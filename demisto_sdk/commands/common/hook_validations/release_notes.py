@@ -27,7 +27,8 @@ class ReleaseNotesValidator(BaseValidator):
         latest_release_notes (str): the text of the UNRELEASED section in the changelog file.
     """
 
-    def __init__(self, release_notes_file_path, modified_files=None, pack_name=None, added_files=None, ignored_errors=None,
+    def __init__(self, release_notes_file_path, modified_files=None, pack_name=None, added_files=None,
+                 ignored_errors=None,
                  print_as_warnings=False, suppress_print=False, json_file_path=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
@@ -87,7 +88,7 @@ class ReleaseNotesValidator(BaseValidator):
 
         Return:
             True if for all the modified yaml files, if there was a change in the docker image in the RN, it's the same version as the yaml.
-            Otherwise, return False and a release_notes_docker_image_not_match_yaml Error
+            Otherwise, return False and a docker_rn_mismatch error
         """
         release_notes_categories = self.get_categories_from_rn("\n" + self.latest_release_notes)
         # renamed files will appear in the modified list as a tuple: (old path, new path)
@@ -95,23 +96,31 @@ class ReleaseNotesValidator(BaseValidator):
         modified_yml_list = [file for file in modified_files_list if file.endswith('.yml')]
         rn_file_name = self.release_notes_file_path[self.release_notes_file_path.rindex('/') + 1:]
         error_list = []
-        for type, field in zip(['Integrations', 'Scripts'], ['display', 'name']):
-            if(type in release_notes_categories):
-                splited_release_notes_entities = self.get_entities_from_category(f'\n{release_notes_categories.get(type)}')
+        for content_type, field in zip(['Integrations', 'Scripts'], ['display', 'name']):
+            if content_type in release_notes_categories:
+                split_release_notes_entities = self.get_entities_from_category(
+                    f'\n{release_notes_categories.get(content_type)}'
+                )
                 for modified_yml_file in modified_yml_list:
                     modified_yml_dict = get_yaml(modified_yml_file) or {}
-                    if modified_yml_dict.get(field) in splited_release_notes_entities:
-                        entity_conent = splited_release_notes_entities.get(modified_yml_dict.get(field, {}), '') + "\n"
-                        docker_version = self.get_docker_version_from_rn(entity_conent)
-                        yml_docker_version = modified_yml_dict.get("dockerimage") if type == 'Scripts' else \
-                            modified_yml_dict.get("script", {}).get("dockerimage", '')
-                        if docker_version and yml_docker_version and yml_docker_version != docker_version:
+
+                    if modified_yml_dict.get(field) in split_release_notes_entities:
+                        entity_content = split_release_notes_entities.get(modified_yml_dict.get(field, {}), '') + "\n"
+                        rn_docker_ver = self.get_docker_version_from_rn(entity_content)
+
+                        modified_yml_docker_ver = modified_yml_dict.get("dockerimage") if content_type == 'Scripts' \
+                            else modified_yml_dict.get("script", {}).get("dockerimage", '')
+
+                        mismatching_versions = \
+                            rn_docker_ver and modified_yml_docker_ver and modified_yml_docker_ver != rn_docker_ver
+                        missing_in_rn = modified_yml_docker_ver and not rn_docker_ver
+
+                        if mismatching_versions or missing_in_rn:
                             error_list.append({'name': modified_yml_dict.get(field),
-                                               'rn_version': docker_version,
-                                               'yml_version': yml_docker_version})
-        if len(error_list) > 0:
-            error_message, error_code = Errors.release_notes_docker_image_not_match_yaml(rn_file_name,
-                                                                                         error_list, self.pack_path)
+                                               'rn_version': rn_docker_ver,
+                                               'yml_version': modified_yml_docker_ver})
+        if error_list:
+            error_message, error_code = Errors.docker_rn_mismatch(rn_file_name, error_list, self.pack_path)
             if self.handle_error(error_message, error_code, file_path=self.release_notes_file_path):
                 return False
 

@@ -148,6 +148,8 @@ ERROR_CODE = {
                                                        'related_field': 'unsearchable'},
     'select_values_cannot_contain_empty_values': {'code': "IF116", 'ui_applicable': False,
                                                   'related_field': 'selectValues'},
+    "invalid_marketplaces_in_alias": {'code': "IF117", 'ui_applicable': False, 'related_field': 'Aliases'},
+    "aliases_with_inner_alias": {'code': "IF118", 'ui_applicable': False, 'related_field': 'Aliases'},
 
     # IM - Images
     "no_image_given": {'code': "IM100", 'ui_applicable': True, 'related_field': 'image'},
@@ -336,7 +338,7 @@ ERROR_CODE = {
     "added_release_notes_for_new_pack": {'code': "RN108", 'ui_applicable': False, 'related_field': ''},
     "modified_existing_release_notes": {'code': "RN109", 'ui_applicable': False, 'related_field': ''},
     "release_notes_config_file_missing_release_notes": {'code': "RN110", 'ui_applicable': False, 'related_field': ''},
-    "release_notes_docker_image_not_match_yaml": {'code': "RN111", 'ui_applicable': False, 'related_field': ''},
+    "docker_rn_mismatch": {'code': "RN111", 'ui_applicable': False, 'related_field': ''},
 
     # RP - Reputations (Indicator Types)
     "wrong_version_reputations": {'code': "RP100", 'ui_applicable': False, 'related_field': 'version'},
@@ -1160,14 +1162,19 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def release_notes_docker_image_not_match_yaml(rn_file_name, un_matching_files_list: list, pack_path):
-        message_to_return = f'The {rn_file_name} release notes file contains incompatible Docker images:\n'
-        for un_matching_file in un_matching_files_list:
-            message_to_return += f"- {un_matching_file.get('name')}: Release notes file has dockerimage: " \
-                                 f"{un_matching_file.get('rn_version')} but the YML file has dockerimage: " \
-                                 f"{un_matching_file.get('yml_version')}\n"
-        message_to_return += "To fix this please run: 'demisto-sdk update-release-notes -i {pack_path}'"
-        return message_to_return
+    def docker_rn_mismatch(rn_file_name: str, mismatching_files: List[dict], pack_path: str):
+        message = f'The docker image release notes in {rn_file_name} do not match the actual docker images used:\n'
+        for mismatching_file in mismatching_files:
+            rn_version = mismatching_file.get('rn_version')
+            yml_version = mismatching_file.get('yml_version')
+            if yml_version and not rn_version:
+                message = f"docker image version update (to {yml_version}) is missing from release notes"
+            else:
+                message += f"- {mismatching_file.get('name')}: " \
+                           f"Release notes mention an update in docker image {rn_version}, " \
+                           f"but the YML file uses {yml_version}\n"
+        message += f"To fix these issues, run demisto-sdk update-release-notes -i {pack_path}"
+        return message
 
     @staticmethod
     @error_code_decorator
@@ -2149,3 +2156,17 @@ class Errors:
     @error_code_decorator
     def wrong_version_format():
         return 'Pack metadata version format is not valid. Please fill in a valid format (example: 0.0.0)'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_marketplaces_in_alias(invalid_aliases: List[str]):
+        return 'The following fields exist as aliases and have invalid "marketplaces" key value:' \
+               f'\n{invalid_aliases}\n' \
+               'the value of the "marketplaces" key in these fields should be ["xsoar"].'
+
+    @staticmethod
+    @error_code_decorator
+    def aliases_with_inner_alias(invalid_aliases: List[str]):
+        return "The following fields exist as aliases and therefore cannot contain an 'Aliases' key." \
+               f"\n{invalid_aliases}\n" \
+               "Please remove the key from the fields or removed the fields from the other field's Aliases list."

@@ -40,5 +40,12 @@
 	"version": -1,
 	"fromVersion": "5.0.0",
 	"toVersion": "5.1.0",
+	"Aliases": [
+		{
+			"cliName": "testing",
+			"type": "shortText",
+			"name": "Testing"
+		}
+	],
 	"pack": "just a test"
 }

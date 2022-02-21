@@ -45,7 +45,7 @@ vulture = "*"
 wcmatch = "*"
 yamlordereddictloader = "*"
 GitPython = "*"
-Jinja2 = "*"
+Jinja2 = "<3.0,>=2.11.1"
 Pebble = "*"
 PyPDF2 = "*"
 giturlparse = "*"
@@ -54,6 +54,8 @@ python-dotenv = "*"
 importlib-resources = "*"
 dictdiffer = "*"
 setuptools = "*"
+markupsafe = "==2.0.1"
+
 
 [dev-packages]
 mitmproxy = "==5.1.0"

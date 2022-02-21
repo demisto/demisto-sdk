@@ -287,7 +287,7 @@ class Downloader:
 
             self.arrange_response(system_items_list)
 
-            for item in system_items_list:
+            for item in system_items_list:  # type: ignore
                 file_name: str = self.build_file_name(item)
                 file_path: str = os.path.join(self.system_content_temp_dir, file_name)
                 with open(file_path, 'w') as file:

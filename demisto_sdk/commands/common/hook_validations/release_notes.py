@@ -88,7 +88,7 @@ class ReleaseNotesValidator(BaseValidator):
 
         Return:
             True if for all the modified yaml files, if there was a change in the docker image in the RN, it's the same version as the yaml.
-            Otherwise, return False and a release_notes_docker_image_not_match_yaml Error
+            Otherwise, return False and a docker_rn_mismatch error
         """
         release_notes_categories = self.get_categories_from_rn("\n" + self.latest_release_notes)
         # renamed files will appear in the modified list as a tuple: (old path, new path)

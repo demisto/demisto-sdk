@@ -3,7 +3,6 @@ import shutil
 from pathlib import Path
 
 import pytest
-from _pytest import monkeypatch
 from mock import patch
 
 from demisto_sdk.commands.common.constants import (

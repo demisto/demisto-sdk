@@ -1163,13 +1163,18 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def release_notes_docker_image_not_match_yaml(rn_file_name, un_matching_files_list: list, pack_path):
-        message_to_return = f'The {rn_file_name} release notes file contains incompatible Docker images:\n'
+        message = f'The {rn_file_name} release notes file contains incompatible Docker images:\n'
         for un_matching_file in un_matching_files_list:
-            message_to_return += f"- {un_matching_file.get('name')}: Release notes file has dockerimage: " \
-                                 f"{un_matching_file.get('rn_version')} but the YML file has dockerimage: " \
-                                 f"{un_matching_file.get('yml_version')}\n"
-        message_to_return += "To fix this please run: 'demisto-sdk update-release-notes -i {pack_path}'"
-        return message_to_return
+            rn_version = un_matching_file.get('rn_version')
+            yml_version = un_matching_file.get('yml_version')
+            if yml_version and not rn_version:
+                message = f"docker image version update (to {yml_version}) is missing from release notes"
+            else:
+                message += f"- {un_matching_file.get('name')}: Release notes file has dockerimage: " \
+                                     f"{rn_version} but the YML file has dockerimage: " \
+                                     f"{yml_version}\n"
+        message += f"To fix these issues, run demisto-sdk update-release-notes -i {pack_path}"
+        return message
 
     @staticmethod
     @error_code_decorator
@@ -2162,6 +2167,6 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def aliases_with_inner_alias(invalid_aliases: List[str]):
-        return "The following fields exist as aliases and therefore cannot contain an 'Aliases' key."\
+        return "The following fields exist as aliases and therefore cannot contain an 'Aliases' key." \
                f"\n{invalid_aliases}\n" \
                "Please remove the key from the fields or removed the fields from the other field's Aliases list."

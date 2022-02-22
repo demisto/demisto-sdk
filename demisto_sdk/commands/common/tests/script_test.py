@@ -661,10 +661,9 @@ class TestScriptValidator:
         read_me_pack = repo.create_pack('README_test')
         script = read_me_pack.create_script('script1', create_unified=unified)
 
-        with ChangeCWD(script.path):
-            scripts_validator = get_validator(file_path=script.yml.path)
-            scripts_validator.validate_all = validate_all
-            scripts_validator.structure_validator.file_type = SCRIPT
-            if remove_readme:
-                os.remove(script.readme.path)
-            assert scripts_validator.validate_readme_exists(scripts_validator.validate_all) is expected_result
+        scripts_validator = get_validator(file_path=script.yml.path)
+        scripts_validator.validate_all = validate_all
+        scripts_validator.structure_validator.file_type = SCRIPT
+        if remove_readme:
+            os.remove(script.readme.path)
+        assert scripts_validator.validate_readme_exists(scripts_validator.validate_all) is expected_result

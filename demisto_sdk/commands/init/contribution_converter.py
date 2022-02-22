@@ -317,7 +317,7 @@ class ContributionConverter:
 
         Args:
             files_to_source_mapping (Dict[str, Dict[str, str]]): Only used when updating a pack. mapping of a file
-                name as inside the the contribution zip to a dictionary containing the the associated source info
+                name as inside the contribution zip to a dictionary containing the the associated source info
                 for that file, specifically the base name (the name used in naming the split component files) and
                 the name of the containing directory.
         """

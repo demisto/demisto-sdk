@@ -20,13 +20,10 @@ class Integration:
         self.repo_path = repo.path
 
         # Create paths
-        if not create_unified:
-            self._tmpdir_integration_path = tmpdir / f'{self.name}'
-            self._tmpdir_integration_path.mkdir()
-            self.readme = File(self._tmpdir_integration_path / 'README.md', self._repo.path)
-        else:
-            self._tmpdir_integration_path = tmpdir
-            self.readme = File(self._tmpdir_integration_path / f'{self.name}_README.md', self._repo.path)
+        self._tmpdir_integration_path = tmpdir / f'{self.name}'
+        self._tmpdir_integration_path.mkdir()
+        self.readme = File(self._tmpdir_integration_path / 'README.md', self._repo.path)
+
         # if creating a unified yaml
         self.create_unified = create_unified
 
@@ -61,6 +58,13 @@ class Integration:
         if image is not None:
             self.image.write_bytes(image)
 
+        if self.create_unified:
+            unifier = YmlUnifier(input=self.path, output=os.path.dirname(self._tmpdir_integration_path))
+            yml_path, readme_path = unifier.merge_script_package_to_yml()
+            shutil.rmtree(self._tmpdir_integration_path)
+            self.yml.path = yml_path[0]
+            self.readme.path = readme_path
+
     def create_default_integration(self, name: str = 'Sample', commands: List[str] = None):
         """Creates a new integration with basic data
 
@@ -94,7 +98,3 @@ class Integration:
             description=description
         )
 
-        if self.create_unified:
-            unifier = YmlUnifier(input=self.path, output=os.path.dirname(self._tmpdir_integration_path))
-            unifier.merge_script_package_to_yml()
-            shutil.rmtree(self._tmpdir_integration_path)

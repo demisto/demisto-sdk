@@ -1425,10 +1425,9 @@ class TestisContextChanged:
         read_me_pack = repo.create_pack('README_test')
         integration = read_me_pack.create_integration('integration1', create_unified=unified)
 
-        with ChangeCWD(integration.path):
-            structure_validator = mock_structure(file_path=integration.yml.path)
-            integration_validator = IntegrationValidator(structure_validator, validate_all=validate_all)
-            integration_validator.structure_validator.file_type = INTEGRATION
-            if remove_readme:
-                os.remove(integration.readme.path)
-            assert integration_validator.validate_readme_exists(integration_validator.validate_all) is expected_result
+        structure_validator = mock_structure(file_path=integration.yml.path)
+        integration_validator = IntegrationValidator(structure_validator, validate_all=validate_all)
+        integration_validator.structure_validator.file_type = INTEGRATION
+        if remove_readme:
+            os.remove(integration.readme.path)
+        assert integration_validator.validate_readme_exists(integration_validator.validate_all) is expected_result

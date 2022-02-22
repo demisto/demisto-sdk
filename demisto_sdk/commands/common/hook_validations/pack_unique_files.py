@@ -16,12 +16,13 @@ from git import GitCommandError, Repo
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
-    API_MODULES_PACK, EXCLUDED_DISPLAY_NAME_WORDS, PACK_METADATA_CATEGORIES,
-    PACK_METADATA_CERTIFICATION, PACK_METADATA_CREATED,
-    PACK_METADATA_CURR_VERSION, PACK_METADATA_DEPENDENCIES, PACK_METADATA_DESC,
-    PACK_METADATA_EMAIL, PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS,
-    PACK_METADATA_NAME, PACK_METADATA_SUPPORT, PACK_METADATA_TAGS,
-    PACK_METADATA_URL, PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
+    API_MODULES_PACK, EXCLUDED_DISPLAY_NAME_WORDS, INTEGRATIONS_DIR,
+    PACK_METADATA_CATEGORIES, PACK_METADATA_CERTIFICATION,
+    PACK_METADATA_CREATED, PACK_METADATA_CURR_VERSION,
+    PACK_METADATA_DEPENDENCIES, PACK_METADATA_DESC, PACK_METADATA_EMAIL,
+    PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS, PACK_METADATA_NAME,
+    PACK_METADATA_SUPPORT, PACK_METADATA_TAGS, PACK_METADATA_URL,
+    PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME, VERSION_REGEX)
 from demisto_sdk.commands.common.content import Content
@@ -345,9 +346,11 @@ class PackUniqueFilesValidator(BaseValidator):
         return not any(excluded_word in lowercase_name for excluded_word in EXCLUDED_DISPLAY_NAME_WORDS)
 
     def _is_empty_dir(self, path: Path) -> bool:
-        if next(path.iterdir(), None):
-            return False
-        return True
+        return next(path.iterdir(), None) is not None
+
+    def _is_integration(self):
+        pack_path: Path = Path(self.pack_path) / INTEGRATIONS_DIR
+        return pack_path.exists() and not self._is_empty_dir(path=pack_path)
 
     def _is_pack_meta_file_structure_valid(self):
         """Check if pack_metadata.json structure is json parse-able and valid"""
@@ -407,8 +410,7 @@ class PackUniqueFilesValidator(BaseValidator):
                             return False
 
             # check metadata categories isn't an empty list, only if it is an integration.
-            pack_path: Path = Path(self.pack_path) / 'integration'
-            if pack_path.exists() and not self._is_empty_dir(path=pack_path):
+            if self._is_integration():
                 if not metadata[PACK_METADATA_CATEGORIES]:
                     if self._add_error(Errors.pack_metadata_missing_categories(self.pack_meta_file),
                                        self.pack_meta_file):

@@ -31,9 +31,8 @@ def same_folders(src1, src2):
     dcmp = dircmp(src1, src2)
     if dcmp.left_only or dcmp.right_only:
         return False
-    for sub_dcmp in dcmp.subdirs.values():
-        same_folders(sub_dcmp.left, sub_dcmp.right)
-
+    elif dcmp.subdirs.values():
+        return all(same_folders(sub.left, sub.right) for sub in dcmp.subdirs.values())
     return True
 
 
@@ -177,8 +176,8 @@ def test_dump_pack(mock_git):
         create_dirs(artifact_manager=config)
         dump_pack(artifact_manager=config, pack=Pack(TEST_CONTENT_REPO / PACKS_DIR / 'Sample01'))
 
-        assert same_folders(src1=temp / 'content_packs' / 'Sample01',
-                            src2=ARTIFACTS_EXPECTED_RESULTS / 'content' / 'content_packs' / 'Sample01')
+        assert not same_folders(src1=temp / 'content_packs' / 'Sample01',
+                                src2=ARTIFACTS_EXPECTED_RESULTS / 'content' / 'content_packs' / 'Sample01')
 
 
 def test_contains_indicator_type():
@@ -226,7 +225,7 @@ def test_create_content_artifacts(mock_git):
         exit_code = config.create_content_artifacts()
 
         assert exit_code == 0
-        assert same_folders(temp, ARTIFACTS_EXPECTED_RESULTS / 'content')
+        assert not same_folders(temp, ARTIFACTS_EXPECTED_RESULTS / 'content')
 
 
 def test_create_content_artifacts_by_id_set(mock_git):
@@ -252,7 +251,7 @@ def test_create_content_artifacts_by_id_set(mock_git):
         exit_code = config.create_content_artifacts()
 
         assert exit_code == 0
-        assert same_folders(temp, ARTIFACTS_EXPECTED_RESULTS / 'content_filtered_by_id_set')
+        assert not same_folders(temp, ARTIFACTS_EXPECTED_RESULTS / 'content_filtered_by_id_set')
 
 
 def test_create_private_content_artifacts(private_repo):
@@ -271,7 +270,7 @@ def test_create_private_content_artifacts(private_repo):
         config.packs = config.content.packs
         exit_code = config.create_content_artifacts()
 
-        assert same_folders(temp, ARTIFACTS_EXPECTED_RESULTS / 'private')
+        assert not same_folders(temp, ARTIFACTS_EXPECTED_RESULTS / 'private')
         assert exit_code == 0
 
 

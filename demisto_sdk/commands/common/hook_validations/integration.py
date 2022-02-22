@@ -912,6 +912,8 @@ class IntegrationValidator(ContentEntityValidator):
                 if 'defaultvalue' in param:
                     param.pop('defaultvalue')
             for fetch_required_param in fetch_required_params:
+                # If this condition returns true, we'll go over the params dict and we'll check if there's a param that match the fetch_required_param name.
+                # If there is one, we know that in the params dict there is a matching param to the fetch_required_param but it has a malformed structure.
                 if fetch_required_param not in params:
                     error_message = ''
                     error_code = ''

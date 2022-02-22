@@ -1846,10 +1846,19 @@ def test_image_error(capsys):
     assert expected_string in stdout
     assert expected_code in stdout
 
-def test_alternative_fields(mocker):
+
+ALTERNATIVE_FIELDS_PATHS = [
+    (ALTERNATIVE_FIELDS_INVALID_INCIDENT_FIELD_PATH, False),
+    (ALTERNATIVE_FIELDS_INVALID_PLAYBOOK_PATH, False),
+    (ALTERNATIVE_FIELDS_INVALID_INCIDENT_FIELD_PATH, True),
+    (ALTERNATIVE_FIELDS_VALID_INCDENT_FIELD_PATH, True)
+]
+
+@pytest.mark.parametrize('path, result', ALTERNATIVE_FIELDS_PATHS)
+def test_alternative_fields(mocker, path, result):
     """
     Given
-            file with or without alternative names for sub items in that file.
+            File with or without alternative names for sub items in that file.
     When
             Validating the file
     Then
@@ -1857,7 +1866,4 @@ def test_alternative_fields(mocker):
     """
     mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
     validate_manager = ValidateManager(id_set_path=ALTERNATIVE_FIELDS_ID_SET_PATH)
-    assert not validate_manager.run_validations_on_file(ALTERNATIVE_FIELDS_INVALID_INCIDENT_FIELD_PATH, None)
-    assert not validate_manager.run_validations_on_file(ALTERNATIVE_FIELDS_INVALID_PLAYBOOK_PATH, None)
-    assert validate_manager.run_validations_on_file(ALTERNATIVE_FIELDS_VALID_INCDENT_FIELD_PATH, None)
-    assert validate_manager.run_validations_on_file(ALTERNATIVE_FIELDS_VALID_PLAYBOOK_PATH, None)
+    assert result == validate_manager.run_validations_on_file(path, None)

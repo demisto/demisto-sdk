@@ -1,4 +1,5 @@
 import glob
+import json
 import os
 import shutil
 from pathlib import Path
@@ -47,7 +48,8 @@ from demisto_sdk.tests.constants_test import (DUMMY_SCRIPT_PATH, IGNORED_PNG,
                                               VALID_PLAYBOOK_ID_PATH,
                                               VALID_REPUTATION_FILE,
                                               VALID_SCRIPT_PATH,
-                                              VALID_WIDGET_PATH)
+                                              VALID_WIDGET_PATH,
+                                              ALTERNATIVE_FIELDS_ID_SET_PATH)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT, MAPPER, OLD_CLASSIFIER, REPUTATION)
 from TestSuite.pack import Pack
@@ -1651,3 +1653,48 @@ class TestGetItemMarketplaces:
 
         assert len(marketplaces) == 1
         assert 'xsoar' in marketplaces
+
+INVALID_PLAYBOOK_NESTED_DATA = {'id': 'a037cfcc-aa5a-417c-81c7-dd569be7b783',
+      'version': '-1',
+      'name': 'Panorama Query Logs',
+      'description': 'Query Panorama Logs of types: traffic, threat, url, data-filtering and wildfire.',
+      'playbookName': 'Panorama Query Logs',
+      'type': 'playbook',
+      'iscommand': 'false'}
+VALID_PLAYBOOK_NESTED_DATA = {'id': 'a037cfcc-aa5a-417c-81c7-dd569be7b783',
+      'version': '-1',
+      'name': 'Panorama Query Logs',
+      'description': 'Query Panorama Logs of types: traffic, threat, url, data-filtering and wildfire.',
+      'playbookName': 'Panorama Query Logs',
+      'playbookName_x2': 'Panorama Query Logs_x2',
+      'type': 'playbook',
+      'iscommand': 'false'}
+INVALID_INCIDENT_FIELD_DATA = json.loads(ALTERNATIVE_FIELDS_INVALID_INCIDENT_FIELD_PATH)
+VALID_INCIDENT_FIELD_DATA = json.loads(ALTERNATIVE_FIELDS_VALID_INCIDENT_FIELD_PATH)
+
+ALTERNATIVE_FIELDS_DATA_AND_RESULTS = [(INVALID_PLAYBOOK_NESTED_DATA, 'playbookName',
+                                        {'playbookName_x2': 'Panorama Query Logs_x2'}),
+                                       (VALID_PLAYBOOK_NESTED_DATA, 'playbookName', {}),
+                                       (INVALID_INCIDENT_FIELD_DATA, 'fieldCalcScript', {'fieldCalcScript_x2': 'GetCampaignIndicatorsByIncidentId_x2'}),
+                                       (VALID_INCIDENT_FIELD_DATA, 'fieldCalcScript', {})]
+
+
+class TestMissingAlternativeFields:
+    @staticmethod
+    @pytest.mark.parametrize('data, field, result', ALTERNATIVE_FIELDS_DATA_AND_RESULTS)
+    def test_get_missing_alternative_fields(mocker, data, field, result):
+        """
+        Given
+            - A content item data of nested item.
+            This data represents part of the content item's original data that is in the same hirarchy level of the
+            field of interest. for example, if the item is a playbook, the data represents a data
+            section under tasks > *task_id* > task
+            - a field of interest
+            - loaded id set.
+        When
+            - While validating or formatting a file.
+        Then
+            - Return the missing alternative fields if there are any.
+        """
+        id_set = json.loads(ALTERNATIVE_FIELDS_ID_SET_PATH)
+        assert results == tools.get_missing_alternative_fields(data, field, id_set)

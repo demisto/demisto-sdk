@@ -5,7 +5,8 @@ from typing import Dict, List, Tuple
 import click
 
 from demisto_sdk.commands.common.constants import (JOB,
-                                                   TESTS_AND_DOC_DIRECTORIES)
+                                                   TESTS_AND_DOC_DIRECTORIES,
+                                                   FileType)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.tools import (find_type, get_files_in_dir,
                                                print_error, print_success,
@@ -105,7 +106,8 @@ def format_manager(input: str = None,
                    prev_ver: str = None,
                    include_untracked: bool = False,
                    add_tests: bool = None,
-                   interactive: bool = True):
+                   interactive: bool = True,
+                   id_set_path: str = None):
     """
     Format_manager is a function that activated format command on different type of files.
     Args:
@@ -122,6 +124,7 @@ def format_manager(input: str = None,
         include_untracked (bool): Whether to include untracked files when checking against git
         interactive (bool): Whether to run the format interactively or not (usually for contribution management)
         add_tests (bool): Whether to exclude tests automatically.
+        id_set_path (str): The path of the id_set.json file.
     Returns:
         int 0 in case of success 1 otherwise
     """
@@ -169,7 +172,8 @@ def format_manager(input: str = None,
                                                                  update_docker=update_docker,
                                                                  assume_yes=assume_yes,
                                                                  deprecate=deprecate,
-                                                                 add_tests=add_tests)
+                                                                 add_tests=add_tests,
+                                                                 id_set_path=id_set_path)
                 if err_res:
                     log_list.extend([(err_res, print_error)])
                 if info_res:
@@ -280,6 +284,9 @@ def run_format_on_file(input: str, file_type: str, from_version: str, interactiv
     if file_type not in ('integration', 'playbook', 'script') and 'add_tests' in kwargs:
         # adding tests is relevant only for integrations, playbooks and scripts.
         del kwargs['add_tests']
+    if file_type != FileType.INCIDENT_FIELD.value and 'id_set_path' in kwargs:
+        # relevant only for incidentfield
+        del kwargs['id_set_path']
     update_object = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path, from_version=from_version,
                                                           interactive=interactive, **kwargs)
     format_res, validate_res = update_object.format_file()  # type: ignore

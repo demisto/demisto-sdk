@@ -688,8 +688,9 @@ class Linter:
         file_loader = FileSystemLoader(Path(__file__).parent / 'templates')
         env = Environment(loader=file_loader, lstrip_blocks=True, trim_blocks=True, autoescape=True)
         template = env.get_template('dockerfile.jinja2')
+        registry = os.getenv("DOCKER_REGISTRY")
         try:
-            dockerfile = template.render(image=docker_base_image[0],
+            dockerfile = template.render(image=f'{registry}/{docker_base_image[0]}' if registry else docker_base_image[0],
                                          pypi_packs=requirements + self._facts["additional_requirements"],
                                          pack_type=self._pkg_lint_status["pack_type"],
                                          copy_pack=False)
@@ -702,7 +703,6 @@ class Linter:
         test_image = None
         try:
             logger.info(f"{log_prompt} - Trying to pull existing image {test_image_name}")
-            registry = os.getenv("DOCKER_REGISTRY")
             test_image = self._docker_client.images.pull(f'{registry}/{test_image_name}' if registry else test_image_name)
         except (docker.errors.APIError, docker.errors.ImageNotFound):
             logger.info(f"{log_prompt} - Unable to find image {test_image_name}")

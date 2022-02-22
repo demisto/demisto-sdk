@@ -20,7 +20,7 @@
             "module": "demisto_sdk",
             "cwd": "${env:CONTENT}",
             "args": [
-                "update-release-notes",
+                "Lint",
                 "-i",
                 "${env:CONTENT}/Packs/AbuseDB/Integrations/AbuseDB",
                 "-j",

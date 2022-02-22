@@ -9,6 +9,7 @@ from TestSuite.json_based import JSONBased
 from TestSuite.playbook import Playbook
 from TestSuite.script import Script
 from TestSuite.secrets import Secrets
+from TestSuite.test_tools import suite_join_path
 from TestSuite.text_based import TextBased
 
 
@@ -65,7 +66,6 @@ class Pack:
         self.path = str(self._pack_path)
 
         # Create repo structure
-
         self._integrations_path = self._pack_path / 'Integrations'
         self._integrations_path.mkdir()
 
@@ -156,6 +156,9 @@ class Pack:
             name = f'integration_{len(self.integrations)}'
         if yml is None:
             yml = {}
+        if image is None:
+            with open(suite_join_path('assets/default_integration', 'sample_image.png'), 'rb') as image_file:
+                image = image_file.read()
         integration = Integration(self._integrations_path, name, self._repo, create_unified=create_unified)
         integration.build(
             code,

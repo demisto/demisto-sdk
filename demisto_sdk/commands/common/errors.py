@@ -25,6 +25,7 @@ ALLOWED_IGNORE_ERRORS = [
     'RM100', 'RM102', 'RM104', 'RM106',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
+    'IM111'
 ]
 
 PRESET_ERROR_TO_IGNORE = {
@@ -163,6 +164,7 @@ ERROR_CODE = {
     "image_is_empty": {'code': "IM108", 'ui_applicable': True, 'related_field': 'image'},
     "author_image_is_missing": {'code': "IM109", 'ui_applicable': True, 'related_field': 'image'},
     "invalid_image_name_or_location": {'code': "IM110", 'ui_applicable': True, 'related_field': 'image'},
+    "invalid_image_dimensions": {'code': "IM111", 'ui_applicable': True, 'related_field': 'image'},
 
     # IN - Integrations
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
@@ -1047,6 +1049,11 @@ class Errors:
                "If you're trying to add author image, make sure the image name looks like the following: Author_image.png and located in the pack root path." \
                "For more info: https://xsoar.pan.dev/docs/packs/packs-format#author_imagepng\n" \
                "Otherwise, any other image should be located under the 'Doc_files' dir."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_image_dimensions(width: int, height: int):
+        return f'The image dimensions are {width}x{height}. The requirements are 120x50.'
 
     @staticmethod
     @error_code_decorator

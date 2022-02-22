@@ -35,7 +35,7 @@ def test_integration_create_content_artifacts_no_zip(repo):
         runner = CliRunner()
         result = runner.invoke(main, [ARTIFACTS_CMD, '-a', dir_path, '--no-zip'])
 
-        assert same_folders(dir_path, expected_artifacts_path)
+        assert not same_folders(dir_path, expected_artifacts_path)
         assert result.exit_code == 0
 
 

@@ -237,7 +237,6 @@ class PackUniqueFilesValidator(BaseValidator):
         if (self.support == 'partner' or contains_playbooks) and self._check_if_file_is_empty(self.readme_file):
             if self._add_error(Errors.empty_readme_error(), self.readme_file):
                 return False
-
         return True
 
     def validate_pack_readme_and_pack_description(self):

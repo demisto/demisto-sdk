@@ -564,18 +564,21 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content', return_value=text)
         assert self.validator.validate_pack_readme_file_is_not_empty() == result
 
-    def test_no_readme_alert_on_scripts_layout(self, mocker):
+    def test_no_readme_alert_on_scripts_layouts(self, repo, mocker):
         """
-       Given:
-            - pack with scripts or layouts
+          Given:
+               - pack with scripts or layouts
 
-        When:
-            - Running test_validate_pack_readme_file_is_not_empty_partner.
+           When:
+               - Running test_validate_pack_readme_file_is_not_empty_partner.
 
-        Then:
-            - Ensure no validation on empty pack read me file.
+           Then:
+               - Ensure no validation on empty pack read me file.
         """
-        self.validator = PackUniqueFilesValidator(self.FAKE_PACK_NO_PLAYBOOK)
+        dummy_pack = repo.create_pack('TEST_PACK')
+        dummy_pack.create_layout('test_layout')
+        dummy_pack.create_script('test_script')
+        self.validator = PackUniqueFilesValidator(dummy_pack.path)
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content', return_value="text")
         assert self.validator.validate_pack_readme_file_is_not_empty()
 

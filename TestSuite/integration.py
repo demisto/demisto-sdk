@@ -60,9 +60,10 @@ class Integration:
 
         if self.create_unified:
             unifier = YmlUnifier(input=self.path, output=os.path.dirname(self._tmpdir_integration_path))
-            yml_path, readme_path = unifier.merge_script_package_to_yml()
+            yml_path = unifier.merge_script_package_to_yml()[0]
+            readme_path = unifier.move_readme_next_to_unified(yml_path)
             shutil.rmtree(self._tmpdir_integration_path)
-            self.yml.path = yml_path[0]
+            self.yml.path = yml_path
             self.readme.path = readme_path
 
     def create_default_integration(self, name: str = 'Sample', commands: List[str] = None):
@@ -97,4 +98,3 @@ class Integration:
             changelog=changelog,
             description=description
         )
-

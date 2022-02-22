@@ -5,8 +5,8 @@ import io
 import json
 import os
 import re
-import sys
 import shutil
+import sys
 from typing import Dict, List, Tuple, Union
 
 import click
@@ -167,9 +167,7 @@ class YmlUnifier:
         """
         print("Merging package: {}".format(self.package_path))
         package_dir_name = os.path.basename(self.package_path)
-        output_filename = '{}-{}'.format(DIR_TO_PREFIX[self.dir_name], package_dir_name)
-        dst_readme = self.move_readme_in_unify(self.dest_path, self.package_path, output_filename)
-        output_filename += '.yml'
+        output_filename = '{}-{}.yml'.format(DIR_TO_PREFIX[self.dir_name], package_dir_name)
 
         if file_name_suffix:
             # append suffix to output file name
@@ -207,7 +205,7 @@ class YmlUnifier:
         unifier_outputs = list(output_map.keys()), self.yml_path, script_path, image_path, desc_path
         print_color(f'Created unified yml: {list(output_map.keys())}', LOG_COLORS.GREEN)
 
-        return unifier_outputs[0], dst_readme
+        return unifier_outputs[0]
 
     def insert_image_to_yml(self, yml_data, yml_unified):
         image_data, found_img_path = self.get_data(self.package_path, "*png")
@@ -530,8 +528,7 @@ class YmlUnifier:
         # remove all non-word characters (dash is ok)
         return re.sub(r'[^\w-]', '', dasherized_integration_id)
 
-    @staticmethod
-    def move_readme_in_unify(dst_path, src_path, filename):
+    def move_readme_next_to_unified(self, yml_path):
         """
             Args:
                 dst_path: The location where to move the readme file to
@@ -539,7 +536,8 @@ class YmlUnifier:
                 filename: The new name of the readme file in the dst location
 
         """
-        dst_path_readme = os.path.join(dst_path, f'{filename}_README.md')
-        src_path_readme = os.path.join(src_path, 'README.md')
+        dst_path_readme = yml_path.replace('.yml', '_README.md')
+        # dst_path_readme = os.path.join(self.dst_path, f'{filename}_README.md')
+        src_path_readme = os.path.join(self.package_path, 'README.md')
         shutil.move(src_path_readme, dst_path_readme)
         return dst_path_readme

@@ -155,7 +155,18 @@ class Pack:
         if name is None:
             name = f'integration_{len(self.integrations)}'
         if yml is None:
-            yml = {}
+            yml = {
+                'commonfields': {'id': name, 'version': -1},
+                'name': name,
+                'display': name,
+                'description': f'this is an integration {name}',
+                'script': {
+                    'type': 'python',
+                    'subtype': 'python3',
+                    'script': '',
+                    'commands': [],
+                },
+            }
         if image is None:
             with open(suite_join_path('assets/default_integration', 'sample_image.png'), 'rb') as image_file:
                 image = image_file.read()

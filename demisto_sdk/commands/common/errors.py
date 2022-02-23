@@ -224,6 +224,7 @@ ERROR_CODE = {
     "fromlicense_in_parameters": {'code': "IN146", 'ui_applicable': True,
                                   'related_field': '<parameter-name>.fromlicense'},
     "changed_integration_yml_fields": {'code': "IN147", "ui_applicable": False, 'related_field': 'script'},
+    "parameter_is_malformed": {'code': "IN148", 'ui_applicable': False, 'related_field': 'configuration'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -714,8 +715,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def parameter_missing_from_yml(name, correct_format):
-        return f'A required parameter "{name}" is missing or malformed ' \
+    def parameter_missing_from_yml(name):
+        return f'A required parameter "{name}" is missing from the YAML file.'
+
+    @staticmethod
+    @error_code_decorator
+    def parameter_is_malformed(name, correct_format):
+        return f'A required parameter "{name}" is malformed ' \
                f'in the YAML file.\nThe correct format of the parameter should ' \
                f'be as follows:\n{correct_format}'
 

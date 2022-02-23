@@ -56,15 +56,9 @@ dictdiffer = "*"
 setuptools = "*"
 markupsafe = "==2.0.1"
 imagesize = "*"
-
 cryptography = "*"
-types-PyYAML = "*"
 'mypy[python2]'="*"
-types-dateparser="*"
-types-pyyaml="*"
-types-requests="*"
-types-pytz="*"
-types-python-dateutil="*"
+
 [dev-packages]
 mitmproxy = "==5.1.0"
 mock = "*"

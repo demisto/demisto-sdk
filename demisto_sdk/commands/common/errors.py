@@ -2172,7 +2172,9 @@ class Errors:
         return f'There is a difference between the version in the pack metadata' \
                f'file and the version of the latest release note.\n expected pack metadata to be {rn_version} '\
                f'instead found {pack_metadata_version}.'
-               
+    
+    @staticmethod
+    @error_code_decorator           
     def invalid_marketplaces_in_alias(invalid_aliases: List[str]):
         return 'The following fields exist as aliases and have invalid "marketplaces" key value:' \
                f'\n{invalid_aliases}\n' \

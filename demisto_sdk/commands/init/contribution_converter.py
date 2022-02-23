@@ -284,7 +284,10 @@ class ContributionConverter:
             generate_playbook_doc(yml_path)
 
         dir_output = os.path.dirname(os.path.realpath(yml_path))
-        readme_path = os.path.join(dir_output, 'README.md')
+        if file_type == 'playbook':
+            readme_path = yml_path.replace('.yml', '_README.md')
+        else:
+            readme_path = os.path.join(dir_output, 'README.md')
         self.readme_files.append(readme_path)
 
     def generate_readmes_for_new_content_pack(self, is_contribution=False):

@@ -201,7 +201,7 @@ jobs:
               CI_COMMIT_BRANCH="master" ./Tests/scripts/validate.sh
   test-lint:
       docker:
-        - image: devdemisto/content-build:3.0.0.26955
+        - image: devdemisto/content-build:3.0.0.12681
       steps:
         - checkout
         - setup_remote_docker
@@ -226,8 +226,6 @@ jobs:
               
               # installing local sdk inside venv
               pip3 install ~/project >> /tmp/lint_env_installation.log
-              mypy --version
-              python --version
               echo ""
               echo "lint files changed running lint"
               # python file (CommonServerPython lint is running over python 3 and 2)

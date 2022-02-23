@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "0ea9d9e7ebfd3678f5cccb9239640e3434e424a07dd36886bcb6d25953c466c4"
+            "sha256": "1fb0de00b91d0174cb0d122a998ac3273faf1d0029f7fcc2cd09f6954c90a10d"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -1463,6 +1463,38 @@
             "index": "pypi",
             "version": "==1.5.2"
         },
+        "types-dateparser": {
+            "hashes": [
+                "sha256:1c9d7c89494e75b9a48c310a90fb09ad70299ab5186a835e9d187a4ca6620ed6",
+                "sha256:f648ab13de4ec883ecc22c5d5416783d06559c506401af00d5e0e104998671d9"
+            ],
+            "index": "pypi",
+            "version": "==1.0.14"
+        },
+        "types-python-dateutil": {
+            "hashes": [
+                "sha256:90f95a6b6d4faba359287f17a2cae511ccc9d4abc89b01969bdac1185815c05d",
+                "sha256:d60db7f5d40ce85ce54e7fb14e4157daf33e24f5a4bfb5f44ee7a5b790dfabd0"
+            ],
+            "index": "pypi",
+            "version": "==2.8.9"
+        },
+        "types-pytz": {
+            "hashes": [
+                "sha256:8831f689379ac9e2a62668157381379ed74b3702980e08e71f8673c179c4e3c7",
+                "sha256:fef8de238ee95135952229a2a23bfb87bd63d5a6c8598106a46cfcf48f069ea8"
+            ],
+            "index": "pypi",
+            "version": "==2021.3.5"
+        },
+        "types-pyyaml": {
+            "hashes": [
+                "sha256:6252f62d785e730e454dfa0c9f0fb99d8dae254c5c3c686903cf878ea27c04b7",
+                "sha256:693b01c713464a6851f36ff41077f8adbc6e355eda929addfb4a97208aea9b4b"
+            ],
+            "index": "pypi",
+            "version": "==6.0.4"
+        },
         "types-requests": {
             "hashes": [
                 "sha256:ad18284931c5ddbf050ccdd138f200d18fd56f88aa3567019d8da9b2d4fe0344",
@@ -1484,7 +1516,7 @@
                 "sha256:643c97c5294aedc737780a49d9df30889321cbe1204eac2c2ec6134035a92e44",
                 "sha256:e2cb6c6b5b604af38597403e9852872d7f534962ae2954c7f35efcb1ccacf4a4"
             ],
-            "markers": "python_full_version >= '3.6.0'",
+            "markers": "python_version >= '3.6'",
             "version": "==2.1"
         },
         "ujson": {

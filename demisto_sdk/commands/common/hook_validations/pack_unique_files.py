@@ -137,7 +137,7 @@ class PackUniqueFilesValidator(BaseValidator):
         Return:
             (str): The lastest version of RN.
         """
-        
+
         try:
             list_of_files = glob.glob(self.pack_path + '/ReleaseNotes/*')
             list_of_versions = [(os.path.basename(version)[:-3]).replace('_', '.') for version in list_of_files]

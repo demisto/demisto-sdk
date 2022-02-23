@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "16b075fac4130bffa3cf5aa89dbca2596bbd6791b74ef1d910906a54c2ce00da"
+            "sha256": "0ea9d9e7ebfd3678f5cccb9239640e3434e424a07dd36886bcb6d25953c466c4"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -863,7 +863,6 @@
             "version": "==6.0.2"
         },
         "mypy": {
-            "extras": [],
             "hashes": [
                 "sha256:0038b21890867793581e4cb0d810829f5fd4441aa75796b53033af3aa30430ce",
                 "sha256:1171f2e0859cfff2d366da2c7092b06130f232c636a3f7301e3feb8b41f6377d",

@@ -535,6 +535,8 @@ class YmlUnifier:
                 src_path: Where to remove the readme file to
                 filename: The new name of the readme file in the dst location
 
+            Return: readme new location next to the unified yml.
+
         """
         dst_path_readme = yml_path.replace('.yml', '_README.md')
         # dst_path_readme = os.path.join(self.dst_path, f'{filename}_README.md')

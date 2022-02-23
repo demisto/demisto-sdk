@@ -44,8 +44,3 @@ class Script(Integration):
             changelog=changelog,
             description=description
         )
-
-        if self.create_unified:
-            unifier = YmlUnifier(input=self.path, output=os.path.dirname(self._tmpdir_integration_path))
-            unifier.merge_script_package_to_yml()
-            shutil.rmtree(self._tmpdir_integration_path)

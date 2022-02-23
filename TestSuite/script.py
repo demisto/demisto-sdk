@@ -1,9 +1,6 @@
-import os
-import shutil
 from pathlib import Path
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from TestSuite.integration import Integration
 from TestSuite.test_tools import suite_join_path
 

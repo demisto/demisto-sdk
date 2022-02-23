@@ -344,13 +344,15 @@ class TestFieldValidator:
     }
     PACK_METADATA1 = {'name': 'pack name', 'itemPrefix': ['pack prefix']}
     PACK_METADATA2 = {'name': 'pack name'}
+    PACK_METADATA3 = {'name': 'Pack Name'}
 
     INPUTS_NAMES2 = [
         (FIELD_NAME1, PACK_METADATA1, False),
         (FIELD_NAME1, PACK_METADATA2, True),
         (FIELD_NAME2, PACK_METADATA1, True),
         (FIELD_NAME2, PACK_METADATA2, False),
-        (FIELD_NAME3, PACK_METADATA1, False)
+        (FIELD_NAME3, PACK_METADATA1, False),
+        (FIELD_NAME1, PACK_METADATA3, False)
     ]
 
     @pytest.mark.parametrize('current_file,pack_metadata, answer', INPUTS_NAMES2)

@@ -16,10 +16,10 @@ In order to release a new version of `demisto-sdk` to the public follow these st
   **Note:** if you're on `content-internal-dist/master`, a notification will be sent to the content-team slack channel. The destination channel can be set via argument.
   Wait until the nightly sdk completes. 
   **Note:** you should discard this change and delete the branch after the build is finished successfully.
-9) In Demisto's content-private repository create a new branch and go to the build configuration file [**config.yml**](https://github.com/demisto/content-private/blob/master/.github/workflows/config.yml) and update the SDK installation command by replacing the line: `pip3 install demisto-sdk` with this line: `pip3 install git+https://github.com/demisto/demisto-sdk.git@release-branch-name.`
-10) Open a PR for that content-private branch, and verify the build triggered is green. Note that **this PR is for SDK version check only, and it shouldn't be merged**, after build is finished successfully - you should discard this change and close the PR.
+9) In Demisto's content-private repository create a new branch and go to the build configuration file [**config.yml**](https://github.com/demisto/content-private/blob/master/.github/workflows/config.yml) and update the SDK installation command by replacing `pip3 install demisto-sdk` with `pip3 install git+https://github.com/demisto/demisto-sdk.git@<sdk-release-branch-name>.`
+10) Open a PR for that content-private branch, and verify the build triggered is green. Note that **this PR is for SDK version check only, and it shouldn't be merged**, once the build is successful, discard this change and close the PR.
 
-**Note:** You can run the builds in steps: 5, 6, 8, 10 at the same time (no need to wait for one to finish before starting the other).
+**Note:** Steps 5, 6, 8, 10 can be performed at the same time (no need to wait for one to finish before starting the other).
 
 ### Release process:
 1) Click [Here](https://github.com/demisto/demisto-sdk/releases/new) (alternatively: visit the [SDK github page](https://github.com/demisto/demisto-sdk), click on **releases**, and then **Draft a new release**)

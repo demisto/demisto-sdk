@@ -2113,7 +2113,7 @@ class Errors:
                f"You can use the pack name or one of the prefixes found in the itemPrefix field in the pack_metadata. " \
                f"Example: {pack_prefix} {field_name}.\n" \
                f"Also make sure to update the field id and cliName accordingly. " \
-               f"Example: cliName: {pack_prefix.replace(' ', '')}{field_name.replace(' ', '')}, "
+               f"Example: cliName: {pack_prefix.replace(' ', '').lower()}{field_name.replace(' ', '')}, "
 
     @staticmethod
     @error_code_decorator

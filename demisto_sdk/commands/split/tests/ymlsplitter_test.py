@@ -2,16 +2,17 @@ import base64
 import os
 from pathlib import Path
 
-import yaml
-
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
+from TestSuite.test_tools import ChangeCWD
+
+yaml = YAML_Handler()
 
 
 def test_extract_long_description(tmpdir):
-
     # Test when script
     extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/script-test_script.yml',
                             output='', file_type='script', no_demisto_mock=False,
@@ -29,7 +30,6 @@ def test_extract_long_description(tmpdir):
 
 
 def test_extract_image(tmpdir):
-
     # Test when script
     extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/script-test_script.yml',
                             output='', file_type='script')
@@ -131,6 +131,18 @@ def test_get_output_path():
     assert res == Path(out + "/Zoom")
 
 
+def test_get_output_path_relative(repo):
+    pack = repo.create_pack()
+    integration = pack.create_integration()
+
+    with ChangeCWD(repo.path):
+        extractor = YmlSplitter(input=integration.yml.rel_path, file_type='integration')
+
+    output_path = extractor.get_output_path()
+    assert output_path.is_absolute()
+    assert output_path.relative_to(pack.path) == Path(integration.path).relative_to(pack.path)
+
+
 def test_get_output_path_empty_output():
     input_path = Path(f'{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml')
     extractor = YmlSplitter(input=str(input_path),
@@ -159,7 +171,7 @@ def test_extract_to_package_format_pwsh(tmpdir):
         file_data = f.read()
         assert 'This is a sample test README' in file_data
     with open(out.join('PowerShellRemotingOverSSH').join('PowerShellRemotingOverSSH.yml'), 'r') as f:
-        yaml_obj = yaml.safe_load(f)
+        yaml_obj = yaml.load(f)
         assert yaml_obj['fromversion'] == '5.5.0'
         assert not yaml_obj['script']['script']
 

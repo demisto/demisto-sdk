@@ -518,6 +518,8 @@ def validate(config, **kwargs):
 @click.option('-fbi', '--filter-by-id-set', is_flag=True,
               help='Whether to use the id set as content items guide, meaning only include in the packs the '
                    'content items that appear in the id set.', default=False, hidden=True)
+@click.option('-af', '--alternate-fields', is_flag=True,
+              help='Use the alternative fields if such are present in the yml or json of the content item.', default=False, hidden=True)
 def create_content_artifacts(**kwargs) -> int:
     """Generating the following artifacts:
        1. content_new - Contains all content objects of type json,yaml (from_version < 6.0.0)
@@ -782,6 +784,9 @@ def coverage_analyze(**kwargs):
     is_flag=True,
     help='Whether to answer manually to add tests configuration prompt when running interactively.'
 )
+@click.option(
+    "-s", "--id-set-path", help="The path of the id_set json file.",
+    type=click.Path(exists=True, resolve_path=True))
 def format(
         input: Path,
         output: Path,
@@ -794,7 +799,8 @@ def format(
         use_git: bool,
         prev_ver: str,
         include_untracked: bool,
-        add_tests: bool
+        add_tests: bool,
+        id_set_path: str
 ):
     """Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/
     incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file/genericfield/generictype/
@@ -814,6 +820,7 @@ def format(
         prev_ver=prev_ver,
         include_untracked=include_untracked,
         add_tests=add_tests,
+        id_set_path=id_set_path,
     )
 
 
@@ -1413,7 +1420,7 @@ def create_id_set(**kwargs):
     id_set, excluded_items_by_pack, excluded_items_by_type = id_set_creator.create_id_set()
 
     if excluded_items_by_pack:
-        remove_dependencies_from_id_set(id_set, excluded_items_by_pack, excluded_items_by_type)
+        remove_dependencies_from_id_set(id_set, excluded_items_by_pack, excluded_items_by_type, kwargs.get('marketplace', ''))
         id_set_creator.save_id_set()
 
 
@@ -1884,11 +1891,11 @@ def test_content(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    '-i', '--input', type=str, help='The path to the file to check')
+    '-i', '--input', type=str, help='The path to the file to check', multiple=True)
 @click.option(
     '--no-camel-case', is_flag=True, help='Whether to check CamelCase words', default=False)
 @click.option(
-    '--known-words', type=str, help="The path to a file containing additional known words"
+    '--known-words', type=str, help="The path to a file containing additional known words", multiple=True
 )
 @click.option(
     '--always-true', is_flag=True, help="Whether to fail the command if misspelled words are found"
@@ -1911,12 +1918,17 @@ def test_content(**kwargs):
 @click.option(
     '-rn', '--release-notes', is_flag=True, help="Will run only on release notes files"
 )
+@click.option(
+    '-pkw', '--use-packs-known-words', is_flag=True, help="Will find and load the known_words file from the pack. "
+                                                          "To use this option make sure you are running from the "
+                                                          "content directory.", default=False
+)
 def doc_review(**kwargs):
     """Check the spelling in .md and .yml files as well as review release notes"""
     from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
     doc_reviewer = DocReviewer(
-        file_path=kwargs.get('input'),
-        known_words_file_path=kwargs.get('known_words'),
+        file_paths=kwargs.get('input', []),
+        known_words_file_paths=kwargs.get('known_words', []),
         no_camel_case=kwargs.get('no_camel_case'),
         no_failure=kwargs.get('always_true'),
         expand_dictionary=kwargs.get('expand_dictionary'),
@@ -1924,6 +1936,7 @@ def doc_review(**kwargs):
         use_git=kwargs.get('use_git'),
         prev_ver=kwargs.get('prev_ver'),
         release_notes_only=kwargs.get('release_notes'),
+        load_known_words_from_pack=kwargs.get('use_packs_known_words'),
     )
     result = doc_reviewer.run_doc_review()
     if result:

@@ -7,25 +7,25 @@ import logging
 import os
 import re
 import string
-from pathlib import Path
 from typing import List, Optional, Tuple
 
 import click
-import yaml
 from pykwalify.core import Core
-from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     ACCEPTED_FILE_EXTENSIONS, CHECKED_TYPES_REGEXES,
     FILE_TYPES_PATHS_TO_VALIDATE, OLD_REPUTATION, SCHEMA_TO_REGEX, FileType)
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (get_remote_file,
                                                is_file_path_in_pack)
 from demisto_sdk.commands.format.format_constants import \
     OLD_FILE_DEFAULT_1_FROMVERSION
+
+yaml = YAML_Handler()
 
 
 class StructureValidator(BaseValidator):
@@ -44,7 +44,7 @@ class StructureValidator(BaseValidator):
     SCHEMAS_PATH = "schemas"
 
     FILE_SUFFIX_TO_LOAD_FUNCTION = {
-        '.yml': yaml.safe_load,
+        '.yml': yaml.load,
         '.json': json.load,
     }
 
@@ -90,7 +90,6 @@ class StructureValidator(BaseValidator):
                 self.is_valid_file_path(),
                 self.is_valid_scheme(),
                 self.is_file_id_without_slashes(),
-                self.is_valid_yml()
             ]
 
             if self.old_file:  # In case the file is modified
@@ -469,7 +468,7 @@ class StructureValidator(BaseValidator):
         curr = self.current_file
         key_list = []
         for single_path in error_path:
-            if type(curr) is list:
+            if isinstance(curr, list):
                 curr = curr[int(single_path)]
 
                 # if the error is from arguments of file
@@ -495,26 +494,6 @@ class StructureValidator(BaseValidator):
             if self.handle_error(error_message, error_code, self.file_path):
                 return False
 
-        return True
-
-    def is_valid_yml(self):
-        # type: () -> bool
-        """Checks if given file is valid yml file
-
-        Returns:
-            (bool): Is file is valid
-        """
-        path = Path(self.file_path)
-        if path.suffix == '.yml':
-            try:
-                ryaml = YAML()
-                ryaml.preserve_quotes = True
-                with open(self.file_path, 'r') as yf:
-                    yaml_obj = ryaml.load(yf)  # noqa: F841
-            except Exception as e:
-                error_message, error_code = Errors.invalid_yml_file(e)
-                self.handle_error(error_message, error_code, file_path=self.file_path)
-                return False
         return True
 
 

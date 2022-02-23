@@ -1,0 +1,19 @@
+id: playbook
+name: name
+name_x2: name_x2
+fromversion: "6.0.0"
+tasks:
+  task_num:
+    id: "18"
+    taskid: 6e7a08d8-833e-4adb-8d45-3b4872c1a613
+    type: condition
+    task:
+      id: 6e7a08d8-833e-4adb-8d45-3b4872c1a613
+      version: -1
+      name: name
+      scriptName: scriptName
+      scriptName_x2: scriptName_x2
+      type: condition
+      iscommand: false
+      brand: ""
+

@@ -9,6 +9,7 @@ from TestSuite.json_based import JSONBased
 from TestSuite.playbook import Playbook
 from TestSuite.script import Script
 from TestSuite.secrets import Secrets
+from TestSuite.test_tools import suite_join_path
 from TestSuite.text_based import TextBased
 
 
@@ -154,6 +155,9 @@ class Pack:
             name = f'integration_{len(self.integrations)}'
         if yml is None:
             yml = {}
+        if image is None:
+            with open(suite_join_path('assets/default_integration', 'sample_image.png'), 'rb') as image_file:
+                image = image_file.read()
         integration = Integration(self._integrations_path, name, self._repo)
         integration.build(
             code,
@@ -177,9 +181,16 @@ class Pack:
             image: bytes = b''
     ) -> Script:
         if name is None:
-            name = f'script{len(self.integrations)}'
+            name = f'script{len(self.scripts)}'
         if yml is None:
-            yml = {}
+            yml = {
+                'commonfields': {'id': name, 'version': -1},
+                'name': name,
+                'comment': f'this is script {name}',
+                'type': 'python',
+                'subtype': 'python3',
+                'script': '-',
+            }
         script = Script(self._scripts_path, name, self._repo)
         script.build(
             code,

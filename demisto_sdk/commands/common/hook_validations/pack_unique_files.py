@@ -131,18 +131,23 @@ class PackUniqueFilesValidator(BaseValidator):
         return os.path.join(self.pack_path, file_name)
 
     def _get_pack_latest_rn_version(self):
-        """Returns the version of the latest release note in the Pack"""
+        """
+        Extract all the Release notes from the pack and reutrn the highest version of release note in the Pack.
+
+        Return:
+            (str): The lastest version of RN.
+        """
+        
         try:
             list_of_files = glob.glob(self.pack_path + '/ReleaseNotes/*')
-            list_of_versions = [(version[version.rindex('/') + 1:version.rindex('.')]).replace('_', '.') for version in list_of_files]
-            print(list_of_versions)
+            list_of_versions = [(os.path.basename(version)[:-3]).replace('_', '.') for version in list_of_files]
         except Exception:
-            return False
+            return ''
         if list_of_versions:
             list_of_versions.sort(key=LooseVersion)
             return list_of_versions[-1]
         else:
-            return False
+            return ''
 
     def _is_pack_file_exists(self, file_name: str, is_required: bool = False):
         """
@@ -564,17 +569,15 @@ class PackUniqueFilesValidator(BaseValidator):
              bool: True if the versions are match, otherwise False
         """
         metadata_file_path = self._get_pack_file_path(self.pack_meta_file)
-        current_meta_file_content = self.metadata_content
-        current_version = current_meta_file_content.get('currentVersion', '0.0.0')
+        current_version = self.metadata_content.get('currentVersion', '0.0.0')
         rn_version = self._get_pack_latest_rn_version()
         if not rn_version and current_version == '1.0.0':
             return True
         if not rn_version:
             self._add_error(Errors.missing_release_notes_for_pack(self.pack), self.pack)
             return False
-        if LooseVersion(rn_version) == LooseVersion(current_version):
-            return True
-        elif self._add_error(Errors.pack_metadata_version_diff_from_rn(rn_version, current_version), metadata_file_path):
+        if LooseVersion(rn_version) != LooseVersion(current_version):
+            self._add_error(Errors.pack_metadata_version_diff_from_rn(rn_version, current_version), metadata_file_path)
             return False
         return True
 

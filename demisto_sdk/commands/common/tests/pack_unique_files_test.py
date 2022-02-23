@@ -90,7 +90,6 @@ class TestPackUniqueFilesValidator:
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_and_pack_description', return_value=True)
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_readme_images', return_value=True)
-        # mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_meta_file', return_value=True)
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         assert not self.validator.are_valid_files(id_set_validations=False)
         fake_validator = PackUniqueFilesValidator('fake')
@@ -785,7 +784,7 @@ class TestPackUniqueFilesValidator:
         ({"currentVersion": "1.0.2"}, "1.0.1", True, False),
         ({"currentVersion": "1.0.1"}, "1.0.2", True, False),
         ({"currentVersion": "1.0.1"}, "1.0.2", False, False),
-        ({"currentVersion": "1.0.0"}, "1.0.2", False, True),
+        ({"currentVersion": "1.0.0"}, "1.0.0", False, True),
     ])
     def test_is_right_version(self, repo, pack_metadata, rn_version, create_rn, expected_results):
         """

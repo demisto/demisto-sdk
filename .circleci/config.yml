@@ -226,6 +226,8 @@ jobs:
               
               # installing local sdk inside venv
               pip3 install ~/project >> /tmp/lint_env_installation.log
+              mypy --version
+              python --version
               echo ""
               echo "lint files changed running lint"
               # python file (CommonServerPython lint is running over python 3 and 2)

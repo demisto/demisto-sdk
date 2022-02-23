@@ -201,7 +201,7 @@ jobs:
               CI_COMMIT_BRANCH="master" ./Tests/scripts/validate.sh
   test-lint:
       docker:
-        - image: devdemisto/content-build:3.0.0.12681
+        - image: devdemisto/content-build:3.0.0.26955
       steps:
         - checkout
         - setup_remote_docker

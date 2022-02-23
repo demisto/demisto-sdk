@@ -19,7 +19,14 @@ NAME = "demisto-sdk"
 # Converting Pipfile to requirements style list because setup expects requirements.txt file.
 parser = configparser.ConfigParser()
 parser.read("Pipfile")
-install_requires = [f'{key}{value}'.replace('\"', '').replace('*', '') for key, value in parser['packages'].items() if key != 'demisto-sdk']
+
+
+def end_or_comment_index(value: str):
+    return len(value) if value.find("#") == -1 else value.find("#")
+
+
+install_requires = [f'{key}{value[:end_or_comment_index(value)]}'.replace('\'', '').replace('\"', '').replace('*', '')
+                    for key, value in parser['packages'].items() if key != 'demisto-sdk']
 
 with open('README.md', 'r') as f:
     readme = f.read()

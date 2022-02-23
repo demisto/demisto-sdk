@@ -58,6 +58,7 @@ markupsafe = "==2.0.1"
 imagesize = "*"
 cryptography = "*"
 'mypy[python2]'="*"
+types-requests="==2.26.3"# This is an open issue https://github.com/python/typeshed/issues/6893
 
 [dev-packages]
 mitmproxy = "==5.1.0"

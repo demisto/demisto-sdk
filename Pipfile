@@ -63,6 +63,9 @@ types-pyyaml="*"
 types-requests="==2.26.3"# This is an open issue https://github.com/python/typeshed/issues/6893
 types-pytz="*"
 types-python-dateutil="*"
+types-pyvmomi="*"
+types-tabulate="*"
+
 [dev-packages]
 mitmproxy = "==5.1.0"
 mock = "*"

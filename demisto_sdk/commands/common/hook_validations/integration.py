@@ -911,10 +911,18 @@ class IntegrationValidator(ContentEntityValidator):
             for param in params:
                 if 'defaultvalue' in param:
                     param.pop('defaultvalue')
-            for param in fetch_required_params:
-                if param not in params:
-                    error_message, error_code = Errors.parameter_missing_from_yml(param.get('name'),
-                                                                                  yaml.dumps(param))
+            for fetch_required_param in fetch_required_params:
+                # If this condition returns true, we'll go over the params dict and we'll check if there's a param that match the fetch_required_param name.
+                # If there is one, we know that in the params dict there is a matching param to the fetch_required_param but it has a malformed structure.
+                if fetch_required_param not in params:
+                    error_message = ''
+                    error_code = ''
+                    for param in params:
+                        if param.get('name') == fetch_required_param.get('name'):
+                            error_message, error_code = Errors.parameter_is_malformed(fetch_required_param.get('name'),
+                                                                                      yaml.dumps(fetch_required_param))
+                    if not error_message:
+                        error_message, error_code = Errors.parameter_missing_from_yml(fetch_required_param.get('name'))
                     if self.handle_error(error_message, error_code, file_path=self.file_path,
                                          suggested_fix=Errors.suggest_fix(self.file_path)):
                         fetch_params_exist = False

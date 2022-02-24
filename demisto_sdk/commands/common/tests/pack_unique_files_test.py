@@ -573,7 +573,7 @@ class TestPackUniqueFilesValidator:
                - Running test_validate_pack_readme_file_is_not_empty_partner.
 
            Then:
-               - Ensure no validation on empty pack read me file.
+               - Ensure no error on an empty pack README file.
         """
         dummy_pack = repo.create_pack('TEST_PACK')
         dummy_pack.create_layout('test_layout')

@@ -137,7 +137,7 @@ def main(config, version, release_notes):
             print_warning(f'You are using demisto-sdk {__version__}.')
             if last_release and __version__ != last_release:
                 print_warning(f'however version {last_release} is available.\n'
-                              f'You should consider upgrading via "pip3 install --upgrade demisto-sdk" command.')
+                              f'To update, run pip3 install --upgrade demisto-sdk')
             if release_notes:
                 rn_entries = get_release_note_entries(__version__)
 

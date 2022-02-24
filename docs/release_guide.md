@@ -14,7 +14,7 @@ In order to release a new version of `demisto-sdk` to the public follow these st
 7) Enter the content-internal-dist repo, open a new branch and update the demisto-sdk version in the [**.gitlab-ci.yml**](https://code.pan.run/xsoar/content-internal-dist/-/blob/master/.gitlab/.gitlab-ci.yml) file. Use the release branch - replace the `pip3 install git+https://github.com/demisto/demisto-sdk.git@master` line with this line: `pip3 install git+https://github.com/demisto/demisto-sdk.git@release-branch-name.`
 8) Push your branch to remote, and run `./.gitlab/trigger_content_gold_nightly_build.sh -ct <GitLab_token> -b <new_internal_dist_branch_name>`.
   **Note:** if you're on `content-internal-dist/master`, a notification will be sent to the content-team slack channel. The destination channel can be set via argument.
-  Wait until the nightly sdk completes. 
+  Wait until the nightly sdk completes.
   **Note:** you should discard this change and delete the branch after the build is finished successfully.
 9) In Demisto's content-private repository create a new branch and go to the build configuration file [**config.yml**](https://github.com/demisto/content-private/blob/master/.github/workflows/config.yml) and update the SDK installation command by replacing `pip3 install demisto-sdk` with `pip3 install git+https://github.com/demisto/demisto-sdk.git@<sdk-release-branch-name>.`
 10) Open a PR for that content-private branch, and verify the build triggered is green. Note that **this PR is for SDK version check only, and it shouldn't be merged**, once the build is successful, discard this change and close the PR.
@@ -29,8 +29,8 @@ In order to release a new version of `demisto-sdk` to the public follow these st
 5) Update [**dev-requirements-py3.txt**](https://github.com/demisto/content/blob/master/dev-requirements-py3.txt) again, this time with the newly-released version (rather than the branch), e.g demisto-sdk==x.x.x.
 6) Wait for the build to finish, or force merge your PR to the Content repository.
 7) Update **CHANGELOG.md** file - change the `# Changelog` header to the release version in the format `# X.X.X` e.g. `# 1.0.0`, and create a new `# Changelog` header at the top of the file.
-8) Announce regarding the SDK release in the **dmst-content-team** slack channel - mention the release version, paste the `CHANGELOG` contents for this release, and add a link to demisto-sdk in pypi. 
+8) Announce regarding the SDK release in the **dmst-content-team** slack channel - mention the release version, paste the `CHANGELOG` contents for this release, and add a link to demisto-sdk in pypi.
 
 Your release was completed successfully!
 
-**Note:** Don't forget to discard any unnecessary PR or branch you opened during the release process. 
+**Note:** Don't forget to discard any unnecessary PR or branch you opened during the release process.

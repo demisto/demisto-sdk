@@ -140,7 +140,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
         try:
             list_of_files = glob.glob(self.pack_path + '/ReleaseNotes/*')
-            list_of_release_notes=[os.path.basename(file) for file in list_of_files]
+            list_of_release_notes = [os.path.basename(file) for file in list_of_files]
             list_of_versions = [rn[:rn.rindex('.')].replace('_', '.') for rn in list_of_release_notes]
         except Exception:
             return ''

@@ -3,8 +3,6 @@ import re
 from pathlib import Path
 from typing import Dict, Optional
 
-import yaml
-
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS, BANG_COMMAND_ARGS_MAPPING_DICT,
     BANG_COMMAND_NAMES, DBOT_SCORES_DICT, DEFAULT_CONTENT_ITEM_FROM_VERSION,
@@ -19,6 +17,7 @@ from demisto_sdk.commands.common.default_additional_info_loader import \
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 Errors)
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.description import \
@@ -31,6 +30,7 @@ from demisto_sdk.commands.common.tools import (
     get_file_version_suffix_if_exists, get_files_in_dir, get_item_marketplaces,
     get_pack_name, is_iron_bank_pack, print_error, server_version_compare)
 
+yaml = YAML_Handler()
 default_additional_info = load_default_additional_info_dict()
 
 
@@ -911,10 +911,18 @@ class IntegrationValidator(ContentEntityValidator):
             for param in params:
                 if 'defaultvalue' in param:
                     param.pop('defaultvalue')
-            for param in fetch_required_params:
-                if param not in params:
-                    error_message, error_code = Errors.parameter_missing_from_yml(param.get('name'),
-                                                                                  yaml.dump(param))
+            for fetch_required_param in fetch_required_params:
+                # If this condition returns true, we'll go over the params dict and we'll check if there's a param that match the fetch_required_param name.
+                # If there is one, we know that in the params dict there is a matching param to the fetch_required_param but it has a malformed structure.
+                if fetch_required_param not in params:
+                    error_message = ''
+                    error_code = ''
+                    for param in params:
+                        if param.get('name') == fetch_required_param.get('name'):
+                            error_message, error_code = Errors.parameter_is_malformed(fetch_required_param.get('name'),
+                                                                                      yaml.dumps(fetch_required_param))
+                    if not error_message:
+                        error_message, error_code = Errors.parameter_missing_from_yml(fetch_required_param.get('name'))
                     if self.handle_error(error_message, error_code, file_path=self.file_path,
                                          suggested_fix=Errors.suggest_fix(self.file_path)):
                         fetch_params_exist = False
@@ -941,13 +949,13 @@ class IntegrationValidator(ContentEntityValidator):
 
             if not first_fetch_param:
                 error_message, error_code = Errors.parameter_missing_from_yml_not_community_contributor(
-                    'first_fetch', yaml.dump(FIRST_FETCH_PARAM))
+                    'first_fetch', yaml.dumps(FIRST_FETCH_PARAM))
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     fetch_params_exist = False
 
             if not max_fetch_param:
                 error_message, error_code = Errors.parameter_missing_from_yml_not_community_contributor(
-                    'max_fetch', yaml.dump(MAX_FETCH_PARAM))
+                    'max_fetch', yaml.dumps(MAX_FETCH_PARAM))
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     fetch_params_exist = False
 
@@ -989,7 +997,7 @@ class IntegrationValidator(ContentEntityValidator):
             if not is_valid:
                 param_structure = dict(equal_key_values, **contained_key_values, name=required_param.get('name'))
                 error_message, error_code = Errors.parameter_missing_for_feed(required_param.get('name'),
-                                                                              yaml.dump(param_structure))
+                                                                              yaml.dumps(param_structure))
                 if self.handle_error(error_message, error_code, file_path=self.file_path,
                                      suggested_fix=Errors.suggest_fix(self.file_path)):
                     params_exist = False

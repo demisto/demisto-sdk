@@ -7,19 +7,20 @@ import tempfile
 from io import open
 from pathlib import Path
 
-import yaml
-from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import SingleQuotedScalarString
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
                                                    TYPE_TO_EXTENSION)
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_all_docker_images,
                                                get_pipenv_dir,
                                                get_python_version, pascal_case,
                                                print_color, print_error)
 from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
+
+yaml = YAML_Handler()
 
 REGEX_MODULE = r"### GENERATED CODE ###((.|\s)+?)### END GENERATED CODE ###"
 INTEGRATIONS_DOCS_REFERENCE = 'https://xsoar.pan.dev/docs/reference/integrations/'
@@ -53,8 +54,8 @@ class YmlSplitter:
                  no_common_server: bool = False, no_auto_create_dir: bool = False, configuration: Configuration = None,
                  base_name: str = '', no_readme: bool = False, no_pipenv: bool = False,
                  no_logging: bool = False, no_basic_fmt: bool = False, new_module_file: bool = False):
-        self.input = Path(input)
-        self.output = Path(output) if output else Path(self.input.parent)
+        self.input = Path(input).resolve()
+        self.output = (Path(output) if output else Path(self.input.parent)).resolve()
         self.demisto_mock = not no_demisto_mock
         self.common_server = not no_common_server
         self.file_type = file_type
@@ -70,12 +71,12 @@ class YmlSplitter:
             self.config = configuration
         self.autocreate_dir = not no_auto_create_dir
         with open(self.input, 'rb') as yml_file:
-            self.yml_data = yaml.safe_load(yml_file)
+            self.yml_data = yaml.load(yml_file)
 
     def get_output_path(self):
         """Get processed output path
         """
-        output_path = self.output
+        output_path = Path(self.output)
         if self.autocreate_dir and output_path.name in {'Integrations', 'Scripts'}:
             code_name = self.yml_data.get("name")
             if not code_name:
@@ -107,10 +108,8 @@ class YmlSplitter:
         self.extract_long_description("{}/{}_description.md".format(output_path, base_name))
         yaml_out = "{}/{}.yml".format(output_path, base_name)
         self.print_logs("Creating yml file: {} ...".format(yaml_out), log_color=LOG_COLORS.NATIVE)
-        ryaml = YAML()
-        ryaml.preserve_quotes = True
         with open(self.input, 'r') as yf:
-            yaml_obj = ryaml.load(yf)
+            yaml_obj = yaml.load(yf)
         script_obj = yaml_obj
 
         if self.file_type == 'integration':
@@ -125,7 +124,7 @@ class YmlSplitter:
             self.print_logs("Setting fromversion for PowerShell to: 5.5.0", log_color=LOG_COLORS.NATIVE)
             yaml_obj['fromversion'] = "5.5.0"
         with open(yaml_out, 'w') as yf:
-            ryaml.dump(yaml_obj, yf)
+            yaml.dump(yaml_obj, yf)
         # check if there is a README and if found, set found_readme to True
         found_readme = False
         if self.readme:

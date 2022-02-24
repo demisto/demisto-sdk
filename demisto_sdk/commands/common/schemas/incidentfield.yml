@@ -115,7 +115,12 @@ schema;aliases_schema:
   mapping:
     cliName:
       type: str
+      required: True
+    name:
+      type: str
+      required: True
     type:
       type: str
+      required: True
       enum: [ 'shortText', 'longText', 'boolean', 'singleSelect', 'multiSelect', 'date', 'user', 'role', 'number',
               'attachments', 'tagsSelect', 'internal', 'url', 'markdown', 'grid', 'timer', 'html' ]

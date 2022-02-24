@@ -110,21 +110,21 @@ class DockerImageValidator(BaseValidator):
 
     def get_code_type(self):
         if self.is_integration:
-            code_type = self.yml_file.get('script').get('type', 'python')
+            code_type = self.yml_file.get('script', {}).get('type', 'python')
         else:
             code_type = self.yml_file.get('type', 'python')
         return code_type
 
     def get_python_version(self):
         if self.is_integration:
-            python_version = self.yml_file.get('script').get('subtype', 'python2')
+            python_version = self.yml_file.get('script', {}).get('subtype', 'python2')
         else:
             python_version = self.yml_file.get('subtype', 'python2')
         return python_version
 
     def get_docker_image_from_yml(self):
         if self.is_integration:
-            docker_image = self.yml_file.get('script').get('dockerimage', '')
+            docker_image = self.yml_file.get('script', {}).get('dockerimage', '')
         else:
             docker_image = self.yml_file.get('dockerimage', '')
         return docker_image

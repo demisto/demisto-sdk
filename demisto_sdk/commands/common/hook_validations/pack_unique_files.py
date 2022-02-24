@@ -97,7 +97,6 @@ class PackUniqueFilesValidator(BaseValidator):
         self.prev_ver = prev_ver
         self.support = support
         self.metadata_content: Dict = dict()
-
     # error handling
     def _add_error(self, error: Tuple[str, str], file_path: str, warning=False):
         """Adds error entry to a list under pack's name
@@ -345,12 +344,12 @@ class PackUniqueFilesValidator(BaseValidator):
         lowercase_name = pack_name.lower()
         return not any(excluded_word in lowercase_name for excluded_word in EXCLUDED_DISPLAY_NAME_WORDS)
 
-    def _is_empty_dir(self, path: Path) -> bool:
-        return next(path.iterdir(), None) is not None
+    def _is_empty_dir(self, dir_path: Path) -> bool:
+        return dir_path.stat().st_size == 0
 
-    def _is_integration(self):
+    def _is_integration_pack(self):
         pack_path: Path = Path(self.pack_path) / INTEGRATIONS_DIR
-        return pack_path.exists() and not self._is_empty_dir(path=pack_path)
+        return pack_path.exists() and not self._is_empty_dir(dir_path=pack_path)
 
     def _is_pack_meta_file_structure_valid(self):
         """Check if pack_metadata.json structure is json parse-able and valid"""
@@ -410,7 +409,7 @@ class PackUniqueFilesValidator(BaseValidator):
                             return False
 
             # check metadata categories isn't an empty list, only if it is an integration.
-            if self._is_integration():
+            if self._is_integration_pack():
                 if not metadata[PACK_METADATA_CATEGORIES]:
                     if self._add_error(Errors.pack_metadata_missing_categories(self.pack_meta_file),
                                        self.pack_meta_file):

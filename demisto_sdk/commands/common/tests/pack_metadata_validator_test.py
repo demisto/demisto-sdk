@@ -47,8 +47,8 @@ class TestPackMetadataValidator:
                             return_value=TestPackMetadataValidator.read_file(metadata))
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
-        mocker.patch.object(Path, 'exists', return_value=True)
-        mocker.patch.object(PackUniqueFilesValidator, '_is_empty_dir', return_value=False)
+        mocker.patch.object(PackUniqueFilesValidator, '_is_integration_pack', return_value=True)
+
 
         validator = PackUniqueFilesValidator('fake')
         assert not validator.validate_pack_meta_file()
@@ -144,26 +144,31 @@ class TestPackMetadataValidator:
             assert not validator._is_pack_meta_file_structure_valid()
 
     def test_metadata_validator_empty_categories(self, mocker):
-        from pathlib import Path
         metadata = os.path.join(self.__class__.FILES_PATH, 'pack_metadata_empty_categories.json')
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=TestPackMetadataValidator.read_file(metadata))
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
-        mocker.patch.object(Path, 'exists', return_value=True)
-        mocker.patch.object(PackUniqueFilesValidator, '_is_empty_dir', return_value=False)
+        mocker.patch.object(PackUniqueFilesValidator, '_is_integration_pack', return_value=True)
         validator = PackUniqueFilesValidator('fake')
         assert not validator.validate_pack_meta_file()
         assert "[PA129] - pack_metadata.json - Missing categories" in validator.get_errors()
 
-    def test_is_integration(self, mocker):
-        from pathlib import Path
+    def test_is_integration_pack(self, pack):
+        """
+        Given:
+            - A pack to validate.
 
-        mocker.patch.object(Path, 'exists', return_value=True)
-        mocker.patch.object(PackUniqueFilesValidator, '_is_empty_dir', return_value=False)
-        validator = PackUniqueFilesValidator('dummyPack')
-        assert validator._is_integration()
+        When:
+            - Calling _is_integration_pack() method.
+
+        Then:
+            - Ensure true is returned, indicates the pack contains integration.
+        """
+        pack.create_integration('test')
+        validator = PackUniqueFilesValidator(pack.name, pack_path=pack.path)
+        assert validator._is_integration_pack()
 
     def test_metadata_validator_invalid_version_add_error(self, mocker):
         """

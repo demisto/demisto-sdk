@@ -531,11 +531,10 @@ class YmlUnifier:
     def move_readme_next_to_unified(self, yml_path):
         """
             Args:
-                dst_path: The location where to move the readme file to
-                src_path: Where to remove the readme file to
-                filename: The new name of the readme file in the dst location
+               yml_path: The path to the yml file.
 
-            Return: readme new location next to the unified yml.
+            Return:
+                 README new location next to the unified yml (in the same folder).
 
         """
         dst_path_readme = yml_path.replace('.yml', '_README.md')

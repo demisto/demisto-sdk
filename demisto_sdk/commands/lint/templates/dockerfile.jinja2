@@ -19,7 +19,7 @@ then apt-get update && apt-get install -y --no-install-recommends gcc python3-de
 pip install --no-cache-dir -r /devwork/test-requirements.txt; \
 if echo "$OS_RELEASE" | grep -q "alpine"; then apk del .build-deps; \
 elif echo "$OS_RELEASE" | grep -qi "Debian"; \
-then apt-get update && apt-get autoremove -y gcc python3-dev;fi;
+then apt-get autoremove -y gcc python3-dev;fi;
 {# Container entry point (Every command will start with /bin/sh) #}
 ENTRYPOINT ["/bin/sh", "-c"]
 {# Build for python based image #}

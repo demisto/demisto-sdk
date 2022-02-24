@@ -881,14 +881,15 @@ def upload(**kwargs):
         else:
             config_file_path = kwargs['input_config_file']
             config_file_to_parse = ConfigFileParser(config_file_path=config_file_path)
-            pack_path = config_file_to_parse.parse_file()
+            pack_path = config_file_to_parse.get_custom_packs_paths()
+            kwargs['detached_files'] = True
             kwargs.pop('input_config_file')
 
         output_zip_path = kwargs.pop('keep_zip') or tempfile.gettempdir()
         packs_unifier = PacksZipper(pack_paths=pack_path, output=output_zip_path,
                                     content_version='0.0.0', zip_all=True, quiet_mode=True)
         packs_zip_path, pack_names = packs_unifier.zip_packs()
-        if packs_zip_path is None:
+        if packs_zip_path is None and not kwargs.get('detached_files'):
             return EX_FAIL
 
         kwargs['input'] = packs_zip_path

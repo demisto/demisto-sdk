@@ -1,3 +1,4 @@
+import ast
 import glob
 import json
 import logging
@@ -32,7 +33,7 @@ from demisto_sdk.commands.common.tools import (find_type,
                                                get_child_directories,
                                                get_demisto_version,
                                                get_parent_directory_name,
-                                               print_v)
+                                               print_v, get_file)
 
 # These are the class names of the objects in demisto_sdk.commands.common.content.objects
 UPLOAD_SUPPORTED_ENTITIES = [
@@ -95,7 +96,7 @@ class Uploader:
         """
 
     def __init__(self, input: str, insecure: bool = False, verbose: bool = False, pack_names: list = None,
-                 skip_validation: bool = False):
+                 skip_validation: bool = False, detached_files: bool = False):
         self.path = input
         self.log_verbose = verbose
         verify = (not insecure) if insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
@@ -106,6 +107,7 @@ class Uploader:
         self.demisto_version = get_demisto_version(self.client)
         self.pack_names = pack_names
         self.skip_upload_packs_validation = skip_validation
+        self.detached_files = detached_files
 
     def upload(self):
         """Upload the pack / directory / file to the remote Cortex XSOAR instance.
@@ -116,6 +118,13 @@ class Uploader:
             return ERROR_RETURN_CODE
 
         status_code = SUCCESS_RETURN_CODE
+
+        if self.detached_files:
+            detach_reattach_handler = DetachReattachFiles(self.client, base_path='SystemPacks')
+            detach_reattach_handler.detach_reattach_and_upload_files()
+            if not self.path:
+                return SUCCESS_RETURN_CODE
+
         click.secho(f"Uploading {self.path} ...")
         if self.path is None or not os.path.exists(self.path):
             click.secho(f'Error: Given input path: {self.path} does not exist', fg='bright_red')
@@ -404,15 +413,139 @@ class ConfigFileParser:
 
     def parse_file(self):
         config_file_data = self.get_file_data()
-        custom_packs_paths = self.get_custom_packs_paths(config_file_data)
-        return custom_packs_paths
+        return config_file_data
 
     def get_file_data(self):
         with open(self.config_file_path) as config_file:
             config_file_data = json.load(config_file)
         return config_file_data
 
-    def get_custom_packs_paths(self, config_file_data):
+    def get_custom_packs_paths(self) -> str:
+        config_file_data = self.parse_file()
         custom_packs = config_file_data.get('custom_packs', [])
         custom_packs_paths = ",".join(pack.get('url') for pack in custom_packs)
         return custom_packs_paths
+
+
+class DetachReattachFiles:
+    def __init__(self, client, base_path: str = 'SystemPacks'):
+        self.base_path = base_path
+        self.client = client
+
+    DETACH_ITEM_TYPE_TO_ENDPOINT: dict = {
+        'IncidentTypes': '/incidenttype/detach/:id/',
+        'Layouts': '/layout/:id/detach/',
+        'Playbooks': '/playbook/detach/:id/',
+        'Scripts': '/automation/detach/:id/',
+    }
+
+    REATTACH_ITEM_TYPE_TO_ENDPOINT: dict = {
+        'IncidentTypes': '/incidenttype/attach/:id',
+        'Layouts': '/layout/:id/attach',
+        'Playbooks': '/playbook/attach/:id',
+        'Automations': '/automation/attach/:id',
+    }
+
+    VALID_FILES_FOR_DETACH = ['Playbooks', 'scripts', 'IncidentTypes', 'Layouts']
+
+    def find_file_type(self, file_path) -> str:
+        file_type: str
+        if 'Playbooks' in file_path or 'Scripts' in file_path:
+            file_type = 'yml'
+        else:
+            file_type = 'json'
+        return file_type
+
+    def get_files_to_detach(self) -> list:
+        detach_files_dict: list = []
+
+        # for file_path in glob.iglob('SystemPacks', recursive=True):
+        all_files = glob.glob(f'{self.base_path}/**/*', recursive=True)
+        for file_path in all_files:
+            print(file_path)
+            if os.path.isfile(file_path) and self.is_valid_file_for_detach(file_path):
+                file_type = self.find_file_type(file_path)
+                file_data = get_file(file_path, file_type)
+                file_id = file_data.get('id')
+                detach_files_dict.append({'file_id': file_id, 'file_type': file_type, 'file_path': file_path})
+        return detach_files_dict
+
+    def is_valid_file_for_detach(self, file_path: str) -> bool:
+        valid_file = False
+        for file in self.VALID_FILES_FOR_DETACH:
+            if file in file_path and (file_path.endswith('yml') or file_path.endswith('json')):
+                return True
+        return valid_file
+
+    def detach_file(self, file_id, file_path):
+        endpoint: str = ''
+        for file_type, file_endpoint in self.DETACH_ITEM_TYPE_TO_ENDPOINT.items():
+            if file_type in file_path:
+                endpoint = file_endpoint
+                break
+        endpoint = endpoint.replace(':id', file_id)
+
+        try:
+            self.client.generic_request(endpoint, "POST")
+            click.secho(f'\nFile: {file_id} was detached', fg='green')
+        except Exception as e:
+            raise Exception(f'Exception raised when fetching custom content:\n{e}')
+
+    def download_all_files(self) -> dict:
+        all_content_files: dict = {}
+
+        yml_req_body = {"query": "system:T"}
+        all_playbooks_res = self.client.generic_request('/playbook/search', 'POST', body=yml_req_body)
+        all_playbooks = ast.literal_eval(all_playbooks_res[0])
+        all_playbooks = all_playbooks.get('playbooks')
+        all_content_files['Playbooks'] = all_playbooks
+
+        all_scripts_res = self.client.generic_request('/automation/search', 'POST', body=yml_req_body)
+        all_scripts = ast.literal_eval(all_scripts_res[0])
+        all_scripts = all_scripts.get('scripts')
+        all_content_files['Automations'] = all_scripts
+
+        all_layouts_res = self.client.generic_request('/layouts', 'GET')
+        all_layouts = ast.literal_eval(all_layouts_res[0])
+        all_content_files['Layouts'] = all_layouts
+
+        all_incident_types_res = self.client.generic_request('/incidenttype', 'GET')
+        all_incident_types = ast.literal_eval(all_incident_types_res[0])
+        all_content_files['IncidentTypes'] = all_incident_types
+
+        return all_content_files
+
+    def reattach_item(self, item_id, item_type):
+        endpoint: str = self.REATTACH_ITEM_TYPE_TO_ENDPOINT[item_type]
+        endpoint = endpoint.replace(':id', item_id)
+        try:
+            self.client.generic_request(endpoint, 'POST')
+            click.secho(f'\n{item_type}: {item_id} was reattached', fg='green')
+        except Exception as e:
+            raise Exception(f'Exception raised when fetching custom content:\n{e}')
+
+    def reattach_files(self, detached_files_ids):
+        all_files: dict = self.download_all_files()
+        for item_type, item_list in all_files.items():
+            for item in item_list:
+                if isinstance(item, str):
+                    print(item)
+                if not item.get('detached', '') or item.get('detached', '') == 'false':
+                    continue
+                item_id = item.get('id')
+                if item_id and item_id not in detached_files_ids:
+                    self.reattach_item(item_id, item_type)
+
+    def detach_reattach_and_upload_files(self):
+        if not os.path.isdir(self.base_path):
+            return
+        detach_files_dict = self.get_files_to_detach()
+        print(detach_files_dict)
+        for file in detach_files_dict:
+            self.detach_file(file.get('file_id'), file_path=file.get('file_path'))
+
+            uploader = Uploader(input=file.get('file_path'))
+            uploader.upload()
+
+        detached_files_ids = [file.get('file_id') for file in detach_files_dict]
+        self.reattach_files(detached_files_ids, )

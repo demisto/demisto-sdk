@@ -21,7 +21,6 @@ Supported content entities:
 - Incident Types
 - Incident Fields
 - Indicator Fields
-- Indicator Types
 - Layouts
 - Layouts Container
 - Classifiers

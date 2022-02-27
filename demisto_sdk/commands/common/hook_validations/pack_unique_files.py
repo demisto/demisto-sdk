@@ -231,9 +231,11 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def validate_pack_readme_file_is_not_empty(self):
         """
-        Validates that README.md file is not empty for partner packs and packs with use cases
+        Validates that README.md file is not empty for partner packs and packs with playbooks
         """
-        if (self.support == 'partner' or self._contains_use_case()) and self._check_if_file_is_empty(self.readme_file):
+        playbooks_path = os.path.join(self.pack_path, "Playbooks")
+        contains_playbooks = os.path.exists(playbooks_path) and len(os.listdir(playbooks_path)) != 0
+        if (self.support == 'partner' or contains_playbooks) and self._check_if_file_is_empty(self.readme_file):
             if self._add_error(Errors.empty_readme_error(), self.readme_file):
                 return False
 

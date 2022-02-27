@@ -1631,7 +1631,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def empty_readme_error():
-        return 'README.md is empty'
+        return "Pack writen by a partner or pack containing playbooks must have a full README.md file" \
+               "with pack information. Please refer to https://xsoar.pan.dev/docs/documentation/pack-docs#pack-readme " \
+               "for more information"
 
     @staticmethod
     @error_code_decorator

@@ -44,9 +44,9 @@ class TestGenerateTestPlaybook:
         )
 
         generator.run()
-        expected_test_playbook_yml = get_yaml(TestGenerateTestPlaybook.TEST_FILE_PATH / expected_yml)
+        expected_test_playbook_yml = get_yaml(TestGenerateTestPlaybook.TEST_FILE_PATH / expected_yml, cache_clear=True)
         actual_test_playbook_yml = get_yaml(Path(TestGenerateTestPlaybook.TEMP_DIR) /
-                                            'playbook-TestPlaybook_Test.yml')
+                                            'playbook-TestPlaybook_Test.yml', cache_clear=True)
 
         assert expected_test_playbook_yml == actual_test_playbook_yml
 

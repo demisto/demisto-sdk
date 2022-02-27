@@ -53,6 +53,8 @@ class TestPackUniqueFilesValidator:
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files', 'Packs'))
     FAKE_PACK_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files',
                                                    'fake_pack'))
+    FAKE_PACK_NO_PLAYBOOK = os.path.normpath(
+        os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files', 'DummyPackOnlyPlaybook'))
     FAKE_PATH_NAME = 'fake_pack'
     validator = PackUniqueFilesValidator(FAKE_PATH_NAME)
     validator.pack_path = FAKE_PACK_PATH
@@ -547,10 +549,10 @@ class TestPackUniqueFilesValidator:
         assert self.validator.validate_pack_readme_file_is_not_empty() == result
 
     @pytest.mark.parametrize('text, result', README_INPUT_RESULTS_LIST)
-    def test_validate_pack_readme_file_is_not_empty_use_case(self, mocker, text, result):
+    def test_validate_pack_readme_file_is_not_empty_playbook(self, mocker, text, result):
         """
        Given:
-            - pack with use case
+            - pack with playbooks
 
         When:
             - Running test_validate_pack_readme_file_is_not_empty_partner.
@@ -561,6 +563,24 @@ class TestPackUniqueFilesValidator:
         self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'CortexXDR'))
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content', return_value=text)
         assert self.validator.validate_pack_readme_file_is_not_empty() == result
+
+    def test_no_readme_alert_on_scripts_layouts(self, repo, mocker):
+        """
+          Given:
+               - pack with scripts or layouts
+
+           When:
+               - Running test_validate_pack_readme_file_is_not_empty_partner.
+
+           Then:
+               - Ensure no error on an empty pack README file.
+        """
+        dummy_pack = repo.create_pack('TEST_PACK')
+        dummy_pack.create_layout('test_layout')
+        dummy_pack.create_script('test_script')
+        self.validator = PackUniqueFilesValidator(dummy_pack.path)
+        mocker.patch.object(PackUniqueFilesValidator, '_read_file_content', return_value="text")
+        assert self.validator.validate_pack_readme_file_is_not_empty()
 
     def test_validate_pack_readme_file_is_not_empty_missing_file(self):
         self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack'))

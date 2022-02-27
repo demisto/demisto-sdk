@@ -374,5 +374,5 @@ class ContentEntityValidator(BaseValidator):
         if self.handle_error(error_message, error_code, file_path=self.file_path,
                              suggested_fix=Errors.suggest_fix(self.file_path, cmd="generate-docs")):
             return False
-        
+
         return True

@@ -356,7 +356,7 @@ class ContentEntityValidator(BaseValidator):
         if file_type == PLAYBOOK:
             to_replace = os.path.splitext(path_split[-1])[-1]
             readme_path = file_path.replace(to_replace, '_README.md')
-        elif file_type == SCRIPT or INTEGRATION:
+        elif file_type in {SCRIPT, INTEGRATION}:
             if path_split[-2] in ['Scripts', 'Integrations']:
                 to_replace = os.path.splitext(file_path)[-1]
                 readme_path = file_path.replace(to_replace, '_README.md')

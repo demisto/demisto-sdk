@@ -14,7 +14,7 @@ class PlaybookValidator(ContentEntityValidator):
     """PlaybookValidator is designed to validate the correctness of the file structure we enter to content repo."""
 
     def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, json_file_path=None,
-                 validate_all=True):
+                 validate_all=False):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          json_file_path=json_file_path)
         self.validate_all = validate_all

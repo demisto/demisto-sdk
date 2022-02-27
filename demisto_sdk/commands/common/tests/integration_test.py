@@ -1411,6 +1411,7 @@ class TestisContextChanged:
     README_TEST_DATA = [(False, False, True),
                         (False, True, True),
                         (True, False, False),
+                        (True, True, True),
                         ]
 
     @pytest.mark.parametrize("remove_readme, validate_all, expected_result", README_TEST_DATA)

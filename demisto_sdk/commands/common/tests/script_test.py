@@ -636,6 +636,7 @@ class TestScriptValidator:
 
     README_TEST_DATA = [(True, False, False),
                         (False, False, True),
+                        (False, True, True),
                         (True, True, True),
                         ]
 

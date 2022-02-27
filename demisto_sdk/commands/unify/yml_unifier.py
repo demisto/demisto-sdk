@@ -538,7 +538,6 @@ class YmlUnifier:
 
         """
         dst_path_readme = yml_path.replace('.yml', '_README.md')
-        # dst_path_readme = os.path.join(self.dst_path, f'{filename}_README.md')
         src_path_readme = os.path.join(self.package_path, 'README.md')
         shutil.move(src_path_readme, dst_path_readme)
         return dst_path_readme

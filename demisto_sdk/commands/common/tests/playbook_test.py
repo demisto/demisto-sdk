@@ -4,7 +4,6 @@ from typing import Optional
 import pytest
 from mock import patch
 
-from demisto_sdk.commands.common.constants import PLAYBOOK
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
@@ -661,9 +660,8 @@ class TestPlaybookValidator:
         """
         read_me_pack = repo.create_pack('README_test')
         playbook = read_me_pack.create_playbook('playbook1')
-        structure_validator = mock_structure(file_path=playbook.yml.path)
+        structure_validator = StructureValidator(playbook.yml.path)
         playbook_validator = PlaybookValidator(structure_validator, validate_all=validate_all)
-        playbook_validator.structure_validator.file_type = PLAYBOOK
         if remove_readme:
             os.remove(playbook.readme.path)
         assert playbook_validator.validate_readme_exists(playbook_validator.validate_all) is expected_result

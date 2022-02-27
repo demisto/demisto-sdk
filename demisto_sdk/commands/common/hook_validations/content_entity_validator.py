@@ -8,8 +8,8 @@ from typing import Optional
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, ENTITY_NAME_SEPARATORS,
     EXCLUDED_DISPLAY_NAME_WORDS, FEATURE_BRANCHES,
-    GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION, INTEGRATION,
-    OLDEST_SUPPORTED_VERSION, PLAYBOOK, SCRIPT)
+    GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION, OLDEST_SUPPORTED_VERSION,
+    FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -353,11 +353,11 @@ class ContentEntityValidator(BaseValidator):
 
         file_path = os.path.normpath(self.file_path)
         path_split = file_path.split(os.sep)
-        file_type = find_type(self.file_path)
-        if file_type == PLAYBOOK:
+        file_type = find_type(self.file_path, _dict=self.current_file, file_type='yml')
+        if file_type == FileType.PLAYBOOK:
             to_replace = os.path.splitext(path_split[-1])[-1]
             readme_path = file_path.replace(to_replace, '_README.md')
-        elif file_type in {SCRIPT, INTEGRATION}:
+        elif file_type in {FileType.SCRIPT, FileType.INTEGRATION}:
             if path_split[-2] in ['Scripts', 'Integrations']:
                 to_replace = os.path.splitext(file_path)[-1]
                 readme_path = file_path.replace(to_replace, '_README.md')

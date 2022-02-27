@@ -3,7 +3,6 @@ import os
 import pytest
 from mock import patch
 
-from demisto_sdk.commands.common.constants import SCRIPT
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
@@ -662,9 +661,8 @@ class TestScriptValidator:
         read_me_pack = repo.create_pack('README_test')
         script = read_me_pack.create_script('script1', create_unified=unified)
 
-        scripts_validator = get_validator(file_path=script.yml.path)
-        scripts_validator.validate_all = validate_all
-        scripts_validator.structure_validator.file_type = SCRIPT
+        structure_validator = StructureValidator(script.yml.path)
+        script_validator = ScriptValidator(structure_validator, validate_all=validate_all)
         if remove_readme:
             os.remove(script.readme.path)
-        assert scripts_validator.validate_readme_exists(scripts_validator.validate_all) is expected_result
+        assert script_validator.validate_readme_exists(script_validator.validate_all) is expected_result

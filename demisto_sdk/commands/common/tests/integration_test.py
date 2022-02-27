@@ -7,8 +7,7 @@ from mock import mock_open, patch
 
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS, FIRST_FETCH_PARAM,
-    INCIDENT_FETCH_REQUIRED_PARAMS, INTEGRATION, MAX_FETCH_PARAM,
-    MarketplaceVersions)
+    INCIDENT_FETCH_REQUIRED_PARAMS, MAX_FETCH_PARAM, MarketplaceVersions)
 from demisto_sdk.commands.common.default_additional_info_loader import \
     load_default_additional_info_dict
 from demisto_sdk.commands.common.hook_validations.integration import \
@@ -1436,9 +1435,8 @@ class TestisContextChanged:
         read_me_pack = repo.create_pack('README_test')
         integration = read_me_pack.create_integration('integration1', create_unified=unified)
 
-        structure_validator = mock_structure(file_path=integration.yml.path)
+        structure_validator = StructureValidator(integration.yml.path)
         integration_validator = IntegrationValidator(structure_validator, validate_all=validate_all)
-        integration_validator.structure_validator.file_type = INTEGRATION
         if remove_readme:
             os.remove(integration.readme.path)
         assert integration_validator.validate_readme_exists(integration_validator.validate_all) is expected_result

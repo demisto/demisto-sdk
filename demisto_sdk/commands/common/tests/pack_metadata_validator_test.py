@@ -40,15 +40,12 @@ class TestPackMetadataValidator:
         os.path.join(FILES_PATH, 'pack_metadata_invalid_format_version.json'),
     ])
     def test_metadata_validator_invalid__non_breaking(self, mocker, metadata):
-        from pathlib import Path
-
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=TestPackMetadataValidator.read_file(metadata))
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         mocker.patch.object(PackUniqueFilesValidator, '_is_integration_pack', return_value=True)
-
 
         validator = PackUniqueFilesValidator('fake')
         assert not validator.validate_pack_meta_file()

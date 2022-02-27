@@ -98,6 +98,7 @@ class PackUniqueFilesValidator(BaseValidator):
         self.support = support
         self.metadata_content: Dict = dict()
     # error handling
+
     def _add_error(self, error: Tuple[str, str], file_path: str, warning=False):
         """Adds error entry to a list under pack's name
         Returns True if added and false otherwise"""

@@ -535,7 +535,7 @@ class ReadMeValidator(BaseValidator):
 
     @staticmethod
     @contextmanager
-    def start_mdx_server(handle_error, file_path: Optional[str] = None):
+    def start_mdx_server(handle_error=None, file_path: Optional[str] = None):
         with ReadMeValidator._MDX_SERVER_LOCK:
             if not ReadMeValidator._MDX_SERVER_PROCESS:
                 mdx_parse_server = Path(__file__).parent.parent / 'mdx-parse-server.js'

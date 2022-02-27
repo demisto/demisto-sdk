@@ -150,7 +150,7 @@ class Pack:
             description: Optional[str] = None,
             changelog: Optional[str] = None,
             image: Optional[bytes] = None,
-            create_unified=False
+            create_unified=False,
     ) -> Integration:
         if name is None:
             name = f'integration_{len(self.integrations)}'
@@ -191,7 +191,7 @@ class Pack:
             description: str = '',
             changelog: str = '',
             image: bytes = b'',
-            create_unified=False
+            create_unified=False,
     ) -> Script:
         if name is None:
             name = f'script{len(self.scripts)}'

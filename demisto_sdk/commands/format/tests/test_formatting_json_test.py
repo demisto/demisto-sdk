@@ -111,6 +111,16 @@ class TestFormattingJson:
 
         assert res is answer
 
+    def test_format_fromversion_having_oldfile(self, mocker):
+        from demisto_sdk.commands.format.update_generic import BaseUpdate
+        from demisto_sdk.commands.format.update_layout import VERSION_6_0_0
+        VERSION_6_0_1 = '6.0.1'
+
+        mocker.patch.object(BaseUpdate, 'is_old_file', return_value={'fromVersion': VERSION_6_0_1})
+        update = BaseUpdate(SOURCE_FORMAT_LAYOUTS_CONTAINER_COPY)
+        update.set_fromVersion(from_version=None)
+        assert update.data[update.from_version_key] == VERSION_6_0_1
+
     @pytest.mark.parametrize('invalid_output', [INVALID_OUTPUT_PATH])
     def test_output_file(self, invalid_output):
         try:

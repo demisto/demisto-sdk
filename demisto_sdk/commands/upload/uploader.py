@@ -31,9 +31,9 @@ from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_child_directories,
-                                               get_demisto_version,
+                                               get_demisto_version, get_file,
                                                get_parent_directory_name,
-                                               print_v, get_file)
+                                               print_v)
 
 # These are the class names of the objects in demisto_sdk.commands.common.content.objects
 UPLOAD_SUPPORTED_ENTITIES = [
@@ -121,7 +121,7 @@ class Uploader:
 
         if self.detached_files:
             item_detacher = ItemDetacher(client=self.client)
-            list_detach_items_ids: list = item_detacher.detach_item_manager()
+            list_detach_items_ids: list = item_detacher.detach_item_manager(upload_file=True)
 
             item_reattacher = ItemReattacher(client=self.client)
             item_reattacher.reattach_item_manager(detached_files_ids=list_detach_items_ids)

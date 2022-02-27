@@ -65,6 +65,14 @@ types-pytz="*"
 types-python-dateutil="*"
 types-pyvmomi="*"
 types-tabulate="*"
+types-paramiko="*"
+types-emoji="*"
+types-ipaddress="*"
+types-chardet="*"
+types-six="*"
+types-PyMySQL="*"
+types-protobuf="*"
+
 
 [dev-packages]
 mitmproxy = "==5.1.0"

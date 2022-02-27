@@ -33,7 +33,7 @@ COMMAND_ONE_OUTPUTS = {
 
 @metadata_collector.command(command_name='first_command', outputs_prefix="NewIntegration.first",
                             outputs_dict=COMMAND_ONE_OUTPUTS)
-def this_is_a_command(some_arg1, command_name, outputs_prefix, outputs_key_field, outputs_dict) -> CommandResults:
+def this_is_a_command(some_arg1, command_name, outputs_prefix, outputs_dict) -> CommandResults:
     """Some Documentation
 
     :param some_arg1: some arg1 description.
@@ -43,7 +43,7 @@ def this_is_a_command(some_arg1, command_name, outputs_prefix, outputs_key_field
     print(f"empty_outputs is {outputs_dict}")
     return CommandResults(
         outputs_prefix=outputs_prefix,
-        outputs_key_field=outputs_key_field,
+        outputs_key_field='id',
         outputs=outputs_dict
     )
 

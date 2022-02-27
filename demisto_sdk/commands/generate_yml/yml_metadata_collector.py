@@ -47,6 +47,7 @@ class YMLMetadataCollector:
     collecting the relevant details and not running them. If it is set to false,
     the run should remain unchanged.
     """
+    # Restored args will not be shown in the YML unless they are added as an InputArgument.
     RESTORED_ARGS = ['command_name', 'outputs_prefix', 'outputs_key_field', 'outputs_dict',
                      'kwargs', 'args', 'inputs_list']
 
@@ -89,10 +90,19 @@ class YMLMetadataCollector:
         """A setter for collect_data."""
         self.collect_data = value
 
-    def command(self, command_name='', outputs_prefix='', outputs_key_field='', outputs_dict=None, inputs_list=None):
-        """A decorator example. Its' arguments are extra inputs specified in the call.
-        It returns a wrapper which collects details of a command functions
-        if collect_data is set to True.
+    def command(self, command_name='', outputs_prefix='', outputs_dict=None, inputs_list=None):
+        """Decorator for integration command function.
+
+        Args:
+            command_name: The name of the command.
+            outputs_prefix: The command results' output prefix.
+            outputs_dict: The command results' outputs dict in the format {"some_field": (type, "description")}.
+            inputs_list: The command input arguments.
+
+        Return: A wrapper for the command function with the following restored args:
+           command_name: The name of the command
+           outputs_prefix: The command results' output prefix.
+           outputs_dict: The command results' empty outputs dict. {"some_field": None}
         """
         print("adding command")
 
@@ -102,31 +112,26 @@ class YMLMetadataCollector:
                 """The function which will collect data if needed or
                 run the original function instead."""
                 print(f"collect_data {self.collect_data}")
-                # Here it is
                 if self.collect_data:
                     print("collecting")
-                    # Here we can collect details from function declaration and builtins.
+                    # Collect details from function declaration and builtins.
                     self.docs[command_name] = func.__doc__
                     self.functions[command_name] = func
                     self.outputs[command_name] = {}
-                    if outputs_prefix or outputs_key_field or outputs_dict:
+                    if outputs_prefix or outputs_dict:
                         self.outputs[command_name] = {
                             'outputs_prefix': outputs_prefix,
-                            'outputs_key_field': outputs_key_field,
                             'outputs_dict': outputs_dict,
                         }
                     if inputs_list:
                         self.inputs[command_name] = inputs_list
                 else:
-                    # Here we can send back the details provided to be used in function
-                    # and reduce code duplication.
+                    # Send back the details provided to be used in function and reduce code duplication.
                     kwargs['command_name'] = command_name
                     kwargs['outputs_prefix'] = outputs_prefix
-                    kwargs['outputs_key_field'] = outputs_key_field
                     kwargs['outputs_dict'] = dict.fromkeys(outputs_dict.keys()) if outputs_dict else None
                     func(*args, **kwargs)
             return get_out_info
 
-        # More information collection can be done here
         self.command_names.append(command_name)
         return command_wrapper

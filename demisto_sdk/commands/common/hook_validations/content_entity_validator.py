@@ -350,6 +350,7 @@ class ContentEntityValidator(BaseValidator):
         """
         if validate_all:
             return True
+
         file_path = os.path.normpath(self.file_path)
         path_split = file_path.split(os.sep)
         file_type = self.structure_validator.file_type
@@ -368,7 +369,10 @@ class ContentEntityValidator(BaseValidator):
 
         if os.path.isfile(readme_path):
             return True
+
         error_message, error_code = Errors.missing_readme_file(file_type)
         if self.handle_error(error_message, error_code, file_path=self.file_path,
                              suggested_fix=Errors.suggest_fix(self.file_path, cmd="generate-docs")):
             return False
+        
+        return True

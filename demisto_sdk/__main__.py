@@ -11,7 +11,7 @@ from typing import IO
 # Third party packages
 import click
 import git
-from pkg_resources import get_distribution
+from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
@@ -123,26 +123,31 @@ def check_configuration_file(command, args):
 )
 @pass_config
 def main(config, version, release_notes):
-    import dotenv
-    dotenv.load_dotenv()  # Load a .env file from the cwd.
     config.configuration = Configuration()
+    import dotenv
+    dotenv.load_dotenv(Path(os.getcwd()) / '.env')  # Load a .env file from the cwd.
     if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
-        cur_version = get_distribution('demisto-sdk').version
-        last_release = get_last_remote_release_version()
-        print_warning(f'You are using demisto-sdk {cur_version}.')
-        if last_release and cur_version != last_release:
-            print_warning(f'however version {last_release} is available.\n'
-                          f'You should consider upgrading via "pip3 install --upgrade demisto-sdk" command.')
-        if release_notes:
-            rn_entries = get_release_note_entries(cur_version)
+        try:
+            __version__ = get_distribution('demisto-sdk').version
+        except DistributionNotFound:
+            __version__ = 'dev'
+            print_warning('Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.')
+        else:
+            last_release = get_last_remote_release_version()
+            print_warning(f'You are using demisto-sdk {__version__}.')
+            if last_release and __version__ != last_release:
+                print_warning(f'however version {last_release} is available.\n'
+                              f'To update, run pip3 install --upgrade demisto-sdk')
+            if release_notes:
+                rn_entries = get_release_note_entries(__version__)
 
-            if not rn_entries:
-                print_warning('\nCould not get the release notes for this version.')
-            else:
-                click.echo('\nThe following are the release note entries for the current version:\n')
-                for rn in rn_entries:
-                    click.echo(rn)
-                click.echo('')
+                if not rn_entries:
+                    print_warning('\nCould not get the release notes for this version.')
+                else:
+                    click.echo('\nThe following are the release note entries for the current version:\n')
+                    for rn in rn_entries:
+                        click.echo(rn)
+                    click.echo('')
 
 
 # ====================== split ====================== #

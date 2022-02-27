@@ -557,7 +557,7 @@ class TestFormattingLayoutscontainer:
     @pytest.fixture(autouse=True)
     def layoutscontainer_formatter(self, layoutscontainer_copy):
         layoutscontainer_formatter = LayoutBaseFormat(
-            input=layoutscontainer_copy, output=DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY)
+            input=layoutscontainer_copy, output=DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY, clear_cache=True)
         layoutscontainer_formatter.schema_path = LAYOUTS_CONTAINER_SCHEMA_PATH
         yield layoutscontainer_formatter
 
@@ -864,22 +864,7 @@ class TestFormattingClassifier:
 
     @pytest.fixture(autouse=True)
     def classifier_formatter(self, classifier_copy):
-        yield ClassifierJSONFormat(input=classifier_copy, output=DESTINATION_FORMAT_CLASSIFIER)
-
-    def test_remove_unnecessary_keys(self, classifier_formatter):
-        """
-        Given
-            - A classifier file with fields that dont exit in classifier schema.
-        When
-            - Run format on classifier file
-        Then
-            - Ensure that unnecessary keys were removed
-        """
-        classifier_formatter.schema_path = CLASSIFIER_SCHEMA_PATH
-        classifier_formatter.remove_unnecessary_keys()
-        for field in ['brands', 'instanceIds', 'itemVersion', 'locked', 'logicalVersion', 'mapping', 'packID',
-                      'system', 'toServerVersion']:
-            assert field not in classifier_formatter.data
+        yield ClassifierJSONFormat(input=classifier_copy, output=DESTINATION_FORMAT_CLASSIFIER, clear_cache=True)
 
     def test_arguments_to_remove(self, classifier_formatter):
         """
@@ -895,6 +880,21 @@ class TestFormattingClassifier:
         expected_args = ['brands', 'instanceIds', 'itemVersion', 'locked', 'logicalVersion', 'mapping', 'packID',
                          'system', 'toServerVersion', 'sourceClassifierId', 'fromServerVersion', 'nameRaw']
         assert set(expected_args) == args_to_remove
+
+    def test_remove_unnecessary_keys(self, classifier_formatter):
+        """
+        Given
+            - A classifier file with fields that dont exit in classifier schema.
+        When
+            - Run format on classifier file
+        Then
+            - Ensure that unnecessary keys were removed
+        """
+        classifier_formatter.schema_path = CLASSIFIER_SCHEMA_PATH
+        classifier_formatter.remove_unnecessary_keys()
+        for field in ['brands', 'instanceIds', 'itemVersion', 'locked', 'logicalVersion', 'mapping', 'packID',
+                      'system', 'toServerVersion']:
+            assert field not in classifier_formatter.data
 
     def test_set_keyTypeMap(self, classifier_formatter):
         """

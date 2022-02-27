@@ -37,9 +37,10 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                  from_version: str = '',
                  no_validate: bool = False,
                  verbose: bool = False,
+                 clear_cache: bool = False,
                  **kwargs):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
-                         verbose=verbose, **kwargs)
+                         verbose=verbose, clear_cache=clear_cache, **kwargs)
 
         # layoutscontainer kinds are unique fields to containers, and shouldn't be in layouts
         self.is_container = any(self.data.get(kind) for kind in LAYOUTS_CONTAINER_KINDS)

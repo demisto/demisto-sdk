@@ -190,6 +190,7 @@ def test_entity_valid_name_invalid(repo, mocker):
     mocker.patch.object(script_content_entity_validator, 'handle_error')
     assert not script_content_entity_validator.name_does_not_contain_excluded_word()
 
+
 def test_validate_readme_exists_not_checking_on_test_playbook(repo, mocker):
     """
     Given:

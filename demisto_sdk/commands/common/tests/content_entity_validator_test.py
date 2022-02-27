@@ -189,3 +189,20 @@ def test_entity_valid_name_invalid(repo, mocker):
     script_content_entity_validator = ContentEntityValidator(script_structure_validator)
     mocker.patch.object(script_content_entity_validator, 'handle_error')
     assert not script_content_entity_validator.name_does_not_contain_excluded_word()
+
+def test_validate_readme_exists_not_checking_on_test_playbook(repo, mocker):
+    """
+    Given:
+    - A test playbook
+
+    When:
+    - Validating if a readme file exists
+
+    Then:
+    - Ensure that True is beeing returned since we dont validate a readme for test playbooks.
+    """
+    pack = repo.create_pack('TEST_PALYBOOK')
+    test_playbook = pack.create_test_playbook('test_playbook1')
+    structue_validator = StructureValidator(test_playbook.yml.path)
+    content_entity_validator = ContentEntityValidator(structue_validator)
+    assert content_entity_validator.validate_readme_exists()

@@ -451,7 +451,9 @@ class Pack:
         if name is None:
             name = f'playbook-{len(self.test_playbooks)}'
         if yml is None:
-            yml = {}
+            yml = {
+                'tasks': {}
+            }
         playbook = Playbook(self._test_playbooks_path, name, self._repo, is_test_playbook=True)
         playbook.build(
             yml,

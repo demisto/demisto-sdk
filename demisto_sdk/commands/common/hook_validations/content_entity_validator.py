@@ -21,7 +21,9 @@ from demisto_sdk.commands.common.hook_validations.structure import \
 from demisto_sdk.commands.common.tools import (_get_file_id,
                                                get_file_displayed_name,
                                                is_test_config_match,
-                                               run_command)
+                                               run_command,
+                                               find_type,
+                                               )
 
 yaml = YAML_Handler()
 
@@ -338,7 +340,7 @@ class ContentEntityValidator(BaseValidator):
 
         return True
 
-    def validate_readme_exists(self, validate_all: bool):
+    def validate_readme_exists(self, validate_all: bool = False):
         """
             Validates if there is a readme file in the same folder as the caller file.
             The validation is processed only on added or modified files.
@@ -353,7 +355,7 @@ class ContentEntityValidator(BaseValidator):
 
         file_path = os.path.normpath(self.file_path)
         path_split = file_path.split(os.sep)
-        file_type = self.structure_validator.file_type
+        file_type = find_type(self.file_path)
         if file_type == PLAYBOOK:
             to_replace = os.path.splitext(path_split[-1])[-1]
             readme_path = file_path.replace(to_replace, '_README.md')

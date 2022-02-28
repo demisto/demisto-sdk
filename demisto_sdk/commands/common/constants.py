@@ -1460,6 +1460,8 @@ FileType_NOT_ALLOWED_TO_DELETE = {
     FileType.PRE_PROCESS_RULES,
     FileType.LISTS,
     FileType.JOB,
+
+    # FileTypes that can be deleted
     # FileType.WHITE_LIST,
     # FileType.DOC_IMAGE,
     # FileType.TEST_PLAYBOOK,

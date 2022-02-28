@@ -496,6 +496,9 @@ class ReadMeValidator(BaseValidator):
             True if 'Demisto' does not exist in the README content, and False if it does.
         """
 
+        # Checks if the Readme.md is in the main repo.
+        if str(self.file_path.parent) == self.content_path:
+            return True
         is_valid = True
         invalid_lines = []
 

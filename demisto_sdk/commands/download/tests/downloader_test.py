@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pytest
 from mock import patch
-from ruamel.yaml import YAML
 
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR, CONNECTIONS_DIR, CONTENT_ENTITIES_DIRS, DASHBOARDS_DIR,
@@ -14,9 +13,12 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR,
     LAYOUTS_DIR, LISTS_DIR, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, REPORTS_DIR,
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR)
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (get_child_files, get_json,
                                                get_yaml)
 from demisto_sdk.commands.download.downloader import Downloader
+
+yaml = YAML_Handler()
 
 
 def ordered(obj):
@@ -412,8 +414,6 @@ class TestMergeExistingFile:
         mocker.patch.object(Downloader, 'get_corresponding_pack_file_object', return_value={})
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader('', '')
-            ryaml = YAML()
-            ryaml.preserve_quotes = True
             downloader.output_pack_path = env.PACK_INSTANCE_PATH
             downloader.log_verbose = False
             downloader.pack_content = env.PACK_CONTENT
@@ -428,8 +428,6 @@ class TestMergeExistingFile:
     def test_merge_and_extract_existing_file_js(self, tmp_path):
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader('', '')
-            ryaml = YAML()
-            ryaml.preserve_quotes = True
             downloader.log_verbose = False
             downloader.num_merged_files = 0
             downloader.num_added_files = 0
@@ -450,8 +448,6 @@ class TestMergeExistingFile:
 
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader('', '')
-            ryaml = YAML()
-            ryaml.preserve_quotes = True
             downloader.log_verbose = False
             downloader.pack_content = env.PACK_CONTENT
             downloader.run_format = False
@@ -502,8 +498,6 @@ class TestMergeExistingFile:
 
         with patch.object(Downloader, "__init__", lambda a, b, c: None):
             downloader = Downloader('', '')
-            ryaml = YAML()
-            ryaml.preserve_quotes = True
             downloader.pack_content = env.PACK_CONTENT
             downloader.run_format = False
             downloader.num_merged_files = 0
@@ -512,7 +506,7 @@ class TestMergeExistingFile:
             for param in parameters:
                 downloader.merge_existing_file(param['custom_content_object'], param['ending'])
                 assert os.path.isfile(param['instance_path'])
-                file_data = param['method'](param['instance_path'])
+                file_data = param['method'](param['instance_path'], cache_clear=True)
                 for field in param['fields']:
                     if file_data.get(field):
                         assert True
@@ -606,15 +600,13 @@ class TestMergeExistingFile:
                 assert ordered(corr_file) == ordered(pack_file_object)
 
     def test_update_data_yml(self, tmp_path):
-        ryaml = YAML()
-        ryaml.preserve_quotes = True
         env = Environment(tmp_path)
         downloader = Downloader(output='', input='', regex='')
         downloader.update_data(env.CUSTOM_CONTENT_INTEGRATION_PATH,
                                f'{env.INTEGRATION_INSTANCE_PATH}/TestIntegration.yml', 'yml')
 
         with open(env.CUSTOM_CONTENT_INTEGRATION_PATH, 'r') as yf:
-            file_yaml_object = ryaml.load(yf)
+            file_yaml_object = yaml.load(yf)
         for field in DELETED_YML_FIELDS_BY_DEMISTO:
             obj = file_yaml_object
             dotted_path_list = field.split('.')

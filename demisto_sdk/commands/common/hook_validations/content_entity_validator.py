@@ -1,26 +1,29 @@
 import json
+import os
 import re
 from abc import abstractmethod
 from distutils.version import LooseVersion
 from typing import Optional
 
-import yaml
-
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, ENTITY_NAME_SEPARATORS,
     EXCLUDED_DISPLAY_NAME_WORDS, FEATURE_BRANCHES,
-    GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION, OLDEST_SUPPORTED_VERSION)
+    GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION, OLDEST_SUPPORTED_VERSION,
+    FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from demisto_sdk.commands.common.tools import (_get_file_id,
+from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
                                                get_file_displayed_name,
                                                is_test_config_match,
                                                run_command)
+
+yaml = YAML_Handler()
 
 
 class ContentEntityValidator(BaseValidator):
@@ -206,7 +209,7 @@ class ContentEntityValidator(BaseValidator):
                 missing_test_playbook_configurations = json.dumps(
                     {'integrations': content_item_id, 'playbookID': '<TestPlaybook ID>'},
                     indent=4)
-                no_tests_key = yaml.dump({'tests': ['No tests']})
+                no_tests_key = yaml.dumps({'tests': ['No tests']})
                 error_message, error_code = Errors.integration_not_registered(self.file_path,
                                                                               missing_test_playbook_configurations,
                                                                               no_tests_key)
@@ -332,5 +335,44 @@ class ContentEntityValidator(BaseValidator):
                     file_path=self.file_path,
                     suggested_fix=Errors.suggest_fix(self.file_path)):
                 return False
+
+        return True
+
+    def validate_readme_exists(self, validate_all: bool = False):
+        """
+            Validates if there is a readme file in the same folder as the caller file.
+            The validation is processed only on added or modified files.
+
+            Args:
+                validate_all: (bool) is the validation being run with -a
+            Return:
+               True if the readme file exits False with an error otherwise
+        """
+        if validate_all:
+            return True
+
+        file_path = os.path.normpath(self.file_path)
+        path_split = file_path.split(os.sep)
+        file_type = find_type(self.file_path, _dict=self.current_file, file_type='yml')
+        if file_type == FileType.PLAYBOOK:
+            to_replace = os.path.splitext(path_split[-1])[-1]
+            readme_path = file_path.replace(to_replace, '_README.md')
+        elif file_type in {FileType.SCRIPT, FileType.INTEGRATION}:
+            if path_split[-2] in ['Scripts', 'Integrations']:
+                to_replace = os.path.splitext(file_path)[-1]
+                readme_path = file_path.replace(to_replace, '_README.md')
+            else:
+                to_replace = path_split[-1]
+                readme_path = file_path.replace(to_replace, "README.md")
+        else:
+            return True
+
+        if os.path.isfile(readme_path):
+            return True
+
+        error_message, error_code = Errors.missing_readme_file(file_type)
+        if self.handle_error(error_message, error_code, file_path=self.file_path,
+                             suggested_fix=Errors.suggest_fix(self.file_path, cmd="generate-docs")):
+            return False
 
         return True

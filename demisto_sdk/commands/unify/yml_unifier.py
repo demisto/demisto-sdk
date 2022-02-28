@@ -5,12 +5,12 @@ import io
 import json
 import os
 import re
+import shutil
 import sys
 from typing import Dict, List, Tuple, Union
 
 import click
 from inflection import dasherize, underscore
-from ruamel.yaml import YAML
 from ruamel.yaml.scalarstring import FoldedScalarString
 
 from demisto_sdk.commands.common.constants import (
@@ -18,6 +18,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_IMAGE_PREFIX, DIR_TO_PREFIX, INTEGRATIONS_DIR, SCRIPTS_DIR,
     TYPE_TO_EXTENSION, FileType)
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                find_type, get_pack_name,
                                                get_yaml, get_yml_paths_in_dir,
@@ -85,14 +86,12 @@ class YmlUnifier:
                 self.yml_path = path
                 break
 
-        self.ryaml = YAML()
-        self.ryaml.preserve_quotes = True
-        self.ryaml.width = 50000  # make sure long lines will not break (relevant for code section)
+        self.yaml = YAML_Handler(width=50000)  # make sure long lines will not break (relevant for code section)
         if yml_modified_data:
             self.yml_data = yml_modified_data
         elif self.yml_path:
             with io.open(self.yml_path, 'r', encoding='utf8') as yml_file:
-                self.yml_data = self.ryaml.load(yml_file)
+                self.yml_data = self.yaml.load(yml_file)
         else:
             self.yml_data = {}
             print_error(f'No yml found in path: {self.package_path}')
@@ -159,7 +158,7 @@ class YmlUnifier:
                                  ' or rename this package (for example if it is a v2).')
 
             with io.open(file_path, mode='w', encoding='utf-8') as file_:
-                self.ryaml.dump(file_data, file_)
+                self.yaml.dump(file_data, file_)
 
         return output_map
 
@@ -528,3 +527,17 @@ class YmlUnifier:
         dasherized_integration_id = dasherize(underscore(integration_id)).replace(' ', '-')
         # remove all non-word characters (dash is ok)
         return re.sub(r'[^\w-]', '', dasherized_integration_id)
+
+    def move_readme_next_to_unified(self, yml_path):
+        """
+            Args:
+                yml_path: The path to the yml file.
+
+            Return:
+                README new location next to the unified yml (in the same folder).
+
+        """
+        dst_path_readme = yml_path.replace('.yml', '_README.md')
+        src_path_readme = os.path.join(self.package_path, 'README.md')
+        shutil.move(src_path_readme, dst_path_readme)
+        return dst_path_readme

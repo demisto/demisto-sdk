@@ -224,6 +224,7 @@ ERROR_CODE = {
     "fromlicense_in_parameters": {'code': "IN146", 'ui_applicable': True,
                                   'related_field': '<parameter-name>.fromlicense'},
     "changed_integration_yml_fields": {'code': "IN147", "ui_applicable": False, 'related_field': 'script'},
+    "parameter_is_malformed": {'code': "IN148", 'ui_applicable': False, 'related_field': 'configuration'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -327,6 +328,7 @@ ERROR_CODE = {
     "readme_contains_demisto_word": {'code': "RM106", 'ui_applicable': False, 'related_field': ''},
     "template_sentence_in_readme": {'code': "RM107", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
+    "missing_readme_file": {'code': "RM109", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -714,8 +716,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def parameter_missing_from_yml(name, correct_format):
-        return f'A required parameter "{name}" is missing or malformed ' \
+    def parameter_missing_from_yml(name):
+        return f'A required parameter "{name}" is missing from the YAML file.'
+
+    @staticmethod
+    @error_code_decorator
+    def parameter_is_malformed(name, correct_format):
+        return f'A required parameter "{name}" is malformed ' \
                f'in the YAML file.\nThe correct format of the parameter should ' \
                f'be as follows:\n{correct_format}'
 
@@ -1625,7 +1632,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def empty_readme_error():
-        return 'README.md is empty'
+        return "Pack writen by a partner or pack containing playbooks must have a full README.md file" \
+               "with pack information. Please refer to https://xsoar.pan.dev/docs/documentation/pack-docs#pack-readme " \
+               "for more information"
 
     @staticmethod
     @error_code_decorator
@@ -2107,7 +2116,7 @@ class Errors:
                f"You can use the pack name or one of the prefixes found in the itemPrefix field in the pack_metadata. " \
                f"Example: {pack_prefix} {field_name}.\n" \
                f"Also make sure to update the field id and cliName accordingly. " \
-               f"Example: cliName: {pack_prefix.replace(' ', '')}{field_name.replace(' ', '')}, "
+               f"Example: cliName: {pack_prefix.replace(' ', '').lower()}{field_name.replace(' ', '')}, "
 
     @staticmethod
     @error_code_decorator
@@ -2172,3 +2181,8 @@ class Errors:
         return "The following fields exist as aliases and therefore cannot contain an 'Aliases' key."\
                f"\n{invalid_aliases}\n" \
                "Please remove the key from the fields or removed the fields from the other field's Aliases list."
+
+    @staticmethod
+    @error_code_decorator
+    def missing_readme_file(location):
+        return f'{location} is missing a README file'

@@ -25,8 +25,8 @@ from demisto_sdk.commands.common.tools import get_yml_paths_in_dir, src_root
 from demisto_sdk.commands.test_content import tools
 from demisto_sdk.commands.upload import uploader
 from demisto_sdk.commands.upload.uploader import (
-    Uploader, parse_error_response, print_summary,
-    sort_directories_based_on_dependencies, ItemDetacher)
+    ItemDetacher, Uploader, parse_error_response, print_summary,
+    sort_directories_based_on_dependencies)
 from TestSuite.test_tools import ChangeCWD
 
 DATA = ''
@@ -1110,9 +1110,10 @@ class TestItemDetacher:
         repo = repo.setup_one_pack(name='Pack')
         detached_items_ids = ItemDetacher(client=API_CLIENT, file_path=repo.path).detach_item_manager()
         assert len(detached_items_ids) == 8
-        assert detached_items_ids == ['Pack_playbook', 'job-Pack_playbook', 'job-Pack_all_feeds_playbook',
-                                      'Pack_integration_test_playbook', 'Pack_script_test_playbook',
-                                      'Pack - layoutcontainer', 'Pack - layout', 'Pack - incident_type']
+        for file_id in detached_items_ids:
+            assert file_id in ['Pack_playbook', 'job-Pack_playbook', 'job-Pack_all_feeds_playbook',
+                               'Pack_integration_test_playbook', 'Pack_script_test_playbook',
+                               'Pack - layoutcontainer', 'Pack - layout', 'Pack - incident_type']
 
         detached_items_ids = ItemDetacher(client=API_CLIENT, file_path=f'{repo._pack_path}/Playbooks/Pack_playbook.yml').detach_item_manager()
         assert len(detached_items_ids) == 1

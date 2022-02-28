@@ -545,7 +545,7 @@ def get_entity_name_by_entity_type(data: dict, content_entity: str):
             if 'typeId' in data:
                 return data.get('typeId', '')
             return data.get('name', '')  # for layoutscontainer
-        return data.get('name') or data.get('id')
+        return data.get('name', '')
 
     except AttributeError:
         raise ValueError(

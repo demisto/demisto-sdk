@@ -928,7 +928,9 @@ def upload(**kwargs):
 @click.option(
     "--system", help="Download system items", is_flag=True, default=False)
 @click.option(
-    "-it", "--item-type", help="The items type to download, use just when downloading system items",
+    "-it", "--item-type", help="The items type to download, use just when downloading system items, should be one "
+                               "form the following list: [IncidentType, IndicatorType, Field, Layout, Playbook, "
+                               "Automation, Classifier, Mapper]",
     type=click.Choice(['IncidentType', 'IndicatorType', 'Field', 'Layout', 'Playbook', 'Automation', 'Classifier',
                        'Mapper'], case_sensitive=False))
 def download(**kwargs):

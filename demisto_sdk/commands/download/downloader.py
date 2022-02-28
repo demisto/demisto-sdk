@@ -192,6 +192,17 @@ class Downloader:
 
         return is_valid
 
+    def handle_api_exception(self, e):
+        if e.status == 401:
+            print_color('\nVerify that the environment variable DEMISTO_API_KEY is configured properly.\n',
+                        LOG_COLORS.RED)
+        print_color(f'Exception raised when fetching custom content:\nStatus: {e}', LOG_COLORS.NATIVE)
+
+    def handle_max_retry_error(self, e):
+        print_color('\nVerify that the environment variable DEMISTO_BASE_URL is configured properly.\n',
+                    LOG_COLORS.RED)
+        print_color(f'Exception raised when fetching custom content:\n{e}', LOG_COLORS.NATIVE)
+
     def fetch_custom_content(self) -> bool:
         """
         Fetches the custom content from Demisto into a temporary dir.
@@ -221,15 +232,10 @@ class Downloader:
             return True
 
         except ApiException as e:
-            if e.status == 401:
-                print_color('\nVerify that the environment variable DEMISTO_API_KEY is configured properly.\n',
-                            LOG_COLORS.RED)
-            print_color(f'Exception raised when fetching custom content:\nStatus: {e}', LOG_COLORS.NATIVE)
+            self.handle_api_exception(e)
             return False
         except MaxRetryError as e:
-            print_color('\nVerify that the environment variable DEMISTO_BASE_URL is configured properly.\n',
-                        LOG_COLORS.RED)
-            print_color(f'Exception raised when fetching custom content:\n{e}', LOG_COLORS.NATIVE)
+            self.handle_max_retry_error(e)
             return False
         except Exception as e:
             print_color(f'Exception raised when fetching custom content:\n{e}', LOG_COLORS.NATIVE)
@@ -298,15 +304,10 @@ class Downloader:
             return True
 
         except ApiException as e:
-            if e.status == 401:
-                print_color('\nVerify that the environment variable DEMISTO_API_KEY is configured properly.\n',
-                            LOG_COLORS.RED)
-            print_color(f'Exception raised when fetching custom content:\nStatus: {e}', LOG_COLORS.NATIVE)
+            self.handle_api_exception(e)
             return False
         except MaxRetryError as e:
-            print_color('\nVerify that the environment variable DEMISTO_BASE_URL is configured properly.\n',
-                        LOG_COLORS.RED)
-            print_color(f'Exception raised when fetching custom content:\n{e}', LOG_COLORS.NATIVE)
+            self.handle_max_retry_error(e)
             return False
         except Exception as e:
             print_color(f'Exception raised when fetching custom content:\n{e}', LOG_COLORS.NATIVE)
@@ -574,6 +575,9 @@ class Downloader:
         file_entity = self.file_type_to_entity(file_data, file_type)  # For example: Integrations
         file_id: str = get_entity_id_by_entity_type(file_data, file_entity)
         file_name: str = get_entity_name_by_entity_type(file_data, file_entity)
+
+        if not file_name:
+            file_name = file_data.get('id', '')
 
         custom_content_object: dict = {
             'id': file_id,

@@ -26,7 +26,7 @@ from demisto_sdk.commands.test_content import tools
 from demisto_sdk.commands.upload import uploader
 from demisto_sdk.commands.upload.uploader import (
     Uploader, parse_error_response, print_summary,
-    sort_directories_based_on_dependencies)
+    sort_directories_based_on_dependencies, ItemDetacher)
 from TestSuite.test_tools import ChangeCWD
 
 DATA = ''
@@ -1057,46 +1057,66 @@ class TestZippedPackUpload:
             skip_value = None
         assert not skip_value
 
-    def test_upload_custom_packs_from_config_file(self, mocker):
-        """
-        Given:
-            - Configuration file with custom packs (zipped packs and unzipped packs) to upload
-        When:
-            - call to upload command
-        Then:
-            - validate the upload_content_packs in the api client was called correct
-              and the pack verification ws turned on and off
-              ans status code is 0 (Ok)
-        """
-        # prepare
-        mock_api_client(mocker)
-        mocker.patch.object(API_CLIENT, 'upload_content_packs')
-        mocker.patch.object(Pack, 'is_server_version_ge', return_value=False)
-        mocker.patch.object(tools, 'update_server_configuration', return_value=(None, None, {}))
-        mocker.patch.object(Uploader, 'notify_user_should_override_packs', return_value=True)
-
-        # run
-        status_code = click.Context(command=upload).invoke(
-            upload, input_config_file=f'{git_path()}/demisto_sdk/commands/upload/tests/data/xsoar_config.json')
-
-        # validate
-        disable_verification_call_args = tools.update_server_configuration.call_args_list[0][1]
-        enable_verification_call_args = tools.update_server_configuration.call_args_list[1][1]
-
-        assert disable_verification_call_args['server_configuration'][constants.PACK_VERIFY_KEY] == 'false'
-        assert constants.PACK_VERIFY_KEY in enable_verification_call_args['config_keys_to_delete']
-        assert status_code == 0
-
-        uploaded_file_path = API_CLIENT.upload_content_packs.call_args[1]['file']
-        assert 'uploadable_packs.zip' in str(uploaded_file_path)
-
 
 class TestItemDetacher:
-    pass
+    def test_detach_item(self, mocker):
+        mocker.patch("click.secho")
+        from click import secho
+        mock_api_client(mocker)
+        mocker.patch.object(API_CLIENT, 'generic_request', return_value=[json.dumps([{'name': 'TestPack'}])])
 
+        ItemDetacher.detach_item(ItemDetacher(API_CLIENT), file_id='file', file_path='Scripts/file_path')
 
-class TestItemReattacher:
-    pass
+        assert secho.call_count == 1
+        assert secho.call_args_list[0][0][0] == '\nFile: file was detached'
+
+    def test_extract_items_from_dir(self, mocker, repo):
+        repo = repo.setup_one_pack(name='Pack')
+        list_items = ItemDetacher(client=API_CLIENT, file_path=repo.path).extract_items_from_dir()
+        assert len(list_items) == 8
+        for item in list_items:
+            assert 'Playbooks' in item.get('file_path') or 'Layouts' in item.get('file_path') \
+                   or 'IncidentTypes' in item.get('file_path') or 'IncidentTypes' in item.get('file_path')
+
+    @pytest.mark.parametrize(argnames='file_path, res', argvalues=[
+        ('Packs/Pack/Playbooks/Process_Survey_Response.yml', True),
+        ('Packs/Pack/Playbooks/Process_Survey_Response.md', False),
+        ('Packs/Pack/Scripts/Process_Survey_Response.yml', True),
+        ('Packs/Pack/Scripts/Process_Survey_Response.md', False)
+    ])
+    def test_is_valid_file_for_detach(self, file_path, res):
+        assert ItemDetacher(client=API_CLIENT).is_valid_file_for_detach(file_path=file_path) == res
+
+    @pytest.mark.parametrize(argnames='file_path, res', argvalues=[
+        ('Packs/Pack/Playbooks/Process_Survey_Response.yml', 'yml'),
+        ('Packs/Pack/Playbooks/Process_Survey_Response.md', 'yml'),
+        ('Packs/Pack/IncidentTypes/Process_Survey_Response.json', 'json'),
+        ('Packs/Pack/Layouts/Process_Survey_Response.json', 'json')
+    ])
+    def test_find_item_type_to_detach(self, file_path, res):
+        assert ItemDetacher(client=API_CLIENT).find_item_type_to_detach(file_path=file_path) == res
+
+    def test_find_item_id_to_detach(self, repo):
+        pack = repo.create_pack("Pack1")
+        playbook1 = pack.create_playbook('MyPlay1')
+        playbook1.create_default_playbook()
+        assert ItemDetacher(client=API_CLIENT,
+                            file_path=f"{playbook1.path}/MyPlay1.yml").find_item_id_to_detach() == 'sample playbook'
+
+    def test_detach_item_manager(self, mocker, repo):
+        mock_api_client(mocker)
+        mocker.patch.object(API_CLIENT, 'generic_request', return_value=[json.dumps([{'name': 'TestPack'}])])
+
+        repo = repo.setup_one_pack(name='Pack')
+        detached_items_ids = ItemDetacher(client=API_CLIENT, file_path=repo.path).detach_item_manager()
+        assert len(detached_items_ids) == 8
+        assert detached_items_ids == ['Pack_playbook', 'job-Pack_playbook', 'job-Pack_all_feeds_playbook',
+                                      'Pack_integration_test_playbook', 'Pack_script_test_playbook',
+                                      'Pack - layoutcontainer', 'Pack - layout', 'Pack - incident_type']
+
+        detached_items_ids = ItemDetacher(client=API_CLIENT, file_path=f'{repo._pack_path}/Playbooks/Pack_playbook.yml').detach_item_manager()
+        assert len(detached_items_ids) == 1
+        assert detached_items_ids == ['Pack_playbook']
 
 
 def exception_raiser(**kwargs):

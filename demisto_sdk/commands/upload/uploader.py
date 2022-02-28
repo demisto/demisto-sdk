@@ -443,7 +443,7 @@ class ItemDetacher:
         'Scripts': '/automation/detach/:id/',
     }
 
-    VALID_FILES_FOR_DETACH = ['Playbooks', 'scripts', 'IncidentTypes', 'Layouts']
+    VALID_FILES_FOR_DETACH = ['Playbooks', 'Scripts', 'IncidentTypes', 'Layouts']
 
     def detach_item(self, file_id, file_path):
         endpoint: str = ''
@@ -468,7 +468,8 @@ class ItemDetacher:
                 file_type = self.find_item_type_to_detach(file_path)
                 file_data = get_file(file_path, file_type)
                 file_id = file_data.get('id')
-                detach_files_list.append({'file_id': file_id, 'file_type': file_type, 'file_path': file_path})
+                if file_id:
+                    detach_files_list.append({'file_id': file_id, 'file_type': file_type, 'file_path': file_path})
         return detach_files_list
 
     def is_valid_file_for_detach(self, file_path: str) -> bool:
@@ -504,7 +505,7 @@ class ItemDetacher:
 
         elif os.path.isfile(self.file_path):
             file_id = self.find_item_id_to_detach()
-            detach_files_list.append({{'file_id': file_id, 'file_path': self.file_path}})
+            detach_files_list.append({'file_id': file_id, 'file_path': self.file_path})
             self.detach_item(file_id=file_id, file_path=self.file_path)
             if upload_file:
                 uploader = Uploader(input=self.file_path)

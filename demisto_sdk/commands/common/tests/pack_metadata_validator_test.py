@@ -155,7 +155,7 @@ class TestPackMetadataValidator:
     def test_is_integration_pack(self, pack):
         """
         Given:
-            - A pack to validate.
+            - A pack with an integration to validate.
 
         When:
             - Calling _is_integration_pack() method.

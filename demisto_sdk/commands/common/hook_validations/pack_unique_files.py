@@ -351,8 +351,8 @@ class PackUniqueFilesValidator(BaseValidator):
         return dir_path.stat().st_size == 0
 
     def _is_integration_pack(self):
-        pack_path: Path = Path(self.pack_path) / INTEGRATIONS_DIR
-        return pack_path.exists() and not self._is_empty_dir(dir_path=pack_path)
+        integration_dir: Path = Path(self.pack_path) / INTEGRATIONS_DIR
+        return integration_dir.exists() and not self._is_empty_dir(dir_path=integration_dir)
 
     def _is_pack_meta_file_structure_valid(self):
         """Check if pack_metadata.json structure is json parse-able and valid"""

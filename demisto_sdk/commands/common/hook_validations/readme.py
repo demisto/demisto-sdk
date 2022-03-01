@@ -300,7 +300,7 @@ class ReadMeValidator(BaseValidator):
         should_print_error = not is_pack_readme  # pack readme errors are handled and printed during the pack unique
         # files validation.
         absolute_links = re.findall(
-            r'(!\[.*\])\((https://[^\s]*)(\".*\")?\)$', self.readme_content, re.IGNORECASE | re.MULTILINE)
+            r'(!\[.*\])\((https://(?!.*\.youtube\.com).*)\)$', self.readme_content, re.IGNORECASE | re.MULTILINE)
         absolute_links += re.findall(
             r'(<img.*?src\s*=\s*"(https://.*?)")', self.readme_content, re.IGNORECASE | re.MULTILINE)
         for link in absolute_links:

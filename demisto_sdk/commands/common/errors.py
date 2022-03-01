@@ -328,6 +328,7 @@ ERROR_CODE = {
     "readme_contains_demisto_word": {'code': "RM106", 'ui_applicable': False, 'related_field': ''},
     "template_sentence_in_readme": {'code': "RM107", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
+    "missing_readme_file": {'code': "RM109", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -1631,7 +1632,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def empty_readme_error():
-        return 'README.md is empty'
+        return "Pack writen by a partner or pack containing playbooks must have a full README.md file" \
+               "with pack information. Please refer to https://xsoar.pan.dev/docs/documentation/pack-docs#pack-readme " \
+               "for more information"
 
     @staticmethod
     @error_code_decorator
@@ -2178,3 +2181,8 @@ class Errors:
         return "The following fields exist as aliases and therefore cannot contain an 'Aliases' key."\
                f"\n{invalid_aliases}\n" \
                "Please remove the key from the fields or removed the fields from the other field's Aliases list."
+
+    @staticmethod
+    @error_code_decorator
+    def missing_readme_file(location):
+        return f'{location} is missing a README file'

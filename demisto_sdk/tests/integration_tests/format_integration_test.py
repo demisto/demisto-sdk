@@ -10,6 +10,8 @@ from click.testing import CliRunner
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
+    ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
 from demisto_sdk.commands.common.tools import (get_dict_from_file,
@@ -495,6 +497,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
                         return_value=(True, f'{playbook.path}/playbook.yml'))
     mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
     mocker.patch.object(PlaybookValidator, 'name_not_contain_the_type', return_value=True)
+    mocker.patch.object(ContentEntityValidator, 'validate_readme_exists', return_value=True)
 
     mocker.patch.object(tools, 'is_external_repository', return_value=True)
     monkeypatch.setattr('builtins.input', lambda _: 'N')

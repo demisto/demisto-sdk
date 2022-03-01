@@ -37,13 +37,15 @@ class IntegrationYMLFormat(BaseUpdateYML):
                  verbose: bool = False,
                  update_docker: bool = False,
                  add_tests: bool = False,
+                 clear_cache: bool = False,
                  **kwargs):
-        super().__init__(input, output, path, from_version, no_validate, verbose=verbose, add_tests=add_tests, **kwargs)
+        super().__init__(input, output, path, from_version, no_validate, verbose=verbose, add_tests=add_tests,
+                         clear_cache=clear_cache, **kwargs)
         self.update_docker = update_docker
         if not from_version and self.data.get("script", {}).get("type") == TYPE_PWSH:
             self.from_version = '5.5.0'
         self.is_beta = False
-        integration_type = find_type(input)
+        integration_type = find_type(input, clear_cache=clear_cache)
         if integration_type:
             self.is_beta = find_type(input).value == 'betaintegration'
 

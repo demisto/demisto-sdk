@@ -447,7 +447,8 @@ WORDS = [
     ('SomeWord', True, True),
     ('SomeTest', True, True),
     ('AGoodSpelledWord', True, True),
-    ('IPs', False, False)
+    ('IPs', False, False),
+    ('IPs**', False, False),
 ]
 
 

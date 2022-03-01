@@ -127,7 +127,7 @@ def test_unmockable_playbook_passes_most_of_the_time(mocker, tmp_path):
     assert incident_test_mock.call_count == 3
     assert not build_context.tests_data_keeper.failed_playbooks
     assert 'unmocked_playbook' in build_context.tests_data_keeper.succeeded_playbooks
-    assert any('Test-Playbook was executed 3 times, and passed 2 times. Adding to succeeded playbooks.' in [log_item][0][0] for
+    assert any('Test-Playbook was executed 3 times, and passed 2 times. Adding to succeeded playbooks.' in log_item[0][0] for
                log_item in logs.info.call_args_list)
 
 
@@ -152,7 +152,7 @@ def test_unmockable_playbook_fails_every_time(mocker, tmp_path):
     assert incident_test_mock.call_count == 3
     assert 'unmocked_playbook (Mock Disabled)' in build_context.tests_data_keeper.failed_playbooks
     assert not build_context.tests_data_keeper.succeeded_playbooks
-    assert any('Test-Playbook was executed 3 times, and passed only 0 times. Adding to failed playbooks.' in [log_item][0][0] for
+    assert any('Test-Playbook was executed 3 times, and passed only 0 times. Adding to failed playbooks.' in log_item[0][0] for
                log_item in logs.info.call_args_list)
 
 

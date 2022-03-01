@@ -45,7 +45,6 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                stream_docker_container_output)
 
 logger = logging.getLogger('demisto-sdk')
-yaml = YAML_Handler()
 
 
 class Linter:
@@ -198,7 +197,7 @@ class Linter:
         try:
 
             script_obj: Dict = {}
-            yml_obj: Dict = yaml.load(yml_file)
+            yml_obj: Dict = YAML_Handler().load(yml_file)
             if isinstance(yml_obj, dict):
                 script_obj = yml_obj.get('script', {}) if isinstance(yml_obj.get('script'), dict) else yml_obj
             self._facts['is_script'] = True if 'Scripts' in yml_file.parts else False

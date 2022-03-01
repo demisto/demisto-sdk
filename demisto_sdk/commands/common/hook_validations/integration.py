@@ -42,6 +42,12 @@ class IntegrationValidator(ContentEntityValidator):
     EXPIRATION_FIELD_TYPE = 17
     ALLOWED_HIDDEN_PARAMS = {'longRunning', 'feedIncremental', 'feedReputation'}
 
+    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
+                 json_file_path=None, validate_all=False):
+        super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
+                         json_file_path=json_file_path, skip_docker_check=skip_docker_check)
+        self.validate_all = validate_all
+
     def is_valid_version(self):
         # type: () -> bool
         if self.current_file.get("commonfields", {}).get('version') == self.DEFAULT_VERSION:
@@ -81,6 +87,7 @@ class IntegrationValidator(ContentEntityValidator):
         """
         answers = [
             super().is_valid_file(validate_rn),
+            self.validate_readme_exists(self.validate_all),
             self.is_valid_subtype(),
             self.is_valid_default_array_argument_in_reputation_command(),
             self.is_valid_default_argument(),
@@ -911,10 +918,18 @@ class IntegrationValidator(ContentEntityValidator):
             for param in params:
                 if 'defaultvalue' in param:
                     param.pop('defaultvalue')
-            for param in fetch_required_params:
-                if param not in params:
-                    error_message, error_code = Errors.parameter_missing_from_yml(param.get('name'),
-                                                                                  yaml.dumps(param))
+            for fetch_required_param in fetch_required_params:
+                # If this condition returns true, we'll go over the params dict and we'll check if there's a param that match the fetch_required_param name.
+                # If there is one, we know that in the params dict there is a matching param to the fetch_required_param but it has a malformed structure.
+                if fetch_required_param not in params:
+                    error_message = ''
+                    error_code = ''
+                    for param in params:
+                        if param.get('name') == fetch_required_param.get('name'):
+                            error_message, error_code = Errors.parameter_is_malformed(fetch_required_param.get('name'),
+                                                                                      yaml.dumps(fetch_required_param))
+                    if not error_message:
+                        error_message, error_code = Errors.parameter_missing_from_yml(fetch_required_param.get('name'))
                     if self.handle_error(error_message, error_code, file_path=self.file_path,
                                          suggested_fix=Errors.suggest_fix(self.file_path)):
                         fetch_params_exist = False

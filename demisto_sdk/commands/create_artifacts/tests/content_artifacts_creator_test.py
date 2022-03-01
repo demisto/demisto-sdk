@@ -225,7 +225,7 @@ def test_create_content_artifacts(mock_git):
         exit_code = config.create_content_artifacts()
 
         assert exit_code == 0
-        assert not same_folders(temp, ARTIFACTS_EXPECTED_RESULTS / 'content')
+        assert same_folders(temp, ARTIFACTS_EXPECTED_RESULTS / 'content')
 
 
 def test_create_content_artifacts_by_id_set(mock_git):

@@ -176,7 +176,7 @@ def test_dump_pack(mock_git):
         create_dirs(artifact_manager=config)
         dump_pack(artifact_manager=config, pack=Pack(TEST_CONTENT_REPO / PACKS_DIR / 'Sample01'))
 
-        assert not same_folders(src1=temp / 'content_packs' / 'Sample01',
+        assert same_folders(src1=temp / 'content_packs' / 'Sample01',
                                 src2=ARTIFACTS_EXPECTED_RESULTS / 'content' / 'content_packs' / 'Sample01')
 
 

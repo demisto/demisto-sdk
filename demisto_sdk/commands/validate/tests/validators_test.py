@@ -1861,11 +1861,11 @@ ALTERNATIVE_FIELDS_PATHS = [
 def test_alternative_fields(mocker, path, result):
     """
     Given
-            File with or without alternative names for sub items in that file.
+        - File with or without alternative names for sub items in that file.
     When
-            Validating the file
+        - Validating the file
     Then
-            Find the alternative fields if there are any and return the validate result.
+        - Find the alternative fields if there are any and return the validate result.
     """
 
     mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)

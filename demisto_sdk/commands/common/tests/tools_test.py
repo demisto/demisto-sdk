@@ -1675,7 +1675,7 @@ ALTERNATIVE_FIELDS_DATA_AND_RESULTS = [(INVALID_PLAYBOOK_NESTED_DATA, 'playbookN
 class TestMissingAlternativeFields:
     @staticmethod
     @pytest.mark.parametrize('data, field, result', ALTERNATIVE_FIELDS_DATA_AND_RESULTS)
-    def test_get_missing_alternative_fields(mocker, data, field, result):
+    def test_get_missing_alternative_fields(data, field, result):
         """
         Given
             - A content item data of nested item.

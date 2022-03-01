@@ -35,7 +35,8 @@ from demisto_sdk.tests.constants_test import (
     SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_INTEGRATION_INVALID,
     SOURCE_FORMAT_INTEGRATION_VALID, SOURCE_FORMAT_PLAYBOOK,
     SOURCE_FORMAT_PLAYBOOK_COPY, SOURCE_FORMAT_SCRIPT_COPY,
-    SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
+    SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH, ALTERNATIVE_FIELDS_INVALID_PLAYBOOK_PATH,
+    ALTERNATIVE_FIELDS_ID_SET_PATH)
 from TestSuite.test_tools import ChangeCWD
 
 yaml = YAML_Handler()
@@ -1305,3 +1306,22 @@ class TestFormatting:
 
         assert all(config in base_yml.data['configuration'] for config in configs_to_be_added)
         assert all(config not in base_yml.data['configuration'] for config in configs_to_be_removed)
+
+    @staticmethod
+    def test_add_alternative_fields():
+        """
+        Given
+            - File without alternative names for sub items in that file.
+        When
+            - Running format.
+        Then
+            - Find the alternative fields if there are any and add it to the yml.
+        """
+        schema_path = os.path.normpath(
+            os.path.join(__file__, "..", "..", "..", "common", "schemas", "{}.yml".format("playbook")))
+        base_yml = PlaybookYMLFormat(ALTERNATIVE_FIELDS_INVALID_PLAYBOOK_PATH, path=schema_path,
+                                     id_set_path=ALTERNATIVE_FIELDS_ID_SET_PATH)
+        base_yml.add_alternative_fields()
+        sub_task = base_yml.data.get('tasks', {}).get('28', {}).get('task', {})
+        assert 'playbookName_x2' in sub_task
+        assert sub_task['playbookName_x2'] == 'Panorama Query Logs_x2'

@@ -1729,12 +1729,12 @@ class ValidateManager:
             return is_valid_as_deprecated
         return None
 
-    def validate_alternative_fields_of_nested_item(self, item_data: dict, file_type: str):
+    def validate_alternative_fields_of_nested_item(self, item_data: dict, file_type: FileType):
         r"""
             Checks if the given item has alternative fields missing from its data, using the id set.
         Args:
             item_data: The extracted data of the item from yml\json.
-            item_type: The type of content item the data belongs to.
+            file_type: The type of content item the data belongs to.
 
         Returns:
             True if there are missing alternative fields, False otherwise.

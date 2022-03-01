@@ -2477,7 +2477,7 @@ def get_item_from_id_set(item_identifier, id_set_section):
     return None
 
 
-def check_and_add_missing_alternative_fields(item_data: dict, item_type: str, id_set_file: dict):
+def check_and_add_missing_alternative_fields(item_data: dict, item_type: FileType, id_set_file: dict):
     r"""
    Checks if there are missing alternative fields in the given data, and adds the missing alternative fields to the
    data. Determining whether the item has an alterntaive field is done by the id set.

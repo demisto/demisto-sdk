@@ -1,5 +1,4 @@
 import glob
-import json
 import os
 import shutil
 from pathlib import Path
@@ -31,28 +30,18 @@ from demisto_sdk.commands.common.tools import (
     get_test_playbook_id, get_to_version, get_yaml, has_remote_configured,
     is_origin_content_repo, is_pack_path, is_uuid, retrieve_file_ending,
     run_command_os, server_version_compare, to_kebab_case)
-from demisto_sdk.tests.constants_test import (DUMMY_SCRIPT_PATH, IGNORED_PNG,
-                                              INDICATORFIELD_EXTRA_FIELDS,
-                                              SOURCE_FORMAT_INTEGRATION_COPY,
-                                              TEST_PLAYBOOK,
-                                              VALID_BETA_INTEGRATION_PATH,
-                                              VALID_DASHBOARD_PATH,
-                                              VALID_GENERIC_DEFINITION_PATH,
-                                              VALID_GENERIC_FIELD_PATH,
-                                              VALID_GENERIC_MODULE_PATH,
-                                              VALID_GENERIC_TYPE_PATH,
-                                              VALID_INCIDENT_FIELD_PATH,
-                                              VALID_INCIDENT_TYPE_PATH,
-                                              VALID_INTEGRATION_TEST_PATH,
-                                              VALID_LAYOUT_PATH, VALID_MD,
-                                              VALID_PLAYBOOK_ID_PATH,
-                                              VALID_REPUTATION_FILE,
-                                              VALID_SCRIPT_PATH,
-                                              VALID_WIDGET_PATH,
-                                              ALTERNATIVE_FIELDS_ID_SET_PATH,
-                                              ALTERNATIVE_FIELDS_INVALID_INCIDENT_FIELD_PATH,
-                                              ALTERNATIVE_FIELDS_VALID_INCIDENT_FIELD_PATH,
-                                              )
+from demisto_sdk.tests.constants_test import (
+    ALTERNATIVE_FIELDS_ID_SET_PATH,
+    ALTERNATIVE_FIELDS_INVALID_INCIDENT_FIELD_PATH,
+    ALTERNATIVE_FIELDS_VALID_INCIDENT_FIELD_PATH, DUMMY_SCRIPT_PATH,
+    IGNORED_PNG, INDICATORFIELD_EXTRA_FIELDS, SOURCE_FORMAT_INTEGRATION_COPY,
+    TEST_PLAYBOOK, VALID_BETA_INTEGRATION_PATH, VALID_DASHBOARD_PATH,
+    VALID_GENERIC_DEFINITION_PATH, VALID_GENERIC_FIELD_PATH,
+    VALID_GENERIC_MODULE_PATH, VALID_GENERIC_TYPE_PATH,
+    VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH,
+    VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_PATH, VALID_MD,
+    VALID_PLAYBOOK_ID_PATH, VALID_REPUTATION_FILE, VALID_SCRIPT_PATH,
+    VALID_WIDGET_PATH)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT, MAPPER, OLD_CLASSIFIER, REPUTATION)
 from TestSuite.pack import Pack
@@ -1657,21 +1646,22 @@ class TestGetItemMarketplaces:
         assert len(marketplaces) == 1
         assert 'xsoar' in marketplaces
 
+
 INVALID_PLAYBOOK_NESTED_DATA = {'id': 'a037cfcc-aa5a-417c-81c7-dd569be7b783',
-      'version': '-1',
-      'name': 'Panorama Query Logs',
-      'description': 'Query Panorama Logs of types: traffic, threat, url, data-filtering and wildfire.',
-      'playbookName': 'Panorama Query Logs',
-      'type': 'playbook',
-      'iscommand': 'false'}
+                                'version': '-1',
+                                'name': 'Panorama Query Logs',
+                                'description': 'Query Panorama Logs of types: traffic, threat, url, data-filtering and wildfire.',
+                                'playbookName': 'Panorama Query Logs',
+                                'type': 'playbook',
+                                'iscommand': 'false'}
 VALID_PLAYBOOK_NESTED_DATA = {'id': 'a037cfcc-aa5a-417c-81c7-dd569be7b783',
-      'version': '-1',
-      'name': 'Panorama Query Logs',
-      'description': 'Query Panorama Logs of types: traffic, threat, url, data-filtering and wildfire.',
-      'playbookName': 'Panorama Query Logs',
-      'playbookName_x2': 'Panorama Query Logs_x2',
-      'type': 'playbook',
-      'iscommand': 'false'}
+                              'version': '-1',
+                              'name': 'Panorama Query Logs',
+                              'description': 'Query Panorama Logs of types: traffic, threat, url, data-filtering and wildfire.',
+                              'playbookName': 'Panorama Query Logs',
+                              'playbookName_x2': 'Panorama Query Logs_x2',
+                              'type': 'playbook',
+                              'iscommand': 'false'}
 INVALID_INCIDENT_FIELD_DATA = tools.get_json(ALTERNATIVE_FIELDS_INVALID_INCIDENT_FIELD_PATH)
 VALID_INCIDENT_FIELD_DATA = tools.get_json(ALTERNATIVE_FIELDS_VALID_INCIDENT_FIELD_PATH)
 

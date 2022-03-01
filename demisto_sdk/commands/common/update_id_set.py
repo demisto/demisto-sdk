@@ -148,7 +148,7 @@ def get_alternative_fields_from_data(data: dict) -> Union[bool, dict]:
     """
     # We first check specifically for name and id, not in the recursive call, to avoid catching cases of
     # nested items having an alternative name or id.
-    id_x2 = data.get('commonfields').get('id_x2') if data.get('commonfields') else data.get('id_x2')
+    id_x2 = data.get('commonfields', {}).get('id_x2') if data.get('commonfields') else data.get('id_x2')
     name_x2 = data.get('name_x2')
     if id_x2 or name_x2:
         return {'id_x2': id_x2, 'name_x2': name_x2}

@@ -77,7 +77,7 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
         alias_ids: set = {f'incident_{alias.get("cliName")}' for alias in aliases}
         if not self.id_set:
             self.id_set = open_id_set_file(self.id_set_path)
-        incident_field_list: list = self.id_set.get('IncidentFields')
+        incident_field_list: list = self.id_set.get('IncidentFields', [])
 
         for incident_field in incident_field_list:
             field_id = list(incident_field.keys())[0]

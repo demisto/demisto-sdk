@@ -10,13 +10,10 @@ import dictdiffer
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, INTEGRATION, PLAYBOOK)
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS,
-                                               check_and_add_missing_alternative_fields,
-                                               get_dict_from_file,
-                                               get_pack_metadata,
-                                               get_remote_file,
-                                               is_file_from_content_repo,
-                                               open_id_set_file)
+from demisto_sdk.commands.common.tools import (
+    LOG_COLORS, check_and_add_missing_alternative_fields, get_dict_from_file,
+    get_pack_metadata, get_remote_file, is_file_from_content_repo,
+    open_id_set_file)
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, GENERIC_OBJECTS_DEFAULT_FROMVERSION,
     GENERIC_OBJECTS_FILE_TYPES, NEW_FILE_DEFAULT_5_5_0_FROMVERSION,
@@ -68,7 +65,7 @@ class BaseUpdate:
         self.interactive = interactive
         self.updated_ids: Dict = {}
         self.id_set_path = kwargs.get('id_set_path')
-        self.id_set = {}
+        self.id_set: Dict = {}
         if not self.no_validate:
             self.validate_manager = ValidateManager(silence_init_prints=True, skip_conf_json=True,
                                                     skip_dependencies=True, skip_pack_rn_validation=True,

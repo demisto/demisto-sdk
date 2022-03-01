@@ -365,8 +365,6 @@ def test_demisto_in_repo_readme(mocker, repo):
     """
     from pathlib import Path
 
-    from demisto_sdk.commands.common.tools import (get_content_path,
-                                                   get_pack_name)
     readme_path = Path(repo.path) / '*README.md'
     mocker.patch.object(ReadMeValidator, '__init__', return_value=None)
 

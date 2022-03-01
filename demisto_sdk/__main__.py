@@ -135,7 +135,8 @@ def main(config, version, release_notes):
         else:
             last_release = get_last_remote_release_version()
             print_warning(f'You are using demisto-sdk {__version__}.')
-            if last_release and __version__ != last_release:
+            if last_release and __version__ != last_release \
+                    and last_release not in __version__:  # v1.2.3 in v1.2.3.dev8, no need to prompt
                 print_warning(f'however version {last_release} is available.\n'
                               f'To update, run pip3 install --upgrade demisto-sdk')
             if release_notes:

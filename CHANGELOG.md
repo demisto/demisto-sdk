@@ -2,6 +2,7 @@
 
 * Fixed an issue in **update-release-notes** where suggestion fix failed in validation.
 * Fixed a bug where `.env` files didn't load. @nicolas-rdgs
+* Fixed a bug in **pack validation** when validation fails if "demisto" found in the repo README.
 
 # 1.6.1
 * Added the '--use-packs-known-words' argument to the **doc-review** command

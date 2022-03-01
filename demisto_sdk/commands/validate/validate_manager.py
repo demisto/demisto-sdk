@@ -96,7 +96,7 @@ class ValidateManager:
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
             create_id_set=False, json_file_path=None, skip_schema_check=False, debug_git=False, include_untracked=False,
-            pykwalify_logs=False, check_is_unskipped=True, quite_bc=False, run_with_multiprocessing=False
+            pykwalify_logs=False, check_is_unskipped=True, quite_bc=False, run_with_multiprocessing=True
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -555,6 +555,7 @@ class ValidateManager:
 
         elif file_type == FileType.README:
             if not self.validate_all:
+                ReadMeValidator.add_node_env_vars()
                 with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):
                     return self.validate_readme(file_path, pack_error_ignore_list)
             return self.validate_readme(file_path, pack_error_ignore_list)

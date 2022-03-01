@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
 from threading import Lock
-from typing import List, Optional, Any
+from typing import List, Optional
 from urllib.parse import urlparse
 
 import click
@@ -112,7 +112,6 @@ class ReadMeValidator(BaseValidator):
 
     def mdx_verify_server(self) -> bool:
         if not ReadMeValidator._MDX_SERVER_PROCESS:
-            server_started: Any
             server_started = ReadMeValidator.start_mdx_server(handle_error=self.handle_error,
                                                               file_path=str(self.file_path))
             if not server_started:

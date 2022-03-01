@@ -270,7 +270,7 @@ def test_create_private_content_artifacts(private_repo):
         config.packs = config.content.packs
         exit_code = config.create_content_artifacts()
 
-        assert not same_folders(temp, ARTIFACTS_EXPECTED_RESULTS / 'private')
+        assert same_folders(temp, ARTIFACTS_EXPECTED_RESULTS / 'private')
         assert exit_code == 0
 
 

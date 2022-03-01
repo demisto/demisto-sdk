@@ -32,7 +32,7 @@ class MapperJSONFormat(BaseUpdateJSON):
         try:
             click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             from_version = VERSION_6_0_0 if self.from_version_key not in self.old_file else None
-            self.set_fromVersion(from_version=from_version)
+            self.set_fromVersion(from_version)
             self.update_json()
             self.set_description()
             self.set_mapping()

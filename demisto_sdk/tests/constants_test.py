@@ -246,7 +246,7 @@ INDICATORFIELD_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/in
 ALTERNATIVE_FIELDS_ID_SET_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/id_set_alternative_fields.json'
 ALTERNATIVE_FIELDS_INVALID_INCIDENT_FIELD_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/incidentfield-alternative_fields_invalid.json'
 ALTERNATIVE_FIELDS_INVALID_PLAYBOOK_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-alternative_fields_invalid.yml'
-ALTERNATIVE_FIELDS_VALID_INCDENT_FIELD_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/incidentfield-alternative_fields_valid.json'
+ALTERNATIVE_FIELDS_VALID_INCIDENT_FIELD_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/incidentfield-alternative_fields_valid.json'
 ALTERNATIVE_FIELDS_VALID_PLAYBOOK_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-alternative_fields_valid.yml'
 
 DIR_LIST = [

@@ -74,7 +74,7 @@ from demisto_sdk.tests.constants_test import (
     VALID_PACK, VALID_PLAYBOOK_CONDITION, VALID_REPUTATION_PATH,
     VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
     WIDGET_TARGET, ALTERNATIVE_FIELDS_ID_SET_PATH, ALTERNATIVE_FIELDS_INVALID_INCIDENT_FIELD_PATH,
-    ALTERNATIVE_FIELDS_INVALID_PLAYBOOK_PATH, ALTERNATIVE_FIELDS_VALID_INCDENT_FIELD_PATH,
+    ALTERNATIVE_FIELDS_INVALID_PLAYBOOK_PATH, ALTERNATIVE_FIELDS_VALID_INCIDENT_FIELD_PATH,
     ALTERNATIVE_FIELDS_VALID_PLAYBOOK_PATH)
 
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
@@ -1846,13 +1846,12 @@ def test_image_error(capsys):
     assert expected_string in stdout
     assert expected_code in stdout
 
-
 ALTERNATIVE_FIELDS_PATHS = [
-    (ALTERNATIVE_FIELDS_INVALID_INCIDENT_FIELD_PATH, False),
-    (ALTERNATIVE_FIELDS_INVALID_PLAYBOOK_PATH, False),
-    (ALTERNATIVE_FIELDS_INVALID_INCIDENT_FIELD_PATH, True),
-    (ALTERNATIVE_FIELDS_VALID_INCDENT_FIELD_PATH, True)
-]
+        (ALTERNATIVE_FIELDS_INVALID_INCIDENT_FIELD_PATH, False),
+        (ALTERNATIVE_FIELDS_INVALID_PLAYBOOK_PATH, False),
+        (ALTERNATIVE_FIELDS_VALID_PLAYBOOK_PATH, True),
+        (ALTERNATIVE_FIELDS_VALID_INCIDENT_FIELD_PATH, True)
+    ]
 
 @pytest.mark.parametrize('path, result', ALTERNATIVE_FIELDS_PATHS)
 def test_alternative_fields(mocker, path, result):
@@ -1864,6 +1863,7 @@ def test_alternative_fields(mocker, path, result):
     Then
             Find the alternative fields if there are any and return the validate result.
     """
+
     mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
     validate_manager = ValidateManager(id_set_path=ALTERNATIVE_FIELDS_ID_SET_PATH)
     assert result == validate_manager.run_validations_on_file(path, None)

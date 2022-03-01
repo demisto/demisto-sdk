@@ -49,7 +49,10 @@ from demisto_sdk.tests.constants_test import (DUMMY_SCRIPT_PATH, IGNORED_PNG,
                                               VALID_REPUTATION_FILE,
                                               VALID_SCRIPT_PATH,
                                               VALID_WIDGET_PATH,
-                                              ALTERNATIVE_FIELDS_ID_SET_PATH)
+                                              ALTERNATIVE_FIELDS_ID_SET_PATH,
+                                              ALTERNATIVE_FIELDS_INVALID_INCIDENT_FIELD_PATH,
+                                              ALTERNATIVE_FIELDS_VALID_INCIDENT_FIELD_PATH,
+                                              )
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT, MAPPER, OLD_CLASSIFIER, REPUTATION)
 from TestSuite.pack import Pack
@@ -1669,8 +1672,8 @@ VALID_PLAYBOOK_NESTED_DATA = {'id': 'a037cfcc-aa5a-417c-81c7-dd569be7b783',
       'playbookName_x2': 'Panorama Query Logs_x2',
       'type': 'playbook',
       'iscommand': 'false'}
-INVALID_INCIDENT_FIELD_DATA = json.loads(ALTERNATIVE_FIELDS_INVALID_INCIDENT_FIELD_PATH)
-VALID_INCIDENT_FIELD_DATA = json.loads(ALTERNATIVE_FIELDS_VALID_INCIDENT_FIELD_PATH)
+INVALID_INCIDENT_FIELD_DATA = tools.get_json(ALTERNATIVE_FIELDS_INVALID_INCIDENT_FIELD_PATH)
+VALID_INCIDENT_FIELD_DATA = tools.get_json(ALTERNATIVE_FIELDS_VALID_INCIDENT_FIELD_PATH)
 
 ALTERNATIVE_FIELDS_DATA_AND_RESULTS = [(INVALID_PLAYBOOK_NESTED_DATA, 'playbookName',
                                         {'playbookName_x2': 'Panorama Query Logs_x2'}),
@@ -1696,5 +1699,5 @@ class TestMissingAlternativeFields:
         Then
             - Return the missing alternative fields if there are any.
         """
-        id_set = json.loads(ALTERNATIVE_FIELDS_ID_SET_PATH)
-        assert results == tools.get_missing_alternative_fields(data, field, id_set)
+        id_set = tools.get_json(ALTERNATIVE_FIELDS_ID_SET_PATH)
+        assert result == tools.get_missing_alternative_fields(data, field, id_set)

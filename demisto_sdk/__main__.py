@@ -11,6 +11,7 @@ from typing import IO
 # Third party packages
 import click
 import git
+from packaging.version import parse
 from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
@@ -136,7 +137,7 @@ def main(config, version, release_notes):
             last_release = get_last_remote_release_version()
             print_warning(f'You are using demisto-sdk {__version__}.')
             if last_release and __version__ != last_release \
-                    and f'{last_release}.dev' not in __version__:  # v1.2.3 in v1.2.3.dev8, no need to prompt
+                    and not (last_release == __version__ and parse(__version__).is_devrelease):  # 1.2.3 and 1.2.3.dev4
                 print_warning(f'however version {last_release} is available.\n'
                               f'To update, run pip3 install --upgrade demisto-sdk')
             if release_notes:

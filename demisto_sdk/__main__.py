@@ -869,6 +869,13 @@ def format(
     "-v", "--verbose",
     help="Verbose output", is_flag=True
 )
+@click.option(
+    "--reattach",
+    help="Reattach the detached files in the XSOAR instance"
+         "For the CI/CD Flow (if you specify the --input-config-file flag, "
+         "all the items in the instance that detached and are not exist in the SystemPacks folder in the repo "
+         "will reattached.)", is_flag=True
+)
 def upload(**kwargs):
     """Upload integration or pack to Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.

@@ -96,7 +96,7 @@ class Uploader:
         """
 
     def __init__(self, input: str, insecure: bool = False, verbose: bool = False, pack_names: list = None,
-                 skip_validation: bool = False, detached_files: bool = False):
+                 skip_validation: bool = False, detached_files: bool = False, reattach: bool = False):
         self.path = input
         self.log_verbose = verbose
         verify = (not insecure) if insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
@@ -108,6 +108,7 @@ class Uploader:
         self.pack_names = pack_names
         self.skip_upload_packs_validation = skip_validation
         self.detached_files = detached_files
+        self.reattach_files = reattach
 
     def upload(self):
         """Upload the pack / directory / file to the remote Cortex XSOAR instance.
@@ -123,8 +124,9 @@ class Uploader:
             item_detacher = ItemDetacher(client=self.client)
             list_detach_items_ids: list = item_detacher.detach_item_manager(upload_file=True)
 
-            item_reattacher = ItemReattacher(client=self.client)
-            item_reattacher.reattach_item_manager(detached_files_ids=list_detach_items_ids)
+            if self.reattach_files:
+                item_reattacher = ItemReattacher(client=self.client)
+                item_reattacher.reattach_item_manager(detached_files_ids=list_detach_items_ids)
 
             if not self.path:
                 return SUCCESS_RETURN_CODE

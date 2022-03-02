@@ -321,7 +321,7 @@ def test_invalid_short_file(capsys):
     assert short_readme_error in stdout
 
 
-def test_demisto_in_readme(repo):
+def test_demisto_in_integration_readme(repo):
     """
         Given
             - An integration README contains the word 'Demisto'.
@@ -345,6 +345,35 @@ def test_demisto_in_readme(repo):
         readme_validator = ReadMeValidator(integration.readme.path)
 
         assert not readme_validator.verify_demisto_in_readme_content()
+
+def init_readmeValidator(readme_validator, repo, readme_path):
+    readme_validator.content_path = str(repo.path)
+    readme_validator.file_path = readme_path
+
+
+def test_demisto_in_repo_readme(mocker, repo):
+    """
+        Given
+            - A repo README contains the word 'Demisto'.
+
+        When
+            - Running verify_demisto_in_readme_content.
+
+        Then
+            - Ensure that the validation not fails.
+    """
+    from pathlib import Path
+
+    readme_path = Path(repo.path) / '*README.md'
+    mocker.patch.object(ReadMeValidator, '__init__', return_value=None)
+
+    with open(readme_path, 'w') as f:
+        f.write('This checks if we have the word Demisto in the README.')
+
+    with ChangeCWD(repo.path):
+        readme_validator = ReadMeValidator()
+        init_readmeValidator(readme_validator, repo, readme_path)
+        assert readme_validator.verify_demisto_in_readme_content()
 
 
 def test_demisto_not_in_readme(repo):

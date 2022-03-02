@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from mock import patch
 
@@ -630,3 +632,37 @@ class TestScriptValidator:
             validator = ScriptValidator(structure_validator)
 
             assert validator.runas_is_not_dbtrole()
+
+    README_TEST_DATA = [(True, False, False),
+                        (False, False, True),
+                        (False, True, True),
+                        (True, True, True),
+                        ]
+
+    @pytest.mark.parametrize("remove_readme, validate_all, expected_result", README_TEST_DATA)
+    @pytest.mark.parametrize("unified", [True, False])
+    def test_validate_readme_exists(self, repo, unified, remove_readme, validate_all, expected_result):
+        """
+              Given:
+                  - An integration yml that was added or modified to validate
+
+              When:
+                    All the tests occur twice for unified integrations = [True - False]
+                  - The integration is missing a readme.md file in the same folder
+                  - The integration has a readme.md file in the same folder
+                  - The integration is missing a readme.md file in the same folder but has not been changed or added
+                      (This check is for backward compatibility)
+
+              Then:
+                  - Ensure readme exists and validation fails
+                  - Ensure readme exists and validation passes
+                  - Ensure readme exists and validation passes
+        """
+        read_me_pack = repo.create_pack('README_test')
+        script = read_me_pack.create_script('script1', create_unified=unified)
+
+        structure_validator = StructureValidator(script.yml.path)
+        script_validator = ScriptValidator(structure_validator, validate_all=validate_all)
+        if remove_readme:
+            os.remove(script.readme.path)
+        assert script_validator.validate_readme_exists(script_validator.validate_all) is expected_result

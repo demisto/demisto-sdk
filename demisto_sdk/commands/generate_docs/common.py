@@ -117,7 +117,10 @@ def generate_table_section(data: list, title: str, empty_message: str = '', text
         section.append('---')
 
     if not data:
-        section.extend([empty_message, ''])
+        if empty_message:
+            section.extend([empty_message, ''])
+        else:
+            section = ['']
         return section
 
     section.extend([text, '    |', '    |']) if numbered_section else section.extend([text, '|', '|'])

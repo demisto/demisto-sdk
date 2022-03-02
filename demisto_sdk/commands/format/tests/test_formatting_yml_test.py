@@ -334,7 +334,7 @@ class TestFormatting:
         """
         schema_path = os.path.normpath(
             os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format('playbook')))
-        base_yml = PlaybookYMLFormat(source_path, path=schema_path, verbose=True)
+        base_yml = PlaybookYMLFormat(source_path, path=schema_path, verbose=True, clear_cache=True)
 
         # Assert the unnecessary keys are indeed in the playbook file
         assert 'excessiveKey' in base_yml.data.keys()
@@ -525,7 +525,7 @@ class TestFormatting:
 
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        res = format_manager(input=target, verbose=True)
+        res = format_manager(input=target, verbose=True, clear_cache=True)
         with open(target, 'r') as f:
             yaml_content = yaml.load(f)
             params = yaml_content['configuration']

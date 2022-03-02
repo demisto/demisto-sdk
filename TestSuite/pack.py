@@ -9,6 +9,7 @@ from TestSuite.json_based import JSONBased
 from TestSuite.playbook import Playbook
 from TestSuite.script import Script
 from TestSuite.secrets import Secrets
+from TestSuite.test_tools import suite_join_path
 from TestSuite.text_based import TextBased
 
 
@@ -148,13 +149,28 @@ class Pack:
             readme: Optional[str] = None,
             description: Optional[str] = None,
             changelog: Optional[str] = None,
-            image: Optional[bytes] = None
+            image: Optional[bytes] = None,
+            create_unified=False,
     ) -> Integration:
         if name is None:
             name = f'integration_{len(self.integrations)}'
         if yml is None:
-            yml = {}
-        integration = Integration(self._integrations_path, name, self._repo)
+            yml = {
+                'commonfields': {'id': name, 'version': -1},
+                'name': name,
+                'display': name,
+                'description': f'this is an integration {name}',
+                'script': {
+                    'type': 'python',
+                    'subtype': 'python3',
+                    'script': '',
+                    'commands': [],
+                },
+            }
+        if image is None:
+            with open(suite_join_path('assets/default_integration', 'sample_image.png'), 'rb') as image_file:
+                image = image_file.read()
+        integration = Integration(self._integrations_path, name, self._repo, create_unified=create_unified)
         integration.build(
             code,
             yml,
@@ -174,7 +190,8 @@ class Pack:
             readme: str = '',
             description: str = '',
             changelog: str = '',
-            image: bytes = b''
+            image: bytes = b'',
+            create_unified=False,
     ) -> Script:
         if name is None:
             name = f'script{len(self.scripts)}'
@@ -187,7 +204,7 @@ class Pack:
                 'subtype': 'python3',
                 'script': '-',
             }
-        script = Script(self._scripts_path, name, self._repo)
+        script = Script(self._scripts_path, name, self._repo, create_unified=create_unified)
         script.build(
             code,
             yml,
@@ -415,7 +432,9 @@ class Pack:
         if name is None:
             name = f'playbook-{len(self.playbooks)}'
         if yml is None:
-            yml = {}
+            yml = {
+                "tasks": {},
+            }
         playbook = Playbook(self._playbooks_path, name, self._repo)
         playbook.build(
             yml,
@@ -434,7 +453,9 @@ class Pack:
         if name is None:
             name = f'playbook-{len(self.test_playbooks)}'
         if yml is None:
-            yml = {}
+            yml = {
+                'tasks': {},
+            }
         playbook = Playbook(self._test_playbooks_path, name, self._repo, is_test_playbook=True)
         playbook.build(
             yml,

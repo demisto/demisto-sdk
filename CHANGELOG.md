@@ -1,7 +1,19 @@
 # Changelog
-* Removed PYYAML library (using only ruamel instead).
-* Fixed an issue when filtering items using the ID set in the **create-content-artifacts** command.
+* Fixed an issue in **update-release-notes** where suggestion fix failed in validation.
+* Fixed a bug where `.env` files didn't load. @nicolas-rdgs
+* Fixed a bug where **validate** command failed when the *categories* field in the pack metadata was empty for non-integration packs.
+* Added *system* and *item-type* arguments to **download** command to support downloading of system items.
 * Added files in **test_files** directory to ignored files with git validation.
+
+# 1.6.1
+* Added the '--use-packs-known-words' argument to the **doc-review** command
+* Added YAML_Loader to handle yaml files in a standard way across modules, replacing PYYAML.
+* Fixed an issue when filtering items using the ID set in the **create-content-artifacts** command.
+* Fixed an issue in the **generate-docs** command where tables were generated with an empty description column.
+* Fixed an issue in the **split** command where splitting failed when using relative input/output paths.
+* Added warning when inferred files are missing.
+* Added to **validate** a validation for integration image dimensions, which should be 120x50px.
+* Improved an error in the **validate** command to better differentiate between the case where a required fetch parameter is malformed or missing.
 
 # 1.6.0
 * Fixed an issue in the **create-id-set** command where similar items from different marketplaces were reported as duplicated.

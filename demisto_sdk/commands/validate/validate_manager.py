@@ -1,3 +1,4 @@
+import json
 import os
 from configparser import ConfigParser, MissingSectionHeaderError
 from typing import Optional, Set, Tuple
@@ -23,6 +24,7 @@ from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 PRESET_ERROR_TO_IGNORE, Errors,
                                                 get_all_error_codes)
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.author_image import \
     AuthorImageValidator
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -81,13 +83,12 @@ from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import \
     XSOARConfigJsonValidator
 from demisto_sdk.commands.common.tools import (
-    check_and_add_missing_alternative_fields, find_type, get_api_module_ids,
-    get_api_module_integrations_set, get_pack_ignore_file_path, get_pack_name,
-    get_pack_names_from_files, get_relative_path_from_packs_dir, get_yaml,
-    open_id_set_file, get_all_using_paths, get_id_from_item_data, get_alternative_id_and_name_from_id_set)
+    check_and_add_missing_alternative_fields, find_type, get_all_using_paths,
+    get_alternative_id_and_name_from_id_set, get_api_module_ids,
+    get_api_module_integrations_set, get_id_from_item_data,
+    get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
+    get_relative_path_from_packs_dir, get_yaml, open_id_set_file)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
-from demisto_sdk.commands.common.handlers import YAML_Handler
-import json
 
 yaml = YAML_Handler()
 
@@ -1761,7 +1762,7 @@ class ValidateManager:
             items_using_current_item_paths = get_all_using_paths(item_id, file_type, self.id_set_file)
             for path in items_using_current_item_paths:
                 with open(path, 'r') as file:
-                    using_data = json.loads(file) if path.endswith('json') else yaml.load(file)
+                    using_data = json.loads(file.read()) if path.endswith('json') else yaml.load(file)
                     file_type = find_type(path)
                     if check_and_add_missing_alternative_fields(using_data, file_type, self.id_set_file):
                         # TODO: in the above condition function, there is duplicity with checking if the items have an

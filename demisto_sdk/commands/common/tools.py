@@ -2433,6 +2433,7 @@ def get_id_from_item_data(data):
     commonfields = data.get('commonfields')
     return commonfields.get('id') if commonfields else data.get('id')
 
+
 def should_alternate_field_by_item(content_item, id_set):
     """
     Go over the given content item and check if it should be modified to use its alternative fields, which is determined
@@ -2610,16 +2611,16 @@ def get_all_using_paths(item_id: str, item_type: FileType, id_set: dict):
     """
     using_items_paths = []
     using_key_mappings = {
-                            FileType.SCRIPT: {
-                                FileType.INCIDENT_FIELD: 'scripts',
-                                FileType.PLAYBOOK: 'implementing_scripts'
-                            },
-                            FileType.PLAYBOOK: {
-                                FileType.PLAYBOOK: 'implementing_playbooks',
-                                FileType.INCIDENT_TYPE: 'playbooks'
-                            }
-                        }
-    using_mapping = using_key_mappings.get(item_type)
+        FileType.SCRIPT: {
+            FileType.INCIDENT_FIELD: 'scripts',
+            FileType.PLAYBOOK: 'implementing_scripts'
+        },
+        FileType.PLAYBOOK: {
+            FileType.PLAYBOOK: 'implementing_playbooks',
+            FileType.INCIDENT_TYPE: 'playbooks'
+        }
+    }
+    using_mapping = using_key_mappings.get(item_type, {})
     for using_item_type, using_item_header in using_mapping.items():
         id_set_section = id_set[FileTypeToIDSetKeys[using_item_type]]
         for using_item in id_set_section:

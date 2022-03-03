@@ -285,7 +285,7 @@ def run_format_on_file(input: str, file_type: str, from_version: str, interactiv
         del kwargs['add_tests']
     # if file_type != FileType.INCIDENT_FIELD.value and 'id_set_path' in kwargs:
     #     # relevant only for incidentfield
-    #     del kwargs['id_set_path']
+    #     del kwargs['id_set_path'] TODO: remove
     update_object = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path, from_version=from_version,
                                                           interactive=interactive, **kwargs)
     format_res, validate_res = update_object.format_file()  # type: ignore

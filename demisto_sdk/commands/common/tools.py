@@ -2463,8 +2463,7 @@ def get_url_with_retries(url: str, retries: int, backoff_factor: int = 1, **kwar
     for _ in range(retries):
         response = session.get(url, **kwargs)
         try:
-            if not response.status_code == 503:  # hot fix should be removed
-                response.raise_for_status()
+            response.raise_for_status()
         except Exception as error:
             exception = error
         else:

@@ -14,6 +14,7 @@ import click
 import requests
 from git import InvalidGitRepositoryError
 from requests.adapters import HTTPAdapter
+from requests.exceptions import HTTPError
 from urllib3.util import Retry
 
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
@@ -321,12 +322,12 @@ class ReadMeValidator(BaseValidator):
                                                           error_type='branch_name_readme_absolute_error')
                 else:
                     try:
-                        response = get_url_with_retries(img_url, retries=5, backoff_factor=1, timeout=10)
-                    except Exception:
+                        get_url_with_retries(img_url, retries=5, backoff_factor=1, timeout=10)
+                    except HTTPError as error:
                         error_message, error_code = \
                             Errors.invalid_readme_image_error(prefix + f'({img_url})',
                                                               error_type='general_readme_absolute_error',
-                                                              response=response)
+                                                              response=error.response)
             except Exception as ex:
                 click.secho(f"Could not validate the image link: {img_url}\n {ex}", fg='yellow')
                 continue

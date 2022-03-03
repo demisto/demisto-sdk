@@ -19,7 +19,6 @@ from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
 from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
-from urllib.error import HTTPError
 
 import click
 import colorama
@@ -30,6 +29,7 @@ import requests
 import urllib3
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
+from requests.exceptions import HTTPError
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,

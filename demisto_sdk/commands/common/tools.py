@@ -19,6 +19,7 @@ from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
 from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
+from urllib.error import HTTPError
 
 import click
 import colorama
@@ -2464,7 +2465,7 @@ def get_url_with_retries(url: str, retries: int, backoff_factor: int = 1, **kwar
         response = session.get(url, **kwargs)
         try:
             response.raise_for_status()
-        except Exception as error:
+        except HTTPError as error:
             exception = error
         else:
             return response

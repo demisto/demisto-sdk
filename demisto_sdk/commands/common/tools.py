@@ -2429,6 +2429,10 @@ def alternate_item_fields(content_item):
                     alternate_item_fields(item)
 
 
+def get_id_from_item_data(data):
+    commonfields = data.get('commonfields')
+    return commonfields.get('id') if commonfields else data.get('id')
+
 def should_alternate_field_by_item(content_item, id_set):
     """
     Go over the given content item and check if it should be modified to use its alternative fields, which is determined
@@ -2437,12 +2441,10 @@ def should_alternate_field_by_item(content_item, id_set):
         content_item: content item object
         id_set: parsed id set dict
 
-    Returns: True if should alterante fields, false otherwise
+    Returns: True if should alternate fields, false otherwise
 
     """
-    commonfields = content_item.get('commonfields')
-    item_id = commonfields.get('id') if commonfields else content_item.get('id')
-
+    item_id = get_id_from_item_data(content_item)
     item_type = content_item.type()
     id_set_item_type = id_set.get(FileTypeToIDSetKeys.get(item_type))
     for item in id_set_item_type:
@@ -2480,7 +2482,7 @@ def get_item_from_id_set(item_identifier, id_set_section):
 def check_and_add_missing_alternative_fields(item_data: dict, item_type: FileType, id_set_file: dict):
     r"""
    Checks if there are missing alternative fields in the given data, and adds the missing alternative fields to the
-   data. Determining whether the item has an alterntaive field is done by the id set.
+   data. Determining whether the item has an alternative field is done by the id set.
     Args:
         item_data: The extracted data of the item from yml\json.
         item_type: The type of content item the data belongs to.
@@ -2492,7 +2494,7 @@ def check_and_add_missing_alternative_fields(item_data: dict, item_type: FileTyp
     file_type_item_dict = {
         FileType.INCIDENT_TYPE: ['playbookId'],
         FileType.INCIDENT_FIELD: ['fieldCalcScript', 'script'],
-        FileType.PLAYBOOK: ['playbookName', 'playbookId', 'scriptName'],
+        FileType.PLAYBOOK: ['playbookName', 'playbookId', 'scriptName', 'script'],
     }
 
     possible_alternative_fields = file_type_item_dict.get(item_type)
@@ -2514,7 +2516,7 @@ def check_and_add_missing_alternative_fields(item_data: dict, item_type: FileTyp
                 if field in possible_alternative_fields:
                     missing_alternative_fields = get_missing_alternative_fields(item_data, field, id_set_file)
                     if missing_alternative_fields:
-                        item_data.update(get_missing_alternative_fields(item_data, field, id_set_file))
+                        item_data.update(missing_alternative_fields)
                         was_alternated = True
 
     return was_alternated
@@ -2522,40 +2524,108 @@ def check_and_add_missing_alternative_fields(item_data: dict, item_type: FileTyp
 
 def get_missing_alternative_fields(data, field, id_set):
     """
-    Check if the given field for the given item data has an alternative in the id_set.
+    Check if the given field in the given item data has an alternative in the id_set.
     For example, if the field is playbookName, search the id set for that playbook and check if there is a 'name_x2' for
     that playbook.
     Args:
-        data: The item's data retrived from its yml or json. if the item is a playbook, the data represents a data
+        data: The item's data retrieved from its yml or json. if the item is a playbook, the data represents a data
         section under tasks > *task_id* > task
         field: The field of interest.
-        id_set: The alreday existing id set.
+        id_set: The already existing id set.
 
     Returns:
         Returns the alternative field value missing from data
     """
 
-    possible_script_fields = ['fieldCalcScript', 'script', 'scriptName', 'must', 'should']
     possible_playbook_fields = ['playbookId', 'playbookName']
     alternative_field = f'{field}_x2'
 
     if field in possible_playbook_fields:
-        id_set_section = id_set.get('playbooks')
+        field_type = FileType.PLAYBOOK
     else:
         # According to the way 'field' is generated in the calling function,
-        # this means the field is in possible_script_fields:
-        id_set_section = id_set.get('scripts')
+        # this means the field is of a script:
+        field_type = FileType.SCRIPT
 
-    item_info = get_item_from_id_set(data.get(field), id_set_section)
+    item_info = get_item_from_id_set(data.get(field), id_set.get(FileTypeToIDSetKeys[field_type]))
+    item_id_x2, item_name_x2 = get_alternative_id_and_name_in_item_info_from_id_set(item_info)
+    if item_info:
+        # the field represented an id
+        if item_info.get(data[field]) and item_id_x2 and alternative_field not in data:
+            return {alternative_field: item_id_x2}
+
+        # the field represented a name
+        if list(item_info.values())[0].get('name') and item_name_x2 and alternative_field not in data:
+            return {alternative_field: item_name_x2}
+
+    return {}
+
+
+def get_alternative_id_and_name_from_id_set(item_identifier, item_type, id_set):
+    """
+    Get the alternative id and name from the id set, of the given item identifier.
+    The identifier can be either the item's name or id.
+    Args:
+        item_identifier: id or name of item.
+        item_type: the type of the item.
+        id_set: the loaded id set.
+
+    Returns:
+        alternative_id, alternative_name, or None, None if there arent any.
+
+    """
+    item_info = get_item_from_id_set(item_identifier, id_set.get(FileTypeToIDSetKeys[item_type]))
+    return get_alternative_id_and_name_in_item_info_from_id_set(item_info)
+
+
+def get_alternative_id_and_name_in_item_info_from_id_set(item_info):
+    """
+    Get the alternative id and name from the item's dict that was retrieved from the id set.
+    Args:
+        item_info: the dict representing the item in the id set.
+
+    Returns:
+        alternative_id, alternative_name, or None, None if there arent any.
+    """
+
+    item_id_x2, item_name_x2 = None, None
     if item_info:
         item_inner_info = list(item_info.values())[0]
         item_id_x2 = item_inner_info.get('id_x2')
         item_name_x2 = item_inner_info.get('name_x2')
+    return item_id_x2, item_name_x2
 
-        if item_info.get(data[field]) and item_id_x2 and alternative_field not in data:
-            return {alternative_field: item_id_x2}
 
-        if item_inner_info.get('name') and item_name_x2 and alternative_field not in data:
-            return {alternative_field: item_name_x2}
+def get_all_using_paths(item_id: str, item_type: FileType, id_set: dict):
+    """
+    Get all of the content items that are using the item with the id given.
+    Args:
+        item_id: id of item of interest
+        item_type: type of given item
+        id_set: loaded id set.
 
-    return {}
+    Returns:
+        List of ids of items using item_id.
+
+    """
+    using_items_paths = []
+    using_key_mappings = {
+                            FileType.SCRIPT: {
+                                FileType.INCIDENT_FIELD: 'scripts',
+                                FileType.PLAYBOOK: 'implementing_scripts'
+                            },
+                            FileType.PLAYBOOK: {
+                                FileType.PLAYBOOK: 'implementing_playbooks',
+                                FileType.INCIDENT_TYPE: 'playbooks'
+                            }
+                        }
+    using_mapping = using_key_mappings.get(item_type)
+    for using_item_type, using_item_header in using_mapping.items():
+        id_set_section = id_set[FileTypeToIDSetKeys[using_item_type]]
+        for using_item in id_set_section:
+            using_item_info = list(using_item.values())[0]
+            used_items = using_item_info.get(using_item_header, [])
+            if item_id in used_items:
+                using_items_paths.append(using_item_info.get('file_path'))
+
+    return using_items_paths

@@ -84,8 +84,12 @@ from demisto_sdk.commands.common.tools import (
     check_and_add_missing_alternative_fields, find_type, get_api_module_ids,
     get_api_module_integrations_set, get_pack_ignore_file_path, get_pack_name,
     get_pack_names_from_files, get_relative_path_from_packs_dir, get_yaml,
-    open_id_set_file)
+    open_id_set_file, get_all_using_paths, get_id_from_item_data, get_alternative_id_and_name_from_id_set)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from demisto_sdk.commands.common.handlers import YAML_Handler
+import json
+
+yaml = YAML_Handler()
 
 
 class ValidateManager:
@@ -500,10 +504,7 @@ class ValidateManager:
 
         # alternative fields validation
         if self.id_set_file:
-            if not self.validate_alternative_fields_of_nested_item(structure_validator.current_file, file_type):
-                self.handle_error(error_message='Alternative fields of nested items were found and are missing from '
-                                                'this file, please add them to the file.',
-                                  file_path=file_path, error_code='ADD')
+            if not self.validate_alternative_fields(structure_validator.current_file, file_type):
                 return False
         else:
             click.secho('Skipping alterntive fields validations since a valid id set file was not provided', fg='yellow')
@@ -1729,16 +1730,45 @@ class ValidateManager:
             return is_valid_as_deprecated
         return None
 
-    def validate_alternative_fields_of_nested_item(self, item_data: dict, file_type: FileType):
+    def validate_alternative_fields(self, item_data: dict, file_type: FileType):
         r"""
-            Checks if the given item has alternative fields missing from its data, using the id set.
+            Validate the use of alternative fields related to this item. this inclueds:
+            1. Check if the given item is using any item that has alternative fields, and those are missing from
+             its data, using the id set.
+            2. Check if this current item has an alternative field, and if sp check if all items that are using this
+            current item have its alternative field in their file too.
         Args:
             item_data: The extracted data of the item from yml\json.
             file_type: The type of content item the data belongs to.
 
         Returns:
-            True if there are missing alternative fields, False otherwise.
+            False if the file is invalid due to missing alternative fields, True otherwise.
 
         """
+        is_valid = True
 
-        return not check_and_add_missing_alternative_fields(item_data, file_type, self.id_set_file)
+        # validate the use of alternative fields in current item's file
+        if check_and_add_missing_alternative_fields(item_data, file_type, self.id_set_file):
+            error_message, error_code = Errors.missing_alternative_fields_nested_items()
+            self.handle_error(error_message, error_code, file_path=self.file_path,
+                              suggested_fix=Errors.suggest_fix(self.file_path, '-s', self.id_set_path))
+            is_valid = False
+
+        # validate alternative fields in items that are using this current item
+        item_id = get_id_from_item_data(item_data)
+        alternative_id, alternative_name = get_alternative_id_and_name_from_id_set(item_id, file_type, self.id_set_file)
+        if alternative_id or alternative_name:
+            items_using_current_item_paths = get_all_using_paths(item_id, file_type, self.id_set_file)
+            for path in items_using_current_item_paths:
+                with open(path, 'r') as file:
+                    using_data = json.loads(file) if path.endswith('json') else yaml.load(file)
+                    file_type = find_type(path)
+                    if check_and_add_missing_alternative_fields(using_data, file_type, self.id_set_file):
+                        # TODO: in the above condition function, there is duplicity with checking if the items have an
+                        #  alternative field (since we got here cause we already checked that...)
+                        error_message, error_code = \
+                            Errors.missing_alternative_fields_in_using_items(get_id_from_item_data(using_data), item_id)
+                        self.handle_error(error_message, error_code, file_path=path,
+                                          suggested_fix=Errors.suggest_fix(path, '-s', self.id_set_path))
+                        is_valid = False
+        return is_valid

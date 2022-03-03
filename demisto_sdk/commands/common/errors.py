@@ -152,6 +152,10 @@ ERROR_CODE = {
     "invalid_marketplaces_in_alias": {'code': "IF117", 'ui_applicable': False, 'related_field': 'Aliases'},
     "aliases_with_inner_alias": {'code': "IF118", 'ui_applicable': False, 'related_field': 'Aliases'},
 
+    # AF - alternative fields
+    "missing_alternative_fields_in_using_items": {'code': "AF100", 'ui_applicable': False, 'related_field': ''},
+    "missing_alternative_fields_nested_items": {'code': "AF101", 'ui_applicable': False, 'related_field': ''},
+
     # IM - Images
     "no_image_given": {'code': "IM100", 'ui_applicable': True, 'related_field': 'image'},
     "image_too_large": {'code': "IM101", 'ui_applicable': True, 'related_field': 'image'},
@@ -2172,3 +2176,15 @@ class Errors:
         return "The following fields exist as aliases and therefore cannot contain an 'Aliases' key."\
                f"\n{invalid_aliases}\n" \
                "Please remove the key from the fields or removed the fields from the other field's Aliases list."
+
+    @staticmethod
+    @error_code_decorator
+    def missing_alternative_fields_nested_items():
+        return 'Alternative fields of nested items were found and are missing from this file, ' \
+               'please add them to the file.'  # TODO: improve msg
+
+    @staticmethod
+    @error_code_decorator
+    def missing_alternative_fields_in_using_items(using_id, item_id):
+        return f'Item with id {using_id} is using the item with id {item_id} and it is missing its alternative ' \
+               f'fields. Please add the missing alternative fields to the file.'  # TODO: improve msg

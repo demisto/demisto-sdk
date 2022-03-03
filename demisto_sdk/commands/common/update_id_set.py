@@ -154,7 +154,7 @@ def get_alternative_fields_from_data(data: dict) -> Union[bool, dict]:
         return {'id_x2': id_x2, 'name_x2': name_x2}
 
     # if we reached this part, then there may be an alternative field but it is not one that is specifically in
-    # the id set (like id or name). in this case return the
+    # the id set (like id or name). in this case return whether there are any alternative fields at all.
     return does_dict_have_alternative_key(data)
 
 

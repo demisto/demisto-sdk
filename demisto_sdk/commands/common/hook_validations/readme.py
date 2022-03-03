@@ -23,8 +23,9 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (
-    compare_context_path_in_yml_and_readme, get_content_path, get_yaml,
-    get_yml_paths_in_dir, print_warning, run_command_os)
+    compare_context_path_in_yml_and_readme, get_content_path,
+    get_url_with_retries, get_yaml, get_yml_paths_in_dir, print_warning,
+    run_command_os)
 
 NO_HTML = '<!-- NOT_HTML_DOC -->'
 YES_HTML = '<!-- HTML_DOC -->'
@@ -319,13 +320,9 @@ class ReadMeValidator(BaseValidator):
                         Errors.invalid_readme_image_error(prefix + f'({img_url})',
                                                           error_type='branch_name_readme_absolute_error')
                 else:
-                    adapter = HTTPAdapter(max_retries=Retry(total=5, backoff_factor=1))
-                    session = requests.Session()
-                    session.mount("https://", adapter)
-                    session.mount("http://", adapter)
-                    response = session.get(img_url, timeout=10, stream=True)
-
-                    if response.status_code != 200:
+                    try:
+                        response = get_url_with_retries(img_url, retries=5, backoff_factor=1, timeout=10)
+                    except Exception:
                         error_message, error_code = \
                             Errors.invalid_readme_image_error(prefix + f'({img_url})',
                                                               error_type='general_readme_absolute_error',

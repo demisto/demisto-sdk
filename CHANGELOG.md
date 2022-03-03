@@ -4,6 +4,8 @@
 * Fixed a bug where `.env` files didn't load. @nicolas-rdgs
 * Fixed a bug where **validate** command failed when the *categories* field in the pack metadata was empty for non-integration packs.
 * Added *system* and *item-type* arguments to **download** command to support downloading of system items.
+* Added to **validate** a validation checking that script/integration/playbook have a README file. will validate only upon *-i* and *-g*
+* Fixed a regression on **doc-review** return the *-g* argument funcionality
 
 # 1.6.1
 * Added the '--use-packs-known-words' argument to the **doc-review** command

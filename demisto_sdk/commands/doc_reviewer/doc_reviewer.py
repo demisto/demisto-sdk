@@ -133,7 +133,6 @@ class DocReviewer:
 
         return camel.split()
 
-
     def get_all_md_and_yml_files_in_dir(self, dir_name):
         """recursively get all the supported files from a given dictionary"""
         for root, _, files in os.walk(dir_name):

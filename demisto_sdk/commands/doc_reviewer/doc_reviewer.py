@@ -116,7 +116,7 @@ class DocReviewer:
             singular_word = word[:-1]
             return singular_word == singular_word.upper()
         return False
-    
+
     def is_camel_case(self, word):
         """check if a given word is in camel case"""
         if word != word.lower() and word != word.upper() and "_" not in word and word != word.title():

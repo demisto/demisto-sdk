@@ -57,6 +57,15 @@ If there are files that exist both in the output directory and are specified in 
 
     Regex Pattern. When specified, download all the custom content files with a name that matches this regex pattern.
 
+* **--system**
+
+    Download system items.
+
+* **--it, --item-type**
+
+    The items type to download, use just when downloading system items.
+
+
 ### Asumptions
 For consistency, we assume that for each integration or script the folder containing it will have the same name as the integration/script name with no separators. For example the integration `Test Integration_Full-Name`, will be under `~/.../Packs/TestPack/Integrations/TestIntegrationFullName/`.
 
@@ -114,4 +123,9 @@ demisto-sdk download -o Packs/Phishing -r *Pishing*
 ```
 Regex Pattern. When specified, download all the custom content files with a name that matches this regex pattern.
 -o / --output should not be provided.
+<br/><br/>
+```
+demisto-sdk download --system -it IncidentType -i "Authentication" -i "Access" -o Packs/ABCD
+```
+Download system items, should provide the item type, and the item name as input.
 <br/><br/>

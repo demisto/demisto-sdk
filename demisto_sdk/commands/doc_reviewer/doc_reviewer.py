@@ -160,7 +160,7 @@ class DocReviewer:
             ) in self.SUPPORTED_FILE_TYPES:
                 self.files.append(file)
 
-    def get_files_to_run_on(self, file_path):
+    def get_files_to_run_on(self, file_path=None):
         """Get all the relevant files that the spell-check could work on"""
         if self.git_util:
             self.get_files_from_git()
@@ -208,8 +208,11 @@ class DocReviewer:
         if len(self.SUPPORTED_FILE_TYPES) == 1:
             click.secho('Running only on release notes', fg='bright_cyan')
 
-        for file_path in self.file_paths:
-            self.get_files_to_run_on(file_path)
+        if self.file_paths:
+            for file_path in self.file_paths:
+                self.get_files_to_run_on(file_path)
+        else:
+            self.get_files_to_run_on()
 
         # no eligible files found
         if not self.files:

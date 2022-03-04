@@ -110,9 +110,18 @@ class DocReviewer:
         return '', []
 
     @staticmethod
-    def is_camel_case(word):
+    def is_upper_case_word_plural(word):
+        """check if a given word is an upper case word in plural, like: URLs, IPs, etc"""
+        if len(word) > 2 and word[-1] == 's':
+            singular_word = word[:-1]
+            return singular_word == singular_word.upper()
+        return False
+    
+    def is_camel_case(self, word):
         """check if a given word is in camel case"""
-        return word != word.lower() and word != word.upper() and "_" not in word and word != word.title()
+        if word != word.lower() and word != word.upper() and "_" not in word and word != word.title():
+            return not self.is_upper_case_word_plural(self.remove_punctuation(word))
+        return False
 
     @staticmethod
     def camel_case_split(camel):
@@ -124,14 +133,6 @@ class DocReviewer:
 
         return camel.split()
 
-    @staticmethod
-    def is_upper_case_word_plural(word):
-        """check if a given word is an upper case word in plural, like: URLs, IPs, etc"""
-        if word[-1] == 's':
-            singular_word = word[:-1]
-            if singular_word == singular_word.upper():
-                return True
-        return False
 
     def get_all_md_and_yml_files_in_dir(self, dir_name):
         """recursively get all the supported files from a given dictionary"""
@@ -311,7 +312,7 @@ class DocReviewer:
     def check_word(self, word):
         """Check if a word is legal"""
         # check camel cases
-        if not self.no_camel_case and self.is_camel_case(word) and not self.is_upper_case_word_plural(self.remove_punctuation(word)):
+        if not self.no_camel_case and self.is_camel_case(word):
             word = self.remove_punctuation(word)
             sub_words = self.camel_case_split(word)
             for sub_word in sub_words:

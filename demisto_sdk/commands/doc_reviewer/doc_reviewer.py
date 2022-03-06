@@ -120,6 +120,7 @@ class DocReviewer:
     def is_camel_case(self, word):
         """check if a given word is in camel case"""
         if word != word.lower() and word != word.upper() and "_" not in word and word != word.title():
+            # check if word is an upper case plural, like IPs. If it is, then the word is not in camel case
             return not self.is_upper_case_word_plural(self.remove_punctuation(word))
         return False
 

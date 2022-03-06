@@ -57,7 +57,7 @@ setuptools = "*"
 markupsafe = "==2.0.1"
 imagesize = "*"
 cryptography = "*"
-# linter-related 
+# linter-related
 typed-ast = "*"
 types-dateparser="*"
 types-pyyaml="*"

@@ -7,7 +7,7 @@
 * Added a validation to **validate**, checking that each script, integration and playbook have a README file. This validation only runs when the command is called with either the `-i` or the `-g` flag.
 * Fixed a regression issue with **doc-review**, where  the `-g` flag did not work
 * Improved the detection of errors in **doc-review** command.
-* Fixed an issue in **validate**, checking README.md file is not empty, for packs that contain playbooks, or were written by partners.
+* The **validate** command now checks if a readme file is empty, only for packs that contain playbooks or were written by a partner
 
 # 1.6.1
 * Added the '--use-packs-known-words' argument to the **doc-review** command

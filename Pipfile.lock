@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "c6650c4be2c9b4d123322830579ee9c12fdd1cc7283b9c9ce52987a6c3341082"
+            "sha256": "0fd28dba57c829d1d9c2b9e6e6c239e85050a45caea4cd183dab03f8dd50639a"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -379,10 +379,6 @@
             ],
             "index": "pypi",
             "version": "==3.1.1"
-        },
-        "demisto-sdk": {
-            "path": ".",
-            "version": "==1.6.2.dev27"
         },
         "dictdiffer": {
             "hashes": [

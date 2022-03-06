@@ -336,7 +336,8 @@ class ReadMeValidator(BaseValidator):
                 formatted_error = \
                     self.handle_error(error_message, error_code, file_path=self.file_path,
                                       should_print=should_print_error)
-                error_list.append(formatted_error)
+                if formatted_error:
+                    error_list.append(formatted_error)
 
         return error_list
 

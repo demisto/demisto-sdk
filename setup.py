@@ -24,6 +24,7 @@ parser.read("Pipfile")
 def end_or_comment_index(value: str):
     return len(value) if value.find("#") == -1 else value.find("#")
 
+
 # when install local version for development, demisto-sdk gets added to the pipfile and should be ignored here
 install_requires = [f'{key}{value[:end_or_comment_index(value)]}'.replace('\'', '').replace('\"', '').replace('*', '')
                     for key, value in parser['packages'].items() if key != 'demisto-sdk']

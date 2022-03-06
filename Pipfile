@@ -30,7 +30,7 @@ inflection = "==0.5.1"
 isort = "*"
 jsonschema = "*"
 mergedeep = "*"
-networkx = "==2.6.3"
+networkx = "==2.6.3"# 2.7 doesnt support python 3.7 anymore
 nltk = "*"
 pipenv = "*"
 prettytable = "==0.7.2"

@@ -7,7 +7,7 @@
 * Added a validation to **validate**, checking that each script, integration and playbook have a README file. This validation only runs when the command is called with either the `-i` or the `-g` flag.
 * Fixed a regression issue with **doc-review**, where  the `-g` flag did not work
 * Improved the detection of errors in **doc-review** command.
-* When **validate** is validating *pack unique files* it will check for README existence only for packs that contain playbooks or writen by partners. 
+* Fixed an issue in **validate**, where README existence was only checked in packs that contain playbooks, or written by partners. 
 
 # 1.6.1
 * Added the '--use-packs-known-words' argument to the **doc-review** command

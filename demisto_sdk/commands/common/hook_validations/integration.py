@@ -42,6 +42,12 @@ class IntegrationValidator(ContentEntityValidator):
     EXPIRATION_FIELD_TYPE = 17
     ALLOWED_HIDDEN_PARAMS = {'longRunning', 'feedIncremental', 'feedReputation'}
 
+    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
+                 json_file_path=None, validate_all=False):
+        super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
+                         json_file_path=json_file_path, skip_docker_check=skip_docker_check)
+        self.validate_all = validate_all
+
     def is_valid_version(self):
         # type: () -> bool
         if self.current_file.get("commonfields", {}).get('version') == self.DEFAULT_VERSION:
@@ -81,6 +87,7 @@ class IntegrationValidator(ContentEntityValidator):
         """
         answers = [
             super().is_valid_file(validate_rn),
+            self.validate_readme_exists(self.validate_all),
             self.is_valid_subtype(),
             self.is_valid_default_array_argument_in_reputation_command(),
             self.is_valid_default_argument(),

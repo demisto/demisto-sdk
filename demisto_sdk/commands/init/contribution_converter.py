@@ -284,7 +284,10 @@ class ContributionConverter:
             generate_playbook_doc(yml_path)
 
         dir_output = os.path.dirname(os.path.realpath(yml_path))
-        readme_path = os.path.join(dir_output, 'README.md')
+        if file_type == 'playbook':
+            readme_path = yml_path.replace('.yml', '_README.md')
+        else:
+            readme_path = os.path.join(dir_output, 'README.md')
         self.readme_files.append(readme_path)
 
     def generate_readmes_for_new_content_pack(self, is_contribution=False):
@@ -317,7 +320,7 @@ class ContributionConverter:
 
         Args:
             files_to_source_mapping (Dict[str, Dict[str, str]]): Only used when updating a pack. mapping of a file
-                name as inside the the contribution zip to a dictionary containing the the associated source info
+                name as inside the contribution zip to a dictionary containing the the associated source info
                 for that file, specifically the base name (the name used in naming the split component files) and
                 the name of the containing directory.
         """

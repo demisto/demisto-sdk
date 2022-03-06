@@ -21,7 +21,7 @@ class Playbook:
         self.yml = YAML(tmpdir / f'{self.name}.yml', self._repo.path)
 
         if not self.is_test_playbook:
-            self.readme = File(tmpdir / 'README.md', self._repo.path)
+            self.readme = File(tmpdir / f'{self.name}_README.md', self._repo.path)
 
         if not self.is_test_playbook:
             # build playbook

@@ -71,7 +71,8 @@ class Pack:
             content_object = path_to_pack_object(object_path)
             # skip content items that are not displayed in the id set, if the corresponding flag is used
             if self._filter_items_by_id_set and content_object.type().value not in [FileType.RELEASE_NOTES.value,
-                                                                                    FileType.RELEASE_NOTES_CONFIG.value]:
+                                                                                    FileType.RELEASE_NOTES_CONFIG.value,
+                                                                                    FileType.TEST_PLAYBOOK]:
                 object_id = content_object.get_id()
                 if is_object_in_id_set(object_id, self._pack_info_from_id_set):
                     yield content_object

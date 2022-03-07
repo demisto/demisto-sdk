@@ -7,18 +7,17 @@ from typing import Any, Dict, Optional, Set, Union
 import click
 import dictdiffer
 
-from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_FROM_VERSION, INTEGRATION, PLAYBOOK)
+from demisto_sdk.commands.common.constants import (GENERAL_DEFAULT_FROMVERSION,
+                                                   INTEGRATION)
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
                                                get_pack_metadata,
                                                get_remote_file,
                                                is_file_from_content_repo)
-from demisto_sdk.commands.format.format_constants import (
-    DEFAULT_VERSION, ERROR_RETURN_CODE, GENERIC_OBJECTS_DEFAULT_FROMVERSION,
-    GENERIC_OBJECTS_FILE_TYPES, NEW_FILE_DEFAULT_5_5_0_FROMVERSION,
-    OLD_FILE_DEFAULT_1_FROMVERSION, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE,
-    VERSION_6_0_0)
+from demisto_sdk.commands.format.format_constants import (DEFAULT_VERSION,
+                                                          ERROR_RETURN_CODE,
+                                                          SKIP_RETURN_CODE,
+                                                          SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 yaml = YAML_Handler(allow_duplicate_keys=True)
@@ -220,95 +219,54 @@ class BaseUpdate:
                 return reg
         return None
 
-    def set_fromVersion_of_generic_object(self, from_version=None):
-        """Sets fromVersion key in a generic object file:
-        Args:
-            from_version: The specific from_version value.
-        """
-        if self.verbose:
-            click.echo('Setting fromVersion field of a generic object')
-        # If user entered specific from version key to be set
-        if from_version:
-            if LooseVersion(from_version) < LooseVersion(GENERIC_OBJECTS_DEFAULT_FROMVERSION):
-                click.echo(f'The given fromVersion value for generic entities should be'
-                           f' {GENERIC_OBJECTS_DEFAULT_FROMVERSION} or above , given: {from_version}.\n'
-                           f'Setting fromVersion field to {GENERIC_OBJECTS_DEFAULT_FROMVERSION}')
-                self.data[self.from_version_key] = GENERIC_OBJECTS_DEFAULT_FROMVERSION
-            else:
-                self.data[self.from_version_key] = from_version
-        else:
-            if LooseVersion(self.data.get(self.from_version_key, DEFAULT_CONTENT_ITEM_FROM_VERSION)) < \
-                    LooseVersion(GENERIC_OBJECTS_DEFAULT_FROMVERSION):
-                self.data[self.from_version_key] = GENERIC_OBJECTS_DEFAULT_FROMVERSION
+    def is_new_supported_integration(self, file_type):
+        metadata = get_pack_metadata(self.source_file)
+        return (metadata.get('currentVersion', '') == '1.0.0') and (
+            metadata.get('support', '') != 'xsoar') and file_type == INTEGRATION
 
-    def set_fromVersion(self, from_version=None, file_type: Optional[str] = None):
+    def is_general_default_version_lower(self, version_to_check):
+        return LooseVersion(GENERAL_DEFAULT_FROMVERSION) < LooseVersion(version_to_check)
+
+    def ask_user(self):
+        click.secho('No fromversion is specified for this content item, would you like me to update for you? [Y/n]',
+                    fg='red')
+        user_answer = input()
+        if user_answer in ['Y', 'y', 'yes', 'Yes']:
+            return True
+        else:
+            click.secho('Moving forward without updating fromversion tag', fg='yellow')
+            return False
+
+    def set_fromVersion(self, default_from_version='', file_type: Optional[str] = None):
         """Sets fromVersion key in file:
         Args:
             from_version: The specific from_version value.
             file_type: what is the file type: for now only integration type passed
         """
-        metadata = get_pack_metadata(self.source_file)
-        # if it is new contributed pack = setting version to 6.0.0
-        should_set_from_version = ((metadata.get('currentVersion', '') == '1.0.0') and
-                                   (metadata.get('support', '') != 'xsoar'))
+        version_to_set = None
+        if self.verbose:
+            click.echo('Setting fromVersion field')
 
-        # If file type is a generic object (generic field/type/module/definition) - fromVersion should be at least 6.5.0
-        if file_type in GENERIC_OBJECTS_FILE_TYPES:
-            self.set_fromVersion_of_generic_object(from_version)
-
-        # If there is no existing file in content repo
-        if not self.old_file:
-            if self.verbose:
-                click.echo('Setting fromVersion field')
-            # If current file does not have fromversion key
-            if self.from_version_key not in self.data:
-                # If user entered specific from version key to be set
-                if from_version:
-                    self.data[self.from_version_key] = from_version
-                # if it is new contributed pack = setting version to 6.0.0
-                elif should_set_from_version:
-                    self.data[self.from_version_key] = VERSION_6_0_0
-                # Otherwise add fromversion key to current file and set to default 5.5.0
-                else:
-                    self.data[self.from_version_key] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION
-            # If user wants to modify fromversion key and the key already existed
-            elif from_version:
-                self.data[self.from_version_key] = from_version
-            # if it is new contributed pack, this is integration, and its version is 5.5.0 do not change it
-            # if it is new contributed pack = setting version to 6.0.0
-            elif should_set_from_version:
-                if self.data.get(self.from_version_key) != '5.5.0' or file_type != INTEGRATION:
-                    self.data[self.from_version_key] = VERSION_6_0_0
-
-            # If it is new pack, and it has from version lower than 5.5.0, ask to set it to 5.5.0
-            # Playbook has its own validation in update_fromversion_by_user() function in update_playbook.py
-            elif LooseVersion(self.data.get(self.from_version_key, DEFAULT_CONTENT_ITEM_FROM_VERSION)) < \
-                    LooseVersion(NEW_FILE_DEFAULT_5_5_0_FROMVERSION) and file_type != PLAYBOOK:
-                if self.assume_yes:
-                    self.data[self.from_version_key] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION
-                else:
-                    set_from_version = str(
-                        input(f"\nYour current fromversion is: '{self.data.get(self.from_version_key)}'. Do you want "
-                              f"to set it to '5.5.0'? Y/N ")).lower()
-                    if set_from_version in ['y', 'yes']:
-                        self.data[self.from_version_key] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION
-
-        # If there is an existing file in content repo
+        # If user asked specific version to set.
+        if self.from_version:
+            version_to_set = self.from_version
+        # If there is already a from_version in file.
+        elif self.data.get(self.from_version_key) and self.is_new_supported_integration(file_type):
+            version_to_set = self.data.get(self.from_version_key)
+        # If there is from_version in the old_file(repo).
+        elif old_from_version := self.old_file.get(self.from_version_key):
+            version_to_set = old_from_version
         else:
-            # If current file does not have fromversion key
-            if self.from_version_key not in self.data:
-
-                # If user entered specific from version key to be set
-                if from_version:
-                    self.data[self.from_version_key] = from_version
-
-                # If existing file already have a fromversion key, copy its value to current file
-                elif self.from_version_key in self.old_file:
-                    self.data[self.from_version_key] = self.old_file[self.from_version_key]
-
-                # Otherwise add fromversion key to current file and set to default 1.0.0
+            # Ask the user if default_from_version is needed.
+            if self.assume_yes or self.ask_user():
+                # If the content type has different default from_version from the general type.
+                if default_from_version and self.is_general_default_version_lower(default_from_version):
+                    version_to_set = default_from_version
                 else:
-                    self.data[self.from_version_key] = OLD_FILE_DEFAULT_1_FROMVERSION
+                    # Set the general default from_version.
+                    version_to_set = GENERAL_DEFAULT_FROMVERSION
+        if version_to_set:
+            self.data[self.from_version_key] = version_to_set
 
     def arguments_to_remove(self) -> Set[str]:
         """ Finds diff between keys in file and schema of file type

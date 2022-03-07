@@ -14,6 +14,7 @@ from demisto_sdk.commands.format.update_classifier import (
     ClassifierJSONFormat, OldClassifierJSONFormat)
 from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
+from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 from demisto_sdk.commands.format.update_genericfield import \
     GenericFieldJSONFormat
@@ -327,7 +328,7 @@ def test_update_connection_removes_unnecessary_keys(tmpdir, monkeypatch):
                 "parentContextKey": "File",
                 "not_needed key": "not needed value"
             }],
-        "fromVersion": "5.0.0"
+        "fromVersion": "5.0.0",
     }
     with open(connection_file_path, 'w') as file:
         json.dump(connection_file_content, file)
@@ -336,6 +337,7 @@ def test_update_connection_removes_unnecessary_keys(tmpdir, monkeypatch):
         output=connection_file_path,
         path=CONNECTION_SCHEMA_PATH,
     )
+    connection_formatter.assume_yes = True
     monkeypatch.setattr(
         'builtins.input',
         lambda _: 'N'
@@ -663,8 +665,12 @@ class TestFormattingLayoutscontainer:
         Then
             - Ensure that fromVersion field was updated successfully with '6.0.0' value
         """
-        layoutscontainer_formatter.set_fromVersion('6.0.0')
-        assert layoutscontainer_formatter.data.get('fromVersion') == '6.0.0'
+        from demisto_sdk.commands.common.constants import \
+            GENERAL_DEFAULT_FROMVERSION
+
+        layoutscontainer_formatter.from_version = GENERAL_DEFAULT_FROMVERSION
+        layoutscontainer_formatter.set_fromVersion()
+        assert layoutscontainer_formatter.data.get('fromVersion') == GENERAL_DEFAULT_FROMVERSION
 
     def test_set_output_path(self, layoutscontainer_formatter):
         """
@@ -919,8 +925,12 @@ class TestFormattingClassifier:
         Then
             - Ensure that fromVersion field was updated successfully with '6.0.0' value
         """
-        classifier_formatter.set_fromVersion('6.0.0')
-        assert classifier_formatter.data.get('fromVersion') == '6.0.0'
+        from demisto_sdk.commands.common.constants import \
+            GENERAL_DEFAULT_FROMVERSION
+
+        classifier_formatter.from_version = GENERAL_DEFAULT_FROMVERSION
+        classifier_formatter.set_fromVersion()
+        assert classifier_formatter.data.get('fromVersion') == GENERAL_DEFAULT_FROMVERSION
 
 
 class TestFormattingOldClassifier:
@@ -1004,17 +1014,21 @@ class TestFormattingMapper:
         for field in ['locked', 'sourceClassifierId', 'toServerVersion']:
             assert field not in mapper_formatter.data
 
-    def test_set_toVersion(self, mapper_formatter):
+    def test_set_fromVersion(self, mapper_formatter):
         """
         Given
             - A mapper file without a fromVersion field
         When
             - Run format on mapper file
         Then
-            - Ensure that fromVersion field was updated successfully with '6.0.0' value
+            - Ensure that fromVersion field was updated successfully with GENERAL_DEFAULT_FROMVERSION value
         """
-        mapper_formatter.set_fromVersion('6.0.0')
-        assert mapper_formatter.data.get('fromVersion') == '6.0.0'
+        from demisto_sdk.commands.common.constants import \
+            GENERAL_DEFAULT_FROMVERSION
+
+        mapper_formatter.from_version = GENERAL_DEFAULT_FROMVERSION
+        mapper_formatter.set_fromVersion()
+        assert mapper_formatter.data.get('fromVersion') == GENERAL_DEFAULT_FROMVERSION
 
     def test_update_id(self, mapper_formatter):
         """
@@ -1155,7 +1169,7 @@ class TestFormattingReport:
         assert report_formatter.data.get('orientation') == 'landscape'
 
     @staticmethod
-    def exception_raise(placeholder=None):
+    def exception_raise(placeholder=None, default_from_version=''):
         raise ValueError("MY ERROR")
 
     FORMAT_OBJECT = [
@@ -1179,7 +1193,7 @@ class TestFormattingReport:
         Given
             - A JSON object formatter
         When
-            - Run run_format command and and exception is raised.
+            - Run run_format command and exception is raised.
         Then
             - Ensure the error is printed.
         """
@@ -1200,13 +1214,16 @@ class TestFormattingReport:
         When
             - Run format command
         Then
-            - Ensure that the integration fromversion is set to 6.0.0
+            - Ensure that the integration fromversion is set to GENERAL_DEFAULT_FROMVERSION
         """
+        from demisto_sdk.commands.common.constants import \
+            GENERAL_DEFAULT_FROMVERSION
+
         pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
         incident_type = pack.create_incident_type(name='TestType', content={})
-        bs = BaseUpdateJSON(input=incident_type.path)
+        bs = BaseUpdate(input=incident_type.path, assume_yes=True)
         bs.set_fromVersion()
-        assert bs.data['fromVersion'] == '6.0.0'
+        assert bs.data['fromVersion'] == GENERAL_DEFAULT_FROMVERSION
 
     def test_set_fromversion_six_new_contributor_pack(self, pack):
         """
@@ -1216,8 +1233,11 @@ class TestFormattingReport:
         When
             - Run format command
         Then
-            - Ensure that the integration fromversion is set to 6.0.0
+            - Ensure that the integration fromversion is set to GENERAL_DEFAULT_FROMVERSION
         """
+        from demisto_sdk.commands.common.constants import \
+            GENERAL_DEFAULT_FROMVERSION
+
         pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
         incident_type = pack.create_incident_type(name='TestType', content={'fromVersion': '5.5.0'})
         incident_field = pack.create_incident_field(name='TestField', content={'fromVersion': '5.5.0'})
@@ -1227,6 +1247,6 @@ class TestFormattingReport:
         layout = pack.create_layout(name='TestLayout', content={'fromVersion': '5.5.0'})
         for path in [incident_type.path, incident_field.path, indicator_field.path, indicator_type.path,
                      classifier.path, layout.path]:
-            bs = BaseUpdateJSON(input=path)
+            bs = BaseUpdate(input=path, assume_yes=True)
             bs.set_fromVersion()
-            assert bs.data['fromVersion'] == '6.0.0'
+            assert bs.data['fromVersion'] == GENERAL_DEFAULT_FROMVERSION

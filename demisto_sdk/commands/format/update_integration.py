@@ -8,6 +8,7 @@ from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS, BANG_COMMAND_NAMES, BETA_INTEGRATION,
     FEED_REQUIRED_PARAMS, INCIDENT_FETCH_REQUIRED_PARAMS, INTEGRATION,
     TYPE_PWSH, MarketplaceVersions)
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_item_marketplaces, get_json)
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
@@ -80,7 +81,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
     def set_default_outputs(self):
         """ Replaces empty output descriptions with default values """
-        default_values = get_json(Path().absolute().parents[2] / 'commands/common/default_output_descriptions.json')
+        default_values = get_json(Path(git_path()) / 'demisto_sdk/commands/common/default_output_descriptions.json')
 
         if self.verbose:
             click.echo('Updating empty integration outputs to their default (if exists)')

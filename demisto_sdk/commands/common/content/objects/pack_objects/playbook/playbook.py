@@ -24,4 +24,6 @@ class Playbook(YAMLContentObject):
         return client.import_playbook(file=self.path)
 
     def type(self):
+        if 'TestPlaybooks' in self.path.parts:
+            return FileType.TEST_PLAYBOOK
         return FileType.PLAYBOOK

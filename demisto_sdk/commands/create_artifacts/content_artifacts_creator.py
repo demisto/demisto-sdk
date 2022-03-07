@@ -699,8 +699,9 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     for script in pack.scripts:
         content_items_handler.handle_content_item(script)
         pack_report += dump_pack_conditionally(artifact_manager, script)
-    for test_playbook in pack.test_playbooks:
-        pack_report += dump_pack_conditionally(artifact_manager, test_playbook)
+    if artifact_manager.remove_test_playbooks:
+        for test_playbook in pack.test_playbooks:
+            pack_report += dump_pack_conditionally(artifact_manager, test_playbook)
     for release_note in pack.release_notes:
         pack_report += ObjectReport(release_note, content_packs=True)
         release_note.dump(artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR)

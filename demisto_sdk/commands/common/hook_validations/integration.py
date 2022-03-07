@@ -1461,7 +1461,7 @@ class IntegrationValidator(ContentEntityValidator):
         missing = {}
         for command in self.current_file.get('script', {}).get('commands', []):
             command_missing = []
-            for output in command.get('outputs', []):
+            for output in command.get('outputs') or []:  # outputs in some UT are None
                 if output['contextPath'] in defaults and not output.get('description'):
                     command_missing.append(output['contextPath'])
 

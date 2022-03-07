@@ -37,6 +37,11 @@ DOCUMENTATION_DIR = 'Documentation'
 JOBS_DIR = 'Jobs'
 PRE_PROCESS_RULES_DIR = 'PreProcessRules'
 LISTS_DIR = 'Lists'
+PARSING_RULES_DIR = 'ParsingRules'
+MODELING_RULES_DIR = 'ModelingRules'
+CORRELATION_RULES_DIR = 'CorrelationRules'
+XSIAM_DASHBOARDS_DIR = 'XSIAMDashboards'
+XSIAM_REPORTS_DIR = 'XSIAMReports'
 
 SCRIPT = 'script'
 AUTOMATION = 'automation'
@@ -119,6 +124,11 @@ class FileType(Enum):
     PRE_PROCESS_RULES = 'pre-process-rule'
     LISTS = 'list'
     JOB = 'job'
+    PARSING_RULES = 'parsingrules'
+    MODELING_RULES = 'modelingrules'
+    CORRELATION_RULES = 'correlationrules'
+    XSIAM_DASHBOARDS = 'xsiamdashboards'
+    XSIAM_REPORTS = 'xsiamreports'
 
 
 RN_HEADER_BY_FILE_TYPE = {

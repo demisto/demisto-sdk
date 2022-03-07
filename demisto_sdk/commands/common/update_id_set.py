@@ -24,7 +24,9 @@ from demisto_sdk.commands.common.constants import (
     GENERIC_MODULES_DIR, GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR,
     INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, JOBS_DIR,
     LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR, MP_V2_ID_SET_PATH, REPORTS_DIR,
-    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, FileType,
+    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, PARSING_RULES_DIR,
+    MODELING_RULES_DIR, CORRELATION_RULES_DIR, XSIAM_DASHBOARDS_DIR,
+    XSIAM_REPORTS_DIR, FileType,
     MarketplaceVersions)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_current_repo, get_file,
@@ -46,7 +48,8 @@ ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Cla
 
 CONTENT_MP_V2_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                           'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
-                          'Layouts', 'Mappers', 'Packs', 'Lists']
+                          'Layouts', 'Mappers', 'Packs', 'Lists', 'ParsingRules', 'ModelingRules',
+                          'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports']
 
 ID_SET_MP_V2_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                          'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
@@ -1139,6 +1142,21 @@ def get_general_data(path: str, packs: Dict[str, Dict] = None):
     return {id_: data}
 
 
+def get_mp_v2_entities_data(path: str, packs: Dict[str, Dict] = None):
+    yaml_data = get_yaml(path)
+
+    id_ = yaml_data.get('id', '-')
+    name = yaml_data.get('name', '-')
+    fromversion = yaml_data.get('fromversion')
+    toversion = yaml_data.get('toVersion')
+    pack = get_pack_name(path)
+    marketplaces = get_item_marketplaces(path, item_data=yaml_data, packs=packs)
+
+    data = create_common_entity_data(path, name, toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
+
+    return {id_: data}
+
+
 def get_depends_on(data_dict):
     depends_on = data_dict.get('dependson', {}).get('must', [])
     depends_on_list = list({cmd.split('|')[-1] for cmd in depends_on})
@@ -1441,6 +1459,25 @@ def process_general_items(file_path: str, packs: Dict[str, Dict], marketplace: s
     return res, excluded_items_from_id_set
 
 
+def process_general_mp_v2_items(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool,
+                                expected_file_types: Tuple[FileType], data_extraction_func: Callable) -> Tuple[list, dict]:
+
+    res = []
+    excluded_items_from_id_set: dict = {}
+    try:
+        if find_type(file_path) in expected_file_types:
+            if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
+                return [], excluded_items_from_id_set
+            if print_logs:
+                print(f'adding {file_path} to id_set')
+            res.append(data_extraction_func(file_path, packs=packs))
+    except Exception as exp:  # noqa
+        print_error(f'failed to process {file_path}, Error: {str(exp)}')
+        raise
+
+    return res, excluded_items_from_id_set
+
+
 def process_test_playbook_path(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool) -> tuple:
     """
     Process a yml file in the test playbook dir. Maybe either a script or playbook
@@ -1527,6 +1564,24 @@ def get_general_paths(path, pack_to_create):
     else:
         path_list = [
             [path, '*'],
+            ['Packs', '*', path, '*']
+        ]
+
+    files = list()
+    for path in path_list:
+        files.extend(glob.glob(os.path.join(*path)))
+
+    return files
+
+
+def get_general_mp_v2_paths(path, pack_to_create):
+    if pack_to_create:
+        path_list = [
+            [pack_to_create, path, '*']
+        ]
+
+    else:
+        path_list = [
             ['Packs', '*', path, '*']
         ]
 
@@ -1877,6 +1932,11 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     generic_definitions_list = []
     lists_list = []
     jobs_list = []
+    parsing_rules_list = []
+    modeling_rules_list = []
+    correlation_rules_list = []
+    xsiam_dashboards_list = []
+    xsiam_reports_list = []
     packs_dict: Dict[str, Dict] = {}
     excluded_items_by_pack: Dict[str, set] = {}
     excluded_items_by_type: Dict[str, set] = {}
@@ -2298,6 +2358,116 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         progress_bar.update(1)
 
+        if 'ParsingRules' in objects_to_create:
+            print_color("\nStarting iteration over Parsing Rules", LOG_COLORS.GREEN)
+            for arr, excluded_items_from_iteration in pool.map(partial(process_general_mp_v2_items,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       expected_file_types=(
+                                                                           FileType.PARSING_RULES,),
+                                                                       data_extraction_func=get_mp_v2_entities_data,
+                                                                       ),
+                                                               get_general_mp_v2_paths(PARSING_RULES_DIR,
+                                                                                       pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('parsingRules',
+                                                                                               []).append(_id)
+                parsing_rules_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
+
+        progress_bar.update(1)
+
+        if 'ModelingRules' in objects_to_create:
+            print_color("\nStarting iteration over Modeling Rules", LOG_COLORS.GREEN)
+            for arr, excluded_items_from_iteration in pool.map(partial(process_general_mp_v2_items,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       expected_file_types=(
+                                                                           FileType.MODELING_RULES,),
+                                                                       data_extraction_func=get_mp_v2_entities_data,
+                                                                       ),
+                                                               get_general_mp_v2_paths(MODELING_RULES_DIR,
+                                                                                       pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('modelingRules',
+                                                                                               []).append(_id)
+                modeling_rules_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
+
+        progress_bar.update(1)
+
+        if 'CorrelationRules' in objects_to_create:
+            print_color("\nStarting iteration over Correlation Rules", LOG_COLORS.GREEN)
+            for arr, excluded_items_from_iteration in pool.map(partial(process_general_mp_v2_items,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       expected_file_types=(
+                                                                           FileType.CORRELATION_RULES,),
+                                                                       data_extraction_func=get_mp_v2_entities_data,
+                                                                       ),
+                                                               get_general_mp_v2_paths(CORRELATION_RULES_DIR,
+                                                                                       pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('correlationRules',
+                                                                                               []).append(_id)
+                correlation_rules_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
+
+        progress_bar.update(1)
+
+        if 'XSIAMDashboards' in objects_to_create:
+            print_color("\nStarting iteration over XSIAMDashboards", LOG_COLORS.GREEN)
+            for arr, excluded_items_from_iteration in pool.map(partial(process_general_mp_v2_items,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       expected_file_types=(
+                                                                           FileType.XSIAM_DASHBOARDS,),
+                                                                       data_extraction_func=get_mp_v2_entities_data,
+                                                                       ),
+                                                               get_general_mp_v2_paths(XSIAM_DASHBOARDS_DIR,
+                                                                                       pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('xsiamdashboards',
+                                                                                               []).append(_id)
+                xsiam_dashboards_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
+
+        progress_bar.update(1)
+
+        if 'XSIAMReports' in objects_to_create:
+            print_color("\nStarting iteration over XSIAMReports", LOG_COLORS.GREEN)
+            for arr, excluded_items_from_iteration in pool.map(partial(process_general_mp_v2_items,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       expected_file_types=(
+                                                                           FileType.XSIAM_REPORTS,),
+                                                                       data_extraction_func=get_mp_v2_entities_data,
+                                                                       ),
+                                                               get_general_mp_v2_paths(XSIAM_REPORTS_DIR,
+                                                                                       pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('xsiamreports',
+                                                                                               []).append(_id)
+                xsiam_reports_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
+
+        progress_bar.update(1)
+
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something
     # it shouldn't take too much time
@@ -2333,6 +2503,11 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         new_ids_dict['Reports'] = []
         new_ids_dict['Widgets'] = []
         new_ids_dict['Dashboards'] = []
+        new_ids_dict['ParsingRules'] = sort(parsing_rules_list)
+        new_ids_dict['ModelingRules'] = sort(modeling_rules_list)
+        new_ids_dict['CorrelationRules'] = sort(correlation_rules_list)
+        new_ids_dict['XSIAMDashboards'] = sort(xsiam_dashboards_list)
+        new_ids_dict['XSIAMReports'] = sort(xsiam_reports_list)
 
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)

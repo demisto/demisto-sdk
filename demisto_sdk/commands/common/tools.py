@@ -36,8 +36,8 @@ from demisto_sdk.commands.common.constants import (
     DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
     DOC_FILES_DIR, ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR,
-    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
-    INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
+    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, XSIAM_DASHBOARDS_DIR,
+    INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR, PARSING_RULES_DIR,
     MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME,
     OFFICIAL_CONTENT_ID_SET_PATH, PACK_METADATA_IRON_BANK_TAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
@@ -1157,6 +1157,15 @@ def find_type(
 
             return FileType.PLAYBOOK
 
+        if 'rules' in _dict:
+            if PARSING_RULES_DIR in Path(path).parts:
+                return FileType.PARSING_RULES
+
+            return FileType.MODELING_RULES
+
+        if 'alert_category' in _dict:
+            return FileType.CORRELATION_RULES
+
     if file_type == 'json':
         if 'widgetType' in _dict:
             return FileType.WIDGET
@@ -1212,6 +1221,12 @@ def find_type(
 
         if isinstance(_dict, dict) and {'isAllFeeds', 'selectedFeeds', 'isFeed'}.issubset(_dict.keys()):
             return FileType.JOB
+
+        if 'dashboards_data' in _dict:
+            if XSIAM_DASHBOARDS_DIR in Path(path).parts:
+                return FileType.XSIAM_DASHBOARDS
+
+            return FileType.XSIAM_REPORTS
 
         # When using it for all files validation- sometimes 'id' can be integer
         if 'id' in _dict:

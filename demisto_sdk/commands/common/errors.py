@@ -2194,4 +2194,4 @@ class Errors:
         commands_str = '\n'.join(f'{command}:\t' + ", ".join(outputs) for command, outputs in paths.items())
 
         return f"The following command outputs are missing: \n{commands_str}\n" \
-               "please type them or run demisto-sdk format -i {yaml_path}"
+               f"please type them or run demisto-sdk format -i {yaml_path}"

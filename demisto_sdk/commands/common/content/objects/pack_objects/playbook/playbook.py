@@ -3,7 +3,7 @@ from typing import Union
 import demisto_client
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.constants import PLAYBOOK, FileType
+from demisto_sdk.commands.common.constants import PLAYBOOK, FileType, TEST_PLAYBOOKS_DIR
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
     YAMLContentObject
 
@@ -24,6 +24,6 @@ class Playbook(YAMLContentObject):
         return client.import_playbook(file=self.path)
 
     def type(self):
-        if 'TestPlaybooks' in self.path.parts:
+        if TEST_PLAYBOOKS_DIR in self.path.parts:
             return FileType.TEST_PLAYBOOK
         return FileType.PLAYBOOK

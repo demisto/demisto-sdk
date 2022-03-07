@@ -81,6 +81,9 @@ class IntegrationYMLFormat(BaseUpdateYML):
 
     def set_default_outputs(self):
         """ Replaces empty output descriptions with default values """
+        if not self.data:
+            return
+
         default_values = get_json(Path(git_path()) / 'demisto_sdk/commands/common/default_output_descriptions.json')
 
         if self.verbose:

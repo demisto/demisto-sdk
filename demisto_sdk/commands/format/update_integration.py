@@ -84,7 +84,8 @@ class IntegrationYMLFormat(BaseUpdateYML):
         if not self.data:
             return
 
-        default_values = get_json(Path(git_path()) / 'demisto_sdk/commands/common/default_output_descriptions.json')
+        default_values = get_json(Path(__file__).absolute().parents[3]
+                                  / 'demisto_sdk/commands/common/default_output_descriptions.json')
 
         if self.verbose:
             click.echo('Updating empty integration outputs to their default (if exists)')

@@ -434,10 +434,6 @@ def zip_packs(**kwargs) -> int:
     "--allow-skipped",
     help="Don't fail on skipped integrations or when all test playbooks are skipped.",
     is_flag=True)
-@click.option(
-    "--failed-validations-file",
-    help="The text file path to which to output the failed validations results.",
-    type=click.Path(resolve_path=True))
 @pass_config
 def validate(config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
@@ -479,7 +475,6 @@ def validate(config, **kwargs):
             include_untracked=kwargs.get('include_untracked'),
             quite_bc=kwargs.get('quite_bc_validation'),
             check_is_unskipped=not kwargs.get('allow_skipped', False),
-            failed_validations_file=kwargs.get('failed_validations_file'),
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:

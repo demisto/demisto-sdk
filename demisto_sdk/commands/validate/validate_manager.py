@@ -94,7 +94,7 @@ class ValidateManager:
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
             create_id_set=False, json_file_path=None, skip_schema_check=False, debug_git=False, include_untracked=False,
-            pykwalify_logs=False, check_is_unskipped=True, quite_bc=False, failed_validations_file=None,
+            pykwalify_logs=False, check_is_unskipped=True, quite_bc=False
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -124,12 +124,6 @@ class ValidateManager:
                 os.path.isdir(json_file_path) else json_file_path
         else:
             self.json_file_path = ''
-
-        if failed_validations_file:
-            self.failed_validations_file = os.path.join(failed_validations_file, 'failed_validations_file.txt') if \
-                os.path.isdir(failed_validations_file) else failed_validations_file
-        else:
-            self.failed_validations_file = ''
 
         # Class constants
         self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors,
@@ -210,11 +204,6 @@ class ValidateManager:
             all_failing_files = '\n'.join(FOUND_FILES_AND_ERRORS)
             click.secho(f"\n=========== Found errors in the following files ===========\n\n{all_failing_files}\n",
                         fg="bright_red")
-
-            if self.failed_validations_file:
-                with open(self.failed_validations_file, 'a') as f:
-                    f.write(all_failing_files)
-
             if self.always_valid:
                 click.secho('Found the errors above, but not failing build', fg='yellow')
                 return 0

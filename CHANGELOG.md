@@ -8,7 +8,7 @@
 * Fixed a regression issue with **doc-review**, where  the `-g` flag did not work
 * Improved the detection of errors in **doc-review** command.
 * The **validate** command now checks if a readme file is empty, only for packs that contain playbooks or were written by a partner.
-* Added support for -rf flag in *create-content-artifacts* for marketplacev2.
+* Added support for the `-rt` flag in *create-content-artifacts* for marketplacev2.
 
 # 1.6.1
 * Added the '--use-packs-known-words' argument to the **doc-review** command

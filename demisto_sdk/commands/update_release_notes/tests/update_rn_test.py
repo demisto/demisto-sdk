@@ -1,7 +1,9 @@
+import glob
 import json
 import os
 import shutil
 import unittest
+from collections import Counter
 from typing import Dict, Optional
 
 import mock
@@ -1482,3 +1484,29 @@ def test_force_and_text_update_rn(repo, text, expected_rn_string):
 
     rn_string = client.build_rn_template({})
     assert rn_string == expected_rn_string
+
+
+CREATE_MD_IF_CURRENTVERSION_IS_HIGHER_TEST_BANK_ = [(['1_0_1', '1_0_3'])]
+
+
+@pytest.mark.parametrize('expected_results', CREATE_MD_IF_CURRENTVERSION_IS_HIGHER_TEST_BANK_)
+def test_create_md_if_currentversion_is_higher(mocker, expected_results, repo):
+    """
+        Given:
+            - Case 1: the expected RN files.
+        When:
+            - creating a new markdown file.
+        Then:
+            Ensure that the creation was done correctly although the currentversion wasn't matching the latest RN.
+            - Case 1: Should create a new RN according to currentversion.
+    """
+    pack = repo.create_pack('MyPack')
+    pack.create_release_notes(version='1_0_1')
+    md_string = '### Test'
+    file_path = pack.path + '/ReleaseNotes/1_0_3.md'
+    update_rn = UpdateRN(pack_path=pack.path, update_type=None, modified_files_in_pack={'HelloWorld'},
+                         added_files=set())
+    update_rn.create_markdown(release_notes_path=file_path, rn_string=md_string, changed_files={})
+    updated_rn_folder = glob.glob(pack.path + '/ReleaseNotes/*')
+    updated_versions_list = [rn[rn.rindex('/') + 1:-3] for rn in updated_rn_folder]
+    assert Counter(expected_results) == Counter(updated_versions_list)

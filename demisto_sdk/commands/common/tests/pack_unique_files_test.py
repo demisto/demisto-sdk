@@ -793,10 +793,8 @@ class TestPackUniqueFilesValidator:
         - Case 3: Pack containing rn and pack_metadata with rn versions higher than pack_metadata.
         - Case 4: Pack with pack_metadata version higher than 1.0.0 but no rn.
         - Case 5: Pack with pack_metadata version 1.0.0 and no rn.
-
         When
         - Running test_is_right_version command on pack.
-
         Then
         - Ensure validation correctly.
         - Case 1: Should return True.

@@ -578,7 +578,7 @@ class PackUniqueFilesValidator(BaseValidator):
             self._add_error(Errors.missing_release_notes_for_pack(self.pack), self.pack)
             return False
         if LooseVersion(rn_version) != LooseVersion(current_version):
-            self._add_error(Errors.pack_metadata_version_diff_from_rn(rn_version, current_version), metadata_file_path)
+            self._add_error(Errors.pack_metadata_version_diff_from_rn(self.pack, rn_version, current_version), metadata_file_path)
             return False
         return True
 

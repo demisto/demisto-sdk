@@ -2168,10 +2168,10 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def pack_metadata_version_diff_from_rn(rn_version, pack_metadata_version):
+    def pack_metadata_version_diff_from_rn(pack_path, rn_version, pack_metadata_version):
         return f'There is a difference between the version in the pack metadata' \
-               f'file and the version of the latest release note.\n expected pack metadata to be {rn_version} '\
-               f'instead found {pack_metadata_version}.'
+               f'file and the version of the latest release note.\nexpected latest release note to be {pack_metadata_version} '\
+               f'instead found {rn_version}.\nTo fix the problem, try running `demisto-sdk update-release-notes -i {pack_path}`'
 
     @staticmethod
     @error_code_decorator

@@ -46,17 +46,18 @@ def insert_outputs(yml_data: Dict, command_name: str, output_with_contexts: List
         command_name: the command name whose outputs we want to manipulate.
         output_with_contexts: the new outputs.
     """
-    commands = yml_data.get('script', {}).get('commands', [])
-    command = tuple(filter(lambda value: value.get('name') == command_name, commands))
-    if not command:
+    commands = yml_data.get('script', {}).get('commands') or []
+    command_names = [command.get('name') for command in commands]
+    if command_name not in command_names:
         raise Exception(f'The {command_name} command is missing from the integration YML.')
-    command = command[0]
+    command_index = command_names.index(command_name)
+    command = commands[command_index]
 
     outputs: List[Dict[str, str]] = command.get('outputs') or []
     old_descriptions = _output_path_to_description(outputs)
     new_descriptions = _output_path_to_description(output_with_contexts)
 
-    old_output_paths = set(old_descriptions.keys())
+    old_output_paths = set(filter(None, map(lambda val: val.get('contextPath'), command.get('outputs', []))))
 
     # adds new outputs without overriding existing
     outputs.extend((output for output in output_with_contexts
@@ -69,6 +70,7 @@ def insert_outputs(yml_data: Dict, command_name: str, output_with_contexts: List
             raise Exception('Found a command without a contextPath value')
         if not output.get('description'):
             output['description'] = new_descriptions.get(path) or old_descriptions.get(path) or ''
+    yml_data['script']['commands'][command_index]['outputs'] = outputs
     return yml_data
 
 

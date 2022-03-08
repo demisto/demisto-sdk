@@ -84,13 +84,9 @@ class GitContentConfig:
             gitlab_host = urlparse(parsed_git.url).hostname
             gitlab_id = self._search_gitlab_id(gitlab_host, parsed_git.repo)
             if gitlab_id is None:
-                # Maybe the library made a mistake and this is actually github
-                if parsed_git.owner and parsed_git.repo:
-                    self.CURRENT_REPOSITORY = f'{parsed_git.owner}/{parsed_git.repo}'
-                else:
-                    click.secho('Could not find the repository name - defaulting to demisto/content', fg='yellow')
-                    self.CURRENT_REPOSITORY = GitContentConfig.CURRENT_REPOSITORY
-
+                # default to content repo if the id is not found
+                click.secho('Could not find repository id on gitlab - defaulting to demisto/content', fg='yellow')
+                self.CURRENT_REPOSITORY = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
                 return
             self.GITLAB_HOST = gitlab_host
             self.GITLAB_ID = gitlab_id
@@ -108,14 +104,14 @@ class GitContentConfig:
         if not self.Credentials.GITLAB_TOKEN:
             click.secho('If your repo is in private gitlab repo,'
                         ' configure `DEMISTO_SDK_GITLAB_TOKEN` enviroment variable', fg='yellow')
+        res = requests.get(f"https://{gitlab_hostname}/api/v4/projects",
+                           params={'search': repo},
+                           headers={'PRIVATE-TOKEN': self.Credentials.GITLAB_TOKEN},
+                           timeout=10,
+                           verify=False)
+        if not res.ok:
+            return None
         try:
-            res = requests.get(f"https://{gitlab_hostname}/api/v4/projects",
-                               params={'search': repo},
-                               headers={'PRIVATE-TOKEN': self.Credentials.GITLAB_TOKEN},
-                               timeout=10,
-                               verify=False)
-            if not res.ok:
-                return None
             search_results = res.json()
             return search_results[0].get('id', None) if search_results else None
         except Exception:

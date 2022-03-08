@@ -50,7 +50,6 @@ def insert_outputs(yml_data: Dict, command: str, output_with_contexts: List):
     found = False
     for cmd in commands:
         if cmd.get('name') == command:
-            list({v['id']: v for v in output_with_contexts}.values())
             if not cmd['outputs']:
                 cmd['outputs'] = []
             cmd['outputs'].extend(output_with_contexts)

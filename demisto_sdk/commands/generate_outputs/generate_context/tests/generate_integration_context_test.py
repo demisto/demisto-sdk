@@ -142,4 +142,4 @@ def test_generate_integration_context(mocker, tmpdir):
             assert command['outputs'] == FAKE_OUTPUT_CONTEXTS
             break
     else:
-        assert False, 'command is not found in yml_data'
+        raise AssertionError('command is not found in yml_data')

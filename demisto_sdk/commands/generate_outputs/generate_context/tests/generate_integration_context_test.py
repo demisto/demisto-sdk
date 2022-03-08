@@ -94,7 +94,7 @@ def test_insert_outputs(mocker):
             assert command['outputs'] == FAKE_OUTPUT_CONTEXTS
             break
     else:
-        assert False, f'No command {command_name} in yml_data'
+        raise AssertionError(f'No command {command_name} in yml_data)'
 
 
 def test_generate_integration_context(mocker, tmpdir):

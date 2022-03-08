@@ -225,6 +225,7 @@ ERROR_CODE = {
                                   'related_field': '<parameter-name>.fromlicense'},
     "changed_integration_yml_fields": {'code': "IN147", "ui_applicable": False, 'related_field': 'script'},
     "parameter_is_malformed": {'code': "IN148", 'ui_applicable': False, 'related_field': 'configuration'},
+    'empty_outputs_common_paths': {'code': 'IN149', 'ui_applicable': False, 'related_field': 'contextOutput'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -2178,7 +2179,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def aliases_with_inner_alias(invalid_aliases: List[str]):
-        return "The following fields exist as aliases and therefore cannot contain an 'Aliases' key."\
+        return "The following fields exist as aliases and therefore cannot contain an 'Aliases' key." \
                f"\n{invalid_aliases}\n" \
                "Please remove the key from the fields or removed the fields from the other field's Aliases list."
 
@@ -2186,3 +2187,11 @@ class Errors:
     @error_code_decorator
     def missing_readme_file(location):
         return f'{location} is missing a README file'
+
+    @staticmethod
+    @error_code_decorator
+    def empty_outputs_common_paths(paths: Dict[str, List[str]], yaml_path: str):
+        commands_str = '\n'.join(f'{command}:\t' + ", ".join(outputs) for command, outputs in paths.items())
+
+        return f"The following command outputs are missing: \n{commands_str}\n" \
+               f"please type them or run demisto-sdk format -i {yaml_path}"

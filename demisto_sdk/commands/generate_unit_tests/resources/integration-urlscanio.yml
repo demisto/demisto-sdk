@@ -1,0 +1,566 @@
+commonfields:
+  id: urlscanio
+  version: -1
+name: urlscanio
+display: urlscan.io
+category: Utilities
+description: Generated description - REPLACE THIS
+configuration:
+- name: url
+  display: Server URL
+  defaultvalue: https://urlscan.io
+  type: 0
+  required: true
+- name: proxy
+  display: Use system proxy
+  defaultvalue: ''
+  type: 8
+  required: false
+- name: insecure
+  display: Trust any certificate
+  defaultvalue: ''
+  type: 8
+  required: false
+- name: api_key
+  display: API Key
+  defaultvalue: ''
+  type: 4
+  required: true
+script:
+  script: >2
+
+
+
+
+    class Client(BaseClient):
+        def __init__(self, server_url, verify, proxy, headers, auth):
+            super().__init__(base_url=server_url, verify=verify, proxy=proxy, headers=headers, auth=auth)
+
+        def submit_url_request(self, url, visibility, tags):
+            data = {"tags": tags, "url": url, "visibility": visibility}
+
+            headers = self._headers
+            headers['Content-Type'] = 'application/json'
+
+            response = self._http_request('POST', 'api/v1/scan', json_data=data, headers=headers)
+
+            return response
+
+        def search_request(self, q, size):
+            params = assign_params(q=q, size=size)
+
+            headers = self._headers
+
+            response = self._http_request('GET', 'api/v1/search', params=params, headers=headers)
+
+            return response
+
+        def scan_results_request(self, uuid):
+
+            headers = self._headers
+
+            response = self._http_request('GET', f'api/v1/result/{uuid}', headers=headers)
+
+            return response
+
+
+    def submit_url_command(client, args):
+        url = args.get('url')
+        visibility = args.get('visibility')
+        tags = args.get('tags')
+
+        response = client.submit_url_request(url, visibility, tags)
+        command_results = CommandResults(
+            outputs_prefix='urlscanio.SubmitUrl',
+            outputs_key_field='',
+            outputs=response,
+            raw_response=response
+        )
+
+        return command_results
+
+
+    def search_command(client, args):
+        q = args.get('q')
+        size = args.get('size')
+
+        response = client.search_request(q, size)
+        command_results = CommandResults(
+            outputs_prefix='urlscanio.Search',
+            outputs_key_field='',
+            outputs=response,
+            raw_response=response
+        )
+
+        return command_results
+
+
+    def scan_results_command(client, args):
+        uuid = args.get('uuid')
+
+        response = client.scan_results_request(uuid)
+        command_results = CommandResults(
+            outputs_prefix='urlscanio.ScanResults',
+            outputs_key_field='',
+            outputs=response,
+            raw_response=response
+        )
+
+        return command_results
+
+
+    def test_module(client):
+        # Test functions here
+        return_results('ok')
+
+
+    def main():
+
+        params = demisto.params()
+        args = demisto.args()
+        url = params.get('url')
+        verify_certificate = not params.get('insecure', False)
+        proxy = params.get('proxy', False)
+
+        headers = {}
+        headers['API-Key'] = params['api_key']
+
+        command = demisto.command()
+        demisto.debug(f'Command being called is {command}')
+
+        try:
+            requests.packages.urllib3.disable_warnings()
+            client = Client(urljoin(url, ''), verify_certificate, proxy, headers=headers, auth=None)
+
+            commands = {
+                'urlscanio-submit-url': submit_url_command,
+                'urlscanio-search': search_command,
+                'urlscanio-scan-results': scan_results_command,
+            }
+
+            if command == 'test-module':
+                test_module(client)
+            elif command in commands:
+                return_results(commands[command](client, args))
+            else:
+                raise NotImplementedError(f'{command} command is not implemented.')
+
+        except Exception as e:
+            return_error(str(e))
+
+
+    if __name__ in ['__main__', 'builtin', 'builtins']:
+        main()
+  type: python
+  subtype: python3
+  dockerimage: demisto/python3:3.9.2.17957
+  isfetch: false
+  commands:
+  - name: urlscanio-submit-url
+    description: ''
+    arguments:
+    - name: url
+      description: ''
+      required: false
+      isArray: false
+    - name: visibility
+      description: ''
+      required: false
+      isArray: false
+    - name: tags
+      description: ''
+      required: false
+      isArray: false
+    outputs:
+    - type: String
+      contextPath: urlscanio.SubmitUrl.message
+      description: ''
+    - type: String
+      contextPath: urlscanio.SubmitUrl.uuid
+      description: ''
+    - type: String
+      contextPath: urlscanio.SubmitUrl.result
+      description: ''
+    - type: String
+      contextPath: urlscanio.SubmitUrl.api
+      description: ''
+    - type: String
+      contextPath: urlscanio.SubmitUrl.visibility
+      description: ''
+    - type: String
+      contextPath: urlscanio.SubmitUrl.options.useragent
+      description: ''
+    - type: String
+      contextPath: urlscanio.SubmitUrl.url
+      description: ''
+  - name: urlscanio-search
+    description: ''
+    arguments:
+    - name: q
+      description: ''
+      required: false
+      isArray: false
+    - name: size
+      description: ''
+      required: false
+      isArray: false
+    outputs:
+    - type: Date
+      contextPath: urlscanio.Search.results.indexedAt
+      description: ''
+    - type: String
+      contextPath: urlscanio.Search.results.task.visibility
+      description: ''
+    - type: String
+      contextPath: urlscanio.Search.results.task.method
+      description: ''
+    - type: String
+      contextPath: urlscanio.Search.results.task.domain
+      description: ''
+    - type: Date
+      contextPath: urlscanio.Search.results.task.time
+      description: ''
+    - type: String
+      contextPath: urlscanio.Search.results.task.uuid
+      description: ''
+    - type: String
+      contextPath: urlscanio.Search.results.task.url
+      description: ''
+    - type: Number
+      contextPath: urlscanio.Search.results.stats.uniqIPs
+      description: ''
+    - type: Number
+      contextPath: urlscanio.Search.results.stats.consoleMsgs
+      description: ''
+    - type: Number
+      contextPath: urlscanio.Search.results.stats.uniqCountries
+      description: ''
+    - type: Number
+      contextPath: urlscanio.Search.results.stats.dataLength
+      description: ''
+    - type: Number
+      contextPath: urlscanio.Search.results.stats.encodedDataLength
+      description: ''
+    - type: Number
+      contextPath: urlscanio.Search.results.stats.requests
+      description: ''
+    - type: String
+      contextPath: urlscanio.Search.results.page.country
+      description: ''
+    - type: String
+      contextPath: urlscanio.Search.results.page.server
+      description: ''
+    - type: String
+      contextPath: urlscanio.Search.results.page.domain
+      description: ''
+    - type: String
+      contextPath: urlscanio.Search.results.page.ip
+      description: ''
+    - type: String
+      contextPath: urlscanio.Search.results.page.mimeType
+      description: ''
+    - type: String
+      contextPath: urlscanio.Search.results.page.asnname
+      description: ''
+    - type: String
+      contextPath: urlscanio.Search.results.page.asn
+      description: ''
+    - type: String
+      contextPath: urlscanio.Search.results.page.url
+      description: ''
+    - type: String
+      contextPath: urlscanio.Search.results.page.ptr
+      description: ''
+    - type: String
+      contextPath: urlscanio.Search.results.page.status
+      description: ''
+    - type: String
+      contextPath: urlscanio.Search.results._id
+      description: ''
+    - type: String
+      contextPath: urlscanio.Search.results.sort
+      description: ''
+    - type: String
+      contextPath: urlscanio.Search.results.result
+      description: ''
+    - type: String
+      contextPath: urlscanio.Search.results.screenshot
+      description: ''
+    - type: Number
+      contextPath: urlscanio.Search.total
+      description: ''
+    - type: Number
+      contextPath: urlscanio.Search.took
+      description: ''
+    - type: Boolean
+      contextPath: urlscanio.Search.has_more
+      description: ''
+  - name: urlscanio-scan-results
+    description: ''
+    arguments:
+    - name: uuid
+      description: ''
+      required: false
+      isArray: false
+    outputs:
+    - type: String
+      contextPath: urlscanio.ScanResults.data.requests.request.requestId
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.data.requests.request.loaderId
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.data.requests.request.documentURL
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.data.requests.request.request.url
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.data.requests.request.request.method
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.data.requests.request.request.headers.Upgrade-Insecure-Requests
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.data.requests.request.request.headers.User-Agent
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.data.requests.request.request.mixedContentType
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.data.requests.request.request.initialPriority
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.data.requests.request.request.referrerPolicy
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.data.requests.request.timestamp
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.data.requests.request.wallTime
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.data.requests.request.initiator.type
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.data.requests.request.type
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.data.requests.request.frameId
+      description: ''
+    - type: Boolean
+      contextPath: urlscanio.ScanResults.data.requests.request.hasUserGesture
+      description: ''
+    - type: Boolean
+      contextPath: urlscanio.ScanResults.data.requests.request.primaryRequest
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.data.requests.response.encodedDataLength
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.data.requests.response.dataLength
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.data.requests.response.failed.requestId
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.data.requests.response.failed.timestamp
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.data.requests.response.failed.type
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.data.requests.response.failed.errorText
+      description: ''
+    - type: Boolean
+      contextPath: urlscanio.ScanResults.data.requests.response.failed.canceled
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.data.requests.response.hash
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.data.requests.response.size
+      description: ''
+    - type: Date
+      contextPath: urlscanio.ScanResults.data.timing.beginNavigation
+      description: ''
+    - type: Date
+      contextPath: urlscanio.ScanResults.data.timing.frameStartedLoading
+      description: ''
+    - type: Date
+      contextPath: urlscanio.ScanResults.data.timing.frameNavigated
+      description: ''
+    - type: Date
+      contextPath: urlscanio.ScanResults.data.timing.loadEventFired
+      description: ''
+    - type: Date
+      contextPath: urlscanio.ScanResults.data.timing.frameStoppedLoading
+      description: ''
+    - type: Date
+      contextPath: urlscanio.ScanResults.data.timing.domContentEventFired
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.stats.domainStats.count
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.stats.domainStats.domain
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.stats.domainStats.size
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.stats.domainStats.encodedSize
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.stats.domainStats.index
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.stats.regDomainStats.count
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.stats.regDomainStats.regDomain
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.stats.regDomainStats.size
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.stats.regDomainStats.encodedSize
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.stats.regDomainStats.index
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.stats.regDomainStats.subDomains.domain
+      description: ''
+    - type: Boolean
+      contextPath: urlscanio.ScanResults.stats.regDomainStats.subDomains.failed
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.stats.secureRequests
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.stats.securePercentage
+      description: ''
+    - type: Unknown
+      contextPath: urlscanio.ScanResults.stats.IPv6Percentage
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.stats.uniqCountries
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.stats.totalLinks
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.stats.malicious
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.stats.adBlocked
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.meta.processors.geoip.state
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.meta.processors.rdns.state
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.meta.processors.wappa.state
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.meta.processors.asn.state
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.meta.processors.done.state
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.meta.processors.done.data.state
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.task.uuid
+      description: ''
+    - type: Date
+      contextPath: urlscanio.ScanResults.task.time
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.task.url
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.task.visibility
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.task.options.useragent
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.task.method
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.task.source
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.task.tags
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.task.userAgent
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.task.reportURL
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.task.screenshotURL
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.task.domURL
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.page.url
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.page.domain
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.lists.domains
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.lists.urls
+      description: ''
+    - type: String
+      contextPath: urlscanio.ScanResults.lists.hashes
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.verdicts.overall.score
+      description: ''
+    - type: Boolean
+      contextPath: urlscanio.ScanResults.verdicts.overall.malicious
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.verdicts.overall.hasVerdicts
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.verdicts.urlscan.score
+      description: ''
+    - type: Boolean
+      contextPath: urlscanio.ScanResults.verdicts.urlscan.malicious
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.verdicts.engines.score
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.verdicts.engines.maliciousTotal
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.verdicts.engines.benignTotal
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.verdicts.engines.enginesTotal
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.verdicts.community.score
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.verdicts.community.votesTotal
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.verdicts.community.votesMalicious
+      description: ''
+    - type: Number
+      contextPath: urlscanio.ScanResults.verdicts.community.votesBenign
+      description: ''

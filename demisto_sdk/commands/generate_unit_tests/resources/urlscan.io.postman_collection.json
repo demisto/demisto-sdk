@@ -1,0 +1,500 @@
+{
+	"info": {
+		"_postman_id": "cc7feff1-21fd-4878-b227-a9a05b38cdb9",
+		"name": "urlscan.io",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Submit URL",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"url\": \"https://sometesturl.com/api/v1\",\n    \"visibility\": \"public\",\n    \"tags\": [\"demotag1\", \"demotag2\"]\n}"
+				},
+				"url": {
+					"raw": "{{url}}/api/v1/scan",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"scan"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Submit URL",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"url\": \"https://sometesturl.com/api/v1\",\n    \"visibility\": \"public\",\n    \"tags\": [\"demotag1\", \"demotag2\"]\n}"
+						},
+						"url": {
+							"raw": "{{url}}/api/v1/scan/",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"scan",
+								""
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "nginx"
+						},
+						{
+							"key": "Date",
+							"value": "Wed, 31 Mar 2021 11:06:19 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "X-Rate-Limit-Scope",
+							"value": "user"
+						},
+						{
+							"key": "X-Rate-Limit-Action",
+							"value": "public"
+						},
+						{
+							"key": "X-Rate-Limit-Window",
+							"value": "day"
+						},
+						{
+							"key": "X-Rate-Limit-Limit",
+							"value": "5000"
+						},
+						{
+							"key": "X-Rate-Limit-Remaining",
+							"value": "4968"
+						},
+						{
+							"key": "X-Rate-Limit-Reset",
+							"value": "2021-04-01T00:00:00.000Z"
+						},
+						{
+							"key": "X-Rate-Limit-Reset-After",
+							"value": "46420"
+						},
+						{
+							"key": "Vary",
+							"value": "Accept"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"1db-s4QmSFBIoVxi5Epk7LjrYO7PgZw\""
+						},
+						{
+							"key": "Content-Security-Policy",
+							"value": "default-src 'self' data: ; script-src 'self' data: developers.google.com www.google.com www.gstatic.com secure.wufoo.com; style-src 'self' 'unsafe-inline' fonts.googleapis.com www.google.com; img-src *; font-src 'self' fonts.gstatic.com; child-src 'self'; frame-src https://www.google.com/recaptcha/ secure.wufoo.com securitytrails.wufoo.com; form-action 'self'; upgrade-insecure-requests;"
+						},
+						{
+							"key": "Referrer-Policy",
+							"value": "unsafe-url"
+						},
+						{
+							"key": "Strict-Transport-Security",
+							"value": "max-age=63072000; includeSubdomains; preload"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY"
+						},
+						{
+							"key": "X-XSS-Protection",
+							"value": "1; mode=block"
+						},
+						{
+							"key": "X-Robots-Tag",
+							"value": "all"
+						},
+						{
+							"key": "Content-Encoding",
+							"value": "gzip"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"message\": \"Submission successful\",\n    \"uuid\": \"2cf63ee0-4628-4deb-a7d8-2b2d1a71ceb4\",\n    \"result\": \"https://urlscan.io/result/2cf63ee0-4628-4deb-a7d8-2b2d1a71ceb4/\",\n    \"api\": \"https://urlscan.io/api/v1/result/2cf63ee0-4628-4deb-a7d8-2b2d1a71ceb4/\",\n    \"visibility\": \"public\",\n    \"options\": {\n        \"useragent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.72 Safari/537.36\"\n    },\n    \"url\": \"https://sometesturl.com/api/v1\"\n}"
+				}
+			]
+		},
+		{
+			"name": "Search",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/v1/search?q=domain:urlscan.io&size=2",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"search"
+					],
+					"query": [
+						{
+							"key": "q",
+							"value": "domain:urlscan.io"
+						},
+						{
+							"key": "size",
+							"value": "2"
+						}
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Search",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/search?q=domain:urlscan.io&size=2",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"search"
+							],
+							"query": [
+								{
+									"key": "q",
+									"value": "domain:urlscan.io"
+								},
+								{
+									"key": "size",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "nginx"
+						},
+						{
+							"key": "Date",
+							"value": "Wed, 31 Mar 2021 11:08:20 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "X-Rate-Limit-Scope",
+							"value": "user"
+						},
+						{
+							"key": "X-Rate-Limit-Action",
+							"value": "search"
+						},
+						{
+							"key": "X-Rate-Limit-Window",
+							"value": "day"
+						},
+						{
+							"key": "X-Rate-Limit-Limit",
+							"value": "1000"
+						},
+						{
+							"key": "X-Rate-Limit-Remaining",
+							"value": "995"
+						},
+						{
+							"key": "X-Rate-Limit-Reset",
+							"value": "2021-04-01T00:00:00.000Z"
+						},
+						{
+							"key": "X-Rate-Limit-Reset-After",
+							"value": "46299"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"966-+XiOqwat0IkP2bdQN465FGUSumA\""
+						},
+						{
+							"key": "Content-Security-Policy",
+							"value": "default-src 'self' data: ; script-src 'self' data: developers.google.com www.google.com www.gstatic.com secure.wufoo.com; style-src 'self' 'unsafe-inline' fonts.googleapis.com www.google.com; img-src *; font-src 'self' fonts.gstatic.com; child-src 'self'; frame-src https://www.google.com/recaptcha/ secure.wufoo.com securitytrails.wufoo.com; form-action 'self'; upgrade-insecure-requests;"
+						},
+						{
+							"key": "Referrer-Policy",
+							"value": "unsafe-url"
+						},
+						{
+							"key": "Strict-Transport-Security",
+							"value": "max-age=63072000; includeSubdomains; preload"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY"
+						},
+						{
+							"key": "X-XSS-Protection",
+							"value": "1; mode=block"
+						},
+						{
+							"key": "X-Proxy-Cache",
+							"value": "MISS"
+						},
+						{
+							"key": "X-Robots-Tag",
+							"value": "all"
+						},
+						{
+							"key": "Content-Encoding",
+							"value": "gzip"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"results\": [\n        {\n            \"indexedAt\": \"2021-03-31T10:24:06.102Z\",\n            \"task\": {\n                \"visibility\": \"public\",\n                \"method\": \"manual\",\n                \"domain\": \"urlscan.io\",\n                \"time\": \"2021-03-31T10:23:48.878Z\",\n                \"uuid\": \"67c56dda-c174-44ae-adad-d07a970c2546\",\n                \"url\": \"https://urlscan.io/\"\n            },\n            \"stats\": {\n                \"uniqIPs\": 5,\n                \"consoleMsgs\": 0,\n                \"uniqCountries\": 1,\n                \"dataLength\": 2029843,\n                \"encodedDataLength\": 869428,\n                \"requests\": 53\n            },\n            \"page\": {\n                \"country\": \"DE\",\n                \"server\": \"nginx\",\n                \"domain\": \"urlscan.io\",\n                \"ip\": \"148.251.45.170\",\n                \"mimeType\": \"text/html\",\n                \"asnname\": \"HETZNER-AS, DE\",\n                \"asn\": \"AS24940\",\n                \"url\": \"https://urlscan.io/\",\n                \"ptr\": \"urlscan.io\",\n                \"status\": \"200\"\n            },\n            \"_id\": \"67c56dda-c174-44ae-adad-d07a970c2546\",\n            \"sort\": [\n                1617186228878,\n                \"67c56dda-c174-44ae-adad-d07a970c2546\"\n            ],\n            \"result\": \"https://urlscan.io/api/v1/result/67c56dda-c174-44ae-adad-d07a970c2546/\",\n            \"screenshot\": \"https://urlscan.io/screenshots/67c56dda-c174-44ae-adad-d07a970c2546.png\"\n        },\n        {\n            \"indexedAt\": \"2021-03-31T10:23:57.597Z\",\n            \"task\": {\n                \"visibility\": \"public\",\n                \"method\": \"manual\",\n                \"domain\": \"urlscan.io\",\n                \"time\": \"2021-03-31T10:23:39.828Z\",\n                \"uuid\": \"f801e4a9-c9c2-4961-bbe5-b371bfddf617\",\n                \"url\": \"https://urlscan.io/\"\n            },\n            \"stats\": {\n                \"uniqIPs\": 4,\n                \"consoleMsgs\": 0,\n                \"uniqCountries\": 1,\n                \"dataLength\": 2029390,\n                \"encodedDataLength\": 867642,\n                \"requests\": 53\n            },\n            \"page\": {\n                \"country\": \"DE\",\n                \"server\": \"nginx\",\n                \"domain\": \"urlscan.io\",\n                \"ip\": \"148.251.45.170\",\n                \"mimeType\": \"text/html\",\n                \"asnname\": \"HETZNER-AS, DE\",\n                \"asn\": \"AS24940\",\n                \"url\": \"https://urlscan.io/\",\n                \"ptr\": \"urlscan.io\",\n                \"status\": \"200\"\n            },\n            \"_id\": \"f801e4a9-c9c2-4961-bbe5-b371bfddf617\",\n            \"sort\": [\n                1617186219828,\n                \"f801e4a9-c9c2-4961-bbe5-b371bfddf617\"\n            ],\n            \"result\": \"https://urlscan.io/api/v1/result/f801e4a9-c9c2-4961-bbe5-b371bfddf617/\",\n            \"screenshot\": \"https://urlscan.io/screenshots/f801e4a9-c9c2-4961-bbe5-b371bfddf617.png\"\n        }\n    ],\n    \"total\": 895,\n    \"took\": 43,\n    \"has_more\": false\n}"
+				}
+			]
+		},
+		{
+			"name": "Scan Results",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/api/v1/result/{{uuid}}",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"result",
+						"{{uuid}}"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Scan Results",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{url}}/api/v1/result/{{uuid}}",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"result",
+								"{{uuid}}"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "nginx"
+						},
+						{
+							"key": "Date",
+							"value": "Wed, 31 Mar 2021 11:11:32 GMT"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json; charset=utf-8"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "X-Rate-Limit-Scope",
+							"value": "user"
+						},
+						{
+							"key": "X-Rate-Limit-Action",
+							"value": "retrieve"
+						},
+						{
+							"key": "X-Rate-Limit-Window",
+							"value": "day"
+						},
+						{
+							"key": "X-Rate-Limit-Limit",
+							"value": "10000"
+						},
+						{
+							"key": "X-Rate-Limit-Remaining",
+							"value": "9965"
+						},
+						{
+							"key": "X-Rate-Limit-Reset",
+							"value": "2021-04-01T00:00:00.000Z"
+						},
+						{
+							"key": "X-Rate-Limit-Reset-After",
+							"value": "46107"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "public, max-age=60"
+						},
+						{
+							"key": "ETag",
+							"value": "W/\"14e0-6YIZphB6nueR8LA680WUTL8w9Rs\""
+						},
+						{
+							"key": "Content-Security-Policy",
+							"value": "default-src 'self' data: ; script-src 'self' data: developers.google.com www.google.com www.gstatic.com secure.wufoo.com; style-src 'self' 'unsafe-inline' fonts.googleapis.com www.google.com; img-src *; font-src 'self' fonts.gstatic.com; child-src 'self'; frame-src https://www.google.com/recaptcha/ secure.wufoo.com securitytrails.wufoo.com; form-action 'self'; upgrade-insecure-requests;"
+						},
+						{
+							"key": "Referrer-Policy",
+							"value": "unsafe-url"
+						},
+						{
+							"key": "Strict-Transport-Security",
+							"value": "max-age=63072000; includeSubdomains; preload"
+						},
+						{
+							"key": "X-Content-Type-Options",
+							"value": "nosniff"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "DENY"
+						},
+						{
+							"key": "X-XSS-Protection",
+							"value": "1; mode=block"
+						},
+						{
+							"key": "X-Proxy-Cache",
+							"value": "MISS"
+						},
+						{
+							"key": "X-Robots-Tag",
+							"value": "all"
+						},
+						{
+							"key": "Content-Encoding",
+							"value": "gzip"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"data\": {\n        \"requests\": [\n            {\n                \"request\": {\n                    \"requestId\": \"E7BA3FD1EDCB0B46D63D39115CE8A332\",\n                    \"loaderId\": \"E7BA3FD1EDCB0B46D63D39115CE8A332\",\n                    \"documentURL\": \"https://sometesturl.com/api/v1\",\n                    \"request\": {\n                        \"url\": \"https://sometesturl.com/api/v1\",\n                        \"method\": \"GET\",\n                        \"headers\": {\n                            \"Upgrade-Insecure-Requests\": \"1\",\n                            \"User-Agent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.72 Safari/537.36\"\n                        },\n                        \"mixedContentType\": \"none\",\n                        \"initialPriority\": \"VeryHigh\",\n                        \"referrerPolicy\": \"strict-origin-when-cross-origin\"\n                    },\n                    \"timestamp\": 28402854.615106,\n                    \"wallTime\": 1617188779.923445,\n                    \"initiator\": {\n                        \"type\": \"other\"\n                    },\n                    \"type\": \"Document\",\n                    \"frameId\": \"0CBB75BFD46CE634CFBB98908076A356\",\n                    \"hasUserGesture\": false,\n                    \"primaryRequest\": true\n                },\n                \"response\": {\n                    \"encodedDataLength\": 0,\n                    \"dataLength\": 0,\n                    \"failed\": {\n                        \"requestId\": \"E7BA3FD1EDCB0B46D63D39115CE8A332\",\n                        \"timestamp\": 28402855.135779,\n                        \"type\": \"Document\",\n                        \"errorText\": \"net::ERR_SSL_PROTOCOL_ERROR\",\n                        \"canceled\": false\n                    }\n                }\n            },\n            {\n                \"request\": {},\n                \"requests\": [],\n                \"response\": {\n                    \"encodedDataLength\": 0,\n                    \"dataLength\": 0,\n                    \"hash\": \"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\",\n                    \"size\": 0\n                }\n            }\n        ],\n        \"cookies\": [],\n        \"console\": [],\n        \"links\": [],\n        \"timing\": {\n            \"beginNavigation\": \"2021-03-31T11:06:19.923Z\",\n            \"frameStartedLoading\": \"2021-03-31T11:06:20.473Z\",\n            \"frameNavigated\": \"2021-03-31T11:06:20.481Z\",\n            \"loadEventFired\": \"2021-03-31T11:06:20.481Z\",\n            \"frameStoppedLoading\": \"2021-03-31T11:06:20.482Z\",\n            \"domContentEventFired\": \"2021-03-31T11:06:20.482Z\"\n        },\n        \"globals\": []\n    },\n    \"stats\": {\n        \"resourceStats\": [],\n        \"protocolStats\": [],\n        \"tlsStats\": [],\n        \"serverStats\": [],\n        \"domainStats\": [\n            {\n                \"count\": 0,\n                \"ips\": [],\n                \"domain\": \"sometesturl.com\",\n                \"size\": 0,\n                \"encodedSize\": 0,\n                \"countries\": [],\n                \"index\": 0,\n                \"initiators\": []\n            }\n        ],\n        \"regDomainStats\": [\n            {\n                \"count\": 0,\n                \"ips\": [],\n                \"regDomain\": \"sometesturl.com\",\n                \"size\": 0,\n                \"encodedSize\": 0,\n                \"countries\": [],\n                \"index\": 0,\n                \"subDomains\": [\n                    {\n                        \"domain\": \"\",\n                        \"failed\": true\n                    }\n                ]\n            }\n        ],\n        \"secureRequests\": 0,\n        \"securePercentage\": 0,\n        \"IPv6Percentage\": null,\n        \"uniqCountries\": 0,\n        \"totalLinks\": 0,\n        \"malicious\": 0,\n        \"adBlocked\": 0,\n        \"ipStats\": []\n    },\n    \"meta\": {\n        \"processors\": {\n            \"geoip\": {\n                \"state\": \"done\",\n                \"data\": []\n            },\n            \"rdns\": {\n                \"state\": \"done\",\n                \"data\": []\n            },\n            \"wappa\": {\n                \"state\": \"done\",\n                \"data\": []\n            },\n            \"asn\": {\n                \"state\": \"done\",\n                \"data\": []\n            },\n            \"done\": {\n                \"state\": \"done\",\n                \"data\": {\n                    \"state\": \"done\"\n                }\n            }\n        }\n    },\n    \"task\": {\n        \"uuid\": \"2cf63ee0-4628-4deb-a7d8-2b2d1a71ceb4\",\n        \"time\": \"2021-03-31T11:06:19.698Z\",\n        \"url\": \"https://sometesturl.com/api/v1\",\n        \"visibility\": \"public\",\n        \"options\": {\n            \"useragent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.72 Safari/537.36\"\n        },\n        \"method\": \"api\",\n        \"source\": \"31c22861\",\n        \"tags\": [\n            \"demotag1\",\n            \"demotag2\"\n        ],\n        \"userAgent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.72 Safari/537.36\",\n        \"reportURL\": \"https://urlscan.io/result/2cf63ee0-4628-4deb-a7d8-2b2d1a71ceb4/\",\n        \"screenshotURL\": \"https://urlscan.io/screenshots/2cf63ee0-4628-4deb-a7d8-2b2d1a71ceb4.png\",\n        \"domURL\": \"https://urlscan.io/dom/2cf63ee0-4628-4deb-a7d8-2b2d1a71ceb4/\"\n    },\n    \"page\": {\n        \"url\": \"https://sometesturl.com/api/v1\",\n        \"domain\": \"sometesturl.com\"\n    },\n    \"lists\": {\n        \"ips\": [],\n        \"countries\": [],\n        \"asns\": [],\n        \"domains\": [\n            \"sometesturl.com\"\n        ],\n        \"servers\": [],\n        \"urls\": [\n            \"https://sometesturl.com/api/v1\"\n        ],\n        \"linkDomains\": [],\n        \"certificates\": [],\n        \"hashes\": [\n            \"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"\n        ]\n    },\n    \"verdicts\": {\n        \"overall\": {\n            \"score\": 0,\n            \"categories\": [],\n            \"brands\": [],\n            \"tags\": [],\n            \"malicious\": false,\n            \"hasVerdicts\": 0\n        },\n        \"urlscan\": {\n            \"score\": 0,\n            \"categories\": [],\n            \"brands\": [],\n            \"tags\": [],\n            \"detectionDetails\": [],\n            \"malicious\": false\n        },\n        \"engines\": {\n            \"score\": 0,\n            \"malicious\": [],\n            \"benign\": [],\n            \"maliciousTotal\": 0,\n            \"benignTotal\": 0,\n            \"verdicts\": [],\n            \"enginesTotal\": 0\n        },\n        \"community\": {\n            \"score\": 0,\n            \"votes\": [],\n            \"votesTotal\": 0,\n            \"votesMalicious\": 0,\n            \"votesBenign\": 0,\n            \"tags\": [],\n            \"categories\": []\n        }\n    }\n}"
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "apikey",
+		"apikey": [
+			{
+				"key": "value",
+				"value": "dummy-test-key",
+				"type": "string"
+			},
+			{
+				"key": "key",
+				"value": "API-Key",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "url",
+			"value": "https://urlscan.io"
+		},
+		{
+			"key": "uuid",
+			"value": "2cf63ee0-4628-4deb-a7d8-2b2d1a71ceb4"
+		}
+	]
+}

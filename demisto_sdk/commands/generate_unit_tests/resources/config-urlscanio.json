@@ -1,0 +1,822 @@
+
+{
+    "name": "urlscanio",
+    "display_name": "urlscan.io",
+    "description": "Generated description - REPLACE THIS",
+    "category": "Utilities",
+    "command_prefix": "urlscanio",
+    "docker_image": "demisto/python3:3.9.2.17957",
+    "url": "https://urlscan.io",
+    "base_url_path": "",
+    "auth": {
+        "type": "apikey",
+        "apikey": [
+            {
+                "key": "value",
+                "value": "dummy-test-key",
+                "type": "string"
+            },
+            {
+                "key": "key",
+                "value": "API-Key",
+                "type": "string"
+            },
+            {
+                "key": "in",
+                "value": "header",
+                "type": "string"
+            }
+        ]
+    },
+    "context_path": "urlscanio",
+    "code_type": "python",
+    "code_subtype": "python3",
+    "is_fetch": false,
+    "fix_code": true,
+    "commands": [
+        {
+            "name": "submit-url",
+            "url_path": "api/v1/scan",
+            "http_method": "POST",
+            "description": "",
+            "context_path": "SubmitUrl",
+            "root_object": "",
+            "headers": [
+                {
+                    "Content-Type": "application/json"
+                }
+            ],
+            "unique_key": "",
+            "body_format": {
+                "url": "{url}",
+                "visibility": "{visibility}",
+                "tags": "{tags}"
+            },
+            "upload_file": false,
+            "returns_file": false,
+            "returns_entry_file": false,
+            "arguments": [
+                {
+                    "name": "url",
+                    "description": "",
+                    "required": false,
+                    "is_array": false,
+                    "default_value": "",
+                    "predefined_values": [],
+                    "ref": null,
+                    "type_": null,
+                    "in_": "body",
+                    "in_object": []
+                },
+                {
+                    "name": "visibility",
+                    "description": "",
+                    "required": false,
+                    "is_array": false,
+                    "default_value": "",
+                    "predefined_values": [],
+                    "ref": null,
+                    "type_": null,
+                    "in_": "body",
+                    "in_object": []
+                },
+                {
+                    "name": "tags",
+                    "description": "",
+                    "required": false,
+                    "is_array": false,
+                    "default_value": "",
+                    "predefined_values": [],
+                    "ref": null,
+                    "type_": null,
+                    "in_": "body",
+                    "in_object": []
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "message",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "uuid",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "api",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "visibility",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "options.useragent",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "url",
+                    "description": "",
+                    "type_": "String"
+                }
+            ]
+        },
+        {
+            "name": "search",
+            "url_path": "api/v1/search",
+            "http_method": "GET",
+            "description": "",
+            "context_path": "Search",
+            "root_object": "",
+            "headers": null,
+            "unique_key": "",
+            "body_format": null,
+            "upload_file": false,
+            "returns_file": false,
+            "returns_entry_file": false,
+            "arguments": [
+                {
+                    "name": "q",
+                    "description": "",
+                    "required": false,
+                    "is_array": false,
+                    "default_value": "",
+                    "predefined_values": [],
+                    "ref": null,
+                    "type_": null,
+                    "in_": "query",
+                    "in_object": null
+                },
+                {
+                    "name": "size",
+                    "description": "",
+                    "required": false,
+                    "is_array": false,
+                    "default_value": "",
+                    "predefined_values": [],
+                    "ref": null,
+                    "type_": null,
+                    "in_": "query",
+                    "in_object": null
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "results.indexedAt",
+                    "description": "",
+                    "type_": "Date"
+                },
+                {
+                    "name": "results.task.visibility",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "results.task.method",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "results.task.domain",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "results.task.time",
+                    "description": "",
+                    "type_": "Date"
+                },
+                {
+                    "name": "results.task.uuid",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "results.task.url",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "results.stats.uniqIPs",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "results.stats.consoleMsgs",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "results.stats.uniqCountries",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "results.stats.dataLength",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "results.stats.encodedDataLength",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "results.stats.requests",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "results.page.country",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "results.page.server",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "results.page.domain",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "results.page.ip",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "results.page.mimeType",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "results.page.asnname",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "results.page.asn",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "results.page.url",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "results.page.ptr",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "results.page.status",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "results._id",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "results.sort",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "results.result",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "results.screenshot",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "total",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "took",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "has_more",
+                    "description": "",
+                    "type_": "Boolean"
+                }
+            ]
+        },
+        {
+            "name": "scan-results",
+            "url_path": "api/v1/result/{uuid}",
+            "http_method": "GET",
+            "description": "",
+            "context_path": "ScanResults",
+            "root_object": "",
+            "headers": null,
+            "unique_key": "",
+            "body_format": null,
+            "upload_file": false,
+            "returns_file": false,
+            "returns_entry_file": false,
+            "arguments": [
+                {
+                    "name": "uuid",
+                    "description": "",
+                    "required": false,
+                    "is_array": false,
+                    "default_value": "",
+                    "predefined_values": [],
+                    "ref": null,
+                    "type_": null,
+                    "in_": "url",
+                    "in_object": null
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "data.requests.request.requestId",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "data.requests.request.loaderId",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "data.requests.request.documentURL",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "data.requests.request.request.url",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "data.requests.request.request.method",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "data.requests.request.request.headers.Upgrade-Insecure-Requests",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "data.requests.request.request.headers.User-Agent",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "data.requests.request.request.mixedContentType",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "data.requests.request.request.initialPriority",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "data.requests.request.request.referrerPolicy",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "data.requests.request.timestamp",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "data.requests.request.wallTime",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "data.requests.request.initiator.type",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "data.requests.request.type",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "data.requests.request.frameId",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "data.requests.request.hasUserGesture",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "data.requests.request.primaryRequest",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "data.requests.response.encodedDataLength",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "data.requests.response.dataLength",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "data.requests.response.failed.requestId",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "data.requests.response.failed.timestamp",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "data.requests.response.failed.type",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "data.requests.response.failed.errorText",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "data.requests.response.failed.canceled",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "data.requests.response.hash",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "data.requests.response.size",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "data.timing.beginNavigation",
+                    "description": "",
+                    "type_": "Date"
+                },
+                {
+                    "name": "data.timing.frameStartedLoading",
+                    "description": "",
+                    "type_": "Date"
+                },
+                {
+                    "name": "data.timing.frameNavigated",
+                    "description": "",
+                    "type_": "Date"
+                },
+                {
+                    "name": "data.timing.loadEventFired",
+                    "description": "",
+                    "type_": "Date"
+                },
+                {
+                    "name": "data.timing.frameStoppedLoading",
+                    "description": "",
+                    "type_": "Date"
+                },
+                {
+                    "name": "data.timing.domContentEventFired",
+                    "description": "",
+                    "type_": "Date"
+                },
+                {
+                    "name": "stats.domainStats.count",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "stats.domainStats.domain",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "stats.domainStats.size",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "stats.domainStats.encodedSize",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "stats.domainStats.index",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "stats.regDomainStats.count",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "stats.regDomainStats.regDomain",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "stats.regDomainStats.size",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "stats.regDomainStats.encodedSize",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "stats.regDomainStats.index",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "stats.regDomainStats.subDomains.domain",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "stats.regDomainStats.subDomains.failed",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "stats.secureRequests",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "stats.securePercentage",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "stats.IPv6Percentage",
+                    "description": "",
+                    "type_": "Unknown"
+                },
+                {
+                    "name": "stats.uniqCountries",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "stats.totalLinks",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "stats.malicious",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "stats.adBlocked",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "meta.processors.geoip.state",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "meta.processors.rdns.state",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "meta.processors.wappa.state",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "meta.processors.asn.state",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "meta.processors.done.state",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "meta.processors.done.data.state",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "task.uuid",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "task.time",
+                    "description": "",
+                    "type_": "Date"
+                },
+                {
+                    "name": "task.url",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "task.visibility",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "task.options.useragent",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "task.method",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "task.source",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "task.tags",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "task.userAgent",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "task.reportURL",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "task.screenshotURL",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "task.domURL",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "page.url",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "page.domain",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "lists.domains",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "lists.urls",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "lists.hashes",
+                    "description": "",
+                    "type_": "String"
+                },
+                {
+                    "name": "verdicts.overall.score",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "verdicts.overall.malicious",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "verdicts.overall.hasVerdicts",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "verdicts.urlscan.score",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "verdicts.urlscan.malicious",
+                    "description": "",
+                    "type_": "Boolean"
+                },
+                {
+                    "name": "verdicts.engines.score",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "verdicts.engines.maliciousTotal",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "verdicts.engines.benignTotal",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "verdicts.engines.enginesTotal",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "verdicts.community.score",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "verdicts.community.votesTotal",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "verdicts.community.votesMalicious",
+                    "description": "",
+                    "type_": "Number"
+                },
+                {
+                    "name": "verdicts.community.votesBenign",
+                    "description": "",
+                    "type_": "Number"
+                }
+            ]
+        }
+    ],
+    "params": [
+        {
+            "name": "url",
+            "display": "Server URL",
+            "defaultvalue": "https://urlscan.io",
+            "type_": "STRING",
+            "required": true
+        },
+        {
+            "name": "proxy",
+            "display": "Use system proxy",
+            "defaultvalue": "",
+            "type_": "BOOLEAN",
+            "required": false
+        },
+        {
+            "name": "insecure",
+            "display": "Trust any certificate",
+            "defaultvalue": "",
+            "type_": "BOOLEAN",
+            "required": false
+        },
+        {
+            "name": "api_key",
+            "display": "API Key",
+            "defaultvalue": "",
+            "type_": "ENCRYPTED",
+            "required": true
+        }
+    ]
+}

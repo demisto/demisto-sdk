@@ -60,7 +60,7 @@ def insert_outputs(yml_data: Dict, command_name: str, output_with_contexts: List
 
     # adds new outputs without overriding existing
     outputs.extend((output for output in output_with_contexts
-                    if output.get('contextPath') not in old_output_paths))
+                    if output.get('contextPath') and output.get('contextPath') not in old_output_paths))
 
     # populates the description field, preferring the new value (if not blank), and existing values over blanks.
     for output in outputs:
@@ -68,7 +68,7 @@ def insert_outputs(yml_data: Dict, command_name: str, output_with_contexts: List
         if not path:
             continue  # todo raise error?
         if not output.get('description'):
-            output['description'] = new_descriptions.get(path) or old_descriptions.get(path)
+            output['description'] = new_descriptions.get(path) or old_descriptions.get(path) or ''
     return yml_data
 
 

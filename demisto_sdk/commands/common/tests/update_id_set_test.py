@@ -11,7 +11,7 @@ import pytest
 import demisto_sdk.commands.common.tools as tools
 import demisto_sdk.commands.common.update_id_set as uis
 from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
-                                                   JOBS_DIR, FileType,
+                                                   JOBS_DIR, PARSING_RULES_DIR, FileType,
                                                    MarketplaceVersions)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
@@ -28,7 +28,7 @@ from demisto_sdk.commands.common.update_id_set import (
     has_duplicate, merge_id_sets, process_general_items,
     process_incident_fields, process_integration, process_jobs,
     process_layoutscontainers, process_script, re_create_id_set,
-    should_skip_item_by_mp)
+    should_skip_item_by_mp, process_general_mp_v2_items, get_mp_v2_entities_data)
 from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
@@ -2774,6 +2774,39 @@ class TestJob:
         with pytest.raises(FileNotFoundError):
             assert not process_jobs(str(job_json_path), {pack.name: {}}, MarketplaceVersions.XSOAR.value, print_logs)
         assert f"failed to process job {job_json_path}" in capsys.readouterr().out
+
+
+class TestParsingRules:
+    @staticmethod
+    def test_process_parsing_rules(mocker, capsys, repo):
+        """
+        Given
+            - A repo with a parsing rule object.
+            - Whether to print logs.
+        When
+            - Parsing the parsing rule files.
+        Then
+            - Verify result as expeted.
+        """
+        pack = repo.create_pack()
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
+        parsing_rule = pack.create_parsing_rule("parsing_rule", {"rules": "", "name": "parsing_rule.yml"})
+        res = process_general_mp_v2_items(parsing_rule.path, {pack.name: {}}, MarketplaceVersions.MarketplaceV2.value, True, (FileType.PARSING_RULES,), get_mp_v2_entities_data)
+
+        captured = capsys.readouterr()
+        assert len(res) == 2
+        datum = res[0][0]['-']
+        assert datum['name'] == parsing_rule._tmp_path.parts[-1]
+        path = Path(datum['file_path'])
+        assert path == parsing_rule._tmp_path
+        assert path.exists()
+        assert path.is_file()
+        assert path.suffix == '.yml'
+        assert path.parts[-2] == PARSING_RULES_DIR
+        assert path.parts[-3] == pack.name
+        assert datum['pack'] == pack.name
+
+        assert f'adding {parsing_rule._tmp_path} to id_set' in captured.out
 
 
 def test_merge_id_sets(tmp_path):

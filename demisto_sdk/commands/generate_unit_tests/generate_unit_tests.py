@@ -47,6 +47,8 @@ class CustomContactSolver(ContractSolver):
             arg_builder = ArgsBuilder(command_name=func.name, directory_path=directory_path,
                                       args_list=test_case.args_list)
             args = arg_builder.args
+            decorator = arg_builder.decorators
+            global_args = arg_builder.global_arg
 
             # Compose request_mock calls for each API call made
             test_case.request_mock_ast_builder()
@@ -59,6 +61,9 @@ class CustomContactSolver(ContractSolver):
 
             # Compose test case object
             test_case.inputs = args
+            test_case.decorators = decorator
+            test_case.global_arg = global_args
+
 
             self.id += 1
             self.context.no_cache = False
@@ -78,6 +83,8 @@ class CustomContactSolver(ContractSolver):
                 ast_func = self.solve_function(func, client_ast, generator.test_data_path)
                 test_module.functions.append(ast_func)
                 names_to_import.append(func.name)
+                if ast_func.global_arg:
+                    test_module.global_args.extend(ast_func.global_arg)
             except ValueError:
                 if generator.verbose:
                     print(f"Skipped function: {func} due to one of its argument doesn't have type")
@@ -130,12 +137,12 @@ def run_generate_unit_tests(**kwargs):
     if not os.path.isdir(output_dir):
         print_error(f'The directory provided "{output_dir}" is not a directory')
         return 1
-
-    generator = UnitTestsGenerator(input_path, test_data_path, commands, output_dir, verbose, module_name.split('.')[0])
+    file_name = module_name.split('.')[0]
+    generator = UnitTestsGenerator(input_path, test_data_path, commands, output_dir, verbose, file_name)
     source = generator.get_input_file()
     if source:
         output_test = run(source, generator)
-        output_file = os.path.join(output_dir, f"test_{module_name}")
+        output_file = os.path.join(output_dir, f"{file_name}_test.py")
         print(f"Converting inferred test case to ast and write to file: {output_file}")
         with open(output_file, "w") as f:
             f.write(output_test)
@@ -155,8 +162,5 @@ def run(source, generator):
 
 # ----------------- Monkey Patching----------------------------------------
 
-
-# ContractSolver.solve_function = solve_function
-# ContractSolver.solve = solve
 solver.TestCase = TestCase
 solver.TestModule = TestModule

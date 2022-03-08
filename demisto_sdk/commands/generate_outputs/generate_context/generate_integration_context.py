@@ -66,7 +66,7 @@ def insert_outputs(yml_data: Dict, command_name: str, output_with_contexts: List
     for output in outputs:
         path = output.get('contextPath')
         if not path:
-            continue  # todo raise error?
+            raise Exception('Found a command without a contextPath value')
         if not output.get('description'):
             output['description'] = new_descriptions.get(path) or old_descriptions.get(path) or ''
     return yml_data

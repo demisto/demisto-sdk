@@ -1,10 +1,8 @@
 import json
 import os
 
-
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json, get_yaml, write_yml
-
 
 # Test data files
 FAKE_INTEGRATION_YML = get_yaml(
@@ -83,7 +81,7 @@ def test_insert_outputs(mocker):
                             {command_name: [
                                 (None, None, json.dumps(FAKE_OUTPUTS_1)),
                                 (None, None, json.dumps(FAKE_OUTPUTS_2))]
-                            },
+                             },
                             []))
 
     yml_data = FAKE_INTEGRATION_YML
@@ -118,7 +116,7 @@ def test_generate_integration_context(mocker, tmpdir):
                             {command_name: [
                                 (None, None, json.dumps(FAKE_OUTPUTS_1)),
                                 (None, None, json.dumps(FAKE_OUTPUTS_2))]
-                            },
+                             },
                             []))
 
     # Temp file to check
@@ -145,5 +143,3 @@ def test_generate_integration_context(mocker, tmpdir):
             break
     else:
         assert False, 'command is not found in yml_data'
-
-

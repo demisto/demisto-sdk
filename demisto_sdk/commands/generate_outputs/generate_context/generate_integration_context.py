@@ -1,8 +1,8 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.tools import (get_yaml, print_error,
                                                print_success, print_v,
-                                               write_yml, print_warning)
+                                               print_warning, write_yml)
 from demisto_sdk.commands.generate_docs.common import build_example_dict
 from demisto_sdk.commands.generate_docs.generate_integration_doc import \
     get_command_examples
@@ -57,11 +57,11 @@ def insert_outputs(yml_data: Dict, command_name: str, output_with_contexts: List
     old_descriptions = _output_path_to_description(outputs)
     new_descriptions = _output_path_to_description(output_with_contexts)
 
-    old_output_paths = set(filter(None, map(lambda val: val.get('contextPath'), command.get('outputs', []))))
+    old_output_paths: Set = set(filter(None, map(lambda val: val.get('contextPath'), command.get('outputs', []))))
 
     # adds new outputs without overriding existing
-    outputs.extend((output for output in output_with_contexts
-                    if output.get('contextPath') and output.get('contextPath') not in old_output_paths))
+    outputs.extend(output for output in output_with_contexts
+                   if output.get('contextPath') and output.get('contextPath') not in old_output_paths)
 
     # populates the description field, preferring the new value (if not blank), and existing values over blanks.
     for output in outputs:

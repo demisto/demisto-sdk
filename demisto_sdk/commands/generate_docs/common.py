@@ -2,7 +2,7 @@ import html
 import json
 import os.path
 import re
-from typing import Tuple, Dict, List
+from typing import Dict, List, Tuple
 
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_warning, run_command)

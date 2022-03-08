@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from typing import Tuple
 
 import click
@@ -7,7 +8,8 @@ from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS, BANG_COMMAND_NAMES, BETA_INTEGRATION,
     FEED_REQUIRED_PARAMS, INCIDENT_FETCH_REQUIRED_PARAMS, INTEGRATION,
     TYPE_PWSH, MarketplaceVersions)
-from demisto_sdk.commands.common.tools import find_type, get_item_marketplaces
+from demisto_sdk.commands.common.tools import (find_type,
+                                               get_item_marketplaces, get_json)
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -76,6 +78,22 @@ class IntegrationYMLFormat(BaseUpdateYML):
             if param['name'] in default_additional_info and not param.get('additionalinfo'):
                 param['additionalinfo'] = default_additional_info[param['name']]
 
+    def set_default_outputs(self):
+        """ Replaces empty output descriptions with default values """
+        if not self.data:
+            return
+
+        default_values = get_json(Path(__file__).absolute().parents[3] / 'demisto_sdk/commands/common/'
+                                                                         'default_output_descriptions.json')
+
+        if self.verbose:
+            click.echo('Updating empty integration outputs to their default (if exists)')
+
+        for command in self.data.get('script', {}).get('commands', {}):
+            for output in command.get('outputs', []):
+                if output['contextPath'] in default_values and output.get('description') == '':  # could be missing -> None
+                    output['description'] = default_values[output['contextPath']]
+
     def set_reputation_commands_basic_argument_as_needed(self):
         """Sets basic arguments of reputation commands to be default, isArray and required."""
         if self.verbose:
@@ -110,7 +128,8 @@ class IntegrationYMLFormat(BaseUpdateYML):
                         'required': True,
                         'secret': False
                     }
-                    click.echo(f'Command {command_name} has no arguemnts. Setting them: {json.dumps(default_bang_args, indent=4)}')
+                    click.echo(
+                        f'Command {command_name} has no arguemnts. Setting them: {json.dumps(default_bang_args, indent=4)}')
                     argument_list: list = command.get('arguments', [])
                     argument_list.append(default_bang_args)
                     command['arguments'] = argument_list
@@ -133,7 +152,8 @@ class IntegrationYMLFormat(BaseUpdateYML):
             # otherwise it will be the ALERT_FETCH_REQUIRED_PARAMS (with Alert type etc. )
             marketplaces = get_item_marketplaces(item_path=self.source_file, item_data=self.data)
             is_xsoar_marketplace = not marketplaces or MarketplaceVersions.XSOAR.value in marketplaces
-            fetch_required_params, params_to_remove = (INCIDENT_FETCH_REQUIRED_PARAMS, ALERT_FETCH_REQUIRED_PARAMS) if is_xsoar_marketplace else (
+            fetch_required_params, params_to_remove = (
+                INCIDENT_FETCH_REQUIRED_PARAMS, ALERT_FETCH_REQUIRED_PARAMS) if is_xsoar_marketplace else (
                 ALERT_FETCH_REQUIRED_PARAMS, INCIDENT_FETCH_REQUIRED_PARAMS)
 
             for param_to_add, param_to_remove in zip(fetch_required_params, params_to_remove):
@@ -179,6 +199,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
             self.update_proxy_insecure_param_to_default()
             self.set_params_default_additional_info()
             self.set_reputation_commands_basic_argument_as_needed()
+            self.set_default_outputs()
             self.set_fetch_params_in_config()
             self.set_feed_params_in_config()
             self.update_docker_image()

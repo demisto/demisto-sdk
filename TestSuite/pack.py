@@ -540,7 +540,7 @@ class Pack:
         return correlation_rule
 
     def create_xsiam_dashboard(self, name, content: dict = {}) -> JSONBased:
-        xsiam_dashboard = self._create_json_based(name, prefix="", content=content, dir_pat=self._xsiam_dashboards_path)
+        xsiam_dashboard = self._create_json_based(name, prefix="", content=content, dir_path=self._xsiam_dashboards_path)
         self.xsiam_dashboards.append(xsiam_dashboard)
         return xsiam_dashboard
 

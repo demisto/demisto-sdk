@@ -2,6 +2,7 @@
   "DBotScore.Score": "The actual score.",
   "DBotScore.Vendor": "The vendor used to calculate the score.",
   "DBotScore.Indicator": "The indicator that was tested.",
+  "DBotScore.Reliability": "Reliability of the source providing the intelligence data.",
   "DBotScore.Type": "The indicator type.",
   "Domain.Name": "The domain name.",
   "Domain.DNS": "A list of IP objects resolved by DNS.",

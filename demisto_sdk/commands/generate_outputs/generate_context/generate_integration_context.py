@@ -38,24 +38,49 @@ def generate_example_dict(examples_file: Optional[str], insecure=False):
     return example_dict
 
 
-def insert_outputs(yml_data: Dict, command: str, output_with_contexts: List):
-    """ Insert new ouputs for a command in the yml_data and return it.
+def insert_outputs(yml_data: Dict, command_name: str, output_with_contexts: List):
+    """ Insert new outputs for a command in the yml_data and return it.
 
     Args:
         yml_data: yaml as python dict.
-        commnad: the command we want to change the outputs of.
+        command_name: the command name whose outputs we want to manipulate.
         output_with_contexts: the new outputs.
     """
-    commands = yml_data['script']['commands']
-    for cmd in commands:
-        if cmd.get('name') == command:
-            outputs = cmd.get('outputs', [])
-            outputs.extend(output_with_contexts)
-            cmd['outputs'] = list({v['contextPath']: v for v in outputs}.values())
-            break
-    else:  # when break was not reached
-        raise Exception(f'Input YML doesn\'t have the "{command}" command that exists in the examples file.')
+    commands = yml_data.get('script', {}).get('commands', [])
+    command = tuple(filter(lambda value: value.get('name') == command_name, commands))
+    if not command:
+        raise Exception(f'The {command_name} command is missing from the integration YML.')
+    command = command[0]
+
+    outputs: List[Dict[str, str]] = command.get('outputs', [])
+    old_descriptions = _output_path_to_description(outputs)
+    new_descriptions = _output_path_to_description(output_with_contexts)
+
+    old_output_paths = set(old_descriptions.keys())
+
+    # adds new outputs without overriding existing
+    outputs.extend((output for output in output_with_contexts
+                    if output.get('contextPath') not in old_output_paths))
+
+    # populates the description field, preferring the new value (if not blank), and existing values over blanks.
+    for output in outputs:
+        path = output.get('contextPath')
+        if not path:
+            continue  # todo raise error?
+        if not output.get('description'):
+            output['description'] = new_descriptions.get(path) or old_descriptions.get(path)
     return yml_data
+
+
+def _output_path_to_description(command_outputs: List[Dict[str, str]]) -> Dict[str, str]:
+    """ creates a mapping of contextPath -> description, if the description is not null. """
+    descriptions = {}
+    for output in command_outputs:
+        description = output.get('description')
+        context_path = output.get('contextPath')
+        if context_path and description:
+            descriptions[context_path] = description
+    return descriptions
 
 
 def generate_integration_context(

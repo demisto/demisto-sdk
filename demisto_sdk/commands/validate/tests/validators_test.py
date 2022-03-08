@@ -661,13 +661,21 @@ class TestValidators:
         assert 'SC100' not in ignore_errors_list['file_name']
 
     def test_create_ignored_errors_list(self):
+        """
+            Given:
+                - A list of errors we want to exclude from the all errors list.
+            When:
+                - Running create_ignored_errors_list from validate manager.
+            Then:
+                - verify that the error list that comes out has a correct sublist.
+        """
         validate_manager = ValidateManager()
-        errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
+        errors_to_exclude = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
                            "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC", "GF", "PP", "JB", "LI100",
                            "LI101"]
-        ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
-        assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
-                                "BA110", 'BA111', "BA112", "BA113", "BA114", "BA115", "BC101", "BC102", "BC103", "BC104"]
+        error_list = validate_manager.create_ignored_errors_list(errors_to_exclude)
+        assert  ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
+                                "BA110", 'BA111', "BA112", "BA113", "BA114", "BA115", "BC101", "BC102", "BC103", "BC104"] <= error_list
 
     def test_added_files_type_using_function(self, repo, mocker):
         """
@@ -1792,17 +1800,17 @@ def test_job_unexpected_field_values_in_non_feed_job(repo, capsys,
 
 
 @pytest.mark.parametrize('file_set,expected_output,expected_result',
-                         (({'file_description.md'}, "[BA115] - The file file_description.md cannot be deleted. Please restore the file.", False),
+                         (({'mock_file_description.md'}, "[BA115]", False),
                           (set(), "", True),
                           ({'doc_files/image.png'}, "", True)))
 def test_validate_deleted_files(capsys, file_set, expected_output, expected_result):
     """
     Given
-            A file_path set to validate
+            A file_path set to validate.
     When
-            Validating the files
+            Validating the files.
     Then
-            Assert the expected result (True or False) and the expected output (if there is an expected output)
+            Assert the expected result (True or False) and the expected output (if there is an expected output).
     """
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
 
@@ -1810,8 +1818,8 @@ def test_validate_deleted_files(capsys, file_set, expected_output, expected_resu
 
     stdout = capsys.readouterr().out
 
-    assert expected_result is result
     assert expected_output in stdout
+    assert expected_result is result
 
 
 def test_validate_contributors_file(repo):

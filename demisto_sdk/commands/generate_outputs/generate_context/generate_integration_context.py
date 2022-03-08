@@ -47,20 +47,14 @@ def insert_outputs(yml_data: Dict, command: str, output_with_contexts: List):
         output_with_contexts: the new outputs.
     """
     commands = yml_data['script']['commands']
-    found = False
     for cmd in commands:
         if cmd.get('name') == command:
-            if not cmd['outputs']:
-                cmd['outputs'] = []
-            cmd['outputs'].extend(output_with_contexts)
-            cmd['outputs'] = list({v['contextPath']: v for v in cmd['outputs']}.values())
-            found = True
+            outputs = cmd.get('outputs', [])
+            outputs.extend(output_with_contexts)
+            cmd['outputs'] = list({v['contextPath']: v for v in outputs}.values())
             break
-
-    if not found:
-        raise Exception(
-            f'Input YML doesn\'t have the "{command}" command that exists in the examples file.')
-
+    else:  # when break was not reached
+        raise Exception(f'Input YML doesn\'t have the "{command}" command that exists in the examples file.')
     return yml_data
 
 

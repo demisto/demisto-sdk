@@ -9,7 +9,7 @@
 * Improved the detection of errors in **doc-review** command.
 * The **validate** command now checks if a readme file is empty, only for packs that contain playbooks or were written by a partner
 * The **validate** command now makes sure common contextPath values (e.g. `DBotScore.Score`) have a non-empty description, and **format** populates them automatically.
-
+* Fixed a bug where **doc-review** command failed on existing templates
 # 1.6.1
 * Added the '--use-packs-known-words' argument to the **doc-review** command
 * Added YAML_Loader to handle yaml files in a standard way across modules, replacing PYYAML.

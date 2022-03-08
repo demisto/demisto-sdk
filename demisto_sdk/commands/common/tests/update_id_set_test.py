@@ -11,7 +11,8 @@ import pytest
 import demisto_sdk.commands.common.tools as tools
 import demisto_sdk.commands.common.update_id_set as uis
 from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
-                                                   JOBS_DIR, PARSING_RULES_DIR, FileType,
+                                                   JOBS_DIR, PARSING_RULES_DIR,
+                                                   FileType,
                                                    MarketplaceVersions)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
@@ -23,12 +24,12 @@ from demisto_sdk.commands.common.update_id_set import (
     get_generic_field_data, get_generic_module_data, get_generic_type_data,
     get_incident_fields_by_playbook_input, get_incident_type_data,
     get_indicator_type_data, get_layout_data, get_mapper_data,
-    get_pack_metadata_data, get_playbook_data, get_report_data,
-    get_script_data, get_values_for_keys_recursively, get_widget_data,
-    has_duplicate, merge_id_sets, process_general_items,
-    process_incident_fields, process_integration, process_jobs,
-    process_layoutscontainers, process_script, re_create_id_set,
-    should_skip_item_by_mp, process_general_mp_v2_items, get_mp_v2_entities_data)
+    get_mp_v2_entities_data, get_pack_metadata_data, get_playbook_data,
+    get_report_data, get_script_data, get_values_for_keys_recursively,
+    get_widget_data, has_duplicate, merge_id_sets, process_general_items,
+    process_general_mp_v2_items, process_incident_fields, process_integration,
+    process_jobs, process_layoutscontainers, process_script, re_create_id_set,
+    should_skip_item_by_mp)
 from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
@@ -2791,7 +2792,8 @@ class TestParsingRules:
         pack = repo.create_pack()
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
         parsing_rule = pack.create_parsing_rule("parsing_rule", {"rules": "", "name": "parsing_rule.yml"})
-        res = process_general_mp_v2_items(parsing_rule.path, {pack.name: {}}, MarketplaceVersions.MarketplaceV2.value, True, (FileType.PARSING_RULES,), get_mp_v2_entities_data)
+        res = process_general_mp_v2_items(parsing_rule.path, {pack.name: {}},
+                                          MarketplaceVersions.MarketplaceV2.value, True, (FileType.PARSING_RULES,), get_mp_v2_entities_data)
 
         captured = capsys.readouterr()
         assert len(res) == 2

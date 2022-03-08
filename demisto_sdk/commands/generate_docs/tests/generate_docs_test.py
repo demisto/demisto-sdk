@@ -1084,3 +1084,7 @@ def test_disable_md_autolinks():
     res = disable_md_autolinks(big_str)
     assert 'http://' not in res
     assert res.count('https:<span>//</span>') == 8
+
+
+def test_build_example_dict(mocker):
+    mocker.patch.object()

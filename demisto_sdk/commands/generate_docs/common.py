@@ -2,6 +2,7 @@ import html
 import json
 import os.path
 import re
+from typing import Tuple, Dict, List
 
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_warning, run_command)
@@ -204,41 +205,6 @@ def string_escape_md(st, minimal_escaping=False, escape_multiline=False, escape_
     return st
 
 
-def execute_command(command_example, insecure: bool):
-    errors = []
-    context = {}
-    md_example: str = ''
-    cmd = command_example
-    try:
-        runner = Runner('', insecure=insecure)
-        res, raw_context = runner.execute_command(command_example)
-        if not res:
-            raise RuntimeError('something went wrong with your command: {}'.format(command_example))
-
-        for entry in res:
-            if is_error(entry):
-                raise RuntimeError('something went wrong with your command: {}'.format(command_example))
-
-            if raw_context:
-                context = {k.split('(')[0]: v for k, v in raw_context.items()}
-
-            if entry.contents:
-                content: str = entry.contents
-                if isinstance(content, STRING_TYPES):
-                    md_example = format_md(content)
-                else:
-                    md_example = f'```\n{json.dumps(content, sort_keys=True, indent=4)}\n```'
-
-    except RuntimeError:
-        errors.append('The provided example for cmd {} has failed...'.format(cmd))
-
-    except Exception as e:
-        errors.append(
-            'Error encountered in the processing of command {}, error was: {}. '.format(cmd, str(e)) +
-            '. Please check your command inputs and outputs')
-
-    cmd = cmd.split(' ')[0][1:]
-    return cmd, md_example, context, errors
 
 
 def is_error(execute_command_result):
@@ -264,11 +230,10 @@ def is_error(execute_command_result):
     return execute_command_result.type == entryTypes['error']
 
 
-def build_example_dict(command_examples: list, insecure: bool):
+def build_example_dict(command_examples: list, insecure: bool) -> Tuple[Dict[str, List[Tuple[str, str, str]]], List[str]]:
     """
     gets an array of command examples, run them one by one and return a map of
-        {base command -> (example command, markdown, outputs)}
-    Note: if a command appears more then once, run all occurrences but stores only the first.
+        {base command -> [(example command, markdown, outputs), ...]}.
     """
     examples = {}  # type: dict
     errors = []  # type: list

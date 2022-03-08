@@ -1009,9 +1009,9 @@ class TestFormatting:
             GENERAL_DEFAULT_FROMVERSION
 
         pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
-        script = pack.create_script(yml={'fromversion': '5.0.0'})
-        playbook = pack.create_playbook(yml={'fromversion': '5.0.0'})
-        integration = pack.create_integration(yml={'fromversion': '5.0.0'})
+        script = pack.create_script()
+        playbook = pack.create_playbook()
+        integration = pack.create_integration()
         for path in [script.yml.path, playbook.yml.path, integration.yml.path]:
             bs = BaseUpdate(input=path, assume_yes=True)
             bs.set_fromVersion()

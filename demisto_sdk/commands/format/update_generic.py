@@ -227,10 +227,13 @@ class BaseUpdate:
     def is_general_default_version_lower(self, version_to_check):
         return LooseVersion(GENERAL_DEFAULT_FROMVERSION) < LooseVersion(version_to_check)
 
-    def ask_user(self):
+    def get_answer(self):
         click.secho('No fromversion is specified for this content item, would you like me to update for you? [Y/n]',
                     fg='red')
-        user_answer = input()
+        return input()
+
+    def ask_user(self):
+        user_answer = self.get_answer()
         if user_answer in ['Y', 'y', 'yes', 'Yes']:
             return True
         else:
@@ -240,7 +243,7 @@ class BaseUpdate:
     def set_fromVersion(self, default_from_version='', file_type: Optional[str] = None):
         """Sets fromVersion key in file:
         Args:
-            from_version: The specific from_version value.
+            default_from_version: default fromVersion specific to the content type.
             file_type: what is the file type: for now only integration type passed
         """
         version_to_set = None
@@ -254,9 +257,9 @@ class BaseUpdate:
         elif self.data.get(self.from_version_key) and self.is_new_supported_integration(file_type):
             version_to_set = self.data.get(self.from_version_key)
         # If there is from_version in the old_file(repo).
-        elif old_from_version := self.old_file.get(self.from_version_key):
-            version_to_set = old_from_version
-        else:
+        elif self.old_file.get(self.from_version_key):
+            version_to_set = self.old_file.get(self.from_version_key)
+        elif not self.data.get(self.from_version_key):
             # Ask the user if default_from_version is needed.
             if self.assume_yes or self.ask_user():
                 # If the content type has different default from_version from the general type.

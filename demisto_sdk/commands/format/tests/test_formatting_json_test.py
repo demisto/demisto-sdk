@@ -6,9 +6,12 @@ from typing import Optional
 import pytest
 from mock import patch
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION, GENERAL_DEFAULT_FROMVERSION, FileType,
+    MarketplaceVersions)
 from demisto_sdk.commands.format import (update_dashboard, update_incidenttype,
                                          update_indicatortype)
+from demisto_sdk.commands.format.format_constants import VERSION_6_0_0
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.format.update_classifier import (
     ClassifierJSONFormat, OldClassifierJSONFormat)
@@ -1239,14 +1242,113 @@ class TestFormattingReport:
             GENERAL_DEFAULT_FROMVERSION
 
         pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
-        incident_type = pack.create_incident_type(name='TestType', content={'fromVersion': '5.5.0'})
-        incident_field = pack.create_incident_field(name='TestField', content={'fromVersion': '5.5.0'})
-        indicator_field = pack.create_indicator_field(name='TestFeild', content={'fromVersion': '5.5.0'})
-        indicator_type = pack.create_indicator_type(name='TestType', content={'fromVersion': '5.5.0'})
-        classifier = pack.create_classifier(name='TestClassifier', content={'fromVersion': '5.5.0'})
-        layout = pack.create_layout(name='TestLayout', content={'fromVersion': '5.5.0'})
+        incident_type = pack.create_incident_type(name='TestType')
+        incident_field = pack.create_incident_field(name='TestField')
+        indicator_field = pack.create_indicator_field(name='TestFeild')
+        indicator_type = pack.create_indicator_type(name='TestType')
+        classifier = pack.create_classifier(name='TestClassifier')
+        layout = pack.create_layout(name='TestLayout')
         for path in [incident_type.path, incident_field.path, indicator_field.path, indicator_type.path,
                      classifier.path, layout.path]:
             bs = BaseUpdate(input=path, assume_yes=True)
             bs.set_fromVersion()
             assert bs.data['fromVersion'] == GENERAL_DEFAULT_FROMVERSION
+
+
+class TestFormattingFromVersionKey:
+
+    def init_BaseUpdate(self, base_update: BaseUpdate, version_to_set='', oldfile_version='', assume_yes=True):
+        base_update.verbose = False
+        base_update.data = {}
+        base_update.from_version_key = 'fromversion'
+        base_update.from_version = version_to_set
+        base_update.old_file = {}
+        base_update.assume_yes = assume_yes
+        if oldfile_version:
+            base_update.old_file = {base_update.from_version_key: oldfile_version}
+
+    def test_update_fromVersion_from_flag(self, mocker):
+        """
+        Given
+            - A content item and a version to set.
+        When
+            - Calling set_fromVersion method.
+        Then
+            - Ensure that fromVersion key in the file data was set to the specific test version.
+        """
+
+        mocker.patch.object(BaseUpdate, '__init__', return_value=None)
+        base_update = BaseUpdate()
+        self.init_BaseUpdate(base_update, VERSION_6_0_0)
+        base_update.set_fromVersion()
+        assert base_update.data.get(base_update.from_version_key) == VERSION_6_0_0
+
+    def test_update_fromVersion_from_oldFile(self, mocker):
+        """
+        Given
+            - A content item with oldfile version.
+        When
+            - Calling set_fromVersion method.
+        Then
+            - Ensure that fromVersion key in the file data was set to the specific test version.
+        """
+
+        mocker.patch.object(BaseUpdate, '__init__', return_value=None)
+        base_update = BaseUpdate()
+        self.init_BaseUpdate(base_update, oldfile_version=VERSION_6_0_0)
+        base_update.set_fromVersion()
+        assert base_update.data.get(base_update.from_version_key) == VERSION_6_0_0
+
+    special_content_items = [FileType.JOB,
+                             FileType.LISTS,
+                             FileType.PRE_PROCESS_RULES,
+                             FileType.GENERIC_TYPE]
+
+    @pytest.mark.parametrize(argnames='content_type', argvalues=special_content_items)
+    def test_update_fromVersion_from_default_contentItem(self, mocker, content_type):
+        """
+        Given
+            - A new special content item.
+        When
+            - Calling set_fromVersion method.
+        Then
+            - Ensure that fromVersion key in the file data was set to the specific default content item version.
+        """
+        mocker.patch.object(BaseUpdate, '__init__', return_value=None)
+        base_update = BaseUpdate()
+        self.init_BaseUpdate(base_update)
+        base_update.set_fromVersion(FILETYPE_TO_DEFAULT_FROMVERSION.get(content_type))
+        assert base_update.data.get(base_update.from_version_key) == FILETYPE_TO_DEFAULT_FROMVERSION.get(content_type)
+
+    def test_update_fromVersion_from_default_contentItem_askuser_True(self, mocker):
+        """
+        Given
+            - A new content item.
+        When
+            - Calling set_fromVersion method.
+        Then
+            - Ensure that fromVersion key in the file data was set to the GENERAL_DEFAULT_FROMVERSION
+             item version if the user answers Y.
+        """
+        mocker.patch.object(BaseUpdate, '__init__', return_value=None)
+        base_update = BaseUpdate()
+        self.init_BaseUpdate(base_update, assume_yes=False)
+        mocker.patch.object(BaseUpdate, 'get_answer', return_value='Y')
+        base_update.set_fromVersion()
+        assert base_update.data.get(base_update.from_version_key) == GENERAL_DEFAULT_FROMVERSION
+
+    def test_update_fromVersion_from_default_contentItem_askuser_False(self, mocker):
+        """
+        Given
+            - A new content item.
+        When
+            - Calling set_fromVersion method.
+        Then
+            - Ensure that fromVersion key in the file data hasn't been generated.
+        """
+        mocker.patch.object(BaseUpdate, '__init__', return_value=None)
+        base_update = BaseUpdate()
+        self.init_BaseUpdate(base_update, assume_yes=False)
+        mocker.patch.object(BaseUpdate, 'get_answer', return_value='F')
+        base_update.set_fromVersion()
+        assert base_update.from_version_key not in base_update.data

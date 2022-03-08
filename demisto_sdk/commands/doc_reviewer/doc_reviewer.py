@@ -110,9 +110,19 @@ class DocReviewer:
         return '', []
 
     @staticmethod
-    def is_camel_case(word):
+    def is_upper_case_word_plural(word):
+        """check if a given word is an upper case word in plural, like: URLs, IPs, etc"""
+        if len(word) > 2 and word[-1] == 's':
+            singular_word = word[:-1]
+            return singular_word == singular_word.upper()
+        return False
+
+    def is_camel_case(self, word):
         """check if a given word is in camel case"""
-        return word != word.lower() and word != word.upper() and "_" not in word and word != word.title()
+        if word != word.lower() and word != word.upper() and "_" not in word and word != word.title():
+            # check if word is an upper case plural, like IPs. If it is, then the word is not in camel case
+            return not self.is_upper_case_word_plural(self.remove_punctuation(word))
+        return False
 
     @staticmethod
     def camel_case_split(camel):
@@ -150,7 +160,7 @@ class DocReviewer:
             ) in self.SUPPORTED_FILE_TYPES:
                 self.files.append(file)
 
-    def get_files_to_run_on(self, file_path):
+    def get_files_to_run_on(self, file_path=None):
         """Get all the relevant files that the spell-check could work on"""
         if self.git_util:
             self.get_files_from_git()
@@ -198,8 +208,11 @@ class DocReviewer:
         if len(self.SUPPORTED_FILE_TYPES) == 1:
             click.secho('Running only on release notes', fg='bright_cyan')
 
-        for file_path in self.file_paths:
-            self.get_files_to_run_on(file_path)
+        if self.file_paths:
+            for file_path in self.file_paths:
+                self.get_files_to_run_on(file_path)
+        else:
+            self.get_files_to_run_on()
 
         # no eligible files found
         if not self.files:
@@ -303,6 +316,7 @@ class DocReviewer:
         """Check if a word is legal"""
         # check camel cases
         if not self.no_camel_case and self.is_camel_case(word):
+            word = self.remove_punctuation(word)
             sub_words = self.camel_case_split(word)
             for sub_word in sub_words:
                 sub_word = self.remove_punctuation(sub_word)

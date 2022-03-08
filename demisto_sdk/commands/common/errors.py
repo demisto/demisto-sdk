@@ -22,9 +22,10 @@ ALLOWED_IGNORE_ERRORS = [
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107',
-    'RM100', 'RM102', 'RM104', 'RM106',
+    'RM100', 'RM102', 'RM104', 'RM106', 'RM108',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
+    'IM111'
 ]
 
 PRESET_ERROR_TO_IGNORE = {
@@ -148,6 +149,8 @@ ERROR_CODE = {
                                                        'related_field': 'unsearchable'},
     'select_values_cannot_contain_empty_values': {'code': "IF116", 'ui_applicable': False,
                                                   'related_field': 'selectValues'},
+    "invalid_marketplaces_in_alias": {'code': "IF117", 'ui_applicable': False, 'related_field': 'Aliases'},
+    "aliases_with_inner_alias": {'code': "IF118", 'ui_applicable': False, 'related_field': 'Aliases'},
 
     # IM - Images
     "no_image_given": {'code': "IM100", 'ui_applicable': True, 'related_field': 'image'},
@@ -161,6 +164,7 @@ ERROR_CODE = {
     "image_is_empty": {'code': "IM108", 'ui_applicable': True, 'related_field': 'image'},
     "author_image_is_missing": {'code': "IM109", 'ui_applicable': True, 'related_field': 'image'},
     "invalid_image_name_or_location": {'code': "IM110", 'ui_applicable': True, 'related_field': 'image'},
+    "invalid_image_dimensions": {'code': "IM111", 'ui_applicable': True, 'related_field': 'image'},
 
     # IN - Integrations
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
@@ -220,6 +224,8 @@ ERROR_CODE = {
     "fromlicense_in_parameters": {'code': "IN146", 'ui_applicable': True,
                                   'related_field': '<parameter-name>.fromlicense'},
     "changed_integration_yml_fields": {'code': "IN147", "ui_applicable": False, 'related_field': 'script'},
+    "parameter_is_malformed": {'code': "IN148", 'ui_applicable': False, 'related_field': 'configuration'},
+    'empty_outputs_common_paths': {'code': 'IN149', 'ui_applicable': False, 'related_field': 'contextOutput'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -323,6 +329,7 @@ ERROR_CODE = {
     "readme_contains_demisto_word": {'code': "RM106", 'ui_applicable': False, 'related_field': ''},
     "template_sentence_in_readme": {'code': "RM107", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
+    "missing_readme_file": {'code': "RM109", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -710,8 +717,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def parameter_missing_from_yml(name, correct_format):
-        return f'A required parameter "{name}" is missing or malformed ' \
+    def parameter_missing_from_yml(name):
+        return f'A required parameter "{name}" is missing from the YAML file.'
+
+    @staticmethod
+    @error_code_decorator
+    def parameter_is_malformed(name, correct_format):
+        return f'A required parameter "{name}" is malformed ' \
                f'in the YAML file.\nThe correct format of the parameter should ' \
                f'be as follows:\n{correct_format}'
 
@@ -1044,6 +1056,11 @@ class Errors:
                "If you're trying to add author image, make sure the image name looks like the following: Author_image.png and located in the pack root path." \
                "For more info: https://xsoar.pan.dev/docs/packs/packs-format#author_imagepng\n" \
                "Otherwise, any other image should be located under the 'Doc_files' dir."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_image_dimensions(width: int, height: int):
+        return f'The image dimensions are {width}x{height}. The requirements are 120x50.'
 
     @staticmethod
     @error_code_decorator
@@ -1616,7 +1633,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def empty_readme_error():
-        return 'README.md is empty'
+        return "Pack writen by a partner or pack containing playbooks must have a full README.md file" \
+               "with pack information. Please refer to https://xsoar.pan.dev/docs/documentation/pack-docs#pack-readme " \
+               "for more information"
 
     @staticmethod
     @error_code_decorator
@@ -2098,7 +2117,7 @@ class Errors:
                f"You can use the pack name or one of the prefixes found in the itemPrefix field in the pack_metadata. " \
                f"Example: {pack_prefix} {field_name}.\n" \
                f"Also make sure to update the field id and cliName accordingly. " \
-               f"Example: cliName: {pack_prefix.replace(' ', '')}{field_name.replace(' ', '')}, "
+               f"Example: cliName: {pack_prefix.replace(' ', '').lower()}{field_name.replace(' ', '')}, "
 
     @staticmethod
     @error_code_decorator
@@ -2149,3 +2168,30 @@ class Errors:
     @error_code_decorator
     def wrong_version_format():
         return 'Pack metadata version format is not valid. Please fill in a valid format (example: 0.0.0)'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_marketplaces_in_alias(invalid_aliases: List[str]):
+        return 'The following fields exist as aliases and have invalid "marketplaces" key value:' \
+               f'\n{invalid_aliases}\n' \
+               'the value of the "marketplaces" key in these fields should be ["xsoar"].'
+
+    @staticmethod
+    @error_code_decorator
+    def aliases_with_inner_alias(invalid_aliases: List[str]):
+        return "The following fields exist as aliases and therefore cannot contain an 'Aliases' key." \
+               f"\n{invalid_aliases}\n" \
+               "Please remove the key from the fields or removed the fields from the other field's Aliases list."
+
+    @staticmethod
+    @error_code_decorator
+    def missing_readme_file(location):
+        return f'{location} is missing a README file'
+
+    @staticmethod
+    @error_code_decorator
+    def empty_outputs_common_paths(paths: Dict[str, List[str]], yaml_path: str):
+        commands_str = '\n'.join(f'{command}:\t' + ", ".join(outputs) for command, outputs in paths.items())
+
+        return f"The following command outputs are missing: \n{commands_str}\n" \
+               f"please type them or run demisto-sdk format -i {yaml_path}"

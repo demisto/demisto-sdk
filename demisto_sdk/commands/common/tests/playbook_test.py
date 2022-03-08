@@ -1,3 +1,4 @@
+import os.path
 from typing import Optional
 
 import pytest
@@ -623,7 +624,7 @@ class TestPlaybookValidator:
         - The playbook with input from indicators, includes all valid fields.
         - The playbook with input from indicators, is not set on quietmode.
         - The playbook with input from indicators, one of the tasks does not have quiet mode on.
-        -The playbook with input from indicators, one of the tasks continues on error
+        - The playbook with input from indicators, one of the tasks continues on error
 
         Then
         - Ensure validation passes.
@@ -634,3 +635,33 @@ class TestPlaybookValidator:
         structure = mock_structure("", playbook_json)
         validator = PlaybookValidator(structure)
         assert validator.is_valid_with_indicators_input() is expected_result
+
+    README_TEST_DATA = [(True, False, False),
+                        (False, False, True),
+                        (True, True, True),
+                        ]
+
+    @pytest.mark.parametrize("remove_readme, validate_all, expected_result", README_TEST_DATA)
+    def test_validate_readme_exists(self, repo, remove_readme, validate_all, expected_result):
+        """
+              Given:
+                  - An integration yml that was added or modified to validate
+
+              When:
+                  - The integration is missing a readme.md file in the same folder
+                  - The integration has a readme.md file in the same folder
+                  - The integration is missing a readme.md file in the same folder but has not been changed or added
+                      (This check is for backward compatibility)
+
+              Then:
+                  - Ensure readme exists and validation fails
+                  - Ensure readme exists and validation passes
+                  - Ensure readme exists and validation passes
+        """
+        read_me_pack = repo.create_pack('README_test')
+        playbook = read_me_pack.create_playbook('playbook1')
+        structure_validator = StructureValidator(playbook.yml.path)
+        playbook_validator = PlaybookValidator(structure_validator, validate_all=validate_all)
+        if remove_readme:
+            os.remove(playbook.readme.path)
+        assert playbook_validator.validate_readme_exists(playbook_validator.validate_all) is expected_result

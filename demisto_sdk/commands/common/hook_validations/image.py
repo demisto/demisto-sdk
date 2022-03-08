@@ -1,6 +1,8 @@
 import base64
 import glob
 
+import imagesize
+
 from demisto_sdk.commands.common.constants import (
     DEFAULT_DBOT_IMAGE_BASE64, DEFAULT_IMAGE_BASE64, IMAGE_REGEX,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX)
@@ -18,6 +20,8 @@ class ImageValidator(BaseValidator):
         _is_valid (bool): the attribute which saves the valid/in-valid status of the current file.
     """
     IMAGE_MAX_SIZE = 10 * 1024  # 10kB
+    IMAGE_WIDTH = 120
+    IMAGE_HEIGHT = 50
 
     def __init__(self, file_path, ignored_errors=None, print_as_warnings=False, suppress_print=False,
                  json_file_path=None):
@@ -51,7 +55,8 @@ class ImageValidator(BaseValidator):
             return self._is_valid
 
         is_existing_image = False
-        self.validate_size(allow_empty_image_file=True)
+        # validating dimensions as well because validating integration image
+        self.validate_size(allow_empty_image_file=True, should_validate_dimensions=True)
         if '.png' not in self.file_path:
             is_existing_image = self.is_existing_image()
         if is_existing_image or '.png' in self.file_path:
@@ -61,13 +66,21 @@ class ImageValidator(BaseValidator):
 
         return self._is_valid
 
-    def validate_size(self, allow_empty_image_file: bool, maximum_size: int = IMAGE_MAX_SIZE) -> None:
+    def validate_size(self,
+                      allow_empty_image_file: bool,
+                      maximum_size: int = IMAGE_MAX_SIZE,
+                      should_validate_dimensions: bool = False,
+                      allowed_width: int = IMAGE_WIDTH,
+                      allowed_height: int = IMAGE_HEIGHT) -> None:
         """
         Checks if image has a valid size.
         if 'allow_empty_image_file' is true, checks that the image file is not empty.
         Args:
             allow_empty_image_file (bool): Whether empty image file is an error.
             maximum_size (int): Maximum allowed size.
+            should_validate_dimensions (bool): Should validate the image dimensions.
+            allowed_height (int): the allowed height of the image
+            allowed_width (int): the allowed weight of the image
         """
         if re.match(IMAGE_REGEX, self.file_path, re.IGNORECASE):
             image_size = os.path.getsize(self.file_path)
@@ -75,7 +88,12 @@ class ImageValidator(BaseValidator):
                 error_message, error_code = Errors.image_too_large()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self._is_valid = False
-
+            if should_validate_dimensions:
+                width, height = imagesize.get(self.file_path)
+                if (width, height) != (allowed_width, allowed_height):
+                    error_message, error_code = Errors.invalid_image_dimensions(width, height)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        self._is_valid = False
         else:
             data_dictionary = get_yaml(self.file_path)
 

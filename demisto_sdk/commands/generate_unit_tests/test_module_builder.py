@@ -13,11 +13,13 @@ class TestModule:
                                          value=ast_mod.Constant(value='https://test_url.com'))
         self.tree = tree
         self.module_name = module_name
+        self.global_args = []
 
     def to_ast(self):
         body = []
         body.extend(self.imports)
         body.append(self.server_url)
+        body.extend(self.global_args)
         body.extend([self.util_json_builder(), self.generate_test_client()])
         body.extend([f.to_ast() for f in self.functions if f.asserts])
         return ast_mod.Module(body=body)

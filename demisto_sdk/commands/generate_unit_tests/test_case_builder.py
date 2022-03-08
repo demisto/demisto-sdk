@@ -11,6 +11,9 @@ class ArgsBuilder:
         self.command_name = command_name
         self.directory_path = directory_path
         self.args = []
+        self.global_arg = []
+        self.global_arg_name = None
+        self.decorators = []
         self.build_args()
 
     def build_args(self):
@@ -19,15 +22,56 @@ class ArgsBuilder:
               input: dictionary of mocked inputs from the user
         Returns: ast node of type assign 'args = {test:'mock'}'
         """
-        keys = []
-        values = []
         self.get_mocked_args()
         if self.input_args:
-            for arg in self.args_list:
-                keys.append(ast_mod.Constant(value=arg))
-                values.append(ast_mod.Constant(value=self.input_args.get(arg)))
-            self.args = [ast_mod.Assign(targets=[ast_name('args', ctx=ast_mod.Store())],
-                                        value=ast_mod.Dict(keys=keys, values=values))]
+            is_parametrize = True if self.input_args.get('parametrize', '') == 'True' else False
+            if is_parametrize:
+                self.build_global_args()
+                self.build_decorator()
+            else:
+                self.build_local_args()
+
+    def get_keys_values(self, input_arg):
+        """
+        parsing input arguments into an ast dictionary.
+        """
+        keys = []
+        values = []
+        for arg in self.args_list:
+            keys.append(ast_mod.Constant(value=arg))
+            values.append(ast_mod.Constant(value=input_arg.get(arg)))
+        return keys, values
+
+    def build_local_args(self):
+        """
+        build a local var named args that will be given as input to the command.
+        """
+        keys, values = self.get_keys_values(self.input_args)
+        self.args.append(ast_mod.Assign(targets=[ast_name('args', ctx=ast_mod.Store())],
+                                        value=ast_mod.Dict(keys=keys, values=values)))
+
+    def build_global_args(self):
+        """
+        builds a global var named after the command name, it will hold all arguments given.
+        """
+        self.global_arg_name = f'{self.command_name.upper()}_ARGS'
+        global_args = []
+        for inputs in self.input_args:
+            if 'case' not in inputs:
+                continue
+            keys, values = self.get_keys_values(self.input_args.get(inputs))
+            global_args.append(ast_mod.Dict(keys=keys, values=values))
+        self.global_arg.append(ast_mod.Assign(targets=[ast_name(self.global_arg_name, ast_mod.Store())],
+                                              value=ast_mod.List(elts=global_args, ctx=ast_mod.Store())))
+
+    def build_decorator(self):
+        """
+        builds decorator of parametrize.
+        """
+        call = ast_mod.Call(func=ast_name('pytest.mark.parametrize'),
+                            args=[ast_mod.Constant('args'), ast_name(self.global_arg_name)],
+                            keywords=[])
+        self.decorators.append(call)
 
     def get_mocked_args(self):
         """
@@ -56,6 +100,8 @@ class TestCase:
         self.args_list = []
         self.client_ast = client_ast
         self.client_name = None
+        self.decorators = []
+        self.global_arg = None
         self.get_client_name()
         self.instance_dict_parser()
 
@@ -67,14 +113,18 @@ class TestCase:
         body.extend(self.asserts)
         request_mocker = ast_name('requests_mock')
 
+        args = [self.client_name, request_mocker]
+        if self.global_arg:
+            args.append(ast_name('args'))
+
         test_func = ast_mod.FunctionDef(
             name=f"test_{self.func.name}",
             args=ast_mod.arguments(
-                posonlyargs=[], args=[self.client_name, request_mocker], vararg=None, kwonlyargs=[], kw_defaults=[],
+                posonlyargs=[], args=args, vararg=None, kwonlyargs=[], kw_defaults=[],
                 kwarg=None, defaults=[]
             ),
             body=body,
-            decorator_list=[],
+            decorator_list=self.decorators,
             returns=None
         )
         return test_func
@@ -86,12 +136,14 @@ class TestCase:
         for call in self.client_func_call:
             self.request_mocks.append(self.mock_response_ast_builder(call))
             suffix, method = self.get_call_params_from_http_request(call)
+            url = f'SERVER_URL + \'{suffix}\'' if suffix is not None else 'SERVER_URL'
+
             attr = ast_mod.Attribute(value=ast_name('requests_mock'),
                                      attr=ast_name(method.lower()))
             ret_val = ast_mod.keyword(arg=ast_name('json'),
                                       value=ast_name(f'mock_response_{call}'))
             mock_call = ast_mod.Call(func=attr,
-                                     args=[ast_name(f'SERVER_URL + \'{suffix}\'')],
+                                     args=[ast_name(url)],
                                      keywords=[ret_val])
             self.request_mocks.append(ast_mod.Expr(value=mock_call))
 
@@ -182,11 +234,14 @@ class TestCase:
         Input: command_name: name of the command being called
         Returns: ast node of assignment command results to var.
         """
-        call_args = [ast_name('client'), ast_name('args')] if len(self.args_list) > 0 else [ast_name('client')]
+        call_keywords = [ast_mod.keyword(arg='client', value=ast_name('client'))]
+        if len(self.args_list) > 0:
+            call_keywords.append(ast_mod.keyword(arg='args', value=ast_name('args')))
+
         self.command_call = ast_mod.Assign(targets=[ast_name('results', ctx=ast_mod.Store())],
                                            value=ast_mod.Call(func=ast_name(self.func.name),
-                                                              args=call_args,
-                                                              keywords=[]))
+                                                              args=[],
+                                                              keywords=call_keywords))
 
     @staticmethod
     def assertions_builder(call, ops, comperators):
@@ -200,6 +255,9 @@ class TestCase:
 
     @staticmethod
     def get_links(value):
+        """
+        returns the name of the request whom response is stored in raw_response
+        """
         try:
             return value.links.func.attr
         except AttributeError:

@@ -1,11 +1,12 @@
 from pathlib import Path
 from typing import List, Optional
-from TestSuite.yml import YAML
 
-from demisto_sdk.commands.common.constants import (
-    DEFAULT_IMAGE_BASE64, PARSING_RULES_DIR, MODELING_RULES_DIR, CORRELATION_RULES_DIR,
-    XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR
-)
+from demisto_sdk.commands.common.constants import (CORRELATION_RULES_DIR,
+                                                   DEFAULT_IMAGE_BASE64,
+                                                   MODELING_RULES_DIR,
+                                                   PARSING_RULES_DIR,
+                                                   XSIAM_DASHBOARDS_DIR,
+                                                   XSIAM_REPORTS_DIR)
 from TestSuite.file import File
 from TestSuite.integration import Integration
 from TestSuite.job import Job
@@ -15,6 +16,7 @@ from TestSuite.script import Script
 from TestSuite.secrets import Secrets
 from TestSuite.test_tools import suite_join_path
 from TestSuite.text_based import TextBased
+from TestSuite.yml import YAML
 
 
 class Pack:
@@ -537,12 +539,12 @@ class Pack:
         self.correlation_rules.append(correlation_rule)
         return correlation_rule
 
-    def create_xsiam_dashboard(self, name, content: dict = {}) -> YAML:
-        xsiam_dashboard = self._create_json_based(name, dir_path=self._xsiam_dashboards_path)
+    def create_xsiam_dashboard(self, name, content: dict = {}) -> JSONBased:
+        xsiam_dashboard = self._create_json_based(name, prefix="", content=content, dir_pat=self._xsiam_dashboards_path)
         self.xsiam_dashboards.append(xsiam_dashboard)
         return xsiam_dashboard
 
-    def create_xsiam_report(self, name, content: dict = {}) -> YAML:
-        xsiam_report = self._create_json_based(name, dir_path=self._xsiam_reports_path)
+    def create_xsiam_report(self, name, content: dict = {}) -> JSONBased:
+        xsiam_report = self._create_json_based(name, prefix="", content=content, dir_path=self._xsiam_reports_path)
         self.xsiam_reports.append(xsiam_report)
         return xsiam_report

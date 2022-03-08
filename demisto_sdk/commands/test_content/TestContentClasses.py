@@ -453,7 +453,7 @@ class BuildContext:
     def __init__(self, kwargs: dict, logging_module: ParallelLoggingManager):
         self.logging_module: ParallelLoggingManager = logging_module
         self.api_key = kwargs['api_key']
-        self.server = kwargs['server']
+        self.server = kwargs['server']  # not in use for curr flow
         self.conf, self.secret_conf = self._load_conf_files(kwargs['conf'], kwargs['secret'])
         self.env_json = self._load_env_results_json()
         self.is_nightly = kwargs['nightly']

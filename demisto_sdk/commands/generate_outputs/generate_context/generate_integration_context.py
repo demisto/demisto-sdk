@@ -52,7 +52,7 @@ def insert_outputs(yml_data: Dict, command_name: str, output_with_contexts: List
         raise Exception(f'The {command_name} command is missing from the integration YML.')
     command = command[0]
 
-    outputs: List[Dict[str, str]] = command.get('outputs', [])
+    outputs: List[Dict[str, str]] = command.get('outputs') or []
     old_descriptions = _output_path_to_description(outputs)
     new_descriptions = _output_path_to_description(output_with_contexts)
 

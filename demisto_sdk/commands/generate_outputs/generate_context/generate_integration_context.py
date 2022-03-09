@@ -2,7 +2,7 @@ from typing import Dict, List, Optional
 
 from demisto_sdk.commands.common.tools import (get_yaml, print_error,
                                                print_success, print_v,
-                                               print_warning, write_yml)
+                                               write_yml)
 from demisto_sdk.commands.generate_docs.common import build_example_dict
 from demisto_sdk.commands.generate_docs.generate_integration_doc import \
     get_command_examples

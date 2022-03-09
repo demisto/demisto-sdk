@@ -2,86 +2,84 @@ import json
 import os
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_json, get_yaml, write_yml
+from demisto_sdk.commands.common.tools import get_yaml, write_yml
 
 # Test data files
 FAKE_INTEGRATION_YML = get_yaml(
     f'{git_path()}/demisto_sdk/commands/generate_outputs/generate_context/tests/test_data/fake_integration_empty_output.yml')
 
-
 FAKE_OUTPUT_CONTEXTS = [
-  {
-    "contextPath": "File.SHA256",
-    "description": "",
-    "type": "String"
-  },
-  {
-    "contextPath": "File.SHA1",
-    "description": "",
-    "type": "String"
-  },
-  {
-    "contextPath": "File.MD5",
-    "description": "",
-    "type": "String"
-  },
-  {
-    "contextPath": "File.Name",
-    "description": "",
-    "type": "String"
-  },
-  {
-    "contextPath": "File.Date",
-    "description": "",
-    "type": "Date"
-  },
-  {
-    "contextPath": "File.Size",
-    "description": "",
-    "type": "Number"
-  },
-  {
-    "contextPath": "File.Check",
-    "description": "",
-    "type": "Boolean"
-  },
-  {
-    "contextPath": "File.Type",
-    "description": "",
-    "type": "Unknown"
-  },
-  {
-    "contextPath": "File.EntryID",
-    "description": "",
-    "type": "String"
-  },
-  {
-    "contextPath": "File.SSDeep",
-    "description": "",
-    "type": "String"
-  }
+    {
+        "contextPath": "File.SHA256",
+        "description": "",
+        "type": "String"
+    },
+    {
+        "contextPath": "File.SHA1",
+        "description": "",
+        "type": "String"
+    },
+    {
+        "contextPath": "File.MD5",
+        "description": "",
+        "type": "String"
+    },
+    {
+        "contextPath": "File.Name",
+        "description": "",
+        "type": "String"
+    },
+    {
+        "contextPath": "File.Date",
+        "description": "",
+        "type": "Date"
+    },
+    {
+        "contextPath": "File.Size",
+        "description": "",
+        "type": "Number"
+    },
+    {
+        "contextPath": "File.Check",
+        "description": "",
+        "type": "Boolean"
+    },
+    {
+        "contextPath": "File.Type",
+        "description": "",
+        "type": "Unknown"
+    },
+    {
+        "contextPath": "File.EntryID",
+        "description": "",
+        "type": "String"
+    },
+    {
+        "contextPath": "File.SSDeep",
+        "description": "",
+        "type": "String"
+    }
 ]
 
 FAKE_OUTPUTS_1 = {
-  "File": {
-    "SHA256": "111",
-    "SHA1": "111",
-    "MD5": "111",
-    "Name": "111",
-    "Date": "2018-09-02T23:05:12Z"
-  }
+    "File": {
+        "SHA256": "111",
+        "SHA1": "111",
+        "MD5": "111",
+        "Name": "111",
+        "Date": "2018-09-02T23:05:12Z"
+    }
 }
 FAKE_OUTPUTS_2 = {
-  "File": {
-    "Date": "2018-09-02T23:05:12Z",
-    "Size": 111,
-    "Check": True,
-    "Type": None,
-    "EntryID": "111",
-    "SSDeep": "111"
-  }
+    "File": {
+        "Date": "2018-09-02T23:05:12Z",
+        "Size": 111,
+        "Check": True,
+        "Type": None,
+        "EntryID": "111",
+        "SSDeep": "111"
+    }
 }
-
 
 FAKE_EXAMPLES_FILE = f'{git_path()}/commands/demisto_sdk/generate_outputs/generate_context/tests/test_data/fake_examples.txt'
 
@@ -146,10 +144,11 @@ def test_insert_outputs(mocker):
     mocker.patch.object(generate_integration_context,
                         'build_example_dict',
                         return_value=(
-                            {command_name: [
-                                (None, None, json.dumps(FAKE_OUTPUTS_1)),
-                                (None, None, json.dumps(FAKE_OUTPUTS_2))]
-                             },
+                            {
+                                command_name:
+                                [(None, None, json.dumps(FAKE_OUTPUTS_1)),
+                                 (None, None, json.dumps(FAKE_OUTPUTS_2))]
+                            },
                             []))
 
     yml_data = FAKE_INTEGRATION_YML
@@ -181,10 +180,11 @@ def test_generate_integration_context(mocker, tmpdir):
     mocker.patch.object(generate_integration_context,
                         'build_example_dict',
                         return_value=(
-                            {command_name: [
-                                (None, None, json.dumps(FAKE_OUTPUTS_1)),
-                                (None, None, json.dumps(FAKE_OUTPUTS_2))]
-                             },
+                            {
+                                command_name:
+                                [(None, None, json.dumps(FAKE_OUTPUTS_1)),
+                                 (None, None, json.dumps(FAKE_OUTPUTS_2))]
+                            },
                             []))
 
     # Temp file to check

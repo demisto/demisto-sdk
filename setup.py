@@ -36,7 +36,7 @@ setup(
     keywords=["Demisto"],
     install_requires=install_requires,
     packages=find_packages(
-        exclude=["TestSuite", "*.tests.*", "*.tests"]
+        exclude=["*.tests.*", "*.tests"]
     ),
     include_package_data=True,
     entry_points={

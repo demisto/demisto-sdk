@@ -13,7 +13,7 @@
 * Fixed a bug in **generate-outputs** which the `output` argument is ignored.
 * Added support in **generate-outputs** to provide several examples of the same command.
 * Added support in **generate-outputs** to keep the existing outputs descriptions instead of overriding them.
-
+* Fixed a bug where **doc-review** command failed on existing templates.
 
 # 1.6.1
 * Added the '--use-packs-known-words' argument to the **doc-review** command

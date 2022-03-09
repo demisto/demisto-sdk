@@ -132,8 +132,7 @@ def test_generate_integration_context(mocker, tmpdir):
     else:
         assert False, 'command is not found in yml_data'
 
-    generate_integration_context.generate_integration_context(filename, FAKE_EXAMPLES_FILE, insecure=True,
-                                                              verbose=False)
+    generate_integration_context.generate_integration_context(filename, FAKE_EXAMPLES_FILE, verbose=False)
 
     # Check we have new data
     yml_data = get_yaml(filename)

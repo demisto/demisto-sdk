@@ -2995,7 +2995,8 @@ class TestAllFilesValidator:
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-a', '--no-docker-checks', '--no-conf-json'],
+            result = runner.invoke(main, [VALIDATE_CMD, '-a', '--no-docker-checks', '--no-conf-json',
+                                          '--without-multiprocessing'],
                                    catch_exceptions=False)
             print(result.stdout)
 
@@ -3041,7 +3042,8 @@ class TestAllFilesValidator:
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-a', '--no-docker-checks', '--no-conf-json'],
+            result = runner.invoke(main, [VALIDATE_CMD, '-a', '--no-docker-checks', '--no-conf-json',
+                                          '--without-multiprocessing'],
                                    catch_exceptions=False)
 
         assert 'Validating all files' in result.stdout

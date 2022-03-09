@@ -1,4 +1,6 @@
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
+
+import traceback
 
 from demisto_sdk.commands.common.tools import (get_yaml, print_error,
                                                print_success, print_v,
@@ -49,17 +51,15 @@ def insert_outputs(yml_data: Dict, command_name: str, output_with_contexts: List
     commands = yml_data.get('script', {}).get('commands') or []
     command_names = [command.get('name') for command in commands]
     if command_name not in command_names:
-        raise Exception(f'The {command_name} command is missing from the integration YML.')
+        raise ValueError(f'The {command_name} command is missing from the integration YML.')
     command_index = command_names.index(command_name)
     command = commands[command_index]
 
     outputs: List[Dict[str, str]] = command.get('outputs') or []
     old_descriptions = _output_path_to_description(outputs)
     new_descriptions = _output_path_to_description(output_with_contexts)
+    old_output_paths = {output.get('contextPath') for output in command.get('outputs', [])}
 
-    old_output_paths: Set = set(filter(None, map(lambda val: val.get('contextPath'), command.get('outputs', []))))
-
-    # adds new outputs without overriding existing
     outputs.extend(output for output in output_with_contexts
                    if output.get('contextPath') and output.get('contextPath') not in old_output_paths)
 
@@ -67,7 +67,7 @@ def insert_outputs(yml_data: Dict, command_name: str, output_with_contexts: List
     for output in outputs:
         path = output.get('contextPath')
         if not path:
-            raise Exception('Found a command without a contextPath value')
+            raise ValueError('Found a command without a contextPath value')
         if not output.get('description'):
             output['description'] = new_descriptions.get(path) or old_descriptions.get(path) or ''
     yml_data['script']['commands'][command_index]['outputs'] = outputs
@@ -124,7 +124,7 @@ def generate_integration_context(
         # Make the changes in place the input yml
         print_success(f'Writing outputs to {output_path}')
         write_yml(output_path, yml_data)
-    except Exception as ex:
+    except ValueError as ex:
         if verbose:
             raise
         else:

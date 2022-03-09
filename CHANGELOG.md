@@ -13,6 +13,7 @@
 * Fixed an issue in the **generate-outputs** command, where the outputs were not written to the specified output path. 
 * The **generate-outputs** command can now generate outputs from multiple calls to the same command (useful when different args provide different outputs).
 * The **generate-outputs** command can now update a yaml file with new outputs, without deleting or overwriting existing ones.
+* Fixed a bug where **doc-review** command failed on existing templates.
 
 # 1.6.1
 * Added the '--use-packs-known-words' argument to the **doc-review** command

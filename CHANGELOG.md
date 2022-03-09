@@ -9,6 +9,11 @@
 * Improved the detection of errors in **doc-review** command.
 * The **validate** command now checks if a readme file is empty, only for packs that contain playbooks or were written by a partner
 * The **validate** command now makes sure common contextPath values (e.g. `DBotScore.Score`) have a non-empty description, and **format** populates them automatically.
+* Fixed command **generate-outputs** to work with examples.
+* Fixed a bug in **generate-outputs** which the `output` argument is ignored.
+* Added support in **generate-outputs** to provide several examples of the same command.
+* Added support in **generate-outputs** to keep the existing outputs descriptions instead of overriding them.
+
 
 # 1.6.1
 * Added the '--use-packs-known-words' argument to the **doc-review** command

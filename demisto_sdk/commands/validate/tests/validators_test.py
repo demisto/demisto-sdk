@@ -1799,11 +1799,12 @@ def test_job_unexpected_field_values_in_non_feed_job(repo, capsys,
            in stdout
 
 
-@pytest.mark.parametrize('file_set,expected_output,expected_result',
-                         (({'mock_file_description.md'}, "[BA115]", False),
-                          (set(), "", True),
-                          ({'doc_files/image.png'}, "", True)))
-def test_validate_deleted_files(capsys, file_set, expected_output, expected_result):
+@pytest.mark.parametrize('file_set,expected_output,expected_result,added_files',
+                         (({'mock_file_description.md'}, "[BA115]", False, set()),
+                          (set(), "", True, set()),
+                          ({'doc_files/image.png'}, "", True, set()),
+                          ({'mock_file_description.md'}, "", True, {'renamed_mock_file_description.md'})))
+def test_validate_deleted_files(capsys, file_set, expected_output, expected_result, added_files, mocker):
     """
     Given
             A file_path set to validate.
@@ -1814,7 +1815,10 @@ def test_validate_deleted_files(capsys, file_set, expected_output, expected_resu
     """
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
 
-    result = validate_manager.validate_deleted_files(file_set)
+    if added_files:
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.get_file', return_value={'id': 'id'})
+
+    result = validate_manager.validate_deleted_files(file_set, added_files)
 
     stdout = capsys.readouterr().out
 

@@ -82,9 +82,10 @@ from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import \
     XSOARConfigJsonValidator
 from demisto_sdk.commands.common.tools import (
-    find_type, get_api_module_ids, get_api_module_integrations_set,
-    get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
-    get_relative_path_from_packs_dir, get_yaml, open_id_set_file)
+    _get_file_id, find_type, get_api_module_ids,
+    get_api_module_integrations_set, get_file, get_pack_ignore_file_path,
+    get_pack_name, get_pack_names_from_files, get_relative_path_from_packs_dir,
+    get_yaml, open_id_set_file)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
@@ -1160,14 +1161,18 @@ class ValidateManager:
         Args:
             file_path: The file path.
 
-        Returns: True if the file was renamed, else False.
+        Returns: True if the file was renamed and not deleted, else False.
 
         """
-        for file in added_files:
-            pass
+        if added_files:
+            deleted_file_dict = get_file(file_path, find_type(file_path))
+            deleted_file_id = _get_file_id(file_path, deleted_file_dict)
+            for file in added_files:
+                file_dict = get_file(file, find_type(file))
+                if deleted_file_id == _get_file_id(file, file_dict):
+                    return True
 
-
-
+        return False
 
     def validate_deleted_files(self, deleted_files, added_files) -> bool:
         click.secho(f'\n================= Checking for prohibited deleted files =================',
@@ -1177,7 +1182,6 @@ class ValidateManager:
         for file_path in deleted_files:
             if not self.was_file_renamed_but_labeled_as_deleted(file_path, added_files):
                 if not self.is_file_allowed_to_be_deleted(file_path):
-
                     error_message, error_code = Errors.file_cannot_be_deleted(file_path)
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         is_valid = False

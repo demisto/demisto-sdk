@@ -1,0 +1,69 @@
+{
+	"action": "drop",
+	"enabled": true,
+	"existingEventsFilters": [],
+	"fromServerVersion": "",
+	"id": "preprocessrule-Drop-id",
+	"index": 2,
+	"itemVersion": "",
+	"linkTo": "oldest",
+	"locked": false,
+	"name": "Drop",
+	"newEventFilters": [
+		[
+			{
+				"ignoreCase": false,
+				"left": {
+					"isContext": true,
+					"value": {
+						"complex": null,
+						"simple": "description"
+					}
+				},
+				"operator": "isEqualString",
+				"right": {
+					"isContext": false,
+					"value": {
+						"complex": null,
+						"simple": "my description"
+					}
+				},
+				"type": "shortText"
+			}
+		]
+	],
+	"packID": "",
+	"period": {
+		"by": "days",
+		"fromValue": 30
+	},
+	"readyExistingEventsFilters": [],
+	"readyNewEventFilters": [
+		[
+			{
+				"ignoreCase": false,
+				"left": {
+					"isContext": true,
+					"value": {
+						"complex": null,
+						"simple": "description"
+					}
+				},
+				"operator": "isEqualString",
+				"right": {
+					"isContext": false,
+					"value": {
+						"complex": null,
+						"simple": "my description"
+					}
+				},
+				"type": "shortText"
+			}
+		]
+	],
+	"scriptName": "",
+	"searchClosed": false,
+	"system": false,
+	"toServerVersion": "",
+	"version": -1
+}

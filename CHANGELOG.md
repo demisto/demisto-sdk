@@ -10,7 +10,7 @@
 * The **validate** command now checks if a readme file is empty, only for packs that contain playbooks or were written by a partner
 * The **validate** command now makes sure common contextPath values (e.g. `DBotScore.Score`) have a non-empty description, and **format** populates them automatically.
 * Fixed an issue where the **generate-outputs** command did not work properly when examples were provided.
-* Fixed an issue in the **generate-outputs** command, where the outputs were not written to the specified output path. 
+* Fixed an issue in the **generate-outputs** command, where the outputs were not written to the specified output path.
 * The **generate-outputs** command can now generate outputs from multiple calls to the same command (useful when different args provide different outputs).
 * The **generate-outputs** command can now update a yaml file with new outputs, without deleting or overwriting existing ones.
 * Fixed a bug where **doc-review** command failed on existing templates.

@@ -224,21 +224,39 @@ class BaseUpdate:
         return (metadata.get('currentVersion', '') == '1.0.0') and (
             metadata.get('support', '') != 'xsoar') and file_type == INTEGRATION
 
-    def is_general_default_version_lower(self, version_to_check):
-        return LooseVersion(GENERAL_DEFAULT_FROMVERSION) < LooseVersion(version_to_check)
+    def is_version_lower(self, version_to_check, version):
+        return LooseVersion(version_to_check) < LooseVersion(version)
 
-    def get_answer(self):
-        click.secho('No fromversion is specified for this content item, would you like me to update for you? [Y/n]',
+    def get_answer(self, promote):
+        click.secho(promote,
                     fg='red')
         return input()
 
-    def ask_user(self):
-        user_answer = self.get_answer()
+    def ask_user(self, promote):
+        user_answer = self.get_answer(promote)
         if user_answer in ['Y', 'y', 'yes', 'Yes']:
             return True
         else:
             click.secho('Moving forward without updating fromversion tag', fg='yellow')
             return False
+
+    def set_default_from_version(self, default_from_version):
+        # Ask the user if default_from_version is needed.
+        promote = 'No fromversion is specified for this content item, would you like me to update for you? [Y/n]'
+        if self.assume_yes or self.ask_user(promote):
+            # If the content type has different default from_version from the general type.
+            if default_from_version and self.is_version_lower(GENERAL_DEFAULT_FROMVERSION, default_from_version):
+                return default_from_version
+            else:
+                # Set the general default from_version.
+                return GENERAL_DEFAULT_FROMVERSION
+        return None
+
+    def change_data_from_version(self, default_from_version):
+        promote = 'Your fromversion is not updated to the current content item, would you like me to update for you? [Y/n]'
+        if self.assume_yes or self.ask_user(promote):
+            return default_from_version
+        return None
 
     def set_fromVersion(self, default_from_version='', file_type: Optional[str] = None):
         """Sets fromVersion key in file:
@@ -247,27 +265,24 @@ class BaseUpdate:
             file_type: what is the file type: for now only integration type passed
         """
         version_to_set = None
+        data_version = self.data.get(self.from_version_key)
         if self.verbose:
             click.echo('Setting fromVersion field')
 
-        # If user asked specific version to set.
+        # If user asked specific fromVersion to set.
         if self.from_version:
             version_to_set = self.from_version
-        # If there is already a from_version in file.
-        elif self.data.get(self.from_version_key) and self.is_new_supported_integration(file_type):
+        # If there is already a fromVersion in file.
+        elif data_version and self.is_new_supported_integration(file_type):
             version_to_set = self.data.get(self.from_version_key)
-        # If there is from_version in the old_file(repo).
+        # If there is fromVersion in the old_file(repo).
         elif self.old_file.get(self.from_version_key):
             version_to_set = self.old_file.get(self.from_version_key)
-        elif not self.data.get(self.from_version_key):
-            # Ask the user if default_from_version is needed.
-            if self.assume_yes or self.ask_user():
-                # If the content type has different default from_version from the general type.
-                if default_from_version and self.is_general_default_version_lower(default_from_version):
-                    version_to_set = default_from_version
-                else:
-                    # Set the general default from_version.
-                    version_to_set = GENERAL_DEFAULT_FROMVERSION
+        elif not data_version:
+            version_to_set = self.set_default_from_version(default_from_version)
+        # If the content type default fromVersion is higher than the data fromVersion.
+        elif data_version and default_from_version and self.is_version_lower(data_version, default_from_version):
+            version_to_set = self.change_data_from_version(default_from_version)
         if version_to_set:
             self.data[self.from_version_key] = version_to_set
 

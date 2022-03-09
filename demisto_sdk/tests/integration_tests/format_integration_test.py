@@ -9,6 +9,7 @@ from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
+from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -17,6 +18,7 @@ from demisto_sdk.commands.common.hook_validations.playbook import \
 from demisto_sdk.commands.common.tools import (get_dict_from_file,
                                                is_test_config_match)
 from demisto_sdk.commands.format import format_module, update_generic
+from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat
@@ -80,7 +82,7 @@ CONF_JSON_ORIGINAL_CONTENT = {
 
 
 @pytest.mark.parametrize('source_yml', BASIC_YML_CONTENTS)
-def test_integration_format_yml_with_no_test_positive(tmp_path: PosixPath, source_yml: str):
+def test_integration_format_yml_with_no_test_positive(mocker, tmp_path: PosixPath, source_yml: str):
     """
         Given
         - A yml file (integration, playbook or script) with no 'tests' configured
@@ -95,10 +97,11 @@ def test_integration_format_yml_with_no_test_positive(tmp_path: PosixPath, sourc
         -  Ensure 'No tests' is added in the first time
         -  Ensure message is not prompt in the second time
     """
+
     source_file, output_file = tmp_path / 'source.yml', tmp_path / 'output.yml'
     source_path, output_path = str(source_file), str(output_file)
     source_file.write_text(source_yml)
-
+    mocker.patch.object(BaseUpdate, 'set_fromVersion')
     # Running format in the first time
     runner = CliRunner()
     result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', output_path, '-at'], input='Y')
@@ -110,7 +113,7 @@ def test_integration_format_yml_with_no_test_positive(tmp_path: PosixPath, sourc
     assert output_yml[0].get('tests') == ['No tests (auto formatted)']
 
     # Running format for the second time should raise no exception and should raise no prompt to the user
-    result = runner.invoke(main, [FORMAT_CMD, '-i', output_path], input='Y')
+    result = runner.invoke(main, [FORMAT_CMD, '-i', output_path, '-y'], input='Y')
     assert not result.exception
     assert prompt not in result.output
 
@@ -593,7 +596,7 @@ def test_format_playbook_without_fromversion_no_preset_flag(repo):
     runner = CliRunner(mix_stderr=False)
     format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path), '--assume-yes', '-v'])
     assert 'Success' in format_result.stdout
-    assert playbook.yml.read_dict().get('fromversion') == '5.5.0'
+    assert playbook.yml.read_dict().get('fromversion') == GENERAL_DEFAULT_FROMVERSION
 
 
 def test_format_playbook_without_fromversion_with_preset_flag(repo):
@@ -679,37 +682,7 @@ def test_format_playbook_without_fromversion_without_preset_flag_manual(repo):
     runner = CliRunner(mix_stderr=False)
     format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path), '-v'], input='y\n5.5.0')
     assert 'Success' in format_result.stdout
-    assert playbook.yml.read_dict().get('fromversion') == '5.5.0'
-
-
-def test_format_playbook_without_fromversion_without_preset_flag_manual_two_tries(repo):
-    """
-    Given:
-        - A playbook without fromversion
-
-    When:
-        - Running format on the pack
-
-    Then:
-        - Ensure format runs successfully
-        - Ensure the format does not except wrong version format.
-        - Ensure format adds fromversion with the inputted version.
-    """
-    pack = repo.create_pack('Temp')
-    playbook = pack.create_playbook('my_temp_playbook')
-    playbook.create_default_playbook()
-    playbook_content = playbook.yml.read_dict()
-    if 'fromversion' in playbook_content:
-        del playbook_content['fromversion']
-
-    assert 'fromversion' not in playbook_content
-
-    playbook.yml.write_dict(playbook_content)
-    runner = CliRunner(mix_stderr=False)
-    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path), '-v'], input='y\n5.5\n5.5.0')
-    assert 'Version format is not valid' in format_result.stdout
-    assert 'Success' in format_result.stdout
-    assert playbook.yml.read_dict().get('fromversion') == '5.5.0'
+    assert playbook.yml.read_dict().get('fromversion') == GENERAL_DEFAULT_FROMVERSION
 
 
 def test_format_playbook_copy_removed_from_name_and_id(repo):
@@ -1302,7 +1275,7 @@ class TestFormatWithoutAddTestsFlag:
             }
         )
         layouts_path = layout.path
-        result = runner.invoke(main, [FORMAT_CMD, '-i', layouts_path])
+        result = runner.invoke(main, [FORMAT_CMD, '-i', layouts_path, '-y'])
         prompt = f'The file {layouts_path} has no test playbooks configured.' \
                  f' Do you want to configure it with "No tests" '
         message = f'Formatting {layouts_path} with "No tests"'
@@ -1338,7 +1311,7 @@ class TestFormatWithoutAddTestsFlag:
             }
         )
         layouts_path = layout.path
-        result = runner.invoke(main, [FORMAT_CMD, '-i', layouts_path, '-at'])
+        result = runner.invoke(main, [FORMAT_CMD, '-i', layouts_path, '-at', '-y'])
         prompt = f'The file {layouts_path} has no test playbooks configured.' \
                  f' Do you want to configure it with "No tests" '
         message = f'Formatting {layouts_path} with "No tests"'

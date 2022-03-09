@@ -2,6 +2,8 @@ from typing import Tuple
 
 import click
 
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION, FileType)
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -30,7 +32,7 @@ class GenericModuleJSONFormat(BaseUpdateJSON):
     def run_format(self) -> int:
         try:
             click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
-            super().update_json()
+            super().update_json(default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.GENERIC_MODULE))
             self.set_default_values_as_needed()
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE

@@ -10,7 +10,7 @@
 * The **validate** command now checks if a readme file is empty, only for packs that contain playbooks or were written by a partner
 * The **validate** command now makes sure common contextPath values (e.g. `DBotScore.Score`) have a non-empty description, and **format** populates them automatically.
 * Fixed a bug where **doc-review** command failed on existing templates.
-* Added support for the `-rt` flag in *create-content-artifacts* for marketplacev2.
+* Added support for adding test-playbooks to the zip file result in *create-content-artifacts* command for marketplacev2.
 
 # 1.6.1
 * Added the '--use-packs-known-words' argument to the **doc-review** command

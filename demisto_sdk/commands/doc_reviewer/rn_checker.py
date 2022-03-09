@@ -43,8 +43,8 @@ class ReleaseNotesChecker:
         'Improved implementation',
         'Updated the Docker image to',
         'You can now',
-        'Deprecated. '
-        'Deprecated the '
+        'Deprecated. ',
+        'Deprecated the ',
 
         # full line
         'Documentation and metadata improvements.',

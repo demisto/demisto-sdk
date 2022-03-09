@@ -17,6 +17,7 @@ from enum import Enum
 from functools import lru_cache, partial
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
+from time import sleep
 from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
 
 import click
@@ -28,6 +29,7 @@ import requests
 import urllib3
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
+from requests.exceptions import HTTPError
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
@@ -2453,6 +2455,22 @@ def should_alternate_field_by_item(content_item, id_set):
         if list(item.keys())[0] == item_id:
             return item.get(item_id, {}).get('has_alternative_meta', False)
     return False
+
+
+def get_url_with_retries(url: str, retries: int, backoff_factor: int = 1, **kwargs):
+    kwargs['stream'] = True
+    session = requests.Session()
+    exception = Exception()
+    for _ in range(retries):
+        response = session.get(url, **kwargs)
+        try:
+            response.raise_for_status()
+        except HTTPError as error:
+            exception = error
+        else:
+            return response
+        sleep(backoff_factor)
+    raise exception
 
 
 def order_dict(data):

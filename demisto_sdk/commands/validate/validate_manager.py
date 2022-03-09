@@ -736,7 +736,7 @@ class ValidateManager:
         validation_results.add(self.validate_added_files(added_files, modified_files))
         validation_results.add(self.validate_changed_packs_unique_files(modified_files, added_files, old_format_files,
                                                                         changed_meta_files))
-        validation_results.add(self.validate_deleted_files(deleted_files))
+        validation_results.add(self.validate_deleted_files(deleted_files, added_files))
 
         if old_format_files:
             click.secho(f'\n================= Running validation on old format files =================',
@@ -1151,21 +1151,36 @@ class ValidateManager:
         Returns: True if the file allowed to be deleted, else False.
 
         """
-        file_types = [e for e in FileType]
-        file_types_not_allowed_to_be_deleted = [file_type for file_type in file_types if file_type not in FileType_ALLOWED_TO_DELETE]
         file_type = find_type(file_path)
-        return file_type not in file_types_not_allowed_to_be_deleted
+        return file_type in FileType_ALLOWED_TO_DELETE or not file_type
 
-    def validate_deleted_files(self, deleted_files) -> bool:
+    @staticmethod
+    def was_file_renamed_but_labeled_as_deleted(file_path, added_files):
+        """ Check if a file was renamed and not deleted (git false label the file as deleted)
+        Args:
+            file_path: The file path.
+
+        Returns: True if the file was renamed, else False.
+
+        """
+        for file in added_files:
+            pass
+
+
+
+
+    def validate_deleted_files(self, deleted_files, added_files) -> bool:
         click.secho(f'\n================= Checking for prohibited deleted files =================',
                     fg="bright_cyan")
 
         is_valid = True
         for file_path in deleted_files:
-            if not self.is_file_allowed_to_be_deleted(file_path):
-                error_message, error_code = Errors.file_cannot_be_deleted(file_path)
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    is_valid = False
+            if not self.was_file_renamed_but_labeled_as_deleted(file_path, added_files):
+                if not self.is_file_allowed_to_be_deleted(file_path):
+
+                    error_message, error_code = Errors.file_cannot_be_deleted(file_path)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        is_valid = False
 
         return is_valid
 

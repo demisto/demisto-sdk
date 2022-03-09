@@ -642,7 +642,6 @@ class TestDeprecatedIntegration:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(pack.repo_path):
@@ -713,7 +712,6 @@ class TestDeprecatedIntegration:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(pack.repo_path):
@@ -2344,7 +2342,6 @@ class TestPlaybookValidateDeprecated:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(pack.repo_path):
@@ -2414,7 +2411,6 @@ class TestPlaybookValidateDeprecated:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(pack.repo_path):
@@ -2681,7 +2677,6 @@ class TestScriptDeprecatedValidation:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(pack.repo_path):
@@ -2749,7 +2744,6 @@ class TestScriptDeprecatedValidation:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(pack.repo_path):
@@ -3113,7 +3107,6 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(repo.path):
@@ -3172,7 +3165,6 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(repo.path):
@@ -3223,7 +3215,6 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(repo.path):
@@ -3267,7 +3258,6 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(repo.path):
@@ -3352,7 +3342,6 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(repo.path):
@@ -3396,7 +3385,6 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
-        mocker.patch.object(ValidateManager, 'validate_deleted_files', return_value=True)
         mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(repo.path):

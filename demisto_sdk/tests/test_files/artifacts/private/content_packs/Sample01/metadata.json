@@ -1,0 +1,170 @@
+{
+    "name": "",
+    "id": "Sample01",
+    "description": "",
+    "created": "2022-03-01T13:11:59Z",
+    "updated": "2022-03-01T13:11:59Z",
+    "legacy": true,
+    "support": "",
+    "supportDetails": {},
+    "eulaLink": "https://github.com/demisto/content/blob/master/LICENSE",
+    "author": "",
+    "certification": "",
+    "price": 0,
+    "serverMinVersion": "0.0.0",
+    "currentVersion": "0.0.0",
+    "tags": [],
+    "categories": [],
+    "contentItems": {
+        "automation": [
+            {
+                "name": "",
+                "description": "",
+                "tags": []
+            },
+            {
+                "name": "",
+                "description": "",
+                "tags": []
+            }
+        ],
+        "playbook": [
+            {
+                "name": "",
+                "description": ""
+            },
+            {
+                "name": "",
+                "description": ""
+            }
+        ],
+        "integration": [
+            {
+                "name": "",
+                "description": "",
+                "category": "test",
+                "commands": []
+            },
+            {
+                "name": "",
+                "description": "",
+                "category": "test",
+                "commands": []
+            }
+        ],
+        "incidentfield": [
+            {
+                "name": "",
+                "type": "",
+                "description": ""
+            },
+            {
+                "name": "",
+                "type": "",
+                "description": ""
+            }
+        ],
+        "incidenttype": [
+            {
+                "name": "",
+                "playbook": "",
+                "closureScript": "",
+                "hours": 0,
+                "days": 0,
+                "weeks": 0
+            },
+            {
+                "name": "",
+                "playbook": "",
+                "closureScript": "",
+                "hours": 0,
+                "days": 0,
+                "weeks": 0
+            }
+        ],
+        "dashboard": [
+            {
+                "name": ""
+            },
+            {
+                "name": ""
+            }
+        ],
+        "indicatorfield": [
+            {
+                "name": "",
+                "type": "",
+                "description": ""
+            }
+        ],
+        "report": [
+            {
+                "name": "",
+                "description": ""
+            },
+            {
+                "name": "",
+                "description": ""
+            }
+        ],
+        "reputation": [
+            {
+                "details": "",
+                "reputationScriptName": "",
+                "enhancementScriptNames": []
+            },
+            {
+                "details": "",
+                "reputationScriptName": "",
+                "enhancementScriptNames": []
+            }
+        ],
+        "layoutscontainer": [
+            {
+                "name": ""
+            },
+            {
+                "name": ""
+            }
+        ],
+        "pre-process-rule": [
+            {
+                "name": "Drop",
+                "description": ""
+            },
+            {
+                "name": "Drop",
+                "description": ""
+            }
+        ],
+        "job": [],
+        "classifier": [],
+        "widget": [
+            {
+                "name": "",
+                "dataType": "",
+                "widgetType": "test"
+            },
+            {
+                "name": "",
+                "dataType": "",
+                "widgetType": "test"
+            }
+        ],
+        "genericfield": [],
+        "generictype": [],
+        "genericmodule": [],
+        "genericdefinition": [],
+        "list": [
+            {
+                "name": "checked integrations"
+            },
+            {
+                "name": "TestErrorDecryptorFromFile"
+            }
+        ]
+    },
+    "useCases": [],
+    "keywords": [],
+    "dependencies": {}
+}

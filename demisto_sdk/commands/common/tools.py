@@ -694,7 +694,7 @@ def get_latest_release_notes_text(rn_path):
             if not rn:
                 print_error(f'Release Notes may not be empty. Please fill out correctly. - {rn_path}')
                 return None
-        except:
+        except IOError:
             return ''
 
     return rn if rn else None

@@ -14,6 +14,7 @@ from typing import Dict, Tuple
 import click
 from dateutil import parser
 from git import GitCommandError, Repo
+from packaging.version import parse
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
@@ -137,13 +138,9 @@ class PackUniqueFilesValidator(BaseValidator):
         Return:
             (str): The lastest version of RN.
         """
-
-        try:
-            list_of_files = glob.glob(self.pack_path + '/ReleaseNotes/*')
-            list_of_release_notes = [os.path.basename(file) for file in list_of_files]
-            list_of_versions = [rn[:rn.rindex('.')].replace('_', '.') for rn in list_of_release_notes]
-        except Exception:
-            return ''
+        list_of_files = glob.glob(self.pack_path + '/ReleaseNotes/*')
+        list_of_release_notes = [os.path.basename(file) for file in list_of_files]
+        list_of_versions = [rn[:rn.rindex('.')].replace('_', '.') for rn in list_of_release_notes]
         if list_of_versions:
             list_of_versions.sort(key=LooseVersion)
             return list_of_versions[-1]
@@ -577,7 +574,7 @@ class PackUniqueFilesValidator(BaseValidator):
         if not rn_version:
             self._add_error(Errors.missing_release_notes_for_pack(self.pack), self.pack)
             return False
-        if LooseVersion(rn_version) != LooseVersion(current_version):
+        if parse(rn_version) != parse(current_version):
             self._add_error(Errors.pack_metadata_version_diff_from_rn(self.pack, rn_version, current_version), metadata_file_path)
             return False
         return True

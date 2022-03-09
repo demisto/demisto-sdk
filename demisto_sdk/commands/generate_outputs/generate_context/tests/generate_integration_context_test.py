@@ -7,13 +7,81 @@ from demisto_sdk.commands.common.tools import get_json, get_yaml, write_yml
 # Test data files
 FAKE_INTEGRATION_YML = get_yaml(
     f'{git_path()}/demisto_sdk/commands/generate_outputs/generate_context/tests/test_data/fake_integration_empty_output.yml')
-FAKE_OUTPUT_CONTEXTS = get_json(
-    f'{git_path()}/demisto_sdk/commands/generate_outputs/generate_context/tests/test_data/fake_outputs_with_contexts.json')
 
-FAKE_OUTPUTS_1 = get_json(
-    f'{git_path()}/demisto_sdk/commands/generate_outputs/generate_context/tests/test_data/fake_outputs1.json')
-FAKE_OUTPUTS_2 = get_json(
-    f'{git_path()}/demisto_sdk/commands/generate_outputs/generate_context/tests/test_data/fake_outputs2.json')
+
+FAKE_OUTPUT_CONTEXTS = [
+  {
+    "contextPath": "File.SHA256",
+    "description": "",
+    "type": "String"
+  },
+  {
+    "contextPath": "File.SHA1",
+    "description": "",
+    "type": "String"
+  },
+  {
+    "contextPath": "File.MD5",
+    "description": "",
+    "type": "String"
+  },
+  {
+    "contextPath": "File.Name",
+    "description": "",
+    "type": "String"
+  },
+  {
+    "contextPath": "File.Date",
+    "description": "",
+    "type": "Date"
+  },
+  {
+    "contextPath": "File.Size",
+    "description": "",
+    "type": "Number"
+  },
+  {
+    "contextPath": "File.Check",
+    "description": "",
+    "type": "Boolean"
+  },
+  {
+    "contextPath": "File.Type",
+    "description": "",
+    "type": "Unknown"
+  },
+  {
+    "contextPath": "File.EntryID",
+    "description": "",
+    "type": "String"
+  },
+  {
+    "contextPath": "File.SSDeep",
+    "description": "",
+    "type": "String"
+  }
+]
+
+FAKE_OUTPUTS_1 = {
+  "File": {
+    "SHA256": "111",
+    "SHA1": "111",
+    "MD5": "111",
+    "Name": "111",
+    "Date": "2018-09-02T23:05:12Z"
+  }
+}
+FAKE_OUTPUTS_2 = {
+  "File": {
+    "Date": "2018-09-02T23:05:12Z",
+    "Size": 111,
+    "Check": True,
+    "Type": None,
+    "EntryID": "111",
+    "SSDeep": "111"
+  }
+}
+
 
 FAKE_EXAMPLES_FILE = f'{git_path()}/commands/demisto_sdk/generate_outputs/generate_context/tests/test_data/fake_examples.txt'
 

@@ -100,7 +100,6 @@ def generate_integration_context(
         verbose: verbose (debug mode).
     """
     if not output_path:
-        print_warning('output path wasn\'t provided, saving in input path')
         output_path = input_path
     try:
         yml_data = get_yaml(input_path)

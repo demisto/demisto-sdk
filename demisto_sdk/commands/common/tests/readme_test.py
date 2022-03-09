@@ -365,7 +365,7 @@ def test_demisto_in_repo_readme(mocker, repo):
     """
     from pathlib import Path
 
-    readme_path = Path(repo.path) / '*README.md'
+    readme_path = Path(repo.path) / 'README.md'
     mocker.patch.object(ReadMeValidator, '__init__', return_value=None)
 
     with open(readme_path, 'w') as f:

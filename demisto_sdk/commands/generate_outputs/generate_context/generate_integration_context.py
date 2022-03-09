@@ -1,6 +1,5 @@
-from typing import Dict, List, Optional
-
 import traceback
+from typing import Dict, List, Optional
 
 from demisto_sdk.commands.common.tools import (get_yaml, print_error,
                                                print_success, print_v,

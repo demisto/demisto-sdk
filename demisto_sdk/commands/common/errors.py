@@ -2168,7 +2168,8 @@ class Errors:
     def changed_pack_name(original_name):
         return f'Pack folder names cannot be changed, please rename it back to {original_name}.' \
                f' If you wish to rename the pack, you can edit the name field in pack_metadata.json,' \
-               f' and the pack will be shown in the Marketplace accordingly.'
+               f' and the pack will be shown in the Marketplace accordingly.\n' \
+               f"If the file wasn't renamed, try pulling changes from master and re-run validations"
 
     @staticmethod
     @error_code_decorator

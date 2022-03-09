@@ -1167,10 +1167,11 @@ class ValidateManager:
         if added_files:
             deleted_file_dict = get_file(file_path, find_type(file_path))
             deleted_file_id = _get_file_id(file_path, deleted_file_dict)
-            for file in added_files:
-                file_dict = get_file(file, find_type(file))
-                if deleted_file_id == _get_file_id(file, file_dict):
-                    return True
+            if deleted_file_id:
+                for file in added_files:
+                    file_dict = get_file(file, find_type(file))
+                    if deleted_file_id == _get_file_id(file, file_dict):
+                        return True
 
         return False
 

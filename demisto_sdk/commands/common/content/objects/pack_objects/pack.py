@@ -69,7 +69,9 @@ class Pack:
         objects_path = (self._path / dir_name).glob(patterns=[f"*.{suffix}", f"*/*.{suffix}"])
         for object_path in objects_path:
             content_object = path_to_pack_object(object_path)
-            # skip content items that are not displayed in the id set, if the corresponding flag is used
+            # skip content items that are not displayed in the id set, if the corresponding flag is used,
+            # We excluding ReleaseNotes and TestPlaybooks, because they missing from the id set
+            # but are needed in the pack's zip.
             if self._filter_items_by_id_set and content_object.type().value not in [FileType.RELEASE_NOTES.value,
                                                                                     FileType.RELEASE_NOTES_CONFIG.value,
                                                                                     FileType.TEST_PLAYBOOK.value]:

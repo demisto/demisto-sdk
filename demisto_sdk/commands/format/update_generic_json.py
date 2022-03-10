@@ -50,7 +50,7 @@ class BaseUpdateJSON(BaseUpdate):
             ujson.dump(self.data, file, indent=4, encode_html_chars=True, escape_forward_slashes=False,
                        ensure_ascii=False)
 
-    def update_json(self, default_from_version=''):
+    def update_json(self, default_from_version: str = ''):
         """Manager function for the generic JSON updates."""
         self.set_version_to_default()
         self.remove_null_fields()

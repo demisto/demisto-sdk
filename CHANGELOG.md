@@ -12,13 +12,11 @@
 * Fixed a bug where **doc-review** command failed on existing templates.
 * Fixed a bug where **validate** command failed when the word demisto is in the repo README file.
 * Added support for adding test-playbooks to the zip file result in *create-content-artifacts* command for marketplacev2.
-* Refactored the **format** command on update *fromversion*:
-  - Fixed a bug when changing content item, the *fromversion* field should remain.
-  - Updated the general default *fromversion* and the default *fromversion* of new content items (e.g. `Lists, Jobs..`).
-  - Removed the interactive in *update_playbook*.
-  - Added interactive for all content types, asking user if to generate default *fromversion*.
-  - Updated *update_generic_yml/json* and their usages in the differences content types update.
-
+* Refactored the **format** command's effect on the *fromversion* field:
+  - Fixed a bug where the *fromversion* field was removed when modifying a content item.
+  - Updated the general default *fromversion* and the default *fromversion* of newly-introduced content items (e.g. `Lists`, `Jobs`).
+  - Removed the interactive option in *update_playbook*.
+  - Added an *interactive* mode for all content types, asking user if to set the default *fromversion*.
 
 # 1.6.1
 * Added the '--use-packs-known-words' argument to the **doc-review** command

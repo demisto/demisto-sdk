@@ -74,7 +74,6 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                 task['task']['id'] = generated_uuid
 
     def run_format(self) -> int:
-        # self.update_fromversion_by_user()
         self.update_playbook_usages()
         super().update_yml(file_type=PLAYBOOK)
         self.add_description()

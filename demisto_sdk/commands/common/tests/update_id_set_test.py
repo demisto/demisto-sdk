@@ -10,9 +10,8 @@ import pytest
 
 import demisto_sdk.commands.common.tools as tools
 import demisto_sdk.commands.common.update_id_set as uis
-from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
-                                                   JOBS_DIR, FileType,
-                                                   MarketplaceVersions)
+from demisto_sdk.commands.common.constants import (JOBS_DIR, FileType,
+                                                   MarketplaceVersions, FILETYPE_TO_DEFAULT_FROMVERSION)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
     add_item_to_exclusion_dict, does_dict_have_alternative_key,
@@ -2722,7 +2721,7 @@ class TestJob:
         assert path.parts[-2] == JOBS_DIR
         assert path.parts[-3] == pack.name
 
-        assert datum['fromversion'] == DEFAULT_JOB_FROM_VERSION
+        assert datum['fromversion'] == FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)
         assert datum['pack'] == pack.name
         assert datum['details'] == job_details
         assert datum['selectedFeeds'] == []

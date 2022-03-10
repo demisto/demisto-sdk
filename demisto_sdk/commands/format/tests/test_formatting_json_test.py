@@ -1169,7 +1169,7 @@ class TestFormattingReport:
         assert report_formatter.data.get('orientation') == 'landscape'
 
     @staticmethod
-    def exception_raise(placeholder=None, default_from_version=''):
+    def exception_raise(default_from_version: str = ''):
         raise ValueError("MY ERROR")
 
     FORMAT_OBJECT = [
@@ -1243,7 +1243,7 @@ class TestFormattingReport:
         pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
         incident_type = pack.create_incident_type(name='TestType')
         incident_field = pack.create_incident_field(name='TestField')
-        indicator_field = pack.create_indicator_field(name='TestFeild')
+        indicator_field = pack.create_indicator_field(name='TestField')
         indicator_type = pack.create_indicator_type(name='TestType')
         classifier = pack.create_classifier(name='TestClassifier')
         layout = pack.create_layout(name='TestLayout')

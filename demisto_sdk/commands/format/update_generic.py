@@ -237,12 +237,12 @@ class BaseUpdate:
         if user_answer in ['Y', 'y', 'yes', 'Yes']:
             return True
         else:
-            click.secho('Moving forward without updating fromversion tag', fg='yellow')
+            click.secho('Skipping update of fromVersion', fg='yellow')
             return False
 
     def set_default_from_version(self, default_from_version):
         # Ask the user if default_from_version is needed.
-        promote = 'No fromversion is specified for this content item, would you like me to update for you? [Y/n]'
+        promote = 'This content item is missing the fromVersion field, would you like to set the default? [Y/n]'
         if self.assume_yes or self.ask_user(promote):
             # If the content type has different default from_version from the general type.
             if default_from_version and self.is_version_lower(GENERAL_DEFAULT_FROMVERSION, default_from_version):

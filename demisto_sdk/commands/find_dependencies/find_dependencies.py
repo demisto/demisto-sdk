@@ -2047,7 +2047,7 @@ class PackDependencies:
     @staticmethod
     def check_arguments_find_dependencies(input_paths, all_packs_dependencies, output_path, get_dependent_on):
         if output_path and not all_packs_dependencies and not get_dependent_on:
-            print_warning("You used the '--output-path' argument, which is only relevant for when using the"
+            print_warning("You used the '--output-path' argument, which only works when using either the"
                           " '--all-packs-dependencies' or '--get-dependent-on' flags. Ignoring this argument.")
         if not input_paths:
             if not all_packs_dependencies:

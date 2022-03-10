@@ -11,6 +11,7 @@
 * The **validate** command now makes sure common contextPath values (e.g. `DBotScore.Score`) have a non-empty description, and **format** populates them automatically.
 * Fixed a bug where **doc-review** command failed on existing templates.
 * Fixed a bug where **validate** command failed when the word demisto is in the repo README file.
+* Added support for adding test-playbooks to the zip file result in *create-content-artifacts* command for marketplacev2.
 * Added a **validate** check to prevent deletion of files whose deletion is not supported by the XSOAR marketplace.
 
 # 1.6.1

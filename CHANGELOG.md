@@ -10,6 +10,15 @@
 * The **validate** command now checks if a readme file is empty, only for packs that contain playbooks or were written by a partner
 * The **validate** command now makes sure common contextPath values (e.g. `DBotScore.Score`) have a non-empty description, and **format** populates them automatically.
 * Fixed a bug where **doc-review** command failed on existing templates.
+* Fixed a bug where **validate** command failed when the word demisto is in the repo README file.
+* Added support for adding test-playbooks to the zip file result in *create-content-artifacts* command for marketplacev2.
+* Refactored the **format** command on update *fromversion*:
+  - Fixed a bug when changing content item, the *fromversion* field should remain.
+  - Updated the general default *fromversion* and the default *fromversion* of new content items (e.g. `Lists, Jobs..`).
+  - Removed the interactive in *update_playbook*.
+  - Added interactive for all content types, asking user if to generate default *fromversion*. 
+  - Updated *update_generic_yml/json* and their usages in the differences content types update.
+
 
 # 1.6.1
 * Added the '--use-packs-known-words' argument to the **doc-review** command

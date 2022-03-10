@@ -20,10 +20,12 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                find_type, get_pack_name,
-                                               get_yaml, get_yml_paths_in_dir,
+                                               get_py_paths_in_dir, get_yaml,
+                                               get_yml_paths_in_dir,
                                                print_color, print_error,
                                                print_warning,
                                                server_version_compare)
+from demisto_sdk.commands.unify.generate_yml import YMLGenerator
 
 PACK_METADATA_PATH = 'pack_metadata.json'
 CONTRIBUTOR_DISPLAY_NAME = ' ({} Contribution)'
@@ -73,6 +75,7 @@ class YmlUnifier:
             self.package_path = self.package_path.rstrip(os.sep)
 
         self.dest_path = output
+        self.yml_data = {}
 
         yml_paths, self.yml_path = get_yml_paths_in_dir(self.package_path, Errors.no_yml_file(self.package_path))
         for path in yml_paths:
@@ -85,6 +88,13 @@ class YmlUnifier:
                 self.yml_path = path
                 break
 
+        self.yml_generators = []
+        py_paths = get_py_paths_in_dir(self.package_path)
+        for py_path in py_paths:
+            yml_gen = YMLGenerator(filename=py_path)
+            if yml_gen.is_generatable_file:
+                self.yml_generators.append(yml_gen)
+
         self.ryaml = YAML()
         self.ryaml.preserve_quotes = True
         self.ryaml.width = 50000  # make sure long lines will not break (relevant for code section)
@@ -93,9 +103,13 @@ class YmlUnifier:
         elif self.yml_path:
             with io.open(self.yml_path, 'r', encoding='utf8') as yml_file:
                 self.yml_data = self.ryaml.load(yml_file)
+        elif self.yml_generators:
+            self.yml_generator = self.yml_generators[0]
+            self.yml_generator.generate()
+            self.yml_data = self.yml_generator.get_metadata_dict()
+
         else:
-            self.yml_data = {}
-            print_error(f'No yml found in path: {self.package_path}')
+            print_error(f'No yml or metadata collector found in path: {self.package_path}')
 
         # script key for scripts is a string.
         # script key for integrations is a dictionary.

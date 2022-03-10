@@ -118,6 +118,22 @@ def get_yml_paths_in_dir(project_dir: str, error_msg: str = '') -> Tuple[list, s
     return yml_files, yml_files[0]
 
 
+def get_py_paths_in_dir(project_dir: str, error_msg: str = '') -> list:
+    """
+    Gets the project directory and returns the path of the first yml file in that directory
+    :param project_dir: string path to the project_dir
+    :param error_msg: the error msg to show to the user in case not yml files found in the directory
+    :return: first returned argument is the list of all yml files paths in the directory, second returned argument is a
+    string path to the first yml file in project_dir
+    """
+    py_files = glob.glob(os.path.join(project_dir, '*.py'))
+    if not py_files:
+        if error_msg:
+            print(error_msg)
+        return []
+    return py_files
+
+
 # print srt in the given color
 def print_color(obj, color):
     print(u'{}{}{}'.format(color, obj, LOG_COLORS.NATIVE))

@@ -3,10 +3,8 @@ import re
 from copy import deepcopy
 from distutils.version import LooseVersion
 from typing import Any, Dict, Optional, Set, Union
-
 import click
 import dictdiffer
-
 from demisto_sdk.commands.common.constants import (GENERAL_DEFAULT_FROMVERSION,
                                                    INTEGRATION)
 from demisto_sdk.commands.common.handlers import YAML_Handler
@@ -253,7 +251,7 @@ class BaseUpdate:
         return None
 
     def change_data_from_version(self, default_from_version):
-        promote = 'Your fromversion is not updated to the current content item, would you like me to update for you? [Y/n]'
+        promote = 'Your fromversion is lower than the default fromversion of this content type, would you like me to update for you? [Y/n]'
         if self.assume_yes or self.ask_user(promote):
             return default_from_version
         return None

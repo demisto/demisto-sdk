@@ -2331,7 +2331,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                                                        data_extraction_func=get_general_yaml_data,
                                                                        ),
                                                                get_general_paths(PARSING_RULES_DIR,
-                                                                                       pack_to_create)):
+                                                                                 pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
                         packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('parsingRules',
@@ -2353,7 +2353,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                                                        data_extraction_func=get_general_yaml_data,
                                                                        ),
                                                                get_general_paths(MODELING_RULES_DIR,
-                                                                                       pack_to_create)):
+                                                                                 pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
                         packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('modelingRules',
@@ -2375,7 +2375,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                                                        data_extraction_func=get_general_yaml_data,
                                                                        ),
                                                                get_general_paths(CORRELATION_RULES_DIR,
-                                                                                       pack_to_create)):
+                                                                                 pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
                         packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('correlationRules',
@@ -2397,7 +2397,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                                                        data_extraction_func=get_general_data,
                                                                        ),
                                                                get_general_paths(XSIAM_DASHBOARDS_DIR,
-                                                                                       pack_to_create)):
+                                                                                 pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
                         packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('xsiamdashboards',
@@ -2419,7 +2419,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                                                        data_extraction_func=get_general_data,
                                                                        ),
                                                                get_general_paths(XSIAM_REPORTS_DIR,
-                                                                                       pack_to_create)):
+                                                                                 pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
                         packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('xsiamreports',

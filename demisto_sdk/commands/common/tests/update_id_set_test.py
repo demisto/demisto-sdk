@@ -1218,7 +1218,7 @@ class TestLayouts:
             - exclude incident layout from marketplace v2
             - accept all other cases
         """
-        pack = repo.create_pack(name='DummyPack')
+        pack = repo.create_pack(name=f'DummyPack-{layout_type}')
         layout = pack.create_layoutcontainer('Reut', {
             'id': 'Reut',
             'group': layout_type,
@@ -1226,13 +1226,13 @@ class TestLayouts:
             'marketplaces': ['xsoar', 'marketplacev2'],
         })
 
-        res, excluded_items = process_layoutscontainers(layout.path, {'DummyPack': {}}, marketplace, True)
+        res, excluded_items = process_layoutscontainers(layout.path, {pack.name: {}}, marketplace, True)
 
         if should_exclude:
             assert not res
             assert excluded_items
-            assert 'DummyPack' in excluded_items
-            assert ('layoutscontainer', 'Reut') in excluded_items['DummyPack']
+            assert pack.name in excluded_items
+            assert ('layoutscontainer', 'Reut') in excluded_items[pack.name]
         else:
             assert len(res) == 1
             assert res[0].get('Reut')

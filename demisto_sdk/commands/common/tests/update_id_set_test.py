@@ -10,9 +10,13 @@ import pytest
 
 import demisto_sdk.commands.common.tools as tools
 import demisto_sdk.commands.common.update_id_set as uis
-from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
-                                                   JOBS_DIR, PARSING_RULES_DIR,
-                                                   FileType,
+from demisto_sdk.commands.common.constants import (CORRELATION_RULES_DIR,
+                                                   DEFAULT_JOB_FROM_VERSION,
+                                                   JOBS_DIR,
+                                                   MODELING_RULES_DIR,
+                                                   PARSING_RULES_DIR,
+                                                   XSIAM_DASHBOARDS_DIR,
+                                                   XSIAM_REPORTS_DIR, FileType,
                                                    MarketplaceVersions)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
@@ -21,14 +25,14 @@ from demisto_sdk.commands.common.update_id_set import (
     get_fields_by_script_argument,
     get_filters_and_transformers_from_complex_value,
     get_filters_and_transformers_from_playbook, get_general_data,
-    get_generic_field_data, get_generic_module_data, get_generic_type_data,
-    get_incident_fields_by_playbook_input, get_incident_type_data,
-    get_indicator_type_data, get_layout_data, get_mapper_data,
-    get_mp_v2_entities_data, get_pack_metadata_data, get_playbook_data,
+    get_general_yaml_data, get_generic_field_data, get_generic_module_data,
+    get_generic_type_data, get_incident_fields_by_playbook_input,
+    get_incident_type_data, get_indicator_type_data, get_layout_data,
+    get_mapper_data, get_pack_metadata_data, get_playbook_data,
     get_report_data, get_script_data, get_values_for_keys_recursively,
     get_widget_data, has_duplicate, merge_id_sets, process_general_items,
-    process_general_mp_v2_items, process_incident_fields, process_integration,
-    process_jobs, process_layoutscontainers, process_script, re_create_id_set,
+    process_incident_fields, process_integration, process_jobs,
+    process_layoutscontainers, process_script, re_create_id_set,
     should_skip_item_by_mp)
 from TestSuite.utils import IsEqualFunctions
 
@@ -2779,36 +2783,153 @@ class TestJob:
 
 class TestParsingRules:
     @staticmethod
-    def test_process_parsing_rules(mocker, capsys, repo):
+    def test_process_parsing_rules(mocker, capsys, pack):
         """
         Given
             - A repo with a parsing rule object.
-            - Whether to print logs.
         When
             - Parsing the parsing rule files.
         Then
             - Verify result as expeted.
         """
-        pack = repo.create_pack()
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        parsing_rule = pack.create_parsing_rule("parsing_rule", {"rules": "", "name": "parsing_rule.yml"})
-        res = process_general_mp_v2_items(parsing_rule.path, {pack.name: {}},
-                                          MarketplaceVersions.MarketplaceV2.value, True, (FileType.PARSING_RULES,), get_mp_v2_entities_data)
+        parsing_rule = pack.create_parsing_rule("parsing_rule", {"id": "parsing_rule_id", "rules": "", "name": "parsing_rule.yml"})
+        res = process_general_items(parsing_rule.path, {pack.name: {}},
+                                    MarketplaceVersions.MarketplaceV2.value, True, (FileType.PARSING_RULES,), get_general_yaml_data)
 
         captured = capsys.readouterr()
         assert len(res) == 2
-        datum = res[0][0]['-']
+        datum = res[0][0]['parsing_rule_id']
         assert datum['name'] == parsing_rule._tmp_path.parts[-1]
         path = Path(datum['file_path'])
         assert path == parsing_rule._tmp_path
-        assert path.exists()
-        assert path.is_file()
         assert path.suffix == '.yml'
         assert path.parts[-2] == PARSING_RULES_DIR
         assert path.parts[-3] == pack.name
         assert datum['pack'] == pack.name
 
         assert f'adding {parsing_rule._tmp_path} to id_set' in captured.out
+
+
+class TestModelingRules:
+    @staticmethod
+    def test_process_modeling_rules(mocker, capsys, pack):
+        """
+        Given
+            - A repo with a modeling rule object.
+        When
+            - Parsing the modeling rule files.
+        Then
+            - Verify result as expeted.
+        """
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
+        modeling_rule = pack.create_modeling_rule("modeling_rule", {"id": "modeling_rule_id", "rules": "", "name": "modeling_rule.yml"})
+        res = process_general_items(modeling_rule.path, {pack.name: {}},
+                                    MarketplaceVersions.MarketplaceV2.value, True, (FileType.MODELING_RULES,), get_general_yaml_data)
+
+        captured = capsys.readouterr()
+        assert len(res) == 2
+        datum = res[0][0]['modeling_rule_id']
+        assert datum['name'] == modeling_rule._tmp_path.parts[-1]
+        path = Path(datum['file_path'])
+        assert path == modeling_rule._tmp_path
+        assert path.suffix == '.yml'
+        assert path.parts[-2] == MODELING_RULES_DIR
+        assert path.parts[-3] == pack.name
+        assert datum['pack'] == pack.name
+
+        assert f'adding {modeling_rule._tmp_path} to id_set' in captured.out
+
+
+class TestCorrelationRules:
+    @staticmethod
+    def test_process_correlation_rules(mocker, capsys, pack):
+        """
+        Given
+            - A repo with a correlation rule object.
+        When
+            - Parsing the correlation rule files.
+        Then
+            - Verify result as expeted.
+        """
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
+        correlation_rule = pack.create_correlation_rule("correlation_rule", {"id": "correlation_rule_id", "name": "correlation_rule.yml", "alert_category": ""})
+        res = process_general_items(correlation_rule.path, {pack.name: {}},
+                                    MarketplaceVersions.MarketplaceV2.value, True, (FileType.CORRELATION_RULES,), get_general_yaml_data)
+
+        captured = capsys.readouterr()
+        assert len(res) == 2
+        datum = res[0][0]['correlation_rule_id']
+        assert datum['name'] == correlation_rule._tmp_path.parts[-1]
+        path = Path(datum['file_path'])
+        assert path == correlation_rule._tmp_path
+        assert path.suffix == '.yml'
+        assert path.parts[-2] == CORRELATION_RULES_DIR
+        assert path.parts[-3] == pack.name
+        assert datum['pack'] == pack.name
+
+        assert f'adding {correlation_rule._tmp_path} to id_set' in captured.out
+
+
+class TestXSIAMDashboards:
+    @staticmethod
+    def test_process_xsiam_dashboards(mocker, capsys, pack):
+        """
+        Given
+            - A repo with a XSIAM dashboard object.
+        When
+            - Parsing the XSIAM dashboards files.
+        Then
+            - Verify result as expeted.
+        """
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
+        xsiam_dashboard = pack.create_xsiam_dashboard(
+            "xsiam_dashboard", {"id": "xsiam_dashboard_id", "rules": "", "name": "xsiam_dashboard.json", "dashboards_data": ""})
+        res = process_general_items(xsiam_dashboard.path, {pack.name: {}},
+                                    MarketplaceVersions.MarketplaceV2.value, True, (FileType.XSIAM_DASHBOARDS,), get_general_data)
+
+        captured = capsys.readouterr()
+        assert len(res) == 2
+        datum = res[0][0]['xsiam_dashboard_id']
+        assert datum['name'] == xsiam_dashboard._file_path.parts[-1]
+        path = Path(datum['file_path'])
+        assert path == xsiam_dashboard._file_path
+        assert path.suffix == '.json'
+        assert path.parts[-2] == XSIAM_DASHBOARDS_DIR
+        assert path.parts[-3] == pack.name
+        assert datum['pack'] == pack.name
+
+        assert f'adding {xsiam_dashboard._file_path} to id_set' in captured.out
+
+
+class TestXSIAMReports:
+    @staticmethod
+    def test_process_xsiam_reports(mocker, capsys, pack):
+        """
+        Given
+            - A repo with a XSIAM report object.
+        When
+            - Parsing the XSIAM reports files.
+        Then
+            - Verify result as expeted.
+        """
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
+        xsiam_report = pack.create_xsiam_report("xsiam_report", {"id": "xsiam_report_id", "rules": "", "name": "xsiam_report.json", "dashboards_data": ""})
+        res = process_general_items(xsiam_report.path, {pack.name: {}},
+                                    MarketplaceVersions.MarketplaceV2.value, True, (FileType.XSIAM_REPORTS,), get_general_data)
+
+        captured = capsys.readouterr()
+        assert len(res) == 2
+        datum = res[0][0]['xsiam_report_id']
+        assert datum['name'] == xsiam_report._file_path.parts[-1]
+        path = Path(datum['file_path'])
+        assert path == xsiam_report._file_path
+        assert path.suffix == '.json'
+        assert path.parts[-2] == XSIAM_REPORTS_DIR
+        assert path.parts[-3] == pack.name
+        assert datum['pack'] == pack.name
+
+        assert f'adding {xsiam_report._file_path} to id_set' in captured.out
 
 
 def test_merge_id_sets(tmp_path):

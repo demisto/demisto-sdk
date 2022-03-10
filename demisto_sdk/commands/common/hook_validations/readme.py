@@ -1,4 +1,3 @@
-import atexit
 import json
 import os
 import re

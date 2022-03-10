@@ -6,7 +6,7 @@ from typing import Optional
 import pytest
 from mock import patch
 
-from demisto_sdk.commands.common.constants import (MarketplaceVersions)
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.format import (update_dashboard, update_incidenttype,
                                          update_indicatortype)
 from demisto_sdk.commands.format.format_module import format_manager
@@ -1252,5 +1252,3 @@ class TestFormattingReport:
             bs = BaseUpdate(input=path, assume_yes=True)
             bs.set_fromVersion()
             assert bs.data['fromVersion'] == GENERAL_DEFAULT_FROMVERSION
-
-

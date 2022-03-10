@@ -3,8 +3,10 @@ import re
 from copy import deepcopy
 from distutils.version import LooseVersion
 from typing import Any, Dict, Optional, Set, Union
+
 import click
 import dictdiffer
+
 from demisto_sdk.commands.common.constants import (GENERAL_DEFAULT_FROMVERSION,
                                                    INTEGRATION)
 from demisto_sdk.commands.common.handlers import YAML_Handler

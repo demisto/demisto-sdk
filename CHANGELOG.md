@@ -16,7 +16,7 @@
   - Fixed a bug when changing content item, the *fromversion* field should remain.
   - Updated the general default *fromversion* and the default *fromversion* of new content items (e.g. `Lists, Jobs..`).
   - Removed the interactive in *update_playbook*.
-  - Added interactive for all content types, asking user if to generate default *fromversion*. 
+  - Added interactive for all content types, asking user if to generate default *fromversion*.
   - Updated *update_generic_yml/json* and their usages in the differences content types update.
 
 

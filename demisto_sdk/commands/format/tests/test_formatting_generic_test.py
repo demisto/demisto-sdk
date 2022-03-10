@@ -1,6 +1,7 @@
 import pytest
 
-from demisto_sdk.commands.common.constants import FileType, FILETYPE_TO_DEFAULT_FROMVERSION, GENERAL_DEFAULT_FROMVERSION
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION, GENERAL_DEFAULT_FROMVERSION, FileType)
 from demisto_sdk.commands.format.format_constants import VERSION_6_0_0
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 

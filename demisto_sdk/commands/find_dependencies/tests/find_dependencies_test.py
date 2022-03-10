@@ -5,8 +5,8 @@ import networkx as nx
 import pytest
 
 import demisto_sdk.commands.create_id_set.create_id_set as cis
-from demisto_sdk.commands.common.constants import (FileType,
-                                                   MarketplaceVersions, FILETYPE_TO_DEFAULT_FROMVERSION)
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION, FileType, MarketplaceVersions)
 from demisto_sdk.commands.find_dependencies.find_dependencies import (
     PackDependencies, calculate_single_pack_dependencies,
     get_packs_dependent_on_given_packs,

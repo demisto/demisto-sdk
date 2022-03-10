@@ -1,7 +1,7 @@
 from distutils.version import LooseVersion
 
-from demisto_sdk.commands.common.constants import JOB, FILETYPE_TO_DEFAULT_FROMVERSION, \
-    FileType
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION, JOB, FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator

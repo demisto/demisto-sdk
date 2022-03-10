@@ -4,11 +4,9 @@ from typing import Any, Dict, List, Optional
 import decorator
 from requests import Response
 
-from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
-                                                   CONF_PATH,
-                                                   INTEGRATION_CATEGORIES,
-                                                   PACK_METADATA_DESC,
-                                                   PACK_METADATA_NAME, FILETYPE_TO_DEFAULT_FROMVERSION, FileType)
+from demisto_sdk.commands.common.constants import (
+    BETA_INTEGRATION_DISCLAIMER, CONF_PATH, FILETYPE_TO_DEFAULT_FROMVERSION,
+    INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME, FileType)
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []

@@ -10,8 +10,8 @@ import pytest
 
 import demisto_sdk.commands.common.tools as tools
 import demisto_sdk.commands.common.update_id_set as uis
-from demisto_sdk.commands.common.constants import (JOBS_DIR, FileType,
-                                                   MarketplaceVersions, FILETYPE_TO_DEFAULT_FROMVERSION)
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION, JOBS_DIR, FileType, MarketplaceVersions)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
     add_item_to_exclusion_dict, does_dict_have_alternative_key,

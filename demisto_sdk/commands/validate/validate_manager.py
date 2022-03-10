@@ -120,7 +120,7 @@ class ValidateManager:
         self.quite_bc = quite_bc
         self.check_is_unskipped = check_is_unskipped
         self.conf_json_data = {}
-        self.run_with_multiprocessing = run_with_multiprocessing
+        self.run_with_multiprocessing = multiprocessing
 
         if json_file_path:
             self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \

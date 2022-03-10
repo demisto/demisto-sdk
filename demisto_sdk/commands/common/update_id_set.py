@@ -25,8 +25,8 @@ from demisto_sdk.commands.common.constants import (
     INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, JOBS_DIR,
     LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR, MODELING_RULES_DIR, MP_V2_ID_SET_PATH,
     PARSING_RULES_DIR, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
-    WIDGETS_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, FileType,
-    MarketplaceVersions)
+    TRIGGER_DIR, WIDGETS_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR,
+    FileType, MarketplaceVersions)
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_current_repo, get_file,
                                                get_item_marketplaces, get_json,
@@ -48,7 +48,7 @@ ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Cla
 CONTENT_MP_V2_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                           'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                           'Layouts', 'Mappers', 'Packs', 'Lists', 'ParsingRules', 'ModelingRules',
-                          'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports']
+                          'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers']
 
 ID_SET_MP_V2_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                          'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
@@ -1141,6 +1141,20 @@ def get_general_data(path: str, packs: Dict[str, Dict] = None):
     return {id_: data}
 
 
+def get_trigger_data(path: str, packs: Dict[str, Dict] = None):
+    json_data = get_json(path)
+    id_ = json_data.get('RULE_ID', '-')
+    name = json_data.get('name', '')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    pack = get_pack_name(path)
+    marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
+
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
+
+    return {id_: data}
+
+
 def get_general_yaml_data(path: str, packs: Dict[str, Dict] = None):
     yaml_data = get_yaml(path)
 
@@ -1899,6 +1913,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     correlation_rules_list = []
     xsiam_dashboards_list = []
     xsiam_reports_list = []
+    triggers_list = []
     packs_dict: Dict[str, Dict] = {}
     excluded_items_by_pack: Dict[str, set] = {}
     excluded_items_by_type: Dict[str, set] = {}
@@ -2327,7 +2342,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                           FileType.PARSING_RULES,),
+                                                                           FileType.PARSING_RULE,),
                                                                        data_extraction_func=get_general_yaml_data,
                                                                        ),
                                                                get_general_paths(PARSING_RULES_DIR,
@@ -2349,7 +2364,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                           FileType.MODELING_RULES,),
+                                                                           FileType.MODELING_RULE,),
                                                                        data_extraction_func=get_general_yaml_data,
                                                                        ),
                                                                get_general_paths(MODELING_RULES_DIR,
@@ -2371,7 +2386,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                           FileType.CORRELATION_RULES,),
+                                                                           FileType.CORRELATION_RULE,),
                                                                        data_extraction_func=get_general_yaml_data,
                                                                        ),
                                                                get_general_paths(CORRELATION_RULES_DIR,
@@ -2393,7 +2408,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                           FileType.XSIAM_DASHBOARDS,),
+                                                                           FileType.XSIAM_DASHBOARD,),
                                                                        data_extraction_func=get_general_data,
                                                                        ),
                                                                get_general_paths(XSIAM_DASHBOARDS_DIR,
@@ -2415,7 +2430,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                           FileType.XSIAM_REPORTS,),
+                                                                           FileType.XSIAM_REPORT,),
                                                                        data_extraction_func=get_general_data,
                                                                        ),
                                                                get_general_paths(XSIAM_REPORTS_DIR,
@@ -2425,6 +2440,28 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                         packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('xsiamreports',
                                                                                                []).append(_id)
                 xsiam_reports_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
+
+        progress_bar.update(1)
+
+        if 'Triggers' in objects_to_create:
+            print_color("\nStarting iteration over Triggers", LOG_COLORS.GREEN)
+            for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       expected_file_types=(
+                                                                           FileType.TRIGGER,),
+                                                                       data_extraction_func=get_trigger_data,
+                                                                       ),
+                                                               get_general_paths(TRIGGER_DIR,
+                                                                                 pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('triggers',
+                                                                                               []).append(_id)
+                triggers_list.extend(arr)
                 update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
                                            excluded_items_from_iteration)
 
@@ -2470,6 +2507,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
         new_ids_dict['CorrelationRules'] = sort(correlation_rules_list)
         new_ids_dict['XSIAMDashboards'] = sort(xsiam_dashboards_list)
         new_ids_dict['XSIAMReports'] = sort(xsiam_reports_list)
+        new_ids_dict['Triggers'] = sort(triggers_list)
 
     exec_time = time.time() - start_time
     print_color("Finished the creation of the id_set. Total time: {} seconds".format(exec_time), LOG_COLORS.GREEN)

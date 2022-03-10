@@ -5,6 +5,7 @@ from demisto_sdk.commands.common.constants import (CORRELATION_RULES_DIR,
                                                    DEFAULT_IMAGE_BASE64,
                                                    MODELING_RULES_DIR,
                                                    PARSING_RULES_DIR,
+                                                   TRIGGER_DIR,
                                                    XSIAM_DASHBOARDS_DIR,
                                                    XSIAM_REPORTS_DIR)
 from TestSuite.file import File
@@ -70,6 +71,7 @@ class Pack:
         self.correlation_rules: List[YAML] = list()
         self.xsiam_dashboards: List[JSONBased] = list()
         self.xsiam_reports: List[JSONBased] = list()
+        self.triggers: List[JSONBased] = list()
 
         # Create base pack
         self._pack_path = packs_dir / self.name
@@ -150,6 +152,9 @@ class Pack:
 
         self._xsiam_reports_path = self._pack_path / XSIAM_REPORTS_DIR
         self._xsiam_reports_path.mkdir()
+
+        self._triggers_path = self._pack_path / TRIGGER_DIR
+        self._triggers_path.mkdir()
 
         self.secrets = Secrets(self._pack_path)
 
@@ -548,3 +553,8 @@ class Pack:
         xsiam_report = self._create_json_based(name, prefix="", content=content, dir_path=self._xsiam_reports_path)
         self.xsiam_reports.append(xsiam_report)
         return xsiam_report
+
+    def create_trigger(self, name, content: dict = {}) -> JSONBased:
+        trigger = self._create_json_based(name, prefix="", content=content, dir_path=self._triggers_path)
+        self.triggers.append(trigger)
+        return trigger

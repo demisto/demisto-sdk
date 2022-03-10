@@ -42,6 +42,7 @@ MODELING_RULES_DIR = 'ModelingRules'
 CORRELATION_RULES_DIR = 'CorrelationRules'
 XSIAM_DASHBOARDS_DIR = 'XSIAMDashboards'
 XSIAM_REPORTS_DIR = 'XSIAMReports'
+TRIGGER_DIR = 'Triggers'
 
 SCRIPT = 'script'
 AUTOMATION = 'automation'
@@ -124,11 +125,12 @@ class FileType(Enum):
     PRE_PROCESS_RULES = 'pre-process-rule'
     LISTS = 'list'
     JOB = 'job'
-    PARSING_RULES = 'parsingrules'
-    MODELING_RULES = 'modelingrules'
-    CORRELATION_RULES = 'correlationrules'
-    XSIAM_DASHBOARDS = 'xsiamdashboards'
-    XSIAM_REPORTS = 'xsiamreports'
+    PARSING_RULE = 'parsingrule'
+    MODELING_RULE = 'modelingrule'
+    CORRELATION_RULE = 'correlationrule'
+    XSIAM_DASHBOARD = 'xsiamdashboard'
+    XSIAM_REPORT = 'xsiamreport'
+    TRIGGER = 'trigger'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -184,6 +186,15 @@ ENTITY_TYPE_TO_DIR = {
     FileType.LISTS.value: LISTS_DIR,
     FileType.JOB.value: JOBS_DIR
 }
+
+XSIAM_ONLY_ENTITIES = [
+    FileType.PARSING_RULE.value,
+    FileType.MODELING_RULE.value,
+    FileType.CORRELATION_RULE.value,
+    FileType.XSIAM_DASHBOARD.value,
+    FileType.XSIAM_REPORT.value,
+    FileType.TRIGGER.value
+]
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
 

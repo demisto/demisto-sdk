@@ -45,9 +45,9 @@ from demisto_sdk.commands.common.constants import (
     PACKS_README_FILE_NAME, PARSING_RULES_DIR, PLAYBOOKS_DIR,
     PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX,
-    WIDGETS_DIR, XSIAM_DASHBOARDS_DIR, XSOAR_CONFIG_FILE, FileType,
-    FileTypeToIDSetKeys, GitContentConfig, IdSetKeys, MarketplaceVersions,
-    urljoin)
+    WIDGETS_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_ONLY_ENTITIES, XSOAR_CONFIG_FILE,
+    FileType, FileTypeToIDSetKeys, GitContentConfig, IdSetKeys,
+    MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import YAML_Handler
 
@@ -1160,12 +1160,12 @@ def find_type(
 
         if 'rules' in _dict:
             if PARSING_RULES_DIR in Path(path).parts:
-                return FileType.PARSING_RULES
+                return FileType.PARSING_RULE
 
-            return FileType.MODELING_RULES
+            return FileType.MODELING_RULE
 
         if 'alert_category' in _dict:
-            return FileType.CORRELATION_RULES
+            return FileType.CORRELATION_RULE
 
     if file_type == 'json':
         if 'widgetType' in _dict:
@@ -1225,9 +1225,12 @@ def find_type(
 
         if 'dashboards_data' in _dict:
             if XSIAM_DASHBOARDS_DIR in Path(path).parts:
-                return FileType.XSIAM_DASHBOARDS
+                return FileType.XSIAM_DASHBOARD
 
-            return FileType.XSIAM_REPORTS
+            return FileType.XSIAM_REPORT
+
+        if 'RULE_ID' in _dict:
+            return FileType.TRIGGER
 
         # When using it for all files validation- sometimes 'id' can be integer
         if 'id' in _dict:
@@ -2214,7 +2217,7 @@ def get_current_repo() -> Tuple[str, str, str]:
         return "Unknown source", '', ''
 
 
-def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None) -> List:
+def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None, item_type: str = None) -> List:
     """
     Return the supporting marketplaces of the item.
 
@@ -2225,6 +2228,9 @@ def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[st
 
     Returns: the list of supporting marketplaces.
     """
+
+    if item_type and item_type in XSIAM_ONLY_ENTITIES:
+        return [MarketplaceVersions.MarketplaceV2.value]
 
     if not item_data:
         file_type = Path(item_path).suffix

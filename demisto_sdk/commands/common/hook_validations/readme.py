@@ -1,9 +1,9 @@
-import atexit
 import json
 import os
 import re
 import subprocess
 import tempfile
+from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
 from threading import Lock
@@ -535,7 +535,8 @@ class ReadMeValidator(BaseValidator):
         return is_valid
 
     @staticmethod
-    def start_mdx_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None) -> bool:
+    @contextmanager
+    def start_mdx_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None):
         with ReadMeValidator._MDX_SERVER_LOCK:
             if not ReadMeValidator._MDX_SERVER_PROCESS:
                 mdx_parse_server = Path(__file__).parent.parent / 'mdx-parse-server.js'
@@ -551,7 +552,14 @@ class ReadMeValidator(BaseValidator):
 
                     else:
                         raise Exception(error_message)
-        return True
+        yield True
+        ReadMeValidator.stop_mdx_server()
+
+    @staticmethod
+    def add_node_env_vars():
+        content_path = get_content_path()
+        node_modules_path = content_path / Path('node_modules')
+        os.environ['NODE_PATH'] = str(node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
 
     @staticmethod
     def stop_mdx_server():
@@ -562,6 +570,3 @@ class ReadMeValidator(BaseValidator):
     @staticmethod
     def _get_error_lists():
         return FOUND_FILES_AND_ERRORS, FOUND_FILES_AND_IGNORED_ERRORS
-
-
-atexit.register(ReadMeValidator.stop_mdx_server)

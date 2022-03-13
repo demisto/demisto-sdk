@@ -2,6 +2,18 @@
 
 * Fixed an issue in **update-release-notes** where suggestion fix failed in validation.
 * Fixed a bug where `.env` files didn't load. @nicolas-rdgs
+* Fixed a bug where **validate** command failed when the *categories* field in the pack metadata was empty for non-integration packs.
+* Added *system* and *item-type* arguments to the **download** command, used when downloading system items.
+* Added a validation to **validate**, checking that each script, integration and playbook have a README file. This validation only runs when the command is called with either the `-i` or the `-g` flag.
+* Fixed a regression issue with **doc-review**, where  the `-g` flag did not work
+* Improved the detection of errors in **doc-review** command.
+* The **validate** command now checks if a readme file is empty, only for packs that contain playbooks or were written by a partner
+* The **validate** command now makes sure common contextPath values (e.g. `DBotScore.Score`) have a non-empty description, and **format** populates them automatically.
+* Fixed a bug where **doc-review** command failed on existing templates.
+* Fixed a bug where **validate** command failed when the word demisto is in the repo README file.
+* Added support for adding test-playbooks to the zip file result in *create-content-artifacts* command for marketplacev2.
+* Fixed an issue in **find-dependencies** where using the argument *-o* without the argument *--all-packs-dependencies* did not print a proper warning.
+* Added a **validate** check to prevent deletion of files whose deletion is not supported by the XSOAR marketplace.
 * Added a retries mechanism to the **test-content** command to stabilize the build process.
 
 # 1.6.1

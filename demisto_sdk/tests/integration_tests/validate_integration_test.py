@@ -642,6 +642,8 @@ class TestDeprecatedIntegration:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
+
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks',
@@ -709,6 +711,8 @@ class TestDeprecatedIntegration:
                                                                                          set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -843,7 +847,8 @@ class TestIntegrationValidation:
         - Ensure validation fails.
         - Ensure failure message on hidden params.
         """
-        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
+                            return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
 
         integration_path = join(TEST_FILES_PATH, 'integration-invalid-no-hidden-params.yml')
@@ -931,6 +936,26 @@ class TestIntegrationValidation:
                                    catch_exceptions=False)
         assert 'ST107' in result.stdout
         assert 'Please add the field "description" to the path'
+
+    @pytest.mark.parametrize('field,description,should_pass', (('DBotScore.Score', 'my custom description', True),
+                                                               ('DBotScore.Score', '', False)))
+    def test_empty_default_descriptions(self, repo, field: str, description: str, should_pass: bool):
+        pack = repo.create_pack(f'{field}-{description}')
+        integration = pack.create_integration()
+        integration.create_default_integration()
+        integration.yml.update({'script': {'script': '-',
+                                           'type': 'python',
+                                           'commands': [{'name': 'foo',
+                                                         'description': 'bar',
+                                                         'outputs': [{'contextPath': field,
+                                                                      'description': description},
+                                                                     {'contextPath': 'same',
+                                                                      'description': ''}]}]}})
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
+                                   catch_exceptions=False)
+            assert should_pass == ('IN149' not in result.stdout)
 
 
 class TestPackValidation:
@@ -1770,7 +1795,6 @@ class TestIncidentTypeValidation:
 
 
 class TestLayoutValidation:
-
     DYNAMIC_SECTION_WITH_SCRIPT = {
         "description": "",
         "h": 1,
@@ -2318,6 +2342,8 @@ class TestPlaybookValidateDeprecated:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
+
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main,
@@ -2384,6 +2410,8 @@ class TestPlaybookValidateDeprecated:
                                                                                          set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -2649,6 +2677,8 @@ class TestScriptDeprecatedValidation:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
+
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main,
@@ -2713,6 +2743,8 @@ class TestScriptDeprecatedValidation:
                                                                                          set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -2975,7 +3007,8 @@ class TestAllFilesValidator:
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-a', '--no-docker-checks', '--no-conf-json'],
+            result = runner.invoke(main, [VALIDATE_CMD, '-a', '--no-docker-checks', '--no-conf-json',
+                                          '--no-multiprocessing'],
                                    catch_exceptions=False)
             print(result.stdout)
 
@@ -3021,7 +3054,8 @@ class TestAllFilesValidator:
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-a', '--no-docker-checks', '--no-conf-json'],
+            result = runner.invoke(main, [VALIDATE_CMD, '-a', '--no-docker-checks', '--no-conf-json',
+                                          '--no-multiprocessing'],
                                    catch_exceptions=False)
 
         assert 'Validating all files' in result.stdout
@@ -3074,6 +3108,8 @@ class TestValidationUsingGit:
                                                                                          set(), old_files, True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -3131,6 +3167,8 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
+
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
@@ -3179,6 +3217,8 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
+
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
@@ -3219,6 +3259,8 @@ class TestValidationUsingGit:
                                                                                          set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -3302,6 +3344,8 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
+
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
@@ -3342,6 +3386,8 @@ class TestValidationUsingGit:
                                                                                          set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -3390,6 +3436,8 @@ class TestValidationUsingGit:
                                                                                          set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)

@@ -3,6 +3,7 @@ import shutil
 import sys
 import uuid
 from collections import OrderedDict
+from pathlib import Path
 
 import click
 import pytest
@@ -95,6 +96,42 @@ class TestFormatting:
         tested_api_key_name = 'API key'
         assert api_key_param['name'] == tested_api_key_name
         assert api_key_param.get('additionalinfo') == default_additional_info[tested_api_key_name]
+
+    @pytest.mark.parametrize('field,initial_description,expected_description',
+                             (('DBotScore.Score', '', 'The actual score.'),
+                              ('DBotScore.Score', 'my custom description', 'my custom description'),
+                              ('DBotScore.Foo', '', ''),
+                              ('DBotScore.Foo', 'bar', 'bar'),
+                              )
+                             )
+    def test_default_outputs_filled(self, repo, field: str, initial_description: str, expected_description: str):
+        """
+        Given
+                A field and its description
+        When
+                calling set_default_outputs
+        Then
+                Ensure the description matches the expected description.
+        """
+        repo = repo.create_pack()
+        integration = repo.create_integration()
+        integration.create_default_integration()
+        integration.yml.update({'script': {'commands': [{'outputs': [{'contextPath': field,
+                                                                      'description': initial_description},
+                                                                     {'contextPath': 'same',
+                                                                      'description': ''},
+                                                                     ]}]}})
+        schema_path = Path(__file__).absolute().parents[2] / 'common/schemas/integration.yml'
+
+        formatter = IntegrationYMLFormat(integration.yml.path, path=schema_path)
+
+        formatter.set_default_outputs()
+        formatter.save_yml_to_destination_file()
+
+        assert integration.yml.read_dict()['script']['commands'][0]['outputs'][0]['contextPath'] == field
+        assert integration.yml.read_dict()['script']['commands'][0]['outputs'][0]['description'] == expected_description
+        assert integration.yml.read_dict()['script']['commands'][0]['outputs'][1]['contextPath'] == 'same'
+        assert integration.yml.read_dict()['script']['commands'][0]['outputs'][1]['description'] == ''
 
     @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', BASIC_YML_TEST_PACKS)
     def test_save_output_file(self, source_path, destination_path, formatter, yml_title, file_type):
@@ -479,7 +516,8 @@ class TestFormatting:
         - Ensure the file was created.
         - Ensure that the isfetch and incidenttype params were added to the yml of the integration.
         """
-        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
+                            return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
 
         os.makedirs(path, exist_ok=True)
@@ -520,7 +558,8 @@ class TestFormatting:
         - Ensure that the feedBypassExclusionList, Fetch indicators , feedReputation, feedReliability ,
          feedExpirationPolicy, feedExpirationInterval ,feedFetchInterval params were added to the yml of the integration.
         """
-        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
+                            return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
 
         os.makedirs(path, exist_ok=True)
@@ -606,8 +645,8 @@ class TestFormatting:
             os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format('playbook')))
         base_yml = PlaybookYMLFormat(source_path, path=schema_path)
 
-        assert base_yml.data['tasks']['29']['task'][
-            'playbookName'] == 'File Enrichment - Virus Total Private API_dev_copy'
+        assert base_yml.data['tasks']['29']['task']['playbookName'] == \
+            'File Enrichment - Virus Total Private API_dev_copy'
         base_yml.remove_copy_and_dev_suffixes_from_subplaybook()
 
         assert base_yml.data['tasks']['29']['task']['name'] == 'Fake name'
@@ -1282,10 +1321,12 @@ class TestFormatting:
     @pytest.mark.parametrize(argnames='marketpalces, configs_to_be_added, configs_to_be_removed', argvalues=[
         ([MarketplaceVersions.XSOAR.value], INCIDENT_FETCH_REQUIRED_PARAMS, ALERT_FETCH_REQUIRED_PARAMS),
         ([MarketplaceVersions.MarketplaceV2.value], ALERT_FETCH_REQUIRED_PARAMS, INCIDENT_FETCH_REQUIRED_PARAMS),
-        ([MarketplaceVersions.MarketplaceV2.value, MarketplaceVersions.XSOAR.value], INCIDENT_FETCH_REQUIRED_PARAMS, ALERT_FETCH_REQUIRED_PARAMS),
+        ([MarketplaceVersions.MarketplaceV2.value, MarketplaceVersions.XSOAR.value], INCIDENT_FETCH_REQUIRED_PARAMS,
+         ALERT_FETCH_REQUIRED_PARAMS),
 
     ])
-    def test_set_fetch_params_in_config_acording_marketplaces_value(self, marketpalces, configs_to_be_added, configs_to_be_removed):
+    def test_set_fetch_params_in_config_acording_marketplaces_value(self, marketpalces, configs_to_be_added,
+                                                                    configs_to_be_removed):
         """
         Given
         - Integration yml with isfetch true.

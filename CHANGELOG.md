@@ -12,6 +12,7 @@
 * Fixed a bug where **doc-review** command failed on existing templates.
 * Fixed a bug where **validate** command failed when the word demisto is in the repo README file.
 * Added support for adding test-playbooks to the zip file result in *create-content-artifacts* command for marketplacev2.
+* Fixed an issue in **find-dependencies** where using the argument *-o* without the argument *--all-packs-dependencies* did not print a proper warning.
 * Added a **validate** check to prevent deletion of files whose deletion is not supported by the XSOAR marketplace.
 
 # 1.6.1

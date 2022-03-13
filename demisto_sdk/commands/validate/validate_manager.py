@@ -1,8 +1,10 @@
 import os
+from concurrent.futures._base import Future, as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
-from typing import Optional, Set, Tuple
+from typing import Callable, List, Optional, Set, Tuple
 
 import click
+import pebble
 from colorama import Fore
 from git import InvalidGitRepositoryError
 from packaging import version
@@ -96,7 +98,7 @@ class ValidateManager:
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
             create_id_set=False, json_file_path=None, skip_schema_check=False, debug_git=False, include_untracked=False,
-            pykwalify_logs=False, check_is_unskipped=True, quite_bc=False
+            pykwalify_logs=False, check_is_unskipped=True, quite_bc=False, multiprocessing=True
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -120,6 +122,7 @@ class ValidateManager:
         self.quite_bc = quite_bc
         self.check_is_unskipped = check_is_unskipped
         self.conf_json_data = {}
+        self.run_with_multiprocessing = multiprocessing
 
         if json_file_path:
             self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \
@@ -181,7 +184,7 @@ class ValidateManager:
             # also do not skip id set creation unless the flag is up
             self.skip_docker_checks = True
             self.skip_pack_rn_validation = True
-            self.print_percent = True
+            self.print_percent = not self.run_with_multiprocessing  # the Multiprocessing will mismatch the percent
             self.check_is_unskipped = False
 
         if no_docker_checks:
@@ -203,7 +206,7 @@ class ValidateManager:
             return 0
 
         else:
-            all_failing_files = '\n'.join(FOUND_FILES_AND_ERRORS)
+            all_failing_files = '\n'.join(set(FOUND_FILES_AND_ERRORS))
             click.secho(f"\n=========== Found errors in the following files ===========\n\n{all_failing_files}\n",
                         fg="bright_red")
 
@@ -287,7 +290,7 @@ class ValidateManager:
             elif file_level == PathLevel.PACK:
                 click.secho(f'\n================= Validating pack {path} =================',
                             fg="bright_cyan")
-                files_validation_result.add(self.run_validations_on_pack(path))
+                files_validation_result.add(self.run_validations_on_pack(path)[0])
 
             else:
                 click.secho(f'\n================= Validating package {path} =================',
@@ -295,6 +298,22 @@ class ValidateManager:
                 files_validation_result.add(self.run_validation_on_package(path, error_ignore_list))
 
         return all(files_validation_result)
+
+    def wait_futures_complete(self, futures_list: List[Future], done_fn: Callable):
+        """Wait for all futures to complete, Raise exception if occurred.
+        Args:
+            futures_list: futures to wait for.
+            done_fn: Function to run on result.
+        Raises:
+            Exception: Raise caught exception for further cleanups.
+        """
+        for future in as_completed(futures_list):
+            try:
+                result = future.result()
+                done_fn(result[0], result[1])
+            except Exception as e:
+                click.secho(f'An error occurred while tried to collect result, Error: {e}', fg="bright_red")
+                raise
 
     def run_validation_on_all_packs(self):
         """Runs validations on all files in all packs in repo (-a option)
@@ -314,12 +333,22 @@ class ValidateManager:
         num_of_packs = len(all_packs)
         all_packs.sort(key=str.lower)
 
-        for pack_path in all_packs:
-            self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
-            all_packs_valid.add(self.run_validations_on_pack(pack_path))
-            count += 1
-
-        return all(all_packs_valid)
+        ReadMeValidator.add_node_env_vars()
+        with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):
+            if self.run_with_multiprocessing:
+                with pebble.ProcessPool(max_workers=4) as executor:
+                    futures = []
+                    for pack_path in all_packs:
+                        futures.append(executor.schedule(self.run_validations_on_pack, args=(pack_path,)))
+                    self.wait_futures_complete(futures_list=futures,
+                                               done_fn=lambda x, y: (all_packs_valid.add(x),  # type: ignore
+                                                                     FOUND_FILES_AND_ERRORS.extend(y)))  # type: ignore
+            else:
+                for pack_path in all_packs:
+                    self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
+                    all_packs_valid.add(self.run_validations_on_pack(pack_path)[0])
+                    count += 1
+            return all(all_packs_valid)
 
     def run_validations_on_pack(self, pack_path):
         """Runs validation on all files in given pack. (i,g,a)
@@ -343,7 +372,7 @@ class ValidateManager:
             else:
                 self.ignored_files.add(content_entity_path)
 
-        return all(pack_entities_validation_results)
+        return all(pack_entities_validation_results), FOUND_FILES_AND_ERRORS
 
     def run_validation_on_content_entities(self, content_entity_dir_path, pack_error_ignore_list):
         """Gets non-pack folder and runs validation within it (Scripts, Integrations...)
@@ -526,6 +555,10 @@ class ValidateManager:
             return self.validate_description(file_path, pack_error_ignore_list)
 
         elif file_type == FileType.README:
+            if not self.validate_all:
+                ReadMeValidator.add_node_env_vars()
+                with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):
+                    return self.validate_readme(file_path, pack_error_ignore_list)
             return self.validate_readme(file_path, pack_error_ignore_list)
 
         elif file_type == FileType.REPORT:

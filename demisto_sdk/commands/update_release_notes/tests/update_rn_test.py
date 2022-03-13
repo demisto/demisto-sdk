@@ -177,7 +177,7 @@ class TestRNUpdate(unittest.TestCase):
     def test_build_rn_template_file__maintenance(self, mock_master):
         """
             Given:
-                - a dict of changed items, with a maintenance rn update
+                - a dict of changed items, with a deprecated maintenance rn update
             When:
                 - we want to produce a release notes template for files without descriptions like :
                 'Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'

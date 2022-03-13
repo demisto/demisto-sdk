@@ -1129,7 +1129,6 @@ class Errors:
     def release_notes_file_empty():
         return "Your release notes file is empty, please complete it\nHaving empty release notes " \
                "looks bad in the product UI.\nIf the change you made was minor, please use " \
-               "\"Maintenance and stability enhancements.\" for general changes, or use " \
                "\"Documentation and metadata improvements.\" for changes to documentation."
 
     @staticmethod

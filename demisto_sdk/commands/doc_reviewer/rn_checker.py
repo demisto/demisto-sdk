@@ -27,8 +27,8 @@ def print_template_examples():
     click.secho('\n\nDocker Updates:', fg='bright_cyan')
     click.echo('\n - Updated the Docker image to: *demisto/python3:3.9.1.15759*.')
     click.secho('\n\nGeneral Changes:', fg='bright_cyan')
-    click.secho('Note: Do not these even if the change has no visible impact on the user:', fg='yellow')
-    click.echo('\n - Maintenance and stability enhancements.')
+    click.secho('Note: Use these if the change has no visible impact on the user, '
+                'but please try to refrain from using these if possible!', fg='yellow')
     click.echo('\n - Documentation and metadata improvements.')
     click.echo('\n\nFor additional information see: https://xsoar.pan.dev/docs/documentation/release-notes')
 

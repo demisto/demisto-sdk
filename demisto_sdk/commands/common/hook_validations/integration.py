@@ -1439,7 +1439,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_insecure_configured_correctly(),
             self.is_checkbox_param_configured_correctly(),
             self.is_checkbox_param_configured_correctly(),
-            self.is_not_valid_display_configuration(),
+            not self.is_not_valid_display_configuration(),  # Check for invalid config
             self.is_valid_hidden_params(),
             self.is_valid_parameters_display_name(),
             self.default_params_have_default_additional_info(),

@@ -431,6 +431,11 @@ class AnsibleIntegration:
         if self.verbose:
             print(text)
 
+    def remove_ansible_markup(self, text: str):
+        # Removes Ansible documentation link markup as per
+        # https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#linking-within-module-documentation
+        return re.sub('[ILUCMB]\\((.+?)\\)', '`\\g<1>`', text).strip()
+
     def get_command_name(self, module: str) -> str:
         """
         Determines what the XSOAR command name should be fore the module.
@@ -448,6 +453,125 @@ class AnsibleIntegration:
         else:
             command_name = f"{self.command_prefix}-{to_kebab_case(module)}"
         return command_name
+
+    def get_host_based_static_args(self) -> List[XSOARIntegration.Script.Command.Argument]:
+        # These are args that are added to all commands that interact with a remote host
+        static_args = []
+
+        # host arg
+        remote_host_desc = "hostname or IP of target. Optionally the port can be specified using :PORT. \
+If multiple targets are specified using an array, the integration will use the configured concurrency \
+factor for high performance."
+        static_args.append(XSOARIntegration.Script.Command.Argument(
+            name="host",
+            description=remote_host_desc,
+            required=True,
+            is_array=True))
+        return static_args
+
+    def get_yaml_args(self, module) -> list:
+        args = []
+        command_options = self.ansible_docs.get(module, {}).get("doc").get("options")
+
+        # Add static arguments if integration uses host based targets
+        if self.host_type in REMOTE_HOST_TYPES:
+
+            for static_arg in self.get_host_based_static_args():
+                args.append(static_arg)
+
+        for arg, option in command_options.items():
+
+            # Skip args that the config says to ignore
+            if self.ignored_args:
+                if arg in self.ignored_args:
+                    continue
+
+            name = str(arg)
+
+            if isinstance(option.get('description'), list):
+                description = ""
+                for line_of_doco in option.get('description'):
+                    if not line_of_doco.isspace():
+                        description = f"{description} {self.remove_ansible_markup(line_of_doco)}"
+            else:
+                description = str(option.get('description'))
+
+            # if arg is deprecated skip it
+            if description.startswith('`Deprecated'):
+                print("Skipping arg %s as it is Deprecated" % str(arg))
+                continue
+
+            required = option.get('required', False)
+
+            # Ansible docs have a empty list/dict as defaults....
+            defaultValue = ""
+            if option.get('default') is not None and option.get('default') not in ['[]', '{}']:
+                # The default True/False str cast of bool can be confusing. Using Yes/No instead.
+                if type(option.get('default')) is bool:
+                    defaultValue = "Yes" if option.get('default') else "No"
+                else:
+                    defaultValue = str(option.get('default'))
+
+            predefined = None
+            auto = None
+            if option.get('choices') is not None:
+                predefined = list(option.get('choices'))
+                auto = "PREDEFINED"
+            else:
+                # Ansible Docs don't explicitly mark true/false as choices for bools, so
+                # we must do add it ourselves
+                if type(option.get('default')) is bool:
+                    predefined = ['Yes', 'No']
+                    auto = "PREDEFINED"
+
+            isArray = False
+            if option.get('type') in ["list", "dict"]:
+                isArray = True
+
+            argument = XSOARIntegration.Script.Command.Argument(name=name, description=description,
+                                                                is_array=isArray, required=required,
+                                                                auto=auto, predefined=predefined,
+                                                                defaultValue=defaultValue)
+            args.append(argument)
+        return args
+
+    def get_yaml_outputs(self, module) -> list:
+        command_doc = self.ansible_docs.get(module, {}).get("doc")
+        command_returns = self.ansible_docs.get(module, {}).get("return")
+        command_module = command_doc.get("module")
+        outputs = []
+        if command_returns is not None:  # Some older ansible modules have no documented output
+            for output, details in command_returns.items():
+                output_to_add = {}
+                if details is not None:
+                    output_to_add['contextPath'] = str("%s.%s.%s" %
+                                                       (self.name, to_pascal_case(command_module), output))
+                    if type(details.get('description')) == list:
+                        # Do something if it is a list
+                        output_to_add['description'] = ""
+                        for line in details.get('description'):
+                            output_to_add['description'] = output_to_add['description'] + \
+                                "\n" + self.remove_ansible_markup(line)
+                    else:
+                        output_to_add['description'] = self.remove_ansible_markup(details.get('description'))
+
+                    if details.get('type') == "str":
+                        output_to_add['type'] = "string"
+
+                    elif details.get('type') == "int":
+                        output_to_add['type'] = "number"
+
+                    # Don't think Ansible has any kind of datetime attribute but just in case...
+                    elif details.get('type') == "datetime":
+                        output_to_add['type'] = "date"
+
+                    elif details.get('type') == "bool":
+                        output_to_add['type'] = "boolean"
+
+                    else:  # If the output is any other type it doesn't directly map to a XSOAR type
+                        output_to_add['type'] = "unknown"
+                outputs.append(output_to_add)
+        return outputs
 
     def get_yaml_commands(self) -> list:
         """
@@ -468,130 +592,17 @@ class AnsibleIntegration:
             command_namespace = command_doc.get("collection", {}).split(".")[0]
             command_collection = command_doc.get("collection", {}).split(".")[1]
             command_module = command_doc.get("module")
-            command_options = command_doc.get("options")
-            command_returns = self.ansible_docs.get(module, {}).get("return")
 
             module_online_help = f"{ANSIBLE_ONLINE_DOCS_URL_BASE}{command_namespace}/{command_collection}/{command_module}_module.html"
             command_description = str(command_doc.get('short_description')) + \
                 "\n Further documentation available at " + module_online_help
 
-            args = []
             # Add Arguments
-
-            # Add static arguments if integration uses host based targets
-            if self.host_type in REMOTE_HOST_TYPES:
-                remote_host_desc = "hostname or IP of target. Optionally the port can be specified using :PORT. \
-If multiple targets are specified using an array, the integration will use the configured concurrency \
-factor for high performance."
-                args.append(
-                    XSOARIntegration.Script.Command.Argument(
-                        name="host",
-                        description=remote_host_desc,
-                        required=True,
-                        is_array=True))
-
-            for arg, option in command_options.items():
-
-                # Skip args that the config says to ignore
-                if self.ignored_args:
-                    if arg in self.ignored_args:
-                        continue
-
-                    name = str(arg)
-
-                    if isinstance(option.get('description'), list):
-                        description = ""
-                        for line_of_doco in option.get('description'):
-                            if not line_of_doco.isspace():
-                                clean_line_of_doco = line_of_doco.strip()  # remove begin/end whitespace
-
-                                # remove ansible link markup
-                                # https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#linking-within-module-documentation
-                                clean_line_of_doco = re.sub('[ILUCMB]\\((.+?)\\)', '`\\g<1>`', clean_line_of_doco)
-
-                                description = f"{description} {clean_line_of_doco}"
-                        description = description.strip()
-                    else:
-                        description = str(option.get('description'))
-
-                    # if arg is deprecated skip it
-                    if description.startswith('`Deprecated'):
-                        print("Skipping arg %s as it is Deprecated" % str(arg))
-                        continue
-
-                    required = option.get('required', False)
-
-                    # Ansible docs have a empty list/dict as defaults....
-                    defaultValue = ""
-                    if option.get('default') is not None and option.get('default') not in ['[]', '{}']:
-                        # The default True/False str cast of bool can be confusing. Using Yes/No instead.
-                        if type(option.get('default')) is bool:
-                            defaultValue = "Yes" if option.get('default') else "No"
-                        else:
-                            defaultValue = str(option.get('default'))
-
-                    predefined = None
-                    auto = None
-                    if option.get('choices') is not None:
-                        predefined = list(option.get('choices'))
-                        auto = "PREDEFINED"
-                    else:
-                        # Ansible Docs don't explicitly mark true/false as choices for bools, so
-                        # we must do add it ourselves
-                        if type(option.get('default')) is bool:
-                            predefined = ['Yes', 'No']
-                            auto = "PREDEFINED"
-
-                    isArray = False
-                    if option.get('type') in ["list", "dict"]:
-                        isArray = True
-
-                    argument = XSOARIntegration.Script.Command.Argument(name=name, description=description,
-                                                                        is_array=isArray, required=required,
-                                                                        auto=auto, predefined=predefined,
-                                                                        defaultValue=defaultValue)
-                    args.append(argument)
+            args = self.get_yaml_args(module)
 
             # Add Outputs
-            outputs = []
-            if command_returns is not None:  # Some older ansible modules have no documented output
-                for output, details in command_returns.items():
-                    output_to_add = {}
-                    if details is not None:
-                        output_to_add['contextPath'] = str("%s.%s.%s" %
-                                                           (self.name, to_pascal_case(command_module), output))
+            outputs = self.get_yaml_outputs(module)
 
-                        # remove ansible link markup
-                        # https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#linking-within-module-documentation
-                        if type(details.get('description')) == list:
-                            # Do something if it is a list
-                            output_to_add['description'] = ""
-                            for line in details.get('description'):
-                                clean_line_of_description = re.sub('[ILUCMB]\\((.+?)\\)', '`\\g<1>`', line)
-                                output_to_add['description'] = output_to_add['description'] + \
-                                    "\n" + clean_line_of_description
-                            output_to_add['description'] = output_to_add['description'].strip()
-                        else:
-                            clean_line_of_description = re.sub(
-                                '[ILUCMB]\\((.+?)\\)', '`\\g<1>`', str(details.get('description')))
-                            output_to_add['description'] = clean_line_of_description.strip()
-
-                        if details.get('type') == "str":
-                            output_to_add['type'] = "string"
-
-                        elif details.get('type') == "int":
-                            output_to_add['type'] = "number"
-
-                        # Don't think Ansible has any kind of datetime attribute but just in case...
-                        elif details.get('type') == "datetime":
-                            output_to_add['type'] = "date"
-
-                        elif details.get('type') == "bool":
-                            output_to_add['type'] = "boolean"
-
-                        else:  # If the output is any other type it doesn't directly map to a XSOAR type
-                            output_to_add['type'] = "unknown"
-                    outputs.append(output_to_add)
             commands.append(XSOARIntegration.Script.Command(command_name, command_description, args, outputs))
 
         self.commands = commands

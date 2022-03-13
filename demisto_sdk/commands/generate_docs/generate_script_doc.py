@@ -54,7 +54,7 @@ def generate_script_doc(input_path, examples, output: str = None, permissions: s
         # get the script usages by the id set
         if not os.path.isfile(DEFAULT_ID_SET_PATH):
             id_set_creator = IDSetCreator(output='', print_logs=False)
-            id_set = id_set_creator.create_id_set()
+            id_set, _, _ = id_set_creator.create_id_set()
         else:
             id_set = open_id_set_file(DEFAULT_ID_SET_PATH)
 
@@ -139,9 +139,11 @@ def get_script_info(script_path):
     tags = ', '.join(map(str, tags))
 
     from_version = get_from_version(script_path)
-
-    res = [{'Name': 'Script Type', 'Description': script_type},
-           {'Name': 'Tags', 'Description': tags}]
+    res = []
+    if script_type:
+        res.append({'Name': 'Script Type', 'Description': script_type})
+    if tags:
+        res.append({'Name': 'Tags', 'Description': tags})
     if from_version != DEFAULT_CONTENT_ITEM_FROM_VERSION:
         res.append({'Name': 'Cortex XSOAR Version', 'Description': from_version})
     return res

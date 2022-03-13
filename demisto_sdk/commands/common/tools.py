@@ -2,11 +2,13 @@ import argparse
 import glob
 import io
 import json
+import logging
 import os
 import re
 import shlex
 import sys
 import urllib.parse
+from collections import OrderedDict
 from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
@@ -15,8 +17,8 @@ from enum import Enum
 from functools import lru_cache, partial
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
-from typing import (Callable, Dict, List, Match, Optional, Set, Tuple, Type,
-                    Union)
+from time import sleep
+from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
 
 import click
 import colorama
@@ -25,10 +27,9 @@ import git
 import giturlparse
 import requests
 import urllib3
-import yaml
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
-from ruamel.yaml import YAML
+from requests.exceptions import HTTPError
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
@@ -44,18 +45,18 @@ from demisto_sdk.commands.common.constants import (
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
     RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-    XSOAR_CONFIG_FILE, FileType, GitContentConfig, IdSetKeys,
-    MarketplaceVersions, urljoin)
+    XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys, GitContentConfig,
+    IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import YAML_Handler
+
+logger = logging.getLogger("demisto-sdk")
+yaml = YAML_Handler()
 
 urllib3.disable_warnings()
 
 # inialize color palette
 colorama.init()
-
-ryaml = YAML()
-ryaml.preserve_quotes = True
-ryaml.allow_duplicate_keys = True
 
 
 class LOG_COLORS:
@@ -71,23 +72,6 @@ LOG_VERBOSE = False
 LAYOUT_CONTAINER_FIELDS = {'details', 'detailsV2', 'edit', 'close', 'mobile', 'quickView', 'indicatorsQuickView',
                            'indicatorsDetails'}
 SDK_PYPI_VERSION = r'https://pypi.org/pypi/demisto-sdk/json'
-
-
-class XsoarLoader(yaml.SafeLoader):
-    """
-    New yaml loader based on SafeLoader which can handle the XSOAR related changes in yml.
-    """
-
-    def reference(self, node):
-        """
-        !reference - found in gitlab ci files.
-        handle !reference tag by turning its line into a string.
-        """
-        build_string = '!reference ' + str(self.construct_sequence(node))
-        return self.construct_yaml_str(yaml.ScalarNode(tag='!reference', value=build_string))
-
-
-XsoarLoader.add_constructor('!reference', XsoarLoader.reference)
 
 
 def set_log_verbose(verbose: bool):
@@ -312,7 +296,7 @@ def get_remote_file(
     if full_file_path.endswith('json'):
         details = res.json() if res.ok else json.loads(local_content)
     elif full_file_path.endswith('yml'):
-        details = yaml.safe_load(file_content)  # type: ignore[arg-type]
+        details = yaml.load(file_content)
     # if neither yml nor json then probably a CHANGELOG or README file.
     else:
         details = {}
@@ -369,7 +353,7 @@ def filter_packagify_changes(modified_files, added_files, removed_files, tag='ma
                 updated_added_files.add(file_path)
                 continue
             with open(file_path) as f:
-                details = yaml.safe_load(f.read())
+                details = yaml.load(f)
 
             uniq_identifier = '_'.join([
                 details['name'],
@@ -467,17 +451,21 @@ def get_last_remote_release_version():
     return ''
 
 
-def get_file(file_path, type_of_file):
+@lru_cache()
+def get_file(file_path, type_of_file, clear_cache=False):
+    if clear_cache:
+        get_file.cache_clear()
+    file_path = Path(file_path)
     data_dictionary = None
-    with open(os.path.expanduser(file_path), mode="r", encoding="utf8") as f:
-        if file_path.endswith(type_of_file):
+    with open(file_path.expanduser(), mode="r", encoding="utf8") as f:
+        if type_of_file in file_path.suffix:
             read_file = f.read()
             replaced = read_file.replace("simple: =", "simple: '='")
             # revert str to stream for loader
             stream = io.StringIO(replaced)
             try:
                 if type_of_file in ('yml', '.yml'):
-                    data_dictionary = yaml.load(stream, Loader=XsoarLoader)
+                    data_dictionary = yaml.load(stream)
 
                 else:
                     data_dictionary = json.load(stream)
@@ -490,33 +478,12 @@ def get_file(file_path, type_of_file):
     return {}
 
 
-def get_yaml(file_path):
-    return get_file(file_path, 'yml')
+def get_yaml(file_path, cache_clear=False):
+    return get_file(file_path, 'yml', clear_cache=cache_clear)
 
 
-def get_ryaml(file_path: str) -> dict:
-    """
-    Get yml file contents using ruaml
-
-    Args:
-        file_path (string): The file path
-
-    Returns:
-        dict. The yml contents
-    """
-    try:
-        with open(os.path.expanduser(file_path), 'r') as yf:
-            data = ryaml.load(yf)
-    except FileNotFoundError as e:
-        click.echo(f'File {file_path} not found. Error was: {str(e)}', nl=True)
-    except Exception as e:
-        click.echo(
-            "{} has a structure issue of file type yml. Error was: {}".format(file_path, str(e)), nl=True)
-    return data
-
-
-def get_json(file_path):
-    return get_file(file_path, 'json')
+def get_json(file_path, cache_clear=False):
+    return get_file(file_path, 'json', clear_cache=cache_clear)
 
 
 def get_script_or_integration_id(file_path):
@@ -809,11 +776,14 @@ def get_pack_name(file_path):
     Returns:
         pack name (str)
     """
-    if isinstance(file_path, Path):
-        file_path = str(file_path)
-    # the regex extracts pack name from relative paths, for example: Packs/EWSv2 -> EWSv2
-    match = re.search(rf'{PACKS_DIR_REGEX}[/\\]([^/\\]+)[/\\]?', file_path)
-    return match.group(1) if match else None
+    file_path = Path(file_path)
+    parts = file_path.parts
+    if 'Packs' not in parts:
+        return None
+    pack_name_index = parts.index('Packs') + 1
+    if len(parts) <= pack_name_index:
+        return None
+    return parts[pack_name_index]
 
 
 def get_pack_names_from_files(file_paths, skip_file_types=None):
@@ -1035,14 +1005,13 @@ def get_dev_requirements(py_version, envs_dirs_base):
     return requirements
 
 
-def get_dict_from_file(path: str, use_ryaml: bool = False,
-                       raises_error: bool = True) -> Tuple[Dict, Union[str, None]]:
+def get_dict_from_file(path: str,
+                       raises_error: bool = True, clear_cache: bool = False) -> Tuple[Dict, Union[str, None]]:
     """
     Get a dict representing the file
 
     Arguments:
         path - a path to the file
-        use_ryaml - Whether to use ryaml for file loading or not
         raises_error - Whether to raise a FileNotFound error if `path` is not a valid file.
 
     Returns:
@@ -1051,11 +1020,9 @@ def get_dict_from_file(path: str, use_ryaml: bool = False,
     try:
         if path:
             if path.endswith('.yml'):
-                if use_ryaml:
-                    return get_ryaml(path), 'yml'
-                return get_yaml(path), 'yml'
+                return get_yaml(path, cache_clear=clear_cache), 'yml'
             elif path.endswith('.json'):
-                return get_json(path), 'json'
+                return get_json(path, cache_clear=clear_cache), 'json'
             elif path.endswith('.py'):
                 return {}, 'py'
     except FileNotFoundError as e:
@@ -1131,26 +1098,45 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
 # flake8: noqa: C901
 
 
-def find_type(path: str = '', _dict=None, file_type: Optional[str] = None, ignore_sub_categories: bool = False):
+def find_type(
+    path: str = '',
+    _dict=None,
+    file_type: Optional[str] = None,
+    ignore_sub_categories: bool = False,
+    ignore_invalid_schema_file: bool = False,
+    clear_cache: bool = False
+):
     """
     returns the content file type
 
     Arguments:
-        path - a path to the file
+         path (str): a path to the file.
+        _dict (dict): file dict representation if exists.
+        file_type (str): a string representation of the file type.
+        ignore_sub_categories (bool): ignore the sub categories, True to ignore, False otherwise.
+        ignore_invalid_schema_file (bool): whether to ignore raising error on invalid schema files,
+            True to ignore, False otherwise.
+        clear_cache (bool): wether to clear the cache
 
     Returns:
-        string representing the content file type
+        FileType: string representing of the content file type, None otherwise.
     """
     type_by_path = find_type_by_path(path)
     if type_by_path:
         return type_by_path
     try:
         if not _dict and not file_type:
-            _dict, file_type = get_dict_from_file(path)
+            _dict, file_type = get_dict_from_file(path, clear_cache=clear_cache)
 
     except FileNotFoundError:
         # unable to find the file - hence can't identify it
         return None
+    except ValueError as err:
+        if ignore_invalid_schema_file:
+            # invalid file schema
+            logger.debug(str(err))
+            return None
+        raise err
 
     if file_type == 'yml':
         if 'category' in _dict:
@@ -1646,7 +1632,7 @@ def get_content_file_type_dump(file_path: str) -> Callable[[str], str]:
     file_extension = os.path.splitext(file_path)[-1]
     curr_string_transformer: Union[partial[str], Type[str], Callable] = str
     if file_extension in ['.yml', '.yaml']:
-        curr_string_transformer = yaml.dump
+        curr_string_transformer = yaml.dumps
     elif file_extension == '.json':
         curr_string_transformer = partial(json.dumps, indent=4)
     return curr_string_transformer
@@ -1692,7 +1678,7 @@ def open_id_set_file(id_set_path):
         return id_set
 
 
-def get_demisto_version(demisto_client: demisto_client) -> str:
+def get_demisto_version(client: demisto_client) -> str:
     """
     Args:
         demisto_client: A configured demisto_client instance
@@ -1701,7 +1687,7 @@ def get_demisto_version(demisto_client: demisto_client) -> str:
         the server version of the Demisto instance.
     """
     try:
-        resp = demisto_client.generic_request('/about', 'GET')
+        resp = client.generic_request('/about', 'GET')
         about_data = json.loads(resp[0].replace("'", '"'))
         return parse(about_data.get('demistoVersion'))  # type: ignore
     except Exception:
@@ -1763,7 +1749,7 @@ def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
     return fields_list
 
 
-def is_object_in_id_set(object_name, pack_info_from_id_set):
+def is_object_in_id_set(object_id, pack_info_from_id_set):
     """
         Check if the given object is part of the packs items that are present in the Packs section in the id set.
         This is assuming that the id set is based on the version that has, under each pack, the items it contains.
@@ -1777,8 +1763,8 @@ def is_object_in_id_set(object_name, pack_info_from_id_set):
 
     """
     content_items = pack_info_from_id_set.get('ContentItems', {})
-    for items_type, items_names in content_items.items():
-        if object_name in items_names:
+    for items_type, items_ids in content_items.items():
+        if object_id in items_ids:
             return True
     return False
 
@@ -1921,11 +1907,8 @@ def compare_context_path_in_yml_and_readme(yml_dict, readme_content):
 
 
 def write_yml(yml_path: str, yml_data: Dict):
-    ryaml = YAML()
-    ryaml.allow_duplicate_keys = True
-    ryaml.preserve_quotes = True
     with open(yml_path, 'w') as f:
-        ryaml.dump(yml_data, f)  # ruamel preservers multilines
+        yaml.dump(yml_data, f)  # ruamel preservers multilines
 
 
 def to_kebab_case(s: str):
@@ -2187,6 +2170,21 @@ def get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name: str, ma
     return searched_tasks
 
 
+def extract_docker_image_from_text(text):
+    """
+    Strips the docker image version from a given text.
+    Args:
+        text : the text to extract the docker image from
+    Return:
+        str. The docker image version if exists, otherwise, return None.
+    """
+    match = (re.search(r'(demisto/.+:([0-9]+)(((\.)[0-9]+)+))', text))
+    if match:
+        return match.group(1)
+    else:
+        return None
+
+
 def get_current_repo() -> Tuple[str, str, str]:
     try:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
@@ -2198,6 +2196,40 @@ def get_current_repo() -> Tuple[str, str, str]:
     except git.InvalidGitRepositoryError:
         print_warning('git repo is not found')
         return "Unknown source", '', ''
+
+
+def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None) -> List:
+    """
+    Return the supporting marketplaces of the item.
+
+    Args:
+        item_path: the item path.
+        item_data: the item data.
+        packs: the pack mapping from the ID set.
+
+    Returns: the list of supporting marketplaces.
+    """
+
+    if not item_data:
+        file_type = Path(item_path).suffix
+        item_data = get_file(item_path, file_type)
+
+    # first check, check field 'marketplaces' in the item's file
+    marketplaces = item_data.get('marketplaces', [])  # type: ignore
+
+    # second check, check the metadata of the pack
+    if not marketplaces:
+        if 'pack_metadata' in item_path:
+            # default supporting marketplace
+            marketplaces = [MarketplaceVersions.XSOAR.value]
+        else:
+            pack_name = get_pack_name(item_path)
+            if packs:
+                marketplaces = packs.get(pack_name, {}).get('marketplaces', [MarketplaceVersions.XSOAR.value])
+            else:
+                marketplaces = get_mp_types_from_metadata_by_item(item_path)
+
+    return marketplaces
 
 
 def get_mp_types_from_metadata_by_item(file_path):
@@ -2319,3 +2351,131 @@ def get_api_module_dependencies(pkgs, id_set_path, verbose):
     using_integrations_pkg_paths = [Path(integration.get('file_path')).parent.absolute() for
                                     integration in using_integrations]
     return list(set(using_integrations_pkg_paths + using_scripts_pkg_paths))
+
+
+def listdir_fullpath(dir_name: str) -> List[str]:
+    return [os.path.join(dir_name, f) for f in os.listdir(dir_name)]
+
+
+def get_scripts_and_commands_from_yml_data(data, file_type):
+    """Get the used scripts, playbooks and commands from the yml data
+
+    Args:
+        data: The yml data as extracted with get_yaml
+        file_type: The FileType of the data provided.
+
+    Return (list of found { 'id': command name, 'source': command source }, list of found script and playbook names)
+    """
+    commands = []
+    detailed_commands = []
+    scripts_and_pbs = []
+    if file_type in {FileType.TEST_PLAYBOOK, FileType.PLAYBOOK}:
+        tasks = data.get('tasks')
+        for task_num in tasks.keys():
+            task = tasks[task_num]
+            inner_task = task.get('task')
+            task_type = task.get('type')
+            if inner_task and task_type == 'regular' or task_type == 'playbook':
+                if inner_task.get('iscommand'):
+                    commands.append(inner_task.get('script'))
+                else:
+                    if task_type == 'playbook':
+                        scripts_and_pbs.append(inner_task.get('playbookName'))
+                    elif inner_task.get('scriptName'):
+                        scripts_and_pbs.append(inner_task.get('scriptName'))
+        if file_type == FileType.PLAYBOOK:
+            playbook_id = get_entity_id_by_entity_type(data, PLAYBOOKS_DIR)
+            scripts_and_pbs.append(playbook_id)
+
+    if file_type == FileType.SCRIPT:
+        script_id = get_entity_id_by_entity_type(data, SCRIPTS_DIR)
+        scripts_and_pbs = [script_id]
+        if data.get('dependson'):
+            commands = data.get('dependson').get('must', [])
+
+    if file_type == FileType.INTEGRATION:
+        integration_commands = data.get('script', {}).get('commands')
+        for integration_command in integration_commands:
+            commands.append(integration_command.get('name'))
+
+    for command in commands:
+        command_parts = command.split('|||')
+        if len(command_parts) == 2:
+            detailed_commands.append({
+                'id': command_parts[1],
+                'source': command_parts[0]
+            })
+        else:
+            detailed_commands.append({
+                'id': command_parts[0]
+            })
+
+    return detailed_commands, scripts_and_pbs
+
+
+def alternate_item_fields(content_item):
+    """
+    Go over all of the given content item fields and if there is a field with an alternative name, which is marked
+    by '_x2', use that value as the value of the original field (the corresponding one without the '_x2' suffix).
+    Args:
+        content_item: content item object
+
+    """
+    current_dict = content_item.to_dict() if not isinstance(content_item, dict) else content_item
+    copy_dict = current_dict.copy()  # for modifying dict while iterating
+    for field, value in copy_dict.items():
+        if field.endswith('_x2'):
+            current_dict[field[:-3]] = value
+            current_dict.pop(field)
+        elif isinstance(current_dict[field], dict):
+            alternate_item_fields(current_dict[field])
+        elif isinstance(current_dict[field], list):
+            for item in current_dict[field]:
+                if isinstance(item, dict):
+                    alternate_item_fields(item)
+
+
+def should_alternate_field_by_item(content_item, id_set):
+    """
+    Go over the given content item and check if it should be modified to use its alternative fields, which is determined
+    by the field 'has_alternative_meta' in the id set.
+    Args:
+        content_item: content item object
+        id_set: parsed id set dict
+
+    Returns: True if should alterante fields, false otherwise
+
+    """
+    commonfields = content_item.get('commonfields')
+    item_id = commonfields.get('id') if commonfields else content_item.get('id')
+
+    item_type = content_item.type()
+    id_set_item_type = id_set.get(FileTypeToIDSetKeys.get(item_type))
+    for item in id_set_item_type:
+        if list(item.keys())[0] == item_id:
+            return item.get(item_id, {}).get('has_alternative_meta', False)
+    return False
+
+
+def get_url_with_retries(url: str, retries: int, backoff_factor: int = 1, **kwargs):
+    kwargs['stream'] = True
+    session = requests.Session()
+    exception = Exception()
+    for _ in range(retries):
+        response = session.get(url, **kwargs)
+        try:
+            response.raise_for_status()
+        except HTTPError as error:
+            exception = error
+        else:
+            return response
+        sleep(backoff_factor)
+    raise exception
+
+
+def order_dict(data):
+    """
+    Order dict by default order
+    """
+    return OrderedDict({k: order_dict(v) if isinstance(v, dict) else v
+                        for k, v in sorted(data.items())})

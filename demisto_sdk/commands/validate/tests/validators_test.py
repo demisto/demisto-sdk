@@ -663,10 +663,11 @@ class TestValidators:
     def test_create_ignored_errors_list(self):
         validate_manager = ValidateManager()
         errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
-                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC", "GF", "PP", "JB", "LI100"]
+                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC", "GF", "PP", "JB", "LI100",
+                           "LI101"]
         ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
         assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
-                                "BA110", 'BA111', "BA112", "BA113", "BC101", "BC102", "BC103", "BC104"]
+                                "BA110", 'BA111', "BA112", "BA113", "BA114", "BC101", "BC102", "BC103", "BC104"]
 
     def test_added_files_type_using_function(self, repo, mocker):
         """
@@ -1325,7 +1326,7 @@ def test_run_validation_using_git_on_only_metadata_changed(mocker):
     """
     mocker.patch.object(ValidateManager, 'setup_git_params')
     mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
-                        return_value=(set(), set(), {'/Packs/ForTesting/pack_metadata.json'}, set()))
+                        return_value=(set(), set(), {'/Packs/ForTesting/pack_metadata.json'}, set(), True))
     mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
 
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
@@ -1456,7 +1457,7 @@ def test_check_file_relevance_and_format_path_non_formatted_relevant_file(mocker
     mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=FileType.INTEGRATION)
     mocker.patch.object(validator_obj, 'is_old_file_format', return_value=False)
     input_file_path = 'Packs/PackName/Integrations/IntegrationName/IntegrationName.yml'
-    assert validator_obj.check_file_relevance_and_format_path(input_file_path, None, set()) == input_file_path
+    assert validator_obj.check_file_relevance_and_format_path(input_file_path, None, set()) == (input_file_path, '', True)
 
 
 @pytest.mark.parametrize('input_file_path',
@@ -1478,7 +1479,7 @@ def test_check_file_relevance_and_format_path_ignored_files(input_file_path):
         - return None, file is ignored
     """
     validator_obj = ValidateManager(is_external_repo=True, check_is_unskipped=False)
-    assert validator_obj.check_file_relevance_and_format_path(input_file_path, None, set()) is None
+    assert validator_obj.check_file_relevance_and_format_path(input_file_path, None, set()) == ('', '', True)
 
 
 @pytest.mark.parametrize('input_file_path',
@@ -1498,7 +1499,7 @@ def test_check_file_relevance_and_format_path_ignored_non_pack_files(input_file_
         - return None, file is ignored
     """
     validator_obj = ValidateManager(is_external_repo=True, check_is_unskipped=False)
-    assert validator_obj.check_file_relevance_and_format_path(input_file_path, None, set()) is None
+    assert validator_obj.check_file_relevance_and_format_path(input_file_path, None, set()) == ('', '', True)
 
 
 @pytest.mark.parametrize('input_file_path',
@@ -1517,7 +1518,7 @@ def test_check_file_relevance_and_format_path_ignored_git_and_circle_files(input
         - return None, file is ignored
     """
     validator_obj = ValidateManager(is_external_repo=True, check_is_unskipped=False)
-    assert validator_obj.check_file_relevance_and_format_path(input_file_path, None, set()) is None
+    assert validator_obj.check_file_relevance_and_format_path(input_file_path, None, set()) == ('', '', True)
 
 
 def test_check_file_relevance_and_format_path_type_missing_file(mocker):
@@ -1534,7 +1535,7 @@ def test_check_file_relevance_and_format_path_type_missing_file(mocker):
     validator_obj = ValidateManager(is_external_repo=True, check_is_unskipped=False)
     mocked_handler = mocker.patch.object(validator_obj, 'handle_error', return_value=False)
     mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=None)
-    assert validator_obj.check_file_relevance_and_format_path("Packs/type_missing_filename", None, set()) is None
+    assert validator_obj.check_file_relevance_and_format_path("Packs/type_missing_filename", None, set()) == ('', '', False)
     mocked_handler.assert_called()
 
 
@@ -1556,7 +1557,7 @@ def test_check_file_relevance_and_format_path_ignore_test_file(mocker, input_fil
     """
     validator_obj = ValidateManager(is_external_repo=True, check_is_unskipped=False)
     mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=file_type)
-    assert validator_obj.check_file_relevance_and_format_path(input_file_path, None, set()) is None
+    assert validator_obj.check_file_relevance_and_format_path(input_file_path, None, set()) == ('', '', True)
 
 
 @pytest.mark.parametrize('input_file_path, file_type',
@@ -1578,7 +1579,7 @@ def test_check_file_relevance_and_format_path_file_to_format(mocker, input_file_
     validator_obj = ValidateManager(is_external_repo=True, check_is_unskipped=False)
     mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=file_type)
     mocker.patch.object(validator_obj, 'is_old_file_format', return_value=False)
-    assert validator_obj.check_file_relevance_and_format_path(input_file_path, None, set()) == 'Packs/some_file.yml'
+    assert validator_obj.check_file_relevance_and_format_path(input_file_path, None, set()) == ('Packs/some_file.yml', '', True)
 
 
 @pytest.mark.parametrize('input_file_path, old_file_path, file_type',
@@ -1603,8 +1604,8 @@ def test_check_file_relevance_and_format_path_file_to_format_with_old_path(mocke
     validator_obj = ValidateManager(is_external_repo=True, check_is_unskipped=False)
     mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=file_type)
     mocker.patch.object(validator_obj, 'is_old_file_format', return_value=False)
-    assert validator_obj.check_file_relevance_and_format_path(input_file_path, old_file_path, set()) == \
-        ('Packs/old_file_path.yml', 'Packs/some_file.yml')
+    assert validator_obj.check_file_relevance_and_format_path(input_file_path, old_file_path, set()) ==\
+        ('Packs/some_file.yml', 'Packs/old_file_path.yml', True)
 
 
 def test_check_file_relevance_and_format_path_old_format_file(mocker):
@@ -1622,7 +1623,7 @@ def test_check_file_relevance_and_format_path_old_format_file(mocker):
     mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=FileType.INTEGRATION)
     mocker.patch.object(validator_obj, 'is_old_file_format', return_value=True)
     old_format_files: set = set()
-    assert validator_obj.check_file_relevance_and_format_path('Packs/some_test.yml', None, old_format_files) is None
+    assert validator_obj.check_file_relevance_and_format_path('Packs/some_test.yml', None, old_format_files) == ('', '', True)
     assert old_format_files == {'Packs/some_test.yml'}
 
 
@@ -1807,3 +1808,36 @@ def test_validate_contributors_file(repo):
 
     validate_manager = ValidateManager(check_is_unskipped=False, file_path=contributors_file.path, skip_conf_json=True)
     assert validate_manager.run_validation_on_specific_files()
+
+
+def test_validate_pack_name(repo):
+    """
+    Given:
+        A file in a pack to validate.
+    When:
+        Checking if the pack name of the file is valid (the pack name is not changed).
+    Then:
+        If new file or unchanged pack then `true`, else `false`.
+
+    """
+    validator_obj = ValidateManager()
+    assert validator_obj.is_valid_pack_name('Packs/original_pack/file', None)
+    assert validator_obj.is_valid_pack_name('Packs/original_pack/file', 'Packs/original_pack/file')
+    assert not validator_obj.is_valid_pack_name('Packs/original_pack/file', 'Packs/original_pack_v2/file')
+
+
+def test_image_error(capsys):
+    """
+    Given
+            a image that isn't located in the right folder.
+    When
+            Validating the file
+    Then
+            Ensure an error is raised, and  the right error is given.
+    """
+    validate_manager = ValidateManager()
+    validate_manager.run_validations_on_file(IGNORED_PNG, None)
+    stdout = capsys.readouterr().out
+    expected_string, expected_code = Errors.invalid_image_name_or_location()
+    assert expected_string in stdout
+    assert expected_code in stdout

@@ -44,9 +44,9 @@ class TestGenerateTestPlaybook:
         )
 
         generator.run()
-        expected_test_playbook_yml = (TestGenerateTestPlaybook.TEST_FILE_PATH / expected_yml).read_text()
-        actual_test_playbook_yml = (Path(TestGenerateTestPlaybook.TEMP_DIR) /
-                                    'playbook-TestPlaybook_Test.yml').read_text()
+        expected_test_playbook_yml = get_yaml(TestGenerateTestPlaybook.TEST_FILE_PATH / expected_yml, cache_clear=True)
+        actual_test_playbook_yml = get_yaml(Path(TestGenerateTestPlaybook.TEMP_DIR) /
+                                            'playbook-TestPlaybook_Test.yml', cache_clear=True)
 
         assert expected_test_playbook_yml == actual_test_playbook_yml
 
@@ -75,9 +75,9 @@ class TestGenerateTestPlaybook:
 
         generator.run()
 
-        expected_test_playbook_yml = (TestGenerateTestPlaybook.TEST_FILE_PATH /
-                                      'fake_integration_expected_test_playbook.yml').read_text()
-        actual_test_playbook_yml = (pack_folder / 'TestPlaybooks' / 'playbook-TestPlaybook_Test.yml').read_text()
+        expected_test_playbook_yml = get_yaml(TestGenerateTestPlaybook.TEST_FILE_PATH /
+                                              'fake_integration_expected_test_playbook.yml')
+        actual_test_playbook_yml = get_yaml(pack_folder / 'TestPlaybooks' / 'playbook-TestPlaybook_Test.yml')
 
         assert expected_test_playbook_yml == actual_test_playbook_yml
 
@@ -98,9 +98,9 @@ class TestGenerateTestPlaybook:
 
         generator.run()
 
-        expected_test_playbook_yml = Path(TestGenerateTestPlaybook.TEST_FILE_PATH /
-                                          'fake_integration_expected_test_playbook.yml').read_text()
-        actual_test_playbook_yml = Path('playbook-TestPlaybook_Test.yml').read_text()
+        expected_test_playbook_yml = get_yaml(str(Path(TestGenerateTestPlaybook.TEST_FILE_PATH /
+                                              'fake_integration_expected_test_playbook.yml')))
+        actual_test_playbook_yml = get_yaml(str(Path('playbook-TestPlaybook_Test.yml')))
 
         assert expected_test_playbook_yml == actual_test_playbook_yml
 
@@ -122,9 +122,9 @@ class TestGenerateTestPlaybook:
 
         generator.run()
 
-        expected_test_playbook_yml = Path(TestGenerateTestPlaybook.TEST_FILE_PATH /
-                                          'fake_integration_expected_test_playbook.yml').read_text()
-        actual_test_playbook_yml = output.join('playbook-TestPlaybook_Test.yml').read_text('utf8')
+        expected_test_playbook_yml = get_yaml(Path(TestGenerateTestPlaybook.TEST_FILE_PATH /
+                                              'fake_integration_expected_test_playbook.yml'))
+        actual_test_playbook_yml = get_yaml(output.join('playbook-TestPlaybook_Test.yml'))
 
         assert expected_test_playbook_yml == actual_test_playbook_yml
 
@@ -147,9 +147,9 @@ class TestGenerateTestPlaybook:
 
         generator.run()
 
-        expected_test_playbook_yml = Path(TestGenerateTestPlaybook.TEST_FILE_PATH /
-                                          'fake_integration_expected_test_playbook.yml').read_text()
-        actual_test_playbook_yml = output.read_text('utf8')
+        expected_test_playbook_yml = get_yaml(Path(TestGenerateTestPlaybook.TEST_FILE_PATH /
+                                              'fake_integration_expected_test_playbook.yml'))
+        actual_test_playbook_yml = get_yaml(output)
 
         assert expected_test_playbook_yml == actual_test_playbook_yml
 

@@ -1,5 +1,6 @@
 """Configuring tests for the content suite
 """
+import sys
 from typing import Generator
 from unittest import mock
 
@@ -8,9 +9,11 @@ from _pytest.fixtures import FixtureRequest
 from _pytest.tmpdir import TempPathFactory, _mk_tmp
 
 from TestSuite.integration import Integration
+from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
+from TestSuite.yml import YAML
 
 # Helper Functions
 
@@ -79,6 +82,40 @@ def playbook(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> Play
     """Mocking tmp_path
     """
     return get_playbook(request, tmp_path_factory)
+
+
+@pytest.fixture()
+def malformed_integration_yml(integration) -> YAML:
+    """
+    Provides an invalid integration yml structure.
+    """
+    integration.yml.write("1: 2\n//")
+    return integration.yml
+
+
+@pytest.fixture()
+def malformed_incident_field(pack) -> JSONBased:
+    """
+    Provides an invalid incident field json structure.
+    """
+    incident_field = pack.create_incident_field("malformed")
+    incident_field.write_as_text("{\n '1': '1'")
+    return incident_field
+
+
+@pytest.fixture(scope='class')
+def are_mock_calls_supported_in_python_version():
+    """
+    Validates whether the mock calls feature is supported by the python version running.
+    mock calls feature is supported only in python 3.8+.
+    Skip the tests using the mock calls in case the python version < 3.8
+
+    secho_mocker = mocker.patch.object(click, 'secho')
+    secho_mocker.mock_calls (not supported in python < 3.8)
+    """
+    python_version = sys.version_info
+    if python_version.major == 2 or (python_version.major == 3 and python_version.minor < 8):
+        pytest.skip('The current mock "calls" is supported only in python 3.8+')
 
 
 @pytest.fixture(scope='session', autouse=True)

@@ -1,11 +1,13 @@
 from typing import Callable, List, Optional
 
 import pytest
-from ruamel.yaml import YAML
 from wcmatch.pathlib import Path
 
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.lint import linter
 from demisto_sdk.commands.lint.linter import Linter
+
+yaml = YAML_Handler()
 
 
 @pytest.fixture
@@ -48,7 +50,7 @@ def create_integration(mocker) -> Callable:
                             flake8: bool = False, bandit: bool = False, mypy: bool = False, vulture: bool = False,
                             pylint: bool = False, test: bool = False, no_tests: bool = False, yml: bool = False,
                             js_type: bool = False, type_script_key: bool = False, image: bool = False,
-                            image_py_num: float = 3.7, test_reqs: bool = False) -> Path:
+                            image_py_num: str = '3.7', test_reqs: bool = False) -> Path:
         """ Creates tmp content repositry for integration test
 
         Args:
@@ -66,7 +68,7 @@ def create_integration(mocker) -> Callable:
             js_type(bool): True for definig pack as JavaScript in yml.
             type_script_key(bool): True for define type in script key.
             image(str): Image to define in yml.
-            image_py_num(float): Image python version.
+            image_py_num(str): Image python version.
             test_reqs(bool): True to include a test-requirements.txt file.
 
         Returns:
@@ -113,8 +115,6 @@ def create_integration(mocker) -> Callable:
             from demisto_sdk.commands.lint import linter
             mocker.patch.object(linter, 'get_python_version_from_image')
             linter.get_python_version_from_image.return_value = image_py_num
-
-            yaml = YAML()
             yaml.dump(stream=yml_file.open(mode='w'), data=yml_dict)
 
         return integration_path

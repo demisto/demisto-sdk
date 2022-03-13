@@ -1,12 +1,10 @@
-import os
-import shutil
 from pathlib import Path
 
-import yaml
-
-from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from TestSuite.integration import Integration
 from TestSuite.test_tools import suite_join_path
+
+yaml = YAML_Handler()
 
 
 class Script(Integration):
@@ -27,7 +25,7 @@ class Script(Integration):
         with open(suite_join_path(default_script_dir, 'sample_script.py')) as code_file:
             code = str(code_file.read())
         with open(suite_join_path(default_script_dir, 'sample_script.yml')) as yml_file:
-            yml = yaml.load(yml_file, Loader=yaml.FullLoader)
+            yml = yaml.load(yml_file)
             yml['name'] = yml['commonfields']['id'] = name
         with open(suite_join_path(default_script_dir, 'sample_script_image.png'), 'rb') as image_file:
             image = image_file.read()
@@ -43,8 +41,3 @@ class Script(Integration):
             changelog=changelog,
             description=description
         )
-
-        if self.create_unified:
-            unifier = YmlUnifier(input=self.path, output=os.path.dirname(self._tmpdir_integration_path))
-            unifier.merge_script_package_to_yml()
-            shutil.rmtree(self._tmpdir_integration_path)

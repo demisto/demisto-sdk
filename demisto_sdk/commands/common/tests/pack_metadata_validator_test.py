@@ -37,6 +37,7 @@ class TestPackMetadataValidator:
         os.path.join(FILES_PATH, 'pack_metadata_invalid_category.json'),
         os.path.join(FILES_PATH, 'pack_metadata_invalid_keywords.json'),
         os.path.join(FILES_PATH, 'pack_metadata_invalid_tags.json'),
+        os.path.join(FILES_PATH, 'pack_metadata_invalid_format_version.json'),
     ])
     def test_metadata_validator_invalid__non_breaking(self, mocker, metadata):
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
@@ -44,6 +45,7 @@ class TestPackMetadataValidator:
                             return_value=TestPackMetadataValidator.read_file(metadata))
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        mocker.patch.object(PackUniqueFilesValidator, '_is_integration_pack', return_value=True)
 
         validator = PackUniqueFilesValidator('fake')
         assert not validator.validate_pack_meta_file()
@@ -145,7 +147,70 @@ class TestPackMetadataValidator:
                             return_value=TestPackMetadataValidator.read_file(metadata))
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
-
+        mocker.patch.object(PackUniqueFilesValidator, '_is_integration_pack', return_value=True)
         validator = PackUniqueFilesValidator('fake')
         assert not validator.validate_pack_meta_file()
         assert "[PA129] - pack_metadata.json - Missing categories" in validator.get_errors()
+
+    def test_is_integration_pack(self, pack):
+        """
+        Given:
+            - A pack with an integration to validate.
+
+        When:
+            - Calling _is_integration_pack() method.
+
+        Then:
+            - Ensure true is returned, indicates the pack contains integration.
+        """
+        pack.create_integration('test')
+        validator = PackUniqueFilesValidator(pack.name, pack_path=pack.path)
+        assert validator._is_integration_pack()
+
+    def test_metadata_validator_invalid_version_add_error(self, mocker):
+        """
+        Given:
+            - pack metadata.json file with wrong version type
+
+        When:
+            - validating meta data structure
+
+        Then:
+            - Ensure false is returned and the correct error is added to the validation object error list
+        """
+        metadata = os.path.join(self.FILES_PATH, 'pack_metadata_invalid_format_version.json')
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
+                            return_value=TestPackMetadataValidator.read_file(metadata))
+        mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
+        mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+
+        validator = PackUniqueFilesValidator('fake')
+        assert not validator.validate_pack_meta_file()
+        assert "[PA130] - Pack metadata version format is not valid. Please fill in a valid format (example: 0.0.0)" in validator.get_errors()
+
+    # checks for the version
+    version_checks = [
+        ("1.1.1", True),
+        ("12.1.5", True),
+        ("4.4.16", True),
+        ("blabla", False),
+        ("1.2", False),
+        ("0.", False),
+        ("1-2-1", False)
+    ]
+
+    @pytest.mark.parametrize('version,expected', version_checks)
+    def test_is_version_format(self, version, expected):
+        """
+        Given:
+            - A version to be checked by the _is_version_format function
+
+        When:
+            - Validating meta data structure.
+
+        Then:
+            - return True if the version is in the correct format and False otherwise
+        """
+        validator = PackUniqueFilesValidator('fake')
+        assert validator._is_version_format_valid(version) == expected

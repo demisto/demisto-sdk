@@ -3,16 +3,16 @@ import shutil
 import sys
 import uuid
 from collections import OrderedDict
+from pathlib import Path
 
 import click
 import pytest
-import yaml
 from mock import Mock, patch
-from ruamel.yaml import YAML
 
-from demisto_sdk.commands.common.constants import (FEED_REQUIRED_PARAMS,
-                                                   FETCH_REQUIRED_PARAMS,
-                                                   INTEGRATION)
+from demisto_sdk.commands.common.constants import (
+    ALERT_FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS,
+    INCIDENT_FETCH_REQUIRED_PARAMS, INTEGRATION, MarketplaceVersions)
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.integration import \
@@ -39,9 +39,7 @@ from demisto_sdk.tests.constants_test import (
     SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
 from TestSuite.test_tools import ChangeCWD
 
-ryaml = YAML()
-ryaml.preserve_quotes = True
-ryaml.allow_duplicate_keys = True
+yaml = YAML_Handler()
 
 INTEGRATION_TEST_ARGS = (SOURCE_FORMAT_INTEGRATION_COPY, DESTINATION_FORMAT_INTEGRATION_COPY, IntegrationYMLFormat,
                          'New Integration_copy', 'integration')
@@ -69,7 +67,7 @@ class TestFormatting:
         schema_path = os.path.normpath(
             os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
         base_yml = formatter(source_path, path=schema_path)
-        ryaml.dump(base_yml.data, sys.stdout)
+        yaml.dump(base_yml.data, sys.stdout)
         stdout, _ = capsys.readouterr()
         assert '# comment' in stdout
 
@@ -98,6 +96,42 @@ class TestFormatting:
         tested_api_key_name = 'API key'
         assert api_key_param['name'] == tested_api_key_name
         assert api_key_param.get('additionalinfo') == default_additional_info[tested_api_key_name]
+
+    @pytest.mark.parametrize('field,initial_description,expected_description',
+                             (('DBotScore.Score', '', 'The actual score.'),
+                              ('DBotScore.Score', 'my custom description', 'my custom description'),
+                              ('DBotScore.Foo', '', ''),
+                              ('DBotScore.Foo', 'bar', 'bar'),
+                              )
+                             )
+    def test_default_outputs_filled(self, repo, field: str, initial_description: str, expected_description: str):
+        """
+        Given
+                A field and its description
+        When
+                calling set_default_outputs
+        Then
+                Ensure the description matches the expected description.
+        """
+        repo = repo.create_pack()
+        integration = repo.create_integration()
+        integration.create_default_integration()
+        integration.yml.update({'script': {'commands': [{'outputs': [{'contextPath': field,
+                                                                      'description': initial_description},
+                                                                     {'contextPath': 'same',
+                                                                      'description': ''},
+                                                                     ]}]}})
+        schema_path = Path(__file__).absolute().parents[2] / 'common/schemas/integration.yml'
+
+        formatter = IntegrationYMLFormat(integration.yml.path, path=schema_path)
+
+        formatter.set_default_outputs()
+        formatter.save_yml_to_destination_file()
+
+        assert integration.yml.read_dict()['script']['commands'][0]['outputs'][0]['contextPath'] == field
+        assert integration.yml.read_dict()['script']['commands'][0]['outputs'][0]['description'] == expected_description
+        assert integration.yml.read_dict()['script']['commands'][0]['outputs'][1]['contextPath'] == 'same'
+        assert integration.yml.read_dict()['script']['commands'][0]['outputs'][1]['description'] == ''
 
     @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', BASIC_YML_TEST_PACKS)
     def test_save_output_file(self, source_path, destination_path, formatter, yml_title, file_type):
@@ -273,7 +307,7 @@ class TestFormatting:
             format_obj = IntegrationYMLFormat(src_file, output=dest, path=schema_path, verbose=True)
         assert format_obj.run_format() == 0
         with open(dest) as f:
-            data = yaml.safe_load(f)
+            data = yaml.load(f)
         assert data['fromversion'] == '5.5.0'
         assert data['commonfields']['version'] == -1
 
@@ -301,7 +335,7 @@ class TestFormatting:
         assert os.path.isfile(saved_file_path)
 
         with open(saved_file_path, 'r') as f:
-            yaml_content = yaml.safe_load(f)
+            yaml_content = yaml.load(f)
             assert 'yes' in yaml_content['tasks']['27']['nexttasks']
         os.remove(saved_file_path)
 
@@ -337,7 +371,7 @@ class TestFormatting:
         """
         schema_path = os.path.normpath(
             os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format('playbook')))
-        base_yml = PlaybookYMLFormat(source_path, path=schema_path, verbose=True)
+        base_yml = PlaybookYMLFormat(source_path, path=schema_path, verbose=True, clear_cache=True)
 
         # Assert the unnecessary keys are indeed in the playbook file
         assert 'excessiveKey' in base_yml.data.keys()
@@ -482,7 +516,8 @@ class TestFormatting:
         - Ensure the file was created.
         - Ensure that the isfetch and incidenttype params were added to the yml of the integration.
         """
-        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
+                            return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
 
         os.makedirs(path, exist_ok=True)
@@ -493,12 +528,12 @@ class TestFormatting:
         )
         res = format_manager(input=target, verbose=True)
         with open(target, 'r') as f:
-            yaml_content = yaml.safe_load(f)
+            yaml_content = yaml.load(f)
             params = yaml_content['configuration']
             for param in params:
                 if 'defaultvalue' in param and param['name'] != 'feed':
                     param.pop('defaultvalue')
-            for param in FETCH_REQUIRED_PARAMS:
+            for param in INCIDENT_FETCH_REQUIRED_PARAMS:
                 assert param in yaml_content['configuration']
         os.remove(target)
         os.rmdir(path)
@@ -523,14 +558,15 @@ class TestFormatting:
         - Ensure that the feedBypassExclusionList, Fetch indicators , feedReputation, feedReliability ,
          feedExpirationPolicy, feedExpirationInterval ,feedFetchInterval params were added to the yml of the integration.
         """
-        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
+                            return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
 
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        res = format_manager(input=target, verbose=True)
+        res = format_manager(input=target, verbose=True, clear_cache=True)
         with open(target, 'r') as f:
-            yaml_content = yaml.safe_load(f)
+            yaml_content = yaml.load(f)
             params = yaml_content['configuration']
             for counter, param in enumerate(params):
                 if 'defaultvalue' in param and param['name'] != 'feed':
@@ -609,8 +645,8 @@ class TestFormatting:
             os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format('playbook')))
         base_yml = PlaybookYMLFormat(source_path, path=schema_path)
 
-        assert base_yml.data['tasks']['29']['task'][
-            'playbookName'] == 'File Enrichment - Virus Total Private API_dev_copy'
+        assert base_yml.data['tasks']['29']['task']['playbookName'] == \
+            'File Enrichment - Virus Total Private API_dev_copy'
         base_yml.remove_copy_and_dev_suffixes_from_subplaybook()
 
         assert base_yml.data['tasks']['29']['task']['name'] == 'Fake name'
@@ -647,10 +683,9 @@ class TestFormatting:
             - Ensure `tests` field gets the Test Playbook ID
         """
         test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
-        vmware_integration_yml_path = os.path.join(test_files_path, 'test_files', 'content_repo_example', 'Packs',
-                                                   'VMware',
-                                                   'Integrations', 'integration-VMware.yml')
-        formatter = IntegrationYMLFormat(input=vmware_integration_yml_path, output='')
+        integration_yml_path = os.path.join(test_files_path, 'test_files', 'Packs', 'Phishing',
+                                            'Integrations', 'integration-VMware.yml')
+        formatter = IntegrationYMLFormat(input=integration_yml_path, output='')
         res = formatter.update_tests()
         assert res is None
         assert formatter.data.get('tests') == ['VMWare Test']
@@ -670,6 +705,43 @@ class TestFormatting:
         assert '(Beta)' in formatter.data['display']
         assert formatter.data['beta'] is True
 
+    @patch('builtins.input', lambda *args: 'no')
+    def test_update_tests_on_playbook_with_test_playbook(self):
+        """
+        Given
+            - An integration file.
+        When
+            - Run format on the integration
+        Then
+            - Ensure run_format return value is 0
+            - Ensure `tests` field gets the Test Playbook ID
+        """
+        test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
+        playbook_yml_path = os.path.join(test_files_path, 'test_files', 'Packs', 'Phishing',
+                                         'Playbooks', 'Phishing_Investigation_-_Generic_v2_-_6_0.yml')
+        formatter = PlaybookYMLFormat(input=playbook_yml_path, output='')
+        formatter.update_tests()
+        assert set(formatter.data.get('tests')) == {'playbook-checkEmailAuthenticity-test',
+                                                    'Phishing v2 - Test - Actual Incident'}
+
+    @patch('builtins.input', lambda *args: 'no')
+    def test_update_tests_on_script_with_test_playbook(self):
+        """
+        Given
+            - An integration file.
+        When
+            - Run format on the integration
+        Then
+            - Ensure run_format return value is 0
+            - Ensure `tests` field gets the Test Playbook ID
+        """
+        test_files_path = os.path.join(git_path(), 'demisto_sdk', 'tests')
+        script_yml_path = os.path.join(test_files_path, 'test_files', 'Packs', 'Phishing', 'Scripts',
+                                       'CheckEmailAuthenticity.yml')
+        formatter = ScriptYMLFormat(input=script_yml_path, output='')
+        formatter.update_tests()
+        assert formatter.data.get('tests') == ['playbook-checkEmailAuthenticity-test']
+
     def test_update_docker_format(self, tmpdir, mocker, monkeypatch):
         """Test that script and integration formatter update docker image tag
         """
@@ -682,7 +754,7 @@ class TestFormatting:
         # test example script file with version before 5.0.0
         src_file = f'{test_files_dir}/SlackAsk.yml'
         with open(src_file) as f:
-            data = yaml.safe_load(f)
+            data = yaml.load(f)
         org_docker = data['dockerimage']
         assert data['fromversion'] < '5.0.0'
         assert not data.get(
@@ -696,7 +768,7 @@ class TestFormatting:
 
         assert format_obj.run_format() == 0
         with open(dest) as f:
-            data = yaml.safe_load(f)
+            data = yaml.load(f)
         assert data['dockerimage'].endswith(f':{test_tag}')
         assert data['dockerimage45'] == org_docker
 
@@ -706,7 +778,7 @@ class TestFormatting:
                                           update_docker=True)
         assert format_obj.run_format() == 0
         with open(dest) as f:
-            data = yaml.safe_load(f)
+            data = yaml.load(f)
         assert data['script']['dockerimage'].endswith(f':{test_tag}')
         assert not data['script'].get('dockerimage45')
 
@@ -737,12 +809,12 @@ class TestFormatting:
         integration_yml_file_1 = tmp_path / 'Integration1.yml'
         integration_obj = {'dockerimage': docker_image,
                            'fromversion': '5.0.0'}
-        ryaml.dump(integration_obj, integration_yml_file_1.open('w'))
+        yaml.dump(integration_obj, integration_yml_file_1.open('w'))
 
         format_obj = ScriptYMLFormat(str(integration_yml_file_1), update_docker=True)
         format_obj.update_docker_image()
         with open(str(integration_yml_file_1)) as f:
-            data = yaml.safe_load(f)
+            data = yaml.load(f)
         assert data.get('dockerimage') == docker_image
 
     def test_recursive_extend_schema(self):
@@ -1124,7 +1196,7 @@ class TestFormatting:
                                                    'VMware',
                                                    'Integrations', 'integration-VMware.yml')
         with open(vmware_integration_yml_path) as f:
-            yml_example = yaml.safe_load(f)
+            yml_example = yaml.load(f)
         sorted_yml_file = tmp_path / 'test.yml'
         with sorted_yml_file.open('w') as f:
             yaml.dump(yml_example, f, sort_keys=True)  # sorting the keys to have different order
@@ -1149,12 +1221,12 @@ class TestFormatting:
                                                    'VMware',
                                                    'Integrations', 'integration-VMware.yml')
         with open(vmware_integration_yml_path) as f:
-            yml_example = yaml.safe_load(f)
+            yml_example = yaml.load(f)
         sorted_yml_file = tmp_path / 'test.yml'
         with sorted_yml_file.open('w') as f:
             yaml.dump(yml_example, f, sort_keys=True)  # sorting the keys to have different order
         with sorted_yml_file.open() as f:
-            sorted_yml = yaml.safe_load(f)
+            sorted_yml = yaml.load(f)
         sorted_yml['description'] = 'test'
         sorted_yml['configuration'][0]['defaultvalue'] = 'test'
         del sorted_yml['configuration'][1]['defaultvalue']
@@ -1245,3 +1317,32 @@ class TestFormatting:
         base_yml = IntegrationYMLFormat(input=playbook.yml.path)
         base_yml.update_id_to_equal_name()
         assert base_yml.data.get('id') == uid
+
+    @pytest.mark.parametrize(argnames='marketpalces, configs_to_be_added, configs_to_be_removed', argvalues=[
+        ([MarketplaceVersions.XSOAR.value], INCIDENT_FETCH_REQUIRED_PARAMS, ALERT_FETCH_REQUIRED_PARAMS),
+        ([MarketplaceVersions.MarketplaceV2.value], ALERT_FETCH_REQUIRED_PARAMS, INCIDENT_FETCH_REQUIRED_PARAMS),
+        ([MarketplaceVersions.MarketplaceV2.value, MarketplaceVersions.XSOAR.value], INCIDENT_FETCH_REQUIRED_PARAMS,
+         ALERT_FETCH_REQUIRED_PARAMS),
+
+    ])
+    def test_set_fetch_params_in_config_acording_marketplaces_value(self, marketpalces, configs_to_be_added,
+                                                                    configs_to_be_removed):
+        """
+        Given
+        - Integration yml with isfetch true.
+
+        When
+        - Running the format command.
+
+        Then
+        - Ensure that the fetch params ae according to the marketplaces values.
+        - if no marketplaces or xsoar in marketplaces - the params will be INCIDENT_FETCH_REQUIRED_PARAMS (with Incident type etc. )
+        - otherwise it will be the ALERT_FETCH_REQUIRED_PARAMS (with Alert type etc. ).
+        """
+        base_yml = IntegrationYMLFormat(SOURCE_FORMAT_INTEGRATION_VALID, path="schema_path", verbose=True)
+        base_yml.data['marketplaces'] = marketpalces
+        base_yml.data['configuration'] = configs_to_be_removed.copy()
+        base_yml.set_fetch_params_in_config()
+
+        assert all(config in base_yml.data['configuration'] for config in configs_to_be_added)
+        assert all(config not in base_yml.data['configuration'] for config in configs_to_be_removed)

@@ -69,11 +69,19 @@ class Pack:
         objects_path = (self._path / dir_name).glob(patterns=[f"*.{suffix}", f"*/*.{suffix}"])
         for object_path in objects_path:
             content_object = path_to_pack_object(object_path)
-            # skip content items that are not displayed in the id set, if the corresponding flag is used
+            # skip content items that are not displayed in the id set, if the corresponding flag is used,
+            # We excluding ReleaseNotes and TestPlaybooks, because they missing from the id set
+            # but are needed in the pack's zip.
             if self._filter_items_by_id_set and content_object.type().value not in [FileType.RELEASE_NOTES.value,
-                                                                                    FileType.RELEASE_NOTES_CONFIG.value]:
-                if is_object_in_id_set(content_object.get('name'), self._pack_info_from_id_set):
+                                                                                    FileType.RELEASE_NOTES_CONFIG.value,
+                                                                                    FileType.TEST_PLAYBOOK.value]:
+
+                object_id = content_object.get_id()
+                if is_object_in_id_set(object_id, self._pack_info_from_id_set):
                     yield content_object
+                else:
+                    logging.warning(f'Skipping object {object_path} with id "{object_id}" since it\'s missing from '
+                                    f'the given id set')
             else:
                 yield content_object
 
@@ -328,16 +336,26 @@ class Pack:
         server_version = get_demisto_version(client)
         return LooseVersion(server_version.base_version) >= LooseVersion(server_version_to_check)  # type: ignore
 
-    def upload(self, logger: logging.Logger, client: demisto_client):
+    def upload(self, logger: logging.Logger, client: demisto_client, skip_validation: bool):
         """
         Upload the pack zip to demisto_client,
         from 6.5 server version we have the option to use skip_verify arg instead of server configuration.
         Args:
             logger (logging.Logger): System logger already initialized.
             client: The demisto_client object of the desired XSOAR machine to upload to.
+            skip_validation: if true will skip upload packs validation.
         Returns:
             The result of the upload command from demisto_client
         """
+        if self.is_server_version_ge(client, '6.6.0') and skip_validation:
+            try:
+                logger.info('Uploading...')
+                return client.upload_content_packs(
+                    file=self.path, skip_verify='true', skip_validation='true')  # type: ignore
+
+            except Exception as err:
+                raise Exception(f'Failed to upload pack, error: {err}')
+
         if self.is_server_version_ge(client, '6.5.0'):
             try:
                 logger.info('Uploading...')

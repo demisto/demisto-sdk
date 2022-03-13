@@ -20,7 +20,7 @@
             "module": "demisto_sdk",
             "cwd": "${env:CONTENT}",
             "args": [
-                "lint",
+                "Lint",
                 "-i",
                 "${env:CONTENT}/Packs/AbuseDB/Integrations/AbuseDB",
                 "-j",

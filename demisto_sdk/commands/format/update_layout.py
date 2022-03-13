@@ -4,14 +4,16 @@ from abc import ABC
 from typing import Tuple
 
 import click
-import yaml
 
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_error)
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_FROMVERSION,
     SKIP_RETURN_CODE, SUCCESS_RETURN_CODE, VERSION_6_0_0)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
+
+yaml = YAML_Handler()
 
 LAYOUTS_CONTAINER_KINDS = ['edit',
                            'indicatorsDetails',
@@ -35,9 +37,10 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                  from_version: str = '',
                  no_validate: bool = False,
                  verbose: bool = False,
+                 clear_cache: bool = False,
                  **kwargs):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
-                         verbose=verbose, **kwargs)
+                         verbose=verbose, clear_cache=clear_cache, **kwargs)
 
         # layoutscontainer kinds are unique fields to containers, and shouldn't be in layouts
         self.is_container = any(self.data.get(kind) for kind in LAYOUTS_CONTAINER_KINDS)
@@ -177,7 +180,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 be deleted as values.
         """
         with open(self.schema_path, 'r') as file_obj:
-            a = yaml.safe_load(file_obj)
+            a = yaml.load(file_obj)
         schema_fields = a.get('mapping').keys()
         first_level_args = set(self.data.keys()) - set(schema_fields)
 
@@ -196,7 +199,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 be deleted as values.
         """
         with open(self.schema_path, 'r') as file_obj:
-            a = yaml.safe_load(file_obj)
+            a = yaml.load(file_obj)
         schema_fields = a.get('mapping').keys()
         first_level_args = set(self.data.keys()) - set(schema_fields)
 

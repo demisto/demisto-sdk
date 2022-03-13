@@ -1,4 +1,55 @@
 # Changelog
+
+* Fixed an issue in **update-release-notes** where suggestion fix failed in validation.
+* Fixed a bug where `.env` files didn't load. @nicolas-rdgs
+* Fixed a bug where **validate** command failed when the *categories* field in the pack metadata was empty for non-integration packs.
+* Added *system* and *item-type* arguments to the **download** command, used when downloading system items.
+* Added a validation to **validate**, checking that each script, integration and playbook have a README file. This validation only runs when the command is called with either the `-i` or the `-g` flag.
+* Fixed a regression issue with **doc-review**, where  the `-g` flag did not work
+* Improved the detection of errors in **doc-review** command.
+* The **validate** command now checks if a readme file is empty, only for packs that contain playbooks or were written by a partner
+* The **validate** command now makes sure common contextPath values (e.g. `DBotScore.Score`) have a non-empty description, and **format** populates them automatically.
+* Fixed a bug where **doc-review** command failed on existing templates.
+* Fixed a bug where **validate** command failed when the word demisto is in the repo README file.
+* Added support for adding test-playbooks to the zip file result in *create-content-artifacts* command for marketplacev2.
+* Fixed an issue in **find-dependencies** where using the argument *-o* without the argument *--all-packs-dependencies* did not print a proper warning.
+# 1.6.1
+* Added the '--use-packs-known-words' argument to the **doc-review** command
+* Added YAML_Loader to handle yaml files in a standard way across modules, replacing PYYAML.
+* Fixed an issue when filtering items using the ID set in the **create-content-artifacts** command.
+* Fixed an issue in the **generate-docs** command where tables were generated with an empty description column.
+* Fixed an issue in the **split** command where splitting failed when using relative input/output paths.
+* Added warning when inferred files are missing.
+* Added to **validate** a validation for integration image dimensions, which should be 120x50px.
+* Improved an error in the **validate** command to better differentiate between the case where a required fetch parameter is malformed or missing.
+
+# 1.6.0
+* Fixed an issue in the **create-id-set** command where similar items from different marketplaces were reported as duplicated.
+* Fixed typo in demisto-sdk init
+* Fixed an issue where the **lint** command did not handle all container exit codes.
+* Add to **validate** a validation for pack name to make sure it is unchanged.
+* Added a validation to the **validate** command that verifies that the version in the pack_metdata file is written in the correct format.
+* Fixed an issue in the **format** command where missing *fromVersion* field in indicator fields caused an error.
+
+# 1.5.9
+* Added option to specify `External Playbook Configuration` to change inputs of Playbooks triggered as part of **test-content**
+* Improved performance of the **lint** command.
+* Improved performance of the **validate** command when checking README images.
+* ***create-id-set*** command - the default value of the **marketplace** argument was changed from ‘xsoar’ to all packs existing in the content repository. When using the command, make sure to pass the relevant marketplace to use.
+
+# 1.5.8
+* Fixed an issue where the command **doc-review** along with the argument `--release-notes` failed on yml/json files with invalid schema.
+* Fixed an issue where the **lint** command failed on packs using python 3.10
+
+# 1.5.7
+* Fixed an issue where reading remote yaml files failed.
+* Fixed an issue in **validate** failed with no error message for lists (when no fromVersion field was found).
+* Fixed an issue when running **validate** or **format** in a gitlab repository, and failing to determine its project id.
+* Added an enhancement to **split**, handling an empty output argument.
+* Added the ability to add classifiers and mappers to conf.json.
+* Added the Alias field to the incident field schema.
+
+# 1.5.6
 * Added 'deprecated' release notes template.
 * Fixed an issue where **run-test-playbook** command failed to get the task entries when the test playbook finished with errors.
 * Fixed an issue in **validate** command when running with `no-conf-json` argument to ignore the `conf.json` file.

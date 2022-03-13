@@ -1,8 +1,10 @@
 import os
+from concurrent.futures._base import Future, as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
-from typing import Optional, Set, Tuple
+from typing import Callable, List, Optional, Set, Tuple
 
 import click
+import pebble
 from colorama import Fore
 from git import InvalidGitRepositoryError
 from packaging import version
@@ -14,7 +16,8 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION, DEFAULT_ID_SET_PATH, GENERIC_FIELDS_DIR,
     GENERIC_TYPES_DIR, IGNORED_PACK_NAMES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
     PACKS_PACK_META_FILE_NAME, SKIP_RELEASE_NOTES_FOR_TYPES,
-    VALIDATION_USING_GIT_IGNORABLE_DATA, FileType, PathLevel)
+    VALIDATION_USING_GIT_IGNORABLE_DATA, FileType, FileType_ALLOWED_TO_DELETE,
+    PathLevel)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 FOUND_FILES_AND_ERRORS,
@@ -81,9 +84,10 @@ from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import \
     XSOARConfigJsonValidator
 from demisto_sdk.commands.common.tools import (
-    find_type, get_api_module_ids, get_api_module_integrations_set,
-    get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
-    get_relative_path_from_packs_dir, get_yaml, open_id_set_file)
+    _get_file_id, find_type, get_api_module_ids,
+    get_api_module_integrations_set, get_file, get_pack_ignore_file_path,
+    get_pack_name, get_pack_names_from_files, get_relative_path_from_packs_dir,
+    get_yaml, open_id_set_file)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
@@ -94,7 +98,7 @@ class ValidateManager:
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
             create_id_set=False, json_file_path=None, skip_schema_check=False, debug_git=False, include_untracked=False,
-            pykwalify_logs=False, check_is_unskipped=True, quite_bc=False
+            pykwalify_logs=False, check_is_unskipped=True, quite_bc=False, multiprocessing=True
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -118,6 +122,7 @@ class ValidateManager:
         self.quite_bc = quite_bc
         self.check_is_unskipped = check_is_unskipped
         self.conf_json_data = {}
+        self.run_with_multiprocessing = multiprocessing
 
         if json_file_path:
             self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \
@@ -179,7 +184,7 @@ class ValidateManager:
             # also do not skip id set creation unless the flag is up
             self.skip_docker_checks = True
             self.skip_pack_rn_validation = True
-            self.print_percent = True
+            self.print_percent = not self.run_with_multiprocessing  # the Multiprocessing will mismatch the percent
             self.check_is_unskipped = False
 
         if no_docker_checks:
@@ -201,7 +206,7 @@ class ValidateManager:
             return 0
 
         else:
-            all_failing_files = '\n'.join(FOUND_FILES_AND_ERRORS)
+            all_failing_files = '\n'.join(set(FOUND_FILES_AND_ERRORS))
             click.secho(f"\n=========== Found errors in the following files ===========\n\n{all_failing_files}\n",
                         fg="bright_red")
 
@@ -285,7 +290,7 @@ class ValidateManager:
             elif file_level == PathLevel.PACK:
                 click.secho(f'\n================= Validating pack {path} =================',
                             fg="bright_cyan")
-                files_validation_result.add(self.run_validations_on_pack(path))
+                files_validation_result.add(self.run_validations_on_pack(path)[0])
 
             else:
                 click.secho(f'\n================= Validating package {path} =================',
@@ -293,6 +298,22 @@ class ValidateManager:
                 files_validation_result.add(self.run_validation_on_package(path, error_ignore_list))
 
         return all(files_validation_result)
+
+    def wait_futures_complete(self, futures_list: List[Future], done_fn: Callable):
+        """Wait for all futures to complete, Raise exception if occurred.
+        Args:
+            futures_list: futures to wait for.
+            done_fn: Function to run on result.
+        Raises:
+            Exception: Raise caught exception for further cleanups.
+        """
+        for future in as_completed(futures_list):
+            try:
+                result = future.result()
+                done_fn(result[0], result[1])
+            except Exception as e:
+                click.secho(f'An error occurred while tried to collect result, Error: {e}', fg="bright_red")
+                raise
 
     def run_validation_on_all_packs(self):
         """Runs validations on all files in all packs in repo (-a option)
@@ -312,12 +333,22 @@ class ValidateManager:
         num_of_packs = len(all_packs)
         all_packs.sort(key=str.lower)
 
-        for pack_path in all_packs:
-            self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
-            all_packs_valid.add(self.run_validations_on_pack(pack_path))
-            count += 1
-
-        return all(all_packs_valid)
+        ReadMeValidator.add_node_env_vars()
+        with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):
+            if self.run_with_multiprocessing:
+                with pebble.ProcessPool(max_workers=4) as executor:
+                    futures = []
+                    for pack_path in all_packs:
+                        futures.append(executor.schedule(self.run_validations_on_pack, args=(pack_path,)))
+                    self.wait_futures_complete(futures_list=futures,
+                                               done_fn=lambda x, y: (all_packs_valid.add(x),  # type: ignore
+                                                                     FOUND_FILES_AND_ERRORS.extend(y)))  # type: ignore
+            else:
+                for pack_path in all_packs:
+                    self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
+                    all_packs_valid.add(self.run_validations_on_pack(pack_path)[0])
+                    count += 1
+            return all(all_packs_valid)
 
     def run_validations_on_pack(self, pack_path):
         """Runs validation on all files in given pack. (i,g,a)
@@ -341,7 +372,7 @@ class ValidateManager:
             else:
                 self.ignored_files.add(content_entity_path)
 
-        return all(pack_entities_validation_results)
+        return all(pack_entities_validation_results), FOUND_FILES_AND_ERRORS
 
     def run_validation_on_content_entities(self, content_entity_dir_path, pack_error_ignore_list):
         """Gets non-pack folder and runs validation within it (Scripts, Integrations...)
@@ -524,6 +555,10 @@ class ValidateManager:
             return self.validate_description(file_path, pack_error_ignore_list)
 
         elif file_type == FileType.README:
+            if not self.validate_all:
+                ReadMeValidator.add_node_env_vars()
+                with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):
+                    return self.validate_readme(file_path, pack_error_ignore_list)
             return self.validate_readme(file_path, pack_error_ignore_list)
 
         elif file_type == FileType.REPORT:
@@ -726,6 +761,8 @@ class ValidateManager:
         if self.file_path:
             modified_files, added_files, old_format_files = self.specify_files_by_status(modified_files, added_files,
                                                                                          old_format_files)
+        deleted_files = self.git_util.deleted_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
+                                                    staged_only=self.staged, include_untracked=self.include_untracked)
 
         validation_results = {valid_git_setup, valid_types}
 
@@ -733,6 +770,7 @@ class ValidateManager:
         validation_results.add(self.validate_added_files(added_files, modified_files))
         validation_results.add(self.validate_changed_packs_unique_files(modified_files, added_files, old_format_files,
                                                                         changed_meta_files))
+        validation_results.add(self.validate_deleted_files(deleted_files, added_files))
 
         if old_format_files:
             click.secho(f'\n================= Running validation on old format files =================',
@@ -1138,6 +1176,52 @@ class ValidateManager:
         """
         return pack not in IGNORED_PACK_NAMES
 
+    @staticmethod
+    def is_file_allowed_to_be_deleted(file_path):
+        """
+        Args:
+            file_path: The file path.
+
+        Returns: True if the file allowed to be deleted, else False.
+
+        """
+        file_type = find_type(file_path)
+        return file_type in FileType_ALLOWED_TO_DELETE or not file_type
+
+    @staticmethod
+    def was_file_renamed_but_labeled_as_deleted(file_path, added_files):
+        """ Check if a file was renamed and not deleted (git false label the file as deleted)
+        Args:
+            file_path: The file path.
+
+        Returns: True if the file was renamed and not deleted, else False.
+
+        """
+        if added_files:
+            deleted_file_dict = get_file(file_path, find_type(file_path))
+            deleted_file_id = _get_file_id(file_path, deleted_file_dict)
+            if deleted_file_id:
+                for file in added_files:
+                    file_dict = get_file(file, find_type(file))
+                    if deleted_file_id == _get_file_id(file, file_dict):
+                        return True
+
+        return False
+
+    def validate_deleted_files(self, deleted_files, added_files) -> bool:
+        click.secho(f'\n================= Checking for prohibited deleted files =================',
+                    fg="bright_cyan")
+
+        is_valid = True
+        for file_path in deleted_files:
+            if not self.was_file_renamed_but_labeled_as_deleted(file_path, added_files):
+                if not self.is_file_allowed_to_be_deleted(file_path):
+                    error_message, error_code = Errors.file_cannot_be_deleted(file_path)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        is_valid = False
+
+        return is_valid
+
     def validate_changed_packs_unique_files(self, modified_files, added_files, old_format_files, changed_meta_files):
         click.secho(f'\n================= Running validation on changed pack unique files =================',
                     fg="bright_cyan")
@@ -1533,6 +1617,7 @@ class ValidateManager:
 
     @staticmethod
     def create_ignored_errors_list(errors_to_check):
+        """ Creating a list of errors without the errors in the errors_to_check list """
         ignored_error_list = []
         all_errors = get_all_error_codes()
         for error_code in all_errors:

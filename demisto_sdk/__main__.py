@@ -2045,26 +2045,29 @@ def convert(config, **kwargs):
 @click.option(
     '-o', '--output_dir', help='Directory to store the output in (default is current working directory)',
     required=False)
-@click.option(
-    "-v", "--verbose", is_flag=True,
-    help="Verbose output - mainly for debugging purposes")
+@click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
+              type=click.IntRange(0, 3, clamp=True), default=1, show_default=True)
 @click.option(
     "-i", "--input_path",
     help="Valid integration file path.",
-    required=False)
+    required=True)
+@click.option('-q', "--quiet", is_flag=True, help="Quiet output, only output results in the end")
+@click.option("-lp", "--log-path", help="Path to store all levels of logs",
+              type=click.Path(resolve_path=True))
 def generate_unit_tests(**kwargs):
     """
     This command is used to generate unit tests automatically from an  integration python code.
     Also supports generating unit tests for specific commands.
     """
+
     klara_logger = logging.getLogger('PYSCA')
     klara_logger.propagate = False
-    from commands.generate_unit_tests.generate_unit_tests import run_generate_unit_tests
+    from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import run_generate_unit_tests
     from demisto_sdk.commands.common.logger import logging_setup
-    verbose = kwargs.get('verbose')
-    if verbose:
-        logging_setup(verbose=3)
-
+    logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
+                  quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
+                  log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
+    print(kwargs.get('verbose'))
 
     # check_configuration_file('generate-unit-tests', kwargs)
     run_generate_unit_tests(**kwargs)

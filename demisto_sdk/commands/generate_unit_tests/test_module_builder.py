@@ -1,9 +1,23 @@
 import ast as ast_mod
 from .klara_extension import ast_name
+from demisto_sdk.commands.generate_docs.generate_integration_doc import get_command_examples
 
+
+def create_command_arg_mock_dictionary(commands_examples_input, specific_commands):
+    command_examples = get_command_examples(commands_examples_input, specific_commands)
+    commands_args_dict = {}
+    for command in command_examples:
+        command_line = command.split(' ')
+        command_dict = {}
+        for arg in command_line[1:]:
+            key = arg.split['='][0]
+            value = arg.split['='][1]
+            command_dict.update(key, value)
+        commands_args_dict.update(command_line[0], )
+    return commands_args_dict
 
 class TestModule:
-    def __init__(self, tree, module_name, module=None):
+    def __init__(self, tree, module_name, to_concat, module=None):
         self.functions = []
         self.imports = [ast_mod.Import(names=[ast_mod.alias(name='pytest')]),
                         ast_mod.Import(names=[ast_mod.alias(name='io')]),
@@ -14,14 +28,16 @@ class TestModule:
         self.tree = tree
         self.module_name = module_name
         self.global_args = []
+        self.to_concat = to_concat
 
     def to_ast(self):
         body = []
-        body.extend(self.imports)
-        body.append(self.server_url)
+        if not self.to_concat:
+            body.extend(self.imports)
+            body.append(self.server_url)
+            body.extend([self.util_json_builder(), self.generate_test_client()])
         body.extend(self.global_args)
-        body.extend([self.util_json_builder(), self.generate_test_client()])
-        body.extend([f.to_ast() for f in self.functions if f.asserts])
+        body.extend([f.to_ast() for f in self.functions])
         return ast_mod.Module(body=body)
 
     def util_json_builder(self):

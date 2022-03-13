@@ -1,19 +1,24 @@
 import ast as ast_mod
+import logging
 import os
 from demisto_sdk.commands.common.tools import get_json
 from .klara_extension import ast_name
 
+logger = logging.getLogger('demisto-sdk')
+
 
 class ArgsBuilder:
-    def __init__(self, command_name: str, directory_path: str, args_list: list[str] = []):
+    def __init__(self, command_name: str, directory_path: str, args_list: list[str] = [],
+                 commands_to_generate: dict[list[str]] = {}):
         self.args_list = args_list
-        self.input_args = None
         self.command_name = command_name
         self.directory_path = directory_path
         self.args = []
         self.global_arg = []
         self.global_arg_name = None
         self.decorators = []
+        self.commands_to_generate = commands_to_generate
+        self.input_args = commands_to_generate.get(self.command_name)
         self.build_args()
 
     def build_args(self):
@@ -22,13 +27,15 @@ class ArgsBuilder:
               input: dictionary of mocked inputs from the user
         Returns: ast node of type assign 'args = {test:'mock'}'
         """
-        self.get_mocked_args()
+        global logger
         if self.input_args:
-            is_parametrize = True if self.input_args.get('parametrize', '') == 'True' else False
+            is_parametrize = True if len(self.commands_to_generate.get(self.command_name)) > 1 else False
             if is_parametrize:
+                logger.debug('Creating global argument object for parametrize.')
                 self.build_global_args()
                 self.build_decorator()
             else:
+                logger.debug('Creating local argument object for parametrize.')
                 self.build_local_args()
 
     def get_keys_values(self, input_arg):
@@ -46,7 +53,7 @@ class ArgsBuilder:
         """
         build a local var named args that will be given as input to the command.
         """
-        keys, values = self.get_keys_values(self.input_args)
+        keys, values = self.get_keys_values(self.input_args[0])
         self.args.append(ast_mod.Assign(targets=[ast_name('args', ctx=ast_mod.Store())],
                                         value=ast_mod.Dict(keys=keys, values=values)))
 
@@ -57,9 +64,7 @@ class ArgsBuilder:
         self.global_arg_name = f'{self.command_name.upper()}_ARGS'
         global_args = []
         for inputs in self.input_args:
-            if 'case' not in inputs:
-                continue
-            keys, values = self.get_keys_values(self.input_args.get(inputs))
+            keys, values = self.get_keys_values(inputs)
             global_args.append(ast_mod.Dict(keys=keys, values=values))
         self.global_arg.append(ast_mod.Assign(targets=[ast_name(self.global_arg_name, ast_mod.Store())],
                                               value=ast_mod.List(elts=global_args, ctx=ast_mod.Store())))
@@ -102,6 +107,7 @@ class TestCase:
         self.client_name = None
         self.decorators = []
         self.global_arg = None
+        self.error_list = []
         self.get_client_name()
         self.instance_dict_parser()
 
@@ -164,10 +170,13 @@ class TestCase:
         Args: keywords: all the params passed to CommandResults object when created.
         Return: assertion for each of the CommandResults arg.
         """
+        global logger
         if returned_value := self.get_return_values():
             keywords = returned_value.keywords
             for keyword in keywords:
                 self.asserts.append(TestCase.create_command_results_assertion(keyword.arg, keyword.value))
+        else:
+            logger.warning('No return values were detected, thus no assertions being generated.')
 
     def instance_dict_parser(self):
         """
@@ -177,15 +186,17 @@ class TestCase:
                  client_call: name of client function to mock
                  command_result: CommandResults object returned from the command
         """
+        args_set = set()
         for instance in self.func.instance_dict:
             try:
                 func = str(instance.func)
                 if func == 'args.get':
-                    self.args_list.append(instance.args[0].value)
-                elif func.startswith(self.client_name):
+                    args_set.add(instance.args[0].value)
+                elif self.client_name is not None and func.startswith(self.client_name):
                     self.client_func_call.append(instance.func.attr)
             except AttributeError:
                 pass
+        self.args_list = list(args_set)
 
     def get_call_params_from_http_request(self, def_name):
         """
@@ -195,7 +206,7 @@ class TestCase:
         method = 'POST'
         suffix = None
         for block in self.client_ast.body:
-            if block.name == def_name:
+            if isinstance(block, ast_mod.FunctionDef) and block.name == def_name:
                 for node in block.body:
                     if hasattr(node, 'value') and hasattr(node.value, 'func') and str(
                             node.value.func) == "self._http_request":
@@ -214,10 +225,12 @@ class TestCase:
                client_class_name: name of the client class.
         Return: the name of the local client instance.
         """
+        global logger
         if hasattr(self.func.args, 'args'):
             for arg in self.func.args.args:
                 if hasattr(arg, 'annotation') and str(arg.annotation) == self.client_ast.name:
                     self.client_name = arg.arg
+                    logger.debug(f'Clinet name is {arg.arg}.')
 
     def get_return_values(self):
         """

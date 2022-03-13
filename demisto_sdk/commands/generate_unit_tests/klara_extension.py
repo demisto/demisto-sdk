@@ -9,8 +9,7 @@ import astor
 from demisto_sdk.commands.common.tools import get_json
 import logging
 
-loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
-print(loggers)
+
 COMMENT = "\n\tWhen:\n\tGiven:\n\tThen:\n\t"
 DIRECTORY_PATH = None
 COMMANDS = None

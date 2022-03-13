@@ -73,7 +73,6 @@ types-chardet="*"
 types-six="*"
 types-PyMySQL="*"
 types-protobuf="*"
-socks = "*"
 
 [dev-packages]
 mitmproxy = "==5.1.0"

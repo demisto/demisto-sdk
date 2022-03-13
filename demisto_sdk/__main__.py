@@ -1822,14 +1822,14 @@ def openapi_codegen(**kwargs):
     '-cf', '--config_file', help='The integration configuration YAML file. It is created in the first run of the command, and used in the second run.',
     required=False)
 @click.option(
-    '-n', '--base_name', help='The base filename to use for the generated files', required=False)
+    '-n', '--base_name', help='The base filename to use for the generated files', required=False, default='GeneratedAnsibleIntegration')
 @click.option(
     '-o', '--output_dir', help='Directory to store the output in (default is current working directory)',
     required=False)
 @click.option(
-    '-f', '--fix_code', is_flag=True, help='Fix the python code using autopep8')
+    '-f', '--fix_code', is_flag=True, help='Fix the python code using autopep8', default=False)
 @click.option(
-    '-v', '--verbose', is_flag=True, help='Be verbose with the log output')
+    '-v', '--verbose', is_flag=True, help='Be verbose with the log output', default=False)
 def ansible_codegen(**kwargs):
     """Generates a Cortex XSOAR Ansible integration given a integration configuration file.
     In the first run of the command, an integration configuration file is created, which needs be modified with \
@@ -1858,17 +1858,17 @@ def ansible_codegen(**kwargs):
         print_error(f'The directory provided "{output_dir}" is not a directory')
         sys.exit(1)
 
-    base_name = kwargs.get('base_name', 'GeneratedAnsibleIntegration')
+    base_name = kwargs.get('base_name')
+    verbose = kwargs.get('verbose')
+    fix_code = kwargs.get('fix_code')
 
-    verbose = kwargs.get('verbose', False)
-    fix_code = kwargs.get('fix_code', False)
-
-    container_image = kwargs.get('container_image',
-                                 f"demisto/ansible-runner:{DockerImageValidator.get_docker_image_latest_tag_request('demisto/ansible-runner')}")
+    container_image = kwargs.get('container_image')
+    if not container_image:  # Click sets the value to None even if not provided by user.
+        container_image = f"demisto/ansible-runner:{DockerImageValidator.get_docker_image_latest_tag_request('demisto/ansible-runner')}"
 
     config_file_path = kwargs.get('config_file')
 
-    integration = AnsibleIntegration(base_name, verbose=verbose, container_image=container_image,
+    integration = AnsibleIntegration(base_name=base_name, verbose=verbose, container_image=container_image,
                                      output_dir=output_dir, config_file_path=config_file_path, fix_code=fix_code)
 
     if not config_file_path:

@@ -439,10 +439,15 @@ def zip_packs(**kwargs) -> int:
     "--allow-skipped",
     help="Don't fail on skipped integrations or when all test playbooks are skipped.",
     is_flag=True)
+@click.option(
+    "--no-multiprocessing",
+    help="run validate all without multiprocessing, for debugging purposes.",
+    is_flag=True, default=False)
 @pass_config
 def validate(config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
+    run_with_mp = not kwargs.pop('no_multiprocessing')
     check_configuration_file('validate', kwargs)
     sys.path.append(config.configuration.env_dir)
 
@@ -479,6 +484,7 @@ def validate(config, **kwargs):
             debug_git=kwargs.get('debug_git'),
             include_untracked=kwargs.get('include_untracked'),
             quite_bc=kwargs.get('quite_bc_validation'),
+            multiprocessing=run_with_mp,
             check_is_unskipped=not kwargs.get('allow_skipped', False),
         )
         return validator.run_validation()
@@ -935,6 +941,14 @@ def upload(**kwargs):
     "-a", "--all-custom-content", help="Download all available custom content files", is_flag=True)
 @click.option(
     "-fmt", "--run-format", help="Whether to run demisto-sdk format on downloaded files or not", is_flag=True)
+@click.option(
+    "--system", help="Download system items", is_flag=True, default=False)
+@click.option(
+    "-it", "--item-type", help="The items type to download, use just when downloading system items, should be one "
+                               "form the following list: [IncidentType, IndicatorType, Field, Layout, Playbook, "
+                               "Automation, Classifier, Mapper]",
+    type=click.Choice(['IncidentType', 'IndicatorType', 'Field', 'Layout', 'Playbook', 'Automation', 'Classifier',
+                       'Mapper'], case_sensitive=False))
 def download(**kwargs):
     """Download custom content from Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.

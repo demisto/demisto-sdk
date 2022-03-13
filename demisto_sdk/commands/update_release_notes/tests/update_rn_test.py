@@ -185,7 +185,7 @@ class TestRNUpdate(unittest.TestCase):
                 - return a markdown string
         """
         expected_result = "\n#### Integrations\n##### Hello World Integration\n" \
-                          "- Maintenance and stability enhancements.\n"
+                          "- %%UPDATE_RN%%\n"
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
         mock_master.return_value = '1.0.0'
@@ -202,7 +202,7 @@ class TestRNUpdate(unittest.TestCase):
     def test_build_rn_template_file__documentation(self, mock_master):
         """
             Given:
-                - a dict of changed items, with a maintenance rn update
+                - a dict of changed items, with a documentation rn update
             When:
                 - we want to produce a release notes template for files without descriptions like :
                 'Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'

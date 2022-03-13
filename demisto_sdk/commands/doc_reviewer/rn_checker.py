@@ -44,13 +44,14 @@ class ReleaseNotesChecker:
         'You can now',
         'Deprecated. ',
         'Deprecated the ',
+
+        # full line
+        'Documentation and metadata improvements.',
     }
 
     BANNED_TEMPLATES = {
-        'documentation and metadata improvements.',
-        'metadata improvements and documentation.',
         'maintenance and stability enhancements.',
-        'stability enhancements and maintenance .',
+        'stability enhancements and maintenance.',
     }
 
     def __init__(self, rn_file_path: str = None, rn_file_content: List = [], template_examples: bool = False):
@@ -82,6 +83,8 @@ class ReleaseNotesChecker:
         return good_line
 
     def check_if_using_banned_template(self, line):
+        line = line.lstrip(' -')
+        line = line.rstrip()
         for temp in self.BANNED_TEMPLATES:
             if line.lower() == temp:
                 return True

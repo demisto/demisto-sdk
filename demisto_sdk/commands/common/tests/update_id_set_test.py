@@ -2794,19 +2794,20 @@ class TestParsingRules:
             - Verify result as expeted.
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        parsing_rule = pack.create_parsing_rule("parsing_rule", {"id": "parsing_rule_id", "rules": "", "name": "parsing_rule.yml"})
+        parsing_rule = pack.create_parsing_rule("parsing_rule_name", {"id": "parsing_rule_id", "rules": "", "name": "parsing_rule_name"})
         res = process_general_items(parsing_rule.path, {pack.name: {}},
                                     MarketplaceVersions.MarketplaceV2.value, True, (FileType.PARSING_RULE,), get_general_yaml_data)
 
         captured = capsys.readouterr()
-        assert len(res) == 2
         parsing_rule_result = res[0][0]['parsing_rule_id']
-        assert parsing_rule_result['name'] == parsing_rule._tmp_path.parts[-1]
-        path = Path(parsing_rule_result['file_path'])
-        assert path == parsing_rule._tmp_path
-        assert path.suffix == '.yml'
-        assert path.parts[-2] == PARSING_RULES_DIR
-        assert path.parts[-3] == pack.name
+
+        assert len(res) == 2
+        assert 'name' in parsing_rule_result.keys()
+        assert 'file_path' in parsing_rule_result.keys()
+        assert 'pack' in parsing_rule_result.keys()
+
+        assert parsing_rule_result['name'] == parsing_rule._tmp_path.parts[-1].split('.')[0]
+        assert parsing_rule_result['file_path'] == parsing_rule.path
         assert parsing_rule_result['pack'] == pack.name
 
         assert f'adding {parsing_rule._tmp_path} to id_set' in captured.out
@@ -2824,19 +2825,20 @@ class TestModelingRules:
             - Verify result as expeted.
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        modeling_rule = pack.create_modeling_rule("modeling_rule", {"id": "modeling_rule_id", "rules": "", "name": "modeling_rule.yml"})
+        modeling_rule = pack.create_modeling_rule("modeling_rule_name", {"id": "modeling_rule_id", "rules": "", "name": "modeling_rule_name"})
         res = process_general_items(modeling_rule.path, {pack.name: {}},
                                     MarketplaceVersions.MarketplaceV2.value, True, (FileType.MODELING_RULE,), get_general_yaml_data)
 
         captured = capsys.readouterr()
-        assert len(res) == 2
         modeling_rule_result = res[0][0]['modeling_rule_id']
-        assert modeling_rule_result['name'] == modeling_rule._tmp_path.parts[-1]
-        path = Path(modeling_rule_result['file_path'])
-        assert path == modeling_rule._tmp_path
-        assert path.suffix == '.yml'
-        assert path.parts[-2] == MODELING_RULES_DIR
-        assert path.parts[-3] == pack.name
+
+        assert len(res) == 2
+        assert 'name' in modeling_rule_result.keys()
+        assert 'file_path' in modeling_rule_result.keys()
+        assert 'pack' in modeling_rule_result.keys()
+
+        assert modeling_rule_result['name'] == modeling_rule._tmp_path.parts[-1].split('.')[0]
+        assert modeling_rule_result['file_path'] == modeling_rule.path
         assert modeling_rule_result['pack'] == pack.name
 
         assert f'adding {modeling_rule._tmp_path} to id_set' in captured.out
@@ -2854,19 +2856,20 @@ class TestCorrelationRules:
             - Verify result as expeted.
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        correlation_rule = pack.create_correlation_rule("correlation_rule", {"id": "correlation_rule_id", "name": "correlation_rule.yml", "alert_category": ""})
+        correlation_rule = pack.create_correlation_rule("correlation_rule_name", {"id": "correlation_rule_id", "name": "correlation_rule_name", "alert_category": ""})
         res = process_general_items(correlation_rule.path, {pack.name: {}},
                                     MarketplaceVersions.MarketplaceV2.value, True, (FileType.CORRELATION_RULE,), get_general_yaml_data)
 
         captured = capsys.readouterr()
-        assert len(res) == 2
         correlation_rule_result = res[0][0]['correlation_rule_id']
-        assert correlation_rule_result['name'] == correlation_rule._tmp_path.parts[-1]
-        path = Path(correlation_rule_result['file_path'])
-        assert path == correlation_rule._tmp_path
-        assert path.suffix == '.yml'
-        assert path.parts[-2] == CORRELATION_RULES_DIR
-        assert path.parts[-3] == pack.name
+
+        assert len(res) == 2
+        assert 'name' in correlation_rule_result.keys()
+        assert 'file_path' in correlation_rule_result.keys()
+        assert 'pack' in correlation_rule_result.keys()
+
+        assert correlation_rule_result['name'] == correlation_rule._tmp_path.parts[-1].split('.')[0]
+        assert correlation_rule_result['file_path'] == correlation_rule.path
         assert correlation_rule_result['pack'] == pack.name
 
         assert f'adding {correlation_rule._tmp_path} to id_set' in captured.out
@@ -2885,20 +2888,22 @@ class TestXSIAMDashboards:
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
         xsiam_dashboard = pack.create_xsiam_dashboard(
-            "xsiam_dashboard", {"id": "xsiam_dashboard_id", "rules": "", "name": "xsiam_dashboard.json", "dashboards_data": ""})
+            "xsiam_dashboard_name", {"id": "xsiam_dashboard_id", "rules": "", "name": "xsiam_dashboard_name", "dashboards_data": ""})
         res = process_general_items(xsiam_dashboard.path, {pack.name: {}},
                                     MarketplaceVersions.MarketplaceV2.value, True, (FileType.XSIAM_DASHBOARD,), get_general_data)
 
         captured = capsys.readouterr()
-        assert len(res) == 2
         xsiam_dashboard_result = res[0][0]['xsiam_dashboard_id']
-        assert xsiam_dashboard_result['name'] == xsiam_dashboard._file_path.parts[-1]
-        path = Path(xsiam_dashboard_result['file_path'])
-        assert path == xsiam_dashboard._file_path
-        assert path.suffix == '.json'
-        assert path.parts[-2] == XSIAM_DASHBOARDS_DIR
-        assert path.parts[-3] == pack.name
+
+        assert len(res) == 2
+        assert 'name' in xsiam_dashboard_result.keys()
+        assert 'file_path' in xsiam_dashboard_result.keys()
+        assert 'pack' in xsiam_dashboard_result.keys()
+
+        assert xsiam_dashboard_result['name'] == xsiam_dashboard._file_path.parts[-1].split('.')[0]
+        assert xsiam_dashboard_result['file_path'] == xsiam_dashboard.path
         assert xsiam_dashboard_result['pack'] == pack.name
+
 
         assert f'adding {xsiam_dashboard._file_path} to id_set' in captured.out
 
@@ -2915,20 +2920,22 @@ class TestXSIAMReports:
             - Verify result as expeted.
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        xsiam_report = pack.create_xsiam_report("xsiam_report", {"id": "xsiam_report_id", "rules": "", "name": "xsiam_report.json", "dashboards_data": ""})
+        xsiam_report = pack.create_xsiam_report("xsiam_report_name", {"id": "xsiam_report_id", "rules": "", "name": "xsiam_report_name", "dashboards_data": ""})
         res = process_general_items(xsiam_report.path, {pack.name: {}},
                                     MarketplaceVersions.MarketplaceV2.value, True, (FileType.XSIAM_REPORT,), get_general_data)
 
         captured = capsys.readouterr()
-        assert len(res) == 2
         xsiam_report_result = res[0][0]['xsiam_report_id']
-        assert xsiam_report_result['name'] == xsiam_report._file_path.parts[-1]
-        path = Path(xsiam_report_result['file_path'])
-        assert path == xsiam_report._file_path
-        assert path.suffix == '.json'
-        assert path.parts[-2] == XSIAM_REPORTS_DIR
-        assert path.parts[-3] == pack.name
+
+        assert len(res) == 2
+        assert 'name' in xsiam_report_result.keys()
+        assert 'file_path' in xsiam_report_result.keys()
+        assert 'pack' in xsiam_report_result.keys()
+
+        assert xsiam_report_result['name'] == xsiam_report._file_path.parts[-1].split('.')[0]
+        assert xsiam_report_result['file_path'] == xsiam_report.path
         assert xsiam_report_result['pack'] == pack.name
+
 
         assert f'adding {xsiam_report._file_path} to id_set' in captured.out
 
@@ -2945,20 +2952,22 @@ class TestTriggers:
             - Verify result as expeted.
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        trigger = pack.create_trigger("trigger", {"RULE_ID": "trigger_id", "name": "trigger.json"})
+        trigger = pack.create_trigger("trigger_name", {"RULE_ID": "trigger_id", "name": "trigger_name"})
         res = process_general_items(trigger.path, {pack.name: {}},
                                     MarketplaceVersions.MarketplaceV2.value, True, (FileType.TRIGGER,), get_trigger_data)
 
         captured = capsys.readouterr()
-        assert len(res) == 2
         trigger_result = res[0][0]['trigger_id']
-        assert trigger_result['name'] == trigger._file_path.parts[-1]
-        path = Path(trigger_result['file_path'])
-        assert path == trigger._file_path
-        assert path.suffix == '.json'
-        assert path.parts[-2] == TRIGGER_DIR
-        assert path.parts[-3] == pack.name
+
+        assert len(res) == 2
+        assert 'name' in trigger_result.keys()
+        assert 'file_path' in trigger_result.keys()
+        assert 'pack' in trigger_result.keys()
+
+        assert trigger_result['name'] == trigger._file_path.parts[-1].split('.')[0]
+        assert trigger_result['file_path'] == trigger.path
         assert trigger_result['pack'] == pack.name
+
 
         assert f'adding {trigger._file_path} to id_set' in captured.out
 

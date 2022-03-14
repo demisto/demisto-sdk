@@ -878,9 +878,9 @@ def format(
 @click.option(
     "--reattach",
     help="Reattach the detached files in the XSOAR instance"
-         "For the CI/CD Flow (if you specify the --input-config-file flag, "
-         "all the items in the instance that detached and are not exist in the SystemPacks folder in the repo "
-         "will reattached.)", is_flag=True
+         "for the CI/CD Flow. If you set the --input-config-file flag, "
+         "any detached item in your XSOAR instance that isn't currently in the repo's SystemPacks folder "
+         "will be re-attached.)", is_flag=True
 )
 def upload(**kwargs):
     """Upload integration or pack to Demisto instance.
@@ -899,7 +899,7 @@ def upload(**kwargs):
         else:
             config_file_path = kwargs['input_config_file']
             config_file_to_parse = ConfigFileParser(config_file_path=config_file_path)
-            pack_path = config_file_to_parse.get_custom_packs_paths()
+            pack_path = config_file_to_parse.parse_file()
             kwargs['detached_files'] = True
             kwargs.pop('input_config_file')
 

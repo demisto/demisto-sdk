@@ -107,7 +107,7 @@ class Uploader:
         self.demisto_version = get_demisto_version(self.client)
         self.pack_names = pack_names
         self.skip_upload_packs_validation = skip_validation
-        self.detached_files = detached_files
+        self.is_files_to_detached = detached_files
         self.reattach_files = reattach
 
     def upload(self):
@@ -120,7 +120,7 @@ class Uploader:
 
         status_code = SUCCESS_RETURN_CODE
 
-        if self.detached_files:
+        if self.is_files_to_detached:
             item_detacher = ItemDetacher(client=self.client)
             list_detach_items_ids: list = item_detacher.detach_item_manager(upload_file=True)
 
@@ -419,15 +419,15 @@ class ConfigFileParser:
 
     def parse_file(self):
         config_file_data = self.get_file_data()
-        return config_file_data
+        custom_packs_paths = self.get_custom_packs_paths(config_file_data)
+        return custom_packs_paths
 
     def get_file_data(self):
         with open(self.config_file_path) as config_file:
             config_file_data = json.load(config_file)
         return config_file_data
 
-    def get_custom_packs_paths(self) -> str:
-        config_file_data = self.parse_file()
+    def get_custom_packs_paths(self, config_file_data):
         custom_packs = config_file_data.get('custom_packs', [])
         custom_packs_paths = ",".join(pack.get('url') for pack in custom_packs)
         return custom_packs_paths
@@ -475,19 +475,13 @@ class ItemDetacher:
         return detach_files_list
 
     def is_valid_file_for_detach(self, file_path: str) -> bool:
-        valid_file = False
         for file in self.VALID_FILES_FOR_DETACH:
             if file in file_path and (file_path.endswith('yml') or file_path.endswith('json')):
                 return True
-        return valid_file
+        return False
 
     def find_item_type_to_detach(self, file_path) -> str:
-        file_type: str
-        if 'Playbooks' in file_path or 'Scripts' in file_path:
-            file_type = 'yml'
-        else:
-            file_type = 'json'
-        return file_type
+        return 'yml' if 'Playbooks' in file_path or 'Scripts' in file_path else 'json'
 
     def find_item_id_to_detach(self):
         file_type = self.find_item_type_to_detach(self.file_path)

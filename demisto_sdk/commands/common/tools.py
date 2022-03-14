@@ -42,11 +42,12 @@ from demisto_sdk.commands.common.constants import (
     OFFICIAL_CONTENT_ID_SET_PATH, PACK_METADATA_IRON_BANK_TAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
     PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
-    PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
-    RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-    XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys, GitContentConfig,
-    IdSetKeys, MarketplaceVersions, urljoin)
+    PACKS_README_FILE_NAME, PARSING_RULES_DIR, PLAYBOOKS_DIR,
+    PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
+    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX,
+    WIDGETS_DIR, XSIAM_DASHBOARDS_DIR, XSOAR_CONFIG_FILE,
+    FileType, FileTypeToIDSetKeys, GitContentConfig, IdSetKeys,
+    MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import YAML_Handler
 
@@ -1156,6 +1157,15 @@ def find_type(
                 return FileType.TEST_PLAYBOOK
 
             return FileType.PLAYBOOK
+        
+        if 'rules' in _dict:
+            if PARSING_RULES_DIR in Path(path).parts:
+                return FileType.PARSING_RULE
+
+            return FileType.MODELING_RULE
+
+        if 'alert_category' in _dict:
+            return FileType.CORRELATION_RULE
 
     if file_type == 'json':
         if 'widgetType' in _dict:
@@ -1212,6 +1222,15 @@ def find_type(
 
         if isinstance(_dict, dict) and {'isAllFeeds', 'selectedFeeds', 'isFeed'}.issubset(_dict.keys()):
             return FileType.JOB
+
+        if 'dashboards_data' in _dict:
+            if XSIAM_DASHBOARDS_DIR in Path(path).parts:
+                return FileType.XSIAM_DASHBOARD
+
+            return FileType.XSIAM_REPORT
+
+        if 'RULE_ID' in _dict:
+            return FileType.TRIGGER
 
         # When using it for all files validation- sometimes 'id' can be integer
         if 'id' in _dict:

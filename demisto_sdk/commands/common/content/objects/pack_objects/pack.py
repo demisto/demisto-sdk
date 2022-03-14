@@ -27,6 +27,12 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    TOOLS_DIR, WIDGETS_DIR,
+                                                   PARSING_RULES_DIR,
+                                                   MODELING_RULES_DIR,
+                                                   CORRELATION_RULES_DIR,
+                                                   XSIAM_DASHBOARDS_DIR,
+                                                   XSIAM_REPORTS_DIR,
+                                                   TRIGGER_DIR,
                                                    FileType)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, Classifier, ClassifierMapper, Connection,
@@ -34,7 +40,8 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     GenericModule, GenericType, IncidentField, IncidentType, IndicatorField,
     IndicatorType, Integration, Job, LayoutObject, Lists, OldClassifier,
     PackIgnore, PackMetaData, Playbook, PreProcessRule, Readme, ReleaseNote,
-    ReleaseNoteConfig, Report, Script, SecretIgnore, Widget)
+    ReleaseNoteConfig, Report, Script, SecretIgnore, Widget, ParsingRule,
+    ModelingRule, CorrelationRule, Trigger, XSIAMDashboard, XSIAMReport)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from demisto_sdk.commands.common.tools import (get_demisto_version,
@@ -228,6 +235,36 @@ class Pack:
     @property
     def jobs(self) -> Iterator[Job]:
         return self._content_files_list_generator_factory(JOBS_DIR,
+                                                          suffix="json")
+
+    @property
+    def parsing_rules(self) -> Iterator[ParsingRule]:
+        return self._content_files_list_generator_factory(dir_name=PARSING_RULES_DIR,
+                                                          suffix="yml")
+
+    @property
+    def modeling_rules(self) -> Iterator[ModelingRule]:
+        return self._content_files_list_generator_factory(dir_name=MODELING_RULES_DIR,
+                                                          suffix="yml")
+
+    @property
+    def correlation_rules(self) -> Iterator[CorrelationRule]:
+        return self._content_files_list_generator_factory(dir_name=CORRELATION_RULES_DIR,
+                                                          suffix="yml")
+
+    @property
+    def xsiam_dashboards(self) -> Iterator[XSIAMDashboard]:
+        return self._content_files_list_generator_factory(dir_name=XSIAM_DASHBOARDS_DIR,
+                                                          suffix="json")
+
+    @property
+    def xsiam_reports(self) -> Iterator[XSIAMReport]:
+        return self._content_files_list_generator_factory(dir_name=XSIAM_REPORTS_DIR,
+                                                          suffix="json")
+
+    @property
+    def triggers(self) -> Iterator[Trigger]:
+        return self._content_files_list_generator_factory(dir_name=TRIGGER_DIR,
                                                           suffix="json")
 
     @property

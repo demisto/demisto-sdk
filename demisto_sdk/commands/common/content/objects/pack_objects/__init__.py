@@ -37,6 +37,12 @@ from .script.script import *  # lgtm [py/polluting-import]
 from .secret_ignore.secret_ignore import *  # lgtm [py/polluting-import]
 from .tool.agent_tool import *  # lgtm [py/polluting-import]
 from .widget.widget import *  # lgtm [py/polluting-import]
+from .parsing_rule.parsing_rule import *  # lgtm [py/polluting-import]
+from .modeling_rule.modeling_rule import *  # lgtm [py/polluting-import]
+from .corrlation_rule.correlation_rule import *  # lgtm [py/polluting-import]
+from .xsiam_dashboard.xsiam_dashboard import *  # lgtm [py/polluting-import]
+from .xsiam_report.xsiam_report import *  # lgtm [py/polluting-import]
+from .trigger.trigger import *  # lgtm [py/polluting-import]
 
 __all__ = [name for name, obj in locals().items()
            if not (name.startswith('_') or inspect.ismodule(obj))]

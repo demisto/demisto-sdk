@@ -18,7 +18,8 @@ from demisto_sdk.commands.common.constants import (
     DOCUMENTATION_DIR, GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR,
     GENERIC_MODULES_DIR, GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR,
     INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
-    INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR, PACKS_DIR,
+    INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR, PACKS_DIR, PARSING_RULES_DIR,
+    MODELING_RULES_DIR, CORRELATION_RULES_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, TRIGGER_DIR,
     PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, REPORTS_DIR,
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR, WIDGETS_DIR, ContentItems,
     MarketplaceVersions)
@@ -188,7 +189,13 @@ class ContentItemsHandler:
             ContentItems.GENERIC_TYPES: [],
             ContentItems.GENERIC_MODULES: [],
             ContentItems.GENERIC_DEFINITIONS: [],
-            ContentItems.LISTS: []
+            ContentItems.LISTS: [],
+            ContentItems.PARSING_RULES: [],
+            ContentItems.MODELING_RULES: [],
+            ContentItems.CORRELATION_RULES: [],
+            ContentItems.XSIAM_DASHBOARDS: [],
+            ContentItems.XSIAM_REPORTS: [],
+            ContentItems.TRIGGERS: []
         }
         self.content_folder_name_to_func: Dict[str, Callable] = {
             SCRIPTS_DIR: self.add_script_as_content_item,
@@ -209,7 +216,13 @@ class ContentItemsHandler:
             GENERIC_TYPES_DIR: self.add_generic_type_as_content_item,
             GENERIC_FIELDS_DIR: self.add_generic_field_as_content_item,
             GENERIC_MODULES_DIR: self.add_generic_module_as_content_item,
-            GENERIC_DEFINITIONS_DIR: self.add_generic_definition_as_content_item
+            GENERIC_DEFINITIONS_DIR: self.add_generic_definition_as_content_item,
+            PARSING_RULES_DIR: self.add_parsing_rule_as_content_item,
+            MODELING_RULES_DIR: self.add_modeling_rule_as_content_item,
+            CORRELATION_RULES_DIR: self.add_correlation_rule_as_content_item,
+            XSIAM_DASHBOARDS_DIR: self.add_xsiam_dashboard_as_content_item,
+            XSIAM_REPORTS_DIR: self.add_xsiam_report_as_content_item,
+            TRIGGER_DIR: self.add_trigger_as_content_item
         }
         self.id_set = id_set
         self.alternate_fields = alternate_fields
@@ -372,6 +385,42 @@ class ContentItemsHandler:
 
     def add_generic_module_as_content_item(self, content_object: ContentObject):
         self.content_items[ContentItems.GENERIC_MODULES].append({
+            'name': content_object.get('name', ''),
+            'description': content_object.get('description', '')
+        })
+
+    def add_parsing_rule_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.PARSING_RULES].append({
+            'name': content_object.get('name', ''),
+            'description': content_object.get('description', '')
+        })
+
+    def add_modeling_rule_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.MODELING_RULES].append({
+            'name': content_object.get('name', ''),
+            'description': content_object.get('description', '')
+        })
+
+    def add_correlation_rule_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.CORRELATION_RULES].append({
+            'name': content_object.get('name', ''),
+            'description': content_object.get('description', '')
+        })
+
+    def add_xsiam_dashboard_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.XSIAM_DASHBOARDS].append({
+            'name': content_object.get('name', ''),
+            'description': content_object.get('description', '')
+        })
+
+    def add_xsiam_report_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.XSIAM_REPORTS].append({
+            'name': content_object.get('name', ''),
+            'description': content_object.get('description', '')
+        })
+
+    def add_trigger_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.TRIGGERS].append({
             'name': content_object.get('name', ''),
             'description': content_object.get('description', '')
         })
@@ -733,6 +782,25 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         for widget in pack.widgets:
             content_items_handler.handle_content_item(widget)
             pack_report += dump_pack_conditionally(artifact_manager, widget)
+    elif artifact_manager.marketplace == MarketplaceVersions.MarketplaceV2.value:
+        for parsing_rule in pack.parsing_rules:
+            content_items_handler.handle_content_item(parsing_rule)
+            pack_report += dump_pack_conditionally(artifact_manager, parsing_rule)
+        for modeling_rule in pack.modeling_rules:
+            content_items_handler.handle_content_item(modeling_rule)
+            pack_report += dump_pack_conditionally(artifact_manager, modeling_rule)
+        for correlation_rule in pack.correlation_rules:
+            content_items_handler.handle_content_item(correlation_rule)
+            pack_report += dump_pack_conditionally(artifact_manager, correlation_rule)
+        for xsiam_dashboard in pack.xsiam_dashboards:
+            content_items_handler.handle_content_item(xsiam_dashboard)
+            pack_report += dump_pack_conditionally(artifact_manager, xsiam_dashboard)
+        for xsiam_report in pack.xsiam_reports:
+            content_items_handler.handle_content_item(xsiam_report)
+            pack_report += dump_pack_conditionally(artifact_manager, xsiam_report)
+        for trigger in pack.triggers:
+            content_items_handler.handle_content_item(trigger)
+            pack_report += dump_pack_conditionally(artifact_manager, trigger)
 
     for tool in pack.tools:
         object_report = ObjectReport(tool, content_packs=True)

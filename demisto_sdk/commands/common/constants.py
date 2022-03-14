@@ -37,6 +37,12 @@ DOCUMENTATION_DIR = 'Documentation'
 JOBS_DIR = 'Jobs'
 PRE_PROCESS_RULES_DIR = 'PreProcessRules'
 LISTS_DIR = 'Lists'
+PARSING_RULES_DIR = 'ParsingRules'
+MODELING_RULES_DIR = 'ModelingRules'
+CORRELATION_RULES_DIR = 'CorrelationRules'
+XSIAM_DASHBOARDS_DIR = 'XSIAMDashboards'
+XSIAM_REPORTS_DIR = 'XSIAMReports'
+TRIGGER_DIR = 'Triggers'
 
 SCRIPT = 'script'
 AUTOMATION = 'automation'
@@ -70,6 +76,12 @@ GENERIC_TYPE = 'generictype'
 GENERIC_MODULE = 'genericmodule'
 GENERIC_DEFINITION = 'genericdefinition'
 JOB = 'job'
+PARSING_RULE = 'parsingrule'
+MODELING_RULE = 'modelingrule'
+CORRELATION_RULE = 'correlationrule'
+XSIAM_DASHBOARD = 'xsiamdashboard'
+XSIAM_REPORT = 'xsiamreport'
+TRIGGER = 'trigger'
 
 MARKETPLACE_KEY_PACK_METADATA = 'marketplaces'
 
@@ -119,6 +131,12 @@ class FileType(Enum):
     PRE_PROCESS_RULES = 'pre-process-rule'
     LISTS = 'list'
     JOB = 'job'
+    PARSING_RULE = 'parsingrule'
+    MODELING_RULE = 'modelingrule'
+    CORRELATION_RULE = 'correlationrule'
+    XSIAM_DASHBOARD = 'xsiamdashboard'
+    XSIAM_REPORT = 'xsiamreport'
+    TRIGGER = 'trigger'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -1319,6 +1337,12 @@ class ContentItems(Enum):
     PRE_PROCESS_RULES = 'pre-process-rule'
     LISTS = 'list'
     JOB = 'job'
+    PARSING_RULES = 'parsingrule'
+    MODELING_RULES = 'modelingrule'
+    CORRELATION_RULES = 'correlationrule'
+    XSIAM_DASHBOARDS = 'xsiamdashboard'
+    XSIAM_REPORTS = 'xsiamreport'
+    TRIGGERS = 'trigger'
 
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {
@@ -1336,7 +1360,13 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     CLASSIFIERS_DIR,
     WIDGETS_DIR,
     JOBS_DIR,
-    LISTS_DIR
+    LISTS_DIR,
+    PARSING_RULES_DIR,
+    MODELING_RULES_DIR,
+    CORRELATION_RULES_DIR,
+    XSIAM_DASHBOARDS_DIR,
+    XSIAM_REPORTS_DIR,
+    TRIGGER_DIR
 }
 
 

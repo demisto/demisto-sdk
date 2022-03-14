@@ -54,6 +54,7 @@ ERROR_CODE = {
     "spaces_in_the_end_of_id": {'code': "BA112", 'ui_applicable': False, 'related_field': 'id'},
     "spaces_in_the_end_of_name": {'code': "BA113", 'ui_applicable': False, 'related_field': 'name'},
     "changed_pack_name": {'code': "BA114", 'ui_applicable': False, 'related_field': 'name'},
+    "file_cannot_be_deleted": {'code': "BA115", 'ui_applicable': False, 'related_field': ''},
 
     # BC - Backward Compatible
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -435,6 +436,11 @@ def error_code_decorator(func, *args, **kwargs):
 
 class Errors:
     BACKWARDS = "Possible backwards compatibility break"
+
+    @staticmethod
+    @error_code_decorator
+    def file_cannot_be_deleted(file_path: str):
+        return f"The file {file_path} cannot be deleted. Please restore the file."
 
     @staticmethod
     def suggest_fix(file_path: str, *args: Any, cmd: str = 'format') -> str:

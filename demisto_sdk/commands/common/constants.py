@@ -1417,3 +1417,9 @@ FileTypeToIDSetKeys = {
     FileType.GENERIC_DEFINITION: IdSetKeys.GENERIC_DEFINITIONS.value,
     FileType.JOB: IdSetKeys.JOBS.value
 }
+
+FileType_ALLOWED_TO_DELETE = {
+    FileType.WHITE_LIST,
+    FileType.DOC_IMAGE,
+    FileType.TEST_PLAYBOOK,
+}

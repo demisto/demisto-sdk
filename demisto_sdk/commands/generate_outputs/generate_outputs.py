@@ -36,9 +36,9 @@ def generate_integration_context_from_examples_flow(kwargs):
     input_path: str = kwargs.get('input', '')
     examples: str = kwargs.get('examples', '')
     insecure: bool = kwargs.get('insecure', False)
-
+    output_path: str = kwargs.get('output')
     validate_inputs_examples(input_path)
-    generate_integration_context(input_path, examples, insecure)
+    generate_integration_context(input_path, examples, insecure, output_path=output_path)
 
     generate_ai_descriptions_flow(kwargs)
     return 0

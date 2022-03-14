@@ -1500,8 +1500,8 @@ def merge_id_sets(**kwargs):
     "-i", "--input", help="The relative path of the content pack. For example Packs/Pack_Name"
 )
 @click.option(
-    '-u', '--update-type', help="The type of update being done. [major, minor, revision, maintenance, documentation]",
-    type=click.Choice(['major', 'minor', 'revision', 'maintenance', 'documentation'])
+    '-u', '--update-type', help="The type of update being done. [major, minor, revision, documentation]",
+    type=click.Choice(['major', 'minor', 'revision', 'documentation'])
 )
 @click.option(
     '-v', '--version', help="Bump to a specific version.", type=VersionParamType()

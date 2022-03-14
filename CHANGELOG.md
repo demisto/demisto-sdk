@@ -9,11 +9,17 @@
 * Improved the detection of errors in **doc-review** command.
 * The **validate** command now checks if a readme file is empty, only for packs that contain playbooks or were written by a partner
 * The **validate** command now makes sure common contextPath values (e.g. `DBotScore.Score`) have a non-empty description, and **format** populates them automatically.
+* Fixed an issue where the **generate-outputs** command did not work properly when examples were provided.
+* Fixed an issue in the **generate-outputs** command, where the outputs were not written to the specified output path.
+* The **generate-outputs** command can now generate outputs from multiple calls to the same command (useful when different args provide different outputs).
+* The **generate-outputs** command can now update a yaml file with new outputs, without deleting or overwriting existing ones.
 * Fixed a bug where **doc-review** command failed on existing templates.
 * Fixed a bug where **validate** command failed when the word demisto is in the repo README file.
 * Added support for adding test-playbooks to the zip file result in *create-content-artifacts* command for marketplacev2.
 * Fixed an issue in **find-dependencies** where using the argument *-o* without the argument *--all-packs-dependencies* did not print a proper warning.
 * Added a **validate** check to prevent deletion of files whose deletion is not supported by the XSOAR marketplace.
+* Removed the support in the *maintenance* option of the *-u* flag in the **update-release-notes** command.
+* Added validation for forbidden words and phrases in the **doc-review** command.
 
 # 1.6.1
 * Added the '--use-packs-known-words' argument to the **doc-review** command

@@ -174,35 +174,10 @@ class TestRNUpdate(unittest.TestCase):
         assert expected_result == release_notes
 
     @mock.patch.object(UpdateRN, 'get_master_version')
-    def test_build_rn_template_file__maintenance(self, mock_master):
-        """
-            Given:
-                - a dict of changed items, with a maintenance rn update
-            When:
-                - we want to produce a release notes template for files without descriptions like :
-                'Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'
-            Then:
-                - return a markdown string
-        """
-        expected_result = "\n#### Integrations\n##### Hello World Integration\n" \
-                          "- Maintenance and stability enhancements.\n"
-        from demisto_sdk.commands.update_release_notes.update_rn import \
-            UpdateRN
-        mock_master.return_value = '1.0.0'
-        update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='maintenance',
-                             modified_files_in_pack={'HelloWorld'},
-                             added_files=set())
-        changed_items = {
-            ("Hello World Integration", FileType.INTEGRATION): {"description": "", "is_new_file": False},
-        }
-        release_notes = update_rn.build_rn_template(changed_items)
-        assert expected_result == release_notes
-
-    @mock.patch.object(UpdateRN, 'get_master_version')
     def test_build_rn_template_file__documentation(self, mock_master):
         """
             Given:
-                - a dict of changed items, with a maintenance rn update
+                - a dict of changed items, with a documentation rn update
             When:
                 - we want to produce a release notes template for files without descriptions like :
                 'Connections', 'Incident Types', 'Indicator Types', 'Layouts', 'Incident Fields'

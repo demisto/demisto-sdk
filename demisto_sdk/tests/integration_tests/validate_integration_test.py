@@ -642,6 +642,8 @@ class TestDeprecatedIntegration:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
+
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks',
@@ -709,6 +711,8 @@ class TestDeprecatedIntegration:
                                                                                          set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -2338,6 +2342,8 @@ class TestPlaybookValidateDeprecated:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
+
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main,
@@ -2404,6 +2410,8 @@ class TestPlaybookValidateDeprecated:
                                                                                          set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -2669,6 +2677,8 @@ class TestScriptDeprecatedValidation:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
+
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main,
@@ -2733,6 +2743,8 @@ class TestScriptDeprecatedValidation:
                                                                                          set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -3097,6 +3109,8 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
+
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
@@ -3153,6 +3167,8 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
+
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
@@ -3201,6 +3217,8 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
+
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
@@ -3241,6 +3259,8 @@ class TestValidationUsingGit:
                                                                                          set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -3324,6 +3344,8 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
+
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
@@ -3364,6 +3386,8 @@ class TestValidationUsingGit:
                                                                                          set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -3412,6 +3436,8 @@ class TestValidationUsingGit:
                                                                                          set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)

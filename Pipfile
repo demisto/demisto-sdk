@@ -54,6 +54,8 @@ python-dotenv = "*"
 importlib-resources = "*"
 dictdiffer = "*"
 setuptools = "*"
+markupsafe = "==2.0.1"
+imagesize = "*"
 
 [dev-packages]
 mitmproxy = "==5.1.0"

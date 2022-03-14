@@ -51,7 +51,7 @@ class ReleaseNotesChecker:
 
     BANNED_TEMPLATES = {
         'maintenance and stability enhancements.',
-        'stability enhancements and maintenance.',
+        'stability and maintenance enhancements.',
     }
 
     def __init__(self, rn_file_path: str = None, rn_file_content: List = [], template_examples: bool = False):
@@ -112,7 +112,7 @@ class ReleaseNotesChecker:
                                     'For more information run: `demisto-sdk doc-review --templates` or view our '
                                     'documentation at: https://xsoar.pan.dev/docs/documentation/release-notes')
             if self.check_if_using_banned_template(line):
-                self.add_note(line, 'Line is using one of our banned templates, consider changing it to fit our standard.\n'
+                self.add_note(line, 'Line is using one of our banned templates, please change it to fit our standard.\n'
                                     'For more information run: `demisto-sdk doc-review --templates` or view our '
                                     'documentation at: https://xsoar.pan.dev/docs/documentation/release-notes')
 

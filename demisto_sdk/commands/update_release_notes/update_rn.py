@@ -461,7 +461,8 @@ class UpdateRN:
                                  f"then consider bumping to a new Minor version.")
             new_version = '.'.join(version)
         elif self.update_type == 'maintenance':
-            raise ValueError("The *maintenance* flag is depracetad. Please use the *revision* option. ")
+            raise ValueError("The *maintenance* option is no longer supported."
+                             " Please use the \"revision\" option and make sure to provide informative release notes.")
         if pre_release:
             new_version = new_version + '_prerelease'
         data_dictionary['currentVersion'] = new_version

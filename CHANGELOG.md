@@ -14,8 +14,8 @@
 * Added support for adding test-playbooks to the zip file result in *create-content-artifacts* command for marketplacev2.
 * Fixed an issue in **find-dependencies** where using the argument *-o* without the argument *--all-packs-dependencies* did not print a proper warning.
 * Added a **validate** check to prevent deletion of files whose deletion is not supported by the XSOAR marketplace.
-* Removed support for the flag *maintenance* in the command **update-release-notes**.
-* Added a validation for banned templets in the **doc-review** command.
+* Removed the support in the *maintenance* option of the *-u* flag in the **update-release-notes** command.
+* Added validation for forbidden words and phrases in the **doc-review** command.
 
 # 1.6.1
 * Added the '--use-packs-known-words' argument to the **doc-review** command

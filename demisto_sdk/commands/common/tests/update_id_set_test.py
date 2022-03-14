@@ -10,14 +10,8 @@ import pytest
 
 import demisto_sdk.commands.common.tools as tools
 import demisto_sdk.commands.common.update_id_set as uis
-from demisto_sdk.commands.common.constants import (CORRELATION_RULES_DIR,
-                                                   DEFAULT_JOB_FROM_VERSION,
-                                                   JOBS_DIR,
-                                                   MODELING_RULES_DIR,
-                                                   PARSING_RULES_DIR,
-                                                   TRIGGER_DIR,
-                                                   XSIAM_DASHBOARDS_DIR,
-                                                   XSIAM_REPORTS_DIR, FileType,
+from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
+                                                   JOBS_DIR, FileType,
                                                    MarketplaceVersions)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
@@ -2856,7 +2850,8 @@ class TestCorrelationRules:
             - Verify result as expeted.
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        correlation_rule = pack.create_correlation_rule("correlation_rule_name", {"id": "correlation_rule_id", "name": "correlation_rule_name", "alert_category": ""})
+        correlation_rule = pack.create_correlation_rule(
+            "correlation_rule_name", {"id": "correlation_rule_id", "name": "correlation_rule_name", "alert_category": ""})
         res = process_general_items(correlation_rule.path, {pack.name: {}},
                                     MarketplaceVersions.MarketplaceV2.value, True, (FileType.CORRELATION_RULE,), get_general_yaml_data)
 
@@ -2904,7 +2899,6 @@ class TestXSIAMDashboards:
         assert xsiam_dashboard_result['file_path'] == xsiam_dashboard.path
         assert xsiam_dashboard_result['pack'] == pack.name
 
-
         assert f'adding {xsiam_dashboard._file_path} to id_set' in captured.out
 
 
@@ -2936,7 +2930,6 @@ class TestXSIAMReports:
         assert xsiam_report_result['file_path'] == xsiam_report.path
         assert xsiam_report_result['pack'] == pack.name
 
-
         assert f'adding {xsiam_report._file_path} to id_set' in captured.out
 
 
@@ -2967,7 +2960,6 @@ class TestTriggers:
         assert trigger_result['name'] == trigger._file_path.parts[-1].split('.')[0]
         assert trigger_result['file_path'] == trigger.path
         assert trigger_result['pack'] == pack.name
-
 
         assert f'adding {trigger._file_path} to id_set' in captured.out
 

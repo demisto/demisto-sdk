@@ -1894,7 +1894,7 @@ def openapi_codegen(**kwargs):
 @click.option(
     '-u',
     '--use-retries',
-    type=bool,
+    is_flag=True,
     help='Should use retries mechanism or not (if test-playbook fails, it will execute it again few times and '
          'determine success according to most of the runs',
     default=False)

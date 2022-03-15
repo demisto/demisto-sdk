@@ -451,7 +451,8 @@ class UpdateRN:
             version[2] = '0'
             new_version = '.'.join(version)
         # We validate the input via click
-        elif self.update_type in ['revision', 'maintenance', 'documentation']:
+
+        elif self.update_type in ['revision', 'documentation']:
             version = current_version.split('.')
             version[2] = str(int(version[2]) + 1)
             if int(version[2]) > 99:
@@ -459,6 +460,9 @@ class UpdateRN:
                                  f"Please verify the currentVersion is correct. If it is, "
                                  f"then consider bumping to a new Minor version.")
             new_version = '.'.join(version)
+        elif self.update_type == 'maintenance':
+            raise ValueError("The *maintenance* option is no longer supported."
+                             " Please use the \"revision\" option and make sure to provide informative release notes.")
         if pre_release:
             new_version = new_version + '_prerelease'
         data_dictionary['currentVersion'] = new_version
@@ -565,9 +569,7 @@ class UpdateRN:
                 rn_desc += '\n'
             else:
                 rn_desc = f'##### {content_name}\n'
-                if self.update_type == 'maintenance':
-                    rn_desc += '- Maintenance and stability enhancements.\n'
-                elif self.update_type == 'documentation':
+                if self.update_type == 'documentation':
                     rn_desc += '- Documentation and metadata improvements.\n'
                 else:
                     rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'

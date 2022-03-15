@@ -24,7 +24,7 @@ FEED_REQUIRED_PARAMS_STRUCTURE = [dict(required_param.get('must_equal'), **requi
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None, quite_bc=False):
-    # type: (Optional[str], Optional[dict], Optional[dict]) -> StructureValidator
+    # type: (Optional[str], Optional[dict], Optional[dict], Optional[bool]) -> StructureValidator
     with patch.object(StructureValidator, '__init__', lambda a, b: None):
         structure = StructureValidator(file_path)
         structure.is_valid = True
@@ -844,7 +844,6 @@ class TestIntegrationValidator:
         Then
             - an integration with an invalid file path is invalid.
         """
-
         structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
         validator = IntegrationValidator(structure_validator)
         validator.file_path = 'Packs/VirusTotal/Integrations/VirusTotal/integration-VirusTotal_5.5.yml'
@@ -1057,6 +1056,17 @@ class TestIsFetchParamsExist:
         self.validator.current_file['configuration'] = [t for t in self.validator.current_file['configuration']
                                                         if t['name'] != 'incidentType']
         assert self.validator.is_valid_fetch() is False, 'is_valid_fetch() returns True instead False'
+
+    def test_missing_max_fetch_text(self, capsys):
+        # missing param in configuration
+        self.validator.current_file['configuration'] = [t for t in self.validator.current_file['configuration']
+                                                        if t['name'] != 'incidentType']
+        assert self.validator.is_valid_fetch() is False
+        captured = capsys.readouterr()
+        out = captured.out
+        print(out)
+        assert "display: Incident type" not in out
+        assert '''A required parameter "incidentType" is missing from the YAML file.''' in out
 
     def test_missing_field(self):
         # missing param
@@ -1396,3 +1406,37 @@ class TestisContextChanged:
             res = validator.is_context_correct_in_readme()
             assert res == expected
         patcher.stop()
+
+    README_TEST_DATA = [(False, False, True),
+                        (False, True, True),
+                        (True, False, False),
+                        (True, True, True),
+                        ]
+
+    @pytest.mark.parametrize("remove_readme, validate_all, expected_result", README_TEST_DATA)
+    @pytest.mark.parametrize("unified", [True, False])
+    def test_validate_readme_exists(self, repo, unified, remove_readme, validate_all, expected_result):
+        """
+              Given:
+                  - An integration yml that was added or modified to validate
+
+              When:
+                    All the tests occur twice for unified integrations = [True - False]
+                  - The integration is missing a readme.md file in the same folder
+                  - The integration has a readme.md file in the same folder
+                  - The integration is missing a readme.md file in the same folder but has not been changed or added
+                      (This check is for backward compatibility)
+
+              Then:
+                  - Ensure readme exists and validation fails
+                  - Ensure readme exists and validation passes
+                  - Ensure readme exists and validation passes
+        """
+        read_me_pack = repo.create_pack('README_test')
+        integration = read_me_pack.create_integration('integration1', create_unified=unified)
+
+        structure_validator = StructureValidator(integration.yml.path)
+        integration_validator = IntegrationValidator(structure_validator, validate_all=validate_all)
+        if remove_readme:
+            os.remove(integration.readme.path)
+        assert integration_validator.validate_readme_exists(integration_validator.validate_all) is expected_result

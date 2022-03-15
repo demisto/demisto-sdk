@@ -798,7 +798,7 @@ class TestFormatting:
 
         auth_token = 'token'
         mocker.patch.object(DockerImageValidator, 'docker_auth', return_value=auth_token)
-
+        mocker.patch.object(BaseUpdateYML, 'is_old_file', return_value=False)
         requests_mock.get('https://hub.docker.com/v2/repositories/error/tags', json={"detail": "Object not found"},
                           status_code=404)
         requests_mock.get('https://registry-1.docker.io/v2/error/tags/list', json={'error': 'not found'},

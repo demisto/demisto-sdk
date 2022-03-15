@@ -43,7 +43,7 @@ class TestGitContentConfig:
             Validate the correct repo configuration got back
         """
         mocker.patch.object(GitContentConfig,
-                            '_search_gitlab_id',
+                            '_search_gitlab_repo',
                             return_value=None)
         mocker.patch.object(Repo, 'remote', return_value=Urls([url]))
         requests_mock.get(f'https://api.github.com/repos/{repo_name}')
@@ -90,7 +90,7 @@ class TestGitContentConfig:
             Validate the correct repo configuration got back
         """
         mocker.patch.object(GitContentConfig,
-                            '_search_gitlab_id',
+                            '_search_gitlab_repo',
                             return_value=None)
         custom_github = 'my-own-github-url.com'
         repo_name = 'org/repo'
@@ -126,7 +126,7 @@ class TestGitContentConfig:
             Validate we got back original content
         """
         mocker.patch.object(GitContentConfig,
-                            '_search_gitlab_id',
+                            '_search_gitlab_repo',
                             return_value=None)
         custom_github = 'my-own-github-url.com'
         repo_name = 'org/repo'
@@ -148,7 +148,7 @@ class TestGitContentConfig:
             Validate we got back original content
         """
         mocker.patch.object(GitContentConfig,
-                            '_search_gitlab_id',
+                            '_search_gitlab_repo',
                             return_value=None)
         url = 'https://code.pan.run/xsoar/very-private-repo'
         mocker.patch.object(Repo, 'remote', return_value=Urls([url]))
@@ -174,7 +174,7 @@ class TestGitContentConfig:
         mocker.patch.object(Repo, 'remote', return_value=Urls([url]))
 
         mocker.patch.object(GitContentConfig,
-                            '_search_gitlab_id',
+                            '_search_gitlab_repo',
                             return_value=None)
         git_config = GitContentConfig()
         # for invalid response should return the official content repo
@@ -265,7 +265,7 @@ class TestGitContentConfig:
         assert git_config.base_api == f'https://raw.githubusercontent.com/{custom_repo_name}'
 
         mocker.patch.object(GitContentConfig,
-                            '_search_gitlab_id',
+                            '_search_gitlab_repo',
                             return_value=('gitlab.com', 3))
         git_config = GitContentConfig(custom_repo_name, git_provider=GitProvider.GitLab)
         assert git_config.current_repository == custom_repo_name

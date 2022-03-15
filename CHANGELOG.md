@@ -30,6 +30,7 @@
 * Added warning when inferred files are missing.
 * Added to **validate** a validation for integration image dimensions, which should be 120x50px.
 * Improved an error in the **validate** command to better differentiate between the case where a required fetch parameter is malformed or missing.
+* Added support for new XSIAM entities in **create-content-artifacts** command.
 
 # 1.6.0
 * Fixed an issue in the **create-id-set** command where similar items from different marketplaces were reported as duplicated.

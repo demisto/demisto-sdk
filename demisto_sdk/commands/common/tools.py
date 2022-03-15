@@ -45,9 +45,9 @@ from demisto_sdk.commands.common.constants import (
     PACKS_README_FILE_NAME, PARSING_RULES_DIR, PLAYBOOKS_DIR,
     PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX,
-    WIDGETS_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_ONLY_ENTITIES, XSIAM_REPORTS_DIR, XSOAR_CONFIG_FILE,
-    FileType, FileTypeToIDSetKeys, GitContentConfig, IdSetKeys,
-    MarketplaceVersions, urljoin)
+    WIDGETS_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_ONLY_ENTITIES, XSIAM_REPORTS_DIR,
+    XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys, GitContentConfig,
+    IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import YAML_Handler
 

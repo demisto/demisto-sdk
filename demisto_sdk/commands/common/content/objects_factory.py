@@ -7,12 +7,13 @@ from demisto_sdk.commands.common.content.objects.abstract_objects.general_object
     GeneralObject
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, ChangeLog, Classifier, ClassifierMapper,
-    Connection, Contributors, Dashboard, DocFile, GenericDefinition,
-    GenericField, GenericModule, GenericType, IncidentField, IncidentType,
-    IndicatorField, IndicatorType, Integration, Job, Layout, LayoutsContainer,
-    Lists, OldClassifier, OldIndicatorType, PackIgnore, PackMetaData, Playbook,
-    PreProcessRule, Readme, ReleaseNote, ReleaseNoteConfig, Report, Script,
-    SecretIgnore, Widget, ParsingRule, ModelingRule, CorrelationRule, Trigger, XSIAMDashboard, XSIAMReport)
+    Connection, Contributors, CorrelationRule, Dashboard, DocFile,
+    GenericDefinition, GenericField, GenericModule, GenericType, IncidentField,
+    IncidentType, IndicatorField, IndicatorType, Integration, Job, Layout,
+    LayoutsContainer, Lists, ModelingRule, OldClassifier, OldIndicatorType,
+    PackIgnore, PackMetaData, ParsingRule, Playbook, PreProcessRule, Readme,
+    ReleaseNote, ReleaseNoteConfig, Report, Script, SecretIgnore, Trigger,
+    Widget, XSIAMDashboard, XSIAMReport)
 from demisto_sdk.commands.common.content.objects.root_objects import \
     Documentation
 from demisto_sdk.commands.common.tools import find_type

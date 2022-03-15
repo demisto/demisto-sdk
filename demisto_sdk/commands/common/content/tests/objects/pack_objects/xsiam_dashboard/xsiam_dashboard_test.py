@@ -1,4 +1,5 @@
-from demisto_sdk.commands.common.constants import XSIAM_DASHBOARDS_DIR, PACKS_DIR
+from demisto_sdk.commands.common.constants import (PACKS_DIR,
+                                                   XSIAM_DASHBOARDS_DIR)
 from demisto_sdk.commands.common.content.objects.pack_objects import \
     XSIAMDashboard
 from demisto_sdk.commands.common.content.objects_factory import \

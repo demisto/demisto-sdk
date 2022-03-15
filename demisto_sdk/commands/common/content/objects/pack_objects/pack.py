@@ -8,6 +8,7 @@ from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,
+                                                   CORRELATION_RULES_DIR,
                                                    DASHBOARDS_DIR,
                                                    DOC_FILES_DIR,
                                                    GENERIC_DEFINITIONS_DIR,
@@ -20,28 +21,26 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INDICATOR_TYPES_DIR,
                                                    INTEGRATIONS_DIR, JOBS_DIR,
                                                    LAYOUTS_DIR, LISTS_DIR,
+                                                   MODELING_RULES_DIR,
                                                    PACK_VERIFY_KEY,
+                                                   PARSING_RULES_DIR,
                                                    PLAYBOOKS_DIR,
                                                    PRE_PROCESS_RULES_DIR,
                                                    RELEASE_NOTES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
-                                                   TOOLS_DIR, WIDGETS_DIR,
-                                                   PARSING_RULES_DIR,
-                                                   MODELING_RULES_DIR,
-                                                   CORRELATION_RULES_DIR,
+                                                   TOOLS_DIR, TRIGGER_DIR,
+                                                   WIDGETS_DIR,
                                                    XSIAM_DASHBOARDS_DIR,
-                                                   XSIAM_REPORTS_DIR,
-                                                   TRIGGER_DIR,
-                                                   FileType)
+                                                   XSIAM_REPORTS_DIR, FileType)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, Classifier, ClassifierMapper, Connection,
-    Contributors, Dashboard, DocFile, GenericDefinition, GenericField,
-    GenericModule, GenericType, IncidentField, IncidentType, IndicatorField,
-    IndicatorType, Integration, Job, LayoutObject, Lists, OldClassifier,
-    PackIgnore, PackMetaData, Playbook, PreProcessRule, Readme, ReleaseNote,
-    ReleaseNoteConfig, Report, Script, SecretIgnore, Widget, ParsingRule,
-    ModelingRule, CorrelationRule, Trigger, XSIAMDashboard, XSIAMReport)
+    Contributors, CorrelationRule, Dashboard, DocFile, GenericDefinition,
+    GenericField, GenericModule, GenericType, IncidentField, IncidentType,
+    IndicatorField, IndicatorType, Integration, Job, LayoutObject, Lists,
+    ModelingRule, OldClassifier, PackIgnore, PackMetaData, ParsingRule,
+    Playbook, PreProcessRule, Readme, ReleaseNote, ReleaseNoteConfig, Report,
+    Script, SecretIgnore, Trigger, Widget, XSIAMDashboard, XSIAMReport)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from demisto_sdk.commands.common.tools import (get_demisto_version,

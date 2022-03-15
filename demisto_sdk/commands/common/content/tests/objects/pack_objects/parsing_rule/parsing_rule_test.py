@@ -1,4 +1,4 @@
-from demisto_sdk.commands.common.constants import PARSING_RULES_DIR, PACKS_DIR
+from demisto_sdk.commands.common.constants import PACKS_DIR, PARSING_RULES_DIR
 from demisto_sdk.commands.common.content.objects.pack_objects import \
     ParsingRule
 from demisto_sdk.commands.common.content.objects_factory import \

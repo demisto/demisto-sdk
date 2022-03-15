@@ -1,4 +1,5 @@
-from demisto_sdk.commands.common.constants import CORRELATION_RULES_DIR, PACKS_DIR
+from demisto_sdk.commands.common.constants import (CORRELATION_RULES_DIR,
+                                                   PACKS_DIR)
 from demisto_sdk.commands.common.content.objects.pack_objects import \
     CorrelationRule
 from demisto_sdk.commands.common.content.objects_factory import \

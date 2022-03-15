@@ -1,4 +1,4 @@
-from demisto_sdk.commands.common.constants import XSIAM_REPORTS_DIR, PACKS_DIR
+from demisto_sdk.commands.common.constants import PACKS_DIR, XSIAM_REPORTS_DIR
 from demisto_sdk.commands.common.content.objects.pack_objects import \
     XSIAMReport
 from demisto_sdk.commands.common.content.objects_factory import \

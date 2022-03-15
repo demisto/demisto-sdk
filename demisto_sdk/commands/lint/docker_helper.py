@@ -13,6 +13,8 @@ from demisto_sdk.commands.common.constants import TYPE_PYTHON
 DOCKER_CLIENT = None
 logger = logging.getLogger('demisto-sdk')
 PATH_OR_STR = Union[Path, str]
+# this will be used to determaiine if the system supports mounts
+CAN_MOUNT_FILES = not os.getenv('CIRCLECI', False)
 
 
 def init_global_docker_client(timeout: int = 60, log_prompt: str = ''):
@@ -93,7 +95,7 @@ class Docker:
 
     @staticmethod
     def create_container(image: str, command: Union[str, List[str]], files_to_push: Optional[List] = None,
-                         environment: Optional[Dict] = None, mount_files=True, **kwargs) -> docker.models.containers.Container:
+                         environment: Optional[Dict] = None, mount_files: bool = CAN_MOUNT_FILES, **kwargs) -> docker.models.containers.Container:
         """
         Creates a container and pushing requested files to the container.
         """

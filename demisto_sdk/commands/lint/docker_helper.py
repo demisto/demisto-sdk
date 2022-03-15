@@ -37,7 +37,8 @@ def copy_file(cp_from: PATH_OR_STR, cp_to: PATH_OR_STR) -> Path:
     cp_from = Path(cp_from)
     cp_to = Path(cp_to)
     cp_to.touch()
-    cp_to.write_bytes(cp_from.read_bytes() if cp_from.exists() else b'')
+    if cp_from.exists():
+        cp_to.write_bytes(cp_from.read_bytes())
     return cp_to
 
 
@@ -45,6 +46,9 @@ class Docker:
 
     @staticmethod
     def pull_image(image: str) -> docker.models.images.Image:
+        """
+        Pulling an image if it dosnt exist localy.
+        """
         docker_client = init_global_docker_client()
         try:
             return docker_client.images.get(image)
@@ -90,6 +94,9 @@ class Docker:
     @staticmethod
     def create_container(image: str, command: Union[str, List[str]], files_to_push: Optional[List] = None,
                          environment: Optional[Dict] = None, mount_files=True, **kwargs) -> docker.models.containers.Container:
+        """
+        Creates a container and pushing requested files to the container.
+        """
         kwargs = kwargs or {}
         if files_to_push and mount_files:
             kwargs['mounts'] = Docker.get_mounts(files_to_push)

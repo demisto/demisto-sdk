@@ -715,8 +715,8 @@ class Linter:
 
     def _docker_remove_container(self, container_name: str):
         try:
-            container_obj = self._docker_client.containers.get(container_name)
-            container_obj.remove(force=True)
+            container = self._docker_client.containers.get(container_name)
+            container.remove(force=True)
         except docker.errors.NotFound:
             pass
         except requests.exceptions.ChunkedEncodingError as err:
@@ -746,7 +746,7 @@ class Linter:
         exit_code = SUCCESS
         output = ""
         try:
-            container_obj: docker.models.containers.Container = Docker.create_container(
+            container: docker.models.containers.Container = Docker.create_container(
                 name=container_name,
                 image=test_image,
                 command=[
@@ -759,14 +759,14 @@ class Linter:
                 mount_files=False,
                 environment=self._facts["env_vars"],
             )
-            container_obj.start()
-            stream_docker_container_output(container_obj.logs(stream=True))
+            container.start()
+            stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish
-            container_status = container_obj.wait(condition="exited")
+            container_status = container.wait(condition="exited")
             # Get container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs
-            container_log = container_obj.logs().decode("utf-8")
+            container_log = container.logs().decode("utf-8")
             logger.info(f"{log_prompt} - exit-code: {container_exit_code}")
             if container_exit_code in [1, 2]:
                 # 1-fatal message issued
@@ -789,10 +789,10 @@ class Linter:
             # Keeping container if needed or remove it
             if keep_container:
                 print(f"{log_prompt} - container name {container_name}")
-                container_obj.commit(repository=container_name.lower(), tag="pylint")
+                container.commit(repository=container_name.lower(), tag="pylint")
             else:
                 try:
-                    container_obj.remove(force=True)
+                    container.remove(force=True)
                 except docker.errors.NotFound as e:
                     logger.critical(f"{log_prompt} - Unable to delete container - {e}")
         except Exception as e:
@@ -828,15 +828,15 @@ class Linter:
             cov = '' if no_coverage else self._pack_abs_dir.stem
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
-            container_obj: docker.models.containers.Container = Docker.create_container(
+            container = Docker.create_container(
                 name=container_name, image=test_image, user=f"{uid}:4000", mount_files=False,
                 command=[build_pytest_command(test_xml=test_xml, json=True, cov=cov)],
                 environment=self._facts["env_vars"], files_to_push=[('/devwork/.', self._pack_abs_dir)]
             )
-            container_obj.start()
-            stream_docker_container_output(container_obj.logs(stream=True))
+            container.start()
+            stream_docker_container_output(container.logs(stream=True))
             # Waiting for container to be finished
-            container_status: dict = container_obj.wait(condition="exited")
+            container_status: dict = container.wait(condition="exited")
             # Getting container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs
@@ -847,7 +847,7 @@ class Linter:
                 # 2-Test execution was interrupted by the user
                 # 5-No tests were collected
                 if test_xml:
-                    test_data_xml = get_file_from_container(container_obj=container_obj,
+                    test_data_xml = get_file_from_container(container_obj=container,
                                                             container_path="/devwork/report_pytest.xml")
                     xml_apth = Path(test_xml) / f'{self._pack_name}_pytest.xml'
                     with open(file=xml_apth, mode='bw') as f:
@@ -855,14 +855,14 @@ class Linter:
 
                 if not no_coverage:
                     cov_file_path = os.path.join(self._pack_abs_dir, '.coverage')
-                    cov_data = get_file_from_container(container_obj=container_obj,
+                    cov_data = get_file_from_container(container_obj=container,
                                                        container_path="/devwork/.coverage")
                     cov_data = cov_data if isinstance(cov_data, bytes) else cov_data.encode()
                     with open(cov_file_path, 'wb') as coverage_file:
                         coverage_file.write(cov_data)
                     coverage_report_editor(cov_file_path, os.path.join(self._pack_abs_dir, f'{self._pack_abs_dir.stem}.py'))
 
-                test_json = json.loads(get_file_from_container(container_obj=container_obj,
+                test_json = json.loads(get_file_from_container(container_obj=container,
                                                                container_path="/devwork/report_pytest.json",
                                                                encoding="utf-8"))
                 for test in test_json.get('report', {}).get("tests"):
@@ -872,7 +872,7 @@ class Linter:
                     logger.info(f"{log_prompt} - Successfully finished")
                     exit_code = SUCCESS
                 elif container_exit_code in [2]:
-                    output = container_obj.logs().decode('utf-8')
+                    output = container.logs().decode('utf-8')
                     exit_code = FAIL
                 else:
                     logger.error(f"{log_prompt} - Finished, errors found")
@@ -882,7 +882,7 @@ class Linter:
                 # 4-pytest command line usage error
                 logger.critical(f"{log_prompt} - Usage error")
                 exit_code = RERUN
-                output = container_obj.logs().decode('utf-8')
+                output = container.logs().decode('utf-8')
             else:
                 # Any other container exit code
                 logger.error(f"{log_prompt} - Finished, docker container error found ({container_exit_code})")
@@ -890,10 +890,10 @@ class Linter:
             # Remove container if not needed
             if keep_container:
                 print(f"{log_prompt} - Container name {container_name}")
-                container_obj.commit(repository=container_name.lower(), tag="pytest")
+                container.commit(repository=container_name.lower(), tag="pytest")
             else:
                 try:
-                    container_obj.remove(force=True)
+                    container.remove(force=True)
                 except docker.errors.NotFound as e:
                     logger.critical(f"{log_prompt} - Unable to remove container {e}")
         except (docker.errors.ImageNotFound, docker.errors.APIError) as e:
@@ -917,10 +917,10 @@ class Linter:
         logger.info(f"{log_prompt} - Start")
         container_name = f"{self._pack_name}-pwsh-analyze"
         # Check if previous run left container a live if it do, we remove it
-        container_obj: docker.models.containers.Container
+        container: docker.models.containers.Container
         try:
-            container_obj = self._docker_client.containers.get(container_name)
-            container_obj.remove(force=True)
+            container = self._docker_client.containers.get(container_name)
+            container.remove(force=True)
         except docker.errors.NotFound:
             pass
 
@@ -930,20 +930,20 @@ class Linter:
         try:
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
-            container_obj = Docker.create_container(name=container_name, image=test_image,
-                                                    mount_files=False, user=f"{uid}:4000", environment=self._facts["env_vars"],
-                                                    files_to_push=[('/devwork/.', self._pack_abs_dir)],
-                                                    command=build_pwsh_analyze_command(
-                                                        self._facts["lint_files"][0])
-                                                    )
-            container_obj.start()
-            stream_docker_container_output(container_obj.logs(stream=True))
+            container = Docker.create_container(name=container_name, image=test_image,
+                                                mount_files=False, user=f"{uid}:4000", environment=self._facts["env_vars"],
+                                                files_to_push=[('/devwork/.', self._pack_abs_dir)],
+                                                command=build_pwsh_analyze_command(
+                                                    self._facts["lint_files"][0])
+                                                )
+            container.start()
+            stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish
-            container_status = container_obj.wait(condition="exited")
+            container_status = container.wait(condition="exited")
             # Get container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs
-            container_log = container_obj.logs().decode("utf-8")
+            container_log = container.logs().decode("utf-8")
             logger.info(f"{log_prompt} - exit-code: {container_exit_code}")
             if container_exit_code:
                 # 1-fatal message issued
@@ -956,10 +956,10 @@ class Linter:
             # Keeping container if needed or remove it
             if keep_container:
                 print(f"{log_prompt} - container name {container_name}")
-                container_obj.commit(repository=container_name.lower(), tag="pwsh_analyze")
+                container.commit(repository=container_name.lower(), tag="pwsh_analyze")
             else:
                 try:
-                    container_obj.remove(force=True)
+                    container.remove(force=True)
                 except docker.errors.NotFound as e:
                     logger.critical(f"{log_prompt} - Unable to delete container - {e}")
         except (docker.errors.ImageNotFound, docker.errors.APIError, requests.exceptions.ReadTimeout) as e:
@@ -999,18 +999,18 @@ class Linter:
         try:
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
-            container_obj: docker.models.containers.Container = Docker.create_container(
+            container: docker.models.containers.Container = Docker.create_container(
                 files_to_push=[('/devwork/.', self._pack_abs_dir)], mount_files=False,
                 name=container_name, image=test_image, command=build_pwsh_test_command(),
                 user=f"{uid}:4000", environment=self._facts["env_vars"])
-            container_obj.start()
-            stream_docker_container_output(container_obj.logs(stream=True))
+            container.start()
+            stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish
-            container_status = container_obj.wait(condition="exited")
+            container_status = container.wait(condition="exited")
             # Get container exit code
             container_exit_code = container_status.get("StatusCode")
             # Getting container logs
-            container_log = container_obj.logs().decode("utf-8")
+            container_log = container.logs().decode("utf-8")
             logger.info(f"{log_prompt} - exit-code: {container_exit_code}")
             if container_exit_code:
                 # 1-fatal message issued
@@ -1023,10 +1023,10 @@ class Linter:
             # Keeping container if needed or remove it
             if keep_container:
                 print(f"{log_prompt} - container name {container_name}")
-                container_obj.commit(repository=container_name.lower(), tag='pwsh_test')
+                container.commit(repository=container_name.lower(), tag='pwsh_test')
             else:
                 try:
-                    container_obj.remove(force=True)
+                    container.remove(force=True)
                 except docker.errors.NotFound as e:
                     logger.critical(f"{log_prompt} - Unable to delete container - {e}")
         except (docker.errors.ImageNotFound, docker.errors.APIError, requests.exceptions.ReadTimeout) as e:

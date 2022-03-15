@@ -1129,7 +1129,7 @@ def get_general_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
 
     if find_type(path) in [FileType.XSIAM_DASHBOARD, FileType.XSIAM_REPORT]:
-        json_data = json_data.get('dashboards_data', {})
+        json_data = json_data.get('dashboards_data', [{}])[0]
 
     id_ = json_data.get('id')
     brandname = json_data.get('brandName', '')
@@ -1169,12 +1169,11 @@ def get_general_xsiam_yaml_data(path: str, packs: Dict[str, Dict] = None):
     name = yaml_data.get('name', '')
     fromversion = yaml_data.get('fromxsiamversion')
     toversion = yaml_data.get('toxsiamversion')
+    pack = get_pack_name(path)
+    marketplaces = get_item_marketplaces(path, item_data=yaml_data, packs=packs)
 
     if not id_ and 'marketplacev2' in marketplaces:
         id_ = f"{pack}-{name}"
-
-    pack = get_pack_name(path)
-    marketplaces = get_item_marketplaces(path, item_data=yaml_data, packs=packs)
 
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
     return {id_: data}

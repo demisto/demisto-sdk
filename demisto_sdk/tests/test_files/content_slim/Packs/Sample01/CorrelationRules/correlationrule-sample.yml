@@ -1,0 +1,18 @@
+alert_category: PERSISTENCE
+alert_description: host $agent_id reached $dest_count destinations
+alert_fields:
+  { 'hash': 'the_hash_field_in_my_query' }
+dataset: alerts
+description: My descirption
+drilldown_query_timeframe: QUERY
+execution_mode: SCHEDULED
+mapping_strategy: CUSTOM
+mitre_defs: { }
+name: My rule name
+search_window: 1 day
+severity: SEV_010_INFO
+suppression_duration: 4 hours
+suppression_enabled: true
+suppression_fields:
+  - MyField1
+  - MyField2

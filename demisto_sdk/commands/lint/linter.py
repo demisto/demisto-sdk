@@ -43,7 +43,7 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                stream_docker_container_output)
 
 logger = logging.getLogger('demisto-sdk')
-CAN_MOUNT_FILES = os.getenv('CIRCLECI', False)
+CAN_MOUNT_FILES = not os.getenv('CIRCLECI', False)
 
 
 class Linter:

@@ -43,6 +43,7 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                stream_docker_container_output)
 
 logger = logging.getLogger('demisto-sdk')
+CAN_MOUNT_FILES = os.getenv('CIRCLECI', False)
 
 
 class Linter:
@@ -754,9 +755,8 @@ class Linter:
                         self._facts["lint_files"], docker_version=self._facts.get('python_version'))
                 ],
                 user=f"{os.getuid()}:4000",
-                detach=True,
-                files_to_push=[('/devwork/.', self._pack_abs_dir)],
-                mount_files=False,
+                files_to_push=[('/devwork', self._pack_abs_dir)],
+                mount_files=CAN_MOUNT_FILES,
                 environment=self._facts["env_vars"],
             )
             container.start()
@@ -829,9 +829,9 @@ class Linter:
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container = Docker.create_container(
-                name=container_name, image=test_image, user=f"{uid}:4000", mount_files=False,
+                name=container_name, image=test_image, user=f"{uid}:4000", mount_files=CAN_MOUNT_FILES,
                 command=[build_pytest_command(test_xml=test_xml, json=True, cov=cov)],
-                environment=self._facts["env_vars"], files_to_push=[('/devwork/.', self._pack_abs_dir)]
+                environment=self._facts["env_vars"], files_to_push=[('/devwork', self._pack_abs_dir)]
             )
             container.start()
             stream_docker_container_output(container.logs(stream=True))
@@ -931,8 +931,8 @@ class Linter:
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container = Docker.create_container(name=container_name, image=test_image,
-                                                mount_files=False, user=f"{uid}:4000", environment=self._facts["env_vars"],
-                                                files_to_push=[('/devwork/.', self._pack_abs_dir)],
+                                                mount_files=CAN_MOUNT_FILES, user=f"{uid}:4000", environment=self._facts["env_vars"],
+                                                files_to_push=[('/devwork', self._pack_abs_dir)],
                                                 command=build_pwsh_analyze_command(
                                                     self._facts["lint_files"][0])
                                                 )
@@ -1000,7 +1000,7 @@ class Linter:
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container: docker.models.containers.Container = Docker.create_container(
-                files_to_push=[('/devwork/.', self._pack_abs_dir)], mount_files=False,
+                files_to_push=[('/devwork', self._pack_abs_dir)], mount_files=CAN_MOUNT_FILES,
                 name=container_name, image=test_image, command=build_pwsh_test_command(),
                 user=f"{uid}:4000", environment=self._facts["env_vars"])
             container.start()

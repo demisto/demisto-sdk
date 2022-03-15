@@ -126,7 +126,8 @@ class Docker:
             3. committing the docker changes (installed packages) to a new local image
         """
         if not CAN_MOUNT_FILES:
-            raise docker.errors.BuildError("Can't create a container in this environment rerunning the test after 5 min might work.")
+            raise docker.errors.BuildError(
+                reason="Can't create a container in this environment rerunning the test after 5 min might work.", build_log='')
         changes = ['WORKDIR /devwork']
         changes.append('ENTRYPOINT ["/bin/sh", "-c"]') if container_type == TYPE_PYTHON else None
         script = f'{container_type}_image.sh'

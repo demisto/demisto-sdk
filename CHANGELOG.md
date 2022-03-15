@@ -20,6 +20,7 @@
 * Added a **validate** check to prevent deletion of files whose deletion is not supported by the XSOAR marketplace.
 * Removed the support in the *maintenance* option of the *-u* flag in the **update-release-notes** command.
 * Added validation for forbidden words and phrases in the **doc-review** command.
+* Added a retries mechanism to the **test-content** command to stabilize the build process.
 
 # 1.6.1
 * Added the '--use-packs-known-words' argument to the **doc-review** command

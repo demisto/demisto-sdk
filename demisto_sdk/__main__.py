@@ -1891,6 +1891,13 @@ def openapi_codegen(**kwargs):
     '--server-version',
     help='Which server version to run the tests on(Valid only when using AMI)',
     default="NonAMI")
+@click.option(
+    '-u',
+    '--use-retries',
+    is_flag=True,
+    help='Should use retries mechanism or not (if test-playbook fails, it will execute it again few times and '
+         'determine success according to most of the runs',
+    default=False)
 def test_content(**kwargs):
     """Configure instances for the integration needed to run tests_to_run tests.
     Run test module on each integration.

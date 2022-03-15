@@ -1127,13 +1127,20 @@ def parse_dashboard_or_report_data(path: str, data_file_json: Dict, all_layouts:
 
 def get_general_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
-    id_ = json_data.get('id', '-')
+
+    if find_type(path) in [FileType.XSIAM_DASHBOARD, FileType.XSIAM_REPORT]:
+        json_data = json_data.get('dashboards_data', {})
+
+    id_ = json_data.get('id')
     brandname = json_data.get('brandName', '')
     name = json_data.get('name', '')
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
     marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
+
+    if not id_ and 'marketplacev2' in marketplaces:
+        id_ = f"{pack}-{name}"
 
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
     if brandname:  # for classifiers
@@ -1143,7 +1150,7 @@ def get_general_data(path: str, packs: Dict[str, Dict] = None):
 
 def get_trigger_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
-    id_ = json_data.get('RULE_ID', '-')
+    id_ = json_data.get('RULE_ID')
     name = json_data.get('name', '')
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
@@ -1155,13 +1162,16 @@ def get_trigger_data(path: str, packs: Dict[str, Dict] = None):
     return {id_: data}
 
 
-def get_general_yaml_data(path: str, packs: Dict[str, Dict] = None):
+def get_general_xsiam_yaml_data(path: str, packs: Dict[str, Dict] = None):
     yaml_data = get_yaml(path)
 
-    id_ = yaml_data.get('id', '-')
+    id_ = yaml_data.get('id')
     name = yaml_data.get('name', '')
-    fromversion = yaml_data.get('fromversion')
-    toversion = yaml_data.get('toversion')
+    fromversion = yaml_data.get('fromxsiamversion')
+    toversion = yaml_data.get('toxsiamversion')
+
+    if not id_ and 'marketplacev2' in marketplaces:
+        id_ = f"{pack}-{name}"
 
     pack = get_pack_name(path)
     marketplaces = get_item_marketplaces(path, item_data=yaml_data, packs=packs)
@@ -2343,7 +2353,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
                                                                            FileType.PARSING_RULE,),
-                                                                       data_extraction_func=get_general_yaml_data,
+                                                                       data_extraction_func=get_general_xsiam_yaml_data,
                                                                        ),
                                                                get_general_paths(PARSING_RULES_DIR,
                                                                                  pack_to_create)):
@@ -2365,7 +2375,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
                                                                            FileType.MODELING_RULE,),
-                                                                       data_extraction_func=get_general_yaml_data,
+                                                                       data_extraction_func=get_general_xsiam_yaml_data,
                                                                        ),
                                                                get_general_paths(MODELING_RULES_DIR,
                                                                                  pack_to_create)):
@@ -2387,7 +2397,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
                                                                            FileType.CORRELATION_RULE,),
-                                                                       data_extraction_func=get_general_yaml_data,
+                                                                       data_extraction_func=get_general_xsiam_yaml_data,
                                                                        ),
                                                                get_general_paths(CORRELATION_RULES_DIR,
                                                                                  pack_to_create)):

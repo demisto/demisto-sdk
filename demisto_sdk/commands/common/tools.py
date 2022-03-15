@@ -38,14 +38,14 @@ from demisto_sdk.commands.common.constants import (
     DOC_FILES_DIR, ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR,
     INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
-    MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME,
+    MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME, MODELING_RULES_DIR,
     OFFICIAL_CONTENT_ID_SET_PATH, PACK_METADATA_IRON_BANK_TAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
     PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PARSING_RULES_DIR, PLAYBOOKS_DIR,
     PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX,
-    WIDGETS_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_ONLY_ENTITIES, XSOAR_CONFIG_FILE,
+    WIDGETS_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_ONLY_ENTITIES, XSIAM_REPORTS_DIR, XSOAR_CONFIG_FILE,
     FileType, FileTypeToIDSetKeys, GitContentConfig, IdSetKeys,
     MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -1162,7 +1162,8 @@ def find_type(
             if PARSING_RULES_DIR in Path(path).parts:
                 return FileType.PARSING_RULE
 
-            return FileType.MODELING_RULE
+            if MODELING_RULES_DIR in Path(path).parts:
+                return FileType.MODELING_RULE
 
         if 'alert_category' in _dict:
             return FileType.CORRELATION_RULE
@@ -1227,7 +1228,8 @@ def find_type(
             if XSIAM_DASHBOARDS_DIR in Path(path).parts:
                 return FileType.XSIAM_DASHBOARD
 
-            return FileType.XSIAM_REPORT
+            if XSIAM_REPORTS_DIR in Path(path).parts:
+                return FileType.XSIAM_REPORT
 
         if 'RULE_ID' in _dict:
             return FileType.TRIGGER

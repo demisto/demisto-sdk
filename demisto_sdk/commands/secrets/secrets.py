@@ -281,7 +281,7 @@ class SecretsValidator(object):
             if find_type(file_path) in [FileType.PYTHON_FILE, FileType.README, FileType.POWERSHELL_FILE]:
                 yml_file_contents = self.retrieve_related_yml(os.path.dirname(file_path))
         except ValueError as e:
-            if "has a structure issue of file type yml. Error was: while constructing a mapping" in e:
+            if "has a structure issue of file type yml. Error was: while constructing a mapping" in str(e):
                 with io.open(file_path, mode="r", encoding="utf-8") as matching_yml_file:
                     yml_file_contents = matching_yml_file.read()
         return yml_file_contents

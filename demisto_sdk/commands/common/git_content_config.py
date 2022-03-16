@@ -17,7 +17,7 @@ from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.git_util import GitUtil
 
-logger = logging.getLogger(__name__)
+from logger import logger
 
 
 class GitProvider(enum.Enum):
@@ -70,8 +70,8 @@ class GitContentConfig:
             git_provider = GitProvider.GitLab
 
         self.credentials = GitCredentials()
-        parsed_hostname = urlparse(repo_hostname).hostname
-        self.repo_hostname = parsed_hostname or repo_hostname or os.getenv(GitContentConfig.ENV_REPO_HOSTNAME_NAME)
+        hostname = urlparse(repo_hostname).hostname
+        self.repo_hostname = hostname or repo_hostname or os.getenv(GitContentConfig.ENV_REPO_HOSTNAME_NAME)
         self.git_provider = git_provider
         if not self.repo_hostname:
             self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT if git_provider == GitProvider.GitHub else "gitlab.com"
@@ -171,7 +171,7 @@ class GitContentConfig:
         if not github_hostname or not repo_name:
             return None
         api_host = github_hostname if github_hostname != GitContentConfig.GITHUB_USER_CONTENT else 'github.com'
-        if api_host == 'github.com':
+        if api_host.lower() == 'github.com':
             github_hostname = GitContentConfig.GITHUB_USER_CONTENT
         try:
             r = requests.get(f'https://api.{api_host}/repos/{repo_name}',
@@ -188,6 +188,7 @@ class GitContentConfig:
                              timeout=10)
             if r.ok:
                 return github_hostname, repo_name
+            logger.debug('Could not access GitHub api in `_search_github_repo`')
             return None
         except requests.exceptions.ConnectionError as e:
             logger.debug(str(e), exc_info=True)
@@ -237,6 +238,7 @@ class GitContentConfig:
                 if gitlab_id is None:
                     return None
                 return gitlab_hostname, gitlab_id
+            logger.debug('Could not access GitLab api in `_search_gitlab_repo`')
             return None
 
         except (requests.exceptions.ConnectionError, json.JSONDecodeError, AssertionError) as e:

@@ -70,7 +70,7 @@ class Docker:
             try:
                 src = Path(src)
                 if src.exists():
-                    mounts.append(Mount(target, str(src.absolute()), 'bind'))
+                    mounts.append(Mount(target, str(src.absolute()), 'bind', read_only=True))
             except Exception:
                 logger.debug(f'Failed to mount {src} to {target}')
         return mounts
@@ -149,11 +149,12 @@ class Docker:
 
             container = Docker.create_container(
                 image=base_image, files_to_push=files_to_push, command=f'/{script}',
-                environment={'REQUESTS_CA_BUNDLE': '/etc/ssl/certs/ca-certificates.crt'},
                 mount_files=True
             )
             container.start()
-            container.wait(condition="exited")
+            if container.wait(condition="exited").get("StatusCode") != 0:
+                raise docker.errors.BuildError(
+                    reason="Installation script failed to run.", build_log=container.logs())
         repository, tag = image.split(':')
         container.commit(repository=repository, tag=tag, changes=changes)
         return image

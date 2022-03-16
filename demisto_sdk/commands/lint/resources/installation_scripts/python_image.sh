@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
-if [[ -f '/etc/ssl/certs/ca-certificates.crt']]
+if [[ -f '/etc/ssl/certs/ca-certificates.crt' ]]
 then
     set REQUESTS_CA_BUNDLE='/etc/ssl/certs/ca-certificates.crt'
 fi

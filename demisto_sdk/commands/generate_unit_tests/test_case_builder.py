@@ -1,8 +1,9 @@
 import ast as ast_mod
+import json
 import logging
 import os
-from demisto_sdk.commands.common.tools import get_json
-from .klara_extension import ast_name
+from ordered_set import OrderedSet
+from .common import ast_name, extract_outputs_from_command_run
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -20,6 +21,8 @@ class ArgsBuilder:
         self.commands_to_generate = commands_to_generate
         self.input_args = commands_to_generate.get(self.command_name)
         self.build_args()
+
+    # ================= Argument builders =====================
 
     def build_args(self):
         """
@@ -69,6 +72,8 @@ class ArgsBuilder:
         self.global_arg.append(ast_mod.Assign(targets=[ast_name(self.global_arg_name, ast_mod.Store())],
                                               value=ast_mod.List(elts=global_args, ctx=ast_mod.Store())))
 
+    # ================= Decorator builder =====================
+
     def build_decorator(self):
         """
         builds decorator of parametrize.
@@ -78,24 +83,14 @@ class ArgsBuilder:
                             keywords=[])
         self.decorators.append(call)
 
-    def get_mocked_args(self):
-        """
-        Args: command_name: name of the command.
-               directory_path: path to the directory contains the file.
-        Return: mocked command args json from input file.
-        """
-        path = f'{self.directory_path}/inputs/{self.command_name}.json'
-        if os.path.exists(path):
-            self.input_args = get_json(path)
-
 
 class TestCase:
-    def __init__(self, func, directory_path, client_ast, id=0, module=None):
+    def __init__(self, func, directory_path, client_ast, example_dict, id=0, module=None):
         self.asserts = []
         self.func = func
         self.id = id
         self.module = module
-        self.request_mocks = []
+        self.mocks = []
         self.inputs = []
         self.command_call = None
         self.comment = "\n\tWhen:\n\tGiven:\n\tThen:\n\t"
@@ -107,14 +102,17 @@ class TestCase:
         self.client_name = None
         self.decorators = []
         self.global_arg = None
-        self.error_list = []
+        self.examples_dict = example_dict
         self.get_client_name()
         self.instance_dict_parser()
 
     def to_ast(self):
+        """
+        Converting test_case object to ast.
+        """
         body = [ast_mod.Expr(value=ast_mod.Constant(value=self.comment))]
         body.extend(self.inputs)
-        body.extend(self.request_mocks)
+        body.extend(self.mocks)
         body.append(self.command_call)
         body.extend(self.asserts)
         request_mocker = ast_name('requests_mock')
@@ -135,12 +133,16 @@ class TestCase:
         )
         return test_func
 
+    # ================= Mocks builders =====================
+
     def request_mock_ast_builder(self):
         """
             Builds ast nodes of requests mock.
         """
         for call in self.client_func_call:
-            self.request_mocks.append(self.mock_response_ast_builder(call))
+            self.mocks.append(self.load_mock_from_json_ast_builder(f'mock_response_{call}', call))
+            self.mocks.append(self.load_mock_from_json_ast_builder(f'mock_results', str(self.func.name)))
+
             suffix, method = self.get_call_params_from_http_request(call)
             url = f'SERVER_URL + \'{suffix}\'' if suffix is not None else 'SERVER_URL'
 
@@ -151,52 +153,43 @@ class TestCase:
             mock_call = ast_mod.Call(func=attr,
                                      args=[ast_name(url)],
                                      keywords=[ret_val])
-            self.request_mocks.append(ast_mod.Expr(value=mock_call))
+            self.mocks.append(ast_mod.Expr(value=mock_call))
 
-    def mock_response_ast_builder(self, call):
+    def load_mock_from_json_ast_builder(self, name, call):
         """
-        Args: call: name of the client function used in the call.
-               directory_path: path to the outputs containing the mocked response from the API
-        Return: Assign ast node of assignment of the mocked response to the mock_response object.
+        Args: name: name of the object to store the json.
+              call: name of the call, used to decide which file to choose from outputs directory.
+        Return: Assign ast node of assignment of the mocked object.
         """
-        return ast_mod.Assign(targets=[ast_name(f'mock_response_{call}', ctx=ast_mod.Store())],
+        return ast_mod.Assign(targets=[ast_name(name, ctx=ast_mod.Store())],
                               value=ast_mod.Call(func=ast_name('util_load_json'),
                                                  args=[ast_mod.Constant(
                                                      value=f'{self.directory_path}/outputs/{call}.json')],
                                                  keywords=[]))
 
-    def create_command_results_assertions(self):
+    def build_json_file_mocked_command_results(self):
         """
-        Args: keywords: all the params passed to CommandResults object when created.
-        Return: assertion for each of the CommandResults arg.
+        Creates an output file with command line example.
         """
         global logger
+        if (prefix := self.get_context_prefix()) is not None:
+            self.examples_dict.update({'outputs':
+                                           extract_outputs_from_command_run(self.examples_dict.get('outputs'), prefix)})
+            with open(os.path.join(self.directory_path, 'outputs', f'{str(self.func.name)}.json'),
+                      'w') as f:
+                logger.debug(f'Creating mock command results file for {str(self.func.name)}')
+                f.write(json.dumps(self.examples_dict))
+
+    def get_context_prefix(self):
+        """
+        Retrieves context prefix from CommandResults object
+        """
         if returned_value := self.get_return_values():
             keywords = returned_value.keywords
             for keyword in keywords:
-                self.asserts.append(TestCase.create_command_results_assertion(keyword.arg, keyword.value))
-        else:
-            logger.warning('No return values were detected, thus no assertions being generated.')
-
-    def instance_dict_parser(self):
-        """
-        Args: instance_dict: dictionary of the instances built in tree from the parser
-                client_name: name of the client object
-        Returns: args: list of arguments given as inputs to the function
-                 client_call: name of client function to mock
-                 command_result: CommandResults object returned from the command
-        """
-        args_set = set()
-        for instance in self.func.instance_dict:
-            try:
-                func = str(instance.func)
-                if func == 'args.get':
-                    args_set.add(instance.args[0].value)
-                elif self.client_name is not None and func.startswith(self.client_name):
-                    self.client_func_call.append(instance.func.attr)
-            except AttributeError:
-                pass
-        self.args_list = list(args_set)
+                if keyword.arg == 'outputs_prefix':
+                    return keyword.value.value
+        return None
 
     def get_call_params_from_http_request(self, def_name):
         """
@@ -219,42 +212,20 @@ class TestCase:
                         continue
         return suffix, method
 
-    def get_client_name(self):
+    # ================= Assertions builders =====================
+
+    def create_command_results_assertions(self):
         """
-        Args: func: ast node of the relevant function.
-               client_class_name: name of the client class.
-        Return: the name of the local client instance.
+        Args: keywords: all the params passed to CommandResults object when created.
+        Return: assertion for each of the CommandResults arg.
         """
         global logger
-        if hasattr(self.func.args, 'args'):
-            for arg in self.func.args.args:
-                if hasattr(arg, 'annotation') and str(arg.annotation) == self.client_ast.name:
-                    self.client_name = arg.arg
-                    logger.debug(f'Clinet name is {arg.arg}.')
-
-    def get_return_values(self):
-        """
-        Args: function ast node
-        Returns: array of ast nodes of returned values
-        """
-        for node in self.func.return_nodes:
-            if hasattr(node, 'value') and hasattr(node.value, 'func') and str(node.value.func) == 'CommandResults':
-                return node.value
-        return None
-
-    def call_command_ast_builder(self):
-        """
-        Input: command_name: name of the command being called
-        Returns: ast node of assignment command results to var.
-        """
-        call_keywords = [ast_mod.keyword(arg='client', value=ast_name('client'))]
-        if len(self.args_list) > 0:
-            call_keywords.append(ast_mod.keyword(arg='args', value=ast_name('args')))
-
-        self.command_call = ast_mod.Assign(targets=[ast_name('results', ctx=ast_mod.Store())],
-                                           value=ast_mod.Call(func=ast_name(self.func.name),
-                                                              args=[],
-                                                              keywords=call_keywords))
+        if returned_value := self.get_return_values():
+            keywords = returned_value.keywords
+            for keyword in keywords:
+                self.asserts.append(TestCase.create_command_results_assertion(keyword.arg, keyword.value))
+        else:
+            logger.warning('No return values were detected, thus no assertions being generated.')
 
     @staticmethod
     def assertions_builder(call, ops, comperators):
@@ -293,4 +264,69 @@ class TestCase:
             link = TestCase.get_links(value)
             if link:
                 comperator = ast_name(f'mock_response_{link}')
+        elif arg == 'outputs' or arg == 'readable_output':
+            comperator = ast_mod.Attribute(value=ast_name('mock_results'), attr=arg, ctx=ast_mod.Load())
         return TestCase.assertions_builder(call, ops, [comperator]) if comperator else None
+
+    # ================= General functions =====================
+
+    def instance_dict_parser(self):
+        """
+        Args: instance_dict: dictionary of the instances built in tree from the parser
+                client_name: name of the client object
+        Returns: args: list of arguments given as inputs to the function
+                 client_call: name of client function to mock
+                 command_result: CommandResults object returned from the command
+        """
+        args_set = OrderedSet()
+        for instance in self.func.instance_dict:
+            try:
+                func = str(instance.func)
+                if func == 'args.get':
+                    args_set.add(instance.args[0].value)
+                elif self.client_name is not None and func.startswith(self.client_name):
+                    self.client_func_call.append(instance.func.attr)
+            except AttributeError:
+                pass
+        self.args_list = list(args_set)
+
+    def get_client_name(self):
+        """
+        Args: func: ast node of the relevant function.
+               client_class_name: name of the client class.
+        Return: the name of the local client instance.
+        """
+        global logger
+        if hasattr(self.func.args, 'args'):
+            for arg in self.func.args.args:
+                if hasattr(arg, 'annotation') and str(arg.annotation) == self.client_ast.name:
+                    self.client_name = arg.arg
+                    logger.debug(f'Clinet name is {arg.arg}.')
+
+    def get_return_values(self):
+        """
+        Args: function ast node
+        Returns: array of ast nodes of returned values
+        """
+        for node in self.func.return_nodes:
+            if hasattr(node, 'value') and hasattr(node.value, 'func') and str(node.value.func) == 'CommandResults':
+                return node.value
+        return None
+
+    def call_command_ast_builder(self):
+        """
+        Input: command_name: name of the command being called
+        Returns: ast node of assignment command results to var.
+        """
+        call_keywords = [ast_mod.keyword(arg='client', value=ast_name('client'))]
+        if len(self.args_list) > 0:
+            call_keywords.append(ast_mod.keyword(arg='args', value=ast_name('args')))
+
+        self.command_call = ast_mod.Assign(targets=[ast_name('results', ctx=ast_mod.Store())],
+                                           value=ast_mod.Call(func=ast_name(self.func.name),
+                                                              args=[],
+                                                              keywords=call_keywords))
+
+
+
+

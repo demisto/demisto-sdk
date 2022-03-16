@@ -6,14 +6,24 @@ This command is used to generate unit tests automatically from an  integration p
 Also supports generating unit tests for specific commands.
 
 **Arguments**:
+* *-i, --input_path*
+  Path of the integration python file. (Mandatory)
 * *-c, --commands*
   Specific commands name to generate unit test for (e.g. xdr-get-incidents).
 * *-o, --output_dir*
   Directory to store the output in (default is current working directory).
 * *-v, --verbose*
-  Verbose output - mainly for debugging purposes
-* *-i, --input_path*
-  Path of the integration python file.
+  Verbose output - mainly for debugging purposes, logging level will be displayed accordingly.
+* *-q, --quiet*
+  Quiet output, only output results in the end.
+* *-ql, --log-path*
+  Path to store all levels of logs.
+* *--insecure*
+  Skip certificate validation.
+* *-e, --examples* One of the following:
+  - Path for a file containing examples. Each command should be in a separate line.
+  - Comma separated list of examples, wrapped by quotes.  
+  If the file or list contains a command with more than one example, all of them will be used.
 
 
 **Notes**
@@ -32,12 +42,10 @@ Also supports generating unit tests for specific commands.
 **Test Data Files**   
 For the command work as planned test_data folder must include the following:   
 
-***inputs folder*** - contains a json file for each command with mock arguments as inputs (dictionary). 
-If more than 1 dictionary is given, an additional key sould be added: *parametrize* with value *"True"*,
-and each case must be preceded with *case#* as key.
-
 ***outputs folder*** - contains a json file for each request made with mock response.
 
+**Command Examples file** - 
+For the command to work as planned a command_examples file must be included.
 
 ### Examples
 
@@ -53,18 +61,12 @@ demisto-sdk generate-unit-tests -i Packs/MyPack/Integrations/MyInt/MyInt.py -o P
 demisto-sdk generate-unit-tests -i Packs/MyPack/Integrations/MyInt/MyInt.py -c MyInt_example_command
 ```
 
-####input file
+####command-examples file
 
-```json
-{
-  "parametrize" : "True",
-  "case 1": {
-  "sha256_hash": "value_test1",
-  "comment": "comment_test1"
-  },
-  "case 2": {
-  "sha256_hash": "value_test2",
-  "comment": "comment_test2"
-  }
-}
+```text
+!malwarebazaar-samples-list sample_type=tag sample_value=test limit=2
+!malwarebazaar-samples-list sample_type=tag1 sample_value=test2 limit=444
+!malwarebazaar-download-sample sha256_hash=1234
+!file file=1234
+!malwarebazaar-comment-add comment="test" sha256_hash=1234
 ```

@@ -1,20 +1,6 @@
 import ast as ast_mod
-from .klara_extension import ast_name
-from demisto_sdk.commands.generate_docs.generate_integration_doc import get_command_examples
+from .common import ast_name
 
-
-def create_command_arg_mock_dictionary(commands_examples_input, specific_commands):
-    command_examples = get_command_examples(commands_examples_input, specific_commands)
-    commands_args_dict = {}
-    for command in command_examples:
-        command_line = command.split(' ')
-        command_dict = {}
-        for arg in command_line[1:]:
-            key = arg.split['='][0]
-            value = arg.split['='][1]
-            command_dict.update(key, value)
-        commands_args_dict.update(command_line[0], )
-    return commands_args_dict
 
 class TestModule:
     def __init__(self, tree, module_name, to_concat, module=None):

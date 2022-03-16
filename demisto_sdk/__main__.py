@@ -2045,6 +2045,9 @@ def convert(config, **kwargs):
 @click.option(
     '-o', '--output_dir', help='Directory to store the output in (default is current working directory)',
     required=False)
+@click.option(
+    '-td', '--test_data_path', help='Path to test data directory.',
+    required=False)
 @click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
               type=click.IntRange(0, 3, clamp=True), default=1, show_default=True)
 @click.option(
@@ -2054,6 +2057,18 @@ def convert(config, **kwargs):
 @click.option('-q', "--quiet", is_flag=True, help="Quiet output, only output results in the end")
 @click.option("-lp", "--log-path", help="Path to store all levels of logs",
               type=click.Path(resolve_path=True))
+@click.option(
+    "--insecure",
+    help="Skip certificate validation", is_flag=True
+)
+@click.option(
+    '-d', '--use_demisto',
+    help="Run commands at Demisto automatically.", is_flag=True
+)
+@click.option(
+    "-e", "--examples",
+    help="Integrations: path for file containing command examples."
+         " Each command should be in a separate line.")
 def generate_unit_tests(**kwargs):
     """
     This command is used to generate unit tests automatically from an  integration python code.
@@ -2067,9 +2082,6 @@ def generate_unit_tests(**kwargs):
     logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
                   quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
                   log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
-    print(kwargs.get('verbose'))
-
-    # check_configuration_file('generate-unit-tests', kwargs)
     run_generate_unit_tests(**kwargs)
 
 

@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import astor
@@ -10,25 +11,42 @@ from klara.contract import solver
 from .test_case_builder import TestCase, ArgsBuilder
 from .test_module_builder import TestModule
 from klara.contract.solver import MANAGER, ContractSolver, nodes
+from demisto_sdk.commands.generate_docs.generate_integration_doc import get_command_examples
+from demisto_sdk.commands.generate_docs.common import execute_command
 
 logger = logging.getLogger('demisto-sdk')
 
 
 class UnitTestsGenerator:
-    def __init__(self, input_path: str = '', test_data_path: str = '', commands: list[str] = [], output_dir: str = '',
-                 verbose: bool = False, module_name: str = '', command_examples_input: str = ''):
+    def __init__(self, input_path: str = '',
+                 test_data_path: str = '',
+                 commands: list[str] = [],
+                 output_dir: str = '',
+                 module_name: str = '',
+                 command_examples_input: str = '',
+                 insecure: bool = False,
+                 use_demisto: bool = False):
         self.input_path = input_path
         self.test_data_path = test_data_path
         self.commands = commands
-        self.verbose = verbose
         self.output_dir = output_dir
         self.module_name = module_name
         self.to_concat = False
         self.command_examples_input = command_examples_input
         self.commands_to_generate = {}
+        self.errors = []
+        self.insecure = insecure
+        self.use_demisto = use_demisto
+        self.example_dict = {}
+        self.command_examples = get_command_examples(self.command_examples_input, self.commands)
         self.create_command_to_generate_dict()
+        if self.use_demisto:
+            self.run_commands()
 
     def get_input_file(self):
+        """
+        Returns the source code for which the unit tests will be generated.
+        """
         if os.path.isfile(self.input_path):
             with open(self.input_path, 'r') as input_file:
                 return input_file.read()
@@ -45,35 +63,32 @@ class UnitTestsGenerator:
     def command_name_transformer(command_name):
         return command_name.strip('!').replace('-', '_') + '_command'
 
-    def get_command_examples(self):
+    def build_example_dict(self):
         """
-        get command examples from command file
-
-        @param commands_examples_input: commands examples file or a comma separeted list of com
-        @param specific_commands: commands specified by the user
-
-        @return: a list of command examples
+        gets an array of command examples, run them one by one and return a map of
+            {base command -> {readable_outputs:markdown, outputs:context_outputs}}
+        Note: if a command appears more then once, run all occurrences but stores only the last.
         """
+        examples = {}  # type: dict
+        errors = []  # type: list
+        for example in self.command_examples:
+            name, md_example, context_example, cmd_errors = execute_command(example, self.insecure)
+            if 'playbookQuery' in context_example:
+                del context_example['playbookQuery']
 
-        if not self.command_examples_input:
-            return []
+            context_example = json.dumps(context_example)
+            errors.extend(cmd_errors)
 
-        if os.path.isfile(self.command_examples_input):
-            with open(self.command_examples_input, 'r') as examples_file:
-                command_examples = examples_file.read().splitlines()
-        else:
-            print_warning('failed to open commands file, using commands as comma separated list')
-            command_examples = self.command_examples_input.split(',')
-
-        # Filter from the examples only the commands specified by the user
-        if self.commands:
-            command_examples = [command_ex for command_ex in command_examples if
-                                self.command_name_transformer(command_ex.split(' ')[0]) in self.commands]
-        return command_examples
+            if not cmd_errors:
+                name = self.command_name_transformer(name)
+                examples[name] = {'readable_output': md_example, 'outputs': context_example}
+        return examples, errors
 
     def create_command_to_generate_dict(self):
-        command_examples = self.get_command_examples()
-        for command in command_examples:
+        """
+        Parses command_examples into dictionary of command name and arguments.
+        """
+        for command in self.command_examples:
             command_line = command.split(' ')
             command_name = self.command_name_transformer(command_line[0])
             command_dict = {}
@@ -88,16 +103,28 @@ class UnitTestsGenerator:
         click.echo('Unit tests will be generated for the following commands:')
         click.echo('\n'.join(self.commands_to_generate.keys()))
 
+    def run_commands(self):
+        """
+        Runs commands using Demisto instance
+        """
+        self.example_dict, build_errors = self.build_example_dict()
+        self.errors.extend(build_errors)
+
 
 class CustomContactSolver(ContractSolver):
     def __init__(self, cfg, as_tree, file_name):
         super().__init__(cfg, as_tree, file_name)
 
-    def solve_function(self, func: nodes.FunctionDef, client_ast, directory_path, commands_to_generate) -> TestCase:
+    def solve_function(self, func: nodes.FunctionDef, client_ast, generator) -> TestCase:
         with MANAGER.initialize_z3_var_from_func(func):
             self.context.no_cache = True
             self.pre_conditions(func)
-            test_case = TestCase(func=func, directory_path=directory_path, client_ast=client_ast, id=self.id)
+            directory_path = generator.test_data_path
+            example_dict = generator.example_dict.get(str(func.name))
+            commands_to_generate = generator.commands_to_generate
+            use_demisto = generator.use_demisto
+
+            test_case = TestCase(func=func, directory_path=directory_path, client_ast=client_ast, example_dict=example_dict, id=self.id)
 
             # Compose args mock
             logger.debug('Composing mocked arguments.')
@@ -107,9 +134,11 @@ class CustomContactSolver(ContractSolver):
             decorator = arg_builder.decorators
             global_args = arg_builder.global_arg
 
-            # Compose request_mock calls for each API call made
+            # Compose request_mock calls for each API call made and CommandResults mock
             logger.debug('Composing request mock object.')
             test_case.request_mock_ast_builder()
+            if use_demisto:
+                test_case.build_json_file_mocked_command_results()
 
             # Compose a call to the command
             logger.debug('Composing call to command.')
@@ -136,20 +165,23 @@ class CustomContactSolver(ContractSolver):
         client_ast = test_module.get_client_ast()
         names_to_import = [client_ast.name]
         for func in self.functions:
-            if str(func.name).endswith('_command'):
+            command_name = str(func.name)
+            if command_name.endswith('_command'):
                 names_to_import.append(func.name)
-            if not str(func.name) in generator.commands_to_generate:
+            if command_name not in generator.commands_to_generate:
                 continue
             logger.info(f"Analyzing function: {func} at line: {getattr(func, 'lineno', -1)}")
             try:
-                ast_func = self.solve_function(func, client_ast, generator.test_data_path,
-                                               generator.commands_to_generate)
+                ast_func = self.solve_function(func,
+                                               client_ast,
+                                               generator)
                 logger.info(f"Finished analyzing function: {func}")
                 test_module.functions.append(ast_func)
                 if ast_func.global_arg:
                     test_module.global_args.extend(ast_func.global_arg)
-            except Exception:
-                logger.error(f"Skipped function: {func}.")
+            except Exception as e:
+                logger.error(f"Skipped function: {func}, error is {e}")
+                raise e
             MANAGER.clear_z3_cache()
         test_module.imports.append(test_module.build_imports(names_to_import))
         return test_module
@@ -161,8 +193,9 @@ def run_generate_unit_tests(**kwargs):
     test_data_path = kwargs.get('test_data_path', '')
     output_dir = kwargs.get('output_dir', '')
     commands = arg_to_list(kwargs.get('commands', ''))
-    commands_examples = kwargs.get('command_examples', '')
-    verbose = kwargs.get('verbose', False)
+    commands_examples_path = kwargs.get('examples', '')
+    insecure = kwargs.get('insecure', False)
+    use_demisto = kwargs.get('use_demisto', False)
 
     click.echo("================= Running Unit Testing Generator ===================")
     # validate inputs
@@ -192,8 +225,8 @@ def run_generate_unit_tests(**kwargs):
     if not output_dir:
         output_dir = os.path.dirname(input_path)
 
-    if not commands_examples:
-        commands_examples = os.path.join(os.path.dirname(input_path), 'command_examples')
+    if not commands_examples_path:
+        commands_examples_path = os.path.join(os.path.dirname(input_path), 'command_examples')
 
     # Check the directory exists and if not, try to create it
     if not os.path.exists(output_dir):
@@ -205,11 +238,24 @@ def run_generate_unit_tests(**kwargs):
     if not os.path.isdir(output_dir):
         print_error(f'The directory provided "{output_dir}" is not a directory')
         return 1
+
     file_name = module_name.split('.')[0]
-    generator = UnitTestsGenerator(input_path, test_data_path, commands, output_dir, verbose, file_name,
-                                   commands_examples)
-    logger.debug(f"Created generator object with the following params: {input_path}, {test_data_path}, {commands}, {output_dir}, "
-                 f"{verbose}, {file_name}, {commands_examples}")
+    generator = UnitTestsGenerator(input_path,
+                                   test_data_path,
+                                   commands,
+                                   output_dir,
+                                   file_name,
+                                   commands_examples_path,
+                                   insecure,
+                                   use_demisto)
+
+    logger.debug(f"Created generator object with the following params: input - {input_path},"
+                 f" test data path - {test_data_path},"
+                 f" commands -  {commands},"
+                 f" output_dir - {output_dir},"
+                 f" commands_examples - {commands_examples_path}"
+                 f" insecure - {insecure}")
+
     source = generator.get_input_file()
     if source:
         try:

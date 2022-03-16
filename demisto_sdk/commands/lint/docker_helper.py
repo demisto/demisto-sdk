@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.constants import TYPE_PYTHON
 DOCKER_CLIENT = None
 logger = logging.getLogger('demisto-sdk')
 PATH_OR_STR = Union[Path, str]
-# this will be used to determaiine if the system supports mounts
+# this will be used to determine if the system supports mounts
 CAN_MOUNT_FILES = not os.getenv('CIRCLECI', False)
 
 

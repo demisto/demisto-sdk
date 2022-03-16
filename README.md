@@ -14,7 +14,7 @@ The library uses python 3.7+.
 
 1. **Install** - `pip3 install demisto-sdk`
 1. **Upgrade** - `pip3 install --upgrade demisto-sdk`
-1. **Connect demisto-sdk with Cortex XSOAR server** - In order that demisto-sdk and Cortex XSOAR (Demisto) server communicate, perfrom the following steps:
+1. **Connect demisto-sdk with Cortex XSOAR server** - In order that demisto-sdk and Cortex XSOAR server communicate, perfrom the following steps:
 
    1. Get an API key for XSOAR-server - `Settings` -> `Integrations` -> `API keys` -> `Get your Key` (copy it)
    1. Add the following parameters to your environment. You can also use a [.env file](https://pypi.org/project/python-dotenv/), the demisto-sdk will automatically load that file.:

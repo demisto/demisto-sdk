@@ -1,5 +1,9 @@
 #!/bin/sh
 set -e
+if [[ -f '/etc/ssl/certs/ca-certificates.crt']]
+then
+    set REQUESTS_CA_BUNDLE='/etc/ssl/certs/ca-certificates.crt'
+fi
 mkdir -p /devwork/
 cd /devwork
 chown -R :4000 /devwork/
@@ -20,3 +24,4 @@ elif [[ $ID == "debian" ]]
 then
     apt-get purge -y --auto-remove gcc python3-dev
 fi
+unset REQUESTS_CA_BUNDLE

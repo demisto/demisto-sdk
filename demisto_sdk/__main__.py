@@ -439,10 +439,15 @@ def zip_packs(**kwargs) -> int:
     "--allow-skipped",
     help="Don't fail on skipped integrations or when all test playbooks are skipped.",
     is_flag=True)
+@click.option(
+    "--no-multiprocessing",
+    help="run validate all without multiprocessing, for debugging purposes.",
+    is_flag=True, default=False)
 @pass_config
 def validate(config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
+    run_with_mp = not kwargs.pop('no_multiprocessing')
     check_configuration_file('validate', kwargs)
     sys.path.append(config.configuration.env_dir)
 
@@ -479,6 +484,7 @@ def validate(config, **kwargs):
             debug_git=kwargs.get('debug_git'),
             include_untracked=kwargs.get('include_untracked'),
             quite_bc=kwargs.get('quite_bc_validation'),
+            multiprocessing=run_with_mp,
             check_is_unskipped=not kwargs.get('allow_skipped', False),
         )
         return validator.run_validation()
@@ -935,6 +941,14 @@ def upload(**kwargs):
     "-a", "--all-custom-content", help="Download all available custom content files", is_flag=True)
 @click.option(
     "-fmt", "--run-format", help="Whether to run demisto-sdk format on downloaded files or not", is_flag=True)
+@click.option(
+    "--system", help="Download system items", is_flag=True, default=False)
+@click.option(
+    "-it", "--item-type", help="The items type to download, use just when downloading system items, should be one "
+                               "form the following list: [IncidentType, IndicatorType, Field, Layout, Playbook, "
+                               "Automation, Classifier, Mapper]",
+    type=click.Choice(['IncidentType', 'IndicatorType', 'Field', 'Layout', 'Playbook', 'Automation', 'Classifier',
+                       'Mapper'], case_sensitive=False))
 def download(**kwargs):
     """Download custom content from Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
@@ -1486,8 +1500,8 @@ def merge_id_sets(**kwargs):
     "-i", "--input", help="The relative path of the content pack. For example Packs/Pack_Name"
 )
 @click.option(
-    '-u', '--update-type', help="The type of update being done. [major, minor, revision, maintenance, documentation]",
-    type=click.Choice(['major', 'minor', 'revision', 'maintenance', 'documentation'])
+    '-u', '--update-type', help="The type of update being done. [major, minor, revision, documentation]",
+    type=click.Choice(['major', 'minor', 'revision', 'documentation'])
 )
 @click.option(
     '-v', '--version', help="Bump to a specific version.", type=VersionParamType()
@@ -1877,6 +1891,13 @@ def openapi_codegen(**kwargs):
     '--server-version',
     help='Which server version to run the tests on(Valid only when using AMI)',
     default="NonAMI")
+@click.option(
+    '-u',
+    '--use-retries',
+    is_flag=True,
+    help='Should use retries mechanism or not (if test-playbook fails, it will execute it again few times and '
+         'determine success according to most of the runs',
+    default=False)
 def test_content(**kwargs):
     """Configure instances for the integration needed to run tests_to_run tests.
     Run test module on each integration.

@@ -16,12 +16,13 @@ from git import GitCommandError, Repo
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
-    API_MODULES_PACK, EXCLUDED_DISPLAY_NAME_WORDS, PACK_METADATA_CATEGORIES,
-    PACK_METADATA_CERTIFICATION, PACK_METADATA_CREATED,
-    PACK_METADATA_CURR_VERSION, PACK_METADATA_DEPENDENCIES, PACK_METADATA_DESC,
-    PACK_METADATA_EMAIL, PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS,
-    PACK_METADATA_NAME, PACK_METADATA_SUPPORT, PACK_METADATA_TAGS,
-    PACK_METADATA_URL, PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
+    API_MODULES_PACK, EXCLUDED_DISPLAY_NAME_WORDS, INTEGRATIONS_DIR,
+    PACK_METADATA_CATEGORIES, PACK_METADATA_CERTIFICATION,
+    PACK_METADATA_CREATED, PACK_METADATA_CURR_VERSION,
+    PACK_METADATA_DEPENDENCIES, PACK_METADATA_DESC, PACK_METADATA_EMAIL,
+    PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS, PACK_METADATA_NAME,
+    PACK_METADATA_SUPPORT, PACK_METADATA_TAGS, PACK_METADATA_URL,
+    PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME, VERSION_REGEX)
 from demisto_sdk.commands.common.content import Content
@@ -96,8 +97,8 @@ class PackUniqueFilesValidator(BaseValidator):
         self.prev_ver = prev_ver
         self.support = support
         self.metadata_content: Dict = dict()
-
     # error handling
+
     def _add_error(self, error: Tuple[str, str], file_path: str, warning=False):
         """Adds error entry to a list under pack's name
         Returns True if added and false otherwise"""
@@ -211,9 +212,9 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def validate_pack_readme_images(self):
         readme_file_path = os.path.join(self.pack_path, self.readme_file)
-        readme_validator = ReadMeValidator(readme_file_path)
-        errors = readme_validator.check_readme_relative_image_paths(is_pack_readme=True) + \
-            readme_validator.check_readme_absolute_image_paths(is_pack_readme=True)
+        readme_validator = ReadMeValidator(readme_file_path, ignored_errors=self.ignored_errors)
+        errors = readme_validator.check_readme_relative_image_paths(is_pack_readme=True)
+        errors += readme_validator.check_readme_absolute_image_paths(is_pack_readme=True)
         if errors:
             self._errors.extend(errors)
             return False
@@ -346,6 +347,13 @@ class PackUniqueFilesValidator(BaseValidator):
         lowercase_name = pack_name.lower()
         return not any(excluded_word in lowercase_name for excluded_word in EXCLUDED_DISPLAY_NAME_WORDS)
 
+    def _is_empty_dir(self, dir_path: Path) -> bool:
+        return dir_path.stat().st_size == 0
+
+    def _is_integration_pack(self):
+        integration_dir: Path = Path(self.pack_path) / INTEGRATIONS_DIR
+        return integration_dir.exists() and not self._is_empty_dir(dir_path=integration_dir)
+
     def _is_pack_meta_file_structure_valid(self):
         """Check if pack_metadata.json structure is json parse-able and valid"""
         try:
@@ -403,11 +411,12 @@ class PackUniqueFilesValidator(BaseValidator):
                                            self.pack_meta_file):
                             return False
 
-            # check metadata categories isn't an empty list
-            if not metadata[PACK_METADATA_CATEGORIES]:
-                if self._add_error(Errors.pack_metadata_missing_categories(self.pack_meta_file),
-                                   self.pack_meta_file):
-                    return False
+            # check metadata categories isn't an empty list, only if it is an integration.
+            if self._is_integration_pack():
+                if not metadata[PACK_METADATA_CATEGORIES]:
+                    if self._add_error(Errors.pack_metadata_missing_categories(self.pack_meta_file),
+                                       self.pack_meta_file):
+                        return False
 
             # if the field 'certification' exists, check that its value is set to 'certified' or 'verified'
             certification = metadata.get(PACK_METADATA_CERTIFICATION)

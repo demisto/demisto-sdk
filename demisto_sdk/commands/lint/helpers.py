@@ -26,6 +26,7 @@ from packaging.version import parse
 from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
                                                    DemistoException)
 from demisto_sdk.commands.common.tools import print_warning, run_command_os
+from demisto_sdk.commands.lint.docker_helper import init_global_docker_client
 
 # Python2 requirements
 PYTHON2_REQ = ["flake8", "vulture"]
@@ -280,27 +281,6 @@ def add_tmp_lint_files(content_repo: git.Repo, pack_path: Path, lint_files: List
     finally:
         # If we want to change handling of files after finishing - do it here
         pass
-
-
-DOCKER_CLIENT = None
-
-
-def init_global_docker_client(timeout: int = 60, log_prompt: str = ''):
-
-    global DOCKER_CLIENT
-    if DOCKER_CLIENT is None:
-        try:
-            logger.info(f'{log_prompt} - init and login the docker client')
-            DOCKER_CLIENT = docker.from_env(timeout=timeout)
-            docker_user = os.getenv('DOCKERHUB_USER')
-            docker_pass = os.getenv('DOCKERHUB_PASSWORD')
-            DOCKER_CLIENT.login(username=docker_user,
-                                password=docker_pass,
-                                registry="https://index.docker.io/v1")
-        except Exception:
-            logger.exception(f'{log_prompt} - failed to login to docker registry')
-
-    return DOCKER_CLIENT
 
 
 @lru_cache(maxsize=300)

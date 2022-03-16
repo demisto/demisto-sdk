@@ -101,7 +101,8 @@ def test_integration_format_yml_with_no_test_positive(tmp_path: PosixPath, sourc
 
     # Running format in the first time
     runner = CliRunner()
-    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', output_path, '-at'], input='Y')
+    with ChangeCWD(tmp_path):
+        result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', output_path, '-at'], input='Y')
     prompt = f'The file {source_path} has no test playbooks configured. ' \
              f'Do you want to configure it with "No tests"'
     assert not result.exception

@@ -57,7 +57,7 @@ from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
 
-GIT_ROOT = "{}".format(git_path())
+GIT_ROOT = git_path()
 
 
 class TestGenericFunctions:

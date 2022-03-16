@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 mkdir -p /devwork/
 cd /devwork
 chown -R :4000 /devwork/

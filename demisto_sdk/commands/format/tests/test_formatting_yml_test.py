@@ -1011,8 +1011,8 @@ class TestFormatting:
         test_playbook.create_default_test_playbook('SamplePlaybookTest')
         test_playbook.yml.update({'id': 'other_id'})
         playbook_yml = TestPlaybookYMLFormat(test_playbook.yml.path, path=test_playbook.yml.path, assume_yes=True)
-
-        playbook_yml.run_format()
+        with ChangeCWD(repo.path):
+            playbook_yml.run_format()
         assert test_playbook.yml.read_dict().get('id') == 'SamplePlaybookTest'
 
     def test_set_fromversion_six_new_contributor_pack_no_fromversion(self, pack):

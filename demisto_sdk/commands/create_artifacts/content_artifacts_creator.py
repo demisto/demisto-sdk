@@ -25,9 +25,10 @@ from demisto_sdk.commands.common.constants import (
     XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, ContentItems, MarketplaceVersions)
 from demisto_sdk.commands.common.content import (Content, ContentError,
                                                  ContentFactoryError, Pack)
+from demisto_sdk.commands.common.content.objects.abstract_objects.text_object import \
+    TextObject
 from demisto_sdk.commands.common.content.objects.pack_objects import (
-    JSONContentObject, Script, TextObject, YAMLContentObject,
-    YAMLContentUnifiedObject)
+    JSONContentObject, Script, YAMLContentObject, YAMLContentUnifiedObject)
 from demisto_sdk.commands.common.tools import (alternate_item_fields,
                                                arg_to_list, open_id_set_file,
                                                should_alternate_field_by_item)

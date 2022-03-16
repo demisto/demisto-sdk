@@ -256,7 +256,7 @@ class BaseUpdate:
         return None
 
     def old_content_type(self, file_type: Optional[str] = None):
-        old_types = [FileType.LAYOUT, FileType.OLD_CLASSIFIER]
+        old_types = [FileType.LAYOUT.value, FileType.OLD_CLASSIFIER.value]
         return file_type in old_types
 
     def set_fromVersion(self, default_from_version='', file_type: Optional[str] = None):

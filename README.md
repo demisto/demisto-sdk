@@ -5,7 +5,7 @@
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/ppwwyyxx/OpenPano.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/demisto/demisto-sdk/context:python)
 [![Coverage Status](https://coveralls.io/repos/github/demisto/demisto-sdk/badge.svg?branch=master)](https://coveralls.io/github/demisto/demisto-sdk?branch=master)
 
-The Demisto SDK library can be used to manage your Demisto content with ease and efficiency.
+The Demisto SDK library can be used to manage your Cortex XSOAR content with ease and efficiency.
 The library uses python 3.7+.
 
 ## Usage
@@ -14,9 +14,9 @@ The library uses python 3.7+.
 
 1. **Install** - `pip3 install demisto-sdk`
 1. **Upgrade** - `pip3 install --upgrade demisto-sdk`
-1. **Demisto server demisto-sdk integration** - In order that demisto-sdk and Cortex XSOAR (Demisto) server communicate, perfrom the following steps:
+1. **Connect demisto-sdk with Cortex XSOAR server** - In order that demisto-sdk and Cortex XSOAR (Demisto) server communicate, perfrom the following steps:
 
-   1. Get an API key for Demisto-server - `Settings` -> `Integrations` -> `API keys` -> `Get your Key` (copy it, you will be to copy it once)
+   1. Get an API key for XSOAR-server - `Settings` -> `Integrations` -> `API keys` -> `Get your Key` (copy it)
    1. Add the following parameters to your environment. You can also use a [.env file](https://pypi.org/project/python-dotenv/), the demisto-sdk will automatically load that file.:
 
       ```bash

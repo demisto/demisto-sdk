@@ -70,7 +70,7 @@ class Docker:
             try:
                 src = Path(src)
                 if src.exists():
-                    mounts.append(Mount(target, str(src.absolute()), 'bind', read_only=True))
+                    mounts.append(Mount(target, str(src.absolute()), 'bind'))
             except Exception:
                 logger.debug(f'Failed to mount {src} to {target}')
         return mounts

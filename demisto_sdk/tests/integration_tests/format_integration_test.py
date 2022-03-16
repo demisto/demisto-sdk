@@ -9,7 +9,7 @@ from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION, VERSION_5_5_0
+from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -687,6 +687,7 @@ def test_format_playbook_without_fromversion_without_preset_flag_manual(repo):
     format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(playbook.yml.path), '-v'], input='y')
     assert 'Success' in format_result.stdout
     assert playbook.yml.read_dict().get('fromversion') == GENERAL_DEFAULT_FROMVERSION
+
 
 def test_format_playbook_copy_removed_from_name_and_id(repo):
     """

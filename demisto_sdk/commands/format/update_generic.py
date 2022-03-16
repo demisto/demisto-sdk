@@ -8,12 +8,14 @@ import click
 import dictdiffer
 
 from demisto_sdk.commands.common.constants import (GENERAL_DEFAULT_FROMVERSION,
-                                                   INTEGRATION, VERSION_5_5_0, FileType)
+                                                   INTEGRATION, VERSION_5_5_0,
+                                                   FileType)
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
                                                get_pack_metadata,
                                                get_remote_file,
-                                               is_file_from_content_repo, server_version_compare)
+                                               is_file_from_content_repo,
+                                               server_version_compare)
 from demisto_sdk.commands.format.format_constants import (DEFAULT_VERSION,
                                                           ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
@@ -233,7 +235,9 @@ class BaseUpdate:
         return input()
 
     def ask_user(self):
-        user_answer = self.get_answer('Either no fromversion is specified in your file, or it is lower than the minimal fromversion for this content type, would you like to set it to the default? [Y/n]')
+        user_answer = self.get_answer(
+            'Either no fromversion is specified in your file,'
+            ' or it is lower than the minimal fromversion for this content type, would you like to set it to the default? [Y/n]')
         if user_answer in ['Y', 'y', 'yes', 'Yes']:
             return True
         else:

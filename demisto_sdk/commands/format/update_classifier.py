@@ -46,7 +46,7 @@ class OldClassifierJSONFormat(BaseClassifierJSONFormat):
     def run_format(self) -> int:
         try:
             click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
-            super().update_json(file_type=FileType.OLD_CLASSIFIER)
+            super().update_json(file_type=str(FileType.OLD_CLASSIFIER))
             self.set_toVersion()
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE

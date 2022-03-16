@@ -16,7 +16,8 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION, DEFAULT_ID_SET_PATH, GENERIC_FIELDS_DIR,
     GENERIC_TYPES_DIR, IGNORED_PACK_NAMES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
     PACKS_PACK_META_FILE_NAME, SKIP_RELEASE_NOTES_FOR_TYPES,
-    VALIDATION_USING_GIT_IGNORABLE_DATA, FileType, PathLevel)
+    VALIDATION_USING_GIT_IGNORABLE_DATA, FileType, FileType_ALLOWED_TO_DELETE,
+    PathLevel)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 FOUND_FILES_AND_ERRORS,
@@ -83,9 +84,10 @@ from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import \
     XSOARConfigJsonValidator
 from demisto_sdk.commands.common.tools import (
-    find_type, get_api_module_ids, get_api_module_integrations_set,
-    get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
-    get_relative_path_from_packs_dir, get_yaml, open_id_set_file)
+    _get_file_id, find_type, get_api_module_ids,
+    get_api_module_integrations_set, get_file, get_pack_ignore_file_path,
+    get_pack_name, get_pack_names_from_files, get_relative_path_from_packs_dir,
+    get_yaml, open_id_set_file)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
@@ -759,6 +761,8 @@ class ValidateManager:
         if self.file_path:
             modified_files, added_files, old_format_files = self.specify_files_by_status(modified_files, added_files,
                                                                                          old_format_files)
+        deleted_files = self.git_util.deleted_files(prev_ver=self.prev_ver, committed_only=self.is_circle,
+                                                    staged_only=self.staged, include_untracked=self.include_untracked)
 
         validation_results = {valid_git_setup, valid_types}
 
@@ -766,6 +770,7 @@ class ValidateManager:
         validation_results.add(self.validate_added_files(added_files, modified_files))
         validation_results.add(self.validate_changed_packs_unique_files(modified_files, added_files, old_format_files,
                                                                         changed_meta_files))
+        validation_results.add(self.validate_deleted_files(deleted_files, added_files))
 
         if old_format_files:
             click.secho(f'\n================= Running validation on old format files =================',
@@ -1171,6 +1176,52 @@ class ValidateManager:
         """
         return pack not in IGNORED_PACK_NAMES
 
+    @staticmethod
+    def is_file_allowed_to_be_deleted(file_path):
+        """
+        Args:
+            file_path: The file path.
+
+        Returns: True if the file allowed to be deleted, else False.
+
+        """
+        file_type = find_type(file_path)
+        return file_type in FileType_ALLOWED_TO_DELETE or not file_type
+
+    @staticmethod
+    def was_file_renamed_but_labeled_as_deleted(file_path, added_files):
+        """ Check if a file was renamed and not deleted (git false label the file as deleted)
+        Args:
+            file_path: The file path.
+
+        Returns: True if the file was renamed and not deleted, else False.
+
+        """
+        if added_files:
+            deleted_file_dict = get_file(file_path, find_type(file_path))
+            deleted_file_id = _get_file_id(file_path, deleted_file_dict)
+            if deleted_file_id:
+                for file in added_files:
+                    file_dict = get_file(file, find_type(file))
+                    if deleted_file_id == _get_file_id(file, file_dict):
+                        return True
+
+        return False
+
+    def validate_deleted_files(self, deleted_files, added_files) -> bool:
+        click.secho(f'\n================= Checking for prohibited deleted files =================',
+                    fg="bright_cyan")
+
+        is_valid = True
+        for file_path in deleted_files:
+            if not self.was_file_renamed_but_labeled_as_deleted(file_path, added_files):
+                if not self.is_file_allowed_to_be_deleted(file_path):
+                    error_message, error_code = Errors.file_cannot_be_deleted(file_path)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        is_valid = False
+
+        return is_valid
+
     def validate_changed_packs_unique_files(self, modified_files, added_files, old_format_files, changed_meta_files):
         click.secho(f'\n================= Running validation on changed pack unique files =================',
                     fg="bright_cyan")
@@ -1566,6 +1617,7 @@ class ValidateManager:
 
     @staticmethod
     def create_ignored_errors_list(errors_to_check):
+        """ Creating a list of errors without the errors in the errors_to_check list """
         ignored_error_list = []
         all_errors = get_all_error_codes()
         for error_code in all_errors:

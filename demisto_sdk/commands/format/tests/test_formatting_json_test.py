@@ -6,7 +6,7 @@ from typing import Optional
 import pytest
 from mock import patch
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import MarketplaceVersions, FileType
 from demisto_sdk.commands.format import (update_dashboard, update_incidenttype,
                                          update_indicatortype)
 from demisto_sdk.commands.format.format_module import format_manager
@@ -1169,7 +1169,7 @@ class TestFormattingReport:
         assert report_formatter.data.get('orientation') == 'landscape'
 
     @staticmethod
-    def exception_raise(default_from_version: str = ''):
+    def exception_raise(default_from_version: str = '', file_type: Optional[str] = None):
         raise ValueError("MY ERROR")
 
     FORMAT_OBJECT = [
@@ -1252,3 +1252,43 @@ class TestFormattingReport:
             bs = BaseUpdate(input=path, assume_yes=True)
             bs.set_fromVersion()
             assert bs.data['fromVersion'] == GENERAL_DEFAULT_FROMVERSION
+
+    def test_json_run_format_old_layout(self, mocker, pack):
+        """
+        Given
+            - A new (old) layout.
+        When
+            - Run format command.
+        Then
+            - Ensure that the fromversion is set to 5.5.0.
+        """
+        from demisto_sdk.commands.common.constants import \
+            VERSION_5_5_0
+        mocker.patch.object(BaseUpdateJSON, 'remove_null_fields')
+        mocker.patch.object(LayoutBaseFormat, 'remove_unnecessary_keys')
+        mocker.patch.object(BaseUpdate, 'sync_data_to_master')
+
+        layout = pack.create_layout(name='TestType', content={})
+        bs = LayoutBaseFormat(input=layout.path, assume_yes=True)
+        bs.run_format()
+        assert bs.data['fromVersion'] == VERSION_5_5_0
+
+    def test_json_run_format_old_classifier(self, mocker, pack):
+        """
+        Given
+            - A new old_classifier.
+        When
+            - Run format command.
+        Then
+            - Ensure that the fromversion is set to 5.5.0.
+        """
+        from demisto_sdk.commands.common.constants import \
+            VERSION_5_5_0
+        mocker.patch.object(BaseUpdateJSON, 'remove_null_fields')
+        mocker.patch.object(BaseUpdate, 'remove_unnecessary_keys')
+        mocker.patch.object(BaseUpdate, 'sync_data_to_master')
+
+        classifier = pack.create_classifier(name='TestType', content={})
+        bs = OldClassifierJSONFormat(input=classifier.path, assume_yes=True)
+        bs.run_format()
+        assert bs.data['fromVersion'] == VERSION_5_5_0

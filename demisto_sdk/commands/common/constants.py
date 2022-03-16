@@ -1073,9 +1073,11 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.GENERIC_TYPE: '6.5.0',
     FileType.GENERIC_FIELD: '6.5.0',
     FileType.GENERIC_MODULE: '6.5.0',
-    FileType.GENERIC_DEFINITION: '6.5.0'
+    FileType.GENERIC_DEFINITION: '6.5.0',
 }
+# This constant below should always be two versions before the latest server version
 GENERAL_DEFAULT_FROMVERSION = '6.2.0'
+VERSION_5_5_0 = '5.5.0'
 DEFAULT_CONTENT_ITEM_FROM_VERSION = '0.0.0'
 DEFAULT_CONTENT_ITEM_TO_VERSION = '99.99.99'
 MARKETPLACE_MIN_VERSION = '6.0.0'

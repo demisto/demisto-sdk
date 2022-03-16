@@ -51,13 +51,13 @@ class BaseUpdateJSON(BaseUpdate):
             ujson.dump(self.data, file, indent=4, encode_html_chars=True, escape_forward_slashes=False,
                        ensure_ascii=False)
 
-    def update_json(self, default_from_version: Optional[str] = ''):
+    def update_json(self, default_from_version: Optional[str] = '', file_type: Optional[str] = None):
         """Manager function for the generic JSON updates."""
         self.set_version_to_default()
         self.remove_null_fields()
         self.remove_unnecessary_keys()
         self.remove_spaces_end_of_id_and_name()
-        self.set_fromVersion(default_from_version=default_from_version)
+        self.set_fromVersion(default_from_version=default_from_version, file_type=file_type)
         self.sync_data_to_master()
 
     def set_toVersion(self):

@@ -3,6 +3,7 @@ from typing import Tuple
 
 import click
 
+from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE,
@@ -45,7 +46,7 @@ class OldClassifierJSONFormat(BaseClassifierJSONFormat):
     def run_format(self) -> int:
         try:
             click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
-            super().update_json()
+            super().update_json(file_type=FileType.OLD_CLASSIFIER)
             self.set_toVersion()
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE

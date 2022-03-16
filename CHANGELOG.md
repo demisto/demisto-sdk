@@ -16,8 +16,7 @@
 * Refactored the **format** command's effect on the *fromversion* field:
   - Fixed a bug where the *fromversion* field was removed when modifying a content item.
   - Updated the general default *fromversion* and the default *fromversion* of newly-introduced content items (e.g. `Lists`, `Jobs`).
-  - Removed the interactive option in *update_playbook*.
-  - Added an *interactive* mode for all content types, asking user if to set the default *fromversion*.
+  - Added an interactive mode functionality for all content types, to ask the user whether to set a default *fromversion*, if could not automatically determine its value. Use `-y` to assume 'yes' as an answer to all prompts and run non-interactively.
 
 # 1.6.1
 * Added the '--use-packs-known-words' argument to the **doc-review** command

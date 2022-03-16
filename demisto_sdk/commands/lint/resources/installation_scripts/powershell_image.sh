@@ -11,6 +11,6 @@ exec_pwsh_command() {
 }
 exec_pwsh_command Set-PSRepository -name PSGallery -installationpolicy trusted -ErrorAction Stop
 exec_pwsh_command Install-Module -Name Pester -Scope AllUsers -Force -ErrorAction Stop
-exec_pwsh_command Find-Package Pester
+exec_pwsh_command Invoke-Pester -?
 exec_pwsh_command Install-Module -Name PSScriptAnalyzer -Scope AllUsers -Force -ErrorAction Stop
-exec_pwsh_command Find-Package PSScriptAnalyzer
+exec_pwsh_command Invoke-ScriptAnalyzer -?

@@ -2884,7 +2884,7 @@ class TestXSIAMDashboards:
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
         xsiam_dashboard = pack.create_xsiam_dashboard(
-            "xsiam_dashboard_name", {"dashboards_data": {"id": "xsiam_dashboard_id", "name": "xsiam_dashboard_name"}})
+            "xsiam_dashboard_name", {"dashboards_data": [{"id": "xsiam_dashboard_id", "name": "xsiam_dashboard_name"}]})
         res = process_general_items(xsiam_dashboard.path, {pack.name: {}},
                                     MarketplaceVersions.MarketplaceV2.value, True, (FileType.XSIAM_DASHBOARD,), get_general_data)
 
@@ -2915,7 +2915,7 @@ class TestXSIAMReports:
             - Verify result as expeted.
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        xsiam_report = pack.create_xsiam_report("xsiam_report_name", {"dashboards_data": {"id": "xsiam_report_id", "name": "xsiam_report_name"}})
+        xsiam_report = pack.create_xsiam_report("xsiam_report_name", {"dashboards_data": [{"id": "xsiam_report_id", "name": "xsiam_report_name"}]})
         res = process_general_items(xsiam_report.path, {pack.name: {}},
                                     MarketplaceVersions.MarketplaceV2.value, True, (FileType.XSIAM_REPORT,), get_general_data)
 

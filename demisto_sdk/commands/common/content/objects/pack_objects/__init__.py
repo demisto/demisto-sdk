@@ -52,7 +52,7 @@ from .parsing_rule.parsing_rule import \
 from .playbook.playbook import Playbook  # lgtm [py/polluting-import]
 from .pre_process_rule.pre_process_rule import \
     PreProcessRule  # lgtm [py/polluting-import]
-from .readme.readme import Readme  # lgtm [py/polluting-import]
+from .readme.readme import Readme, TextObject  # lgtm [py/polluting-import]
 from .release_note.release_note import \
     ReleaseNote  # lgtm [py/polluting-import]
 from .release_note_config.release_note_config import \

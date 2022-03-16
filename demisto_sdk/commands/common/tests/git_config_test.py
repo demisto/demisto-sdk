@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
                                                             GitProvider)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 
-GIT_ROOT = "{}".format(git_path())
+GIT_ROOT = git_path()
 VALID_GITLAB_RESPONSE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/valid_gitlab_search_response.json"
 
 DEFAULT_GITHUB_BASE_API = 'https://raw.githubusercontent.com/demisto/content'

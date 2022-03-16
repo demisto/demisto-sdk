@@ -987,7 +987,7 @@ def download(**kwargs):
 def xsoar_config_file_update(**kwargs):
     """Handle your XSOAR Configuration File.
     Add automatically all the installed MarketPlace Packs to the marketplace_packs section in XSOAR Configuration File.
-    Add a Pack to both marketplace_packs and custom_packs sections in the Configuration File.   
+    Add a Pack to both marketplace_packs and custom_packs sections in the Configuration File.
     """
     from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import \
         XSOARConfigFileUpdater

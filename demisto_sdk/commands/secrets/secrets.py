@@ -277,8 +277,13 @@ class SecretsValidator(object):
         # if script or readme file, search for yml in order to retrieve temp white list
         yml_file_contents = ''
         # Validate if it is integration documentation file or supported file extension
-        if find_type(file_path) in [FileType.PYTHON_FILE, FileType.README, FileType.POWERSHELL_FILE]:
-            yml_file_contents = self.retrieve_related_yml(os.path.dirname(file_path))
+        try:
+            if find_type(file_path) in [FileType.PYTHON_FILE, FileType.README, FileType.POWERSHELL_FILE]:
+                yml_file_contents = self.retrieve_related_yml(os.path.dirname(file_path))
+        except ValueError as e:
+            if "has a structure issue of file type yml. Error was: while constructing a mapping" in e:
+                with io.open(file_path, mode="r", encoding="utf-8") as matching_yml_file:
+                    yml_file_contents = matching_yml_file.read()
         return yml_file_contents
 
     @staticmethod

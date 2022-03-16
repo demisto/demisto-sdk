@@ -3,7 +3,6 @@ This is module to store the git configuration of the content repo
 """
 import enum
 import json
-import logging
 import os
 from functools import lru_cache
 from typing import Optional, Tuple
@@ -14,10 +13,9 @@ import giturlparse
 # dirs
 import requests
 from git import InvalidGitRepositoryError
+from logger import logger
 
 from demisto_sdk.commands.common.git_util import GitUtil
-
-from logger import logger
 
 
 class GitProvider(enum.Enum):

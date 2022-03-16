@@ -1,13 +1,13 @@
 # Changelog
-
+* Added dependency validation support for core marketplacev2 packs.
 * Fixed an issue in **update-release-notes** where suggestion fix failed in validation.
 * Fixed a bug where `.env` files didn't load. @nicolas-rdgs
 * Fixed a bug where **validate** command failed when the *categories* field in the pack metadata was empty for non-integration packs.
 * Added *system* and *item-type* arguments to the **download** command, used when downloading system items.
 * Added a validation to **validate**, checking that each script, integration and playbook have a README file. This validation only runs when the command is called with either the `-i` or the `-g` flag.
-* Fixed a regression issue with **doc-review**, where  the `-g` flag did not work
+* Fixed a regression issue with **doc-review**, where  the `-g` flag did not work.
 * Improved the detection of errors in **doc-review** command.
-* The **validate** command now checks if a readme file is empty, only for packs that contain playbooks or were written by a partner
+* The **validate** command now checks if a readme file is empty, only for packs that contain playbooks or were written by a partner.
 * The **validate** command now makes sure common contextPath values (e.g. `DBotScore.Score`) have a non-empty description, and **format** populates them automatically.
 * Fixed an issue where the **generate-outputs** command did not work properly when examples were provided.
 * Fixed an issue in the **generate-outputs** command, where the outputs were not written to the specified output path.

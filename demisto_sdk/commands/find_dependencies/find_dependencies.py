@@ -3,13 +3,13 @@ import json
 import os
 import sys
 from copy import deepcopy
-from distutils.version import LooseVersion
 from pathlib import Path
 from pprint import pformat
 from typing import Any, Iterable, Optional, Set, Tuple, Union
 
 import click
 import networkx as nx
+from packaging.version import Version
 from requests import RequestException
 
 from demisto_sdk.commands.common import constants
@@ -28,8 +28,9 @@ from demisto_sdk.commands.common.update_id_set import (
 from demisto_sdk.commands.create_id_set.create_id_set import (IDSetCreator,
                                                               get_id_set)
 
-MINIMUM_DEPENDENCY_VERSION = LooseVersion('6.0.0')
+MINIMUM_DEPENDENCY_VERSION = Version('6.0.0')
 COMMON_TYPES_PACK = 'CommonTypes'
+CORE_ALERT_FIELDS_PACK = 'CoreAlertFields'
 PACKS_FULL_PATH = os.path.join(get_content_path(), PACKS_DIR)  # full path to Packs folder in content repo
 
 
@@ -204,9 +205,44 @@ class PackDependencies:
         return list(filter(lambda s: next(iter(s.values())).get('pack') == pack_id, items_list))
 
     @staticmethod
+    def _should_add_item_as_dependency(item_details: dict, base_condition: bool, exclude_ignored_dependencies: bool, marketplace: str) -> bool:
+        """
+        Whether the item matches the criteria:
+            * matches the base condition.
+            * relevant to the marketplaces server versions.
+            * not in an excluded pack.
+            * part of the desired marketplace.
+
+        Args:
+            item_details: item info from the ID set.
+            base_condition: basic check of relevance, for example item ID is matched.
+            exclude_ignored_dependencies: Determines whether to include unsupported dependencies or not.
+            marketplace: The dependency calculation desired marketplace.
+
+        Returns:
+            bool
+        """
+        id_set_item_version = Version(item_details.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION))
+        is_version_match = id_set_item_version >= MINIMUM_DEPENDENCY_VERSION
+
+        id_set_item_pack = item_details.get('pack')
+        is_relevant_pack = bool(id_set_item_pack and
+                                (
+                                    not exclude_ignored_dependencies or
+                                    id_set_item_pack not in constants.IGNORED_DEPENDENCY_CALCULATION
+                                ))
+
+        is_marketplace_match = not marketplace or marketplace in item_details.get('marketplaces', [])
+
+        return base_condition and is_version_match and is_relevant_pack and is_marketplace_match
+
+    @staticmethod
     def _search_packs_by_items_names(items_names: Union[str, list],
                                      items_list: list,
-                                     exclude_ignored_dependencies: bool = True, item_type: str = '') -> Tuple[Any, Any]:
+                                     exclude_ignored_dependencies: bool = True,
+                                     item_type: str = '',
+                                     marketplace: str = '',
+                                     ) -> Tuple[Any, Any]:
         """
         Searches for implemented script/integration/playbook.
         Get a set of packs and dict (pack, item) of the found implemented items.
@@ -216,8 +252,10 @@ class PackDependencies:
             items_list (list): specific section of id set.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
             item_type (str): the type of content item given.
+            marketplace: The dependency calculation desired marketplace.
+
         Returns:
-            tuppele of:
+            tuple of:
                 set: found pack ids and
                 dict: found {pack, (item_type, item_id)} ids
 
@@ -230,23 +268,26 @@ class PackDependencies:
         for item in items_list:
             item_id = list(item.keys())[0]
             item_details = list(item.values())[0]
-            if item_details.get('name', '') in items_names and 'pack' in item_details and \
-                    LooseVersion(item_details.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)) >= \
-                    MINIMUM_DEPENDENCY_VERSION:
+
+            if PackDependencies._should_add_item_as_dependency(item_details,
+                                                               item_details.get('name', '') in items_names,
+                                                               exclude_ignored_dependencies,
+                                                               marketplace,
+                                                               ):
                 pack_name = item_details.get('pack')
                 pack_names.add(pack_name)
                 packs_and_items_dict.setdefault(pack_name, []).append((item_type, item_id))
 
-        if not exclude_ignored_dependencies:
-            return set(pack_names), packs_and_items_dict
-        return {p for p in pack_names if p not in constants.IGNORED_DEPENDENCY_CALCULATION}, packs_and_items_dict
+        return pack_names, packs_and_items_dict
 
     @staticmethod
     def _search_packs_by_items_names_or_ids(items_names: Union[str, list],
                                             items_list: list,
                                             exclude_ignored_dependencies: bool = True,
-                                            incident_or_indicator: Optional[str] = 'Both', item_type: str = '') -> \
-            Tuple[Any, Any]:
+                                            incident_or_indicator: Optional[str] = 'Both',
+                                            item_type: str = '',
+                                            marketplace: str = '',
+                                            ) -> Tuple[Any, Any]:
         """
         Searches for implemented packs of the given items.
 
@@ -259,8 +300,10 @@ class PackDependencies:
                 'Incident' to search packs with incident fields,
                 'Both' to search packs with indicator fields and incident fields.
             item_type (str): the type of content item given.
+            marketplace: The dependency calculation desired marketplace.
+
         Returns:
-            tuppele of
+            tuple of
             set: found pack ids
             dict: found {pack, (item_type, item_id)} ids
         """
@@ -284,12 +327,17 @@ class PackDependencies:
             for item_from_id_set in items_list:
                 item_id = list(item_from_id_set.keys())[0]
                 item_details = list(item_from_id_set.values())[0]
-                if (item_id in item_possible_ids or item_name == item_details.get('name')) \
-                        and item_details.get('pack') \
-                        and LooseVersion(item_details.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)) >= \
-                        MINIMUM_DEPENDENCY_VERSION \
-                        and (item_details['pack'] not in constants.IGNORED_DEPENDENCY_CALCULATION or
-                             not exclude_ignored_dependencies):
+                id_set_item_aliases = set(item_details.get('aliases', []))
+
+                is_item_id_match = item_id in item_possible_ids or item_name == item_details.get('name')
+                if item_type == 'incidentfield':
+                    is_item_id_match = is_item_id_match or set(item_possible_ids).intersection(id_set_item_aliases)
+
+                if PackDependencies._should_add_item_as_dependency(item_details,
+                                                                   is_item_id_match,
+                                                                   exclude_ignored_dependencies,
+                                                                   marketplace,
+                                                                   ):
                     pack_name = item_details.get('pack')
                     pack_names.add(pack_name)
                     packs_and_items_dict.setdefault(pack_name, []).extend([(item_type, item_id)])
@@ -299,7 +347,9 @@ class PackDependencies:
     @staticmethod
     def _search_packs_by_integration_command(command: str,
                                              id_set: dict,
-                                             exclude_ignored_dependencies: bool = True) -> Tuple[Any, Any]:
+                                             exclude_ignored_dependencies: bool = True,
+                                             marketplace: str = '',
+                                             ) -> Tuple[Any, Any]:
         """
         Filters packs by implementing integration commands.
 
@@ -307,9 +357,10 @@ class PackDependencies:
             command (str): integration command.
             id_set (dict): id set json.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+            marketplace (str): The dependency calculation desired marketplace.
 
         Returns:
-            tuppele of:
+            tuple of:
             set: found pack ids
             dict: found {pack, (item_type, item_id)} ids
         """
@@ -318,9 +369,12 @@ class PackDependencies:
         for item in id_set['integrations']:
             item_id = list(item.keys())[0]
             item_details = list(item.values())[0]
-            if command in item_details.get('commands', []) and 'pack' in item_details and \
-                    LooseVersion(item_details.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)) >= \
-                    MINIMUM_DEPENDENCY_VERSION:
+
+            if PackDependencies._should_add_item_as_dependency(item_details,
+                                                               command in item_details.get('commands', []),
+                                                               exclude_ignored_dependencies,
+                                                               marketplace,
+                                                               ):
                 pack_name = item_details.get('pack')
                 pack_names.add(pack_name)
                 packs_and_items_dict.setdefault(pack_name, []).extend([('integration', item_id)])
@@ -387,13 +441,13 @@ class PackDependencies:
             pack_dependencies_data (list): representing the dependencies.
 
         """
-        common_types_pack_dependency = False
-        if COMMON_TYPES_PACK in packs_found_from_incident_fields_or_types:
-            packs_found_from_incident_fields_or_types.remove(COMMON_TYPES_PACK)
-            common_types_pack_dependency = True
-        pack_dependencies_data = PackDependencies._label_as_optional(packs_found_from_incident_fields_or_types)
-        if common_types_pack_dependency:
-            pack_dependencies_data.extend(PackDependencies._label_as_mandatory({COMMON_TYPES_PACK}))
+        pack_dependencies_data = []
+        mandatory_packs = packs_found_from_incident_fields_or_types.intersection({COMMON_TYPES_PACK, CORE_ALERT_FIELDS_PACK})
+        packs_found_from_incident_fields_or_types -= mandatory_packs
+
+        pack_dependencies_data.extend(PackDependencies._label_as_mandatory(mandatory_packs))
+        pack_dependencies_data.extend(PackDependencies._label_as_optional(packs_found_from_incident_fields_or_types))
+
         return pack_dependencies_data
 
     @staticmethod
@@ -401,7 +455,9 @@ class PackDependencies:
                                       id_set: dict,
                                       verbose: bool,
                                       exclude_ignored_dependencies: bool = True,
-                                      get_dependent_items: bool = False) -> Union[Tuple[Any, Any], Set[Any]]:
+                                      get_dependent_items: bool = False,
+                                      marketplace: str = '',
+                                      ) -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects script pack dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -411,6 +467,7 @@ class PackDependencies:
             id_set (dict): id set json.
             verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+            marketplace: The dependency calculation desired marketplace.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -439,7 +496,7 @@ class PackDependencies:
             for command in dependencies_commands:
                 # try to search dependency by scripts first
                 pack_names, packs_and_items_dict = PackDependencies._search_packs_by_items_names(
-                    command, id_set['scripts'], exclude_ignored_dependencies, 'script')
+                    command, id_set['scripts'], exclude_ignored_dependencies, 'script', marketplace=marketplace)
 
                 if pack_names:  # found script dependency implementing pack name
                     pack_dependencies_data = PackDependencies._label_as_mandatory(pack_names)
@@ -448,7 +505,7 @@ class PackDependencies:
                 else:
                     # try to search dependency by integration
                     pack_names, packs_and_items_dict = PackDependencies._search_packs_by_integration_command(
-                        command, id_set, exclude_ignored_dependencies)
+                        command, id_set, exclude_ignored_dependencies, marketplace=marketplace)
 
                     if pack_names:  # found integration dependency implementing pack name
                         pack_dependencies_data = PackDependencies._detect_generic_commands_dependencies(pack_names)
@@ -471,8 +528,9 @@ class PackDependencies:
     def _differentiate_playbook_implementing_objects(implementing_objects: list,
                                                      skippable_tasks: set,
                                                      id_set_section: list,
-                                                     exclude_ignored_dependencies: bool = True, item_type: str = '') \
-            -> Tuple[Any, Any]:
+                                                     exclude_ignored_dependencies: bool = True,
+                                                     item_type: str = '',
+                                                     ) -> Tuple[Any, Any]:
         """
         Differentiate implementing objects by skippable.
 
@@ -482,6 +540,7 @@ class PackDependencies:
             id_set_section (list): id set section corresponds to implementing_objects (scripts or playbooks).
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
             item_type (str): the type of content item given.
+            marketplace: The dependency calculation desired marketplace.
 
         Returns:
             tuple of:
@@ -509,8 +568,9 @@ class PackDependencies:
 
     @staticmethod
     def _collect_playbooks_dependencies(pack_playbooks: list, id_set: dict, verbose: bool,
-                                        exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False) \
-            -> Union[Tuple[Any, Any], Set[Any]]:
+                                        exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False,
+                                        marketplace: str = '',
+                                        ) -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects playbook pack dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -520,6 +580,7 @@ class PackDependencies:
             id_set (dict): id set json.
             verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+            marketplace: The dependency calculation desired marketplace.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -602,7 +663,8 @@ class PackDependencies:
             packs_found_from_incident_fields, packs_and_incident_fields_dict = PackDependencies. \
                 _search_packs_by_items_names_or_ids(incident_fields, id_set['IncidentFields'],
                                                     exclude_ignored_dependencies, 'Both',
-                                                    'incidentfield')  # check if in builtin
+                                                    'incidentfield',
+                                                    marketplace=marketplace)  # check if in builtin
             if packs_found_from_incident_fields:
                 pack_dependencies_data = PackDependencies._update_optional_commontypes_pack_dependencies(
                     packs_found_from_incident_fields)
@@ -615,7 +677,8 @@ class PackDependencies:
             # as customers do not have to use the OOTB inputs.
             indicator_fields = playbook_data.get('indicator_fields', [])
             packs_found_from_indicator_fields, packs_and_indicator_fields_dict = PackDependencies._search_packs_by_items_names_or_ids(
-                indicator_fields, id_set['IndicatorFields'], exclude_ignored_dependencies, 'Both', 'incidentfield')
+                indicator_fields, id_set['IndicatorFields'], exclude_ignored_dependencies, 'Both', 'incidentfield',
+                marketplace=marketplace)
             if packs_found_from_indicator_fields:
                 pack_dependencies_data = PackDependencies._update_optional_commontypes_pack_dependencies(
                     packs_found_from_indicator_fields)
@@ -641,7 +704,8 @@ class PackDependencies:
                                       id_set: dict,
                                       verbose: bool,
                                       exclude_ignored_dependencies: bool = True,
-                                      get_dependent_items: bool = False
+                                      get_dependent_items: bool = False,
+                                      marketplace: str = '',
                                       ) -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects layouts pack dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
@@ -652,6 +716,7 @@ class PackDependencies:
             id_set (dict): id set json.
             verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+            marketplace: The dependency calculation desired marketplace.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -693,7 +758,8 @@ class PackDependencies:
             packs_found_from_incident_indicator_fields, packs_and_incident_indicator_dict = PackDependencies. \
                 _search_packs_by_items_names_or_ids(related_fields, id_set[f'{layout_type}Fields'],
                                                     exclude_ignored_dependencies, layout_type,
-                                                    f'{layout_type.lower()}_field')
+                                                    f'{layout_type.lower()}_field',
+                                                    marketplace=marketplace)
 
             if packs_found_from_incident_indicator_fields:
                 pack_dependencies_data = PackDependencies. \
@@ -719,10 +785,11 @@ class PackDependencies:
     @staticmethod
     def _collect_incidents_fields_dependencies(pack_incidents_fields: list, id_set: dict, verbose: bool,
                                                exclude_ignored_dependencies: bool = True,
-                                               get_dependent_items: bool = False) \
-            -> Union[Tuple[Any, Any], Set[Any]]:
+                                               get_dependent_items: bool = False,
+                                               marketplace: str = '',
+                                               ) -> Union[Tuple[Any, Any], Set[Any]]:
         """
-        Collects in incidents fields dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
+        Collects incidents fields dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
 
         Args:
@@ -730,6 +797,7 @@ class PackDependencies:
             id_set (dict): id set json.
             verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+            marketplace: The dependency calculation desired marketplace.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -756,7 +824,7 @@ class PackDependencies:
 
             related_scripts = incident_field_data.get('scripts', [])
             packs_found_from_scripts, packs_and_scripts_dict = PackDependencies._search_packs_by_items_names(
-                related_scripts, id_set['scripts'], exclude_ignored_dependencies, 'script')
+                related_scripts, id_set['scripts'], exclude_ignored_dependencies, 'script', marketplace=marketplace)
 
             if packs_found_from_scripts:
                 pack_dependencies_data = PackDependencies. \
@@ -781,8 +849,9 @@ class PackDependencies:
     @staticmethod
     def _collect_indicators_types_dependencies(pack_indicators_types: list, id_set: dict, verbose: bool,
                                                exclude_ignored_dependencies: bool = True,
-                                               get_dependent_items: bool = False) \
-            -> Union[Tuple[Any, Any], Set[Any]]:
+                                               get_dependent_items: bool = False,
+                                               marketplace: str = '',
+                                               ) -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects in indicators types dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -792,6 +861,7 @@ class PackDependencies:
             id_set (dict): id set json.
             verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+            marketplace: The dependency calculation desired marketplace.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -827,7 +897,7 @@ class PackDependencies:
 
             related_scripts = indicator_type_data.get('scripts', [])
             packs_found_from_scripts, packs_and_scripts_dict = PackDependencies._search_packs_by_items_names(
-                related_scripts, id_set['scripts'], exclude_ignored_dependencies, 'script')
+                related_scripts, id_set['scripts'], exclude_ignored_dependencies, 'script', marketplace=marketplace)
 
             if packs_found_from_scripts:
                 pack_dependencies_data = PackDependencies. \
@@ -853,8 +923,9 @@ class PackDependencies:
 
     @staticmethod
     def _collect_integrations_dependencies(pack_integrations: list, id_set: dict, verbose: bool,
-                                           exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False) \
-            -> Union[Tuple[Any, Any], Set[Any]]:
+                                           exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False,
+                                           marketplace: str = '',
+                                           ) -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects integrations dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -863,6 +934,7 @@ class PackDependencies:
             id_set (dict): id set json.
             verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+            marketplace: The dependency calculation desired marketplace.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -881,7 +953,8 @@ class PackDependencies:
 
             related_classifiers = integration_data.get('classifiers', [])
             packs_found_from_classifiers, packs_and_classifiers_dict = PackDependencies._search_packs_by_items_names_or_ids(
-                related_classifiers, id_set['Classifiers'], exclude_ignored_dependencies, 'Both', 'classifier')
+                related_classifiers, id_set['Classifiers'], exclude_ignored_dependencies, 'Both', 'classifier',
+                marketplace=marketplace)
 
             if packs_found_from_classifiers:
                 pack_dependencies_data = PackDependencies. \
@@ -893,7 +966,8 @@ class PackDependencies:
 
             related_mappers = integration_data.get('mappers', [])
             packs_found_from_mappers, packs_and_mappers_dict = PackDependencies._search_packs_by_items_names_or_ids(
-                related_mappers, id_set['Mappers'], exclude_ignored_dependencies, 'Both', 'mapper')
+                related_mappers, id_set['Mappers'], exclude_ignored_dependencies, 'Both', 'mapper',
+                marketplace=marketplace)
 
             if packs_found_from_mappers:
                 pack_dependencies_data = PackDependencies. \
@@ -905,7 +979,8 @@ class PackDependencies:
 
             related_incident_types = integration_data.get('incident_types', [])
             packs_found_from_incident_types, packs_and_incident_types_dict = PackDependencies._search_packs_by_items_names(
-                related_incident_types, id_set['IncidentTypes'], exclude_ignored_dependencies, 'incidenttype')
+                related_incident_types, id_set['IncidentTypes'], exclude_ignored_dependencies, 'incidenttype',
+                marketplace=marketplace)
 
             if packs_found_from_incident_types:
                 pack_dependencies_data = PackDependencies. \
@@ -937,8 +1012,9 @@ class PackDependencies:
     @staticmethod
     def _collect_incidents_types_dependencies(pack_incidents_types: list, id_set: dict, verbose: bool,
                                               exclude_ignored_dependencies: bool = True,
-                                              get_dependent_items: bool = False) \
-            -> Union[Tuple[Any, Any], Set[Any]]:
+                                              get_dependent_items: bool = False,
+                                              marketplace: str = '',
+                                              ) -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects in incidents types dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -948,6 +1024,7 @@ class PackDependencies:
             id_set (dict): id set json.
             verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+            marketplace: The dependency calculation desired marketplace.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -966,7 +1043,7 @@ class PackDependencies:
 
             related_playbooks = incident_type_data.get('playbooks', [])
             packs_found_from_playbooks, packs_and_playbooks_dict = PackDependencies._search_packs_by_items_names(
-                related_playbooks, id_set['playbooks'], exclude_ignored_dependencies, 'playbook')
+                related_playbooks, id_set['playbooks'], exclude_ignored_dependencies, 'playbook', marketplace=marketplace)
 
             if packs_found_from_playbooks:
                 pack_dependencies_data = PackDependencies. \
@@ -979,7 +1056,7 @@ class PackDependencies:
 
             related_scripts = incident_type_data.get('scripts', [])
             packs_found_from_scripts, packs_and_scripts_dict = PackDependencies._search_packs_by_items_names(
-                related_scripts, id_set['scripts'], exclude_ignored_dependencies, 'script')
+                related_scripts, id_set['scripts'], exclude_ignored_dependencies, 'script', marketplace=marketplace)
 
             if packs_found_from_scripts:
                 pack_dependencies_data = PackDependencies. \
@@ -1005,8 +1082,9 @@ class PackDependencies:
 
     @staticmethod
     def _collect_classifiers_dependencies(pack_classifiers: list, id_set: dict, verbose: bool,
-                                          exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False) \
-            -> Union[Tuple[Any, Any], Set[Any]]:
+                                          exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False,
+                                          marketplace: str = '',
+                                          ) -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects in classifiers dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -1016,6 +1094,7 @@ class PackDependencies:
             id_set (dict): id set json.
             verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+            marketplace: The dependency calculation desired marketplace.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -1038,7 +1117,8 @@ class PackDependencies:
                                                                                                    'indicator']:
                 packs_found_from_generic_types, packs_and_generic_types_dict = \
                     PackDependencies._search_packs_by_items_names_or_ids(
-                        related_types, id_set['GenericTypes'], exclude_ignored_dependencies, "Generic", 'generictype')
+                        related_types, id_set['GenericTypes'], exclude_ignored_dependencies, "Generic", 'generictype',
+                        marketplace=marketplace)
 
                 if packs_found_from_generic_types:
                     pack_dependencies_data = PackDependencies._label_as_mandatory(
@@ -1051,7 +1131,8 @@ class PackDependencies:
             else:
                 packs_found_from_incident_types, packs_and_incident_types_dict = \
                     PackDependencies._search_packs_by_items_names(
-                        related_types, id_set['IncidentTypes'], exclude_ignored_dependencies, 'incidenttype')
+                        related_types, id_set['IncidentTypes'], exclude_ignored_dependencies, 'incidenttype',
+                        marketplace=marketplace)
 
                 # classifiers dependencies from incident types should be marked as optional unless CommonTypes pack,
                 # as customers do not have to use the OOTB mapping.
@@ -1067,7 +1148,8 @@ class PackDependencies:
             # collect pack dependencies from transformers and filters
             related_scripts = classifier_data.get('filters', []) + classifier_data.get('transformers', [])
             packs_found_from_scripts, packs_and_scripts_dict = PackDependencies._search_packs_by_items_names_or_ids(
-                related_scripts, id_set['scripts'], exclude_ignored_dependencies, 'Both', 'script')
+                related_scripts, id_set['scripts'], exclude_ignored_dependencies, 'Both', 'script',
+                marketplace=marketplace)
 
             if packs_found_from_scripts:
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_scripts)
@@ -1090,8 +1172,9 @@ class PackDependencies:
 
     @staticmethod
     def _collect_mappers_dependencies(pack_mappers: list, id_set: dict, verbose: bool,
-                                      exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False) \
-            -> Union[Tuple[Any, Any], Set[Any]]:
+                                      exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False,
+                                      marketplace: str = '',
+                                      ) -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects in mappers dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -1101,6 +1184,7 @@ class PackDependencies:
             id_set (dict): id set json.
             verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+            marketplace: The dependency calculation desired marketplace.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -1122,7 +1206,8 @@ class PackDependencies:
             if mapper_data.get('definitionId') and mapper_data.get('definitionId') not in ['incident', 'indicator']:
                 packs_found_from_generic_types, packs_and_generic_types_dict = \
                     PackDependencies._search_packs_by_items_names(
-                        related_types, id_set['GenericTypes'], exclude_ignored_dependencies, 'generictype')
+                        related_types, id_set['GenericTypes'], exclude_ignored_dependencies, 'generictype',
+                        marketplace=marketplace)
 
                 if packs_found_from_generic_types:
                     pack_dependencies_data = PackDependencies._label_as_mandatory(
@@ -1134,7 +1219,8 @@ class PackDependencies:
 
                 packs_found_from_generic_fields, packs_and_generic_fields_dict = \
                     PackDependencies._search_packs_by_items_names(
-                        related_types, id_set['GenericFields'], exclude_ignored_dependencies, 'genericfield')
+                        related_types, id_set['GenericFields'], exclude_ignored_dependencies, 'genericfield',
+                        marketplace=marketplace)
 
                 if packs_found_from_generic_fields:
                     pack_dependencies_data = PackDependencies._label_as_mandatory(
@@ -1146,7 +1232,8 @@ class PackDependencies:
             else:
                 packs_found_from_incident_types, packs_and_incident_types_dict = PackDependencies. \
                     _search_packs_by_items_names(
-                        related_types, id_set['IncidentTypes'], exclude_ignored_dependencies, 'incidenttype')
+                        related_types, id_set['IncidentTypes'], exclude_ignored_dependencies, 'incidenttype',
+                        marketplace=marketplace)
 
                 # mappers dependencies from incident types should be marked as optional unless CommonTypes Pack,
                 # as customers do not have to use the OOTB mapping.
@@ -1162,7 +1249,8 @@ class PackDependencies:
                 related_fields = mapper_data.get('incident_fields', [])
                 packs_found_from_incident_fields, packs_and_incident_fields_dict = PackDependencies. \
                     _search_packs_by_items_names_or_ids(
-                        related_fields, id_set['IncidentFields'], exclude_ignored_dependencies, 'Both', 'incidentfield')
+                        related_fields, id_set['IncidentFields'], exclude_ignored_dependencies, 'Both', 'incidentfield',
+                        marketplace=marketplace)
 
                 # mappers dependencies from incident fields should be marked as optional unless CommonTypes pack,
                 # as customers do not have to use the OOTB mapping.
@@ -1176,7 +1264,7 @@ class PackDependencies:
             # collect pack dependencies from transformers and filters
             related_scripts = mapper_data.get('filters', []) + mapper_data.get('transformers', [])
             packs_found_from_scripts, packs_and_scripts_dict = PackDependencies._search_packs_by_items_names_or_ids(
-                related_scripts, id_set['scripts'], exclude_ignored_dependencies, 'Both', 'script')
+                related_scripts, id_set['scripts'], exclude_ignored_dependencies, 'Both', 'script', marketplace=marketplace)
 
             if packs_found_from_scripts:
                 pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_scripts)
@@ -1197,9 +1285,13 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
-    def _collect_widget_dependencies(pack_widgets: list, id_set: dict, verbose: bool,
-                                     exclude_ignored_dependencies: bool = True, header: str = "Widgets",
-                                     get_dependent_items: bool = False) -> Union[Tuple[Any, Any], Set[Any]]:
+    def _collect_widget_dependencies(pack_widgets: list,
+                                     id_set: dict, verbose: bool,
+                                     exclude_ignored_dependencies: bool = True,
+                                     header: str = "Widgets",
+                                     get_dependent_items: bool = False,
+                                     marketplace: str = '',
+                                     ) -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects widget dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -1209,6 +1301,7 @@ class PackDependencies:
             id_set (dict): id set json.
             verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+            marketplace: The dependency calculation desired marketplace.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -1228,7 +1321,7 @@ class PackDependencies:
 
             related_scripts = widget_data.get('scripts', [])
             packs_found_from_scripts, packs_and_scripts_dict = PackDependencies._search_packs_by_items_names(
-                related_scripts, id_set['scripts'], exclude_ignored_dependencies, 'script')
+                related_scripts, id_set['scripts'], exclude_ignored_dependencies, 'script', marketplace=marketplace)
 
             if packs_found_from_scripts:
                 pack_dependencies_data = PackDependencies. \
@@ -1253,16 +1346,20 @@ class PackDependencies:
     @staticmethod
     def _collect_generic_types_dependencies(pack_generic_types: list, id_set: dict, verbose: bool,
                                             exclude_ignored_dependencies: bool = True,
-                                            get_dependent_items: bool = False) \
-            -> Union[Tuple[Any, Any], Set[Any]]:
+                                            get_dependent_items: bool = False,
+                                            marketplace: str = '',
+                                            ) -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects generic types dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
+
         Args:
             pack_generic_types (list): collection of pack generics types data.
             id_set (dict): id set json.
             verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+            marketplace: The dependency calculation desired marketplace.
+
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
@@ -1281,7 +1378,7 @@ class PackDependencies:
 
             related_scripts = generic_type_data.get('scripts', [])
             packs_found_from_scripts, packs_and_scripts_dict = PackDependencies._search_packs_by_items_names(
-                related_scripts, id_set['scripts'], exclude_ignored_dependencies, 'script')
+                related_scripts, id_set['scripts'], exclude_ignored_dependencies, 'script', marketplace=marketplace)
 
             if packs_found_from_scripts:
                 pack_dependencies_data = PackDependencies. \
@@ -1294,7 +1391,7 @@ class PackDependencies:
             related_definitions = generic_type_data.get('definitionId')
             packs_found_from_definitions, packs_and_definitions_dict = PackDependencies._search_packs_by_items_names_or_ids(
                 related_definitions, id_set['GenericDefinitions'], exclude_ignored_dependencies, 'Both',
-                'generic_definition')
+                'generic_definition', marketplace=marketplace)
 
             if packs_found_from_definitions:
                 pack_dependencies_data = PackDependencies. \
@@ -1307,7 +1404,7 @@ class PackDependencies:
 
             related_layout = generic_type_data.get('layout')
             packs_found_from_layout, packs_and_layouts_dict = PackDependencies._search_packs_by_items_names_or_ids(
-                related_layout, id_set['Layouts'], exclude_ignored_dependencies, 'Both', 'layout')
+                related_layout, id_set['Layouts'], exclude_ignored_dependencies, 'Both', 'layout', marketplace=marketplace)
 
             if packs_found_from_definitions:
                 pack_dependencies_data = PackDependencies. \
@@ -1330,9 +1427,13 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
-    def _collect_generic_fields_dependencies(pack_generic_fields: list, id_set: dict, verbose: bool,
+    def _collect_generic_fields_dependencies(pack_generic_fields: list,
+                                             id_set: dict,
+                                             verbose: bool,
                                              exclude_ignored_dependencies: bool = True,
-                                             get_dependent_items: bool = False) -> Union[Tuple[Any, Any], Set[Any]]:
+                                             get_dependent_items: bool = False,
+                                             marketplace: str = '',
+                                             ) -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects in generic fields dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
@@ -1342,6 +1443,7 @@ class PackDependencies:
             id_set (dict): id set json.
             verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+            marketplace: The dependency calculation desired marketplace.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -1361,7 +1463,7 @@ class PackDependencies:
 
             related_scripts = generic_field_data.get('scripts', [])
             packs_found_from_scripts, packs_and_scripts_dict = PackDependencies._search_packs_by_items_names(
-                related_scripts, id_set['scripts'], exclude_ignored_dependencies, 'script')
+                related_scripts, id_set['scripts'], exclude_ignored_dependencies, 'script', marketplace=marketplace)
 
             if packs_found_from_scripts:
                 pack_dependencies_data = PackDependencies. \
@@ -1375,7 +1477,7 @@ class PackDependencies:
             packs_found_from_definitions, packs_and_definitions_dict = PackDependencies. \
                 _search_packs_by_items_names_or_ids(
                     related_definitions, id_set['GenericDefinitions'], exclude_ignored_dependencies,
-                    'Both', 'generic_definition')
+                    'Both', 'generic_definition', marketplace=marketplace)
 
             if packs_found_from_definitions:
                 pack_dependencies_data = PackDependencies. \
@@ -1387,7 +1489,8 @@ class PackDependencies:
                                               packs_and_definitions_dict)
             related_types = generic_field_data.get('generic_types')
             packs_found_from_types, packs_and_types_dict = PackDependencies._search_packs_by_items_names_or_ids(
-                related_types, id_set['GenericTypes'], exclude_ignored_dependencies, 'Both', 'generic_type')
+                related_types, id_set['GenericTypes'], exclude_ignored_dependencies, 'Both', 'generic_type',
+                marketplace=marketplace)
 
             if packs_found_from_types:
                 pack_dependencies_data = PackDependencies. \
@@ -1410,17 +1513,24 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
-    def _collect_generic_modules_dependencies(pack_generic_modules: list, id_set: dict, verbose: bool,
+    def _collect_generic_modules_dependencies(pack_generic_modules: list,
+                                              id_set: dict,
+                                              verbose: bool,
                                               exclude_ignored_dependencies: bool = True,
-                                              get_dependent_items: bool = False) -> Union[Tuple[Any, Any], Set[Any]]:
+                                              get_dependent_items: bool = False,
+                                              marketplace: str = '',
+                                              ) -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects generic types dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
+
         Args:
             pack_generic_types (list): collection of pack generics types data.
             id_set (dict): id set json.
             verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+            marketplace: The dependency calculation desired marketplace.
+
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
             if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
@@ -1441,7 +1551,7 @@ class PackDependencies:
             packs_found_from_definitions, packs_and_definitions_dict = PackDependencies. \
                 _search_packs_by_items_names_or_ids(
                     related_definitions, id_set['GenericDefinitions'], exclude_ignored_dependencies,
-                    'Both', 'generic_definition')
+                    'Both', 'generic_definition', marketplace=marketplace)
 
             if packs_found_from_definitions:
                 pack_dependencies_data = PackDependencies. \
@@ -1456,7 +1566,8 @@ class PackDependencies:
                 related_dashboards = related_views.get(view, {}).get('dashboards', [])
                 packs_found_from_dashboards, packs_and_dashboards_dict = PackDependencies. \
                     _search_packs_by_items_names_or_ids(
-                        related_dashboards, id_set['Dashboards'], exclude_ignored_dependencies, 'dashboard')
+                        related_dashboards, id_set['Dashboards'], exclude_ignored_dependencies, 'dashboard',
+                        marketplace=marketplace)
 
                 if packs_found_from_dashboards:
                     pack_dependencies_data = PackDependencies. \
@@ -1481,17 +1592,23 @@ class PackDependencies:
         return dependencies_packs
 
     @staticmethod
-    def _collect_jobs_dependencies(pack_jobs: list, id_set: dict, verbose: bool,
-                                   exclude_ignored_dependencies: bool = True, get_dependent_items: bool = False) \
-            -> Union[Tuple[Any, Any], Set[Any]]:
+    def _collect_jobs_dependencies(pack_jobs: list,
+                                   id_set: dict,
+                                   verbose: bool,
+                                   exclude_ignored_dependencies: bool = True,
+                                   get_dependent_items: bool = False,
+                                   marketplace: str = '',
+                                   ) -> Union[Tuple[Any, Any], Set[Any]]:
         """
         Collects integrations dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
         and the packs containing them.
+
         Args:
-            pack_jobs (list): collection of pack job data.
-            id_set (dict): id set json.
-            verbose (bool): Whether to log the dependencies to the console.
-            exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+            pack_jobs: collection of pack job data.
+            id_set: id set json.
+            verbose: Whether to log the dependencies to the console.
+            exclude_ignored_dependencies: Determines whether to include unsupported dependencies or not.
+            marketplace: The dependency calculation desired marketplace.
 
         Returns:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -1511,7 +1628,8 @@ class PackDependencies:
 
             # Playbook dependency
             packs_found_from_playbooks, packs_and_playbooks_dict = PackDependencies._search_packs_by_items_names_or_ids(
-                job_data.get('playbookId', ''), id_set['playbooks'], exclude_ignored_dependencies, 'Both', 'playbook')
+                job_data.get('playbookId', ''), id_set['playbooks'], exclude_ignored_dependencies, 'Both', 'playbook',
+                marketplace=marketplace)
             pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_playbooks)
             job_dependencies.update(pack_dependencies_data)
             if get_dependent_items:
@@ -1521,7 +1639,7 @@ class PackDependencies:
             # Specified feeds dependencies
             packs_found_from_feeds, packs_and_feeds_dict = PackDependencies._search_packs_by_items_names_or_ids(
                 job_data.get('selectedFeeds', []), id_set['integrations'], exclude_ignored_dependencies, 'Both',
-                'integration')
+                'integration', marketplace=marketplace)
             pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_feeds)
             job_dependencies.update(pack_dependencies_data)
             if get_dependent_items:
@@ -1592,7 +1710,8 @@ class PackDependencies:
 
     @staticmethod
     def _find_pack_dependencies(pack_id: str, id_set: dict, verbose: bool,
-                                exclude_ignored_dependencies: bool = True):
+                                exclude_ignored_dependencies: bool = True,
+                                marketplace: str = ''):
         """
         Searches for the packs and mandatory items the given pack is depending on.
 
@@ -1601,6 +1720,8 @@ class PackDependencies:
             id_set (dict): id set json.
             verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+            marketplace: The dependency calculation desired marketplace.
+
         Returns:
             tuple of:
             set: dependencies data that includes pack id and whether is mandatory or not.
@@ -1616,7 +1737,8 @@ class PackDependencies:
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            True
+            get_dependent_items=True,
+            marketplace=marketplace,
         )
 
         playbooks_dependencies, playbooks_items_dependencies = PackDependencies._collect_playbooks_dependencies(
@@ -1624,7 +1746,8 @@ class PackDependencies:
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            True
+            get_dependent_items=True,
+            marketplace=marketplace,
         )
 
         layouts_dependencies, layouts_items_dependencies = PackDependencies._collect_layouts_dependencies(
@@ -1632,21 +1755,24 @@ class PackDependencies:
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            True
+            get_dependent_items=True,
+            marketplace=marketplace,
         )
         incidents_fields_dependencies, incidents_fields_items_dependencies = PackDependencies._collect_incidents_fields_dependencies(
             pack_items['incidents_fields'],
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            True
+            get_dependent_items=True,
+            marketplace=marketplace,
         )
         indicators_types_dependencies, indicators_types_items_dependencies = PackDependencies._collect_indicators_types_dependencies(
             pack_items['indicators_types'],
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            True
+            get_dependent_items=True,
+            marketplace=marketplace,
         )
 
         integrations_dependencies, integrations_items_dependencies = PackDependencies._collect_integrations_dependencies(
@@ -1654,35 +1780,40 @@ class PackDependencies:
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            True
+            get_dependent_items=True,
+            marketplace=marketplace,
         )
         incidents_types_dependencies, incidents_types_items_dependencies = PackDependencies._collect_incidents_types_dependencies(
             pack_items['incidents_types'],
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            True
+            True,
+            marketplace=marketplace,
         )
         classifiers_dependencies, classifiers_items_dependencies = PackDependencies._collect_classifiers_dependencies(
             pack_items['classifiers'],
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            True
+            get_dependent_items=True,
+            marketplace=marketplace,
         )
         mappers_dependencies, mappers_items_dependencies = PackDependencies._collect_mappers_dependencies(
             pack_items['mappers'],
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            True
+            get_dependent_items=True,
+            marketplace=marketplace,
         )
         widget_dependencies, widgets_items_dependencies = PackDependencies._collect_widget_dependencies(
             pack_items['widgets'],
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            get_dependent_items=True
+            get_dependent_items=True,
+            marketplace=marketplace,
         )
         dashboards_dependencies, dashboards_items_dependencies = PackDependencies._collect_widget_dependencies(
             pack_items['dashboards'],
@@ -1690,7 +1821,8 @@ class PackDependencies:
             verbose,
             exclude_ignored_dependencies,
             header='Dashboards',
-            get_dependent_items=True
+            get_dependent_items=True,
+            marketplace=marketplace,
         )
         reports_dependencies, reports_items_dependencies = PackDependencies._collect_widget_dependencies(
             pack_items['reports'],
@@ -1698,35 +1830,40 @@ class PackDependencies:
             verbose,
             exclude_ignored_dependencies,
             header='Reports',
-            get_dependent_items=True
+            get_dependent_items=True,
+            marketplace=marketplace,
         )
         generic_types_dependencies, generic_types_items_dependencies = PackDependencies._collect_generic_types_dependencies(
             pack_items['generic_types'],
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            get_dependent_items=True
+            get_dependent_items=True,
+            marketplace=marketplace,
         )
         generic_fields_dependencies, generic_fields_items_dependencies = PackDependencies._collect_generic_fields_dependencies(
             pack_items['generic_fields'],
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            get_dependent_items=True
+            get_dependent_items=True,
+            marketplace=marketplace,
         )
         generic_modules_dependencies, generic_modules_items_dependencies = PackDependencies._collect_generic_modules_dependencies(
             pack_items['generic_modules'],
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            get_dependent_items=True
+            get_dependent_items=True,
+            marketplace=marketplace,
         )
         jobs_dependencies, jobs_items_dependencies = PackDependencies._collect_jobs_dependencies(
             pack_items['jobs'],
             id_set,
             verbose,
             exclude_ignored_dependencies,
-            get_dependent_items=True
+            get_dependent_items=True,
+            marketplace=marketplace,
         )
 
         pack_dependencies = (
@@ -1749,12 +1886,12 @@ class PackDependencies:
         return pack_dependencies, items_depenencies
 
     @staticmethod
-    def build_all_dependencies_graph(
-            pack_ids: list,
-            id_set: dict,
-            verbose: bool = False,
-            exclude_ignored_dependencies: bool = True
-    ) -> nx.DiGraph:
+    def build_all_dependencies_graph(pack_ids: list,
+                                     id_set: dict,
+                                     verbose: bool = False,
+                                     exclude_ignored_dependencies: bool = True,
+                                     marketplace: str = '',
+                                     ) -> nx.DiGraph:
         """
         Builds all level of dependencies and returns dependency graph for all packs.
 
@@ -1787,6 +1924,7 @@ class PackDependencies:
             id_set (dict): id set json.
             verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+            marketplace: The dependency calculation desired marketplace.
 
         Returns:
             DiGraph: all dependencies of given packs.
@@ -1802,7 +1940,8 @@ class PackDependencies:
                 print(f'Adding {pack} pack dependencies to the graph...')
             # ITEMS *THIS PACK* IS DEPENDENT *ON*:
             dependencies, dependencies_items = PackDependencies._find_pack_dependencies(
-                pack, id_set, verbose=verbose, exclude_ignored_dependencies=exclude_ignored_dependencies)
+                pack, id_set, verbose=verbose, exclude_ignored_dependencies=exclude_ignored_dependencies,
+                marketplace=marketplace)
             for dependency_name, is_mandatory in dependencies:
                 if dependency_name == pack:
                     continue
@@ -1865,7 +2004,9 @@ class PackDependencies:
     @staticmethod
     def build_dependency_graph_single_pack(pack_id: str, id_set: dict, verbose: bool,
                                            exclude_ignored_dependencies: bool = True,
-                                           get_dependent_items: bool = True) -> nx.DiGraph:
+                                           get_dependent_items: bool = True,
+                                           marketplace: str = '',
+                                           ) -> nx.DiGraph:
         """
         Builds all level of dependencies and returns dependency graph.
 
@@ -1874,6 +2015,7 @@ class PackDependencies:
             id_set (dict): id set json.
             verbose (bool): Whether to log the dependencies to the console.
             exclude_ignored_dependencies (bool): Determines whether to include unsupported dependencies or not.
+            marketplace: The dependency calculation desired marketplace.
 
         Returns:
             DiGraph: all level dependencies of given pack.
@@ -1888,7 +2030,8 @@ class PackDependencies:
 
             for leaf in leaf_nodes:
                 leaf_dependencies, dependencies_items = PackDependencies._find_pack_dependencies(
-                    leaf, id_set, verbose=verbose, exclude_ignored_dependencies=exclude_ignored_dependencies)
+                    leaf, id_set, verbose=verbose, exclude_ignored_dependencies=exclude_ignored_dependencies,
+                    marketplace=marketplace)
 
                 if leaf_dependencies:
                     for dependency_name, is_mandatory in leaf_dependencies:
@@ -1903,6 +2046,9 @@ class PackDependencies:
 
     @staticmethod
     def check_arguments_find_dependencies(input_paths, all_packs_dependencies, output_path, get_dependent_on):
+        if output_path and not all_packs_dependencies and not get_dependent_on:
+            print_warning("You used the '--output-path' argument, which only works when using either the"
+                          " '--all-packs-dependencies' or '--get-dependent-on' flags. Ignoring this argument.")
         if not input_paths:
             if not all_packs_dependencies:
                 print_error("Please provide an input path. The path should be formatted as 'Packs/<some pack name>'. "
@@ -1934,9 +2080,6 @@ class PackDependencies:
         if all_packs_dependencies and not output_path:
             print_error("Please insert path for the generated output using --output-path")
             sys.exit(1)
-        if output_path and not all_packs_dependencies and not get_dependent_on:
-            print_warning("You used the '--output-path' argument, which is only relevant for when using the"
-                          " '--all-packs-dependencies' or '--get-dependent-on' flags. Ignoring this argument.")
 
     @staticmethod
     def find_dependencies_manager(
@@ -2265,17 +2408,24 @@ def calculate_all_packs_dependencies(id_set_path: str, output_path: str, verbose
     return pack_dependencies_result
 
 
-def get_packs_dependent_on_given_packs(packs: list, id_set_path: str, output_path: str = None,
-                                       verbose: bool = False, id_set: dict = None) -> Tuple:
+def get_packs_dependent_on_given_packs(packs: list,
+                                       id_set_path: str,
+                                       output_path: str = None,
+                                       verbose: bool = False,
+                                       id_set: dict = None,
+                                       marketplace: str = '',
+
+                                       ) -> Tuple:
     """
 
     Args:
         packs: A list of paths of packs of interest. The resulted packs will be
-         dependent on these packs.
+            dependent on these packs.
         id_set_path: Path to id_set.json file.
         output_path: The path for the outputs json.
         verbose: Whether to print the log to the console.
         id_set: id_set to calculate the dependencies
+        marketplace: The dependency calculation desired marketplace.
 
     Returns:
         1. A dict with the given packs as keys, and the dependent packs with details about the dependency
@@ -2302,8 +2452,9 @@ def get_packs_dependent_on_given_packs(packs: list, id_set_path: str, output_pat
     if not id_set:
         id_set = get_id_set(id_set_path)
     all_packs = select_packs_for_calculation()
-    dependency_graph = PackDependencies.build_all_dependencies_graph(all_packs, id_set=id_set, verbose=verbose)
+    dependency_graph = PackDependencies.build_all_dependencies_graph(all_packs, id_set=id_set, verbose=verbose, marketplace=marketplace)
     reverse_dependency_graph = nx.DiGraph.reverse(dependency_graph)
+
     pack_names = [get_pack_name(pack_path) for pack_path in packs]
     with ProcessPoolHandler() as pool:
         futures = []
@@ -2354,13 +2505,19 @@ def remove_unmandatory_items(packs_and_items_dict, pack_dependencies_data) -> No
             packs_and_items_dict.pop(pack)
 
 
-def remove_dependencies_from_id_set(id_set: dict, excluded_items_by_pack: dict, excluded_items_by_type: dict) -> None:
+def remove_dependencies_from_id_set(id_set: dict,
+                                    excluded_items_by_pack: dict,
+                                    excluded_items_by_type: dict,
+                                    marketplace: str,
+                                    ) -> None:
     """
-    Given an excluded_items dict, removes excluded items dependencies from the id set
+    Given an excluded_items dict, removes excluded items dependencies from the id set.
+
     Args:
         id_set: the id set generated from re_create_id_set after the removal of items in 'excluded_items'
         excluded_items_by_pack: a dictionary of items that has been excluded from the id_set, aggregated by packs.
         excluded_items_by_type: a dictionary of items that has been excluded from the id_set, aggregated by type.
+        marketplace: The dependency calculation desired marketplace.
 
     Example of excluded_items_by_pack dict:
     {
@@ -2387,7 +2544,7 @@ def remove_dependencies_from_id_set(id_set: dict, excluded_items_by_pack: dict, 
     additional_items_to_exclude = excluded_items_by_pack
 
     while additional_items_to_exclude:
-        additional_items_to_exclude = calculate_dependencies(additional_items_to_exclude, unfiltered_id_set)
+        additional_items_to_exclude = calculate_dependencies(additional_items_to_exclude, unfiltered_id_set, marketplace)
         if additional_items_to_exclude:
             print_success(
                 f"Adding the following packs to the exclusion list: {list(additional_items_to_exclude.keys())}")
@@ -2401,11 +2558,11 @@ def remove_dependencies_from_id_set(id_set: dict, excluded_items_by_pack: dict, 
 
 def save_dict_of_sets(file_path: str, excluded_items_to_save: dict):
     """
-    Casting sets to lists and saving to a json file in the given path
+    Casting sets to lists and saving to a json file in the given path.
+
     Args:
         file_path: the file path in which to save the json file
         excluded_items_to_save: a dictionary of excluded items from the id_set, aggregated by packs.
-
 
     """
     excluded_items_as_lists = excluded_items_to_save.copy()
@@ -2416,12 +2573,15 @@ def save_dict_of_sets(file_path: str, excluded_items_to_save: dict):
         json.dump(excluded_items_as_lists, json_file, indent=4)
 
 
-def calculate_dependencies(excluded_items: dict, id_set: dict) -> dict:
+def calculate_dependencies(excluded_items: dict, id_set: dict, marketplace: str) -> dict:
     """
     Calculate dependencies of the given excluded items from the id_set and return them.
+
     Args:
         excluded_items: a dictionary of excluded items from the id_set, aggregated by packs.
-        id_set: Unfiltered id_set to calculate the dependencies
+        id_set: Unfiltered id_set to calculate the dependencies.
+        marketplace: The dependency calculation desired marketplace.
+
     Returns:
         a dict of items that need to be excluded from the id set in the future
     """
@@ -2429,7 +2589,7 @@ def calculate_dependencies(excluded_items: dict, id_set: dict) -> dict:
 
     packs_list = [f'Packs/{pack}' for pack in excluded_items]
 
-    packs_dependencies_result, _ = get_packs_dependent_on_given_packs(packs_list, '', '', False, id_set)
+    packs_dependencies_result, _ = get_packs_dependent_on_given_packs(packs_list, '', '', False, id_set, marketplace=marketplace)
 
     for excluded_pack, excluded_pack_entities_set in excluded_items.items():
         mandatory_dependent_packs_dict = packs_dependencies_result.get(excluded_pack, {}).get(

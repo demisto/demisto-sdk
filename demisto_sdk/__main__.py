@@ -11,7 +11,7 @@ from typing import IO
 # Third party packages
 import click
 import git
-from pkg_resources import get_distribution
+from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
@@ -123,26 +123,31 @@ def check_configuration_file(command, args):
 )
 @pass_config
 def main(config, version, release_notes):
-    import dotenv
-    dotenv.load_dotenv()  # Load a .env file from the cwd.
     config.configuration = Configuration()
+    import dotenv
+    dotenv.load_dotenv(Path(os.getcwd()) / '.env')  # Load a .env file from the cwd.
     if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
-        cur_version = get_distribution('demisto-sdk').version
-        last_release = get_last_remote_release_version()
-        print_warning(f'You are using demisto-sdk {cur_version}.')
-        if last_release and cur_version != last_release:
-            print_warning(f'however version {last_release} is available.\n'
-                          f'You should consider upgrading via "pip3 install --upgrade demisto-sdk" command.')
-        if release_notes:
-            rn_entries = get_release_note_entries(cur_version)
+        try:
+            __version__ = get_distribution('demisto-sdk').version
+        except DistributionNotFound:
+            __version__ = 'dev'
+            print_warning('Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.')
+        else:
+            last_release = get_last_remote_release_version()
+            print_warning(f'You are using demisto-sdk {__version__}.')
+            if last_release and __version__ != last_release:
+                print_warning(f'however version {last_release} is available.\n'
+                              f'To update, run pip3 install --upgrade demisto-sdk')
+            if release_notes:
+                rn_entries = get_release_note_entries(__version__)
 
-            if not rn_entries:
-                print_warning('\nCould not get the release notes for this version.')
-            else:
-                click.echo('\nThe following are the release note entries for the current version:\n')
-                for rn in rn_entries:
-                    click.echo(rn)
-                click.echo('')
+                if not rn_entries:
+                    print_warning('\nCould not get the release notes for this version.')
+                else:
+                    click.echo('\nThe following are the release note entries for the current version:\n')
+                    for rn in rn_entries:
+                        click.echo(rn)
+                    click.echo('')
 
 
 # ====================== split ====================== #
@@ -434,10 +439,15 @@ def zip_packs(**kwargs) -> int:
     "--allow-skipped",
     help="Don't fail on skipped integrations or when all test playbooks are skipped.",
     is_flag=True)
+@click.option(
+    "--no-multiprocessing",
+    help="run validate all without multiprocessing, for debugging purposes.",
+    is_flag=True, default=False)
 @pass_config
 def validate(config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
+    run_with_mp = not kwargs.pop('no_multiprocessing')
     check_configuration_file('validate', kwargs)
     sys.path.append(config.configuration.env_dir)
 
@@ -474,6 +484,7 @@ def validate(config, **kwargs):
             debug_git=kwargs.get('debug_git'),
             include_untracked=kwargs.get('include_untracked'),
             quite_bc=kwargs.get('quite_bc_validation'),
+            multiprocessing=run_with_mp,
             check_is_unskipped=not kwargs.get('allow_skipped', False),
         )
         return validator.run_validation()
@@ -784,6 +795,9 @@ def coverage_analyze(**kwargs):
     is_flag=True,
     help='Whether to answer manually to add tests configuration prompt when running interactively.'
 )
+@click.option(
+    "-s", "--id-set-path", help="The path of the id_set json file.",
+    type=click.Path(exists=True, resolve_path=True))
 def format(
         input: Path,
         output: Path,
@@ -796,7 +810,8 @@ def format(
         use_git: bool,
         prev_ver: str,
         include_untracked: bool,
-        add_tests: bool
+        add_tests: bool,
+        id_set_path: str
 ):
     """Run formatter on a given script/playbook/integration/incidentfield/indicatorfield/
     incidenttype/indicatortype/layout/dashboard/classifier/mapper/widget/report file/genericfield/generictype/
@@ -816,6 +831,7 @@ def format(
         prev_ver=prev_ver,
         include_untracked=include_untracked,
         add_tests=add_tests,
+        id_set_path=id_set_path,
     )
 
 
@@ -925,6 +941,14 @@ def upload(**kwargs):
     "-a", "--all-custom-content", help="Download all available custom content files", is_flag=True)
 @click.option(
     "-fmt", "--run-format", help="Whether to run demisto-sdk format on downloaded files or not", is_flag=True)
+@click.option(
+    "--system", help="Download system items", is_flag=True, default=False)
+@click.option(
+    "-it", "--item-type", help="The items type to download, use just when downloading system items, should be one "
+                               "form the following list: [IncidentType, IndicatorType, Field, Layout, Playbook, "
+                               "Automation, Classifier, Mapper]",
+    type=click.Choice(['IncidentType', 'IndicatorType', 'Field', 'Layout', 'Playbook', 'Automation', 'Classifier',
+                       'Mapper'], case_sensitive=False))
 def download(**kwargs):
     """Download custom content from Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
@@ -1415,7 +1439,7 @@ def create_id_set(**kwargs):
     id_set, excluded_items_by_pack, excluded_items_by_type = id_set_creator.create_id_set()
 
     if excluded_items_by_pack:
-        remove_dependencies_from_id_set(id_set, excluded_items_by_pack, excluded_items_by_type)
+        remove_dependencies_from_id_set(id_set, excluded_items_by_pack, excluded_items_by_type, kwargs.get('marketplace', ''))
         id_set_creator.save_id_set()
 
 
@@ -1476,8 +1500,8 @@ def merge_id_sets(**kwargs):
     "-i", "--input", help="The relative path of the content pack. For example Packs/Pack_Name"
 )
 @click.option(
-    '-u', '--update-type', help="The type of update being done. [major, minor, revision, maintenance, documentation]",
-    type=click.Choice(['major', 'minor', 'revision', 'maintenance', 'documentation'])
+    '-u', '--update-type', help="The type of update being done. [major, minor, revision, documentation]",
+    type=click.Choice(['major', 'minor', 'revision', 'documentation'])
 )
 @click.option(
     '-v', '--version', help="Bump to a specific version.", type=VersionParamType()
@@ -1867,6 +1891,13 @@ def openapi_codegen(**kwargs):
     '--server-version',
     help='Which server version to run the tests on(Valid only when using AMI)',
     default="NonAMI")
+@click.option(
+    '-u',
+    '--use-retries',
+    is_flag=True,
+    help='Should use retries mechanism or not (if test-playbook fails, it will execute it again few times and '
+         'determine success according to most of the runs',
+    default=False)
 def test_content(**kwargs):
     """Configure instances for the integration needed to run tests_to_run tests.
     Run test module on each integration.
@@ -1886,11 +1917,11 @@ def test_content(**kwargs):
     '-h', '--help'
 )
 @click.option(
-    '-i', '--input', type=str, help='The path to the file to check')
+    '-i', '--input', type=str, help='The path to the file to check', multiple=True)
 @click.option(
     '--no-camel-case', is_flag=True, help='Whether to check CamelCase words', default=False)
 @click.option(
-    '--known-words', type=str, help="The path to a file containing additional known words"
+    '--known-words', type=str, help="The path to a file containing additional known words", multiple=True
 )
 @click.option(
     '--always-true', is_flag=True, help="Whether to fail the command if misspelled words are found"
@@ -1913,12 +1944,17 @@ def test_content(**kwargs):
 @click.option(
     '-rn', '--release-notes', is_flag=True, help="Will run only on release notes files"
 )
+@click.option(
+    '-pkw', '--use-packs-known-words', is_flag=True, help="Will find and load the known_words file from the pack. "
+                                                          "To use this option make sure you are running from the "
+                                                          "content directory.", default=False
+)
 def doc_review(**kwargs):
     """Check the spelling in .md and .yml files as well as review release notes"""
     from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
     doc_reviewer = DocReviewer(
-        file_path=kwargs.get('input'),
-        known_words_file_path=kwargs.get('known_words'),
+        file_paths=kwargs.get('input', []),
+        known_words_file_paths=kwargs.get('known_words', []),
         no_camel_case=kwargs.get('no_camel_case'),
         no_failure=kwargs.get('always_true'),
         expand_dictionary=kwargs.get('expand_dictionary'),
@@ -1926,6 +1962,7 @@ def doc_review(**kwargs):
         use_git=kwargs.get('use_git'),
         prev_ver=kwargs.get('prev_ver'),
         release_notes_only=kwargs.get('release_notes'),
+        load_known_words_from_pack=kwargs.get('use_packs_known_words'),
     )
     result = doc_reviewer.run_doc_review()
     if result:

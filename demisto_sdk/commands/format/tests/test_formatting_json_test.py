@@ -6,6 +6,7 @@ from typing import Optional
 import pytest
 from mock import patch
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.format import (update_dashboard, update_incidenttype,
                                          update_indicatortype)
 from demisto_sdk.commands.format.format_module import format_manager
@@ -502,6 +503,37 @@ def test_remove_spaces_end_of_id_and_name(pack, name):
     assert base_update_json.data['name'] == 'MyDashboard'
 
 
+@pytest.mark.parametrize(argnames='marketplaces', argvalues=[
+    [MarketplaceVersions.MarketplaceV2.value],
+    [MarketplaceVersions.XSOAR.value, MarketplaceVersions.MarketplaceV2.value]
+])
+def test_set_marketplaces_xsoar_only_for_aliased_fields(mocker, pack, marketplaces):
+    """
+    Given
+        - An incident filed with aliases
+    When
+        - Run format command
+    Then
+        - Ensure that the marketplaces value in the aliased filed contain only the `xsoar` marketplace
+    """
+    mocked_field = {'marketplaces': marketplaces}
+
+    def mock_field_generator():
+        yield mocked_field, ''
+
+    mocker.patch.object(IncidentFieldJSONFormat, '_save_alias_field_file')
+    mocker.patch.object(IncidentFieldJSONFormat, '_get_incident_fields_by_aliases', return_value=mock_field_generator())
+
+    tested_filed = pack.create_incident_field(name='tested_filed', content={'Aliases': [{'cliName': 'aliased_field'}]})
+
+    incident_field_formatter = IncidentFieldJSONFormat(input=tested_filed.path, id_set_path='mocked_path')
+    incident_field_formatter.format_marketplaces_field_of_aliases()
+    updated_marketplaces = incident_field_formatter._save_alias_field_file.call_args[1]['field_data']['marketplaces']
+
+    assert len(updated_marketplaces) == 1
+    assert updated_marketplaces[0] == 'xsoar'
+
+
 class TestFormattingLayoutscontainer:
 
     @pytest.fixture(autouse=True)
@@ -515,7 +547,7 @@ class TestFormattingLayoutscontainer:
     @pytest.fixture(autouse=True)
     def layoutscontainer_formatter(self, layoutscontainer_copy):
         layoutscontainer_formatter = LayoutBaseFormat(
-            input=layoutscontainer_copy, output=DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY)
+            input=layoutscontainer_copy, output=DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY, clear_cache=True)
         layoutscontainer_formatter.schema_path = LAYOUTS_CONTAINER_SCHEMA_PATH
         yield layoutscontainer_formatter
 
@@ -822,22 +854,7 @@ class TestFormattingClassifier:
 
     @pytest.fixture(autouse=True)
     def classifier_formatter(self, classifier_copy):
-        yield ClassifierJSONFormat(input=classifier_copy, output=DESTINATION_FORMAT_CLASSIFIER)
-
-    def test_remove_unnecessary_keys(self, classifier_formatter):
-        """
-        Given
-            - A classifier file with fields that dont exit in classifier schema.
-        When
-            - Run format on classifier file
-        Then
-            - Ensure that unnecessary keys were removed
-        """
-        classifier_formatter.schema_path = CLASSIFIER_SCHEMA_PATH
-        classifier_formatter.remove_unnecessary_keys()
-        for field in ['brands', 'instanceIds', 'itemVersion', 'locked', 'logicalVersion', 'mapping', 'packID',
-                      'system', 'toServerVersion']:
-            assert field not in classifier_formatter.data
+        yield ClassifierJSONFormat(input=classifier_copy, output=DESTINATION_FORMAT_CLASSIFIER, clear_cache=True)
 
     def test_arguments_to_remove(self, classifier_formatter):
         """
@@ -853,6 +870,21 @@ class TestFormattingClassifier:
         expected_args = ['brands', 'instanceIds', 'itemVersion', 'locked', 'logicalVersion', 'mapping', 'packID',
                          'system', 'toServerVersion', 'sourceClassifierId', 'fromServerVersion', 'nameRaw']
         assert set(expected_args) == args_to_remove
+
+    def test_remove_unnecessary_keys(self, classifier_formatter):
+        """
+        Given
+            - A classifier file with fields that dont exit in classifier schema.
+        When
+            - Run format on classifier file
+        Then
+            - Ensure that unnecessary keys were removed
+        """
+        classifier_formatter.schema_path = CLASSIFIER_SCHEMA_PATH
+        classifier_formatter.remove_unnecessary_keys()
+        for field in ['brands', 'instanceIds', 'itemVersion', 'locked', 'logicalVersion', 'mapping', 'packID',
+                      'system', 'toServerVersion']:
+            assert field not in classifier_formatter.data
 
     def test_set_keyTypeMap(self, classifier_formatter):
         """

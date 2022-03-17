@@ -39,7 +39,6 @@ requests = "*"
 "ruamel.yaml" = "*"
 slackclient = "==2.9.3"
 tabulate = "*"
-ujson = "*"
 urllib3 = "*"
 vulture = "*"
 wcmatch = "*"
@@ -56,6 +55,7 @@ dictdiffer = "*"
 setuptools = "*"
 markupsafe = "==2.0.1"
 imagesize = "*"
+orjson = "*"
 
 [dev-packages]
 mitmproxy = "==5.1.0"
@@ -70,6 +70,7 @@ requests-mock = "*"
 tox-pyenv = "*"
 Deprecated = "*"
 pipfile-requirements = "*"
+types-orjson = "*"
 
 [requires]
 python_version = "3.9"

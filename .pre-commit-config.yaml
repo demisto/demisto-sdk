@@ -42,9 +42,8 @@ repos:
     -   id: mypy
         exclude: tests/.*|demisto_sdk/commands/init/templates/.*
         additional_dependencies: [
-            types-PyYAML==5.4.3,
-            types-setuptools==57.0.0,
-            types-ujson==0.1.1,
+            types-setuptools,
+            types-orjson,
             types-pytz==2021.1.0,
             types-requests==2.25,
             types-decorator==0.1.5,

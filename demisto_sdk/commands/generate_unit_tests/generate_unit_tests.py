@@ -5,8 +5,7 @@ import astor
 import autopep8
 import click
 
-from demisto_sdk.commands.common.tools import print_error, arg_to_list, print_success, print_warning
-from klara.contract.__main__ import run
+from demisto_sdk.commands.common.tools import print_error, arg_to_list, print_success
 from klara.contract import solver
 from .test_case_builder import TestCase, ArgsBuilder
 from .test_module_builder import TestModule

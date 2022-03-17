@@ -18,7 +18,6 @@ class TestUnitTestsGenerator:
         cls.input_source = os.path.join(cls.test_files_path, 'inputs', 'malwarebazaar.py')
         cls.output_dir = os.path.join(cls.test_files_path, 'outputs')
 
-
     @pytest.mark.parametrize('args, desired', ARGS)
     def test_tests_generated_successfully(self, args, desired):
         """
@@ -45,5 +44,3 @@ class TestUnitTestsGenerator:
 
         if os.path.exists(output_path):
             os.remove(output_path)
-
-

@@ -185,7 +185,8 @@ class TestCase:
         """
         Retrieves context prefix from CommandResults object
         """
-        if returned_value := self.get_return_values():
+        returned_value = self.get_return_values()
+        if returned_value :
             keywords = returned_value.keywords
             for keyword in keywords:
                 if keyword.arg == 'outputs_prefix':
@@ -327,7 +328,3 @@ class TestCase:
                                            value=ast_mod.Call(func=ast_name(self.func.name),
                                                               args=[],
                                                               keywords=call_keywords))
-
-
-
-

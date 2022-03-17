@@ -2,7 +2,7 @@ In order to release a new version of `demisto-sdk` to the public follow these st
 
 ### Validation before release:
 1) Make sure the **CHANGELOG.md** file is in order and is updated with all the changes in the current release.
-2) Create a new release branch on the sdk repo, formatted as `X.X.X`, e.g. `1.0.0` (push the branch to the remote). 
+2) Create a new release branch on the sdk repo, formatted as `X.X.X`, e.g. `1.0.0` (push the branch to the remote).
 3) Make sure that both `sdk-nightly` and `sdk-master` builds passed.
    * If **new SDK commits** were pushed after the nightly tests had started, manually trigger the sdk nightly build again as written in steps 4 and 5. This will test the sdk release branch on what was content's master (until you branched out in step 4).
    * If **no new SDK commits** were done after the nightly tests, skip steps 4 and 5.

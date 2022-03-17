@@ -2,19 +2,19 @@
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.209.6/containers/python-3
 {
 	"name": "Demisto-SDK Development",
-	"image": "devdemisto/demisto-sdk:1.6.0.26904",
-	// "build": {
-	// 	"dockerfile": "Dockerfile",
-	// 	"context": "..",
-	// 	"args": {
-	// 		// Update 'VARIANT' to pick a Python version: 3, 3.10, 3.9, 3.8, 3.7, 3.6
-	// 		// Append -bullseye or -buster to pin to an OS version.
-	// 		// Use -bullseye variants on local on arm64/Apple Silicon.
-	// 		"PYTHON_VARIANT": "3.9",
-	// 		// Options
-	// 		"NODE_VERSION": "16"
-	// 	}
-	// },
+	// "image": "devdemisto/demisto-sdk:1.6.0.26904",
+	"build": {
+		"dockerfile": "Dockerfile",
+		"context": "..",
+		"args": {
+			// Update 'VARIANT' to pick a Python version: 3, 3.10, 3.9, 3.8, 3.7, 3.6
+			// Append -bullseye or -buster to pin to an OS version.
+			// Use -bullseye variants on local on arm64/Apple Silicon.
+			"PYTHON_VARIANT": "3.9",
+			// Options
+			"NODE_VERSION": "16"
+		}
+	},
 
 	// Set *default* container specific settings.json values on container create.
 	"settings": {

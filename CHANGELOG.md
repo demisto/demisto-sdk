@@ -21,7 +21,7 @@
 * Removed the support in the *maintenance* option of the *-u* flag in the **update-release-notes** command.
 * Added validation for forbidden words and phrases in the **doc-review** command.
 * Added a retries mechanism to the **test-content** command to stabilize the build process.
-* Fixed an issue in **format** and **init** to limit the width of a line.
+* Fixed an issue in **format** and **init** to limit the width of a line in YAML files.
 
 # 1.6.1
 * Added the '--use-packs-known-words' argument to the **doc-review** command

@@ -1134,9 +1134,9 @@ class Errors:
     @error_code_decorator
     def release_notes_file_empty():
         return "Your release notes file is empty, please complete it\nHaving empty release notes " \
-               "looks bad in the product UI.\nIf the change you made was minor, please use " \
-               "\"Maintenance and stability enhancements.\" for general changes, or use " \
-               "\"Documentation and metadata improvements.\" for changes to documentation."
+               "looks bad in the product UI.\nMake sure the release notes explicitly describe what changes were made, even if they are minor.\n" \
+               "For changes to documentation you can use " \
+               "\"Documentation and metadata improvements.\" "
 
     @staticmethod
     @error_code_decorator

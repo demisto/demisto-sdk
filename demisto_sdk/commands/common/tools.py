@@ -196,6 +196,10 @@ def get_core_pack_list() -> list:
             'Tests/Marketplace/core_packs_list.json',
             git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
         ) or []
+        core_pack_list.extend(get_remote_file(
+            'Tests/Marketplace/core_packs_mpv2_list.json', github_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+        ) or [])
+        core_pack_list = list(set(core_pack_list))
     else:
         # no core packs in external repos.
         core_pack_list = []

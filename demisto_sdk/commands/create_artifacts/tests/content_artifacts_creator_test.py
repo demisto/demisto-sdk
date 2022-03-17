@@ -31,9 +31,8 @@ def same_folders(src1, src2):
     dcmp = dircmp(src1, src2)
     if dcmp.left_only or dcmp.right_only:
         return False
-    for sub_dcmp in dcmp.subdirs.values():
-        same_folders(sub_dcmp.left, sub_dcmp.right)
-
+    elif dcmp.subdirs.values():
+        return all(same_folders(sub.left, sub.right) for sub in dcmp.subdirs.values())
     return True
 
 

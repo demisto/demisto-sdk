@@ -13,9 +13,9 @@ import giturlparse
 # dirs
 import requests
 from git import InvalidGitRepositoryError
-from logger import logger
 
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.logger import logger
 
 
 class GitProvider(enum.Enum):

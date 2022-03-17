@@ -1,6 +1,6 @@
 # Changelog
 
-* Fixed an issue in **format** and **init** to limit the width of a line in YAML files.
+* Added an agrument to YAMLHandler, allowing to set a maximal width for YAML files.  This fixes an issue where a wrong default was used.
 
 # 1.6.2
 * Added dependency validation support for core marketplacev2 packs.

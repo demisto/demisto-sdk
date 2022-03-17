@@ -10,7 +10,6 @@ from typing import IO
 
 # Third party packages
 import click
-import dotenv
 import git
 from pkg_resources import DistributionNotFound, get_distribution
 
@@ -24,8 +23,6 @@ from demisto_sdk.commands.common.tools import (find_type,
                                                is_external_repository,
                                                print_error, print_success,
                                                print_warning)
-
-dotenv.load_dotenv()  # Load a .env file from the cwd.
 
 
 class PathsParamType(click.Path):

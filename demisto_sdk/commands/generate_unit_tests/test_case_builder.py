@@ -222,7 +222,8 @@ class TestCase:
         Return: assertion for each of the CommandResults arg.
         """
         global logger
-        if returned_value := self.get_return_values():
+        returned_value = self.get_return_values()
+        if returned_value:
             keywords = returned_value.keywords
             for keyword in keywords:
                 self.asserts.append(TestCase.create_command_results_assertion(keyword.arg, keyword.value))

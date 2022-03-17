@@ -44,7 +44,9 @@ setup(
     url="https://github.com/demisto/demisto-sdk",
     keywords=["Demisto", "Cortex XSOAR"],
     install_requires=get_requirements(),
-    packages=find_packages(),
+    packages=find_packages(
+        exclude=["*.tests.*", "*.tests"]
+    ),
     include_package_data=True,
     entry_points={
         'console_scripts': ['demisto-sdk = demisto_sdk.__main__:main']

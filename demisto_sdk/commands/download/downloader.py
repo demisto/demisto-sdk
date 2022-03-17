@@ -7,7 +7,7 @@ import re
 import shutil
 import tarfile
 from tempfile import mkdtemp
-from typing import Dict, List
+from typing import Dict, List, Union
 
 import demisto_client.demisto_api
 from demisto_client.demisto_api.rest import ApiException
@@ -40,6 +40,40 @@ from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 yaml = YAML_Handler()
 
 
+ITEM_TYPE_TO_ENDPOINT: dict = {
+    'IncidentType': '/incidenttype',
+    'IndicatorType': '/reputation',
+    'Field': '/incidentfields',
+    'Layout': '/layouts',
+    'Playbook': '/playbook/search',
+    'Automation': 'automation/load/',
+    'Classifier': '/classifier/search',
+    'Mapper': '/classifier/search'
+}
+
+ITEM_TYPE_TO_REQUEST_TYPE = {
+    'IncidentType': 'GET',
+    'IndicatorType': 'GET',
+    'Field': 'GET',
+    'Layout': 'GET',
+    'Playbook': 'POST',
+    'Automation': 'POST',
+    'Classifier': 'POST',
+    'Mapper': 'POST'
+}
+
+ITEM_TYPE_TO_PREFIX = {
+    'IncidentType': '.json',
+    'IndicatorType': '.json',
+    'Field': '.json',
+    'Layout': '.json',
+    'Playbook': '.yml',
+    'Automation': '.yml',
+    'Classifier': '.json',
+    'Mapper': '.json'
+}
+
+
 class Downloader:
     """
     Downloader is a class that's designed to download and merge custom content from Demisto to the content repository.
@@ -59,16 +93,20 @@ class Downloader:
         files_not_downloaded (list): A list of all files didn't succeeded to be downloaded
         custom_content (list): A list of all custom content objects
         pack_content (dict): The pack content that maps the pack
+        system (bool): whether to download system items
+        item_type (str): The items type to download, use just when downloading system items.
     """
 
     def __init__(self, output: str, input: str, regex: str = '', force: bool = False, insecure: bool = False,
                  verbose: bool = False, list_files: bool = False, all_custom_content: bool = False,
-                 run_format: bool = False):
+                 run_format: bool = False, system: bool = False, item_type: str = ''):
         logging.disable(logging.CRITICAL)
         self.output_pack_path = output
         self.input_files = list(input)
         self.regex = regex
         self.force = force
+        self.download_system_item = system
+        self.system_item_type = item_type
         self.insecure = insecure
         self.log_verbose = verbose
         self.list_files = list_files
@@ -76,6 +114,7 @@ class Downloader:
         self.run_format = run_format
         self.client = None
         self.custom_content_temp_dir = mkdtemp()
+        self.system_content_temp_dir = mkdtemp()
         self.all_custom_content_objects: List[dict] = list()
         self.files_not_downloaded: List[list] = list()
         self.custom_content: List[dict] = list()
@@ -99,7 +138,9 @@ class Downloader:
         """
         if not self.verify_flags():
             return 1
-        if not self.fetch_custom_content():
+        if not self.download_system_item and not self.fetch_custom_content():
+            return 1
+        if self.download_system_item and not self.fetch_system_content():
             return 1
         if self.handle_list_files_flag():
             return 0
@@ -109,7 +150,7 @@ class Downloader:
             return 1
 
         self.build_pack_content()
-        self.build_custom_content()
+        self.build_custom_content() if not self.download_system_item else self.build_system_content()
         self.update_pack_hierarchy()
         self.merge_into_pack()
         self.log_files_downloaded()
@@ -127,6 +168,7 @@ class Downloader:
         Verifies that the flags configuration given by the user is correct
         :return: The verification result
         """
+        is_valid = True
         if not self.list_files:
             output_flag, input_flag = True, True
             if not self.output_pack_path:
@@ -137,8 +179,29 @@ class Downloader:
                     input_flag = False
                     print_color("Error: Missing option '-i' / '--input'.", LOG_COLORS.RED)
             if not input_flag or not output_flag:
-                return False
-        return True
+                is_valid = False
+
+        if self.download_system_item and not self.system_item_type:
+            print_color("Error: Missing option '-it' / '--item-type', "
+                        "you should specify the system item type to download.", LOG_COLORS.RED)
+            is_valid = False
+
+        if self.system_item_type and not self.download_system_item:
+            print_color("The item type option is just for downloading system items.", LOG_COLORS.RED)
+            is_valid = False
+
+        return is_valid
+
+    def handle_api_exception(self, e):
+        if e.status == 401:
+            print_color('\nVerify that the environment variable DEMISTO_API_KEY is configured properly.\n',
+                        LOG_COLORS.RED)
+        print_color(f'Exception raised when fetching custom content:\nStatus: {e}', LOG_COLORS.NATIVE)
+
+    def handle_max_retry_error(self, e):
+        print_color('\nVerify that the environment variable DEMISTO_BASE_URL is configured properly.\n',
+                    LOG_COLORS.RED)
+        print_color(f'Exception raised when fetching custom content:\n{e}', LOG_COLORS.NATIVE)
 
     def fetch_custom_content(self) -> bool:
         """
@@ -169,15 +232,82 @@ class Downloader:
             return True
 
         except ApiException as e:
-            if e.status == 401:
-                print_color('\nVerify that the environment variable DEMISTO_API_KEY is configured properly.\n',
-                            LOG_COLORS.RED)
-            print_color(f'Exception raised when fetching custom content:\nStatus: {e}', LOG_COLORS.NATIVE)
+            self.handle_api_exception(e)
             return False
         except MaxRetryError as e:
-            print_color('\nVerify that the environment variable DEMISTO_BASE_URL is configured properly.\n',
-                        LOG_COLORS.RED)
+            self.handle_max_retry_error(e)
+            return False
+        except Exception as e:
             print_color(f'Exception raised when fetching custom content:\n{e}', LOG_COLORS.NATIVE)
+            return False
+
+    def build_req_params(self):
+        endpoint = ITEM_TYPE_TO_ENDPOINT[self.system_item_type]
+        req_type = ITEM_TYPE_TO_REQUEST_TYPE[self.system_item_type]
+        verify = (not self.insecure) if self.insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
+        self.client = demisto_client.configure(verify_ssl=verify)
+
+        req_body: dict = {}
+        if self.system_item_type in ['Playbook', 'Classifier', 'Mapper']:
+            filter_by_names = ' or '.join(self.input_files)
+            req_body = {"query": f"name:{filter_by_names}"}
+
+        return endpoint, req_type, req_body
+
+    def get_system_automation(self, req_type):
+        automation_list: list = []
+        for script in self.input_files:
+            endpoint = f"automation/load/{script}"
+            api_response = demisto_client.generic_request_func(self.client, endpoint, req_type)
+            automation_list.append(ast.literal_eval(api_response[0]))
+        return automation_list
+
+    def arrange_response(self, system_items_list):
+        if self.system_item_type == 'Playbook':
+            system_items_list = system_items_list.get('playbooks')
+
+        if self.system_item_type in ['Classifier', 'Mapper']:
+            system_items_list = system_items_list.get('classifiers')
+
+        return system_items_list
+
+    def build_file_name(self, item):
+        item_name: str = item.get('name') or item.get('id')
+        return item_name.replace('/', ' ').replace(' ', '_') + ITEM_TYPE_TO_PREFIX[self.system_item_type]
+
+    def fetch_system_content(self):
+        """
+        Fetches the system content from Demisto into a temporary dir.
+        :return: True if fetched successfully, False otherwise
+        """
+        try:
+            system_items_list: Union
+            endpoint, req_type, req_body = self.build_req_params()
+
+            if self.system_item_type == 'Automation':
+                system_items_list = self.get_system_automation(req_type)
+
+            else:
+                api_response = demisto_client.generic_request_func(self.client, endpoint, req_type, body=req_body)
+                system_items_list = ast.literal_eval(api_response[0])
+
+            self.arrange_response(system_items_list)
+
+            for item in system_items_list:  # type: ignore
+                file_name: str = self.build_file_name(item)
+                file_path: str = os.path.join(self.system_content_temp_dir, file_name)
+                with open(file_path, 'w') as file:
+                    if file_path.endswith('json'):
+                        json.dump(item, file)
+                    else:
+                        yaml.dump(item, file)
+            return True
+
+        except ApiException as e:
+            self.handle_api_exception(e)
+            return False
+        except MaxRetryError as e:
+            self.handle_max_retry_error(e)
             return False
         except Exception as e:
             print_color(f'Exception raised when fetching custom content:\n{e}', LOG_COLORS.NATIVE)
@@ -201,6 +331,23 @@ class Downloader:
                 print_color(f"Error when loading {file_path}, skipping", LOG_COLORS.RED)
                 print_color(f"{e}", LOG_COLORS.RED)
         return custom_content_objects
+
+    def get_system_content_objects(self) -> List[dict]:
+        """
+        Creates a list of all custom content objects
+        :return: The list of all custom content objects
+        """
+        system_content_file_paths: list = get_child_files(self.system_content_temp_dir)
+        system_content_objects: List = list()
+        for file_path in system_content_file_paths:
+            try:
+                system_content_object: Dict = self.build_custom_content_object(file_path)
+                system_content_objects.append(system_content_object)
+            # Do not add file to custom_content_objects if it has an invalid format
+            except ValueError as e:
+                print_color(f"Error when loading {file_path}, skipping", LOG_COLORS.RED)
+                print_color(f"{e}", LOG_COLORS.RED)
+        return system_content_objects
 
     def handle_list_files_flag(self) -> bool:
         """
@@ -375,6 +522,30 @@ class Downloader:
         print_color(f'Demisto instance: Receiving objects: 100% ({number_of_files}/{number_of_files}),'
                     f' done.\n', LOG_COLORS.NATIVE)
 
+    def build_system_content(self) -> None:
+        """
+        Build a data structure called pack content that holds basic data for each content entity instances downloaded from Demisto.
+        For example check out the CUSTOM_CONTENT variable in downloader_test.py
+        """
+        system_content_objects = self.get_system_content_objects()
+        for input_file_name in self.input_files:
+            input_file_exist_in_cc: bool = False
+            for system_content_object in system_content_objects:
+                name = system_content_object.get('name', 'N/A')
+                if name == input_file_name:
+                    system_content_object['exist_in_pack'] = self.exist_in_pack_content(system_content_object)
+                    self.custom_content.append(system_content_object)
+                    input_file_exist_in_cc = True
+            # If in input files and not in custom content files
+            if not input_file_exist_in_cc:
+                self.files_not_downloaded.append([input_file_name, FILE_NOT_IN_CC_REASON])
+
+        number_of_files = len(self.custom_content)
+        print_color(f'\nDemisto instance: Enumerating objects: {number_of_files}, done.',
+                    LOG_COLORS.NATIVE)
+        print_color(f'Demisto instance: Receiving objects: 100% ({number_of_files}/{number_of_files}),'
+                    f' done.\n', LOG_COLORS.NATIVE)
+
     def exist_in_pack_content(self, custom_content_object: dict) -> bool:
         """
         Checks if the current custom content object already exists in custom content
@@ -404,6 +575,9 @@ class Downloader:
         file_entity = self.file_type_to_entity(file_data, file_type)  # For example: Integrations
         file_id: str = get_entity_id_by_entity_type(file_data, file_entity)
         file_name: str = get_entity_name_by_entity_type(file_data, file_entity)
+
+        if not file_name:
+            file_name = file_data.get('id', '')
 
         custom_content_object: dict = {
             'id': file_id,
@@ -774,6 +948,7 @@ class Downloader:
         """
         try:
             shutil.rmtree(self.custom_content_temp_dir, ignore_errors=True)
+            shutil.rmtree(self.system_content_temp_dir, ignore_errors=True)
         except shutil.Error as e:
             print_color(e, LOG_COLORS.RED)
             raise

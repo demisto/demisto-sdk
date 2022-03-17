@@ -7,6 +7,7 @@ import json
 import os
 import re
 from distutils.version import LooseVersion
+from pathlib import Path
 from typing import Optional, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
@@ -70,11 +71,20 @@ class UpdateRN:
             :return
                 The new file path if was changed
         """
+        def validate_new_path(expected_path: str):
+            if not Path(expected_path).exists():
+                print_warning(f"file {file_path} implies the existence of {str(expected_path)}, which is missing. "
+                              f"Did you mistype {file_path}?")
+
         if file_path.endswith('_image.png'):
-            return file_path.replace('_image.png', '.yml')
+            new_path = file_path.replace('_image.png', '.yml')
+            validate_new_path(new_path)
+            return new_path
 
         elif file_path.endswith('_description.md'):
-            return file_path.replace('_description.md', '.yml')
+            new_path = file_path.replace('_description.md', '.yml')
+            validate_new_path(new_path)
+            return new_path
 
         return file_path
 
@@ -118,7 +128,8 @@ class UpdateRN:
             file_name, file_type = self.get_changed_file_name_and_type(packfile)
             if 'yml' in packfile and file_type in [FileType.INTEGRATION, FileType.BETA_INTEGRATION,
                                                    FileType.SCRIPT] and packfile not in self.added_files:
-                docker_image_name: Optional[str] = check_docker_image_changed(main_branch=self.main_branch, packfile=packfile)
+                docker_image_name: Optional[str] = check_docker_image_changed(main_branch=self.main_branch,
+                                                                              packfile=packfile)
             else:
                 docker_image_name = None
             changed_files[(file_name, file_type)] = {
@@ -440,7 +451,8 @@ class UpdateRN:
             version[2] = '0'
             new_version = '.'.join(version)
         # We validate the input via click
-        elif self.update_type in ['revision', 'maintenance', 'documentation']:
+
+        elif self.update_type in ['revision', 'documentation']:
             version = current_version.split('.')
             version[2] = str(int(version[2]) + 1)
             if int(version[2]) > 99:
@@ -448,6 +460,9 @@ class UpdateRN:
                                  f"Please verify the currentVersion is correct. If it is, "
                                  f"then consider bumping to a new Minor version.")
             new_version = '.'.join(version)
+        elif self.update_type == 'maintenance':
+            raise ValueError("The *maintenance* option is no longer supported."
+                             " Please use the \"revision\" option and make sure to provide informative release notes.")
         if pre_release:
             new_version = new_version + '_prerelease'
         data_dictionary['currentVersion'] = new_version
@@ -554,9 +569,7 @@ class UpdateRN:
                 rn_desc += '\n'
             else:
                 rn_desc = f'##### {content_name}\n'
-                if self.update_type == 'maintenance':
-                    rn_desc += '- Maintenance and stability enhancements.\n'
-                elif self.update_type == 'documentation':
+                if self.update_type == 'documentation':
                     rn_desc += '- Documentation and metadata improvements.\n'
                 else:
                     rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'

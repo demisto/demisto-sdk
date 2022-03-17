@@ -1,14 +1,12 @@
 # STD python packages
 import copy
 import hashlib
-import json
 import logging
 import os
 import platform
 import traceback
 from typing import Any, Dict, List, Optional, Tuple
 
-# 3-rd party packages
 import docker
 import docker.errors
 import docker.models.containers
@@ -21,9 +19,8 @@ from wcmatch.pathlib import NEGATE, Path
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON)
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.timers import timer
-# Local packages
 from demisto_sdk.commands.common.tools import (get_all_docker_images,
                                                run_command_os)
 from demisto_sdk.commands.lint.commands_builder import (
@@ -41,6 +38,13 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                pylint_plugin,
                                                split_warnings_errors,
                                                stream_docker_container_output)
+
+json = JSON_Handler()
+
+
+# 3-rd party packages
+
+# Local packages
 
 logger = logging.getLogger('demisto-sdk')
 

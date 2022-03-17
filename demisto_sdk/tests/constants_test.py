@@ -1,9 +1,11 @@
-import json
-
 import pytest
 
 import demisto_sdk.commands.common.constants as constants
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+
+json = JSON_Handler()
+
 
 GIT_ROOT = "{}".format(git_path())
 INVALID_PLAYBOOK_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/Playbooks.playbook-invalid.yml"

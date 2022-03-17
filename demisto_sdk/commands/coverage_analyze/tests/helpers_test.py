@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import sqlite3
@@ -10,6 +9,7 @@ import pytest
 import requests
 from freezegun import freeze_time
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.coverage_analyze.helpers import (CoverageSummary,
                                                            InvalidReportType,
@@ -20,6 +20,9 @@ from demisto_sdk.commands.coverage_analyze.helpers import (CoverageSummary,
                                                            get_report_str,
                                                            parse_report_type,
                                                            percent_to_float)
+
+json = JSON_Handler()
+
 
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 JSON_MIN_DATA_FILE = os.path.join(TEST_DATA_DIR, 'coverage-min.json')

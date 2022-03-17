@@ -1,5 +1,4 @@
 import io
-import json
 import logging
 import os
 import sqlite3
@@ -9,6 +8,11 @@ from typing import Dict, Iterable, List, Optional
 
 import coverage
 import requests
+
+from demisto_sdk.commands.common.handlers import JSON_Handler
+
+json = JSON_Handler()
+
 
 EXCLUDED_LINES = ['pragma: no cover', r'if __name__ in (\(|\[)[\W\w]+(\)|\]):']
 logger = logging.getLogger('demisto-sdk')

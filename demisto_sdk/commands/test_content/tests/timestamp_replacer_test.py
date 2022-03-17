@@ -1,4 +1,3 @@
-import json
 import sys
 from collections import OrderedDict
 from unittest.mock import MagicMock, mock_open
@@ -8,8 +7,11 @@ import pytest
 from mitmproxy.http import HTTPFlow, HTTPRequest
 from mitmproxy.net.http import Headers
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.test_content.timestamp_replacer import \
     TimestampReplacer
+
+json = JSON_Handler()
 
 
 @pytest.fixture()

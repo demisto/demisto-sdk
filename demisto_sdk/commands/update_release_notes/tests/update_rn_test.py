@@ -1,4 +1,3 @@
-import json
 import os
 import shutil
 import unittest
@@ -9,10 +8,13 @@ import pytest
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION, FileType)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.common.update_id_set import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+json = JSON_Handler()
 
 
 class TestRNUpdate(unittest.TestCase):
@@ -664,16 +666,16 @@ class TestRNUpdateUnit:
     META_BACKUP = ""
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
     CURRENT_RN = """
-#### Incident Types
+# Incident Types
 - **Cortex XDR Incident**
 
-#### Incident Fields
+# Incident Fields
 - **XDR Alerts**
 
-#### Object Types
+# Object Types
 - **(Asset) - Sample GenericType**
 
-#### Object Fields
+# Object Fields
 - **(Asset) - Sample GenericField**
 """
     CHANGED_FILES = {
@@ -689,24 +691,24 @@ class TestRNUpdateUnit:
                                                         "/HelloWorld/GenericType/asset/Sample_GenericType"}
     }
     EXPECTED_RN_RES = """
-#### Incident Types
+# Incident Types
 - **Cortex XDR Incident**
 
-#### Incident Fields
+# Incident Fields
 - **Sample IncidentField**
 - **XDR Alerts**
 
-#### Object Types
+# Object Types
 - **(Asset) - Sample GenericType**
 
-#### Object Fields
+# Object Fields
 - **(Asset) - Sample GenericField**
 
-#### Integrations
-##### Cortex XDR - IR
+# Integrations
+# Cortex XDR - IR
 - %%UPDATE_RN%%
 
-##### Sample
+# Sample
 - %%UPDATE_RN%%
 """
 
@@ -946,7 +948,9 @@ class TestRNUpdateUnit:
             - Case 4: Return True and throw error saying "The master branch is currently ahead of
                       your pack's version. Please pull from master and re-run the command."
         """
-        import json
+        from demisto_sdk.commands.common.handlers import JSON_Handler
+        json = JSON_Handler()
+
         from subprocess import Popen
 
         from demisto_sdk.commands.update_release_notes.update_rn import \

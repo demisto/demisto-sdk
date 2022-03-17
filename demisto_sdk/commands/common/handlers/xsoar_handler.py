@@ -15,5 +15,5 @@ class XSOAR_Handler(ABC):
         pass
 
     @abstractmethod
-    def dumps(self, data, sort_keys=False):
+    def dumps(self, data, indent=None, sort_keys=False):
         pass

@@ -1,11 +1,11 @@
 import ast
-import json
 import logging
 from functools import partial
 
 import pytest
 
 from demisto_sdk.commands.common.constants import PB_Status
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.test_content.Docker import Docker
 from demisto_sdk.commands.test_content.TestContentClasses import (
     Integration, TestConfiguration, TestContext, TestPlaybook)
@@ -17,6 +17,8 @@ from demisto_sdk.commands.test_content.tests.DemistoClientMock import \
     DemistoClientMock
 from demisto_sdk.commands.test_content.tests.server_context_test import \
     generate_mocked_server_context
+
+json = JSON_Handler()
 
 
 def test_is_runnable_on_this_instance(mocker):

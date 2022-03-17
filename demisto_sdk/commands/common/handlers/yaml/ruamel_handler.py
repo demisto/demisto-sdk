@@ -26,7 +26,7 @@ class RUAMEL_Handler(XSOAR_Handler):
             data = order_dict(data)
         self._yaml.dump(data, stream)
 
-    def dumps(self, data, sort_keys=False):
+    def dumps(self, data, sort_keys=False, indent=None):
         """
 
         This function is not recommended and not efficient!

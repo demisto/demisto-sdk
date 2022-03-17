@@ -1,6 +1,5 @@
 # STD packages
 import concurrent.futures
-import json
 import logging
 import os
 import re
@@ -8,7 +7,6 @@ import sys
 import textwrap
 from typing import Any, Dict, List, Set, Union
 
-# Third party packages
 import docker
 import docker.errors
 import git
@@ -19,7 +17,7 @@ from wcmatch.pathlib import Path, PosixPath
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON,
                                                    DemistoException)
-# Local packages
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import Colors
 from demisto_sdk.commands.common.timers import report_time_measurements
 from demisto_sdk.commands.common.tools import (find_file, find_type,
@@ -37,6 +35,13 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                generate_coverage_report,
                                                get_test_modules, validate_env)
 from demisto_sdk.commands.lint.linter import Linter
+
+json = JSON_Handler()
+
+
+# Third party packages
+
+# Local packages
 
 logger = logging.getLogger('demisto-sdk')
 sha1Regex = re.compile(r'\b[0-9a-fA-F]{40}\b', re.M)

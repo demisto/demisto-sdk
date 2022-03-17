@@ -1,5 +1,4 @@
 import functools
-import json
 import logging
 import urllib
 from ast import literal_eval
@@ -15,6 +14,11 @@ from mitmproxy.addonmanager import Loader
 from mitmproxy.addons.serverplayback import ServerPlayback
 from mitmproxy.http import HTTPFlow, HTTPRequest
 from mitmproxy.script import concurrent
+
+from demisto_sdk.commands.common.handlers import JSON_Handler
+
+json = JSON_Handler()
+
 
 logging.basicConfig(level=logging.DEBUG,
                     format='[%(asctime)s] - [%(funcName)s] - %(message)s')

@@ -1,7 +1,6 @@
 import argparse
 import glob
 import io
-import json
 import logging
 import os
 import re
@@ -48,7 +47,10 @@ from demisto_sdk.commands.common.constants import (
     XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys, GitContentConfig,
     IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+
+json = JSON_Handler()
+
 
 logger = logging.getLogger("demisto-sdk")
 yaml = YAML_Handler()

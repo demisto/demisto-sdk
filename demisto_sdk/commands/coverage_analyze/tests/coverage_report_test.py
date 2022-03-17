@@ -1,10 +1,10 @@
-import json
 import logging
 import os
 import re
 
 import pytest
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.coverage_analyze.coverage_report import \
     CoverageReport
@@ -13,6 +13,9 @@ from demisto_sdk.commands.coverage_analyze.helpers import (fix_file_path,
 from demisto_sdk.commands.coverage_analyze.tests.helpers_test import (
     COVERAGE_FILES_DIR, JSON_MIN_DATA_FILE, PYTHON_FILE_PATH, TEST_DATA_DIR,
     TestCoverageSummary, copy_file, read_file)
+
+json = JSON_Handler()
+
 
 DEFAULT_URL = TestCoverageSummary.TestGetFilesSummary.default_url
 REPORT_STR_FILE = os.path.join(TEST_DATA_DIR, 'coverage.txt')

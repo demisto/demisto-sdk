@@ -1,4 +1,3 @@
-import json
 import os
 import re
 import shutil
@@ -12,11 +11,15 @@ from mock import patch
 
 from demisto_sdk.commands.common.constants import LAYOUT, LAYOUTS_CONTAINER
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.init.contribution_converter import \
     ContributionConverter
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from TestSuite.contribution import Contribution
 from TestSuite.repo import Repo
+
+json = JSON_Handler()
+
 
 RELEASE_NOTES_COPY = "demisto_sdk/commands/init/tests/RN/1_0_1-formatted.md"
 SOURCE_RELEASE_NOTES_FILE = "demisto_sdk/commands/init/tests/RN/1_0_1.md"

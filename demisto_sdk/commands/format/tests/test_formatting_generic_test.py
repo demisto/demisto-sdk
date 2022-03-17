@@ -1,8 +1,7 @@
 import pytest
 
 from demisto_sdk.commands.common.constants import (
-    FILETYPE_TO_DEFAULT_FROMVERSION, GENERAL_DEFAULT_FROMVERSION,
-    VERSION_5_5_0, FileType)
+    FILETYPE_TO_DEFAULT_FROMVERSION, GENERAL_DEFAULT_FROMVERSION, FileType)
 from demisto_sdk.commands.format.format_constants import VERSION_6_0_0
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
@@ -154,19 +153,3 @@ class TestFormattingFromVersionKey:
         self.init_BaseUpdate(base_update)
         base_update.set_fromVersion('5.5.0')
         assert base_update.data.get(base_update.from_version_key) == GENERAL_DEFAULT_FROMVERSION
-
-    @pytest.mark.parametrize(argnames='content_type', argvalues=[FileType.LAYOUT, FileType.OLD_CLASSIFIER])
-    def test_update_fromVersion_old_content_type(self, mocker, content_type):
-        """
-        Given
-            - A new special content item with default fromVersion that is lower than the general.
-        When
-            - Calling set_fromVersion method.
-        Then
-            - Ensure that fromVersion key in the file data was set to the general fromVersion.
-        """
-        mocker.patch.object(BaseUpdate, '__init__', return_value=None)
-        base_update = BaseUpdate()
-        self.init_BaseUpdate(base_update)
-        base_update.set_fromVersion(file_type=content_type)
-        assert base_update.data.get(base_update.from_version_key) == VERSION_5_5_0

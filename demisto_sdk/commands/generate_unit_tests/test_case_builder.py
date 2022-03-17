@@ -172,7 +172,8 @@ class TestCase:
         Creates an output file with command line example.
         """
         global logger
-        if (prefix := self.get_context_prefix()) is not None:
+        prefix = self.get_context_prefix()
+        if prefix is not None:
             self.examples_dict.update({'outputs':
                                            extract_outputs_from_command_run(self.examples_dict.get('outputs'), prefix)})
             with open(os.path.join(self.directory_path, 'outputs', f'{str(self.func.name)}.json'),

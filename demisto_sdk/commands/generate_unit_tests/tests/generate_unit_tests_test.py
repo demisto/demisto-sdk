@@ -4,8 +4,8 @@ import pytest
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import run_generate_unit_tests
 
-ARGS = [({'use_demisto': False}, 'malwarebazaar_all.py'),
-        ({'use_demisto': False, 'commands': 'malwarebazaar-comment-add'}, 'malwarebazaar_specific_command.py')]
+ARGS = [({'use_demisto': False}, 'malwarebazaar_all.txt'),
+        ({'use_demisto': False, 'commands': 'malwarebazaar-comment-add'}, 'malwarebazaar_specific_command.txt')]
 
 
 class TestUnitTestsGenerator:
@@ -35,12 +35,15 @@ class TestUnitTestsGenerator:
         args.update({'input_path': self.input_source,
                      'output_dir': self.output_dir,
                      'test_data_path': 'demisto_sdk/commands/generate_unit_tests/tests/test_files/outputs'})
-        test_file_path = os.path.join(self.output_dir, 'malwarebazaar_test.py')
-        if os.path.exists(test_file_path):
-            os.remove(test_file_path)
+
         run_generate_unit_tests(**args)
+
         output_path = os.path.join(self.output_dir, 'malwarebazaar_test.py')
         desired = os.path.join(self.output_dir, desired)
+
         assert filecmp.cmp(output_path, desired)
+
+        if os.path.exists(output_path):
+            os.remove(output_path)
 
 

@@ -12,7 +12,7 @@ class UJSON_Handler(XSOAR_Handler):
     def load(self, stream):
         return ujson.load(stream)
 
-    def dump(self, data, stream, indent=None, sort_keys=False):
+    def dump(self, data, stream, sort_keys=False, indent=None,):
         ujson.dump(data, stream, indent=indent, sort_keys=sort_keys)
 
     def dumps(self, data, sort_keys=False, indent=None):

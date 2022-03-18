@@ -48,8 +48,8 @@ jobs:
             command: |
               mkdir test-results
               pipenv run pytest -p no:warnings -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml
-            store_test_results:
-              test-results
+        - store_test_results:
+            path: test-results
         - store_artifacts:
             path: coverage_html_report
         - run:

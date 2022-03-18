@@ -22,9 +22,9 @@ references:
       run:
         name: Create requirement files
         command: |
-          pip install pipfile-requirements
-          pipfile2req > requirements.txt
-          pipfile2req -d > requirements-dev.txt
+          pip install pipenv
+          pipenv lock -r > requirements.txt
+          pipenv lock -r --dev > requirements-dev.txt
 
     restore_tox_37_cache: &restore_tox_37_cache
       restore_cache:

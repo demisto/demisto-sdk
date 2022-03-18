@@ -55,7 +55,7 @@ dictdiffer = "*"
 setuptools = "*"
 markupsafe = "==2.0.1"
 imagesize = "*"
-orjson = "*"
+ujson = "*"
 
 [dev-packages]
 mitmproxy = "==5.1.0"
@@ -69,8 +69,6 @@ pytest-subprocess = "*"
 requests-mock = "*"
 tox-pyenv = "*"
 Deprecated = "*"
-pipfile-requirements = "*"
-types-orjson = "*"
 
 [requires]
 python_version = "3.9"

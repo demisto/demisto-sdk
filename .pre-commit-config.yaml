@@ -43,7 +43,7 @@ repos:
         exclude: tests/.*|demisto_sdk/commands/init/templates/.*
         additional_dependencies: [
             types-setuptools,
-            types-orjson,
+            types-ujson,
             types-pytz==2021.1.0,
             types-requests==2.25,
             types-decorator==0.1.5,

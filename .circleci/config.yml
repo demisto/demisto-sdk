@@ -127,7 +127,7 @@ jobs:
             command: |
               pip install micropipenv
               micropipenv install
-              export PYTHONPATH="$HOME/project"
+              export PYTHONPATH=$(pwd)
         - run:
             name: Set Up & Create Id Set
             when: always

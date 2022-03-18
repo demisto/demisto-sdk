@@ -20,10 +20,10 @@ jobs:
       steps:
         - checkout
         - python/install-packages:
-          app-dir: ~/project
-          pkg-manager: "pipenv"
-          args: "--dev"
-          cache-version: << pipeline.parameters.cache-version >>
+            app-dir: ~/project
+            pkg-manager: "pipenv"
+            args: "--dev"
+            # cache-version: << pipeline.parameters.cache-version >>
         - run:
             # install npm modules so readme tests run with mdx verification
             name: npm install
@@ -51,10 +51,10 @@ jobs:
       steps:
         - checkout
         - python/install-packages:
-          app-dir: ~/project
-          pkg-manager: "pipenv"
-          args: "--dev"
-          cache-version: << pipeline.parameters.cache-version >>
+            app-dir: ~/project
+            pkg-manager: "pipenv"
+            args: "--dev"
+            cache-version: << pipeline.parameters.cache-version >>
         - run:
             # install npm modules so readme tests run with mdx verification
             name: npm install
@@ -113,6 +113,10 @@ jobs:
         - image: cimg/python:3.9.10-node
       steps:
         - checkout
+        - python/install-packages:
+            app-dir: ~/project
+            pkg-manager: "pipenv"
+            cache-version: << pipeline.parameters.cache-version >>
         - attach_workspace:
             at: ~/project
         - run:
@@ -122,10 +126,6 @@ jobs:
         - run:
             name: whoami
             command: pwd
-        - python/install-packages:
-          app-dir: ~/project
-          pkg-manager: "pipenv"
-          cache-version: << pipeline.parameters.cache-version >>
         - run:
             name: Set Up & Create Id Set
             when: always

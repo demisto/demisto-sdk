@@ -9,80 +9,62 @@ references:
         tags:
           only: /^v\d+\.\d+\.\d+$/
 
-    reqs_tox: &reqs_tox
-      requires:
-        - prepare-tox3-7
-
     reqs_content_checkout: &reqs_content_checkout
       requires:
         - checkout-content
-        - prepare-tox3-7
-
-    create_requirement_files: &create_requirement_files
-      run:
-        name: Create requirement files
-        command: |
-          pip install pipfile-requirements
-          pipfile2req > requirements.txt
-          pipfile2req -d > requirements-dev.txt
-
-    restore_tox_37_cache: &restore_tox_37_cache
-      restore_cache:
-        key: tox-37-cache-{{ checksum "Pipfile" }}-{{ checksum "Pipfile.lock" }}
-
-    save_tox_37_cache: &save_tox_37_cache
-      save_cache:
-        key: tox-37-cache-{{ checksum "Pipfile" }}-{{ checksum "Pipfile.lock" }}
-        paths:
-          - .tox/py37
 
 jobs:
-  tox3-7-unit-tests:
-      # docker image circleci/python:3.8.3-buster-node also contains python 3.7
+  python 3.9:
       docker:
-        - image: circleci/python:3.8.3-buster-node
+        - image: cimg/python:3.9.10-node
       steps:
         - checkout
-        - *create_requirement_files
-        - *restore_tox_37_cache
         - run:
             # install npm modules so readme tests run with mdx verification
             name: npm install
             command: |
               npm ci
         - run:
-            name: Setup Tox
+            name: Setup Micropipenv
             command: |
-              pip install tox
+              pip install micropipenv
+              micropipenv install --dev
         - run:
-            name: Tox build
+            name: Pytest
             no_output_timeout: 15m
             command: |
-              tox -e py37 -v
-        - *save_tox_37_cache
-
-  tox3-8-unit-tests:
+              pytest -p no:warnings -v --cov=demisto_sdk --cov-report=html
+        - store_artifacts:
+            path: coverage_html_report
+        - run:
+            name: Coveralls upload
+            command: |
+              if [ -n "$COVERALLS_REPO_TOKEN" ]; then
+                pip install coveralls
+                coveralls
+              else
+                echo "Skipping coveralls"
+              fi
+  python 3.10:
       docker:
-        - image: circleci/python:3.8.3-buster-node
+        - image: cimg/python:3.10.2-node
       steps:
         - checkout
-        - *create_requirement_files
-        - restore_cache:
-            key: tox-38-cache-{{ checksum "Pipfile" }}-{{ checksum "Pipfile.lock" }}
         - run:
             # install npm modules so readme tests run with mdx verification
             name: npm install
             command: |
               npm ci
         - run:
-            name: Setup Tox
+            name: Setup Micropipenv
             command: |
-              pip install tox
+              pip install micropipenv
+              micropipenv install --dev
         - run:
-            name: Tox build
+            name: Pytest
             no_output_timeout: 15m
             command: |
-              tox -e py38 -v -- --cov=demisto_sdk --cov-report=html
+              pytest -p no:warnings -v --cov=demisto_sdk --cov-report=html
         - store_artifacts:
             path: coverage_html_report
         - run:
@@ -95,35 +77,10 @@ jobs:
                 echo "Skipping coveralls"
               fi
 
-  prepare-tox3-7:
-    docker:
-      - image: circleci/python:3.8.3-buster-node
-    steps:
-      - checkout
-      - *create_requirement_files
-      - *restore_tox_37_cache
-      - run:
-          # install npm modules so readme tests run with mdx verification
-          name: npm install
-          command: |
-            npm ci
-      - run:
-          name: Setup Tox
-          command: |
-            pip install tox
-      - run:
-          name: Tox build
-          command: |
-            tox -e py37 --notest
-      - *save_tox_37_cache
-      - persist_to_workspace:
-          root: ~/project
-          paths:
-            - .tox
 
   precommit-checks:
       docker:
-        - image: circleci/python:3.8.3-buster-node
+        - image: cimg/python:3.9.10
       steps:
         - checkout
         - attach_workspace:
@@ -135,9 +92,10 @@ jobs:
               pre-commit --version
               pre-commit run -a
               deactivate
+
   checkout-content:
       docker:
-        - image: circleci/python:3.8.3-buster-node
+        - image: cimg/python:3.9.10
       steps:
         - checkout
         - run:
@@ -153,7 +111,7 @@ jobs:
               - content
   validate-files:
       docker:
-        - image: circleci/python:3.8.3-buster-node
+        - image: cimg/python:3.9.10-node
       steps:
         - checkout
         - attach_workspace:
@@ -166,36 +124,28 @@ jobs:
             name: Set Up & Create Id Set
             when: always
             command: |
-              . .tox/py37/bin/activate
               cd content
               npm update
               npm ci
-              export PYTHONPATH=".:${PYTHONPATH}"
-              demisto-sdk -v
+              python -m demisto_sdk -v
 
-              CI_COMMIT_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
+              CI_COMMIT_BRANCH="master" python -m demisto_sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
         - run:
             name: Merge Id Set
             when: always
             command: |
-              . .tox/py37/bin/activate
               cd content
-
-              export PYTHONPATH=".:${PYTHONPATH}"
-              demisto-sdk -v
+              python -m demisto_sdk -v
               export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
 
               gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
-              CI_COMMIT_BRANCH="master" demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json --fail-duplicates
+              CI_COMMIT_BRANCH="master" python -m demisto_sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json --fail-duplicates
         - run:
             name: Test validate files and yaml
             when: always
             command: |
-              . .tox/py37/bin/activate
               cd content
-
-              export PYTHONPATH=".:${PYTHONPATH}"
-              demisto-sdk -v
+              python -m demisto_sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
 
               CI_COMMIT_BRANCH="master" ./Tests/scripts/validate.sh
@@ -229,16 +179,16 @@ jobs:
               echo ""
               echo "lint files changed running lint"
               # python file (CommonServerPython lint is running over python 3 and 2)
-              demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPython
+              python -m demisto_sdk lint -i ./Packs/Base/Scripts/CommonServerPython
               
               # ps file
-              demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPowerShell
+              python -m demisto_sdk lint -i ./Packs/Base/Scripts/CommonServerPowerShell
               
         - store_artifacts:
             path: /tmp/lint_env_installation.log
   create-content-artifacts:
       docker:
-        - image: circleci/python:3.8.3-buster-node
+        - image: cimg/python:3.9.10-node
       steps:
         - checkout
         - attach_workspace:
@@ -247,18 +197,16 @@ jobs:
             name: Test Create Content Artifacts
             when: always
             command: |
-              . .tox/py37/bin/activate
-
               cd content
-              demisto-sdk -v
+              python -m demisto_sdk -v
               mkdir ./tmp
 
-              CIRCLE_BRANCH="master" demisto-sdk create-content-artifacts -a ./tmp
+              CIRCLE_BRANCH="master" python -m demisto_sdk create-content-artifacts -a ./tmp
         - store_artifacts:
             path: content/tmp
   deploy:
       docker:
-        - image: circleci/python:3.8.3-buster
+        - image: cimg/python:3.9.10
       steps:
         - checkout
         - run:
@@ -280,7 +228,6 @@ workflows:
           <<: *tag_filter
       - precommit-checks:
           <<: *tag_filter
-          <<: *reqs_tox
       - validate-files:
           <<: *tag_filter
           <<: *reqs_content_checkout

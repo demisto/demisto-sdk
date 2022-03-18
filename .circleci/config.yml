@@ -27,7 +27,7 @@ references:
         - checkout-content
 
 jobs:
-  pytest: &pytest
+  pytest:
       docker:
         - image: cimg/python:3.9.10-node
       steps:
@@ -216,9 +216,7 @@ workflows:
       - checkout-content:
           <<: *tag_filter
       - precommit-checks:
-          <<: *tag_filter
-      - pytest:
-        <<: *pytest
+          <<: *tag_filter 
       - validate-files:
           <<: *tag_filter
           <<: *reqs_content_checkout

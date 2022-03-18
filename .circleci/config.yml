@@ -6,7 +6,6 @@ version: 2.1
 orbs:
   python: circleci/python@<<pipeline.parameters.dev-orb-version>>
   orb-tools: circleci/orb-tools@10.0
-  linter: talkiq/linter@2.0.0
 
 parameters:
   dev-orb-version:
@@ -216,7 +215,8 @@ workflows:
       - checkout-content:
           <<: *tag_filter
       - precommit-checks:
-          <<: *tag_filter 
+          <<: *tag_filter
+      - pytest
       - validate-files:
           <<: *tag_filter
           <<: *reqs_content_checkout

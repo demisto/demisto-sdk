@@ -88,12 +88,13 @@ jobs:
         - run:
             name: Pre-commit
             command: |
+              pip install pre-commit
               pre-commit --version
               pre-commit run -a
 
   checkout-content:
       docker:
-        - image: cimg/python:3.9.10
+        - image: cimg/python:3.9.10-node
       steps:
         - checkout
         - run:
@@ -122,6 +123,7 @@ jobs:
             name: Set Up & Create Id Set
             when: always
             command: |
+              micropipenv install
               cd content
               npm update
               npm ci

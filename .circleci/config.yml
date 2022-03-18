@@ -4,16 +4,21 @@
 ### =============================================================
 version: 2.1
 orbs:
-  python: circleci/python@<<pipeline.parameters.dev-orb-version>>
+  python: circleci/python@<<pipeline.parameters.python-orb-version>>
+  node: circleci/node@<<pipeline.parameters.node-orb-version>>
   orb-tools: circleci/orb-tools@10.0
 
 parameters:
-  dev-orb-version:
+  python-orb-version:
     type: string
     default: "2.0.3"
+  node-orb-version:
+    type: string
+    default: "5.0.1"
   cache-version:
     type: string
     default: v3
+
 
 references:
     tag_filter: &tag_filter
@@ -35,11 +40,8 @@ jobs:
             pkg-manager: "pipenv"
             args: "--dev"
             cache-version: << pipeline.parameters.cache-version >>
-        - run:
-            # install npm modules so readme tests run with mdx verification
-            name: npm install
-            command: |
-              npm ci
+        - node/install-packages:
+            cache-version: << pipeline.parameters.cache-version >>
         - run:
             name: pytest
             no_output_timeout: 15m

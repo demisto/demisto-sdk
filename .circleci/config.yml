@@ -19,16 +19,16 @@ jobs:
         - image: cimg/python:3.9.10-node
       steps:
         - checkout
+        - python/install-packages:
+          app-dir: ~/project
+          pkg-manager: "pipenv"
+          args: "--dev"
+          cache-version: << pipeline.parameters.cache-version >>
         - run:
             # install npm modules so readme tests run with mdx verification
             name: npm install
             command: |
               npm ci
-        - run:
-            name: Setup Micropipenv
-            command: |
-              pip install micropipenv
-              micropipenv install --dev
         - run:
             name: Pytest
             no_output_timeout: 15m
@@ -50,16 +50,16 @@ jobs:
         - image: cimg/python:3.10.2-node
       steps:
         - checkout
+        - python/install-packages:
+          app-dir: ~/project
+          pkg-manager: "pipenv"
+          args: "--dev"
+          cache-version: << pipeline.parameters.cache-version >>
         - run:
             # install npm modules so readme tests run with mdx verification
             name: npm install
             command: |
               npm ci
-        - run:
-            name: Setup Micropipenv
-            command: |
-              pip install micropipenv
-              micropipenv install --dev
         - run:
             name: Pytest
             no_output_timeout: 15m
@@ -121,18 +121,17 @@ jobs:
               pip install gsutil
         - run:
             name: whoami
-            command: ls
-        - run: 
-            name: setup demisto-sdk
-            command: |
-              pip install micropipenv
-              micropipenv install
-              export PYTHONPATH=$(pwd)
+            command: pwd
+        - python/install-packages:
+          app-dir: ~/project
+          pkg-manager: "pipenv"
+          cache-version: << pipeline.parameters.cache-version >>
         - run:
             name: Set Up & Create Id Set
             when: always
+            environment:
+              PYTHONPATH: "~/project"
             command: |
-              export PYTHONPATH=$(pwd)
               cd content
               npm update
               npm ci

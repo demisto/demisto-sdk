@@ -3,6 +3,18 @@
 ### https://circleci.com/docs/config-sample
 ### =============================================================
 version: 2.1
+orbs:
+  python: circleci/python@<<pipeline.parameters.dev-orb-version>>
+  orb-tools: circleci/orb-tools@10.0
+
+parameters:
+  dev-orb-version:
+    type: string
+    default: "2.0.3"
+  cache-version:
+    type: string
+    default: v3
+
 references:
     tag_filter: &tag_filter
       filters:
@@ -23,7 +35,7 @@ jobs:
             app-dir: ~/project
             pkg-manager: "pipenv"
             args: "--dev"
-            # cache-version: << pipeline.parameters.cache-version >>
+            cache-version: << pipeline.parameters.cache-version >>
         - run:
             # install npm modules so readme tests run with mdx verification
             name: npm install

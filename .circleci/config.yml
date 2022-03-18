@@ -119,11 +119,15 @@ jobs:
             name: gsutil install
             command: |
               pip install gsutil
+        - run: 
+            name: setup demisto-sdk
+            command: |
+              pip install micropipenv
+              micropipenv install
         - run:
             name: Set Up & Create Id Set
             when: always
             command: |
-              micropipenv install
               cd content
               npm update
               npm ci

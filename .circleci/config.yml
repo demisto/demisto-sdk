@@ -6,6 +6,7 @@ version: 2.1
 orbs:
   python: circleci/python@<<pipeline.parameters.dev-orb-version>>
   orb-tools: circleci/orb-tools@10.0
+  linter: talkiq/linter@2.0.0
 
 parameters:
   dev-orb-version:
@@ -26,7 +27,7 @@ references:
         - checkout-content
 
 jobs:
-  python 3-9:
+  pytest: &pytest
       docker:
         - image: cimg/python:3.9.10-node
       steps:
@@ -42,41 +43,13 @@ jobs:
             command: |
               npm ci
         - run:
-            name: Pytest
+            name: pytest
             no_output_timeout: 15m
             command: |
-              pytest -p no:warnings -v --cov=demisto_sdk --cov-report=html
-        - store_artifacts:
-            path: coverage_html_report
-        - run:
-            name: Coveralls upload
-            command: |
-              if [ -n "$COVERALLS_REPO_TOKEN" ]; then
-                pip install coveralls
-                coveralls
-              else
-                echo "Skipping coveralls"
-              fi
-  python 3-10:
-      docker:
-        - image: cimg/python:3.10.2-node
-      steps:
-        - checkout
-        - python/install-packages:
-            app-dir: ~/project
-            pkg-manager: "pipenv"
-            args: "--dev"
-            cache-version: << pipeline.parameters.cache-version >>
-        - run:
-            # install npm modules so readme tests run with mdx verification
-            name: npm install
-            command: |
-              npm ci
-        - run:
-            name: Pytest
-            no_output_timeout: 15m
-            command: |
-              pytest -p no:warnings -v --cov=demisto_sdk --cov-report=html
+              mkdir test-results
+              pytest -p no:warnings -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml
+            store_test_results:
+              test-results
         - store_artifacts:
             path: coverage_html_report
         - run:
@@ -244,6 +217,8 @@ workflows:
           <<: *tag_filter
       - precommit-checks:
           <<: *tag_filter
+      - pytest:
+        <<: *pytest
       - validate-files:
           <<: *tag_filter
           <<: *reqs_content_checkout

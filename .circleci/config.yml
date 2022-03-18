@@ -119,11 +119,15 @@ jobs:
             name: gsutil install
             command: |
               pip install gsutil
+        - run:
+            name: whoami
+            command: ls
         - run: 
             name: setup demisto-sdk
             command: |
               pip install micropipenv
               micropipenv install
+              export PYTHONPATH="$HOME/project"
         - run:
             name: Set Up & Create Id Set
             when: always

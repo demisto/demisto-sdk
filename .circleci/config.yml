@@ -132,6 +132,7 @@ jobs:
             name: Set Up & Create Id Set
             when: always
             command: |
+              export PYTHONPATH=$(pwd)
               cd content
               npm update
               npm ci
@@ -142,6 +143,7 @@ jobs:
             name: Merge Id Set
             when: always
             command: |
+              export PYTHONPATH=$(pwd)
               cd content
               python -m demisto_sdk -v
               export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
@@ -152,6 +154,7 @@ jobs:
             name: Test validate files and yaml
             when: always
             command: |
+              export PYTHONPATH=$(pwd)
               cd content
               python -m demisto_sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"

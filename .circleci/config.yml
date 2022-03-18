@@ -14,7 +14,7 @@ references:
         - checkout-content
 
 jobs:
-  python 3.9:
+  python 3-9:
       docker:
         - image: cimg/python:3.9.10-node
       steps:
@@ -45,7 +45,7 @@ jobs:
               else
                 echo "Skipping coveralls"
               fi
-  python 3.10:
+  python 3-10:
       docker:
         - image: cimg/python:3.10.2-node
       steps:
@@ -88,10 +88,8 @@ jobs:
         - run:
             name: Pre-commit
             command: |
-              . .tox/py37/bin/activate
               pre-commit --version
               pre-commit run -a
-              deactivate
 
   checkout-content:
       docker:
@@ -218,12 +216,6 @@ workflows:
   version: 2.1
   build_and_release:
     jobs:
-      - tox3-7-unit-tests:
-          <<: *tag_filter
-      - tox3-8-unit-tests:
-          <<: *tag_filter
-      - prepare-tox3-7:
-          <<: *tag_filter
       - checkout-content:
           <<: *tag_filter
       - precommit-checks:
@@ -239,8 +231,6 @@ workflows:
       - deploy:
           <<: *tag_filter
           requires:
-            - tox3-7-unit-tests
-            - tox3-8-unit-tests
             - precommit-checks
             - validate-files
             - create-content-artifacts

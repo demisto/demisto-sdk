@@ -29,8 +29,10 @@ references:
       requires:
         - checkout-content
 
-    add_demisto_sdk_to_path: &add_demisto_sdk_to_path
-      - run: echo 'export PYTHONPATH="${PYTHONPATH}:${HOME}/project"' >> $BASH_ENV
+    install_demisto_sdk: &install_demisto_sdk
+        - python/install-packages:
+            pkg-manager: "pip"
+            cache-version: << pipeline.parameters.cache-version >>
 
 jobs:
   pytest:
@@ -111,7 +113,7 @@ jobs:
         - python/install-packages:
             args: "gsutil"
             cache-version: << pipeline.parameters.cache-version >>
-        - <<: *add_demisto_sdk_to_path
+        - <<: *install_demisto_sdk
         - run:
             name: Set Up & Create Id Set
             when: always
@@ -151,7 +153,7 @@ jobs:
         - setup_remote_docker
         - attach_workspace:
             at: ~/project
-        - <<: *add_demisto_sdk_to_path
+        - <<: *install_demisto_sdk
         - run:
             name: Test lint on python and ps files
             when: always
@@ -174,10 +176,10 @@ jobs:
               echo ""
               echo "lint files changed running lint"
               # python file (CommonServerPython lint is running over python 3 and 2)
-              pipenv run python -m demisto_sdk lint -i ./Packs/Base/Scripts/CommonServerPython
+              demisto_sdk lint -i ./Packs/Base/Scripts/CommonServerPython
               
               # ps file
-              pipenv run python -m demisto_sdk lint -i ./Packs/Base/Scripts/CommonServerPowerShell
+              demisto_sdk lint -i ./Packs/Base/Scripts/CommonServerPowerShell
               
         - store_artifacts:
             path: /tmp/lint_env_installation.log
@@ -188,7 +190,7 @@ jobs:
         - checkout
         - attach_workspace:
             at: ~/project
-        - <<: *add_demisto_sdk_to_path
+        - <<: *install_demisto_sdk
         - run:
             name: Test Create Content Artifacts
             when: always

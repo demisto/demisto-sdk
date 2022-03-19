@@ -54,7 +54,7 @@ jobs:
         - python/install-packages:
             pkg-manager: "pipenv"
             args: "--dev --system"
-            cache-version: << pipeline.parameters.dev-cache-version >>
+            cache-version: << pipeline.parameters.cache-version >>
         - node/install-packages:
             cache-version: << pipeline.parameters.cache-version >>
         - run:
@@ -121,14 +121,14 @@ jobs:
         - python/install-packages:
             args: "gsutil"
             cache-version: << pipeline.parameters.cache-version >>
+        - node/install-packages:
+            cache-version: << pipeline.parameters.cache-version >>
         - <<: *install_demisto_sdk
         - run:
             name: Set Up & Create Id Set
             when: always
             command: |
               cd content
-              npm update
-              npm ci
               python -m demisto_sdk -v
 
               CI_COMMIT_BRANCH="master" python -m demisto_sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
@@ -146,7 +146,6 @@ jobs:
             name: Test validate files and yaml
             when: always
             command: |
-              export PYTHONPATH=$(pwd)
               cd content
               python -m demisto_sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"

@@ -49,7 +49,7 @@ jobs:
             no_output_timeout: 15m
             command: |
               mkdir test-results
-              pipenv run pytest -p no:warnings -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml
+              pytest -p no:warnings -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml
         - store_test_results:
             path: test-results
         - store_artifacts:

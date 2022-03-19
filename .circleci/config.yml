@@ -21,6 +21,9 @@ parameters:
   dev-cache-version:
     type: string
     default: v3
+  node-cache-version:
+    type: string
+    default: v3
 
 references:
     tag_filter: &tag_filter
@@ -33,14 +36,18 @@ references:
         - checkout-content
 
     install_demisto_sdk: &install_demisto_sdk
-        - python/install-packages:
-            pkg-manager: "pipenv"
-            args: "--system"
-            cache-version: << pipeline.parameters.cache-version >>
-            pre-install-steps:
-              - run:
-                  name: export demisto-sdk to path
-                  command: echo 'export PYTHONPATH="${PYTHONPATH}:${HOME}/project"' >> $BASH_ENV
+      - python/install-packages:
+          pkg-manager: "pipenv"
+          args: "--system"
+          cache-version: << pipeline.parameters.cache-version >>
+          pre-install-steps:
+            - run:
+                name: export demisto-sdk to path
+                command: echo 'export PYTHONPATH="${PYTHONPATH}:${HOME}/project"' >> $BASH_ENV
+    
+    install_node_ci: &install_node_ci
+      - node/install-packages:
+          cache-version: << pipeline.parameters.node-cache-version >>
 
 jobs:
   pytest:
@@ -55,8 +62,7 @@ jobs:
             pkg-manager: "pipenv"
             args: "--dev --system"
             cache-version: << pipeline.parameters.cache-version >>
-        - node/install-packages:
-            cache-version: << pipeline.parameters.cache-version >>
+        - <<: *install_node_ci
         - run:
             name: pytest
             no_output_timeout: 15m
@@ -113,14 +119,10 @@ jobs:
         - image: cimg/python:3.9.10-node
       steps:
         - checkout
-        - python/install-packages:
-            pkg-manager: "pipenv"
-            cache-version: << pipeline.parameters.cache-version >>
         - attach_workspace:
             at: ~/project
-        - node/install-packages:
-            cache-version: << pipeline.parameters.cache-version >>
         - <<: *install_demisto_sdk
+        - <<: *install_node_ci
         - run:
             name: Set Up & Create Id Set
             when: always

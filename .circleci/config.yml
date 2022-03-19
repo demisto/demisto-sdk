@@ -40,7 +40,7 @@ jobs:
         - checkout
         - python/install-packages:
             pkg-manager: "pipenv"
-            args: "--dev"
+            args: "--dev --system"
             cache-version: << pipeline.parameters.cache-version >>
         - node/install-packages:
             cache-version: << pipeline.parameters.cache-version >>

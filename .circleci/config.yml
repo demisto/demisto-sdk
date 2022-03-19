@@ -126,9 +126,9 @@ jobs:
               cd content
               npm update
               npm ci
-              pipenv run python -m demisto_sdk -v
+              python -m demisto_sdk -v
 
-              CI_COMMIT_BRANCH="master" pipenv run python -m demisto_sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
+              CI_COMMIT_BRANCH="master" python -m demisto_sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
         - run:
             name: Merge Id Set
             when: always
@@ -146,7 +146,7 @@ jobs:
             command: |
               export PYTHONPATH=$(pwd)
               cd content
-              pipenv run python -m demisto_sdk -v
+              python -m demisto_sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
 
               CI_COMMIT_BRANCH="master" ./Tests/scripts/validate.sh
@@ -201,10 +201,10 @@ jobs:
             when: always
             command: |
               cd content
-              pipenv run python -m demisto_sdk -v
+              python -m demisto_sdk -v
               mkdir ./tmp
 
-              CIRCLE_BRANCH="master" pipenv run python -m demisto_sdk create-content-artifacts -a ./tmp
+              CIRCLE_BRANCH="master" python -m demisto_sdk create-content-artifacts -a ./tmp
         - store_artifacts:
             path: content/tmp
   deploy:

@@ -118,9 +118,6 @@ jobs:
             cache-version: << pipeline.parameters.cache-version >>
         - attach_workspace:
             at: ~/project
-        - python/install-packages:
-            args: "gsutil"
-            cache-version: << pipeline.parameters.cache-version >>
         - node/install-packages:
             cache-version: << pipeline.parameters.cache-version >>
         - <<: *install_demisto_sdk
@@ -136,6 +133,7 @@ jobs:
             name: Merge Id Set
             when: always
             command: |
+              pip install gsutil
               cd content
               python -m demisto_sdk -v
               export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"

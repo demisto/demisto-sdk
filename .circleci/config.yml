@@ -35,6 +35,10 @@ references:
       requires:
         - checkout-content
 
+    install_node_ci: &install_node_ci
+      - node/install-packages:
+          cache-version: << pipeline.parameters.node-cache-version >>
+          
     install_demisto_sdk: &install_demisto_sdk
       - python/install-packages:
           pkg-manager: "pipenv"
@@ -44,10 +48,7 @@ references:
             - run:
                 name: export demisto-sdk to path
                 command: echo 'export PYTHONPATH="${PYTHONPATH}:${HOME}/project"' >> $BASH_ENV
-    
-    install_node_ci: &install_node_ci
-      - node/install-packages:
-          cache-version: << pipeline.parameters.node-cache-version >>
+      - <<: *install_node_ci
 
 jobs:
   pytest:
@@ -122,7 +123,6 @@ jobs:
         - attach_workspace:
             at: ~/project
         - <<: *install_demisto_sdk
-        - <<: *install_node_ci
         - run:
             name: Set Up & Create Id Set
             when: always
@@ -146,6 +146,7 @@ jobs:
             name: Test validate files and yaml
             when: always
             command: |
+              alias demisto-sdk="python -m demisto_sdk"
               cd content
               python -m demisto_sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"

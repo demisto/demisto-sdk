@@ -31,8 +31,13 @@ references:
 
     install_demisto_sdk: &install_demisto_sdk
         - python/install-packages:
-            pkg-manager: "pip"
-            path-args: "-e ."
+            pkg-manager: "pipenv"
+            args: "--system"
+            cache-version: << pipeline.parameters.cache-version >>
+            pre-install-steps:
+              - run:
+                  name: export demisto-sdk to path
+                  command: echo 'export PYTHONPATH="${PYTHONPATH}:${HOME}/project"' >> $BASH_ENV
 
 jobs:
   pytest:

@@ -46,7 +46,8 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
+from demisto_sdk.commands.unify.integration_script_unifier import \
+    IntegrationScriptUnifier
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.constants_test import (
     CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DIR_LIST, IGNORED_PNG,
@@ -533,9 +534,9 @@ class TestValidators:
         def get_script_or_integration_package_data_mock(*args, **kwargs):
             return VALID_SCRIPT_PATH, ''
 
-        with patch.object(YmlUnifier, '__init__', lambda a, b: None):
-            YmlUnifier.get_script_or_integration_package_data = get_script_or_integration_package_data_mock
-            return YmlUnifier('')
+        with patch.object(IntegrationScriptUnifier, '__init__', lambda a, b: None):
+            IntegrationScriptUnifier.get_script_or_integration_package_data = get_script_or_integration_package_data_mock
+            return IntegrationScriptUnifier('')
 
     def test_script_valid_rn(self, mocker):
         """

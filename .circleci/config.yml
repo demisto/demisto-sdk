@@ -19,11 +19,6 @@ parameters:
     type: string
     default: v3
 
-pythonversion:
-  python3-8: cimg/python:3.8.12-node
-  python3-9: cimg/python:3.9.10-node
-  python3-10: cimg/python:3.10.2-node
-
 references:
     tag_filter: &tag_filter
       filters:
@@ -227,7 +222,7 @@ workflows:
       - pytest:
           matrix:
             parameters:
-              pythonversion: [python3-8, python3-9, python3-10]   
+              pythonversion: [cimg/python:3.8.12-node, cimg/python:3.9.10-node, cimg/python:3.10.2-node]   
           name: pytest-<< matrix.pythonversion >>
       - validate-files:
           <<: *tag_filter

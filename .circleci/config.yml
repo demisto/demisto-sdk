@@ -134,7 +134,6 @@ jobs:
             name: Merge Id Set
             when: always
             command: |
-              export PYTHONPATH=$(pwd)
               cd content
               python -m demisto_sdk -v
               export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"

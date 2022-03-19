@@ -40,7 +40,7 @@ jobs:
         - checkout
         - python/install-packages:
             pkg-manager: "pipenv"
-            args: "--dev --system"
+            args: "--dev --ignore-pipfile"
             cache-version: << pipeline.parameters.cache-version >>
         - node/install-packages:
             cache-version: << pipeline.parameters.cache-version >>
@@ -49,7 +49,7 @@ jobs:
             no_output_timeout: 15m
             command: |
               mkdir test-results
-              pytest -p no:warnings -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml
+              pipenv run pytest -p no:warnings -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml
         - store_test_results:
             path: test-results
         - store_artifacts:

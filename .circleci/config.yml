@@ -19,6 +19,10 @@ parameters:
     type: string
     default: v3
 
+pythonversion:
+  python3-8: cimg/python:3.8.12-node
+  python3-9: cimg/python:3.9.10-node
+  python3-10: cimg/python:3.10.2-node
 
 references:
     tag_filter: &tag_filter
@@ -32,8 +36,11 @@ references:
 
 jobs:
   pytest:
+      parameters:
+        pythonversion:
+          type: string
       docker:
-        - image: cimg/python:3.9.10-node
+        - image: << parameters.pythonversion >>
       steps:
         - checkout
         - python/install-packages:
@@ -217,7 +224,11 @@ workflows:
           <<: *tag_filter
       - precommit-checks:
           <<: *tag_filter
-      - pytest
+      - pytest:
+          matrix:
+            parameters:
+              pythonversion: [python3-8, python3-9, python3-10]   
+          name: pytest-<< matrix.pythonversion >>
       - validate-files:
           <<: *tag_filter
           <<: *reqs_content_checkout

@@ -40,10 +40,13 @@ jobs:
         - checkout
         - python/install-packages:
             pkg-manager: "pipenv"
-            args: "--dev --ignore-pipfile"
+            args: "--dev --system"
             cache-version: << pipeline.parameters.cache-version >>
         - node/install-packages:
             cache-version: << pipeline.parameters.cache-version >>
+        - run: 
+          command: pip list
+          name: piplist
         - run:
             name: pytest
             no_output_timeout: 15m

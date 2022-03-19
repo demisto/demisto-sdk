@@ -197,7 +197,7 @@ jobs:
               pipenv run python -m demisto_sdk -v
               mkdir ./tmp
 
-              CIRCLE_BRANCH="master" python -m demisto_sdk create-content-artifacts -a ./tmp
+              CIRCLE_BRANCH="master" pipenv run python -m demisto_sdk create-content-artifacts -a ./tmp
         - store_artifacts:
             path: content/tmp
   deploy:

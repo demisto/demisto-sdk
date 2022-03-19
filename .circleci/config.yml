@@ -18,6 +18,9 @@ parameters:
   cache-version:
     type: string
     default: v3
+  dev-cache-version:
+    type: string
+    default: v3
 
 references:
     tag_filter: &tag_filter
@@ -51,7 +54,7 @@ jobs:
         - python/install-packages:
             pkg-manager: "pipenv"
             args: "--dev --system"
-            cache-version: << pipeline.parameters.cache-version >>
+            cache-version: << pipeline.parameters.dev-cache-version >>
         - node/install-packages:
             cache-version: << pipeline.parameters.cache-version >>
         - run:
@@ -116,7 +119,6 @@ jobs:
         - attach_workspace:
             at: ~/project
         - python/install-packages:
-            pkg-manager: "pip"
             args: "gsutil"
             cache-version: << pipeline.parameters.cache-version >>
         - <<: *install_demisto_sdk

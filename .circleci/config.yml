@@ -32,7 +32,7 @@ references:
     install_demisto_sdk: &install_demisto_sdk
         - python/install-packages:
             pkg-manager: "pip"
-            cache-version: << pipeline.parameters.cache-version >>
+            path-args: "-e ."
 
 jobs:
   pytest:

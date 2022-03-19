@@ -29,6 +29,9 @@ references:
       requires:
         - checkout-content
 
+    add_demisto_sdk_to_path: &add_demisto_sdk_to_path
+      - run: echo 'export PYTHONPATH="${PYTHONPATH}:${HOME}/project"' >> $BASH_ENV
+
 jobs:
   pytest:
       parameters:
@@ -101,23 +104,17 @@ jobs:
       steps:
         - checkout
         - python/install-packages:
-            app-dir: ~/project
             pkg-manager: "pipenv"
             cache-version: << pipeline.parameters.cache-version >>
         - attach_workspace:
             at: ~/project
-        - run:
-            name: gsutil install
-            command: |
-              pip install gsutil
-        - run:
-            name: whoami
-            command: pwd
+        - python/install-packages:
+            args: "gsutil"
+            cache-version: << pipeline.parameters.cache-version >>
+        - <<: *add_demisto_sdk_to_path
         - run:
             name: Set Up & Create Id Set
             when: always
-            environment:
-              PYTHONPATH: "~/project"
             command: |
               cd content
               npm update
@@ -154,6 +151,7 @@ jobs:
         - setup_remote_docker
         - attach_workspace:
             at: ~/project
+        - <<: *add_demisto_sdk_to_path
         - run:
             name: Test lint on python and ps files
             when: always
@@ -190,6 +188,7 @@ jobs:
         - checkout
         - attach_workspace:
             at: ~/project
+        - <<: *add_demisto_sdk_to_path
         - run:
             name: Test Create Content Artifacts
             when: always

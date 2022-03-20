@@ -121,6 +121,7 @@ class FileType(Enum):
     JOB = 'job'
     BUILD_CONFIG_FILE = 'build-config-file'
 
+
 RN_HEADER_BY_FILE_TYPE = {
     FileType.PLAYBOOK: 'Playbooks',
     FileType.INTEGRATION: 'Integrations',

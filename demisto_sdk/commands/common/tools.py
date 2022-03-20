@@ -44,10 +44,10 @@ from demisto_sdk.commands.common.constants import (
     PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PARSING_RULES_DIR, PLAYBOOKS_DIR,
     PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
-    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX,
-    WIDGETS_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_ONLY_ENTITIES, XSIAM_REPORTS_DIR,
-    XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys, GitContentConfig,
-    IdSetKeys, MarketplaceVersions, urljoin)
+    SCRIPTS_DIR, SIEM_ONLY_ENTITIES, TEST_PLAYBOOKS_DIR, TYPE_PWSH,
+    UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSIAM_DASHBOARDS_DIR,
+    XSIAM_REPORTS_DIR, XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys,
+    GitContentConfig, IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import YAML_Handler
 
@@ -1165,7 +1165,7 @@ def find_type(
             if MODELING_RULES_DIR in Path(path).parts:
                 return FileType.MODELING_RULE
 
-        if 'alert_category' in _dict:
+        if 'global_rule_id' in _dict:
             return FileType.CORRELATION_RULE
 
     if file_type == 'json':
@@ -1225,13 +1225,12 @@ def find_type(
             return FileType.JOB
 
         if 'dashboards_data' in _dict:
-            if XSIAM_DASHBOARDS_DIR in Path(path).parts:
-                return FileType.XSIAM_DASHBOARD
+            return FileType.XSIAM_DASHBOARD
 
-            if XSIAM_REPORTS_DIR in Path(path).parts:
-                return FileType.XSIAM_REPORT
+        if 'templates_data' in _dict:
+            return FileType.XSIAM_REPORT
 
-        if 'RULE_ID' in _dict:
+        if 'trigger_id' in _dict:
             return FileType.TRIGGER
 
         # When using it for all files validation- sometimes 'id' can be integer
@@ -2231,7 +2230,7 @@ def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[st
     Returns: the list of supporting marketplaces.
     """
 
-    if item_type and item_type in XSIAM_ONLY_ENTITIES:
+    if item_type and item_type in SIEM_ONLY_ENTITIES:
         return [MarketplaceVersions.MarketplaceV2.value]
 
     if not item_data:

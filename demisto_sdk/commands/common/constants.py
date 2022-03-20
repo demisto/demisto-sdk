@@ -187,7 +187,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.JOB.value: JOBS_DIR
 }
 
-XSIAM_ONLY_ENTITIES = [
+SIEM_ONLY_ENTITIES = [
     FileType.PARSING_RULE.value,
     FileType.MODELING_RULE.value,
     FileType.CORRELATION_RULE.value,

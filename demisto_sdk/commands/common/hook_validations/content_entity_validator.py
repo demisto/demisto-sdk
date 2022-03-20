@@ -23,8 +23,6 @@ from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
                                                run_command)
 
 json = JSON_Handler()
-
-
 yaml = YAML_Handler()
 
 

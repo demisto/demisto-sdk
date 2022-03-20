@@ -17,8 +17,6 @@ from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
 from TestSuite.test_tools import ChangeCWD
 
 json = JSON_Handler()
-
-
 yaml = YAML_Handler()
 
 TEST_VALID_CODE = '''import demistomock as demisto

@@ -666,16 +666,16 @@ class TestRNUpdateUnit:
     META_BACKUP = ""
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
     CURRENT_RN = """
-# Incident Types
+#### Incident Types
 - **Cortex XDR Incident**
 
-# Incident Fields
+#### Incident Fields
 - **XDR Alerts**
 
-# Object Types
+#### Object Types
 - **(Asset) - Sample GenericType**
 
-# Object Fields
+#### Object Fields
 - **(Asset) - Sample GenericField**
 """
     CHANGED_FILES = {
@@ -691,24 +691,24 @@ class TestRNUpdateUnit:
                                                         "/HelloWorld/GenericType/asset/Sample_GenericType"}
     }
     EXPECTED_RN_RES = """
-# Incident Types
+#### Incident Types
 - **Cortex XDR Incident**
 
-# Incident Fields
+#### Incident Fields
 - **Sample IncidentField**
 - **XDR Alerts**
 
-# Object Types
+#### Object Types
 - **(Asset) - Sample GenericType**
 
-# Object Fields
+#### Object Fields
 - **(Asset) - Sample GenericField**
 
-# Integrations
-# Cortex XDR - IR
+#### Integrations
+##### Cortex XDR - IR
 - %%UPDATE_RN%%
 
-# Sample
+##### Sample
 - %%UPDATE_RN%%
 """
 
@@ -948,9 +948,6 @@ class TestRNUpdateUnit:
             - Case 4: Return True and throw error saying "The master branch is currently ahead of
                       your pack's version. Please pull from master and re-run the command."
         """
-        from demisto_sdk.commands.common.handlers import JSON_Handler
-        json = JSON_Handler()
-
         from subprocess import Popen
 
         from demisto_sdk.commands.update_release_notes.update_rn import \

@@ -25,8 +25,6 @@ from demisto_sdk.commands.format.format_constants import \
     OLD_FILE_DEFAULT_1_FROMVERSION
 
 json = JSON_Handler()
-
-
 yaml = YAML_Handler()
 
 

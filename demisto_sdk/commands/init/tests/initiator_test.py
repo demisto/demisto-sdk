@@ -16,8 +16,6 @@ from demisto_sdk.commands.init.initiator import Initiator
 from TestSuite.test_tools import ChangeCWD
 
 json = JSON_Handler()
-
-
 yaml = YAML_Handler()
 
 DIR_NAME = 'DirName'

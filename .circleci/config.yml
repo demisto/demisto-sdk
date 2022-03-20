@@ -22,9 +22,9 @@ references:
       run:
         name: Create requirement files
         command: |
-          pip install pipenv
-          pipenv lock -r > requirements.txt
-          pipenv lock -r --dev > requirements-dev.txt
+          pip install pipfile-requirements
+          pipfile2req > requirements.txt
+          pipfile2req -d > requirements-dev.txt
 
     restore_tox_37_cache: &restore_tox_37_cache
       restore_cache:
@@ -40,7 +40,7 @@ jobs:
   tox3-7-unit-tests:
       # docker image circleci/python:3.8.3-buster-node also contains python 3.7
       docker:
-        - image: cimg/python:3.9.10-node
+        - image: circleci/python:3.8.3-buster-node
       steps:
         - checkout
         - *create_requirement_files
@@ -63,7 +63,7 @@ jobs:
 
   tox3-8-unit-tests:
       docker:
-        - image: cimg/python:3.9.10-node
+        - image: circleci/python:3.8.3-buster-node
       steps:
         - checkout
         - *create_requirement_files

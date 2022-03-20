@@ -31,8 +31,6 @@ from demisto_sdk.commands.common.tools import (
     get_pack_name, is_iron_bank_pack, print_error, server_version_compare)
 
 json = JSON_Handler()
-
-
 yaml = YAML_Handler()
 default_additional_info = load_default_additional_info_dict()
 

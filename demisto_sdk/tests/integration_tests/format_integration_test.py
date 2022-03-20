@@ -29,8 +29,6 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
 from TestSuite.test_tools import ChangeCWD
 
 json = JSON_Handler()
-
-
 yaml = YAML_Handler()
 
 

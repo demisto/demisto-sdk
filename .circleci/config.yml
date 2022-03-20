@@ -96,7 +96,7 @@ jobs:
         - python/install-packages:
             pkg-manager: "pip"
             args: "pre-commit"
-            pip-dependency-file: ""  # No requirements.txt file
+            pip-dependency-file: "requirements-pre-commit.txt"
         - run:
             name: Pre-commit
             command: |
@@ -138,7 +138,7 @@ jobs:
         - python/install-packages:
             pkg-manager: "pip"
             args: "gsutil"
-            pip-dependency-file: ""  # No requirements.txt file
+            pip-dependency-file: "requirements-pre-gsutil.txt"
         - run:
             name: Merge Id Set
             when: always

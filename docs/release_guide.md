@@ -2,10 +2,10 @@ In order to release a new version of `demisto-sdk` to the public follow these st
 
 ### Validation before release:
 1) Make sure the **CHANGELOG.md** file is in order and is updated with all the changes in the current release.
-2) Create a new release branch on the sdk repo, formatted as `X.X.X`, e.g. `1.0.0`.
+2) Create a new release branch on the sdk repo, formatted as `X.X.X`, e.g. `1.0.0` (push the branch to the remote).
 3) Make sure that both `sdk-nightly` and `sdk-master` builds passed.
-   * If **new SDK commits** were pushed after the nightly tests had started, manually trigger the sdk nightly build again as written in step 4. This will test sdk master on content branch.
-   * If **no new SDK commits** were done after the nightly tests, skip step 4.
+   * If **new SDK commits** were pushed after the nightly tests had started, manually trigger the sdk nightly build again as written in steps 4 and 5. This will test the sdk release branch on what was content's master (until you branched out in step 4).
+   * If **no new SDK commits** were done after the nightly tests, skip steps 4 and 5.
 4) Enter the content repo, open a new branch and update the version of the SDK in Demisto's Content repository by updating the demisto-sdk version in the [**dev-requirements-py3.txt**](https://github.com/demisto/content/blob/master/dev-requirements-py3.txt) file. Use the release branch first - replace the `demisto-sdk==version` line with this line: `git+https://github.com/demisto/demisto-sdk.git@release-branch-name.`
 5) Push your branch to remote, and run `./Utils/gitlab_triggers/trigger_content_nightly_build.sh -ct <GitLab_token> -b <new_content_branch_name>`.
   **Note:** if you're on `content/master`, a notification will be sent to the content-team slack channel. The destination channel can be set via argument.
@@ -24,6 +24,7 @@ In order to release a new version of `demisto-sdk` to the public follow these st
 ### Release process:
 1) Click [Here](https://github.com/demisto/demisto-sdk/releases/new) (alternatively: visit the [SDK github page](https://github.com/demisto/demisto-sdk), click on **releases**, and then **Draft a new release**)
 2) Update the **Tag version** and **Release title** to `vX.X.X`.
+3) Select the sdk release branch as the **Target**.
 3) In the **Describe the release** text box paste the `CHANGELOG` contents for this release.
 4) Make sure the relevant nightly SDK build passed (step 3 on the previous section), then click **Publish release**. Your release will go through a deploy build (follow it on the [CI website](https://app.circleci.com/pipelines/github/demisto/demisto-sdk). If the build is successful, your release will be public 🎉.
 5) Update [**dev-requirements-py3.txt**](https://github.com/demisto/content/blob/master/dev-requirements-py3.txt) again, this time with the newly-released version (rather than the branch), e.g demisto-sdk==x.x.x.

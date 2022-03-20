@@ -2,15 +2,85 @@ import json
 import os
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.tools import get_json, get_yaml, write_yml
+from demisto_sdk.commands.common.tools import get_yaml, write_yml
 
 # Test data files
 FAKE_INTEGRATION_YML = get_yaml(
     f'{git_path()}/demisto_sdk/commands/generate_outputs/generate_context/tests/test_data/fake_integration_empty_output.yml')
-FAKE_OUTPUT_CONTEXTS = get_json(
-    f'{git_path()}/demisto_sdk/commands/generate_outputs/generate_context/tests/test_data/fake_outputs_with_contexts.json')
-FAKE_OUTPUTS = get_json(
-    f'{git_path()}/demisto_sdk/commands/generate_outputs/generate_context/tests/test_data/fake_outputs.json')
+
+FAKE_OUTPUT_CONTEXTS = [
+    {
+        "contextPath": "File.SHA256",
+        "description": "",
+        "type": "String"
+    },
+    {
+        "contextPath": "File.SHA1",
+        "description": "",
+        "type": "String"
+    },
+    {
+        "contextPath": "File.MD5",
+        "description": "",
+        "type": "String"
+    },
+    {
+        "contextPath": "File.Name",
+        "description": "",
+        "type": "String"
+    },
+    {
+        "contextPath": "File.Date",
+        "description": "",
+        "type": "Date"
+    },
+    {
+        "contextPath": "File.Size",
+        "description": "",
+        "type": "Number"
+    },
+    {
+        "contextPath": "File.Check",
+        "description": "",
+        "type": "Boolean"
+    },
+    {
+        "contextPath": "File.Type",
+        "description": "",
+        "type": "Unknown"
+    },
+    {
+        "contextPath": "File.EntryID",
+        "description": "",
+        "type": "String"
+    },
+    {
+        "contextPath": "File.SSDeep",
+        "description": "",
+        "type": "String"
+    }
+]
+
+FAKE_OUTPUTS_1 = {
+    "File": {
+        "SHA256": "111",
+        "SHA1": "111",
+        "MD5": "111",
+        "Name": "111",
+        "Date": "2018-09-02T23:05:12Z"
+    }
+}
+FAKE_OUTPUTS_2 = {
+    "File": {
+        "Date": "2018-09-02T23:05:12Z",
+        "Size": 111,
+        "Check": True,
+        "Type": None,
+        "EntryID": "111",
+        "SSDeep": "111"
+    }
+}
+
 FAKE_EXAMPLES_FILE = f'{git_path()}/commands/demisto_sdk/generate_outputs/generate_context/tests/test_data/fake_examples.txt'
 
 
@@ -59,25 +129,6 @@ def test_generate_context_from_outputs():
                      'type': 'String'}]}
 
 
-def test_generate_example_dict(mocker):
-    """
-    Given
-       - An exmaples file path
-    When
-       - generating examples outputs
-    Then
-       - Ensure the outputs are correct
-    """
-    from demisto_sdk.commands.generate_outputs.generate_context import \
-        generate_integration_context
-    mocker.patch.object(generate_integration_context,
-                        'build_example_dict',
-                        return_value=(FAKE_OUTPUT_CONTEXTS, []))
-
-    assert generate_integration_context.generate_example_dict(
-        FAKE_EXAMPLES_FILE) == FAKE_OUTPUT_CONTEXTS
-
-
 def test_insert_outputs(mocker):
     """
     Given
@@ -93,8 +144,11 @@ def test_insert_outputs(mocker):
     mocker.patch.object(generate_integration_context,
                         'build_example_dict',
                         return_value=(
-                            {command_name: (
-                                None, None, json.dumps(FAKE_OUTPUTS))},
+                            {
+                                command_name:
+                                [(None, None, json.dumps(FAKE_OUTPUTS_1)),
+                                 (None, None, json.dumps(FAKE_OUTPUTS_2))]
+                            },
                             []))
 
     yml_data = FAKE_INTEGRATION_YML
@@ -106,6 +160,8 @@ def test_insert_outputs(mocker):
         if command.get('name') == command_name:
             assert command['outputs'] == FAKE_OUTPUT_CONTEXTS
             break
+    else:
+        raise AssertionError(f'No command {command_name} in yml_data)')
 
 
 def test_generate_integration_context(mocker, tmpdir):
@@ -124,7 +180,12 @@ def test_generate_integration_context(mocker, tmpdir):
     mocker.patch.object(generate_integration_context,
                         'build_example_dict',
                         return_value=(
-                            {command_name: (None, None, json.dumps(FAKE_OUTPUTS))}, []))
+                            {
+                                command_name:
+                                [(None, None, json.dumps(FAKE_OUTPUTS_1)),
+                                 (None, None, json.dumps(FAKE_OUTPUTS_2))]
+                            },
+                            []))
 
     # Temp file to check
     filename = os.path.join(tmpdir.strpath, 'fake_integration.yml')
@@ -136,11 +197,10 @@ def test_generate_integration_context(mocker, tmpdir):
         if command.get('name') == command_name:
             command['outputs'] = ''
             break
+    else:
+        raise AssertionError(f'command {command_name} is not found in yml_data')
 
-    generate_integration_context.generate_integration_context(filename,
-                                                              FAKE_EXAMPLES_FILE,
-                                                              insecure=True,
-                                                              verbose=False)
+    generate_integration_context.generate_integration_context(filename, FAKE_EXAMPLES_FILE, verbose=False)
 
     # Check we have new data
     yml_data = get_yaml(filename)
@@ -148,3 +208,5 @@ def test_generate_integration_context(mocker, tmpdir):
         if command.get('name') == command_name:
             assert command['outputs'] == FAKE_OUTPUT_CONTEXTS
             break
+    else:
+        raise AssertionError(f'command {command_name} is not found in yml_data')

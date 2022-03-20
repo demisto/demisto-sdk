@@ -38,27 +38,49 @@ def generate_example_dict(examples_file: Optional[str], insecure=False):
     return example_dict
 
 
-def insert_outputs(yml_data: Dict, command: str, output_with_contexts: List):
-    """ Insert new ouputs for a command in the yml_data and return it.
+def insert_outputs(yml_data: Dict, command_name: str, output_with_contexts: List):
+    """ Insert new outputs for a command in the yml_data and return it.
 
     Args:
         yml_data: yaml as python dict.
-        commnad: the command we want to change the outputs of.
+        command_name: the command name whose outputs we want to manipulate.
         output_with_contexts: the new outputs.
     """
-    commands = yml_data['script']['commands']
-    found = False
-    for cmd in commands:
-        if cmd.get('name') == command:
-            cmd['outputs'] = output_with_contexts
-            found = True
-            break
+    commands = yml_data.get('script', {}).get('commands') or []
+    command_names = [command.get('name') for command in commands]
+    if command_name not in command_names:
+        raise ValueError(f'The {command_name} command is missing from the integration YML.')
+    command_index = command_names.index(command_name)
+    command = commands[command_index]
 
-    if not found:
-        raise Exception(
-            f'Input YML doesn\'t have the "{command}" command that exists in the examples file.')
+    outputs: List[Dict[str, str]] = command.get('outputs') or []
+    old_descriptions = _output_path_to_description(outputs)
+    new_descriptions = _output_path_to_description(output_with_contexts)
+    old_output_paths = {output.get('contextPath') for output in command.get('outputs', [])}
 
+    outputs.extend(output for output in output_with_contexts
+                   if output.get('contextPath') and output.get('contextPath') not in old_output_paths)
+
+    # populates the description field, preferring the new value (if not blank), and existing values over blanks.
+    for output in outputs:
+        path = output.get('contextPath')
+        if not path:
+            raise ValueError('Found a command without a contextPath value')
+        if not output.get('description'):
+            output['description'] = new_descriptions.get(path) or old_descriptions.get(path) or ''
+    yml_data['script']['commands'][command_index]['outputs'] = outputs
     return yml_data
+
+
+def _output_path_to_description(command_outputs: List[Dict[str, str]]) -> Dict[str, str]:
+    """ creates a mapping of contextPath -> description, if the description is not null. """
+    descriptions = {}
+    for output in command_outputs:
+        description = output.get('description')
+        context_path = output.get('contextPath')
+        if context_path and description:
+            descriptions[context_path] = description
+    return descriptions
 
 
 def generate_integration_context(
@@ -66,16 +88,19 @@ def generate_integration_context(
         examples: Optional[str] = None,
         insecure: bool = False,
         verbose: bool = False,
+        output_path: Optional[str] = None
 ):
     """ Generate integration command contexts in-place.
 
     Args:
+        output_path: Output path
         input_path: path to the yaml integration.
         examples: path to the command examples.
         insecure: should use insecure.
         verbose: verbose (debug mode).
     """
-
+    if not output_path:
+        output_path = input_path
     try:
         yml_data = get_yaml(input_path)
 
@@ -84,18 +109,19 @@ def generate_integration_context(
 
         for command in example_dict:
             print_v(f'Building context for the {command} command...', verbose)
-            _, _, outputs = example_dict.get(command)
+            example = example_dict.get(command)
 
             # Generate the examples with a local server
-            output_with_contexts = dict_from_outputs_str(command, outputs,
-                                                         verbose=verbose)
-            output_contexts = output_with_contexts.get('outputs')
-            yml_data = insert_outputs(yml_data, command, output_contexts)
+            for _, _, outputs in example:
+                output_with_contexts = dict_from_outputs_str(command, outputs,
+                                                             verbose=verbose)
+                output_contexts = output_with_contexts.get('outputs')
+                yml_data = insert_outputs(yml_data, command, output_contexts)
 
         # Make the changes in place the input yml
-        print_success(f'Writing outputs to input file "{input_path}"...')
-        write_yml(input_path, yml_data)
-    except Exception as ex:
+        print_success(f'Writing outputs to {output_path}')
+        write_yml(output_path, yml_data)
+    except ValueError as ex:
         if verbose:
             raise
         else:

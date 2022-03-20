@@ -1,46 +1,8 @@
-from unittest.mock import DEFAULT
-
 import pytest
 
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
 from demisto_sdk.commands.lint import linter
 from demisto_sdk.commands.lint.linter import Linter
-
-
-class TestCreateImage:
-    def test_build_image_no_errors(self, linter_obj: Linter, demisto_content, create_integration, mocker):
-        content_path = demisto_content
-        create_integration(content_path=content_path)
-        # Expected returns
-        exp_test_image_id = 'test-image'
-        exp_errors = ""
-        # Jinja2 mocking
-        mocker.patch.multiple(linter, Environment=DEFAULT, FileSystemLoader=DEFAULT, exceptions=DEFAULT, hashlib=DEFAULT)
-        # Facts mocking
-        mocker.patch.dict(linter_obj._facts, {
-            "images": [],
-            "python_version": 0,
-            "test": False,
-            "lint_files": [],
-            "additional_requirements": [],
-            "docker_engine": True,
-            "env_vars": {
-                "CI": True,
-                "DEMISTO_LINT_UPDATE_CERTS": "yes"
-            }
-        })
-        mocker.patch.object(linter, 'io')
-        # Docker client mocking
-        mocker.patch.object(linter_obj, '_docker_client')
-        docker_build_response = mocker.MagicMock()
-        docker_build_response.short_id = exp_test_image_id
-
-        linter_obj._docker_client.images.build().__getitem__().short_id = exp_test_image_id
-
-        act_test_image_id, act_errors = linter_obj._docker_image_create(docker_base_image=[exp_test_image_id, '3.7'])
-
-        assert act_test_image_id == exp_test_image_id
-        assert act_errors == exp_errors
 
 
 class TestPylint:
@@ -50,7 +12,7 @@ class TestPylint:
         exp_container_log = ""
 
         # Docker client mocking
-        mocker.patch.object(linter_obj, '_docker_client')
+        mocker.patch('demisto_sdk.commands.lint.docker_helper.Docker.create_container')
         linter_obj._docker_client.containers.run().wait.return_value = {"StatusCode": exp_container_exit_code}
         linter_obj._docker_client.containers.run().logs.return_value = exp_container_log.encode('utf-8')
         act_container_exit_code, act_container_log = linter_obj._docker_run_pylint(test_image='test-image',
@@ -69,9 +31,9 @@ class TestPylint:
     def test_run_pylint_with_errors(self, mocker, linter_obj: Linter, exp_container_exit_code: int, exp_container_log: str,
                                     exp_exit_code: int, exp_output: str):
         # Docker client mocking
-        mocker.patch.object(linter_obj, '_docker_client')
-        linter_obj._docker_client.containers.run().wait.return_value = {"StatusCode": exp_container_exit_code}
-        linter_obj._docker_client.containers.run().logs.return_value = exp_container_log.encode('utf-8')
+        mocker.patch('demisto_sdk.commands.lint.docker_helper.Docker.create_container')
+        linter.Docker.create_container().wait.return_value = {"StatusCode": exp_container_exit_code}
+        linter.Docker.create_container().logs.return_value = exp_container_log.encode('utf-8')
         act_exit_code, act_output = linter_obj._docker_run_pylint(test_image='test-image',
                                                                   keep_container=False)
 
@@ -93,8 +55,8 @@ class TestPytest:
         exp_test_json = mocker.MagicMock() if exp_container_exit_code in [0, 1, 2, 5] else {}
 
         # Docker client mocking
-        mocker.patch.object(linter_obj, '_docker_client')
-        linter_obj._docker_client.containers.run().wait.return_value = {"StatusCode": exp_container_exit_code}
+        mocker.patch('demisto_sdk.commands.lint.docker_helper.Docker.create_container')
+        linter.Docker.create_container().wait.return_value = {"StatusCode": exp_container_exit_code}
 
         # Docker related mocking
         mocker.patch.object(linter, 'json')

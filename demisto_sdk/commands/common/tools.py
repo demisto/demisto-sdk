@@ -1091,6 +1091,9 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
 
     if path.name.endswith(XSOAR_CONFIG_FILE):
         return FileType.XSOAR_CONFIG
+    
+    if path.suffix == '.yml' and (path.parts[0].startswith == '.circleci' or path.parts[0].startswith == '.gitlab'):
+        return FileType.BUILD_CONFIG_FILE
 
     return None
 

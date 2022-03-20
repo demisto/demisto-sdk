@@ -20,7 +20,6 @@ In case of a private repo and an un-configured 'DEMISTO_SDK_GITHUB_TOKEN' remote
     - major
     - minor
     - revision
-    - maintenance (revision)
     - documentation (revision)
 
 * **-g, --use-git**

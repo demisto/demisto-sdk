@@ -17,6 +17,7 @@ from enum import Enum
 from functools import lru_cache, partial
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
+from time import sleep
 from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
 
 import click
@@ -28,6 +29,7 @@ import requests
 import urllib3
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
+from requests.exceptions import HTTPError
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
@@ -190,6 +192,10 @@ def get_core_pack_list() -> list:
         core_pack_list = get_remote_file(
             'Tests/Marketplace/core_packs_list.json', github_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
         ) or []
+        core_pack_list.extend(get_remote_file(
+            'Tests/Marketplace/core_packs_mpv2_list.json', github_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+        ) or [])
+        core_pack_list = list(set(core_pack_list))
     else:
         # no core packs in external repos.
         core_pack_list = []
@@ -449,7 +455,10 @@ def get_last_remote_release_version():
     return ''
 
 
-def get_file(file_path, type_of_file):
+@lru_cache()
+def get_file(file_path, type_of_file, clear_cache=False):
+    if clear_cache:
+        get_file.cache_clear()
     file_path = Path(file_path)
     data_dictionary = None
     with open(file_path.expanduser(), mode="r", encoding="utf8") as f:
@@ -473,12 +482,12 @@ def get_file(file_path, type_of_file):
     return {}
 
 
-def get_yaml(file_path):
-    return get_file(file_path, 'yml')
+def get_yaml(file_path, cache_clear=False):
+    return get_file(file_path, 'yml', clear_cache=cache_clear)
 
 
-def get_json(file_path):
-    return get_file(file_path, 'json')
+def get_json(file_path, cache_clear=False):
+    return get_file(file_path, 'json', clear_cache=cache_clear)
 
 
 def get_script_or_integration_id(file_path):
@@ -1004,7 +1013,7 @@ def get_dev_requirements(py_version, envs_dirs_base):
 
 
 def get_dict_from_file(path: str,
-                       raises_error: bool = True) -> Tuple[Dict, Union[str, None]]:
+                       raises_error: bool = True, clear_cache: bool = False) -> Tuple[Dict, Union[str, None]]:
     """
     Get a dict representing the file
 
@@ -1018,9 +1027,9 @@ def get_dict_from_file(path: str,
     try:
         if path:
             if path.endswith('.yml'):
-                return get_yaml(path), 'yml'
+                return get_yaml(path, cache_clear=clear_cache), 'yml'
             elif path.endswith('.json'):
-                return get_json(path), 'json'
+                return get_json(path, cache_clear=clear_cache), 'json'
             elif path.endswith('.py'):
                 return {}, 'py'
     except FileNotFoundError as e:
@@ -1101,7 +1110,8 @@ def find_type(
     _dict=None,
     file_type: Optional[str] = None,
     ignore_sub_categories: bool = False,
-    ignore_invalid_schema_file: bool = False
+    ignore_invalid_schema_file: bool = False,
+    clear_cache: bool = False
 ):
     """
     returns the content file type
@@ -1113,6 +1123,7 @@ def find_type(
         ignore_sub_categories (bool): ignore the sub categories, True to ignore, False otherwise.
         ignore_invalid_schema_file (bool): whether to ignore raising error on invalid schema files,
             True to ignore, False otherwise.
+        clear_cache (bool): wether to clear the cache
 
     Returns:
         FileType: string representing of the content file type, None otherwise.
@@ -1122,7 +1133,7 @@ def find_type(
         return type_by_path
     try:
         if not _dict and not file_type:
-            _dict, file_type = get_dict_from_file(path)
+            _dict, file_type = get_dict_from_file(path, clear_cache=clear_cache)
 
     except FileNotFoundError:
         # unable to find the file - hence can't identify it
@@ -2451,6 +2462,22 @@ def should_alternate_field_by_item(content_item, id_set):
         if list(item.keys())[0] == item_id:
             return item.get(item_id, {}).get('has_alternative_meta', False)
     return False
+
+
+def get_url_with_retries(url: str, retries: int, backoff_factor: int = 1, **kwargs):
+    kwargs['stream'] = True
+    session = requests.Session()
+    exception = Exception()
+    for _ in range(retries):
+        response = session.get(url, **kwargs)
+        try:
+            response.raise_for_status()
+        except HTTPError as error:
+            exception = error
+        else:
+            return response
+        sleep(backoff_factor)
+    raise exception
 
 
 def order_dict(data):

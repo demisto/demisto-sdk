@@ -1,0 +1,1 @@
+This readme is to validate the exsitance for the script-valid.yml

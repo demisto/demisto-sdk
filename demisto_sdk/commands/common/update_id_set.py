@@ -171,7 +171,6 @@ def should_skip_item_by_mp(file_path: str, marketplace: str, excluded_items_from
         return True
 
     item_marketplaces = get_item_marketplaces(file_path, item_data=item_data, packs=packs)
-    # print(item_marketplaces)
     if marketplace not in item_marketplaces:
         if print_logs:
             print(f'Skipping {file_path} due to mismatch with the given marketplace')
@@ -1174,7 +1173,7 @@ def get_parsing_rule_data(path: str, packs: Dict[str, Dict] = None):
     pack = get_pack_name(path)
     marketplaces = get_item_marketplaces(path, item_data=yaml_data, packs=packs)
 
-    if not id_ and 'marketplacev2' in marketplaces:
+    if not id_ and 'marketplacev2' in marketplaces:  # TODO: Should be removed after we have an agreed id field for parsing rule
         id_ = f"{pack}-{os.path.basename(path).split('.')[0]}"
 
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
@@ -1191,7 +1190,7 @@ def get_modeling_rule_data(path: str, packs: Dict[str, Dict] = None):
     pack = get_pack_name(path)
     marketplaces = get_item_marketplaces(path, item_data=yaml_data, packs=packs)
 
-    if not id_ and 'marketplacev2' in marketplaces:
+    if not id_ and 'marketplacev2' in marketplaces:  # TODO: Should be removed after we have an agreed id field for modeling rule
         id_ = f"{pack}-{os.path.basename(path).split('.')[0]}"
 
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
@@ -1971,7 +1970,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
 
     with click.progressbar(length=len(objects_to_create), label="Creating id-set") as progress_bar:
-        print(objects_to_create)
+
         if 'Packs' in objects_to_create:
             print_color("\nStarting iteration over Packs", LOG_COLORS.GREEN)
             for pack_data in pool.map(partial(get_pack_metadata_data,
@@ -1999,7 +1998,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                 integration_list.extend(arr)
                 update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
                                            excluded_items_from_iteration)
-        print(integration_list)
+
         progress_bar.update(1)
 
         if 'Playbooks' in objects_to_create:

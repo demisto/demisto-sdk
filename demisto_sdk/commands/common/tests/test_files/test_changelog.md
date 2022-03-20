@@ -1,51 +1,9 @@
 # Changelog
-
-* Added an agrument to YAMLHandler, allowing to set a maximal width for YAML files.  This fixes an issue where a wrong default was used.
-* Added the detach mechanism to the **upload** command, If you set the --input-config-file flag, any files in the repo's SystemPacks folder will be detached.
-* Added the reattach mechanism to the **upload** command, If you set the --input-config-file flag, any detached item in your XSOAR instance that isn't currently in the repo's SystemPacks folder will be re-attached.
-
-# 1.6.2
-* Added dependency validation support for core marketplacev2 packs.
-* Fixed an issue in **update-release-notes** where suggestion fix failed in validation.
-* Fixed a bug where `.env` files didn't load. @nicolas-rdgs
-* Fixed a bug where **validate** command failed when the *categories* field in the pack metadata was empty for non-integration packs.
-* Added *system* and *item-type* arguments to the **download** command, used when downloading system items.
-* Added a validation to **validate**, checking that each script, integration and playbook have a README file. This validation only runs when the command is called with either the `-i` or the `-g` flag.
-* Fixed a regression issue with **doc-review**, where the `-g` flag did not work.
-* Improved the detection of errors in **doc-review** command.
-* The **validate** command now checks if a readme file is empty, only for packs that contain playbooks or were written by a partner.
-* The **validate** command now makes sure common contextPath values (e.g. `DBotScore.Score`) have a non-empty description, and **format** populates them automatically.
-* Fixed an issue where the **generate-outputs** command did not work properly when examples were provided.
-* Fixed an issue in the **generate-outputs** command, where the outputs were not written to the specified output path.
-* The **generate-outputs** command can now generate outputs from multiple calls to the same command (useful when different args provide different outputs).
-* The **generate-outputs** command can now update a yaml file with new outputs, without deleting or overwriting existing ones.
-* Fixed a bug where **doc-review** command failed on existing templates.
-* Fixed a bug where **validate** command failed when the word demisto is in the repo README file.
-* Added support for adding test-playbooks to the zip file result in *create-content-artifacts* command for marketplacev2.
-* Fixed an issue in **find-dependencies** where using the argument *-o* without the argument *--all-packs-dependencies* did not print a proper warning.
-* Added a **validate** check to prevent deletion of files whose deletion is not supported by the XSOAR marketplace.
-* Removed the support in the *maintenance* option of the *-u* flag in the **update-release-notes** command.
-* Added validation for forbidden words and phrases in the **doc-review** command.
-* Added a retries mechanism to the **test-content** command to stabilize the build process.
-* Added support for all `git` platforms to get remote files.
-
-# 1.6.1
-* Added the '--use-packs-known-words' argument to the **doc-review** command
-* Added YAML_Loader to handle yaml files in a standard way across modules, replacing PYYAML.
-* Fixed an issue when filtering items using the ID set in the **create-content-artifacts** command.
-* Fixed an issue in the **generate-docs** command where tables were generated with an empty description column.
-* Fixed an issue in the **split** command where splitting failed when using relative input/output paths.
-* Added warning when inferred files are missing.
-* Added to **validate** a validation for integration image dimensions, which should be 120x50px.
-* Improved an error in the **validate** command to better differentiate between the case where a required fetch parameter is malformed or missing.
-
-# 1.6.0
 * Fixed an issue in the **create-id-set** command where similar items from different marketplaces were reported as duplicated.
 * Fixed typo in demisto-sdk init
 * Fixed an issue where the **lint** command did not handle all container exit codes.
 * Add to **validate** a validation for pack name to make sure it is unchanged.
 * Added a validation to the **validate** command that verifies that the version in the pack_metdata file is written in the correct format.
-* Fixed an issue in the **format** command where missing *fromVersion* field in indicator fields caused an error.
 
 # 1.5.9
 * Added option to specify `External Playbook Configuration` to change inputs of Playbooks triggered as part of **test-content**

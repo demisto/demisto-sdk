@@ -4,9 +4,6 @@ from enum import Enum
 from functools import reduce
 from typing import Dict, List
 
-from demisto_sdk.commands.common.GitContentConfig import \
-    GitContentConfig  # noqa
-
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
 NOT_TEST = '(?!Test)'
 INTEGRATIONS_DIR = 'Integrations'
@@ -956,6 +953,8 @@ class PB_Status:
     FAILED = 'failed'
     IN_PROGRESS = 'inprogress'
     FAILED_DOCKER_TEST = 'failed_docker_test'
+    CONFIGURATION_FAILED = 'failed_configuration'
+    SECOND_PLAYBACK_REQUIRED = 'second_playback_required'
 
 
 # change log regexes

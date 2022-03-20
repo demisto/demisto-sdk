@@ -875,6 +875,13 @@ def format(
     "-v", "--verbose",
     help="Verbose output", is_flag=True
 )
+@click.option(
+    "--reattach",
+    help="Reattach the detached files in the XSOAR instance"
+         "for the CI/CD Flow. If you set the --input-config-file flag, "
+         "any detached item in your XSOAR instance that isn't currently in the repo's SystemPacks folder "
+         "will be re-attached.)", is_flag=True
+)
 def upload(**kwargs):
     """Upload integration or pack to Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
@@ -893,13 +900,14 @@ def upload(**kwargs):
             config_file_path = kwargs['input_config_file']
             config_file_to_parse = ConfigFileParser(config_file_path=config_file_path)
             pack_path = config_file_to_parse.parse_file()
+            kwargs['detached_files'] = True
             kwargs.pop('input_config_file')
 
         output_zip_path = kwargs.pop('keep_zip') or tempfile.gettempdir()
         packs_unifier = PacksZipper(pack_paths=pack_path, output=output_zip_path,
                                     content_version='0.0.0', zip_all=True, quiet_mode=True)
         packs_zip_path, pack_names = packs_unifier.zip_packs()
-        if packs_zip_path is None:
+        if packs_zip_path is None and not kwargs.get('detached_files'):
             return EX_FAIL
 
         kwargs['input'] = packs_zip_path
@@ -985,9 +993,9 @@ def download(**kwargs):
 @click.option(
     "--file-path", help="XSOAR Configuration File path, the default value is in the repo level", is_flag=False)
 def xsoar_config_file_update(**kwargs):
-    """Download custom content from Demisto instance.
-    DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
-    DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
+    """Handle your XSOAR Configuration File.
+    Add automatically all the installed MarketPlace Packs to the marketplace_packs section in XSOAR Configuration File.
+    Add a Pack to both marketplace_packs and custom_packs sections in the Configuration File.
     """
     from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import \
         XSOARConfigFileUpdater
@@ -1891,6 +1899,13 @@ def openapi_codegen(**kwargs):
     '--server-version',
     help='Which server version to run the tests on(Valid only when using AMI)',
     default="NonAMI")
+@click.option(
+    '-u',
+    '--use-retries',
+    is_flag=True,
+    help='Should use retries mechanism or not (if test-playbook fails, it will execute it again few times and '
+         'determine success according to most of the runs',
+    default=False)
 def test_content(**kwargs):
     """Configure instances for the integration needed to run tests_to_run tests.
     Run test module on each integration.

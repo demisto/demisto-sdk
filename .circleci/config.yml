@@ -24,6 +24,9 @@ parameters:
   node-cache-version:
     type: string
     default: v3
+  pre-commit-cache-version:
+    type: string
+    default: v3
 
 references:
     tag_filter: &tag_filter
@@ -96,6 +99,7 @@ jobs:
             pkg-manager: "pip"
             args: "pre-commit"
             pip-dependency-file: ""  # No requirements.txt file
+            cache-key: << pipeline.parameters.pre-commit-cache-version >>
         - run:
             name: Pre-commit
             command: |

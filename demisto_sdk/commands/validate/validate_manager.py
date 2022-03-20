@@ -30,7 +30,7 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.author_image import \
     AuthorImageValidator
 from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+    BaseValidator, meta_specific_validation_decorator
 from demisto_sdk.commands.common.hook_validations.classifier import \
     ClassifierValidator
 from demisto_sdk.commands.common.hook_validations.conf_json import \
@@ -439,6 +439,7 @@ class ValidateManager:
 
         return all(package_entities_validation_results)
 
+    @meta_specific_validation_decorator('changed_pack_name')
     def is_valid_pack_name(self, file_path, old_file_path):
         """
         Valid pack name is currently considered to be a new pack name or an existing pack.
@@ -455,6 +456,7 @@ class ValidateManager:
                 return False
         return True
         
+    @meta_specific_validation_decorator('invalid_image_name_or_location')
     def is_valid_file_type(self, file_type, file_path):
         """
         If a file_type is unsupported, will return `False`.
@@ -1217,6 +1219,7 @@ class ValidateManager:
 
         return False
 
+    @meta_specific_validation_decorator('file_cannot_be_deleted')
     def validate_deleted_files(self, deleted_files, added_files) -> bool:
         click.secho(f'\n================= Checking for prohibited deleted files =================',
                     fg="bright_cyan")
@@ -1275,6 +1278,7 @@ class ValidateManager:
                     handle_error = False
         return handle_error
 
+    @meta_specific_validation_decorator('multiple_release_notes_files')
     def validate_no_duplicated_release_notes(self, added_files):
         """Validated that among the added files - there are no duplicated RN for the same pack.
 

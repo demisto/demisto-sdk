@@ -4,7 +4,7 @@ import os
 
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+    BaseValidator, meta_specific_validation_decorator
 
 
 class ReleaseNotesConfigValidator(BaseValidator):
@@ -32,6 +32,7 @@ class ReleaseNotesConfigValidator(BaseValidator):
 
         return all(validations)
 
+    @meta_specific_validation_decorator('release_notes_config_file_missing_release_notes')
     def has_corresponding_rn_file(self) -> bool:
         """
         Checks whether config RN has a corresponding RN file.

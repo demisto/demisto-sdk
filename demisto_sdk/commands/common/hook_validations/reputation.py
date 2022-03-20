@@ -6,7 +6,9 @@ from demisto_sdk.commands.common.constants import \
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
-
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator, meta_specific_validation_decorator
+    
 # Valid indicator type can include letters, numbers whitespaces, ampersands and underscores.
 VALID_INDICATOR_TYPE = '^[A-Za-z0-9_& ]*$'
 
@@ -36,6 +38,7 @@ class ReputationValidator(ContentEntityValidator):
 
         return is_reputation_valid
 
+    @meta_specific_validation_decorator('wrong_version_reputations')
     def is_valid_version(self):
         # type: () -> bool
         """Validate that the reputations file as version of -1."""
@@ -51,6 +54,7 @@ class ReputationValidator(ContentEntityValidator):
 
         return is_valid
 
+    @meta_specific_validation_decorator('reputation_expiration_should_be_numeric')
     def is_valid_expiration(self):
         # type: () -> bool
         """Validate that the expiration field of a 5.5 reputation file is numeric."""
@@ -64,6 +68,7 @@ class ReputationValidator(ContentEntityValidator):
 
         return True
 
+    @meta_specific_validation_decorator('reputation_empty_required_fields')
     def is_required_fields_empty(self):
         # type: () -> bool
         """Validate that id and details fields are not empty.
@@ -78,6 +83,7 @@ class ReputationValidator(ContentEntityValidator):
                 return False
         return True
 
+    @meta_specific_validation_decorator('reputation_id_and_details_not_equal')
     def is_id_equals_details(self):
         # type: () -> bool
         """Validate that the id equal details."""
@@ -89,6 +95,7 @@ class ReputationValidator(ContentEntityValidator):
                 return False
         return True
 
+    @meta_specific_validation_decorator('reputation_invalid_indicator_type_id')
     def is_valid_indicator_type_id(self):
         # type: () -> bool
         """Validate that id field is valid.

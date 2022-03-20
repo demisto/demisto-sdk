@@ -101,6 +101,7 @@ class StructureValidator(BaseValidator):
 
         return False
 
+    @meta_specific_validation_decorator('structure_doesnt_match_scheme')
     def scheme_of_file_by_path(self):
         # type:  () -> Optional[str]
         """Running on given regexes from `constants` to find out what type of file it is
@@ -120,6 +121,7 @@ class StructureValidator(BaseValidator):
 
         return None
 
+    @meta_specific_validation_decorator('pykwalify_general_error')
     def is_valid_scheme(self):
         # type: () -> bool
         """Validate the file scheme according to the scheme we have saved in SCHEMAS_PATH.
@@ -183,6 +185,7 @@ class StructureValidator(BaseValidator):
         except AttributeError:
             return None
 
+    @meta_specific_validation_decorator('file_id_contains_slashes')
     def is_file_id_without_slashes(self):
         # type: () -> bool
         """Check if the ID of the file contains any slashes ('/').
@@ -199,6 +202,7 @@ class StructureValidator(BaseValidator):
 
         return True
 
+    @meta_specific_validation_decorator('file_id_changed')
     def is_id_modified(self):
         # type: () -> bool
         """Check if the ID of the file has been changed.
@@ -220,6 +224,7 @@ class StructureValidator(BaseValidator):
         # False - the id has not changed.
         return False
 
+    @meta_specific_validation_decorator('from_version_modified')
     def is_valid_fromversion_on_modified(self):
         # type: () -> bool
         """Check that the fromversion property was not changed on existing Content files.
@@ -245,6 +250,7 @@ class StructureValidator(BaseValidator):
 
         return True
 
+    @meta_specific_validation_decorator('wrong_file_extension')
     def is_valid_file_extension(self):
         file_extension = os.path.splitext(self.file_path)[1]
         if file_extension not in self.valid_extensions:
@@ -310,6 +316,7 @@ class StructureValidator(BaseValidator):
                 is_valid_path = True
         return is_valid_path
 
+    @meta_specific_validation_decorator('parse_error_line')
     def parse_error_msg(self, err) -> bool:
         """A wrapper which handles pykwalify error messages.
         Returns:
@@ -440,6 +447,7 @@ class StructureValidator(BaseValidator):
             error_message, error_code = Errors.pykwalify_field_undefined(str(error_key))
             return error_message, error_code, True
 
+    @meta_specific_validation_decorator('pykwalify_incorrect_enum')
     def parse_enum_error_line(self, error_path: List[str], error_msg: str) -> Tuple[str, str, bool]:
         """Parse a wrong enum value pykwalify error.
 
@@ -489,6 +497,7 @@ class StructureValidator(BaseValidator):
 
         return str(key_list).strip('[]').replace(',', '->')
 
+    @meta_specific_validation_decorator('file_name_include_spaces_error')
     def check_for_spaces_in_file_name(self):
         file_name = os.path.basename(self.file_path)
         if file_name.count(' ') > 0:

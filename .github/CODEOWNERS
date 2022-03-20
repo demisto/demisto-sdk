@@ -1,7 +1,8 @@
 demisto-sdk/demisto_sdk/commands/validate/validate_manager.py @idovandijk
 demisto_sdk/commands/common/hook_validations/ @idovandijk
 
-/.vscode/ @jochman
+.vscode/ @jochman
+.devcontainer/ @jochman
 
 Pipfile* @dorschw
-/.circleci/ @dorschw
+.circleci/ @dorschw

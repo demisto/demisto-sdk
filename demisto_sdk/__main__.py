@@ -1891,6 +1891,15 @@ def openapi_codegen(**kwargs):
     '--server-version',
     help='Which server version to run the tests on(Valid only when using AMI)',
     default="NonAMI")
+@click.option(
+    '--server-type',
+    help='Which server runs the tests? XSIAM or XSOAR',
+    default='XSOAR')
+@click.option(
+    '-x',
+    '--xsiam-machine',
+    help='XSIAM machine to use, if it is XSIAM build.')
+@click.option('--xsiam-servers-path', help='Path to secret xsiam server metadata file.')
 def test_content(**kwargs):
     """Configure instances for the integration needed to run tests_to_run tests.
     Run test module on each integration.

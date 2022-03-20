@@ -44,6 +44,9 @@ FAILED_MATCH_INSTANCE_MSG = "{} Failed to run.\n There are {} instances of {}, p
 ENTRY_TYPE_ERROR = 4
 DEFAULT_INTERVAL = 4
 SLACK_MEM_CHANNEL_ID = 'CM55V7J8K'
+XSIAM_SERVER_TYPE = 'XSIAM'
+# For now we run all xsiam tests
+IS_XSIAM = False
 
 __all__ = ['BuildContext',
            'Conf',
@@ -161,6 +164,10 @@ class TestPlaybook:
         self.build_context = build_context
         self.configuration: TestConfiguration = test_configuration
         self.is_mockable: bool = self.configuration.playbook_id not in build_context.unmockable_test_ids
+        # todo delete this line: in xsiam validate that all test playbooks are unmockable.
+        if IS_XSIAM:
+            build_context.logging_module.info(f'Playbook ID: {self.configuration.playbook_id}, '
+                                              f'is mockable: {build_context.unmockable_test_ids}')
         self.integrations: List[Integration] = [
             Integration(self.build_context, integration_name, self.configuration.test_instance_names)
             for integration_name in self.configuration.test_integrations]
@@ -294,7 +301,9 @@ class TestPlaybook:
         """
         for integration in self.integrations:
             integration.disable_integration_instance(client)
-        updated_keys = self._set_prev_server_keys(client, server_context)
+        updated_keys = False
+        if not IS_XSIAM:
+            updated_keys = self._set_prev_server_keys(client, server_context)
         if updated_keys:
             server_context._reset_containers()
 
@@ -359,7 +368,11 @@ class TestPlaybook:
             self.build_context.logging_module.exception(
                 f'Failed to create incident with name {incident_name} for playbook {self}')
         try:
-            inc_id = response.id
+            # TODO: response will have no id in xsiam, check if status code check is like this
+            if IS_XSIAM and response.status != 202:
+                inc_id = 'incCreateErr'
+            else:
+                inc_id = response.id
         except Exception:
             inc_id = 'incCreateErr'
         # inc_id = response_json.get('id', 'incCreateErr')
@@ -374,7 +387,8 @@ class TestPlaybook:
         # get incident
         search_filter = demisto_client.demisto_api.SearchIncidentsData()
         inc_filter = demisto_client.demisto_api.IncidentFilter()
-        inc_filter.query = f'id: {inc_id}'
+        inc_filter.query = f'id: {incident_name}'
+        # todo: inc_filter.query = f'name: {inc_id}'
         # inc_filter.query
         search_filter.filter = inc_filter
 
@@ -451,17 +465,27 @@ class TestPlaybook:
 
 class BuildContext:
     def __init__(self, kwargs: dict, logging_module: ParallelLoggingManager):
+        global IS_XSIAM
+        self.is_xsiam = True if kwargs['server_type'] == XSIAM_SERVER_TYPE else False
+        IS_XSIAM = self.is_xsiam
         self.logging_module: ParallelLoggingManager = logging_module
-        self.api_key = kwargs['api_key']
         self.server = kwargs['server']  # not in use for curr flow
+        self.xsiam_machine = kwargs.get('xsiam-machine')
+        self.xsiam_servers_path = kwargs.get('xsiam-servers-path')
         self.conf, self.secret_conf = self._load_conf_files(kwargs['conf'], kwargs['secret'])
-        self.env_json = self._load_env_results_json()
+        self.api_key = kwargs['api_key']
+        if self.is_xsiam:
+            self.xsiam_conf = self._load_xsiam_file(self.xsiam_servers_path)
+            self.env_json = [self.xsiam_conf.get(self.xsiam_machine, {})]
+            self.api_key = self.env_json[0].get('api_key')
+        else:
+            self.env_json = self._load_env_results_json()
         self.is_nightly = kwargs['nightly']
         self.slack_client = SlackClient(kwargs['slack'])
         self.circleci_token = kwargs['circleci']
         self.build_number = kwargs['build_number']
         self.build_name = kwargs['branch_name']
-        self.isAMI = kwargs['is_ami']
+        self.isAMI = kwargs['is_ami'] if not self.is_xsiam else False
         self.memCheck = kwargs['mem_check']
         self.server_version = kwargs['server_version']  # AMI Role
         self.is_local_run = (self.server is not None)
@@ -548,7 +572,8 @@ class BuildContext:
         """
         unmockable_tests = []
         all_tests = self._get_all_tests()
-        if self.server or not self.isAMI:
+        # for xsiam, set all tests to unmockable.
+        if self.server or not self.isAMI or self.is_xsiam:
             unmockable_tests = all_tests
             self.unmockable_test_ids = {test.playbook_id for test in all_tests}
         elif self.isAMI:
@@ -629,6 +654,8 @@ class BuildContext:
         """
         if self.server:
             return {self.server: None}
+        if self.is_xsiam:
+            return {env.get('base_url'): None for env in self.env_json}
         instances_ips = {env.get('InstanceDNS'): env.get('TunnelPort') for env in self.env_json if env.get('Role') == self.server_version}
         return instances_ips
 
@@ -647,7 +674,7 @@ class BuildContext:
         if port_match:
             port = int(port_match[0])
         else:
-            # If the server URL has no port in the end - it means it's a local build and we can return the
+            # If the server URL has no port in the end - it means it's a local build or XSIAM, and we can return the
             # server URL as is.
             return server_url
         for server_private_ip, tunnel_port in self.instances_ips.items():
@@ -699,10 +726,20 @@ class BuildContext:
             'Server 6.1': '6.1.0',
             'Server 6.2': '6.2.0',
             'Server Master': default_version,
+            'XSIAM 6.6': '6.6.0'
         }
         server_numeric_version = server_version_mapping.get(self.server_version, default_version)
         self.logging_module.info(f'Server version: {server_numeric_version}', real_time=True)
         return server_numeric_version
+
+    @staticmethod
+    def _load_xsiam_file(xsiam_servers_path):
+        conf = None
+        if xsiam_servers_path:
+            with open(xsiam_servers_path) as data_file:
+                conf = json.load(data_file)
+
+        return conf
 
     @staticmethod
     def _load_conf_files(conf_path, secret_conf_path):
@@ -940,6 +977,7 @@ class Integration:
             else:
                 self.configuration = integration_params[0]
 
+        # todo: change for xsiam
         elif self.name == 'Demisto REST API':
             self.configuration.params = {  # type: ignore
                 'url': 'https://localhost',
@@ -1124,7 +1162,8 @@ class Integration:
         module_instance = self.create_module(instance_name, configuration, instance_configuration)
 
         # set server keys
-        self._set_server_keys(client, server_context)
+        if not IS_XSIAM:
+            self._set_server_keys(client, server_context)
 
         # set module params
         for param_conf in module_configuration:
@@ -1313,9 +1352,13 @@ class TestContext:
         self.incident_id: Optional[str] = None
         self.test_docker_images: Set[str] = set()
         self.client: DefaultApi = client
-        self.tunnel_command = \
-            f'ssh -i ~/.ssh/oregon-ci.pem -4 -o StrictHostKeyChecking=no -f -N "{CONTENT_BUILD_SSH_USER}@{LOAD_BALANCER_DNS}" ' \
-            f'-L "{self.server_context.tunnel_port}:{self.server_context.server_ip}:443"'
+        if IS_XSIAM:
+            self.tunnel_command = ''
+        else:
+            self.tunnel_command = \
+                f'ssh -i ~/.ssh/oregon-ci.pem -4 -o StrictHostKeyChecking=no -f -N ' \
+                f'"{CONTENT_BUILD_SSH_USER}@{LOAD_BALANCER_DNS}" ' \
+                f'-L "{self.server_context.tunnel_port}:{self.server_context.server_ip}:443"'
 
     def _get_investigation_playbook_state(self) -> str:
         """
@@ -1420,7 +1463,8 @@ class TestContext:
             Empty string or
         """
         try:
-            self.build_context.logging_module.info(f'ssh tunnel command:\n{self.tunnel_command}')
+            if not self.build_context.is_xsiam:
+                self.build_context.logging_module.info(f'ssh tunnel command:\n{self.tunnel_command}')
             instance_configuration = self.playbook.configuration.instance_configuration
 
             if not self.playbook.configure_integrations(self.client, self.server_context, instance_configuration):
@@ -1770,9 +1814,13 @@ class ServerContext:
         self.build_context = build_context
         self.server_ip = server_private_ip
         self.tunnel_port = tunnel_port
-        self.server_url = f'https://localhost:{tunnel_port}' if tunnel_port else f'https://{self.server_ip}'
+        if IS_XSIAM:
+            self.server_url = server_private_ip
+        else:
+            self.server_url = f'https://localhost:{tunnel_port}' if tunnel_port else f'https://{self.server_ip}'
         self.client: Optional[DefaultApi] = None
         self._configure_new_client()
+        # in xsiam we will not use proxy
         self.proxy = MITMProxy(server_private_ip,
                                self.build_context.logging_module,
                                build_number=self.build_context.build_number,
@@ -1861,6 +1909,7 @@ class ServerContext:
             self.client.api_client.pool.close()
             self.client.api_client.pool.terminate()
             del self.client
+        # todo: change when xsiam
         self.client = demisto_client.configure(base_url=self.server_url,
                                                api_key=self.build_context.api_key,
                                                verify_ssl=False)
@@ -1885,7 +1934,9 @@ class ServerContext:
             self._execute_unmockable_tests()
             self.build_context.logging_module.info(f'Finished tests with server url - {self.server_url}',
                                                    real_time=True)
-            self.build_context.tests_data_keeper.add_proxy_related_test_data(self.proxy)
+            # no need in xsiam, no proxy
+            if not IS_XSIAM:
+                self.build_context.tests_data_keeper.add_proxy_related_test_data(self.proxy)
 
             if self.build_context.isAMI:
                 if self.proxy.should_update_mock_repo:

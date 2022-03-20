@@ -92,10 +92,13 @@ jobs:
         - checkout
         - attach_workspace:
             at: ~/project
+        - python/install-packages:
+            pkg-manager: "pip"
+            args: "pre-commit"
+            pip-dependency-file: ""  # No requirements.txt file
         - run:
             name: Pre-commit
             command: |
-              pip install pre-commit
               pre-commit --version
               pre-commit run -a
 

@@ -1,5 +1,6 @@
 # Changelog
 
+* Dropped support for python 3.7
 * Added an agrument to YAMLHandler, allowing to set a maximal width for YAML files.  This fixes an issue where a wrong default was used.
 
 # 1.6.2

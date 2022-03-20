@@ -394,8 +394,8 @@ class TestPlaybook:
         # get incident
         search_filter = demisto_client.demisto_api.SearchIncidentsData()
         inc_filter = demisto_client.demisto_api.IncidentFilter()
-        inc_filter.query = f'id: {incident_name}'
-        # todo: inc_filter.query = f'name: {inc_id}'
+        inc_filter.query = f'id: {inc_id}'
+        # todo: inc_filter.query = f'name: {incident_name}'
         # inc_filter.query
         search_filter.filter = inc_filter
 

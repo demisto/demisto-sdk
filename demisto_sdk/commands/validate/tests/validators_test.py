@@ -1350,6 +1350,7 @@ def test_run_validation_using_git_on_only_metadata_changed(mocker, pack: Pack, p
     Then
         - validate That no error returns.
     """
+    pack.pack_metadata.write_json(pack_metadata)
     mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
     mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
                         return_value=(set(), set(), {pack.pack_metadata.path}, set(), True))

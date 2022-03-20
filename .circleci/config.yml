@@ -99,7 +99,7 @@ jobs:
             pkg-manager: "pip"
             args: "pre-commit"
             pip-dependency-file: ""  # No requirements.txt file
-            cache-key: << pipeline.parameters.pre-commit-cache-version >>
+            cache-version: << pipeline.parameters.pre-commit-cache-version >>
         - run:
             name: Pre-commit
             command: |

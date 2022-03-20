@@ -101,7 +101,8 @@ def test_integration_format_yml_with_no_test_positive(tmp_path: PosixPath, sourc
 
     # Running format in the first time
     runner = CliRunner()
-    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', output_path, '-at'], input='Y')
+    with ChangeCWD(tmp_path):
+        result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', output_path, '-at'], input='Y')
     prompt = f'The file {source_path} has no test playbooks configured. ' \
              f'Do you want to configure it with "No tests"'
     assert not result.exception
@@ -135,7 +136,8 @@ def test_integration_format_yml_with_no_test_negative(tmp_path: PosixPath, sourc
     source_file.write_text(source_yml)
 
     runner = CliRunner()
-    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', output_path, '-at'], input='N')
+    with ChangeCWD(tmp_path):
+        result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', output_path, '-at'], input='N')
     assert not result.exception
     prompt = f'The file {source_path} has no test playbooks configured. Do you want to configure it with "No tests"'
     assert prompt in result.output
@@ -162,7 +164,8 @@ def test_integration_format_yml_with_no_test_no_interactive_positive(tmp_path: P
 
     runner = CliRunner()
     # Running format in the first time
-    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', output_path, '-y'])
+    with ChangeCWD(tmp_path):
+        result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', output_path, '-y'])
     assert not result.exception
     yml_content = get_dict_from_file(output_path)
     assert yml_content[0].get('tests') == ['No tests (auto formatted)']
@@ -242,7 +245,8 @@ def test_integration_format_configuring_conf_json_positive(tmp_path: PosixPath,
     saved_file_path = str(tmp_path / os.path.basename(destination_path))
     runner = CliRunner()
     # Running format in the first time
-    result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', saved_file_path], input='Y')
+    with ChangeCWD(tmp_path):
+        result = runner.invoke(main, [FORMAT_CMD, '-i', source_path, '-o', saved_file_path], input='Y')
     prompt = 'The following test playbooks are not configured in conf.json file'
     assert not result.exception
     assert prompt in result.output
@@ -331,7 +335,8 @@ def test_integration_format_remove_playbook_sourceplaybookid(tmp_path):
     source_playbook_path = SOURCE_FORMAT_PLAYBOOK_COPY
     playbook_path = str(tmp_path / 'format_new_playbook_copy.yml')
     runner = CliRunner()
-    result = runner.invoke(main, [FORMAT_CMD, '-i', source_playbook_path, '-o', playbook_path, '-at'], input='N')
+    with ChangeCWD(tmp_path):
+        result = runner.invoke(main, [FORMAT_CMD, '-i', source_playbook_path, '-o', playbook_path, '-at'], input='N')
     prompt = f'The file {source_playbook_path} has no test playbooks configured. Do you want to configure it with "No tests"'
     assert result.exit_code == 0
     assert prompt in result.output
@@ -817,7 +822,8 @@ def test_format_incident_type_layout_id(repo):
     )
 
     runner = CliRunner(mix_stderr=False)
-    format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(pack.path), '-v', '-y'], catch_exceptions=False)
+    with ChangeCWD(repo.path):
+        format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(pack.path), '-v', '-y'], catch_exceptions=False)
 
     assert format_result.exit_code == 0
     assert 'Success' in format_result.stdout

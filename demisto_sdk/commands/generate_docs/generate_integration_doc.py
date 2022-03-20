@@ -88,7 +88,7 @@ def generate_integration_doc(
         if not output:  # default output dir will be the dir of the input file
             output = os.path.dirname(os.path.realpath(input_path))
         errors: list = []
-        example_dict = {}
+        example_dict: dict = {}
         if examples:
             specific_commands = command.split(',') if command else None
             command_examples = get_command_examples(examples, specific_commands)

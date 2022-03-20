@@ -1,4 +1,4 @@
-from typing import TextIO
+from typing import AnyStr, TextIO
 
 import ujson
 
@@ -10,6 +10,9 @@ class UJSON_Handler(XSOAR_Handler):
     XSOAR wrapper to orjso
     Use only this wrapper for yaml handling.
     """
+
+    def loads(self, s: AnyStr):
+        return ujson.loads(s)
 
     def load(self, stream: TextIO):
         return ujson.load(stream)

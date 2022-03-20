@@ -54,7 +54,7 @@ jobs:
         pythonversion:
           type: string
       docker:
-        - image: << parameters.pythonversion >>
+        - image: cimg/python:<< parameters.pythonversion >>-node
       steps:
         - checkout
         - python/install-packages:
@@ -240,7 +240,7 @@ workflows:
       - pytest:
           matrix:
             parameters:
-              pythonversion: [cimg/python:3.8.12-node, cimg/python:3.9.10-node, cimg/python:3.10.2-node]   
+              pythonversion: [3.8.12, 3.9.10, 3.10.2]   
           name: pytest-<< matrix.pythonversion >>
       - validate-files:
           <<: *tag_filter

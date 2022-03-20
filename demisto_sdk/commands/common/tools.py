@@ -46,7 +46,7 @@ from demisto_sdk.commands.common.constants import (
     PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
     SCRIPTS_DIR, SIEM_ONLY_ENTITIES, TEST_PLAYBOOKS_DIR, TYPE_PWSH,
     UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSIAM_DASHBOARDS_DIR,
-    XSIAM_REPORTS_DIR, XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys,
+    XSIAM_REPORTS_DIR, TRIGGER_DIR, XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys,
     IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
                                                             GitProvider)
@@ -1058,6 +1058,8 @@ def get_dict_from_file(path: str,
                 return get_json(path, cache_clear=clear_cache), 'json'
             elif path.endswith('.py'):
                 return {}, 'py'
+            elif path.endswith('.xif'):
+                return {}, 'xif'
     except FileNotFoundError as e:
         if raises_error:
             raise
@@ -1102,6 +1104,12 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.JOB
         elif INDICATOR_TYPES_DIR in path.parts:
             return FileType.REPUTATION
+        elif XSIAM_DASHBOARDS_DIR in path.parts:
+            return FileType.XSIAM_DASHBOARD
+        elif XSIAM_REPORTS_DIR in path.parts:
+            return FileType.XSIAM_REPORT
+        elif TRIGGER_DIR in path.parts:
+            return FileType.TRIGGER
 
     # integration image
     if path.name.endswith('_image.png'):
@@ -1121,6 +1129,9 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
 
     if path.suffix == '.js':
         return FileType.JAVASCRIPT_FILE
+
+    if path.suffix ==  '.xif':
+        return FileType.XIF_FILE
 
     if path.name.endswith(XSOAR_CONFIG_FILE):
         return FileType.XSOAR_CONFIG

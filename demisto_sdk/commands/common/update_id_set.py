@@ -43,7 +43,8 @@ CONTENT_ENTITIES = ['Packs', 'Integrations', 'Scripts', 'Playbooks', 'TestPlaybo
 ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'GenericTypes', 'GenericFields', 'GenericModules',
-                   'GenericDefinitions', 'Lists', 'Jobs']
+                   'GenericDefinitions', 'Lists', 'Jobs', 'ParsingRules', 'ModelingRules',
+                   'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers']
 
 CONTENT_MP_V2_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                           'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
@@ -170,6 +171,7 @@ def should_skip_item_by_mp(file_path: str, marketplace: str, excluded_items_from
         return True
 
     item_marketplaces = get_item_marketplaces(file_path, item_data=item_data, packs=packs)
+    # print(item_marketplaces)
     if marketplace not in item_marketplaces:
         if print_logs:
             print(f'Skipping {file_path} due to mismatch with the given marketplace')
@@ -1969,7 +1971,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
 
     with click.progressbar(length=len(objects_to_create), label="Creating id-set") as progress_bar:
-
+        print(objects_to_create)
         if 'Packs' in objects_to_create:
             print_color("\nStarting iteration over Packs", LOG_COLORS.GREEN)
             for pack_data in pool.map(partial(get_pack_metadata_data,
@@ -1997,7 +1999,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                 integration_list.extend(arr)
                 update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
                                            excluded_items_from_iteration)
-
+        print(integration_list)
         progress_bar.update(1)
 
         if 'Playbooks' in objects_to_create:

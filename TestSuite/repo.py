@@ -76,7 +76,7 @@ class Repo:
     def __del__(self):
         shutil.rmtree(self.path, ignore_errors=True)
 
-    def setup_one_pack(self, name) -> Pack:
+    def setup_one_pack(self, name, marketplace='xsoar') -> Pack:
         """Sets up a new pack in the repo, and includes one per each content entity.
 
         Args:
@@ -208,9 +208,17 @@ class Repo:
         pack.create_job(is_feed=False, name=name)
         pack.create_job(is_feed=True, name=f'{name}_all_feeds')
 
+        if marketplace != 'xsoar':
+            pack.create_parsing_rule(f'{name}_parsingrule', {"id": "parsing_rule_id", "rules": "", "name": "parsing_rule_name"})
+            pack.create_modeling_rule(f'{name}_modelingrule', {"id": "modeling_rule_id", "rules": "", "name": "modeling_rule_name"})
+            pack.create_correlation_rule(f'{name}_correlationrule', {"global_rule_id": "correlation_rule_id", "name": "correlation_rule_name", "alert_category": ""})
+            pack.create_xsiam_dashboard(f'{name}_xsiamdashboard', {"dashboards_data": [{"global_id": "xsiam_dashboard_id", "name": "xsiam_dashboard_name"}]})
+            pack.create_xsiam_report(f'{name}_xsiamreport', {"templates_data": [{"global_id": "xsiam_report_id", "name": "xsiam_report_name"}]})
+            pack.create_trigger(f'{name}_trigger', {"trigger_id": "trigger_id", "trigger_name": "trigger_name"})
+            print('parsing done')
         return pack
 
-    def setup_content_repo(self, number_of_packs):
+    def setup_content_repo(self, number_of_packs, marketplace='xsoar'):
         """Creates a fully constructed content repository, where packs names will pack_<index>.
 
         Args:
@@ -218,7 +226,7 @@ class Repo:
 
         """
         for i in range(number_of_packs):
-            self.setup_one_pack(f'pack_{i}')
+            self.setup_one_pack(f'pack_{i}', marketplace)
 
     def create_pack(self, name: Optional[str] = None):
         if name is None:

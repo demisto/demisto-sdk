@@ -106,8 +106,11 @@ class UnitTestsGenerator:
         """
         Runs commands using Demisto instance
         """
+        global logger
         self.example_dict, build_errors = self.build_example_dict()
-        self.errors.extend(build_errors)
+        if build_errors:
+            logger.error('Found errors while executing command using demisto:')
+            logger.error('\n'.join(build_errors))
 
 
 class CustomContactSolver(ContractSolver):
@@ -121,7 +124,7 @@ class CustomContactSolver(ContractSolver):
             directory_path = generator.test_data_path
             example_dict = generator.example_dict.get(str(func.name))
             commands_to_generate = generator.commands_to_generate
-            use_demisto = generator.use_demisto
+            use_demisto = generator.use_demisto and example_dict is not None
 
             test_case = TestCase(func=func, directory_path=directory_path, client_ast=client_ast, example_dict=example_dict, id=self.id)
 

@@ -186,7 +186,7 @@ class TestCase:
         Retrieves context prefix from CommandResults object
         """
         returned_value = self.get_return_values()
-        if returned_value :
+        if returned_value:
             keywords = returned_value.keywords
             for keyword in keywords:
                 if keyword.arg == 'outputs_prefix':

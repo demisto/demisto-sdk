@@ -1,7 +1,7 @@
 """This file is a part of the generating yml design. Generating a yml file from a python file."""
 import enum
 import re
-from typing import Any, Callable, List, Union
+from typing import Any, Callable, List, Optional, Union
 
 import click
 
@@ -39,7 +39,7 @@ class ConfTypesEnum(enum.Enum):
 class OutputArgument:
     """YML output argument."""
 
-    def __init__(self, name: str, output_type: Any, description: str, prefix: str = ''):
+    def __init__(self, name: str, output_type: Any = dict, description: str = '', prefix: str = ''):
         self.name = name
         self.output_type = output_type
         self.description = description
@@ -63,9 +63,9 @@ class ConfKey:
 
 
 class CommandMetadata:
-    def __init__(self, name: str, doc: str, function: Callable, outputs: list,
-                 inputs: list, file_output: bool, multiple_output_prefixes: bool, outputs_prefix: str,
-                 execution: bool):
+    def __init__(self, name: str, doc: Optional[str], function: Callable, outputs: Optional[list],
+                 inputs: Optional[list], file_output: bool, multiple_output_prefixes: bool, outputs_prefix: str,
+                 execution: Union[bool, None], deprecated: bool, description: str):
         self.name = name
         self.doc = doc
         self.function = function
@@ -75,6 +75,8 @@ class CommandMetadata:
         self.multiple_output_prefixes = multiple_output_prefixes
         self.outputs_prefix = outputs_prefix
         self.execution = execution
+        self.deprecated = deprecated
+        self.description = description
 
 
 class YMLMetadataCollector:
@@ -86,22 +88,25 @@ class YMLMetadataCollector:
     the run should remain unchanged.
     """
     # Restored args will not be shown in the YML unless they are added as an InputArgument.
-    RESTORED_ARGS = ['command_name', 'outputs_prefix', 'outputs_key_field', 'outputs_dict',
+    RESTORED_ARGS = ['command_name', 'outputs_prefix', 'outputs_list',
                      'kwargs', 'args', 'inputs_list', 'client']
 
     def __init__(self, integration_name: str, docker_image: str = "demisto/python3:latest",
-                 description: str = "", category: str = "Utilities", conf: List[ConfKey] = [], is_feed: bool = False,
+                 description: str = "", category: str = "Utilities", conf: List[ConfKey] = [],
+                 is_feed: bool = False,
                  is_fetch: bool = False, is_runonce: bool = False, detailed_description: str = "",
                  image: str = "", display: str = "", tests: list = ["No tests"], fromversion: str = "6.0.0",
                  long_running: bool = False, long_running_port: bool = False, integration_type: str = "python",
                  integration_subtype: str = "python3", deprecated: bool = False, system: bool = False,
-                 timeout: str = "", default_classifier: str = "", default_mapper_in: str = ""):
-        self.commands = []
+                 timeout: str = "", default_classifier: str = "", default_mapper_in: str = "",
+                 integration_name_x2: str = "", default_enabled_x2: Union[bool, None] = None,
+                 default_enabled: Union[bool, None] = None):
+        self.commands: list = []
         self.collect_data = False
 
         # Integration configurations
         self.integration_name = integration_name
-        self.display = display if display else integration_name
+        self.display = display
         self.image = image
         self.detailed_description = detailed_description
         self.docker_image = docker_image
@@ -122,14 +127,20 @@ class YMLMetadataCollector:
         self.timeout = timeout
         self.default_classifier = default_classifier
         self.default_mapper_in = default_mapper_in
+        self.default_enabled = default_enabled
+
+        # x2 fields
+        self.integration_name_x2 = integration_name_x2
+        self.default_enabled_x2 = default_enabled_x2
 
     def set_collect_data(self, value: bool):
         """A setter for collect_data."""
         self.collect_data = value
 
     def command(self, command_name: str = '', outputs_prefix: str = '', outputs_list: list = [],
-                inputs_list: list = [], execution: bool = False, file_output: bool = False,
-                multiple_output_prefixes: bool = False) -> Callable:
+                inputs_list: list = [], execution: Union[bool, None] = None, file_output: bool = False,
+                multiple_output_prefixes: bool = False, deprecated: bool = False, restore: bool = False,
+                description: str = '') -> Callable:
         """Decorator for integration command function.
 
         Args:
@@ -137,7 +148,12 @@ class YMLMetadataCollector:
             outputs_prefix: The command results' output prefix.
             outputs_list: The command results' outputs list of OutputArgument.
             inputs_list: The command input arguments.
+            execution: Execution command flag.
             file_output: True if the command outputs file.
+            multiple_output_prefixes: Whether the command supports multiple prefixes.
+            deprecated: Whether the command is deprecated.
+            restore: Whether to use resotred arguments or not.
+            description: The commands description.
 
         Return: A wrapper for the command function with the following restored args:
            command_name: The name of the command
@@ -162,18 +178,18 @@ class YMLMetadataCollector:
                         file_output=file_output,
                         outputs_prefix=outputs_prefix if outputs_prefix else '',
                         multiple_output_prefixes=multiple_output_prefixes,
-                        execution=execution
+                        execution=execution,
+                        deprecated=deprecated,
+                        description=description
                     )
                     self.commands.append(command_metadata)
                 else:
-                    # Send back the details provided to be used in function and reduce code duplication.
-                    kwargs['command_name'] = command_name
-                    kwargs['outputs_prefix'] = outputs_prefix
-                    # TODO: maybe make empty dict here.
-                    # kwargs['outputs_dict'] = dict.fromkeys(outputs_dict.keys()) if outputs_dict else None
-                    kwargs['execution'] = execution
-                    func(*args, **kwargs)
+                    if restore:
+                        # Send back the details provided to be used in function and reduce code duplication.
+                        kwargs['command_name'] = command_name
+                        kwargs['outputs_prefix'] = outputs_prefix
+                        kwargs['execution'] = execution
+                    return func(*args, **kwargs)
             return get_out_info
 
-        # self.command_names.append(command_name)
         return command_wrapper

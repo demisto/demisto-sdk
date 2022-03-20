@@ -8,6 +8,7 @@ import pebble
 from colorama import Fore
 from git import InvalidGitRepositoryError
 from packaging import version
+import decorator
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
@@ -24,7 +25,7 @@ from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE, Errors,
-                                                get_all_error_codes)
+                                                get_all_error_codes, ERROR_CODE)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.author_image import \
     AuthorImageValidator
@@ -98,7 +99,7 @@ class ValidateManager:
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
             create_id_set=False, json_file_path=None, skip_schema_check=False, debug_git=False, include_untracked=False,
-            pykwalify_logs=False, check_is_unskipped=True, quite_bc=False, multiprocessing=True
+            pykwalify_logs=False, check_is_unskipped=True, quite_bc=False, multiprocessing=True, specific_validations=None,
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -123,7 +124,7 @@ class ValidateManager:
         self.check_is_unskipped = check_is_unskipped
         self.conf_json_data = {}
         self.run_with_multiprocessing = multiprocessing
-
+        self.specific_validations = specific_validations
         if json_file_path:
             self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \
                 os.path.isdir(json_file_path) else json_file_path
@@ -143,7 +144,7 @@ class ValidateManager:
                                                    ignored_errors=None,
                                                    print_as_warnings=self.print_ignored_errors,
                                                    id_set_file=self.id_set_file,
-                                                   json_file_path=json_file_path) if validate_id_set else None
+                                                   json_file_path=json_file_path, specific_validations=specific_validations) if validate_id_set else None
 
         try:
             self.git_util = GitUtil(repo=Content.git())
@@ -453,6 +454,19 @@ class ValidateManager:
                                  drop_line=True):
                 return False
         return True
+        
+    def is_valid_file_type(self, file_type, file_path):
+        """
+        If a file_type is unsupported, will return `False`.
+        """
+        if not file_type:
+            error_message, error_code = Errors.file_type_not_supported()
+            if str(file_path).endswith('.png'):
+                error_message, error_code = Errors.invalid_image_name_or_location()
+            if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path,
+                                 drop_line=True):
+                return False
+        return True
 
     # flake8: noqa: C901
     def run_validations_on_file(self, file_path, pack_error_ignore_list, is_modified=False,
@@ -479,13 +493,8 @@ class ValidateManager:
         if file_type in self.skipped_file_types or file_path.endswith('_unified.yml'):
             self.ignored_files.add(file_path)
             return True
-        elif file_type is None:
-            error_message, error_code = Errors.file_type_not_supported()
-            if str(file_path).endswith('.png'):
-                error_message, error_code = Errors.invalid_image_name_or_location()
-            if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path,
-                                 drop_line=True):
-                return False
+        elif not self.is_valid_file_type(file_type, file_path):
+            return False
 
         if file_type == FileType.XSOAR_CONFIG:
             xsoar_config_validator = XSOARConfigJsonValidator(file_path)
@@ -509,7 +518,7 @@ class ValidateManager:
                                                  json_file_path=self.json_file_path,
                                                  skip_schema_check=self.skip_schema_check,
                                                  pykwalify_logs=self.pykwalify_logs,
-                                                 quite_bc=self.quite_bc)
+                                                 quite_bc=self.quite_bc, specific_validations=self.specific_validations)
 
         # schema validation
         if file_type not in {FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT, FileType.DESCRIPTION}:

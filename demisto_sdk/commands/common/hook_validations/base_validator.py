@@ -14,21 +14,39 @@ from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE,
                                                 get_all_error_codes,
-                                                get_error_object)
+                                                get_error_object, ERROR_CODE)
 from demisto_sdk.commands.common.tools import (
     find_type, get_file_displayed_name, get_json, get_pack_name,
     get_relative_path_from_packs_dir, get_yaml)
+
+def meta_specific_validation_decorator(error_func_name):
+
+    def specific_validation_decorator(func):
+
+        def wrapper(self, *args, **kwargs):
+            if self.specific_validations:
+                if ERROR_CODE[error_func_name].get('code') in self.specific_validations:
+                    return func(self, *args, **kwargs)
+            elif not self.specific_validations:
+                return func(self, *args, **kwargs)
+                
+            return True
+
+        return wrapper
+
+    return specific_validation_decorator
 
 
 class BaseValidator:
 
     def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False,
-                 json_file_path: Optional[str] = None):
+                 json_file_path: Optional[str] = None, specific_validations=None):
         self.ignored_errors = ignored_errors if ignored_errors else {}
         self.print_as_warnings = print_as_warnings
         self.checked_files = set()  # type: ignore
         self.suppress_print = suppress_print
         self.json_file_path = json_file_path
+        self.specific_validations = specific_validations
 
     @staticmethod
     def should_ignore_error(error_code, ignored_errors):

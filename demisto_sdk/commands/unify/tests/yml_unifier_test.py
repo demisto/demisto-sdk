@@ -577,7 +577,7 @@ final test: hi
         """
         from demisto_sdk.commands.unify.integration_script_unifier import \
             IntegrationScriptUnifier
-        abs_path_mock = mocker.patch('demisto_sdk.commands.unify.yml_unifier.os.path.abspath')
+        abs_path_mock = mocker.patch('demisto_sdk.commands.unify.integration_script_unifier.os.path.abspath')
         abs_path_mock.return_value = TESTS_DIR + '/test_files/Packs/DummyPack/Integrations/UploadTest'
         input_path_integration = '.'
         unifier = IntegrationScriptUnifier(input_path_integration)

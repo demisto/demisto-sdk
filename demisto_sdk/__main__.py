@@ -985,9 +985,9 @@ def download(**kwargs):
 @click.option(
     "--file-path", help="XSOAR Configuration File path, the default value is in the repo level", is_flag=False)
 def xsoar_config_file_update(**kwargs):
-    """Download custom content from Demisto instance.
-    DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
-    DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
+    """Handle your XSOAR Configuration File.
+    Add automatically all the installed MarketPlace Packs to the marketplace_packs section in XSOAR Configuration File.
+    Add a Pack to both marketplace_packs and custom_packs sections in the Configuration File.
     """
     from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import \
         XSOARConfigFileUpdater

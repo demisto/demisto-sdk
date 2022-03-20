@@ -10,6 +10,7 @@ import urllib.parse
 import uuid
 from copy import deepcopy
 from distutils.version import LooseVersion
+from math import ceil
 from pprint import pformat
 from queue import Empty, Queue
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
@@ -43,6 +44,9 @@ FAILED_MATCH_INSTANCE_MSG = "{} Failed to run.\n There are {} instances of {}, p
                             "the instance_name argument in conf.json. The options are:\n{}"
 ENTRY_TYPE_ERROR = 4
 DEFAULT_INTERVAL = 4
+MAX_RETRIES = 3
+RETRIES_THRESHOLD = ceil(MAX_RETRIES / 2)
+
 SLACK_MEM_CHANNEL_ID = 'CM55V7J8K'
 XSIAM_SERVER_TYPE = 'XSIAM'
 # For now we run all xsiam tests
@@ -113,6 +117,9 @@ class TestConfiguration:
         self.test_instance_names: List[str] = self._parse_instance_names_conf(test_configuration)
         self.instance_configuration: dict = test_configuration.get('instance_configuration', {})
         self.external_playbook_config: dict = test_configuration.get('external_playbook_config', {})
+        self.is_first_playback_failed: bool = False
+        self.number_of_executions: int = 0
+        self.number_of_successful_runs: int = 0
 
     @staticmethod
     def _parse_integrations_conf(test_configuration):
@@ -496,6 +503,7 @@ class BuildContext:
         self.conf_unmockable_tests = self._get_unmockable_tests_from_conf()
         self.unmockable_test_ids: Set[str] = set()
         self.mockable_tests_to_run, self.unmockable_tests_to_run = self._get_tests_to_run()
+        self.test_retries_queue: Queue = Queue()
         self.slack_user_id = self._retrieve_slack_user_id()
         self.all_integrations_configurations = self._get_all_integration_config(self.instances_ips)
 
@@ -797,6 +805,7 @@ class TestResults:
     def __init__(self, unmockable_integrations):
         self.succeeded_playbooks = []
         self.failed_playbooks = set()
+        self.playbook_report = dict()
         self.skipped_tests = dict()
         self.skipped_integrations = dict()
         self.rerecorded_tests = []
@@ -820,6 +829,8 @@ class TestResults:
             skipped_tests_file.write('\n'.join(self.skipped_tests))
         with open('./Tests/skipped_integrations.txt', "w") as skipped_integrations_file:
             skipped_integrations_file.write('\n'.join(self.skipped_integrations))
+        with open('./Tests/test_playbooks_report.json', "w") as test_playbooks_report_file:
+            json.dump(self.playbook_report, test_playbooks_report_file, indent=4)
 
     def print_test_summary(self,
                            is_ami: bool = True,
@@ -1468,7 +1479,7 @@ class TestContext:
             instance_configuration = self.playbook.configuration.instance_configuration
 
             if not self.playbook.configure_integrations(self.client, self.server_context, instance_configuration):
-                return PB_Status.FAILED
+                return PB_Status.CONFIGURATION_FAILED
 
             test_module_result = self.playbook.run_test_module_on_integrations(self.client)
             if not test_module_result:
@@ -1589,13 +1600,45 @@ class TestContext:
         """
         self.build_context.tests_data_keeper.succeeded_playbooks.append(self.playbook.configuration.playbook_id)
 
-    def _add_to_failed_playbooks(self, is_second_playback_run: bool = False) -> None:
+    def _add_details_to_failed_tests_report(self, playbook_name: str, failed_stage: str) -> None:
         """
-        Adds the playbook to the succeeded playbooks list
+        Adds the relevant details to the failed tests report.
+
+        Args:
+            playbook_name: The test's name.
+            failed_stage: The stage where the test failed.
+        """
+        self.build_context.tests_data_keeper.playbook_report.setdefault(playbook_name, []).append({
+            'number_of_executions': self.playbook.configuration.number_of_executions,
+            'number_of_successful_runs': self.playbook.configuration.number_of_successful_runs,
+            'failed_stage': failed_stage,
+        })
+
+    @staticmethod
+    def _get_failed_stage(status: Optional[str], is_second_playback_run: bool = False) -> str:
+        """
+        Gets the test failed stage.
+
+        Args:
+            status: what is the test status.
+            is_second_playback_run: Is The playbook run on a second playback after a freshly created record.
+        """
+        if is_second_playback_run:
+            return 'Second playback'
+        if status == PB_Status.FAILED_DOCKER_TEST:
+            return 'Docker test'
+        if status == PB_Status.CONFIGURATION_FAILED:
+            return 'Configuration'
+        return 'Execution'
+
+    def _add_to_failed_playbooks(self, is_second_playback_run: bool = False, status: Optional[str] = None) -> None:
+        """
+        Adds the playbook to the failed playbooks list
 
         Args:
             is_second_playback_run: Is The playbook run on a second playback after a freshly created record
         """
+        failed_stage = self._get_failed_stage(status, is_second_playback_run)
         playbook_name_to_add = self.playbook.configuration.playbook_id
         if not self.playbook.is_mockable:
             playbook_name_to_add += " (Mock Disabled)"
@@ -1604,6 +1647,8 @@ class TestContext:
                 'Playback on newly created record has failed, see the following confluence page for help:\n'
                 'https://confluence.paloaltonetworks.com/display/DemistoContent/Debug+Proxy-Related+Test+Failures')
             playbook_name_to_add += ' (Second Playback)'
+
+        self._add_details_to_failed_tests_report(self.playbook.configuration.playbook_id, failed_stage)
         self.build_context.logging_module.error(f'Test failed: {self}')
         self.build_context.tests_data_keeper.failed_playbooks.add(playbook_name_to_add)
 
@@ -1668,44 +1713,161 @@ class TestContext:
         with acquire_test_lock(self.playbook) as lock:
             if lock:
                 status = self._incident_and_docker_test()
-                self._handle_status(status)
+                self.playbook.configuration.number_of_executions += 1
+                self._update_playbook_status(status)
             else:
                 return False
         return True
 
-    def _handle_status(self, status: str,
-                       is_first_playback_run: bool = False,
-                       is_second_playback_run: bool = False,
-                       is_record_run: bool = False) -> None:
+    def _update_complete_status(self, is_first_execution: bool, is_record_run: bool, is_first_playback_run: bool,
+                                is_second_playback_run: bool, use_retries_mechanism: bool,
+                                number_of_executions: int):
         """
-        Handles the playbook execution run
+        Updates (if necessary) the playbook status in case the original status is complete.
+        Args:
+            is_first_execution: whether it is the first execution or not.
+            is_record_run: whether it is a record execution or not.
+            is_first_playback_run: whether it is the first playback execution or not.
+            is_second_playback_run: whether it is the second playback execution or not.
+            use_retries_mechanism: whether to use the retries mechanism or not.
+            number_of_executions: the number of times the test was executed.
+        Returns:
+            PB_Status.COMPLETED if the Test-Playbook passed successfully and was added to succeeded playbooks.
+            PB_Status.FAILED if the Test-Playbook failed and was added to failed playbooks.
+            PB_Status.SECOND_PLAYBACK_REQUIRED if second playback is needed.
+            PB_Status.IN_PROGRESS if more executions are needed in order to determine whether the playbook is successful or not.
+        """
+
+        self.build_context.logging_module.success(f'PASS: {self} succeed')
+
+        # count successful run only when recording mockable or executing unmockable test.
+        if not is_first_playback_run and not is_second_playback_run:
+            self.playbook.configuration.number_of_successful_runs += 1
+
+        # mockable test, first record passed, still need to check second playback.
+        if is_first_execution and is_record_run:
+            return PB_Status.SECOND_PLAYBACK_REQUIRED
+
+        # first/last playback passed (mockable tests) or first execution passed (unmockable tests). adding to succeeded
+        # playbooks, no more executions are needed.
+        if is_first_execution or is_first_playback_run or is_second_playback_run:
+            return PB_Status.COMPLETED
+
+        if use_retries_mechanism:
+            return self._update_status_based_on_retries_mechanism(number_of_executions, is_record_run)
+
+        return PB_Status.COMPLETED
+
+    def _update_failed_status(self, is_record_run: bool, is_first_playback_run: bool, is_second_playback_run: bool,
+                              use_retries_mechanism: bool, number_of_executions: int):
+        """
+        Handles the playbook failed status
         - Logs according to the results
-        - Adds the test to the test results
+        Args:
+            is_record_run: whether it is a record execution.
+            is_first_playback_run: whether it is the first playback execution.
+            is_second_playback_run: whether it is the second playback execution.
+            use_retries_mechanism: whether to use the retries mechanism.
+            number_of_executions: how many times the test was executed.
+        Returns:
+            PB_Status.COMPLETED if the Test-Playbook passed successfully and was added to succeeded playbooks.
+            PB_Status.FAILED if the Test-Playbook failed and was added to failed playbooks.
+            PB_Status.SECOND_PLAYBACK_REQUIRED if second playback is needed.
+            PB_Status.IN_PROGRESS if more executions are needed in order to determine whether the playbook is successful or not.
+        """
+        # in case the first playback run fails, the code should continue to record the playback.
+        if is_first_playback_run:
+            return PB_Status.IN_PROGRESS
+
+        # in case the second playback run fails, test-playbook is considered a failure.
+        if is_second_playback_run:
+            return PB_Status.FAILED
+
+        # in case of using the retries mechanism, the function should determine whether the test-playbook is considered
+        # a failure or give it another try.
+        if use_retries_mechanism:
+            return self._update_status_based_on_retries_mechanism(number_of_executions, is_record_run)
+
+        # the test-playbook is considered a failed playbook.
+        return PB_Status.FAILED
+
+    def _update_status_based_on_retries_mechanism(self, number_of_executions, is_record_run):
+        """
+        Updates the status of a test-playbook when using the retries mechanism.
+        Args:
+            number_of_executions: how many times the test was executed.
+            is_record_run: whether it is a record execution.
+        Returns:
+            PB_Status.COMPLETED if the Test-Playbook passed successfully and was added to succeeded playbooks.
+            PB_Status.FAILED if the Test-Playbook failed and was added to failed playbooks.
+            PB_Status.SECOND_PLAYBACK_REQUIRED if second playback is needed.
+            PB_Status.IN_PROGRESS if more executions are needed in order to determine whether the playbook is successful or not.
+        """
+        if number_of_executions < MAX_RETRIES:
+            self.build_context.logging_module.info(
+                f'Using the retries mechanism for test {self}.\n'
+                f'Test-Playbook was executed {number_of_executions} times, more executions are needed.')
+            self.build_context.test_retries_queue.put(self.playbook)
+            return PB_Status.IN_PROGRESS
+
+        else:  # number_of_executions == MAX_RETRIES:
+            # check if in most executions, the test passed.
+            if self.playbook.configuration.number_of_successful_runs >= RETRIES_THRESHOLD:
+                # It's not enough that the record run will pass to declare the test as successful,
+                # we need the second playback to pass as well.
+                if is_record_run:
+                    self.build_context.logging_module.info(
+                        f'Test-Playbook recording was executed {MAX_RETRIES} times, and passed {self.playbook.configuration.number_of_successful_runs} times.'
+                        f' Running second playback.')
+                    return PB_Status.SECOND_PLAYBACK_REQUIRED
+                self.build_context.logging_module.info(
+                    f'Test-Playbook was executed {MAX_RETRIES} times, and passed {self.playbook.configuration.number_of_successful_runs} times.'
+                    f' Adding to succeeded playbooks.')
+                return PB_Status.COMPLETED
+            else:
+                self.build_context.logging_module.info(
+                    f'Test-Playbook was executed {MAX_RETRIES} times, and passed only {self.playbook.configuration.number_of_successful_runs} times.'
+                    f' Adding to failed playbooks.')
+                return PB_Status.FAILED
+
+    def _update_playbook_status(self, status: str,
+                                is_first_playback_run: bool = False,
+                                is_second_playback_run: bool = False,
+                                is_record_run: bool = False) -> str:
+        """
+        Updates the playbook status if necessary and adds the test to the right set (succeeded/failed) if test is done.
         Args:
             status: The string representation of the playbook execution
             is_first_playback_run: Is the playbook runs in playback mode
             is_second_playback_run: Is The playbook run on a second playback after a freshly created record
+        Returns:
+            PB_Status.COMPLETED if the Test-Playbook passed successfully and was added to succeeded playbooks.
+            PB_Status.FAILED if the Test-Playbook failed and was added to failed playbooks.
+            PB_Status.SECOND_PLAYBACK_REQUIRED if second playback is needed.
+            PB_Status.IN_PROGRESS if more executions are needed in order to determine whether the playbook is successful or not.
         """
+        use_retries_mechanism = self.server_context.use_retries_mechanism
+        number_of_executions = self.playbook.configuration.number_of_executions
+        is_first_execution = number_of_executions == 1
+
         if status == PB_Status.COMPLETED:
-            self.build_context.logging_module.success(f'PASS: {self} succeed')
-            # It's not enough that the record run will pass to declare the test as successful,
-            # we need the second playback to pass as well.
-            if is_record_run:
-                return
+            updated_status = self._update_complete_status(is_first_execution, is_record_run, is_first_playback_run,
+                                                          is_second_playback_run, use_retries_mechanism, number_of_executions)
+
+        elif status in (PB_Status.FAILED_DOCKER_TEST, PB_Status.CONFIGURATION_FAILED):
+            self._add_to_failed_playbooks(status=status)
+            return status
+
+        else:  # test-playbook failed
+            updated_status = self._update_failed_status(is_record_run, is_first_playback_run, is_second_playback_run,
+                                                        use_retries_mechanism, number_of_executions)
+
+        if updated_status == PB_Status.COMPLETED:
             self._add_to_succeeded_playbooks()
-
-        elif status == PB_Status.FAILED_DOCKER_TEST:
-            self._add_to_failed_playbooks()
-
-        else:
-            if is_first_playback_run:
-                return
-            if is_second_playback_run:
-                self._add_to_failed_playbooks(is_second_playback_run=True)
-                return
-            self._add_to_failed_playbooks()
-            if not self.build_context.is_local_run:
-                self._notify_failed_test()
+        elif updated_status == PB_Status.FAILED:
+            self._notify_failed_test()
+            self._add_to_failed_playbooks(is_second_playback_run=is_second_playback_run)
+        return updated_status
 
     def _execute_mockable_test(self, proxy: MITMProxy):
         """
@@ -1715,17 +1877,20 @@ class TestContext:
         Returns:
             True if test has finished it's execution else False
         """
-        if proxy.has_mock_file(self.playbook.configuration.playbook_id):
-            # Running first playback run on mock file
-            self.build_context.logging_module.info(f'------ Test {self} start ------ (Mock: Playback)')
-            with run_with_mock(proxy, self.playbook.configuration.playbook_id) as result_holder:
-                status = self._incident_and_docker_test()
-                result_holder[RESULT] = status == PB_Status.COMPLETED
-            self._handle_status(status, is_first_playback_run=True)
-            if status in (PB_Status.COMPLETED, PB_Status.FAILED_DOCKER_TEST):
-                return True
-            self.build_context.logging_module.warning(
-                "Test failed with mock, recording new mock file. (Mock: Recording)")
+        # we want to test first playback only once (we want to skip it when using retries mechanism)
+        if not self.playbook.configuration.is_first_playback_failed:
+            if proxy.has_mock_file(self.playbook.configuration.playbook_id):
+                # Running first playback run on mock file
+                self.build_context.logging_module.info(f'------ Test {self} start ------ (Mock: Playback)')
+                with run_with_mock(proxy, self.playbook.configuration.playbook_id) as result_holder:
+                    status = self._incident_and_docker_test()
+                    status = self._update_playbook_status(status, is_first_playback_run=True)
+                    result_holder[RESULT] = status == PB_Status.COMPLETED
+                if status in (PB_Status.COMPLETED, PB_Status.FAILED_DOCKER_TEST):
+                    return True
+                self.build_context.logging_module.warning(
+                    "Test failed with mock, recording new mock file. (Mock: Recording)")
+                self.playbook.configuration.is_first_playback_failed = True
 
         # Running on record mode since playback has failed or mock file was not found
         self.build_context.logging_module.info(f'------ Test {self} start ------ (Mock: Recording)')
@@ -1733,21 +1898,21 @@ class TestContext:
             if lock:
                 with run_with_mock(proxy, self.playbook.configuration.playbook_id, record=True) as result_holder:
                     status = self._incident_and_docker_test()
-                    self._handle_status(status, is_record_run=True)
-                    completed = status == PB_Status.COMPLETED
-                    result_holder[RESULT] = completed
+                    self.playbook.configuration.number_of_executions += 1
+                    status = self._update_playbook_status(status, is_record_run=True)
+                    result_holder[RESULT] = status == PB_Status.SECOND_PLAYBACK_REQUIRED
             else:
                 # If the integrations were not locked - the test has not finished it's execution
                 return False
 
         # Running playback after successful record to verify the record is valid for future runs
-        if completed:
+        if status == PB_Status.SECOND_PLAYBACK_REQUIRED:
             self.build_context.logging_module.info(
                 f'------ Test {self} start ------ (Mock: Second playback)')
             with run_with_mock(proxy, self.playbook.configuration.playbook_id) as result_holder:
                 status = self._run_incident_test()
+                self._update_playbook_status(status, is_second_playback_run=True)
                 result_holder[RESULT] = status == PB_Status.COMPLETED
-            self._handle_status(status, is_second_playback_run=True)
         return True
 
     def _is_runnable_on_current_server_instance(self) -> bool:
@@ -1810,7 +1975,8 @@ class TestContext:
 
 class ServerContext:
 
-    def __init__(self, build_context: BuildContext, server_private_ip: str, tunnel_port: int = None):
+    def __init__(self, build_context: BuildContext, server_private_ip: str, tunnel_port: int = None,
+                 use_retries_mechanism: bool = True):
         self.build_context = build_context
         self.server_ip = server_private_ip
         self.tunnel_port = tunnel_port
@@ -1829,6 +1995,7 @@ class ServerContext:
         self.executed_tests: Set[str] = set()
         self.executed_in_current_round: Set[str] = set()
         self.prev_system_conf: dict = {}
+        self.use_retries_mechanism: bool = use_retries_mechanism
 
     def _execute_unmockable_tests(self):
         """
@@ -1878,6 +2045,9 @@ class ServerContext:
                                               username=self.build_context.secret_conf.server_username,
                                               password=self.build_context.secret_conf.server_password,
                                               server=self.server_url)
+
+    def _execute_failed_tests(self):
+        self._execute_tests(self.build_context.test_retries_queue)
 
     def _reset_tests_round_if_necessary(self, test_playbook: TestPlaybook, queue_: Queue) -> None:
         """
@@ -1932,6 +2102,9 @@ class ServerContext:
             self._execute_mockable_tests()
             self.build_context.logging_module.info('Running mock-disabled tests', real_time=True)
             self._execute_unmockable_tests()
+            if self.use_retries_mechanism:
+                self.build_context.logging_module.info('Running failed tests', real_time=True)
+                self._execute_failed_tests()
             self.build_context.logging_module.info(f'Finished tests with server url - {self.server_url}',
                                                    real_time=True)
             # no need in xsiam, no proxy

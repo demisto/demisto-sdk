@@ -2,6 +2,7 @@ import html
 import json
 import os.path
 import re
+from typing import Dict, List, Tuple
 
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_warning, run_command)
@@ -267,11 +268,10 @@ def is_error(execute_command_result):
     return execute_command_result.type == entryTypes['error']
 
 
-def build_example_dict(command_examples: list, insecure: bool):
+def build_example_dict(command_examples: list, insecure: bool) -> Tuple[Dict[str, List[Tuple[str, str, str]]], List[str]]:
     """
     gets an array of command examples, run them one by one and return a map of
-        {base command -> (example command, markdown, outputs)}
-    Note: if a command appears more then once, run all occurrences but stores only the first.
+        {base command -> [(example command, markdown, outputs), ...]}.
     """
     examples = {}  # type: dict
     errors = []  # type: list

@@ -107,18 +107,18 @@ class IntegrationScriptUnifier(YAMLUnifier):
             else:  # no value for dockerimage45 remove the dockerimage entry
                 del yml_unified45['dockerimage']
 
-            output_path45 = re.sub(r'\.yml$', '_45.yml', self.dest_path)
+            output_path45 = re.sub(r'\.yml$', '_45.yml', self.dest_path)  # type: ignore[type-var]
             output_map = {
                 self.dest_path: yml_unified,
                 output_path45: yml_unified45,
             }
         for file_path, file_data in output_map.items():
-            if os.path.isfile(file_path) and self.use_force is False:
+            if os.path.isfile(file_path) and self.use_force is False:  # type: ignore[arg-type]
                 raise ValueError(f'Output file already exists: {self.dest_path}.'
                                  ' Make sure to remove this file from source control'
                                  ' or rename this package (for example if it is a v2).')
 
-            with io.open(file_path, mode='w', encoding='utf-8') as file_:
+            with io.open(file_path, mode='w', encoding='utf-8') as file_:  # type: ignore[arg-type]
                 self.yaml.dump(file_data, file_)
 
         return output_map

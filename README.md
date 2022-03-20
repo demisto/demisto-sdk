@@ -23,12 +23,20 @@ The library uses python 3.7+.
       export DEMISTO_BASE_URL=<http or https>://<demisto-server url or ip>:<port>
       export DEMISTO_API_KEY=<API key>
       ```
+      for use on Cortex XSIAM need to add
+      ```bash
+      export XSIAM_AUTH_ID=<auth id>
+      ```
 
       for example:
 
       ```bash
       export DEMISTO_BASE_URL=http://127.0.0.1:8080
       export DEMISTO_API_KEY=XXXXXXXXXXXXXXXXXXXXXX
+      ```
+      for use the client on Cortex XSOAR after using on Cortex XSIAM you need delete the XSIAM_AUTH_ID parameter on your environment
+      ```bash
+      unset XSIAM_AUTH_ID
       ```
 
       >For more configurations, check the [demisto-py](https://github.com/demisto/demisto-py) repository (which is used by the demisto-sdk to communicate with Cortex XSOAR).

@@ -3,10 +3,15 @@
 **Download & merge custom content from Demisto instance to local content repository.**
 
 In order to run the command, `DEMISTO_BASE_URL` environment variable should contain the Demisto base URL, and `DEMISTO_API_KEY` environment variable should contain a valid Demisto API Key.
+And to use the command on Cortex XSIAM need to set `XSIAM_AUTH_ID` environment variable.
 To set the environment variables, run the following shell commands:
 ```
 export DEMISTO_BASE_URL=<YOUR_DESMISTO_BASE_URL>
 export DEMISTO_API_KEY=<YOUR_DEMISTO_API_KEY>
+```
+and on Cortex XSIAM
+```
+export XSIAM_AUTH_ID=<THE_XSIAM_AUTH_ID>
 ```
 
 

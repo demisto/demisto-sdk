@@ -2,8 +2,8 @@ from io import StringIO
 
 from ruamel.yaml import YAML
 
-from .handlers_utils import order_dict
-from .xsoar_handler import XSOAR_Handler
+from demisto_sdk.commands.common.handlers.handlers_utils import order_dict
+from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
 
 
 class RUAMEL_Handler(XSOAR_Handler):

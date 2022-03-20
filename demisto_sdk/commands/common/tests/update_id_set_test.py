@@ -16,20 +16,19 @@ from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
     add_item_to_exclusion_dict, does_dict_have_alternative_key,
-    find_duplicates, get_classifier_data, get_dashboard_data,
-    get_fields_by_script_argument,
+    find_duplicates, get_classifier_data, get_correlation_rule_data,
+    get_dashboard_data, get_fields_by_script_argument,
     get_filters_and_transformers_from_complex_value,
     get_filters_and_transformers_from_playbook, get_general_data,
-    get_general_xsiam_yaml_data, get_generic_field_data,
-    get_generic_module_data, get_generic_type_data,
+    get_generic_field_data, get_generic_module_data, get_generic_type_data,
     get_incident_fields_by_playbook_input, get_incident_type_data,
     get_indicator_type_data, get_layout_data, get_mapper_data,
-    get_pack_metadata_data, get_playbook_data, get_report_data,
-    get_script_data, get_trigger_data, get_values_for_keys_recursively,
-    get_widget_data, has_duplicate, merge_id_sets, process_general_items,
-    process_incident_fields, process_integration, process_jobs,
-    process_layoutscontainers, process_script, re_create_id_set,
-    should_skip_item_by_mp)
+    get_modeling_rule_data, get_pack_metadata_data, get_parsing_rule_data,
+    get_playbook_data, get_report_data, get_script_data, get_trigger_data,
+    get_values_for_keys_recursively, get_widget_data, has_duplicate,
+    merge_id_sets, process_general_items, process_incident_fields,
+    process_integration, process_jobs, process_layoutscontainers,
+    process_script, re_create_id_set, should_skip_item_by_mp)
 from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
@@ -2791,7 +2790,7 @@ class TestParsingRules:
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
         parsing_rule = pack.create_parsing_rule("parsing_rule_name", {"id": "parsing_rule_id", "rules": "", "name": "parsing_rule_name"})
         res = process_general_items(parsing_rule.path, {pack.name: {}},
-                                    MarketplaceVersions.MarketplaceV2.value, True, (FileType.PARSING_RULE,), get_general_xsiam_yaml_data)
+                                    MarketplaceVersions.MarketplaceV2.value, True, (FileType.PARSING_RULE,), get_parsing_rule_data)
 
         captured = capsys.readouterr()
         parsing_rule_result = res[0][0]['parsing_rule_id']
@@ -2822,7 +2821,7 @@ class TestModelingRules:
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
         modeling_rule = pack.create_modeling_rule("modeling_rule_name", {"id": "modeling_rule_id", "rules": "", "name": "modeling_rule_name"})
         res = process_general_items(modeling_rule.path, {pack.name: {}},
-                                    MarketplaceVersions.MarketplaceV2.value, True, (FileType.MODELING_RULE,), get_general_xsiam_yaml_data)
+                                    MarketplaceVersions.MarketplaceV2.value, True, (FileType.MODELING_RULE,), get_modeling_rule_data)
 
         captured = capsys.readouterr()
         modeling_rule_result = res[0][0]['modeling_rule_id']
@@ -2852,9 +2851,9 @@ class TestCorrelationRules:
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
         correlation_rule = pack.create_correlation_rule(
-            "correlation_rule_name", {"id": "correlation_rule_id", "name": "correlation_rule_name", "alert_category": ""})
+            "correlation_rule_name", {"global_rule_id": "correlation_rule_id", "name": "correlation_rule_name", "alert_category": ""})
         res = process_general_items(correlation_rule.path, {pack.name: {}},
-                                    MarketplaceVersions.MarketplaceV2.value, True, (FileType.CORRELATION_RULE,), get_general_xsiam_yaml_data)
+                                    MarketplaceVersions.MarketplaceV2.value, True, (FileType.CORRELATION_RULE,), get_correlation_rule_data)
 
         captured = capsys.readouterr()
         correlation_rule_result = res[0][0]['correlation_rule_id']
@@ -2884,7 +2883,7 @@ class TestXSIAMDashboards:
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
         xsiam_dashboard = pack.create_xsiam_dashboard(
-            "xsiam_dashboard_name", {"dashboards_data": [{"id": "xsiam_dashboard_id", "name": "xsiam_dashboard_name"}]})
+            "xsiam_dashboard_name", {"dashboards_data": [{"global_id": "xsiam_dashboard_id", "name": "xsiam_dashboard_name"}]})
         res = process_general_items(xsiam_dashboard.path, {pack.name: {}},
                                     MarketplaceVersions.MarketplaceV2.value, True, (FileType.XSIAM_DASHBOARD,), get_general_data)
 
@@ -2915,7 +2914,7 @@ class TestXSIAMReports:
             - Verify result as expeted.
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        xsiam_report = pack.create_xsiam_report("xsiam_report_name", {"dashboards_data": [{"id": "xsiam_report_id", "name": "xsiam_report_name"}]})
+        xsiam_report = pack.create_xsiam_report("xsiam_report_name", {"templates_data": [{"global_id": "xsiam_report_id", "name": "xsiam_report_name"}]})
         res = process_general_items(xsiam_report.path, {pack.name: {}},
                                     MarketplaceVersions.MarketplaceV2.value, True, (FileType.XSIAM_REPORT,), get_general_data)
 
@@ -2946,7 +2945,7 @@ class TestTriggers:
             - Verify result as expeted.
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        trigger = pack.create_trigger("trigger_name", {"RULE_ID": "trigger_id", "name": "trigger_name"})
+        trigger = pack.create_trigger("trigger_name", {"trigger_id": "trigger_id", "trigger_name": "trigger_name"})
         res = process_general_items(trigger.path, {pack.name: {}},
                                     MarketplaceVersions.MarketplaceV2.value, True, (FileType.TRIGGER,), get_trigger_data)
 

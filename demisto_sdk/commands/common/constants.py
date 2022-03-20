@@ -1418,6 +1418,12 @@ class IdSetKeys(Enum):
     REPORTS = "Reports"
     WIDGETS = "Widgets"
     DASHBOARDS = "Dashboards"
+    PARSING_RULES = "ParsingRules"
+    MODELING_RULES = "ModelingRules"
+    CORRELATION_RULES = "CorrelationRules"
+    XSIAM_DASHBOARDS = "XSIAMDashboards"
+    XSIAM_REPORTS = "XSIAMReports"
+    TRIGGERS = "Triggers"
 
 
 FileTypeToIDSetKeys = {
@@ -1444,7 +1450,13 @@ FileTypeToIDSetKeys = {
     FileType.GENERIC_FIELD: IdSetKeys.GENERIC_FIELDS.value,
     FileType.GENERIC_MODULE: IdSetKeys.GENERIC_MODULES.value,
     FileType.GENERIC_DEFINITION: IdSetKeys.GENERIC_DEFINITIONS.value,
-    FileType.JOB: IdSetKeys.JOBS.value
+    FileType.JOB: IdSetKeys.JOBS.value,
+    FileType.PARSING_RULE: IdSetKeys.PARSING_RULES.value,
+    FileType.MODELING_RULE: IdSetKeys.MODELING_RULES.value,
+    FileType.CORRELATION_RULE: IdSetKeys.CORRELATION_RULES.value,
+    FileType.XSIAM_DASHBOARD: IdSetKeys.XSIAM_DASHBOARDS.value,
+    FileType.XSIAM_REPORT: IdSetKeys.XSIAM_REPORTS.value,
+    FileType.TRIGGER: IdSetKeys.TRIGGERS.value
 }
 
 FileType_ALLOWED_TO_DELETE = {

@@ -410,14 +410,14 @@ class ContentItemsHandler:
 
     def add_xsiam_dashboard_as_content_item(self, content_object: ContentObject):
         self.content_items[ContentItems.XSIAM_DASHBOARDS].append({
-            'name': content_object.get('name', ''),
-            'description': content_object.get('description', '')
+            'name': content_object['dashboards_data'][0].get('name', ''),
+            'description': content_object['dashboards_data'][0].get('description', '')
         })
 
     def add_xsiam_report_as_content_item(self, content_object: ContentObject):
         self.content_items[ContentItems.XSIAM_REPORTS].append({
-            'name': content_object.get('name', ''),
-            'description': content_object.get('description', '')
+            'name': content_object['templates_data'][0].get('report_name', ''),
+            'description': content_object['templates_data'][0].get('report_description', '')
         })
 
     def add_trigger_as_content_item(self, content_object: ContentObject):

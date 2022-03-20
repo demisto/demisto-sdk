@@ -98,7 +98,6 @@ jobs:
             at: ~/project
         - python/install-packages:
             pkg-manager: "pip"
-            args: "pre-commit"
             pip-dependency-file: "requirements-pre-commit.txt"
         - run:
             name: Pre-commit

@@ -44,9 +44,9 @@ from demisto_sdk.commands.common.constants import (
     PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PARSING_RULES_DIR, PLAYBOOKS_DIR,
     PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
-    SCRIPTS_DIR, SIEM_ONLY_ENTITIES, TEST_PLAYBOOKS_DIR, TYPE_PWSH,
-    UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSIAM_DASHBOARDS_DIR,
-    XSIAM_REPORTS_DIR, TRIGGER_DIR, XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys,
+    SCRIPTS_DIR, SIEM_ONLY_ENTITIES, TEST_PLAYBOOKS_DIR, TRIGGER_DIR,
+    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSIAM_DASHBOARDS_DIR,
+    XSIAM_REPORTS_DIR, XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys,
     IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
                                                             GitProvider)
@@ -1130,7 +1130,7 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
     if path.suffix == '.js':
         return FileType.JAVASCRIPT_FILE
 
-    if path.suffix ==  '.xif':
+    if path.suffix == '.xif':
         return FileType.XIF_FILE
 
     if path.name.endswith(XSOAR_CONFIG_FILE):

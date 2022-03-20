@@ -37,10 +37,10 @@ class YMLGenerator:
         self.filename = os.path.abspath(filename)
         self.metadata_collector: Optional[YMLMetadataCollector] = None
         self.file_import: Optional[Any] = None
-        self.is_generatable_file: bool = self.import_the_metadata_collector()
         self.metadata: Optional[MetadataToDict] = None
         self.verbose = verbose
         self.force = force
+        self.is_generatable_file: bool = self.import_the_metadata_collector()
 
     def import_the_metadata_collector(self):
         """Find the metadata_collector object in the python file and import it."""
@@ -66,28 +66,31 @@ class YMLGenerator:
                         spec.loader.exec_module(self.file_import)  # type: ignore
                         # Here we assume the details_collector object will be called 'metadata_collector'.
                         self.metadata_collector = self.file_import.metadata_collector  # type: ignore
-                        print(f"Found the metadata collector in file {self.filename}")
+                        if self.verbose:
+                            click.secho(f"Found the metadata collector in file {self.filename}", fg='green')
                         return True
                 else:
-                    print(f"Problem importing {self.filename}")
+                    click.secho(f"Problem importing {self.filename}", fg='red')
                     return False
             except Exception as err:
-                print(f"No metadata collector found in {self.filename}")
+                click.secho(f"No metadata collector found in {self.filename}", fg='red')
                 if not str(err) == "module 'metadata_collector' has no attribute 'metadata_collector'":
-                    print(traceback.format_exc())
-                    print(str(err))
+                    click.secho(traceback.format_exc())
+                    click.secho(str(err), fg='red')
                 return False
 
     def generate(self):
         """The main method. Collect details and write the yml file."""
+        click.secho("Starting yml generation..")
         if not self.is_generatable_file:
-            click.secho(f'Not running file {self.filename} without metadata collector.')
+            click.secho(f'Not running file {self.filename} without metadata collector.', fg='red')
             return
         # Collect the wrapped functions with the details.
         self.collect_functions()
         # Make sure when they are ran, only collecting data will be preformed.
         if self.metadata_collector:
             self.metadata_collector.set_collect_data(True)
+            self.metadata_collector.set_verbose(self.verbose)
         # Run the functions and by that, collect the data.
         self.run_functions()
         # Write the yml file according to the collected details.
@@ -103,7 +106,8 @@ class YMLGenerator:
         with open(self.filename, 'r+') as code_file:
             content = code_file.read()
             if not content.startswith(self.IMPORT_COLLECTOR_LINE):
-                click.secho('Adding import lines, please do not remove while generating yml.')
+                if self.verbose:
+                    click.secho('Adding import lines, please do not remove while generating yml.')
                 code_file.seek(0, 0)
                 code_file.write(f"{self.IMPORT_COLLECTOR_LINE}\n{self.EXPLICIT_DECLARATION_IMPORTS_LINE}\n\n{content}")
 
@@ -114,6 +118,8 @@ class YMLGenerator:
         with open(self.filename, 'w') as code_file:
             clean_content = content
             if self.IMPORT_COLLECTOR_LINE in content:
+                if self.verbose:
+                    click.secho('Removing added import lines.')
                 content_parts = content.split(f"{self.IMPORT_COLLECTOR_LINE}\n{self.EXPLICIT_DECLARATION_IMPORTS_LINE}\n\n")
                 if len(content_parts) > 1:
                     clean_content = '\n'.join(content_parts[1:])
@@ -145,9 +151,10 @@ class YMLGenerator:
     def extract_metadata(self):
         """Collected details to MetadataToDict object."""
         if self.is_generatable_file:
-            click.secho('Converting collected details to dict')
+            if self.verbose:
+                click.secho('Converting collected details to dict..', fg='green')
             if self.metadata_collector:
-                self.metadata = MetadataToDict(self.metadata_collector)
+                self.metadata = MetadataToDict(metadata_collector=self.metadata_collector, verbose=self.verbose)
                 self.metadata.build_integration_dict()
 
     def save_to_yml_file(self):
@@ -155,10 +162,10 @@ class YMLGenerator:
         yml_filename = self.get_yml_filename()
 
         if os.path.exists(yml_filename) and not self.force:
-            click.secho(f"File {yml_filename} already exists, not writing. To override add --force.", color='red')
+            click.secho(f"File {yml_filename} already exists, not writing. To override add --force.", fg='red')
         else:
             if self.force:
-                click.secho(f"Force flag is used. Overriding {yml_filename} if it exists.", color='orange')
+                click.secho(f"Force flag is used. Overriding {yml_filename} if it exists.", fg='yellow')
             if self.metadata:
                 self.metadata.save_dict_as_yaml_integration_file(yml_filename)
 
@@ -171,9 +178,10 @@ class YMLGenerator:
 class MetadataToDict:
     """Transform the YMLMetadataCollector into a dict and then a yml."""
 
-    def __init__(self, metadata_collector: YMLMetadataCollector):
+    def __init__(self, metadata_collector: YMLMetadataCollector, verbose: bool = False):
         self.mc = metadata_collector
         self.metadata_dict: dict = {}
+        self.verbose = verbose
 
     def build_integration_dict(self):
         """Build the integration dictionary from the metadata_collector provided."""
@@ -250,12 +258,13 @@ class MetadataToDict:
 
     def command_metadata_from_function(self, command: CommandMetadata) -> dict:
         """Build YML command metadata dictionary for the command."""
-
+        if self.verbose:
+            click.secho(f"Parsing metadata for command {command.name}...")
         description: str = ''
         in_args: list = []
         out_args: list = []
         if not command.inputs or not command.outputs:
-            description, in_args, out_args = self.google_docstring_to_dict(command.function.__doc__)
+            description, in_args, out_args = self.google_docstring_to_dict(command.function.__doc__, self.verbose)
 
         command_dict: dict = {
             "deprecated": command.deprecated,
@@ -287,6 +296,9 @@ class MetadataToDict:
 
         if command.execution is not None:
             command_dict["execution"] = command.execution
+
+        if self.verbose:
+            click.secho(f"Completed parsing metadata for command {command.name}.", fg='green')
 
         return command_dict
 
@@ -454,7 +466,9 @@ class MetadataToDict:
         return organized_outputs
 
     @staticmethod
-    def google_docstring_to_dict(docstring: Optional[str]) -> Tuple[str, list, list]:
+    def google_docstring_to_dict(docstring: Optional[str], verbose: bool = False) -> Tuple[str, list, list]:
+        """Parse google style docstring."""
+
         if not docstring:
             return '', [], []
 
@@ -477,7 +491,7 @@ class MetadataToDict:
                     spaces_num = len(lines[0]) - len(lines[0].lstrip())
                     arg_lines = section[1].split(f'\n{spaces_num*" "}')
                     for arg_line in arg_lines:
-                        in_arg, in_arg_type = MetadataToDict.parse_in_argument_lines(arg_line)
+                        in_arg, in_arg_type = MetadataToDict.parse_in_argument_lines(arg_line, verbose)
                         if in_arg:
                             input_list.append((in_arg, in_arg_type))
 
@@ -486,14 +500,14 @@ class MetadataToDict:
                     spaces_num = len(lines[0]) - len(lines[0].lstrip())
                     out_lines = section[1].split(f'\n{spaces_num*" "}')
                     for out_line in out_lines:
-                        out_arg = MetadataToDict.parse_out_argument_lines(out_line)
+                        out_arg = MetadataToDict.parse_out_argument_lines(out_line, verbose)
                         if out_arg:
                             output_list.append(out_arg)
 
         return description, input_list, output_list
 
     @staticmethod
-    def parse_in_argument_lines(argument_line: str) -> Tuple[Union[InputArgument, None], Any]:
+    def parse_in_argument_lines(argument_line: str, verbose: bool = False) -> Tuple[Union[InputArgument, None], Any]:
         """Parse input argument line from docstring."""
         regex_args_with_type = r"^(?: *|\t)(?P<name>\*{0,4}(\w+|\w+\s|\w+\.\w+\s)\((?P<type>.*)\)):(?P<desc>(\s|\S)*)"
         argument_sections = re.findall(regex_args_with_type, argument_line, re.MULTILINE)
@@ -513,13 +527,14 @@ class MetadataToDict:
             try:
                 input_type = eval(input_type_str.lower())
             except Exception:
-                print(f"Problems parsing input type {input_type_str}, setting is_array=False.")
+                if verbose:
+                    click.secho(f"Problems parsing input type {input_type_str}, setting is_array=False.", fg='yellow')
                 input_type = None
 
             return InputArgument(name=name, description=description), input_type
 
     @staticmethod
-    def parse_out_argument_lines(argument_line: str) -> Union[OutputArgument, None]:
+    def parse_out_argument_lines(argument_line: str, verbose: bool = False) -> Union[OutputArgument, None]:
         """Parse output argument line from docstring."""
         regex_arguments = r"^(?: *|\t)(?P<name>\*{0,4}(\w+|\w+\s|\w+\.\w+\s)\((?P<type>.*)\)):(?P<desc>(\s|\S)*)"
         argument_sections = re.findall(regex_arguments, argument_line, re.MULTILINE)
@@ -532,7 +547,8 @@ class MetadataToDict:
         try:
             out_type = eval(output_type_str.lower())
         except Exception:
-            print(f"Problems parsing output type {output_type_str}, setting as Unknown.")
+            if verbose:
+                click.secho(f"Problems parsing output type {output_type_str}, setting as Unknown.", fg='yellow')
             out_type = dict
 
         description = argument_sections[0][3].strip()
@@ -553,6 +569,9 @@ class MetadataToDict:
 
     def save_dict_as_yaml_integration_file(self, output_file: str):
         """Save the dict to an output file."""
-        click.secho(f"Writing collected metadata to {output_file}.")
+        if self.verbose:
+            click.secho(f"Writing collected metadata to {output_file}.")
         with open(output_file, 'w') as file_handler:
             yaml.dump(self.metadata_dict, file_handler)
+
+        click.secho("Finished successfully.", fg='green')

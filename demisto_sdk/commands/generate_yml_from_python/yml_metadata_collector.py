@@ -100,9 +100,10 @@ class YMLMetadataCollector:
                  integration_subtype: str = "python3", deprecated: bool = False, system: bool = False,
                  timeout: str = "", default_classifier: str = "", default_mapper_in: str = "",
                  integration_name_x2: str = "", default_enabled_x2: Union[bool, None] = None,
-                 default_enabled: Union[bool, None] = None):
+                 default_enabled: Union[bool, None] = None, verbose: bool = False):
         self.commands: list = []
         self.collect_data = False
+        self.verbose = verbose
 
         # Integration configurations
         self.integration_name = integration_name
@@ -137,6 +138,10 @@ class YMLMetadataCollector:
         """A setter for collect_data."""
         self.collect_data = value
 
+    def set_verbose(self, value: bool):
+        """A setter for collect_data."""
+        self.verbose = value
+
     def command(self, command_name: str = '', outputs_prefix: str = '', outputs_list: list = [],
                 inputs_list: list = [], execution: Union[bool, None] = None, file_output: bool = False,
                 multiple_output_prefixes: bool = False, deprecated: bool = False, restore: bool = False,
@@ -167,7 +172,8 @@ class YMLMetadataCollector:
                 """The function which will collect data if needed or
                 run the original function instead."""
                 if self.collect_data:
-                    click.secho(f"Collecting metadata from command {command_name}")
+                    if self.verbose:
+                        click.secho(f"Collecting metadata from command {command_name}")
                     # Collect details from function declaration and builtins.
                     command_metadata = CommandMetadata(
                         name=command_name,

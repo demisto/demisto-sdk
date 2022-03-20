@@ -1148,6 +1148,36 @@ def get_general_data(path: str, packs: Dict[str, Dict] = None):
     return {id_: data}
 
 
+def get_xsiam_dashboard_data(path: str, packs: Dict[str, Dict] = None):
+    json_data = get_json(path).get('dashboards_data', [{}])[0]
+
+    id_ = json_data.get('global_id')
+    name = json_data.get('name')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    pack = get_pack_name(path)
+    marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
+
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
+
+    return {id_: data}
+
+
+def get_xsiam_report_data(path: str, packs: Dict[str, Dict] = None):
+    json_data = get_json(path).get('templates_data', [{}])[0]
+
+    id_ = json_data.get('global_id')
+    name = json_data.get('report_name')
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    pack = get_pack_name(path)
+    marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
+
+    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
+
+    return {id_: data}
+
+
 def get_trigger_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
 
@@ -2456,7 +2486,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
                                                                            FileType.XSIAM_DASHBOARD,),
-                                                                       data_extraction_func=get_general_data,
+                                                                       data_extraction_func=get_xsiam_dashboard_data,
                                                                        ),
                                                                get_general_paths(XSIAM_DASHBOARDS_DIR,
                                                                                  pack_to_create)):
@@ -2478,7 +2508,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
                                                                            FileType.XSIAM_REPORT,),
-                                                                       data_extraction_func=get_general_data,
+                                                                       data_extraction_func=get_xsiam_report_data,
                                                                        ),
                                                                get_general_paths(XSIAM_REPORTS_DIR,
                                                                                  pack_to_create)):

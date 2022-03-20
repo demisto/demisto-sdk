@@ -25,10 +25,11 @@ from demisto_sdk.commands.common.update_id_set import (
     get_indicator_type_data, get_layout_data, get_mapper_data,
     get_modeling_rule_data, get_pack_metadata_data, get_parsing_rule_data,
     get_playbook_data, get_report_data, get_script_data, get_trigger_data,
-    get_values_for_keys_recursively, get_widget_data, has_duplicate,
-    merge_id_sets, process_general_items, process_incident_fields,
-    process_integration, process_jobs, process_layoutscontainers,
-    process_script, re_create_id_set, should_skip_item_by_mp)
+    get_values_for_keys_recursively, get_widget_data, get_xsiam_dashboard_data,
+    get_xsiam_report_data, has_duplicate, merge_id_sets, process_general_items,
+    process_incident_fields, process_integration, process_jobs,
+    process_layoutscontainers, process_script, re_create_id_set,
+    should_skip_item_by_mp)
 from TestSuite.utils import IsEqualFunctions
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
@@ -2885,7 +2886,7 @@ class TestXSIAMDashboards:
         xsiam_dashboard = pack.create_xsiam_dashboard(
             "xsiam_dashboard_name", {"dashboards_data": [{"global_id": "xsiam_dashboard_id", "name": "xsiam_dashboard_name"}]})
         res = process_general_items(xsiam_dashboard.path, {pack.name: {}},
-                                    MarketplaceVersions.MarketplaceV2.value, True, (FileType.XSIAM_DASHBOARD,), get_general_data)
+                                    MarketplaceVersions.MarketplaceV2.value, True, (FileType.XSIAM_DASHBOARD,), get_xsiam_dashboard_data)
 
         captured = capsys.readouterr()
         xsiam_dashboard_result = res[0][0]['xsiam_dashboard_id']
@@ -2914,9 +2915,9 @@ class TestXSIAMReports:
             - Verify result as expeted.
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        xsiam_report = pack.create_xsiam_report("xsiam_report_name", {"templates_data": [{"global_id": "xsiam_report_id", "name": "xsiam_report_name"}]})
+        xsiam_report = pack.create_xsiam_report("xsiam_report_name", {"templates_data": [{"global_id": "xsiam_report_id", "report_name": "xsiam_report_name"}]})
         res = process_general_items(xsiam_report.path, {pack.name: {}},
-                                    MarketplaceVersions.MarketplaceV2.value, True, (FileType.XSIAM_REPORT,), get_general_data)
+                                    MarketplaceVersions.MarketplaceV2.value, True, (FileType.XSIAM_REPORT,), get_xsiam_report_data)
 
         captured = capsys.readouterr()
         xsiam_report_result = res[0][0]['xsiam_report_id']

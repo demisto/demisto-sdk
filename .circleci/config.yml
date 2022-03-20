@@ -15,18 +15,12 @@ parameters:
   node-orb-version:
     type: string
     default: "5.0.1"
-  python-cache-version:
-    type: string
-    default: v3
-  dev-cache-version:
-    type: string
-    default: v3
-  node-cache-version:
+  cache-version:
     type: string
     default: v3
   global-docker-image:
     type: string
-    default: cimg/python:3.9.10-node
+    default: cimg/python:3.10.2-node
 
 
 references:
@@ -41,13 +35,13 @@ references:
 
     install_node_ci: &install_node_ci
       - node/install-packages:
-          cache-version: << pipeline.parameters.node-cache-version >>
+          cache-version: << pipeline.parameters.cache-version >>
           
     install_demisto_sdk: &install_demisto_sdk
       - python/install-packages:
           pkg-manager: "pipenv"
           args: "--system"
-          cache-version: << pipeline.parameters.python-cache-version >>
+          cache-version: << pipeline.parameters.cache-version >>
           pre-install-steps:
             - run:
                 name: export demisto-sdk to path
@@ -66,14 +60,14 @@ jobs:
         - python/install-packages:
             pkg-manager: "pipenv"
             args: "--dev --system"
-            cache-version: << pipeline.parameters.python-cache-version >>
+            cache-version: << pipeline.parameters.cache-version >>
         - <<: *install_node_ci
         - run:
             name: pytest
             no_output_timeout: 15m
             command: |
               mkdir test-results
-              python -m pytest -p no:warnings -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml
+              python -m pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml
         - store_test_results:
             path: test-results
         - store_artifacts:
@@ -123,44 +117,49 @@ jobs:
               - content
   validate-files:
       docker:
-        - image: cimg/python:3.9.10-node
+        - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
         - attach_workspace:
             at: ~/project
         - <<: *install_demisto_sdk
+        - python/install-packages:
+            pkg-manager: "pip"
+            pip-dependency-file: "requirements-gsutil.txt"
         - run:
             name: Set Up & Create Id Set
             when: always
+            environment:
+              CI_COMMIT_BRANCH: "master"
             command: |
               cd content
               python -m demisto_sdk -v
 
-              CI_COMMIT_BRANCH="master" python -m demisto_sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
-        - python/install-packages:
-            pkg-manager: "pip"
-            args: "gsutil"
-            pip-dependency-file: "requirements-gsutil.txt"
+              python -m demisto_sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
         - run:
             name: Merge Id Set
             when: always
+            environment:
+              CI_COMMIT_BRANCH: "master"
             command: |
               cd content
               python -m demisto_sdk -v
               export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
 
               gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
-              CI_COMMIT_BRANCH="master" python -m demisto_sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json --fail-duplicates
+              python -m demisto_sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json --fail-duplicates
         - <<: *install_node_ci
         - run:
             name: Test validate files and yaml
             when: always
+            environment:
+              CI_COMMIT_BRANCH: "master"
             command: |
               cd content
               python -m demisto_sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
 
-              CI_COMMIT_BRANCH="master" ./Tests/scripts/validate.sh
+              ./Tests/scripts/validate.sh
   test-lint:
       docker:
         - image: devdemisto/content-build:3.0.0.12681
@@ -210,12 +209,14 @@ jobs:
         - run:
             name: Test Create Content Artifacts
             when: always
+            environment:
+              CIRCLE_BRANCH: "master"
             command: |
               cd content
               python -m demisto_sdk -v
               mkdir ./tmp
 
-              CIRCLE_BRANCH="master" python -m demisto_sdk create-content-artifacts -a ./tmp
+              python -m demisto_sdk create-content-artifacts -a ./tmp
         - store_artifacts:
             path: content/tmp
   deploy:

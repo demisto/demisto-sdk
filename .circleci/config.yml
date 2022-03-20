@@ -141,7 +141,7 @@ jobs:
         - python/install-packages:
             pkg-manager: "pip"
             args: "gsutil"
-            pip-dependency-file: "requirements-pre-gsutil.txt"
+            pip-dependency-file: "requirements-gsutil.txt"
         - run:
             name: Merge Id Set
             when: always

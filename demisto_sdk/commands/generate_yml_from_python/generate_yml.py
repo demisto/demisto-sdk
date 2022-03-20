@@ -10,11 +10,12 @@ from types import FunctionType
 from typing import Any, AnyStr, Callable, List, Optional, Tuple, Union
 
 import click
-import mock
-import yaml
-from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (CommandMetadata, ConfKey,
-                                                                                  InputArgument, OutputArgument,
-                                                                                  YMLMetadataCollector)
+import mock  # type: ignore
+import yaml  # type: ignore
+
+from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (
+    CommandMetadata, ConfKey, InputArgument, OutputArgument,
+    YMLMetadataCollector)
 
 
 class YMLGenerator:
@@ -35,7 +36,7 @@ class YMLGenerator:
         self.metadata_collector: Optional[YMLMetadataCollector] = None
         self.file_import: Optional[Any] = None
         self.is_generatable_file: bool = self.import_the_metadata_collector()
-        self.metadata: Optional[dict] = None
+        self.metadata: Optional[MetadataToDict] = None
         self.verbose = verbose
         self.force = force
 
@@ -57,13 +58,14 @@ class YMLGenerator:
             try:
                 spec = importlib.util.spec_from_file_location("metadata_collector", self.filename)
                 # The self.file_import object will be used later to identify wrapped functions.
-                self.file_import = importlib.util.module_from_spec(spec)
-                if self.file_import:
-                    spec.loader.exec_module(self.file_import)
-                    # Here we assume the details_collector object will be called 'metadata_collector'.
-                    self.metadata_collector = self.file_import.metadata_collector
-                    print(f"Found the metadata collector in file {self.filename}")
-                    return True
+                if spec:
+                    self.file_import = importlib.util.module_from_spec(spec)
+                    if self.file_import:
+                        spec.loader.exec_module(self.file_import)  # type: ignore
+                        # Here we assume the details_collector object will be called 'metadata_collector'.
+                        self.metadata_collector = self.file_import.metadata_collector  # type: ignore
+                        print(f"Found the metadata collector in file {self.filename}")
+                        return True
                 else:
                     print(f"Problem importing {self.filename}")
                     return False
@@ -133,7 +135,7 @@ class YMLGenerator:
             for function in self.functions:
                 function()
 
-    def get_yml_filename(self):
+    def get_yml_filename(self) -> str:
         yml_filename_splitted = self.filename.split('.')[:-1] + ['yml']
         yml_filename = ".".join(yml_filename_splitted)
         return yml_filename
@@ -142,8 +144,9 @@ class YMLGenerator:
         """Collected details to MetadataToDict object."""
         if self.is_generatable_file:
             click.secho('Converting collected details to dict')
-            self.metadata = MetadataToDict(self.metadata_collector)
-            self.metadata.build_integration_dict()
+            if self.metadata_collector:
+                self.metadata = MetadataToDict(self.metadata_collector)
+                self.metadata.build_integration_dict()
 
     def save_to_yml_file(self):
         """Write the yml file based on the collected details."""
@@ -154,10 +157,13 @@ class YMLGenerator:
         else:
             if self.force:
                 click.secho(f"Force flag is used. Overriding {yml_filename} if it exists.", color='orange')
-            self.metadata.save_dict_as_yaml_integration_file(yml_filename)
+            if self.metadata:
+                self.metadata.save_dict_as_yaml_integration_file(yml_filename)
 
-    def get_metadata_dict(self):
-        return self.metadata.metadata_dict
+    def get_metadata_dict(self) -> Union[dict, None]:
+        if self.metadata:
+            return self.metadata.metadata_dict
+        return None
 
 
 class MetadataToDict:
@@ -171,7 +177,7 @@ class MetadataToDict:
         """Build the integration dictionary from the metadata_collector provided."""
         config_keys = [self.config_metadata_from_key(config_key) for config_key in self.mc.conf]
         commands = [self.command_metadata_from_function(command) for command in self.mc.commands]
-        integration_dict = {
+        integration_dict: dict = {
             "category": self.mc.category,
             "description": self.mc.description,
             "commonfields": {
@@ -198,7 +204,7 @@ class MetadataToDict:
         }
 
         if self.mc.detailed_description:
-            integration_dict["detaileddescription"] = self.mc.detailed_description
+            integration_dict.update({"detaileddescription": self.mc.detailed_description})
         if self.mc.deprecated:
             integration_dict["deprecated"] = self.mc.deprecated
         if self.mc.system:

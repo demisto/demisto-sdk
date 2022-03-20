@@ -11,11 +11,13 @@ from typing import Any, AnyStr, Callable, List, Optional, Tuple, Union
 
 import click
 import mock  # type: ignore
-import yaml  # type: ignore
 
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (
     CommandMetadata, ConfKey, InputArgument, OutputArgument,
     YMLMetadataCollector)
+
+yaml = YAML_Handler()
 
 
 class YMLGenerator:
@@ -552,4 +554,5 @@ class MetadataToDict:
     def save_dict_as_yaml_integration_file(self, output_file: str):
         """Save the dict to an output file."""
         click.secho(f"Writing collected metadata to {output_file}.")
-        yaml.dump(self.metadata_dict, open(output_file, "w"))
+        with open(output_file, 'w') as file_handler:
+            yaml.dump(self.metadata_dict, file_handler)

@@ -211,7 +211,8 @@ class Repo:
         if marketplace != 'xsoar':
             pack.create_parsing_rule(f'{name}_parsingrule', {"id": "parsing_rule_id", "rules": "", "name": "parsing_rule_name"})
             pack.create_modeling_rule(f'{name}_modelingrule', {"id": "modeling_rule_id", "rules": "", "name": "modeling_rule_name"})
-            pack.create_correlation_rule(f'{name}_correlationrule', {"global_rule_id": "correlation_rule_id", "name": "correlation_rule_name", "alert_category": ""})
+            pack.create_correlation_rule(f'{name}_correlationrule', {"global_rule_id": "correlation_rule_id",
+                                         "name": "correlation_rule_name", "alert_category": ""})
             pack.create_xsiam_dashboard(f'{name}_xsiamdashboard', {"dashboards_data": [{"global_id": "xsiam_dashboard_id", "name": "xsiam_dashboard_name"}]})
             pack.create_xsiam_report(f'{name}_xsiamreport', {"templates_data": [{"global_id": "xsiam_report_id", "name": "xsiam_report_name"}]})
             pack.create_trigger(f'{name}_trigger', {"trigger_id": "trigger_id", "trigger_name": "trigger_name"})

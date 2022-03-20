@@ -1,7 +1,5 @@
 import copy
-import datetime
 import inspect
-import textwrap
 
 import pytest
 
@@ -266,7 +264,6 @@ class TestCommandGeneration:
         expected_dict["script"]["commands"] = [expected_command]
         assert expected_dict == yml_generator.get_metadata_dict()
 
-    @pytest.mark.skip(reason="MISSING FEATURE")
     def test_long_description(self, tmp_path):
         integration_path = tmp_path / "integration_name.py"
 

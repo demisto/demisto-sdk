@@ -8,8 +8,6 @@ from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorOutput, json_body_to_code)
 
 json = JSON_Handler()
-
-
 yaml = YAML_Handler()
 
 

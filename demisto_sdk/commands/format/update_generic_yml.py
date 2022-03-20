@@ -15,8 +15,6 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
 json = JSON_Handler()
-
-
 yaml = YAML_Handler()
 
 

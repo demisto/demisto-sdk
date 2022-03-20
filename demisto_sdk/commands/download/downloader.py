@@ -37,8 +37,6 @@ from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
 json = JSON_Handler()
-
-
 yaml = YAML_Handler()
 
 

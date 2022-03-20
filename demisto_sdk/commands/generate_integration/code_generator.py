@@ -19,10 +19,7 @@ from demisto_sdk.commands.generate_integration.XSOARIntegration import \
     XSOARIntegration
 
 json = JSON_Handler()
-
-
 yaml = YAML_Handler(width=50000)
-
 logger = logging.getLogger('demisto-sdk')
 
 ILLEGAL_CODE_NAMES = ['type', 'from', 'id', 'filter', 'list']

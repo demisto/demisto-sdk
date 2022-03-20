@@ -82,8 +82,6 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_error)
 
 json = JSON_Handler()
-
-
 yaml = YAML_Handler()
 
 

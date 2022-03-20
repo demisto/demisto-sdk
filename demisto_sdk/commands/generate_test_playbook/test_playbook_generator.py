@@ -8,8 +8,6 @@ from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.upload.uploader import Uploader
 
 json = JSON_Handler()
-
-
 yaml = YAML_Handler()
 
 

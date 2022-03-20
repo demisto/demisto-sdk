@@ -15,7 +15,7 @@ parameters:
   node-orb-version:
     type: string
     default: "5.0.1"
-  cache-version:
+  python-cache-version:
     type: string
     default: v3
   dev-cache-version:
@@ -24,9 +24,7 @@ parameters:
   node-cache-version:
     type: string
     default: v3
-  pre-commit-cache-version:
-    type: string
-    default: v3
+
 
 references:
     tag_filter: &tag_filter
@@ -46,7 +44,7 @@ references:
       - python/install-packages:
           pkg-manager: "pipenv"
           args: "--system"
-          cache-version: << pipeline.parameters.cache-version >>
+          cache-version: << pipeline.parameters.python-cache-version >>
           pre-install-steps:
             - run:
                 name: export demisto-sdk to path
@@ -65,7 +63,7 @@ jobs:
         - python/install-packages:
             pkg-manager: "pipenv"
             args: "--dev --system"
-            cache-version: << pipeline.parameters.cache-version >>
+            cache-version: << pipeline.parameters.python-cache-version >>
         - <<: *install_node_ci
         - run:
             name: pytest
@@ -99,7 +97,6 @@ jobs:
             pkg-manager: "pip"
             args: "pre-commit"
             pip-dependency-file: ""  # No requirements.txt file
-            cache-version: << pipeline.parameters.pre-commit-cache-version >>
         - run:
             name: Pre-commit
             command: |
@@ -138,11 +135,14 @@ jobs:
               python -m demisto_sdk -v
 
               CI_COMMIT_BRANCH="master" python -m demisto_sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
+        - python/install-packages:
+            pkg-manager: "pip"
+            args: "gsutil"
+            pip-dependency-file: ""  # No requirements.txt file
         - run:
             name: Merge Id Set
             when: always
             command: |
-              pip install gsutil
               cd content
               python -m demisto_sdk -v
               export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"

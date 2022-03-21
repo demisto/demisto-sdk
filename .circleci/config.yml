@@ -72,6 +72,7 @@ jobs:
             name: pytest
             no_output_timeout: 15m
             command: |
+              set -e TEST_FILES=$(circleci tests glob "demisto_sdk/**/_test*.py" | circleci tests split --split-by=timings)
               mkdir test-results
               python -m pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml
         - store_test_results:

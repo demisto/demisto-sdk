@@ -3,6 +3,7 @@
 * Added an agrument to YAMLHandler, allowing to set a maximal width for YAML files.  This fixes an issue where a wrong default was used.
 * Added the detach mechanism to the **upload** command, If you set the --input-config-file flag, any files in the repo's SystemPacks folder will be detached.
 * Added the reattach mechanism to the **upload** command, If you set the --input-config-file flag, any detached item in your XSOAR instance that isn't currently in the repo's SystemPacks folder will be re-attached.
+* Added support for new XSIAM entities in *create-id-set* command.
 
 # 1.6.2
 * Added dependency validation support for core marketplacev2 packs.

@@ -1204,6 +1204,8 @@ class ValidateManager:
             deleted_file_id = _get_file_id(file_path, deleted_file_dict)
             if deleted_file_id:
                 for file in added_files:
+                    if not isinstance(file, str):
+                        file = file.as_posix()
                     file_dict = get_file(file, find_type(file))
                     if deleted_file_id == _get_file_id(file, file_dict):
                         return True

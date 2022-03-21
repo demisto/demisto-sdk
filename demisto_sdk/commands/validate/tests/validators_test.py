@@ -1802,7 +1802,7 @@ def test_job_unexpected_field_values_in_non_feed_job(repo, capsys,
 @pytest.mark.parametrize('file_set,expected_output,expected_result,added_files',
                          (({'mock_file_description.md'}, "[BA115]", False, set()),
                           (set(), "", True, set()),
-                          ({PosixPath('doc_files/image.png')}, "", True, {'added_file.yml'}),
+                          ({PosixPath('doc_files/image.png')}, "", True, {PosixPath('added_file.py')}),
                           ({'doc_files/image.png'}, "", True, set()),
                           ({'mock_playbook.yml'}, "", True, {'renamed_mock_playbook.yml'})))
 def test_validate_deleted_files(capsys, file_set, expected_output, expected_result, added_files, mocker):

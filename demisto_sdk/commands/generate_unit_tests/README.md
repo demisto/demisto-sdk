@@ -26,6 +26,8 @@ Also supports generating unit tests for specific commands.
   - Path for a file containing examples. Each command should be in a separate line.
   - Comma separated list of examples, wrapped by quotes.  
   If the file or list contains a command with more than one example, all of them will be used.
+* *-d, --use_demisto* If passed, commands will be ran using Demisto instance, and the outputs will be used to
+  create outputs mocks, if not passed, you will have to create the mocks manually.
 
 
 **Notes**
@@ -76,6 +78,6 @@ demisto-sdk generate-unit-tests -i Packs/MyPack/Integrations/MyInt/MyInt.py -c M
 
 ####command output file
 ```json
-{"readable_output": "Comment added to 094fd325049b8a9cf6d3e5ef2a6d4cc6a567d7d49c35f8bb8dd9e3c6acf3d78d malware sample successfully",
-  "outputs": {"comment": "test", "sha256_hash": "094fd325049b8a9cf6d3e5ef2a6d4cc6a567d7d49c35f8bb8dd9e3c6acf3d78d"}}
+{"readable_output": "Comment added to 1234 malware sample successfully",
+  "outputs": {"comment": "test", "sha256_hash": "1234"}}
 ```

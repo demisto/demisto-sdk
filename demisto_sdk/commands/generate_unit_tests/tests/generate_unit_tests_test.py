@@ -1,4 +1,6 @@
+import ast
 import filecmp
+import itertools
 import os
 import pytest
 from ast import parse
@@ -7,6 +9,25 @@ from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import run_gen
 
 ARGS = [({'use_demisto': False}, 'malwarebazaar_all.txt'),
         ({'use_demisto': False, 'commands': 'malwarebazaar-comment-add'}, 'malwarebazaar_specific_command.txt')]
+
+
+def compare_ast(node1, node2):
+    """
+     Recursively comparing ast objects.
+    """
+    if type(node1) is not type(node2):
+        return False
+    if isinstance(node1, ast.AST):
+        for k, v in vars(node1).items():
+            if k in ('lineno', 'col_offset', 'ctx'):
+                continue
+            if not compare_ast(v, getattr(node2, k)):
+                return False
+        return True
+    elif isinstance(node1, list):
+        return all(itertools.starmap(compare_ast, zip(node1, node2)))
+    else:
+        return node1 == node2
 
 
 class TestUnitTestsGenerator:
@@ -24,7 +45,8 @@ class TestUnitTestsGenerator:
     def test_tests_generated_successfully(self, args, desired):
         """
         Given
-        - Postman collection v2.1 of 4 Virus Total API commands
+        - input arguments for the command
+        - desired path to generate the test file into.
 
         When
         - generating config file from the postman collection
@@ -37,10 +59,14 @@ class TestUnitTestsGenerator:
                      'output_dir': self.output_dir,
                      'test_data_path': 'demisto_sdk/commands/generate_unit_tests/tests/test_files/outputs'})
 
-        run_generate_unit_tests(**args)
-
         output_path = os.path.join(self.output_dir, 'malwarebazaar_test.py')
         desired = os.path.join(self.output_dir, desired)
+
+        if os.path.exists(output_path):
+            os.remove(output_path)
+
+        run_generate_unit_tests(**args)
+
 
         with open(output_path, 'r') as f:
             output_source = f.read()
@@ -48,9 +74,6 @@ class TestUnitTestsGenerator:
         with open(desired, 'r') as f:
             output_desired = f.read()
 
-        assert parse(output_source) == parse(output_desired)
+        assert compare_ast(parse(output_source), parse(output_desired))
 
-        # assert filecmp.cmp(output_path, desired)
 
-        if os.path.exists(output_path):
-            os.remove(output_path)

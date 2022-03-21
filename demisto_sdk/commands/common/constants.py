@@ -137,6 +137,7 @@ class FileType(Enum):
     XSIAM_REPORT = 'xsiamreport'
     TRIGGER = 'trigger'
 
+
 RN_HEADER_BY_FILE_TYPE = {
     FileType.PLAYBOOK: 'Playbooks',
     FileType.INTEGRATION: 'Integrations',

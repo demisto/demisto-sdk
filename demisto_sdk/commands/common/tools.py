@@ -724,12 +724,15 @@ def get_latest_release_notes_text(rn_path):
         print_warning('Path to release notes not found.')
         rn = None
     else:
-        with open(rn_path) as f:
-            rn = f.read()
+        try:
+            with open(rn_path) as f:
+                rn = f.read()
 
-        if not rn:
-            print_error(f'Release Notes may not be empty. Please fill out correctly. - {rn_path}')
-            return None
+            if not rn:
+                print_error(f'Release Notes may not be empty. Please fill out correctly. - {rn_path}')
+                return None
+        except IOError:
+            return ''
 
     return rn if rn else None
 

@@ -4,9 +4,6 @@ from enum import Enum
 from functools import reduce
 from typing import Dict, List
 
-from demisto_sdk.commands.common.GitContentConfig import \
-    GitContentConfig  # noqa
-
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
 NOT_TEST = '(?!Test)'
 INTEGRATIONS_DIR = 'Integrations'

@@ -78,7 +78,7 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
-
+from pathlib import PosixPath
 
 class TestValidators:
     CREATED_DIRS = list()  # type: list[str]
@@ -1802,6 +1802,7 @@ def test_job_unexpected_field_values_in_non_feed_job(repo, capsys,
 @pytest.mark.parametrize('file_set,expected_output,expected_result,added_files',
                          (({'mock_file_description.md'}, "[BA115]", False, set()),
                           (set(), "", True, set()),
+                          ({PosixPath('doc_files/image.png')}, "", True, {'added_file.yml'}),
                           ({'doc_files/image.png'}, "", True, set()),
                           ({'mock_playbook.yml'}, "", True, {'renamed_mock_playbook.yml'})))
 def test_validate_deleted_files(capsys, file_set, expected_output, expected_result, added_files, mocker):

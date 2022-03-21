@@ -1198,6 +1198,8 @@ class ValidateManager:
 
         """
         if added_files:
+            if not isinstance(file_path, str):
+                file_path = file_path.as_posix()
             deleted_file_dict = get_file(file_path, find_type(file_path))
             deleted_file_id = _get_file_id(file_path, deleted_file_dict)
             if deleted_file_id:
@@ -1214,10 +1216,12 @@ class ValidateManager:
 
         is_valid = True
         for file_path in deleted_files:
+            if not isinstance(file_path, str):
+                file_path = file_path.as_posix()
             if not self.was_file_renamed_but_labeled_as_deleted(file_path, added_files):
                 if not self.is_file_allowed_to_be_deleted(file_path):
                     error_message, error_code = Errors.file_cannot_be_deleted(file_path)
-                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    if self.handle_error(error_message, error_code, file_path):
                         is_valid = False
 
         return is_valid

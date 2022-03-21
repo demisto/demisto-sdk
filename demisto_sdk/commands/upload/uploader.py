@@ -1,3 +1,4 @@
+import ast
 import glob
 import logging
 import os
@@ -30,7 +31,7 @@ from demisto_sdk.commands.common.content.objects_factory import \
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_child_directories,
-                                               get_demisto_version,
+                                               get_demisto_version, get_file,
                                                get_parent_directory_name,
                                                print_v)
 
@@ -98,7 +99,7 @@ class Uploader:
         """
 
     def __init__(self, input: str, insecure: bool = False, verbose: bool = False, pack_names: list = None,
-                 skip_validation: bool = False):
+                 skip_validation: bool = False, detached_files: bool = False, reattach: bool = False):
         self.path = input
         self.log_verbose = verbose
         verify = (not insecure) if insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
@@ -109,6 +110,8 @@ class Uploader:
         self.demisto_version = get_demisto_version(self.client)
         self.pack_names = pack_names
         self.skip_upload_packs_validation = skip_validation
+        self.is_files_to_detached = detached_files
+        self.reattach_files = reattach
 
     def upload(self):
         """Upload the pack / directory / file to the remote Cortex XSOAR instance.
@@ -119,6 +122,18 @@ class Uploader:
             return ERROR_RETURN_CODE
 
         status_code = SUCCESS_RETURN_CODE
+
+        if self.is_files_to_detached:
+            item_detacher = ItemDetacher(client=self.client)
+            list_detach_items_ids: list = item_detacher.detach_item_manager(upload_file=True)
+
+            if self.reattach_files:
+                item_reattacher = ItemReattacher(client=self.client)
+                item_reattacher.reattach_item_manager(detached_files_ids=list_detach_items_ids)
+
+            if not self.path:
+                return SUCCESS_RETURN_CODE
+
         click.secho(f"Uploading {self.path} ...")
         if self.path is None or not os.path.exists(self.path):
             click.secho(f'Error: Given input path: {self.path} does not exist', fg='bright_red')
@@ -419,3 +434,134 @@ class ConfigFileParser:
         custom_packs = config_file_data.get('custom_packs', [])
         custom_packs_paths = ",".join(pack.get('url') for pack in custom_packs)
         return custom_packs_paths
+
+
+class ItemDetacher:
+    def __init__(self, client, file_path: str = 'SystemPacks'):
+        self.file_path = file_path
+        self.client = client
+
+    DETACH_ITEM_TYPE_TO_ENDPOINT: dict = {
+        'IncidentTypes': '/incidenttype/detach/:id/',
+        'Layouts': '/layout/:id/detach/',
+        'Playbooks': '/playbook/detach/:id/',
+        'Scripts': '/automation/detach/:id/',
+    }
+
+    VALID_FILES_FOR_DETACH = ['Playbooks', 'Scripts', 'IncidentTypes', 'Layouts']
+
+    def detach_item(self, file_id, file_path):
+        endpoint: str = ''
+        for file_type, file_endpoint in self.DETACH_ITEM_TYPE_TO_ENDPOINT.items():
+            if file_type in file_path:
+                endpoint = file_endpoint
+                break
+        endpoint = endpoint.replace(':id', file_id)
+
+        try:
+            self.client.generic_request(endpoint, "POST")
+            click.secho(f'\nFile: {file_id} was detached', fg='green')
+        except Exception as e:
+            raise Exception(f'Exception raised when fetching custom content:\n{e}')
+
+    def extract_items_from_dir(self):
+        detach_files_list: list = []
+
+        all_files = glob.glob(f'{self.file_path}/**/*', recursive=True)
+        for file_path in all_files:
+            if os.path.isfile(file_path) and self.is_valid_file_for_detach(file_path):
+                file_type = self.find_item_type_to_detach(file_path)
+                file_data = get_file(file_path, file_type)
+                file_id = file_data.get('id')
+                if file_id:
+                    detach_files_list.append({'file_id': file_id, 'file_type': file_type, 'file_path': file_path})
+        return detach_files_list
+
+    def is_valid_file_for_detach(self, file_path: str) -> bool:
+        for file in self.VALID_FILES_FOR_DETACH:
+            if file in file_path and (file_path.endswith('yml') or file_path.endswith('json')):
+                return True
+        return False
+
+    def find_item_type_to_detach(self, file_path) -> str:
+        return 'yml' if 'Playbooks' in file_path or 'Scripts' in file_path else 'json'
+
+    def find_item_id_to_detach(self):
+        file_type = self.find_item_type_to_detach(self.file_path)
+        file_data = get_file(self.file_path, file_type)
+        file_id = file_data.get('id')
+        return file_id
+
+    def detach_item_manager(self, upload_file: bool = False):
+        detach_files_list: list = []
+        if os.path.isdir(self.file_path):
+            detach_files_list = self.extract_items_from_dir()
+            for file in detach_files_list:
+                self.detach_item(file.get('file_id'), file_path=file.get('file_path'))
+                if upload_file:
+                    uploader = Uploader(input=file.get('file_path'))
+                    uploader.upload()
+
+        elif os.path.isfile(self.file_path):
+            file_id = self.find_item_id_to_detach()
+            detach_files_list.append({'file_id': file_id, 'file_path': self.file_path})
+            self.detach_item(file_id=file_id, file_path=self.file_path)
+            if upload_file:
+                uploader = Uploader(input=self.file_path)
+                uploader.upload()
+
+        detached_items_ids = [file.get('file_id') for file in detach_files_list]
+        return detached_items_ids
+
+
+class ItemReattacher:
+
+    def __init__(self, client, file_path: str = ''):
+        self.file_path = file_path
+        self.client = client
+
+    REATTACH_ITEM_TYPE_TO_ENDPOINT: dict = {
+        'IncidentType': '/incidenttype/attach/:id',
+        'Layouts': '/layout/:id/attach',
+        'Playbooks': '/playbook/attach/:id',
+        'Automations': '/automation/attach/:id',
+    }
+
+    def download_all_detach_supported_items(self) -> dict:
+        all_detach_supported_items: dict = {}
+        yml_req_body = {"query": "system:T"}
+
+        for endpoint in ['/playbook/search', '/automation/search']:
+            res = self.client.generic_request(endpoint, 'POST', body=yml_req_body)
+            res_result = ast.literal_eval(res[0])
+            if 'playbook' in endpoint:
+                all_detach_supported_items['Playbooks'] = res_result.get('playbooks')
+            else:
+                all_detach_supported_items['Automations'] = res_result.get('scripts')
+
+        for item_type in ['IncidentType', 'Layouts']:
+            endpoint = item_type.lower()
+            res = self.client.generic_request(endpoint, 'GET')
+            all_detach_supported_items[item_type] = ast.literal_eval(res[0])
+
+        return all_detach_supported_items
+
+    def reattach_item(self, item_id, item_type):
+        endpoint: str = self.REATTACH_ITEM_TYPE_TO_ENDPOINT[item_type]
+        endpoint = endpoint.replace(':id', item_id)
+        try:
+            self.client.generic_request(endpoint, 'POST')
+            click.secho(f'\n{item_type}: {item_id} was reattached', fg='green')
+        except Exception as e:
+            raise Exception(f'Exception raised when fetching custom content:\n{e}')
+
+    def reattach_item_manager(self, detached_files_ids=None):
+        if not self.file_path and detached_files_ids:
+            all_files: dict = self.download_all_detach_supported_items()
+            for item_type, item_list in all_files.items():
+                for item in item_list:
+                    if not item.get('detached', '') or item.get('detached', '') == 'false':
+                        continue
+                    item_id = item.get('id')
+                    if item_id and item_id not in detached_files_ids:
+                        self.reattach_item(item_id, item_type)

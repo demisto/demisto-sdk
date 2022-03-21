@@ -1,25 +1,26 @@
-from demisto_sdk.commands.common.constants import PACKS_DIR, PARSING_RULES_DIR
 from demisto_sdk.commands.common.content.objects.pack_objects import \
     ParsingRule
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
-from demisto_sdk.commands.common.tools import src_root
-
-TEST_DATA = src_root() / 'tests' / 'test_files'
-TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
-PARSING_RULE = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / PARSING_RULES_DIR / 'parsingrule-sample.yml'
-PARSING_RULE_BAD = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / PARSING_RULES_DIR / 'sample_bad.yml'
-PARSING_RULE_BAD_NORMALIZED = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / PARSING_RULES_DIR / 'parsingrule-sample_bad.yml'
 
 
-def test_objects_factory():
-    obj = path_to_pack_object(PARSING_RULE)
+def get_parsing_rule(pack, name):
+    return pack.create_parsing_rule(name, {"id": "parsing_rule_id", "rules": "", "name": "parsing_rule_name"})
+
+
+def test_objects_factory(pack):
+    parsing_rule = get_parsing_rule(pack, 'parsing_rule_name')
+    obj = path_to_pack_object(parsing_rule.parsing_rule_tmp_path)
     assert isinstance(obj, ParsingRule)
 
 
-def test_prefix():
-    obj = ParsingRule(PARSING_RULE)
-    assert obj.normalize_file_name() == PARSING_RULE.name
+def test_prefix(pack):
+    parsing_rule = get_parsing_rule(pack, 'parsingrule-parsing_rule_name')
 
-    obj = ParsingRule(PARSING_RULE_BAD)
-    assert obj.normalize_file_name() == PARSING_RULE_BAD_NORMALIZED.name
+    obj = ParsingRule(parsing_rule.parsing_rule_tmp_path)
+    assert obj.normalize_file_name() == parsing_rule.parsing_rule_tmp_path.name
+
+    parsing_rule = get_parsing_rule(pack, 'parsing_rule_name')
+
+    obj = ParsingRule(parsing_rule.parsing_rule_tmp_path)
+    assert obj.normalize_file_name() == f"parsingrule-{parsing_rule.parsing_rule_tmp_path.name}"

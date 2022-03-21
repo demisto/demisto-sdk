@@ -8,15 +8,21 @@ from demisto_sdk.commands.common.constants import (CORRELATION_RULES_DIR,
                                                    TRIGGER_DIR,
                                                    XSIAM_DASHBOARDS_DIR,
                                                    XSIAM_REPORTS_DIR)
+from TestSuite.correlation_rule import CorrelationRule
 from TestSuite.file import File
 from TestSuite.integration import Integration
 from TestSuite.job import Job
 from TestSuite.json_based import JSONBased
+from TestSuite.modeling_rule import ModelingRule
+from TestSuite.parsing_rule import ParsingRule
 from TestSuite.playbook import Playbook
 from TestSuite.script import Script
 from TestSuite.secrets import Secrets
 from TestSuite.test_tools import suite_join_path
 from TestSuite.text_based import TextBased
+from TestSuite.trigger import Trigger
+from TestSuite.xsiam_dashboard import XSIAMDashboard
+from TestSuite.xsiam_report import XSIAMReport
 from TestSuite.yml import YAML
 
 
@@ -529,32 +535,32 @@ class Pack:
         self.contributors = contributors
         return contributors
 
-    def create_parsing_rule(self, name, content: dict = {}) -> YAML:
-        parsing_rule = self._create_yaml_based(name, self._parsing_rules_path, content)
+    def create_parsing_rule(self, name, content: dict = {}) -> ParsingRule:
+        parsing_rule = ParsingRule(name, self._parsing_rules_path, self.repo_path, content)
         self.parsing_rules.append(parsing_rule)
         return parsing_rule
 
-    def create_modeling_rule(self, name, content: dict = {}) -> YAML:
-        modeling_rule = self._create_yaml_based(name, self._modeling_rules_path, content)
+    def create_modeling_rule(self, name, content: dict = {}) -> ModelingRule:
+        modeling_rule = ModelingRule(name, self._modeling_rules_path, self.repo_path, content)
         self.modeling_rules.append(modeling_rule)
         return modeling_rule
 
-    def create_correlation_rule(self, name, content: dict = {}) -> YAML:
-        correlation_rule = self._create_yaml_based(name, self._correlation_rules_path, content)
+    def create_correlation_rule(self, name, content: dict = {}) -> CorrelationRule:
+        correlation_rule = CorrelationRule(name, self._correlation_rules_path, self.repo_path, content)
         self.correlation_rules.append(correlation_rule)
         return correlation_rule
 
-    def create_xsiam_dashboard(self, name, content: dict = {}) -> JSONBased:
-        xsiam_dashboard = self._create_json_based(name, prefix="", content=content, dir_path=self._xsiam_dashboards_path)
+    def create_xsiam_dashboard(self, name, content: dict = {}) -> XSIAMDashboard:
+        xsiam_dashboard = XSIAMDashboard(name, self._xsiam_dashboards_path, content)
         self.xsiam_dashboards.append(xsiam_dashboard)
         return xsiam_dashboard
 
-    def create_xsiam_report(self, name, content: dict = {}) -> JSONBased:
-        xsiam_report = self._create_json_based(name, prefix="", content=content, dir_path=self._xsiam_reports_path)
+    def create_xsiam_report(self, name, content: dict = {}) -> XSIAMReport:
+        xsiam_report = XSIAMReport(name, self._xsiam_reports_path, content)
         self.xsiam_reports.append(xsiam_report)
         return xsiam_report
 
-    def create_trigger(self, name, content: dict = {}) -> JSONBased:
-        trigger = self._create_json_based(name, prefix="", content=content, dir_path=self._triggers_path)
+    def create_trigger(self, name, content: dict = {}) -> Trigger:
+        trigger = Trigger(name, self._triggers_path, content)
         self.triggers.append(trigger)
         return trigger

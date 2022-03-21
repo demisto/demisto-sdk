@@ -1,25 +1,26 @@
-from demisto_sdk.commands.common.constants import MODELING_RULES_DIR, PACKS_DIR
 from demisto_sdk.commands.common.content.objects.pack_objects import \
     ModelingRule
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
-from demisto_sdk.commands.common.tools import src_root
-
-TEST_DATA = src_root() / 'tests' / 'test_files'
-TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
-MODELING_RULE = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / MODELING_RULES_DIR / 'modelingrule-sample.yml'
-MODELING_RULE_BAD = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / MODELING_RULES_DIR / 'sample_bad.yml'
-MODELING_RULE_BAD_NORMALIZED = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / MODELING_RULES_DIR / 'modelingrule-sample_bad.yml'
 
 
-def test_objects_factory():
-    obj = path_to_pack_object(MODELING_RULE)
+def get_modeling_rule(pack, name):
+    return pack.create_modeling_rule(name, {"id": "modeling_rule_id", "rules": "", "name": "modeling_rule_name"})
+
+
+def test_objects_factory(pack):
+    modeling_rule = get_modeling_rule(pack, 'modeling_rule_name')
+    obj = path_to_pack_object(modeling_rule.modeling_rule_tmp_path)
     assert isinstance(obj, ModelingRule)
 
 
-def test_prefix():
-    obj = ModelingRule(MODELING_RULE)
-    assert obj.normalize_file_name() == MODELING_RULE.name
+def test_prefix(pack):
+    modeling_rule = get_modeling_rule(pack, 'modelingrule-modeling_rule_name')
 
-    obj = ModelingRule(MODELING_RULE_BAD)
-    assert obj.normalize_file_name() == MODELING_RULE_BAD_NORMALIZED.name
+    obj = ModelingRule(modeling_rule.modeling_rule_tmp_path)
+    assert obj.normalize_file_name() == modeling_rule.modeling_rule_tmp_path.name
+
+    modeling_rule = get_modeling_rule(pack, 'modeling_rule_name')
+
+    obj = ModelingRule(modeling_rule.modeling_rule_tmp_path)
+    assert obj.normalize_file_name() == f"modelingrule-{modeling_rule.modeling_rule_tmp_path.name}"

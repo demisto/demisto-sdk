@@ -213,7 +213,7 @@ class Repo:
         pack.create_job(is_feed=False, name=name)
         pack.create_job(is_feed=True, name=f'{name}_all_feeds')
 
-        if marketplaces == ['marketplacev2']:
+        if 'marketplacev2' in marketplaces:
             pack.create_parsing_rule(f'{name}_parsingrule', {"id": "parsing_rule_id", "rules": "", "name": "parsing_rule_name"})
             pack.create_modeling_rule(f'{name}_modelingrule', {"id": "modeling_rule_id", "rules": "", "name": "modeling_rule_name"})
             pack.create_correlation_rule(f'{name}_correlationrule', {"global_rule_id": "correlation_rule_id",

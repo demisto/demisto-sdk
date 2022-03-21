@@ -10,7 +10,9 @@ class XSIAMReport(JSONBased):
 
         super().__init__(xsiam_report_dir_path, name, '')
 
-        if not json_content:
+        if json_content:
+            self.write_json(json_content)
+        else:
             self.create_default_xsiam_report()
 
     def create_default_xsiam_report(self):

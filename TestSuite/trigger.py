@@ -10,7 +10,9 @@ class Trigger(JSONBased):
 
         super().__init__(trigger_dir_path, name, '')
 
-        if not json_content:
+        if json_content:
+            self.write_json(json_content)
+        else:
             self.create_default_trigger()
 
     def create_default_trigger(self):

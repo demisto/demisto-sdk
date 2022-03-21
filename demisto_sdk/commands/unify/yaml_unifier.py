@@ -49,8 +49,7 @@ class YAMLUnifier(ABC):
             print_error(UNSUPPORTED_INPUT_ERR_MSG)
 
         self.package_path = input
-        if self.package_path.endswith(os.sep):
-            self.package_path = self.package_path.rstrip(os.sep)
+        self.package_path = self.package_path.rstrip(os.sep)
 
         self.use_force = force
         self.dest_path = output

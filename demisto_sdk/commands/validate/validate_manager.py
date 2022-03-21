@@ -1207,7 +1207,6 @@ class ValidateManager:
                     file_dict = get_file(file, find_type(file))
                     if deleted_file_id == _get_file_id(file, file_dict):
                         return True
-
         return False
 
     def validate_deleted_files(self, deleted_files, added_files) -> bool:

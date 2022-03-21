@@ -2,6 +2,7 @@ import json
 import os
 import sys
 from io import StringIO
+from pathlib import Path
 from shutil import copyfile
 from typing import Any, List, Optional, Type, Union
 
@@ -78,7 +79,7 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
-from pathlib import PosixPath
+
 
 class TestValidators:
     CREATED_DIRS = list()  # type: list[str]
@@ -1804,7 +1805,7 @@ def test_job_unexpected_field_values_in_non_feed_job(repo, capsys,
                           (set(), "", True, set()),
                           ({'doc_files/image.png'}, "", True, set()),
                           ({'mock_playbook.yml'}, "", True, {'renamed_mock_playbook.yml'}),
-                          ({PosixPath('mock_playbook.yml')}, "", True, {PosixPath('renamed_mock_playbook.yml')}),))
+                          ({Path('mock_playbook.yml')}, "", True, {Path('renamed_mock_playbook.yml')})))
 def test_validate_deleted_files(capsys, file_set, expected_output, expected_result, added_files, mocker):
     """
     Given

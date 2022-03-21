@@ -112,6 +112,7 @@ class FileType(Enum):
     AUTHOR_IMAGE = 'author_image'
     DOC_IMAGE = 'doc_image'
     PYTHON_FILE = 'pythonfile'
+    XIF_FILE = 'xiffile'
     JAVASCRIPT_FILE = 'javascriptfile'
     POWERSHELL_FILE = 'powershellfile'
     CONF_JSON = 'confjson'
@@ -128,13 +129,13 @@ class FileType(Enum):
     PRE_PROCESS_RULES = 'pre-process-rule'
     LISTS = 'list'
     JOB = 'job'
+    BUILD_CONFIG_FILE = 'build-config-file'
     PARSING_RULE = 'parsingrule'
     MODELING_RULE = 'modelingrule'
     CORRELATION_RULE = 'correlationrule'
     XSIAM_DASHBOARD = 'xsiamdashboard'
     XSIAM_REPORT = 'xsiamreport'
     TRIGGER = 'trigger'
-
 
 RN_HEADER_BY_FILE_TYPE = {
     FileType.PLAYBOOK: 'Playbooks',
@@ -189,6 +190,15 @@ ENTITY_TYPE_TO_DIR = {
     FileType.LISTS.value: LISTS_DIR,
     FileType.JOB.value: JOBS_DIR
 }
+
+SIEM_ONLY_ENTITIES = [
+    FileType.PARSING_RULE.value,
+    FileType.MODELING_RULE.value,
+    FileType.CORRELATION_RULE.value,
+    FileType.XSIAM_DASHBOARD.value,
+    FileType.XSIAM_REPORT.value,
+    FileType.TRIGGER.value
+]
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
 

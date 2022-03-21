@@ -44,10 +44,10 @@ from demisto_sdk.commands.common.constants import (
     PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PARSING_RULES_DIR, PLAYBOOKS_DIR,
     PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
-    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TRIGGER_DIR, TYPE_PWSH, UNRELEASE_HEADER,
-    UUID_REGEX, WIDGETS_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR,
-    XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys, IdSetKeys,
-    MarketplaceVersions, urljoin)
+    SCRIPTS_DIR, SIEM_ONLY_ENTITIES, TEST_PLAYBOOKS_DIR, TRIGGER_DIR,
+    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSIAM_DASHBOARDS_DIR,
+    XSIAM_REPORTS_DIR, XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys,
+    IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
                                                             GitProvider)
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -1130,8 +1130,14 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
     if path.suffix == '.js':
         return FileType.JAVASCRIPT_FILE
 
+    if path.suffix == '.xif':
+        return FileType.XIF_FILE
+
     if path.name.endswith(XSOAR_CONFIG_FILE):
         return FileType.XSOAR_CONFIG
+
+    if path.suffix == '.yml' and (path.parts[0] == '.circleci' or path.parts[0] == '.gitlab'):
+        return FileType.BUILD_CONFIG_FILE
 
     return None
 
@@ -2267,9 +2273,13 @@ def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[st
         item_path: the item path.
         item_data: the item data.
         packs: the pack mapping from the ID set.
+        item_type: The item type.
 
     Returns: the list of supporting marketplaces.
     """
+
+    if item_type and item_type in SIEM_ONLY_ENTITIES:
+        return [MarketplaceVersions.MarketplaceV2.value]
 
     if not item_data:
         file_type = Path(item_path).suffix

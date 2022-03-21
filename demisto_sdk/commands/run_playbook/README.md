@@ -3,18 +3,23 @@
 **Run a playbook in a given Demisto instance.**
 **This command creates a new instance in Demisto and runs the given playbook.**
 
-* In order to run the command, `DEMISTO_API_KEY` environment variable should contain a valid Demisto API Key.
-* You can either specify a URL as an environment variable named: `DEMISTO_BASE_URL`, or enter it as an argument.
-* And to use the command on Cortex XSIAM need to set `XSIAM_AUTH_ID` environment variable.
-    
+In order to run the command, `DEMISTO_BASE_URL` environment variable should contain the Cortex XSOAR/XSIAM instance URL,
+and `DEMISTO_API_KEY` environment variable should contain a valid Cortex XSOAR/XSIAM API Key.
+To use the command on Cortex XSIAM the `XSIAM_AUTH_ID` environment variable should also be set.
 To set the environment variables, run the following shell commands:
 ```
 export DEMISTO_BASE_URL=<YOUR_DESMISTO_BASE_URL>
 export DEMISTO_API_KEY=<YOUR_DEMISTO_API_KEY>
 ```
-and on Cortex XSIAM
+and for Cortex XSIAM
 ```
 export XSIAM_AUTH_ID=<THE_XSIAM_AUTH_ID>
+```
+Note!
+As long as `XSIAM_AUTH_ID` environment variable is set, SDK commands will be configured to work with an XSIAM instance.
+In order to set Demisto SDK to work with Cortex XSOAR instance, you need to delete the XSIAM_AUTH_ID parameter from your environment.
+```bash
+unset XSIAM_AUTH_ID
 ```
 
 **Arguments**:

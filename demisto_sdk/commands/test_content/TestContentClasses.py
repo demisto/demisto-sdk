@@ -2037,6 +2037,7 @@ class ServerContext:
             del self.client
         self.client = demisto_client.configure(base_url=self.server_url,
                                                api_key=self.build_context.api_key,
+                                               auth_id=self.build_context.auth_id,
                                                verify_ssl=False)
 
     def _reset_containers(self):

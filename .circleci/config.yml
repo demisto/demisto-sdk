@@ -17,7 +17,7 @@ parameters:
     default: "5.0.1"
   cache-version:
     type: string
-    default: v3
+    default: v3  # Change this parameter to clear cache.
   global-docker-image:
     type: string
     default: cimg/python:3.10.2-node
@@ -47,6 +47,11 @@ references:
                 name: export demisto-sdk to path
                 command: echo 'export PYTHONPATH="${PYTHONPATH}:${HOME}/project"' >> $BASH_ENV
       - <<: *install_node_ci
+
+    install_build_dependencies: &install_build_dependencies
+      - python/install-packages: 
+                pkg-manager: "pip"
+                pip-dependency-file: "requirements-build.txt"
 
 jobs:
   pytest:
@@ -90,14 +95,23 @@ jobs:
         - checkout
         - attach_workspace:
             at: ~/project
-        - python/install-packages:
-            pkg-manager: "pip"
-            pip-dependency-file: "requirements-pre-commit.txt"
+        - <<: *install_build_dependencies
+        - run:
+            command: |
+              cp .pre-commit-config.yaml pre-commit-cache-key.txt
+              python --version --version >> pre-commit-cache-key.txt
+        - restore_cache:
+            keys:
+            - v1-pc-cache-{{ checksum "pre-commit-cache-key.txt" }}
         - run:
             name: Pre-commit
             command: |
               pre-commit --version
               pre-commit run -a
+        - save_cache:
+            key: v1-pc-cache-{{ checksum "pre-commit-cache-key.txt" }}
+            paths:
+              - ~/.cache/pre-commit
 
   checkout-content:
       docker:
@@ -123,9 +137,7 @@ jobs:
         - attach_workspace:
             at: ~/project
         - <<: *install_demisto_sdk
-        - python/install-packages:
-            pkg-manager: "pip"
-            pip-dependency-file: "requirements-gsutil.txt"
+        - <<: *install_build_dependencies
         - <<: *install_node_ci
         - run:
             name: Set Up & Create Id Set

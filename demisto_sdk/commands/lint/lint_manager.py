@@ -89,7 +89,7 @@ class LintManager:
                 print(f'Found {Colors.Fg.cyan}{len(dependent_on_api_module)}{Colors.reset} dependent packages. '
                       f'Executing lint and test on those as well.')
             else:
-                print("No dependent packages found.")
+                print('No dependent packages found.')
         if json_file_path:
             if os.path.isdir(json_file_path):
                 json_file_path = os.path.join(json_file_path, 'lint_outputs.json')

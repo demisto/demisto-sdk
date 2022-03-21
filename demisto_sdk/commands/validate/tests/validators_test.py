@@ -2,6 +2,7 @@ import json
 import os
 import sys
 from io import StringIO
+from pathlib import Path
 from shutil import copyfile
 from typing import Any, List, Optional, Type, Union
 
@@ -1803,7 +1804,8 @@ def test_job_unexpected_field_values_in_non_feed_job(repo, capsys,
                          (({'mock_file_description.md'}, "[BA115]", False, set()),
                           (set(), "", True, set()),
                           ({'doc_files/image.png'}, "", True, set()),
-                          ({'mock_playbook.yml'}, "", True, {'renamed_mock_playbook.yml'})))
+                          ({'mock_playbook.yml'}, "", True, {'renamed_mock_playbook.yml'}),
+                          ({Path('mock_playbook.yml')}, "", True, {Path('renamed_mock_playbook.yml')})))
 def test_validate_deleted_files(capsys, file_set, expected_output, expected_result, added_files, mocker):
     """
     Given

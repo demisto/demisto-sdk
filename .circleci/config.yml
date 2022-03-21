@@ -60,6 +60,7 @@ jobs:
           type: string
       docker:
         - image: cimg/python:<< parameters.pythonversion >>-node
+      parallelism: 4
       steps:
         - checkout
         - python/install-packages:

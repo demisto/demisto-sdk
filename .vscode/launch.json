@@ -6,7 +6,7 @@
             "type": "python",
             "request": "launch",
             "module": "demisto_sdk",
-            "cwd": "${env:CONTENT}",
+            "cwd": "${env:CONTENT}", // Predefine the CONTENT variable in your environment first!
             "args": [
                 "upload",
                 "-i",
@@ -18,7 +18,7 @@
             "type": "python",
             "request": "launch",
             "module": "demisto_sdk",
-            "cwd": "${env:CONTENT}",
+            "cwd": "${env:CONTENT}",  // Predefine the CONTENT variable in your environment first!
             "args": [
                 "lint",
                 "-i",

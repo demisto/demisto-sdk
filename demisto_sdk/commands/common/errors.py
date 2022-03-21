@@ -22,9 +22,10 @@ ALLOWED_IGNORE_ERRORS = [
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107',
-    'RM100', 'RM102', 'RM104', 'RM106',
+    'RM100', 'RM102', 'RM104', 'RM106', 'RM108',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
+    'IM111'
 ]
 
 PRESET_ERROR_TO_IGNORE = {
@@ -52,6 +53,8 @@ ERROR_CODE = {
     'entity_name_contains_excluded_word': {'code': 'BA111', 'ui_applicable': False, 'related_field': ''},
     "spaces_in_the_end_of_id": {'code': "BA112", 'ui_applicable': False, 'related_field': 'id'},
     "spaces_in_the_end_of_name": {'code': "BA113", 'ui_applicable': False, 'related_field': 'name'},
+    "changed_pack_name": {'code': "BA114", 'ui_applicable': False, 'related_field': 'name'},
+    "file_cannot_be_deleted": {'code': "BA115", 'ui_applicable': False, 'related_field': ''},
 
     # BC - Backward Compatible
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -147,6 +150,8 @@ ERROR_CODE = {
                                                        'related_field': 'unsearchable'},
     'select_values_cannot_contain_empty_values': {'code': "IF116", 'ui_applicable': False,
                                                   'related_field': 'selectValues'},
+    "invalid_marketplaces_in_alias": {'code': "IF117", 'ui_applicable': False, 'related_field': 'Aliases'},
+    "aliases_with_inner_alias": {'code': "IF118", 'ui_applicable': False, 'related_field': 'Aliases'},
 
     # IM - Images
     "no_image_given": {'code': "IM100", 'ui_applicable': True, 'related_field': 'image'},
@@ -159,6 +164,8 @@ ERROR_CODE = {
     "invalid_image_name": {'code': "IM107", 'ui_applicable': False, 'related_field': 'image'},
     "image_is_empty": {'code': "IM108", 'ui_applicable': True, 'related_field': 'image'},
     "author_image_is_missing": {'code': "IM109", 'ui_applicable': True, 'related_field': 'image'},
+    "invalid_image_name_or_location": {'code': "IM110", 'ui_applicable': True, 'related_field': 'image'},
+    "invalid_image_dimensions": {'code': "IM111", 'ui_applicable': True, 'related_field': 'image'},
 
     # IN - Integrations
     "wrong_display_name": {'code': "IN100", 'ui_applicable': True, 'related_field': '<parameter-name>.display'},
@@ -218,6 +225,8 @@ ERROR_CODE = {
     "fromlicense_in_parameters": {'code': "IN146", 'ui_applicable': True,
                                   'related_field': '<parameter-name>.fromlicense'},
     "changed_integration_yml_fields": {'code': "IN147", "ui_applicable": False, 'related_field': 'script'},
+    "parameter_is_malformed": {'code': "IN148", 'ui_applicable': False, 'related_field': 'configuration'},
+    'empty_outputs_common_paths': {'code': 'IN149', 'ui_applicable': False, 'related_field': 'contextOutput'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -282,6 +291,7 @@ ERROR_CODE = {
     "metadata_url_invalid": {'code': "PA127", 'ui_applicable': False, 'related_field': ''},
     "required_pack_file_does_not_exist": {'code': "PA128", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_missing_categories": {'code': "PA129", 'ui_applicable': False, 'related_field': ''},
+    "wrong_version_format": {'code': "PA130", 'ui_applicable': False, 'related_field': ''},
 
     # PB - Playbooks
     "playbook_cant_have_rolename": {'code': "PB100", 'ui_applicable': True, 'related_field': 'rolename'},
@@ -320,6 +330,7 @@ ERROR_CODE = {
     "readme_contains_demisto_word": {'code': "RM106", 'ui_applicable': False, 'related_field': ''},
     "template_sentence_in_readme": {'code': "RM107", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
+    "missing_readme_file": {'code': "RM109", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -333,6 +344,7 @@ ERROR_CODE = {
     "added_release_notes_for_new_pack": {'code': "RN108", 'ui_applicable': False, 'related_field': ''},
     "modified_existing_release_notes": {'code': "RN109", 'ui_applicable': False, 'related_field': ''},
     "release_notes_config_file_missing_release_notes": {'code': "RN110", 'ui_applicable': False, 'related_field': ''},
+    "release_notes_docker_image_not_match_yaml": {'code': "RN111", 'ui_applicable': False, 'related_field': ''},
 
     # RP - Reputations (Indicator Types)
     "wrong_version_reputations": {'code': "RP100", 'ui_applicable': False, 'related_field': 'version'},
@@ -424,6 +436,11 @@ def error_code_decorator(func, *args, **kwargs):
 
 class Errors:
     BACKWARDS = "Possible backwards compatibility break"
+
+    @staticmethod
+    @error_code_decorator
+    def file_cannot_be_deleted(file_path: str):
+        return f"The file {file_path} cannot be deleted. Please restore the file."
 
     @staticmethod
     def suggest_fix(file_path: str, *args: Any, cmd: str = 'format') -> str:
@@ -706,8 +723,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def parameter_missing_from_yml(name, correct_format):
-        return f'A required parameter "{name}" is missing or malformed ' \
+    def parameter_missing_from_yml(name):
+        return f'A required parameter "{name}" is missing from the YAML file.'
+
+    @staticmethod
+    @error_code_decorator
+    def parameter_is_malformed(name, correct_format):
+        return f'A required parameter "{name}" is malformed ' \
                f'in the YAML file.\nThe correct format of the parameter should ' \
                f'be as follows:\n{correct_format}'
 
@@ -1032,6 +1054,22 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def invalid_image_name_or_location():
+        return "The image file name or location is invalid\n" \
+               "If you're trying to add an integration image, make sure the image name looks like the following:<integration_name>_image.png and located in" \
+               "your integration folder: Packs/<MyPack>/Integrations/<MyIntegration>. For more info: " \
+               "https://xsoar.pan.dev/docs/integrations/package-dir#the-directory-structure-is-as-follows.\n" \
+               "If you're trying to add author image, make sure the image name looks like the following: Author_image.png and located in the pack root path." \
+               "For more info: https://xsoar.pan.dev/docs/packs/packs-format#author_imagepng\n" \
+               "Otherwise, any other image should be located under the 'Doc_files' dir."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_image_dimensions(width: int, height: int):
+        return f'The image dimensions are {width}x{height}. The requirements are 120x50.'
+
+    @staticmethod
+    @error_code_decorator
     def description_missing_from_conf_json(problematic_instances):
         return "Those instances don't have description:\n{}".format('\n'.join(problematic_instances))
 
@@ -1096,9 +1134,9 @@ class Errors:
     @error_code_decorator
     def release_notes_file_empty():
         return "Your release notes file is empty, please complete it\nHaving empty release notes " \
-               "looks bad in the product UI.\nIf the change you made was minor, please use " \
-               "\"Maintenance and stability enhancements.\" for general changes, or use " \
-               "\"Documentation and metadata improvements.\" for changes to documentation."
+               "looks bad in the product UI.\nMake sure the release notes explicitly describe what changes were made, even if they are minor.\n" \
+               "For changes to documentation you can use " \
+               "\"Documentation and metadata improvements.\" "
 
     @staticmethod
     @error_code_decorator
@@ -1142,6 +1180,17 @@ class Errors:
     def release_notes_config_file_missing_release_notes(config_rn_path: str):
         return f'Release notes config file {config_rn_path} is missing corresponding release notes file.\n' \
                f'''Please add release notes file: {config_rn_path.replace('json', 'md')}'''
+
+    @staticmethod
+    @error_code_decorator
+    def release_notes_docker_image_not_match_yaml(rn_file_name, un_matching_files_list: list, pack_path):
+        message_to_return = f'The {rn_file_name} release notes file contains incompatible Docker images:\n'
+        for un_matching_file in un_matching_files_list:
+            message_to_return += f"- {un_matching_file.get('name')}: Release notes file has dockerimage: " \
+                                 f"{un_matching_file.get('rn_version')} but the YML file has dockerimage: " \
+                                 f"{un_matching_file.get('yml_version')}\n"
+        message_to_return += "To fix this please run: 'demisto-sdk update-release-notes -i {pack_path}'"
+        return message_to_return
 
     @staticmethod
     @error_code_decorator
@@ -1590,7 +1639,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def empty_readme_error():
-        return 'README.md is empty'
+        return "Pack writen by a partner or pack containing playbooks must have a full README.md file" \
+               "with pack information. Please refer to https://xsoar.pan.dev/docs/documentation/pack-docs#pack-readme " \
+               "for more information"
 
     @staticmethod
     @error_code_decorator
@@ -2072,7 +2123,7 @@ class Errors:
                f"You can use the pack name or one of the prefixes found in the itemPrefix field in the pack_metadata. " \
                f"Example: {pack_prefix} {field_name}.\n" \
                f"Also make sure to update the field id and cliName accordingly. " \
-               f"Example: cliName: {pack_prefix.replace(' ', '')}{field_name.replace(' ', '')}, "
+               f"Example: cliName: {pack_prefix.replace(' ', '').lower()}{field_name.replace(' ', '')}, "
 
     @staticmethod
     @error_code_decorator
@@ -2114,5 +2165,40 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_yml_file(error):
-        return f'There is problem with the yml file. The error: {error}'
+    def changed_pack_name(original_name):
+        return f'Pack folder names cannot be changed, please rename it back to {original_name}.' \
+               f' If you wish to rename the pack, you can edit the name field in pack_metadata.json,' \
+               f' and the pack will be shown in the Marketplace accordingly.\n' \
+               f"If the file wasn't renamed, try pulling changes from master and re-run validations"
+
+    @staticmethod
+    @error_code_decorator
+    def wrong_version_format():
+        return 'Pack metadata version format is not valid. Please fill in a valid format (example: 0.0.0)'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_marketplaces_in_alias(invalid_aliases: List[str]):
+        return 'The following fields exist as aliases and have invalid "marketplaces" key value:' \
+               f'\n{invalid_aliases}\n' \
+               'the value of the "marketplaces" key in these fields should be ["xsoar"].'
+
+    @staticmethod
+    @error_code_decorator
+    def aliases_with_inner_alias(invalid_aliases: List[str]):
+        return "The following fields exist as aliases and therefore cannot contain an 'Aliases' key." \
+               f"\n{invalid_aliases}\n" \
+               "Please remove the key from the fields or removed the fields from the other field's Aliases list."
+
+    @staticmethod
+    @error_code_decorator
+    def missing_readme_file(location):
+        return f'{location} is missing a README file'
+
+    @staticmethod
+    @error_code_decorator
+    def empty_outputs_common_paths(paths: Dict[str, List[str]], yaml_path: str):
+        commands_str = '\n'.join(f'{command}:\t' + ", ".join(outputs) for command, outputs in paths.items())
+
+        return f"The following command outputs are missing: \n{commands_str}\n" \
+               f"please type them or run demisto-sdk format -i {yaml_path}"

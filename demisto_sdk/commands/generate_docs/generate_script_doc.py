@@ -139,9 +139,11 @@ def get_script_info(script_path):
     tags = ', '.join(map(str, tags))
 
     from_version = get_from_version(script_path)
-
-    res = [{'Name': 'Script Type', 'Description': script_type},
-           {'Name': 'Tags', 'Description': tags}]
+    res = []
+    if script_type:
+        res.append({'Name': 'Script Type', 'Description': script_type})
+    if tags:
+        res.append({'Name': 'Tags', 'Description': tags})
     if from_version != DEFAULT_CONTENT_ITEM_FROM_VERSION:
         res.append({'Name': 'Cortex XSOAR Version', 'Description': from_version})
     return res

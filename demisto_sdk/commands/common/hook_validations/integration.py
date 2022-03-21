@@ -1,24 +1,24 @@
+import json
 import os
 import re
 from pathlib import Path
 from typing import Dict, Optional
 
-import yaml
-
 from demisto_sdk.commands.common.constants import (
-    BANG_COMMAND_ARGS_MAPPING_DICT, BANG_COMMAND_NAMES, DBOT_SCORES_DICT,
-    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEPRECATED_REGEXES,
-    ENDPOINT_COMMAND_NAME, ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
-    FEED_REQUIRED_PARAMS, FETCH_REQUIRED_PARAMS, FIRST_FETCH,
-    FIRST_FETCH_PARAM, INTEGRATION_CATEGORIES, IOC_OUTPUTS_DICT, MAX_FETCH,
-    MAX_FETCH_PARAM, PACKS_DIR, PACKS_PACK_META_FILE_NAME, PYTHON_SUBTYPES,
-    REPUTATION_COMMAND_NAMES, TYPE_PWSH, XSOAR_CONTEXT_STANDARD_URL,
-    XSOAR_SUPPORT)
+    ALERT_FETCH_REQUIRED_PARAMS, BANG_COMMAND_ARGS_MAPPING_DICT,
+    BANG_COMMAND_NAMES, DBOT_SCORES_DICT, DEFAULT_CONTENT_ITEM_FROM_VERSION,
+    DEPRECATED_REGEXES, ENDPOINT_COMMAND_NAME, ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
+    FEED_REQUIRED_PARAMS, FIRST_FETCH, FIRST_FETCH_PARAM,
+    INCIDENT_FETCH_REQUIRED_PARAMS, INTEGRATION_CATEGORIES, IOC_OUTPUTS_DICT,
+    MAX_FETCH, MAX_FETCH_PARAM, PACKS_DIR, PACKS_PACK_META_FILE_NAME,
+    PYTHON_SUBTYPES, REPUTATION_COMMAND_NAMES, TYPE_PWSH,
+    XSOAR_CONTEXT_STANDARD_URL, XSOAR_SUPPORT, MarketplaceVersions)
 from demisto_sdk.commands.common.default_additional_info_loader import \
     load_default_additional_info_dict
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 Errors)
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.description import \
@@ -28,9 +28,10 @@ from demisto_sdk.commands.common.hook_validations.docker import \
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.tools import (
     _get_file_id, compare_context_path_in_yml_and_readme, get_core_pack_list,
-    get_file_version_suffix_if_exists, get_files_in_dir, get_pack_name,
-    is_iron_bank_pack, print_error, server_version_compare)
+    get_file_version_suffix_if_exists, get_files_in_dir, get_item_marketplaces,
+    get_pack_name, is_iron_bank_pack, print_error, server_version_compare)
 
+yaml = YAML_Handler()
 default_additional_info = load_default_additional_info_dict()
 
 
@@ -41,6 +42,12 @@ class IntegrationValidator(ContentEntityValidator):
 
     EXPIRATION_FIELD_TYPE = 17
     ALLOWED_HIDDEN_PARAMS = {'longRunning', 'feedIncremental', 'feedReputation'}
+
+    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
+                 json_file_path=None, validate_all=False):
+        super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
+                         json_file_path=json_file_path, skip_docker_check=skip_docker_check)
+        self.validate_all = validate_all
 
     def is_valid_version(self):
         # type: () -> bool
@@ -81,6 +88,7 @@ class IntegrationValidator(ContentEntityValidator):
         """
         answers = [
             super().is_valid_file(validate_rn),
+            self.validate_readme_exists(self.validate_all),
             self.is_valid_subtype(),
             self.is_valid_default_array_argument_in_reputation_command(),
             self.is_valid_default_argument(),
@@ -107,6 +115,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.name_not_contain_the_type(),
             self.is_valid_endpoint_command(),
             self.is_api_token_in_credential_type(),
+            self.are_common_outputs_with_description(),
         ]
 
         return all(answers)
@@ -900,14 +909,29 @@ class IntegrationValidator(ContentEntityValidator):
         """
         fetch_params_exist = True
         if self.current_file.get('script', {}).get('isfetch') is True:
+
+            # get the iten marketplaces to decide which are the required params
+            # if no marketplaces or xsoar in marketplaces - the required params will be INCIDENT_FETCH_REQUIRED_PARAMS (with Incident type etc. )
+            # otherwise it will be the ALERT_FETCH_REQUIRED_PARAMS (with Alert type etc. )
+            marketplaces = get_item_marketplaces(item_path=self.file_path, item_data=self.current_file)
+            is_xsoar_marketplace = not marketplaces or MarketplaceVersions.XSOAR.value in marketplaces
+            fetch_required_params = INCIDENT_FETCH_REQUIRED_PARAMS if is_xsoar_marketplace else ALERT_FETCH_REQUIRED_PARAMS
             params = [dict.copy(_key) for _key in self.current_file.get('configuration', [])]
             for param in params:
                 if 'defaultvalue' in param:
                     param.pop('defaultvalue')
-            for param in FETCH_REQUIRED_PARAMS:
-                if param not in params:
-                    error_message, error_code = Errors.parameter_missing_from_yml(param.get('name'),
-                                                                                  yaml.dump(param))
+            for fetch_required_param in fetch_required_params:
+                # If this condition returns true, we'll go over the params dict and we'll check if there's a param that match the fetch_required_param name.
+                # If there is one, we know that in the params dict there is a matching param to the fetch_required_param but it has a malformed structure.
+                if fetch_required_param not in params:
+                    error_message = ''
+                    error_code = ''
+                    for param in params:
+                        if param.get('name') == fetch_required_param.get('name'):
+                            error_message, error_code = Errors.parameter_is_malformed(fetch_required_param.get('name'),
+                                                                                      yaml.dumps(fetch_required_param))
+                    if not error_message:
+                        error_message, error_code = Errors.parameter_missing_from_yml(fetch_required_param.get('name'))
                     if self.handle_error(error_message, error_code, file_path=self.file_path,
                                          suggested_fix=Errors.suggest_fix(self.file_path)):
                         fetch_params_exist = False
@@ -934,13 +958,13 @@ class IntegrationValidator(ContentEntityValidator):
 
             if not first_fetch_param:
                 error_message, error_code = Errors.parameter_missing_from_yml_not_community_contributor(
-                    'first_fetch', yaml.dump(FIRST_FETCH_PARAM))
+                    'first_fetch', yaml.dumps(FIRST_FETCH_PARAM))
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     fetch_params_exist = False
 
             if not max_fetch_param:
                 error_message, error_code = Errors.parameter_missing_from_yml_not_community_contributor(
-                    'max_fetch', yaml.dump(MAX_FETCH_PARAM))
+                    'max_fetch', yaml.dumps(MAX_FETCH_PARAM))
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     fetch_params_exist = False
 
@@ -982,7 +1006,7 @@ class IntegrationValidator(ContentEntityValidator):
             if not is_valid:
                 param_structure = dict(equal_key_values, **contained_key_values, name=required_param.get('name'))
                 error_message, error_code = Errors.parameter_missing_for_feed(required_param.get('name'),
-                                                                              yaml.dump(param_structure))
+                                                                              yaml.dumps(param_structure))
                 if self.handle_error(error_message, error_code, file_path=self.file_path,
                                      suggested_fix=Errors.suggest_fix(self.file_path)):
                     params_exist = False
@@ -1429,3 +1453,24 @@ class IntegrationValidator(ContentEntityValidator):
 
         raise Exception('Could not find the pack name of the integration, '
                         'please verify the integration is in a pack')
+
+    def are_common_outputs_with_description(self):
+        defaults = json.loads(
+            (Path(__file__).absolute().parents[2] / 'common/default_output_descriptions.json').read_text())
+
+        missing = {}
+        for command in self.current_file.get('script', {}).get('commands', []):
+            command_missing = []
+            for output in command.get('outputs') or []:  # outputs in some UT are None
+                if output['contextPath'] in defaults and not output.get('description'):
+                    command_missing.append(output['contextPath'])
+
+            if command_missing:
+                missing[command['name']] = command_missing
+
+        if missing:
+            error_message, error_code = Errors.empty_outputs_common_paths(missing, self.file_path)
+            if self.handle_error(error_message, error_code, self.file_path):
+                return False
+
+        return True

@@ -16,14 +16,15 @@ from git import GitCommandError, Repo
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
-    API_MODULES_PACK, EXCLUDED_DISPLAY_NAME_WORDS, PACK_METADATA_CATEGORIES,
-    PACK_METADATA_CERTIFICATION, PACK_METADATA_CREATED,
+    API_MODULES_PACK, EXCLUDED_DISPLAY_NAME_WORDS, INTEGRATIONS_DIR,
+    PACK_METADATA_CATEGORIES, PACK_METADATA_CERTIFICATION,
+    PACK_METADATA_CREATED, PACK_METADATA_CURR_VERSION,
     PACK_METADATA_DEPENDENCIES, PACK_METADATA_DESC, PACK_METADATA_EMAIL,
     PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS, PACK_METADATA_NAME,
     PACK_METADATA_SUPPORT, PACK_METADATA_TAGS, PACK_METADATA_URL,
     PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
-    PACKS_WHITELIST_FILE_NAME)
+    PACKS_WHITELIST_FILE_NAME, VERSION_REGEX)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -96,8 +97,8 @@ class PackUniqueFilesValidator(BaseValidator):
         self.prev_ver = prev_ver
         self.support = support
         self.metadata_content: Dict = dict()
-
     # error handling
+
     def _add_error(self, error: Tuple[str, str], file_path: str, warning=False):
         """Adds error entry to a list under pack's name
         Returns True if added and false otherwise"""
@@ -211,9 +212,9 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def validate_pack_readme_images(self):
         readme_file_path = os.path.join(self.pack_path, self.readme_file)
-        readme_validator = ReadMeValidator(readme_file_path)
-        errors = readme_validator.check_readme_relative_image_paths(is_pack_readme=True) + \
-            readme_validator.check_readme_absolute_image_paths(is_pack_readme=True)
+        readme_validator = ReadMeValidator(readme_file_path, ignored_errors=self.ignored_errors)
+        errors = readme_validator.check_readme_relative_image_paths(is_pack_readme=True)
+        errors += readme_validator.check_readme_absolute_image_paths(is_pack_readme=True)
         if errors:
             self._errors.extend(errors)
             return False
@@ -230,9 +231,11 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def validate_pack_readme_file_is_not_empty(self):
         """
-        Validates that README.md file is not empty for partner packs and packs with use cases
+        Validates that README.md file is not empty for partner packs and packs with playbooks
         """
-        if (self.support == 'partner' or self._contains_use_case()) and self._check_if_file_is_empty(self.readme_file):
+        playbooks_path = os.path.join(self.pack_path, "Playbooks")
+        contains_playbooks = os.path.exists(playbooks_path) and len(os.listdir(playbooks_path)) != 0
+        if (self.support == 'partner' or contains_playbooks) and self._check_if_file_is_empty(self.readme_file):
             if self._add_error(Errors.empty_readme_error(), self.readme_file):
                 return False
 
@@ -294,7 +297,6 @@ class PackUniqueFilesValidator(BaseValidator):
         ]):
             if self.should_version_raise:
                 return self.validate_version_bump()
-
             else:
                 return True
 
@@ -308,10 +310,8 @@ class PackUniqueFilesValidator(BaseValidator):
         current_version = current_meta_file_content.get('currentVersion', '0.0.0')
         if LooseVersion(old_version) < LooseVersion(current_version):
             return True
-
         elif self._add_error(Errors.pack_metadata_version_should_be_raised(self.pack, old_version), metadata_file_path):
             return False
-
         return True
 
     def validate_pack_name(self, metadata_file_content: Dict) -> bool:
@@ -346,6 +346,13 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         lowercase_name = pack_name.lower()
         return not any(excluded_word in lowercase_name for excluded_word in EXCLUDED_DISPLAY_NAME_WORDS)
+
+    def _is_empty_dir(self, dir_path: Path) -> bool:
+        return dir_path.stat().st_size == 0
+
+    def _is_integration_pack(self):
+        integration_dir: Path = Path(self.pack_path) / INTEGRATIONS_DIR
+        return integration_dir.exists() and not self._is_empty_dir(dir_path=integration_dir)
 
     def _is_pack_meta_file_structure_valid(self):
         """Check if pack_metadata.json structure is json parse-able and valid"""
@@ -404,11 +411,12 @@ class PackUniqueFilesValidator(BaseValidator):
                                            self.pack_meta_file):
                             return False
 
-            # check metadata categories isn't an empty list
-            if not metadata[PACK_METADATA_CATEGORIES]:
-                if self._add_error(Errors.pack_metadata_missing_categories(self.pack_meta_file),
-                                   self.pack_meta_file):
-                    return False
+            # check metadata categories isn't an empty list, only if it is an integration.
+            if self._is_integration_pack():
+                if not metadata[PACK_METADATA_CATEGORIES]:
+                    if self._add_error(Errors.pack_metadata_missing_categories(self.pack_meta_file),
+                                       self.pack_meta_file):
+                        return False
 
             # if the field 'certification' exists, check that its value is set to 'certified' or 'verified'
             certification = metadata.get(PACK_METADATA_CERTIFICATION)
@@ -416,6 +424,11 @@ class PackUniqueFilesValidator(BaseValidator):
                 if self._add_error(Errors.pack_metadata_certification_is_invalid(self.pack_meta_file),
                                    self.pack_meta_file):
                     return False
+
+            # check format of metadata version
+            version = metadata.get(PACK_METADATA_CURR_VERSION, '0.0.0')
+            if not self._is_version_format_valid(version):
+                return False
 
         except (ValueError, TypeError):
             if self._add_error(Errors.pack_metadata_isnt_json(self.pack_meta_file), self.pack_meta_file):
@@ -502,6 +515,21 @@ class PackUniqueFilesValidator(BaseValidator):
         except (ValueError, TypeError):
             if self._add_error(Errors.pack_metadata_non_approved_usecases(non_approved_usecases), self.pack_meta_file):
                 return False
+        return True
+
+    def _is_version_format_valid(self, version: str) -> bool:
+        """
+        checks if the meta-data version is in the correct format
+        Args:
+            version (str): The version to check the foramt on
+
+        Returns:
+            bool: True if the version is in the correct format, otherwise false.
+        """
+        match_obj = re.match(VERSION_REGEX, version)
+        if not match_obj:
+            self._add_error(Errors.wrong_version_format(), self.pack_meta_file)
+            return False
         return True
 
     def _is_approved_tags(self) -> bool:

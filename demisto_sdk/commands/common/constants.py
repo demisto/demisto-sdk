@@ -4,9 +4,6 @@ from enum import Enum
 from functools import reduce
 from typing import Dict, List
 
-from demisto_sdk.commands.common.GitContentConfig import \
-    GitContentConfig  # noqa
-
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
 NOT_TEST = '(?!Test)'
 INTEGRATIONS_DIR = 'Integrations'
@@ -938,6 +935,8 @@ class PB_Status:
     FAILED = 'failed'
     IN_PROGRESS = 'inprogress'
     FAILED_DOCKER_TEST = 'failed_docker_test'
+    CONFIGURATION_FAILED = 'failed_configuration'
+    SECOND_PLAYBACK_REQUIRED = 'second_playback_required'
 
 
 # change log regexes
@@ -1073,6 +1072,7 @@ OLDEST_SUPPORTED_VERSION = '5.0.0'
 LAYOUTS_CONTAINERS_OLDEST_SUPPORTED_VERSION = '6.0.0'
 GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION = '6.5.0'
 FEATURE_BRANCHES = ['v4.5.0']
+VERSION_REGEX = r'(\d+\.){2}\d+'
 
 BASE_PACK = "Base"
 NON_SUPPORTED_PACK = "NonSupported"
@@ -1184,7 +1184,7 @@ FEED_REQUIRED_PARAMS = [
     }
 ]
 
-FETCH_REQUIRED_PARAMS = [
+INCIDENT_FETCH_REQUIRED_PARAMS = [
     {
         'display': 'Incident type',
         'name': 'incidentType',
@@ -1193,6 +1193,21 @@ FETCH_REQUIRED_PARAMS = [
     },
     {
         'display': 'Fetch incidents',
+        'name': 'isFetch',
+        'required': False,
+        'type': 8
+    }
+]
+
+ALERT_FETCH_REQUIRED_PARAMS = [
+    {
+        'display': 'Alert type',
+        'name': 'incidentType',
+        'required': False,
+        'type': 13
+    },
+    {
+        'display': 'Fetch alerts',
         'name': 'isFetch',
         'required': False,
         'type': 8
@@ -1354,3 +1369,56 @@ INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {'html': LooseVersion('6.1.0'), 'grid': Lo
 class IdSetKeys(Enum):
     SCRIPTS = 'scripts'
     INTEGRATIONS = 'integrations'
+    PLAYBOOKS = "playbooks"
+    TEST_PLAYBOOKS = "TestPlaybooks"
+    CLASSIFIERS = "Classifiers"
+    INCIDENT_FIELDS = "IncidentFields"
+    INCIDENT_TYPES = "IncidentTypes"
+    INDICATOR_FIELDS = "IndicatorFields"
+    INDICATOR_TYPES = "IndicatorTypes"
+    LISTS = "Lists"
+    JOBS = "Jobs"
+    MAPPERS = "Mappers"
+    PACKS = "Packs"
+    GENERIC_TYPES = "GenericTypes"
+    GENERIC_FIELDS = "GenericFields"
+    GENERIC_MODULES = "GenericModules"
+    GENERIC_DEFINITIONS = "GenericDefinitions"
+    LAYOUTS = "Layouts"
+    REPORTS = "Reports"
+    WIDGETS = "Widgets"
+    DASHBOARDS = "Dashboards"
+
+
+FileTypeToIDSetKeys = {
+    FileType.INTEGRATION: IdSetKeys.INTEGRATIONS.value,
+    FileType.BETA_INTEGRATION: IdSetKeys.INTEGRATIONS.value,
+    FileType.PLAYBOOK: IdSetKeys.PLAYBOOKS.value,
+    FileType.SCRIPT: IdSetKeys.SCRIPTS.value,
+    FileType.TEST_SCRIPT: IdSetKeys.SCRIPTS.value,
+    FileType.TEST_PLAYBOOK: IdSetKeys.PLAYBOOKS.value,
+    FileType.DASHBOARD: IdSetKeys.DASHBOARDS.value,
+    FileType.WIDGET: IdSetKeys.WIDGETS.value,
+    FileType.REPORT: IdSetKeys.REPORTS.value,
+    FileType.OLD_CLASSIFIER: IdSetKeys.CLASSIFIERS.value,
+    FileType.CLASSIFIER: IdSetKeys.CLASSIFIERS.value,
+    FileType.MAPPER: IdSetKeys.MAPPERS.value,
+    FileType.LAYOUT: IdSetKeys.LAYOUTS.value,
+    FileType.LAYOUTS_CONTAINER: IdSetKeys.LAYOUTS.value,
+    FileType.LISTS: IdSetKeys.LISTS.value,
+    FileType.REPUTATION: IdSetKeys.INDICATOR_TYPES.value,
+    FileType.INDICATOR_FIELD: IdSetKeys.INDICATOR_FIELDS.value,
+    FileType.INCIDENT_FIELD: IdSetKeys.INCIDENT_FIELDS.value,
+    FileType.INCIDENT_TYPE: IdSetKeys.INCIDENT_TYPES.value,
+    FileType.GENERIC_TYPE: IdSetKeys.GENERIC_TYPES.value,
+    FileType.GENERIC_FIELD: IdSetKeys.GENERIC_FIELDS.value,
+    FileType.GENERIC_MODULE: IdSetKeys.GENERIC_MODULES.value,
+    FileType.GENERIC_DEFINITION: IdSetKeys.GENERIC_DEFINITIONS.value,
+    FileType.JOB: IdSetKeys.JOBS.value
+}
+
+FileType_ALLOWED_TO_DELETE = {
+    FileType.WHITE_LIST,
+    FileType.DOC_IMAGE,
+    FileType.TEST_PLAYBOOK,
+}

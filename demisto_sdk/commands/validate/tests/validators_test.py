@@ -661,13 +661,21 @@ class TestValidators:
         assert 'SC100' not in ignore_errors_list['file_name']
 
     def test_create_ignored_errors_list(self):
+        """
+            Given:
+                - A list of errors we want to exclude from the all errors list.
+            When:
+                - Running create_ignored_errors_list from validate manager.
+            Then:
+                - verify that the error list that comes out has a correct sublist.
+        """
         validate_manager = ValidateManager()
-        errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
-                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC", "GF", "PP", "JB", "LI100",
-                           "LI101"]
-        ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
-        assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
-                                "BA110", 'BA111', "BA112", "BA113", "BC101", "BC102", "BC103", "BC104"]
+        errors_to_exclude = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
+                             "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC", "GF", "PP", "JB", "LI100",
+                             "LI101"]
+        error_list = validate_manager.create_ignored_errors_list(errors_to_exclude)
+        assert ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
+                "BA110", 'BA111', "BA112", "BA113", "BA114", "BA115", "BC101", "BC102", "BC103", "BC104"] <= error_list
 
     def test_added_files_type_using_function(self, repo, mocker):
         """
@@ -1324,11 +1332,11 @@ def test_run_validation_using_git_on_only_metadata_changed(mocker):
     Then
         - validate That no error returns.
     """
-    mocker.patch.object(ValidateManager, 'setup_git_params')
+    mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
     mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
                         return_value=(set(), set(), {'/Packs/ForTesting/pack_metadata.json'}, set(), True))
     mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
-
+    mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
     res = validate_manager.run_validation_using_git()
     assert res
@@ -1791,6 +1799,33 @@ def test_job_unexpected_field_values_in_non_feed_job(repo, capsys,
            in stdout
 
 
+@pytest.mark.parametrize('file_set,expected_output,expected_result,added_files',
+                         (({'mock_file_description.md'}, "[BA115]", False, set()),
+                          (set(), "", True, set()),
+                          ({'doc_files/image.png'}, "", True, set()),
+                          ({'mock_playbook.yml'}, "", True, {'renamed_mock_playbook.yml'})))
+def test_validate_deleted_files(capsys, file_set, expected_output, expected_result, added_files, mocker):
+    """
+    Given
+            A file_path set to validate.
+    When
+            Validating the files.
+    Then
+            Assert the expected result (True or False) and the expected output (if there is an expected output).
+    """
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
+    if added_files:
+        mocker.patch('demisto_sdk.commands.validate.validate_manager._get_file_id', return_value='playbook')
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.get_file', return_value={'id': 'id'})
+
+    result = validate_manager.validate_deleted_files(file_set, added_files)
+
+    stdout = capsys.readouterr().out
+
+    assert expected_output in stdout
+    assert expected_result is result
+
+
 def test_validate_contributors_file(repo):
     """
     Given:
@@ -1808,3 +1843,36 @@ def test_validate_contributors_file(repo):
 
     validate_manager = ValidateManager(check_is_unskipped=False, file_path=contributors_file.path, skip_conf_json=True)
     assert validate_manager.run_validation_on_specific_files()
+
+
+def test_validate_pack_name(repo):
+    """
+    Given:
+        A file in a pack to validate.
+    When:
+        Checking if the pack name of the file is valid (the pack name is not changed).
+    Then:
+        If new file or unchanged pack then `true`, else `false`.
+
+    """
+    validator_obj = ValidateManager()
+    assert validator_obj.is_valid_pack_name('Packs/original_pack/file', None)
+    assert validator_obj.is_valid_pack_name('Packs/original_pack/file', 'Packs/original_pack/file')
+    assert not validator_obj.is_valid_pack_name('Packs/original_pack/file', 'Packs/original_pack_v2/file')
+
+
+def test_image_error(capsys):
+    """
+    Given
+            a image that isn't located in the right folder.
+    When
+            Validating the file
+    Then
+            Ensure an error is raised, and  the right error is given.
+    """
+    validate_manager = ValidateManager()
+    validate_manager.run_validations_on_file(IGNORED_PNG, None)
+    stdout = capsys.readouterr().out
+    expected_string, expected_code = Errors.invalid_image_name_or_location()
+    assert expected_string in stdout
+    assert expected_code in stdout

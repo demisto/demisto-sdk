@@ -14,6 +14,8 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_IGNORE_FILE_NAME, PLAYBOOKS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, FileType)
 from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
+                                                            GitCredentials)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
@@ -22,14 +24,14 @@ from demisto_sdk.commands.common.tools import (
     find_type, get_code_lang, get_current_repo, get_dict_from_file,
     get_entity_id_by_entity_type, get_entity_name_by_entity_type,
     get_file_displayed_name, get_file_version_suffix_if_exists,
-    get_files_in_dir, get_ignore_pack_skipped_tests, get_last_release_version,
-    get_last_remote_release_version, get_latest_release_notes_text,
-    get_pack_metadata, get_relative_path_from_packs_dir,
-    get_release_note_entries, get_release_notes_file_path, get_ryaml,
-    get_scripts_and_commands_from_yml_data, get_test_playbook_id,
-    get_to_version, get_yaml, has_remote_configured, is_origin_content_repo,
-    is_pack_path, is_uuid, retrieve_file_ending, run_command_os,
-    server_version_compare, to_kebab_case)
+    get_files_in_dir, get_ignore_pack_skipped_tests, get_item_marketplaces,
+    get_last_release_version, get_last_remote_release_version,
+    get_latest_release_notes_text, get_pack_metadata,
+    get_relative_path_from_packs_dir, get_release_note_entries,
+    get_release_notes_file_path, get_scripts_and_commands_from_yml_data,
+    get_test_playbook_id, get_to_version, get_yaml, has_remote_configured,
+    is_origin_content_repo, is_pack_path, is_uuid, retrieve_file_ending,
+    run_command_os, server_version_compare, to_kebab_case)
 from demisto_sdk.tests.constants_test import (DUMMY_SCRIPT_PATH, IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
@@ -54,6 +56,8 @@ from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
+
+GIT_ROOT = git_path()
 
 
 class TestGenericFunctions:
@@ -246,7 +250,7 @@ class TestGetRemoteFile:
     def test_get_remote_file_sanity(self):
         hello_world_yml = tools.get_remote_file(
             'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml',
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert hello_world_yml
         assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
@@ -255,7 +259,7 @@ class TestGetRemoteFile:
         hello_world_py = tools.get_remote_file(
             'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
             return_content=True,
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert hello_world_py
 
@@ -263,7 +267,7 @@ class TestGetRemoteFile:
         hello_world_py = tools.get_remote_file(
             'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
             return_content=True,
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         hello_world_text = hello_world_py.decode()
         assert isinstance(hello_world_py, bytes)
@@ -275,7 +279,7 @@ class TestGetRemoteFile:
         hello_world_yml = tools.get_remote_file(
             'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml',
             'master',
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert hello_world_yml
         assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
@@ -284,7 +288,7 @@ class TestGetRemoteFile:
         gmail_yml = tools.get_remote_file(
             'Integrations/Gmail/Gmail.yml',
             '19.10.0',
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert gmail_yml
         assert gmail_yml['commonfields']['id'] == 'Gmail'
@@ -293,7 +297,7 @@ class TestGetRemoteFile:
         gmail_yml = tools.get_remote_file(
             'Integrations/Gmail/Gmail.yml',
             'origin/19.10.0',
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert gmail_yml
         assert gmail_yml['commonfields']['id'] == 'Gmail'
@@ -302,7 +306,7 @@ class TestGetRemoteFile:
         invalid_yml = tools.get_remote_file(
             'Integrations/File/File.yml',
             '19.10.0',
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert not invalid_yml
 
@@ -310,7 +314,7 @@ class TestGetRemoteFile:
         invalid_yml = tools.get_remote_file(
             'Integrations/Gmail/Gmail.yml',
             'NoSuchBranch',
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert not invalid_yml
 
@@ -318,7 +322,7 @@ class TestGetRemoteFile:
         invalid_yml = tools.get_remote_file(
             'Integrations/Gmail/Gmail.yml',
             'origin/NoSuchBranch',
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert not invalid_yml
 
@@ -326,7 +330,7 @@ class TestGetRemoteFile:
         hello_world_readme = tools.get_remote_file(
             'Packs/HelloWorld/README.md',
             'master',
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert hello_world_readme == {}
 
@@ -390,9 +394,10 @@ class TestGetRemoteFileLocally:
             ok = False
 
         mocker.patch.object(requests, 'get', return_value=Response)
-        mocker.patch.object(os, 'getenv', return_value=False)
-        some_file_json = tools.get_remote_file(os.path.join(self.REPO_NAME, self.FILE_NAME),
-                                               github_repo=self.REPO_NAME)
+        mocker.patch.dict(os.environ, {GitCredentials.ENV_GITHUB_TOKEN_NAME: '',
+                                       GitCredentials.ENV_GITLAB_TOKEN_NAME: ''})
+        with ChangeCWD(self.REPO_NAME):
+            some_file_json = tools.get_remote_file(self.FILE_NAME)
         assert some_file_json
         assert some_file_json['id'] == 'some_file'
 
@@ -515,8 +520,8 @@ def test_run_command_os(command, cwd):
 
 
 class TestGetFile:
-    def test_get_ryaml(self):
-        file_data = get_ryaml(SOURCE_FORMAT_INTEGRATION_COPY)
+    def test_get_yaml(self):
+        file_data = get_yaml(SOURCE_FORMAT_INTEGRATION_COPY)
         assert file_data
         assert file_data.get('name') is not None
 
@@ -1139,7 +1144,7 @@ def test_get_relative_path_from_packs_dir():
     ('1.3.8', ['* Updated the **secrets** command to work on forked branches.']),
     ('1.3', [])
 ])
-def test_get_release_note_entries(version, expected_result):
+def test_get_release_note_entries(requests_mock, version, expected_result):
     """
     Given:
         - Version of the demisto-sdk.
@@ -1150,6 +1155,11 @@ def test_get_release_note_entries(version, expected_result):
     Then:
         - Ensure that the result as expected.
     """
+    requests_mock.get('https://api.github.com/repos/demisto/demisto-sdk')
+    #
+    with open(f'{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/test_changelog.md', 'rb') as f:
+        changelog = f.read()
+    requests_mock.get('https://raw.githubusercontent.com/demisto/demisto-sdk/master/CHANGELOG.md', content=changelog)
 
     assert get_release_note_entries(version) == expected_result
 
@@ -1561,7 +1571,7 @@ YML_DATA_CASES = [(get_yaml(VALID_INTEGRATION_TEST_PATH), FileType.INTEGRATION,
                    ['ReadFile', 'Get Original Email - Gmail']),
                   (get_yaml(VALID_PLAYBOOK_ID_PATH), FileType.PLAYBOOK, [{'id': 'setIncident', 'source': 'Builtin'},
                                                                          {'id': 'closeInvestigation',
-                                                                          'source': 'Builtin'},
+                                                                                'source': 'Builtin'},
                                                                          {'id': 'setIncident', 'source': 'Builtin'}],
                    ['Account Enrichment - Generic', 'EmailAskUser', 'ADGetUser', 'IP Enrichment - Generic',
                     'IP Enrichment - Generic', 'AssignAnalystToIncident', 'access_investigation_-_generic']),
@@ -1579,3 +1589,75 @@ def test_get_scripts_and_commands_from_yml_data(data, file_type, expected_comman
     commands, scripts = get_scripts_and_commands_from_yml_data(data=data, file_type=file_type)
     assert commands == expected_commands
     assert scripts == expected_scripts
+
+
+class TestGetItemMarketplaces:
+    @staticmethod
+    def test_item_has_marketplaces_field():
+        """
+        Given
+            - item declares marketplaces
+        When
+            - getting the marketplaces of an item
+        Then
+            - return the item's marketplaces
+        """
+        item_data = {
+            'name': 'Integration',
+            'marketplaces': ['xsoar', 'marketplacev2'],
+        }
+        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml', item_data=item_data)
+
+        assert 'xsoar' in marketplaces
+        assert 'marketplacev2' in marketplaces
+
+    @staticmethod
+    def test_only_pack_has_marketplaces():
+        """
+        Given
+            - item does not declare marketplaces
+            - pack declares marketplaces
+        When
+            - getting the marketplaces of an item
+        Then
+            - return the pack's marketplaces
+        """
+        item_data = {
+            'name': 'Integration',
+            'pack': 'PackID',
+        }
+        packs = {
+            'PackID': {
+                'id': 'PackID',
+                'marketplaces': ['xsoar', 'marketplacev2'],
+            }
+        }
+        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml', item_data=item_data, packs=packs)
+
+        assert 'xsoar' in marketplaces
+        assert 'marketplacev2' in marketplaces
+
+    @staticmethod
+    def test_no_marketplaces_specified():
+        """
+        Given
+            - item does not declare marketplaces
+            - pack does not declare marketplaces
+        When
+            - getting the marketplaces of an item
+        Then
+            - return the default marketplaces (only xsoar)
+        """
+        item_data = {
+            'name': 'Integration',
+            'pack': 'PackID',
+        }
+        packs = {
+            'PackID': {
+                'id': 'PackID',
+            }
+        }
+        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml', item_data=item_data, packs=packs)
+
+        assert len(marketplaces) == 1
+        assert 'xsoar' in marketplaces

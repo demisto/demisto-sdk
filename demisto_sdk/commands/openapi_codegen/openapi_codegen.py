@@ -7,8 +7,8 @@ from distutils.util import strtobool
 from typing import Any, List, Optional, Union
 
 import autopep8
-import yaml
 
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.tools import camel_to_snake, print_error
@@ -19,6 +19,8 @@ from demisto_sdk.commands.generate_integration.base_code import (
     BASE_TOKEN)
 from demisto_sdk.commands.generate_integration.XSOARIntegration import \
     XSOARIntegration
+
+yaml = YAML_Handler()
 
 ILLEGAL_DESCRIPTION_CHARS = ['\n', 'br', '*', '\r', '\t', 'para', 'span', '«', '»', '<', '>']
 ILLEGAL_CODE_CHARS = ILLEGAL_DESCRIPTION_CHARS + [' ', '.', ',', '(', ')', '`', ':', "'", '"', '[', ']', '-']
@@ -837,7 +839,7 @@ class OpenAPIIntegration:
         yaml_file = os.path.join(directory, f'{self.base_name}.yml')
         try:
             with open(yaml_file, 'w') as fp:
-                fp.write(yaml.dump(self.generate_yaml().to_dict()))
+                yaml.dump(self.generate_yaml().to_dict(), fp)
             return yaml_file
         except Exception as err:
             print_error(f'Error writing {yaml_file} - {err}')

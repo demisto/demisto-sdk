@@ -1,9 +1,9 @@
-import atexit
 import json
 import os
 import re
 import subprocess
 import tempfile
+from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
 from threading import Lock
@@ -14,6 +14,7 @@ import click
 import requests
 from git import InvalidGitRepositoryError
 from requests.adapters import HTTPAdapter
+from requests.exceptions import HTTPError
 from urllib3.util import Retry
 
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
@@ -23,8 +24,9 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (
-    compare_context_path_in_yml_and_readme, get_content_path, get_yaml,
-    get_yml_paths_in_dir, print_warning, run_command_os)
+    compare_context_path_in_yml_and_readme, get_content_path,
+    get_url_with_retries, get_yaml, get_yml_paths_in_dir, print_warning,
+    run_command_os)
 
 NO_HTML = '<!-- NOT_HTML_DOC -->'
 YES_HTML = '<!-- HTML_DOC -->'
@@ -319,17 +321,13 @@ class ReadMeValidator(BaseValidator):
                         Errors.invalid_readme_image_error(prefix + f'({img_url})',
                                                           error_type='branch_name_readme_absolute_error')
                 else:
-                    adapter = HTTPAdapter(max_retries=Retry(total=5, backoff_factor=1))
-                    session = requests.Session()
-                    session.mount("https://", adapter)
-                    session.mount("http://", adapter)
-                    response = session.get(img_url, timeout=10, stream=True)
-
-                    if response.status_code != 200:
+                    try:
+                        get_url_with_retries(img_url, retries=5, backoff_factor=1, timeout=10)
+                    except HTTPError as error:
                         error_message, error_code = \
                             Errors.invalid_readme_image_error(prefix + f'({img_url})',
                                                               error_type='general_readme_absolute_error',
-                                                              response=response)
+                                                              response=error.response)
             except Exception as ex:
                 click.secho(f"Could not validate the image link: {img_url}\n {ex}", fg='yellow')
                 continue
@@ -338,7 +336,8 @@ class ReadMeValidator(BaseValidator):
                 formatted_error = \
                     self.handle_error(error_message, error_code, file_path=self.file_path,
                                       should_print=should_print_error)
-                error_list.append(formatted_error)
+                if formatted_error:
+                    error_list.append(formatted_error)
 
         return error_list
 
@@ -496,6 +495,10 @@ class ReadMeValidator(BaseValidator):
             True if 'Demisto' does not exist in the README content, and False if it does.
         """
 
+        # Checks if the Readme.md is in the main repo.
+        if str(self.file_path.parent) == self.content_path:
+            return True
+
         is_valid = True
         invalid_lines = []
 
@@ -532,7 +535,8 @@ class ReadMeValidator(BaseValidator):
         return is_valid
 
     @staticmethod
-    def start_mdx_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None) -> bool:
+    @contextmanager
+    def start_mdx_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None):
         with ReadMeValidator._MDX_SERVER_LOCK:
             if not ReadMeValidator._MDX_SERVER_PROCESS:
                 mdx_parse_server = Path(__file__).parent.parent / 'mdx-parse-server.js'
@@ -548,7 +552,14 @@ class ReadMeValidator(BaseValidator):
 
                     else:
                         raise Exception(error_message)
-        return True
+        yield True
+        ReadMeValidator.stop_mdx_server()
+
+    @staticmethod
+    def add_node_env_vars():
+        content_path = get_content_path()
+        node_modules_path = content_path / Path('node_modules')
+        os.environ['NODE_PATH'] = str(node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
 
     @staticmethod
     def stop_mdx_server():
@@ -559,6 +570,3 @@ class ReadMeValidator(BaseValidator):
     @staticmethod
     def _get_error_lists():
         return FOUND_FILES_AND_ERRORS, FOUND_FILES_AND_IGNORED_ERRORS
-
-
-atexit.register(ReadMeValidator.stop_mdx_server)

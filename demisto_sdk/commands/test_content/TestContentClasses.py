@@ -1998,8 +1998,10 @@ class ServerContext:
                                               server=self.server_url)
         self._execute_tests(self.build_context.mockable_tests_to_run)
         self.proxy.configure_proxy_in_demisto(proxy='',
-                                              username=self.build_context.secret_conf.server_username,
-                                              password=self.build_context.secret_conf.server_password,
+                                              username=self.build_context.secret_conf.server_username if not self.build_context.auth_id else None,
+                                              password=self.build_context.secret_conf.server_password if not self.build_context.auth_id else None,
+                                              api_key=self.build_context.api_key,
+                                              auth_id=self.build_context.auth_id,
                                               server=self.server_url)
 
     def _execute_failed_tests(self):

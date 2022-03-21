@@ -513,8 +513,6 @@ def get_yaml(file_path, cache_clear=False):
 
 
 def get_json(file_path, cache_clear=False):
-    if cache_clear:
-        get_file.cache_clear()
     return get_file(file_path, 'json', clear_cache=cache_clear)
 
 
@@ -726,15 +724,12 @@ def get_latest_release_notes_text(rn_path):
         print_warning('Path to release notes not found.')
         rn = None
     else:
-        try:
-            with open(rn_path) as f:
-                rn = f.read()
+        with open(rn_path) as f:
+            rn = f.read()
 
-            if not rn:
-                print_error(f'Release Notes may not be empty. Please fill out correctly. - {rn_path}')
-                return None
-        except IOError:
-            return ''
+        if not rn:
+            print_error(f'Release Notes may not be empty. Please fill out correctly. - {rn_path}')
+            return None
 
     return rn if rn else None
 

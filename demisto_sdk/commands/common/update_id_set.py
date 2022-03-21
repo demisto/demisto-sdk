@@ -140,7 +140,7 @@ def does_dict_have_alternative_key(data: dict) -> bool:
 
 
 def should_skip_item_by_mp(file_path: str, marketplace: str, excluded_items_from_id_set: dict,
-                           packs: Dict[str, Dict] = None, print_logs: bool = False):
+                           packs: Dict[str, Dict] = None, print_logs: bool = False, item_type: str = None):
     """
     Checks if the item given (as path) should be part of the current generated id set.
      The checks are in this order:
@@ -155,6 +155,7 @@ def should_skip_item_by_mp(file_path: str, marketplace: str, excluded_items_from
         excluded_items_from_id_set: the dict that holds the excluded items, aggregated by packs
         packs: the pack mapping from the ID set.
         print_logs: whether to pring logs
+        item_type: The item type.
 
     Returns: True if should be skipped, else False
 
@@ -170,7 +171,7 @@ def should_skip_item_by_mp(file_path: str, marketplace: str, excluded_items_from
     except (ValueError, FileNotFoundError, IsADirectoryError):
         return True
 
-    item_marketplaces = get_item_marketplaces(file_path, item_data=item_data, packs=packs)
+    item_marketplaces = get_item_marketplaces(file_path, item_data=item_data, packs=packs, item_type=item_type)
     if marketplace not in item_marketplaces:
         if print_logs:
             print(f'Skipping {file_path} due to mismatch with the given marketplace')
@@ -1156,7 +1157,7 @@ def get_xsiam_dashboard_data(path: str, packs: Dict[str, Dict] = None):
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
-    marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
+    marketplaces = [MarketplaceVersions.MarketplaceV2.value]
 
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
 
@@ -1171,7 +1172,7 @@ def get_xsiam_report_data(path: str, packs: Dict[str, Dict] = None):
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
-    marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
+    marketplaces = [MarketplaceVersions.MarketplaceV2.value]
 
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
 
@@ -1186,7 +1187,7 @@ def get_trigger_data(path: str, packs: Dict[str, Dict] = None):
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
-    marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
+    marketplaces = [MarketplaceVersions.MarketplaceV2.value]
 
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
 
@@ -1201,7 +1202,7 @@ def get_parsing_rule_data(path: str, packs: Dict[str, Dict] = None):
     fromversion = yaml_data.get('fromversion')
     toversion = yaml_data.get('toversion')
     pack = get_pack_name(path)
-    marketplaces = get_item_marketplaces(path, item_data=yaml_data, packs=packs)
+    marketplaces = [MarketplaceVersions.MarketplaceV2.value]
 
     if not id_ and 'marketplacev2' in marketplaces:  # TODO: Should be removed after we have an agreed id field for parsing rule
         id_ = f"{pack}-{os.path.basename(path).split('.')[0]}"
@@ -1218,7 +1219,7 @@ def get_modeling_rule_data(path: str, packs: Dict[str, Dict] = None):
     fromversion = yaml_data.get('fromversion')
     toversion = yaml_data.get('toversion')
     pack = get_pack_name(path)
-    marketplaces = get_item_marketplaces(path, item_data=yaml_data, packs=packs)
+    marketplaces = [MarketplaceVersions.MarketplaceV2.value]
 
     if not id_ and 'marketplacev2' in marketplaces:  # TODO: Should be removed after we have an agreed id field for modeling rule
         id_ = f"{pack}-{os.path.basename(path).split('.')[0]}"
@@ -1235,7 +1236,7 @@ def get_correlation_rule_data(path: str, packs: Dict[str, Dict] = None):
     fromversion = yaml_data.get('fromversion')
     toversion = yaml_data.get('toversion')
     pack = get_pack_name(path)
-    marketplaces = get_item_marketplaces(path, item_data=yaml_data, packs=packs)
+    marketplaces = [MarketplaceVersions.MarketplaceV2.value]
 
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
     return {id_: data}
@@ -1536,8 +1537,9 @@ def process_general_items(file_path: str, packs: Dict[str, Dict], marketplace: s
     res = []
     excluded_items_from_id_set: dict = {}
     try:
-        if find_type(file_path) in expected_file_types:
-            if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
+        item_type = find_type(file_path)
+        if item_type in expected_file_types:
+            if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs, item_type=item_type):
                 return [], excluded_items_from_id_set
             if print_logs:
                 print(f'adding {file_path} to id_set')

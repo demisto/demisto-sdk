@@ -54,7 +54,7 @@ references:
                 pip-dependency-file: "requirements-build.txt"
 
 jobs:
-  pytest:
+  run-unit-tests:
       parameters:
         pythonversion:
           type: string
@@ -138,6 +138,7 @@ jobs:
             at: ~/project
         - <<: *install_demisto_sdk
         - <<: *install_build_dependencies
+        - <<: *install_node_ci
         - run:
             name: Set Up & Create Id Set
             when: always
@@ -246,7 +247,7 @@ workflows:
           <<: *tag_filter
       - precommit-checks:
           <<: *tag_filter
-      - pytest:
+      - run-unit-tests:
           matrix:
             parameters:
               pythonversion: [3.8.12, 3.9.10, 3.10.2]   

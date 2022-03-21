@@ -196,6 +196,8 @@ jobs:
               cd content
               echo "installing venv"
               NO_HOOKS=1 SETUP_PY2=yes .hooks/bootstrap >> /tmp/lint_env_installation.log
+              echo "finished script installation"
+              echo $(ls)
               source ./venv/bin/activate
               pip3 install -r .circleci/build-requirements.txt >> /tmp/lint_env_installation.log
               

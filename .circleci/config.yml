@@ -185,7 +185,7 @@ jobs:
             name: Test lint on python and ps files
             when: always
             command: |
-              pip3 uninstall -y virtualenv && pip3 install virtualenv==16.7.7 # allows installing py2&py3 together.
+              pip3 uninstall virtualenv -y && pip3 install virtualenv==16.7.7
               cd ~/project
               export SDK_LINT_FILES_CHANGED=$(git diff master... --name-only -- demisto_sdk/commands/lint)
 

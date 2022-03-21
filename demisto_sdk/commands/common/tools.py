@@ -513,6 +513,8 @@ def get_yaml(file_path, cache_clear=False):
 
 
 def get_json(file_path, cache_clear=False):
+    if cache_clear:
+        get_file.cache_clear()
     return get_file(file_path, 'json', clear_cache=cache_clear)
 
 

@@ -3,10 +3,13 @@ import inspect
 
 import pytest
 
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.generate_yml_from_python.generate_yml import \
     YMLGenerator
-from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import \
-    YMLMetadataCollector
+from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (
+    ConfKey, InputArgument, OutputArgument, YMLMetadataCollector)
+
+yaml = YAML_Handler()
 
 
 def dedent(code_line, spaces_num):
@@ -28,16 +31,20 @@ def save_code_as_integration(code, full_path, configuration=None, conf_in_second
     if docstring:
         code_snippet = code_snippet.replace('**docstring**', docstring)
 
+    full_code = code_snippet
     if configuration:
         if conf_in_second_line:
             code_lines = code_snippet.split('\n')
             rest_of_code = '\n'.join(code_lines[1:])
-            print(f"{code_lines[0]}\nconfiguration={configuration}\n\n{rest_of_code}")
-            full_path.write_text(f"{code_lines[0]}\nconfiguration={configuration}\n\n{rest_of_code}")
+            full_code = f"{code_lines[0]}\nconfiguration={configuration}\n\n{rest_of_code}"
+            full_path.write_text(full_code)
         else:
-            full_path.write_text(f"configuration={configuration}\n\n{code_snippet}")
+            full_code = f"configuration={configuration}\n\n{code_snippet}"
+            full_path.write_text(full_code)
     else:
-        full_path.write_text(code_snippet)
+        full_path.write_text(full_code)
+    # will be printed if the test fails.
+    print(f"The code in the test:\n{full_code}")
 
 
 EMPTY_INTEGRATION_DICT = {'category': 'Utilities',
@@ -75,7 +82,7 @@ class TestImportDependencies:
             import hlem
             hlem.now()
 
-            metadata_collector = YMLMetadataCollector(integration_name="some_name")
+            metadata_collector = YMLMetadataCollector(integration_name="some_name")  # noqa: F841
 
             def some_func():
                 """Some func doc"""
@@ -95,16 +102,16 @@ class TestImportDependencies:
         integration_path = tmp_path / "integration_name.py"
 
         def code_snippet():
-            metadata_collector = YMLMetadataCollector(integration_name="some_name")
+            metadata_collector = YMLMetadataCollector(integration_name="some_name")  # noqa: F841
 
-            class MyClient(BaseClient):
+            class MyClient(BaseClient):  # noqa: F821, F841
                 """Some class doc"""
 
                 def __init__(self):
                     pass
 
-            def some_command(dates: datetime.datetime) -> CommandResults:
-                return CommandResults()
+            def some_command(dates: datetime.datetime) -> CommandResults:  # noqa: F821, F841
+                return CommandResults()  # noqa: F401, F821
 
         save_code_as_integration(code=code_snippet, full_path=integration_path)
         try:
@@ -123,7 +130,7 @@ class TestImportDependencies:
         def code_snippet():
             import datetime
 
-            metadata_collector = YMLMetadataCollector(integration_name="some_name")
+            metadata_collector = YMLMetadataCollector(integration_name="some_name")  # noqa: F841
 
             def some_func():
                 """Some func doc"""
@@ -162,9 +169,7 @@ class TestConfigurationGeneration:
         integration_path = tmp_path / "integration_name.py"
 
         def code_snippet():
-            from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import \
-                YMLMetadataCollector
-            metadata_collector = YMLMetadataCollector(**configuration)
+            metadata_collector = YMLMetadataCollector(**configuration)  # noqa: F841
 
             def some_func():
                 """Some func doc"""
@@ -190,9 +195,7 @@ class TestConfigurationGeneration:
         integration_path = tmp_path / "integration_name.py"
 
         def code_snippet():
-            from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import \
-                YMLMetadataCollector
-            metadata_collector = YMLMetadataCollector(**configuration)
+            metadata_collector = YMLMetadataCollector(**configuration)  # noqa: F841
 
             def some_func():
                 """Some func doc"""
@@ -218,10 +221,7 @@ class TestConfigurationGeneration:
         integration_path = tmp_path / "integration_name.py"
 
         def code_snippet():
-            from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (
-                ConfKey, YMLMetadataCollector)
-
-            metadata_collector = YMLMetadataCollector(integration_name="some_name",
+            metadata_collector = YMLMetadataCollector(integration_name="some_name",  # noqa: F841
                                                       conf=[ConfKey(**configuration)])
 
             def some_func():
@@ -235,39 +235,6 @@ class TestConfigurationGeneration:
         expected_conf = copy.deepcopy(BASIC_CONF_KEY_DICT)
         expected_conf.update(expected_update)
         expected_dict["configuration"] = [expected_conf]
-        assert expected_dict == yml_generator.get_metadata_dict()
-
-    def test_generate_full_configuration(self, tmp_path):  # TODO: make better
-        integration_path = tmp_path / "integration_name.py"
-
-        def code_snippet():
-            from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (
-                ConfKey, YMLMetadataCollector)
-
-            metadata_collector = YMLMetadataCollector(integration_name="some_name",
-                                                      conf=[ConfKey(name="confkey1"),
-                                                            ConfKey(name="confkey2")])
-
-            def some_func():
-                """Some func doc"""
-                print("func")
-
-        save_code_as_integration(code=code_snippet, full_path=integration_path, configuration='')
-        yml_generator = YMLGenerator(filename=integration_path)
-        yml_generator.generate()
-
-        expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
-        expected_dict.update({
-
-        })
-        expected_dict["configuration"] = [{'display': 'confkey1',
-                                           'name': 'confkey1',
-                                           'required': False,
-                                           'type': 0},
-                                          {'display': 'confkey2',
-                                           'name': 'confkey2',
-                                           'required': False,
-                                           'type': 0}]
         assert expected_dict == yml_generator.get_metadata_dict()
 
 
@@ -307,9 +274,6 @@ class TestCommandGeneration:
         integration_path = tmp_path / "integration_name.py"
 
         def code_snippet():
-            from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import \
-                YMLMetadataCollector
-
             metadata_collector = YMLMetadataCollector(integration_name="some_name")
 
             @metadata_collector.command(**configuration)
@@ -330,9 +294,6 @@ class TestCommandGeneration:
         integration_path = tmp_path / "integration_name.py"
 
         def code_snippet():
-            from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import \
-                YMLMetadataCollector
-
             metadata_collector = YMLMetadataCollector(integration_name="some_name")
 
             @metadata_collector.command(command_name="funky-command")
@@ -361,9 +322,6 @@ class TestCommandGeneration:
         integration_path = tmp_path / "integration_name.py"
 
         def code_snippet():
-            from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (
-                InputArgument, OutputArgument, YMLMetadataCollector)
-
             metadata_collector = YMLMetadataCollector(integration_name="some_name")
 
             @metadata_collector.command(command_name="funky-command", outputs_prefix='funk', execution=False,
@@ -391,19 +349,58 @@ class TestCommandGeneration:
         # return it as a dict in the command and assert its right
         pass
 
-    @pytest.mark.parametrize("configuration, expected_update",
-                             [({"name": "some_input_arg"}, {"name": "some_input_arg", "description": "some_input_arg"}),
-                              ({"name": "some_input_arg", "description": "some desc"},
-                               {"name": "some_input_arg", "description": "some desc"}),
-                              ],  # TODO: fill in the details, options included
-                             ids=["name", "description"])
-    def test_inputs_from_input_list(self, tmp_path, configuration, expected_update):
+    def test_enum_inputs_from_input_list(self, tmp_path):
         integration_path = tmp_path / "integration_name.py"
 
         def code_snippet():
-            from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (
-                InputArgument, YMLMetadataCollector)
+            import enum
 
+            class InputOptions(enum.Enum):
+                A = "a"
+                B = "b"
+
+            metadata_collector = YMLMetadataCollector(integration_name="some_name")
+
+            @metadata_collector.command(command_name="some-command",
+                                        inputs_list=[InputArgument(name="some_arg",
+                                                                   description="some_description",
+                                                                   input_type=InputOptions)])
+            def funky_command():
+                """Some other description"""
+                print("func")
+
+        save_code_as_integration(code=code_snippet, full_path=integration_path)
+        yml_generator = YMLGenerator(filename=integration_path)
+        yml_generator.generate()
+        expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
+        expected_command = copy.deepcopy(BASIC_COMMAND_DICT)
+        expected_arg = copy.deepcopy(BASIC_IN_ARG_DICT)
+        expected_arg.update({"auto": "PREDEFINED", "predefined": ["a", "b"]})
+        expected_command["arguments"] = [expected_arg]
+        expected_dict["script"]["commands"] = [expected_command]
+        assert expected_dict == yml_generator.get_metadata_dict()
+
+    @pytest.mark.parametrize("configuration, expected_update",
+                             [({"name": "some_input_arg"}, {"name": "some_input_arg"}),
+                              ({"description": "some desc"}, {"description": "some desc"}),
+                              ({"required": True}, {"required": True}),
+                              ({"default": True}, {"default": True, "defaultValue": True, "required": False}),
+                              ({"is_array": True}, {"isArray": True}),
+                              ({"secret": True}, {"secret": True}),
+                              ({"execution": True}, {"execution": True}),
+                              ({"options": ["a", "b"]}, {"auto": "PREDEFINED", "predefined": ["a", "b"]}),
+                              ],
+                             ids=["name", "description", "required", "default", "is_array", "secret", "execution",
+                                  "options"])
+    def test_inputs_from_input_list(self, tmp_path, configuration, expected_update):
+        integration_path = tmp_path / "integration_name.py"
+
+        if "name" not in configuration.keys():
+            configuration.update({"name": "some_arg"})
+        if "description" not in configuration.keys():
+            configuration.update({"description": "some_description"})
+
+        def code_snippet():
             metadata_collector = YMLMetadataCollector(integration_name="some_name")
 
             @metadata_collector.command(command_name="some-command",
@@ -438,9 +435,6 @@ class TestCommandGeneration:
         integration_path = tmp_path / "integration_name.py"
 
         def code_snippet():
-            from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (
-                InputArgument, YMLMetadataCollector)
-
             metadata_collector = YMLMetadataCollector(integration_name="some_name")
 
             @metadata_collector.command(command_name="some-command")
@@ -459,16 +453,72 @@ class TestCommandGeneration:
         expected_dict["script"]["commands"] = [expected_command]
         assert expected_dict == yml_generator.get_metadata_dict()
 
-    def test_outputs_from_declaration(self):
-        pass
+    @pytest.mark.parametrize("docstring, expected_update",
+                             [('Some other description\n'
+                               '\n    Context Outputs:'
+                               '\n        some_out_arg (str): some desc.\n',
+                               {"contextPath": "some_name.some_out_arg", "description": "some desc.",
+                                "type": "String"}),
+                              ('Some other description\n'
+                               '\n    Context Outputs:'
+                               '\n        some_out_arg (int): some desc.\n',
+                               {"contextPath": "some_name.some_out_arg", "description": "some desc.",
+                                "type": "Number"}),
+                              ('Some other description\n'
+                               '\n    Context Outputs:'
+                               '\n        some_out_arg (float): some desc.\n',
+                               {"contextPath": "some_name.some_out_arg", "description": "some desc.",
+                                "type": "Number"}),
+                              ('Some other description\n'
+                               '\n    Context Outputs:'
+                               '\n        some_out_arg (bool): some desc.\n',
+                               {"contextPath": "some_name.some_out_arg", "description": "some desc.",
+                                "type": "Boolean"}),
+                              ('Some other description\n'
+                               '\n    Context Outputs:'
+                               '\n        some_out_arg (datetime.datetime): some desc.\n',
+                               {"contextPath": "some_name.some_out_arg", "description": "some desc.",
+                                "type": "Date"}),
+                              ('Some other description\n'
+                               '\n    Context Outputs:'
+                               '\n        some_out_arg (dict): some desc.\n',
+                               {"contextPath": "some_name.some_out_arg", "description": "some desc.",
+                                "type": "Unknown"}),
+                              ('Some other description\n'
+                               '\n    Context Outputs:'
+                               '\n        some_out_arg (dict): some interesting\n very long description.\n',
+                               {"contextPath": "some_name.some_out_arg",
+                                "description": "some interesting\n very long description.",
+                                "type": "Unknown"})
+                              ],
+                             ids=["type str", "type int", "type float", "type bool", "type date",
+                                  "type dict", "long description"])
+    def test_outputs_from_declaration(self, tmp_path, docstring, expected_update):
+        integration_path = tmp_path / "integration_name.py"
+
+        def code_snippet():
+            metadata_collector = YMLMetadataCollector(integration_name="some_name")
+
+            @metadata_collector.command(command_name="some-command")
+            def funky_command():
+                """**docstring**"""
+                print("func")
+
+        save_code_as_integration(code=code_snippet, full_path=integration_path, docstring=docstring)
+        yml_generator = YMLGenerator(filename=integration_path)
+        yml_generator.generate()
+        expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
+        expected_command = copy.deepcopy(BASIC_COMMAND_DICT)
+        expected_arg = copy.deepcopy(BASIC_OUT_ARG_DICT)
+        expected_arg.update(expected_update)
+        expected_command["outputs"] = [expected_arg]
+        expected_dict["script"]["commands"] = [expected_command]
+        assert expected_dict == yml_generator.get_metadata_dict()
 
     def test_outputs_from_output_list(self, tmp_path):
         integration_path = tmp_path / "integration_name.py"
 
         def code_snippet():
-            from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (
-                OutputArgument, YMLMetadataCollector)
-
             metadata_collector = YMLMetadataCollector(integration_name="some_name")
 
             @metadata_collector.command(command_name="some-command", outputs_prefix="some",
@@ -502,7 +552,7 @@ class TestCommandGeneration:
         integration_path = tmp_path / "integration_name.py"
 
         def code_snippet():
-            import datetime
+            import datetime  # noqa: F401
 
             metadata_collector = YMLMetadataCollector(integration_name="some_name")
 
@@ -526,22 +576,296 @@ class TestCommandGeneration:
         expected_dict["script"]["commands"] = [expected_command]
         assert expected_dict == yml_generator.get_metadata_dict()
 
-    def test_input_list_overrides_docstring(self):
-        pass
+    def test_input_list_overrides_docstring(self, tmp_path):
+        integration_path = tmp_path / "integration_name.py"
 
-    def test_output_list_overrides_docstring(self):
-        pass
+        def code_snippet():
+            metadata_collector = YMLMetadataCollector(integration_name="some_name")
 
-    def test_multiple_output_prefixes(self):
-        pass
+            @metadata_collector.command(command_name="some-command",
+                                        inputs_list=[InputArgument(name="listed_name",
+                                                                   description="listed desc")])
+            def funky_command():
+                """Some other description
+
+                Args:
+                    doc_name: some doc.
+                """
+                print("func")
+
+        save_code_as_integration(code=code_snippet, full_path=integration_path)
+        yml_generator = YMLGenerator(filename=integration_path)
+        yml_generator.generate()
+        expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
+        expected_command = copy.deepcopy(BASIC_COMMAND_DICT)
+        expected_arg = copy.deepcopy(BASIC_IN_ARG_DICT)
+        expected_arg.update({"name": "listed_name", "description": "listed desc"})
+        expected_command["arguments"] = [expected_arg]
+        expected_dict["script"]["commands"] = [expected_command]
+        assert expected_dict == yml_generator.get_metadata_dict()
+
+    def test_output_list_overrides_docstring(self, tmp_path):
+        integration_path = tmp_path / "integration_name.py"
+
+        def code_snippet():
+            import datetime  # noqa: 401
+
+            metadata_collector = YMLMetadataCollector(integration_name="some_name")
+
+            @metadata_collector.command(command_name="some-command", outputs_prefix="some",
+                                        outputs_list=[OutputArgument(name="some_list_out",
+                                                                     description="some list desc",
+                                                                     output_type=str)])
+            def funky_command():
+                """Some other description
+
+                Context Outputs:
+                    some_doc_out (int): some doc desc
+
+                """
+                print("func")
+
+        save_code_as_integration(code=code_snippet, full_path=integration_path)
+        yml_generator = YMLGenerator(filename=integration_path)
+        yml_generator.generate()
+        expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
+        expected_command = copy.deepcopy(BASIC_COMMAND_DICT)
+        expected_out = copy.deepcopy(BASIC_OUT_ARG_DICT)
+        expected_out.update({"contextPath": "some.some_list_out",
+                             "description": "some list desc",
+                             "type": "String"})
+        expected_command["outputs"] = [expected_out]
+        expected_dict["script"]["commands"] = [expected_command]
+        assert expected_dict == yml_generator.get_metadata_dict()
+
+    def test_multiple_output_prefixes_in_declaration(self, tmp_path):
+        integration_path = tmp_path / "integration_name.py"
+
+        def code_snippet():
+            metadata_collector = YMLMetadataCollector(integration_name="some_name")
+
+            @metadata_collector.command(command_name="some-command", multiple_output_prefixes=True)
+            def funky_command():
+                """Some other description
+
+                Context Outputs:
+                    first_prefix.out1 (dict): first out in first prefix.
+                    second_prefix.out1 (dict): first out in second prefix.
+                    first_prefix.out2 (dict): second out in first prefix.
+                    no_prefix_out (dict): no explicit prefix.
+                """
+                print("func")
+
+        save_code_as_integration(code=code_snippet, full_path=integration_path)
+        yml_generator = YMLGenerator(filename=integration_path)
+        yml_generator.generate()
+        expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
+        expected_command = copy.deepcopy(BASIC_COMMAND_DICT)
+        arg1_pre1 = copy.deepcopy(BASIC_OUT_ARG_DICT)
+        arg1_pre1.update({"contextPath": "first_prefix.out1", "description": "first out in first prefix."})
+        arg2_pre1 = copy.deepcopy(BASIC_OUT_ARG_DICT)
+        arg2_pre1.update({"contextPath": "second_prefix.out1", "description": "first out in second prefix."})
+        arg1_pre2 = copy.deepcopy(BASIC_OUT_ARG_DICT)
+        arg1_pre2.update({"contextPath": "first_prefix.out2", "description": "second out in first prefix."})
+        no_prefix_arg = copy.deepcopy(BASIC_OUT_ARG_DICT)
+        no_prefix_arg.update({"contextPath": "some_name.no_prefix_out", "description": "no explicit prefix."})
+        expected_command["outputs"] = [arg1_pre1, arg2_pre1, arg1_pre2, no_prefix_arg]
+        expected_dict["script"]["commands"] = [expected_command]
+        assert expected_dict == yml_generator.get_metadata_dict()
+
+    def test_multiple_output_prefixes_in_list(self, tmp_path):
+        integration_path = tmp_path / "integration_name.py"
+
+        def code_snippet():
+            metadata_collector = YMLMetadataCollector(integration_name="some_name")
+
+            @metadata_collector.command(command_name="some-command", multiple_output_prefixes=True,
+                                        outputs_list=[OutputArgument(name="out1",
+                                                                     prefix="first_prefix",
+                                                                     description="first out in first prefix."),
+                                                      OutputArgument(name="out2",
+                                                                     prefix="first_prefix",
+                                                                     description="second out in first prefix."),
+                                                      OutputArgument(name="out1",
+                                                                     prefix="second_prefix",
+                                                                     description="first out in second prefix."),
+                                                      OutputArgument(name="no_prefix_out",
+                                                                     description="no explicit prefix.")
+                                                      ])
+            def funky_command():
+                """Some other description"""
+                print("func")
+
+        save_code_as_integration(code=code_snippet, full_path=integration_path)
+        yml_generator = YMLGenerator(filename=integration_path)
+        yml_generator.generate()
+        expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
+        expected_command = copy.deepcopy(BASIC_COMMAND_DICT)
+        arg1_pre1 = copy.deepcopy(BASIC_OUT_ARG_DICT)
+        arg1_pre1.update({"contextPath": "first_prefix.out1", "description": "first out in first prefix."})
+        arg2_pre1 = copy.deepcopy(BASIC_OUT_ARG_DICT)
+        arg2_pre1.update({"contextPath": "second_prefix.out1", "description": "first out in second prefix."})
+        arg1_pre2 = copy.deepcopy(BASIC_OUT_ARG_DICT)
+        arg1_pre2.update({"contextPath": "first_prefix.out2", "description": "second out in first prefix."})
+        no_prefix_arg = copy.deepcopy(BASIC_OUT_ARG_DICT)
+        no_prefix_arg.update({"contextPath": "some_name.no_prefix_out", "description": "no explicit prefix."})
+        expected_command["outputs"] = [arg1_pre1, arg1_pre2, arg2_pre1, no_prefix_arg]
+        expected_dict["script"]["commands"] = [expected_command]
+        assert expected_dict == yml_generator.get_metadata_dict()
 
 
 class TestYMLGeneration:
-    def test_yml_file_making(self):
-        pass
+    FULL_INTEGRATION_DICT = {'category': 'Utilities',
+                             'commonfields': {'id': 'some_name', 'version': -1},
+                             'configuration': [{
+                                 "display": "confkey1",
+                                 "name": "confkey1",
+                                 "type": 0,
+                                 "required": False
+                             }, {
+                                 "display": "confkey2",
+                                 "name": "confkey2",
+                                 "type": 0,
+                                 "required": False
+                             }],
+                             'description': '',
+                             'display': 'some name',
+                             'fromversion': '6.0.0',
+                             'name': 'some_name',
+                             'script': {'commands': [{
+                                 'arguments': [{
+                                     'default': False,
+                                     'name': 'classy_arg1',
+                                     'description': 'some classy first arg.',
+                                     'isArray': False,
+                                     'required': True,
+                                     'secret': False
+                                 }, {
+                                     'default': False,
+                                     'name': 'classy_arg2',
+                                     'description': 'some classy second arg.',
+                                     'isArray': False,
+                                     'required': True,
+                                     'secret': False
+                                 }
+                                 ],
+                                 'deprecated': False,
+                                 'description': 'Some classy description.',
+                                 'name': 'some-classy-command',
+                                 'outputs': [{
+                                     "contextPath": "some_name.classy_out1",
+                                     "description": "some classy first out.",
+                                     "type": "String"
+                                 }, {
+                                     "contextPath": "some_name.classy_out2",
+                                     "description": "some classy second out.",
+                                     "type": "Number"
+                                 }]},
+                                 {
+                                     'arguments': [{
+                                         'default': False,
+                                         'name': 'some_in1',
+                                         'description': 'in one desc',
+                                         'isArray': False,
+                                         'required': True,
+                                         'secret': False
+                                     }, {
+                                         'default': False,
+                                         'name': 'some_in2',
+                                         'description': 'in two desc',
+                                         'isArray': False,
+                                         'required': True,
+                                         'secret': False
+                                     }],
+                                     'deprecated': False,
+                                     'description': 'Some funky description.',
+                                     'name': 'some-funky-command',
+                                     'outputs': [{
+                                         "contextPath": "some_name.some_out1",
+                                         "description": "some one desc",
+                                         "type": "String"
+                                     }, {
+                                         "contextPath": "some_name.some_out2",
+                                         "description": "some two desc",
+                                         "type": "Unknown"
+                                     }]}],
+                                 'dockerimage': 'demisto/python3:latest',
+                                 'feed': False,
+                                 'isfetch': False,
+                                 'longRunning': False,
+                                 'longRunningPort': False,
+                                 'runonce': False,
+                                 'script': '-',
+                                 'subtype': 'python3',
+                                 'type': 'python'},
+                             'tests': ['No tests']}
 
-    def test_complete_integration_generation(self):
-        pass
+    def full_integration_code_snippet(self):
+        metadata_collector = YMLMetadataCollector(integration_name="some_name",
+                                                  conf=[ConfKey(name="confkey1"),
+                                                        ConfKey(name="confkey2")])
 
-    def test_no_metadata_collector_defined(self):
-        pass
+        @metadata_collector.command(command_name="some-funky-command",
+                                    inputs_list=[InputArgument(name="some_in1",
+                                                               description="in one desc"),
+                                                 InputArgument(name="some_in2",
+                                                               description="in two desc")],
+                                    outputs_list=[OutputArgument(name="some_out1",
+                                                                 description="some one desc",
+                                                                 output_type=str),
+                                                  OutputArgument(name="some_out2",
+                                                                 description="some two desc",
+                                                                 output_type=dict)])
+        def funky_command():
+            """Some funky description."""
+            print("func")
+
+        @metadata_collector.command(command_name="some-classy-command")
+        def classy_command():
+            """Some classy description.
+
+            Args:
+                classy_arg1: some classy first arg.
+                classy_arg2: some classy second arg.
+
+            Context Outputs:
+                classy_out1 (str): some classy first out.
+                classy_out2 (int): some classy second out.
+            """
+            print("func")
+
+    def test_yml_file_making(self, tmp_path):
+        integration_path = tmp_path / "integration_name.py"
+        save_code_as_integration(code=TestYMLGeneration.full_integration_code_snippet, full_path=integration_path)
+        yml_generator = YMLGenerator(filename=integration_path)
+        yml_generator.generate()
+        yml_generator.save_to_yml_file()
+        with open(tmp_path / "integration_name.yml", "r") as generated_yml:
+            metadata_dict = yaml.load(generated_yml)
+
+        assert metadata_dict == yml_generator.get_metadata_dict()
+
+    def test_complete_integration_generation(self, tmp_path):
+        integration_path = tmp_path / "integration_name.py"
+        save_code_as_integration(code=TestYMLGeneration.full_integration_code_snippet, full_path=integration_path)
+        yml_generator = YMLGenerator(filename=integration_path)
+        yml_generator.generate()
+        assert self.FULL_INTEGRATION_DICT == yml_generator.get_metadata_dict()
+
+    def test_no_metadata_collector_defined(self, tmp_path, capsys):
+        integration_path = tmp_path / "integration_name.py"
+
+        def code_snippet():
+            def funky_command():
+                """Some other description"""
+                print("func")
+
+        save_code_as_integration(code=code_snippet, full_path=integration_path)
+
+        yml_generator = YMLGenerator(filename=integration_path)
+        yml_generator.generate()
+        out, err = capsys.readouterr()
+
+        assert "No metadata collector found in" in out
+        assert not yml_generator.is_generatable_file
+        assert not yml_generator.metadata_collector

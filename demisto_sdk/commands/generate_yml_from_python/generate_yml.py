@@ -51,7 +51,7 @@ class YMLGenerator:
         def import_mock(name: str, *args, **kwargs):
             if name not in {'InputArgument', 'ConfKey', 'ParameterType', 'YMLMetadataCollector',
                             'demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector',
-                            'datetime'}:
+                            'datetime', 'enum'}:
                 return mock_obj
             return orig_import(name, *args, **kwargs)
 
@@ -272,11 +272,8 @@ class MetadataToDict:
         """Build YML command metadata dictionary for the command."""
         if self.verbose:
             click.secho(f"Parsing metadata for command {command.name}...")
-        description: str = ''
-        in_args: list = []
-        out_args: list = []
-        if not command.inputs or not command.outputs:
-            description, in_args, out_args = self.google_docstring_to_dict(command.function.__doc__, self.verbose)
+
+        description, in_args, out_args = self.google_docstring_to_dict(command.function.__doc__, self.verbose)
 
         command_dict: dict = {
             "deprecated": command.deprecated,
@@ -323,7 +320,7 @@ class MetadataToDict:
             if argument.options:
                 options = argument.options
             elif argument.input_type:
-                options = MetadataToDict.handle_enum(argument.options)
+                options = MetadataToDict.handle_enum(argument.input_type)
 
             command_args.append(MetadataToDict.add_arg_metadata(
                 arg_name=argument.name,
@@ -403,7 +400,7 @@ class MetadataToDict:
             "description": arg_name,
             "required": required,
             "secret": False,
-            "default": False
+            "default": True if default_value else False
         }
         if description:
             arg_metadata["description"] = description
@@ -467,7 +464,11 @@ class MetadataToDict:
             if prefix:
                 context_path = f"{prefix}.{output_key.name}"
             if multiple_prefixes:
-                context_path = f"{output_key.prefix}.{output_key.name}"
+                if output_key.prefix:
+                    context_path = f"{output_key.prefix}.{output_key.name}"
+                elif "." in output_key.name:
+                    context_path = output_key.name
+
             if output_key:
                 organized_outputs.append({
                     "contextPath": context_path,

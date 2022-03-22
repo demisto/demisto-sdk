@@ -1,6 +1,5 @@
 import functools
 import logging
-import urllib
 from ast import literal_eval
 from collections import OrderedDict
 from copy import deepcopy
@@ -8,6 +7,7 @@ from os import path
 from time import ctime
 from typing import List, Union
 
+import urllib3
 from dateparser import parse
 from mitmproxy import ctx
 from mitmproxy.addonmanager import Loader
@@ -114,8 +114,8 @@ class TimestampReplacer:
         """Print details of the request"""
         req = flow.request
         logging.info(f'{req.method} {req.pretty_url}')
-        _, _, path, _, query, _ = urllib.parse.urlparse(req.url)
-        queriesArray = urllib.parse.parse_qsl(query, keep_blank_values=True)
+        _, _, path, _, query, _ = urllib3.parse.urlparse(req.url)
+        queriesArray = urllib3.parse.parse_qsl(query, keep_blank_values=True)
         logging.info(f'queriesArray={queriesArray}')
         if req.multipart_form:
             logging.info(f'multipart_form data = {req.multipart_form.items()}')
@@ -239,7 +239,7 @@ class TimestampReplacer:
                     logging.exception(f'failed to run literal_eval on content {content}')
                 try:
                     logging.info('parsing the request body with "literal_eval" failed - trying with "json.loads"')
-                    content = json.loads(content, object_pairs_hook=OrderedDict)
+                    content = json.loads(content)
                     self.modify_json_body(req, content)
                 except Exception:
                     logging.exception(f'failed to run json.loads on content {content}')
@@ -364,7 +364,7 @@ class TimestampReplacer:
                     logging.exception(f'failed to run literal_eval content: {content}')
                 try:
                     logging.info('parsing the request body with "literal_eval" failed - trying with "json.loads"')
-                    content = json.loads(content, object_pairs_hook=OrderedDict)
+                    content = json.loads(content)
                     json_keys = self.determine_problematic_keys(content)
                     self.json_keys.update(json_keys)
                 except Exception:

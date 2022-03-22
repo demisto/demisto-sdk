@@ -63,7 +63,7 @@ class TestGenerateTestPlaybook:
         integration_folder.mkdir(parents=True)
 
         integration_path = integration_folder / 'DummyIntegration.yml'
-        shutil.copy(str(TestGenerateTestPlaybook.DUMMY_INTEGRATION_YML_PATH), str(integration_path))
+        shutil.copy(str(TestGenerateTestPlaybook.DUMMY_INTEGRATION_YML_PATH), integration_path)
 
         generator = PlaybookTestsGenerator(
             input=integration_path,
@@ -110,8 +110,8 @@ class TestGenerateTestPlaybook:
         When: called `generate_test_playbook`
         Then: Make sure the generated test playbook is correct, and saved in the relevant location.
         """
-        tmpdir.mkdir("some_folder")
-        output = tmpdir.join("some_folder")
+        output = tmpdir / "some_folder"
+        output.mkdir()
         generator = PlaybookTestsGenerator(
             input=TestGenerateTestPlaybook.DUMMY_INTEGRATION_YML_PATH,
             file_type='integration',
@@ -122,9 +122,12 @@ class TestGenerateTestPlaybook:
 
         generator.run()
 
-        expected_test_playbook_yml = get_yaml(Path(TestGenerateTestPlaybook.TEST_FILE_PATH /
-                                              'fake_integration_expected_test_playbook.yml'))
-        actual_test_playbook_yml = get_yaml(output.join('playbook-TestPlaybook_Test.yml'))
+        expected_test_playbook_yml = get_yaml(
+            TestGenerateTestPlaybook.TEST_FILE_PATH / 'fake_integration_expected_test_playbook.yml'
+        )
+        actual_test_playbook_yml = get_yaml(
+            output / 'playbook-TestPlaybook_Test.yml'
+        )
 
         assert expected_test_playbook_yml == actual_test_playbook_yml
 

@@ -7,6 +7,7 @@
 * Fixed an issue in the **validate** command did not work properly when using the *-g* flag.
 * Enhanced the dependency message shown when running **lint**.
 * Added support for new XSIAM entities in *create-id-set* command.
+* Added support for new XSIAM entities in **create-content-artifacts** command.
 
 # 1.6.2
 * Added dependency validation support for core marketplacev2 packs.
@@ -42,7 +43,6 @@
 * Added warning when inferred files are missing.
 * Added to **validate** a validation for integration image dimensions, which should be 120x50px.
 * Improved an error in the **validate** command to better differentiate between the case where a required fetch parameter is malformed or missing.
-* Added support for new XSIAM entities in **create-content-artifacts** command.
 
 # 1.6.0
 * Fixed an issue in the **create-id-set** command where similar items from different marketplaces were reported as duplicated.

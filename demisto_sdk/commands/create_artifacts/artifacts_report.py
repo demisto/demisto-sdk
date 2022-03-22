@@ -4,8 +4,10 @@ from typing import List, Union
 from tabulate import tabulate
 from wcmatch.pathlib import Path
 
+from demisto_sdk.commands.common.content.objects.abstract_objects.text_object import \
+    TextObject
 from demisto_sdk.commands.common.content.objects.pack_objects import (
-    JSONContentObject, TextObject, YAMLContentObject, YAMLContentUnifiedObject)
+    JSONContentObject, YAMLContentObject, YAMLContentUnifiedObject)
 from demisto_sdk.commands.common.logger import Colors
 
 ContentObject = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject, TextObject]

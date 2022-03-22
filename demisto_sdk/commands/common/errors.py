@@ -9,7 +9,8 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    DEFAULT_JOB_FROM_VERSION,
                                                    INTEGRATION_CATEGORIES,
                                                    PACK_METADATA_DESC,
-                                                   PACK_METADATA_NAME, FileType)
+                                                   PACK_METADATA_NAME,
+                                                   FileType)
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []

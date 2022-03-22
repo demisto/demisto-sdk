@@ -63,7 +63,7 @@ class TestGenerateTestPlaybook:
         integration_folder.mkdir(parents=True)
 
         integration_path = integration_folder / 'DummyIntegration.yml'
-        shutil.copy(str(TestGenerateTestPlaybook.DUMMY_INTEGRATION_YML_PATH), integration_path)
+        shutil.copy(TestGenerateTestPlaybook.DUMMY_INTEGRATION_YML_PATH, integration_path)
 
         generator = PlaybookTestsGenerator(
             input=integration_path,

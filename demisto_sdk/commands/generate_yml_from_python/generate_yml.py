@@ -30,7 +30,7 @@ class YMLGenerator:
     """
     IMPORT_COLLECTOR_LINE = "from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (" \
                             "CommandMetadata, ConfKey, InputArgument, YMLMetadataCollector, " \
-                            "OutputArgument)"
+                            "OutputArgument, ParameterTypes)"
     EXPLICIT_DECLARATION_IMPORTS_LINE = "from CommonServerPython import BaseClient, CommandResults, datetime"
 
     def __init__(self, filename: str, verbose: bool = False, force: bool = False):
@@ -51,7 +51,7 @@ class YMLGenerator:
         def import_mock(name: str, *args, **kwargs):
             if name not in {'InputArgument', 'ConfKey', 'ParameterType', 'YMLMetadataCollector',
                             'demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector',
-                            'datetime', 'enum'}:
+                            'datetime', 'enum', 'ParameterTypes'}:
                 return mock_obj
             return orig_import(name, *args, **kwargs)
 

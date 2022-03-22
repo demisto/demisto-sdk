@@ -8,6 +8,9 @@ import click
 
 from demisto_sdk.commands.common.constants import ParameterType
 
+# This is done so the dependencies will not clash or be mocked.
+ParameterTypes = ParameterType
+
 
 class InputArgument:
     """YML input argument for a command."""

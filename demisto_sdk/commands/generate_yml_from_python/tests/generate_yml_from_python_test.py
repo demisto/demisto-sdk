@@ -215,7 +215,7 @@ class TestConfigurationGeneration:
                                {"name": "some_confkey_name", "display": "some_display_name"}),
                               ({"name": "some_name", "required": True}, {"name": "some_name", "required": True}),
                               ({"name": "some_name", "required": False}, {"name": "some_name", "required": False})
-                              ],  # TODO: fill in all details
+                              ],  # TODO: fill in all details, including parameter types.
                              ids=["name", "display", "required=True", "required=False"])
     def test_generate_conf_keys(self, tmp_path, configuration, expected_update):
         integration_path = tmp_path / "integration_name.py"

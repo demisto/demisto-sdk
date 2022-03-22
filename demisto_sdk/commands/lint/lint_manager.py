@@ -85,14 +85,16 @@ class LintManager:
 
         self._id_set_path = id_set_path
         if check_dependent_api_module:
-            print("Checking for packages dependent on the modified api module...")
+            print('Checking for packages dependent on the modified API module', end='... ')
             dependent_on_api_module = get_api_module_dependencies(self._pkgs, self._id_set_path, self._verbose)
             dependent_on_api_module = self._get_packages(content_repo=self._facts["content_repo"],
                                                          input=dependent_on_api_module)
             self._pkgs = list(set(self._pkgs + dependent_on_api_module))
-            print(f"Found {Colors.Fg.cyan}{len(dependent_on_api_module)}{Colors.reset} dependent packages."
-                  f" Executing lint and test on dependent packages as well.")
-
+            if dependent_on_api_module:
+                print(f'Found {Colors.Fg.cyan}{len(dependent_on_api_module)}{Colors.reset} dependent packages. '
+                      f'Executing lint and test on those as well.')
+            else:
+                print('No dependent packages found.')
         if json_file_path:
             if os.path.isdir(json_file_path):
                 json_file_path = os.path.join(json_file_path, 'lint_outputs.json')
@@ -221,7 +223,8 @@ class LintManager:
                 print_v(f"Found changed package {Colors.Fg.cyan}{pkg}{Colors.reset}",
                         log_verbose=self._verbose)
         if pkgs:
-            print(f"Executing lint and test on {Colors.Fg.cyan}{pkgs}{Colors.reset} integrations and scripts")
+            pkgs_str = ", ".join(map(str, pkgs))
+            print(f"Executing lint and test on integrations and scripts in {Colors.Fg.cyan}{pkgs_str}{Colors.reset}")
 
         return pkgs
 

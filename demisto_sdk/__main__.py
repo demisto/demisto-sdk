@@ -307,11 +307,12 @@ def unify(**kwargs):
         generic_module_unifier.merge_generic_module_with_its_dashboards()
 
     else:
-        from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
+        from demisto_sdk.commands.unify.integration_script_unifier import \
+            IntegrationScriptUnifier
 
         # pass arguments to YML unifier and call the command
-        yml_unifier = YmlUnifier(**kwargs)
-        yml_unifier.merge_script_package_to_yml()
+        yml_unifier = IntegrationScriptUnifier(**kwargs)
+        yml_unifier.unify()
 
     return 0
 
@@ -439,7 +440,7 @@ def zip_packs(**kwargs) -> int:
     '--print-pykwalify', is_flag=True,
     help='Whether to print the pykwalify log errors.')
 @click.option(
-    "--quite-bc-validation",
+    "--quiet-bc-validation",
     help="Set backwards compatibility validation's errors as warnings.",
     is_flag=True)
 @click.option(

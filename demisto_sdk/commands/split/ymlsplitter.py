@@ -18,7 +18,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_pipenv_dir,
                                                get_python_version, pascal_case,
                                                print_color, print_error)
-from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
+from demisto_sdk.commands.unify.integration_script_unifier import \
+    IntegrationScriptUnifier
 
 yaml = YAML_Handler()
 
@@ -276,7 +277,7 @@ class YmlSplitter:
 
     def remove_integration_documentation(self, detailed_description):
         if "[View Integration Documentation]" in detailed_description:
-            normalized_integration_id = YmlUnifier.normalize_integration_id(self.yml_data['commonfields']['id'])
+            normalized_integration_id = IntegrationScriptUnifier.normalize_integration_id(self.yml_data['commonfields']['id'])
             integration_doc_link = INTEGRATIONS_DOCS_REFERENCE + normalized_integration_id
             documentation = f'[View Integration Documentation]({integration_doc_link})'
             if '\n\n---\n' + documentation in detailed_description:

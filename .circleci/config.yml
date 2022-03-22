@@ -73,7 +73,17 @@ jobs:
             no_output_timeout: 15m
             command: |
               shopt -u globstar
-              TEST_FILES=$(circleci tests glob "**/tests/**/*_test.py" | circleci tests split --split-by=timings)
+
+              # The first sed expression is to remove test files from under the demisto_sdk/commands/init/templates
+              # directory from the globbed list of files. Need to manually remove them since the pytest 'ignore'
+              # argument in pytest.ini is itself ignored when explicitly passing tests to pytest. The second is to
+              # remove the integration tests (integration tests as opposed to unit tests) from the list because those
+              # tests shouldn't be parallelized.
+              TEST_FILES=$(circleci tests glob "**/*_test.py")
+              TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/init\/templates\S*\.py//g')
+              TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/tests\/integration_tests\S*\.py//g')
+              TEST_FILES=$(echo "$TEST_FILES" | circleci tests split --split-by=timings)
+
               mkdir test-results
               python -m pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml $TEST_FILES
         - store_test_results:

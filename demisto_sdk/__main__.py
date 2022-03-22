@@ -11,7 +11,7 @@ from typing import IO
 # Third party packages
 import click
 import git
-from pkg_resources import get_distribution
+from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
 # Common tools
@@ -123,26 +123,31 @@ def check_configuration_file(command, args):
 )
 @pass_config
 def main(config, version, release_notes):
-    import dotenv
-    dotenv.load_dotenv()  # Load a .env file from the cwd.
     config.configuration = Configuration()
+    import dotenv
+    dotenv.load_dotenv(Path(os.getcwd()) / '.env')  # Load a .env file from the cwd.
     if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
-        cur_version = get_distribution('demisto-sdk').version
-        last_release = get_last_remote_release_version()
-        print_warning(f'You are using demisto-sdk {cur_version}.')
-        if last_release and cur_version != last_release:
-            print_warning(f'however version {last_release} is available.\n'
-                          f'You should consider upgrading via "pip3 install --upgrade demisto-sdk" command.')
-        if release_notes:
-            rn_entries = get_release_note_entries(cur_version)
+        try:
+            __version__ = get_distribution('demisto-sdk').version
+        except DistributionNotFound:
+            __version__ = 'dev'
+            print_warning('Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.')
+        else:
+            last_release = get_last_remote_release_version()
+            print_warning(f'You are using demisto-sdk {__version__}.')
+            if last_release and __version__ != last_release:
+                print_warning(f'however version {last_release} is available.\n'
+                              f'To update, run pip3 install --upgrade demisto-sdk')
+            if release_notes:
+                rn_entries = get_release_note_entries(__version__)
 
-            if not rn_entries:
-                print_warning('\nCould not get the release notes for this version.')
-            else:
-                click.echo('\nThe following are the release note entries for the current version:\n')
-                for rn in rn_entries:
-                    click.echo(rn)
-                click.echo('')
+                if not rn_entries:
+                    print_warning('\nCould not get the release notes for this version.')
+                else:
+                    click.echo('\nThe following are the release note entries for the current version:\n')
+                    for rn in rn_entries:
+                        click.echo(rn)
+                    click.echo('')
 
 
 # ====================== split ====================== #
@@ -295,11 +300,12 @@ def unify(**kwargs):
         generic_module_unifier.merge_generic_module_with_its_dashboards()
 
     else:
-        from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
+        from demisto_sdk.commands.unify.integration_script_unifier import \
+            IntegrationScriptUnifier
 
         # pass arguments to YML unifier and call the command
-        yml_unifier = YmlUnifier(**kwargs)
-        yml_unifier.merge_script_package_to_yml()
+        yml_unifier = IntegrationScriptUnifier(**kwargs)
+        yml_unifier.unify()
 
     return 0
 
@@ -427,17 +433,22 @@ def zip_packs(**kwargs) -> int:
     '--print-pykwalify', is_flag=True,
     help='Whether to print the pykwalify log errors.')
 @click.option(
-    "--quite-bc-validation",
+    "--quiet-bc-validation",
     help="Set backwards compatibility validation's errors as warnings.",
     is_flag=True)
 @click.option(
     "--allow-skipped",
     help="Don't fail on skipped integrations or when all test playbooks are skipped.",
     is_flag=True)
+@click.option(
+    "--no-multiprocessing",
+    help="run validate all without multiprocessing, for debugging purposes.",
+    is_flag=True, default=False)
 @pass_config
 def validate(config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
     from demisto_sdk.commands.validate.validate_manager import ValidateManager
+    run_with_mp = not kwargs.pop('no_multiprocessing')
     check_configuration_file('validate', kwargs)
     sys.path.append(config.configuration.env_dir)
 
@@ -474,6 +485,7 @@ def validate(config, **kwargs):
             debug_git=kwargs.get('debug_git'),
             include_untracked=kwargs.get('include_untracked'),
             quite_bc=kwargs.get('quite_bc_validation'),
+            multiprocessing=run_with_mp,
             check_is_unskipped=not kwargs.get('allow_skipped', False),
         )
         return validator.run_validation()
@@ -864,6 +876,13 @@ def format(
     "-v", "--verbose",
     help="Verbose output", is_flag=True
 )
+@click.option(
+    "--reattach",
+    help="Reattach the detached files in the XSOAR instance"
+         "for the CI/CD Flow. If you set the --input-config-file flag, "
+         "any detached item in your XSOAR instance that isn't currently in the repo's SystemPacks folder "
+         "will be re-attached.)", is_flag=True
+)
 def upload(**kwargs):
     """Upload integration or pack to Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
@@ -882,13 +901,14 @@ def upload(**kwargs):
             config_file_path = kwargs['input_config_file']
             config_file_to_parse = ConfigFileParser(config_file_path=config_file_path)
             pack_path = config_file_to_parse.parse_file()
+            kwargs['detached_files'] = True
             kwargs.pop('input_config_file')
 
         output_zip_path = kwargs.pop('keep_zip') or tempfile.gettempdir()
         packs_unifier = PacksZipper(pack_paths=pack_path, output=output_zip_path,
                                     content_version='0.0.0', zip_all=True, quiet_mode=True)
         packs_zip_path, pack_names = packs_unifier.zip_packs()
-        if packs_zip_path is None:
+        if packs_zip_path is None and not kwargs.get('detached_files'):
             return EX_FAIL
 
         kwargs['input'] = packs_zip_path
@@ -930,6 +950,14 @@ def upload(**kwargs):
     "-a", "--all-custom-content", help="Download all available custom content files", is_flag=True)
 @click.option(
     "-fmt", "--run-format", help="Whether to run demisto-sdk format on downloaded files or not", is_flag=True)
+@click.option(
+    "--system", help="Download system items", is_flag=True, default=False)
+@click.option(
+    "-it", "--item-type", help="The items type to download, use just when downloading system items, should be one "
+                               "form the following list: [IncidentType, IndicatorType, Field, Layout, Playbook, "
+                               "Automation, Classifier, Mapper]",
+    type=click.Choice(['IncidentType', 'IndicatorType', 'Field', 'Layout', 'Playbook', 'Automation', 'Classifier',
+                       'Mapper'], case_sensitive=False))
 def download(**kwargs):
     """Download custom content from Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
@@ -966,9 +994,9 @@ def download(**kwargs):
 @click.option(
     "--file-path", help="XSOAR Configuration File path, the default value is in the repo level", is_flag=False)
 def xsoar_config_file_update(**kwargs):
-    """Download custom content from Demisto instance.
-    DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
-    DEMISTO_API_KEY environment variable should contain a valid Demisto API Key.
+    """Handle your XSOAR Configuration File.
+    Add automatically all the installed MarketPlace Packs to the marketplace_packs section in XSOAR Configuration File.
+    Add a Pack to both marketplace_packs and custom_packs sections in the Configuration File.
     """
     from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import \
         XSOARConfigFileUpdater
@@ -1481,8 +1509,8 @@ def merge_id_sets(**kwargs):
     "-i", "--input", help="The relative path of the content pack. For example Packs/Pack_Name"
 )
 @click.option(
-    '-u', '--update-type', help="The type of update being done. [major, minor, revision, maintenance, documentation]",
-    type=click.Choice(['major', 'minor', 'revision', 'maintenance', 'documentation'])
+    '-u', '--update-type', help="The type of update being done. [major, minor, revision, documentation]",
+    type=click.Choice(['major', 'minor', 'revision', 'documentation'])
 )
 @click.option(
     '-v', '--version', help="Bump to a specific version.", type=VersionParamType()
@@ -1872,6 +1900,13 @@ def openapi_codegen(**kwargs):
     '--server-version',
     help='Which server version to run the tests on(Valid only when using AMI)',
     default="NonAMI")
+@click.option(
+    '-u',
+    '--use-retries',
+    is_flag=True,
+    help='Should use retries mechanism or not (if test-playbook fails, it will execute it again few times and '
+         'determine success according to most of the runs',
+    default=False)
 def test_content(**kwargs):
     """Configure instances for the integration needed to run tests_to_run tests.
     Run test module on each integration.

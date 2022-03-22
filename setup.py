@@ -35,7 +35,9 @@ setup(
     url="https://github.com/demisto/demisto-sdk",
     keywords=["Demisto"],
     install_requires=install_requires,
-    packages=find_packages(),
+    packages=find_packages(
+        exclude=["*.tests.*", "*.tests"]
+    ),
     include_package_data=True,
     entry_points={
         'console_scripts': ['demisto-sdk = demisto_sdk.__main__:main']
@@ -47,10 +49,11 @@ setup(
         'Intended Audience :: Developers',
         'Natural Language :: English',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: Implementation :: CPython'
     ],
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     author="Demisto"
 )

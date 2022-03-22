@@ -4,7 +4,8 @@ from pathlib import Path
 from typing import List, Optional
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
+from demisto_sdk.commands.unify.integration_script_unifier import \
+    IntegrationScriptUnifier
 from TestSuite.file import File
 from TestSuite.test_tools import suite_join_path
 from TestSuite.yml import YAML
@@ -58,6 +59,14 @@ class Integration:
         if image is not None:
             self.image.write_bytes(image)
 
+        if self.create_unified:
+            unifier = IntegrationScriptUnifier(input=self.path, output=os.path.dirname(self._tmpdir_integration_path))
+            yml_path = unifier.unify()[0]
+            readme_path = unifier.move_readme_next_to_unified(yml_path)
+            shutil.rmtree(self._tmpdir_integration_path)
+            self.yml.path = yml_path
+            self.readme.path = readme_path
+
     def create_default_integration(self, name: str = 'Sample', commands: List[str] = None):
         """Creates a new integration with basic data
 
@@ -90,8 +99,3 @@ class Integration:
             changelog=changelog,
             description=description
         )
-
-        if self.create_unified:
-            unifier = YmlUnifier(input=self.path, output=os.path.dirname(self._tmpdir_integration_path))
-            unifier.merge_script_package_to_yml()
-            shutil.rmtree(self._tmpdir_integration_path)

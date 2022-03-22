@@ -36,8 +36,7 @@ class YAMLUnifier(ABC):
     ):
         directory_name = ''
         # Changing relative path to current abspath fixed problem with default output file name.
-        if input == '.':
-            input = os.path.abspath(input)
+        input = os.path.abspath(input)
         if not os.path.isdir(input):
             print_error(UNSUPPORTED_INPUT_ERR_MSG)
             sys.exit(1)

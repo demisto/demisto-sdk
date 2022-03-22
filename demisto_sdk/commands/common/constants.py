@@ -73,6 +73,12 @@ GENERIC_TYPE = 'generictype'
 GENERIC_MODULE = 'genericmodule'
 GENERIC_DEFINITION = 'genericdefinition'
 JOB = 'job'
+PARSING_RULE = 'parsingrule'
+MODELING_RULE = 'modelingrule'
+CORRELATION_RULE = 'correlationrule'
+XSIAM_DASHBOARD = 'xsiamdashboard'
+XSIAM_REPORT = 'xsiamreport'
+TRIGGER = 'trigger'
 
 MARKETPLACE_KEY_PACK_METADATA = 'marketplaces'
 
@@ -130,6 +136,7 @@ class FileType(Enum):
     XSIAM_DASHBOARD = 'xsiamdashboard'
     XSIAM_REPORT = 'xsiamreport'
     TRIGGER = 'trigger'
+
 
 RN_HEADER_BY_FILE_TYPE = {
     FileType.PLAYBOOK: 'Playbooks',
@@ -1340,6 +1347,12 @@ class ContentItems(Enum):
     PRE_PROCESS_RULES = 'pre-process-rule'
     LISTS = 'list'
     JOB = 'job'
+    PARSING_RULES = 'parsingrule'
+    MODELING_RULES = 'modelingrule'
+    CORRELATION_RULES = 'correlationrule'
+    XSIAM_DASHBOARDS = 'xsiamdashboard'
+    XSIAM_REPORTS = 'xsiamreport'
+    TRIGGERS = 'trigger'
 
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {
@@ -1357,7 +1370,13 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     CLASSIFIERS_DIR,
     WIDGETS_DIR,
     JOBS_DIR,
-    LISTS_DIR
+    LISTS_DIR,
+    PARSING_RULES_DIR,
+    MODELING_RULES_DIR,
+    CORRELATION_RULES_DIR,
+    XSIAM_DASHBOARDS_DIR,
+    XSIAM_REPORTS_DIR,
+    TRIGGER_DIR
 }
 
 
@@ -1410,6 +1429,12 @@ class IdSetKeys(Enum):
     REPORTS = "Reports"
     WIDGETS = "Widgets"
     DASHBOARDS = "Dashboards"
+    PARSING_RULES = "ParsingRules"
+    MODELING_RULES = "ModelingRules"
+    CORRELATION_RULES = "CorrelationRules"
+    XSIAM_DASHBOARDS = "XSIAMDashboards"
+    XSIAM_REPORTS = "XSIAMReports"
+    TRIGGERS = "Triggers"
 
 
 FileTypeToIDSetKeys = {
@@ -1436,7 +1461,13 @@ FileTypeToIDSetKeys = {
     FileType.GENERIC_FIELD: IdSetKeys.GENERIC_FIELDS.value,
     FileType.GENERIC_MODULE: IdSetKeys.GENERIC_MODULES.value,
     FileType.GENERIC_DEFINITION: IdSetKeys.GENERIC_DEFINITIONS.value,
-    FileType.JOB: IdSetKeys.JOBS.value
+    FileType.JOB: IdSetKeys.JOBS.value,
+    FileType.PARSING_RULE: IdSetKeys.PARSING_RULES.value,
+    FileType.MODELING_RULE: IdSetKeys.MODELING_RULES.value,
+    FileType.CORRELATION_RULE: IdSetKeys.CORRELATION_RULES.value,
+    FileType.XSIAM_DASHBOARD: IdSetKeys.XSIAM_DASHBOARDS.value,
+    FileType.XSIAM_REPORT: IdSetKeys.XSIAM_REPORTS.value,
+    FileType.TRIGGER: IdSetKeys.TRIGGERS.value
 }
 
 FileType_ALLOWED_TO_DELETE = {

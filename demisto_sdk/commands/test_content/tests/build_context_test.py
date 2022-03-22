@@ -191,7 +191,8 @@ def get_mocked_build_context(
         'build_number': '11111',
         'branch_name': 'branch',
         'server_version': server_version,
-        'mem_check': False
+        'mem_check': False,
+        'server_type': 'XSOAR'
     }
     return BuildContext(kwargs, logging_manager)
 

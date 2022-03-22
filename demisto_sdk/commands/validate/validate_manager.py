@@ -4,11 +4,11 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from typing import Callable, List, Optional, Set, Tuple
 
 import click
+import decorator
 import pebble
 from colorama import Fore
 from git import InvalidGitRepositoryError
 from packaging import version
-import decorator
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
@@ -21,16 +21,17 @@ from demisto_sdk.commands.common.constants import (
     PathLevel)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
+                                                ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE, Errors,
-                                                get_all_error_codes, ERROR_CODE)
+                                                get_all_error_codes)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.author_image import \
     AuthorImageValidator
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator, meta_specific_validation_decorator
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator, meta_specific_validation_decorator)
 from demisto_sdk.commands.common.hook_validations.classifier import \
     ClassifierValidator
 from demisto_sdk.commands.common.hook_validations.conf_json import \
@@ -99,7 +100,7 @@ class ValidateManager:
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
             create_id_set=False, json_file_path=None, skip_schema_check=False, debug_git=False, include_untracked=False,
-            pykwalify_logs=False, check_is_unskipped=True, quite_bc=False, multiprocessing=True, specific_validations=None,
+            pykwalify_logs=False, check_is_unskipped=True, quite_bc=False, multiprocessing=True, specific_validations='',
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -124,7 +125,7 @@ class ValidateManager:
         self.check_is_unskipped = check_is_unskipped
         self.conf_json_data = {}
         self.run_with_multiprocessing = multiprocessing
-        self.specific_validations = specific_validations
+        self.specific_validations = specific_validations.split(',')
         if json_file_path:
             self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \
                 os.path.isdir(json_file_path) else json_file_path
@@ -144,7 +145,8 @@ class ValidateManager:
                                                    ignored_errors=None,
                                                    print_as_warnings=self.print_ignored_errors,
                                                    id_set_file=self.id_set_file,
-                                                   json_file_path=json_file_path, specific_validations=specific_validations) if validate_id_set else None
+                                                   json_file_path=json_file_path,
+                                                   specific_validations=self.specific_validations) if validate_id_set else None
 
         try:
             self.git_util = GitUtil(repo=Content.git())
@@ -455,7 +457,7 @@ class ValidateManager:
                                  drop_line=True):
                 return False
         return True
-        
+
     @meta_specific_validation_decorator('invalid_image_name_or_location')
     def is_valid_file_type(self, file_type, file_path):
         """

@@ -47,9 +47,9 @@ class IDSetValidations(BaseValidator):
     PACKS_SECTION = "Packs"
 
     def __init__(self, is_test_run=False, is_circle=False, configuration=Configuration(), ignored_errors=None,
-                 print_as_warnings=False, suppress_print=False, id_set_file=None, json_file_path=None):
+                 print_as_warnings=False, suppress_print=False, id_set_file=None, json_file_path=None, specific_validations=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print, json_file_path=json_file_path)
+                         suppress_print=suppress_print, json_file_path=json_file_path, specific_validations=specific_validations)
         self.is_circle = is_circle
         self.configuration = configuration
         if not is_test_run and self.is_circle:

@@ -9,27 +9,34 @@ from demisto_sdk.commands.common.constants import (PACK_METADATA_SUPPORT,
                                                    PACKS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    FileType)
-from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
+from demisto_sdk.commands.common.errors import (ERROR_CODE,
+                                                FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE,
                                                 get_all_error_codes,
-                                                get_error_object, ERROR_CODE)
+                                                get_error_object)
 from demisto_sdk.commands.common.tools import (
     find_type, get_file_displayed_name, get_json, get_pack_name,
     get_relative_path_from_packs_dir, get_yaml)
 
-def meta_specific_validation_decorator(error_func_name):
+
+def meta_specific_validation_decorator(error_func_names_str: str):
 
     def specific_validation_decorator(func):
 
         def wrapper(self, *args, **kwargs):
             if self.specific_validations:
-                if ERROR_CODE[error_func_name].get('code') in self.specific_validations:
-                    return func(self, *args, **kwargs)
-            elif not self.specific_validations:
+                error_func_names = error_func_names_str.split(',')
+                error_func_code = ''
+                for error_func_name in error_func_names:
+                    error_func_code = ERROR_CODE[error_func_name].get('code')  # type: ignore
+                    if error_func_code:
+                        if error_func_code in self.specific_validations or error_func_code[:2] in self.specific_validations:
+                            return func(self, *args, **kwargs)
+            else:
                 return func(self, *args, **kwargs)
-                
+
             return True
 
         return wrapper
@@ -40,7 +47,7 @@ def meta_specific_validation_decorator(error_func_name):
 class BaseValidator:
 
     def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False,
-                 json_file_path: Optional[str] = None, specific_validations=None):
+                 json_file_path: Optional[str] = None, specific_validations=[]):
         self.ignored_errors = ignored_errors if ignored_errors else {}
         self.print_as_warnings = print_as_warnings
         self.checked_files = set()  # type: ignore

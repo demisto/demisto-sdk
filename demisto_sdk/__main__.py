@@ -444,9 +444,9 @@ def zip_packs(**kwargs) -> int:
     help="run validate all without multiprocessing, for debugging purposes.",
     is_flag=True, default=False)
 @click.option(
-    '-sv','--run-specific-validations',
+    '-sv', '--run-specific-validations',
     help="run specific validations.",
-    is_flag=False, default=False)
+    is_flag=False)
 @pass_config
 def validate(config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""

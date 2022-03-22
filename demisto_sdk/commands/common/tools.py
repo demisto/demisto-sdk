@@ -513,6 +513,8 @@ def get_yaml(file_path, cache_clear=False):
 
 
 def get_json(file_path, cache_clear=False):
+    if cache_clear:
+        get_file.cache_clear()
     return get_file(file_path, 'json', clear_cache=cache_clear)
 
 
@@ -1123,6 +1125,9 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
 
     if path.name.endswith(XSOAR_CONFIG_FILE):
         return FileType.XSOAR_CONFIG
+
+    if path.suffix == '.yml' and (path.parts[0] == '.circleci' or path.parts[0] == '.gitlab'):
+        return FileType.BUILD_CONFIG_FILE
 
     return None
 

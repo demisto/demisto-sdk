@@ -101,6 +101,32 @@ jobs:
               fi
 
 
+  run-integration-tests:
+      parameters:
+        pythonversion:
+          type: string
+      docker:
+        - image: cimg/python:<< parameters.pythonversion >>-node
+      steps:
+        - checkout
+        - python/install-packages:
+            pkg-manager: "pipenv"
+            args: "--dev --system"
+            cache-version: << pipeline.parameters.cache-version >>
+        - <<: *install_node_ci
+        - run:
+            name: pytest
+            no_output_timeout: 15m
+            command: |
+              shopt -u globstar
+              TEST_FILES=$(circleci tests glob "demisto_sdk/tests/integration_tests/**/*_test.py")
+
+              mkdir integration-test-results
+              python -m pytest -v --junitxml=integration-test-results/junit.xml $TEST_FILES
+        - store_test_results:
+            path: integration-test-results
+
+
   precommit-checks:
       docker:
         - image: << pipeline.parameters.global-docker-image >>
@@ -266,7 +292,12 @@ workflows:
           matrix:
             parameters:
               pythonversion: [3.8.12, 3.9.10, 3.10.2]   
-          name: pytest-<< matrix.pythonversion >>
+          name: run-unit-tests-<< matrix.pythonversion >>
+      - run-integration-tests:
+          matrix:
+            parameters:
+              pythonversion: [3.8.12, 3.9.10, 3.10.2]   
+          name: run-integration-tests-<< matrix.pythonversion >>
       - validate-files:
           <<: *tag_filter
           <<: *reqs_content_checkout

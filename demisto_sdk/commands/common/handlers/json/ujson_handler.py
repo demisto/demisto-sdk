@@ -25,22 +25,22 @@ class UJSON_Handler(XSOAR_Handler):
         except ValueError as e:
             raise JSONDecodeError(e)
 
-    def load(self, stream: TextIO):
+    def load(self, fp: TextIO):
         try:
-            return ujson.load(stream)
+            return ujson.load(fp)
         except ValueError as e:
             raise JSONDecodeError(e)
 
-    def dump(self, data, stream: TextIO, sort_keys=False, indent=0):
+    def dump(self, obj, fp: TextIO, sort_keys=False, indent=0):
         try:
-            ujson.dump(data, stream, sort_keys=sort_keys, indent=indent)
+            ujson.dump(obj, fp, sort_keys=sort_keys, indent=indent)
         except ValueError as e:
             raise JSONDecodeError(e)
 
-    def dumps(self, data, sort_keys=False, indent=0):
+    def dumps(self, obj, sort_keys=False, indent=0):
         try:
             return ujson.dumps(
-                data,
+                obj,
                 sort_keys=sort_keys,
                 indent=indent
             )

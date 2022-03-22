@@ -182,14 +182,16 @@ class CoverageSummary:
                 if next_update > datetime.utcnow():
                     return full_coverage_summary['files']
             except FileNotFoundError:
+                logger.info('No cache file found. creatig a cache dir at %s', self.cache_dir)
                 os.makedirs(self.cache_dir, exist_ok=True)
-            except (json.decoder.JSONDecodeError, KeyError, ValueError):
-                pass
+            except (json.JSONDecodeError, KeyError, ValueError) as exc:
+                logger.exception(exc)
 
-        data = requests.get(self.url)
-        data.raise_for_status()
+        resp = requests.get(self.url)
+        resp.raise_for_status()
+        data = resp.json()
         if self.use_cache and self.cache_dir:
-            with open(json_path, 'w') as coverage_summary_raw:
-                coverage_summary_raw.write(data.text)
+            with open(json_path, 'w') as fp:
+                json.dump(data, fp)
 
-        return data.json()['files']
+        return data['files']

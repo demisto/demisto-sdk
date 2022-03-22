@@ -433,7 +433,7 @@ def zip_packs(**kwargs) -> int:
     '--print-pykwalify', is_flag=True,
     help='Whether to print the pykwalify log errors.')
 @click.option(
-    "--quite-bc-validation",
+    "--quiet-bc-validation",
     help="Set backwards compatibility validation's errors as warnings.",
     is_flag=True)
 @click.option(

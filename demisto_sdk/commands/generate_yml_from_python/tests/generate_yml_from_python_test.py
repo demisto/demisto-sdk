@@ -68,14 +68,76 @@ BASIC_CONF_KEY_DICT = {
 
 
 class TestImportDependencies:
-    def test_unrunnable_code_yml_generation(self):
-        pass
+    def test_unrunnable_code_yml_generation(self, tmp_path):
+        integration_path = tmp_path / "integration_name.py"
 
-    def test_generation_with_implicit_imports_in_code(self):
-        pass
+        def code_snippet():
+            import hlem
+            hlem.now()
 
-    def test_generation_with_subscriptable_imports(self):
-        pass
+            metadata_collector = YMLMetadataCollector(integration_name="some_name")
+
+            def some_func():
+                """Some func doc"""
+                print("something nice")
+
+        save_code_as_integration(code=code_snippet, full_path=integration_path)
+        try:
+            yml_generator = YMLGenerator(filename=integration_path)
+            yml_generator.generate()
+            expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
+            assert expected_dict == yml_generator.get_metadata_dict()
+        except Exception as exc:
+            assert False, f"Made up imports are not working anymore: {exc}"
+
+    def test_generation_with_implicit_imports_in_declarations(self, tmp_path):
+        """Explicit imports from CommonServerPython"""
+        integration_path = tmp_path / "integration_name.py"
+
+        def code_snippet():
+            metadata_collector = YMLMetadataCollector(integration_name="some_name")
+
+            class MyClient(BaseClient):
+                """Some class doc"""
+
+                def __init__(self):
+                    pass
+
+            def some_command(dates: datetime.datetime) -> CommandResults:
+                return CommandResults()
+
+        save_code_as_integration(code=code_snippet, full_path=integration_path)
+        try:
+            yml_generator = YMLGenerator(filename=integration_path)
+            yml_generator.generate()
+            expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
+            assert expected_dict == yml_generator.get_metadata_dict()
+        except Exception as exc:
+            assert False, f"CommomServerPython imports are not working anymore: {exc}"
+
+    def test_generation_with_subscriptable_imports(self, tmp_path):
+        """Since the imports are mocked, it is important that they are MagicMocked and not regularly mocked.
+        Otherwise they will not be subscriptable."""
+        integration_path = tmp_path / "integration_name.py"
+
+        def code_snippet():
+            import datetime
+
+            metadata_collector = YMLMetadataCollector(integration_name="some_name")
+
+            def some_func():
+                """Some func doc"""
+                datetime[3] = 5
+                print(f"func {datetime[3]}")
+
+        save_code_as_integration(code=code_snippet, full_path=integration_path)
+        try:
+            yml_generator = YMLGenerator(filename=integration_path)
+            yml_generator.generate()
+            expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
+            assert expected_dict == yml_generator.get_metadata_dict()
+        except Exception as exc:
+            assert False, f"Imports are not subscriptable anymore: {exc}"
 
 
 class TestConfigurationGeneration:
@@ -441,9 +503,6 @@ class TestCommandGeneration:
 
         def code_snippet():
             import datetime
-
-            from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (
-                OutputArgument, YMLMetadataCollector)
 
             metadata_collector = YMLMetadataCollector(integration_name="some_name")
 

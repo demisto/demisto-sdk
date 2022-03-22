@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    DEFAULT_JOB_FROM_VERSION,
                                                    INTEGRATION_CATEGORIES,
                                                    PACK_METADATA_DESC,
-                                                   PACK_METADATA_NAME)
+                                                   PACK_METADATA_NAME, FileType)
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
@@ -2192,8 +2192,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def missing_readme_file(location):
-        return f'{location} is missing a README file'
+    def missing_readme_file(location: FileType):
+        return f'{location.name} is missing a README file'
 
     @staticmethod
     @error_code_decorator

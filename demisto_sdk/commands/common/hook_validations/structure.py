@@ -51,7 +51,7 @@ class StructureValidator(BaseValidator):
     def __init__(self, file_path, is_new_file=False, old_file_path=None, predefined_scheme=None, fromversion=False,
                  configuration=Configuration(), ignored_errors=None, print_as_warnings=False, tag='master',
                  suppress_print: bool = False, branch_name='', json_file_path=None, skip_schema_check=False,
-                 pykwalify_logs=False, quite_bc=False, specific_validations=None):
+                 pykwalify_logs=False, quite_bc=False, specific_validations=[]):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path, specific_validations=specific_validations)
         self.is_valid = True
@@ -300,7 +300,7 @@ class StructureValidator(BaseValidator):
         return None
 
 
-    @meta_specific_validation_decorator(error_func_name="invalid_file_path")
+    @meta_specific_validation_decorator("invalid_file_path")
     def is_valid_file_path(self):
         """Returns is valid filepath exists.
 

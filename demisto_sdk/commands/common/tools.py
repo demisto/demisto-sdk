@@ -13,11 +13,11 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
 from distutils.version import LooseVersion
 from enum import Enum
-from functools import lru_cache, partial
+from functools import lru_cache
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
-from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
+from typing import Callable, Dict, List, Match, Optional, Tuple, Union
 
 import click
 import colorama

@@ -6,26 +6,14 @@
             "type": "python",
             "request": "launch",
             "module": "demisto_sdk",
-            "cwd": "${env:CONTENT}", // Predefine the CONTENT variable in your environment first!
+            "cwd": "/Users/yhayun/dev/demisto/content",
+            "justMyCode": false, // Predefine the CONTENT variable in your environment first!
             "args": [
-                "upload",
+                "update-release-notes",
                 "-i",
-                "${env:CONTENT}/Packs/AbuseDB/Integrations/AbuseDB"
+                "Packs/Base"
             ]
         },
-        {
-            "name": "Python: Lint AbuseDB with logs",
-            "type": "python",
-            "request": "launch",
-            "module": "demisto_sdk",
-            "cwd": "${env:CONTENT}",  // Predefine the CONTENT variable in your environment first!
-            "args": [
-                "lint",
-                "-i",
-                "${env:CONTENT}/Packs/AbuseDB/Integrations/AbuseDB",
-                "-j",
-                "${env:CONTENT}/.demisto-sdk-report"
-            ]
-        }
+
     ]
 }

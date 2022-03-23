@@ -1094,6 +1094,32 @@ class TestRNUpdateUnit:
 
         assert check_docker_image_changed(main_branch='origin/master', packfile='test.yml') is None
 
+    @pytest.mark.parametrize('return_value_mock',
+                             [('+  dockerimage: demisto/python3:3.9.8.24399'),
+                              ('+dockerimage: demisto/python3:3.9.8.24399')])
+    def test_check_docker_image_changed(self, mocker, return_value_mock):
+        """
+        Given
+            - Case 1: a git diff mock of a Modified .yml file where the docker is changed and there're spaces between the
+            '+' and the dockerimage
+            - Case 2: a git diff mock of a Modified .yml file where the docker is changed and there's no space between the
+            '+' and the dockerimage
+        When
+            - calling the check_docker_image_changed function
+        Then
+            Ensure that the dockerimage was extracted correctly for each case where each case demonstrate either integration
+            yml or Script yml.
+            - Case 1: Should extract the dockerimage version for integration yml demonstration.
+            - Case 2: Should extract the dockerimage version for script yml demonstration.
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            check_docker_image_changed
+
+        return_value = '+  dockerimage: demisto/python3:3.9.8.24399'
+
+        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command', return_value=return_value)
+        assert check_docker_image_changed(main_branch='origin/master', packfile='test.yml') == 'demisto/python3:3.9.8.24399'
+
     def test_update_docker_image_in_yml(self, mocker):
         """
         Given

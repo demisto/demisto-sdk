@@ -2517,3 +2517,30 @@ def order_dict(data):
     """
     return OrderedDict({k: order_dict(v) if isinstance(v, dict) else v
                         for k, v in sorted(data.items())})
+
+
+def extract_commands_from_readme(readme_data: str):
+    """
+    Go over all the commands in a readme file and return their names.
+    Args:
+        readme_data: the readme content as a string
+
+    Returns: a list of all the commands names
+    """
+    commands_section = readme_data[readme_data.find("\n### "):]
+    return re.findall(r'\n### (.+)', commands_section)
+
+
+def extract_command_names_from_yml(yml_data: dict):
+    """
+    Go over all the commands in a yml file and return their names.
+    Args:
+        yml_data: the yml content as a dict
+
+    Returns: a list of all the commands names
+    """
+    commands_ls = []
+    for command in yml_data.get('script', {}).get('commands', {}):
+        if command.get('arguments', {}).get('name'):
+            commands_ls.append(command.get('arguments', {}).get('name'))
+    return commands_ls

@@ -6,6 +6,7 @@
 * Added the reattach mechanism to the **upload** command, If you set the --input-config-file flag, any detached item in your XSOAR instance that isn't currently in the repo's SystemPacks folder will be re-attached.
 * Fixed an issue in the **validate** command did not work properly when using the *-g* flag.
 * Enhanced the dependency message shown when running **lint**.
+* The **validate** command now checks if there're integration commands that apear only in the readme file or only in the yml file.
 
 # 1.6.2
 * Added dependency validation support for core marketplacev2 packs.

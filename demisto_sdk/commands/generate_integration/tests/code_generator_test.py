@@ -48,7 +48,7 @@ def test_json_body_to_code():
     }
 
     body_code = json_body_to_code(request_body)
-    assert body_code == 'data={"test_filter": {"test_const": "CONST VALUE", "test_key": test_key}, "test_id": test_id, "test_name": test_name}'
+    assert body_code == 'data={"test_filter":{"test_const":"CONST VALUE","test_key":test_key},"test_id":test_id,"test_name":test_name}'
 
 
 class TestCodeGenerator:

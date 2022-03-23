@@ -2058,9 +2058,6 @@ def convert(config, **kwargs):
 @click.option(
     '-o', '--output_dir', help='Directory to store the output in (default is current working directory)',
     required=False)
-@click.option(
-    '-td', '--test_data_path', help='Path to test data directory.',
-    required=False)
 @click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
               type=click.IntRange(0, 3, clamp=True), default=1, show_default=True)
 @click.option(
@@ -2082,6 +2079,9 @@ def convert(config, **kwargs):
     "-e", "--examples",
     help="Integrations: path for file containing command examples."
          " Each command should be in a separate line.")
+@click.option(
+    "-a", "--append",
+    help="Append generated test file to the existing.", is_flag=True)
 def generate_unit_tests(**kwargs):
     """
     This command is used to generate unit tests automatically from an  integration python code.

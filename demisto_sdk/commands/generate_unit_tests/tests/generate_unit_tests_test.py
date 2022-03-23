@@ -1,8 +1,8 @@
 import ast
-import filecmp
 import itertools
 import os
 import pytest
+from pathlib import Path
 from ast import parse
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import run_generate_unit_tests
@@ -18,7 +18,7 @@ def compare_ast(node1, node2):
     if type(node1) is not type(node2):
         return False
     if isinstance(node1, ast.AST):
-        for k, v in vars(node1).items():
+        for (k, v) in vars(node1).items():
             if k in ('lineno', 'col_offset', 'ctx'):
                 continue
             if not compare_ast(v, getattr(node2, k)):
@@ -31,14 +31,14 @@ def compare_ast(node1, node2):
 
 
 class TestUnitTestsGenerator:
-    test_files_path = os.path.join(git_path(), 'demisto_sdk', 'commands', 'generate_unit_tests', 'tests', 'test_files')
+    test_files_path = Path(git_path(), 'demisto_sdk', 'commands', 'generate_unit_tests', 'tests', 'test_files')
     input_path = None
     output_dir = None
 
     @classmethod
     def setup_class(cls):
-        cls.input_path = os.path.join(cls.test_files_path, 'inputs', 'malwarebazaar.py')
-        cls.output_dir = os.path.join(cls.test_files_path, 'outputs')
+        cls.input_path = str(Path(cls.test_files_path, 'inputs', 'malwarebazaar.py'))
+        cls.output_dir = str(Path(cls.test_files_path, 'outputs'))
 
 
     @pytest.mark.parametrize('args, desired', ARGS)
@@ -59,10 +59,10 @@ class TestUnitTestsGenerator:
                      'output_dir': self.output_dir,
                      'test_data_path': 'demisto_sdk/commands/generate_unit_tests/tests/test_files/outputs'})
 
-        output_path = os.path.join(self.output_dir, 'malwarebazaar_test.py')
-        desired = os.path.join(self.output_dir, desired)
+        output_path = Path(self.output_dir, 'malwarebazaar_test.py')
+        desired = Path(self.output_dir, desired)
 
-        if os.path.exists(output_path):
+        if output_path.exists():
             os.remove(output_path)
 
         run_generate_unit_tests(**args)

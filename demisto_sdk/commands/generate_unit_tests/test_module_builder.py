@@ -1,6 +1,9 @@
 import ast as ast_mod
+import logging
+
 from demisto_sdk.commands.generate_unit_tests.common import ast_name
 
+logger = logging.getLogger('demisto-sdk')
 
 class TestModule:
     def __init__(self, tree, module_name, to_concat, module=None):
@@ -63,10 +66,23 @@ class TestModule:
         """
             Return: client function to mock
         """
+        client_init_args = self.get_client_init_args(self.get_client_ast())
+        keywords = []
+        for arg in client_init_args:
+            arg_name = arg.arg
+            arg_annotation = str(arg.annotation) if hasattr(arg, 'annotation') else None
+            if 'url' in arg_name:
+                keywords.append(ast_mod.keyword(arg=arg_name, value=ast_name('SERVER_URL')))
+            elif arg_annotation and arg_annotation == 'bool':
+                keywords.append(ast_mod.keyword(arg=arg_name, value=ast_name('True')))
+            elif arg_annotation and arg_annotation == 'str':
+                keywords.append(ast_mod.keyword(arg=arg_name, value=ast_mod.Constant('test')))
+            elif arg_name != 'self':
+                keywords.append(ast_mod.keyword(arg=arg_name, value=ast_name('None')))
         body = [
             ast_mod.Return(value=ast_mod.Call(func=ast_name('Client'),
                                               args=[],
-                                              keywords=[ast_mod.keyword(arg='base_url', value=ast_name('SERVER_URL'))]))
+                                              keywords=keywords))
         ]
 
         func = ast_mod.FunctionDef(
@@ -92,6 +108,15 @@ class TestModule:
                 bases = [str(id) for id in body_node.bases]
                 if 'BaseClient' in bases:
                     return body_node
+        return None
+
+    @staticmethod
+    def get_client_init_args(client_ast):
+        global logger
+        for func in client_ast.body:
+            if func.name == '__init__':
+                return func.args.args
+        logger.debug('No init function was found in Client class.')
         return None
 
     def build_imports(self, names_to_import):

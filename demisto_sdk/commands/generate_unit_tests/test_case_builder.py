@@ -1,7 +1,7 @@
 import ast as ast_mod
 import json
 import logging
-import os
+from pathlib import Path
 from ordered_set import OrderedSet
 from .common import ast_name, extract_outputs_from_command_run
 
@@ -48,8 +48,12 @@ class ArgsBuilder:
         keys = []
         values = []
         for arg in self.args_list:
+            value = input_arg.get(arg)
+            test = '"test"'.replace('"', '')
+            if value is not None:
+                value.replace('"', '')
             keys.append(ast_mod.Constant(value=arg))
-            values.append(ast_mod.Constant(value=input_arg.get(arg)))
+            values.append(ast_mod.Constant(value=value))
         return keys, values
 
     def build_local_args(self):
@@ -164,7 +168,7 @@ class TestCase:
         return ast_mod.Assign(targets=[ast_name(name, ctx=ast_mod.Store())],
                               value=ast_mod.Call(func=ast_name('util_load_json'),
                                                  args=[ast_mod.Constant(
-                                                     value=f'{self.directory_path}/outputs/{call}.json')],
+                                                     value='./' + str(Path('test_data', 'outputs', f'{call}.json')))],
                                                  keywords=[]))
 
     def build_json_file_mocked_command_results(self):
@@ -176,8 +180,7 @@ class TestCase:
         if prefix is not None:
             self.examples_dict.update({'outputs':
                                            extract_outputs_from_command_run(self.examples_dict.get('outputs'), prefix)})
-            with open(os.path.join(self.directory_path, 'outputs', f'{str(self.func.name)}.json'),
-                      'w') as f:
+            with Path(self.directory_path, 'outputs', f'{str(self.func.name)}.json').open(mode='w') as f:
                 logger.debug(f'Creating mock command results file for {str(self.func.name)}')
                 f.write(json.dumps(self.examples_dict))
 
@@ -268,7 +271,8 @@ class TestCase:
             if link:
                 comperator = ast_name(f'mock_response_{link}')
         elif arg == 'outputs' or arg == 'readable_output':
-            comperator = ast_mod.Attribute(value=ast_name('mock_results'), attr=arg, ctx=ast_mod.Load())
+            get_call = ast_mod.Call(func=ast_name('get'), args=[ast_mod.Constant(arg)], keywords=[])
+            comperator = ast_mod.Attribute(value=ast_name('mock_results'), attr=get_call, ctx=ast_mod.Load())
         return TestCase.assertions_builder(call, ops, [comperator]) if comperator else None
 
     # ================= General functions =====================

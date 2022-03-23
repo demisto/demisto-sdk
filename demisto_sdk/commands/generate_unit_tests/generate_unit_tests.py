@@ -4,6 +4,8 @@ import os
 import astor
 import autopep8
 import click
+from pathlib import Path
+from demisto_sdk.commands.common.logger import Colors
 
 from demisto_sdk.commands.common.tools import print_error, arg_to_list, print_success
 from klara.contract import solver
@@ -46,7 +48,7 @@ class UnitTestsGenerator:
         """
         Returns the source code for which the unit tests will be generated.
         """
-        if os.path.isfile(self.input_path):
+        if Path(self.input_path).is_file():
             with open(self.input_path, 'r') as input_file:
                 return input_file.read()
         else:
@@ -94,6 +96,7 @@ class UnitTestsGenerator:
             for arg in command_line[1:]:
                 key = arg.split('=')[0]
                 value = arg.split('=')[1]
+                value = value.replace('"', '')
                 command_dict.update({key: value})
             if command_name in self.commands_to_generate:
                 self.commands_to_generate.get(command_name).append(command_dict)
@@ -172,17 +175,17 @@ class CustomContactSolver(ContractSolver):
                 names_to_import.append(func.name)
             if command_name not in generator.commands_to_generate:
                 continue
-            logger.info(f"Analyzing function: {func} at line: {getattr(func, 'lineno', -1)}")
+            logger.info(f"{Colors.Fg.cyan}Analyzing function: {func} at line: {getattr(func, 'lineno', -1)}{Colors.reset}")
             try:
                 ast_func = self.solve_function(func,
                                                client_ast,
                                                generator)
-                logger.info(f"Finished analyzing function: {func}")
+                logger.info(f"{Colors.Fg.cyan}Finished analyzing function: {func}\n{Colors.reset}")
                 test_module.functions.append(ast_func)
                 if ast_func.global_arg:
                     test_module.global_args.extend(ast_func.global_arg)
             except Exception as e:
-                logger.error(f"Skipped function: {func}, error is {e}")
+                logger.error(f"{Colors.Fg.red}Skipped function: {func}, error is {e}\n{Colors.reset}")
                 raise e
             MANAGER.clear_z3_cache()
         test_module.imports.append(test_module.build_imports(names_to_import))
@@ -192,21 +195,22 @@ class CustomContactSolver(ContractSolver):
 def run_generate_unit_tests(**kwargs):
     global logger
     input_path = kwargs.get('input_path', '')
-    test_data_path = kwargs.get('test_data_path', '')
     output_dir = kwargs.get('output_dir', '')
     commands = arg_to_list(kwargs.get('commands', ''))
     commands_examples_path = kwargs.get('examples', '')
     insecure = kwargs.get('insecure', False)
     use_demisto = kwargs.get('use_demisto', False)
+    append = kwargs.get('append', False)
 
     click.echo("================= Running Unit Testing Generator ===================")
     # validate inputs
+    input_path_obj = Path(input_path)
     if not input_path:
         print_error(
             'To use the generate_unit_tests version of this command please include an `input` argument')
         return 1
 
-    if input_path and not os.path.isfile(input_path):
+    if input_path and not input_path_obj.is_file():
         print_error(F'Input file {input_path} was not found.')
         return 1
 
@@ -214,30 +218,30 @@ def run_generate_unit_tests(**kwargs):
         print_error(F'Input {input_path} is not a valid python file.')
         return 1
 
-    module_name = os.path.basename(input_path)
+    module_name = input_path_obj.name
 
-    if not test_data_path:
-        dirname = os.path.dirname(input_path)
-        test_data_path = os.path.join(f'{dirname}/', "test_data")
-        if not os.path.isdir(test_data_path):
-            print_error(
-                'There is no test_data folder in the working directory, please insert test data directory path.')
-            return 1
+    dirname = input_path_obj.parent
+    test_data_path = Path(dirname, 'test_data')
+    if not test_data_path.is_dir():
+        print_error(
+            'There is no test_data folder in the working directory, please insert test data directory path.')
+        return 1
 
     if not output_dir:
-        output_dir = os.path.dirname(input_path)
+        output_dir = Path(input_path).parent
 
     if not commands_examples_path:
-        commands_examples_path = os.path.join(os.path.dirname(input_path), 'command_examples')
+        commands_examples_path = Path(input_path_obj.parent, 'command_examples')
 
     # Check the directory exists and if not, try to create it
-    if not os.path.exists(output_dir):
+    output_dir_path_obj = Path(output_dir)
+    if not output_dir_path_obj.exists():
         try:
             os.mkdir(output_dir)
         except Exception as err:
             print_error(f'Error creating directory {output_dir} - {err}')
             return 1
-    if not os.path.isdir(output_dir):
+    if not output_dir_path_obj.is_dir():
         print_error(f'The directory provided "{output_dir}" is not a directory')
         return 1
 
@@ -261,10 +265,11 @@ def run_generate_unit_tests(**kwargs):
     source = generator.get_input_file()
     if source:
         try:
-            output_file = os.path.join(output_dir, f"{file_name}_test.py")
-            generator.to_concat = True if os.path.isfile(output_file) else False
+            output_file = Path(output_dir, f"{file_name}_test.py")
+            generator.to_concat = True if append and output_file.exists() else False
             write_mode = "a" if generator.to_concat else "w"
-            output_test = autopep8.fix_code(run(source, generator))
+            options = autopep8.parse_args(['--max-line-length', '100000', '-'])
+            output_test = autopep8.fix_code(run(source, generator), options)
             if generator.to_concat:
                 output_test = '\n' * 2 + output_test
             logger.debug(f"Writing to file: {output_file}")
@@ -283,7 +288,7 @@ def run_generate_unit_tests(**kwargs):
 
 def run(source, generator):
     global logger
-    logger.info("Running code parser and testing generator.")
+    logger.info(f"\n{Colors.Fg.green}Running code parser and testing generator.{Colors.reset}")
     logger.debug("Starting parsing input code into ast.")
     tree = MANAGER.build_tree(ast_str=source)
     logger.debug("Finished parsing code into ast.")

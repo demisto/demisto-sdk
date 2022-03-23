@@ -18,8 +18,6 @@ Also supports generating unit tests for specific commands.
   Quiet output, only output results in the end.
 * *-ql, --log-path*
   Path to store all levels of logs.
-* *-td, --test_data_path*
-  Path to test data directory.
 * *--insecure*
   Skip certificate validation.
 * *-e, --examples* One of the following:
@@ -28,6 +26,7 @@ Also supports generating unit tests for specific commands.
   If the file or list contains a command with more than one example, all of them will be used.
 * *-d, --use_demisto* If passed, commands will be ran using Demisto instance, and the outputs will be used to
   create outputs mocks, if not passed, you will have to create the mocks manually.
+* *-a, --append* Append generated test file to the existing (only if already exists).
 
 
 **Notes**
@@ -44,7 +43,7 @@ Also supports generating unit tests for specific commands.
 
 
 **Test Data Files**   
-For the the unit tests to work as planned test_data folder must include the following:   
+For the unit tests to work as planned test_data folder must include the following:   
 
 ***outputs folder*** - contains a json file for each request made with mock response (the name of the file should be as the name of the client function).
 ***outputs command files*** - if use_demisto option was not selected, outputs files must be provided for each command, with the name of the command, see at the examples files below the desired formation for the file.
@@ -57,7 +56,7 @@ For the command to work as planned a command_examples file must be included.
 ####command excecution
 
 ```
-demisto-sdk generate-unit-tests -i Packs/MyPack/Integrations/MyInt/MyInt.py 
+demisto-sdk generate-unit-tests -i Packs/MyPack/Integrations/MyInt/MyInt.py -d --insecure
 ```
 ```
 demisto-sdk generate-unit-tests -i Packs/MyPack/Integrations/MyInt/MyInt.py -o Packs/MyPack/Integrations/MyInt

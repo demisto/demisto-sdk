@@ -4,9 +4,9 @@ import os
 import astor
 import autopep8
 import click
+import sys
 from pathlib import Path
 from demisto_sdk.commands.common.logger import Colors
-
 from demisto_sdk.commands.common.tools import print_error, arg_to_list, print_success
 from klara.contract import solver
 from .test_case_builder import TestCase, ArgsBuilder
@@ -14,6 +14,9 @@ from .test_module_builder import TestModule
 from klara.contract.solver import MANAGER, ContractSolver, nodes
 from demisto_sdk.commands.generate_docs.generate_integration_doc import get_command_examples
 from demisto_sdk.commands.generate_docs.common import execute_command
+
+if 'typed_ast' in sys.modules:
+    del sys.modules['typed_ast']
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -129,7 +132,8 @@ class CustomContactSolver(ContractSolver):
             commands_to_generate = generator.commands_to_generate
             use_demisto = generator.use_demisto and example_dict is not None
 
-            test_case = TestCase(func=func, directory_path=directory_path, client_ast=client_ast, example_dict=example_dict, id=self.id)
+            test_case = TestCase(func=func, directory_path=directory_path, client_ast=client_ast,
+                                 example_dict=example_dict, id=self.id)
 
             # Compose args mock
             logger.debug('Composing mocked arguments.')
@@ -175,7 +179,8 @@ class CustomContactSolver(ContractSolver):
                 names_to_import.append(func.name)
             if command_name not in generator.commands_to_generate:
                 continue
-            logger.info(f"{Colors.Fg.cyan}Analyzing function: {func} at line: {getattr(func, 'lineno', -1)}{Colors.reset}")
+            logger.info(
+                f"{Colors.Fg.cyan}Analyzing function: {func} at line: {getattr(func, 'lineno', -1)}{Colors.reset}")
             try:
                 ast_func = self.solve_function(func,
                                                client_ast,

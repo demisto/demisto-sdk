@@ -475,6 +475,7 @@ class BuildContext:
     def __init__(self, kwargs: dict, logging_module: ParallelLoggingManager):
         global IS_XSIAM
         self.is_xsiam = True if kwargs['server_type'] == XSIAM_SERVER_TYPE else False
+        logging_module.info(f"{kwargs['server_type']=}")
         IS_XSIAM = self.is_xsiam
         logging_module.info(f'IS XSIAM {self.is_xsiam=}, {IS_XSIAM=}')
         self.logging_module: ParallelLoggingManager = logging_module

@@ -32,7 +32,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_pack_name, get_yaml,
                                                print_color, print_error,
                                                print_warning)
-from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
+from demisto_sdk.commands.unify.integration_script_unifier import \
+    IntegrationScriptUnifier
 
 CONTENT_ENTITIES = ['Packs', 'Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
@@ -356,7 +357,7 @@ def get_filters_and_transformers_from_playbook(data_dict: dict) -> Tuple[list, l
 
 
 def get_integration_api_modules(file_path, data_dictionary, is_unified_integration):
-    unifier = YmlUnifier(os.path.dirname(file_path))
+    unifier = IntegrationScriptUnifier(os.path.dirname(file_path))
     if is_unified_integration:
         integration_script_code = data_dictionary.get('script', {}).get('script', '')
     else:
@@ -1217,7 +1218,7 @@ def process_script(file_path: str, packs: Dict[str, Dict], marketplace: str, pri
                 res.append(get_script_data(file_path, packs=packs))
         else:
             # package script
-            unifier = YmlUnifier(file_path)
+            unifier = IntegrationScriptUnifier(file_path)
             yml_path, code = unifier.get_script_or_integration_package_data()
             if should_skip_item_by_mp(yml_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
                 return [], excluded_items_from_id_set

@@ -4,9 +4,6 @@ from enum import Enum
 from functools import reduce
 from typing import Dict, List
 
-from demisto_sdk.commands.common.GitContentConfig import \
-    GitContentConfig  # noqa
-
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
 NOT_TEST = '(?!Test)'
 INTEGRATIONS_DIR = 'Integrations'
@@ -119,6 +116,7 @@ class FileType(Enum):
     PRE_PROCESS_RULES = 'pre-process-rule'
     LISTS = 'list'
     JOB = 'job'
+    BUILD_CONFIG_FILE = 'build-config-file'
 
 
 RN_HEADER_BY_FILE_TYPE = {

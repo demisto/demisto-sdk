@@ -498,14 +498,18 @@ class BuildContext:
         self.server_version = kwargs['server_version']  # AMI Role
         self.is_local_run = (self.server is not None)
         self.server_numeric_version = self._get_server_numeric_version()
+        logging_module.info('Got here 1')
         self.instances_ips = self._get_instances_ips()
         self.filtered_tests = self._extract_filtered_tests()
         self.tests_data_keeper = TestResults(self.conf.unmockable_integrations)
+        logging_module.info('Got here 2')
         self.conf_unmockable_tests = self._get_unmockable_tests_from_conf()
         self.unmockable_test_ids: Set[str] = set()
         self.mockable_tests_to_run, self.unmockable_tests_to_run = self._get_tests_to_run()
+        logging_module.info('Got here 3')
         self.test_retries_queue: Queue = Queue()
         self.slack_user_id = self._retrieve_slack_user_id()
+        logging_module.info('Got here 4')
         self.all_integrations_configurations = self._get_all_integration_config(self.instances_ips)
 
     def _get_all_integration_config(self, instances_ips: dict) -> Optional[list]:

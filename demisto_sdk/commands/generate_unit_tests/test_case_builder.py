@@ -4,13 +4,14 @@ import logging
 from pathlib import Path
 from ordered_set import OrderedSet
 from .common import ast_name, extract_outputs_from_command_run
+from typing import List, Dict
 
 logger = logging.getLogger('demisto-sdk')
 
 
 class ArgsBuilder:
-    def __init__(self, command_name: str, directory_path: str, args_list: list[str] = [],
-                 commands_to_generate: dict[list[str]] = {}):
+    def __init__(self, command_name: str, directory_path: str, args_list: List[str] = [],
+                 commands_to_generate: Dict[List[str]] = {}):
         self.args_list = args_list
         self.command_name = command_name
         self.directory_path = directory_path

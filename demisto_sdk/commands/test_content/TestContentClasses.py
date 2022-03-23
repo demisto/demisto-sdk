@@ -486,6 +486,7 @@ class BuildContext:
             self.xsiam_conf = self._load_xsiam_file(self.xsiam_servers_path)
             self.env_json = [self.xsiam_conf.get(self.xsiam_machine, {})]
             self.api_key = self.env_json[0].get('api_key')
+            logging_module.info(f'Got here {self.xsiam_machine=}, {self.xsiam_conf=}, {self.env_json=}')
         else:
             self.env_json = self._load_env_results_json()
         self.is_nightly = kwargs['nightly']
@@ -497,6 +498,7 @@ class BuildContext:
         self.memCheck = kwargs['mem_check']
         self.server_version = kwargs['server_version']  # AMI Role
         self.is_local_run = (self.server is not None)
+        logging_module.info('Got here 0')
         self.server_numeric_version = self._get_server_numeric_version()
         logging_module.info('Got here 1')
         self.instances_ips = self._get_instances_ips()

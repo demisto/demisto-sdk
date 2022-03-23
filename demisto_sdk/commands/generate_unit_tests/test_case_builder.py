@@ -11,7 +11,7 @@ logger = logging.getLogger('demisto-sdk')
 
 class ArgsBuilder:
     def __init__(self, command_name: str, directory_path: str, args_list: List[str] = [],
-                 commands_to_generate: Dict[List[str]] = {}):
+                 commands_to_generate: Dict[str, List[str]] = {}):
         self.args_list = args_list
         self.command_name = command_name
         self.directory_path = directory_path

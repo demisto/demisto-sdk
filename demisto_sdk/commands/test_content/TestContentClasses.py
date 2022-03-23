@@ -476,10 +476,11 @@ class BuildContext:
         global IS_XSIAM
         self.is_xsiam = True if kwargs['server_type'] == XSIAM_SERVER_TYPE else False
         IS_XSIAM = self.is_xsiam
+        logging_module.info(f'IS XSIAM {self.is_xsiam=}, {IS_XSIAM=}')
         self.logging_module: ParallelLoggingManager = logging_module
         self.server = kwargs['server']  # not in use for curr flow
-        self.xsiam_machine = kwargs.get('xsiam-machine')
-        self.xsiam_servers_path = kwargs.get('xsiam-servers-path')
+        self.xsiam_machine = kwargs.get('xsiam_machine')
+        self.xsiam_servers_path = kwargs.get('xsiam_servers_path')
         self.conf, self.secret_conf = self._load_conf_files(kwargs['conf'], kwargs['secret'])
         self.api_key = kwargs['api_key']
         if self.is_xsiam:

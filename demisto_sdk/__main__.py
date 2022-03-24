@@ -484,7 +484,7 @@ def validate(config, **kwargs):
             skip_schema_check=kwargs.get('skip_schema_check'),
             debug_git=kwargs.get('debug_git'),
             include_untracked=kwargs.get('include_untracked'),
-            quite_bc=kwargs.get('quite_bc_validation'),
+            quiet_bc=kwargs.get('quiet_bc_validation'),
             multiprocessing=run_with_mp,
             check_is_unskipped=not kwargs.get('allow_skipped', False),
         )

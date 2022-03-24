@@ -19,7 +19,7 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
         structure.old_file = old_file
         structure.prev_ver = 'master'
         structure.branch_name = ''
-        structure.quite_bc = False
+        structure.quiet_bc = False
         structure.skip_schema_check = False
         structure.pykwalify_logs = False
         structure.scheme_name = namedtuple('scheme_name', 'value')(value='genericfield')

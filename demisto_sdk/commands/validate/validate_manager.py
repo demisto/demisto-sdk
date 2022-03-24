@@ -98,7 +98,7 @@ class ValidateManager:
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
             create_id_set=False, json_file_path=None, skip_schema_check=False, debug_git=False, include_untracked=False,
-            pykwalify_logs=False, check_is_unskipped=True, quite_bc=False, multiprocessing=True
+            pykwalify_logs=False, check_is_unskipped=True, quiet_bc=False, multiprocessing=True
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -119,7 +119,7 @@ class ValidateManager:
         self.debug_git = debug_git
         self.include_untracked = include_untracked
         self.pykwalify_logs = pykwalify_logs
-        self.quite_bc = quite_bc
+        self.quiet_bc = quiet_bc
         self.check_is_unskipped = check_is_unskipped
         self.conf_json_data = {}
         self.run_with_multiprocessing = multiprocessing
@@ -509,7 +509,7 @@ class ValidateManager:
                                                  json_file_path=self.json_file_path,
                                                  skip_schema_check=self.skip_schema_check,
                                                  pykwalify_logs=self.pykwalify_logs,
-                                                 quite_bc=self.quite_bc)
+                                                 quiet_bc=self.quiet_bc)
 
         # schema validation
         if file_type not in {FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT, FileType.DESCRIPTION}:

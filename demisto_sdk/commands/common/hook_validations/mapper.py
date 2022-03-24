@@ -72,7 +72,7 @@ class MapperValidator(ContentEntityValidator):
                 removed_dict[removed] = old_mapper[removed]
             error_message, error_code = Errors.removed_incident_types(removed_dict)
             if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                 warning=self.structure_validator.quite_bc):
+                                 warning=self.structure_validator.quiet_bc):
                 self.is_valid = False
                 return True
         else:
@@ -90,7 +90,7 @@ class MapperValidator(ContentEntityValidator):
             if removed_incident_fields:
                 error_message, error_code = Errors.changed_incident_field_in_mapper(removed_incident_fields)
                 if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                     warning=self.structure_validator.quite_bc):
+                                     warning=self.structure_validator.quiet_bc):
                     self.is_valid = False
                     return True
 

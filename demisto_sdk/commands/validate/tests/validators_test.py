@@ -1446,7 +1446,7 @@ def test_get_packs_that_should_have_version_raised(repo):
         assert 'NewPack' not in packs_that_should_have_version_raised
 
 
-def test_quite_bc_flag(repo):
+def test_quiet_bc_flag(repo):
     existing_pack1 = repo.create_pack('PackWithModifiedIntegration')
     moodified_integration = existing_pack1.create_integration('MyIn')
     moodified_integration.create_default_integration()

@@ -482,7 +482,7 @@ class BuildContext:
             self.env_json = [self.xsiam_conf.get(self.xsiam_machine, {})]
             self.api_key = self.env_json[0].get('api_key')
             self.auth_id = self.env_json[0].get('x-xdr-auth-id')
-            logging_module.info(f'Got here {self.xsiam_machine=}, {self.xsiam_conf=}, {self.env_json=}')
+            logging_module.info(f'Got here {self.xsiam_machine=}')
         else:
             self.api_key = kwargs['api_key']
             self.env_json = self._load_env_results_json()
@@ -2081,6 +2081,8 @@ class ServerContext:
             self.client.api_client.pool.close()
             self.client.api_client.pool.terminate()
             del self.client
+        self.build_context.logging_module.info('Starting creating client:')
+        self.build_context.logging_module.info(f'{self.server_url=}, {self.build_context.auth_id=}')
         self.client = demisto_client.configure(base_url=self.server_url,
                                                api_key=self.build_context.api_key,
                                                auth_id=self.build_context.auth_id,

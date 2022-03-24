@@ -2103,7 +2103,7 @@ def replace_external_playbook_configuration(client: DefaultApi, external_playboo
         raise Exception("External Playbook was not found or has no inputs.")
 
     inputs_default = deepcopy(inputs)
-    logger_module.info("Saved current configuration.")
+    logger_module.info("Saved current configuration. current inputs={}".format(inputs))
     """ takes external configuration of shape {"playbookID": "Isolate Endpoint - Generic V2",
                                                "input_parameters":{"Endpoint_hostname": {"simple", "test"}}}"""
     changed_keys = []
@@ -2122,6 +2122,7 @@ def replace_external_playbook_configuration(client: DefaultApi, external_playboo
     if failed_keys:
         raise Exception(f'Some input keys was not found in playbook: {",".join(failed_keys)}.')
     logger_module.info(f"Changing keys: {changed_keys}.")
+    logger_module.info("new {}".format(inputs))
 
     saving_inputs_path = f'/playbook/inputs/{external_playbook_id}'
     try:

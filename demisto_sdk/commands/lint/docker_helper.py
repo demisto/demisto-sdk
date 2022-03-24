@@ -137,4 +137,44 @@ class DockerBase:
         return image
 
 
-Docker = DockerBase()
+class MountableDocker(DockerBase):
+    def __init__(self):
+        super(MountableDocker, self).__init__()
+        self._files_to_push_on_installation.extend([
+            ('/etc/pip.conf', copy_file('/etc/pip.conf', self.tmp_dir / 'pip.conf')),
+            ('/etc/ssl/certs/ca-certificates.crt', copy_file('/etc/ssl/certs/ca-certificates.crt', self.tmp_dir / 'ca-certificates.crt')),
+        ])
+
+    @staticmethod
+    def get_mounts(files: List[Tuple[str, PATH_OR_STR]]) -> List[Mount]:
+        """
+        Args:
+            files: a list of (target path in container, source path in machine).
+        Returns:
+            a list of mounts
+        """
+        mounts = []
+        for target, src in files:
+            try:
+                src = Path(src)
+                if src.exists():
+                    mounts.append(Mount(target, str(src.absolute()), 'bind'))
+            except Exception:
+                logger.debug(f'Failed to mount {src} to {target}')
+        return mounts
+
+    def create_container(self, image: str, command: Union[str, List[str]], files_to_push: Optional[FILES_SRC_TARGET] = None,
+                         environment: Optional[Dict] = None, mount_files: bool = CAN_MOUNT_FILES, **kwargs) -> docker.models.containers.Container:
+        """
+        Creates a container and pushing requested files to the container.
+        """
+        kwargs = kwargs or {}
+        if files_to_push and mount_files:
+            return super(MountableDocker, self).create_container(image=image, command=command, environment=environment,
+                                                                 mounts=self.get_mounts(files_to_push), files_to_push=None, **kwargs)
+        else:
+            return super(MountableDocker, self).create_container(image=image, command=command, environment=environment,
+                                                                 files_to_push=files_to_push, **kwargs)
+
+
+Docker = MountableDocker() if CAN_MOUNT_FILES else DockerBase()

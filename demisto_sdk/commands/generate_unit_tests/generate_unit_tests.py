@@ -5,12 +5,13 @@ import astor
 import autopep8
 import click
 import sys
+from typing import List
 from pathlib import Path
 from demisto_sdk.commands.common.logger import Colors
 from demisto_sdk.commands.common.tools import print_error, arg_to_list, print_success
 from klara.contract import solver
-from .test_case_builder import TestCase, ArgsBuilder
-from .test_module_builder import TestModule
+from demisto_sdk.commands.generate_unit_tests.test_case_builder import TestCase, ArgsBuilder
+from demisto_sdk.commands.generate_unit_tests.test_module_builder import TestModule
 from klara.contract.solver import MANAGER, ContractSolver, nodes
 from demisto_sdk.commands.generate_docs.generate_integration_doc import get_command_examples
 from demisto_sdk.commands.generate_docs.common import execute_command
@@ -24,7 +25,7 @@ logger = logging.getLogger('demisto-sdk')
 class UnitTestsGenerator:
     def __init__(self, input_path: str = '',
                  test_data_path: str = '',
-                 commands: list[str] = [],
+                 commands: List[str] = [],
                  output_dir: str = '',
                  module_name: str = '',
                  command_examples_input: str = '',

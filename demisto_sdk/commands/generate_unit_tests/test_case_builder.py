@@ -3,7 +3,7 @@ import json
 import logging
 from pathlib import Path
 from ordered_set import OrderedSet
-from .common import ast_name, extract_outputs_from_command_run
+from demisto_sdk.commands.generate_unit_tests.common import ast_name, extract_outputs_from_command_run
 from typing import List, Dict
 
 logger = logging.getLogger('demisto-sdk')

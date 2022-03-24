@@ -12,7 +12,7 @@ class JSONDecodeError(ValueError):
 class UJSON_Handler(XSOAR_Handler):
     """
     XSOAR wrapper to UJSON
-    Use only this wrapper for yaml handling.
+    Use only this wrapper for json handling.
     """
     JSONDecodeError = JSONDecodeError
 

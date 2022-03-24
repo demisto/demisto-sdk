@@ -392,7 +392,7 @@ class Linter:
         logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
         logger.debug(f"{log_prompt} - Finished, stderr: {RL if stderr else ''}{stderr}")
         if stderr or exit_code:
-            logger.error(f"{log_prompt}- Finished, errors found")
+            logger.error(f"{log_prompt} - Finished, errors found")
             if stderr:
                 return FAIL, stderr
             else:
@@ -438,7 +438,7 @@ class Linter:
                 command=build_xsoar_linter_command(lint_files, py_num, self._facts.get('support_level', 'base')),
                 cwd=self._pack_abs_dir, env=myenv)
         if exit_code & FAIL_PYLINT:
-            logger.error(f"{log_prompt}- Finished, errors found")
+            logger.error(f"{log_prompt} - Finished, errors found")
             status = FAIL
         if exit_code & WARNING:
             logger.warning(f"{log_prompt} - Finished, warnings found")
@@ -455,7 +455,7 @@ class Linter:
             else:
                 stdout = "Xsoar linter could not run, please make sure you have" \
                          " the necessary Pylint version for both py2 and py3"
-            logger.error(f"{log_prompt}- Finished, errors found")
+            logger.error(f"{log_prompt} - Finished, errors found")
 
         logger.debug(f"{log_prompt} - Finished, exit-code: {exit_code}")
         logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
@@ -485,7 +485,7 @@ class Linter:
         logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
         logger.debug(f"{log_prompt} - Finished, stderr: {RL if stderr else ''}{stderr}")
         if stderr or exit_code:
-            logger.error(f"{log_prompt}- Finished, errors found")
+            logger.error(f"{log_prompt} - Finished, errors found")
             if stderr:
                 return FAIL, stderr
             else:
@@ -516,7 +516,7 @@ class Linter:
         logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
         logger.debug(f"{log_prompt} - Finished, stderr: {RL if stderr else ''}{stderr}")
         if stderr or exit_code:
-            logger.error(f"{log_prompt}- Finished, errors found")
+            logger.error(f"{log_prompt} - Finished, errors found")
             if stderr:
                 return FAIL, stderr
             else:
@@ -548,7 +548,7 @@ class Linter:
         logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
         logger.debug(f"{log_prompt} - Finished, stderr: {RL if stderr else ''}{stderr}")
         if stderr or exit_code:
-            logger.error(f"{log_prompt}- Finished, errors found")
+            logger.error(f"{log_prompt} - Finished, errors found")
             if stderr:
                 return FAIL, stderr
             else:

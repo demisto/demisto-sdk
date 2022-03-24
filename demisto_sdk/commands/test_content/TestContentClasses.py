@@ -2113,8 +2113,14 @@ def replace_external_playbook_configuration(client: DefaultApi, external_playboo
         matching_record = list(filter(lambda x: x.get('key') == input_, inputs))
         if matching_record:
             existing_val = matching_record[0]
-            existing_val['value']["simple"] = external_playbook_configuration["input_parameters"][input_].get("simple")
-            existing_val['value']["complex"] = external_playbook_configuration["input_parameters"][input_].get("complex")
+            simple = external_playbook_configuration["input_parameters"][input_].get("simple")
+            complex = external_playbook_configuration["input_parameters"][input_].get("complex")
+
+            if complex is None and simple is None:
+                raise Exception(f'Did not found neither simple nor complex value for field: {input_}')
+
+            existing_val['value']["simple"] = simple
+            existing_val['value']["complex"] = complex
             changed_keys.append(input_)
 
         else:

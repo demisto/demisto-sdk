@@ -71,7 +71,7 @@ jobs:
             no_output_timeout: 15m
             command: |
               mkdir test-results
-              python -m pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml
+              poetry run pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml
         - store_test_results:
             path: test-results
         - store_artifacts:
@@ -145,9 +145,9 @@ jobs:
               CI_COMMIT_BRANCH: "master"
             command: |
               cd content
-              python -m demisto_sdk -v
-
-              python -m demisto_sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
+              poetry run -m demisto_sdk -v
+              poetry run demisto-sdk -v
+              poetry run python -m demisto_sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
         - run:
             name: Merge Id Set
             when: always

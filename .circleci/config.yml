@@ -39,8 +39,8 @@ references:
           
     install_demisto_sdk: &install_demisto_sdk
       - python/install-packages:
-          pkg-manager: "pipenv"
-          args: "--system"
+          pkg-manager: "poetry"
+          args: "--no-dev"
           cache-version: << pipeline.parameters.cache-version >>
           pre-install-steps:
             - run:
@@ -63,8 +63,7 @@ jobs:
       steps:
         - checkout
         - python/install-packages:
-            pkg-manager: "pipenv"
-            args: "--dev --system"
+            pkg-manager: "poetry"
             cache-version: << pipeline.parameters.cache-version >>
         - <<: *install_node_ci
         - run:

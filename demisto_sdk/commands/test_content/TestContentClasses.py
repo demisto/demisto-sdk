@@ -171,10 +171,6 @@ class TestPlaybook:
         self.build_context = build_context
         self.configuration: TestConfiguration = test_configuration
         self.is_mockable: bool = self.configuration.playbook_id not in build_context.unmockable_test_ids
-        # todo delete this line: in xsiam validate that all test playbooks are unmockable.
-        if IS_XSIAM:
-            build_context.logging_module.info(f'Playbook ID: {self.configuration.playbook_id}, '
-                                              f'is mockable: {build_context.unmockable_test_ids}')
         self.integrations: List[Integration] = [
             Integration(self.build_context, integration_name, self.configuration.test_instance_names)
             for integration_name in self.configuration.test_integrations]
@@ -475,22 +471,23 @@ class BuildContext:
     def __init__(self, kwargs: dict, logging_module: ParallelLoggingManager):
         global IS_XSIAM
         self.is_xsiam = True if kwargs['server_type'] == XSIAM_SERVER_TYPE else False
-        logging_module.info(f"{kwargs['server_type']=}")
         IS_XSIAM = self.is_xsiam
-        logging_module.info(f'IS XSIAM {self.is_xsiam=}, {IS_XSIAM=}')
         self.logging_module: ParallelLoggingManager = logging_module
         self.server = kwargs['server']  # not in use for curr flow
         self.xsiam_machine = kwargs.get('xsiam_machine')
         self.xsiam_servers_path = kwargs.get('xsiam_servers_path')
         self.conf, self.secret_conf = self._load_conf_files(kwargs['conf'], kwargs['secret'])
-        self.api_key = kwargs['api_key']
         if self.is_xsiam:
             self.xsiam_conf = self._load_xsiam_file(self.xsiam_servers_path)
             self.env_json = [self.xsiam_conf.get(self.xsiam_machine, {})]
             self.api_key = self.env_json[0].get('api_key')
+            self.auth_id = self.env_json[0].get('x-xdr-auth-id')
             logging_module.info(f'Got here {self.xsiam_machine=}, {self.xsiam_conf=}, {self.env_json=}')
         else:
+            self.api_key = kwargs['api_key']
             self.env_json = self._load_env_results_json()
+            self.xsiam_conf = None
+            self.auth_id = None
         self.is_nightly = kwargs['nightly']
         self.slack_client = SlackClient(kwargs['slack'])
         self.circleci_token = kwargs['circleci']
@@ -500,20 +497,15 @@ class BuildContext:
         self.memCheck = kwargs['mem_check']
         self.server_version = kwargs['server_version']  # AMI Role
         self.is_local_run = (self.server is not None)
-        logging_module.info('Got here 0')
         self.server_numeric_version = self._get_server_numeric_version()
-        logging_module.info('Got here 1')
         self.instances_ips = self._get_instances_ips()
         self.filtered_tests = self._extract_filtered_tests()
         self.tests_data_keeper = TestResults(self.conf.unmockable_integrations)
-        logging_module.info('Got here 2')
         self.conf_unmockable_tests = self._get_unmockable_tests_from_conf()
         self.unmockable_test_ids: Set[str] = set()
         self.mockable_tests_to_run, self.unmockable_tests_to_run = self._get_tests_to_run()
-        logging_module.info('Got here 3')
         self.test_retries_queue: Queue = Queue()
         self.slack_user_id = self._retrieve_slack_user_id()
-        logging_module.info('Got here 4')
         self.all_integrations_configurations = self._get_all_integration_config(self.instances_ips)
 
     def _get_all_integration_config(self, instances_ips: dict) -> Optional[list]:
@@ -543,6 +535,7 @@ class BuildContext:
             A dict containing the configuration for the integration if found else empty list
         """
         tmp_client = demisto_client.configure(base_url=server_url,
+                                              auth_id=self.auth_id,
                                               api_key=self.api_key,
                                               verify_ssl=False)
         self.logging_module.debug('Getting all integrations instances')
@@ -2088,9 +2081,9 @@ class ServerContext:
             self.client.api_client.pool.close()
             self.client.api_client.pool.terminate()
             del self.client
-        # todo: change when xsiam
         self.client = demisto_client.configure(base_url=self.server_url,
                                                api_key=self.build_context.api_key,
+                                               auth_id=self.build_context.auth_id,
                                                verify_ssl=False)
 
     def _reset_containers(self):

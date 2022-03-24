@@ -16,7 +16,7 @@ configparser = "*"
 coverage = "*"
 dateparser = "*"
 decorator = "*"
-demisto-py = ">=3.1.1"
+demisto-py = {git = "git+https://github.com/demisto/demisto-py.git@b52324445882d5dec1ac4a3b8594c2beba1d54a2"}
 dictor = "*"
 docker = "==4.3.0"
 flake8 = "*"

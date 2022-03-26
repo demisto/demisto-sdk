@@ -89,7 +89,7 @@ class YMLMetadataCollector:
                  detailed_description: Optional[str] = None, image: Optional[str] = None, display: Optional[str] = None,
                  tests: list = ["No tests"], fromversion: str = "6.0.0",
                  long_running: bool = False, long_running_port: bool = False, integration_type: str = "python",
-                 integration_subtype: str = "python3", deprecated: bool = False, system: bool = False,
+                 integration_subtype: str = "python3", deprecated: Optional[bool] = None, system: Optional[bool] = None,
                  timeout: Optional[str] = None, default_classifier: Optional[str] = None,
                  default_mapper_in: Optional[str] = None,
                  integration_name_x2: Optional[str] = None, default_enabled_x2: Optional[bool] = None,
@@ -103,25 +103,26 @@ class YMLMetadataCollector:
         self.display = display
         self.image = image
         self.detailed_description = detailed_description
-        self.docker_image = docker_image
         self.description = description if description else ''
         self.category = category
         self.conf = conf if conf else []
-        self.is_feed = is_feed
-        self.is_fetch = is_fetch
-        self.is_runonce = is_runonce
         self.tests = tests
         self.fromversion = fromversion
-        self.long_running = long_running
-        self.long_running_port = long_running_port
-        self.integration_type = integration_type
-        self.integration_subtype = integration_subtype
-        self.deprecated = deprecated
         self.system = system
         self.timeout = timeout
         self.default_classifier = default_classifier
         self.default_mapper_in = default_mapper_in
         self.default_enabled = default_enabled
+        # script fields
+        self.docker_image = docker_image
+        self.is_feed = is_feed
+        self.is_fetch = is_fetch
+        self.is_runonce = is_runonce
+        self.long_running = long_running
+        self.long_running_port = long_running_port
+        self.integration_type = integration_type
+        self.integration_subtype = integration_subtype
+        self.deprecated = deprecated
 
         # x2 fields
         self.integration_name_x2 = integration_name_x2

@@ -5,7 +5,7 @@ import inspect
 import os
 import re
 import traceback
-from enum import EnumMeta
+from enum import Enum, EnumMeta
 from types import FunctionType
 from typing import Any, AnyStr, Callable, List, Optional, Tuple, Union
 
@@ -166,7 +166,8 @@ class YMLGenerator:
             if self.verbose:
                 click.secho('Converting collected details to dict..')
             if self.metadata_collector:
-                self.metadata = MetadataToDict(metadata_collector=self.metadata_collector, verbose=self.verbose)
+                self.metadata = MetadataToDict(metadata_collector=self.metadata_collector, verbose=self.verbose,
+                                               file_import=self.file_import)
                 self.metadata.build_integration_dict()
 
     def save_to_yml_file(self):
@@ -190,10 +191,12 @@ class YMLGenerator:
 class MetadataToDict:
     """Transform the YMLMetadataCollector into a dict and then a yml."""
 
-    def __init__(self, metadata_collector: YMLMetadataCollector, verbose: bool = False):
+    def __init__(self, metadata_collector: YMLMetadataCollector, verbose: bool = False,
+                 file_import: Optional[Any] = None):
         self.mc = metadata_collector
         self.metadata_dict: dict = {}
         self.verbose = verbose
+        self.file_import = file_import
 
     def build_integration_dict(self):
         """Build the integration dictionary from the metadata_collector provided."""
@@ -227,9 +230,9 @@ class MetadataToDict:
 
         if self.mc.detailed_description:
             integration_dict.update({"detaileddescription": self.mc.detailed_description})
-        if self.mc.deprecated:
+        if self.mc.deprecated is not None:
             integration_dict["deprecated"] = self.mc.deprecated
-        if self.mc.system:
+        if self.mc.system is not None:
             integration_dict["system"] = self.mc.system
         if self.mc.timeout:
             integration_dict["timeout"] = self.mc.timeout
@@ -266,6 +269,9 @@ class MetadataToDict:
         if config_key.options:
             config_key_metadata["options"] = config_key.options
 
+        if config_key.input_type:
+            config_key_metadata["options"] = MetadataToDict.handle_enum(config_key.input_type)
+
         return config_key_metadata
 
     def command_metadata_from_function(self, command: CommandMetadata) -> dict:
@@ -273,7 +279,8 @@ class MetadataToDict:
         if self.verbose:
             click.secho(f"Parsing metadata for command {command.name}...")
 
-        description, in_args, out_args = self.google_docstring_to_dict(command.function.__doc__, self.verbose)
+        description, in_args, out_args = self.google_docstring_to_dict(command.function.__doc__, self.verbose,
+                                                                       self.file_import)
 
         command_dict: dict = {
             "deprecated": command.deprecated,
@@ -352,30 +359,38 @@ class MetadataToDict:
                 secret = False
                 execution = False
                 required = False
-                if arg_type is EnumMeta:
+                if arg_type and inspect.isclass(arg_type) and issubclass(arg_type, Enum) or arg_type is EnumMeta:
                     options = MetadataToDict.handle_enum(arg_type)
-                elif description and 'options=[' in description.lower():
-                    split_line = description.lower().split('options=[')
+                elif description and 'options=[' in description:
+                    split_line = description.split('options=[')
                     right_of_line_options = split_line[1]
-                    options_str = right_of_line_options.split(']')[0]
+                    options_str = right_of_line_options.split('].')[0]
                     options = options_str.split(',')
                     options = [option.strip() for option in options]
-                    description = f"{split_line[0]}{right_of_line_options.split(']')[1].lstrip()}"
+                    description = f"{split_line[0]}{right_of_line_options.split('].')[1].lstrip()}"
                 if declared_arg and not inspect.Parameter.empty:
                     default = declared_arg.default
                 elif description and 'default=' in description:
-                    left_of_line_default = description.lower().split('default=')[1]
+                    left_of_line_default = description.split('default=')[1]
                     default = left_of_line_default.split('.')[0]
-                    description = f"{left_of_line_default}{left_of_line_default.split('.')[1].lstrip()}"
-                if description and 'secret.' in description.lower():
+                    after_default = ".".join(left_of_line_default.split('.')[1:])
+                    description = f"{description.split('default=')[0].strip()}{after_default.strip()}"
+                if description and 'secret.' in description:
                     secret = True
                     description = description.replace(' secret.', '')
-                if description and 'potentially harmful.' in description.lower():
+                    description = description.replace('secret.', '')
+                if description and 'potentially harmful.' in description:
                     execution = True
                     description = description.replace(' potentially harmful.', '')
-                if description and 'required.' in description.lower():
+                    description = description.replace('potentially harmful.', '')
+                if description and 'required.' in description:
                     required = True
+                    description = description.replace(' required.', '')
                     description = description.replace('required.', '')
+                if description and 'execution.' in description:
+                    execution = True
+                    description = description.replace(' execution.', '')
+                    description = description.replace('execution.', '')
 
                 command_args.append(MetadataToDict.add_arg_metadata(
                     arg_name=input_arg.name,
@@ -479,7 +494,7 @@ class MetadataToDict:
         return organized_outputs
 
     @staticmethod
-    def google_docstring_to_dict(docstring: Optional[str], verbose: bool = False) -> Tuple[str, list, list]:
+    def google_docstring_to_dict(docstring: Optional[str], verbose: bool = False, file_import: Optional[Any] = None) -> Tuple[str, list, list]:
         """Parse google style docstring."""
 
         if not docstring:
@@ -504,7 +519,7 @@ class MetadataToDict:
                     spaces_num = len(lines[0]) - len(lines[0].lstrip())
                     arg_lines = section[1].split(f'\n{spaces_num*" "}')
                     for arg_line in arg_lines:
-                        in_arg, in_arg_type = MetadataToDict.parse_in_argument_lines(arg_line, verbose)
+                        in_arg, in_arg_type = MetadataToDict.parse_in_argument_lines(arg_line, verbose, file_import)
                         if in_arg:
                             input_list.append((in_arg, in_arg_type))
 
@@ -520,7 +535,8 @@ class MetadataToDict:
         return description, input_list, output_list
 
     @staticmethod
-    def parse_in_argument_lines(argument_line: str, verbose: bool = False) -> Tuple[Optional[InputArgument], Any]:
+    def parse_in_argument_lines(argument_line: str, verbose: bool = False,
+                                file_import: Optional[Any] = None) -> Tuple[Optional[InputArgument], Any]:
         """Parse input argument line from docstring."""
         regex_args_with_type = r"^(?: *|\t)(?P<name>\*{0,4}(\w+|\w+\s|\w+\.\w+\s)\((?P<type>.*)\)):(?P<desc>(\s|\S)*)"
         argument_sections = re.findall(regex_args_with_type, argument_line, re.MULTILINE)
@@ -538,10 +554,14 @@ class MetadataToDict:
             description = argument_sections[0][3].strip()
             input_type_str = argument_sections[0][2]
             try:
-                input_type = eval(input_type_str.lower())
-            except Exception:
+                if file_import and input_type_str in dir(file_import):
+                    input_type = file_import.__getattribute__(input_type_str)
+                else:
+                    input_type = eval(input_type_str)
+            except Exception as err:
                 if verbose:
-                    click.secho(f"Problems parsing input type {input_type_str}, setting is_array=False.", fg='yellow')
+                    click.secho(f"Problems parsing input type {input_type_str}, setting isArray=False."
+                                f"Error was: {err}", fg='yellow')
                 input_type = None
 
             return InputArgument(name=name, description=description), input_type

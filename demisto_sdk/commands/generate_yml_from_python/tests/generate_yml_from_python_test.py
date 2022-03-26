@@ -150,23 +150,42 @@ class TestImportDependencies:
 class TestConfigurationGeneration:
 
     @pytest.mark.parametrize("configuration, expected_update",
-                             [({"integration_name": "some_name"},
-                               {"name": "some_name"}),
-                              ({"integration_name": "some_name", "display": "not_some_name"},
-                               {"display": "not_some_name"}),
-                              ({"integration_name": "some_name", "image": "some_image"},
-                               {"image": "some_image"}),
-                              ({"integration_name": "some_name", "detailed_description": "some_detailed_description"},
+                             [({"integration_name": "some_other_name"}, {"commonfields": {"id": "some_other_name",
+                                                                                          "version": -1},
+                                                                         "name": "some_other_name",
+                                                                         "display": "some other name"}),
+                              ({"display": "not_some_name"}, {"display": "not_some_name"}),
+                              ({"image": "some_image"}, {"image": "some_image"}),
+                              ({"detailed_description": "some_detailed_description"},
                                {"detaileddescription": "some_detailed_description"}),
-                              ({"integration_name": "some_name", "description": "some_description"},
-                               {"description": "some_description"}),
-                              ({"integration_name": "some_name", "category": "some_category"},
-                               {"category": "some_category"}),
-                              ],  # TODO: fill in all details
+                              ({"description": "some_description"}, {"description": "some_description"}),
+                              ({"category": "some_category"}, {"category": "some_category"}),
+                              ({"tests": ["Test1", "Test2"]}, {"tests": ["Test1", "Test2"]}),
+                              ({"fromversion": "7.0.0"}, {"fromversion": "7.0.0"}),
+                              ({"system": True}, {"system": True}),
+                              ({"system": False}, {"system": False}),
+                              ({"timeout": "5s"}, {"timeout": "5s"}),
+                              ({"default_classifier": "TheCalssifier"}, {"defaultclassifier": "TheCalssifier"}),
+                              ({"default_mapper_in": "TheCalssifierIn"}, {"defaultmapperin": "TheCalssifierIn"}),
+                              ({"default_enabled": True}, {"defaultEnabled": True}),
+                              ({"default_enabled": False}, {"defaultEnabled": False}),
+                              ({"deprecated": True}, {"deprecated": True}),
+                              ({"deprecated": False}, {"deprecated": False}),
+                              ({"default_enabled_x2": True}, {"defaultEnabled_x2": True}),
+                              ({"default_enabled_x2": False}, {"defaultEnabled_x2": False}),
+                              ({"integration_name_x2": "some_x2_name"},
+                               {"commonfields": {"id": "some_name",
+                                                 "version": -1,
+                                                 "name_x2": "some_x2_name"}})],
                              ids=["integration_name", "display", "image", "detailed_description",
-                                  "description", "category"])
+                                  "description", "category", "tests", "fromversion", "system=True", "system=False",
+                                  "timeout", "default_classifier", "default_mapper_in", "default_enabled=True",
+                                  "default_enabled=False", "deprecated=True", "deprecated=False",
+                                  "default_enabled_x2=True", "default_enabled_x2=False", "integration_name_x2"])
     def test_generate_general_configuration(self, tmp_path, configuration, expected_update):
         integration_path = tmp_path / "integration_name.py"
+        if "integration_name" not in configuration.keys():
+            configuration.update({"integration_name": "some_name"})
 
         def code_snippet():
             metadata_collector = YMLMetadataCollector(**configuration)  # noqa: F841
@@ -183,16 +202,25 @@ class TestConfigurationGeneration:
         assert expected_dict == yml_generator.get_metadata_dict()
 
     @pytest.mark.parametrize("configuration, expected_update",
-                             [({"integration_name": "some_name", "docker_image": "some_dockerimage"},
-                               {"dockerimage": "some_dockerimage"}),
-                              ({"integration_name": "some_name", "is_feed": True},
-                               {"feed": True}),
-                              ({"integration_name": "some_name", "is_feed": False},
-                               {"feed": False})
-                              ],  # TODO: fill in all details
-                             ids=["docker_image", "is_feed=True", "is_feed=False"])
+                             [({"docker_image": "some_dockerimage"}, {"dockerimage": "some_dockerimage"}),
+                              ({"is_feed": True}, {"feed": True}),
+                              ({"is_feed": False}, {"feed": False}),
+                              ({"is_fetch": True}, {"isfetch": True}),
+                              ({"is_fetch": False}, {"isfetch": False}),
+                              ({"is_runonce": False}, {"runonce": False}),
+                              ({"is_runonce": True}, {"runonce": True}),
+                              ({"long_running": True}, {"longRunning": True}),
+                              ({"long_running": False}, {"longRunning": False}),
+                              ({"long_running_port": "8080"}, {"longRunningPort": "8080"}),
+                              ({"integration_type": "java"}, {"type": "java"}),
+                              ({"integration_subtype": "javascript"}, {"subtype": "javascript"})],
+                             ids=["docker_image", "is_feed=True", "is_feed=False", "is_fetch=True", "is_fetch=False",
+                                  "is_runonce=False", "is_runonce=True", "long_running=True", "long_running=False",
+                                  "long_running_port", "type", "subtype"])
     def test_generate_general_script_configuration(self, tmp_path, configuration, expected_update):
         integration_path = tmp_path / "integration_name.py"
+        if "integration_name" not in configuration.keys():
+            configuration.update({"integration_name": "some_name"})
 
         def code_snippet():
             metadata_collector = YMLMetadataCollector(**configuration)  # noqa: F841
@@ -211,14 +239,18 @@ class TestConfigurationGeneration:
     @pytest.mark.parametrize("configuration, expected_update",
                              [({"name": "some_confkey_name"},
                                {"name": "some_confkey_name", "display": "some_confkey_name"}),
-                              ({"name": "some_confkey_name", "display": "some_display_name"},
-                               {"name": "some_confkey_name", "display": "some_display_name"}),
-                              ({"name": "some_name", "required": True}, {"name": "some_name", "required": True}),
-                              ({"name": "some_name", "required": False}, {"name": "some_name", "required": False})
-                              ],  # TODO: fill in all details, including parameter types.
-                             ids=["name", "display", "required=True", "required=False"])
+                              ({"display": "some_display_name"}, {"display": "some_display_name"}),
+                              ({"default_value": "1337"}, {"defaultvalue": "1337"}),
+                              ({"required": True}, {"required": True}),
+                              ({"required": False}, {"required": False}),
+                              ({"additional_info": "some more info"}, {"additionalinfo": "some more info"}),
+                              ({"options": ["A", "B"]}, {"options": ["A", "B"]})],
+                             ids=["name", "display", "default_value", "required=True", "required=False",
+                                  "additional_info", "options"])
     def test_generate_conf_keys(self, tmp_path, configuration, expected_update):
         integration_path = tmp_path / "integration_name.py"
+        if "name" not in configuration.keys():
+            configuration.update({"name": "some_name"})
 
         def code_snippet():
             metadata_collector = YMLMetadataCollector(integration_name="some_name",  # noqa: F841
@@ -234,6 +266,70 @@ class TestConfigurationGeneration:
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
         expected_conf = copy.deepcopy(BASIC_CONF_KEY_DICT)
         expected_conf.update(expected_update)
+        expected_dict["configuration"] = [expected_conf]
+        assert expected_dict == yml_generator.get_metadata_dict()
+
+    @pytest.mark.parametrize("configuration, expected_update",
+                             [("ParameterTypes.STRING", {"type": 0}),
+                              ("ParameterTypes.NUMBER", {"type": 1}),
+                              ("ParameterTypes.ENCRYPTED", {"type": 4}),
+                              ("ParameterTypes.BOOLEAN", {"type": 8}),
+                              ("ParameterTypes.AUTH", {"type": 9}),
+                              ("ParameterTypes.DOWNLOAD_LINK", {"type": 11}),
+                              ("ParameterTypes.TEXT_AREA", {"type": 12}),
+                              ("ParameterTypes.INCIDENT_TYPE", {"type": 13}),
+                              ("ParameterTypes.TEXT_AREA_ENCRYPTED", {"type": 14}),
+                              ("ParameterTypes.SINGLE_SELECT", {"type": 15}),
+                              ("ParameterTypes.MULTI_SELECT", {"type": 16})],
+                             ids=["key_type=STRING",
+                                  "key_type=NUMBER", "key_type=ENCRYPTED", "key_type=BOOLEAN", "key_type=AUTH",
+                                  "key_type=DOWNLOAD_LINK", "key_type=TEXT_AREA", "key_type=INCIDENT_TYPE",
+                                  "key_type=TEXT_AREA_ENCRYPTED", "key_type=SINGLE_SELECT", "key_type=MULTI_SELECT"])
+    def test_conf_keys_parameter_types(self, tmp_path, configuration, expected_update):
+        integration_path = tmp_path / "integration_name.py"
+
+        def code_snippet():
+            metadata_collector = YMLMetadataCollector(integration_name="some_name",  # noqa: F841
+                                                      conf=[ConfKey(name="some_name",
+                                                                    key_type=configuration)])
+
+            def some_func():
+                """Some func doc"""
+                print("func")
+
+        save_code_as_integration(code=code_snippet, full_path=integration_path, configuration=configuration)
+        yml_generator = YMLGenerator(filename=integration_path)
+        yml_generator.generate()
+        expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
+        expected_conf = copy.deepcopy(BASIC_CONF_KEY_DICT)
+        expected_conf.update(expected_update)
+        expected_dict["configuration"] = [expected_conf]
+        assert expected_dict == yml_generator.get_metadata_dict()
+
+    def test_enum_inputs_in_conf_key(self, tmp_path):
+        integration_path = tmp_path / "integration_name.py"
+
+        def code_snippet():
+            import enum
+
+            class InputOptions(enum.Enum):
+                A = "a"
+                B = "b"
+
+            metadata_collector = YMLMetadataCollector(integration_name="some_name",  # noqa: F841
+                                                      conf=[ConfKey(name="some_name",
+                                                                    input_type=InputOptions)])
+
+            def funky_command():
+                """Some other description"""
+                print("func")
+
+        save_code_as_integration(code=code_snippet, full_path=integration_path)
+        yml_generator = YMLGenerator(filename=integration_path)
+        yml_generator.generate()
+        expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
+        expected_conf = copy.deepcopy(BASIC_CONF_KEY_DICT)
+        expected_conf.update({"options": ["a", "b"]})
         expected_dict["configuration"] = [expected_conf]
         assert expected_dict == yml_generator.get_metadata_dict()
 
@@ -429,13 +525,56 @@ class TestCommandGeneration:
                                '\n    Args:'
                                '\n        some_input_arg: required. some desc.\n',
                                {"name": "some_input_arg", "description": "some desc.", "required": True}),
-                              ],  # TODO: fill in the details
-                             ids=["basic", "required"])
+                              ('Some other description\n'
+                               '\n    Args:'
+                               '\n        some_input_arg: default=5. some desc.\n',
+                               {"name": "some_input_arg", "description": "some desc.", "required": False,
+                                "defaultValue": "5", "default": True}),
+                              ('Some other description\n'
+                               '\n    Args:'
+                               '\n        some_input_arg: secret. some desc.\n',
+                               {"name": "some_input_arg", "description": "some desc.", "secret": True}),
+                              ('Some other description\n'
+                               '\n    Args:'
+                               '\n        some_input_arg: execution. some desc.\n',
+                               {"name": "some_input_arg", "description": "some desc.", "execution": True}),
+                              ('Some other description\n'
+                               '\n    Args:'
+                               '\n        some_input_arg: options=[A, B]. some desc.\n',
+                               {'auto': 'PREDEFINED', "name": "some_input_arg", "description": "some desc.",
+                                "predefined": ["A", "B"]}),
+                              ('Some other description\n'
+                               '\n    Args:'
+                               '\n        some_input_arg (list): some desc.\n',
+                               {"name": "some_input_arg", "description": "some desc.", "isArray": True}),
+                              ('Some other description\n'
+                               '\n    Args:'
+                               '\n        some_input_arg (int): some desc.\n',
+                               {"name": "some_input_arg", "description": "some desc.", "isArray": False}),
+                              ('Some other description\n'
+                               '\n    Args:'
+                               '\n        some_input_arg: required. some desc. secret.\n',
+                               {"name": "some_input_arg", "description": "some desc.", "required": True,
+                                "secret": True}),
+                              ('Some other description\n'
+                               '\n    Args:'
+                               '\n        some_input_arg (InputOptions): some desc.\n    ',
+                               {'auto': 'PREDEFINED', "name": "some_input_arg", "description": "some desc.",
+                                "predefined": ["a", "b"]}),
+                              ],
+                             ids=["basic", "required", "default", "secret", "execution", "options", "isArray=True",
+                                  "isArray=False", "multiple flags", "type is enum"])
     def test_inputs_from_declaration(self, tmp_path, docstring, expected_update):
         integration_path = tmp_path / "integration_name.py"
 
         def code_snippet():
+            import enum
+
             metadata_collector = YMLMetadataCollector(integration_name="some_name")
+
+            class InputOptions(enum.Enum):
+                A = "a"
+                B = "b"
 
             @metadata_collector.command(command_name="some-command")
             def funky_command():

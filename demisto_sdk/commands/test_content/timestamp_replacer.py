@@ -512,8 +512,8 @@ class TimestampReplacer:
         try:
             if parse(val):
                 return True
-        except Exception:
-            logging.exception(f'Failed to parse as date object: {val}')
+        except Exception as exc:
+            logging.exception(f'Failed to parse as date object: {val}', exc)
         return False
 
 

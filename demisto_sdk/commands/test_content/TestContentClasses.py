@@ -2044,15 +2044,17 @@ class ServerContext:
         Iterates the mockable tests queue and executes them as long as there are tests to execute
         """
         # we running XSIAM without proxy. This code wont be executed on xsiam servers
-        self.proxy.configure_proxy_in_demisto(proxy=self.proxy.ami.internal_ip + ':' + self.proxy.PROXY_PORT,
-                                              username=self.build_context.secret_conf.server_username,
-                                              password=self.build_context.secret_conf.server_password,
-                                              server=self.server_url)
+        if not IS_XSIAM:
+            self.proxy.configure_proxy_in_demisto(proxy=self.proxy.ami.internal_ip + ':' + self.proxy.PROXY_PORT,
+                                                  username=self.build_context.secret_conf.server_username,
+                                                  password=self.build_context.secret_conf.server_password,
+                                                  server=self.server_url)
         self._execute_tests(self.build_context.mockable_tests_to_run)
-        self.proxy.configure_proxy_in_demisto(proxy='',
-                                              username=self.build_context.secret_conf.server_username,
-                                              password=self.build_context.secret_conf.server_password,
-                                              server=self.server_url)
+        if not IS_XSIAM:
+            self.proxy.configure_proxy_in_demisto(proxy='',
+                                                  username=self.build_context.secret_conf.server_username,
+                                                  password=self.build_context.secret_conf.server_password,
+                                                  server=self.server_url)
 
     def _execute_failed_tests(self):
         self._execute_tests(self.build_context.test_retries_queue)

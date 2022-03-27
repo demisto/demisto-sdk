@@ -7,6 +7,7 @@
 * Fixed an issue in the **validate** command did not work properly when using the *-g* flag.
 * Enhanced the dependency message shown when running **lint**.
 * The **validate** command now checks if there're integration commands that apear only in the readme file or only in the yml file.
+* Fixed an issue where **update-release-notes** didn't update the currentVersion in pack_metadata
 
 # 1.6.2
 * Added dependency validation support for core marketplacev2 packs.

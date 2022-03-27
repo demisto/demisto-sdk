@@ -331,7 +331,7 @@ ERROR_CODE = {
     "template_sentence_in_readme": {'code': "RM107", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
     "missing_readme_file": {'code': "RM109", 'ui_applicable': False, 'related_field': ''},
-    "missing_commands_in_readme_or_yml": {'code': "RM110", 'ui_applicable': False, 'related_field': ''},
+    "missing_commands_from_readme": {'code': "RM110", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -2198,16 +2198,10 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def missing_commands_in_readme_or_yml(yml_name, missing_commands_from_readme, missing_commands_from_yml):
-        error_msg = ''
-        if missing_commands_from_readme:
-            error_msg += f'The following commands appear in {yml_name} but not in the README file:\n'
-            for command in missing_commands_from_readme:
-                error_msg += f'{command}\n'
-        if missing_commands_from_yml:
-            error_msg += f'The following commands appear in the README file but not in {yml_name}:'
-            for command in missing_commands_from_yml:
-                error_msg += f'\n{command}'
+    def missing_commands_from_readme(yml_name, missing_commands_from_readme):
+        error_msg = f'The following commands appear in {yml_name} but not in the README file:\n'
+        for command in missing_commands_from_readme:
+            error_msg += f'{command}\n'
         return error_msg
 
     @staticmethod

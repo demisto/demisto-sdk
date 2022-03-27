@@ -483,10 +483,9 @@ def test_verify_readme_image_paths(mocker):
 
 
 VERIFY_YML_COMMANDS_MATCH_README_DATA = [
-    ({'script': {'commands': [{'arguments': {'name': 'command_name'}}]}}, "## Commands\n### command_name\n somename", True),
-    ({'script': {'commands': [{'arguments': {'name': 'get-mapping-fields'}}]}}, "", True),
-    ({'script': {'commands': [{'arguments': {'name': 'command_name'}}]}}, "", False),
-    ({'script': {'commands': []}}, "## Commands\n### command_name\n somename", False),
+    ({'script': {'commands': [{'name': 'command_name'}]}}, "## Commands\n### command_name\n somename", True),
+    ({'script': {'commands': [{'name': 'get-mapping-fields'}]}}, "", True),
+    ({'script': {'commands': [{'name': 'command_name'}]}}, "", False),
 ]
 
 

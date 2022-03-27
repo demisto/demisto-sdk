@@ -24,10 +24,10 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (
-    compare_context_path_in_yml_and_readme, extract_command_names_from_yml,
-    extract_commands_from_readme, get_content_path, get_url_with_retries,
-    get_yaml, get_yml_paths_in_dir, is_integration_readme, print_warning,
-    run_command_os)
+    compare_context_path_in_yml_and_readme,
+    extract_none_deprecated_command_names_from_yml, get_content_path,
+    get_url_with_retries, get_yaml, get_yml_paths_in_dir,
+    is_integration_readme, print_warning, run_command_os)
 
 NO_HTML = '<!-- NOT_HTML_DOC -->'
 YES_HTML = '<!-- HTML_DOC -->'
@@ -539,25 +539,22 @@ class ReadMeValidator(BaseValidator):
     def verify_yml_commands_match_readme(self):
         """
         Checks if there are commands that doesn't appear in the readme but appear in the .yml file
-        or the other way around.
 
         Return:
-            True if all commands appear in both place, and False if it does'nt.
+            True if all commands appear in the readme, and False if it does'nt.
         """
         if not is_integration_readme(str(self.file_path)):
             return True
         _, yml_file_path = get_yml_paths_in_dir(str((Path(self.file_path)).parent))
         yml_as_dict = get_yaml(yml_file_path)
-        yml_commands_list = extract_command_names_from_yml(yml_as_dict)
-        readme_commands_list = extract_commands_from_readme(self.readme_content)
+        yml_commands_list = extract_none_deprecated_command_names_from_yml(yml_as_dict)
         is_valid = True
         excluded_from_readme_commands = ['get-mapping-fields']
-        missing_commands_from_yml = [command for command in readme_commands_list if command not in yml_commands_list]
         missing_commands_from_readme = [
-            command for command in yml_commands_list if command not in readme_commands_list and command not in excluded_from_readme_commands]
-        if missing_commands_from_yml or missing_commands_from_readme:
-            error_message, error_code = Errors.missing_commands_in_readme_or_yml(
-                os.path.basename(yml_file_path), missing_commands_from_readme, missing_commands_from_yml)
+            command for command in yml_commands_list if command not in self.readme_content and command not in excluded_from_readme_commands]
+        if missing_commands_from_readme:
+            error_message, error_code = Errors.missing_commands_from_readme(
+                os.path.basename(yml_file_path), missing_commands_from_readme)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = False
 

@@ -7,8 +7,8 @@ from demisto_sdk.commands.common.handlers.xsoar_handler import XSOAR_Handler
 
 class OrJSON_Handler(XSOAR_Handler):
     """
-    XSOAR wrapper to orjso
-    Use only this wrapper for json handling. 
+    XSOAR wrapper to orjson
+    Use only this wrapper for json handling.
     """
 
     def load(self, stream: TextIO):

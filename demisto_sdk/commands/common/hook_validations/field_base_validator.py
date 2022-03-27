@@ -268,7 +268,7 @@ class FieldBaseValidator(ContentEntityValidator):
             if old_from_version != current_from_version:
                 error_message, error_code = Errors.from_version_modified_after_rename()
                 if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                     warning=self.structure_validator.quite_bc):
+                                     warning=self.structure_validator.quiet_bc):
                     is_from_version_changed = True
 
         return is_from_version_changed
@@ -286,7 +286,7 @@ class FieldBaseValidator(ContentEntityValidator):
             if old_type and old_type != current_type:
                 error_message, error_code = Errors.incident_field_type_change()
                 if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                     warning=self.structure_validator.quite_bc):
+                                     warning=self.structure_validator.quiet_bc):
                     is_type_changed = True
 
         return is_type_changed
@@ -348,7 +348,7 @@ class FieldBaseValidator(ContentEntityValidator):
             error_message, error_code = Errors.field_version_is_not_correct(current_version, min_from_version,
                                                                             reason_for_min_version)
             if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                 warning=self.structure_validator.quite_bc):
+                                 warning=self.structure_validator.quiet_bc):
                 return False
         return True
 
@@ -361,7 +361,7 @@ class FieldBaseValidator(ContentEntityValidator):
         if any(select_value == '' for select_value in (self.current_file.get('selectValues') or [])):
             error_message, error_code = Errors.select_values_cannot_contain_empty_values()
             if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                 warning=self.structure_validator.quite_bc):
+                                 warning=self.structure_validator.quiet_bc):
                 return False
         return True
 
@@ -393,7 +393,7 @@ class FieldBaseValidator(ContentEntityValidator):
             invalid_aliases = [alias.get("cliname") for alias in self._get_incident_fields_by_aliases(aliases) if validator(alias)]
             if invalid_aliases:
                 error_message, error_code = error_generator(invalid_aliases)
-                if self.handle_error(error_message, error_code, file_path=self.file_path, warning=self.structure_validator.quite_bc):
+                if self.handle_error(error_message, error_code, file_path=self.file_path, warning=self.structure_validator.quiet_bc):
                     is_valid = False
 
         return is_valid

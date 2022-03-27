@@ -405,7 +405,7 @@ class UpdateRN:
             The pack metadata dictionary
         """
         try:
-            data_dictionary = get_json(self.metadata_path)
+            data_dictionary = get_json(self.metadata_path, cache_clear=True)
         except FileNotFoundError as e:
             raise FileNotFoundError(f'Pack {self.pack} was not found. Please verify the pack name is correct.') from e
         return data_dictionary

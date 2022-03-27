@@ -87,7 +87,7 @@ def test_is_changed_from_version(current_from_version, old_from_version, answer)
     structure.current_file = current_from_version
     validator = IncidentTypeValidator(structure)
     assert validator.is_changed_from_version() is answer
-    structure.quite_bc = True
+    structure.quiet_bc = True
     assert validator.is_changed_from_version() is False
 
 

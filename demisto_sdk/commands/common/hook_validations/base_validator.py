@@ -60,7 +60,7 @@ def meta_specific_validation_decorator(error_func_names_str=''):
 class BaseValidator:
 
     def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False,
-                 json_file_path: Optional[str] = None, specific_validations=[]):
+                 json_file_path: Optional[str] = None, specific_validations=None):
         self.ignored_errors = ignored_errors if ignored_errors else {}
         self.print_as_warnings = print_as_warnings
         self.checked_files = set()  # type: ignore

@@ -46,7 +46,7 @@ from demisto_sdk.commands.common.constants import (
     RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
     XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys, IdSetKeys,
-    MarketplaceVersions, urljoin)
+    MarketplaceVersions, urljoin, PACKS_INTEGRATION_README_REGEX)
 from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
                                                             GitProvider)
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -2544,3 +2544,10 @@ def extract_command_names_from_yml(yml_data: dict):
         if command.get('arguments', {}).get('name'):
             commands_ls.append(command.get('arguments', {}).get('name'))
     return commands_ls
+
+def is_integration_readme(file_path):
+    matching_regex = re.findall(PACKS_INTEGRATION_README_REGEX, file_path)
+    if matching_regex:
+        return True
+    else:
+        return False

@@ -26,7 +26,8 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
 from demisto_sdk.commands.common.tools import (
     compare_context_path_in_yml_and_readme, extract_command_names_from_yml,
     extract_commands_from_readme, get_content_path, get_url_with_retries,
-    get_yaml, get_yml_paths_in_dir, print_warning, run_command_os)
+    get_yaml, get_yml_paths_in_dir, print_warning, run_command_os,
+    is_integration_readme)
 
 NO_HTML = '<!-- NOT_HTML_DOC -->'
 YES_HTML = '<!-- HTML_DOC -->'
@@ -543,7 +544,8 @@ class ReadMeValidator(BaseValidator):
         Return:
             True if all commands appear in both place, and False if it does'nt.
         """
-
+        if not is_integration_readme(str(self.file_path)):
+            return True
         _, yml_file_path = get_yml_paths_in_dir(str((Path(self.file_path)).parent))
         yml_as_dict = get_yaml(yml_file_path)
         yml_commands_list = extract_command_names_from_yml(yml_as_dict)

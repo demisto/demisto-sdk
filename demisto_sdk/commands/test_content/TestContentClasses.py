@@ -1991,10 +1991,13 @@ class ServerContext:
         self.client: Optional[DefaultApi] = None
         self._configure_new_client()
         # in xsiam we will not use proxy
-        self.proxy = MITMProxy(server_private_ip,
-                               self.build_context.logging_module,
-                               build_number=self.build_context.build_number,
-                               branch_name=self.build_context.build_name)
+        if IS_XSIAM:
+            self.proxy = None
+        else:
+            self.proxy = MITMProxy(server_private_ip,
+                                   self.build_context.logging_module,
+                                   build_number=self.build_context.build_number,
+                                   branch_name=self.build_context.build_name)
         self.is_instance_using_docker = not is_redhat_instance(self.server_ip)
         self.executed_tests: Set[str] = set()
         self.executed_in_current_round: Set[str] = set()
@@ -2040,6 +2043,7 @@ class ServerContext:
         """
         Iterates the mockable tests queue and executes them as long as there are tests to execute
         """
+        # we running XSIAM without proxy. This code wont be executed on xsiam servers
         self.proxy.configure_proxy_in_demisto(proxy=self.proxy.ami.internal_ip + ':' + self.proxy.PROXY_PORT,
                                               username=self.build_context.secret_conf.server_username,
                                               password=self.build_context.secret_conf.server_password,
@@ -2117,7 +2121,7 @@ class ServerContext:
             if not IS_XSIAM:
                 self.build_context.tests_data_keeper.add_proxy_related_test_data(self.proxy)
 
-            if self.build_context.isAMI:
+            if self.build_context.isAMI and not IS_XSIAM:
                 if self.proxy.should_update_mock_repo:
                     self.proxy.push_mock_files()
             self.build_context.logging_module.debug(f'Tests executed on server {self.server_ip}:\n'

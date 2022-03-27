@@ -133,7 +133,7 @@ class ValidateManager:
         if specific_validations:
             self.specific_validations = specific_validations.split(',')
         else:
-            self.specific_validations = specific_validations
+            self.specific_validations = []
 
         # Class constants
         self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors,

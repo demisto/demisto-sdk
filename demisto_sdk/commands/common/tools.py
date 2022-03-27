@@ -41,12 +41,13 @@ from demisto_sdk.commands.common.constants import (
     MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME,
     OFFICIAL_CONTENT_ID_SET_PATH, PACK_METADATA_IRON_BANK_TAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
-    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
+    PACKS_DIR_REGEX, PACKS_INTEGRATION_README_REGEX,
+    PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
     RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
     XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys, IdSetKeys,
-    MarketplaceVersions, urljoin, PACKS_INTEGRATION_README_REGEX)
+    MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
                                                             GitProvider)
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -2544,6 +2545,7 @@ def extract_command_names_from_yml(yml_data: dict):
         if command.get('arguments', {}).get('name'):
             commands_ls.append(command.get('arguments', {}).get('name'))
     return commands_ls
+
 
 def is_integration_readme(file_path):
     matching_regex = re.findall(PACKS_INTEGRATION_README_REGEX, file_path)

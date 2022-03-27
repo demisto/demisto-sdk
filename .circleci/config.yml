@@ -3,86 +3,78 @@
 ### https://circleci.com/docs/config-sample
 ### =============================================================
 version: 2.1
+orbs:
+  python: circleci/python@<< pipeline.parameters.python-orb-version >>
+  node: circleci/node@<< pipeline.parameters.node-orb-version >>
+  orb-tools: circleci/orb-tools@10.0
+
+parameters:
+  python-orb-version:
+    type: string
+    default: "2.0.3"
+  node-orb-version:
+    type: string
+    default: "5.0.1"
+  cache-version:
+    type: string
+    default: v3  # Change this parameter to clear cache.
+  global-docker-image:
+    type: string
+    default: cimg/python:3.10.2-node
+
+
 references:
     tag_filter: &tag_filter
       filters:
         tags:
           only: /^v\d+\.\d+\.\d+$/
 
-    reqs_tox: &reqs_tox
-      requires:
-        - prepare-tox3-7
-
     reqs_content_checkout: &reqs_content_checkout
       requires:
         - checkout-content
-        - prepare-tox3-7
 
-    create_requirement_files: &create_requirement_files
-      run:
-        name: Create requirement files
-        command: |
-          pip install pipfile-requirements
-          pipfile2req > requirements.txt
-          pipfile2req -d > requirements-dev.txt
+    install_node_ci: &install_node_ci
+      - node/install-packages:
+          cache-version: << pipeline.parameters.cache-version >>
+          
+    install_demisto_sdk: &install_demisto_sdk
+      - python/install-packages:
+          pkg-manager: "pipenv"
+          args: "--system"
+          cache-version: << pipeline.parameters.cache-version >>
+          pre-install-steps:
+            - run:
+                name: export demisto-sdk to path
+                command: echo 'export PYTHONPATH="${PYTHONPATH}:${HOME}/project"' >> $BASH_ENV
+      - <<: *install_node_ci
 
-    restore_tox_37_cache: &restore_tox_37_cache
-      restore_cache:
-        key: tox-37-cache-{{ checksum "Pipfile" }}-{{ checksum "Pipfile.lock" }}
-
-    save_tox_37_cache: &save_tox_37_cache
-      save_cache:
-        key: tox-37-cache-{{ checksum "Pipfile" }}-{{ checksum "Pipfile.lock" }}
-        paths:
-          - .tox/py37
+    install_build_dependencies: &install_build_dependencies
+      - python/install-packages: 
+                pkg-manager: "pip"
+                pip-dependency-file: "requirements-build.txt"
 
 jobs:
-  tox3-7-unit-tests:
-      # docker image circleci/python:3.8.3-buster-node also contains python 3.7
+  run-unit-tests:
+      parameters:
+        pythonversion:
+          type: string
       docker:
-        - image: circleci/python:3.8.3-buster-node
+        - image: cimg/python:<< parameters.pythonversion >>-node
       steps:
         - checkout
-        - *create_requirement_files
-        - *restore_tox_37_cache
+        - python/install-packages:
+            pkg-manager: "pipenv"
+            args: "--dev --system"
+            cache-version: << pipeline.parameters.cache-version >>
+        - <<: *install_node_ci
         - run:
-            # install npm modules so readme tests run with mdx verification
-            name: npm install
-            command: |
-              npm ci
-        - run:
-            name: Setup Tox
-            command: |
-              pip install tox
-        - run:
-            name: Tox build
+            name: pytest
             no_output_timeout: 15m
             command: |
-              tox -e py37 -v
-        - *save_tox_37_cache
-
-  tox3-8-unit-tests:
-      docker:
-        - image: circleci/python:3.8.3-buster-node
-      steps:
-        - checkout
-        - *create_requirement_files
-        - restore_cache:
-            key: tox-38-cache-{{ checksum "Pipfile" }}-{{ checksum "Pipfile.lock" }}
-        - run:
-            # install npm modules so readme tests run with mdx verification
-            name: npm install
-            command: |
-              npm ci
-        - run:
-            name: Setup Tox
-            command: |
-              pip install tox
-        - run:
-            name: Tox build
-            no_output_timeout: 15m
-            command: |
-              tox -e py38 -v -- --cov=demisto_sdk --cov-report=html
+              mkdir test-results
+              python -m pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml
+        - store_test_results:
+            path: test-results
         - store_artifacts:
             path: coverage_html_report
         - run:
@@ -95,49 +87,35 @@ jobs:
                 echo "Skipping coveralls"
               fi
 
-  prepare-tox3-7:
-    docker:
-      - image: circleci/python:3.8.3-buster-node
-    steps:
-      - checkout
-      - *create_requirement_files
-      - *restore_tox_37_cache
-      - run:
-          # install npm modules so readme tests run with mdx verification
-          name: npm install
-          command: |
-            npm ci
-      - run:
-          name: Setup Tox
-          command: |
-            pip install tox
-      - run:
-          name: Tox build
-          command: |
-            tox -e py37 --notest
-      - *save_tox_37_cache
-      - persist_to_workspace:
-          root: ~/project
-          paths:
-            - .tox
 
   precommit-checks:
       docker:
-        - image: circleci/python:3.8.3-buster-node
+        - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
         - attach_workspace:
             at: ~/project
+        - <<: *install_build_dependencies
+        - run:
+            command: |
+              cp .pre-commit-config.yaml pre-commit-cache-key.txt
+              python --version --version >> pre-commit-cache-key.txt
+        - restore_cache:
+            keys:
+            - v1-pc-cache-{{ checksum "pre-commit-cache-key.txt" }}
         - run:
             name: Pre-commit
             command: |
-              . .tox/py37/bin/activate
               pre-commit --version
               pre-commit run -a
-              deactivate
+        - save_cache:
+            key: v1-pc-cache-{{ checksum "pre-commit-cache-key.txt" }}
+            paths:
+              - ~/.cache/pre-commit
+
   checkout-content:
       docker:
-        - image: circleci/python:3.8.3-buster-node
+        - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
         - run:
@@ -153,64 +131,61 @@ jobs:
               - content
   validate-files:
       docker:
-        - image: circleci/python:3.8.3-buster-node
+        - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
         - attach_workspace:
             at: ~/project
-        - run:
-            name: gsutil install
-            command: |
-              pip install gsutil
+        - <<: *install_demisto_sdk
+        - <<: *install_build_dependencies
+        - <<: *install_node_ci
         - run:
             name: Set Up & Create Id Set
             when: always
+            environment:
+              CI_COMMIT_BRANCH: "master"
             command: |
-              . .tox/py37/bin/activate
               cd content
-              npm update
-              npm ci
-              export PYTHONPATH=".:${PYTHONPATH}"
-              demisto-sdk -v
+              python -m demisto_sdk -v
 
-              CI_COMMIT_BRANCH="master" demisto-sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
+              python -m demisto_sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
         - run:
             name: Merge Id Set
             when: always
+            environment:
+              CI_COMMIT_BRANCH: "master"
             command: |
-              . .tox/py37/bin/activate
               cd content
-
-              export PYTHONPATH=".:${PYTHONPATH}"
-              demisto-sdk -v
+              python -m demisto_sdk -v
               export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
 
               gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
-              CI_COMMIT_BRANCH="master" demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json --fail-duplicates
+              python -m demisto_sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json --fail-duplicates
         - run:
             name: Test validate files and yaml
             when: always
+            environment:
+              CI_COMMIT_BRANCH: "master"
             command: |
-              . .tox/py37/bin/activate
               cd content
-
-              export PYTHONPATH=".:${PYTHONPATH}"
-              demisto-sdk -v
+              python -m demisto_sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
 
-              CI_COMMIT_BRANCH="master" ./Tests/scripts/validate.sh
+              ./Tests/scripts/validate.sh
   test-lint:
       docker:
-        - image: devdemisto/content-build:3.0.0.12681
+        - image: devdemisto/content-build:3.0.0.27653
       steps:
         - checkout
         - setup_remote_docker
         - attach_workspace:
             at: ~/project
+        - <<: *install_demisto_sdk
         - run:
             name: Test lint on python and ps files
             when: always
             command: |
+              pip3 uninstall virtualenv -y && pip3 install virtualenv==16.7.7
               cd ~/project
               export SDK_LINT_FILES_CHANGED=$(git diff master... --name-only -- demisto_sdk/commands/lint)
 
@@ -221,6 +196,7 @@ jobs:
               cd content
               echo "installing venv"
               NO_HOOKS=1 SETUP_PY2=yes .hooks/bootstrap >> /tmp/lint_env_installation.log
+              echo "finished script installation"
               source ./venv/bin/activate
               pip3 install -r .circleci/build-requirements.txt >> /tmp/lint_env_installation.log
               
@@ -229,36 +205,35 @@ jobs:
               echo ""
               echo "lint files changed running lint"
               # python file (CommonServerPython lint is running over python 3 and 2)
-              demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPython
+              python3 -m demisto_sdk lint -i ./Packs/Base/Scripts/CommonServerPython
               
               # ps file
-              demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPowerShell
+              python3 -m demisto_sdk lint -i ./Packs/Base/Scripts/CommonServerPowerShell
               
         - store_artifacts:
             path: /tmp/lint_env_installation.log
   create-content-artifacts:
       docker:
-        - image: circleci/python:3.8.3-buster-node
+        - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
         - attach_workspace:
             at: ~/project
+        - <<: *install_demisto_sdk
         - run:
             name: Test Create Content Artifacts
             when: always
             command: |
-              . .tox/py37/bin/activate
-
               cd content
-              demisto-sdk -v
+              python -m demisto_sdk -v
               mkdir ./tmp
 
-              CIRCLE_BRANCH="master" demisto-sdk create-content-artifacts -a ./tmp
+              python -m demisto_sdk create-content-artifacts -a ./tmp
         - store_artifacts:
             path: content/tmp
   deploy:
       docker:
-        - image: circleci/python:3.8.3-buster
+        - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
         - run:
@@ -270,17 +245,15 @@ workflows:
   version: 2.1
   build_and_release:
     jobs:
-      - tox3-7-unit-tests:
-          <<: *tag_filter
-      - tox3-8-unit-tests:
-          <<: *tag_filter
-      - prepare-tox3-7:
-          <<: *tag_filter
       - checkout-content:
           <<: *tag_filter
       - precommit-checks:
           <<: *tag_filter
-          <<: *reqs_tox
+      - run-unit-tests:
+          matrix:
+            parameters:
+              pythonversion: [3.8.12, 3.9.10, 3.10.2]   
+          name: pytest-<< matrix.pythonversion >>
       - validate-files:
           <<: *tag_filter
           <<: *reqs_content_checkout
@@ -292,8 +265,6 @@ workflows:
       - deploy:
           <<: *tag_filter
           requires:
-            - tox3-7-unit-tests
-            - tox3-8-unit-tests
             - precommit-checks
             - validate-files
             - create-content-artifacts

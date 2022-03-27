@@ -12,7 +12,7 @@ class RUAMEL_Handler(XSOAR_Handler):
     Use only this wrapper for yaml handling.
     """
 
-    def __init__(self, typ=None, preserve_quotes=True, allow_duplicate_keys=False, width=5000):
+    def __init__(self, typ=None, preserve_quotes=True, allow_duplicate_keys=False, width=None):
         self._yaml = YAML(typ=typ)
         self._yaml.preserve_quotes = preserve_quotes
         self._yaml.allow_duplicate_keys = allow_duplicate_keys

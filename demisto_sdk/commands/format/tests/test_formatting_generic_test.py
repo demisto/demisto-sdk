@@ -56,12 +56,12 @@ class TestFormattingFromVersionKey:
     def test_update_fromVersion_from_data_with_oldfile(self, mocker):
         """
         Given
-            - A content item with data
-            - An old file fromVersion.
+            - An existing content item that already contains a fromversion key of 6.1.0.
+            - The user manually updated the fromversion key to 6.0.0 in the current version.
         When
             - Calling set_fromVersion method.
         Then
-            - Ensure that fromVersion key in the file data remain.
+            - Ensure that fromVersion remains 6.0.0.
         """
 
         mocker.patch.object(BaseUpdate, '__init__', return_value=None)

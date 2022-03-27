@@ -549,7 +549,7 @@ class ReadMeValidator(BaseValidator):
         yml_as_dict = get_yaml(yml_file_path)
         yml_commands_list = extract_none_deprecated_command_names_from_yml(yml_as_dict)
         is_valid = True
-        excluded_from_readme_commands = ['get-mapping-fields', 'get-modified-remote-data', 'update-remote-system', 'get-remote-data']
+        excluded_from_readme_commands = ['get-mapping-fields', 'xsoar-search-incidents', 'xsoar-get-incident', 'get-remote-data']
         missing_commands_from_readme = [
             command for command in yml_commands_list if command not in self.readme_content and command not in excluded_from_readme_commands]
         if missing_commands_from_readme:

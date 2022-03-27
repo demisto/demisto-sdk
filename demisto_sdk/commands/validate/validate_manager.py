@@ -125,16 +125,22 @@ class ValidateManager:
         self.check_is_unskipped = check_is_unskipped
         self.conf_json_data = {}
         self.run_with_multiprocessing = multiprocessing
-        self.specific_validations = specific_validations.split(',')
         if json_file_path:
             self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \
                 os.path.isdir(json_file_path) else json_file_path
         else:
             self.json_file_path = ''
 
+        if specific_validations:
+            self.specific_validations = specific_validations.split(',')
+        else:
+            self.specific_validations = specific_validations
+
         # Class constants
         self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors,
                                           json_file_path=json_file_path).handle_error
+        self.error_handling = BaseValidator(print_as_warnings=print_ignored_errors,
+                                          json_file_path=json_file_path).error_handling
         self.file_path = file_path
         self.id_set_path = id_set_path or DEFAULT_ID_SET_PATH
         # create the id_set only once per run.
@@ -440,7 +446,7 @@ class ValidateManager:
                 self.ignored_files.add(file_path)
 
         return all(package_entities_validation_results)
-
+    
     @meta_specific_validation_decorator('changed_pack_name')
     def is_valid_pack_name(self, file_path, old_file_path):
         """
@@ -452,24 +458,18 @@ class ValidateManager:
         original_pack_name = get_pack_name(old_file_path)
         new_pack_name = get_pack_name(file_path)
         if original_pack_name != new_pack_name:
-            error_message, error_code = Errors.changed_pack_name(original_pack_name)
-            if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path,
-                                 drop_line=True):
-                return False
+            self.error_handling('changed_pack_name', file_path, original_pack_name, drop_line=True)
         return True
 
-    @meta_specific_validation_decorator('invalid_image_name_or_location')
+    @meta_specific_validation_decorator('invalid_image_name_or_location,file_type_not_supported')
     def is_valid_file_type(self, file_type, file_path):
         """
         If a file_type is unsupported, will return `False`.
         """
         if not file_type:
-            error_message, error_code = Errors.file_type_not_supported()
-            if str(file_path).endswith('.png'):
-                error_message, error_code = Errors.invalid_image_name_or_location()
-            if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path,
-                                 drop_line=True):
-                return False
+            # if str(file_path).endswith('.png'):
+            #     error_message, error_code = Errors.invalid_image_name_or_location()
+            self.error_handling('file_type_not_supported', file_path, drop_line=True)
         return True
 
     # flake8: noqa: C901

@@ -6,8 +6,6 @@ import click
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    meta_specific_validation_decorator
 
 FROM_VERSION_PRE_PROCESS_RULES = '6.5.0'
 
@@ -49,7 +47,6 @@ class PreProcessRuleValidator(ContentEntityValidator):
         """
         return self._is_valid_version()
 
-    @meta_specific_validation_decorator('invalid_from_server_version_in_pre_process_rules')
     def is_valid_from_server_version(self) -> bool:
         """Checks if from version field is valid.
 
@@ -125,7 +122,6 @@ class PreProcessRuleValidator(ContentEntityValidator):
 
         return False
 
-    @meta_specific_validation_decorator('unknown_fields_in_pre_process_rules')
     def are_incident_fields_exist(self, id_set_file, is_ci) -> bool:
         """Checks if incident field is valid - exist in the content.
 

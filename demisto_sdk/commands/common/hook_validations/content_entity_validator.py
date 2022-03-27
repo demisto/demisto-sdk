@@ -15,8 +15,7 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator, meta_specific_validation_decorator
-
+    BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
@@ -35,7 +34,7 @@ class ContentEntityValidator(BaseValidator):
                  suppress_print=False, json_file_path=None, oldest_supported_version=None):
         # type: (StructureValidator, dict, bool, bool, bool, Optional[str], Optional[str]) -> None
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print, json_file_path=json_file_path, specific_validations=structure_validator.specific_validations)
+                         suppress_print=suppress_print, json_file_path=json_file_path)
         self.structure_validator = structure_validator
         self.current_file = structure_validator.current_file
         self.old_file = structure_validator.old_file
@@ -140,7 +139,7 @@ class ContentEntityValidator(BaseValidator):
             if arg not in old_dict.keys() and required:
                 return False
         return True
-    @meta_specific_validation_decorator('id_should_equal_name')
+
     def _is_id_equals_name(self, file_type):
         """Validate that the id of the file equals to the name.
          Args:
@@ -153,9 +152,11 @@ class ContentEntityValidator(BaseValidator):
         file_id = _get_file_id(file_type, self.current_file)
         name = self.current_file.get('name', '')
         if file_id != name:
-            suggested_fix = Errors.suggest_fix(self.file_path)
-            if self.error_handling('id_should_equal_name', self.file_path, name, file_id, suggested_fix=suggested_fix):
+            error_message, error_code = Errors.id_should_equal_name(name, file_id)
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 suggested_fix=Errors.suggest_fix(self.file_path)):
                 return False
+
         return True
 
     def _load_conf_file(self):
@@ -243,7 +244,6 @@ class ContentEntityValidator(BaseValidator):
 
         return True
 
-    @meta_specific_validation_decorator('no_minimal_fromversion_in_file')
     def is_valid_fromversion(self):
         """Check if the file has a fromversion 5.0.0 or higher
             This is not checked if checking on or against a feature branch.
@@ -266,7 +266,6 @@ class ContentEntityValidator(BaseValidator):
                 return False
 
         return True
-
 
     def is_valid_fromversion_for_generic_objects(self):
         """
@@ -338,8 +337,7 @@ class ContentEntityValidator(BaseValidator):
                 return False
 
         return True
-        
-    @meta_specific_validation_decorator('missing_readme_file')
+
     def validate_readme_exists(self, validate_all: bool = False):
         """
             Validates if there is a readme file in the same folder as the caller file.

@@ -13,8 +13,7 @@ from demisto_sdk.commands.common.hook_validations.docker import \
 from demisto_sdk.commands.common.tools import (
     get_core_pack_list, get_file_version_suffix_if_exists, get_files_in_dir,
     get_pack_name, server_version_compare)
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    meta_specific_validation_decorator
+
 
 class ScriptValidator(ContentEntityValidator):
     """ScriptValidator is designed to validate the correctness of the file structure we enter to content repo. And
@@ -28,7 +27,6 @@ class ScriptValidator(ContentEntityValidator):
                          json_file_path=json_file_path)
         self.validate_all = validate_all
 
-    @meta_specific_validation_decorator('wrong_version')
     def is_valid_version(self) -> bool:
         if self.current_file.get('commonfields', {}).get('version') != self.DEFAULT_VERSION:
             error_message, error_code = Errors.wrong_version()
@@ -117,7 +115,6 @@ class ScriptValidator(ContentEntityValidator):
             arg_to_required[arg.get('name')] = arg.get('required', False)
         return arg_to_required
 
-    @meta_specific_validation_decorator('breaking_backwards_subtype')
     def is_changed_subtype(self):
         """Validate that the subtype was not changed."""
         type_ = self.current_file.get('type')
@@ -133,7 +130,6 @@ class ScriptValidator(ContentEntityValidator):
 
         return False
 
-    @meta_specific_validation_decorator('wrong_subtype')
     def is_valid_subtype(self):
         """Validate that the subtype is python2 or python3."""
         type_ = self.current_file.get('type')
@@ -146,7 +142,6 @@ class ScriptValidator(ContentEntityValidator):
 
         return True
 
-    @meta_specific_validation_decorator('added_required_fields')
     def is_added_required_args(self):
         """Check if required arg were added."""
         current_args_to_required = self._get_arg_to_required_dict(self.current_file)
@@ -162,7 +157,6 @@ class ScriptValidator(ContentEntityValidator):
                         return True
         return False
 
-    @meta_specific_validation_decorator('incident_in_script_arg')
     def no_incident_in_core_pack(self):
         """check if args name contains the word incident"""
         args = self.current_file.get('args', [])
@@ -189,7 +183,6 @@ class ScriptValidator(ContentEntityValidator):
             return True
         return False
 
-    @meta_specific_validation_decorator('breaking_backwards_arg_changed')
     def is_arg_changed(self):
         # type: () -> bool
         """Check if the argument has been changed."""
@@ -204,7 +197,6 @@ class ScriptValidator(ContentEntityValidator):
 
         return False
 
-    @meta_specific_validation_decorator('breaking_backwards_context')
     def is_context_path_changed(self):
         # type: () -> bool
         """Check if the context path as been changed."""
@@ -243,7 +235,6 @@ class ScriptValidator(ContentEntityValidator):
             return True
         return False
 
-    @meta_specific_validation_decorator('invalid_version_script_name')
     def is_valid_name(self):
         # type: () -> bool
         version_number: Optional[str] = get_file_version_suffix_if_exists(self.current_file)
@@ -259,7 +250,6 @@ class ScriptValidator(ContentEntityValidator):
 
             return True
 
-    @meta_specific_validation_decorator('pwsh_wrong_version')
     def is_valid_pwsh(self) -> bool:
         if self.current_file.get('type') == TYPE_PWSH:
             from_version = self.current_file.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION)
@@ -271,7 +261,6 @@ class ScriptValidator(ContentEntityValidator):
 
         return True
 
-    @meta_specific_validation_decorator('invalid_deprecated_script')
     def is_valid_as_deprecated(self) -> bool:
         is_valid = True
         is_deprecated = self.current_file.get('deprecated', False)
@@ -329,7 +318,6 @@ class ScriptValidator(ContentEntityValidator):
 
         return all(answers)
 
-    @meta_specific_validation_decorator('folder_name_has_separators')
     def check_separators_in_folder(self) -> bool:
         """
         Check if there are separators in the script folder name.
@@ -350,7 +338,6 @@ class ScriptValidator(ContentEntityValidator):
 
         return True
 
-    @meta_specific_validation_decorator('file_name_has_separators')
     def check_separators_in_files(self):
         """
         Check if there are separators in the script files names.
@@ -389,7 +376,6 @@ class ScriptValidator(ContentEntityValidator):
 
         return True
 
-    @meta_specific_validation_decorator('field_contain_forbidden_word')
     def name_not_contain_the_type(self):
         """
         Check that the entity name does not contain the entity type
@@ -404,7 +390,6 @@ class ScriptValidator(ContentEntityValidator):
                 return False
         return True
 
-    @meta_specific_validation_decorator('runas_is_dbotrole')
     def runas_is_not_dbtrole(self):
         """
         Check that runas permission is not DBotRole

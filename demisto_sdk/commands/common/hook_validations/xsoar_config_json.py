@@ -7,7 +7,7 @@ from prettytable import PrettyTable
 
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator, meta_specific_validation_decorator
+    BaseValidator
 from demisto_sdk.commands.common.tools import get_dict_from_file
 
 
@@ -33,7 +33,6 @@ class XSOARConfigJsonValidator(BaseValidator):
         self.configuration_json = self.load_xsoar_configuration_file()
         self.schema_json, _ = get_dict_from_file(self.schema_path)
 
-    @meta_specific_validation_decorator('xsoar_config_file_is_not_json')
     def load_xsoar_configuration_file(self) -> Optional[Dict[str, Any]]:
         """Loads the configuration file for the schema validation.
 
@@ -72,7 +71,6 @@ class XSOARConfigJsonValidator(BaseValidator):
 
         return errors_table, errors_found
 
-    @meta_specific_validation_decorator('xsoar_config_file_malformed')
     def is_valid_xsoar_config_file(self):
         """Runs the schema validation on the configuration data, with the schema data.
 

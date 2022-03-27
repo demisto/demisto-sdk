@@ -16,8 +16,7 @@ from demisto_sdk.commands.common.tools import (extract_docker_image_from_text,
                                                get_release_notes_file_path,
                                                get_yaml)
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+
 
 class ReleaseNotesValidator(BaseValidator):
     """Release notes validator is designed to ensure the existence and correctness of the release notes in content repo.

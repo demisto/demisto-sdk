@@ -2,8 +2,6 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import is_string_uuid
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    meta_specific_validation_decorator
 
 
 class TestPlaybookValidator(ContentEntityValidator):
@@ -43,7 +41,6 @@ class TestPlaybookValidator(ContentEntityValidator):
         """
         return self._is_valid_version()
 
-    @meta_specific_validation_decorator('invalid_uuid')
     def _is_id_uuid(self):
         """
         Check that the taskid field and the id field under the task field are both on from uuid format
@@ -63,8 +60,7 @@ class TestPlaybookValidator(ContentEntityValidator):
                 # invalid task in order to raise error for all the invalid tasks at the file
 
         return is_valid
-    
-    @meta_specific_validation_decorator('taskid_different_from_id')
+
     def _is_taskid_equals_id(self):
         """
         Check that taskid field and id field under task field contains equal values

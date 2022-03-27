@@ -3,8 +3,6 @@ from distutils.version import LooseVersion
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    meta_specific_validation_decorator
 
 
 class WidgetValidator(ContentEntityValidator):
@@ -35,7 +33,6 @@ class WidgetValidator(ContentEntityValidator):
 
         return all(answers)
 
-    @meta_specific_validation_decorator('invalid_fromversion_for_type_metrics')
     def _is_valid_fromversion(self):
         """
         Check whether the fromVersion field is valid.

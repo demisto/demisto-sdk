@@ -4,7 +4,6 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from typing import Callable, List, Optional, Set, Tuple
 
 import click
-import decorator
 import pebble
 from colorama import Fore
 from git import InvalidGitRepositoryError
@@ -21,7 +20,6 @@ from demisto_sdk.commands.common.constants import (
     PathLevel)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
-                                                ERROR_CODE,
                                                 FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
@@ -100,7 +98,7 @@ class ValidateManager:
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
             create_id_set=False, json_file_path=None, skip_schema_check=False, debug_git=False, include_untracked=False,
-            pykwalify_logs=False, check_is_unskipped=True, quite_bc=False, multiprocessing=True, specific_validations='',
+            pykwalify_logs=False, check_is_unskipped=True, quiet_bc=False, multiprocessing=True, specific_validations=''
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -121,7 +119,7 @@ class ValidateManager:
         self.debug_git = debug_git
         self.include_untracked = include_untracked
         self.pykwalify_logs = pykwalify_logs
-        self.quite_bc = quite_bc
+        self.quiet_bc = quiet_bc
         self.check_is_unskipped = check_is_unskipped
         self.conf_json_data = {}
         self.run_with_multiprocessing = multiprocessing
@@ -140,7 +138,7 @@ class ValidateManager:
         self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors,
                                           json_file_path=json_file_path).handle_error
         self.error_handling = BaseValidator(print_as_warnings=print_ignored_errors,
-                                          json_file_path=json_file_path).error_handling
+                                            json_file_path=json_file_path).error_handling
         self.file_path = file_path
         self.id_set_path = id_set_path or DEFAULT_ID_SET_PATH
         # create the id_set only once per run.
@@ -446,7 +444,7 @@ class ValidateManager:
                 self.ignored_files.add(file_path)
 
         return all(package_entities_validation_results)
-    
+
     @meta_specific_validation_decorator('changed_pack_name')
     def is_valid_pack_name(self, file_path, old_file_path):
         """
@@ -522,7 +520,7 @@ class ValidateManager:
                                                  json_file_path=self.json_file_path,
                                                  skip_schema_check=self.skip_schema_check,
                                                  pykwalify_logs=self.pykwalify_logs,
-                                                 quite_bc=self.quite_bc, specific_validations=self.specific_validations)
+                                                 quiet_bc=self.quiet_bc, specific_validations=self.specific_validations)
 
         # schema validation
         if file_type not in {FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT, FileType.DESCRIPTION}:
@@ -1211,14 +1209,15 @@ class ValidateManager:
 
         """
         if added_files:
+            file_path = str(file_path)
             deleted_file_dict = get_file(file_path, find_type(file_path))
             deleted_file_id = _get_file_id(file_path, deleted_file_dict)
             if deleted_file_id:
                 for file in added_files:
+                    file = str(file)
                     file_dict = get_file(file, find_type(file))
                     if deleted_file_id == _get_file_id(file, file_dict):
                         return True
-
         return False
 
     @meta_specific_validation_decorator('file_cannot_be_deleted')
@@ -1228,10 +1227,11 @@ class ValidateManager:
 
         is_valid = True
         for file_path in deleted_files:
+            file_path = str(file_path)
             if not self.was_file_renamed_but_labeled_as_deleted(file_path, added_files):
                 if not self.is_file_allowed_to_be_deleted(file_path):
                     error_message, error_code = Errors.file_cannot_be_deleted(file_path)
-                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    if self.handle_error(error_message, error_code, file_path):
                         is_valid = False
 
         return is_valid

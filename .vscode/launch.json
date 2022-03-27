@@ -6,11 +6,11 @@
             "type": "python",
             "request": "launch",
             "module": "demisto_sdk",
-            "cwd": "/Users/yhayun/dev/demisto/content", // Predefine the CONTENT variable in your environment first!
+            "cwd": "${env:CONTENT}", // Predefine the CONTENT variable in your environment first!
             "args": [
-                "validate",
+                "upload",
                 "-i",
-                "Packs/XSOARContentUpdateNotifications/Scripts/ListInstalledContentPacks/README.md"
+                "${env:CONTENT}/Packs/AbuseDB/Integrations/AbuseDB"
             ]
         },
         {

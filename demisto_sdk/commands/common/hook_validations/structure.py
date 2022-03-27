@@ -116,7 +116,7 @@ class StructureValidator(BaseValidator):
 
         pretty_formatted_string_of_regexes = json.dumps(SCHEMA_TO_REGEX, indent=4, sort_keys=True)
 
-        self.error_handling('invalid_image_name_or_location', self.file_path, pretty_formatted_string_of_regexes)
+        self.error_handling('structure_doesnt_match_scheme', self.file_path, pretty_formatted_string_of_regexes)
 
         return None
 

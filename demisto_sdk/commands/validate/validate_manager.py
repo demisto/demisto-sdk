@@ -457,7 +457,8 @@ class ValidateManager:
         original_pack_name = get_pack_name(old_file_path)
         new_pack_name = get_pack_name(file_path)
         if original_pack_name != new_pack_name:
-            self.error_handling('changed_pack_name', file_path, original_pack_name, drop_line=True)
+            if self.error_handling('changed_pack_name', file_path, original_pack_name, drop_line=True):
+                return False
         return True
 
     @meta_specific_validation_decorator('invalid_image_name_or_location,file_type_not_supported')
@@ -467,8 +468,12 @@ class ValidateManager:
         """
         if not file_type:
             if str(file_path).endswith('.png'):
-                self.error_handling('invalid_image_name_or_location', file_path, drop_line=True)
-            self.error_handling('file_type_not_supported', file_path, drop_line=True)
+                if self.error_handling('invalid_image_name_or_location', file_path, drop_line=True):
+                    return False
+            else:
+                if self.error_handling('file_type_not_supported', file_path, drop_line=True):
+                    return False 
+
         return True
 
     # flake8: noqa: C901
@@ -1231,7 +1236,7 @@ class ValidateManager:
             file_path = str(file_path)
             if not self.was_file_renamed_but_labeled_as_deleted(file_path, added_files):
                 if not self.is_file_allowed_to_be_deleted(file_path):
-                    if self.error_handling('file_cannot_be_deleted', file_path):
+                    if self.error_handling('file_cannot_be_deleted', file_path, file_path):
                         is_valid = False
 
         return is_valid

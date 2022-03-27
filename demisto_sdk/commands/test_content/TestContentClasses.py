@@ -2122,7 +2122,7 @@ def replace_external_playbook_configuration(client: DefaultApi, external_playboo
 
             # If no value (simple or complex) was found, It is a typo
             if complex is None and simple is None:
-                raise Exception(f'Did not found neither simple nor complex value for field: {input_}. '
+                raise Exception(f'Could not found neither a `simple` nor `complex` value for field: {input_}. '
                                 'A valid configuration should be of the followng format: '
                                 '{<param name>: {"simple", <required value>}}')
 

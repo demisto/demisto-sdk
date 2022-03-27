@@ -146,7 +146,7 @@ jobs:
             command: |
               cd content
               poetry run -m demisto_sdk -v
-              poetry run python -m demisto_sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
+              poetry run demisto-sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
         - run:
             name: Merge Id Set
             when: always
@@ -154,11 +154,11 @@ jobs:
               CI_COMMIT_BRANCH: "master"
             command: |
               cd content
-              poetry run python -m demisto_sdk -v
+              poetry run demisto-sdk -v
               export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
 
               gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
-              poetry run python -m demisto_sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json --fail-duplicates
+              poetry run demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json --fail-duplicates
         - run:
             name: Test validate files and yaml
             when: always
@@ -166,7 +166,7 @@ jobs:
               CI_COMMIT_BRANCH: "master"
             command: |
               cd content
-              poetry run python -m demisto_sdk -v
+              poetry run demisto-sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
 
               ./Tests/scripts/validate.sh
@@ -178,7 +178,6 @@ jobs:
         - setup_remote_docker
         - attach_workspace:
             at: ~/project
-        - <<: *install_demisto_sdk
         - run:
             name: Test lint on python and ps files
             when: always
@@ -203,10 +202,10 @@ jobs:
               echo ""
               echo "lint files changed running lint"
               # python file (CommonServerPython lint is running over python 3 and 2)
-              python3 -m demisto_sdk lint -i ./Packs/Base/Scripts/CommonServerPython
+              poetry run demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPython
               
               # ps file
-              python3 -m demisto_sdk lint -i ./Packs/Base/Scripts/CommonServerPowerShell
+              poetry run demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPowerShell
               
         - store_artifacts:
             path: /tmp/lint_env_installation.log
@@ -223,10 +222,10 @@ jobs:
             when: always
             command: |
               cd content
-              poetry run python -m demisto_sdk -v
+              poetry run demisto-sdk -v
               mkdir ./tmp
 
-              poetry run python -m demisto_sdk create-content-artifacts -a ./tmp
+              poetry run demisto-sdk create-content-artifacts -a ./tmp
         - store_artifacts:
             path: content/tmp
   deploy:

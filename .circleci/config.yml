@@ -145,7 +145,7 @@ jobs:
               CI_COMMIT_BRANCH: "master"
             command: |
               cd content
-              poetry run -m demisto_sdk -v
+              poetry run demisto-sdk -v
               poetry run demisto-sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
         - run:
             name: Merge Id Set

@@ -116,8 +116,7 @@ class StructureValidator(BaseValidator):
 
         pretty_formatted_string_of_regexes = json.dumps(SCHEMA_TO_REGEX, indent=4, sort_keys=True)
 
-        error_message, error_code = Errors.structure_doesnt_match_scheme(pretty_formatted_string_of_regexes)
-        self.handle_error(error_message, error_code, file_path=self.file_path)
+        self.error_handling('invalid_image_name_or_location', self.file_path, pretty_formatted_string_of_regexes)
 
         return None
 
@@ -155,8 +154,7 @@ class StructureValidator(BaseValidator):
             try:
                 return self.parse_error_msg(err)
             except Exception:
-                error_message, error_code = Errors.pykwalify_general_error(err)
-                if self.handle_error(error_message, error_code, self.file_path):
+                if self.error_handling('pykwalify_general_error', self.file_path, err):
                     self.is_valid = False
                     return False
         return True
@@ -195,8 +193,7 @@ class StructureValidator(BaseValidator):
         """
         file_id = self.get_file_id_from_loaded_file_data(self.current_file)
         if file_id and '/' in file_id:
-            error_message, error_code = Errors.file_id_contains_slashes()
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.error_handling('file_id_contains_slashes', self.file_path):
                 self.is_valid = False
                 return False
 
@@ -217,8 +214,7 @@ class StructureValidator(BaseValidator):
         old_version_id = self.get_file_id_from_loaded_file_data(self.old_file)
         new_file_id = self.get_file_id_from_loaded_file_data(self.current_file)
         if not (new_file_id == old_version_id):
-            error_message, error_code = Errors.file_id_changed(old_version_id, new_file_id)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.error_handling('file_id_changed', self.file_path, old_version_id, new_file_id):
                 return True
 
         # False - the id has not changed.
@@ -243,8 +239,7 @@ class StructureValidator(BaseValidator):
             return True
 
         if from_version_old != from_version_new:
-            error_message, error_code = Errors.from_version_modified()
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.error_handling('from_version_modified', self.file_path):
                 self.is_valid = False
                 return False
 
@@ -254,8 +249,7 @@ class StructureValidator(BaseValidator):
     def is_valid_file_extension(self):
         file_extension = os.path.splitext(self.file_path)[1]
         if file_extension not in self.valid_extensions:
-            error_message, error_code = Errors.wrong_file_extension(file_extension, self.valid_extensions)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
+            if self.error_handling('wrong_file_extension', self.file_path, file_extension, self.valid_extensions):
                 return False
 
         return True
@@ -310,12 +304,10 @@ class StructureValidator(BaseValidator):
         """
         is_valid_path = bool(self.scheme_name or self.file_type)
         if not is_valid_path:
-            error_message, error_code = Errors.invalid_file_path()
-            if not self.handle_error(error_message, error_code, file_path=self.file_path):
+            if not self.error_handling('invalid_file_path', self.file_path):
                 is_valid_path = True
         return is_valid_path
 
-    @meta_specific_validation_decorator('parse_error_line')
     def parse_error_msg(self, err) -> bool:
         """A wrapper which handles pykwalify error messages.
         Returns:
@@ -500,8 +492,7 @@ class StructureValidator(BaseValidator):
     def check_for_spaces_in_file_name(self):
         file_name = os.path.basename(self.file_path)
         if file_name.count(' ') > 0:
-            error_message, error_code = Errors.file_name_include_spaces_error(file_name)
-            if self.handle_error(error_message, error_code, self.file_path):
+            if self.error_handling('pykwalify_general_error', self.file_path, file_name):
                 return False
 
         return True

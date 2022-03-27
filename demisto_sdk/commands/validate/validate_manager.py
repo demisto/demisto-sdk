@@ -123,6 +123,7 @@ class ValidateManager:
         self.check_is_unskipped = check_is_unskipped
         self.conf_json_data = {}
         self.run_with_multiprocessing = multiprocessing
+
         if json_file_path:
             self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \
                 os.path.isdir(json_file_path) else json_file_path
@@ -465,8 +466,8 @@ class ValidateManager:
         If a file_type is unsupported, will return `False`.
         """
         if not file_type:
-            # if str(file_path).endswith('.png'):
-            #     error_message, error_code = Errors.invalid_image_name_or_location()
+            if str(file_path).endswith('.png'):
+                self.error_handling('invalid_image_name_or_location', file_path, drop_line=True)
             self.error_handling('file_type_not_supported', file_path, drop_line=True)
         return True
 
@@ -1230,8 +1231,7 @@ class ValidateManager:
             file_path = str(file_path)
             if not self.was_file_renamed_but_labeled_as_deleted(file_path, added_files):
                 if not self.is_file_allowed_to_be_deleted(file_path):
-                    error_message, error_code = Errors.file_cannot_be_deleted(file_path)
-                    if self.handle_error(error_message, error_code, file_path):
+                    if self.error_handling('file_cannot_be_deleted', file_path):
                         is_valid = False
 
         return is_valid
@@ -1299,8 +1299,7 @@ class ValidateManager:
                 if pack_name not in added_rn:
                     added_rn.add(pack_name)
                 else:
-                    error_message, error_code = Errors.multiple_release_notes_files()
-                    if self.handle_error(error_message, error_code, file_path=pack_name):
+                    if self.error_handling('multiple_release_notes_files', pack_name):
                         return False
 
         click.secho("\nNo duplicated release notes found.\n", fg="bright_green")

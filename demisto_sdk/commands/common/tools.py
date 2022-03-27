@@ -2547,7 +2547,14 @@ def extract_command_names_from_yml(yml_data: dict):
     return commands_ls
 
 
-def is_integration_readme(file_path):
+def is_integration_readme(file_path: str):
+    """
+    Ensure that the given path is an integration readme path.
+    Args:
+        file_path: the file path as a string.
+
+    Returns: True if given path is an integration readme path, otherwise return False.
+    """
     matching_regex = re.findall(PACKS_INTEGRATION_README_REGEX, file_path)
     if matching_regex:
         return True

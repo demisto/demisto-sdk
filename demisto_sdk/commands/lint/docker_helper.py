@@ -23,7 +23,10 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ''):
     global DOCKER_CLIENT
     if DOCKER_CLIENT is None:
         try:
-            logger.info(f'{log_prompt} - init and login the docker client')
+            if log_prompt:
+                logger.info(f'{log_prompt} - init and login the docker client')
+            else:
+                logger.debug('init and login the docker client')
             DOCKER_CLIENT = docker.from_env(timeout=timeout)
             docker_user = os.getenv('DOCKERHUB_USER')
             docker_pass = os.getenv('DOCKERHUB_PASSWORD')
@@ -131,7 +134,7 @@ class DockerBase:
         container.start()
         if container.wait(condition="exited").get("StatusCode") != 0:
             raise docker.errors.BuildError(
-                reason=f"Installation script failed to run on container '{container.short_id}'.", build_log=container.logs())
+                reason=f"Installation script failed to run on container '{container.id}'.", build_log=container.logs())
         repository, tag = image.split(':')
         container.commit(repository=repository, tag=tag, changes=self.changes[container_type])
         return image
@@ -140,10 +143,15 @@ class DockerBase:
 class MountableDocker(DockerBase):
     def __init__(self):
         super(MountableDocker, self).__init__()
-        self._files_to_push_on_installation.extend([
-            ('/etc/pip.conf', copy_file('/etc/pip.conf', self.tmp_dir / 'pip.conf')),
-            ('/etc/ssl/certs/ca-certificates.crt', copy_file('/etc/ssl/certs/ca-certificates.crt', self.tmp_dir / 'ca-certificates.crt')),
-        ])
+        files = [
+            Path('/etc/ssl/certs/ca-certificates.crt'),
+            Path('/etc/pip.conf'),
+        ]
+        for file in files:
+            if file.exists():
+                self._files_to_push_on_installation.append(
+                    (str(file), copy_file(file, self.tmp_dir / file.name))
+                )
 
     @staticmethod
     def get_mounts(files: List[Tuple[str, PATH_OR_STR]]) -> List[Mount]:

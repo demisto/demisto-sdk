@@ -359,7 +359,7 @@ class TestPlaybook:
             - The created incident or None
         """
         # Preparing the incident request
-        incident_name = f'inc-{self.configuration.playbook_id}'
+        incident_name = f'inc-{self.configuration.playbook_id}--{uuid.uuid4()}'
         create_incident_request = demisto_client.demisto_api.CreateIncidentRequest()
         create_incident_request.create_investigation = True
         create_incident_request.playbook_id = self.configuration.playbook_id
@@ -372,7 +372,8 @@ class TestPlaybook:
                 f'Failed to create incident with name {incident_name} for playbook {self}')
         try:
             # TODO: response will have no id in xsiam, check if status code check is like this
-            if IS_XSIAM and response.status != 202:
+            if IS_XSIAM:  # and response.status != 202:
+                self.build_context.logging_module.info(f'Can I get the status?? {response.status=}')
                 inc_id = 'incCreateErr'
             else:
                 inc_id = response.id

@@ -496,15 +496,13 @@ def test_verify_yml_commands_match_readme(yml_data, readme_text, excepted_result
     - Case 1: integration with one command mentioned in both the yml and the readme files.
     - Case 2: integration with one command that should be excluded from the readme file and mentioned in the yml file.
     - Case 3: integration with one command mentioned only in the yml file.
-    - Case 4: integration with one command mentioned only in the readme file.
     When
-    - Running test_verify_yml_commands_match_readme on the integration.
+    - Running verify_yml_commands_match_readme on the integration.
     Then
     - Ensure validation correctly identifies missed commands from yml or readme files.
     - Case 1: Should return True.
     - Case 2: Should return True.
     - Case 3: Should return False.
-    - Case 4: Should return False.
     """
     integration.yml.write_dict(yml_data)
     integration.readme.write(readme_text)

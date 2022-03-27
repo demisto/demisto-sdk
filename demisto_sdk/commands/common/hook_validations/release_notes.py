@@ -17,7 +17,7 @@ from demisto_sdk.commands.common.tools import (extract_docker_image_from_text,
                                                get_yaml)
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator, meta_specific_validation_decorator
+    BaseValidator
 
 class ReleaseNotesValidator(BaseValidator):
     """Release notes validator is designed to ensure the existence and correctness of the release notes in content repo.
@@ -40,7 +40,6 @@ class ReleaseNotesValidator(BaseValidator):
         self.release_notes_path = get_release_notes_file_path(self.release_notes_file_path)
         self.latest_release_notes = get_latest_release_notes_text(self.release_notes_path)
 
-    @meta_specific_validation_decorator('missing_release_notes_entry')
     def are_release_notes_complete(self):
         is_valid = True
         modified_added_files = itertools.chain.from_iterable((self.added_files or [], self.modified_files or []))
@@ -81,7 +80,6 @@ class ReleaseNotesValidator(BaseValidator):
                 return False
         return True
 
-    @meta_specific_validation_decorator('release_notes_docker_image_not_match_yaml')
     def is_docker_image_same_as_yml(self) -> bool:
         """
         Iterates on all modified yaml files,

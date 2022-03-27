@@ -570,3 +570,4 @@ class ReadMeValidator(BaseValidator):
     @staticmethod
     def _get_error_lists():
         return FOUND_FILES_AND_ERRORS, FOUND_FILES_AND_IGNORED_ERRORS
+        

@@ -1984,6 +1984,8 @@ class ServerContext:
         self.tunnel_port = tunnel_port
         if IS_XSIAM:
             self.server_url = server_private_ip
+            # we use client without demisto username
+            os.environ.pop('DEMISTO_USERNAME', None)
         else:
             self.server_url = f'https://localhost:{tunnel_port}' if tunnel_port else f'https://{self.server_ip}'
         self.client: Optional[DefaultApi] = None

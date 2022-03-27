@@ -438,7 +438,6 @@ class StructureValidator(BaseValidator):
             error_message, error_code = Errors.pykwalify_field_undefined(str(error_key))
             return error_message, error_code, True
 
-    @meta_specific_validation_decorator('pykwalify_incorrect_enum')
     def parse_enum_error_line(self, error_path: List[str], error_msg: str) -> Tuple[str, str, bool]:
         """Parse a wrong enum value pykwalify error.
 

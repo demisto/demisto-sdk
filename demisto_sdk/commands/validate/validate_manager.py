@@ -472,7 +472,7 @@ class ValidateManager:
                     return False
             else:
                 if self.error_handling('file_type_not_supported', file_path, drop_line=True):
-                    return False 
+                    return False
 
         return True
 

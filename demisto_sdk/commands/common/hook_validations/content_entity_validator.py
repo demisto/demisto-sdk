@@ -14,8 +14,8 @@ from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import (
-    BaseValidator, meta_specific_validation_decorator)
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
@@ -44,7 +44,6 @@ class ContentEntityValidator(BaseValidator):
         self.prev_ver = structure_validator.prev_ver
         self.branch_name = structure_validator.branch_name
         self.oldest_supported_version = oldest_supported_version or OLDEST_SUPPORTED_VERSION
-        self.specific_validations = structure_validator.specific_validations
 
     def is_valid_file(self, validate_rn=True):
         tests = [
@@ -339,7 +338,6 @@ class ContentEntityValidator(BaseValidator):
 
         return True
 
-    @meta_specific_validation_decorator('missing_readme_file')
     def validate_readme_exists(self, validate_all: bool = False):
         """
             Validates if there is a readme file in the same folder as the caller file.
@@ -372,7 +370,9 @@ class ContentEntityValidator(BaseValidator):
         if os.path.isfile(readme_path):
             return True
 
-        if self.error_handling('missing_readme_file', self.file_path, file_type, suggested_fix=Errors.suggest_fix(self.file_path, cmd="generate-docs")):
+        error_message, error_code = Errors.missing_readme_file(file_type)
+        if self.handle_error(error_message, error_code, file_path=self.file_path,
+                             suggested_fix=Errors.suggest_fix(self.file_path, cmd="generate-docs")):
             return False
 
         return True

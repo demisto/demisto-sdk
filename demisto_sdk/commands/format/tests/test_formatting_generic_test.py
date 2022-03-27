@@ -8,22 +8,23 @@ from demisto_sdk.commands.format.update_generic import BaseUpdate
 
 class TestFormattingFromVersionKey:
 
-    def init_BaseUpdate(self, base_update: BaseUpdate, version_to_set='', oldfile_version='', assume_yes=True, existing_fromVersion=''):
+    def init_BaseUpdate(self, base_update: BaseUpdate, version_to_set='', oldfile_version='', assume_yes=True, current_fromVersion=''):
         base_update.verbose = False
         base_update.data = {}
         base_update.from_version_key = 'fromversion'
-        if existing_fromVersion:
-            base_update.data[base_update.from_version_key] = existing_fromVersion
+        if current_fromVersion:
+            base_update.data[base_update.from_version_key] = current_fromVersion
         base_update.from_version = version_to_set
         base_update.old_file = {}
         base_update.assume_yes = assume_yes
         if oldfile_version:
-            base_update.old_file = {base_update.from_version_key: oldfile_version}
+            base_update.old_file[base_update.from_version_key] = oldfile_version
 
     def test_update_fromVersion_from_flag(self, mocker):
         """
         Given
-            - A content item and a version to set.
+            - A content item without a fromversion key in its current state.
+            - The fromversion key to set is specified in the format arguments.
         When
             - Calling set_fromVersion method.
         Then
@@ -39,11 +40,11 @@ class TestFormattingFromVersionKey:
     def test_update_fromVersion_from_oldFile(self, mocker):
         """
         Given
-            - A content item with oldfile version.
+            - An existing content item that already contains a fromversion key of 6.0.0.
         When
             - Calling set_fromVersion method.
         Then
-            - Ensure that fromVersion key in the file data was set to the specific test version.
+            - Ensure that the fromVersion key in the file remains 6.0.0.
         """
 
         mocker.patch.object(BaseUpdate, '__init__', return_value=None)
@@ -55,7 +56,8 @@ class TestFormattingFromVersionKey:
     def test_update_fromVersion_from_data_with_oldfile(self, mocker):
         """
         Given
-            - A content item with data & oldfile fromVersion.
+            - A content item with data
+            - An old file fromVersion.
         When
             - Calling set_fromVersion method.
         Then
@@ -65,25 +67,9 @@ class TestFormattingFromVersionKey:
         mocker.patch.object(BaseUpdate, '__init__', return_value=None)
         mocker.patch.object(BaseUpdate, 'is_new_supported_integration', return_value=False)
         base_update = BaseUpdate()
-        self.init_BaseUpdate(base_update, oldfile_version=GENERAL_DEFAULT_FROMVERSION, existing_fromVersion=VERSION_6_0_0)
+        self.init_BaseUpdate(base_update, oldfile_version='6.1.0', current_fromVersion=VERSION_6_0_0)
         base_update.set_fromVersion()
         assert base_update.data.get(base_update.from_version_key) == VERSION_6_0_0
-
-    def test_update_fromVersion_from_data_with_worng_fromVersion(self, mocker):
-        """
-        Given
-            - A new special content item with existing fromVersion key and his lower than the default for this type.
-        When
-            - Calling set_fromVersion method.
-        Then
-            - Ensure that fromVersion key updated to the content type default fromVersion.
-        """
-        mocker.patch.object(BaseUpdate, '__init__', return_value=None)
-        mocker.patch.object(BaseUpdate, 'is_new_supported_integration', return_value=False)
-        base_update = BaseUpdate()
-        self.init_BaseUpdate(base_update, existing_fromVersion='5.5.0')
-        base_update.set_fromVersion(FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB))
-        assert base_update.data.get(base_update.from_version_key) == FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)
 
     special_content_items = [FileType.JOB,
                              FileType.LISTS,
@@ -101,6 +87,8 @@ class TestFormattingFromVersionKey:
             - Ensure that fromVersion key in the file data was set to the specific default content item version.
         """
         mocker.patch.object(BaseUpdate, '__init__', return_value=None)
+        mocker.patch('demisto_sdk.commands.common.constants.GENERAL_DEFAULT_FROMVERSION', return_value='6.2.0')
+
         base_update = BaseUpdate()
         self.init_BaseUpdate(base_update)
         base_update.set_fromVersion(FILETYPE_TO_DEFAULT_FROMVERSION.get(content_type))

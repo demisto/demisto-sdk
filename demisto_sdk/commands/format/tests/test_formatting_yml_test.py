@@ -11,7 +11,7 @@ from mock import Mock, patch
 
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS,
-    GENERAL_DEFAULT_FROMVERSION, INCIDENT_FETCH_REQUIRED_PARAMS, INTEGRATION,
+    GENERAL_DEFAULT_FROMVERSION, INCIDENT_FETCH_REQUIRED_PARAMS,
     MarketplaceVersions)
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.docker import \
@@ -768,7 +768,7 @@ class TestFormatting:
             'builtins.input',
             lambda _: 'N'
         )
-
+        mocker.patch.object(BaseUpdate, 'set_fromVersion', return_value=None)
         assert format_obj.run_format() == 0
         with open(dest) as f:
             data = yaml.load(f)
@@ -1055,22 +1055,6 @@ class TestFormatting:
             bs = BaseUpdate(input=path, assume_yes=True)
             bs.set_fromVersion()
             assert bs.data['fromversion'] == GENERAL_DEFAULT_FROMVERSION, path
-
-    def test_set_fromversion_not_changed_new_contributor_pack(self, pack):
-        """
-        Given
-            - An integration from new contributed pack with fromversion key at yml,
-        When
-            - Run format command
-        Then
-            - Ensure that the integration fromversion is not set to 6.0.0
-            if it is new contributed pack, this is integration, and its version is 5.5.0 do not change it
-        """
-        pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
-        integration = pack.create_integration(yml={'fromversion': '5.5.0'})
-        bs = BaseUpdate(input=integration.yml.path)
-        bs.set_fromVersion(file_type=INTEGRATION)
-        assert bs.data['fromversion'] == '5.5.0', integration.yml.path
 
     @pytest.mark.parametrize('user_input, description_result',
                              [('', 'Deprecated. No available replacement.'),

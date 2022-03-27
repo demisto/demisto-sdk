@@ -751,6 +751,26 @@ def server_version_compare(v1, v2):
     return -1
 
 
+def get_max_version(versions):
+    """get max version between Demisto versions.
+
+    Args:
+        versions (list): list of strings representing Demisto version.
+
+    Returns:
+        int.
+        max version.
+    """
+
+    if len(versions) == 0:
+        raise BaseException("Error: empty versions list")
+    max_version = versions[0]
+    for version in versions[1:]:
+        if server_version_compare(version, max_version) == 1:
+            max_version = version
+    return max_version
+
+
 def run_threads_list(threads_list):
     """
     Start a list of threads and wait for completion (join)

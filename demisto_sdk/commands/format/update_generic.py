@@ -1,23 +1,22 @@
 import os
 import re
 from copy import deepcopy
-from distutils.version import LooseVersion
 from typing import Any, Dict, Optional, Set, Union
 
 import click
 import dictdiffer
 
 from demisto_sdk.commands.common.constants import (GENERAL_DEFAULT_FROMVERSION,
-                                                   INTEGRATION, VERSION_5_5_0,
-                                                   FileType)
+                                                   INTEGRATION, VERSION_5_5_0)
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
+                                               get_max_version,
                                                get_pack_metadata,
                                                get_remote_file,
-                                               is_file_from_content_repo,
-                                               server_version_compare)
+                                               is_file_from_content_repo)
 from demisto_sdk.commands.format.format_constants import (DEFAULT_VERSION,
                                                           ERROR_RETURN_CODE,
+                                                          OLD_FILE_TYPES,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
@@ -226,9 +225,6 @@ class BaseUpdate:
         return (metadata.get('currentVersion', '') == '1.0.0') and (
             metadata.get('support', '') != 'xsoar') and file_type == INTEGRATION
 
-    def is_version_lower(self, version_to_check, version):
-        return LooseVersion(version_to_check) < LooseVersion(version)
-
     def get_answer(self, promote):
         click.secho(promote,
                     fg='red')
@@ -244,20 +240,30 @@ class BaseUpdate:
             click.secho('Skipping update of fromVersion', fg='yellow')
             return False
 
-    def set_default_from_version(self, default_from_version):
+    def set_default_from_version(self, default_from_version: str, current_fromversion_value: Optional[str] = None, file_type: Optional[str] = None):
         # Ask the user if default_from_version is needed.
         if self.assume_yes or self.ask_user():
+            # If it is old content type, the supported version is 5.5.0.
+            if file_type and file_type in OLD_FILE_TYPES:
+                self.data[self.from_version_key] = VERSION_5_5_0
+                return
             # If the content type has different default from_version from the general type.
-            if default_from_version and server_version_compare(default_from_version, GENERAL_DEFAULT_FROMVERSION) > 0:
-                return default_from_version
+            elif default_from_version:
+                versions = [default_from_version, GENERAL_DEFAULT_FROMVERSION]
+                if current_fromversion_value:
+                    versions.append(current_fromversion_value)
+                self.data[self.from_version_key] = get_max_version(versions)
+                # if (current_fromversion_value and server_version_compare(current_fromversion_value,
+                #                                                          default_from_version) < 0 < server_version_compare(
+                #     default_from_version,
+                #     GENERAL_DEFAULT_FROMVERSION)) or server_version_compare(default_from_version,
+                #                                                             GENERAL_DEFAULT_FROMVERSION) > 0:
+                #     self.data[self.from_version_key] = default_from_version
+                #     return
+                # If the current from_version is higher, keep it.
+            # Set the general default from_version.
             else:
-                # Set the general default from_version.
-                return GENERAL_DEFAULT_FROMVERSION
-        return None
-
-    def old_content_type(self, file_type: Optional[str] = None):
-        old_types = [FileType.LAYOUT.value, FileType.OLD_CLASSIFIER.value]
-        return file_type in old_types
+                self.data[self.from_version_key] = GENERAL_DEFAULT_FROMVERSION
 
     def set_fromVersion(self, default_from_version='', file_type: Optional[str] = None):
         """Sets fromVersion key in file:
@@ -265,32 +271,21 @@ class BaseUpdate:
             default_from_version: default fromVersion specific to the content type.
             file_type: what is the file type: for now only integration type passed
         """
-        version_to_set = None
         current_fromversion_value = self.data.get(self.from_version_key)
         if self.verbose:
             click.echo('Setting fromVersion field')
 
         # If user asked specific fromVersion to set.
         if self.from_version:
-            version_to_set = self.from_version
-        # If there is already a fromVersion in file and its 5.5.0 and it is new supported integration (issue #35130).
-        elif current_fromversion_value and current_fromversion_value == VERSION_5_5_0 and self.is_new_supported_integration(
-                file_type):
-            version_to_set = current_fromversion_value
-        # If there is fromVersion in the old_file(repo).
-        elif self.old_file.get(self.from_version_key) and not current_fromversion_value:
-            version_to_set = self.old_file.get(self.from_version_key)
-        # If there isn't current fromVersion, ask the user to generate it.
-        elif not current_fromversion_value:
-            # If it is old content type the supported version is 5.5.0.
-            version_to_set = VERSION_5_5_0 if self.old_content_type(file_type) else self.set_default_from_version(
-                default_from_version)
-        # If the content type default fromVersion is higher than the current fromVersion.
-        elif default_from_version and server_version_compare(current_fromversion_value, default_from_version) < 0:
-            if self.assume_yes or self.ask_user():
-                version_to_set = default_from_version
-        if version_to_set:
-            self.data[self.from_version_key] = version_to_set
+            self.data[self.from_version_key] = self.from_version
+        # If there is fromVersion key in the old file(repo).
+        elif self.old_file.get(self.from_version_key):
+            if not current_fromversion_value:
+                self.data[self.from_version_key] = self.old_file.get(self.from_version_key)
+        # If its new file, ask the user to generate it.
+        else:
+            # Its new file.
+            self.set_default_from_version(default_from_version, current_fromversion_value, file_type)
 
     def arguments_to_remove(self) -> Set[str]:
         """ Finds diff between keys in file and schema of file type

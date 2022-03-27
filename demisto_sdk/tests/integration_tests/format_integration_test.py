@@ -120,7 +120,7 @@ def test_integration_format_yml_with_no_test_positive(mocker, tmp_path: PosixPat
 
 
 @pytest.mark.parametrize('source_yml', BASIC_YML_CONTENTS)
-def test_integration_format_yml_with_no_test_negative(tmp_path: PosixPath, source_yml: str):
+def test_integration_format_yml_with_no_test_negative(mocker, tmp_path: PosixPath, source_yml: str):
     """
         Given
         - A yml file (integration, playbook or script) with no 'tests' configured
@@ -137,6 +137,7 @@ def test_integration_format_yml_with_no_test_negative(tmp_path: PosixPath, sourc
     source_file, output_file = tmp_path / 'source.yml', tmp_path / 'output.yml'
     source_path, output_path = str(source_file), str(output_file)
     source_file.write_text(source_yml)
+    mocker.patch.object(BaseUpdate, 'set_default_from_version', return_value=None)
 
     runner = CliRunner()
     with ChangeCWD(tmp_path):
@@ -215,7 +216,8 @@ def test_integration_format_configuring_conf_json_no_interactive_positive(tmp_pa
 
 
 @pytest.mark.parametrize('source_path,destination_path,formatter,yml_title,file_type', YML_FILES_WITH_TEST_PLAYBOOKS)
-def test_integration_format_configuring_conf_json_positive(tmp_path: PosixPath,
+def test_integration_format_configuring_conf_json_positive(mocker,
+                                                           tmp_path: PosixPath,
                                                            source_path: str,
                                                            destination_path: str,
                                                            formatter: BaseUpdateYML,
@@ -243,6 +245,7 @@ def test_integration_format_configuring_conf_json_positive(tmp_path: PosixPath,
     with open(conf_json_path, 'w') as file:
         json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
     BaseUpdateYML.CONF_PATH = conf_json_path
+    mocker.patch.object(BaseUpdate, 'set_default_from_version', return_value=None)
 
     test_playbooks = ['test1', 'test2']
     saved_file_path = str(tmp_path / os.path.basename(destination_path))
@@ -321,7 +324,7 @@ def _verify_conf_json_modified(test_playbooks: List, yml_title: str, conf_json_p
         raise
 
 
-def test_integration_format_remove_playbook_sourceplaybookid(tmp_path):
+def test_integration_format_remove_playbook_sourceplaybookid(mocker, tmp_path):
     """
     Given
     - Playbook with field  `sourceplaybookid`.
@@ -338,6 +341,8 @@ def test_integration_format_remove_playbook_sourceplaybookid(tmp_path):
     source_playbook_path = SOURCE_FORMAT_PLAYBOOK_COPY
     playbook_path = str(tmp_path / 'format_new_playbook_copy.yml')
     runner = CliRunner()
+    mocker.patch.object(BaseUpdate, 'set_default_from_version', return_value=None)
+
     with ChangeCWD(tmp_path):
         result = runner.invoke(main, [FORMAT_CMD, '-i', source_playbook_path, '-o', playbook_path, '-at'], input='N')
     prompt = f'The file {source_playbook_path} has no test playbooks configured. Do you want to configure it with "No tests"'
@@ -512,7 +517,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
     success_reg = re.compile("Format Status .+?- Success\n")
     with ChangeCWD(playbook.path):
         runner = CliRunner(mix_stderr=False)
-        result_format = runner.invoke(main, [FORMAT_CMD, '-i', 'playbook.yml', '-v'], catch_exceptions=False)
+        result_format = runner.invoke(main, [FORMAT_CMD, '-i', 'playbook.yml', '-v', '-y'], catch_exceptions=False)
 
         with ChangeCWD(repo.path):
             result_validate = runner.invoke(main, ['validate', '-i', 'Packs/PackName/Playbooks/playbook.yml',
@@ -869,6 +874,7 @@ def test_format_generic_field_missing_from_version_key(mocker, repo):
         - Ensure success message is printed.
     """
     mocker.patch.object(update_generic, 'is_file_from_content_repo', return_value=(False, ''))
+    mocker.patch('demisto_sdk.commands.common.constants.GENERAL_DEFAULT_FROMVERSION', return_value='6.2.0')
     pack = repo.create_pack('PackName')
     generic_field = GENERIC_FIELD.copy()
     if generic_field['fromVersion']:
@@ -1086,7 +1092,7 @@ def test_format_generic_definition_missing_from_version_key(mocker, repo):
 
 class TestFormatWithoutAddTestsFlag:
 
-    def test_format_integrations_folder_with_add_tests(self, pack):
+    def test_format_integrations_folder_with_add_tests(self, mocker, pack):
         """
             Given
             - An integration folder.
@@ -1103,6 +1109,8 @@ class TestFormatWithoutAddTestsFlag:
         integration.create_default_integration()
         integration.yml.update({'fromversion': '5.5.0'})
         integration_path = integration.yml.path
+        mocker.patch.object(BaseUpdate, 'set_default_from_version', return_value=None)
+
         result = runner.invoke(main, [FORMAT_CMD, '-i', integration_path, '-at'])
         prompt = f'The file {integration_path} has no test playbooks configured.' \
                  f' Do you want to configure it with "No tests"?'
@@ -1137,7 +1145,7 @@ class TestFormatWithoutAddTestsFlag:
         assert prompt not in result.output
         assert message in result.output
 
-    def test_format_script_without_test_flag(self, pack):
+    def test_format_script_without_test_flag(self, mocker, pack):
         """
             Given
             - An script folder.
@@ -1156,6 +1164,7 @@ class TestFormatWithoutAddTestsFlag:
         script.create_default_script()
         script.yml.update({'fromversion': '5.5.0'})
         script_path = script.yml.path
+        mocker.patch.object(BaseUpdate, 'set_default_from_version', return_value=None)
 
         result = runner.invoke(main, [FORMAT_CMD, '-i', script_path])
         prompt = f'The file {script_path} has no test playbooks configured.' \

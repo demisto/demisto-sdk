@@ -253,15 +253,6 @@ class BaseUpdate:
                 if current_fromversion_value:
                     versions.append(current_fromversion_value)
                 self.data[self.from_version_key] = get_max_version(versions)
-                # if (current_fromversion_value and server_version_compare(current_fromversion_value,
-                #                                                          default_from_version) < 0 < server_version_compare(
-                #     default_from_version,
-                #     GENERAL_DEFAULT_FROMVERSION)) or server_version_compare(default_from_version,
-                #                                                             GENERAL_DEFAULT_FROMVERSION) > 0:
-                #     self.data[self.from_version_key] = default_from_version
-                #     return
-                # If the current from_version is higher, keep it.
-            # Set the general default from_version.
             else:
                 self.data[self.from_version_key] = GENERAL_DEFAULT_FROMVERSION
 

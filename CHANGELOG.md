@@ -7,6 +7,8 @@
 * Fixed an issue in the **validate** command did not work properly when using the *-g* flag.
 * Enhanced the dependency message shown when running **lint**.
 * Fixed an issue where *dockerimage* changes wasn't recognized for Scripts .yml files.
+* Fixed an issue where **update-release-notes** didn't update the currentVersion in pack_metadata
+* Improved the logging in **test-content** for helping catch typos in external playbook configuration.
 
 # 1.6.2
 * Added dependency validation support for core marketplacev2 packs.

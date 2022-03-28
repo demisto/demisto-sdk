@@ -169,7 +169,7 @@ jobs:
               poetry run demisto-sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
 
-              ./Tests/scripts/validate.sh
+              poetry run ./Tests/scripts/validate.sh
   test-lint:
       docker:
         - image: devdemisto/content-build:3.0.0.27653

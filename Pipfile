@@ -56,6 +56,7 @@ dictdiffer = "*"
 setuptools = "*"
 markupsafe = "==2.0.1"
 imagesize = "*"
+pre-commit = "*"
 
 [dev-packages]
 mitmproxy = "==5.1.0"

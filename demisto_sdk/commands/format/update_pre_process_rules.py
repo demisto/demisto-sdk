@@ -39,7 +39,6 @@ class PreProcessRulesFormat(BaseUpdateJSON):
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            print(''.join(traceback.format_exception(etype=type(err), value=err, tb=err.__traceback__)))
             if self.verbose:
                 click.secho(f'\nFailed to update file {self.source_file}. Error: {err}', fg='red')
             return ERROR_RETURN_CODE

@@ -6,7 +6,10 @@
 * Added the reattach mechanism to the **upload** command, If you set the --input-config-file flag, any detached item in your XSOAR instance that isn't currently in the repo's SystemPacks folder will be re-attached.
 * Fixed an issue in the **validate** command did not work properly when using the *-g* flag.
 * Enhanced the dependency message shown when running **lint**.
+* Fixed an issue where **update-release-notes** didn't update the currentVersion in pack_metadata
+* Improved the logging in **test-content** for helping catch typos in external playbook configuration.
 * Added support for Parsing/Modeling Rule content item in the **unify** command.
+
 
 # 1.6.2
 * Added dependency validation support for core marketplacev2 packs.

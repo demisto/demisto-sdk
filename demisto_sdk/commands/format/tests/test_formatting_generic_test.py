@@ -100,7 +100,7 @@ class TestFormattingFromVersionKey:
         When
             - Calling set_fromVersion method.
         Then
-            - Ensure that fromVersion key in the file data was set to the GENERAL_DEFAULT_FROMVERSION
+            - Ensure that fromVersion key in the file data was set to the GENERAL_DEFAULT_FROMVERSION.
              item version if the user answers Y.
         """
         mocker.patch.object(BaseUpdate, '__init__', return_value=None)

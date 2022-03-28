@@ -1,8 +1,8 @@
 ## Unify
 
-This command has two main functions:
+This command has three main functions:
 
-1. #### YML Unifier:
+1. #### Integration/Script Unifier:
 
     Unifies integration/script code, image, description and yml files to a single XSOAR yml file.
 
@@ -52,3 +52,22 @@ This command has two main functions:
     `demisto-sdk unify -i Packs/RBVM/GenericModules/genericmodule-RBVM.json -o Packs/RBVM/`
     This will take the GenericModule input file "genericmodule-RBVM.json", unify it with its dashboards and save
     the unified file in the given output directory ("Packs/RBVM/").
+
+3. #### Parsing/Modeling Rule Unifier:
+
+    Unifies Parsing/Modeling rule YML, XIF and samples JSON files to a single YML file.
+
+    **Use Cases**:
+    This command is used in order to create a unified YML file, able to be uploaded to Cortex XSIAM as part of a Content Pack.
+
+    **Arguments**:
+    * **-i, --input**
+      The path to the directory of a parsing/modeling rule in which the files reside.
+    * **-o, --output**
+      The path to the directory into which to write the unified YML file.
+    * **--force**
+      Forcefully overwrites the preexisting YML if one exists.
+
+    **Examples**:
+    `demisto-sdk unify -i ParsingRule/MyParsingRule -o ParsingRules`
+    This will grab the parsing rules components (YAML, XIF and JSON) from the `ParsingRule/MyParsingRule` directory and unify them to a single YAML file that will be created in the "ParsingRules" directory.

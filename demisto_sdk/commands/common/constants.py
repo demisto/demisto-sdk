@@ -34,6 +34,9 @@ DOCUMENTATION_DIR = 'Documentation'
 JOBS_DIR = 'Jobs'
 PRE_PROCESS_RULES_DIR = 'PreProcessRules'
 LISTS_DIR = 'Lists'
+PARSING_RULES_DIR = 'ParsingRules'
+MODELING_RULES_DIR = 'ModelingRules'
+SAMPLES_DIR = 'Samples'
 
 SCRIPT = 'script'
 AUTOMATION = 'automation'
@@ -116,6 +119,8 @@ class FileType(Enum):
     PRE_PROCESS_RULES = 'pre-process-rule'
     LISTS = 'list'
     JOB = 'job'
+    MODELING_RULE = 'modelingrule'
+    PARSING_RULE = 'parsingrule'
     BUILD_CONFIG_FILE = 'build-config-file'
 
 
@@ -561,6 +566,8 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
 
 INTEGRATION_PREFIX = 'integration'
 SCRIPT_PREFIX = 'script'
+PARSING_RULE_PREFIX = 'parsingrule'
+MODELING_RULE_PREFIX = 'modelingrule'
 
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
@@ -1004,7 +1011,9 @@ DEF_DOCKER_PWSH = 'demisto/powershell:6.2.3.5563'
 
 DIR_TO_PREFIX = {
     'Integrations': INTEGRATION_PREFIX,
-    'Scripts': SCRIPT_PREFIX
+    'Scripts': SCRIPT_PREFIX,
+    'ModelingRules': MODELING_RULE_PREFIX,
+    'ParsingRules': PARSING_RULE_PREFIX,
 }
 
 ENTITY_NAME_SEPARATORS = [' ', '_', '-']

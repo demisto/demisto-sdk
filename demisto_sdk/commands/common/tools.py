@@ -1194,6 +1194,11 @@ def find_type(
 
             return FileType.PLAYBOOK
 
+        if 'rules' in _dict:
+            if 'samples' in _dict:
+                return FileType.PARSING_RULE
+            return FileType.MODELING_RULE
+
     if file_type == 'json':
         if 'widgetType' in _dict:
             return FileType.WIDGET

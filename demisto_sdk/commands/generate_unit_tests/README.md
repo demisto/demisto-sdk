@@ -2,8 +2,9 @@
 Generate unit tests for an integration.
 
 **Use-Cases**
-This command is used to generate unit tests automatically from an  integration python code.
+This command is used to generate unit tests automatically from an integration python code.
 Also supports generating unit tests for specific commands.
+**Important**: this command is not intended to fully replace the manual work on unit tests but to ease the initial effort in writing them.
 
 **Arguments**:
 * *-i, --input_path*
@@ -19,41 +20,41 @@ Also supports generating unit tests for specific commands.
 * *-ql, --log-path*
   Path to store all levels of logs.
 * *--insecure*
-  Skip certificate validation.
-* *-e, --examples* One of the following:
-  - Path for a file containing examples. Each command should be in a separate line.
-  - Comma separated list of examples, wrapped by quotes.  
-  If the file or list contains a command with more than one example, all of them will be used.
-* *-d, --use_demisto* If passed, commands will be ran using Demisto instance, and the outputs will be used to
-  create outputs mocks, if not passed, you will have to create the mocks manually.
+  Skip certificate validation when authorizing XSOAR.
+* *-e, --examples*
+  One of the following:
+  - A path for a file containing Integration command examples. Each command example should be in a separate line.
+  - A comma-separated list of examples, wrapped by quotes.
+  If the file or the list contains a command with more than one example, all of them will be used as different test cases.
+* *-d, --use_demisto*
+  If passed, the XSOAR instance configured in the `DEMISTO_BASE_URL` and `DEMISTO_API_KEY` environment variables will run the Integration commands and generate outputs which will be used as mock outputs. **If this flag is not passed, you will need to create the mocks manually before using the command.**
 * *-a, --append* Append generated test file to the existing (only if already exists).
 
 
 **Notes**
 * The output of the command will be writen in an output file in the given directory.
 
-**Code Conventions**
-* Command name must contain *"_command"* prefix.
-* Command must get *args* as input (dictionary names _args_ contains all arguments required).
-* Each args access must be made using *get* method.
-* Command must get *client* as input and must be typed.
-* Command must return CommandResults object.
-* Each request made during the flow of the command must be done using _http_request_ method and include _method_ keyword, and _url_suffix_ keyword if needed.
-* Client class must extend *BaseClass*
+**Required Code Conventions**
+* Every command method name must have the suffix `_command`.
+* Every command method must have the `args` dictionary parameter.
+* Each argument access in `args` must be made using the `get()` method.
+* Every command method must have the `client` parameter which must be typed (`client: Client`, where `Client` extends `BaseClient`).
+* Each HTTP request made during the flow of the command must be done using the `_http_request()` method.
+* Every command must return a `CommandResults` object.
 
 
 **Test Data Files**   
 For the unit tests to work as planned test_data folder must include the following:   
 
-***outputs folder*** - contains a json file for each request made with mock response (the name of the file should be as the name of the client function).
-***outputs command files*** - if use_demisto option was not selected, outputs files must be provided for each command, with the name of the command, see at the examples files below the desired formation for the file.
+* ***outputs*** folder - contains a JSON file for each HTTP request with a mock response (the file name should be the name of the client function making the HTTP call).
+* ***outputs command files*** - if the `--use_demisto` flag was not given, outputs files must be provided for each command. File names should have the same name of the command. See examples files below to view the desired structure for the file.
 
 **Command Examples file** - 
-For the command to work as planned a command_examples file must be included.
+For the command to work as planned, a `command_examples` file must be provided.
 
 ### Examples
 
-####command excecution
+#### Command Executions
 
 ```
 demisto-sdk generate-unit-tests -i Packs/MyPack/Integrations/MyInt/MyInt.py -d --insecure
@@ -65,7 +66,7 @@ demisto-sdk generate-unit-tests -i Packs/MyPack/Integrations/MyInt/MyInt.py -o P
 demisto-sdk generate-unit-tests -i Packs/MyPack/Integrations/MyInt/MyInt.py -c MyInt_example_command
 ```
 
-####command-examples file
+#### `command_examples` File
 
 ```text
 !malwarebazaar-samples-list sample_type=tag sample_value=test limit=2
@@ -75,7 +76,7 @@ demisto-sdk generate-unit-tests -i Packs/MyPack/Integrations/MyInt/MyInt.py -c M
 !malwarebazaar-comment-add comment="test" sha256_hash=1234
 ```
 
-####command output file
+#### Command Output File
 ```json
 {"readable_output": "Comment added to 1234 malware sample successfully",
   "outputs": {"comment": "test", "sha256_hash": "1234"}}

@@ -2104,7 +2104,7 @@ def generate_unit_tests(**kwargs):
     logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
                   quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
                   log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
-    run_generate_unit_tests(**kwargs)
+    return run_generate_unit_tests(**kwargs)
 
 
 @main.command(

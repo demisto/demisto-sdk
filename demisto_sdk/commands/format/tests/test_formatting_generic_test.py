@@ -65,7 +65,6 @@ class TestFormattingFromVersionKey:
         """
 
         mocker.patch.object(BaseUpdate, '__init__', return_value=None)
-        mocker.patch.object(BaseUpdate, 'is_new_supported_integration', return_value=False)
         base_update = BaseUpdate()
         self.init_BaseUpdate(base_update, oldfile_version='6.1.0', current_fromVersion=VERSION_6_0_0)
         base_update.set_fromVersion()

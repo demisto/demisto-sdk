@@ -1,5 +1,4 @@
 from io import StringIO
-from turtle import width
 
 from ruamel.yaml import YAML
 
@@ -25,7 +24,7 @@ class RUAMEL_Handler(XSOAR_Handler):
         yaml = YAML(typ=self._typ)
         yaml.allow_duplicate_keys = self._allow_duplicate_keys
         yaml.preserve_quotes = self._allow_duplicate_keys
-        yaml.width = width
+        yaml.width = self._width
         return yaml
 
     def load(self, stream):

@@ -371,12 +371,7 @@ class TestPlaybook:
             self.build_context.logging_module.exception(
                 f'Failed to create incident with name {incident_name} for playbook {self}')
         try:
-            # TODO: response will have no id in xsiam, check if status code check is like this
-            if IS_XSIAM:  # and response.status != 202:
-                self.build_context.logging_module.info(f'Can I get the status?? {response.status=}')
-                inc_id = 'incCreateErr'
-            else:
-                inc_id = response.id
+            inc_id = response.id
         except Exception:
             inc_id = 'incCreateErr'
         # inc_id = response_json.get('id', 'incCreateErr')

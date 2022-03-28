@@ -1,4 +1,3 @@
-import traceback
 from typing import Tuple
 
 import click

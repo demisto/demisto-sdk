@@ -6,7 +6,8 @@ from typing import Any, Dict, Optional, Set, Union
 import click
 import dictdiffer
 
-from demisto_sdk.commands.common.constants import (GENERAL_DEFAULT_FROMVERSION, VERSION_5_5_0)
+from demisto_sdk.commands.common.constants import (GENERAL_DEFAULT_FROMVERSION,
+                                                   VERSION_5_5_0)
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
                                                get_max_version,

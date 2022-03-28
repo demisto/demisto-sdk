@@ -220,11 +220,6 @@ class BaseUpdate:
                 return reg
         return None
 
-    def is_new_supported_integration(self, file_type):
-        metadata = get_pack_metadata(self.source_file)
-        return (metadata.get('currentVersion', '') == '1.0.0') and (
-            metadata.get('support', '') != 'xsoar') and file_type == INTEGRATION
-
     def get_answer(self, promote):
         click.secho(promote,
                     fg='red')

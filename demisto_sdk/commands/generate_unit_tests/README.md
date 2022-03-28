@@ -12,34 +12,34 @@ Also supports generating unit tests for specific commands.
 * *-c, --commands*
   Specific commands name to generate unit test for (e.g. xdr-get-incidents).
 * *-o, --output_dir*
-  Directory to store the output in (default is current working directory).
+  Directory to store the command output (generated test file) in (default is the input integration directory).
 * *-v, --verbose*
   Verbose output - mainly for debugging purposes, logging level will be displayed accordingly.
 * *-q, --quiet*
   Quiet output, only output results in the end.
-* *-ql, --log-path*
+* *-lp, --log-path*
   Path to store all levels of logs.
-* *--insecure*
-  Skip certificate validation when authorizing XSOAR.
 * *-e, --examples*
   One of the following:
   - A path for a file containing Integration command examples. Each command example should be in a separate line.
   - A comma-separated list of examples, wrapped by quotes.
   If the file or the list contains a command with more than one example, all of them will be used as different test cases.
 * *-d, --use_demisto*
-  If passed, the XSOAR instance configured in the `DEMISTO_BASE_URL` and `DEMISTO_API_KEY` environment variables will run the Integration commands and generate outputs which will be used as mock outputs. **If this flag is not passed, you will need to create the mocks manually before using the command.**
+  If passed, the XSOAR instance configured in the `DEMISTO_BASE_URL` and `DEMISTO_API_KEY` environment variables will run the Integration commands and generate outputs which will be used as mock outputs. **If this flag is not passed, you will need to create the mocks manually, at the outputs directory, with the name of the command.**
+* *--insecure*
+  Skip certificate validation when authorizing XSOAR.
 * *-a, --append* Append generated test file to the existing (only if already exists).
 
 
 **Notes**
-* The output of the command will be writen in an output file in the given directory.
+* The outputs from the command run will be writen in an output file in the given directory.
 
 **Required Code Conventions**
 * Every command method name must have the suffix `_command`.
 * Every command method must have the `args` dictionary parameter.
 * Each argument access in `args` must be made using the `get()` method.
 * Every command method must have the `client` parameter which must be typed (`client: Client`, where `Client` extends `BaseClient`).
-* Each HTTP request made during the flow of the command must be done using the `_http_request()` method.
+* Each HTTP request made during the flow of the command must be done using the `_http_request()` method. (`method` must be passed).
 * Every command must return a `CommandResults` object.
 
 
@@ -76,7 +76,8 @@ demisto-sdk generate-unit-tests -i Packs/MyPack/Integrations/MyInt/MyInt.py -c M
 !malwarebazaar-comment-add comment="test" sha256_hash=1234
 ```
 
-#### Command Output File
+#### Command Output File 
+##### malwarebazaar_comment_add_command.json
 ```json
 {"readable_output": "Comment added to 1234 malware sample successfully",
   "outputs": {"comment": "test", "sha256_hash": "1234"}}

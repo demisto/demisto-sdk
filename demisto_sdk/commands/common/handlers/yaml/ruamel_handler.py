@@ -1,4 +1,5 @@
 from io import StringIO
+from turtle import width
 
 from ruamel.yaml import YAML
 
@@ -13,20 +14,30 @@ class RUAMEL_Handler(XSOAR_Handler):
     """
 
     def __init__(self, typ=None, preserve_quotes=True, allow_duplicate_keys=False, width=5000):
-        self._yaml = YAML(typ=typ)
-        self._yaml.preserve_quotes = preserve_quotes
-        self._yaml.allow_duplicate_keys = allow_duplicate_keys
-        self._yaml.width = width
+        self._typ = typ
+        self._preserve_quotes = preserve_quotes
+        self._allow_duplicate_keys = allow_duplicate_keys
+        self._width = width
+
+    @property
+    def yaml(self) -> YAML:
+        """Creating an instance of ruamel for each command. Best practice by ruamel"""
+        yaml = YAML(typ=self._typ)
+        yaml.allow_duplicate_keys = self._allow_duplicate_keys
+        yaml.preserve_quotes = self._allow_duplicate_keys
+        yaml.width = width
+        return yaml
 
     def load(self, stream):
-        return self._yaml.load(stream)
+        return self.yaml.load(stream)
 
     def dump(self, data, stream, sort_keys=False, indent=0):
         if sort_keys:
             data = order_dict(data)
+        yaml = self.yaml
         if indent:
-            self._yaml.indent(sequence=indent)
-        self._yaml.dump(data, stream)
+            yaml.indent(sequence=indent)
+        yaml.dump(data, stream)
 
     def dumps(self, data, sort_keys=False, indent=None):
         """

@@ -1,4 +1,4 @@
-from typing import AnyStr, TextIO
+from typing import IO, Any, AnyStr
 
 import ujson
 
@@ -25,19 +25,19 @@ class UJSON_Handler(XSOAR_Handler):
         except ValueError as e:
             raise JSONDecodeError(e)
 
-    def load(self, fp: TextIO):
+    def load(self, fp: IO[str]):
         try:
             return ujson.load(fp)
         except ValueError as e:
             raise JSONDecodeError(e)
 
-    def dump(self, obj, fp: TextIO, sort_keys=False, indent=0):
+    def dump(self, obj: Any, fp: IO[str], indent=0, sort_keys=False):
         try:
-            ujson.dump(obj, fp, sort_keys=sort_keys, indent=indent)
+            ujson.dump(obj, fp, indent=indent, sort_keys=sort_keys)
         except ValueError as e:
             raise JSONDecodeError(e)
 
-    def dumps(self, obj, sort_keys=False, indent=0):
+    def dumps(self, obj: Any, indent=0, sort_keys=False):
         try:
             return ujson.dumps(
                 obj,

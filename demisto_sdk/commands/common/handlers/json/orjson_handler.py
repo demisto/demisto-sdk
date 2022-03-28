@@ -1,4 +1,4 @@
-from typing import Optional, TextIO
+from typing import IO, Optional
 
 import orjson
 
@@ -11,15 +11,15 @@ class OrJSON_Handler(XSOAR_Handler):
     Use only this wrapper for json handling.
     """
 
-    def load(self, stream: TextIO):
-        data = stream.read()
+    def load(self, fp: IO[str]):
+        data = fp.read()
         return orjson.loads(data)
 
-    def dump(self, data, stream: TextIO, sort_keys=False, indent=None):
+    def dump(self, data, fp: IO[str], indent=None, sort_keys=False):
         data = self.dumps(data, sort_keys=sort_keys, indent=indent)
-        stream.write(data)
+        fp.write(data)
 
-    def dumps(self, data, sort_keys=False, indent=None):
+    def dumps(self, data, indent=None, sort_keys=False):
         return orjson.dumps(
             data,
             option=self._indent_level(indent) | self._sort_keys(sort_keys))

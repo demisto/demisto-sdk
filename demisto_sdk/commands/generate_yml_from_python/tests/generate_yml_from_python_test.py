@@ -1,5 +1,6 @@
 import copy
 import inspect
+from contextlib import nullcontext as does_not_raise
 from importlib.machinery import SourceFileLoader
 from typing import Any, Callable, Optional
 
@@ -74,7 +75,6 @@ EMPTY_INTEGRATION_DICT = {'category': 'Utilities',
                                      'longRunning': False,
                                      'longRunningPort': False,
                                      'runonce': False,
-                                     'script': '-',
                                      'subtype': 'python3',
                                      'type': 'python'},
                           'tests': ['No tests']}
@@ -88,7 +88,7 @@ BASIC_CONF_KEY_DICT = {
 
 
 class TestImportDependencies:
-    def test_unrunnable_code_yml_generation(self, tmp_path):
+    def test_problematic_imports_in_code_yml_generation(self, tmp_path):
         """
         Given
         - Integration code with valid YMLMetadataCollector use and invalid imports.
@@ -112,13 +112,11 @@ class TestImportDependencies:
                 print("something nice")
 
         save_code_as_integration(code=code_snippet, full_path=integration_path)
-        try:
+        with does_not_raise():
             yml_generator = YMLGenerator(filename=integration_path)
             yml_generator.generate()
             expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
             assert expected_dict == yml_generator.get_metadata_dict()
-        except Exception as exc:
-            assert False, f"Made up imports are not working anymore: {exc}"
 
     def test_generation_with_implicit_imports_in_declarations(self, tmp_path):
         """Explicit imports from CommonServerPython
@@ -265,7 +263,7 @@ class TestConfigurationGeneration:
                               ({"long_running": True}, {"longRunning": True}),
                               ({"long_running": False}, {"longRunning": False}),
                               ({"long_running_port": "8080"}, {"longRunningPort": "8080"}),
-                              ({"integration_type": "java"}, {"type": "java"}),
+                              ({"integration_type": "rust"}, {"type": "rust"}),
                               ({"integration_subtype": "javascript"}, {"subtype": "javascript"})],
                              ids=["docker_image", "is_feed=True", "is_feed=False", "is_fetch=True", "is_fetch=False",
                                   "is_runonce=False", "is_runonce=True", "long_running=True", "long_running=False",
@@ -741,9 +739,13 @@ class TestCommandGeneration:
                                '\n        some_input_arg (InputOptions): some desc.\n    ',
                                {'auto': 'PREDEFINED', "name": "some_input_arg", "description": "some desc.",
                                 "predefined": ["a", "b"]}),
+                              ('Some other description\n'
+                               '\n    Args:'
+                               '\n        some_input_arg: potentially harmful. some desc.\n',
+                               {"name": "some_input_arg", "description": "some desc.", "execution": True})
                               ],
                              ids=["basic", "required", "default", "secret", "execution", "options", "isArray=True",
-                                  "isArray=False", "multiple flags", "type is enum"])
+                                  "isArray=False", "multiple flags", "type is enum", "execution"])
     def test_inputs_from_declaration(self, tmp_path, docstring, expected_update):
         """
         Given
@@ -1109,6 +1111,56 @@ class TestCommandGeneration:
         no_prefix_arg = copy.deepcopy(BASIC_OUT_ARG_DICT)
         no_prefix_arg.update({"contextPath": "some_name.no_prefix_out", "description": "no explicit prefix."})
         expected_command["outputs"] = [arg1_pre1, arg1_pre2, arg2_pre1, no_prefix_arg]
+        expected_dict["script"]["commands"] = [expected_command]
+        assert expected_dict == yml_generator.get_metadata_dict()
+
+    def test_command_with_file_output(self, tmp_path):
+        """
+        Given
+        - Decorated command code with file output.
+
+        When
+        - Running YMLGenerator generate.
+
+        Then
+        - Ensure that the YML dict is generated as expected.
+        """
+        integration_path = tmp_path / "integration_name.py"
+
+        def code_snippet():
+            metadata_collector = YMLMetadataCollector(integration_name="some_name")
+
+            @metadata_collector.command(command_name="some-command", multiple_output_prefixes=True,
+                                        file_output=True)
+            def funky_command():
+                """Some other description"""
+                print("func")
+
+        save_code_as_integration(code=code_snippet, full_path=integration_path)
+        yml_generator = YMLGenerator(filename=integration_path)
+        yml_generator.generate()
+        expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
+        expected_command = copy.deepcopy(BASIC_COMMAND_DICT)
+        expected_command["outputs"] = [
+            {"contextPath": "InfoFile.EntryID",
+             "description": "The EntryID of the report file.",
+             "type": "Unknown"},
+            {"contextPath": "InfoFile.Extension",
+             "description": "The extension of the report file.",
+             "type": "String"},
+            {"contextPath": "InfoFile.Name",
+             "description": "The name of the report file.",
+             "type": "String"},
+            {"contextPath": "InfoFile.Info",
+             "description": "The info of the report file.",
+             "type": "String"},
+            {"contextPath": "InfoFile.Size",
+             "description": "The size of the report file.",
+             "type": "Number"},
+            {"contextPath": "InfoFile.Type",
+             "description": "The type of the report file.",
+             "type": "String"}
+        ]
         expected_dict["script"]["commands"] = [expected_command]
         assert expected_dict == yml_generator.get_metadata_dict()
 

@@ -1,10 +1,11 @@
-import json
-
 import pytest
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.test_content.ParallelLoggingManager import \
     ParallelLoggingManager
 from demisto_sdk.commands.test_content.TestContentClasses import BuildContext
+
+json = JSON_Handler()
 
 
 def generate_test_configuration(playbook_id: str,

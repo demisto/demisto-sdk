@@ -1,4 +1,3 @@
-import json
 import os
 from contextlib import contextmanager
 from filecmp import cmp, dircmp
@@ -8,11 +7,14 @@ from shutil import copyfile, copytree, rmtree
 import pytest
 
 from demisto_sdk.commands.common.constants import PACKS_DIR, TEST_PLAYBOOKS_DIR
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import (is_object_in_id_set,
                                                open_id_set_file, src_root)
 from TestSuite.test_tools import ChangeCWD
+
+json = JSON_Handler()
+
 
 TEST_DATA = src_root() / 'tests' / 'test_files'
 TEST_CONTENT_REPO = TEST_DATA / 'content_slim'

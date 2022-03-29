@@ -391,7 +391,7 @@ class TestPlaybook:
         inc_filter = demisto_client.demisto_api.IncidentFilter()
         inc_filter.query = f'id: {inc_id}'
         if IS_XSIAM:
-            inc_filter.query = f'name: {incident_name}'
+            inc_filter.query = f'name: "{incident_name}"'
         # inc_filter.query
         search_filter.filter = inc_filter
 
@@ -406,9 +406,16 @@ class TestPlaybook:
                 found_incidents = incidents.total
                 incident_search_responses.append(incidents)
             except ApiException:
-                self.build_context.logging_module.exception(f'Searching incident with id {inc_id} failed')
+                if IS_XSIAM:
+                    self.build_context.logging_module.exception(f'Searching incident with name {incident_name} failed')
+                else:
+                    self.build_context.logging_module.exception(f'Searching incident with id {inc_id} failed')
             if time.time() > timeout:
-                self.build_context.logging_module.error(f'Got timeout for searching incident with id {inc_id}')
+                if IS_XSIAM:
+                    self.build_context.logging_module.error(f'Got timeout for searching incident with id {inc_id}')
+                else:
+                    self.build_context.logging_module.error(f'Got timeout for searching incident name {incident_name}')
+
                 self.build_context.logging_module.error(f'Incident search responses: {incident_search_responses}')
                 return None
 
@@ -991,6 +998,8 @@ class Integration:
 
         # todo: change for xsiam
         elif self.name == 'Demisto REST API':
+            if IS_XSIAM:
+                self.build_context.logging_module.warning('Trying to configure "Demisto REST API" for XSIAM server.')
             self.configuration.params = {  # type: ignore
                 'url': 'https://localhost',
                 'apikey': self.build_context.api_key,

@@ -13,7 +13,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
                                                get_max_version,
                                                get_remote_file,
                                                is_file_from_content_repo)
-from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
+from demisto_sdk.commands.format.format_constants import (DEFAULT_VERSION,
+                                                          ERROR_RETURN_CODE,
                                                           OLD_FILE_TYPES,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -96,7 +97,7 @@ class BaseUpdate:
             return output_file_path
 
     def set_version_to_default(self, location=None):
-        self.set_default_value('version', GENERAL_DEFAULT_FROMVERSION, location)
+        self.set_default_value('version', DEFAULT_VERSION, location)
 
     def set_default_value(self, key: str, value: Any, location=None):
         """Replaces the version to default."""

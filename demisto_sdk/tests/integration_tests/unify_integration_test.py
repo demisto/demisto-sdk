@@ -1,13 +1,15 @@
-import json
 import os
 
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     DASHBOARD, GENERIC_MODULE, UNIFIED_GENERIC_MODULE)
 from TestSuite.test_tools import ChangeCWD
+
+json = JSON_Handler()
+
 
 UNIFY_CMD = "unify"
 yaml = YAML_Handler()

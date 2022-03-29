@@ -1,6 +1,5 @@
 import base64
 import copy
-import json
 import os
 import re
 import shutil
@@ -11,13 +10,14 @@ from click.testing import CliRunner
 from mock import patch
 
 from demisto_sdk.__main__ import main
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.unify.integration_script_unifier import \
     IntegrationScriptUnifier
 from TestSuite.test_tools import ChangeCWD
 
+json = JSON_Handler()
 yaml = YAML_Handler()
 
 TEST_VALID_CODE = '''import demistomock as demisto

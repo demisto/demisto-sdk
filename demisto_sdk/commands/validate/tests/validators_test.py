@@ -1,4 +1,3 @@
-import json
 import os
 import sys
 from io import StringIO
@@ -17,6 +16,7 @@ from demisto_sdk.commands.common.constants import (CONF_PATH,
                                                    TEST_PLAYBOOK, FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
@@ -47,7 +47,8 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
+from demisto_sdk.commands.unify.integration_script_unifier import \
+    IntegrationScriptUnifier
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.constants_test import (
     CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DIR_LIST, IGNORED_PNG,
@@ -79,6 +80,8 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
+
+json = JSON_Handler()
 
 
 class TestValidators:
@@ -534,9 +537,9 @@ class TestValidators:
         def get_script_or_integration_package_data_mock(*args, **kwargs):
             return VALID_SCRIPT_PATH, ''
 
-        with patch.object(YmlUnifier, '__init__', lambda a, b: None):
-            YmlUnifier.get_script_or_integration_package_data = get_script_or_integration_package_data_mock
-            return YmlUnifier('')
+        with patch.object(IntegrationScriptUnifier, '__init__', lambda a, b: None):
+            IntegrationScriptUnifier.get_script_or_integration_package_data = get_script_or_integration_package_data_mock
+            return IntegrationScriptUnifier('')
 
     def test_script_valid_rn(self, mocker):
         """
@@ -1445,7 +1448,7 @@ def test_get_packs_that_should_have_version_raised(repo):
         assert 'NewPack' not in packs_that_should_have_version_raised
 
 
-def test_quite_bc_flag(repo):
+def test_quiet_bc_flag(repo):
     existing_pack1 = repo.create_pack('PackWithModifiedIntegration')
     moodified_integration = existing_pack1.create_integration('MyIn')
     moodified_integration.create_default_integration()

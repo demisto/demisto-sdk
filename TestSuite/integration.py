@@ -4,7 +4,8 @@ from pathlib import Path
 from typing import List, Optional
 
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
+from demisto_sdk.commands.unify.integration_script_unifier import \
+    IntegrationScriptUnifier
 from TestSuite.file import File
 from TestSuite.test_tools import suite_join_path
 from TestSuite.yml import YAML
@@ -59,8 +60,8 @@ class Integration:
             self.image.write_bytes(image)
 
         if self.create_unified:
-            unifier = YmlUnifier(input=self.path, output=os.path.dirname(self._tmpdir_integration_path))
-            yml_path = unifier.merge_script_package_to_yml()[0]
+            unifier = IntegrationScriptUnifier(input=self.path, output=os.path.dirname(self._tmpdir_integration_path))
+            yml_path = unifier.unify()[0]
             readme_path = unifier.move_readme_next_to_unified(yml_path)
             shutil.rmtree(self._tmpdir_integration_path)
             self.yml.path = yml_path

@@ -2,7 +2,6 @@
 
 Module contains validation of schemas, ids and paths.
 """
-import json
 import logging
 import os
 import re
@@ -17,7 +16,7 @@ from demisto_sdk.commands.common.constants import (
     ACCEPTED_FILE_EXTENSIONS, CHECKED_TYPES_REGEXES,
     FILE_TYPES_PATHS_TO_VALIDATE, OLD_REPUTATION, SCHEMA_TO_REGEX, FileType)
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (get_remote_file,
@@ -25,6 +24,7 @@ from demisto_sdk.commands.common.tools import (get_remote_file,
 from demisto_sdk.commands.format.format_constants import \
     OLD_FILE_DEFAULT_1_FROMVERSION
 
+json = JSON_Handler()
 yaml = YAML_Handler()
 
 
@@ -51,7 +51,7 @@ class StructureValidator(BaseValidator):
     def __init__(self, file_path, is_new_file=False, old_file_path=None, predefined_scheme=None, fromversion=False,
                  configuration=Configuration(), ignored_errors=None, print_as_warnings=False, tag='master',
                  suppress_print: bool = False, branch_name='', json_file_path=None, skip_schema_check=False,
-                 pykwalify_logs=False, quite_bc=False):
+                 pykwalify_logs=False, quiet_bc=False):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self.is_valid = True
@@ -59,7 +59,7 @@ class StructureValidator(BaseValidator):
         self.file_path = file_path.replace('\\', '/')
         self.skip_schema_check = skip_schema_check
         self.pykwalify_logs = pykwalify_logs
-        self.quite_bc = quite_bc
+        self.quiet_bc = quiet_bc
 
         self.scheme_name = predefined_scheme or self.scheme_of_file_by_path()
         if isinstance(self.scheme_name, str):

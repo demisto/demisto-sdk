@@ -1,10 +1,12 @@
 import io
-import json
 import os
 import shutil
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.secrets.secrets import SecretsValidator
+
+json = JSON_Handler()
 
 
 def create_whitelist_secrets_file(file_path, urls=None, ips=None, files=None, generic_strings=None):

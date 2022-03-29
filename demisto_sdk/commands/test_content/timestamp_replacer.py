@@ -1,5 +1,4 @@
 import functools
-import json
 import logging
 import urllib.parse
 from ast import literal_eval
@@ -15,6 +14,11 @@ from mitmproxy.addonmanager import Loader
 from mitmproxy.addons.serverplayback import ServerPlayback
 from mitmproxy.http import HTTPFlow, Request
 from mitmproxy.script import concurrent
+
+from demisto_sdk.commands.common.handlers import JSON_Handler
+
+json = JSON_Handler()
+
 
 logging.basicConfig(level=logging.DEBUG,
                     format='[%(asctime)s] - [%(funcName)s] - %(message)s')
@@ -235,7 +239,7 @@ class TimestampReplacer:
                     logging.exception(f'failed to run literal_eval on content {content}')
                 try:
                     logging.info('parsing the request body with "literal_eval" failed - trying with "json.loads"')
-                    content = json.loads(content, object_pairs_hook=OrderedDict)
+                    content = json.loads(content)
                     self.modify_json_body(req, content)
                 except Exception:
                     logging.exception(f'failed to run json.loads on content {content}')
@@ -360,7 +364,7 @@ class TimestampReplacer:
                     logging.exception(f'failed to run literal_eval content: {content}')
                 try:
                     logging.info('parsing the request body with "literal_eval" failed - trying with "json.loads"')
-                    content = json.loads(content, object_pairs_hook=OrderedDict)
+                    content = json.loads(content)
                     json_keys = self.determine_problematic_keys(content)
                     self.json_keys.update(json_keys)
                 except Exception:

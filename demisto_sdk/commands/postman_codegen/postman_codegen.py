@@ -1,4 +1,3 @@
-import json
 import logging
 import re
 from collections import defaultdict
@@ -6,6 +5,7 @@ from typing import Any, Dict, List, Union
 
 import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.commands.common.constants import DemistoException
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.generate_integration.code_generator import (
@@ -14,6 +14,9 @@ from demisto_sdk.commands.generate_integration.code_generator import (
     IntegrationGeneratorParam, ParameterType)
 from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs import (
     determine_type, flatten_json)
+
+json = JSON_Handler()
+
 
 logger: logging.Logger = logging.getLogger('demisto-sdk')
 

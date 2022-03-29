@@ -241,13 +241,15 @@ Python 3) and then calls the ``main()`` function. Just keep this convention.
 
 """
 
-import json
-import traceback
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
-
-import dateparser
-import demistomock as demisto  # noqa: E402 lgtm [py/polluting-import]
 import urllib3
+import dateparser
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
+import traceback
+from demisto_sdk.commands.common.handlers import JSON_Handler
+json = JSON_Handler()
+
+
+import demistomock as demisto  # noqa: E402 lgtm [py/polluting-import]
 from CommonServerPython import *  # noqa: E402 lgtm [py/polluting-import]
 from CommonServerUserPython import *  # noqa: E402 lgtm [py/polluting-import]
 

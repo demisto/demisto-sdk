@@ -2,7 +2,6 @@
 
 Module contains validation of schemas, ids and paths.
 """
-import json
 import logging
 import os
 import re
@@ -17,7 +16,7 @@ from demisto_sdk.commands.common.constants import (
     ACCEPTED_FILE_EXTENSIONS, CHECKED_TYPES_REGEXES,
     FILE_TYPES_PATHS_TO_VALIDATE, OLD_REPUTATION, SCHEMA_TO_REGEX, FileType)
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (get_remote_file,
@@ -25,6 +24,7 @@ from demisto_sdk.commands.common.tools import (get_remote_file,
 from demisto_sdk.commands.format.format_constants import \
     OLD_FILE_DEFAULT_1_FROMVERSION
 
+json = JSON_Handler()
 yaml = YAML_Handler()
 
 

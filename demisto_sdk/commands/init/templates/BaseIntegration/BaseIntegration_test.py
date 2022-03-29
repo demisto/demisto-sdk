@@ -11,7 +11,8 @@ you are implementing with your integration
 """
 
 import io
-import json
+from demisto_sdk.commands.common.handlers import JSON_Handler
+json = JSON_Handler()
 
 
 def util_load_json(path):

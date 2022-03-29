@@ -1,6 +1,9 @@
-import json
 from pathlib import Path
 from typing import List, Optional
+
+from demisto_sdk.commands.common.handlers import JSON_Handler
+
+json = JSON_Handler()
 
 
 class ConfJSON:

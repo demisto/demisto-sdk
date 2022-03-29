@@ -13,6 +13,8 @@ from demisto_sdk.commands.common.constants import TYPE_PYTHON
 DOCKER_CLIENT = None
 logger = logging.getLogger('demisto-sdk')
 PATH_OR_STR = Union[Path, str]
+# this will be used to determine if the system supports mounts
+CAN_MOUNT_FILES = not os.getenv('CIRCLECI', False)
 
 
 def init_global_docker_client(timeout: int = 60, log_prompt: str = ''):
@@ -93,7 +95,7 @@ class Docker:
 
     @staticmethod
     def create_container(image: str, command: Union[str, List[str]], files_to_push: Optional[List] = None,
-                         environment: Optional[Dict] = None, mount_files=True, **kwargs) -> docker.models.containers.Container:
+                         environment: Optional[Dict] = None, mount_files: bool = CAN_MOUNT_FILES, **kwargs) -> docker.models.containers.Container:
         """
         Creates a container and pushing requested files to the container.
         """
@@ -123,7 +125,9 @@ class Docker:
             2. running the istallation scripts
             3. committing the docker changes (installed packages) to a new local image
         """
-
+        if not CAN_MOUNT_FILES:
+            raise docker.errors.BuildError(
+                reason="Can't create a container in this environment rerunning the test after 5 min might work.", build_log='')
         changes = ['WORKDIR /devwork']
         changes.append('ENTRYPOINT ["/bin/sh", "-c"]') if container_type == TYPE_PYTHON else None
         script = f'{container_type}_image.sh'
@@ -145,11 +149,12 @@ class Docker:
 
             container = Docker.create_container(
                 image=base_image, files_to_push=files_to_push, command=f'/{script}',
-                environment={'REQUESTS_CA_BUNDLE': '/etc/ssl/certs/ca-certificates.crt'},
                 mount_files=True
             )
             container.start()
-            container.wait(condition="exited")
+            if container.wait(condition="exited").get("StatusCode") != 0:
+                raise docker.errors.BuildError(
+                    reason="Installation script failed to run.", build_log=container.logs())
         repository, tag = image.split(':')
         container.commit(repository=repository, tag=tag, changes=changes)
         return image

@@ -1,14 +1,12 @@
 # STD python packages
 import copy
 import hashlib
-import json
 import logging
 import os
 import platform
 import traceback
 from typing import Any, Dict, List, Optional, Tuple
 
-# 3-rd party packages
 import docker
 import docker.errors
 import docker.models.containers
@@ -21,9 +19,8 @@ from wcmatch.pathlib import NEGATE, Path
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON)
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.timers import timer
-# Local packages
 from demisto_sdk.commands.common.tools import (get_all_docker_images,
                                                run_command_os)
 from demisto_sdk.commands.lint.commands_builder import (
@@ -41,6 +38,13 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                pylint_plugin,
                                                split_warnings_errors,
                                                stream_docker_container_output)
+
+json = JSON_Handler()
+
+
+# 3-rd party packages
+
+# Local packages
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -754,9 +758,7 @@ class Linter:
                         self._facts["lint_files"], docker_version=self._facts.get('python_version'))
                 ],
                 user=f"{os.getuid()}:4000",
-                detach=True,
-                files_to_push=[('/devwork/.', self._pack_abs_dir)],
-                mount_files=False,
+                files_to_push=[('/devwork', self._pack_abs_dir)],
                 environment=self._facts["env_vars"],
             )
             container.start()
@@ -829,9 +831,9 @@ class Linter:
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container = Docker.create_container(
-                name=container_name, image=test_image, user=f"{uid}:4000", mount_files=False,
+                name=container_name, image=test_image, user=f"{uid}:4000",
                 command=[build_pytest_command(test_xml=test_xml, json=True, cov=cov)],
-                environment=self._facts["env_vars"], files_to_push=[('/devwork/.', self._pack_abs_dir)]
+                environment=self._facts["env_vars"], files_to_push=[('/devwork', self._pack_abs_dir)]
             )
             container.start()
             stream_docker_container_output(container.logs(stream=True))
@@ -931,8 +933,8 @@ class Linter:
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container = Docker.create_container(name=container_name, image=test_image,
-                                                mount_files=False, user=f"{uid}:4000", environment=self._facts["env_vars"],
-                                                files_to_push=[('/devwork/.', self._pack_abs_dir)],
+                                                user=f"{uid}:4000", environment=self._facts["env_vars"],
+                                                files_to_push=[('/devwork', self._pack_abs_dir)],
                                                 command=build_pwsh_analyze_command(
                                                     self._facts["lint_files"][0])
                                                 )
@@ -1000,7 +1002,7 @@ class Linter:
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container: docker.models.containers.Container = Docker.create_container(
-                files_to_push=[('/devwork/.', self._pack_abs_dir)], mount_files=False,
+                files_to_push=[('/devwork', self._pack_abs_dir)],
                 name=container_name, image=test_image, command=build_pwsh_test_command(),
                 user=f"{uid}:4000", environment=self._facts["env_vars"])
             container.start()

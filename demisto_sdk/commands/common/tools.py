@@ -781,14 +781,14 @@ def server_version_compare(v1, v2):
     return -1
 
 
-def get_max_version(versions):
+def get_max_version(versions: List[str]) -> str:
     """get max version between Demisto versions.
 
     Args:
         versions (list): list of strings representing Demisto version.
 
     Returns:
-        int.
+        str.
         max version.
     """
 

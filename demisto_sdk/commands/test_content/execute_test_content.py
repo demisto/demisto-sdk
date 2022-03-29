@@ -66,9 +66,8 @@ def execute_test_content(**kwargs):
     for server_ip, port in build_context.instances_ips.items():
         tests_execution_instance = ServerContext(build_context, server_private_ip=server_ip, tunnel_port=port,
                                                  use_retries_mechanism=use_retries_mechanism)
-        logging_manager.info(f'Done creating server: {server_ip=}, {port=}')
         threads_list.append(Thread(target=tests_execution_instance.execute_tests))
-    logging_manager.info(f'All servers and threads created.')
+    logging_manager.info('All servers and threads created.')
     for thread in threads_list:
         thread.start()
 

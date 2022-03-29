@@ -17,8 +17,8 @@ from demisto_sdk.commands.common.constants import (
     FILE_TYPES_PATHS_TO_VALIDATE, OLD_REPUTATION, SCHEMA_TO_REGEX, FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator, meta_specific_validation_decorator
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator, meta_specific_validation_decorator)
 from demisto_sdk.commands.common.tools import (get_remote_file,
                                                is_file_path_in_pack)
 from demisto_sdk.commands.format.format_constants import \
@@ -116,7 +116,7 @@ class StructureValidator(BaseValidator):
 
         pretty_formatted_string_of_regexes = json.dumps(SCHEMA_TO_REGEX, indent=4, sort_keys=True)
 
-        self.error_handling('structure_doesnt_match_scheme', self.file_path, pretty_formatted_string_of_regexes)
+        self.proxy_error_handling('structure_doesnt_match_scheme', self.file_path, pretty_formatted_string_of_regexes)
 
         return None
 
@@ -154,7 +154,7 @@ class StructureValidator(BaseValidator):
             try:
                 return self.parse_error_msg(err)
             except Exception:
-                if self.error_handling('pykwalify_general_error', self.file_path, err):
+                if self.proxy_error_handling('pykwalify_general_error', self.file_path, err):
                     self.is_valid = False
                     return False
         return True
@@ -193,7 +193,7 @@ class StructureValidator(BaseValidator):
         """
         file_id = self.get_file_id_from_loaded_file_data(self.current_file)
         if file_id and '/' in file_id:
-            if self.error_handling('file_id_contains_slashes', self.file_path):
+            if self.proxy_error_handling('file_id_contains_slashes', self.file_path):
                 self.is_valid = False
                 return False
 
@@ -214,7 +214,7 @@ class StructureValidator(BaseValidator):
         old_version_id = self.get_file_id_from_loaded_file_data(self.old_file)
         new_file_id = self.get_file_id_from_loaded_file_data(self.current_file)
         if not (new_file_id == old_version_id):
-            if self.error_handling('file_id_changed', self.file_path, old_version_id, new_file_id):
+            if self.proxy_error_handling('file_id_changed', self.file_path, old_version_id, new_file_id):
                 return True
 
         # False - the id has not changed.
@@ -239,7 +239,7 @@ class StructureValidator(BaseValidator):
             return True
 
         if from_version_old != from_version_new:
-            if self.error_handling('from_version_modified', self.file_path):
+            if self.proxy_error_handling('from_version_modified', self.file_path):
                 self.is_valid = False
                 return False
 
@@ -249,7 +249,7 @@ class StructureValidator(BaseValidator):
     def is_valid_file_extension(self):
         file_extension = os.path.splitext(self.file_path)[1]
         if file_extension not in self.valid_extensions:
-            if self.error_handling('wrong_file_extension', self.file_path, file_extension, self.valid_extensions):
+            if self.proxy_error_handling('wrong_file_extension', self.file_path, file_extension, self.valid_extensions):
                 return False
 
         return True
@@ -304,7 +304,7 @@ class StructureValidator(BaseValidator):
         """
         is_valid_path = bool(self.scheme_name or self.file_type)
         if not is_valid_path:
-            if not self.error_handling('invalid_file_path', self.file_path):
+            if not self.proxy_error_handling('invalid_file_path', self.file_path):
                 is_valid_path = True
         return is_valid_path
 
@@ -491,7 +491,7 @@ class StructureValidator(BaseValidator):
     def check_for_spaces_in_file_name(self):
         file_name = os.path.basename(self.file_path)
         if file_name.count(' ') > 0:
-            if self.error_handling('pykwalify_general_error', self.file_path, file_name):
+            if self.proxy_error_handling('pykwalify_general_error', self.file_path, file_name):
                 return False
 
         return True

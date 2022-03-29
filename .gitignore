@@ -94,7 +94,8 @@ pyproject.toml
 .travis.yml
 git_push.sh
 .swagger-codegen
-.vscode
+.vscode/*
+.demisto-sdk-report
 .pytest_cache
 .idea
 .mypy_cache

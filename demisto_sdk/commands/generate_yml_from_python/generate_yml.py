@@ -214,6 +214,7 @@ class MetadataToDict:
             "configuration": config_keys,
             "script": {
                 "commands": commands,
+                "script": "-",
                 "type": self.mc.integration_type,
                 "subtype": self.mc.integration_subtype,
                 "dockerimage": self.mc.docker_image,

@@ -75,6 +75,7 @@ EMPTY_INTEGRATION_DICT = {'category': 'Utilities',
                                      'longRunning': False,
                                      'longRunningPort': False,
                                      'runonce': False,
+                                     'script': '-',
                                      'subtype': 'python3',
                                      'type': 'python'},
                           'tests': ['No tests']}

@@ -276,7 +276,7 @@ class BaseUpdate:
             self.set_default_from_version(default_from_version, current_fromversion_value, file_type)
 
     def arguments_to_remove(self) -> Set[str]:
-        """ Finds diff between keys in file and schema of file type
+        """ Finds diff between keys in file and schema of file type.
         Returns:
             List of keys that should be deleted in file
         """

@@ -29,7 +29,7 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.author_image import \
     AuthorImageValidator
 from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+    BaseValidator, meta_specific_validation_decorator
 from demisto_sdk.commands.common.hook_validations.classifier import \
     ClassifierValidator
 from demisto_sdk.commands.common.hook_validations.conf_json import \
@@ -138,7 +138,7 @@ class ValidateManager:
         self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors,
                                           json_file_path=json_file_path).handle_error
         self.error_handling = BaseValidator(print_as_warnings=print_ignored_errors,
-                                            json_file_path=json_file_path).error_handling
+                                          json_file_path=json_file_path).proxy_error_handling
         self.file_path = file_path
         self.id_set_path = id_set_path or DEFAULT_ID_SET_PATH
         # create the id_set only once per run.
@@ -445,7 +445,7 @@ class ValidateManager:
 
         return all(package_entities_validation_results)
 
-    @BaseValidator.meta_specific_validation_decorator('changed_pack_name')
+    @meta_specific_validation_decorator('changed_pack_name')
     def is_valid_pack_name(self, file_path, old_file_path):
         """
         Valid pack name is currently considered to be a new pack name or an existing pack.
@@ -460,7 +460,7 @@ class ValidateManager:
                 return False
         return True
 
-    @BaseValidator.meta_specific_validation_decorator('invalid_image_name_or_location,file_type_not_supported')
+    @meta_specific_validation_decorator('invalid_image_name_or_location,file_type_not_supported')
     def is_valid_file_type(self, file_type, file_path):
         """
         If a file_type is unsupported, will return `False`.
@@ -1225,7 +1225,7 @@ class ValidateManager:
                         return True
         return False
 
-    @BaseValidator.meta_specific_validation_decorator('file_cannot_be_deleted')
+    @meta_specific_validation_decorator('file_cannot_be_deleted')
     def validate_deleted_files(self, deleted_files, added_files) -> bool:
         click.secho(f'\n================= Checking for prohibited deleted files =================',
                     fg="bright_cyan")
@@ -1284,7 +1284,7 @@ class ValidateManager:
                     handle_error = False
         return handle_error
 
-    @BaseValidator.meta_specific_validation_decorator('multiple_release_notes_files')
+    @meta_specific_validation_decorator('multiple_release_notes_files')
     def validate_no_duplicated_release_notes(self, added_files):
         """Validated that among the added files - there are no duplicated RN for the same pack.
 

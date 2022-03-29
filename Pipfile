@@ -73,9 +73,10 @@ types-six="*"
 types-PyMySQL="*"
 types-protobuf="*"
 dateparser = "*"
+typing-extensions="*"
+
 
 [dev-packages]
-typing-extensions="*"
 mitmproxy = "*"
 mock = "*"
 pre-commit = "*"

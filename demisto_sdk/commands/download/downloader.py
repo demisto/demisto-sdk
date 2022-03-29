@@ -189,6 +189,7 @@ class Downloader:
         :return: The list of all custom content objects
         """
         custom_content_file_paths: list = get_child_files(self.custom_content_temp_dir)
+        print(1)
         custom_content_objects: List = list()
         for file_path in custom_content_file_paths:
             try:

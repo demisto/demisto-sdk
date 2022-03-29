@@ -1,6 +1,6 @@
-import json
 import os
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations import image
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
@@ -8,6 +8,8 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tests.integration_test import mock_structure
 from TestSuite.file import File
 from TestSuite.test_tools import ChangeCWD
+
+json = JSON_Handler()
 
 
 def test_is_not_default_image():

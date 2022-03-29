@@ -1,14 +1,15 @@
-import json
 import sys
-from collections import OrderedDict
 from unittest.mock import MagicMock, mock_open
 
 import mitmproxy
 import pytest
 from mitmproxy.http import Headers, HTTPFlow, Request
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.test_content.timestamp_replacer import \
     TimestampReplacer
+
+json = JSON_Handler()
 
 
 @pytest.fixture()
@@ -240,7 +241,7 @@ class TestTimeStampReplacer:
         time_stamp_replacer = TimestampReplacer()
         time_stamp_replacer.json_keys = ['timestamp_key', 'dict1.list.1']
         time_stamp_replacer.request(flow)
-        content = json.loads(flow.request.get_content(), object_pairs_hook=OrderedDict)
+        content = json.loads(flow.request.get_content())
         for key, val in content.items():
             if key == 'timestamp_key':
                 assert val == time_stamp_replacer.constant

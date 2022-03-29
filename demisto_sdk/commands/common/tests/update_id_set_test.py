@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import sys
@@ -12,6 +11,7 @@ import demisto_sdk.commands.common.tools as tools
 import demisto_sdk.commands.common.update_id_set as uis
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION, JOBS_DIR, FileType, MarketplaceVersions)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
     add_item_to_exclusion_dict, does_dict_have_alternative_key,
@@ -29,6 +29,9 @@ from demisto_sdk.commands.common.update_id_set import (
     process_layoutscontainers, process_script, re_create_id_set,
     should_skip_item_by_mp)
 from TestSuite.utils import IsEqualFunctions
+
+json = JSON_Handler()
+
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
 

@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import re
@@ -10,7 +9,7 @@ from typing import Any, Dict, List, Optional, Union
 import autopep8
 
 import demisto_sdk.commands.common.tools as tools
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.generate_integration.base_code import (
     BASE_ARGUMENT, BASE_BASIC_AUTH, BASE_BEARER_TOKEN, BASE_CLIENT,
     BASE_CLIENT_API_KEY, BASE_CODE_TEMPLATE, BASE_CREDENTIALS, BASE_FUNCTION,
@@ -19,8 +18,8 @@ from demisto_sdk.commands.generate_integration.base_code import (
 from demisto_sdk.commands.generate_integration.XSOARIntegration import \
     XSOARIntegration
 
+json = JSON_Handler()
 yaml = YAML_Handler(width=50000)
-
 logger = logging.getLogger('demisto-sdk')
 
 ILLEGAL_CODE_NAMES = ['type', 'from', 'id', 'filter', 'list']

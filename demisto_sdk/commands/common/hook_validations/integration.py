@@ -1,4 +1,3 @@
-import json
 import os
 import re
 from pathlib import Path
@@ -18,7 +17,7 @@ from demisto_sdk.commands.common.default_additional_info_loader import \
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 Errors)
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.description import \
@@ -31,6 +30,7 @@ from demisto_sdk.commands.common.tools import (
     get_file_version_suffix_if_exists, get_files_in_dir, get_item_marketplaces,
     get_pack_name, is_iron_bank_pack, print_error, server_version_compare)
 
+json = JSON_Handler()
 yaml = YAML_Handler()
 default_additional_info = load_default_additional_info_dict()
 

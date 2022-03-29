@@ -69,5 +69,5 @@ This command has three main functions:
       Forcefully overwrites the preexisting YML if one exists.
 
     **Examples**:
-    `demisto-sdk unify -i ParsingRule/MyParsingRule -o ParsingRules`
+    `demisto-sdk unify -i Packs/SIEMPack/ParsingRule/MyParsingRule -o Packs/SIEMPack/ParsingRule`
     This will grab the parsing rules components (YAML, XIF and JSON) from the `ParsingRule/MyParsingRule` directory and unify them to a single YAML file that will be created in the "ParsingRules" directory.

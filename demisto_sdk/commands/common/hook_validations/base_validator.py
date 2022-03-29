@@ -58,6 +58,7 @@ def meta_specific_validation_decorator(error_func_names_str=''):
 
     return specific_validation_decorator
 
+
 @meta_specific_validation_decorator()
 def error_handling(validator, error_func_name, file_path, *error_func_args, should_print=True, suggested_fix=None, warning=False, drop_line=False):
     error_func = getattr(Errors, error_func_name)
@@ -94,7 +95,8 @@ class BaseValidator:
         return False
 
     def proxy_error_handling(self, error_func_name, file_path, *error_func_args, should_print=True, suggested_fix=None, warning=False, drop_line=False):
-        return error_handling(self, error_func_name, file_path, *error_func_args, should_print=should_print, suggested_fix=suggested_fix, warning=warning, drop_line=drop_line)
+        return error_handling(self, error_func_name, file_path, *error_func_args,
+                              should_print=should_print, suggested_fix=suggested_fix, warning=warning, drop_line=drop_line)
 
     def handle_error(self, error_message, error_code, file_path, should_print=True, suggested_fix=None, warning=False,
                      drop_line=False):

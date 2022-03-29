@@ -1,4 +1,6 @@
-import json
+from demisto_sdk.commands.common.handlers import JSON_Handler
+json = JSON_Handler()
+
 import traceback
 from typing import Any, Dict
 

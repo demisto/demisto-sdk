@@ -151,7 +151,9 @@ def test_dump_with_price(mocker):
         assert file_content['vendorName']
 
     import builtins
-    import json
+
+    from demisto_sdk.commands.common.handlers import JSON_Handler
+    json = JSON_Handler()
 
     obj = PackMetaData(PACK_METADATA)
     obj.price = 1

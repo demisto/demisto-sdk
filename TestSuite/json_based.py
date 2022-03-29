@@ -1,8 +1,10 @@
-import json
 import os
 from pathlib import Path
 
 from demisto_sdk.commands.common.constants import PACKS_DIR
+from demisto_sdk.commands.common.handlers import JSON_Handler
+
+json = JSON_Handler()
 
 
 class JSONBased:

@@ -1,10 +1,11 @@
-import json
 import logging
 import os
 import re
+from pathlib import Path
 
 import pytest
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.coverage_analyze.coverage_report import \
     CoverageReport
@@ -13,6 +14,9 @@ from demisto_sdk.commands.coverage_analyze.helpers import (fix_file_path,
 from demisto_sdk.commands.coverage_analyze.tests.helpers_test import (
     COVERAGE_FILES_DIR, JSON_MIN_DATA_FILE, PYTHON_FILE_PATH, TEST_DATA_DIR,
     TestCoverageSummary, copy_file, read_file)
+
+json = JSON_Handler()
+
 
 DEFAULT_URL = TestCoverageSummary.TestGetFilesSummary.default_url
 REPORT_STR_FILE = os.path.join(TEST_DATA_DIR, 'coverage.txt')
@@ -38,10 +42,10 @@ class TestCoverageReport:
     def test_with_print_report(self, tmpdir, monkeypatch, caplog):
         monkeypatch.chdir(tmpdir)
         cov_report = CoverageReport()
-        cov_report._report_str = read_file(REPORT_STR_FILE)
+        cov_report._report_str = Path(REPORT_STR_FILE).read_text()
         with caplog.at_level(logging.INFO, logger='demisto-sdk'):
             cov_report.coverage_report()
-        assert caplog.records[0].msg == f'\n{read_file(REPORT_STR_FILE)}'
+        assert caplog.records[0].msg == f'\n{Path(REPORT_STR_FILE).read_text()}'
 
     def test_with_export_report_function(self, tmpdir, monkeypatch, caplog):
         monkeypatch.chdir(tmpdir)
@@ -115,9 +119,9 @@ class TestCoverageReport:
         assert isinstance(cover, float)
 
     def test_original_summary(self, tmpdir, monkeypatch, requests_mock):
-        requests_mock.get(DEFAULT_URL, text=read_file(JSON_MIN_DATA_FILE))
+        requests_mock.get(DEFAULT_URL, json=read_file(JSON_MIN_DATA_FILE))
         monkeypatch.chdir(tmpdir)
-        assert CoverageReport().original_summary == json.loads(read_file(JSON_MIN_DATA_FILE))['files']
+        assert CoverageReport().original_summary == read_file(JSON_MIN_DATA_FILE)['files']
 
 
 class TestFileMinCoverage:
@@ -170,7 +174,7 @@ class TestCoverageDiffReport:
     @staticmethod
     def get_coverage_report_obj():
         cov_report = CoverageReport()
-        cov_report._original_summary = json.loads(read_file(JSON_MIN_DATA_FILE))['files']
+        cov_report._original_summary = read_file(JSON_MIN_DATA_FILE)['files']
         return cov_report
 
     def test_without_files(self, caplog, tmpdir, monkeypatch, mocker):
@@ -184,7 +188,7 @@ class TestCoverageDiffReport:
     def test_with_degradated_files(self, caplog, tmpdir, monkeypatch, mocker):
         monkeypatch.chdir(tmpdir)
         cov_report = self.get_coverage_report_obj()
-        cov_report._report_str = read_file(REPORT_STR_FILE)
+        cov_report._report_str = Path(REPORT_STR_FILE).read_text()
         mocker.patch.object(cov_report, 'file_min_coverage', return_value=100.0)
         with caplog.at_level(logging.ERROR, logger='demisto-sdk'):
             assert cov_report.coverage_diff_report() is False
@@ -193,7 +197,7 @@ class TestCoverageDiffReport:
     def test_with_passed_files(self, caplog, tmpdir, monkeypatch, mocker):
         monkeypatch.chdir(tmpdir)
         cov_report = self.get_coverage_report_obj()
-        cov_report._report_str = read_file(REPORT_STR_FILE)
+        cov_report._report_str = Path(REPORT_STR_FILE).read_text()
         mocker.patch.object(cov_report, 'file_min_coverage', return_value=10.0)
         with caplog.at_level(logging.ERROR, logger='demisto-sdk'):
             assert cov_report.coverage_diff_report()

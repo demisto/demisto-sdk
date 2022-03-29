@@ -1,5 +1,4 @@
 import io
-import json
 import os
 from typing import Optional
 
@@ -15,9 +14,12 @@ from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 PRESET_ERROR_TO_IGNORE,
                                                 get_all_error_codes,
                                                 get_error_object)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (
     find_type, get_file_displayed_name, get_json, get_pack_name,
     get_relative_path_from_packs_dir, get_yaml)
+
+json = JSON_Handler()
 
 
 class BaseValidator:

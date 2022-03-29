@@ -85,7 +85,6 @@ class BaseValidator:
 
         return False
 
-    @meta_specific_validation_decorator()
     def error_handling(self, error_func_name, file_path, *error_func_args, should_print=True, suggested_fix=None, warning=False, drop_line=False):
         error_func = getattr(Errors, error_func_name)
         error_message, error_code = error_func(*error_func_args)

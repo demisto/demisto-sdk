@@ -75,6 +75,7 @@ types-protobuf="*"
 dateparser = "*"
 
 [dev-packages]
+typing-extensions="*"
 mitmproxy = "*"
 mock = "*"
 pre-commit = "*"

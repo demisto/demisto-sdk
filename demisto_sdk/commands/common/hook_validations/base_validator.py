@@ -29,19 +29,14 @@ def is_error_code_in_specific_validations_list(error_func_code, specific_validat
     return False
 
 
-def meta_specific_validation_decorator(error_func_codes_str=''):
+def meta_specific_validation_decorator(error_func_codes_str):
 
     def specific_validation_decorator(func):
 
         def wrapper(self, *args, **kwargs):
 
             if self.specific_validations:
-                error_func_codes = []
-                if error_func_codes_str:
-                    error_func_codes = error_func_codes_str.split(',')
-                else:
-                    error_func_codes.append(args[1])
-
+                error_func_codes = error_func_codes_str.split(',')
                 for error_func_code in error_func_codes:
                     if is_error_code_in_specific_validations_list(error_func_code, self.specific_validations):
                         return func(self, *args, **kwargs)

@@ -439,6 +439,7 @@ class TestPlaybook:
                 'filter': {},
                 'all': False
             }
+            self.build_context.logging_module.info(f'Trying to delete with body: {body}')
             res = demisto_client.generic_request_func(self=client, method='POST',
                                                       path='/incident/batchDelete', body=body)
         except ApiException:
@@ -1544,7 +1545,9 @@ class TestContext:
         """
         test_passed = playbook_state in (PB_Status.COMPLETED, PB_Status.NOT_SUPPORTED_VERSION)
         if self.incident_id and test_passed:
-            self.playbook.delete_incident(self.client, self.incident_id)
+            # todo: change it... batchDelete is not supported?
+            if not IS_XSIAM:
+                self.playbook.delete_incident(self.client, self.incident_id)
             self.playbook.delete_integration_instances(self.client)
 
     def _run_docker_threshold_test(self):

@@ -1,17 +1,16 @@
 import ast
 import itertools
 import os
+import pytest
 from ast import parse
 from pathlib import Path
-
-import pytest
-
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import (
     UnitTestsGenerator, run_generate_unit_tests)
 
-ARGS = [({'use_demisto': False}, 'malwarebazaar_all.txt'),
-        ({'use_demisto': False, 'commands': 'malwarebazaar-comment-add'}, 'malwarebazaar_specific_command.txt'),
-        ({'use_demisto': True}, 'malwarebazaar_all.txt')]
+ARGS = [({'use_demisto': False}, 'malwarebazaar_all.py'),
+        ({'use_demisto': False, 'commands': 'malwarebazaar-comment-add'}, 'malwarebazaar_specific_command.py'),
+        ({'use_demisto': True}, 'malwarebazaar_all.py')]
 
 
 EXAMPLES = {'readable_output': "test_md_example", 'outputs': {"MalwareBazaar": {"MalwarebazaarCommentAdd": {"comment": "test"}}}}
@@ -37,7 +36,7 @@ def compare_ast(node1, node2):
 
 
 class TestUnitTestsGenerator:
-    test_files_path = Path(Path.cwd(), 'test_files')
+    test_files_path = Path(git_path(), 'demisto_sdk', 'commands', 'generate_unit_tests', 'tests', 'test_files')
     input_path = None
     output_dir = None
 

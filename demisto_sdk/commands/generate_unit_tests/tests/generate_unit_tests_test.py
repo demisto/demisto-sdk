@@ -1,9 +1,11 @@
 import ast
 import itertools
 import os
-import pytest
 from ast import parse
 from pathlib import Path
+
+import pytest
+
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import (
     UnitTestsGenerator, run_generate_unit_tests)
@@ -36,7 +38,7 @@ def compare_ast(node1, node2):
 
 
 class TestUnitTestsGenerator:
-    test_files_path = Path(git_path(), 'demisto_sdk', 'commands', 'generate_unit_tests', 'tests', 'test_files')
+    test_files_path = Path(__file__, git_path(), 'demisto_sdk', 'commands', 'generate_unit_tests', 'tests', 'test_files')
     input_path = None
     output_dir = None
 

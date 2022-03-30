@@ -2792,23 +2792,23 @@ class TestParsingRules:
             - Verify result as expeted.
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        parsing_rule = pack.create_parsing_rule("parsing_rule_name", {"id": "parsing_rule_id", "rules": "", "name": "parsing_rule_name"})
-        res = process_general_items(parsing_rule.path, {pack.name: {}},
+        parsing_rule = pack.create_parsing_rule("parsing_rule_name")
+        res = process_general_items(parsing_rule.yml.path, {pack.name: {}},
                                     MarketplaceVersions.MarketplaceV2.value, True, (FileType.PARSING_RULE,), get_parsing_rule_data)
 
         captured = capsys.readouterr()
-        parsing_rule_result = res[0][0]['parsing_rule_id']
+        parsing_rule_result = res[0][0]['parsing-rule']
 
         assert len(res) == 2
         assert 'name' in parsing_rule_result.keys()
         assert 'file_path' in parsing_rule_result.keys()
         assert 'pack' in parsing_rule_result.keys()
 
-        assert parsing_rule_result['name'] == parsing_rule._tmp_path.parts[-1].split('.')[0]
-        assert parsing_rule_result['file_path'] == parsing_rule.path
+        assert parsing_rule_result['name'] == 'Parsing Rule'
+        assert parsing_rule_result['file_path'] == parsing_rule.yml.path
         assert parsing_rule_result['pack'] == pack.name
 
-        assert f'adding {parsing_rule._tmp_path} to id_set' in captured.out
+        assert f'adding {parsing_rule.yml.path} to id_set' in captured.out
 
 
 class TestModelingRules:
@@ -2823,23 +2823,23 @@ class TestModelingRules:
             - Verify result as expeted.
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        modeling_rule = pack.create_modeling_rule("modeling_rule_name", {"id": "modeling_rule_id", "rules": "", "name": "modeling_rule_name"})
-        res = process_general_items(modeling_rule.path, {pack.name: {}},
+        modeling_rule = pack.create_modeling_rule("modeling_rule_name")
+        res = process_general_items(modeling_rule.yml.path, {pack.name: {}},
                                     MarketplaceVersions.MarketplaceV2.value, True, (FileType.MODELING_RULE,), get_modeling_rule_data)
 
         captured = capsys.readouterr()
-        modeling_rule_result = res[0][0]['modeling_rule_id']
+        modeling_rule_result = res[0][0]['modeling-rule']
 
         assert len(res) == 2
         assert 'name' in modeling_rule_result.keys()
         assert 'file_path' in modeling_rule_result.keys()
         assert 'pack' in modeling_rule_result.keys()
 
-        assert modeling_rule_result['name'] == modeling_rule._tmp_path.parts[-1].split('.')[0]
-        assert modeling_rule_result['file_path'] == modeling_rule.path
+        assert modeling_rule_result['name'] == 'Modeling Rule'
+        assert modeling_rule_result['file_path'] == modeling_rule.yml.path
         assert modeling_rule_result['pack'] == pack.name
 
-        assert f'adding {modeling_rule._tmp_path} to id_set' in captured.out
+        assert f'adding {modeling_rule.yml.path} to id_set' in captured.out
 
 
 class TestCorrelationRules:

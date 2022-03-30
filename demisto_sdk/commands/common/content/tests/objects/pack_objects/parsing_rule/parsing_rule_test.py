@@ -8,7 +8,7 @@ def get_parsing_rule(pack, name):
     return pack.create_parsing_rule(name)
 
 
-class TestNotUnifiedParsingRule:
+class TestParsingRule:
     def test_objects_factory(self, pack):
         parsing_rule = get_parsing_rule(pack, 'parsing_rule_name')
         obj = path_to_pack_object(parsing_rule.yml._tmp_path)

@@ -6,6 +6,9 @@ from typing import Dict, List
 
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
 NOT_TEST = '(?!Test)'
+
+# NAMES OF ENTITY DIRECTORIES
+
 INTEGRATIONS_DIR = 'Integrations'
 SCRIPTS_DIR = 'Scripts'
 PLAYBOOKS_DIR = 'Playbooks'
@@ -36,10 +39,13 @@ PRE_PROCESS_RULES_DIR = 'PreProcessRules'
 LISTS_DIR = 'Lists'
 PARSING_RULES_DIR = 'ParsingRules'
 MODELING_RULES_DIR = 'ModelingRules'
+SAMPLES_DIR = 'Samples'
 CORRELATION_RULES_DIR = 'CorrelationRules'
 XSIAM_DASHBOARDS_DIR = 'XSIAMDashboards'
 XSIAM_REPORTS_DIR = 'XSIAMReports'
 TRIGGER_DIR = 'Triggers'
+
+# NAMES OF ENTITIES
 
 SCRIPT = 'script'
 AUTOMATION = 'automation'
@@ -589,6 +595,8 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
 
 INTEGRATION_PREFIX = 'integration'
 SCRIPT_PREFIX = 'script'
+PARSING_RULE_PREFIX = 'parsingrule'
+MODELING_RULE_PREFIX = 'modelingrule'
 
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
@@ -1032,7 +1040,9 @@ DEF_DOCKER_PWSH = 'demisto/powershell:6.2.3.5563'
 
 DIR_TO_PREFIX = {
     'Integrations': INTEGRATION_PREFIX,
-    'Scripts': SCRIPT_PREFIX
+    'Scripts': SCRIPT_PREFIX,
+    'ModelingRules': MODELING_RULE_PREFIX,
+    'ParsingRules': PARSING_RULE_PREFIX,
 }
 
 ENTITY_NAME_SEPARATORS = [' ', '_', '-']

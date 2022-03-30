@@ -48,6 +48,16 @@ class YAMLContentUnifiedObject(YAMLContentObject):
         return next(self._path.parent.glob(patterns=patterns), None)
 
     @property
+    def rules_path(self) -> Optional[Path]:
+        """YAML related code path.
+
+        Returns:
+            Code path or None if code file not found.
+        """
+        patterns = [f"{self.path.stem}.@(xif)"]
+        return next(self._path.parent.glob(patterns=patterns, flags=EXTMATCH), None)
+
+    @property
     def script(self) -> dict:
         """Script item in object dict:
             1. Script - Loacted under main keys.
@@ -90,6 +100,9 @@ class YAMLContentUnifiedObject(YAMLContentObject):
         Returns:
             bool: True if unified else False.
         """
+        if self._content_type in [FileType.PARSING_RULE, FileType.MODELING_RULE]:
+            return self.rules_path is None
+
         return self.code_path is None
 
     def _unify(self, dest_dir: Path) -> List[Path]:

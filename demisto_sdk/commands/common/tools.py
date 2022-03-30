@@ -1209,7 +1209,7 @@ def find_type(
             return FileType.PLAYBOOK
 
         if 'rules' in _dict:
-            if PARSING_RULES_DIR in Path(path).parts:
+            if 'samples' in _dict and PARSING_RULES_DIR in Path(path).parts:
                 return FileType.PARSING_RULE
 
             if MODELING_RULES_DIR in Path(path).parts:

@@ -13,9 +13,8 @@ from TestSuite.file import File
 from TestSuite.integration import Integration
 from TestSuite.job import Job
 from TestSuite.json_based import JSONBased
-from TestSuite.modeling_rule import ModelingRule
-from TestSuite.parsing_rule import ParsingRule
 from TestSuite.playbook import Playbook
+from TestSuite.rule import Rule
 from TestSuite.script import Script
 from TestSuite.secrets import Secrets
 from TestSuite.test_tools import suite_join_path
@@ -72,8 +71,8 @@ class Pack:
         self.release_notes: List[TextBased] = list()
         self.release_notes_config: List[JSONBased] = list()
         self.jobs: List[Job] = list()
-        self.parsing_rules: List[YAML] = list()
-        self.modeling_rules: List[YAML] = list()
+        self.parsing_rules: List[Rule] = list()
+        self.modeling_rules: List[Rule] = list()
         self.correlation_rules: List[YAML] = list()
         self.xsiam_dashboards: List[JSONBased] = list()
         self.xsiam_reports: List[JSONBased] = list()
@@ -535,15 +534,70 @@ class Pack:
         self.contributors = contributors
         return contributors
 
-    def create_parsing_rule(self, name, content: dict = {}) -> ParsingRule:
-        parsing_rule = ParsingRule(name, self._parsing_rules_path, self.repo_path, content)
-        self.parsing_rules.append(parsing_rule)
-        return parsing_rule
+    def create_parsing_rule(
+        self,
+        name: Optional[str] = None,
+        yml: Optional[dict] = None,
+        rules: Optional[str] = None,
+        samples: Optional[list] = None,
+    ) -> Rule:
+        if not name:
+            name = f'parsingrule_{len(self.parsing_rules)}'
+        if not yml:
+            yml = {
+                'id': 'parsing-rule',
+                'name': 'Parsing Rule',
+                'fromversion': 3.3,
+                'tags': 'tag',
+                'rules': '',
+                'samples': '',
+            }
+        if not rules:
+            rules = '[INGEST:vendor="vendor", product="product", target_dataset="dataset", no_hit=drop]'
 
-    def create_modeling_rule(self, name, content: dict = {}) -> ModelingRule:
-        modeling_rule = ModelingRule(name, self._modeling_rules_path, self.repo_path, content)
-        self.modeling_rules.append(modeling_rule)
-        return modeling_rule
+        rule = Rule(
+            tmpdir=self._parsing_rules_path,
+            name=name,
+            repo=self._repo,
+        )
+        rule.build(
+            yml=yml,
+            rules=rules,
+            samples=samples,
+        )
+        self.parsing_rules.append(rule)
+        return rule
+
+    def create_modeling_rule(
+        self,
+        name: Optional[str] = None,
+        yml: Optional[dict] = None,
+        rules: Optional[str] = None,
+    ) -> Rule:
+        if not name:
+            name = f'modelingrule_{len(self.modeling_rules)}'
+        if not yml:
+            yml = {
+                'id': 'modeling-rule',
+                'name': 'Modeling Rule',
+                'fromversion': 3.3,
+                'tags': 'tag',
+                'rules': '',
+            }
+        if not rules:
+            rules = '[MODEL: dataset="dataset", model="Model", version=0.1]'
+
+        rule = Rule(
+            tmpdir=self._modeling_rules_path,
+            name=name,
+            repo=self._repo,
+        )
+        rule.build(
+            yml=yml,
+            rules=rules,
+        )
+        self.modeling_rules.append(rule)
+        return rule
 
     def create_correlation_rule(self, name, content: dict = {}) -> CorrelationRule:
         correlation_rule = CorrelationRule(name, self._correlation_rules_path, self.repo_path, content)

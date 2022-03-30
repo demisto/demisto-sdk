@@ -10,6 +10,7 @@
 * Improved the logging in **test-content** for helping catch typos in external playbook configuration.
 * Added support for new XSIAM entities in *create-id-set* command.
 * Added support for new XSIAM entities in **create-content-artifacts** command.
+* Added support for Parsing/Modeling Rule content item in the **unify** command.
 
 # 1.6.2
 * Added dependency validation support for core marketplacev2 packs.

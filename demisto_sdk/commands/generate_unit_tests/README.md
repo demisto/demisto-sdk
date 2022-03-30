@@ -44,7 +44,7 @@ Also supports generating unit tests for specific commands.
 
 
 **Test Data Files**   
-For the unit tests to work as planned test_data folder must include the following:   
+For the unit tests to run successfully, a `test_data` folder must exist and include:
 
 * ***outputs*** folder - contains a JSON file for each HTTP request with a mock response (the file name should be the name of the client function making the HTTP call).
 * ***outputs command files*** - if the `--use_demisto` flag was not given, outputs files must be provided for each command. File names should have the same name of the command. See examples files below to view the desired structure for the file.

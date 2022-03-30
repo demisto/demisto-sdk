@@ -50,7 +50,6 @@ class ArgsBuilder:
         values = []
         for arg in self.args_list:
             value = input_arg.get(arg)
-            test = '"test"'.replace('"', '')
             if value is not None:
                 value.replace('"', '')
             keys.append(ast_mod.Constant(value=arg))
@@ -183,7 +182,7 @@ class TestCase:
                                            extract_outputs_from_command_run(self.examples_dict.get('outputs'), prefix)})
             with Path(self.directory_path, 'outputs', f'{str(self.func.name)}.json').open(mode='w') as f:
                 logger.debug(f'Creating mock command results file for {str(self.func.name)}')
-                f.write(json.dumps(self.examples_dict))
+                f.write(json.dumps(self.examples_dict, indent=4))
 
     def get_context_prefix(self):
         """

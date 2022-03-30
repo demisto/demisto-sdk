@@ -216,7 +216,7 @@ def run_generate_unit_tests(**kwargs):
             'To use the generate_unit_tests version of this command please include an `input` argument')
         return 1
 
-    if input_path and not input_path_obj.is_file():
+    if not input_path_obj.is_file():
         print_error(F'Input file {input_path} was not found.')
         return 1
 
@@ -227,7 +227,7 @@ def run_generate_unit_tests(**kwargs):
     module_name = input_path_obj.name
 
     dirname = input_path_obj.parent
-    test_data_path = Path(dirname, 'test_data')
+    test_data_path = dirname / 'test_data'
     if not test_data_path.is_dir():
         print_error(
             'There is no test_data folder in the working directory, please insert test data directory path.')
@@ -237,7 +237,7 @@ def run_generate_unit_tests(**kwargs):
         output_dir = Path(input_path).parent
 
     if not commands_examples_path:
-        commands_examples_path = Path(input_path_obj.parent, 'command_examples')
+        commands_examples_path = input_path_obj.parent / 'command_examples'
 
     # Check the directory exists and if not, try to create it
     output_dir_path_obj = Path(output_dir)

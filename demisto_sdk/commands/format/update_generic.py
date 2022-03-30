@@ -234,25 +234,6 @@ class BaseUpdate:
             click.secho('Skipping update of fromVersion', fg='yellow')
             return False
 
-    def should_update_fromversion(self, max_version, current_fromversion_value, file_type):
-        """
-        Check if should change the fromversion key.
-        Args:
-            max_version: the maximum version between general, default and current.
-            current_fromversion_value: current from_version if exists in the file.
-            file_type: the file type.
-        Returns:
-            int.
-            1 if its an old file type.
-            0 if shouldn't change the fromversion.
-            -1  if the max version different from the maximum fromversion.
-        """
-        if file_type and file_type in OLD_FILE_TYPES:
-            return 1
-        if max_version != current_fromversion_value:
-            return -1
-        return 0
-
     def set_default_from_version(self, default_from_version: str, current_fromversion_value: str, file_type: str):
         """
         Sets the default fromVersion key in the file:
@@ -266,12 +247,8 @@ class BaseUpdate:
             file_type: the file type.
         """
         max_version = get_max_version([GENERAL_DEFAULT_FROMVERSION, default_from_version, current_fromversion_value])
-        should_update = self.should_update_fromversion(max_version, current_fromversion_value, file_type)
-        if should_update and (self.assume_yes or self.ask_user()):
-            if should_update == 1:
-                self.data[self.from_version_key] = VERSION_5_5_0
-            else:
-                self.data[self.from_version_key] = max_version
+        if max_version != current_fromversion_value and (self.assume_yes or self.ask_user()):
+            self.data[self.from_version_key] = max_version
 
     def set_fromVersion(self, default_from_version='', file_type: str = ''):
         """Sets fromVersion key in the file.
@@ -288,6 +265,8 @@ class BaseUpdate:
         elif self.old_file.get(self.from_version_key):
             if not current_fromversion_value:
                 self.data[self.from_version_key] = self.old_file.get(self.from_version_key)
+        elif file_type and file_type in OLD_FILE_TYPES:
+            self.data[self.from_version_key] = VERSION_5_5_0
         else:
             self.set_default_from_version(default_from_version, current_fromversion_value, file_type)
 

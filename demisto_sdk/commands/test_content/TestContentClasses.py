@@ -421,6 +421,8 @@ class TestPlaybook:
 
             time.sleep(10)
 
+        self.build_context.logging_module.info(f'Created incident and found it: {incidents}')
+        self.build_context.logging_module.info(f'Returning {incidents.data[0]=}')
         return incidents.data[0]
 
     def delete_incident(self, client: DefaultApi, incident_id: str) -> bool:
@@ -1508,7 +1510,7 @@ class TestContext:
             incident = self.playbook.create_incident(self.client)
             if not incident:
                 return ''
-
+            self.build_context.logging_module.info(f'Got here: {incident=}')
             self.incident_id = incident.investigation_id
             investigation_id = self.incident_id
             self.build_context.logging_module.info(f'Got here: {investigation_id=}, {incident.investigation_id=},'

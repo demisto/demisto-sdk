@@ -175,12 +175,6 @@ class Pack:
         self._jobs_path = self._pack_path / 'Jobs'
         self._jobs_path.mkdir()
 
-        self._parsing_rules_path = self._pack_path / PARSING_RULES_DIR
-        self._parsing_rules_path.mkdir()
-
-        self._modeling_rules_path = self._pack_path / MODELING_RULES_DIR
-        self._modeling_rules_path.mkdir()
-
         self.contributors: Optional[TextBased] = None
 
     def create_integration(

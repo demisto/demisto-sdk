@@ -1392,6 +1392,7 @@ class TestContext:
                 self=self.client,
                 method='GET',
                 path=f'/inv-playbook/{self.incident_id}')
+            self.build_context.logging_module.info(f'Got here 2: {investigation_playbook_raw=}')
             investigation_playbook = ast.literal_eval(investigation_playbook_raw[0])
         except ApiException:
             self.build_context.logging_module.exception(
@@ -1417,11 +1418,13 @@ class TestContext:
 
     def _print_investigation_error(self):
         try:
+            self.build_context.logging_module.info(f'Got here before: {urllib.parse.quote(self.incident_id)=}')
             res = demisto_client.generic_request_func(
                 self=self.client,
                 method='POST',
                 path='/investigation/' + urllib.parse.quote(self.incident_id),  # type: ignore
                 body={"pageSize": 1000})
+            self.build_context.logging_module.info(f'Got here too: {res=}')
             if res and int(res[1]) == 200:
                 resp_json = ast.literal_eval(res[0])
                 entries = resp_json['entries']
@@ -1508,12 +1511,16 @@ class TestContext:
 
             self.incident_id = incident.investigation_id
             investigation_id = self.incident_id
+            self.build_context.logging_module.info(f'Got here: {investigation_id=}, {incident.investigation_id=},'
+                                                   f' {self.incident_id=}.')
             if investigation_id is None:
                 self.build_context.logging_module.error(f'Failed to get investigation id of incident: {incident}')
                 return ''
+            self.build_context.logging_module.info(f'Found incident with incident ID: {investigation_id}.')
 
             server_url = self.client.api_client.configuration.host
-            self.build_context.logging_module.info(f'Investigation URL: {server_url}/#/WorkPlan/{investigation_id}')
+            if not IS_XSIAM:
+                self.build_context.logging_module.info(f'Investigation URL: {server_url}/#/WorkPlan/{investigation_id}')
             playbook_state = self._poll_for_playbook_state()
 
             if self.playbook.configuration.context_print_dt:

@@ -439,7 +439,6 @@ class TestPlaybook:
                 'filter': {},
                 'all': False
             }
-            self.build_context.logging_module.info(f'Trying to delete with body: {body}')
             res = demisto_client.generic_request_func(self=client, method='POST',
                                                       path='/incident/batchDelete', body=body)
         except ApiException:
@@ -1392,7 +1391,6 @@ class TestContext:
                 self=self.client,
                 method='GET',
                 path=f'/inv-playbook/{self.incident_id}')
-            self.build_context.logging_module.info(f'Got here 2: {investigation_playbook_raw=}')
             investigation_playbook = ast.literal_eval(investigation_playbook_raw[0])
         except ApiException:
             self.build_context.logging_module.exception(
@@ -1418,13 +1416,11 @@ class TestContext:
 
     def _print_investigation_error(self):
         try:
-            self.build_context.logging_module.info(f'Got here before: {urllib.parse.quote(self.incident_id)=}')
             res = demisto_client.generic_request_func(
                 self=self.client,
                 method='POST',
                 path='/investigation/' + urllib.parse.quote(self.incident_id),  # type: ignore
                 body={"pageSize": 1000})
-            self.build_context.logging_module.info(f'Got here too: {res=}')
             if res and int(res[1]) == 200:
                 resp_json = ast.literal_eval(res[0])
                 entries = resp_json['entries']
@@ -1508,13 +1504,13 @@ class TestContext:
             incident = self.playbook.create_incident(self.client)
             if not incident:
                 return ''
+
             self.incident_id = incident.id if IS_XSIAM else incident.investigation_id
             investigation_id = self.incident_id
-            self.build_context.logging_module.info(f'Got here: {investigation_id=}, {incident.investigation_id=},'
-                                                   f' {self.incident_id=}.')
             if investigation_id is None:
                 self.build_context.logging_module.error(f'Failed to get investigation id of incident: {incident}')
                 return ''
+
             self.build_context.logging_module.info(f'Found incident with incident ID: {investigation_id}.')
 
             server_url = self.client.api_client.configuration.host
@@ -1713,9 +1709,11 @@ class TestContext:
         # We don't want to run docker tests on redhat instance because it does not use docker and it does not support
         # the threshold configurations.
         if playbook_state == PB_Status.COMPLETED and self.server_context.is_instance_using_docker:
-            docker_test_results = self._run_docker_threshold_test()
-            if not docker_test_results:
-                playbook_state = PB_Status.FAILED_DOCKER_TEST
+            #  todo: cant run this cmd on xsiam machine
+            if not IS_XSIAM:
+                docker_test_results = self._run_docker_threshold_test()
+                if not docker_test_results:
+                    playbook_state = PB_Status.FAILED_DOCKER_TEST
             self._clean_incident_if_successful(playbook_state)
         return playbook_state
 
@@ -2061,13 +2059,14 @@ class ServerContext:
         """
         # we running XSIAM without proxy. This code wont be executed on xsiam servers
         if not IS_XSIAM:
-            self.proxy.configure_proxy_in_demisto(proxy=self.proxy.ami.internal_ip + ':' + self.proxy.PROXY_PORT,
-                                                  username=self.build_context.secret_conf.server_username,
-                                                  password=self.build_context.secret_conf.server_password,
-                                                  server=self.server_url)
+            self.proxy.configure_proxy_in_demisto(  # type: ignore[union-attr]
+                proxy=self.proxy.ami.internal_ip + ':' + self.proxy.PROXY_PORT,  # type: ignore[union-attr]
+                username=self.build_context.secret_conf.server_username,
+                password=self.build_context.secret_conf.server_password,
+                server=self.server_url)
         self._execute_tests(self.build_context.mockable_tests_to_run)
         if not IS_XSIAM:
-            self.proxy.configure_proxy_in_demisto(proxy='',
+            self.proxy.configure_proxy_in_demisto(proxy='',  # type: ignore[union-attr]
                                                   username=self.build_context.secret_conf.server_username,
                                                   password=self.build_context.secret_conf.server_password,
                                                   server=self.server_url)
@@ -2105,8 +2104,6 @@ class ServerContext:
             self.client.api_client.pool.close()
             self.client.api_client.pool.terminate()
             del self.client
-        self.build_context.logging_module.info('Starting creating client:')
-        self.build_context.logging_module.info(f'{self.server_url=}, {self.build_context.auth_id=}')
         self.client = demisto_client.configure(base_url=self.server_url,
                                                api_key=self.build_context.api_key,
                                                auth_id=self.build_context.auth_id,
@@ -2140,8 +2137,8 @@ class ServerContext:
                 self.build_context.tests_data_keeper.add_proxy_related_test_data(self.proxy)
 
             if self.build_context.isAMI and not IS_XSIAM:
-                if self.proxy.should_update_mock_repo:
-                    self.proxy.push_mock_files()
+                if self.proxy.should_update_mock_repo:  # type: ignore[union-attr]
+                    self.proxy.push_mock_files()    # type: ignore[union-attr]
             self.build_context.logging_module.debug(f'Tests executed on server {self.server_ip}:\n'
                                                     f'{pformat(self.executed_tests)}')
         except Exception:

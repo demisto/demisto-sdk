@@ -8,7 +8,7 @@ astroid = "*"
 autopep8 = "*"
 bandit = "*"
 mypy = "*"
-pylint = "==2.12.2"
+pylint = "==2.12.2"#unfreeze issue https://github.com/demisto/etc/issues/47688
 vulture = "*"
 flake8 = "*"
 bs4 = "*"
@@ -56,11 +56,13 @@ setuptools = "*"
 markupsafe = "==2.0.1"
 imagesize = "*"
 cryptography = "*"
+dateparser = "*"
+
 # linter-related
 typed-ast = "*"
 types-dateparser="*"
 types-pyyaml="*"
-types-requests="==2.26.3"# This is an open issue https://github.com/python/typeshed/issues/6893
+types-requests="==2.26.3"# unfreeze issue https://github.com/demisto/etc/issues/47690
 types-pytz="*"
 types-python-dateutil="*"
 types-pyvmomi="*"
@@ -72,7 +74,6 @@ types-chardet="*"
 types-six="*"
 types-PyMySQL="*"
 types-protobuf="*"
-dateparser = "*"
 typing-extensions="*"
 
 

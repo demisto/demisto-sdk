@@ -65,7 +65,7 @@ class TestContainerRunner:
                 'cd bla/bla',
                 {
                     'Message':
-                        'OCI runtime create failed: container_linux.go:367: starting container process caused:'
+                        'OCI runtime create failed: container_linux.go:380: starting container process caused:'
                         ' exec: "cd": executable file not found in $PATH: unknown'
                 }
             )

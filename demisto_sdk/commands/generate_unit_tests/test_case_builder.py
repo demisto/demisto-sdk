@@ -180,9 +180,8 @@ class TestCase:
         if prefix is not None:
             self.examples_dict.update({'outputs':
                                            extract_outputs_from_command_run(self.examples_dict.get('outputs'), prefix)})
-            with Path(self.directory_path, 'outputs', f'{str(self.func.name)}.json').open(mode='w') as f:
-                logger.debug(f'Creating mock command results file for {str(self.func.name)}')
-                f.write(json.dumps(self.examples_dict, indent=4))
+            logger.debug(f'Creating mock command results file for {str(self.func.name)}')
+            Path(self.directory_path, 'outputs', f'{str(self.func.name)}.json').write_text(json.dumps(self.examples_dict))
 
     def get_context_prefix(self):
         """

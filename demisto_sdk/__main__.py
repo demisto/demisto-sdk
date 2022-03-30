@@ -131,8 +131,7 @@ def main(config, version, release_notes):
             __version__ = get_distribution('demisto-sdk').version
         except DistributionNotFound:
             __version__ = 'dev'
-            print_warning(
-                'Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.')
+            print_warning('Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.')
         else:
             last_release = get_last_remote_release_version()
             print_warning(f'You are using demisto-sdk {__version__}.')
@@ -2065,7 +2064,7 @@ def convert(config, **kwargs):
     "-c", "--commands", help="Specific commands name to generate unit test for (e.g. xdr-get-incidents)",
     required=False)
 @click.option(
-    '-o', '--output_dir', help='Directory to store the output in (default is current working directory)',
+    '-o', '--output_dir', help='Directory to store the output in (default is the input integration directory)',
     required=False)
 @click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
               type=click.IntRange(0, 3, clamp=True), default=1, show_default=True)
@@ -2077,12 +2076,12 @@ def convert(config, **kwargs):
 @click.option("-lp", "--log-path", help="Path to store all levels of logs",
               type=click.Path(resolve_path=True))
 @click.option(
-    "--insecure",
-    help="Skip certificate validation", is_flag=True
-)
-@click.option(
     '-d', '--use_demisto',
     help="Run commands at Demisto automatically.", is_flag=True
+)
+@click.option(
+    "--insecure",
+    help="Skip certificate validation", is_flag=True
 )
 @click.option(
     "-e", "--examples",
@@ -2090,7 +2089,7 @@ def convert(config, **kwargs):
          " Each command should be in a separate line.")
 @click.option(
     "-a", "--append",
-    help="Append generated test file to the existing.", is_flag=True)
+    help="Append generated test file to the existing <integration_name>_test.py. Else, overwriting existing UT", is_flag=True)
 def generate_unit_tests(**kwargs):
     """
     This command is used to generate unit tests automatically from an  integration python code.

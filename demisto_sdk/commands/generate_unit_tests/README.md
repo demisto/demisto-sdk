@@ -28,7 +28,7 @@ Also supports generating unit tests for specific commands.
   If passed, the XSOAR instance configured in the `DEMISTO_BASE_URL` and `DEMISTO_API_KEY` environment variables will run the Integration commands and generate outputs which will be used as mock outputs. **If this flag is not passed, you will need to create the mocks manually, at the outputs directory, with the name of the command.**
 * *--insecure*
   Skip certificate validation when authorizing XSOAR.
-* *-a, --append* Append generated test file to the existing (only if already exists).
+* *-a, --append* Append the generated unit tests to an existing file (only if already exists).
 
 
 **Notes**
@@ -41,6 +41,7 @@ Also supports generating unit tests for specific commands.
 * Every command method must have the `client` parameter which must be typed (`client: Client`, where `Client` extends `BaseClient`).
 * Each HTTP request made during the flow of the command must be done using the `_http_request()` method. (`method` must be passed).
 * Every command must return a `CommandResults` object.
+* Client class `__init__` function arguments have to include types (None will be passed otherwise).
 
 
 **Test Data Files**   

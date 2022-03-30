@@ -4,12 +4,14 @@ import os
 import pytest
 from pathlib import Path
 from ast import parse
-from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import run_generate_unit_tests
+from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import run_generate_unit_tests, UnitTestsGenerator
 
 ARGS = [({'use_demisto': False}, 'malwarebazaar_all.txt'),
-        ({'use_demisto': False, 'commands': 'malwarebazaar-comment-add'}, 'malwarebazaar_specific_command.txt')]
+        ({'use_demisto': False, 'commands': 'malwarebazaar-comment-add'}, 'malwarebazaar_specific_command.txt'),
+        ({'use_demisto': True}, 'malwarebazaar_all.txt')]
 
+
+EXAMPLES = {'readable_output': "test_md_example", 'outputs': {"MalwareBazaar": {"MalwarebazaarCommentAdd": {"comment": "test"}}}}
 
 def compare_ast(node1, node2):
     """
@@ -31,7 +33,7 @@ def compare_ast(node1, node2):
 
 
 class TestUnitTestsGenerator:
-    test_files_path = Path(git_path(), 'demisto_sdk', 'commands', 'generate_unit_tests', 'tests', 'test_files')
+    test_files_path = Path(Path.cwd(), 'test_files')
     input_path = None
     output_dir = None
 
@@ -40,9 +42,8 @@ class TestUnitTestsGenerator:
         cls.input_path = str(Path(cls.test_files_path, 'inputs', 'malwarebazaar.py'))
         cls.output_dir = str(Path(cls.test_files_path, 'outputs'))
 
-
-    @pytest.mark.parametrize('args, desired', ARGS)
-    def test_tests_generated_successfully(self, args, desired):
+    @pytest.mark.parametrize('args, expected_result', ARGS)
+    def test_tests_generated_successfully(self, mocker, args, expected_result):
         """
         Given
         - input arguments for the command
@@ -59,14 +60,15 @@ class TestUnitTestsGenerator:
                      'output_dir': self.output_dir,
                      'test_data_path': 'demisto_sdk/commands/generate_unit_tests/tests/test_files/outputs'})
 
+        mocker.patch.object(UnitTestsGenerator, "execute_commands_into_dict", return_value=(EXAMPLES, []))
+
         output_path = Path(self.output_dir, 'malwarebazaar_test.py')
-        desired = Path(self.output_dir, desired)
+        desired = Path(self.output_dir, expected_result)
 
         if output_path.exists():
             os.remove(output_path)
 
         run_generate_unit_tests(**args)
-
 
         with open(output_path, 'r') as f:
             output_source = f.read()
@@ -75,5 +77,3 @@ class TestUnitTestsGenerator:
             output_desired = f.read()
 
         assert compare_ast(parse(output_source), parse(output_desired))
-
-

@@ -30,13 +30,14 @@ class UnitTestsGenerator:
                  module_name: str = '',
                  command_examples_input: str = '',
                  insecure: bool = False,
-                 use_demisto: bool = False):
+                 use_demisto: bool = False,
+                 append: bool = False):
         self.input_path = input_path
         self.test_data_path = test_data_path
         self.commands = commands
         self.output_dir = output_dir
         self.module_name = module_name
-        self.to_concat = False
+        self.to_concat = append
         self.command_examples_input = command_examples_input
         self.commands_to_generate = {}
         self.errors = []
@@ -52,11 +53,9 @@ class UnitTestsGenerator:
         """
         Returns the source code for which the unit tests will be generated.
         """
-        if Path(self.input_path).is_file():
-            with open(self.input_path, 'r') as input_file:
-                return input_file.read()
-        else:
-            print_error('failed to open input file')
+
+        with open(self.input_path, 'r') as input_file:
+            return input_file.read()
 
     def decision_maker(self, command_name):
         """
@@ -68,7 +67,7 @@ class UnitTestsGenerator:
     def command_name_transformer(command_name):
         return command_name.strip('!').replace('-', '_') + '_command'
 
-    def build_example_dict(self):
+    def execute_commands_into_dict(self):
         """
         gets an array of command examples, run them one by one and return a map of
             {base command -> {readable_outputs:markdown, outputs:context_outputs}}
@@ -78,8 +77,6 @@ class UnitTestsGenerator:
         errors = []  # type: list
         for example in self.command_examples:
             name, md_example, context_example, cmd_errors = execute_command(example, self.insecure)
-            if 'playbookQuery' in context_example:
-                del context_example['playbookQuery']
 
             context_example = json.dumps(context_example)
             errors.extend(cmd_errors)
@@ -114,17 +111,27 @@ class UnitTestsGenerator:
         Runs commands using Demisto instance
         """
         global logger
-        self.example_dict, build_errors = self.build_example_dict()
+        self.example_dict, build_errors = self.execute_commands_into_dict()
         if build_errors:
             logger.error('Found errors while executing command using demisto:')
             logger.error('\n'.join(build_errors))
 
 
 class CustomContactSolver(ContractSolver):
-    def __init__(self, cfg, as_tree, file_name):
-        super().__init__(cfg, as_tree, file_name)
+    def __init__(self, cfg, as_tree):
+        """
+            Args: cfg: klara cfg object parsed from input file
+                  as_tree: ast tree representing input code.
+        """
+        super().__init__(cfg, as_tree, '')
 
     def solve_function(self, func: nodes.FunctionDef, client_ast, generator) -> TestCase:
+        """
+            Args: func: ast_node of the function analayzed.
+                  client_ast: ast sub-tree of the client class.
+                  generator: UnitTestsGenerator object.
+            Returns: TestCase object to parse into unit test.
+        """
         with MANAGER.initialize_z3_var_from_func(func):
             self.context.no_cache = True
             self.pre_conditions(func)
@@ -168,6 +175,10 @@ class CustomContactSolver(ContractSolver):
             return test_case
 
     def solve(self, generator: UnitTestsGenerator) -> TestModule:
+        """
+            Args: generator: UnitTestsGenerator object.
+            Returns: TestModule object to parse into tests file.
+        """
         global logger
         test_module = TestModule(module_name=generator.module_name, tree=self.as_tree, to_concat=generator.to_concat)
         self.visit(self.as_tree)
@@ -229,9 +240,9 @@ def run_generate_unit_tests(**kwargs):
     dirname = input_path_obj.parent
     test_data_path = dirname / 'test_data'
     if not test_data_path.is_dir():
-        print_error(
-            'There is no test_data folder in the working directory, please insert test data directory path.')
-        return 1
+        test_data_path.mkdir(parents=True, exist_ok=True)
+        outputs_path = test_data_path / 'outputs'
+        outputs_path.mkdir(parents=True, exist_ok=True)
 
     if not output_dir:
         output_dir = Path(input_path).parent
@@ -243,7 +254,7 @@ def run_generate_unit_tests(**kwargs):
     output_dir_path_obj = Path(output_dir)
     if not output_dir_path_obj.exists():
         try:
-            os.mkdir(output_dir)
+            output_dir_path_obj.mkdir(parents=True, exist_ok=True)
         except Exception as err:
             print_error(f'Error creating directory {output_dir} - {err}')
             return 1
@@ -252,6 +263,8 @@ def run_generate_unit_tests(**kwargs):
         return 1
 
     file_name = module_name.split('.')[0]
+    output_file = Path(output_dir, f"{file_name}_test.py")
+    append = append and output_file.exists()
     generator = UnitTestsGenerator(input_path,
                                    test_data_path,
                                    commands,
@@ -259,20 +272,21 @@ def run_generate_unit_tests(**kwargs):
                                    file_name,
                                    commands_examples_path,
                                    insecure,
-                                   use_demisto)
+                                   use_demisto,
+                                   append)
 
     logger.debug(f"Created generator object with the following params: input - {input_path},"
                  f" test data path - {test_data_path},"
                  f" commands -  {commands},"
                  f" output_dir - {output_dir},"
-                 f" commands_examples - {commands_examples_path}"
-                 f" insecure - {insecure}")
+                 f" commands_examples - {commands_examples_path},"
+                 f" insecure - {insecure},"
+                 f" use_demisto - {use_demisto},"
+                 f" append - {append}")
 
     source = generator.get_input_file()
     if source:
         try:
-            output_file = Path(output_dir, f"{file_name}_test.py")
-            generator.to_concat = True if append and output_file.exists() else False
             write_mode = "a" if generator.to_concat else "w"
             options = autopep8.parse_args(['--max-line-length', '100000', '-'])
             output_test = autopep8.fix_code(run(source, generator), options)
@@ -299,7 +313,7 @@ def run(source, generator):
     tree = MANAGER.build_tree(ast_str=source)
     logger.debug("Finished parsing code into ast.")
     cfg = MANAGER.build_cfg(tree)
-    cs = CustomContactSolver(cfg, tree, "test")
+    cs = CustomContactSolver(cfg, tree)
     logger.info("Running solver for test generating.")
     module = cs.solve(generator)
     logger.info("Finished generating testing asts, parsing to source code.")

@@ -57,7 +57,7 @@ setuptools = "*"
 markupsafe = "==2.0.1"
 imagesize = "*"
 ordered-set = "*"
-klara = "*"
+klara = "==0.6.3"
 
 [dev-packages]
 mitmproxy = "==5.1.0"

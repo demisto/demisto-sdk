@@ -1,7 +1,7 @@
 import os
 import re
 from copy import deepcopy
-from typing import Any, Dict, Optional, Set, Union
+from typing import Any, Dict, Set, Union
 
 import click
 import dictdiffer
@@ -234,8 +234,28 @@ class BaseUpdate:
             click.secho('Skipping update of fromVersion', fg='yellow')
             return False
 
-    def set_default_from_version(self, default_from_version: str, current_fromversion_value: Optional[str] = None, file_type: Optional[str] = None):
-        """Sets the default fromVersion key in the file:
+    def should_update_fromversion(self, max_version, current_fromversion_value, file_type):
+        """
+        Check if should change the fromversion key.
+        Args:
+            max_version: the maximum version between general, default and current.
+            current_fromversion_value: current from_version if exists in the file.
+            file_type: the file type.
+        Returns:
+            int.
+            1 if its an old file type.
+            0 if shouldn't change the fromversion.
+            -1  if the max version different from the maximum fromversion.
+        """
+        if file_type and file_type in OLD_FILE_TYPES:
+            return 1
+        if max_version != current_fromversion_value:
+            return -1
+        return 0
+
+    def set_default_from_version(self, default_from_version: str, current_fromversion_value: str, file_type: str):
+        """
+        Sets the default fromVersion key in the file:
             In case the user approved it:
                 Set the fromversion to 5.0.0 for old content items.
                 Set/update the fromversion to the input default if supplied.(checks if it is the highest one).
@@ -245,25 +265,21 @@ class BaseUpdate:
             current_fromversion_value: current from_version if exists in the file.
             file_type: the file type.
         """
-        if self.assume_yes or self.ask_user():
-            if file_type and file_type in OLD_FILE_TYPES:
+        max_version = get_max_version([GENERAL_DEFAULT_FROMVERSION, default_from_version, current_fromversion_value])
+        should_update = self.should_update_fromversion(max_version, current_fromversion_value, file_type)
+        if should_update and (self.assume_yes or self.ask_user()):
+            if should_update == 1:
                 self.data[self.from_version_key] = VERSION_5_5_0
-                return
-            elif default_from_version:
-                versions = [default_from_version, GENERAL_DEFAULT_FROMVERSION]
-                if current_fromversion_value:
-                    versions.append(current_fromversion_value)
-                self.data[self.from_version_key] = get_max_version(versions)
             else:
-                self.data[self.from_version_key] = GENERAL_DEFAULT_FROMVERSION
+                self.data[self.from_version_key] = max_version
 
-    def set_fromVersion(self, default_from_version='', file_type: Optional[str] = None):
+    def set_fromVersion(self, default_from_version='', file_type: str = ''):
         """Sets fromVersion key in the file.
         Args:
             default_from_version: default fromVersion specific to the content type.
             file_type: the file type.
         """
-        current_fromversion_value = self.data.get(self.from_version_key)
+        current_fromversion_value = self.data.get(self.from_version_key, '')
         if self.verbose:
             click.echo('Setting fromVersion field')
 

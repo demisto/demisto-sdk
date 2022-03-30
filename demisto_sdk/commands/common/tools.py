@@ -749,7 +749,9 @@ def format_version(version):
         The formatted server version.
     """
     formatted_version = version
-    if len(version.split('.')) == 1:
+    if not version:
+        formatted_version = '0.0.0'
+    elif len(version.split('.')) == 1:
         formatted_version = f'{version}.0.0'
     elif len(version.split('.')) == 2:
         formatted_version = f'{version}.0'

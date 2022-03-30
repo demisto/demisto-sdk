@@ -109,7 +109,7 @@ class BaseUpdateYML(BaseUpdate):
             if not self.data.get('tests', '') and self.old_file.get('tests', ''):
                 self.data['tests'] = self.old_file['tests']
 
-    def update_yml(self, default_from_version: Optional[str] = '', file_type: Optional[str] = None) -> None:
+    def update_yml(self, default_from_version: Optional[str] = '', file_type: str = '') -> None:
         """Manager function for the generic YML updates."""
 
         self.set_fromVersion(default_from_version=default_from_version, file_type=file_type)

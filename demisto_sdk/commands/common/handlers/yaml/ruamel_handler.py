@@ -12,8 +12,7 @@ class RUAMEL_Handler(XSOAR_Handler):
     Use only this wrapper for yaml handling.
     """
 
-    def __init__(self, typ=None, preserve_quotes=True, allow_duplicate_keys=False, width=5000):
-        self._typ = typ
+    def __init__(self, preserve_quotes=True, allow_duplicate_keys=False, width=5000):
         self._preserve_quotes = preserve_quotes
         self._allow_duplicate_keys = allow_duplicate_keys
         self._width = width
@@ -21,7 +20,7 @@ class RUAMEL_Handler(XSOAR_Handler):
     @property
     def yaml(self) -> YAML:
         """Creating an instance of ruamel for each command. Best practice by ruamel"""
-        yaml = YAML(typ=self._typ)
+        yaml = YAML()
         yaml.allow_duplicate_keys = self._allow_duplicate_keys
         yaml.preserve_quotes = self._allow_duplicate_keys
         yaml.width = self._width

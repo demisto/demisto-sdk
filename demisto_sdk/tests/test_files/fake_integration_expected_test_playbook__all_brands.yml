@@ -19,7 +19,7 @@ tasks:
       '#none#':
       - '1'
     separatecontext: false
-    view: '{"position": {"x": 50, "y": 50}}'
+    view: '{"position":{"x":50,"y":50}}'
     note: false
     timertriggers: []
     ignoreworker: false
@@ -43,7 +43,7 @@ tasks:
       all:
         simple: yes
     separatecontext: false
-    view: '{"position": {"x": 50, "y": 200}}'
+    view: '{"position":{"x":50,"y":200}}'
     note: false
     timertriggers: []
     ignoreworker: false
@@ -66,7 +66,7 @@ tasks:
       - '3'
     scriptarguments: {}
     separatecontext: false
-    view: '{"position": {"x": 50, "y": 400}}'
+    view: '{"position":{"x":50,"y":400}}'
     note: false
     timertriggers: []
     ignoreworker: false
@@ -120,7 +120,7 @@ tasks:
             value:
               simple: Zoom.User.type
             iscontext: true
-    view: '{"position": {"x": 50, "y": 600}}'
+    view: '{"position":{"x":50,"y":600}}'
     note: false
     timertriggers: []
     ignoreworker: false
@@ -143,7 +143,7 @@ tasks:
       - '5'
     scriptarguments: {}
     separatecontext: false
-    view: '{"position": {"x": 50, "y": 800}}'
+    view: '{"position":{"x":50,"y":800}}'
     note: false
     timertriggers: []
     ignoreworker: false
@@ -182,7 +182,7 @@ tasks:
             value:
               simple: Zoom.Meeting.start_url
             iscontext: true
-    view: '{"position": {"x": 50, "y": 1000}}'
+    view: '{"position":{"x":50,"y":1000}}'
     note: false
     timertriggers: []
     ignoreworker: false
@@ -205,7 +205,7 @@ tasks:
       - '7'
     scriptarguments: {}
     separatecontext: false
-    view: '{"position": {"x": 50, "y": 1200}}'
+    view: '{"position":{"x":50,"y":1200}}'
     note: false
     timertriggers: []
     ignoreworker: false
@@ -279,7 +279,7 @@ tasks:
             value:
               simple: File.SSDeep
             iscontext: true
-    view: '{"position": {"x": 50, "y": 1400}}'
+    view: '{"position":{"x":50,"y":1400}}'
     note: false
     timertriggers: []
     ignoreworker: false
@@ -302,7 +302,7 @@ tasks:
       - '9'
     scriptarguments: {}
     separatecontext: false
-    view: '{"position": {"x": 50, "y": 1600}}'
+    view: '{"position":{"x":50,"y":1600}}'
     note: false
     timertriggers: []
     ignoreworker: false
@@ -406,7 +406,7 @@ tasks:
             value:
               simple: Zoom.User.group_ids
             iscontext: true
-    view: '{"position": {"x": 50, "y": 1800}}'
+    view: '{"position":{"x":50,"y":1800}}'
     note: false
     timertriggers: []
     ignoreworker: false
@@ -429,7 +429,7 @@ tasks:
       - '11'
     scriptarguments: {}
     separatecontext: false
-    view: '{"position": {"x": 50, "y": 2000}}'
+    view: '{"position":{"x":50,"y":2000}}'
     note: false
     timertriggers: []
     ignoreworker: false
@@ -447,12 +447,11 @@ tasks:
       brand: ''
       description: ''
     separatecontext: false
-    view: '{"position": {"x": 50, "y": 2200}}'
+    view: '{"position":{"x":50,"y":2200}}'
     note: false
     timertriggers: []
     ignoreworker: false
     skipunavailable: false
-view: '{"linkLabelsPosition": {}, "paper": {"dimensions": {"height": 200, "width":
-  380, "x": 50, "y": 50}}}'
+view: '{"linkLabelsPosition":{},"paper":{"dimensions":{"height":200,"width":380,"x":50,"y":50}}}'
 inputs: []
 outputs: []

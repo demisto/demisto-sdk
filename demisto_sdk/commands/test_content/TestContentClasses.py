@@ -421,8 +421,6 @@ class TestPlaybook:
 
             time.sleep(10)
 
-        self.build_context.logging_module.info(f'Created incident and found it: {incidents}')
-        self.build_context.logging_module.info(f'Returning {incidents.data[0]=}')
         return incidents.data[0]
 
     def delete_incident(self, client: DefaultApi, incident_id: str) -> bool:
@@ -490,7 +488,6 @@ class BuildContext:
             self.env_json = [self.xsiam_conf.get(self.xsiam_machine, {})]
             self.api_key = self.env_json[0].get('api_key')
             self.auth_id = self.env_json[0].get('x-xdr-auth-id')
-            logging_module.info(f'Got here {self.xsiam_machine=}')
         else:
             self.api_key = kwargs['api_key']
             self.env_json = self._load_env_results_json()
@@ -1510,8 +1507,7 @@ class TestContext:
             incident = self.playbook.create_incident(self.client)
             if not incident:
                 return ''
-            self.build_context.logging_module.info(f'Got here: {incident=}')
-            self.incident_id = incident.investigation_id
+            self.incident_id = incident.id if IS_XSIAM else incident.investigation_id
             investigation_id = self.incident_id
             self.build_context.logging_module.info(f'Got here: {investigation_id=}, {incident.investigation_id=},'
                                                    f' {self.incident_id=}.')

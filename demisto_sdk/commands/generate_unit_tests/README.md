@@ -44,13 +44,13 @@ Also supports generating unit tests for specific commands.
 * Client class `__init__` function arguments have to include types (None will be passed otherwise).
 
 
-**Test Data Files**   
+**Test Data Files**
 For the unit tests to run successfully, a `test_data` folder must exist and include:
 
 * ***outputs*** folder - contains a JSON file for each HTTP request with a mock response (the file name should be the name of the client function making the HTTP call).
 * ***outputs command files*** - if the `--use_demisto` flag was not given, outputs files must be provided for each command. File names should have the same name of the command. See examples files below to view the desired structure for the file.
 
-**Command Examples file** - 
+**Command Examples file** -
 For the command to work as planned, a `command_examples` file must be provided.
 
 ### Examples
@@ -77,7 +77,7 @@ demisto-sdk generate-unit-tests -i Packs/MyPack/Integrations/MyInt/MyInt.py -c M
 !malwarebazaar-comment-add comment="test" sha256_hash=1234
 ```
 
-#### Command Output File 
+#### Command Output File
 ##### malwarebazaar_comment_add_command.json
 ```json
 {"readable_output": "Comment added to 1234 malware sample successfully",

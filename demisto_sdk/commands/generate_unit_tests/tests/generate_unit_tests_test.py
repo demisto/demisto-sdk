@@ -1,10 +1,13 @@
 import ast
 import itertools
 import os
-import pytest
-from pathlib import Path
 from ast import parse
-from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import run_generate_unit_tests, UnitTestsGenerator
+from pathlib import Path
+
+import pytest
+
+from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import (
+    UnitTestsGenerator, run_generate_unit_tests)
 
 ARGS = [({'use_demisto': False}, 'malwarebazaar_all.txt'),
         ({'use_demisto': False, 'commands': 'malwarebazaar-comment-add'}, 'malwarebazaar_specific_command.txt'),
@@ -12,6 +15,7 @@ ARGS = [({'use_demisto': False}, 'malwarebazaar_all.txt'),
 
 
 EXAMPLES = {'readable_output': "test_md_example", 'outputs': {"MalwareBazaar": {"MalwarebazaarCommentAdd": {"comment": "test"}}}}
+
 
 def compare_ast(node1, node2):
     """

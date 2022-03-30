@@ -5,6 +5,7 @@ from demisto_sdk.commands.generate_unit_tests.common import ast_name
 
 logger = logging.getLogger('demisto-sdk')
 
+
 class TestModule:
     def __init__(self, tree, module_name, to_concat, module=None):
         self.functions = []

@@ -1,20 +1,25 @@
 import json
 import logging
-import os
+import sys
+from pathlib import Path
+from typing import List
+
 import astor
 import autopep8
 import click
-import sys
-from typing import List
-from pathlib import Path
-from demisto_sdk.commands.common.logger import Colors
-from demisto_sdk.commands.common.tools import print_error, arg_to_list, print_success
 from klara.contract import solver
-from demisto_sdk.commands.generate_unit_tests.test_case_builder import TestCase, ArgsBuilder
-from demisto_sdk.commands.generate_unit_tests.test_module_builder import TestModule
 from klara.contract.solver import MANAGER, ContractSolver, nodes
-from demisto_sdk.commands.generate_docs.generate_integration_doc import get_command_examples
+
+from demisto_sdk.commands.common.logger import Colors
+from demisto_sdk.commands.common.tools import (arg_to_list, print_error,
+                                               print_success)
 from demisto_sdk.commands.generate_docs.common import execute_command
+from demisto_sdk.commands.generate_docs.generate_integration_doc import \
+    get_command_examples
+from demisto_sdk.commands.generate_unit_tests.test_case_builder import (
+    ArgsBuilder, TestCase)
+from demisto_sdk.commands.generate_unit_tests.test_module_builder import \
+    TestModule
 
 if 'typed_ast' in sys.modules:
     del sys.modules['typed_ast']

@@ -2098,8 +2098,9 @@ def generate_unit_tests(**kwargs):
 
     klara_logger = logging.getLogger('PYSCA')
     klara_logger.propagate = False
-    from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import run_generate_unit_tests
     from demisto_sdk.commands.common.logger import logging_setup
+    from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import \
+        run_generate_unit_tests
     logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
                   quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
                   log_path=kwargs.get('log_path'))  # type: ignore[arg-type]

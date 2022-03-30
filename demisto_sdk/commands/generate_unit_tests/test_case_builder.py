@@ -2,9 +2,12 @@ import ast as ast_mod
 import json
 import logging
 from pathlib import Path
+from typing import Dict, List
+
 from ordered_set import OrderedSet
-from demisto_sdk.commands.generate_unit_tests.common import ast_name, extract_outputs_from_command_run
-from typing import List, Dict
+
+from demisto_sdk.commands.generate_unit_tests.common import (
+    ast_name, extract_outputs_from_command_run)
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -145,7 +148,7 @@ class TestCase:
         """
         for call in self.client_func_call:
             self.mocks.append(self.load_mock_from_json_ast_builder(f'mock_response_{call}', call))
-            self.mocks.append(self.load_mock_from_json_ast_builder(f'mock_results', str(self.func.name)))
+            self.mocks.append(self.load_mock_from_json_ast_builder('mock_results', str(self.func.name)))
 
             suffix, method = self.get_call_params_from_http_request(call)
             url = f'SERVER_URL + \'{suffix}\'' if suffix is not None else 'SERVER_URL'
@@ -177,11 +180,13 @@ class TestCase:
         """
         global logger
         prefix = self.get_context_prefix()
+
         if prefix is not None:
             self.examples_dict.update({'outputs':
                                            extract_outputs_from_command_run(self.examples_dict.get('outputs'), prefix)})
             logger.debug(f'Creating mock command results file for {str(self.func.name)}')
-            Path(self.directory_path, 'outputs', f'{str(self.func.name)}.json').write_text(json.dumps(self.examples_dict))
+            Path(self.directory_path, 'outputs', f'{str(self.func.name)}.json').write_text(
+                json.dumps(self.examples_dict))
 
     def get_context_prefix(self):
         """

@@ -4,10 +4,10 @@ from typing import List, Optional, Union
 from wcmatch.pathlib import EXTMATCH, Path
 
 import demisto_sdk.commands.common.content.errors as exc
-from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
-                                                   SCRIPTS_DIR, FileType)
+from demisto_sdk.commands.common.constants import ENTITY_TYPE_TO_DIR, FileType
 from demisto_sdk.commands.unify.integration_script_unifier import \
     IntegrationScriptUnifier
+from demisto_sdk.commands.unify.rule_unifier import RuleUnifier
 
 from .yaml_content_object import YAMLContentObject
 
@@ -119,11 +119,19 @@ class YAMLContentUnifiedObject(YAMLContentObject):
             2. Verbosity to quiet mode option in unify module.
         """
         # Directory configuration - Integrations or Scripts
-        unify_dir = SCRIPTS_DIR if self._content_type == FileType.SCRIPT else INTEGRATIONS_DIR
+        unify_dir = ENTITY_TYPE_TO_DIR[self._content_type.value]
+
         # Unify step
-        unifier = IntegrationScriptUnifier(input=str(self.path.parent), dir_name=unify_dir, output=dest_dir, force=True,
-                                           yml_modified_data=self.to_dict())
+        unifier: Union[IntegrationScriptUnifier, RuleUnifier]
+        if self._content_type in [FileType.SCRIPT, FileType.INTEGRATION]:
+            unifier = IntegrationScriptUnifier(input=str(self.path.parent), dir_name=unify_dir, output=dest_dir, force=True,
+                                               yml_modified_data=self.to_dict())
+
+        elif self._content_type in [FileType.PARSING_RULE, FileType.MODELING_RULE]:
+            unifier = RuleUnifier(input=str(self.path.parent), output=dest_dir, force=True)
+
         created_files: List[str] = unifier.unify()
+
         # Validate that unify succeed - there is not exception raised in unify module.
         if not created_files:
             raise exc.ContentDumpError(self, self.path, "Unable to unify object")
@@ -149,7 +157,7 @@ class YAMLContentUnifiedObject(YAMLContentObject):
             2. Verbosity to quiet mode option in unify module.
         """
         # Directory configuration - Integrations or Scripts
-        unify_dir = SCRIPTS_DIR if self._content_type == FileType.SCRIPT else INTEGRATIONS_DIR
+        unify_dir = ENTITY_TYPE_TO_DIR[self._content_type.value]
         # Split step
         unifier = IntegrationScriptUnifier(input=str(self.path.parent), dir_name=unify_dir, output=str(dest_dir / self.path.name),
                                            force=True)

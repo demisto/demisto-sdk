@@ -37,6 +37,8 @@ class RuleUnifier(YAMLUnifier):
         self._output_yaml(file_path=self.dest_path, file_data=self.yml_data)
         click.secho(f'Successfully created unifyed YAML in {self.dest_path}', fg="green")
 
+        return [str(self.dest_path)]
+
     def _insert_rules(self):
         rules_path = Path(self.yml_path).with_suffix('.xif')
         with io.open(rules_path, mode='r', encoding='utf-8') as rules_file:

@@ -195,7 +195,9 @@ ENTITY_TYPE_TO_DIR = {
     FileType.GENERIC_FIELD.value: GENERIC_FIELDS_DIR,
     FileType.GENERIC_TYPE.value: GENERIC_TYPES_DIR,
     FileType.LISTS.value: LISTS_DIR,
-    FileType.JOB.value: JOBS_DIR
+    FileType.JOB.value: JOBS_DIR,
+    FileType.PARSING_RULE.value: PARSING_RULES_DIR,
+    FileType.MODELING_RULE.value: MODELING_RULES_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [

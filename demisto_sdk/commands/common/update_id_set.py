@@ -1541,13 +1541,24 @@ def process_general_items(file_path: str, packs: Dict[str, Dict], marketplace: s
     res = []
     excluded_items_from_id_set: dict = {}
     try:
-        item_type = find_type(file_path)
-        if item_type in expected_file_types:
-            if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs, item_type=item_type):
-                return [], excluded_items_from_id_set
-            if print_logs:
-                print(f'adding {file_path} to id_set')
-            res.append(data_extraction_func(file_path, packs=packs))
+        if os.path.isfile(file_path):
+            item_type = find_type(file_path)
+            if item_type in expected_file_types:
+                if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs, item_type=item_type):
+                    return [], excluded_items_from_id_set
+                if print_logs:
+                    print(f'adding {file_path} to id_set')
+                res.append(data_extraction_func(file_path, packs=packs))
+        else:
+            package_name = os.path.basename(file_path)
+            file_path = os.path.join(file_path, '{}.yml'.format(package_name))
+            item_type = find_type(file_path)
+            if os.path.isfile(file_path) and item_type in expected_file_types:
+                if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs, item_type=item_type):
+                    return [], excluded_items_from_id_set
+                if print_logs:
+                    print(f'adding {file_path} to id_set')
+                res.append(data_extraction_func(file_path, packs=packs))
     except Exception as exp:  # noqa
         print_error(f'failed to process {file_path}, Error: {str(exp)}')
         raise

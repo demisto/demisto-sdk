@@ -6,6 +6,9 @@ from typing import Dict, List
 
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
 NOT_TEST = '(?!Test)'
+
+# NAMES OF ENTITY DIRECTORIES
+
 INTEGRATIONS_DIR = 'Integrations'
 SCRIPTS_DIR = 'Scripts'
 PLAYBOOKS_DIR = 'Playbooks'
@@ -41,6 +44,9 @@ CORRELATION_RULES_DIR = 'CorrelationRules'
 XSIAM_DASHBOARDS_DIR = 'XSIAMDashboards'
 XSIAM_REPORTS_DIR = 'XSIAMReports'
 TRIGGER_DIR = 'Triggers'
+
+# NAMES OF ENTITIES
+
 SCRIPT = 'script'
 AUTOMATION = 'automation'
 INTEGRATION = 'integration'

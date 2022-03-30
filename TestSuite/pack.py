@@ -13,8 +13,6 @@ from TestSuite.file import File
 from TestSuite.integration import Integration
 from TestSuite.job import Job
 from TestSuite.json_based import JSONBased
-from TestSuite.modeling_rule import ModelingRule
-from TestSuite.parsing_rule import ParsingRule
 from TestSuite.playbook import Playbook
 from TestSuite.rule import Rule
 from TestSuite.script import Script

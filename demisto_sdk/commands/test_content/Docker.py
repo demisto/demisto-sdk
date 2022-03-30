@@ -1,7 +1,10 @@
-import json
 import logging
 import re
 from subprocess import PIPE, Popen
+
+from demisto_sdk.commands.common.handlers import JSON_Handler
+
+json = JSON_Handler()
 
 
 class Docker:

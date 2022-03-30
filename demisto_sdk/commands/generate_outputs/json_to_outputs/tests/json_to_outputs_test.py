@@ -1,12 +1,15 @@
-import json
 from pathlib import Path
 from typing import Optional
 
 import pytest
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import run_command
 from demisto_sdk.commands.generate_outputs.json_to_outputs.json_to_outputs import (
     determine_type, json_to_outputs, parse_json)
+
+json = JSON_Handler()
+
 
 DUMMY_FIELD_DESCRIPTION = "dummy field description"
 TEST_PATH = Path('demisto_sdk/commands/generate_outputs/json_to_outputs/tests')

@@ -1,4 +1,3 @@
-import json
 import os
 from collections import OrderedDict, deque
 from os import listdir
@@ -12,10 +11,11 @@ from demisto_sdk.commands.common.constants import (
     INTEGRATION_CATEGORIES, MARKETPLACE_LIVE_DISCUSSIONS, MARKETPLACES,
     PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS, XSOAR_AUTHOR, XSOAR_SUPPORT,
     XSOAR_SUPPORT_URL)
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.init.initiator import Initiator
 from TestSuite.test_tools import ChangeCWD
 
+json = JSON_Handler()
 yaml = YAML_Handler()
 
 DIR_NAME = 'DirName'

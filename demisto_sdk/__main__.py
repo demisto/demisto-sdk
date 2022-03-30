@@ -1,5 +1,4 @@
 # Site packages
-import json
 import logging
 import os
 import sys
@@ -8,21 +7,27 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
 from typing import IO
 
-# Third party packages
 import click
 import git
 from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
-# Common tools
 from demisto_sdk.commands.common.constants import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, FileType)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
                                                get_release_note_entries,
                                                is_external_repository,
                                                print_error, print_success,
                                                print_warning)
+from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
+
+json = JSON_Handler()
+
+# Third party packages
+
+# Common tools
 
 
 class PathsParamType(click.Path):
@@ -63,6 +68,9 @@ class VersionParamType(click.ParamType):
         else:
             self.fail(f"Version {value} is not according to the expected format. "
                       f"The format of version should be in x.y.z format, e.g: <2.1.3>", param, ctx)
+
+
+json = JSON_Handler()
 
 
 class DemistoSDK:
@@ -199,7 +207,6 @@ def split(config, **kwargs):
     to multiple files(To a package format - https://demisto.pan.dev/docs/package-dir).
     """
     from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
-    from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
     check_configuration_file('split', kwargs)
     file_type: FileType = find_type(kwargs.get('input', ''), ignore_sub_categories=True)

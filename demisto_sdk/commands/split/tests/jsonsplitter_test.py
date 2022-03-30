@@ -1,10 +1,13 @@
-import json
 import os
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     GENERIC_MODULE, UNIFIED_GENERIC_MODULE)
 from TestSuite.test_tools import ChangeCWD
+
+json = JSON_Handler()
+
 
 EXTRACTED_DASHBOARD = UNIFIED_GENERIC_MODULE.get('views')[0].get('tabs')[0].get('dashboard')
 

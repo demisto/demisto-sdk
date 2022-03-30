@@ -8,11 +8,10 @@ from demisto_sdk.commands.common.constants import (PACK_METADATA_SUPPORT,
                                                    PACKS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    FileType)
-from demisto_sdk.commands.common.errors import (ERROR_CODE,
-                                                FOUND_FILES_AND_ERRORS,
+from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
-                                                PRESET_ERROR_TO_IGNORE, Errors,
+                                                PRESET_ERROR_TO_IGNORE,
                                                 get_all_error_codes,
                                                 get_error_object)
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -23,31 +22,28 @@ from demisto_sdk.commands.common.tools import (
 json = JSON_Handler()
 
 
-def is_error_code_in_specific_validations_list(error_func_name, specific_validations_list):
+def is_error_code_in_specific_validations_list(error_func_code, specific_validations_list):
     """Return True if an error is in the specific validations list, and False otherwise"""
-    error_func_code = ''
-    error_func_code = ERROR_CODE[error_func_name].get('code')  # type: ignore
-    if error_func_code:
-        if error_func_code in specific_validations_list or error_func_code[:2] in specific_validations_list:
-            return True
+    if error_func_code in specific_validations_list or error_func_code[:2] in specific_validations_list:
+        return True
     return False
 
 
-def meta_specific_validation_decorator(error_func_names_str=''):
+def meta_specific_validation_decorator(error_func_codes_str=''):
 
     def specific_validation_decorator(func):
 
         def wrapper(self, *args, **kwargs):
 
             if self.specific_validations:
-                error_func_names = []
-                if error_func_names_str:
-                    error_func_names = error_func_names_str.split(',')
+                error_func_codes = []
+                if error_func_codes_str:
+                    error_func_codes = error_func_codes_str.split(',')
                 else:
-                    error_func_names.append(args[0])
+                    error_func_codes.append(args[1])
 
-                for error_func_name in error_func_names:
-                    if is_error_code_in_specific_validations_list(error_func_name, self.specific_validations):
+                for error_func_code in error_func_codes:
+                    if is_error_code_in_specific_validations_list(error_func_code, self.specific_validations):
                         return func(self, *args, **kwargs)
             else:
                 return func(self, *args, **kwargs)
@@ -59,11 +55,19 @@ def meta_specific_validation_decorator(error_func_names_str=''):
     return specific_validation_decorator
 
 
-@meta_specific_validation_decorator()
-def error_handling(validator, error_func_name, file_path, *error_func_args, should_print=True, suggested_fix=None, warning=False, drop_line=False):
-    error_func = getattr(Errors, error_func_name)
-    error_message, error_code = error_func(*error_func_args)
-    return validator.handle_error(error_message, error_code, file_path, should_print, suggested_fix, warning, drop_line)
+def handle_error_decorator(func):
+
+    def wrapper(self, *args, **kwargs):
+        if self.specific_validations:
+            if is_error_code_in_specific_validations_list(args[1], self.specific_validations):
+                return func(self, *args, **kwargs)
+
+        else:
+            return func(self, *args, **kwargs)
+
+        return False
+
+    return wrapper
 
 
 class BaseValidator:
@@ -94,10 +98,7 @@ class BaseValidator:
 
         return False
 
-    def proxy_error_handling(self, error_func_name, file_path, *error_func_args, should_print=True, suggested_fix=None, warning=False, drop_line=False):
-        return error_handling(self, error_func_name, file_path, *error_func_args,
-                              should_print=should_print, suggested_fix=suggested_fix, warning=warning, drop_line=drop_line)
-
+    @handle_error_decorator
     def handle_error(self, error_message, error_code, file_path, should_print=True, suggested_fix=None, warning=False,
                      drop_line=False):
         """Handle an error that occurred during validation

@@ -137,8 +137,6 @@ class ValidateManager:
         # Class constants
         self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors,
                                           json_file_path=json_file_path).handle_error
-        self.proxy_error_handling = BaseValidator(print_as_warnings=print_ignored_errors,
-                                                  json_file_path=json_file_path).proxy_error_handling
         self.file_path = file_path
         self.id_set_path = id_set_path or DEFAULT_ID_SET_PATH
         # create the id_set only once per run.
@@ -445,7 +443,7 @@ class ValidateManager:
 
         return all(package_entities_validation_results)
 
-    @meta_specific_validation_decorator('changed_pack_name')
+    @meta_specific_validation_decorator('BA114')
     def is_valid_pack_name(self, file_path, old_file_path):
         """
         Valid pack name is currently considered to be a new pack name or an existing pack.
@@ -456,22 +454,24 @@ class ValidateManager:
         original_pack_name = get_pack_name(old_file_path)
         new_pack_name = get_pack_name(file_path)
         if original_pack_name != new_pack_name:
-            if self.proxy_error_handling('changed_pack_name', file_path, original_pack_name, drop_line=True):
+            error_message, error_code = Errors.changed_pack_name(original_pack_name)
+            if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path,
+                                 drop_line=True):
                 return False
         return True
 
-    @meta_specific_validation_decorator('invalid_image_name_or_location,file_type_not_supported')
+    @meta_specific_validation_decorator('BA102,IM110')
     def is_valid_file_type(self, file_type, file_path):
         """
         If a file_type is unsupported, will return `False`.
         """
         if not file_type:
+            error_message, error_code = Errors.file_type_not_supported()
             if str(file_path).endswith('.png'):
-                if self.proxy_error_handling('invalid_image_name_or_location', file_path, drop_line=True):
-                    return False
-            else:
-                if self.proxy_error_handling('file_type_not_supported', file_path, drop_line=True):
-                    return False
+                error_message, error_code = Errors.invalid_image_name_or_location()
+            if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path,
+                                 drop_line=True):
+                return False
 
         return True
 
@@ -1225,7 +1225,7 @@ class ValidateManager:
                         return True
         return False
 
-    @meta_specific_validation_decorator('file_cannot_be_deleted')
+    @meta_specific_validation_decorator('BA115')
     def validate_deleted_files(self, deleted_files, added_files) -> bool:
         click.secho(f'\n================= Checking for prohibited deleted files =================',
                     fg="bright_cyan")
@@ -1235,7 +1235,8 @@ class ValidateManager:
             file_path = str(file_path)
             if not self.was_file_renamed_but_labeled_as_deleted(file_path, added_files):
                 if not self.is_file_allowed_to_be_deleted(file_path):
-                    if self.proxy_error_handling('file_cannot_be_deleted', file_path, file_path):
+                    error_message, error_code = Errors.file_cannot_be_deleted(file_path)
+                    if self.handle_error(error_message, error_code, file_path):
                         is_valid = False
 
         return is_valid
@@ -1266,6 +1267,7 @@ class ValidateManager:
 
         return all(valid_pack_files)
 
+    @meta_specific_validation_decorator('ST106')
     def validate_no_old_format(self, old_format_files):
         """ Validate there are no files in the old format (unified yml file for the code and configuration
         for python integration).
@@ -1284,7 +1286,7 @@ class ValidateManager:
                     handle_error = False
         return handle_error
 
-    @meta_specific_validation_decorator('multiple_release_notes_files')
+    @meta_specific_validation_decorator('RN105')
     def validate_no_duplicated_release_notes(self, added_files):
         """Validated that among the added files - there are no duplicated RN for the same pack.
 
@@ -1303,7 +1305,8 @@ class ValidateManager:
                 if pack_name not in added_rn:
                     added_rn.add(pack_name)
                 else:
-                    if self.proxy_error_handling('multiple_release_notes_files', pack_name):
+                    error_message, error_code = Errors.multiple_release_notes_files()
+                    if self.handle_error(error_message, error_code, file_path=pack_name):
                         return False
 
         click.secho("\nNo duplicated release notes found.\n", fg="bright_green")

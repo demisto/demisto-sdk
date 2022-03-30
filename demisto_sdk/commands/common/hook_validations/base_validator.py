@@ -55,25 +55,10 @@ def meta_specific_validation_decorator(error_func_codes_str=''):
     return specific_validation_decorator
 
 
-def handle_error_decorator(func):
-
-    def wrapper(self, *args, **kwargs):
-        if self.specific_validations:
-            if is_error_code_in_specific_validations_list(args[1], self.specific_validations):
-                return func(self, *args, **kwargs)
-
-        else:
-            return func(self, *args, **kwargs)
-
-        return False
-
-    return wrapper
-
-
 class BaseValidator:
 
     def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False,
-                 json_file_path: Optional[str] = None, specific_validations=None):
+                 json_file_path: Optional[str] = None, specific_validations: Optional[str] = None):
         self.ignored_errors = ignored_errors if ignored_errors else {}
         self.print_as_warnings = print_as_warnings
         self.checked_files = set()  # type: ignore
@@ -98,7 +83,6 @@ class BaseValidator:
 
         return False
 
-    @handle_error_decorator
     def handle_error(self, error_message, error_code, file_path, should_print=True, suggested_fix=None, warning=False,
                      drop_line=False):
         """Handle an error that occurred during validation
@@ -115,6 +99,10 @@ class BaseValidator:
         Returns:
             str. Will return the formatted error message if it is not ignored, an None if it is ignored
         """
+        if self.specific_validations:
+            if not is_error_code_in_specific_validations_list(error_code, self.specific_validations):
+                return None
+
         def formatted_error_str(error_type):
             if error_type not in {'ERROR', 'WARNING'}:
                 raise ValueError("Error type is not valid. Should be in {'ERROR', 'WARNING'}")

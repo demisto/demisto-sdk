@@ -1,7 +1,6 @@
 import argparse
 import glob
 import io
-import json
 import logging
 import os
 import re
@@ -14,11 +13,11 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
 from distutils.version import LooseVersion
 from enum import Enum
-from functools import lru_cache, partial
+from functools import lru_cache
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
-from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
+from typing import Callable, Dict, List, Match, Optional, Tuple, Union
 
 import click
 import colorama
@@ -50,7 +49,10 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
                                                             GitProvider)
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+
+json = JSON_Handler()
+
 
 logger = logging.getLogger("demisto-sdk")
 yaml = YAML_Handler()
@@ -1649,33 +1651,6 @@ def get_parent_directory_name(path: str, abs_path: bool = False) -> str:
     if abs_path:
         return parent_dir_name
     return os.path.basename(parent_dir_name)
-
-
-def get_content_file_type_dump(file_path: str) -> Callable[[str], str]:
-    """
-    Return a method with which 'curr' (the current key the lies in the path of the error) should be printed with
-    If the file is a yml file:
-        will return a yaml.dump function
-    If the file is a json file:
-        will return a json.dumps function configured with indent=4
-    In any other case- will just print the string representation of the key.
-
-    The file type is checked according to the file extension
-
-    Args:
-        file_path: The file path whose type is determined in this method
-
-    Returns:
-        A function that returns string representation of 'curr'
-    """
-    # Setting the method that should the curr path
-    file_extension = os.path.splitext(file_path)[-1]
-    curr_string_transformer: Union[partial[str], Type[str], Callable] = str
-    if file_extension in ['.yml', '.yaml']:
-        curr_string_transformer = yaml.dumps
-    elif file_extension == '.json':
-        curr_string_transformer = partial(json.dumps, indent=4)
-    return curr_string_transformer
 
 
 def get_code_lang(file_data: dict, file_entity: str) -> str:

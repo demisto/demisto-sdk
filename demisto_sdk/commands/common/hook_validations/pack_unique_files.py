@@ -3,7 +3,6 @@ This module is designed to validate the existence and structure of content pack 
 """
 import glob
 import io
-import json
 import os
 import re
 from datetime import datetime
@@ -30,6 +29,7 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
@@ -38,6 +38,9 @@ from demisto_sdk.commands.common.tools import (get_core_pack_list, get_json,
                                                pack_name_to_path)
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
+
+json = JSON_Handler()
+
 
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 SUPPORTED_CONTRIBUTORS_LIST = ['partner', 'developer']

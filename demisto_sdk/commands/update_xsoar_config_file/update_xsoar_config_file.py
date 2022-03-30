@@ -1,11 +1,14 @@
-import json
 import logging
 import os
 from typing import Dict, List
 
 import demisto_client
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
+
+json = JSON_Handler()
+
 
 XSOAR_CONFIG_FILE_JSON = "xsoar_config.json"
 MARKETPLACE_PACKS_SECTION = "marketplace_packs"

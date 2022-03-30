@@ -19,7 +19,22 @@ NAME = "demisto-sdk"
 # Converting Pipfile to requirements style list because setup expects requirements.txt file.
 parser = configparser.ConfigParser()
 parser.read("Pipfile")
-install_requires = [f'{key}{value}'.replace('\"', '').replace('*', '') for key, value in parser['packages'].items()]
+
+
+def end_or_comment_index(value: str):
+    return len(value) if value.find("#") == -1 else value.find("#")
+
+
+def format_for_requirements_file(key, value) -> str:
+    return f'{key}{value[:end_or_comment_index(value)]}' \
+        .replace('\'', '') \
+        .replace('\"', '') \
+        .replace('*', '')
+
+
+# when install local version for development, demisto-sdk gets added to the pipfile and should be ignored here
+install_requires = [format_for_requirements_file(key, value)
+                    for key, value in parser['packages'].items() if key != 'demisto-sdk']
 
 with open('README.md', 'r') as f:
     readme = f.read()

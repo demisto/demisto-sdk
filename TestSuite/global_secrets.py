@@ -1,5 +1,8 @@
-import json
 from pathlib import Path
+
+from demisto_sdk.commands.common.handlers import JSON_Handler
+
+json = JSON_Handler()
 
 
 class GlobalSecrets:

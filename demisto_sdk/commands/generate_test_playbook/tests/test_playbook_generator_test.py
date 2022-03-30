@@ -3,10 +3,13 @@ from pathlib import Path
 
 import pytest
 
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import (
     PlaybookTestsGenerator, get_command_examples)
+
+yaml = YAML_Handler()
 
 
 class TestGenerateTestPlaybook:
@@ -44,11 +47,9 @@ class TestGenerateTestPlaybook:
         )
 
         generator.run()
-        expected_test_playbook_yml = get_yaml(TestGenerateTestPlaybook.TEST_FILE_PATH / expected_yml, cache_clear=True)
-        actual_test_playbook_yml = get_yaml(Path(TestGenerateTestPlaybook.TEMP_DIR) /
-                                            'playbook-TestPlaybook_Test.yml', cache_clear=True)
-
-        assert expected_test_playbook_yml == actual_test_playbook_yml
+        excepted_path = TestGenerateTestPlaybook.TEST_FILE_PATH / expected_yml
+        new_yml_path = Path(TestGenerateTestPlaybook.TEMP_DIR) / 'playbook-TestPlaybook_Test.yml'
+        assert yaml.load(new_yml_path) == yaml.load(excepted_path)
 
     def test_generate_test_playbook__integration_under_packs(self, tmpdir):
         """
@@ -63,7 +64,7 @@ class TestGenerateTestPlaybook:
         integration_folder.mkdir(parents=True)
 
         integration_path = integration_folder / 'DummyIntegration.yml'
-        shutil.copy(str(TestGenerateTestPlaybook.DUMMY_INTEGRATION_YML_PATH), str(integration_path))
+        shutil.copy(TestGenerateTestPlaybook.DUMMY_INTEGRATION_YML_PATH, integration_path)
 
         generator = PlaybookTestsGenerator(
             input=integration_path,
@@ -75,13 +76,11 @@ class TestGenerateTestPlaybook:
 
         generator.run()
 
-        expected_test_playbook_yml = get_yaml(TestGenerateTestPlaybook.TEST_FILE_PATH /
-                                              'fake_integration_expected_test_playbook.yml')
-        actual_test_playbook_yml = get_yaml(pack_folder / 'TestPlaybooks' / 'playbook-TestPlaybook_Test.yml')
+        expected_test_playbook_path = TestGenerateTestPlaybook.TEST_FILE_PATH / 'fake_integration_expected_test_playbook.yml'
+        actual_test_playbook_path = pack_folder / 'TestPlaybooks' / 'playbook-TestPlaybook_Test.yml'
+        assert yaml.load(actual_test_playbook_path) == yaml.load(expected_test_playbook_path)
 
-        assert expected_test_playbook_yml == actual_test_playbook_yml
-
-    def test_generate_test_playbook__integration_not_under_packs(self, tmpdir):
+    def test_generate_test_playbook__integration_not_under_packs(self):
         """
         Given: an integration, NOT inside the standard Content folder structure.
         When: called `generate_test_playbook`
@@ -110,8 +109,8 @@ class TestGenerateTestPlaybook:
         When: called `generate_test_playbook`
         Then: Make sure the generated test playbook is correct, and saved in the relevant location.
         """
-        tmpdir.mkdir("some_folder")
-        output = tmpdir.join("some_folder")
+        output = tmpdir / "some_folder"
+        output.mkdir()
         generator = PlaybookTestsGenerator(
             input=TestGenerateTestPlaybook.DUMMY_INTEGRATION_YML_PATH,
             file_type='integration',
@@ -122,9 +121,12 @@ class TestGenerateTestPlaybook:
 
         generator.run()
 
-        expected_test_playbook_yml = get_yaml(Path(TestGenerateTestPlaybook.TEST_FILE_PATH /
-                                              'fake_integration_expected_test_playbook.yml'))
-        actual_test_playbook_yml = get_yaml(output.join('playbook-TestPlaybook_Test.yml'))
+        expected_test_playbook_yml = get_yaml(
+            TestGenerateTestPlaybook.TEST_FILE_PATH / 'fake_integration_expected_test_playbook.yml'
+        )
+        actual_test_playbook_yml = get_yaml(
+            output / 'playbook-TestPlaybook_Test.yml'
+        )
 
         assert expected_test_playbook_yml == actual_test_playbook_yml
 

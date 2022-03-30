@@ -11,10 +11,13 @@ import pytest
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION, FileType)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.common.update_id_set import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+json = JSON_Handler()
 
 
 class TestRNUpdate(unittest.TestCase):
@@ -948,7 +951,6 @@ class TestRNUpdateUnit:
             - Case 4: Return True and throw error saying "The master branch is currently ahead of
                       your pack's version. Please pull from master and re-run the command."
         """
-        import json
         from subprocess import Popen
 
         from demisto_sdk.commands.update_release_notes.update_rn import \

@@ -1,4 +1,3 @@
-import json
 import os
 import sys
 from io import StringIO
@@ -17,6 +16,7 @@ from demisto_sdk.commands.common.constants import (CONF_PATH,
                                                    TEST_PLAYBOOK, FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
@@ -80,6 +80,8 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
+
+json = JSON_Handler()
 
 
 class TestValidators:
@@ -1466,7 +1468,7 @@ def test_get_packs_that_should_have_version_raised(repo):
         assert 'NewPack' not in packs_that_should_have_version_raised
 
 
-def test_quite_bc_flag(repo):
+def test_quiet_bc_flag(repo):
     existing_pack1 = repo.create_pack('PackWithModifiedIntegration')
     moodified_integration = existing_pack1.create_integration('MyIn')
     moodified_integration.create_default_integration()

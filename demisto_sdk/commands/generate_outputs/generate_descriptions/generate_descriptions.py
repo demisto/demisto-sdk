@@ -1,5 +1,4 @@
 import itertools
-import json
 import logging
 import math
 import os
@@ -10,7 +9,11 @@ from typing import Dict
 
 import requests
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import get_yaml, print_error, write_yml
+
+json = JSON_Handler()
+
 
 CREDENTIALS = 9
 

@@ -38,8 +38,7 @@ def compare_ast(node1, node2):
 
 
 class TestUnitTestsGenerator:
-    # test_files_path = Path(__file__, git_path(), 'demisto_sdk', 'commands', 'generate_unit_tests', 'tests', 'test_files')
-    test_files_path = Path(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files').resolve()
+    test_files_path = Path(__file__, git_path(), 'demisto_sdk', 'commands', 'generate_unit_tests', 'tests', 'test_files').resolve()
     input_path = None
     output_dir = None
 

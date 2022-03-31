@@ -105,5 +105,4 @@ coverage_html_report
 node_modules
 .DS_Store
 
-#python files
-demisto_sdk/commands/generate_unit_tests/tests/test_files/outputs
+

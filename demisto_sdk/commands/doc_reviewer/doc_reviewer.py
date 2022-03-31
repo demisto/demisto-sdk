@@ -22,7 +22,7 @@ from demisto_sdk.commands.common.content.objects.abstract_objects import \
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
     YAMLContentObject
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.tools import find_type
+from demisto_sdk.commands.common.tools import find_type, get_pack_name
 from demisto_sdk.commands.doc_reviewer.known_words import KNOWN_WORDS
 from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
 
@@ -100,10 +100,10 @@ class DocReviewer:
                     return (packs_ignore_path, packs_known_words)
                 else:
                     click.secho(f'\nNo [known_words] section was found within: {packs_ignore_path}', fg='yellow')
-                    return (packs_ignore_path, [])
+                    return packs_ignore_path, [get_pack_name(file_path)]
 
             click.secho(f'\nNo .pack-ignore file was found within pack: {packs_ignore_path}', fg='yellow')
-            return '', []
+            return '', [get_pack_name(file_path)]
 
         click.secho(f'\nCould not load pack\'s known words file since no pack structure was found for {file_path}'
                     f'\nMake sure you are running from the content directory.', fg='bright_red')

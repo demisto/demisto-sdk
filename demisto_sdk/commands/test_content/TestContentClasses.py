@@ -1392,6 +1392,7 @@ class TestContext:
                 method='GET',
                 path=f'/inv-playbook/{self.incident_id}')
             investigation_playbook = ast.literal_eval(investigation_playbook_raw[0])
+            self.build_context.logging_module.info(f'Got investigation state: {investigation_playbook}')
         except ApiException:
             self.build_context.logging_module.exception(
                 'Failed to get investigation playbook state, error trying to communicate with demisto server'
@@ -1402,6 +1403,7 @@ class TestContext:
             state = investigation_playbook['state']
             return state
         except Exception:  # noqa: E722
+            self.build_context.logging_module.info('Returning not supported')
             return PB_Status.NOT_SUPPORTED_VERSION
 
     def _collect_docker_images(self) -> None:
@@ -1540,11 +1542,14 @@ class TestContext:
             playbook_state: The state of the playbook with which we can check if the test was successful
         """
         test_passed = playbook_state in (PB_Status.COMPLETED, PB_Status.NOT_SUPPORTED_VERSION)
+        self.build_context.logging_module.info(f'In clean incident if success: {test_passed=}')
         if self.incident_id and test_passed:
             # todo: change it... batchDelete is not supported?
+            self.build_context.logging_module.info(f'Got here start cleaning.')
             if not IS_XSIAM:
                 self.playbook.delete_incident(self.client, self.incident_id)
             self.playbook.delete_integration_instances(self.client)
+        self.build_context.logging_module.info(f'Got here done cleaning.')
 
     def _run_docker_threshold_test(self):
         self._collect_docker_images()
@@ -1866,6 +1871,7 @@ class TestContext:
         number_of_executions = self.playbook.configuration.number_of_executions
         is_first_execution = number_of_executions == 1
 
+        # todo: check what to do if status is not supported
         if status == PB_Status.COMPLETED:
             updated_status = self._update_complete_status(is_first_execution, is_record_run, is_first_playback_run,
                                                           is_second_playback_run, use_retries_mechanism, number_of_executions)
@@ -1884,6 +1890,7 @@ class TestContext:
         elif updated_status == PB_Status.FAILED:
             self._notify_failed_test()
             self._add_to_failed_playbooks(is_second_playback_run=is_second_playback_run)
+        self.build_context.logging_module.info(f'Got to update playbook status: {status}')
         return updated_status
 
     def _execute_mockable_test(self, proxy: MITMProxy):

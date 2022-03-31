@@ -723,7 +723,7 @@ def test_having_two_file_paths_not_same_pack(repo, mocker, first_file_content, s
 
 
 @pytest.mark.parametrize('known_words_content, expected_known_words',
-                         [(['[known_words]', 'wordament'], ['wordament', 'test_pack']),
+                         [(['[known_words]', 'wordament'], ['test_pack', 'wordament']),
                           (['[known_words]'], ['test_pack']),
                           ([], ['test_pack'])])
 def test_find_known_words_from_pack(repo, known_words_content, expected_known_words):

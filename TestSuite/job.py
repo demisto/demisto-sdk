@@ -2,7 +2,8 @@ from json.decoder import JSONDecodeError
 from pathlib import Path
 from typing import List, Optional
 
-from demisto_sdk.commands.common.constants import DEFAULT_JOB_FROM_VERSION
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION, FileType)
 from TestSuite.json_based import JSONBased
 
 
@@ -19,7 +20,7 @@ class Job(JSONBased):
 
     def create_default_job(self, is_feed: bool, selected_feeds: list, details: str):
         self.write_json({
-            'fromVersion': DEFAULT_JOB_FROM_VERSION,
+            'fromVersion': FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB),
             'id': self.pure_name,
             'name': self.pure_name,
             'isFeed': is_feed,

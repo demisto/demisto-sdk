@@ -1,4 +1,5 @@
 from distutils.version import LooseVersion
+from typing import Optional
 
 import click
 import ujson
@@ -6,9 +7,9 @@ import ujson
 from demisto_sdk.commands.common.constants import \
     DEFAULT_CONTENT_ITEM_TO_VERSION
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.tools import find_type, is_uuid, print_error
+from demisto_sdk.commands.common.tools import is_uuid, print_error
 from demisto_sdk.commands.format.format_constants import (
-    ARGUMENTS_DEFAULT_VALUES, GENERIC_OBJECTS_FILE_TYPES, TO_VERSION_5_9_9)
+    ARGUMENTS_DEFAULT_VALUES, TO_VERSION_5_9_9)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
 yaml = YAML_Handler()
@@ -50,17 +51,13 @@ class BaseUpdateJSON(BaseUpdate):
             ujson.dump(self.data, file, indent=4, encode_html_chars=True, escape_forward_slashes=False,
                        ensure_ascii=False)
 
-    def update_json(self):
+    def update_json(self, default_from_version: Optional[str] = '', file_type: str = ''):
         """Manager function for the generic JSON updates."""
         self.set_version_to_default()
         self.remove_null_fields()
         self.remove_unnecessary_keys()
         self.remove_spaces_end_of_id_and_name()
-        source_file_type = find_type(self.source_file)
-        if source_file_type in GENERIC_OBJECTS_FILE_TYPES:
-            self.set_fromVersion(from_version=self.from_version, file_type=source_file_type)
-        else:
-            self.set_fromVersion(from_version=self.from_version)
+        self.set_fromVersion(default_from_version=default_from_version, file_type=file_type)
         self.sync_data_to_master()
 
     def set_toVersion(self):
@@ -114,6 +111,8 @@ class BaseUpdateJSON(BaseUpdate):
                 """
         if not self.old_file:
             if self.verbose:
-                click.echo('Updating YML ID and name to be without spaces at the end')
-            self.data['name'] = self.data['name'].strip()
-            self.data['id'] = self.data['id'].strip()
+                click.echo('Updating json ID and name to be without spaces at the end')
+            if 'name' in self.data:
+                self.data['name'] = self.data['name'].strip()
+            if 'id' in self.data:
+                self.data['id'] = self.data['id'].strip()

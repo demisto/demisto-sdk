@@ -75,7 +75,7 @@ types-six="*"
 types-PyMySQL="*"
 types-protobuf="*"
 typing-extensions="*"
-
+types-setuptools="*"
 
 [dev-packages]
 mitmproxy = "*"

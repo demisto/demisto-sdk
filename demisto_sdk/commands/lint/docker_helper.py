@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
 DOCKER_CLIENT = None
 logger = logging.getLogger('demisto-sdk')
 PATH_OR_STR = Union[Path, str]
-FILES_SRC_TARGET = List[Tuple[str, PATH_OR_STR]]
+FILES_SRC_TARGET = List[Tuple[PATH_OR_STR, str]]
 # this will be used to determine if the system supports mounts
 CAN_MOUNT_FILES = not os.getenv('CIRCLECI', False)
 
@@ -64,12 +64,15 @@ class DockerBase:
         self.requirements = self.tmp_dir / 'requirements.txt'
         self.requirements.touch()
         self._files_to_push_on_installation: FILES_SRC_TARGET = [
-            ('/test-requirements.txt', self.requirements),
+            (self.requirements, '/test-requirements.txt'),
         ]
+
+    def __del__(self):
+        del self.tmp_dir_name
 
     def installation_files(self, container_type: str) -> FILES_SRC_TARGET:
         files = self._files_to_push_on_installation.copy()
-        files.append(('/install.sh', self.installation_scripts[container_type]))
+        files.append((self.installation_scripts[container_type], '/install.sh'))
         return files
 
     @staticmethod
@@ -84,7 +87,7 @@ class DockerBase:
             return docker_client.images.pull(image)
 
     @staticmethod
-    def copy_files_container(container: docker.models.containers.Container, files: List[Tuple[str, PATH_OR_STR]]):
+    def copy_files_container(container: docker.models.containers.Container, files: FILES_SRC_TARGET):
         """
         Args:
             container: the container object.
@@ -93,7 +96,7 @@ class DockerBase:
         if files:
             with tempfile.NamedTemporaryFile() as tar_file_path:
                 with tarfile.open(name=tar_file_path.name, mode='w') as tar_file:
-                    for dst, src in files:
+                    for src, dst in files:
                         try:
                             tar_file.add(src, arcname=dst)
                         except Exception as error:
@@ -150,11 +153,11 @@ class MountableDocker(DockerBase):
         for file in files:
             if file.exists():
                 self._files_to_push_on_installation.append(
-                    (str(file), copy_file(file, self.tmp_dir / file.name))
+                    (copy_file(file, self.tmp_dir / file.name), str(file))
                 )
 
     @staticmethod
-    def get_mounts(files: List[Tuple[str, PATH_OR_STR]]) -> List[Mount]:
+    def get_mounts(files: FILES_SRC_TARGET) -> List[Mount]:
         """
         Args:
             files: a list of (target path in container, source path in machine).
@@ -162,7 +165,7 @@ class MountableDocker(DockerBase):
             a list of mounts
         """
         mounts = []
-        for target, src in files:
+        for src, target in files:
             try:
                 src = Path(src)
                 if src.exists():

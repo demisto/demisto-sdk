@@ -31,7 +31,7 @@ class ContentEntityValidator(BaseValidator):
     CONF_PATH = "./Tests/conf.json"
 
     def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
-                 suppress_print=False, json_file_path=None, oldest_supported_version=None, is_modified=False):
+                 suppress_print=False, json_file_path=None, oldest_supported_version=None):
         # type: (StructureValidator, dict, bool, bool, bool, Optional[str], Optional[str], bool) -> None
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
@@ -44,7 +44,6 @@ class ContentEntityValidator(BaseValidator):
         self.prev_ver = structure_validator.prev_ver
         self.branch_name = structure_validator.branch_name
         self.oldest_supported_version = oldest_supported_version or OLDEST_SUPPORTED_VERSION
-        self.is_modified = is_modified
 
     def is_valid_file(self, validate_rn=True):
         tests = [

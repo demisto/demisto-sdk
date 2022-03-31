@@ -47,7 +47,7 @@ class IntegrationValidator(ContentEntityValidator):
     def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
                  json_file_path=None, validate_all=False, is_modified=False):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         json_file_path=json_file_path, skip_docker_check=skip_docker_check, is_modified=False)
+                         json_file_path=json_file_path, skip_docker_check=skip_docker_check)
         self.validate_all = validate_all
         self.is_modified = is_modified
 

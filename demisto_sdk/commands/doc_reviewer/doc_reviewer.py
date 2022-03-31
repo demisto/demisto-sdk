@@ -92,19 +92,21 @@ class DocReviewer:
         if 'Packs' in file_path_obj.parts:
             pack_name = file_path_obj.parts[file_path_obj.parts.index('Packs') + 1]
             packs_ignore_path = os.path.join("Packs", pack_name, PACKS_PACK_IGNORE_FILE_NAME)
+            default_pack_known_words = [
+                get_pack_name(file_path),
+            ]
             if os.path.isfile(packs_ignore_path):
                 config = ConfigParser(allow_no_value=True)
                 config.read(packs_ignore_path)
                 if 'known_words' in config.sections():
-                    packs_known_words = [known_word for known_word in config['known_words']]
-                    packs_known_words.append(get_pack_name(file_path))
+                    packs_known_words = default_pack_known_words + list(config['known_words'])
                     return packs_ignore_path, packs_known_words
                 else:
                     click.secho(f'\nNo [known_words] section was found within: {packs_ignore_path}', fg='yellow')
-                    return packs_ignore_path, [get_pack_name(file_path)]
+                    return packs_ignore_path, default_pack_known_words
 
             click.secho(f'\nNo .pack-ignore file was found within pack: {packs_ignore_path}', fg='yellow')
-            return '', [get_pack_name(file_path)]
+            return '', default_pack_known_words
 
         click.secho(f'\nCould not load pack\'s known words file since no pack structure was found for {file_path}'
                     f'\nMake sure you are running from the content directory.', fg='bright_red')
@@ -141,14 +143,15 @@ class DocReviewer:
             for file_name in files:
                 full_path = (os.path.join(root, file_name))
                 if find_type(
-                    full_path, ignore_invalid_schema_file=self.ignore_invalid_schema_file
+                        full_path, ignore_invalid_schema_file=self.ignore_invalid_schema_file
                 ) in self.SUPPORTED_FILE_TYPES:
                     self.files.append(str(full_path))
 
     def gather_all_changed_files(self):
         modified = self.git_util.modified_files(prev_ver=self.prev_ver)  # type: ignore[union-attr]
         added = self.git_util.added_files(prev_ver=self.prev_ver)  # type: ignore[union-attr]
-        renamed = self.git_util.renamed_files(prev_ver=self.prev_ver, get_only_current_file_names=True)  # type: ignore[union-attr]
+        renamed = self.git_util.renamed_files(prev_ver=self.prev_ver,
+                                              get_only_current_file_names=True)  # type: ignore[union-attr]
 
         return modified.union(added).union(renamed)  # type: ignore[arg-type]
 
@@ -157,7 +160,7 @@ class DocReviewer:
         for file in self.gather_all_changed_files():
             file = str(file)
             if os.path.isfile(file) and find_type(
-                file, ignore_invalid_schema_file=self.ignore_invalid_schema_file
+                    file, ignore_invalid_schema_file=self.ignore_invalid_schema_file
             ) in self.SUPPORTED_FILE_TYPES:
                 self.files.append(file)
 
@@ -170,7 +173,7 @@ class DocReviewer:
             self.get_all_md_and_yml_files_in_dir(file_path)
 
         elif find_type(
-            file_path, ignore_invalid_schema_file=self.ignore_invalid_schema_file
+                file_path, ignore_invalid_schema_file=self.ignore_invalid_schema_file
         ) in self.SUPPORTED_FILE_TYPES:
             self.files.append(file_path)
 

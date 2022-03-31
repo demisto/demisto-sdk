@@ -1392,7 +1392,6 @@ class TestContext:
                 method='GET',
                 path=f'/inv-playbook/{self.incident_id}')
             investigation_playbook = ast.literal_eval(investigation_playbook_raw[0])
-            self.build_context.logging_module.info(f'Got investigation state: {investigation_playbook}')
         except ApiException:
             self.build_context.logging_module.exception(
                 'Failed to get investigation playbook state, error trying to communicate with demisto server'
@@ -1546,7 +1545,7 @@ class TestContext:
         """
         test_passed = playbook_state in (PB_Status.COMPLETED, PB_Status.NOT_SUPPORTED_VERSION)
         if self.incident_id and test_passed:
-            # todo: change it... batchDelete is not supported?
+            # todo: change it... batchDelete is not supported in XSIAM
             if not IS_XSIAM:
                 self.playbook.delete_incident(self.client, self.incident_id)
             self.playbook.delete_integration_instances(self.client)
@@ -1714,7 +1713,7 @@ class TestContext:
         # We don't want to run docker tests on redhat instance because it does not use docker and it does not support
         # the threshold configurations.
         if playbook_state == PB_Status.COMPLETED and self.server_context.is_instance_using_docker:
-            #  todo: cant run this cmd on xsiam machine
+            #  todo: cant run this cmd on xsiam machine, check this
             if not IS_XSIAM:
                 docker_test_results = self._run_docker_threshold_test()
                 if not docker_test_results:
@@ -1871,13 +1870,11 @@ class TestContext:
         number_of_executions = self.playbook.configuration.number_of_executions
         is_first_execution = number_of_executions == 1
 
-        # todo: check what to do if status is not supported
         if status == PB_Status.COMPLETED:
             updated_status = self._update_complete_status(is_first_execution, is_record_run, is_first_playback_run,
                                                           is_second_playback_run, use_retries_mechanism, number_of_executions)
 
         elif status in (PB_Status.FAILED_DOCKER_TEST, PB_Status.CONFIGURATION_FAILED):
-            self.build_context.logging_module.info(f'Got here: {status=}')
             self._add_to_failed_playbooks(status=status)
             return status
 

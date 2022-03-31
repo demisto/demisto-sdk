@@ -1,4 +1,6 @@
 # Changelog
+* Added a new validation to **validate** command to verify that the metadata *currentVersion* is
+the same as the last release note version.
 * **Breaking change**: Fixed a typo in the **validate** `--quiet-bc-validation` flag (was `--quite-bc-validation`). @upstart-swiss
 * Dropped support for python 3.7: Demisto-SDK is now supported on Python 3.8 or newer.
 * Added an agrument to YAMLHandler, allowing to set a maximal width for YAML files.  This fixes an issue where a wrong default was used.

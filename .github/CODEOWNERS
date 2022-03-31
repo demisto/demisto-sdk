@@ -6,3 +6,5 @@ demisto_sdk/commands/common/hook_validations/ @idovandijk
 
 Pipfile* @dorschw
 .circleci/ @dorschw
+
+demisto_sdk/commands/test_content/timestamp_replacer.py @esharf

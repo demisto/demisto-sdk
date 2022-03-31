@@ -1,6 +1,8 @@
+import glob
 import os
 import shutil
 import unittest
+from collections import Counter
 from typing import Dict, Optional
 
 import mock
@@ -1458,3 +1460,38 @@ def test_force_and_text_update_rn(repo, text, expected_rn_string):
 
     rn_string = client.build_rn_template({})
     assert rn_string == expected_rn_string
+
+
+CREATE_MD_IF_CURRENTVERSION_IS_HIGHER_TEST_BANK_ = [(['0_0_1'], ['0_0_1', '0_0_3'])]
+
+
+@pytest.mark.parametrize('first_expected_results, second_expected_results', CREATE_MD_IF_CURRENTVERSION_IS_HIGHER_TEST_BANK_)
+def test_create_md_if_currentversion_is_higher(mocker, first_expected_results, second_expected_results, repo):
+    """
+        Given:
+            - Case 1: the expected RN files.
+        When:
+            - creating a new markdown file.
+        Then:
+            Ensure that the creation was done correctly although the currentversion wasn't matching the latest RN.
+            - Case 1: Should create a new RN according to currentversion.
+    """
+    yml_mock = {'display': 'test', 'script': {'type': 'python', 'dockerimage': 'demisto/python3:3.9.5.123'}}
+    pack = repo.create_pack('PackName')
+    mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.check_docker_image_changed',
+                 return_value='demisto/python3:3.9.5.124')
+    integration = pack.create_integration('integration', 'bla', yml_mock)
+    integration.create_default_integration()
+    integration.yml.update({'display': 'Sample1'})
+    pack.pack_metadata.write_json({'currentVersion': '0.0.1'})
+    client = UpdateRN(pack_path=str(pack.path), update_type='revision',
+                      modified_files_in_pack={f'{str(integration.path)}/integration.yml'}, added_files=set())
+    client.execute_update()
+    updated_rn_folder = glob.glob(pack.path + '/ReleaseNotes/*')
+    updated_versions_list = [rn[rn.rindex('/') + 1:-3] for rn in updated_rn_folder]
+    assert Counter(first_expected_results) == Counter(updated_versions_list)
+    pack.pack_metadata.write_json({'currentVersion': '0.0.3'})
+    client.execute_update()
+    updated_rn_folder = glob.glob(pack.path + '/ReleaseNotes/*')
+    updated_versions_list = [rn[rn.rindex('/') + 1:-3] for rn in updated_rn_folder]
+    assert Counter(second_expected_results) == Counter(updated_versions_list)

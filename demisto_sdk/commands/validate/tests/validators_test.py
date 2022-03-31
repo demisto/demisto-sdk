@@ -1326,7 +1326,25 @@ def test_should_raise_pack_version(pack_name, expected):
     assert res == expected
 
 
-def test_run_validation_using_git_on_only_metadata_changed(mocker):
+pack_metadata = {
+    "name": "ForTesting",
+    "description": "A descriptive description.",
+    "support": "xsoar",
+    "currentVersion": "1.0.0",
+    "author": "Cortex XSOAR",
+    "url": "https://www.paloaltonetworks.com/cortex",
+    "email": "",
+    "categories": [
+        "Data Enrichment & Threat Intelligence"
+    ],
+    "tags": [],
+    "useCases": [],
+    "keywords": []
+}
+
+
+@pytest.mark.parametrize('pack_metadata', [(pack_metadata)])
+def test_run_validation_using_git_on_only_metadata_changed(mocker, pack: Pack, pack_metadata):
     """
     Given
         - metadata file that was changed.
@@ -1335,13 +1353,15 @@ def test_run_validation_using_git_on_only_metadata_changed(mocker):
     Then
         - validate That no error returns.
     """
+    pack.pack_metadata.write_json(pack_metadata)
     mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
     mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
-                        return_value=(set(), set(), {'/Packs/ForTesting/pack_metadata.json'}, set(), True))
+                        return_value=(set(), set(), {pack.pack_metadata.path}, set(), True))
     mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
     mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
-    res = validate_manager.run_validation_using_git()
+    with ChangeCWD(pack.repo_path):
+        res = validate_manager.run_validation_using_git()
     assert res
 
 

@@ -42,8 +42,7 @@ class ConnectionJSONFormat(BaseUpdateJSON):
     def run_format(self) -> int:
         try:
             click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
-            self.remove_unnecessary_keys()
-            self.set_fromVersion(from_version=self.from_version)
+            super().update_json()
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:

@@ -4,12 +4,9 @@ from typing import Any, Dict, List, Optional
 import decorator
 from requests import Response
 
-from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
-                                                   CONF_PATH,
-                                                   DEFAULT_JOB_FROM_VERSION,
-                                                   INTEGRATION_CATEGORIES,
-                                                   PACK_METADATA_DESC,
-                                                   PACK_METADATA_NAME)
+from demisto_sdk.commands.common.constants import (
+    BETA_INTEGRATION_DISCLAIMER, CONF_PATH, FILETYPE_TO_DEFAULT_FROMVERSION,
+    INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME, FileType)
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
@@ -292,6 +289,7 @@ ERROR_CODE = {
     "required_pack_file_does_not_exist": {'code': "PA128", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_missing_categories": {'code': "PA129", 'ui_applicable': False, 'related_field': ''},
     "wrong_version_format": {'code': "PA130", 'ui_applicable': False, 'related_field': ''},
+    "pack_metadata_version_diff_from_rn": {'code': "PA131", 'ui_applicable': False, 'related_field': ''},
 
     # PB - Playbooks
     "playbook_cant_have_rolename": {'code': "PB100", 'ui_applicable': True, 'related_field': 'rolename'},
@@ -1841,7 +1839,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_fromversion_in_job(version):
-        return f'fromVersion field in Job needs to be at least {DEFAULT_JOB_FROM_VERSION} (found {version})'
+        return f'fromVersion field in Job needs to be at least {FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)} (found {version})'
 
     @staticmethod
     @error_code_decorator
@@ -2175,6 +2173,13 @@ class Errors:
     @error_code_decorator
     def wrong_version_format():
         return 'Pack metadata version format is not valid. Please fill in a valid format (example: 0.0.0)'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_version_diff_from_rn(pack_path, rn_version, pack_metadata_version):
+        return f'There is a difference between the version in the pack metadata' \
+               f'file and the version of the latest release note.\nexpected latest release note to be {pack_metadata_version} '\
+               f'instead found {rn_version}.\nTo fix the problem, try running `demisto-sdk update-release-notes -i {pack_path}`'
 
     @staticmethod
     @error_code_decorator

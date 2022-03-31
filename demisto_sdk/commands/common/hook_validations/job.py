@@ -1,6 +1,7 @@
 from distutils.version import LooseVersion
 
-from demisto_sdk.commands.common.constants import DEFAULT_JOB_FROM_VERSION, JOB
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION, JOB, FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
@@ -23,7 +24,7 @@ class JobValidator(ContentEntityValidator):
         return True
 
     def is_valid_fromversion(self):
-        if not self.from_version or LooseVersion(self.from_version) < LooseVersion(DEFAULT_JOB_FROM_VERSION):
+        if not self.from_version or LooseVersion(self.from_version) < LooseVersion(FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)):
             error_message, error_code = Errors.invalid_fromversion_in_job(self.from_version)
             formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path)
             if formatted_error:

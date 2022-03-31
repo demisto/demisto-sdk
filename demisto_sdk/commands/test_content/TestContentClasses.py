@@ -1391,7 +1391,6 @@ class TestContext:
                 self=self.client,
                 method='GET',
                 path=f'/inv-playbook/{self.incident_id}')
-            self.build_context.logging_module.info(f'Got investigation raw: {investigation_playbook_raw}')
             investigation_playbook = ast.literal_eval(investigation_playbook_raw[0])
             self.build_context.logging_module.info(f'Got investigation state: {investigation_playbook}')
         except ApiException:
@@ -1404,7 +1403,10 @@ class TestContext:
             state = investigation_playbook['state']
             return state
         except Exception:  # noqa: E722
-            self.build_context.logging_module.info('Returning not supported')
+            # setting state to `in progress` in XSIAM build,
+            # Because `investigation_playbook` returned empty if xsiam investigation is still in progress.
+            if IS_XSIAM:
+                return PB_Status.IN_PROGRESS
             return PB_Status.NOT_SUPPORTED_VERSION
 
     def _collect_docker_images(self) -> None:
@@ -1543,14 +1545,11 @@ class TestContext:
             playbook_state: The state of the playbook with which we can check if the test was successful
         """
         test_passed = playbook_state in (PB_Status.COMPLETED, PB_Status.NOT_SUPPORTED_VERSION)
-        self.build_context.logging_module.info(f'In clean incident if success: {test_passed=}')
         if self.incident_id and test_passed:
             # todo: change it... batchDelete is not supported?
-            self.build_context.logging_module.info(f'Got here start cleaning.')
             if not IS_XSIAM:
                 self.playbook.delete_incident(self.client, self.incident_id)
             self.playbook.delete_integration_instances(self.client)
-        self.build_context.logging_module.info(f'Got here done cleaning.')
 
     def _run_docker_threshold_test(self):
         self._collect_docker_images()

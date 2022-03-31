@@ -4,12 +4,9 @@ from typing import Any, Dict, List, Optional
 import decorator
 from requests import Response
 
-from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
-                                                   CONF_PATH,
-                                                   DEFAULT_JOB_FROM_VERSION,
-                                                   INTEGRATION_CATEGORIES,
-                                                   PACK_METADATA_DESC,
-                                                   PACK_METADATA_NAME)
+from demisto_sdk.commands.common.constants import (
+    BETA_INTEGRATION_DISCLAIMER, CONF_PATH, FILETYPE_TO_DEFAULT_FROMVERSION,
+    INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME, FileType)
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
@@ -1842,7 +1839,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_fromversion_in_job(version):
-        return f'fromVersion field in Job needs to be at least {DEFAULT_JOB_FROM_VERSION} (found {version})'
+        return f'fromVersion field in Job needs to be at least {FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)} (found {version})'
 
     @staticmethod
     @error_code_decorator

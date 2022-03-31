@@ -2,7 +2,8 @@ import traceback
 
 import click
 
-from demisto_sdk.commands.common.constants import DEFAULT_JOB_FROM_VERSION
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION, FileType)
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -41,15 +42,9 @@ class JobJSONFormat(BaseUpdateJSON):
     def run_format(self) -> int:
         try:
             click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
+            super().update_json(default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB))
             self.update_id()
             self.attempt_infer_selected_feeds()
-            self.set_from_server_version_to_default()
-
-            # relevant parts of super().update_json()
-            self.remove_null_fields()
-            self.remove_unnecessary_keys()
-            self.remove_spaces_end_of_id_and_name()
-
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
 
@@ -63,6 +58,3 @@ class JobJSONFormat(BaseUpdateJSON):
         format_result = self.run_format()
         result_code = self.initiate_file_validator() if format_result == SUCCESS_RETURN_CODE else SKIP_RETURN_CODE
         return format_result, result_code
-
-    def set_from_server_version_to_default(self, location=None):
-        self.set_default_value('fromVersion', DEFAULT_JOB_FROM_VERSION, location=location)

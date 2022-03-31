@@ -32,7 +32,7 @@ class ContentEntityValidator(BaseValidator):
 
     def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
                  suppress_print=False, json_file_path=None, oldest_supported_version=None):
-        # type: (StructureValidator, dict, bool, bool, bool, Optional[str], Optional[str], bool) -> None
+        # type: (StructureValidator, dict, bool, bool, bool, Optional[str], Optional[str]) -> None
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path)
         self.structure_validator = structure_validator

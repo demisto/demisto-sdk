@@ -38,7 +38,7 @@ def compare_ast(node1, node2):
 
 
 class TestUnitTestsGenerator:
-    test_files_path = Path(__file__, git_path(), 'demisto_sdk', 'commands', 'generate_unit_tests', 'tests', 'test_files').resolve()
+    test_files_path = Path(__file__, git_path(), 'demisto_sdk', 'commands', 'generate_unit_tests', 'tests', 'test_files')
     input_path = None
     output_dir = None
 
@@ -70,9 +70,6 @@ class TestUnitTestsGenerator:
         output_path = Path(self.output_dir, 'malwarebazaar_test.py')
         desired = Path(self.output_dir, expected_result)
 
-        if output_path.exists():
-            os.remove(output_path)
-
         run_generate_unit_tests(**args)
 
         with open(output_path, 'r') as f:
@@ -81,4 +78,8 @@ class TestUnitTestsGenerator:
         with open(desired, 'r') as f:
             output_desired = f.read()
 
-        assert compare_ast(parse(output_source), parse(output_desired))
+        try:
+            assert compare_ast(parse(output_source), parse(output_desired))
+        finally:
+            if output_path.exists():
+                os.remove(output_path)

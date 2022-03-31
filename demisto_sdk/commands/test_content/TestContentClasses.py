@@ -1391,6 +1391,7 @@ class TestContext:
                 self=self.client,
                 method='GET',
                 path=f'/inv-playbook/{self.incident_id}')
+            self.build_context.logging_module.info(f'Got investigation raw: {investigation_playbook_raw}')
             investigation_playbook = ast.literal_eval(investigation_playbook_raw[0])
             self.build_context.logging_module.info(f'Got investigation state: {investigation_playbook}')
         except ApiException:

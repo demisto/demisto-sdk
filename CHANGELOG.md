@@ -1,4 +1,6 @@
 # Changelog
+* Added a new validation to **validate** command to verify that the metadata *currentVersion* is
+the same as the last release note version.
 * **Breaking change**: Fixed a typo in the **validate** `--quiet-bc-validation` flag (was `--quite-bc-validation`). @upstart-swiss
 * Dropped support for python 3.7: Demisto-SDK is now supported on Python 3.8 or newer.
 * Added an agrument to YAMLHandler, allowing to set a maximal width for YAML files.  This fixes an issue where a wrong default was used.
@@ -8,6 +10,7 @@
 * Enhanced the dependency message shown when running **lint**.
 * The **validate** command now checks if there're none-deprecated integration commands that apear only in the integration yml but not in the readme file.
 * Fixed an issue where **update-release-notes** didn't update the currentVersion in pack_metadata
+* Improved the logging in **test-content** for helping catch typos in external playbook configuration.
 
 # 1.6.2
 * Added dependency validation support for core marketplacev2 packs.
@@ -33,6 +36,10 @@
 * Added validation for forbidden words and phrases in the **doc-review** command.
 * Added a retries mechanism to the **test-content** command to stabilize the build process.
 * Added support for all `git` platforms to get remote files.
+* Refactored the **format** command's effect on the *fromversion* field:
+  - Fixed a bug where the *fromversion* field was removed when modifying a content item.
+  - Updated the general default *fromversion* and the default *fromversion* of newly-introduced content items (e.g. `Lists`, `Jobs`).
+  - Added an interactive mode functionality for all content types, to ask the user whether to set a default *fromversion*, if could not automatically determine its value. Use `-y` to assume 'yes' as an answer to all prompts and run non-interactively.
 
 # 1.6.1
 * Added the '--use-packs-known-words' argument to the **doc-review** command

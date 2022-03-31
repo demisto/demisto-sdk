@@ -27,7 +27,8 @@ from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.tools import (
-    _get_file_id, compare_context_path_in_yml_and_readme, get_core_pack_list,
+    _get_file_id, compare_context_path_in_yml_and_readme,
+    extract_none_deprecated_command_names_from_yml, get_core_pack_list,
     get_file_version_suffix_if_exists, get_files_in_dir, get_item_marketplaces,
     get_pack_name, is_iron_bank_pack, print_error, server_version_compare)
 
@@ -44,10 +45,11 @@ class IntegrationValidator(ContentEntityValidator):
     ALLOWED_HIDDEN_PARAMS = {'longRunning', 'feedIncremental', 'feedReputation'}
 
     def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
-                 json_file_path=None, validate_all=False):
+                 json_file_path=None, validate_all=False, is_modified=False):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          json_file_path=json_file_path, skip_docker_check=skip_docker_check)
         self.validate_all = validate_all
+        self.is_modified = is_modified
 
     def is_valid_version(self):
         # type: () -> bool
@@ -78,6 +80,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_changed_removed_yml_fields(),
             # will move to is_valid_integration after https://github.com/demisto/etc/issues/17949
             not self.is_outputs_for_reputations_commands_valid(),
+            self.verify_yml_commands_match_readme(),
         ]
         return not any(answers)
 
@@ -1474,3 +1477,29 @@ class IntegrationValidator(ContentEntityValidator):
                 return False
 
         return True
+
+    def verify_yml_commands_match_readme(self):
+        """
+        Checks if there are commands that doesn't appear in the readme but appear in the .yml file
+
+        Return:
+            True if all commands appear in the readme, and False if it does'nt.
+        """
+        if not self.is_modified:
+            return True
+        yml_commands_list = extract_none_deprecated_command_names_from_yml(self.current_file)
+        is_valid = True
+        dir_path = os.path.dirname(self.file_path)
+        readme_path = os.path.join(dir_path, 'README.md')
+        with open(readme_path, 'r') as readme:
+            readme_content = readme.read()
+        excluded_from_readme_commands = ['get-mapping-fields', 'xsoar-search-incidents', 'xsoar-get-incident', 'get-remote-data']
+        missing_commands_from_readme = [
+            command for command in yml_commands_list if command not in readme_content and command not in excluded_from_readme_commands]
+        if missing_commands_from_readme:
+            error_message, error_code = Errors.missing_commands_from_readme(
+                os.path.basename(self.file_path), missing_commands_from_readme)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                is_valid = False
+
+        return is_valid

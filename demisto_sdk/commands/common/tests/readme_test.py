@@ -9,7 +9,6 @@ import requests_mock
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from TestSuite.integration import Integration
 from TestSuite.test_tools import ChangeCWD
 
 VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
@@ -480,31 +479,3 @@ def test_verify_readme_image_paths(mocker):
     assert 'please repair it:\n' \
            '![Identity with High Risk Score](https://github.com/demisto/test3.png)' \
            not in captured_output
-
-
-VERIFY_YML_COMMANDS_MATCH_README_DATA = [
-    ({'script': {'commands': [{'name': 'command_name'}]}}, "## Commands\n### command_name\n somename", True),
-    ({'script': {'commands': [{'name': 'get-mapping-fields'}]}}, "", True),
-    ({'script': {'commands': [{'name': 'command_name'}]}}, "", False),
-]
-
-
-@pytest.mark.parametrize("yml_data, readme_text, excepted_results", VERIFY_YML_COMMANDS_MATCH_README_DATA)
-def test_verify_yml_commands_match_readme(yml_data, readme_text, excepted_results, integration: Integration):
-    """
-    Given
-    - Case 1: integration with one command mentioned in both the yml and the readme files.
-    - Case 2: integration with one command that should be excluded from the readme file and mentioned in the yml file.
-    - Case 3: integration with one command mentioned only in the yml file.
-    When
-    - Running verify_yml_commands_match_readme on the integration.
-    Then
-    - Ensure validation correctly identifies missed commands from yml or readme files.
-    - Case 1: Should return True.
-    - Case 2: Should return True.
-    - Case 3: Should return False.
-    """
-    integration.yml.write_dict(yml_data)
-    integration.readme.write(readme_text)
-    readme_validator = ReadMeValidator(integration.readme.path)
-    assert readme_validator.verify_yml_commands_match_readme() == excepted_results

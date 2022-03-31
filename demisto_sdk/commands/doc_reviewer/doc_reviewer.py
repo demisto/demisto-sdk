@@ -150,8 +150,7 @@ class DocReviewer:
     def gather_all_changed_files(self):
         modified = self.git_util.modified_files(prev_ver=self.prev_ver)  # type: ignore[union-attr]
         added = self.git_util.added_files(prev_ver=self.prev_ver)  # type: ignore[union-attr]
-        renamed = self.git_util.renamed_files(prev_ver=self.prev_ver,
-                                              get_only_current_file_names=True)  # type: ignore[union-attr]
+        renamed = self.git_util.renamed_files(prev_ver=self.prev_ver, get_only_current_file_names=True)  # type: ignore[union-attr]
 
         return modified.union(added).union(renamed)  # type: ignore[arg-type]
 

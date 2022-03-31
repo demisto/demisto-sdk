@@ -1517,7 +1517,7 @@ class TestContext:
             if not IS_XSIAM:
                 self.build_context.logging_module.info(f'Investigation URL: {server_url}/#/WorkPlan/{investigation_id}')
             playbook_state = self._poll_for_playbook_state()
-
+            self.build_context.logging_module.info(f'Got incident: {investigation_id} status: {playbook_state}.')
             if self.playbook.configuration.context_print_dt:
                 self.playbook.print_context_to_log(self.client, investigation_id)
 
@@ -1871,6 +1871,7 @@ class TestContext:
                                                           is_second_playback_run, use_retries_mechanism, number_of_executions)
 
         elif status in (PB_Status.FAILED_DOCKER_TEST, PB_Status.CONFIGURATION_FAILED):
+            self.build_context.logging_module.info(f'Got here: {status=}')
             self._add_to_failed_playbooks(status=status)
             return status
 

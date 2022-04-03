@@ -45,11 +45,10 @@ class IntegrationValidator(ContentEntityValidator):
     ALLOWED_HIDDEN_PARAMS = {'longRunning', 'feedIncremental', 'feedReputation'}
 
     def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
-                 json_file_path=None, validate_all=False, is_modified=False):
+                 json_file_path=None, validate_all=False):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          json_file_path=json_file_path, skip_docker_check=skip_docker_check)
         self.validate_all = validate_all
-        self.is_modified = is_modified
 
     def is_valid_version(self):
         # type: () -> bool
@@ -1485,8 +1484,8 @@ class IntegrationValidator(ContentEntityValidator):
         Return:
             True if all commands appear in the readme, and False if it does'nt.
         """
-        if not self.is_modified:
-            return True
+        # if not self.is_modified:
+        #     return True
         yml_commands_list = extract_none_deprecated_command_names_from_yml(self.current_file)
         is_valid = True
         dir_path = os.path.dirname(self.file_path)

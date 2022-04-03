@@ -122,7 +122,7 @@ class IntegrationValidator(ContentEntityValidator):
         return all(answers)
 
     def is_valid_file(self, validate_rn: bool = True, skip_test_conf: bool = False,
-                      check_is_unskipped: bool = True, conf_json_data: dict = {}) -> bool:
+                      check_is_unskipped: bool = True, conf_json_data: dict = {}, is_modified=False) -> bool:
         """Check whether the Integration is valid or not according to the LEVEL SUPPORT OPTIONS
         that depends on the contributor type
 
@@ -141,7 +141,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_hidden_params(),
             self.is_valid_description(beta_integration=False),
             self.is_context_correct_in_readme(),
-            self.verify_yml_commands_match_readme(),
+            self.verify_yml_commands_match_readme(is_modified),
         ]
 
         if check_is_unskipped:
@@ -1477,13 +1477,15 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
-    def verify_yml_commands_match_readme(self):
+    def verify_yml_commands_match_readme(self, is_modified=False):
         """
         Checks if there are commands that doesn't appear in the readme but appear in the .yml file
 
         Return:
             True if all commands appear in the readme, and False if it does'nt.
         """
+        if not is_modified:
+            return True
         yml_commands_list = extract_none_deprecated_command_names_from_yml(self.current_file)
         is_valid = True
         dir_path = os.path.dirname(self.file_path)

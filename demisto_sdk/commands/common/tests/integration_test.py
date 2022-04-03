@@ -1346,8 +1346,8 @@ class TestIsFeedParamsExist:
         integration.yml.write_dict(yml_data)
         integration.readme.write(readme_text)
         struct = mock_structure(current_file=yml_data, file_path=integration.yml.path)
-        integration_validator = IntegrationValidator(struct, is_modified=is_modified)
-        assert integration_validator.verify_yml_commands_match_readme() == excepted_results
+        integration_validator = IntegrationValidator(struct)
+        assert integration_validator.verify_yml_commands_match_readme(is_modified) == excepted_results
 
 
 class TestisContextChanged:

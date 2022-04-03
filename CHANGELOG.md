@@ -10,7 +10,7 @@ the same as the last release note version.
 * Enhanced the dependency message shown when running **lint**.
 * Fixed an issue where **update-release-notes** didn't update the currentVersion in pack_metadata
 * Improved the logging in **test-content** for helping catch typos in external playbook configuration.
-* Fixed an issue where **update-xsoar-config-file** does not insert properly the marketplace packs to the list.
+* Fixed an issue where **update-xsoar-config-file** did not properly insert the marketplace packs list to the file.
 
 # 1.6.2
 * Added dependency validation support for core marketplacev2 packs.

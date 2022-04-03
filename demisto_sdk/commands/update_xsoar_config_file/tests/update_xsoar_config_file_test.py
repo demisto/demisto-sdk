@@ -83,6 +83,7 @@ class TestXSOARConfigFileUpdater:
 
         mocker.patch.object(XSOARConfigFileUpdater, 'get_installed_packs', return_value=[
             {"id": "test1", "version": "1.0.0"}])
+
         with temp_dir() as tmp_output_dir:
 
             with open(f'{tmp_output_dir}/xsoar_config.json', 'w') as config_file:
@@ -95,12 +96,14 @@ class TestXSOARConfigFileUpdater:
             )
 
             assert Path(f'{tmp_output_dir}/xsoar_config.json').exists()
+            expected_path_object = Path(tmp_output_dir) / 'xsoar_config.json'
 
-            try:
-                with open(f'{tmp_output_dir}/xsoar_config.json', 'r') as config_file:
+            if expected_path_object.is_file():
+                with open(expected_path_object, 'r') as config_file:
                     config_file_info = json.load(config_file)
-            except IsADirectoryError:
+            elif not expected_path_object.is_file():
                 config_file_info = {}
+
             assert config_file_info == {'marketplace_packs': [{'id': 'test2', 'version': '2.0.0'},
                                                               {'id': 'test1', 'version': '1.0.0'}]}
 

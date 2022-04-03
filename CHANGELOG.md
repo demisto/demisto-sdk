@@ -10,6 +10,7 @@ the same as the last release note version.
 * Enhanced the dependency message shown when running **lint**.
 * Fixed an issue where **update-release-notes** didn't update the currentVersion in pack_metadata
 * Improved the logging in **test-content** for helping catch typos in external playbook configuration.
+* Added the pack name to the known words by default when running the **doc-review** command.
 
 # 1.6.2
 * Added dependency validation support for core marketplacev2 packs.

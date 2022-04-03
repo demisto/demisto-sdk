@@ -24,7 +24,7 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ''):
     if DOCKER_CLIENT is None:
         try:
             if log_prompt:
-                logger.info(f'{log_prompt} - init and login the docker client')
+                logger.debug(f'{log_prompt} - init and login the docker client')
             else:
                 logger.debug('init and login the docker client')
             DOCKER_CLIENT = docker.from_env(timeout=timeout)

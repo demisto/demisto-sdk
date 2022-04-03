@@ -2090,6 +2090,7 @@ class PackDependencies:
             input_paths: Tuple = None,
             all_packs_dependencies: bool = False,
             get_dependent_on: bool = False,
+            dependency: str = '',
             output_path: str = None,
     ) -> None:
         """
@@ -2103,6 +2104,7 @@ class PackDependencies:
             all_packs_dependencies: Whether to calculate dependencies for all content packs.
             get_dependent_on: Whether to get the packs dependent on the given packs.
             output_path: The destination path for the packs dependencies json file.
+            dependency: The pack to search the dependency for.
 
         """
 
@@ -2115,6 +2117,19 @@ class PackDependencies:
             print_success("Found the following dependent packs:")
             dependent_packs = json.dumps(dependent_packs, indent=4)
             click.echo(click.style(dependent_packs, bold=True))
+
+        elif dependency:
+            dependent_packs, _ = get_packs_dependent_on_given_packs(input_paths, id_set_path,  # type: ignore[arg-type]
+                                                                    output_path, verbose=True)
+            dependent_items = dependent_packs[Path(input_paths[0]).name].get('packsDependentOnThisPackMandatorily')
+            if dependency in dependent_items:
+                print_success(f"The pack {dependency} depends on {Path(input_paths[0]).name} because of the "
+                              f"following items:")
+                packs_dependencies = dependent_items.get(dependency)
+                dependencies = json.dumps(packs_dependencies, indent=4)
+                click.echo(click.style(dependencies, bold=True))
+            else:
+                print_warning("Could not find dependencies between the two packs.")
 
         elif all_packs_dependencies:
             calculate_all_packs_dependencies(id_set_path, output_path, verbose)  # type: ignore[arg-type]
@@ -2414,6 +2429,7 @@ def get_packs_dependent_on_given_packs(packs: list,
                                        verbose: bool = False,
                                        id_set: dict = None,
                                        marketplace: str = '',
+                                       dependency: str = '',
 
                                        ) -> Tuple:
     """
@@ -2426,6 +2442,7 @@ def get_packs_dependent_on_given_packs(packs: list,
         verbose: Whether to print the log to the console.
         id_set: id_set to calculate the dependencies
         marketplace: The dependency calculation desired marketplace.
+        dependency: The pack to search the dependency for.
 
     Returns:
         1. A dict with the given packs as keys, and the dependent packs with details about the dependency

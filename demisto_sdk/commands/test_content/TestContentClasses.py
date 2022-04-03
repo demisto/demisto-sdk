@@ -527,7 +527,10 @@ class BuildContext:
         if not self.is_nightly:
             return []
         url, port = list(instances_ips.items())[0]
-        server_url = f'https://localhost:{port}' if port else f'https://{url}'
+        if IS_XSIAM:
+            server_url = url
+        else:
+            server_url = f'https://localhost:{port}' if port else f'https://{url}'
         return self.get_all_installed_integrations_configurations(server_url)
 
     def get_all_installed_integrations_configurations(self, server_url: str) -> list:
@@ -539,6 +542,9 @@ class BuildContext:
         Returns:
             A dict containing the configuration for the integration if found else empty list
         """
+        if IS_XSIAM:
+            # in xsiam we dont use demisto username
+            os.environ.pop('DEMISTO_USERNAME', None)
         tmp_client = demisto_client.configure(base_url=server_url,
                                               auth_id=self.auth_id,
                                               api_key=self.api_key,

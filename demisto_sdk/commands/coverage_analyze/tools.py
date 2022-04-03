@@ -1,13 +1,16 @@
 '''
     This file contains functions that are related to the coverage reports but not used in the demisto-sdk source.
 '''
-import json
 from datetime import datetime, timedelta
 from typing import Optional
 
 import requests
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logging_setup
+
+json = JSON_Handler()
+
 
 ONE_DAY = timedelta(days=1)
 LATEST_URL = 'https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json'

@@ -1,8 +1,8 @@
 """
 This module is designed to validate the existence and structure of content pack essential files in content.
 """
+import glob
 import io
-import json
 import os
 import re
 from datetime import datetime
@@ -13,6 +13,7 @@ from typing import Dict, Tuple
 import click
 from dateutil import parser
 from git import GitCommandError, Repo
+from packaging.version import parse
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
@@ -28,6 +29,7 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
@@ -36,6 +38,9 @@ from demisto_sdk.commands.common.tools import (get_core_pack_list, get_json,
                                                pack_name_to_path)
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
+
+json = JSON_Handler()
+
 
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 SUPPORTED_CONTRIBUTORS_LIST = ['partner', 'developer']
@@ -129,6 +134,22 @@ class PackUniqueFilesValidator(BaseValidator):
     def _get_pack_file_path(self, file_name=''):
         """Returns the full file path to pack's file"""
         return os.path.join(self.pack_path, file_name)
+
+    def _get_pack_latest_rn_version(self):
+        """
+        Extract all the Release notes from the pack and reutrn the highest version of release note in the Pack.
+
+        Return:
+            (str): The lastest version of RN.
+        """
+        list_of_files = glob.glob(self.pack_path + '/ReleaseNotes/*')
+        list_of_release_notes = [os.path.basename(file) for file in list_of_files]
+        list_of_versions = [rn[:rn.rindex('.')].replace('_', '.') for rn in list_of_release_notes]
+        if list_of_versions:
+            list_of_versions.sort(key=LooseVersion)
+            return list_of_versions[-1]
+        else:
+            return ''
 
     def _is_pack_file_exists(self, file_name: str, is_required: bool = False):
         """
@@ -290,6 +311,7 @@ class PackUniqueFilesValidator(BaseValidator):
             self._is_pack_meta_file_structure_valid(),
             self._is_valid_contributor_pack_support_details(),
             self._is_approved_usecases(),
+            self._is_right_version(),
             self._is_approved_tags(),
             self._is_price_changed(),
             self._is_valid_support_type(),
@@ -550,6 +572,25 @@ class PackUniqueFilesValidator(BaseValidator):
         except (ValueError, TypeError):
             if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
                 return False
+        return True
+
+    def _is_right_version(self):
+        """Checks whether the currentVersion field in the pack metadata match the version of the latest release note.
+
+        Return:
+             bool: True if the versions are match, otherwise False
+        """
+        metadata_file_path = self._get_pack_file_path(self.pack_meta_file)
+        current_version = self.metadata_content.get('currentVersion', '0.0.0')
+        rn_version = self._get_pack_latest_rn_version()
+        if not rn_version and current_version == '1.0.0':
+            return True
+        if not rn_version:
+            self._add_error(Errors.missing_release_notes_for_pack(self.pack), self.pack)
+            return False
+        if parse(rn_version) != parse(current_version):
+            self._add_error(Errors.pack_metadata_version_diff_from_rn(self.pack, rn_version, current_version), metadata_file_path)
+            return False
         return True
 
     def _contains_use_case(self):

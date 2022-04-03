@@ -1,4 +1,3 @@
-import json
 import os
 import sys
 from io import StringIO
@@ -11,12 +10,12 @@ from mock import patch
 
 import demisto_sdk.commands.validate.validate_manager
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (CONF_PATH,
-                                                   DEFAULT_JOB_FROM_VERSION,
-                                                   PACKS_PACK_META_FILE_NAME,
-                                                   TEST_PLAYBOOK, FileType)
+from demisto_sdk.commands.common.constants import (
+    CONF_PATH, FILETYPE_TO_DEFAULT_FROMVERSION, PACKS_PACK_META_FILE_NAME,
+    TEST_PLAYBOOK, FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
@@ -80,6 +79,8 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
+
+json = JSON_Handler()
 
 
 class TestValidators:
@@ -1325,7 +1326,25 @@ def test_should_raise_pack_version(pack_name, expected):
     assert res == expected
 
 
-def test_run_validation_using_git_on_only_metadata_changed(mocker):
+pack_metadata = {
+    "name": "ForTesting",
+    "description": "A descriptive description.",
+    "support": "xsoar",
+    "currentVersion": "1.0.0",
+    "author": "Cortex XSOAR",
+    "url": "https://www.paloaltonetworks.com/cortex",
+    "email": "",
+    "categories": [
+        "Data Enrichment & Threat Intelligence"
+    ],
+    "tags": [],
+    "useCases": [],
+    "keywords": []
+}
+
+
+@pytest.mark.parametrize('pack_metadata', [(pack_metadata)])
+def test_run_validation_using_git_on_only_metadata_changed(mocker, pack: Pack, pack_metadata):
     """
     Given
         - metadata file that was changed.
@@ -1334,13 +1353,15 @@ def test_run_validation_using_git_on_only_metadata_changed(mocker):
     Then
         - validate That no error returns.
     """
+    pack.pack_metadata.write_json(pack_metadata)
     mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
     mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
-                        return_value=(set(), set(), {'/Packs/ForTesting/pack_metadata.json'}, set(), True))
+                        return_value=(set(), set(), {pack.pack_metadata.path}, set(), True))
     mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
     mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
-    res = validate_manager.run_validation_using_git()
+    with ChangeCWD(pack.repo_path):
+        res = validate_manager.run_validation_using_git()
     assert res
 
 
@@ -1676,7 +1697,7 @@ def test_job_from_version(repo, capsys, is_feed: bool, version: Optional[str]):
         assert not validate_manager.validate_job(StructureValidator(job.path, is_new_file=True),
                                                  pack_error_ignore_list=list())
     stdout = capsys.readouterr().out
-    assert f"fromVersion field in Job needs to be at least {DEFAULT_JOB_FROM_VERSION} (found {version})" in stdout
+    assert f"fromVersion field in Job needs to be at least {FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)} (found {version})" in stdout
 
 
 def test_job_non_feed_with_selected_feeds(repo, capsys):

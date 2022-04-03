@@ -1,4 +1,3 @@
-import json
 import os
 from typing import Dict, List, Optional
 
@@ -8,13 +7,14 @@ from demisto_sdk.commands.common.constants import (ENTITY_TYPE_TO_DIR,
                                                    INTEGRATION, PLAYBOOK,
                                                    TEST_PLAYBOOKS_DIR,
                                                    FileType)
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.tools import (
     _get_file_id, find_type, get_entity_id_by_entity_type,
     get_not_registered_tests, get_scripts_and_commands_from_yml_data, get_yaml,
     is_uuid, listdir_fullpath)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
+json = JSON_Handler()
 yaml = YAML_Handler()
 
 
@@ -109,10 +109,10 @@ class BaseUpdateYML(BaseUpdate):
             if not self.data.get('tests', '') and self.old_file.get('tests', ''):
                 self.data['tests'] = self.old_file['tests']
 
-    def update_yml(self, file_type: Optional[str] = None) -> None:
+    def update_yml(self, default_from_version: Optional[str] = '', file_type: str = '') -> None:
         """Manager function for the generic YML updates."""
 
-        self.set_fromVersion(from_version=self.from_version, file_type=file_type)
+        self.set_fromVersion(default_from_version=default_from_version, file_type=file_type)
         self.remove_copy_and_dev_suffixes_from_name()
         self.remove_unnecessary_keys()
         self.remove_spaces_end_of_id_and_name()

@@ -1,4 +1,3 @@
-import json
 import os
 
 import click
@@ -13,15 +12,20 @@ from demisto_sdk.commands.common.constants import (PACK_METADATA_DESC,
                                                    PACK_METADATA_SUPPORT,
                                                    PACK_METADATA_TAGS,
                                                    PACK_METADATA_USE_CASES,
+                                                   PACKS_PACK_META_FILE_NAME,
                                                    PACKS_README_FILE_NAME,
                                                    XSOAR_SUPPORT)
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.test_tools import ChangeCWD
+
+json = JSON_Handler()
+
 
 VALIDATE_CMD = "validate"
 PACK_METADATA_PARTNER = {
@@ -796,3 +800,37 @@ class TestPackUniqueFilesValidator:
             assert not res
             assert f'Partners must provide a non-empty author image under the path {author_image_path}.' in \
                    self.validator.get_errors()
+
+    @pytest.mark.parametrize('pack_metadata, rn_version, create_rn, expected_results', [
+        ({"currentVersion": "1.0.1"}, "1.0.1", True, True),
+        ({"currentVersion": "1.0.2"}, "1.0.1", True, False),
+        ({"currentVersion": "1.0.1"}, "1.0.2", True, False),
+        ({"currentVersion": "1.0.1"}, "1.0.2", False, False),
+        ({"currentVersion": "1.0.0"}, "1.0.0", False, True),
+    ])
+    def test_is_right_version(self, repo, pack_metadata, rn_version, create_rn, expected_results):
+        """
+        Given
+        - Case 1: Pack containing rn and pack_metadata with equal versions.
+        - Case 2: Pack containing rn and pack_metadata with rn versions lower than pack_metadata.
+        - Case 3: Pack containing rn and pack_metadata with rn versions higher than pack_metadata.
+        - Case 4: Pack with pack_metadata version higher than 1.0.0 but no rn.
+        - Case 5: Pack with pack_metadata version 1.0.0 and no rn.
+        When
+        - Running test_is_right_version command on pack.
+        Then
+        - Ensure validation correctly.
+        - Case 1: Should return True.
+        - Case 2: Should return False.
+        - Case 3: Should return False.
+        - Case 4: Should return False.
+        - Case 5: Should return True.
+        """
+        pack = repo.create_pack('MyPack')
+        self.validator.metadata_content = pack_metadata
+        self.validator.pack_path = pack.path
+        self.validator.pack_meta_file = PACKS_PACK_META_FILE_NAME
+        if create_rn:
+            pack.create_release_notes(version=rn_version)
+        res = self.validator._is_right_version()
+        assert res == expected_results

@@ -1,7 +1,6 @@
 import copy
 import glob
 import itertools
-import json
 import os
 import re
 import time
@@ -26,6 +25,7 @@ from demisto_sdk.commands.common.constants import (
     LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR, MP_V2_ID_SET_PATH, REPORTS_DIR,
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, FileType,
     MarketplaceVersions)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_current_repo, get_file,
                                                get_item_marketplaces, get_json,
@@ -34,6 +34,9 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                print_warning)
 from demisto_sdk.commands.unify.integration_script_unifier import \
     IntegrationScriptUnifier
+
+json = JSON_Handler()
+
 
 CONTENT_ENTITIES = ['Packs', 'Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',

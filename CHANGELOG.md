@@ -9,8 +9,10 @@ the same as the last release note version.
 * Fixed an issue in the **validate** command did not work properly when using the *-g* flag.
 * Enhanced the dependency message shown when running **lint**.
 * The **validate** command now checks if there're none-deprecated integration commands that apear only in the integration yml but not in the readme file.
+* Fixed an issue where *dockerimage* changes in Scripts weren't recognized by the **update-release-notes** command.
 * Fixed an issue where **update-release-notes** didn't update the currentVersion in pack_metadata
 * Improved the logging in **test-content** for helping catch typos in external playbook configuration.
+* Fixed an issue where **update-xsoar-config-file** did not properly insert the marketplace packs list to the file.
 
 # 1.6.2
 * Added dependency validation support for core marketplacev2 packs.

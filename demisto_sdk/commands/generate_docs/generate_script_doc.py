@@ -130,7 +130,7 @@ def get_script_info(script_path):
     :param script_path: the script yml file path.
     :return: list of dicts contains the script information.
     """
-    script = get_yaml(script_path)
+    script = get_yaml(script_path, cache_clear=True)
     script_type = script.get('subtype')
     if not script_type:
         script_type = script.get('type')

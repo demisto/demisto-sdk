@@ -741,7 +741,7 @@ class BuildContext:
             'Server 6.1': '6.1.0',
             'Server 6.2': '6.2.0',
             'Server Master': default_version,
-            'XSIAM 6.6': '6.6.0'
+            'XSIAM Master': default_version
         }
         server_numeric_version = server_version_mapping.get(self.server_version, default_version)
         self.logging_module.info(f'Server version: {server_numeric_version}', real_time=True)

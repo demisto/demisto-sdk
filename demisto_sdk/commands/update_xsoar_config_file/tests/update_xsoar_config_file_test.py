@@ -13,7 +13,6 @@ from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file impo
 
 json = JSON_Handler()
 
-
 UNIT_TEST_DATA = (src_root() / 'commands' / 'update_xsoar_config_file' / 'tests' / 'data')
 
 
@@ -41,7 +40,10 @@ class TestXSOARConfigFileUpdater:
                              argvalues=[(True, 'xsoar_config.json',
                                          {'marketplace_packs': [{'id': 'test1', 'version': '1.0.0'}]}),
                                         (False, '', {})])
-    def test_add_all_marketplace_packs(self, mocker, add_all_marketplace_packs, expected_path, expected_outputs):
+    def test_add_all_marketplace_packs(self, mocker,
+                                       add_all_marketplace_packs: bool,
+                                       expected_path: str,
+                                       expected_outputs: dict):
         """
         Given:
             - add_all_marketplace_packs arg as True or False
@@ -55,19 +57,21 @@ class TestXSOARConfigFileUpdater:
         mocker.patch.object(XSOARConfigFileUpdater, 'get_installed_packs', return_value=[
             {"id": "test1", "version": "1.0.0"}])
         with temp_dir() as tmp_output_dir:
+            temp_file = tmp_output_dir / 'xsoar_config.json'
             click.Context(command=xsoar_config_file_update).invoke(
                 xsoar_config_file_update,
-                file_path=tmp_output_dir / 'xsoar_config.json',
+                file_path=temp_file,
                 add_all_marketplace_packs=add_all_marketplace_packs
             )
+            assert temp_file.exists() == add_all_marketplace_packs
 
-            assert Path(f'{tmp_output_dir}/{expected_path}').exists()
-
-            try:
-                with open(f'{tmp_output_dir}/{expected_path}', 'r') as config_file:
-                    config_file_info = json.load(config_file)
-            except IsADirectoryError:
+            expected_path_object = Path(tmp_output_dir) / expected_path
+            if expected_path_object.is_file():
+                config_file_info = json.loads(expected_path_object.read_text())
+            elif expected_path_object.is_dir():
                 config_file_info = {}
+            else:
+                raise ValueError(f"Cannot read {str(expected_path_object)}")
             assert config_file_info == expected_outputs
 
     def test_add_all_marketplace_packs_on_existing_list(self, mocker):

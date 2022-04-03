@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.handlers import YAML_Handler
 
 from .dictionary_based_object import DictionaryBasedObject
 
-yaml = YAML_Handler(typ='rt', width=50000)
+yaml = YAML_Handler(width=50000)
 
 
 class YAMLObject(DictionaryBasedObject):

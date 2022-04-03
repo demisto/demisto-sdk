@@ -30,7 +30,7 @@ class TestSysExitChecker(pylint.testutils.CheckerTestCase):
         """)
         assert node_b is not None
         with self.assertAddsMessages(
-                pylint.testutils.Message(
+                pylint.testutils.MessageTest(
                     msg_id='sys-exit-exists',
                     node=node_b,
                 ),
@@ -116,7 +116,7 @@ class TestDemistoLogChecker(pylint.testutils.CheckerTestCase):
         """)
         assert node_b is not None
         with self.assertAddsMessages(
-                pylint.testutils.Message(
+                pylint.testutils.MessageTest(
                     msg_id='demisto-log-exists',
                     node=node_b,
                 ),
@@ -185,7 +185,7 @@ class TestMainChecker(pylint.testutils.CheckerTestCase):
                 return False  #@
         """)
         with self.assertAddsMessages(
-                pylint.testutils.Message(
+                pylint.testutils.MessageTest(
                     msg_id='main-func-doesnt-exist',
                     node=node_a,
                 ),
@@ -216,7 +216,7 @@ class TestDemistoResultsChecker(pylint.testutils.CheckerTestCase):
         """)
         assert node_b is not None
         with self.assertAddsMessages(
-                pylint.testutils.Message(
+                pylint.testutils.MessageTest(
                     msg_id='demisto-results-exists',
                     node=node_b,
                 ),
@@ -283,7 +283,7 @@ class TestReturnOutputChecker(pylint.testutils.CheckerTestCase):
         """)
         assert node_b is not None
         with self.assertAddsMessages(
-                pylint.testutils.Message(
+                pylint.testutils.MessageTest(
                     msg_id='return-outputs-exists',
                     node=node_b,
                 ),
@@ -374,7 +374,7 @@ class TestInitParamsChecker(pylint.testutils.CheckerTestCase):
         """)
         assert node_b is not None
         with self.assertAddsMessages(
-                pylint.testutils.Message(
+                pylint.testutils.MessageTest(
                     msg_id='init-params-outside-main',
                     node=node_b,
                 ),
@@ -427,7 +427,7 @@ class TestInitArgsChecker(pylint.testutils.CheckerTestCase):
         """)
         assert node_b is not None
         with self.assertAddsMessages(
-                pylint.testutils.Message(
+                pylint.testutils.MessageTest(
                     msg_id='init-args-outside-main',
                     node=node_b,
                 ),

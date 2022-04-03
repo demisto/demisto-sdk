@@ -1,5 +1,4 @@
 # Site packages
-import json
 import logging
 import os
 import sys
@@ -8,21 +7,27 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
 from typing import IO
 
-# Third party packages
 import click
 import git
 from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
-# Common tools
 from demisto_sdk.commands.common.constants import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, FileType)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
                                                get_release_note_entries,
                                                is_external_repository,
                                                print_error, print_success,
                                                print_warning)
+from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
+
+json = JSON_Handler()
+
+# Third party packages
+
+# Common tools
 
 
 class PathsParamType(click.Path):
@@ -63,6 +68,9 @@ class VersionParamType(click.ParamType):
         else:
             self.fail(f"Version {value} is not according to the expected format. "
                       f"The format of version should be in x.y.z format, e.g: <2.1.3>", param, ctx)
+
+
+json = JSON_Handler()
 
 
 class DemistoSDK:
@@ -199,7 +207,6 @@ def split(config, **kwargs):
     to multiple files(To a package format - https://demisto.pan.dev/docs/package-dir).
     """
     from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
-    from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
     check_configuration_file('split', kwargs)
     file_type: FileType = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
@@ -300,11 +307,12 @@ def unify(**kwargs):
         generic_module_unifier.merge_generic_module_with_its_dashboards()
 
     else:
-        from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
+        from demisto_sdk.commands.unify.integration_script_unifier import \
+            IntegrationScriptUnifier
 
         # pass arguments to YML unifier and call the command
-        yml_unifier = YmlUnifier(**kwargs)
-        yml_unifier.merge_script_package_to_yml()
+        yml_unifier = IntegrationScriptUnifier(**kwargs)
+        yml_unifier.unify()
 
     return 0
 
@@ -432,7 +440,7 @@ def zip_packs(**kwargs) -> int:
     '--print-pykwalify', is_flag=True,
     help='Whether to print the pykwalify log errors.')
 @click.option(
-    "--quite-bc-validation",
+    "--quiet-bc-validation",
     help="Set backwards compatibility validation's errors as warnings.",
     is_flag=True)
 @click.option(
@@ -483,7 +491,7 @@ def validate(config, **kwargs):
             skip_schema_check=kwargs.get('skip_schema_check'),
             debug_git=kwargs.get('debug_git'),
             include_untracked=kwargs.get('include_untracked'),
-            quite_bc=kwargs.get('quite_bc_validation'),
+            quiet_bc=kwargs.get('quiet_bc_validation'),
             multiprocessing=run_with_mp,
             check_is_unskipped=not kwargs.get('allow_skipped', False),
         )

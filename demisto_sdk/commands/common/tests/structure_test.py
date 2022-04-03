@@ -1,4 +1,3 @@
-import json
 import os
 from os.path import isfile
 from shutil import copyfile
@@ -18,7 +17,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_SCRIPT_TEST_PY_REGEX, PACKS_SCRIPT_YML_REGEX,
     PACKS_WIDGET_JSON_REGEX, PLAYBOOK_README_REGEX, PLAYBOOK_YML_REGEX,
     TEST_PLAYBOOK_YML_REGEX)
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import (
@@ -42,6 +41,7 @@ from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
 
+json = JSON_Handler()
 yaml = YAML_Handler()
 
 

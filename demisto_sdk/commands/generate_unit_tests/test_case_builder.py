@@ -160,7 +160,6 @@ class TestCase:
             mock_call = ast_mod.Call(func=attr,
                                      args=[ast_name(url)],
                                      keywords=[ret_val])
-            x=2
             self.mocks.append(ast_mod.Expr(value=mock_call))
 
     def load_mock_from_json_ast_builder(self, name, call):

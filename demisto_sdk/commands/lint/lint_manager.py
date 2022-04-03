@@ -45,10 +45,6 @@ json = JSON_Handler()
 logger = logging.getLogger('demisto-sdk')
 sha1Regex = re.compile(r'\b[0-9a-fA-F]{40}\b', re.M)
 
-# removing typed-ast in case it is installed
-if 'typed_ast' in sys.modules:
-    del sys.modules['typed_ast']
-
 
 class LintManager:
     """ LintManager used to activate lint command using Linters in a single or multi thread.

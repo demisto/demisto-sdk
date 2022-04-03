@@ -1,3 +1,4 @@
+import os
 import sys
 from unittest.mock import MagicMock, mock_open
 
@@ -34,6 +35,18 @@ def flow():
     return flow
 
 
+@pytest.fixture
+def tz(request):
+    original_tz = os.getenv('TZ')
+    os.environ['TZ'] = 'UTC'
+
+    def teardown():
+        if original_tz:
+            os.environ['TZ'] = original_tz
+    request.addfinalizer(teardown)
+    return request
+
+
 TIMESTAMP_FORMATS = [
     '2021-01-11T13:18:12+00:00',
     '2021-01-14 17:44:00.571043',
@@ -44,6 +57,7 @@ TIMESTAMP_FORMATS = [
 ]
 
 
+@pytest.mark.usefixtures('tz')
 class TestTimeStampReplacer:
     DEFAULT_OPTIONS_MAPPING = {
         'detect_timestamps': False,

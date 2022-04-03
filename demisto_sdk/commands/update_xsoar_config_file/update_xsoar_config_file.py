@@ -131,7 +131,10 @@ class XSOARConfigFileUpdater:
         """
         config_file_info = self.get_xsoar_config_data()
         if config_file_info.get(section_name):
-            config_file_info[section_name].append(data_to_update)
+            if isinstance(data_to_update, list):
+                config_file_info[section_name].extend(data_to_update)
+            if isinstance(data_to_update, dict):
+                config_file_info[section_name].append(data_to_update)
         else:
             config_file_info[section_name] = [data_to_update] if isinstance(data_to_update, dict) else data_to_update
         self.set_xsoar_config_data(config_file_info=config_file_info)

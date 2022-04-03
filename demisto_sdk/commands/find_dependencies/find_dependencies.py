@@ -2121,10 +2121,10 @@ class PackDependencies:
         elif dependency:
             dependent_packs, _ = get_packs_dependent_on_given_packs(input_paths, id_set_path,  # type: ignore[arg-type]
                                                                     output_path, verbose=True)
-            dependent_items = dependent_packs[Path(input_paths[0]).name].get('packsDependentOnThisPackMandatorily')
+            dependent_items = dependent_packs[Path(input_paths[0]).name].get('packsDependentOnThisPackMandatorily')  # type: ignore[attr-defined]
             if dependency in dependent_items:
-                print_success(f"The pack {dependency} depends on {Path(input_paths[0]).name} because of the "
-                              f"following items:")
+                print_success(f"The pack \"{dependency}\" depends on \"{Path(input_paths[0]).name}\" "
+                              f"with the following items:")
                 packs_dependencies = dependent_items.get(dependency)
                 dependencies = json.dumps(packs_dependencies, indent=4)
                 click.echo(click.style(dependencies, bold=True))

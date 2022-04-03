@@ -2429,7 +2429,6 @@ def get_packs_dependent_on_given_packs(packs: list,
                                        verbose: bool = False,
                                        id_set: dict = None,
                                        marketplace: str = '',
-                                       dependency: str = '',
 
                                        ) -> Tuple:
     """
@@ -2442,7 +2441,6 @@ def get_packs_dependent_on_given_packs(packs: list,
         verbose: Whether to print the log to the console.
         id_set: id_set to calculate the dependencies
         marketplace: The dependency calculation desired marketplace.
-        dependency: The pack to search the dependency for.
 
     Returns:
         1. A dict with the given packs as keys, and the dependent packs with details about the dependency

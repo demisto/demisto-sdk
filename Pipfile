@@ -8,7 +8,7 @@ astroid = "*"
 autopep8 = "*"
 bandit = "*"
 mypy = "*"
-pylint = "==2.12.2"#unfreeze issue https://github.com/demisto/etc/issues/47688
+pylint = "==2.12.2" #unfreeze issue https://github.com/demisto/etc/issues/47688
 vulture = "*"
 flake8 = "*"
 bs4 = "*"
@@ -57,7 +57,6 @@ markupsafe = "==2.0.1"
 imagesize = "*"
 cryptography = "*"
 dateparser = "*"
-
 # linter-related
 typed-ast = "*"
 types-dateparser="*"
@@ -75,7 +74,7 @@ types-six="*"
 types-PyMySQL="*"
 types-protobuf="*"
 typing-extensions="*"
-
+"backports.zoneinfo" = "*"
 
 [dev-packages]
 mitmproxy = "*"

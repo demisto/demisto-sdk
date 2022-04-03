@@ -70,6 +70,40 @@ class TestXSOARConfigFileUpdater:
                 config_file_info = {}
             assert config_file_info == expected_outputs
 
+    def test_add_all_marketplace_packs_on_existing_list(self, mocker):
+        """
+        Given:
+            - add_all_marketplace_packs arg as True
+        When:
+            - run the update_xsoar_config_file command
+        Then:
+            - validate the xsoar_config file exist in the destination output
+            - validate the xsoar_config file output is as expected
+        """
+
+        mocker.patch.object(XSOARConfigFileUpdater, 'get_installed_packs', return_value=[
+            {"id": "test1", "version": "1.0.0"}])
+        with temp_dir() as tmp_output_dir:
+
+            with open(f'{tmp_output_dir}/xsoar_config.json', 'w') as config_file:
+                json.dump({'marketplace_packs': [{'id': 'test2', 'version': '2.0.0'}]}, config_file)
+
+            click.Context(command=xsoar_config_file_update).invoke(
+                xsoar_config_file_update,
+                file_path=tmp_output_dir / 'xsoar_config.json',
+                add_all_marketplace_packs=True
+            )
+
+            assert Path(f'{tmp_output_dir}/xsoar_config.json').exists()
+
+            try:
+                with open(f'{tmp_output_dir}/xsoar_config.json', 'r') as config_file:
+                    config_file_info = json.load(config_file)
+            except IsADirectoryError:
+                config_file_info = {}
+            assert config_file_info == {'marketplace_packs': [{'id': 'test2', 'version': '2.0.0'},
+                                                              {'id': 'test1', 'version': '1.0.0'}]}
+
     def test_add_marketplace_pack(self, capsys):
         """
         Given:

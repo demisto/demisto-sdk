@@ -1099,10 +1099,12 @@ class TestRNUpdateUnit:
                               ('+dockerimage: demisto/python3:3.9.8.24399')])
     def test_check_docker_image_changed(self, mocker, return_value_mock):
         """
+        This test checks that for both integration and script YMLs, where the docker image resides at a different level,
+        changes made to this key are found correctly by 'check_docker_image_changed' function.
         Given
-            - Case 1: a git diff mock of a Modified .yml file where the docker is changed and there're spaces between the
+            - Case 1: a git diff mock of a modified integration .yml file where the docker is changed and there're spaces between the
             '+' and the dockerimage
-            - Case 2: a git diff mock of a Modified .yml file where the docker is changed and there's no space between the
+            - Case 2: a git diff mock of a modified sccript .yml file where the docker is changed and there's no space between the
             '+' and the dockerimage
         When
             - calling the check_docker_image_changed function

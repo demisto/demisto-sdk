@@ -1,6 +1,7 @@
-# Generate YML from python
-Generate YML file from python code that includes special syntax.
-The output file name will be the same as the python code with the .yml ending instead of .py.
+# Generate YML from Python
+Generate YML file from Python code that includes special syntax.
+The output file name will be the same as the Python code with the `.yml` extension instead of `.py`.
+The generation currently supports integrations only.
 
 **Arguments**
 * **-i, --input**
@@ -12,61 +13,13 @@ The output file name will be the same as the python code with the .yml ending in
 
 
 ## Features and Usage
-### Importing
-If the following line:
+### Usage
+The feature is supported from content Base pack version 1.20.0 and on.
+
+Make sure you have the following line your Python code:
 ```python
 from CommonServerPython import *
 ```
-is in your code, **no importing is required**.
-
-Otherwise if you are making a standalone integration:
-
-If you have demisto-sdk as a dependency in your project, you can use the following import:
-```python
-from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (CommandMetadata, ConfKey, InputArgument, YMLMetadataCollector,OutputArgument, ParameterTypes)
-```
-If you don't have demisto-sdk installed as a dependency and do not wish to, you can add the following implementation to your code, or add it as a separate file and import it:
-```python
-from unittest.mock import MagicMock
-from typing import Optional, Any, Union, Callable
-
-# Mocks for YML generation
-InputArgument = MagicMock()
-OutputArgument = MagicMock()
-ConfKey = MagicMock()
-
-class YMLMetadataCollector:
-    def __init__(self, integration_name: str, docker_image: str = "demisto/python3:latest",
-                 description: Optional[str] = None, category: str = "Utilities", conf: Optional[List[ConfKey]] = None,
-                 is_feed: bool = False, is_fetch: bool = False, is_runonce: bool = False,
-                 detailed_description: Optional[str] = None, image: Optional[str] = None, display: Optional[str] = None,
-                 tests: list = ["No tests"], fromversion: str = "6.0.0",
-                 long_running: bool = False, long_running_port: bool = False, integration_type: str = "python",
-                 integration_subtype: str = "python3", deprecated: Optional[bool] = None, system: Optional[bool] = None,
-                 timeout: Optional[str] = None, default_classifier: Optional[str] = None,
-                 default_mapper_in: Optional[str] = None,
-                 integration_name_x2: Optional[str] = None, default_enabled_x2: Optional[bool] = None,
-                 default_enabled: Optional[bool] = None, verbose: bool = False):
-        pass
-
-    def command(self, command_name: str, outputs_prefix: Optional[str] = None,
-                outputs_list: Optional[list] = None, inputs_list: Optional[list] = None,
-                execution: Optional[bool] = None, file_output: bool = False,
-                multiple_output_prefixes: bool = False, deprecated: bool = False, restore: bool = False,
-                description: Optional[str] = None) -> Callable:
-        def command_wrapper(func):
-            def get_out_info(*args, **kwargs):
-                if restore:
-                    kwargs['command_name'] = command_name
-                    kwargs['outputs_prefix'] = outputs_prefix
-                    kwargs['execution'] = execution
-                return func(*args, **kwargs)
-
-            return get_out_info
-
-        return command_wrapper
-```
-This will ensure your code runs even though it uses the undefined YMLMetadataCollector objects.
 
 ### Initialization and Integration Configuration
 The initialization begins with the YMLMetadataCollector object in the following way:
@@ -74,17 +27,33 @@ The initialization begins with the YMLMetadataCollector object in the following 
 metadata_collector = YMLMetadataCollector(integration_name="some_name")
 ```
 * It is very important that the **name of the initialized object is `metadata_collector`**. Otherwise the generation will not work.
-* The only mandatory argument for the YMLMetadataCollector is the integration_name which will be used as your integration id.
+* The only mandatory argument for the YMLMetadataCollector is the integration_name which will be used as your integration ID.
 * All other arguments concerning the whole integration will be passed in this initialization as well. See the initialization examples in the sections below.
 Other arguments include:
-```python
-integration_name, display, image, detailed_description,
-description, category, tests, fromversion, system,
-timeout, default_classifier, default_mapper_in, default_enabled,
-deprecated, default_enabled_x2, integration_name_x2
-docker_image, is_feed, is_fetch, is_runonce, long_running,
-long_running, long_running_port, type, subtype
-```
+    * integration_name
+    * display
+    * image
+    * detailed_description
+    * description
+    * category
+    * tests
+    * fromversion
+    * system
+    * timeout
+    * default_classifier
+    * default_mapper_in
+    * default_enabled
+    * deprecated
+    * default_enabled_x2
+    * integration_name_x2
+    * docker_image
+    * is_feed
+    * is_fetch
+    * is_runonce
+    * long_running
+    * long_running_port
+    * type
+    * subtype
 
 #### ConfKey
 To specify integration configuration keys use the keyword `conf=[ConfKey(), ConfKey()]` like so:
@@ -96,9 +65,13 @@ metadata_collector = YMLMetadataCollector(integration_name="some_name",
                                                                     key_type=ParameterTypes.NUMBER)])
 ```
 ConfKey arguments include:
-```python
-name, display, default_value, required, additional_info, options, input_type
-```
+* name
+* display
+* default_value
+* required
+* additional_info
+* options
+* input_type
 
 Where `key_type` takes argument of type `ParameterTypes` which is exactly the same as `ParameterType` that can be found in
 `demisto_sdk.commands.common.constants`
@@ -141,15 +114,21 @@ def funky_command():
     print("funk")
 ```
 The only mandatory argument is `command_name`. Other `metadata_collector.command` arguments inculde
-```python
-deprecated, execution, description, outputs_prefix, outputs_list,
-inputs_list, file_output, multiple_output_prefixes
-```
+* deprecated
+* execution
+* description
+* outputs_prefix
+* outputs_list
+* inputs_list
+* file_output
+* multiple_output_prefixes
+
 ##### Restored Args
 In order to reduce code duplication, you can reuse the following arguments:
-```python
-command_name, outputs_prefix, execution
-```
+* command_name
+* outputs_prefix
+* execution
+
 In the following way:
 ```python
 metadata_collector = YMLMetadataCollector(integration_name="some_name")
@@ -229,9 +208,16 @@ def funky_command():
     print("funk")
 ```
 `InputArgument` arguments include the following:
-```python
-name, description, required, default, is_array, secret, execution, options, input_type
-```
+* name
+* description
+* required
+* default
+* is_array
+* secret
+* execution
+* options
+* input_type
+
 Where `options` and `input_type` behave similarly to those in the ConfKey:
 `options` to specify predefined arguments with list of options, and `input_type` to specify an enum class as the
 predefined options.
@@ -256,10 +242,12 @@ def funky_command():
     print("funk")
 ```
 `OutputArgument` arguments include the following:
-```python
-name, description, output_type, prefix
-```
-Where `output_type` will be converted from a python type to available context outputs types.
+* name
+* description
+* output_type
+* prefix
+
+Where `output_type` will be converted from a Python type to available context outputs types.
 
 The output prefix in the context data will be the one specified in the `@metadata_collector.command`, for our example it will be `funk`.
 
@@ -431,8 +419,11 @@ def funky_command():
     print("funk")
 ```
 To specify the argument is a secret, add `secret.` to the argument description.
+
 To specify execution=True, add `potentially harmful.` or `execution.` to the argument description.
+
 To specify required=True, add `required.` to the argument description.
+
 For example the following docstring:
 ```python
 @metadata_collector.command(command_name="funky-command")

@@ -1,6 +1,7 @@
 import copy
 import inspect
 from contextlib import nullcontext as does_not_raise
+from importlib import util
 from importlib.machinery import SourceFileLoader
 from typing import Any, Callable, Optional
 
@@ -146,13 +147,11 @@ class TestImportDependencies:
                 return CommandResults()  # noqa: F401, F821
 
         save_code_as_integration(code=code_snippet, full_path=integration_path)
-        try:
+        with does_not_raise():
             yml_generator = YMLGenerator(filename=integration_path)
             yml_generator.generate()
             expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
             assert expected_dict == yml_generator.get_metadata_dict()
-        except Exception as exc:
-            assert False, f"CommomServerPython imports are not working anymore: {exc}"
 
     def test_generation_with_subscriptable_imports(self, tmp_path):
         """Since the imports are mocked, it is important that they are MagicMocked and not regularly mocked.
@@ -180,13 +179,11 @@ class TestImportDependencies:
                 print(f"func {datetime[3]}")
 
         save_code_as_integration(code=code_snippet, full_path=integration_path)
-        try:
+        with does_not_raise():
             yml_generator = YMLGenerator(filename=integration_path)
             yml_generator.generate()
             expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
             assert expected_dict == yml_generator.get_metadata_dict()
-        except Exception as exc:
-            assert False, f"Imports are not subscriptable anymore: {exc}"
 
 
 class TestConfigurationGeneration:
@@ -743,10 +740,18 @@ class TestCommandGeneration:
                               ('Some other description\n'
                                '\n    Args:'
                                '\n        some_input_arg: potentially harmful. some desc.\n',
-                               {"name": "some_input_arg", "description": "some desc.", "execution": True})
+                               {"name": "some_input_arg", "description": "some desc.", "execution": True}),
+                              ('Some other description\n'
+                               '\n    Args:'
+                               '\n        some invalid arg line.\n',
+                               {}),
+                              ('Some other description\n'
+                               '\n    Args:'
+                               '\n        some_input_arg (hlem): some desc.\n',
+                               {"name": "some_input_arg", "description": "some desc."}),
                               ],
                              ids=["basic", "required", "default", "secret", "execution", "options", "isArray=True",
-                                  "isArray=False", "multiple flags", "type is enum", "execution"])
+                                  "isArray=False", "multiple flags", "type is enum", "execution", "invalid", "invalid type"])
     def test_inputs_from_declaration(self, tmp_path, docstring, expected_update):
         """
         Given
@@ -779,9 +784,10 @@ class TestCommandGeneration:
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
         expected_command = copy.deepcopy(BASIC_COMMAND_DICT)
-        expected_arg = copy.deepcopy(BASIC_IN_ARG_DICT)
-        expected_arg.update(expected_update)
-        expected_command["arguments"] = [expected_arg]
+        if expected_update:
+            expected_arg = copy.deepcopy(BASIC_IN_ARG_DICT)
+            expected_arg.update(expected_update)
+            expected_command["arguments"] = [expected_arg]
         expected_dict["script"]["commands"] = [expected_command]
         assert expected_dict == yml_generator.get_metadata_dict()
 
@@ -821,10 +827,19 @@ class TestCommandGeneration:
                                '\n        some_out_arg (dict): some interesting\n very long description.\n',
                                {"contextPath": "some_name.some_out_arg",
                                 "description": "some interesting\n very long description.",
+                                "type": "Unknown"}),
+                              ('Some other description\n'
+                               '\n    Context Outputs:'
+                               '\n        some_out_arg: some description.',
+                               {}),
+                              ('Some other description\n'
+                               '\n    Context Outputs:'
+                               '\n        some_out_arg (hlem): some description.',
+                               {"contextPath": "some_name.some_out_arg", "description": "some description.",
                                 "type": "Unknown"})
                               ],
                              ids=["type str", "type int", "type float", "type bool", "type date",
-                                  "type dict", "long description"])
+                                  "type dict", "long description", "missing type", "invalid type"])
     def test_outputs_from_declaration(self, tmp_path, docstring, expected_update):
         """
         Given
@@ -851,9 +866,10 @@ class TestCommandGeneration:
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
         expected_command = copy.deepcopy(BASIC_COMMAND_DICT)
-        expected_arg = copy.deepcopy(BASIC_OUT_ARG_DICT)
-        expected_arg.update(expected_update)
-        expected_command["outputs"] = [expected_arg]
+        if expected_update:
+            expected_arg = copy.deepcopy(BASIC_OUT_ARG_DICT)
+            expected_arg.update(expected_update)
+            expected_command["outputs"] = [expected_arg]
         expected_dict["script"]["commands"] = [expected_command]
         assert expected_dict == yml_generator.get_metadata_dict()
 
@@ -1165,6 +1181,35 @@ class TestCommandGeneration:
         expected_dict["script"]["commands"] = [expected_command]
         assert expected_dict == yml_generator.get_metadata_dict()
 
+    def test_command_without_docstring(self, tmp_path):
+        """
+        Given
+        - Decorated command code with multiple output prefixes mentioned in docstring arguments.
+
+        When
+        - Running YMLGenerator generate.
+
+        Then
+        - Ensure that the YML dict is generated as expected.
+        """
+        integration_path = tmp_path / "integration_name.py"
+
+        def code_snippet():
+            metadata_collector = YMLMetadataCollector(integration_name="some_name")
+
+            @metadata_collector.command(command_name="some-command")
+            def funky_command():
+                print("func")
+
+        save_code_as_integration(code=code_snippet, full_path=integration_path)
+        yml_generator = YMLGenerator(filename=integration_path)
+        yml_generator.generate()
+        expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
+        expected_command = copy.deepcopy(BASIC_COMMAND_DICT)
+        expected_command["description"] = ""
+        expected_dict["script"]["commands"] = [expected_command]
+        assert expected_dict == yml_generator.get_metadata_dict()
+
 
 class TestYMLGeneration:
     FULL_INTEGRATION_DICT = {'category': 'Utilities',
@@ -1351,3 +1396,62 @@ class TestYMLGeneration:
         assert "No metadata collector found in" in out
         assert not yml_generator.is_generatable_file
         assert not yml_generator.metadata_collector
+        assert not yml_generator.get_metadata_dict()
+
+    def test_file_importing_failure(self, tmp_path, capsys):
+        """
+        Given
+        - Integration code raising an exception.
+
+        When
+        - Running YMLGenerator generate.
+
+        Then
+        - Ensure the exception is printed in the stdout.
+        """
+        integration_path = tmp_path / "integration_name.py"
+
+        def code_snippet():
+            raise Exception("UniqueIntegrationException")
+
+        save_code_as_integration(code=code_snippet, full_path=integration_path)
+        yml_generator = YMLGenerator(filename=integration_path)
+        yml_generator.generate()
+        out, err = capsys.readouterr()
+
+        assert "UniqueIntegrationException" in out
+        assert not yml_generator.is_generatable_file
+        assert not yml_generator.metadata_collector
+        assert not yml_generator.get_metadata_dict()
+
+    def test_undefined_spec_failure(self, tmp_path, capsys, mocker):
+        """
+        Given
+        - Integration code without metadata_collector.
+        - importlib.util.spec_from_file_location returns none when importing the code.
+
+        When
+        - Running YMLGenerator generate.
+
+        Then
+        - Ensure relevant message is printed.
+        - Ensure that the no YML dict is generated.
+        """
+        integration_path = tmp_path / "integration_name.py"
+
+        def code_snippet():
+            def funky_command():
+                """Some other description"""
+                print("func")
+
+        save_code_as_integration(code=code_snippet, full_path=integration_path)
+
+        mocker.patch.object(util, 'spec_from_file_location', return_value=None)
+        yml_generator = YMLGenerator(filename=integration_path)
+        yml_generator.generate()
+        out, err = capsys.readouterr()
+
+        assert "Problem importing" in out
+        assert not yml_generator.is_generatable_file
+        assert not yml_generator.metadata_collector
+        assert not yml_generator.get_metadata_dict()

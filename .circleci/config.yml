@@ -65,7 +65,7 @@ jobs:
         - checkout
         - python/install-packages:
             pkg-manager: "pipenv"
-            args: "--dev --system"
+            args: "--dev"
             cache-version: << pipeline.parameters.cache-version >>
         - <<: *install_node_ci
         - run:
@@ -85,7 +85,7 @@ jobs:
               TEST_FILES=$(echo "$TEST_FILES" | circleci tests split --split-by=timings)
 
               mkdir test-results
-              python -m pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml $TEST_FILES
+              pipenv run pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml $TEST_FILES
         - store_test_results:
             path: test-results
         - store_artifacts:
@@ -111,7 +111,7 @@ jobs:
         - checkout
         - python/install-packages:
             pkg-manager: "pipenv"
-            args: "--dev --system"
+            args: "--dev"
             cache-version: << pipeline.parameters.cache-version >>
         - <<: *install_node_ci
         - run:
@@ -122,7 +122,7 @@ jobs:
               TEST_FILES=$(circleci tests glob "demisto_sdk/tests/integration_tests/**/*_test.py")
 
               mkdir integration-test-results
-              python -m pytest -v --junitxml=integration-test-results/junit.xml $TEST_FILES
+              pipenv run pytest -v --junitxml=integration-test-results/junit.xml $TEST_FILES
         - store_test_results:
             path: integration-test-results
 

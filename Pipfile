@@ -74,7 +74,7 @@ types-six="*"
 types-PyMySQL="*"
 types-protobuf="*"
 typing-extensions="*"
-klara = "==0.6.3"
+klara = "*"
 ordered-set = "*"
 
 [dev-packages]

@@ -57,9 +57,6 @@ markupsafe = "==2.0.1"
 imagesize = "*"
 cryptography = "*"
 dateparser = "*"
-klara = "==0.6.3"
-ordered-set = "*"
-
 # linter-related
 typed-ast = "*"
 types-dateparser="*"
@@ -77,7 +74,8 @@ types-six="*"
 types-PyMySQL="*"
 types-protobuf="*"
 typing-extensions="*"
-
+klara = "==0.6.3"
+ordered-set = "*"
 
 [dev-packages]
 mitmproxy = "*"

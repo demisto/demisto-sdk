@@ -66,6 +66,8 @@ def execute_test_content(**kwargs):
         tests_execution_instance = ServerContext(build_context, server_private_ip=server_ip, tunnel_port=port,
                                                  use_retries_mechanism=use_retries_mechanism)
         threads_list.append(Thread(target=tests_execution_instance.execute_tests))
+
+    logging_manager.info('Finished creating configurations, starting to run tests.')
     for thread in threads_list:
         thread.start()
 

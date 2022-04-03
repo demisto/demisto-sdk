@@ -38,13 +38,16 @@ from demisto_sdk.commands.lint.linter import Linter
 
 json = JSON_Handler()
 
-
 # Third party packages
 
 # Local packages
 
 logger = logging.getLogger('demisto-sdk')
 sha1Regex = re.compile(r'\b[0-9a-fA-F]{40}\b', re.M)
+
+# removing typed-ast in case it is installed
+if 'typed_ast' in sys.modules:
+    del sys.modules['typed_ast']
 
 
 class LintManager:
@@ -189,7 +192,8 @@ class LintManager:
         logger.debug("Docker daemon test passed")
         return facts
 
-    def _get_packages(self, content_repo: git.Repo, input: Union[str, List[str]], git: bool = False, all_packs: bool = False,
+    def _get_packages(self, content_repo: git.Repo, input: Union[str, List[str]], git: bool = False,
+                      all_packs: bool = False,
                       base_branch: str = 'master') -> List[PosixPath]:
         """ Get packages paths to run lint command.
 

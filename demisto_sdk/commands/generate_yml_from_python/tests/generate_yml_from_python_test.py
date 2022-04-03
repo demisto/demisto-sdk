@@ -12,6 +12,7 @@ from demisto_sdk.commands.generate_yml_from_python.generate_yml import \
     YMLGenerator
 from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import (
     ConfKey, InputArgument, OutputArgument, YMLMetadataCollector)
+from TestSuite.integration import Integration
 
 yaml = YAML_Handler()
 
@@ -27,8 +28,9 @@ def dedent(code_line: str, spaces_num: int) -> str:
     return code_line
 
 
-def save_code_as_integration(code: Callable, full_path: str, configuration: Optional[Any] = None,
-                             conf_in_second_line: bool = False, docstring: Optional[str] = None):
+def save_code_as_integration(code: Callable, full_path: str = None, configuration: Optional[Any] = None,
+                             conf_in_second_line: bool = False, docstring: Optional[str] = None,
+                             integration: Integration = None):
     """Save code from given function as integration to full_path.
 
     Args:
@@ -51,12 +53,13 @@ def save_code_as_integration(code: Callable, full_path: str, configuration: Opti
             code_lines = code_snippet.split('\n')
             rest_of_code = '\n'.join(code_lines[1:])
             full_code = f"{code_lines[0]}\nconfiguration={configuration}\n\n{rest_of_code}"
-            full_path.write_text(full_code)
         else:
             full_code = f"configuration={configuration}\n\n{code_snippet}"
-            full_path.write_text(full_code)
-    else:
+
+    if full_path:
         full_path.write_text(full_code)
+    elif integration:
+        integration.build(code=full_code)
 
     # will be printed if the test fails.
     print(f"The code in the test:\n{full_code}")
@@ -90,7 +93,7 @@ BASIC_CONF_KEY_DICT = {
 
 
 class TestImportDependencies:
-    def test_problematic_imports_in_code_yml_generation(self, tmp_path):
+    def test_problematic_imports_in_code_yml_generation(self, tmp_path, repo):
         """
         Given
         - Integration code with valid YMLMetadataCollector use and invalid imports.
@@ -101,7 +104,7 @@ class TestImportDependencies:
         Then
         - Ensure that the YML dict is generated as needed.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
             import hlem
@@ -113,14 +116,14 @@ class TestImportDependencies:
                 """Some func doc"""
                 print("something nice")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration)
         with does_not_raise():
-            yml_generator = YMLGenerator(filename=integration_path)
+            yml_generator = YMLGenerator(filename=integration.code.path)
             yml_generator.generate()
             expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
             assert expected_dict == yml_generator.get_metadata_dict()
 
-    def test_generation_with_implicit_imports_in_declarations(self, tmp_path):
+    def test_generation_with_implicit_imports_in_declarations(self, tmp_path, repo):
         """Explicit imports from CommonServerPython
 
         Given
@@ -132,7 +135,7 @@ class TestImportDependencies:
         Then
         - Ensure that the YML dict is generated as needed.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
             metadata_collector = YMLMetadataCollector(integration_name="some_name")  # noqa: F841
@@ -146,14 +149,14 @@ class TestImportDependencies:
             def some_command(dates: datetime.datetime) -> CommandResults:  # noqa: F821, F841
                 return CommandResults()  # noqa: F401, F821
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration)
         with does_not_raise():
-            yml_generator = YMLGenerator(filename=integration_path)
+            yml_generator = YMLGenerator(filename=integration.code.path)
             yml_generator.generate()
             expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
             assert expected_dict == yml_generator.get_metadata_dict()
 
-    def test_generation_with_subscriptable_imports(self, tmp_path):
+    def test_generation_with_subscriptable_imports(self, tmp_path, repo):
         """Since the imports are mocked, it is important that they are MagicMocked and not regularly mocked.
         Otherwise they will not be subscriptable.
 
@@ -166,7 +169,7 @@ class TestImportDependencies:
         Then
         - Ensure that the YML dict is generated as needed.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
             import datetime
@@ -178,9 +181,9 @@ class TestImportDependencies:
                 datetime[3] = 5
                 print(f"func {datetime[3]}")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration)
         with does_not_raise():
-            yml_generator = YMLGenerator(filename=integration_path)
+            yml_generator = YMLGenerator(filename=integration.code.path)
             yml_generator.generate()
             expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
             assert expected_dict == yml_generator.get_metadata_dict()
@@ -221,7 +224,7 @@ class TestConfigurationGeneration:
                                   "timeout", "default_classifier", "default_mapper_in", "default_enabled=True",
                                   "default_enabled=False", "deprecated=True", "deprecated=False",
                                   "default_enabled_x2=True", "default_enabled_x2=False", "integration_name_x2"])
-    def test_generate_general_configuration(self, tmp_path, configuration, expected_update):
+    def test_generate_general_configuration(self, tmp_path, repo, configuration, expected_update):
         """
         Given
         - Integration code with various configurations of YMLMetadataCollector initialization.
@@ -232,7 +235,7 @@ class TestConfigurationGeneration:
         Then
         - Ensure that the YML dict is generated as needed.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
         if "integration_name" not in configuration.keys():
             configuration.update({"integration_name": "some_name"})
 
@@ -243,8 +246,8 @@ class TestConfigurationGeneration:
                 """Some func doc"""
                 print("func")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path, configuration=configuration)
-        yml_generator = YMLGenerator(filename=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration, configuration=configuration)
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
         expected_dict.update(expected_update)
@@ -266,7 +269,7 @@ class TestConfigurationGeneration:
                              ids=["docker_image", "is_feed=True", "is_feed=False", "is_fetch=True", "is_fetch=False",
                                   "is_runonce=False", "is_runonce=True", "long_running=True", "long_running=False",
                                   "long_running_port", "type", "subtype"])
-    def test_generate_general_script_configuration(self, tmp_path, configuration, expected_update):
+    def test_generate_general_script_configuration(self, tmp_path, repo, configuration, expected_update):
         """
         Given
         - Integration code with various script configurations of YMLMetadataCollector initialization.
@@ -277,7 +280,7 @@ class TestConfigurationGeneration:
         Then
         - Ensure that the YML dict is generated as needed.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
         if "integration_name" not in configuration.keys():
             configuration.update({"integration_name": "some_name"})
 
@@ -288,8 +291,8 @@ class TestConfigurationGeneration:
                 """Some func doc"""
                 print("func")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path, configuration=configuration)
-        yml_generator = YMLGenerator(filename=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration, configuration=configuration)
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
         expected_dict["script"].update(expected_update)
@@ -306,7 +309,7 @@ class TestConfigurationGeneration:
                               ({"options": ["A", "B"]}, {"options": ["A", "B"]})],
                              ids=["name", "display", "default_value", "required=True", "required=False",
                                   "additional_info", "options"])
-    def test_generate_conf_keys(self, tmp_path, configuration, expected_update):
+    def test_generate_conf_keys(self, tmp_path, repo, configuration, expected_update):
         """
         Given
         - Integration code with various ConfKey configurations of YMLMetadataCollector initialization.
@@ -317,7 +320,7 @@ class TestConfigurationGeneration:
         Then
         - Ensure that the YML dict is generated as needed.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
         if "name" not in configuration.keys():
             configuration.update({"name": "some_name"})
 
@@ -329,8 +332,8 @@ class TestConfigurationGeneration:
                 """Some func doc"""
                 print("func")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path, configuration=configuration)
-        yml_generator = YMLGenerator(filename=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration, configuration=configuration)
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
         expected_conf = copy.deepcopy(BASIC_CONF_KEY_DICT)
@@ -354,7 +357,7 @@ class TestConfigurationGeneration:
                                   "key_type=NUMBER", "key_type=ENCRYPTED", "key_type=BOOLEAN", "key_type=AUTH",
                                   "key_type=DOWNLOAD_LINK", "key_type=TEXT_AREA", "key_type=INCIDENT_TYPE",
                                   "key_type=TEXT_AREA_ENCRYPTED", "key_type=SINGLE_SELECT", "key_type=MULTI_SELECT"])
-    def test_conf_keys_parameter_types(self, tmp_path, configuration, expected_update):
+    def test_conf_keys_parameter_types(self, tmp_path, repo, configuration, expected_update):
         """
         Given
         - Integration code with various ParameterTypes of ConfKey configurations of YMLMetadataCollector initialization.
@@ -365,7 +368,7 @@ class TestConfigurationGeneration:
         Then
         - Ensure that the YML dict is generated as needed.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
             metadata_collector = YMLMetadataCollector(integration_name="some_name",  # noqa: F841
@@ -376,8 +379,8 @@ class TestConfigurationGeneration:
                 """Some func doc"""
                 print("func")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path, configuration=configuration)
-        yml_generator = YMLGenerator(filename=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration, configuration=configuration)
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
         expected_conf = copy.deepcopy(BASIC_CONF_KEY_DICT)
@@ -385,7 +388,7 @@ class TestConfigurationGeneration:
         expected_dict["configuration"] = [expected_conf]
         assert expected_dict == yml_generator.get_metadata_dict()
 
-    def test_enum_inputs_in_conf_key(self, tmp_path):
+    def test_enum_inputs_in_conf_key(self, tmp_path, repo):
         """
         Given
         - Integration code with Enum object as input_types of ConfKey configurations.
@@ -396,7 +399,7 @@ class TestConfigurationGeneration:
         Then
         - Ensure that the YML dict is generated as needed.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
             import enum
@@ -413,8 +416,8 @@ class TestConfigurationGeneration:
                 """Some other description"""
                 print("func")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path)
-        yml_generator = YMLGenerator(filename=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration)
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
         expected_conf = copy.deepcopy(BASIC_CONF_KEY_DICT)
@@ -455,7 +458,7 @@ class TestCommandGeneration:
                                {"name": "funky-command", "description": "Some funky command", "execution": False})
                               ],
                              ids=["name", "deprecated=True", "deprecated=False", "execution=True", "execution=False"])
-    def test_generate_command_generic(self, tmp_path, configuration, expected_update):
+    def test_generate_command_generic(self, tmp_path, repo, configuration, expected_update):
         """
         Given
         - Integration code with decorated command and various configurations of the command.
@@ -466,7 +469,7 @@ class TestCommandGeneration:
         Then
         - Ensure that the YML dict is generated as needed.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
             metadata_collector = YMLMetadataCollector(integration_name="some_name")
@@ -476,8 +479,8 @@ class TestCommandGeneration:
                 """Some funky command"""
                 print("func")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path, configuration=configuration)
-        yml_generator = YMLGenerator(filename=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration, configuration=configuration)
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
         expected_command = copy.deepcopy(BASIC_COMMAND_DICT)
@@ -485,7 +488,7 @@ class TestCommandGeneration:
         expected_dict["script"]["commands"] = [expected_command]
         assert expected_dict == yml_generator.get_metadata_dict()
 
-    def test_long_description(self, tmp_path):
+    def test_long_description(self, tmp_path, repo):
         """
         Given
         - Integration code with decorated command and a mulitline description in the docs.
@@ -496,7 +499,7 @@ class TestCommandGeneration:
         Then
         - Ensure that the YML dict is generated as needed and the description is fully captured.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
             metadata_collector = YMLMetadataCollector(integration_name="some_name")
@@ -510,8 +513,8 @@ class TestCommandGeneration:
                 """
                 print("func")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path, configuration="")
-        yml_generator = YMLGenerator(filename=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration, configuration="")
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
         expected_dict["script"]["commands"] = [{
@@ -523,7 +526,7 @@ class TestCommandGeneration:
         }]
         assert expected_dict == yml_generator.get_metadata_dict()
 
-    def test_restored_args_not_in_command_metadata(self, tmp_path):
+    def test_restored_args_not_in_command_metadata(self, tmp_path, repo):
         """
         Given
         - Decorated command code with restored args usage.
@@ -534,7 +537,7 @@ class TestCommandGeneration:
         Then
         - Ensure restored args do not show up as command args in the generated YML dict.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
             metadata_collector = YMLMetadataCollector(integration_name="some_name")
@@ -547,8 +550,8 @@ class TestCommandGeneration:
                 """Some funky command"""
                 print("func")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path)
-        yml_generator = YMLGenerator(filename=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration)
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         generated_dict = yml_generator.get_metadata_dict()
 
@@ -560,7 +563,7 @@ class TestCommandGeneration:
         for restored_arg in YMLMetadataCollector.RESTORED_ARGS:
             assert restored_arg not in args_names
 
-    def test_restored_args(self, tmp_path):
+    def test_restored_args(self, tmp_path, repo):
         """
         Given
         - Decorated command code with restored args usage.
@@ -571,7 +574,7 @@ class TestCommandGeneration:
         Then
         - Ensure restored args work properly when running the function without collecting metadata.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
             from demisto_sdk.commands.generate_yml_from_python.yml_metadata_collector import \
@@ -584,15 +587,15 @@ class TestCommandGeneration:
                 """Some funky command"""
                 return client, command_name, outputs_prefix, execution
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path)
-        yml_generator = YMLGenerator(filename=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration)
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         generated_dict = yml_generator.get_metadata_dict()
         # Make sure something was generated
         assert generated_dict.keys()
 
         # Import the integration file and run funky_command
-        integration = SourceFileLoader("integration_name", str(integration_path)).load_module()
+        integration = SourceFileLoader("integration_name", str(integration.code.path)).load_module()
         client, command_name, outputs_prefix, execution = integration.funky_command("theClient")
 
         # Make sure the restored args as well as regular args are restored correctly
@@ -601,7 +604,7 @@ class TestCommandGeneration:
         assert outputs_prefix == "funk"
         assert execution is False
 
-    def test_enum_inputs_from_input_list(self, tmp_path):
+    def test_enum_inputs_from_input_list(self, tmp_path, repo):
         """
         Given
         - Decorated command code with explicit InputArgument use and an Enum input_type.
@@ -612,7 +615,7 @@ class TestCommandGeneration:
         Then
         - Ensure that the YML dict is generated as needed.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
             import enum
@@ -631,8 +634,8 @@ class TestCommandGeneration:
                 """Some other description"""
                 print("func")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path)
-        yml_generator = YMLGenerator(filename=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration)
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
         expected_command = copy.deepcopy(BASIC_COMMAND_DICT)
@@ -654,7 +657,7 @@ class TestCommandGeneration:
                               ],
                              ids=["name", "description", "required", "default", "is_array", "secret", "execution",
                                   "options"])
-    def test_inputs_from_input_list(self, tmp_path, configuration, expected_update):
+    def test_inputs_from_input_list(self, tmp_path, repo, configuration, expected_update):
         """
         Given
         - Decorated command code with explicit InputArgument use and its various configurations.
@@ -665,7 +668,7 @@ class TestCommandGeneration:
         Then
         - Ensure that the YML dict is generated as needed.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
 
         if "name" not in configuration.keys():
             configuration.update({"name": "some_arg"})
@@ -681,8 +684,8 @@ class TestCommandGeneration:
                 """Some other description"""
                 print("func")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path, configuration=configuration)
-        yml_generator = YMLGenerator(filename=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration, configuration=configuration)
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
         expected_command = copy.deepcopy(BASIC_COMMAND_DICT)
@@ -752,7 +755,7 @@ class TestCommandGeneration:
                               ],
                              ids=["basic", "required", "default", "secret", "execution", "options", "isArray=True",
                                   "isArray=False", "multiple flags", "type is enum", "execution", "invalid", "invalid type"])
-    def test_inputs_from_declaration(self, tmp_path, docstring, expected_update):
+    def test_inputs_from_declaration(self, tmp_path, repo, docstring, expected_update):
         """
         Given
         - Decorated command code with input arguments mentioned in docstring and their various configurations.
@@ -763,7 +766,7 @@ class TestCommandGeneration:
         Then
         - Ensure that the YML dict is generated as needed.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
             import enum
@@ -779,8 +782,8 @@ class TestCommandGeneration:
                 """**docstring**"""
                 print("func")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path, docstring=docstring)
-        yml_generator = YMLGenerator(filename=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration, docstring=docstring)
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
         expected_command = copy.deepcopy(BASIC_COMMAND_DICT)
@@ -840,7 +843,7 @@ class TestCommandGeneration:
                               ],
                              ids=["type str", "type int", "type float", "type bool", "type date",
                                   "type dict", "long description", "missing type", "invalid type"])
-    def test_outputs_from_declaration(self, tmp_path, docstring, expected_update):
+    def test_outputs_from_declaration(self, tmp_path, repo, docstring, expected_update):
         """
         Given
         - Decorated command code with output arguments mentioned in docstring and their various configurations.
@@ -851,7 +854,7 @@ class TestCommandGeneration:
         Then
         - Ensure that the YML dict is generated as needed.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
             metadata_collector = YMLMetadataCollector(integration_name="some_name")
@@ -861,8 +864,8 @@ class TestCommandGeneration:
                 """**docstring**"""
                 print("func")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path, docstring=docstring)
-        yml_generator = YMLGenerator(filename=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration, docstring=docstring)
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
         expected_command = copy.deepcopy(BASIC_COMMAND_DICT)
@@ -873,7 +876,7 @@ class TestCommandGeneration:
         expected_dict["script"]["commands"] = [expected_command]
         assert expected_dict == yml_generator.get_metadata_dict()
 
-    def test_outputs_from_output_list(self, tmp_path):
+    def test_outputs_from_output_list(self, tmp_path, repo):
         """
         Given
         - Decorated command code with explicit OutputArgument use and its configurations.
@@ -884,7 +887,7 @@ class TestCommandGeneration:
         Then
         - Ensure that the YML dict is generated as needed.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
             metadata_collector = YMLMetadataCollector(integration_name="some_name")
@@ -896,8 +899,8 @@ class TestCommandGeneration:
                 """Some other description"""
                 print("func")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path)
-        yml_generator = YMLGenerator(filename=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration)
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
         expected_command = copy.deepcopy(BASIC_COMMAND_DICT)
@@ -916,7 +919,7 @@ class TestCommandGeneration:
                               ('datetime.datetime', {"type": "Date"})
                               ],
                              ids=["str", "int", "float", "bool", "dict", "list", "datetime"])
-    def test_outputs_types_from_output_list(self, tmp_path, configuration, expected_update):
+    def test_outputs_types_from_output_list(self, tmp_path, repo, configuration, expected_update):
         """
         Given
         - Decorated command code with explicit OutputArgument use and its output_type configurations.
@@ -927,7 +930,7 @@ class TestCommandGeneration:
         Then
         - Ensure that the YML dict is generated as needed.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
             import datetime  # noqa: F401
@@ -942,9 +945,9 @@ class TestCommandGeneration:
                 """Some other description"""
                 print("func")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path, configuration=configuration,
+        save_code_as_integration(code=code_snippet, integration=integration, configuration=configuration,
                                  conf_in_second_line=True)
-        yml_generator = YMLGenerator(filename=integration_path)
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
         expected_command = copy.deepcopy(BASIC_COMMAND_DICT)
@@ -954,7 +957,7 @@ class TestCommandGeneration:
         expected_dict["script"]["commands"] = [expected_command]
         assert expected_dict == yml_generator.get_metadata_dict()
 
-    def test_input_list_overrides_docstring(self, tmp_path):
+    def test_input_list_overrides_docstring(self, tmp_path, repo):
         """
         Given
         - Decorated command code with explicit InputArgument use and input arguments mentioned in docstring.
@@ -965,7 +968,7 @@ class TestCommandGeneration:
         Then
         - Ensure that the YML dict is generated from the explicit InputArgument use and not the docstring.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
             metadata_collector = YMLMetadataCollector(integration_name="some_name")
@@ -981,8 +984,8 @@ class TestCommandGeneration:
                 """
                 print("func")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path)
-        yml_generator = YMLGenerator(filename=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration)
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
         expected_command = copy.deepcopy(BASIC_COMMAND_DICT)
@@ -992,7 +995,7 @@ class TestCommandGeneration:
         expected_dict["script"]["commands"] = [expected_command]
         assert expected_dict == yml_generator.get_metadata_dict()
 
-    def test_output_list_overrides_docstring(self, tmp_path):
+    def test_output_list_overrides_docstring(self, tmp_path, repo):
         """
         Given
         - Decorated command code with explicit OutputArgument use and input arguments mentioned in docstring.
@@ -1003,7 +1006,7 @@ class TestCommandGeneration:
         Then
         - Ensure that the YML dict is generated from the explicit OutputArgument use and not the docstring.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
             import datetime  # noqa: 401
@@ -1023,8 +1026,8 @@ class TestCommandGeneration:
                 """
                 print("func")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path)
-        yml_generator = YMLGenerator(filename=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration)
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
         expected_command = copy.deepcopy(BASIC_COMMAND_DICT)
@@ -1036,7 +1039,7 @@ class TestCommandGeneration:
         expected_dict["script"]["commands"] = [expected_command]
         assert expected_dict == yml_generator.get_metadata_dict()
 
-    def test_multiple_output_prefixes_in_declaration(self, tmp_path):
+    def test_multiple_output_prefixes_in_declaration(self, tmp_path, repo):
         """
         Given
         - Decorated command code with multiple output prefixes mentioned in docstring arguments.
@@ -1047,7 +1050,7 @@ class TestCommandGeneration:
         Then
         - Ensure that the YML dict is generated as expected.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
             metadata_collector = YMLMetadataCollector(integration_name="some_name")
@@ -1064,8 +1067,8 @@ class TestCommandGeneration:
                 """
                 print("func")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path)
-        yml_generator = YMLGenerator(filename=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration)
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
         expected_command = copy.deepcopy(BASIC_COMMAND_DICT)
@@ -1081,7 +1084,7 @@ class TestCommandGeneration:
         expected_dict["script"]["commands"] = [expected_command]
         assert expected_dict == yml_generator.get_metadata_dict()
 
-    def test_multiple_output_prefixes_in_list(self, tmp_path):
+    def test_multiple_output_prefixes_in_list(self, tmp_path, repo):
         """
         Given
         - Decorated command code with multiple output prefixes mentioned in explicit arguments.
@@ -1092,7 +1095,7 @@ class TestCommandGeneration:
         Then
         - Ensure that the YML dict is generated as expected.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
             metadata_collector = YMLMetadataCollector(integration_name="some_name")
@@ -1114,8 +1117,8 @@ class TestCommandGeneration:
                 """Some other description"""
                 print("func")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path)
-        yml_generator = YMLGenerator(filename=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration)
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
         expected_command = copy.deepcopy(BASIC_COMMAND_DICT)
@@ -1131,7 +1134,7 @@ class TestCommandGeneration:
         expected_dict["script"]["commands"] = [expected_command]
         assert expected_dict == yml_generator.get_metadata_dict()
 
-    def test_command_with_file_output(self, tmp_path):
+    def test_command_with_file_output(self, tmp_path, repo):
         """
         Given
         - Decorated command code with file output.
@@ -1142,7 +1145,7 @@ class TestCommandGeneration:
         Then
         - Ensure that the YML dict is generated as expected.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
             metadata_collector = YMLMetadataCollector(integration_name="some_name")
@@ -1153,8 +1156,8 @@ class TestCommandGeneration:
                 """Some other description"""
                 print("func")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path)
-        yml_generator = YMLGenerator(filename=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration)
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
         expected_command = copy.deepcopy(BASIC_COMMAND_DICT)
@@ -1181,7 +1184,7 @@ class TestCommandGeneration:
         expected_dict["script"]["commands"] = [expected_command]
         assert expected_dict == yml_generator.get_metadata_dict()
 
-    def test_command_without_docstring(self, tmp_path):
+    def test_command_without_docstring(self, tmp_path, repo):
         """
         Given
         - Decorated command code with multiple output prefixes mentioned in docstring arguments.
@@ -1192,7 +1195,7 @@ class TestCommandGeneration:
         Then
         - Ensure that the YML dict is generated as expected.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
             metadata_collector = YMLMetadataCollector(integration_name="some_name")
@@ -1201,8 +1204,8 @@ class TestCommandGeneration:
             def funky_command():
                 print("func")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path)
-        yml_generator = YMLGenerator(filename=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration)
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         expected_dict = copy.deepcopy(EMPTY_INTEGRATION_DICT)
         expected_command = copy.deepcopy(BASIC_COMMAND_DICT)
@@ -1331,7 +1334,7 @@ class TestYMLGeneration:
             """
             print("func")
 
-    def test_yml_file_making(self, tmp_path):
+    def test_yml_file_making(self, tmp_path, repo):
         """
         Given
         - full integration code.
@@ -1342,17 +1345,17 @@ class TestYMLGeneration:
         Then
         - Ensure the YML file contents are as expected.
         """
-        integration_path = tmp_path / "integration_name.py"
-        save_code_as_integration(code=TestYMLGeneration.full_integration_code_snippet, full_path=integration_path)
-        yml_generator = YMLGenerator(filename=integration_path)
+        integration = Integration(tmp_path, "integration_name", repo)
+        save_code_as_integration(code=TestYMLGeneration.full_integration_code_snippet, integration=integration)
+        yml_generator = YMLGenerator(filename=integration.code.path, force=True)
         yml_generator.generate()
         yml_generator.save_to_yml_file()
-        with open(tmp_path / "integration_name.yml", "r") as generated_yml:
+        with open(str(integration.yml.path), "r") as generated_yml:
             metadata_dict = yaml.load(generated_yml)
 
         assert metadata_dict == yml_generator.get_metadata_dict()
 
-    def test_complete_integration_generation(self, tmp_path):
+    def test_complete_integration_generation(self, tmp_path, repo):
         """
         Given
         - full integration code.
@@ -1363,13 +1366,13 @@ class TestYMLGeneration:
         Then
         - Ensure the generated YML dict is as expected.
         """
-        integration_path = tmp_path / "integration_name.py"
-        save_code_as_integration(code=TestYMLGeneration.full_integration_code_snippet, full_path=integration_path)
-        yml_generator = YMLGenerator(filename=integration_path)
+        integration = Integration(tmp_path, "integration_name", repo)
+        save_code_as_integration(code=TestYMLGeneration.full_integration_code_snippet, integration=integration)
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         assert self.FULL_INTEGRATION_DICT == yml_generator.get_metadata_dict()
 
-    def test_no_metadata_collector_defined(self, tmp_path, capsys):
+    def test_no_metadata_collector_defined(self, tmp_path, repo, capsys):
         """
         Given
         - full integration code without YMLMetadataCollector
@@ -1380,16 +1383,16 @@ class TestYMLGeneration:
         Then
         - Ensure the right message is displayed and the file is marked as non generatable.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
             def funky_command():
                 """Some other description"""
                 print("func")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration)
 
-        yml_generator = YMLGenerator(filename=integration_path)
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         out, err = capsys.readouterr()
 
@@ -1398,7 +1401,7 @@ class TestYMLGeneration:
         assert not yml_generator.metadata_collector
         assert not yml_generator.get_metadata_dict()
 
-    def test_file_importing_failure(self, tmp_path, capsys):
+    def test_file_importing_failure(self, tmp_path, repo, capsys):
         """
         Given
         - Integration code raising an exception.
@@ -1409,13 +1412,13 @@ class TestYMLGeneration:
         Then
         - Ensure the exception is printed in the stdout.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
             raise Exception("UniqueIntegrationException")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path)
-        yml_generator = YMLGenerator(filename=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration)
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         out, err = capsys.readouterr()
 
@@ -1424,7 +1427,7 @@ class TestYMLGeneration:
         assert not yml_generator.metadata_collector
         assert not yml_generator.get_metadata_dict()
 
-    def test_undefined_spec_failure(self, tmp_path, capsys, mocker):
+    def test_undefined_spec_failure(self, tmp_path, repo, capsys, mocker):
         """
         Given
         - Integration code without metadata_collector.
@@ -1437,17 +1440,17 @@ class TestYMLGeneration:
         - Ensure relevant message is printed.
         - Ensure that the no YML dict is generated.
         """
-        integration_path = tmp_path / "integration_name.py"
+        integration = Integration(tmp_path, "integration_name", repo)
 
         def code_snippet():
             def funky_command():
                 """Some other description"""
                 print("func")
 
-        save_code_as_integration(code=code_snippet, full_path=integration_path)
+        save_code_as_integration(code=code_snippet, integration=integration)
 
         mocker.patch.object(util, 'spec_from_file_location', return_value=None)
-        yml_generator = YMLGenerator(filename=integration_path)
+        yml_generator = YMLGenerator(filename=integration.code.path)
         yml_generator.generate()
         out, err = capsys.readouterr()
 

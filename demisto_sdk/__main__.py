@@ -2022,7 +2022,10 @@ def integration_diff(**kwargs):
 
 # ====================== generate_yml_from_python ====================== #
 @main.command(name="generate-yml-from-python",
-              help='''Generate YML from python''')  # TODO: enhance
+              help='''Generate YML file from Python code that includes special syntax.\n
+                      The output file name will be the same as the Python code with the `.yml` extension instead of `.py`.\n
+                      The generation currently supports integrations only.\n
+                      For more information on usage and installation visit the command's README.md file.''')
 @click.help_option(
     '-h', '--help'
 )

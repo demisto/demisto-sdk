@@ -79,7 +79,6 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_changed_removed_yml_fields(),
             # will move to is_valid_integration after https://github.com/demisto/etc/issues/17949
             not self.is_outputs_for_reputations_commands_valid(),
-            self.verify_yml_commands_match_readme(),
         ]
         return not any(answers)
 
@@ -142,6 +141,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_hidden_params(),
             self.is_valid_description(beta_integration=False),
             self.is_context_correct_in_readme(),
+            self.verify_yml_commands_match_readme(),
         ]
 
         if check_is_unskipped:
@@ -1484,8 +1484,6 @@ class IntegrationValidator(ContentEntityValidator):
         Return:
             True if all commands appear in the readme, and False if it does'nt.
         """
-        # if not self.is_modified:
-        #     return True
         yml_commands_list = extract_none_deprecated_command_names_from_yml(self.current_file)
         is_valid = True
         dir_path = os.path.dirname(self.file_path)

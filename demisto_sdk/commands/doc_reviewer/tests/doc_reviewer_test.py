@@ -739,6 +739,7 @@ def test_find_known_words_from_pack(repo, known_words_content, expected_known_wo
 
     Then:
         - Ensure the found path result is appropriate.
+        - Ensure the pack name (test_pack) is in the know words.
     """
     pack = repo.create_pack('test_pack')
     rn_file = pack.create_release_notes(version='1_0_0', content='Some release note')

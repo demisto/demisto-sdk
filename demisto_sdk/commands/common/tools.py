@@ -511,6 +511,8 @@ def get_file(file_path, type_of_file, clear_cache=False):
 
 
 def get_yaml(file_path, cache_clear=False):
+    if cache_clear:
+        get_file.cache_clear()
     return get_file(file_path, 'yml', clear_cache=cache_clear)
 
 

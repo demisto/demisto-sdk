@@ -5,6 +5,8 @@ import click
 
 from demisto_sdk.commands.common.constants import DEPRECATED_REGEXES
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
@@ -83,6 +85,7 @@ class PlaybookValidator(ContentEntityValidator):
         """
         return self._is_valid_version()
 
+    @error_codes('PB100')
     def is_no_rolename(self):  # type: () -> bool
         """Check whether the playbook has a rolename
 
@@ -122,6 +125,7 @@ class PlaybookValidator(ContentEntityValidator):
                         task) and is_all_condition_branches_handled
         return is_all_condition_branches_handled
 
+    @error_codes('PB101,PB102')
     def is_builtin_condition_task_branches_handled(self, task: Dict) -> bool:
         """Checks whether a builtin conditional task branches are handled properly
         NOTE: The function uses str.upper() on branches to be case insensitive
@@ -165,6 +169,7 @@ class PlaybookValidator(ContentEntityValidator):
 
         return is_all_condition_branches_handled
 
+    @error_codes('PB101,PB102')
     def is_ask_condition_branches_handled(self, task: Dict) -> bool:
         """Checks whether a builtin conditional task branches are handled properly
         NOTE: The function uses str.upper() on branches to be case insensitive
@@ -231,6 +236,7 @@ class PlaybookValidator(ContentEntityValidator):
 
         return is_all_condition_branches_handled
 
+    @error_codes('PB103')
     def is_root_connected_to_all_tasks(self):  # type: () -> bool
         """Check whether the playbook root is connected to all tasks
 
@@ -256,6 +262,7 @@ class PlaybookValidator(ContentEntityValidator):
 
         return tasks_bucket.issubset(next_tasks_bucket)
 
+    @error_codes('PB104')
     def is_valid_as_deprecated(self) -> bool:
         is_valid = True
         is_deprecated = self.current_file.get('deprecated', False)
@@ -271,6 +278,7 @@ class PlaybookValidator(ContentEntityValidator):
                     is_valid = False
         return is_valid
 
+    @error_codes('PB105')
     def is_delete_context_all_in_playbook(self) -> bool:
         """
         Check if delete context all=yes exist in playbook.
@@ -289,6 +297,7 @@ class PlaybookValidator(ContentEntityValidator):
                     return False
         return True
 
+    @error_codes('PB106')
     def is_using_instance(self) -> bool:
         """
         Check if there is an existing task that uses specific instance.
@@ -305,6 +314,7 @@ class PlaybookValidator(ContentEntityValidator):
                     return False
         return True
 
+    @error_codes('PB107')
     def is_script_id_valid(self, id_set_file):
         """Checks whether a script id is valid (i.e id exists in set_id)
         Args:
@@ -398,6 +408,7 @@ class PlaybookValidator(ContentEntityValidator):
         next_tasks: Dict = task.get('nexttasks', {})
         return '#default#' in next_tasks
 
+    @error_codes('PB112')
     def verify_condition_tasks_has_else_path(self):  # type: () -> bool
         """Check whether the playbook conditional tasks has else path
 
@@ -419,6 +430,7 @@ class PlaybookValidator(ContentEntityValidator):
 
         return all_conditions_has_else_path
 
+    @error_codes('PB108')
     def _is_id_uuid(self):
         """
         Check that the taskid field and the id field under the task field are both on from uuid format
@@ -439,6 +451,7 @@ class PlaybookValidator(ContentEntityValidator):
 
         return is_valid
 
+    @error_codes('PB109')
     def _is_taskid_equals_id(self):
         """
         Check that taskid field and id field under task field contains equal values
@@ -460,6 +473,7 @@ class PlaybookValidator(ContentEntityValidator):
 
         return is_valid
 
+    @error_codes('BA110')
     def name_not_contain_the_type(self):
         """
         Check that the entity name does not contain the entity type
@@ -487,6 +501,7 @@ class PlaybookValidator(ContentEntityValidator):
                 return all(answer)
         return True
 
+    @error_codes('PB114')
     def is_playbook_quiet_mode(self):
         if not self.current_file.get('quiet', False):
             error_message, error_code = Errors.playbook_not_quiet_mode()
@@ -494,6 +509,7 @@ class PlaybookValidator(ContentEntityValidator):
                 return False
         return True
 
+    @error_codes('PB115')
     def is_tasks_quiet_mode(self):
         not_quiet = []
         tasks: dict = self.current_file.get('tasks', {})
@@ -506,6 +522,7 @@ class PlaybookValidator(ContentEntityValidator):
                 return False
         return True
 
+    @error_codes('PB116')
     def is_stopping_on_error(self):
         continue_tasks = []
         tasks: dict = self.current_file.get('tasks', {})

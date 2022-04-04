@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import (
-    BaseValidator, meta_specific_validation_decorator)
+    BaseValidator, error_codes)
 from demisto_sdk.commands.common.tools import (get_remote_file,
                                                is_file_path_in_pack)
 from demisto_sdk.commands.format.format_constants import \
@@ -101,7 +101,7 @@ class StructureValidator(BaseValidator):
 
         return False
 
-    @meta_specific_validation_decorator('ST100')
+    @error_codes('ST100')
     def scheme_of_file_by_path(self):
         # type:  () -> Optional[str]
         """Running on given regexes from `constants` to find out what type of file it is
@@ -121,7 +121,7 @@ class StructureValidator(BaseValidator):
 
         return None
 
-    @meta_specific_validation_decorator('ST110')
+    @error_codes('ST110')
     def is_valid_scheme(self):
         # type: () -> bool
         """Validate the file scheme according to the scheme we have saved in SCHEMAS_PATH.
@@ -185,7 +185,7 @@ class StructureValidator(BaseValidator):
         except AttributeError:
             return None
 
-    @meta_specific_validation_decorator('ST101')
+    @error_codes('ST101')
     def is_file_id_without_slashes(self):
         # type: () -> bool
         """Check if the ID of the file contains any slashes ('/').
@@ -202,7 +202,7 @@ class StructureValidator(BaseValidator):
 
         return True
 
-    @meta_specific_validation_decorator('ST102')
+    @error_codes('ST102')
     def is_id_modified(self):
         # type: () -> bool
         """Check if the ID of the file has been changed.
@@ -224,7 +224,7 @@ class StructureValidator(BaseValidator):
         # False - the id has not changed.
         return False
 
-    @meta_specific_validation_decorator('ST103')
+    @error_codes('ST103')
     def is_valid_fromversion_on_modified(self):
         # type: () -> bool
         """Check that the fromversion property was not changed on existing Content files.
@@ -250,7 +250,7 @@ class StructureValidator(BaseValidator):
 
         return True
 
-    @meta_specific_validation_decorator('ST104')
+    @error_codes('ST104')
     def is_valid_file_extension(self):
         file_extension = os.path.splitext(self.file_path)[1]
         if file_extension not in self.valid_extensions:
@@ -299,7 +299,7 @@ class StructureValidator(BaseValidator):
                     return file_type
         return None
 
-    @meta_specific_validation_decorator("ST105")
+    @error_codes("ST105")
     def is_valid_file_path(self):
         """Returns is valid filepath exists.
 
@@ -494,7 +494,7 @@ class StructureValidator(BaseValidator):
 
         return str(key_list).strip('[]').replace(',', '->')
 
-    @meta_specific_validation_decorator('BA103')
+    @error_codes('BA103')
     def check_for_spaces_in_file_name(self):
         file_name = os.path.basename(self.file_path)
         if file_name.count(' ') > 0:

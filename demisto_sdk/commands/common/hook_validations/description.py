@@ -5,8 +5,8 @@ from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    PACKS_INTEGRATION_YML_REGEX,
                                                    FileType)
 from demisto_sdk.commands.common.errors import FOUND_FILES_AND_ERRORS, Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator, error_codes)
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import find_type, get_yaml, os, re
@@ -23,9 +23,9 @@ class DescriptionValidator(BaseValidator):
     """
 
     def __init__(self, file_path: str, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False,
-                 json_file_path: Optional[str] = None):
+                 json_file_path: Optional[str] = None, specific_validations=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print, json_file_path=json_file_path)
+                         suppress_print=suppress_print, json_file_path=json_file_path, specific_validations=specific_validations)
         self._is_valid = True
         # Handling a case where the init function initiated with file path instead of structure validator
         self.file_path = file_path.file_path if isinstance(file_path, StructureValidator) else file_path
@@ -43,6 +43,7 @@ class DescriptionValidator(BaseValidator):
 
         return self._is_valid
 
+    @error_codes('DS105')
     def contains_contrib_details(self):
         """check if DESCRIPTION file contains contribution details"""
         with open(self.file_path) as f:
@@ -56,6 +57,7 @@ class DescriptionValidator(BaseValidator):
                 return False
         return True
 
+    @error_codes('DS100,DS101,DS102')
     def is_valid_beta_description(self):
         """Check if beta disclaimer exists in detailed description"""
         description_in_yml = self.data_dictionary.get('detaileddescription', '') if self.data_dictionary else ''
@@ -89,6 +91,7 @@ class DescriptionValidator(BaseValidator):
 
         return True
 
+    @error_codes('DS104,DS103')
     def is_duplicate_description(self):
         """Check if the integration has a non-duplicate description ."""
         is_description_in_yml = False
@@ -127,6 +130,7 @@ class DescriptionValidator(BaseValidator):
 
         return True
 
+    @error_codes('DS106')
     def is_valid_description_name(self):
         """Check if the description name is valid"""
         description_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))
@@ -146,6 +150,7 @@ class DescriptionValidator(BaseValidator):
 
         return True
 
+    @error_codes('DS104,DS107')
     def verify_demisto_in_description_content(self):
         """
         Checks if there are the word 'Demisto' in the description content.

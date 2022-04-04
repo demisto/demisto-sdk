@@ -8,8 +8,8 @@ from pkg_resources import parse_version
 
 from demisto_sdk.commands.common.constants import IronBankDockers
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator, error_codes)
 from demisto_sdk.commands.common.tools import get_yaml
 
 # disable insecure warnings
@@ -29,9 +29,10 @@ DEFAULT_REGISTRY = 'registry-1.docker.io'
 class DockerImageValidator(BaseValidator):
 
     def __init__(self, yml_file_path, is_modified_file, is_integration, ignored_errors=None, print_as_warnings=False,
-                 suppress_print: bool = False, json_file_path: Optional[str] = None, is_iron_bank: bool = False):
+                 suppress_print: bool = False, json_file_path: Optional[str] = None, is_iron_bank: bool = False,
+                 specific_validations: list = None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print, json_file_path=json_file_path)
+                         suppress_print=suppress_print, json_file_path=json_file_path, specific_validations=specific_validations)
         self.is_valid = True
         self.is_modified_file = is_modified_file
         self.is_integration = is_integration
@@ -47,6 +48,7 @@ class DockerImageValidator(BaseValidator):
         self.docker_image_latest_tag = self.get_docker_image_latest_tag(self.docker_image_name, self.yml_docker_image,
                                                                         self.is_iron_bank)
 
+    @error_codes('DO108,DO107')
     def is_docker_image_valid(self):
         # javascript code should not check docker
         if self.code_type == 'javascript':
@@ -67,6 +69,7 @@ class DockerImageValidator(BaseValidator):
 
         return self.is_valid
 
+    @error_codes('DO100,DO106,DO101')
     def is_docker_image_latest_tag(self):
         if 'demisto/python:1.3-alpine' == f'{self.docker_image_name}:{self.docker_image_tag}':
             # the docker image is the default one
@@ -278,6 +281,7 @@ class DockerImageValidator(BaseValidator):
                 tag = DockerImageValidator.lexical_find_latest_tag(tags)
         return tag
 
+    @error_codes('DO102,DO103')
     def get_docker_image_latest_tag(self, docker_image_name, yml_docker_image, is_iron_bank=False):
         """Returns the docker image latest tag of the given docker image
 
@@ -307,6 +311,7 @@ class DockerImageValidator(BaseValidator):
 
             return "no-tag-required"
 
+    @error_codes('DO104,DO105')
     def parse_docker_image(self, docker_image):
         """Verify that the docker image is of demisto format & parse the name and tag
 

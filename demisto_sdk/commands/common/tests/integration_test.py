@@ -35,6 +35,7 @@ def mock_structure(file_path=None, current_file=None, old_file=None, quiet_bc=Fa
         structure.prev_ver = 'master'
         structure.branch_name = ''
         structure.quiet_bc = quiet_bc
+        structure.specific_validations = None
         return structure
 
 

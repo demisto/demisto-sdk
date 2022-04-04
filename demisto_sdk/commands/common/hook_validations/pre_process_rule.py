@@ -4,6 +4,8 @@ from typing import List
 import click
 
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 
@@ -47,6 +49,7 @@ class PreProcessRuleValidator(ContentEntityValidator):
         """
         return self._is_valid_version()
 
+    @error_codes('PP100')
     def is_valid_from_server_version(self) -> bool:
         """Checks if from version field is valid.
 
@@ -122,6 +125,7 @@ class PreProcessRuleValidator(ContentEntityValidator):
 
         return False
 
+    @error_codes('PP101')
     def are_incident_fields_exist(self, id_set_file, is_ci) -> bool:
         """Checks if incident field is valid - exist in the content.
 

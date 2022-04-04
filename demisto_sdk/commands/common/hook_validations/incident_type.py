@@ -4,6 +4,8 @@ from distutils.version import LooseVersion
 from demisto_sdk.commands.common.constants import \
     DEFAULT_CONTENT_ITEM_FROM_VERSION
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 
@@ -67,6 +69,7 @@ class IncidentTypeValidator(ContentEntityValidator):
         """
         return super(IncidentTypeValidator, self)._is_id_equals_name('incident_type')
 
+    @error_codes('if110')
     def is_changed_from_version(self):
         # type: () -> bool
         """Check if fromversion has been changed.
@@ -85,6 +88,7 @@ class IncidentTypeValidator(ContentEntityValidator):
                     is_bc_broke = True
         return is_bc_broke
 
+    @error_codes('IT100,IF108')
     def is_including_int_fields(self):
         # type: () -> bool
         """Check if including required fields, only from 5.0.0.
@@ -111,6 +115,7 @@ class IncidentTypeValidator(ContentEntityValidator):
 
         return is_valid
 
+    @error_codes('IT101')
     def is_valid_playbook_id(self):
         # type: () -> bool
         """Check if playbookId is valid
@@ -124,6 +129,7 @@ class IncidentTypeValidator(ContentEntityValidator):
                 return False
         return True
 
+    @error_codes('IT102,IT103')
     def is_valid_autoextract(self):
         """Check if extractSettings field is valid.
 

@@ -9,8 +9,8 @@ import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator, error_codes)
 from demisto_sdk.commands.common.tools import (
     get_script_or_sub_playbook_tasks_from_playbook, get_yaml)
 from demisto_sdk.commands.common.update_id_set import (
@@ -48,7 +48,7 @@ class IDSetValidations(BaseValidator):
     PACKS_SECTION = "Packs"
 
     def __init__(self, is_test_run=False, is_circle=False, configuration=Configuration(), ignored_errors=None,
-                 print_as_warnings=False, suppress_print=False, id_set_file=None, json_file_path=None, specific_validations=[]):
+                 print_as_warnings=False, suppress_print=False, id_set_file=None, json_file_path=None, specific_validations=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path, specific_validations=specific_validations)
         self.is_circle = is_circle
@@ -65,6 +65,7 @@ class IDSetValidations(BaseValidator):
             self.incident_types_set = self.id_set_file[self.INCIDENT_TYPES_SECTION]
             self.packs_set = self.id_set_file[self.PACKS_SECTION]
 
+    @error_codes('IT104')
     def _is_incident_type_default_playbook_found(self, incident_type_data):
         """Check if the default playbook of an incident type is in the id_set
 
@@ -93,6 +94,7 @@ class IDSetValidations(BaseValidator):
 
         return is_valid
 
+    @error_codes('IF114')
     def _is_incident_field_scripts_found(self, incident_field_data, incident_field_file_path=None):
         """Check if scripts and field calculations scripts of an incident field is in the id_set
 
@@ -127,6 +129,7 @@ class IDSetValidations(BaseValidator):
 
         return is_valid
 
+    @error_codes('LO105')
     def _is_layouts_container_scripts_found(self, layouts_container_data, layouts_container_file_path=None):
         """Check if scripts of a layouts container is in the id_set
 
@@ -162,6 +165,7 @@ class IDSetValidations(BaseValidator):
 
         return is_valid
 
+    @error_codes('LO106')
     def _is_layout_scripts_found(self, layout_data, layout_file_path=None):
         """Check if scripts of a layout  is in the id_set
 
@@ -287,6 +291,7 @@ class IDSetValidations(BaseValidator):
 
         return all_tabs
 
+    @error_codes('SC102')
     def _is_non_real_command_found(self, script_data):
         """Check if the script depend-on section has a non real command
 
@@ -308,6 +313,7 @@ class IDSetValidations(BaseValidator):
                             return not is_valid
         return is_valid
 
+    @error_codes('IN132,IN133')
     def _is_integration_classifier_and_mapper_found(self, integration_data):
         """Check if the integration classifier and mapper are found
 
@@ -349,6 +355,7 @@ class IDSetValidations(BaseValidator):
 
         return is_valid_classifier and is_valid_mapper
 
+    @error_codes('CL108')
     def _is_classifier_incident_types_found(self, classifier_data):
         """Check if the classifier incident types were found
 
@@ -381,6 +388,7 @@ class IDSetValidations(BaseValidator):
 
         return is_valid
 
+    @error_codes('MP105')
     def _is_mapper_incident_types_found(self, mapper_data):
         """Check if the classifier incident types were found
 
@@ -448,6 +456,7 @@ class IDSetValidations(BaseValidator):
 
         return True, None
 
+    @error_codes('PB113')
     def is_subplaybook_name_valid(self, playbook_data, file_path):
         """Checks whether a sub playbook name is valid (i.e id exists in set_id)
         Args:
@@ -495,6 +504,7 @@ class IDSetValidations(BaseValidator):
                 return commands_to_integration
         return commands_to_integration
 
+    @error_codes('PB111,PB117')
     def is_entity_version_match_playbook_version(self, implemented_entity_list_from_playbook,
                                                  main_playbook_version, entity_set_from_id_set,
                                                  playbook_name, file_path, main_playbook_data):
@@ -571,6 +581,7 @@ class IDSetValidations(BaseValidator):
 
         return is_valid
 
+    @error_codes('PB111')
     def is_playbook_integration_version_valid(self, playbook_integration_commands, playbook_version, playbook_name,
                                               file_path):
         """Check if the playbook's version match playbook's used integrations.

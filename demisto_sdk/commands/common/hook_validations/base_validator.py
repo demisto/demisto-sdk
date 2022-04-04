@@ -22,38 +22,33 @@ from demisto_sdk.commands.common.tools import (
 json = JSON_Handler()
 
 
-def is_error_code_in_specific_validations_list(error_func_code, specific_validations_list):
-    """Return True if an error is in the specific validations list, and False otherwise"""
-    if error_func_code in specific_validations_list or error_func_code[:2] in specific_validations_list:
-        return True
-    return False
+def error_codes(error_codes_str):
 
-
-def meta_specific_validation_decorator(error_func_codes_str):
-
-    def specific_validation_decorator(func):
+    def error_codes_decorator(func):
 
         def wrapper(self, *args, **kwargs):
-
             if self.specific_validations:
-                error_func_codes = error_func_codes_str.split(',')
-                for error_func_code in error_func_codes:
-                    if is_error_code_in_specific_validations_list(error_func_code, self.specific_validations):
+                # if specific validations were selected, we check if the current validation error codes matches the
+                # specific validation the user specified.
+                error_codes = error_codes_str.split(',')
+                for error_code in error_codes:
+                    if self.should_run_validation(error_code):
                         return func(self, *args, **kwargs)
             else:
+                # if no specific validations were mentioned, we return the function outputs.
                 return func(self, *args, **kwargs)
 
             return True
 
         return wrapper
 
-    return specific_validation_decorator
+    return error_codes_decorator
 
 
 class BaseValidator:
 
     def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False,
-                 json_file_path: Optional[str] = None, specific_validations: Optional[str] = None):
+                 json_file_path: Optional[str] = None, specific_validations=None):
         self.ignored_errors = ignored_errors if ignored_errors else {}
         self.print_as_warnings = print_as_warnings
         self.checked_files = set()  # type: ignore
@@ -78,6 +73,10 @@ class BaseValidator:
 
         return False
 
+    def should_run_validation(self, error_code):
+        """Return True if the validation should run, and False otherwise"""
+        return error_code in self.specific_validations or error_code[:2] in self.specific_validations
+
     def handle_error(self, error_message, error_code, file_path, should_print=True, suggested_fix=None, warning=False,
                      drop_line=False):
         """Handle an error that occurred during validation
@@ -95,7 +94,8 @@ class BaseValidator:
             str. Will return the formatted error message if it is not ignored, an None if it is ignored
         """
         if self.specific_validations:
-            if not is_error_code_in_specific_validations_list(error_code, self.specific_validations):
+            if not self.should_run_validation(error_code):
+                # if the error code is not specified in the specific_validations list, we exit the function and return None
                 return None
 
         def formatted_error_str(error_type):

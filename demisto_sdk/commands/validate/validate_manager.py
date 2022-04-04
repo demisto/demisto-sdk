@@ -29,7 +29,7 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.author_image import \
     AuthorImageValidator
 from demisto_sdk.commands.common.hook_validations.base_validator import (
-    BaseValidator, meta_specific_validation_decorator)
+    BaseValidator, error_codes)
 from demisto_sdk.commands.common.hook_validations.classifier import \
     ClassifierValidator
 from demisto_sdk.commands.common.hook_validations.conf_json import \
@@ -137,6 +137,7 @@ class ValidateManager:
         # Class constants
         self.handle_error = BaseValidator(print_as_warnings=print_ignored_errors,
                                           json_file_path=json_file_path).handle_error
+        self.should_run_validation = BaseValidator(specific_validations=specific_validations).should_run_validation
         self.file_path = file_path
         self.id_set_path = id_set_path or DEFAULT_ID_SET_PATH
         # create the id_set only once per run.
@@ -443,7 +444,7 @@ class ValidateManager:
 
         return all(package_entities_validation_results)
 
-    @meta_specific_validation_decorator('BA114')
+    @error_codes('BA114')
     def is_valid_pack_name(self, file_path, old_file_path):
         """
         Valid pack name is currently considered to be a new pack name or an existing pack.
@@ -460,7 +461,7 @@ class ValidateManager:
                 return False
         return True
 
-    @meta_specific_validation_decorator('BA102,IM110')
+    @error_codes('BA102,IM110')
     def is_valid_file_type(self, file_type, file_path):
         """
         If a file_type is unsupported, will return `False`.
@@ -504,7 +505,7 @@ class ValidateManager:
             return False
 
         if file_type == FileType.XSOAR_CONFIG:
-            xsoar_config_validator = XSOARConfigJsonValidator(file_path)
+            xsoar_config_validator = XSOARConfigJsonValidator(file_path, specific_validations=self.specific_validations)
             return xsoar_config_validator.is_valid_xsoar_config_file()
 
         if not self.check_only_schema:
@@ -525,7 +526,8 @@ class ValidateManager:
                                                  json_file_path=self.json_file_path,
                                                  skip_schema_check=self.skip_schema_check,
                                                  pykwalify_logs=self.pykwalify_logs,
-                                                 quiet_bc=self.quiet_bc, specific_validations=self.specific_validations)
+                                                 quiet_bc=self.quiet_bc,
+                                                 specific_validations=self.specific_validations)
 
         # schema validation
         if file_type not in {FileType.TEST_PLAYBOOK, FileType.TEST_SCRIPT, FileType.DESCRIPTION}:
@@ -658,10 +660,14 @@ class ValidateManager:
             return True
 
         else:
-            error_message, error_code = Errors.file_type_not_supported()
-            if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path):
-                return False
+            return self.file_type_not_supported(file_path)
+        return True
 
+    @error_codes('BA102')
+    def file_type_not_supported(self, file_path):
+        error_message, error_code = Errors.file_type_not_supported()
+        if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path):
+            return False
         return True
 
     @staticmethod
@@ -805,13 +811,15 @@ class ValidateManager:
     def validate_description(self, file_path, pack_error_ignore_list):
         description_validator = DescriptionValidator(file_path, ignored_errors=pack_error_ignore_list,
                                                      print_as_warnings=self.print_ignored_errors,
-                                                     json_file_path=self.json_file_path)
+                                                     json_file_path=self.json_file_path,
+                                                     specific_validations=self.specific_validations)
         return description_validator.is_valid_file()
 
     def validate_readme(self, file_path, pack_error_ignore_list):
         readme_validator = ReadMeValidator(file_path, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors,
-                                           json_file_path=self.json_file_path)
+                                           json_file_path=self.json_file_path,
+                                           specific_validations=self.specific_validations)
         return readme_validator.is_valid_file()
 
     def validate_test_playbook(self, structure_validator, pack_error_ignore_list):
@@ -839,7 +847,8 @@ class ValidateManager:
                                                             added_files=added_files,
                                                             ignored_errors=pack_error_ignore_list,
                                                             print_as_warnings=self.print_ignored_errors,
-                                                            json_file_path=self.json_file_path)
+                                                            json_file_path=self.json_file_path,
+                                                            specific_validations=self.specific_validations)
             return release_notes_validator.is_file_valid()
 
         return True
@@ -859,7 +868,8 @@ class ValidateManager:
             return True
         release_notes_config_validator = ReleaseNotesConfigValidator(file_path, ignored_errors=pack_error_ignore_list,
                                                                      print_as_warnings=self.print_ignored_errors,
-                                                                     json_file_path=self.json_file_path)
+                                                                     json_file_path=self.json_file_path,
+                                                                     specific_validations=self.specific_validations)
         return release_notes_config_validator.is_file_valid()
 
     def validate_playbook(self, structure_validator, pack_error_ignore_list, file_type):
@@ -1225,7 +1235,7 @@ class ValidateManager:
                         return True
         return False
 
-    @meta_specific_validation_decorator('BA115')
+    @error_codes('BA115')
     def validate_deleted_files(self, deleted_files, added_files) -> bool:
         click.secho(f'\n================= Checking for prohibited deleted files =================',
                     fg="bright_cyan")
@@ -1267,7 +1277,7 @@ class ValidateManager:
 
         return all(valid_pack_files)
 
-    @meta_specific_validation_decorator('ST106')
+    @error_codes('ST106')
     def validate_no_old_format(self, old_format_files):
         """ Validate there are no files in the old format (unified yml file for the code and configuration
         for python integration).
@@ -1286,7 +1296,7 @@ class ValidateManager:
                     handle_error = False
         return handle_error
 
-    @meta_specific_validation_decorator('RN105')
+    @error_codes('RN105')
     def validate_no_duplicated_release_notes(self, added_files):
         """Validated that among the added files - there are no duplicated RN for the same pack.
 

@@ -101,7 +101,6 @@ class StructureValidator(BaseValidator):
 
         return False
 
-    @error_codes('ST100')
     def scheme_of_file_by_path(self):
         # type:  () -> Optional[str]
         """Running on given regexes from `constants` to find out what type of file it is

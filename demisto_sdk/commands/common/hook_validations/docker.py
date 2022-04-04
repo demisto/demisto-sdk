@@ -281,7 +281,6 @@ class DockerImageValidator(BaseValidator):
                 tag = DockerImageValidator.lexical_find_latest_tag(tags)
         return tag
 
-    @error_codes('DO102,DO103')
     def get_docker_image_latest_tag(self, docker_image_name, yml_docker_image, is_iron_bank=False):
         """Returns the docker image latest tag of the given docker image
 
@@ -311,7 +310,6 @@ class DockerImageValidator(BaseValidator):
 
             return "no-tag-required"
 
-    @error_codes('DO104,DO105')
     def parse_docker_image(self, docker_image):
         """Verify that the docker image is of demisto format & parse the name and tag
 

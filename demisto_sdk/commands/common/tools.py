@@ -837,8 +837,9 @@ def get_integration_command_names(file_path):
     Returns:
 
     """
-    click.secho(f'get_integration_command_names: ')
+    click.secho(f'{get_integretion_name()}: ')
     yml_dict = get_yaml(file_path)
+
     commands = yml_dict.get("script", {})
     click.secho(f'commands: {commands}')
     # # handles scripts
@@ -852,6 +853,22 @@ def get_integration_command_names(file_path):
         names.append(command_name)
     click.secho(f'commands names: {names}')
     return names
+
+
+def get_integretion_name():
+    """
+    extract pack name (folder name) from file path
+
+    Arguments:
+        file_path (str): path of a file inside the pack
+
+    Returns:
+        pack name (str)
+    """
+    a = get_yml_paths_in_dir('Packs/MicrosoftDefenderAdvancedThreatProtection')
+    click.secho(f'all yml files: {a}')
+
+
 
 def get_pack_name(file_path):
     """

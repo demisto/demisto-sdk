@@ -75,6 +75,7 @@ types-PyMySQL="*"
 types-protobuf="*"
 typing-extensions="*"
 ordered-set = "*"
+klara = "*"
 
 [dev-packages]
 mitmproxy = "*"

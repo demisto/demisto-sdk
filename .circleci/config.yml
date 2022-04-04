@@ -144,8 +144,8 @@ jobs:
         - run:
             name: Pre-commit
             command: |
-              pre-commit --version
-              pre-commit run -a
+              poetry run pre-commit --version
+              poetry run pre-commit run -a
         - save_cache:
             key: v1-pc-cache-{{ checksum "pre-commit-cache-key.txt" }}
             paths:

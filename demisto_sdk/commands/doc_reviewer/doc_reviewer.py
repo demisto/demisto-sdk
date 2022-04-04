@@ -223,6 +223,10 @@ class DocReviewer:
             return True
 
         self.add_known_words()
+
+        print("HERE")
+        print(self.files)
+
         for file in self.files:
             click.echo(f'\nChecking file {file}')
             restarted_spellchecker = self.update_known_words_from_pack(file)

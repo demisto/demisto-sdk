@@ -48,9 +48,10 @@ INTEGRATIONS_DOCS_REFERENCE = 'https://xsoar.pan.dev/docs/reference/integrations
 class IntegrationScriptUnifier(YAMLUnifier):
 
     def __init__(self, input: str, dir_name=INTEGRATIONS_DIR, output: str = '',
-                 image_prefix=DEFAULT_IMAGE_PREFIX, force: bool = False, yml_modified_data=None):
+                 image_prefix=DEFAULT_IMAGE_PREFIX, force: bool = False, yml_modified_data=None, test=False):
 
         self.image_prefix = image_prefix
+        self.test = test
         if yml_modified_data:
             self.yml_data = yml_modified_data
 
@@ -163,11 +164,33 @@ class IntegrationScriptUnifier(YAMLUnifier):
                 yml_unified = self.add_contributors_support(yml_unified, contributor_type, contributor_email,
                                                             contributor_url, author)
 
+        if self.test:
+            yml_unified = self.add_test(yml_unified)
+
         output_map = self.write_yaml_with_docker(yml_unified, self.yml_data, script_obj)
         unifier_outputs = list(output_map.keys()), self.yml_path, script_path, image_path, desc_path
         print_color(f'Created unified yml: {list(output_map.keys())}', LOG_COLORS.GREEN)
 
         return unifier_outputs[0]
+
+    def add_test(self, unified_yml):
+        """
+            Args:
+                unified_yml - The unified_yml
+            Returns:
+                 the unified yml with the id/name/display appended with the Test label
+                 if the fields exsits.
+        """
+        to_append = ' - Test'
+        if unified_yml['name']:
+            unified_yml['name'] += to_append
+        if unified_yml['commonfields']['id']:
+            unified_yml['commonfields']['id'] += to_append
+        if not self.is_script_package:
+            if unified_yml['display']:
+                unified_yml['display'] += to_append
+
+        return unified_yml
 
     def insert_image_to_yml(self, yml_data, yml_unified):
         image_data, found_img_path = self.get_data(self.package_path, "*png")

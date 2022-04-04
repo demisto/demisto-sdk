@@ -1,4 +1,3 @@
-import json
 import os
 import re
 import shutil
@@ -17,6 +16,7 @@ from demisto_sdk.commands.common.constants import (
     AUTOMATION, ENTITY_TYPE_TO_DIR, INTEGRATION, INTEGRATIONS_DIR,
     MARKETPLACE_LIVE_DISCUSSIONS, MARKETPLACES, PACK_INITIAL_VERSION, SCRIPT,
     SCRIPTS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, capital_case,
                                                find_type,
                                                get_child_directories,
@@ -33,6 +33,8 @@ from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from demisto_sdk.commands.update_release_notes.update_rn_manager import \
     UpdateReleaseNotesManager
+
+json = JSON_Handler()
 
 
 class ContributionConverter:
@@ -284,7 +286,10 @@ class ContributionConverter:
             generate_playbook_doc(yml_path)
 
         dir_output = os.path.dirname(os.path.realpath(yml_path))
-        readme_path = os.path.join(dir_output, 'README.md')
+        if file_type == 'playbook':
+            readme_path = yml_path.replace('.yml', '_README.md')
+        else:
+            readme_path = os.path.join(dir_output, 'README.md')
         self.readme_files.append(readme_path)
 
     def generate_readmes_for_new_content_pack(self, is_contribution=False):
@@ -317,7 +322,7 @@ class ContributionConverter:
 
         Args:
             files_to_source_mapping (Dict[str, Dict[str, str]]): Only used when updating a pack. mapping of a file
-                name as inside the the contribution zip to a dictionary containing the the associated source info
+                name as inside the contribution zip to a dictionary containing the the associated source info
                 for that file, specifically the base name (the name used in naming the split component files) and
                 the name of the containing directory.
         """

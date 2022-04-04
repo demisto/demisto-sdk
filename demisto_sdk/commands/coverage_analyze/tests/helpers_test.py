@@ -1,6 +1,6 @@
-import json
 import logging
 import os
+import shutil
 import sqlite3
 from datetime import datetime
 from typing import Text
@@ -10,6 +10,7 @@ import pytest
 import requests
 from freezegun import freeze_time
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.coverage_analyze.helpers import (CoverageSummary,
                                                            InvalidReportType,
@@ -21,6 +22,9 @@ from demisto_sdk.commands.coverage_analyze.helpers import (CoverageSummary,
                                                            parse_report_type,
                                                            percent_to_float)
 
+json = JSON_Handler()
+
+
 TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 JSON_MIN_DATA_FILE = os.path.join(TEST_DATA_DIR, 'coverage-min.json')
 COVERAGE_FILES_DIR = os.path.join(TEST_DATA_DIR, 'coverage_data_files')
@@ -29,18 +33,16 @@ PYTHON_FILE_PATH = os.path.join(TEST_DATA_DIR, 'HealthCheckAnalyzeLargeInvestiga
 
 def read_file(file_path):
     with open(file_path, 'r') as file_obj:
-        return file_obj.read().strip()
+        return json.load(file_obj)
 
 
 def write_file(file_path, file_content):
     with open(file_path, 'w') as file_obj:
-        file_obj.write(file_content)
+        json.dump(file_content, file_obj)
 
 
 def copy_file(origin, destination):
-    with open(destination, 'wb') as destination_file:
-        with open(origin, 'rb') as origin_file:
-            destination_file.write(origin_file.read())
+    shutil.copy(origin, destination)
 
 
 def test_get_report_str():
@@ -143,7 +145,7 @@ class TestCoverageSummary:
                 cache_dir=cache_dir, previous_coverage_report_url=TestCoverageSummary.TestGetFilesSummary.default_url
             ).get_files_summary()
             assert len(mock_min_cov_request.request_history) == request_count
-            assert read_file(JSON_MIN_DATA_FILE) == read_file(cache_dir.join('coverage-min.json'))
+            assert read_file(JSON_MIN_DATA_FILE) == read_file(cache_dir / 'coverage-min.json')
 
         @staticmethod
         def validate_min_format(summary):
@@ -162,61 +164,61 @@ class TestCoverageSummary:
             self.validate_min_format(summary)
 
         def test_the_data_file_is_valid(self):
-            self.validate_min_format(json.loads(read_file(JSON_MIN_DATA_FILE)))
+            self.validate_min_format(read_file(JSON_MIN_DATA_FILE))
 
         def test_without_cached_data(self, tmpdir, requests_mock):
-            mock_min_cov_request = requests_mock.get(self.default_url, text=read_file(JSON_MIN_DATA_FILE))
+            mock_min_cov_request = requests_mock.get(self.default_url, json=read_file(JSON_MIN_DATA_FILE))
             files_data = CoverageSummary(
                 cache_dir=tmpdir, previous_coverage_report_url=TestCoverageSummary.TestGetFilesSummary.default_url
             ).get_files_summary()
             assert len(mock_min_cov_request.request_history) == 1
             assert read_file(JSON_MIN_DATA_FILE) == read_file(tmpdir.join('coverage-min.json'))
-            assert files_data == json.loads(read_file(JSON_MIN_DATA_FILE))['files']
+            assert files_data == read_file(JSON_MIN_DATA_FILE)['files']
 
         def test_with_invalid_cached_data_that_will_raise_key_error(self, tmpdir, requests_mock):
             json_data = read_file(JSON_MIN_DATA_FILE)
-            mock_min_cov_request = requests_mock.get(self.default_url, text=json_data)
-            json_data = json.loads(json_data)
-            json_data.pop('files')
-            cached_file = tmpdir.join('coverage-min.json')
-            write_file(cached_file, json.dumps(json_data))
+            mock_min_cov_request = requests_mock.get(self.default_url, json=json_data)
+            obj_with_no_files = json_data.copy()
+            obj_with_no_files.pop('files')
+            cached_file = tmpdir / 'coverage-min.json'
+            write_file(cached_file, json_data)
             self.check_get_files(tmpdir, mock_min_cov_request, 1)
 
         def test_with_invalid_cached_data_that_will_raise_value_error(self, tmpdir, requests_mock):
             json_data = read_file(JSON_MIN_DATA_FILE)
-            mock_min_cov_request = requests_mock.get(self.default_url, text=json_data)
-            json_data = json.loads(json_data)
-            json_data['last_updated'] = 'test'
-            cached_file = tmpdir.join('coverage-min.json')
-            write_file(cached_file, json.dumps(json_data))
+            mock_min_cov_request = requests_mock.get(self.default_url, json=json_data)
+            json_data_with_modified_last_updated = json_data.copy()
+            json_data_with_modified_last_updated['last_updated'] = 'test'
+            cached_file = tmpdir / 'coverage-min.json'
+            write_file(cached_file, json_data_with_modified_last_updated)
             self.check_get_files(tmpdir, mock_min_cov_request, 1)
 
         def test_with_invalid_cached_data_that_will_raise_json_parse_error(self, tmpdir, requests_mock):
-            cached_file = tmpdir.join('coverage-min.json')
+            cached_file = tmpdir / 'coverage-min.json'
             json_data = read_file(JSON_MIN_DATA_FILE)
-            mock_min_cov_request = requests_mock.get(self.default_url, text=json_data)
-            write_file(cached_file, json_data.replace('{', '', 1))
-            mock_min_cov_request = requests_mock.get(self.default_url, text=read_file(JSON_MIN_DATA_FILE))
+            mock_min_cov_request = requests_mock.get(self.default_url, json=json_data)
+            cached_file.write('}')
+            mock_min_cov_request = requests_mock.get(self.default_url, json=read_file(JSON_MIN_DATA_FILE))
             self.check_get_files(tmpdir, mock_min_cov_request, 1)
 
         def test_with_not_updated_file(self, tmpdir, requests_mock):
             cached_file = tmpdir.join('coverage-min.json')
             text_data = read_file(JSON_MIN_DATA_FILE)
             write_file(cached_file, text_data)
-            mock_min_cov_request = requests_mock.get(self.default_url, text=text_data)
+            mock_min_cov_request = requests_mock.get(self.default_url, json=text_data)
             self.check_get_files(tmpdir, mock_min_cov_request, 1)
 
-        @ freeze_time('2021-10-1T00:00:00Z')
+        @freeze_time('2021-10-1T00:00:00Z')
         def test_with_updated_file(self, tmpdir, requests_mock):
             cached_file = tmpdir.join('coverage-min.json')
             text_data = read_file(JSON_MIN_DATA_FILE)
             write_file(cached_file, text_data)
-            mock_min_cov_request = requests_mock.get(self.default_url, text=text_data)
+            mock_min_cov_request = requests_mock.get(self.default_url, json=text_data)
             self.check_get_files(tmpdir, mock_min_cov_request, 0)
 
         def test_with_no_cache(self, mocker, requests_mock):
             import builtins
-            mock_min_cov_request = requests_mock.get(self.default_url, text=read_file(JSON_MIN_DATA_FILE))
+            mock_min_cov_request = requests_mock.get(self.default_url, json=read_file(JSON_MIN_DATA_FILE))
             not_mocked_open = builtins.open
             open_file_mocker = mocker.patch('builtins.open')
             files_data = CoverageSummary(
@@ -225,7 +227,7 @@ class TestCoverageSummary:
             assert open_file_mocker.call_count == 0
             builtins.open = not_mocked_open
             assert len(mock_min_cov_request.request_history) == 1
-            assert files_data == json.loads(read_file(JSON_MIN_DATA_FILE))['files']
+            assert files_data == read_file(JSON_MIN_DATA_FILE)['files']
 
     class TestCreateCoverageSummaryFile:
         def test_creation(self, tmpdir):

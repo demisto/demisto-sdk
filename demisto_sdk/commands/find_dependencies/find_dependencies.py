@@ -1,5 +1,4 @@
 import glob
-import json
 import os
 import sys
 from copy import deepcopy
@@ -16,6 +15,7 @@ from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION, GENERIC_COMMANDS_NAMES,
     IGNORED_PACKS_IN_DEPENDENCY_CALC, PACKS_DIR)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (ProcessPoolHandler,
                                                get_content_id_set,
                                                get_content_path, get_pack_name,
@@ -27,6 +27,9 @@ from demisto_sdk.commands.common.update_id_set import (
     merge_id_sets, update_excluded_items_dict)
 from demisto_sdk.commands.create_id_set.create_id_set import (IDSetCreator,
                                                               get_id_set)
+
+json = JSON_Handler()
+
 
 MINIMUM_DEPENDENCY_VERSION = Version('6.0.0')
 COMMON_TYPES_PACK = 'CommonTypes'
@@ -2046,6 +2049,9 @@ class PackDependencies:
 
     @staticmethod
     def check_arguments_find_dependencies(input_paths, all_packs_dependencies, output_path, get_dependent_on):
+        if output_path and not all_packs_dependencies and not get_dependent_on:
+            print_warning("You used the '--output-path' argument, which only works when using either the"
+                          " '--all-packs-dependencies' or '--get-dependent-on' flags. Ignoring this argument.")
         if not input_paths:
             if not all_packs_dependencies:
                 print_error("Please provide an input path. The path should be formatted as 'Packs/<some pack name>'. "
@@ -2077,9 +2083,6 @@ class PackDependencies:
         if all_packs_dependencies and not output_path:
             print_error("Please insert path for the generated output using --output-path")
             sys.exit(1)
-        if output_path and not all_packs_dependencies and not get_dependent_on:
-            print_warning("You used the '--output-path' argument, which is only relevant for when using the"
-                          " '--all-packs-dependencies' or '--get-dependent-on' flags. Ignoring this argument.")
 
     @staticmethod
     def find_dependencies_manager(

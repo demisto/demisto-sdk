@@ -1,13 +1,13 @@
-import json
 from pathlib import Path
 from typing import Dict, Optional
 
 import click
 
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.upload.uploader import Uploader
 
+json = JSON_Handler()
 yaml = YAML_Handler()
 
 

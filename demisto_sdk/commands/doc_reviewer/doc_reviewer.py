@@ -22,7 +22,7 @@ from demisto_sdk.commands.common.content.objects.abstract_objects import \
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
     YAMLContentObject
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.tools import find_type
+from demisto_sdk.commands.common.tools import find_type, get_pack_name
 from demisto_sdk.commands.doc_reviewer.known_words import KNOWN_WORDS
 from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
 
@@ -92,27 +92,40 @@ class DocReviewer:
         if 'Packs' in file_path_obj.parts:
             pack_name = file_path_obj.parts[file_path_obj.parts.index('Packs') + 1]
             packs_ignore_path = os.path.join("Packs", pack_name, PACKS_PACK_IGNORE_FILE_NAME)
+            default_pack_known_words = [
+                get_pack_name(file_path),
+            ]
             if os.path.isfile(packs_ignore_path):
                 config = ConfigParser(allow_no_value=True)
                 config.read(packs_ignore_path)
                 if 'known_words' in config.sections():
-                    packs_known_words = [known_word for known_word in config['known_words']]
-                    return (packs_ignore_path, packs_known_words)
+                    packs_known_words = default_pack_known_words + list(config['known_words'])
+                    return packs_ignore_path, packs_known_words
                 else:
                     click.secho(f'\nNo [known_words] section was found within: {packs_ignore_path}', fg='yellow')
-                    return (packs_ignore_path, [])
+                    return packs_ignore_path, default_pack_known_words
 
             click.secho(f'\nNo .pack-ignore file was found within pack: {packs_ignore_path}', fg='yellow')
-            return '', []
+            return '', default_pack_known_words
 
         click.secho(f'\nCould not load pack\'s known words file since no pack structure was found for {file_path}'
                     f'\nMake sure you are running from the content directory.', fg='bright_red')
         return '', []
 
     @staticmethod
-    def is_camel_case(word):
+    def is_upper_case_word_plural(word):
+        """check if a given word is an upper case word in plural, like: URLs, IPs, etc"""
+        if len(word) > 2 and word[-1] == 's':
+            singular_word = word[:-1]
+            return singular_word == singular_word.upper()
+        return False
+
+    def is_camel_case(self, word):
         """check if a given word is in camel case"""
-        return word != word.lower() and word != word.upper() and "_" not in word and word != word.title()
+        if word != word.lower() and word != word.upper() and "_" not in word and word != word.title():
+            # check if word is an upper case plural, like IPs. If it is, then the word is not in camel case
+            return not self.is_upper_case_word_plural(self.remove_punctuation(word))
+        return False
 
     @staticmethod
     def camel_case_split(camel):
@@ -130,7 +143,7 @@ class DocReviewer:
             for file_name in files:
                 full_path = (os.path.join(root, file_name))
                 if find_type(
-                    full_path, ignore_invalid_schema_file=self.ignore_invalid_schema_file
+                        full_path, ignore_invalid_schema_file=self.ignore_invalid_schema_file
                 ) in self.SUPPORTED_FILE_TYPES:
                     self.files.append(str(full_path))
 
@@ -146,11 +159,11 @@ class DocReviewer:
         for file in self.gather_all_changed_files():
             file = str(file)
             if os.path.isfile(file) and find_type(
-                file, ignore_invalid_schema_file=self.ignore_invalid_schema_file
+                    file, ignore_invalid_schema_file=self.ignore_invalid_schema_file
             ) in self.SUPPORTED_FILE_TYPES:
                 self.files.append(file)
 
-    def get_files_to_run_on(self, file_path):
+    def get_files_to_run_on(self, file_path=None):
         """Get all the relevant files that the spell-check could work on"""
         if self.git_util:
             self.get_files_from_git()
@@ -159,7 +172,7 @@ class DocReviewer:
             self.get_all_md_and_yml_files_in_dir(file_path)
 
         elif find_type(
-            file_path, ignore_invalid_schema_file=self.ignore_invalid_schema_file
+                file_path, ignore_invalid_schema_file=self.ignore_invalid_schema_file
         ) in self.SUPPORTED_FILE_TYPES:
             self.files.append(file_path)
 
@@ -198,8 +211,11 @@ class DocReviewer:
         if len(self.SUPPORTED_FILE_TYPES) == 1:
             click.secho('Running only on release notes', fg='bright_cyan')
 
-        for file_path in self.file_paths:
-            self.get_files_to_run_on(file_path)
+        if self.file_paths:
+            for file_path in self.file_paths:
+                self.get_files_to_run_on(file_path)
+        else:
+            self.get_files_to_run_on()
 
         # no eligible files found
         if not self.files:
@@ -303,6 +319,7 @@ class DocReviewer:
         """Check if a word is legal"""
         # check camel cases
         if not self.no_camel_case and self.is_camel_case(word):
+            word = self.remove_punctuation(word)
             sub_words = self.camel_case_split(word)
             for sub_word in sub_words:
                 sub_word = self.remove_punctuation(sub_word)

@@ -20,6 +20,13 @@ class ScriptValidator(ContentEntityValidator):
         also try to catch possible Backward compatibility breaks due to the preformed changes.
     """
 
+    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
+                 json_file_path=None, validate_all=False):
+        super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
+                         skip_docker_check=skip_docker_check,
+                         json_file_path=json_file_path)
+        self.validate_all = validate_all
+
     def is_valid_version(self) -> bool:
         if self.current_file.get('commonfields', {}).get('version') != self.DEFAULT_VERSION:
             error_message, error_code = Errors.wrong_version()
@@ -65,6 +72,7 @@ class ScriptValidator(ContentEntityValidator):
         """Check whether the script is valid or not"""
         is_script_valid = all([
             super().is_valid_file(validate_rn),
+            self.validate_readme_exists(self.validate_all),
             self.is_valid_subtype(),
             self.is_id_equals_name(),
             self.is_docker_image_valid(),
@@ -72,7 +80,7 @@ class ScriptValidator(ContentEntityValidator):
             self.is_valid_script_file_path(),
             self.is_there_separators_in_names(),
             self.name_not_contain_the_type(),
-            self.runas_is_not_dbtrole()
+            self.runas_is_not_dbtrole(),
         ])
         # check only on added files
         if not self.old_file:
@@ -117,7 +125,7 @@ class ScriptValidator(ContentEntityValidator):
                 if old_subtype and old_subtype != subtype:
                     error_message, error_code = Errors.breaking_backwards_subtype()
                     if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                         warning=self.structure_validator.quite_bc):
+                                         warning=self.structure_validator.quiet_bc):
                         return True
 
         return False
@@ -145,7 +153,7 @@ class ScriptValidator(ContentEntityValidator):
                         (arg in old_args_to_required and required != old_args_to_required[arg]):
                     error_message, error_code = Errors.added_required_fields(arg)
                     if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                         warning=self.structure_validator.quite_bc):
+                                         warning=self.structure_validator.quiet_bc):
                         return True
         return False
 
@@ -171,7 +179,7 @@ class ScriptValidator(ContentEntityValidator):
         # type: () -> bool
         """Check if there are duplicated arguments."""
         args = [arg['name'] for arg in self.current_file.get('args', [])]
-        if len(args) != len(set(args)) and not self.structure_validator.quite_bc:
+        if len(args) != len(set(args)) and not self.structure_validator.quiet_bc:
             return True
         return False
 
@@ -184,7 +192,7 @@ class ScriptValidator(ContentEntityValidator):
         if not self._is_sub_set(current_args, old_args):
             error_message, error_code = Errors.breaking_backwards_arg_changed()
             if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                 warning=self.structure_validator.quite_bc):
+                                 warning=self.structure_validator.quiet_bc):
                 return True
 
         return False
@@ -198,7 +206,7 @@ class ScriptValidator(ContentEntityValidator):
         if not self._is_sub_set(current_context, old_context):
             error_message, error_code = Errors.breaking_backwards_context()
             if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                 warning=self.structure_validator.quite_bc):
+                                 warning=self.structure_validator.quiet_bc):
                 return True
 
         return False

@@ -1,4 +1,5 @@
 from distutils.version import LooseVersion
+from typing import List
 
 import pytest
 from mock import patch
@@ -294,7 +295,7 @@ class TestFieldValidator:
         structure.current_file = current_from_version
         validator = FieldBaseValidator(structure, set(), set())
         assert validator.is_changed_from_version() is answer
-        structure.quite_bc = True
+        structure.quiet_bc = True
         assert validator.is_changed_from_version() is False
 
     data_required = [
@@ -330,7 +331,7 @@ class TestFieldValidator:
         validator = FieldBaseValidator(structure, set(), set())
         assert validator.is_changed_type() == is_valid, f'is_changed_type({current_type}, {old_type})' \
                                                         f' returns {not is_valid}.'
-        structure.quite_bc = True
+        structure.quiet_bc = True
         assert validator.is_changed_type() is False
 
     FIELD_NAME1 = {
@@ -344,13 +345,15 @@ class TestFieldValidator:
     }
     PACK_METADATA1 = {'name': 'pack name', 'itemPrefix': ['pack prefix']}
     PACK_METADATA2 = {'name': 'pack name'}
+    PACK_METADATA3 = {'name': 'Pack Name'}
 
     INPUTS_NAMES2 = [
         (FIELD_NAME1, PACK_METADATA1, False),
         (FIELD_NAME1, PACK_METADATA2, True),
         (FIELD_NAME2, PACK_METADATA1, True),
         (FIELD_NAME2, PACK_METADATA2, False),
-        (FIELD_NAME3, PACK_METADATA1, False)
+        (FIELD_NAME3, PACK_METADATA1, False),
+        (FIELD_NAME1, PACK_METADATA3, False)
     ]
 
     @pytest.mark.parametrize('current_file,pack_metadata, answer', INPUTS_NAMES2)
@@ -442,3 +445,62 @@ class TestFieldValidator:
         structure = StructureValidator(indicator_field.path)
         validator = FieldBaseValidator(structure, {'some-type'}, set())
         assert not validator.does_not_have_empty_select_values()
+
+    @pytest.mark.parametrize('marketplaces, expected', [
+        (['xsoar', 'invalid_market'], False),
+        (['invalid_market'], False),
+        (['xsoar'], True),
+        (None, True),
+    ])
+    def test_is_valid_marketplaces_in_aliased_field(self, pack, marketplaces: List[str], expected: bool):
+        """
+        Given
+        - A field with aliases values.
+
+        When
+        - Validating the aliased fields are valid.
+
+        Then
+        - Ensure the expected bool is returned according to whether the marketplaces of the aliased fileds are valid.
+        """
+
+        tested_field = pack.create_incident_field('tested_field', {'Aliases': [{'cliName': 'aliased_field'}]})
+        incident_aliased_field = {'name': 'incident_aliased_field', 'cliName': 'aliasedfield'}
+        if marketplaces:
+            incident_aliased_field['marketplaces'] = marketplaces
+
+        mocked_id_set = {
+            'IncidentFields': [{'incident_aliased_field': incident_aliased_field}]
+        }
+        structure = StructureValidator(tested_field.path)
+        validator = FieldBaseValidator(structure, set(), set(), id_set_file=mocked_id_set)
+        assert validator.is_aliased_fields_are_valid() == expected
+
+    @pytest.mark.parametrize('aliases, expected', [
+        (['test', 'aliased_field'], False),
+        ([], True),
+    ])
+    def test_is_inner_alias_in_aliased_field(self, pack, aliases: list, expected: bool):
+        """
+        Given
+        - A field with aliases values.
+
+        When
+        - Validating the aliased fields are valid.
+
+        Then
+        - Ensure the expected bool is returned according to whether the aliased field have inner alias or not.
+        """
+
+        tested_field = pack.create_incident_field('tested_field', {'Aliases': [{'cliName': 'aliasedfield'}]})
+
+        incident_aliased_field = {'name': 'incident_aliasedfield', 'cliname': 'aliasedfield'}
+        if aliases:
+            incident_aliased_field['aliases'] = aliases
+
+        mocked_id_set = {
+            'IncidentFields': [{'incident_aliasedfield': incident_aliased_field}]
+        }
+        structure = StructureValidator(tested_field.path)
+        validator = FieldBaseValidator(structure, set(), set(), id_set_file=mocked_id_set)
+        assert validator.is_aliased_fields_are_valid() == expected

@@ -5,9 +5,8 @@ import networkx as nx
 import pytest
 
 import demisto_sdk.commands.create_id_set.create_id_set as cis
-from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
-                                                   FileType,
-                                                   MarketplaceVersions)
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION, FileType, MarketplaceVersions)
 from demisto_sdk.commands.find_dependencies.find_dependencies import (
     PackDependencies, calculate_single_pack_dependencies,
     get_packs_dependent_on_given_packs,
@@ -438,12 +437,15 @@ class TestIdSetFilters:
 
     def test_search_for_specific_pack_script_item(self, module_repo):
         pack_id = "PrismaCloudCompute"
-
+        import os
         expected_result = [
             {
                 "PrismaCloudComputeParseAuditAlert": {
                     "name": "PrismaCloudComputeParseAuditAlert",
-                    "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseAuditAlert/PrismaCloudComputeParseAuditAlert.yml",
+                    "file_path": os.path.join(
+                        module_repo.path,
+                        "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseAuditAlert/PrismaCloudComputeParseAuditAlert.yml"
+                    ),
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute",
@@ -453,7 +455,10 @@ class TestIdSetFilters:
             {
                 "PrismaCloudComputeParseCloudDiscoveryAlert": {
                     "name": "PrismaCloudComputeParseCloudDiscoveryAlert",
-                    "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseCloudDiscoveryAlert/PrismaCloudComputeParseCloudDiscoveryAlert.yml",
+                    "file_path": os.path.join(
+                        module_repo.path,
+                        "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseCloudDiscoveryAlert/PrismaCloudComputeParseCloudDiscoveryAlert.yml"
+                    ),
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute",
@@ -463,7 +468,10 @@ class TestIdSetFilters:
             {
                 "PrismaCloudComputeParseComplianceAlert": {
                     "name": "PrismaCloudComputeParseComplianceAlert",
-                    "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseComplianceAlert/PrismaCloudComputeParseComplianceAlert.yml",
+                    "file_path": os.path.join(
+                        module_repo.path,
+                        "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseComplianceAlert/PrismaCloudComputeParseComplianceAlert.yml"
+                    ),
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute",
@@ -473,7 +481,10 @@ class TestIdSetFilters:
             {
                 "PrismaCloudComputeParseVulnerabilityAlert": {
                     "name": "PrismaCloudComputeParseVulnerabilityAlert",
-                    "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseVulnerabilityAlert/PrismaCloudComputeParseVulnerabilityAlert.yml",
+                    "file_path": os.path.join(
+                        module_repo.path,
+                        "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseVulnerabilityAlert/PrismaCloudComputeParseVulnerabilityAlert.yml"
+                    ),
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute",
@@ -2587,7 +2598,7 @@ class TestDependsOnJob:
                     "pack": "pack0",
                     "playbookId": "Pentera Run Scan",
                     "selectedFeeds": selected_feeds,
-                    "fromVersion": DEFAULT_JOB_FROM_VERSION
+                    "fromVersion": FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)
                 }
             }
         ]
@@ -2619,7 +2630,7 @@ class TestDependsOnJob:
                     "pack": "pack0",
                     "playbookId": "Pentera Run Scan",
                     "selectedFeeds": selected_feeds,
-                    "fromVersion": DEFAULT_JOB_FROM_VERSION
+                    "fromVersion": FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)
                 }
             }
         ]

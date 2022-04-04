@@ -18,7 +18,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_pipenv_dir,
                                                get_python_version, pascal_case,
                                                print_color, print_error)
-from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
+from demisto_sdk.commands.unify.integration_script_unifier import \
+    IntegrationScriptUnifier
 
 yaml = YAML_Handler()
 
@@ -54,8 +55,8 @@ class YmlSplitter:
                  no_common_server: bool = False, no_auto_create_dir: bool = False, configuration: Configuration = None,
                  base_name: str = '', no_readme: bool = False, no_pipenv: bool = False,
                  no_logging: bool = False, no_basic_fmt: bool = False, new_module_file: bool = False):
-        self.input = Path(input)
-        self.output = Path(output) if output else Path(self.input.parent)
+        self.input = Path(input).resolve()
+        self.output = (Path(output) if output else Path(self.input.parent)).resolve()
         self.demisto_mock = not no_demisto_mock
         self.common_server = not no_common_server
         self.file_type = file_type
@@ -76,7 +77,7 @@ class YmlSplitter:
     def get_output_path(self):
         """Get processed output path
         """
-        output_path = self.output
+        output_path = Path(self.output)
         if self.autocreate_dir and output_path.name in {'Integrations', 'Scripts'}:
             code_name = self.yml_data.get("name")
             if not code_name:
@@ -276,7 +277,7 @@ class YmlSplitter:
 
     def remove_integration_documentation(self, detailed_description):
         if "[View Integration Documentation]" in detailed_description:
-            normalized_integration_id = YmlUnifier.normalize_integration_id(self.yml_data['commonfields']['id'])
+            normalized_integration_id = IntegrationScriptUnifier.normalize_integration_id(self.yml_data['commonfields']['id'])
             integration_doc_link = INTEGRATIONS_DOCS_REFERENCE + normalized_integration_id
             documentation = f'[View Integration Documentation]({integration_doc_link})'
             if '\n\n---\n' + documentation in detailed_description:

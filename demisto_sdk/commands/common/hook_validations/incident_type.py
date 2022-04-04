@@ -81,7 +81,7 @@ class IncidentTypeValidator(ContentEntityValidator):
             if old_from_version != current_from_version:
                 error_message, error_code = Errors.from_version_modified_after_rename()
                 if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                     warning=self.structure_validator.quite_bc):
+                                     warning=self.structure_validator.quiet_bc):
                     is_bc_broke = True
         return is_bc_broke
 

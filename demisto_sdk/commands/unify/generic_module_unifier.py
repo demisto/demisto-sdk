@@ -1,4 +1,3 @@
-import json
 import os
 import sys
 from typing import Dict, Optional
@@ -6,7 +5,10 @@ from typing import Dict, Optional
 import click
 
 from demisto_sdk.commands.common.constants import PACKS_DIR, FileType
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import find_type, get_pack_name
+
+json = JSON_Handler()
 
 
 class GenericModuleUnifier:

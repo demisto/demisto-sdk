@@ -1,4 +1,5 @@
 import copy
+from copy import deepcopy
 from os.path import join
 
 import pytest
@@ -513,6 +514,7 @@ class TestDeprecatedIntegration:
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml = deepcopy(valid_integration_yml)
         valid_integration_yml['deprecated'] = True
         valid_integration_yml['display'] = 'ServiceNow (Deprecated)'
         valid_integration_yml['description'] = 'Deprecated. Use the ServiceNow v2 integration instead.'
@@ -541,6 +543,7 @@ class TestDeprecatedIntegration:
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         invalid_integration_yml = get_yaml(pack_integration_path)
+        invalid_integration_yml = deepcopy(invalid_integration_yml)
         invalid_integration_yml['deprecated'] = True
         invalid_integration_yml['description'] = 'Deprecated.'
         integration = pack.create_integration(yml=invalid_integration_yml)
@@ -569,6 +572,7 @@ class TestDeprecatedIntegration:
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         invalid_integration_yml = get_yaml(pack_integration_path)
+        invalid_integration_yml = deepcopy(invalid_integration_yml)
         invalid_integration_yml['deprecated'] = True
         invalid_integration_yml['display'] = '(Deprecated)'
         integration = pack.create_integration(yml=invalid_integration_yml)
@@ -597,6 +601,7 @@ class TestDeprecatedIntegration:
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml = deepcopy(valid_integration_yml)
         valid_integration_yml['deprecated'] = True
         valid_integration_yml['display'] = 'ServiceNow (Deprecated)'
         valid_integration_yml['description'] = 'Deprecated. Use the ServiceNow v2 integration instead.'
@@ -631,6 +636,7 @@ class TestDeprecatedIntegration:
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml = deepcopy(valid_integration_yml)
         valid_integration_yml['deprecated'] = True
         valid_integration_yml['display'] = 'ServiceNow (Deprecated)'
         valid_integration_yml['description'] = 'Deprecated. Use the ServiceNow v2 integration instead.'
@@ -641,6 +647,8 @@ class TestDeprecatedIntegration:
                                                                                          set(), set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -668,6 +676,7 @@ class TestDeprecatedIntegration:
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml = deepcopy(valid_integration_yml)
         valid_integration_yml['toversion'] = '4.4.4'
         valid_integration_yml['commonfields']['version'] = -2
         integration = pack.create_integration(yml=valid_integration_yml)
@@ -700,6 +709,7 @@ class TestDeprecatedIntegration:
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml = deepcopy(valid_integration_yml)
         valid_integration_yml['toversion'] = '4.4.4'
         valid_integration_yml['commonfields']['version'] = -2
         integration = pack.create_integration(yml=valid_integration_yml)
@@ -709,6 +719,8 @@ class TestDeprecatedIntegration:
                                                                                          set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -735,7 +747,7 @@ class TestIntegrationValidation:
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
-        valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml = get_yaml(pack_integration_path, cache_clear=True)
         integration = pack.create_integration('integration0', yml=valid_integration_yml)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -795,7 +807,7 @@ class TestIntegrationValidation:
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
-        invalid_integration_yml = get_yaml(pack_integration_path)
+        invalid_integration_yml = get_yaml(pack_integration_path, cache_clear=True)
         del invalid_integration_yml['fromversion']
         integration = pack.create_integration(yml=invalid_integration_yml)
         with ChangeCWD(pack.repo_path):
@@ -843,7 +855,8 @@ class TestIntegrationValidation:
         - Ensure validation fails.
         - Ensure failure message on hidden params.
         """
-        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
+                            return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
 
         integration_path = join(TEST_FILES_PATH, 'integration-invalid-no-hidden-params.yml')
@@ -889,7 +902,7 @@ class TestIntegrationValidation:
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
-        invalid_integration_yml = get_yaml(pack_integration_path)
+        invalid_integration_yml = get_yaml(pack_integration_path, cache_clear=True)
         first_command_args = invalid_integration_yml['script']['commands'][0]['arguments']
         first_command_args.append(first_command_args[0])
         invalid_integration_yml['configuration'].append(
@@ -932,6 +945,26 @@ class TestIntegrationValidation:
         assert 'ST107' in result.stdout
         assert 'Please add the field "description" to the path'
 
+    @pytest.mark.parametrize('field,description,should_pass', (('DBotScore.Score', 'my custom description', True),
+                                                               ('DBotScore.Score', '', False)))
+    def test_empty_default_descriptions(self, repo, field: str, description: str, should_pass: bool):
+        pack = repo.create_pack(f'{field}-{description}')
+        integration = pack.create_integration()
+        integration.create_default_integration()
+        integration.yml.update({'script': {'script': '-',
+                                           'type': 'python',
+                                           'commands': [{'name': 'foo',
+                                                         'description': 'bar',
+                                                         'outputs': [{'contextPath': field,
+                                                                      'description': description},
+                                                                     {'contextPath': 'same',
+                                                                      'description': ''}]}]}})
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', integration.yml.rel_path, '--no-docker-checks'],
+                                   catch_exceptions=False)
+            assert should_pass == ('IN149' not in result.stdout)
+
 
 class TestPackValidation:
     def test_integration_validate_pack_positive(self, mocker):
@@ -949,6 +982,7 @@ class TestPackValidation:
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         mocker.patch.object(IntegrationValidator, 'is_there_separators_in_names', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_docker_image_valid', return_value=True)
+        mocker.patch.object(ContentEntityValidator, 'validate_readme_exists', return_value=True)
         mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_usecases',
                      return_value=[])
         mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_tags',
@@ -1769,7 +1803,6 @@ class TestIncidentTypeValidation:
 
 
 class TestLayoutValidation:
-
     DYNAMIC_SECTION_WITH_SCRIPT = {
         "description": "",
         "h": 1,
@@ -2191,6 +2224,7 @@ class TestPlaybookValidation:
         """
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
+        mocker.patch.object(ContentEntityValidator, 'validate_readme_exists', return_value=True)
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, '-i', VALID_PLAYBOOK_FILE_PATH, '--allow-skipped',
                                       '--no-conf-json'], catch_exceptions=False)
@@ -2316,6 +2350,8 @@ class TestPlaybookValidateDeprecated:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
+
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main,
@@ -2382,6 +2418,8 @@ class TestPlaybookValidateDeprecated:
                                                                                          set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -2578,7 +2616,7 @@ class TestScriptDeprecatedValidation:
         mocker.patch.object(tools, 'is_external_repository', return_value=True)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         pack = repo.create_pack('PackName')
-        invalid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        invalid_script_yml = get_yaml(VALID_SCRIPT_PATH, cache_clear=True)
         invalid_script_yml['deprecated'] = True
         script = pack.create_script(yml=invalid_script_yml)
         with ChangeCWD(pack.repo_path):
@@ -2647,6 +2685,8 @@ class TestScriptDeprecatedValidation:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
+
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main,
@@ -2711,6 +2751,8 @@ class TestScriptDeprecatedValidation:
                                                                                          set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
@@ -2838,6 +2880,32 @@ class TestImageValidation:
         assert "The image file name or location is invalid" in result.stdout
         assert result.exit_code == 1
 
+    def test_invalid_image_size(self, repo):
+        """
+        Given
+        - An image with bad dimensions and bad size.
+
+        When
+        - Running validate on it.
+
+        Then
+        - Ensure validate fails on dimensions error and asks to change the image.
+        """
+        pack = repo.create_pack("PackName")
+        with open(f'{git_path()}/demisto_sdk/tests/integration_tests/Tests/invalid_integration_image.png', 'rb') as f:
+            image = f.read()
+        integration = pack.create_integration(image=image)
+        image_path = integration.image.path
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', image_path], catch_exceptions=False)
+        assert f'Validating {image_path} as image' in result.stdout
+        assert 'IM111' in result.stdout
+        assert 'IM101' in result.stdout
+        assert '120x50' in result.stdout
+        assert '10kB' in result.stdout
+        assert result.exit_code == 1
+
 
 class TestAuthorImageValidation:
     def test_author_image_valid(self, repo, mocker):
@@ -2935,19 +3003,20 @@ class TestAllFilesValidator:
         pack1 = repo.create_pack('PackName1')
         pack1.author_image.write(DEFAULT_IMAGE_BASE64)
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
-        valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml = get_yaml(pack_integration_path, cache_clear=True)
         integration = pack1.create_integration('integration0', yml=valid_integration_yml)
         incident_field = pack1.create_incident_field('incident-field', content=INCIDENT_FIELD)
         dashboard = pack1.create_dashboard('dashboard', content=DASHBOARD)
 
-        valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        valid_script_yml = get_yaml(VALID_SCRIPT_PATH, cache_clear=True)
         pack2 = repo.create_pack('PackName2')
         pack2.author_image.write(DEFAULT_IMAGE_BASE64)
         script = pack2.create_script(yml=valid_script_yml)
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-a', '--no-docker-checks', '--no-conf-json'],
+            result = runner.invoke(main, [VALIDATE_CMD, '-a', '--no-docker-checks', '--no-conf-json',
+                                          '--no-multiprocessing'],
                                    catch_exceptions=False)
             print(result.stdout)
 
@@ -2979,21 +3048,22 @@ class TestAllFilesValidator:
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         pack1 = repo.create_pack('PackName1')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
-        valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml = get_yaml(pack_integration_path, cache_clear=True)
         integration = pack1.create_integration(yml=valid_integration_yml)
         incident_field_copy = INCIDENT_FIELD.copy()
         incident_field_copy['content'] = False
         incident_field = pack1.create_incident_field('incident-field', content=incident_field_copy)
         dashboard = pack1.create_dashboard('dashboard', content=DASHBOARD)
 
-        invalid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        invalid_script_yml = get_yaml(VALID_SCRIPT_PATH, cache_clear=True)
         invalid_script_yml['name'] = invalid_script_yml['name'] + "_v2"
         pack2 = repo.create_pack('PackName2')
         script = pack2.create_script(yml=invalid_script_yml)
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-a', '--no-docker-checks', '--no-conf-json'],
+            result = runner.invoke(main, [VALIDATE_CMD, '-a', '--no-docker-checks', '--no-conf-json',
+                                          '--no-multiprocessing'],
                                    catch_exceptions=False)
 
         assert 'Validating all files' in result.stdout
@@ -3027,12 +3097,12 @@ class TestValidationUsingGit:
         mocker.patch.object(PackUniqueFilesValidator, 'are_valid_files', return_value='')
         pack1 = repo.create_pack('PackName1')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
-        valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml = get_yaml(pack_integration_path, cache_clear=True)
         integration = pack1.create_integration('integration0', yml=valid_integration_yml)
         incident_field = pack1.create_incident_field('incident-field', content=INCIDENT_FIELD)
         dashboard = pack1.create_dashboard('dashboard', content=DASHBOARD)
 
-        valid_script_yml = get_yaml(VALID_SCRIPT_PATH)
+        valid_script_yml = get_yaml(VALID_SCRIPT_PATH, cache_clear=True)
         pack2 = repo.create_pack('PackName2')
         script = pack2.create_script(yml=valid_script_yml)
         old_integration = pack2.create_integration('OldIntegration', yml={'toversion': '5.0.0', 'deprecated': True})
@@ -3046,6 +3116,8 @@ class TestValidationUsingGit:
                                                                                          set(), old_files, True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -3103,6 +3175,8 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
+
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
@@ -3151,6 +3225,8 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
+
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
@@ -3191,6 +3267,8 @@ class TestValidationUsingGit:
                                                                                          set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -3274,6 +3352,8 @@ class TestValidationUsingGit:
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
 
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
+
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-g', '--no-docker-checks', '--no-conf-json',
@@ -3314,6 +3394,8 @@ class TestValidationUsingGit:
                                                                                          set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -3362,6 +3444,8 @@ class TestValidationUsingGit:
                                                                                          set(), set(), True))
         mocker.patch.object(GitUtil, '__init__', return_value=None)
         mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='MyBranch')
+
+        mocker.patch.object(GitUtil, 'deleted_files', return_value={})
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)

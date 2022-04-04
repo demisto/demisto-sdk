@@ -3,12 +3,12 @@ from typing import Tuple
 
 import click
 
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION, FileType)
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-
-FROM_VERSION_PRE_PROCESS_RULES = '6.5.0'
 
 
 class PreProcessRulesFormat(BaseUpdateJSON):
@@ -35,18 +35,11 @@ class PreProcessRulesFormat(BaseUpdateJSON):
     def run_format(self) -> int:
         try:
             click.secho(f'\n======= Updating file: {self.source_file} =======', fg='white')
-            self.set_version_to_default()
-            self.remove_unnecessary_keys()
-
-            self.set_from_server_version_to_default()
-
+            super().update_json(default_from_version=FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.PRE_PROCESS_RULES))
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            print(''.join(traceback.format_exception(etype=type(err), value=err, tb=err.__traceback__)))
+            print(''.join(traceback.format_exception(type(err), value=err, tb=err.__traceback__)))
             if self.verbose:
                 click.secho(f'\nFailed to update file {self.source_file}. Error: {err}', fg='red')
             return ERROR_RETURN_CODE
-
-    def set_from_server_version_to_default(self, location=None):
-        self.set_default_value('fromServerVersion', FROM_VERSION_PRE_PROCESS_RULES, location)

@@ -299,7 +299,7 @@ def unify(**kwargs):
     """
     check_configuration_file('unify', kwargs)
     # Input is of type Path.
-    input_ = kwargs.get('input')
+    input_ = str(kwargs.get('input'))
     file_type = find_type(input_)
     force = kwargs.get('force', False)
     if not (output := kwargs.get('output', '')):

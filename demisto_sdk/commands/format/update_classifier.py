@@ -3,6 +3,7 @@ from typing import Tuple
 
 import click
 
+from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE,
@@ -19,12 +20,14 @@ class BaseClassifierJSONFormat(BaseUpdateJSON, ABC):
                  no_validate: bool = False,
                  verbose: bool = False,
                  clear_cache: bool = False,
+                 old_classifier_type: bool = False,
                  **kwargs):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
                          verbose=verbose, clear_cache=clear_cache, **kwargs)
+        self.old_classifier_type = old_classifier_type
 
     def run_format(self) -> int:
-        super().update_json()
+        super().update_json(file_type=FileType.OLD_CLASSIFIER.value if self.old_classifier_type else VERSION_6_0_0)
         return SUCCESS_RETURN_CODE
 
     def format_file(self) -> Tuple[int, int]:
@@ -45,6 +48,7 @@ class OldClassifierJSONFormat(BaseClassifierJSONFormat):
     def run_format(self) -> int:
         try:
             click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
+            self.old_classifier_type = True
             super().run_format()
             self.set_toVersion()
             self.save_json_to_destination_file()
@@ -68,7 +72,6 @@ class ClassifierJSONFormat(BaseClassifierJSONFormat):
         try:
             click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             super().run_format()
-            self.set_fromVersion(VERSION_6_0_0)
             self.set_description()
             self.set_keyTypeMap()
             self.set_transformer()

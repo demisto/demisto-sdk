@@ -728,12 +728,15 @@ def get_latest_release_notes_text(rn_path):
         print_warning('Path to release notes not found.')
         rn = None
     else:
-        with open(rn_path) as f:
-            rn = f.read()
+        try:
+            with open(rn_path) as f:
+                rn = f.read()
 
-        if not rn:
-            print_error(f'Release Notes may not be empty. Please fill out correctly. - {rn_path}')
-            return None
+            if not rn:
+                print_error(f'Release Notes may not be empty. Please fill out correctly. - {rn_path}')
+                return None
+        except IOError:
+            return ''
 
     return rn if rn else None
 
@@ -749,7 +752,9 @@ def format_version(version):
         The formatted server version.
     """
     formatted_version = version
-    if len(version.split('.')) == 1:
+    if not version:
+        formatted_version = '0.0.0'
+    elif len(version.split('.')) == 1:
         formatted_version = f'{version}.0.0'
     elif len(version.split('.')) == 2:
         formatted_version = f'{version}.0'
@@ -781,6 +786,26 @@ def server_version_compare(v1, v2):
     if _v1 > _v2:
         return 1
     return -1
+
+
+def get_max_version(versions: List[str]) -> str:
+    """get max version between Demisto versions.
+
+    Args:
+        versions (list): list of strings representing Demisto version.
+
+    Returns:
+        str.
+        max version.
+    """
+
+    if len(versions) == 0:
+        raise BaseException("Error: empty versions list")
+    max_version = versions[0]
+    for version in versions[1:]:
+        if server_version_compare(version, max_version) == 1:
+            max_version = version
+    return max_version
 
 
 def run_threads_list(threads_list):

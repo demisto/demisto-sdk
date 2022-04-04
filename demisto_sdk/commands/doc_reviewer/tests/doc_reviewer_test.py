@@ -723,9 +723,9 @@ def test_having_two_file_paths_not_same_pack(repo, mocker, first_file_content, s
 
 
 @pytest.mark.parametrize('known_words_content, expected_known_words',
-                         [(['[known_words]', 'wordament'], ['wordament']),
-                          (['[known_words]'], []),
-                          ([], [])])
+                         [(['[known_words]', 'wordament'], ['test_pack', 'wordament']),
+                          (['[known_words]'], ['test_pack']),
+                          ([], ['test_pack'])])
 def test_find_known_words_from_pack(repo, known_words_content, expected_known_words):
     """
     Given:
@@ -739,6 +739,7 @@ def test_find_known_words_from_pack(repo, known_words_content, expected_known_wo
 
     Then:
         - Ensure the found path result is appropriate.
+        - Ensure the pack name (test_pack) is in the know words.
     """
     pack = repo.create_pack('test_pack')
     rn_file = pack.create_release_notes(version='1_0_0', content='Some release note')

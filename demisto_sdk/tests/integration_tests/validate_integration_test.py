@@ -1,4 +1,5 @@
 import copy
+from copy import deepcopy
 from os.path import join
 
 import pytest
@@ -513,6 +514,7 @@ class TestDeprecatedIntegration:
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml = deepcopy(valid_integration_yml)
         valid_integration_yml['deprecated'] = True
         valid_integration_yml['display'] = 'ServiceNow (Deprecated)'
         valid_integration_yml['description'] = 'Deprecated. Use the ServiceNow v2 integration instead.'
@@ -541,6 +543,7 @@ class TestDeprecatedIntegration:
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         invalid_integration_yml = get_yaml(pack_integration_path)
+        invalid_integration_yml = deepcopy(invalid_integration_yml)
         invalid_integration_yml['deprecated'] = True
         invalid_integration_yml['description'] = 'Deprecated.'
         integration = pack.create_integration(yml=invalid_integration_yml)
@@ -569,6 +572,7 @@ class TestDeprecatedIntegration:
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         invalid_integration_yml = get_yaml(pack_integration_path)
+        invalid_integration_yml = deepcopy(invalid_integration_yml)
         invalid_integration_yml['deprecated'] = True
         invalid_integration_yml['display'] = '(Deprecated)'
         integration = pack.create_integration(yml=invalid_integration_yml)
@@ -597,6 +601,7 @@ class TestDeprecatedIntegration:
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml = deepcopy(valid_integration_yml)
         valid_integration_yml['deprecated'] = True
         valid_integration_yml['display'] = 'ServiceNow (Deprecated)'
         valid_integration_yml['description'] = 'Deprecated. Use the ServiceNow v2 integration instead.'
@@ -631,6 +636,7 @@ class TestDeprecatedIntegration:
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml = deepcopy(valid_integration_yml)
         valid_integration_yml['deprecated'] = True
         valid_integration_yml['display'] = 'ServiceNow (Deprecated)'
         valid_integration_yml['description'] = 'Deprecated. Use the ServiceNow v2 integration instead.'
@@ -670,6 +676,7 @@ class TestDeprecatedIntegration:
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml = deepcopy(valid_integration_yml)
         valid_integration_yml['toversion'] = '4.4.4'
         valid_integration_yml['commonfields']['version'] = -2
         integration = pack.create_integration(yml=valid_integration_yml)
@@ -702,6 +709,7 @@ class TestDeprecatedIntegration:
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml = deepcopy(valid_integration_yml)
         valid_integration_yml['toversion'] = '4.4.4'
         valid_integration_yml['commonfields']['version'] = -2
         integration = pack.create_integration(yml=valid_integration_yml)

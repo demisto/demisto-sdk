@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import sys
@@ -10,9 +9,9 @@ import pytest
 
 import demisto_sdk.commands.common.tools as tools
 import demisto_sdk.commands.common.update_id_set as uis
-from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
-                                                   JOBS_DIR, FileType,
-                                                   MarketplaceVersions)
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION, JOBS_DIR, FileType, MarketplaceVersions)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
     add_item_to_exclusion_dict, does_dict_have_alternative_key,
@@ -30,6 +29,9 @@ from demisto_sdk.commands.common.update_id_set import (
     process_layoutscontainers, process_script, re_create_id_set,
     should_skip_item_by_mp)
 from TestSuite.utils import IsEqualFunctions
+
+json = JSON_Handler()
+
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
 
@@ -2722,7 +2724,7 @@ class TestJob:
         assert path.parts[-2] == JOBS_DIR
         assert path.parts[-3] == pack.name
 
-        assert datum['fromversion'] == DEFAULT_JOB_FROM_VERSION
+        assert datum['fromversion'] == FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)
         assert datum['pack'] == pack.name
         assert datum['details'] == job_details
         assert datum['selectedFeeds'] == []

@@ -4,8 +4,7 @@ import click
 
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
-                                                          SUCCESS_RETURN_CODE,
-                                                          VERSION_6_0_0)
+                                                          SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
 
@@ -31,12 +30,10 @@ class MapperJSONFormat(BaseUpdateJSON):
     def run_format(self) -> int:
         try:
             click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
-            self.set_fromVersion(VERSION_6_0_0)
-            self.update_json()
+            super().update_json()
             self.set_description()
             self.set_mapping()
             self.update_id()
-
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
 

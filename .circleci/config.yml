@@ -60,6 +60,7 @@ jobs:
           type: string
       docker:
         - image: cimg/python:<< parameters.pythonversion >>-node
+      parallelism: 8
       steps:
         - checkout
         - python/install-packages:
@@ -70,8 +71,20 @@ jobs:
             name: pytest
             no_output_timeout: 15m
             command: |
+              shopt -u globstar
+
+              # The first sed expression is to remove test files from under the demisto_sdk/commands/init/templates
+              # directory from the globbed list of files. Need to manually remove them since the pytest 'ignore'
+              # argument in pytest.ini is itself ignored when explicitly passing tests to pytest. The second is to
+              # remove the integration tests (integration tests as opposed to unit tests) from the list because those
+              # tests shouldn't be parallelized.
+              TEST_FILES=$(circleci tests glob "**/*_test.py")
+              TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/init\/templates\S*\.py//g')
+              TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/tests\/integration_tests\S*\.py//g')
+              TEST_FILES=$(echo "$TEST_FILES" | circleci tests split --split-by=timings)
+
               mkdir test-results
-              poetry run pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml
+              python -m pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml $TEST_FILES
         - store_test_results:
             path: test-results
         - store_artifacts:
@@ -85,6 +98,32 @@ jobs:
               else
                 echo "Skipping coveralls"
               fi
+
+
+  run-integration-tests:
+      parameters:
+        pythonversion:
+          type: string
+      docker:
+        - image: cimg/python:<< parameters.pythonversion >>-node
+      steps:
+        - checkout
+        - python/install-packages:
+            pkg-manager: "pipenv"
+            args: "--dev --system"
+            cache-version: << pipeline.parameters.cache-version >>
+        - <<: *install_node_ci
+        - run:
+            name: pytest
+            no_output_timeout: 15m
+            command: |
+              shopt -u globstar
+              TEST_FILES=$(circleci tests glob "demisto_sdk/tests/integration_tests/**/*_test.py")
+
+              mkdir integration-test-results
+              python -m pytest -v --junitxml=integration-test-results/junit.xml $TEST_FILES
+        - store_test_results:
+            path: integration-test-results
 
 
   precommit-checks:
@@ -172,7 +211,7 @@ jobs:
               poetry run ./Tests/scripts/validate.sh
   test-lint:
       docker:
-        - image: devdemisto/content-build:3.0.0.27653
+        - image: devdemisto/content-build:3.0.0.27979
       steps:
         - checkout
         - setup_remote_docker
@@ -250,7 +289,12 @@ workflows:
           matrix:
             parameters:
               pythonversion: [3.8.12, 3.9.10, 3.10.2]   
-          name: pytest-<< matrix.pythonversion >>
+          name: run-unit-tests-<< matrix.pythonversion >>
+      - run-integration-tests:
+          matrix:
+            parameters:
+              pythonversion: [3.8.12, 3.9.10, 3.10.2]   
+          name: run-integration-tests-<< matrix.pythonversion >>
       - validate-files:
           <<: *tag_filter
           <<: *reqs_content_checkout

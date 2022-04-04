@@ -1,5 +1,4 @@
 import ast
-import json
 import logging
 import os
 import re
@@ -26,6 +25,7 @@ from slack import WebClient as SlackClient
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
     FILTER_CONF, PB_Status)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import get_demisto_version
 from demisto_sdk.commands.test_content.constants import (
     CONTENT_BUILD_SSH_USER, LOAD_BALANCER_DNS)
@@ -38,6 +38,9 @@ from demisto_sdk.commands.test_content.ParallelLoggingManager import \
     ParallelLoggingManager
 from demisto_sdk.commands.test_content.tools import (
     is_redhat_instance, update_server_configuration)
+
+json = JSON_Handler()
+
 
 ENV_RESULTS_PATH = './artifacts/env_results.json'
 FAILED_MATCH_INSTANCE_MSG = "{} Failed to run.\n There are {} instances of {}, please select one of them by using " \

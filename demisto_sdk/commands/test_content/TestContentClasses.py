@@ -391,6 +391,7 @@ class TestPlaybook:
         inc_filter = demisto_client.demisto_api.IncidentFilter()
         inc_filter.query = f'id: {inc_id}'
         if IS_XSIAM:
+            # in xsiam `create_incident` response don`t return created incident id.
             inc_filter.query = f'name: "{incident_name}"'
         # inc_filter.query
         search_filter.filter = inc_filter
@@ -479,7 +480,7 @@ class BuildContext:
         self.is_xsiam = True if kwargs['server_type'] == XSIAM_SERVER_TYPE else False
         IS_XSIAM = self.is_xsiam
         self.logging_module: ParallelLoggingManager = logging_module
-        self.server = kwargs['server']  # not in use for curr flow
+        self.server = kwargs['server']
         self.xsiam_machine = kwargs.get('xsiam_machine')
         self.xsiam_servers_path = kwargs.get('xsiam_servers_path')
         self.conf, self.secret_conf = self._load_conf_files(kwargs['conf'], kwargs['secret'])
@@ -1001,10 +1002,11 @@ class Integration:
             else:
                 self.configuration = integration_params[0]
 
-        # todo: change for xsiam
         elif self.name == 'Demisto REST API':
             if IS_XSIAM:
-                self.build_context.logging_module.warning('Trying to configure "Demisto REST API" for XSIAM server.')
+                self.build_context.logging_module.warning('Trying to configure "Demisto REST API" for XSIAM server, '
+                                                          'this integration will not work on XSIAM, '
+                                                          'consider to use CoreRestAPI.')
             self.configuration.params = {  # type: ignore
                 'url': 'https://localhost',
                 'apikey': self.build_context.api_key,

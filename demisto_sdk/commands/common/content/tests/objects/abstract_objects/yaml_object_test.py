@@ -13,7 +13,7 @@ TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
 TEST_VALID_YAML = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / PLAYBOOKS_DIR / 'playbook-sample_new.yml'
 TEST_NOT_VALID_YAML = TEST_DATA / 'malformed.yaml'
 
-yaml = YAML_Handler(typ='rt', width=50000)
+yaml = YAML_Handler(width=50000)
 
 
 class TestValidYAML:

@@ -58,7 +58,7 @@ Whether to run docker image validation.
 Whether to skip the initialization prints.
 * **--skip-pack-dependencies**
 Skip validation of pack dependencies.
-* **create-id-set**
+* **--create-id-set**
 Whether to create the id_set.json file.
 * **-j, --json-file**
 The JSON file path to which to output the command results.

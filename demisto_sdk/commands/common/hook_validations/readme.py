@@ -536,8 +536,14 @@ class ReadMeValidator(BaseValidator):
         with ReadMeValidator._MDX_SERVER_LOCK:
             if not ReadMeValidator._MDX_SERVER_PROCESS:
                 mdx_parse_server = Path(__file__).parent.parent / 'mdx-parse-server.js'
-                ReadMeValidator._MDX_SERVER_PROCESS = subprocess.Popen(['node', str(mdx_parse_server)],
-                                                                       stdout=subprocess.PIPE, text=True)
+                try:
+                    ReadMeValidator._MDX_SERVER_PROCESS = subprocess.Popen(['node', str(mdx_parse_server)],
+                                                                            stdout=subprocess.PIPE, text=True)
+                except FileNotFoundError:
+                    error_message, error_code = Errors.error_uninstall_node()
+                    if handle_error(error_message, error_code,file_path=file_path):
+                        return False
+
                 line = ReadMeValidator._MDX_SERVER_PROCESS.stdout.readline()  # type: ignore
                 if 'MDX server is listening on port' not in line:
                     ReadMeValidator.stop_mdx_server()

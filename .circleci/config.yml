@@ -17,7 +17,7 @@ parameters:
     default: "5.0.1"
   cache-version:
     type: string
-    default: v1  # Change this parameter to clear cache.
+    default: v3  # Change this parameter to clear cache.
   global-docker-image:
     type: string
     default: cimg/python:3.10.2-node

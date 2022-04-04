@@ -22,7 +22,7 @@ from demisto_sdk.commands.common.content.objects.abstract_objects import \
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
     YAMLContentObject
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.tools import find_type, get_pack_name
+from demisto_sdk.commands.common.tools import find_type, get_pack_name, get_integration_command_names
 from demisto_sdk.commands.doc_reviewer.known_words import KNOWN_WORDS
 from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
 
@@ -94,6 +94,7 @@ class DocReviewer:
             packs_ignore_path = os.path.join("Packs", pack_name, PACKS_PACK_IGNORE_FILE_NAME)
             default_pack_known_words = [
                 get_pack_name(file_path),
+                get_integration_command_names(file_path)
             ]
             if os.path.isfile(packs_ignore_path):
                 config = ConfigParser(allow_no_value=True)
@@ -223,9 +224,7 @@ class DocReviewer:
             return True
 
         self.add_known_words()
-
-        print("HERE")
-        print(self.files)
+        click.secho(f'HERE: {self.files}')
 
         for file in self.files:
             click.echo(f'\nChecking file {file}')

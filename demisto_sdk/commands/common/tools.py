@@ -53,7 +53,6 @@ from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 
 json = JSON_Handler()
 
-
 logger = logging.getLogger("demisto-sdk")
 yaml = YAML_Handler()
 
@@ -827,6 +826,33 @@ def is_file_path_in_pack(file_path):
     return bool(re.findall(PACKS_DIR_REGEX, file_path))
 
 
+def get_integration_command_names(file_path):
+    """
+    1. Get the RN file path
+    2. Load yml file
+    3. Get the command names
+    Args:
+        file_path:
+
+    Returns:
+
+    """
+    click.secho(f'get_integration_command_names: ')
+    yml_dict = get_yaml(file_path)
+    commands = yml_dict.get("script", {})
+    click.secho(f'commands: {commands}')
+    # # handles scripts
+    # if not commands:
+    #     return different_contexts
+    commands = commands.get('commands', [])
+    click.secho(f'commands: {commands}')
+    names = []
+    for command in commands:
+        command_name = command.get('name')
+        names.append(command_name)
+    click.secho(f'commands names: {names}')
+    return names
+
 def get_pack_name(file_path):
     """
     extract pack name (folder name) from file path
@@ -1163,12 +1189,12 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
 
 
 def find_type(
-    path: str = '',
-    _dict=None,
-    file_type: Optional[str] = None,
-    ignore_sub_categories: bool = False,
-    ignore_invalid_schema_file: bool = False,
-    clear_cache: bool = False
+        path: str = '',
+        _dict=None,
+        file_type: Optional[str] = None,
+        ignore_sub_categories: bool = False,
+        ignore_invalid_schema_file: bool = False,
+        clear_cache: bool = False
 ):
     """
     returns the content file type

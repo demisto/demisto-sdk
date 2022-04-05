@@ -67,8 +67,8 @@ jobs:
             name: manual
             no_output_timeout: 15m
             command: |
-              pip uninstall -y setuptools
-              pip install setuptools
+              pip uninstall -y pipenv
+              pip install pipenv
         - python/install-packages:
             pkg-manager: "pipenv"
             args: "--dev --system"

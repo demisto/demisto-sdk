@@ -1134,6 +1134,6 @@ def test_missing_data_sections_when_generating_table_section(yml_content, expect
     script_pack = pack.create_script()
     script_pack.yml.write_dict(yml_content)
 
-    script_info = get_script_info(script_pack.yml.path)
+    script_info = get_script_info(script_pack.yml.path, clear_cache=True)
     section = generate_table_section(script_info, "Script data")
     assert section == expected_result

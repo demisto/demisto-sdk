@@ -771,8 +771,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def error_uninstall_node():
-        return 'Failed run `node`\n' \
-               'Try running the following command: `node install`'
+        return 'Failed to run `node`\n' \
+               'Please download and install the `node` package'
 
     @staticmethod
     @error_code_decorator

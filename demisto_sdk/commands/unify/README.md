@@ -34,7 +34,7 @@ This command has two main functions:
     `demisto-sdk unify -u Integrations/MyInt -t`
     This will append to the unified yml name/script/id a label ' - Test' that will prevent bumps
     with the uploaded unified yml and the original integration on the server. 
-    origin yml: {name: integration} --> unified yml: {name: integration - Test}
+    origin yml: `{name: integration}` --> unified yml: `{name: integration - Test}`
 
 2. #### GenericModule Unifier:
 

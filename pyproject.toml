@@ -88,6 +88,7 @@ types-six = "^1.16.12"
 types-PyMySQL = "^1.0.15"
 types-protobuf = "^3.19.15"
 typing-extensions = "^4.1.1"
+gsutil = {version = "5.8", optional = true}
 
 [tool.poetry.dev-dependencies]
 mitmproxy = "^8.0.0"
@@ -100,10 +101,9 @@ pytest-mock = "^3.7.0"
 pytest-subprocess = "^1.4.1"
 requests-mock = "^1.9.3"
 Deprecated = "^1.2.13"
-gsutil = {version = "5.8", optional = true}
 
 [tool.poetry.extras]
-build = ["pre-commit", "gsutil"]
+build = ["gsutil"]
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

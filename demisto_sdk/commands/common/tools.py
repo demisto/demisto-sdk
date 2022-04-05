@@ -842,8 +842,12 @@ def get_integration_command_names(file_path):
     # click.secho(f'here !!:')
     pack_name = get_pack_name(file_path)
     integrations_dir_path = os.path.join(PACKS_DIR, pack_name, INTEGRATIONS_DIR)
-    found_integrations: List[str] = os.listdir(integrations_dir_path)
     command_names = []
+    if not glob.glob(integrations_dir_path):
+        click.secho(f'no integrations found')
+        return command_names
+    found_integrations: List[str] = os.listdir(integrations_dir_path)
+
     if len(found_integrations) == 0:
         click.secho(f'no integrations found')
     else:

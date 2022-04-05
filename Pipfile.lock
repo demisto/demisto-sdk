@@ -1537,10 +1537,10 @@
         },
         "types-cryptography": {
             "hashes": [
-                "sha256:448feaf9ae31226149bc6bce1cf8fff54da661ef04837f7c0c316829885c3628",
-                "sha256:d745cba4b1d0ec0a141b8b7693f887a02c332d8f6036c100db3cac98443e2ddb"
+                "sha256:66b4b816d353c7706b775bfc40c541a9d8f5de9651f0253688beaf96e285e8c5",
+                "sha256:f957138f073332b9c07eadb0831efaa578fdb604e553ac38d72c467aeb4b7c23"
             ],
-            "version": "==3.3.18"
+            "version": "==3.3.19"
         },
         "types-dateparser": {
             "hashes": [

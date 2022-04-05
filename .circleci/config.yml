@@ -64,11 +64,10 @@ jobs:
       steps:
         - checkout
         - run:
-            name: manual
+            name: upgrade pipenv
             no_output_timeout: 15m
             command: |
-              pip uninstall -y pipenv
-              pip install pipenv
+              pip install -U pipenv
         - python/install-packages:
             pkg-manager: "pipenv"
             args: "--dev --system"

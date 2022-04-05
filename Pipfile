@@ -4,6 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+pipenv = "*"
 astroid = "*"
 autopep8 = "*"
 bandit = "*"
@@ -31,7 +32,6 @@ jsonschema = "*"
 mergedeep = "*"
 networkx = "*"
 nltk = "*"
-pipenv = "*"
 prettytable = "==0.7.2"
 pykwalify = "*"
 pyspellchecker = "*"

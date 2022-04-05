@@ -25,8 +25,8 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (
     compare_context_path_in_yml_and_readme, get_content_path,
-    get_url_with_retries, get_yaml, get_yml_paths_in_dir, print_warning,
-    run_command_os, print_error)
+    get_url_with_retries, get_yaml, get_yml_paths_in_dir, print_error,
+    print_warning, run_command_os)
 
 json = JSON_Handler()
 

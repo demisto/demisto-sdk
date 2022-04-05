@@ -829,38 +829,65 @@ def is_file_path_in_pack(file_path):
 def get_integration_command_names(file_path):
     """
     1. Get the RN file path
-    2. Search for integrations in the pack
-    3. Load yml file
-    3. Get the command names
+    2. Check if integrations exist in the current pack
+    3. For each integration, load yml file
+    3. Keep in a set all the commands names
+    4. Keep in a set all the integrations names
     Args:
-        file_path:
+        file_path: RN file path
 
-    Returns:
+    Returns: (set) of all the commands and integrations names found.
 
     """
-    from demisto_sdk.commands.common.constants import PACKS_DIR, INTEGRATIONS_DIR
-    # click.secho(f'here !!:')
-    pack_name = get_pack_name(file_path)
-    integrations_dir_path = os.path.join(PACKS_DIR, pack_name, INTEGRATIONS_DIR)
-    command_names = []
+    integrations_dir_path = os.path.join(PACKS_DIR, get_pack_name(file_path), INTEGRATIONS_DIR)
+    command_names = {}
     if not glob.glob(integrations_dir_path):
-        click.secho(f'no integrations found')
+        click.secho(f'no integrations path found')
         return command_names
-    found_integrations: List[str] = os.listdir(integrations_dir_path)
 
+    found_integrations: List[str] = os.listdir(integrations_dir_path)
     if len(found_integrations) == 0:
         click.secho(f'no integrations found')
     else:
-        # click.secho(f'all integrations found: {found_integrations}')
-
         for integration in found_integrations:
             integration_path_full = os.path.join(integrations_dir_path, integration, f'{integration}.yml')
             yml_dict = get_yaml(integration_path_full)
             commands = yml_dict.get("script", {}).get('commands', [])
-            command_names.extend([command.get('name') for command in commands])
+            command_names.update({command.get('name') for command in commands})
+            command_names.update(integration)
 
         click.secho(f'commands names: {command_names}')
     return command_names
+
+
+def get_scripts_names(file_path):
+    """
+    1. Get the RN file path
+    2. Check if scripts exist in the current pack
+    3. Keep in a set all the scripts names
+    Args:
+        file_path: RN file path
+
+    Returns: (set) of all the scripts names found.
+
+    """
+    scripts_dir_path = os.path.join(PACKS_DIR, get_pack_name(file_path), SCRIPTS_DIR)
+    scripts_names = {}
+    if not glob.glob(scripts_dir_path):
+        click.secho(f'no scripts path found')
+        return scripts_names
+
+    found_scripts: List[str] = os.listdir(scripts_dir_path)
+    if len(found_scripts) == 0:
+        click.secho(f'no scripts found')
+    else:
+        for script in found_scripts:
+            script_path_full = os.path.join(scripts_dir_path, script, f'{script}.yml')
+            yml_dict = get_yaml(script_path_full)
+            scripts_names.update(yml_dict.get("name"))
+
+        click.secho(f'scripts names: {scripts_names}')
+    return scripts_names
 
 
 def get_pack_name(file_path):

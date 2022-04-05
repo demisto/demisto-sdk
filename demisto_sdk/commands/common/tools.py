@@ -856,13 +856,12 @@ def get_integration_command_names(file_path):
             integration_path_full = os.path.join('Packs/MicrosoftDefenderAdvancedThreatProtection/Integrations/MicrosoftDefenderAdvancedThreatProtection', int_file)
             yml_dict = get_yaml(integration_path_full)
             commands = yml_dict.get("script", {})
-            click.secho(f'commands: {commands}')
             commands = commands.get('commands', [])
-            click.secho(f'commands: {commands}')
+            # click.secho(f'commands: {commands}')
             for command in commands:
                 command_name = command.get('name')
                 names.append(command_name)
-            click.secho(f'commands names: {names}')
+    click.secho(f'commands names: {names}')
     return names
 
 

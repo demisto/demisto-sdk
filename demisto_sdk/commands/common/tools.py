@@ -839,7 +839,7 @@ def get_integration_command_names(file_path):
 
     """
     from demisto_sdk.commands.common.constants import PACKS_DIR, INTEGRATIONS_DIR
-    click.secho(f'here !!:')
+    # click.secho(f'here !!:')
     pack_name = get_pack_name(file_path)
     integrations_dir_path = os.path.join(PACKS_DIR, pack_name, INTEGRATIONS_DIR)
     found_integrations: List[str] = os.listdir(integrations_dir_path)
@@ -847,7 +847,7 @@ def get_integration_command_names(file_path):
     if len(found_integrations) == 0:
         click.secho(f'no integrations found')
     else:
-        click.secho(f'all integrations found: {found_integrations}')
+        # click.secho(f'all integrations found: {found_integrations}')
 
         for integration in found_integrations:
             integration_path_full = os.path.join(integrations_dir_path, integration, f'{integration}.yml')

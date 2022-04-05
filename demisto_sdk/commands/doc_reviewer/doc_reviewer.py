@@ -92,10 +92,10 @@ class DocReviewer:
         if 'Packs' in file_path_obj.parts:
             pack_name = file_path_obj.parts[file_path_obj.parts.index('Packs') + 1]
             packs_ignore_path = os.path.join("Packs", pack_name, PACKS_PACK_IGNORE_FILE_NAME)
-            get_integration_command_names(file_path)
             default_pack_known_words = [
                 get_pack_name(file_path),
             ]
+            default_pack_known_words.extend(get_integration_command_names(file_path))
             if os.path.isfile(packs_ignore_path):
                 config = ConfigParser(allow_no_value=True)
                 config.read(packs_ignore_path)

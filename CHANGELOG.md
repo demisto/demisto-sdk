@@ -15,6 +15,7 @@ the same as the last release note version.
 * Added support for new XSIAM entities in *create-id-set* command.
 * Added support for new XSIAM entities in **create-content-artifacts** command.
 * Added support for Parsing/Modeling Rule content item in the **unify** command.
+* Added the pack name to the known words by default when running the **doc-review** command.
 
 # 1.6.2
 * Added dependency validation support for core marketplacev2 packs.

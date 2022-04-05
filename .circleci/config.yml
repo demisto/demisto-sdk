@@ -176,11 +176,6 @@ jobs:
         - attach_workspace:
             at: ~/project
         - <<: *install_build_dependencies
-        - run: 
-            name: installed dependencies
-            command: poetry run pip list > pip_list.txt
-        - store_artifacts:
-            path: pip_list.txt
         - <<: *install_node_ci
         - run:
             name: Set Up & Create Id Set

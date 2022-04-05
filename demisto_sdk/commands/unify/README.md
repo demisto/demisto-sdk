@@ -29,6 +29,7 @@ This command has two main functions:
     `demisto-sdk unify -i Scripts/MyScr -o Scripts`
     This will grab the script components in "Scripts/MyScr" directory and unify them to a single yaml file
     that will be created in the "Scripts" directory.
+    <br/><br/>
 
     `demisto-sdk unify -u Integrations/MyInt -t`
     This will append to the unified yml name/script/id a label ' - Test' that will prevent bumps

@@ -842,8 +842,12 @@ def get_integration_command_names(file_path):
     click.secho(f'here !!:')
     pack_name = get_pack_name(file_path)
     integrations_path = os.path.join(PACKS_DIR, pack_name, INTEGRATIONS_DIR)
-    found_path_results = glob.glob(integrations_path)
+    found_path_results = glob.glob(integrations_path)[0]
     click.secho(f'found_path_results: {found_path_results}')
+    if len(os.listdir(found_path_results)) == 0:
+        click.secho(f'no integrations found')
+    else:
+        click.secho(f'all integrations found: {os.listdir(found_path_results)}')
     # yml_dict = get_yaml(file_path)
     #
     # commands = yml_dict.get("script", {})

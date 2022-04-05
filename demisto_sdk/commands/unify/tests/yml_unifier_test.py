@@ -1040,3 +1040,88 @@ def test_add_contributors_support(tmp_path):
         contributor_url='',
     )
     assert unified_yml["display"] == 'Test Integration (Partner Contribution)'
+
+
+def test_add_test(tmp_path):
+    '''
+        Given:
+            - an Integration to unify
+
+        When:
+            - the --test flag is True
+
+        Then:
+            - Add a "- Test" to the name/display/id of the integration if the yml exsits.
+    '''
+    unifier = IntegrationScriptUnifier(str(tmp_path))
+    unified_yml = {
+        'display': 'Integration display',
+        'commonfields': {'id': 'Integration id'},
+        'name': 'Integration name'
+    }
+    unified = unifier.add_test(unified_yml)
+    assert unified.get('display') == 'Integration display - Test'
+    assert unified.get('name') == 'Integration name - Test'
+    assert unified.get('commonfields').get('id') == 'Integration id - Test'
+
+
+@pytest.mark.parametrize("flag", [True, False])
+def test_add_test_flag_integration(repo, flag):
+    """
+        Given:
+            - An integration with a name of sample(yml)
+
+        When:
+            - Running the Unify command
+            first run with -t flag on
+            second run without -t flag
+
+        Then:
+            - Check that the '- Test' label was added or not to the unified yml
+    """
+    pack = repo.create_pack('PackName')
+    integration = pack.create_integration('dummy-integration', 'bla', INTEGRATION_YAML)
+    integration.create_default_integration()
+
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        if flag:
+            runner.invoke(main, [UNIFY_CMD, '-i', f'{integration.path}', '-t'])
+        else:
+            runner.invoke(main, [UNIFY_CMD, '-i', f'{integration.path}'])
+
+        with open(os.path.join(integration.path, 'integration-dummy-integration.yml')) as unified_yml:
+            unified_yml_data = yaml.load(unified_yml)
+            if flag:
+                assert unified_yml_data.get('name') == 'Sample - Test'
+            else:
+                assert unified_yml_data.get('name') == 'Sample'
+
+
+def test_add_test_flag(repo):
+    """
+        Given:
+            - A script with the name sample_script(yml)
+
+        When:
+            - running the Unify command with the -t flag
+
+        Then:
+            - check that the ' - Test' label was appended to the name of the script
+            in the unified yml
+    """
+    pack = repo.create_pack('PackName')
+    script = pack.create_script('dummy-script', 'script-code')
+    script.create_default_script()
+
+    with ChangeCWD(pack.repo_path):
+        runner = CliRunner(mix_stderr=False)
+        runner.invoke(main, [UNIFY_CMD, '-i', f'{script.path}', '-t'])
+        with open(os.path.join(script.path, 'script-dummy-script.yml')) as unified_yml:
+            unified_yml_data = yaml.load(unified_yml)
+            assert unified_yml_data.get('name') == 'sample_script - Test'
+
+
+
+
+

@@ -26,7 +26,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
 from demisto_sdk.commands.common.tools import (
     compare_context_path_in_yml_and_readme, get_content_path,
     get_url_with_retries, get_yaml, get_yml_paths_in_dir, print_warning,
-    run_command_os)
+    run_command_os, print_error)
 
 json = JSON_Handler()
 
@@ -168,7 +168,7 @@ class ReadMeValidator(BaseValidator):
 
     @staticmethod
     @lru_cache(None)
-    def are_modules_installed_for_verify(content_path: str) -> bool:
+    def are_modules_installed_for_verify(content_path: str, print_errors: bool = None) -> bool:
         """ Check the following:
             1. npm packages installed - see packs var for specific pack details.
             2. node interperter exists.
@@ -180,7 +180,10 @@ class ReadMeValidator(BaseValidator):
         # Check node exist
         stdout, stderr, exit_code = run_command_os('node -v', cwd=content_path)
         if exit_code:
-            print_warning(f'There is no node installed on the machine, Test Skipped, error - {stderr}, {stdout}')
+            if print_errors:
+                print_error(f'There is no node installed on the machine, Test Failed, error - {stderr}, {stdout}\n')
+            else:
+                print_warning(f'There is no node installed on the machine, Test Skipped, error - {stderr}, {stdout}')
             valid = False
         else:
             # Check npm modules exsits
@@ -195,8 +198,12 @@ class ReadMeValidator(BaseValidator):
                         missing_module.append(pack)
         if missing_module:
             valid = False
-            print_warning(f"The npm modules: {missing_module} are not installed, Readme mdx validation skipped. Use "
-                          f"'npm install' to install all required node dependencies")
+            if print_errors:
+                print_error(f"The npm modules: {missing_module} are not installed, Test Failed. Use "
+                            f"'npm install' to install all required node dependencies\n")
+            else:
+                print_warning(f"The npm modules: {missing_module} are not installed, Readme mdx validation skipped. Use "
+                              f"'npm install' to install all required node dependencies")
         return valid
 
     def is_html_doc(self) -> bool:
@@ -540,20 +547,14 @@ class ReadMeValidator(BaseValidator):
     @staticmethod
     @contextmanager
     def start_mdx_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None):
+        if not ReadMeValidator.are_modules_installed_for_verify(get_content_path(), True):
+            return False
+
         with ReadMeValidator._MDX_SERVER_LOCK:
             if not ReadMeValidator._MDX_SERVER_PROCESS:
                 mdx_parse_server = Path(__file__).parent.parent / 'mdx-parse-server.js'
-                try:
-                    ReadMeValidator._MDX_SERVER_PROCESS = subprocess.Popen(['jjj', str(mdx_parse_server)],
-                                                                            stdout=subprocess.PIPE, text=True)
-                except FileNotFoundError:
-                    error_message, error_code = Errors.error_uninstall_node()
-
-                    if handle_error(error_message, error_code,file_path=file_path):
-                        return False
-                    else:
-                        raise Exception(error_message)
-
+                ReadMeValidator._MDX_SERVER_PROCESS = subprocess.Popen(['node', str(mdx_parse_server)],
+                                                                       stdout=subprocess.PIPE, text=True)
                 line = ReadMeValidator._MDX_SERVER_PROCESS.stdout.readline()  # type: ignore
                 if 'MDX server is listening on port' not in line:
                     ReadMeValidator.stop_mdx_server()

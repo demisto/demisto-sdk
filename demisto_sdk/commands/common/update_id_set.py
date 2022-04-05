@@ -377,6 +377,9 @@ def get_integration_data(file_path, packs: Dict[str, Dict] = None):
     id_ = data_dictionary.get('commonfields', {}).get('id', '-')
     name = data_dictionary.get('name', '-')
 
+    type_ = data_dictionary.get('type', '')
+    if type_ == 'python':
+        type_ = data_dictionary.get('subtype', type_)
     deprecated = data_dictionary.get('deprecated', False)
     tests = data_dictionary.get('tests')
     toversion = data_dictionary.get('toversion')
@@ -408,6 +411,8 @@ def get_integration_data(file_path, packs: Dict[str, Dict] = None):
                                                  pack=pack,
                                                  marketplaces=marketplaces,
                                                  )
+    if type_:
+        integration_data['type'] = type_
     if docker_image:
         integration_data['docker_image'] = docker_image
     if cmd_list:
@@ -618,6 +623,9 @@ def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None):
 
     name = data_dictionary.get('name', '-')
 
+    type_ = data_dictionary.get('type', '')
+    if type_ == 'python':
+        type_ = data_dictionary.get('subtype', type_)
     tests = data_dictionary.get('tests')
     toversion = data_dictionary.get('toversion')
     deprecated = data_dictionary.get('deprecated', False)
@@ -630,6 +638,8 @@ def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None):
 
     script_data = create_common_entity_data(path=file_path, name=name, to_version=toversion, from_version=fromversion,
                                             pack=pack, marketplaces=marketplaces)
+    if type_:
+        script_data['type'] = type_
     if deprecated:
         script_data['deprecated'] = deprecated
     if depends_on:

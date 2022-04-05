@@ -829,7 +829,8 @@ def is_file_path_in_pack(file_path):
 def get_integration_command_names(file_path):
     """
     1. Get the RN file path
-    2. Load yml file
+    2. Search for integrations in the pack
+    3. Load yml file
     3. Get the command names
     Args:
         file_path:
@@ -837,37 +838,26 @@ def get_integration_command_names(file_path):
     Returns:
 
     """
-    click.secho(f'{get_integretion_name()}: ')
-    yml_dict = get_yaml(file_path)
-
-    commands = yml_dict.get("script", {})
-    click.secho(f'commands: {commands}')
-    # # handles scripts
-    # if not commands:
-    #     return different_contexts
-    commands = commands.get('commands', [])
-    click.secho(f'commands: {commands}')
-    names = []
-    for command in commands:
-        command_name = command.get('name')
-        names.append(command_name)
-    click.secho(f'commands names: {names}')
-    return names
-
-
-def get_integretion_name():
-    """
-    extract pack name (folder name) from file path
-
-    Arguments:
-        file_path (str): path of a file inside the pack
-
-    Returns:
-        pack name (str)
-    """
-    a = get_yml_paths_in_dir('Packs/MicrosoftDefenderAdvancedThreatProtection')
-    click.secho(f'all yml files: {a}')
-
+    from demisto_sdk.commands.common.constants import PACKS_DIR, INTEGRATIONS_DIR
+    pack_name = get_pack_name(file_path)
+    integrations_path = os.path.join(PACKS_DIR, pack_name, INTEGRATIONS_DIR)
+    found_path_results = glob.glob(integrations_path)
+    click.secho(f'found_path_results: {found_path_results}')
+    # yml_dict = get_yaml(file_path)
+    #
+    # commands = yml_dict.get("script", {})
+    # click.secho(f'commands: {commands}')
+    # # # handles scripts
+    # # if not commands:
+    # #     return different_contexts
+    # commands = commands.get('commands', [])
+    # click.secho(f'commands: {commands}')
+    # names = []
+    # for command in commands:
+    #     command_name = command.get('name')
+    #     names.append(command_name)
+    # click.secho(f'commands names: {names}')
+    # return names
 
 
 def get_pack_name(file_path):

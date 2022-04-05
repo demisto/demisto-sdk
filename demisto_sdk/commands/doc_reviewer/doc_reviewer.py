@@ -224,7 +224,6 @@ class DocReviewer:
             return True
 
         self.add_known_words()
-        click.secho(f'HERE: {self.files}')
 
         for file in self.files:
             click.echo(f'\nChecking file {file}')

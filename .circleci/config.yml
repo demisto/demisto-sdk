@@ -39,8 +39,8 @@ references:
           
     install_demisto_sdk: &install_demisto_sdk
       - python/install-packages:
-          pkg-manager: "poetry"
-          args: "--no-dev"
+          pkg-manager: "pdm"
+          args: "--production"
           cache-version: << pipeline.parameters.cache-version >>
           pre-install-steps:
             - run:
@@ -50,8 +50,8 @@ references:
 
     install_build_dependencies: &install_build_dependencies
       - python/install-packages: 
-                pkg-manager: "poetry"
-                args: "--extras build"
+                pkg-manager: "pdm"
+                args: "--group build"
 
 jobs:
   run-unit-tests:
@@ -64,7 +64,7 @@ jobs:
       steps:
         - checkout
         - python/install-packages:
-            pkg-manager: "poetry"
+            pkg-manager: "pdm"
             cache-version: << pipeline.parameters.cache-version >>
         - <<: *install_node_ci
         - run:
@@ -84,7 +84,7 @@ jobs:
               TEST_FILES=$(echo "$TEST_FILES" | circleci tests split --split-by=timings)
 
               mkdir test-results
-              poetry run pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml $TEST_FILES
+              pdm run pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml $TEST_FILES
         - store_test_results:
             path: test-results
         - store_artifacts:
@@ -109,7 +109,7 @@ jobs:
       steps:
         - checkout
         - python/install-packages:
-            pkg-manager: "poetry"
+            pkg-manager: "pdm"
             cache-version: << pipeline.parameters.cache-version >>
         - <<: *install_node_ci
         - run:
@@ -120,7 +120,7 @@ jobs:
               TEST_FILES=$(circleci tests glob "demisto_sdk/tests/integration_tests/**/*_test.py")
 
               mkdir integration-test-results
-              poetry run pytest -v --junitxml=integration-test-results/junit.xml $TEST_FILES
+              pdm run pytest -v --junitxml=integration-test-results/junit.xml $TEST_FILES
         - store_test_results:
             path: integration-test-results
 
@@ -137,16 +137,16 @@ jobs:
             name: create cache key for pre-commit
             command: |
               cp .pre-commit-config.yaml pre-commit-cache-key.txt
-              poetry run python --version --version >> pre-commit-cache-key.txt
-              cat poetry.lock >> pre-commit-cache-key.txt
+              pdm run python --version --version >> pre-commit-cache-key.txt
+              cat pdm.lock >> pre-commit-cache-key.txt
         - restore_cache:
             keys:
             - v1-pc-cache-{{ checksum "pre-commit-cache-key.txt" }}
         - run:
             name: Pre-commit
             command: |
-              poetry run pre-commit --version
-              poetry run pre-commit run -a
+              pdm run pre-commit --version
+              pdm run pre-commit run -a
         - save_cache:
             key: v1-pc-cache-{{ checksum "pre-commit-cache-key.txt" }}
             paths:
@@ -184,8 +184,8 @@ jobs:
               CI_COMMIT_BRANCH: "master"
             command: |
               cd content
-              poetry run demisto-sdk -v
-              poetry run demisto-sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
+              pdm run demisto-sdk -v
+              pdm run demisto-sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
         - run:
             name: Merge Id Set
             when: always
@@ -193,11 +193,11 @@ jobs:
               CI_COMMIT_BRANCH: "master"
             command: |
               cd content
-              poetry run demisto-sdk -v
+              pdm run demisto-sdk -v
               export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
 
-              poetry run gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
-              poetry run demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json --fail-duplicates
+              pdm run gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
+              pdm run demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json --fail-duplicates
         - run:
             name: Test validate files and yaml
             when: always
@@ -205,10 +205,10 @@ jobs:
               CI_COMMIT_BRANCH: "master"
             command: |
               cd content
-              poetry run demisto-sdk -v
+              pdm run demisto-sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
 
-              poetry run ./Tests/scripts/validate.sh
+              pdm run ./Tests/scripts/validate.sh
   test-lint:
       docker:
         - image: devdemisto/content-build:3.0.0.27979
@@ -241,10 +241,10 @@ jobs:
               echo ""
               echo "lint files changed running lint"
               # python file (CommonServerPython lint is running over python 3 and 2)
-              poetry run demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPython
+              pdm run demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPython
               
               # ps file
-              poetry run demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPowerShell
+              pdm run demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPowerShell
               
         - store_artifacts:
             path: /tmp/lint_env_installation.log
@@ -261,10 +261,10 @@ jobs:
             when: always
             command: |
               cd content
-              poetry run demisto-sdk -v
+              pdm run demisto-sdk -v
               mkdir ./tmp
 
-              poetry run demisto-sdk create-content-artifacts -a ./tmp
+              pdm run demisto-sdk create-content-artifacts -a ./tmp
         - store_artifacts:
             path: content/tmp
   deploy:
@@ -276,7 +276,7 @@ jobs:
             name: Deploy
             when: always
             command: |
-              poetry run ./demisto_sdk/utils/deploy.sh
+              pdm run ./demisto_sdk/utils/deploy.sh
 workflows:
   version: 2.1
   build_and_release:

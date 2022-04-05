@@ -1,4 +1,5 @@
 # Changelog
+* Added the new **generate-yml-from-python** command.
 * Added a new validation to **validate** command to verify that the metadata *currentVersion* is
 the same as the last release note version.
 * **Breaking change**: Fixed a typo in the **validate** `--quiet-bc-validation` flag (was `--quite-bc-validation`). @upstart-swiss

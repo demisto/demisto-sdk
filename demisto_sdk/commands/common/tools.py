@@ -839,6 +839,7 @@ def get_integration_command_names(file_path):
 
     """
     from demisto_sdk.commands.common.constants import PACKS_DIR, INTEGRATIONS_DIR
+    click.secho(f'here !!:')
     pack_name = get_pack_name(file_path)
     integrations_path = os.path.join(PACKS_DIR, pack_name, INTEGRATIONS_DIR)
     found_path_results = glob.glob(integrations_path)

@@ -63,6 +63,11 @@ jobs:
       parallelism: 8
       steps:
         - checkout
+        - run:
+            name: manual
+            no_output_timeout: 15m
+            command: |
+              pip uninistall -y setuptools
         - python/install-packages:
             pkg-manager: "pipenv"
             args: "--dev --system"

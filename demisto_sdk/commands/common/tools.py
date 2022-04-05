@@ -840,7 +840,7 @@ def get_integration_command_names(file_path):
 
     """
     integrations_dir_path = os.path.join(PACKS_DIR, get_pack_name(file_path), INTEGRATIONS_DIR)
-    command_names = {}
+    command_names = set()
     if not glob.glob(integrations_dir_path):
         click.secho(f'no integrations path found')
         return command_names
@@ -872,7 +872,7 @@ def get_scripts_names(file_path):
 
     """
     scripts_dir_path = os.path.join(PACKS_DIR, get_pack_name(file_path), SCRIPTS_DIR)
-    scripts_names = {}
+    scripts_names = set()
     if not glob.glob(scripts_dir_path):
         click.secho(f'no scripts path found')
         return scripts_names

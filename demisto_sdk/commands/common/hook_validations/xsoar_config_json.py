@@ -35,7 +35,6 @@ class XSOARConfigJsonValidator(BaseValidator):
         self.configuration_json = self.load_xsoar_configuration_file()
         self.schema_json, _ = get_dict_from_file(self.schema_path)
 
-    @error_codes('XC100')
     def load_xsoar_configuration_file(self) -> Optional[Dict[str, Any]]:
         """Loads the configuration file for the schema validation.
 

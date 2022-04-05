@@ -13,6 +13,7 @@ the same as the last release note version.
 * Improved the logging in **test-content** for helping catch typos in external playbook configuration.
 * Fixed an issue where **update-xsoar-config-file** did not properly insert the marketplace packs list to the file.
 * Added the pack name to the known words by default when running the **doc-review** command.
+* Added a new flag to the **validate** command, allowing to run specific validations.
 
 # 1.6.2
 * Added dependency validation support for core marketplacev2 packs.

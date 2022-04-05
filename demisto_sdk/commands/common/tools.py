@@ -851,8 +851,10 @@ def get_integration_command_names(file_path):
     else:
         click.secho(f'all integrations found: {os.listdir(found_path_results)}')
         for integration in found_integrations:
-            integration_path = os.path.join(integrations_path, integration)
-            yml_dict = get_yaml(integration_path)
+            int_file = f'{integration}.yml'
+            #integration_path_full = os.path.join(found_path_results, integration, int_file)
+            integration_path_full = os.path.join('Packs/MicrosoftDefenderAdvancedThreatProtection/Integrations/MicrosoftDefenderAdvancedThreatProtection', int_file)
+            yml_dict = get_yaml(integration_path_full)
             commands = yml_dict.get("script", {})
             click.secho(f'commands: {commands}')
             commands = commands.get('commands', [])
@@ -862,6 +864,7 @@ def get_integration_command_names(file_path):
                 names.append(command_name)
             click.secho(f'commands names: {names}')
     return names
+
 
 def get_pack_name(file_path):
     """

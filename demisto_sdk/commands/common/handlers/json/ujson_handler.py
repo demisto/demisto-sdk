@@ -33,7 +33,13 @@ class UJSON_Handler(XSOAR_Handler):
 
     def dump(self, obj: Any, fp: IO[str], indent=0, sort_keys=False):
         try:
-            ujson.dump(obj, fp, indent=indent, sort_keys=sort_keys)
+            ujson.dump(
+                obj,
+                fp,
+                indent=indent,
+                sort_keys=sort_keys,
+                escape_forward_slashes=False
+            )
         except ValueError as e:
             raise JSONDecodeError(e)
 
@@ -42,7 +48,8 @@ class UJSON_Handler(XSOAR_Handler):
             return ujson.dumps(
                 obj,
                 sort_keys=sort_keys,
-                indent=indent
+                indent=indent,
+                escape_forward_slashes=False
             )
         except ValueError as e:
             raise JSONDecodeError(e)

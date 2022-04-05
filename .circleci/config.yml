@@ -134,6 +134,7 @@ jobs:
             at: ~/project
         - <<: *install_build_dependencies
         - run:
+            name: create cache key for pre-commit
             command: |
               cp .pre-commit-config.yaml pre-commit-cache-key.txt
               poetry run python --version --version >> pre-commit-cache-key.txt
@@ -175,6 +176,11 @@ jobs:
         - attach_workspace:
             at: ~/project
         - <<: *install_build_dependencies
+        - run: 
+            name: installed dependencies
+            command: poetry run pip list > pip_list.txt
+        - store_artifacts:
+            path: pip_list.txt
         - <<: *install_node_ci
         - run:
             name: Set Up & Create Id Set

@@ -844,26 +844,24 @@ def get_integration_command_names(file_path):
     integrations_path = os.path.join(PACKS_DIR, pack_name, INTEGRATIONS_DIR)
     found_path_results = glob.glob(integrations_path)[0]
     click.secho(f'found_path_results: {found_path_results}')
-    if len(os.listdir(found_path_results)) == 0:
+    found_integrations = os.listdir(found_path_results)
+    names = []
+    if len(found_integrations) == 0:
         click.secho(f'no integrations found')
     else:
         click.secho(f'all integrations found: {os.listdir(found_path_results)}')
-    # yml_dict = get_yaml(file_path)
-    #
-    # commands = yml_dict.get("script", {})
-    # click.secho(f'commands: {commands}')
-    # # # handles scripts
-    # # if not commands:
-    # #     return different_contexts
-    # commands = commands.get('commands', [])
-    # click.secho(f'commands: {commands}')
-    # names = []
-    # for command in commands:
-    #     command_name = command.get('name')
-    #     names.append(command_name)
-    # click.secho(f'commands names: {names}')
-    # return names
-
+        for integration in found_integrations:
+            integration_path = os.path.join(integrations_path, integration)
+            yml_dict = get_yaml(integration_path)
+            commands = yml_dict.get("script", {})
+            click.secho(f'commands: {commands}')
+            commands = commands.get('commands', [])
+            click.secho(f'commands: {commands}')
+            for command in commands:
+                command_name = command.get('name')
+                names.append(command_name)
+            click.secho(f'commands names: {names}')
+    return names
 
 def get_pack_name(file_path):
     """

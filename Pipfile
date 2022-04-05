@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pipenv = "*"
+pipenv = "==2021.5.29"
 astroid = "*"
 autopep8 = "*"
 bandit = "*"

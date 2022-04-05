@@ -63,11 +63,6 @@ jobs:
       parallelism: 8
       steps:
         - checkout
-        - run:
-            name: upgrade pipenv
-            no_output_timeout: 15m
-            command: |
-              pip install -U pipenv
         - python/install-packages:
             pkg-manager: "pipenv"
             args: "--dev --system"

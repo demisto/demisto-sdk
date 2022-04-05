@@ -1,14 +1,12 @@
 # STD python packages
 import copy
 import hashlib
-import json
 import logging
 import os
 import platform
 import traceback
 from typing import Any, Dict, List, Optional, Tuple
 
-# 3-rd party packages
 import docker
 import docker.errors
 import docker.models.containers
@@ -21,9 +19,8 @@ from wcmatch.pathlib import NEGATE, Path
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON)
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.timers import timer
-# Local packages
 from demisto_sdk.commands.common.tools import (get_all_docker_images,
                                                run_command_os)
 from demisto_sdk.commands.lint.commands_builder import (
@@ -41,6 +38,13 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                pylint_plugin,
                                                split_warnings_errors,
                                                stream_docker_container_output)
+
+json = JSON_Handler()
+
+
+# 3-rd party packages
+
+# Local packages
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -392,7 +396,7 @@ class Linter:
         logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
         logger.debug(f"{log_prompt} - Finished, stderr: {RL if stderr else ''}{stderr}")
         if stderr or exit_code:
-            logger.error(f"{log_prompt}- Finished, errors found")
+            logger.error(f"{log_prompt} - Finished, errors found")
             if stderr:
                 return FAIL, stderr
             else:
@@ -438,7 +442,7 @@ class Linter:
                 command=build_xsoar_linter_command(lint_files, py_num, self._facts.get('support_level', 'base')),
                 cwd=self._pack_abs_dir, env=myenv)
         if exit_code & FAIL_PYLINT:
-            logger.error(f"{log_prompt}- Finished, errors found")
+            logger.error(f"{log_prompt} - Finished, errors found")
             status = FAIL
         if exit_code & WARNING:
             logger.warning(f"{log_prompt} - Finished, warnings found")
@@ -455,7 +459,7 @@ class Linter:
             else:
                 stdout = "Xsoar linter could not run, please make sure you have" \
                          " the necessary Pylint version for both py2 and py3"
-            logger.error(f"{log_prompt}- Finished, errors found")
+            logger.error(f"{log_prompt} - Finished, errors found")
 
         logger.debug(f"{log_prompt} - Finished, exit-code: {exit_code}")
         logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
@@ -485,7 +489,7 @@ class Linter:
         logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
         logger.debug(f"{log_prompt} - Finished, stderr: {RL if stderr else ''}{stderr}")
         if stderr or exit_code:
-            logger.error(f"{log_prompt}- Finished, errors found")
+            logger.error(f"{log_prompt} - Finished, errors found")
             if stderr:
                 return FAIL, stderr
             else:
@@ -516,7 +520,7 @@ class Linter:
         logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
         logger.debug(f"{log_prompt} - Finished, stderr: {RL if stderr else ''}{stderr}")
         if stderr or exit_code:
-            logger.error(f"{log_prompt}- Finished, errors found")
+            logger.error(f"{log_prompt} - Finished, errors found")
             if stderr:
                 return FAIL, stderr
             else:
@@ -548,7 +552,7 @@ class Linter:
         logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
         logger.debug(f"{log_prompt} - Finished, stderr: {RL if stderr else ''}{stderr}")
         if stderr or exit_code:
-            logger.error(f"{log_prompt}- Finished, errors found")
+            logger.error(f"{log_prompt} - Finished, errors found")
             if stderr:
                 return FAIL, stderr
             else:
@@ -754,7 +758,7 @@ class Linter:
                         self._facts["lint_files"], docker_version=self._facts.get('python_version'))
                 ],
                 user=f"{os.getuid()}:4000",
-                files_to_push=[('/devwork', self._pack_abs_dir)],
+                files_to_push=[(self._pack_abs_dir, '/devwork')],
                 environment=self._facts["env_vars"],
             )
             container.start()
@@ -829,7 +833,9 @@ class Linter:
             container = Docker.create_container(
                 name=container_name, image=test_image, user=f"{uid}:4000",
                 command=[build_pytest_command(test_xml=test_xml, json=True, cov=cov)],
-                environment=self._facts["env_vars"], files_to_push=[('/devwork', self._pack_abs_dir)]
+                environment=self._facts["env_vars"], files_to_push=[
+                    (self._pack_abs_dir, '/devwork')
+                ],
             )
             container.start()
             stream_docker_container_output(container.logs(stream=True))
@@ -844,10 +850,12 @@ class Linter:
                 # 1-Tests were collected and run but some of the tests failed
                 # 2-Test execution was interrupted by the user
                 # 5-No tests were collected
+
                 if test_xml:
                     test_data_xml = get_file_from_container(container_obj=container,
                                                             container_path="/devwork/report_pytest.xml")
                     xml_apth = Path(test_xml) / f'{self._pack_name}_pytest.xml'
+
                     with open(file=xml_apth, mode='bw') as f:
                         f.write(test_data_xml)  # type: ignore
 
@@ -930,7 +938,7 @@ class Linter:
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container = Docker.create_container(name=container_name, image=test_image,
                                                 user=f"{uid}:4000", environment=self._facts["env_vars"],
-                                                files_to_push=[('/devwork', self._pack_abs_dir)],
+                                                files_to_push=[(self._pack_abs_dir, '/devwork')],
                                                 command=build_pwsh_analyze_command(
                                                     self._facts["lint_files"][0])
                                                 )
@@ -998,7 +1006,7 @@ class Linter:
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container: docker.models.containers.Container = Docker.create_container(
-                files_to_push=[('/devwork', self._pack_abs_dir)],
+                files_to_push=[(self._pack_abs_dir, '/devwork')],
                 name=container_name, image=test_image, command=build_pwsh_test_command(),
                 user=f"{uid}:4000", environment=self._facts["env_vars"])
             container.start()

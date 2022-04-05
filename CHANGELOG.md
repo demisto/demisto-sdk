@@ -1,13 +1,29 @@
 # Changelog
+* Added a new validation to **validate** command to verify that the metadata *currentVersion* is
+the same as the last release note version.
+* **Breaking change**: Fixed a typo in the **validate** `--quiet-bc-validation` flag (was `--quite-bc-validation`). @upstart-swiss
+* Dropped support for python 3.7: Demisto-SDK is now supported on Python 3.8 or newer.
+* Added an agrument to YAMLHandler, allowing to set a maximal width for YAML files.  This fixes an issue where a wrong default was used.
+* Added the detach mechanism to the **upload** command, If you set the --input-config-file flag, any files in the repo's SystemPacks folder will be detached.
+* Added the reattach mechanism to the **upload** command, If you set the --input-config-file flag, any detached item in your XSOAR instance that isn't currently in the repo's SystemPacks folder will be re-attached.
+* Fixed an issue in the **validate** command did not work properly when using the *-g* flag.
+* Enhanced the dependency message shown when running **lint**.
+* Fixed an issue where *dockerimage* changes in Scripts weren't recognized by the **update-release-notes** command.
+* Fixed an issue where **update-release-notes** didn't update the currentVersion in pack_metadata
+* Improved the logging in **test-content** for helping catch typos in external playbook configuration.
+* Fixed an issue where **update-xsoar-config-file** did not properly insert the marketplace packs list to the file.
+* Added the pack name to the known words by default when running the **doc-review** command.
 
+# 1.6.2
+* Added dependency validation support for core marketplacev2 packs.
 * Fixed an issue in **update-release-notes** where suggestion fix failed in validation.
 * Fixed a bug where `.env` files didn't load. @nicolas-rdgs
 * Fixed a bug where **validate** command failed when the *categories* field in the pack metadata was empty for non-integration packs.
 * Added *system* and *item-type* arguments to the **download** command, used when downloading system items.
 * Added a validation to **validate**, checking that each script, integration and playbook have a README file. This validation only runs when the command is called with either the `-i` or the `-g` flag.
-* Fixed a regression issue with **doc-review**, where  the `-g` flag did not work
+* Fixed a regression issue with **doc-review**, where the `-g` flag did not work.
 * Improved the detection of errors in **doc-review** command.
-* The **validate** command now checks if a readme file is empty, only for packs that contain playbooks or were written by a partner
+* The **validate** command now checks if a readme file is empty, only for packs that contain playbooks or were written by a partner.
 * The **validate** command now makes sure common contextPath values (e.g. `DBotScore.Score`) have a non-empty description, and **format** populates them automatically.
 * Fixed an issue where the **generate-outputs** command did not work properly when examples were provided.
 * Fixed an issue in the **generate-outputs** command, where the outputs were not written to the specified output path.
@@ -21,6 +37,11 @@
 * Removed the support in the *maintenance* option of the *-u* flag in the **update-release-notes** command.
 * Added validation for forbidden words and phrases in the **doc-review** command.
 * Added a retries mechanism to the **test-content** command to stabilize the build process.
+* Added support for all `git` platforms to get remote files.
+* Refactored the **format** command's effect on the *fromversion* field:
+  - Fixed a bug where the *fromversion* field was removed when modifying a content item.
+  - Updated the general default *fromversion* and the default *fromversion* of newly-introduced content items (e.g. `Lists`, `Jobs`).
+  - Added an interactive mode functionality for all content types, to ask the user whether to set a default *fromversion*, if could not automatically determine its value. Use `-y` to assume 'yes' as an answer to all prompts and run non-interactively.
 
 # 1.6.1
 * Added the '--use-packs-known-words' argument to the **doc-review** command

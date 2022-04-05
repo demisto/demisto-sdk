@@ -9,9 +9,9 @@ logger = logging.getLogger('demisto-sdk')
 class TestModule:
     def __init__(self, tree, module_name, to_concat, module=None):
         self.functions = []
-        self.imports = [ast_mod.Import(names=[ast_mod.alias(name='pytest')]),
-                        ast_mod.Import(names=[ast_mod.alias(name='io')]),
-                        ast_mod.ImportFrom(module='CommonServerPython', names=[ast_mod.alias(name='*')], level=0)]
+        self.imports = [ast_mod.Import(names=[ast_mod.alias(name='pytest', asname=None)]),
+                        ast_mod.Import(names=[ast_mod.alias(name='io', asname=None)]),
+                        ast_mod.ImportFrom(module='CommonServerPython', names=[ast_mod.alias(name='*', asname=None)], level=0)]
         self.module = module
         self.server_url = ast_mod.Assign(targets=[ast_name('SERVER_URL')],
                                          value=ast_mod.Constant(value='https://test_url.com'))

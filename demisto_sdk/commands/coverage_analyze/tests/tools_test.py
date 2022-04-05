@@ -19,12 +19,12 @@ class TestGetTotalCoverage:
         assert get_total_coverage(filename=os.path.join(TEST_DATA_DIR, 'coverage.json')) == 52.38326848249027
 
     def test_get_total_coverage_from_latest_url(self, requests_mock):
-        requests_mock.get(LATEST_URL, text=read_file(JSON_MIN_DATA_FILE))
+        requests_mock.get(LATEST_URL, json=read_file(JSON_MIN_DATA_FILE))
         assert get_total_coverage() == 52.38326848249027
 
     def test_get_total_coverage_from_history_url(self, requests_mock):
         date = datetime.now()
-        requests_mock.get(HISTORY_URL.format(date=date.strftime('%Y-%m-%d')), text=read_file(JSON_MIN_DATA_FILE))
+        requests_mock.get(HISTORY_URL.format(date=date.strftime('%Y-%m-%d')), json=read_file(JSON_MIN_DATA_FILE))
         assert get_total_coverage(date=date) == 52.38326848249027
 
     def test_get_total_coverage_assert(self):

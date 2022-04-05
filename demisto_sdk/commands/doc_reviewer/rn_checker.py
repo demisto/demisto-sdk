@@ -29,7 +29,6 @@ def print_template_examples():
     click.secho('\n\nGeneral Changes:', fg='bright_cyan')
     click.secho('Note: Use these if the change has no visible impact on the user, '
                 'but please try to refrain from using these if possible!', fg='yellow')
-    click.echo('\n - Maintenance and stability enhancements.')
     click.echo('\n - Documentation and metadata improvements.')
     click.echo('\n\nFor additional information see: https://xsoar.pan.dev/docs/documentation/release-notes')
 
@@ -43,12 +42,16 @@ class ReleaseNotesChecker:
         'Improved implementation',
         'Updated the Docker image to',
         'You can now',
-        'Deprecated. '
-        'Deprecated the '
+        'Deprecated. ',
+        'Deprecated the ',
 
         # full line
         'Documentation and metadata improvements.',
-        'Maintenance and stability enhancements.',
+    }
+
+    BANNED_TEMPLATES = {
+        'maintenance and stability enhancements.',
+        'stability and maintenance enhancements.',
     }
 
     def __init__(self, rn_file_path: str = None, rn_file_content: List = [], template_examples: bool = False):
@@ -79,6 +82,14 @@ class ReleaseNotesChecker:
                 break
         return good_line
 
+    def check_if_using_banned_template(self, line):
+        line = line.lstrip(' -')
+        line = line.rstrip()
+        for temp in self.BANNED_TEMPLATES:
+            if line.lower() == temp:
+                return True
+        return False
+
     def print_notes(self):
         """Print the review about the RN"""
         for line in self.notes:
@@ -100,6 +111,10 @@ class ReleaseNotesChecker:
                                     'changing it to fit our standard.\n     '
                                     'For more information run: `demisto-sdk doc-review --templates` or view our '
                                     'documentation at: https://xsoar.pan.dev/docs/documentation/release-notes')
+            if self.check_if_using_banned_template(line):
+                self.add_note(line, 'Line is using one of our banned templates, please change it to fit our standard.\n'
+                                    'For more information run: `demisto-sdk doc-review --templates` or view our '
+                                    'documentation at: https://xsoar.pan.dev/docs/documentation/release-notes')
 
             if line[0].isalpha() and not line[0].isupper():
                 self.add_note(line, 'Line should start with capital letter.')
@@ -114,5 +129,5 @@ class ReleaseNotesChecker:
             self.print_notes()
             return False
         else:
-            click.secho(f'Release notes {self.file_path} look good!', fg='green')
+            click.secho(f' - Release notes {self.file_path} match a known template.', fg='green')
             return True

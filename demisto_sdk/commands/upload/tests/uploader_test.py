@@ -1,5 +1,4 @@
 import inspect
-import json
 from functools import wraps
 from unittest.mock import MagicMock, patch
 
@@ -20,14 +19,18 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    FileType)
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import (
     DELETE_VERIFY_KEY_ACTION, TURN_VERIFICATION_ERROR_MSG, Pack)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yml_paths_in_dir, src_root
 from demisto_sdk.commands.test_content import tools
 from demisto_sdk.commands.upload import uploader
 from demisto_sdk.commands.upload.uploader import (
-    Uploader, parse_error_response, print_summary,
+    ItemDetacher, Uploader, parse_error_response, print_summary,
     sort_directories_based_on_dependencies)
 from TestSuite.test_tools import ChangeCWD
+
+json = JSON_Handler()
+
 
 DATA = ''
 
@@ -1056,6 +1059,68 @@ class TestZippedPackUpload:
         except KeyError:
             skip_value = None
         assert not skip_value
+
+
+class TestItemDetacher:
+    def test_detach_item(self, mocker):
+        mocker.patch("click.secho")
+        from click import secho
+        mock_api_client(mocker)
+        mocker.patch.object(API_CLIENT, 'generic_request', return_value=[json.dumps([{'name': 'TestPack'}])])
+
+        ItemDetacher.detach_item(ItemDetacher(API_CLIENT), file_id='file', file_path='Scripts/file_path')
+
+        assert secho.call_count == 1
+        assert secho.call_args_list[0][0][0] == '\nFile: file was detached'
+
+    def test_extract_items_from_dir(self, mocker, repo):
+        repo = repo.setup_one_pack(name='Pack')
+        list_items = ItemDetacher(client=API_CLIENT, file_path=repo.path).extract_items_from_dir()
+        assert len(list_items) == 8
+        for item in list_items:
+            assert 'Playbooks' in item.get('file_path') or 'Layouts' in item.get('file_path') \
+                   or 'IncidentTypes' in item.get('file_path') or 'IncidentTypes' in item.get('file_path')
+
+    @pytest.mark.parametrize(argnames='file_path, res', argvalues=[
+        ('Packs/Pack/Playbooks/Process_Survey_Response.yml', True),
+        ('Packs/Pack/Playbooks/Process_Survey_Response.md', False),
+        ('Packs/Pack/Scripts/Process_Survey_Response.yml', True),
+        ('Packs/Pack/Scripts/Process_Survey_Response.md', False)
+    ])
+    def test_is_valid_file_for_detach(self, file_path, res):
+        assert ItemDetacher(client=API_CLIENT).is_valid_file_for_detach(file_path=file_path) == res
+
+    @pytest.mark.parametrize(argnames='file_path, res', argvalues=[
+        ('Packs/Pack/Playbooks/Process_Survey_Response.yml', 'yml'),
+        ('Packs/Pack/Playbooks/Process_Survey_Response.md', 'yml'),
+        ('Packs/Pack/IncidentTypes/Process_Survey_Response.json', 'json'),
+        ('Packs/Pack/Layouts/Process_Survey_Response.json', 'json')
+    ])
+    def test_find_item_type_to_detach(self, file_path, res):
+        assert ItemDetacher(client=API_CLIENT).find_item_type_to_detach(file_path=file_path) == res
+
+    def test_find_item_id_to_detach(self, repo):
+        pack = repo.create_pack("Pack1")
+        playbook1 = pack.create_playbook('MyPlay1')
+        playbook1.create_default_playbook()
+        assert ItemDetacher(client=API_CLIENT,
+                            file_path=f"{playbook1.path}/MyPlay1.yml").find_item_id_to_detach() == 'sample playbook'
+
+    def test_detach_item_manager(self, mocker, repo):
+        mock_api_client(mocker)
+        mocker.patch.object(API_CLIENT, 'generic_request', return_value=[json.dumps([{'name': 'TestPack'}])])
+
+        repo = repo.setup_one_pack(name='Pack')
+        detached_items_ids = ItemDetacher(client=API_CLIENT, file_path=repo.path).detach_item_manager()
+        assert len(detached_items_ids) == 8
+        for file_id in detached_items_ids:
+            assert file_id in ['Pack_playbook', 'job-Pack_playbook', 'job-Pack_all_feeds_playbook',
+                               'Pack_integration_test_playbook', 'Pack_script_test_playbook',
+                               'Pack - layoutcontainer', 'Pack - layout', 'Pack - incident_type']
+
+        detached_items_ids = ItemDetacher(client=API_CLIENT, file_path=f'{repo._pack_path}/Playbooks/Pack_playbook.yml').detach_item_manager()
+        assert len(detached_items_ids) == 1
+        assert detached_items_ids == ['Pack_playbook']
 
 
 def exception_raiser(**kwargs):

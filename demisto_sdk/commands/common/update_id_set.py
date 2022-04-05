@@ -1,7 +1,6 @@
 import copy
 import glob
 import itertools
-import json
 import os
 import re
 import time
@@ -26,13 +25,18 @@ from demisto_sdk.commands.common.constants import (
     LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR, MP_V2_ID_SET_PATH, REPORTS_DIR,
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, FileType,
     MarketplaceVersions)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_current_repo, get_file,
                                                get_item_marketplaces, get_json,
                                                get_pack_name, get_yaml,
                                                print_color, print_error,
                                                print_warning)
-from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
+from demisto_sdk.commands.unify.integration_script_unifier import \
+    IntegrationScriptUnifier
+
+json = JSON_Handler()
+
 
 CONTENT_ENTITIES = ['Packs', 'Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
@@ -356,7 +360,7 @@ def get_filters_and_transformers_from_playbook(data_dict: dict) -> Tuple[list, l
 
 
 def get_integration_api_modules(file_path, data_dictionary, is_unified_integration):
-    unifier = YmlUnifier(os.path.dirname(file_path))
+    unifier = IntegrationScriptUnifier(os.path.dirname(file_path))
     if is_unified_integration:
         integration_script_code = data_dictionary.get('script', {}).get('script', '')
     else:
@@ -836,12 +840,20 @@ def get_incident_field_data(path: str, incident_types: List, packs: Dict[str, Di
     if field_calculations_scripts:
         all_scripts = all_scripts.union({field_calculations_scripts})
 
+    # save cliName and name of all aliases fields in a single list
+    aliases: List[str] = sum(([field['cliName'], field['name']] for field in json_data.get('Aliases', [])), [])
+    cli_name = json_data.get('cliName')
+
     data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
 
     if all_associated_types:
         data['incident_types'] = list(all_associated_types)
     if all_scripts:
         data['scripts'] = list(all_scripts)
+    if aliases:
+        data['aliases'] = aliases
+    if cli_name:
+        data['cliname'] = cli_name
     if does_dict_have_alternative_key(json_data):
         data['has_alternative_meta'] = True
 
@@ -1209,7 +1221,7 @@ def process_script(file_path: str, packs: Dict[str, Dict], marketplace: str, pri
                 res.append(get_script_data(file_path, packs=packs))
         else:
             # package script
-            unifier = YmlUnifier(file_path)
+            unifier = IntegrationScriptUnifier(file_path)
             yml_path, code = unifier.get_script_or_integration_package_data()
             if should_skip_item_by_mp(yml_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs):
                 return [], excluded_items_from_id_set

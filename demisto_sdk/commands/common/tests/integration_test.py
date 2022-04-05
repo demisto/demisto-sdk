@@ -23,8 +23,8 @@ FEED_REQUIRED_PARAMS_STRUCTURE = [dict(required_param.get('must_equal'), **requi
                                        name=required_param.get('name')) for required_param in FEED_REQUIRED_PARAMS]
 
 
-def mock_structure(file_path=None, current_file=None, old_file=None, quite_bc=False):
-    # type: (Optional[str], Optional[dict], Optional[dict]) -> StructureValidator
+def mock_structure(file_path=None, current_file=None, old_file=None, quiet_bc=False):
+    # type: (Optional[str], Optional[dict], Optional[dict], Optional[bool]) -> StructureValidator
     with patch.object(StructureValidator, '__init__', lambda a, b: None):
         structure = StructureValidator(file_path)
         structure.is_valid = True
@@ -34,7 +34,7 @@ def mock_structure(file_path=None, current_file=None, old_file=None, quite_bc=Fa
         structure.old_file = old_file
         structure.prev_ver = 'master'
         structure.branch_name = ''
-        structure.quite_bc = quite_bc
+        structure.quiet_bc = quiet_bc
         return structure
 
 
@@ -65,8 +65,8 @@ class TestIntegrationValidator:
         structure = mock_structure("", current_file, old_file)
         validator = IntegrationValidator(structure)
         assert validator.is_added_required_fields() is answer
-        structure.quite_bc = True
-        assert validator.is_added_required_fields() is False  # if quite_bc is true should always succeed
+        structure.quiet_bc = True
+        assert validator.is_added_required_fields() is False  # if quiet_bc is true should always succeed
 
     IS_CHANGED_REMOVED_YML_FIELDS_INPUTS = [
         ({"script": {"isfetch": True, "feed": False}}, {"script": {"isfetch": True, "feed": False}}, False),
@@ -94,8 +94,8 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_changed_removed_yml_fields() is answer
         assert validator.is_valid is not answer
-        structure.quite_bc = True
-        assert validator.is_changed_removed_yml_fields() is False  # if quite_bc is true should always succeed
+        structure.quiet_bc = True
+        assert validator.is_changed_removed_yml_fields() is False  # if quiet_bc is true should always succeed
 
     IS_REMOVED_INTEGRATION_PARAMETERS_INPUTS = [
         ({"configuration": [{"name": "test"}]}, {"configuration": [{"name": "test"}]}, False),
@@ -121,8 +121,8 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_removed_integration_parameters() is answer
         assert validator.is_valid is not answer
-        structure.quite_bc = True
-        assert validator.is_removed_integration_parameters() is False  # if quite_bc is true should always succeed
+        structure.quiet_bc = True
+        assert validator.is_removed_integration_parameters() is False  # if quiet_bc is true should always succeed
 
     CONFIGURATION_JSON_1 = {"configuration": [{"name": "test", "required": False}, {"name": "test1", "required": True}]}
     EXPECTED_JSON_1 = {"test": False, "test1": True}
@@ -158,8 +158,8 @@ class TestIntegrationValidator:
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
         assert validator.is_changed_context_path() is answer
-        structure.quite_bc = True
-        assert validator.is_changed_context_path() is False  # if quite_bc is true should always succeed
+        structure.quiet_bc = True
+        assert validator.is_changed_context_path() is False  # if quiet_bc is true should always succeed
 
     CHANGED_COMMAND_INPUT_1 = [{"name": "test", "arguments": [{"name": "test"}]}]
     CHANGED_COMMAND_INPUT_2 = [{"name": "test", "arguments": [{"name": "test1"}]}]
@@ -186,8 +186,8 @@ class TestIntegrationValidator:
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
         assert validator.is_changed_command_name_or_arg() is answer
-        structure.quite_bc = True
-        assert validator.is_changed_command_name_or_arg() is False  # if quite_bc is true should always succeed
+        structure.quiet_bc = True
+        assert validator.is_changed_command_name_or_arg() is False  # if quiet_bc is true should always succeed
 
     WITHOUT_DUP = [{"name": "test"}, {"name": "test1"}]
     DUPLICATE_PARAMS_INPUTS = [
@@ -318,8 +318,8 @@ class TestIntegrationValidator:
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
         assert validator.is_changed_subtype() is answer
-        structure.quite_bc = True
-        assert validator.is_changed_subtype() is False  # if quite_bc is true should always succeed
+        structure.quiet_bc = True
+        assert validator.is_changed_subtype() is False  # if quiet_bc is true should always succeed
 
     INPUTS_VALID_SUBTYPE_TEST = [
         (PYTHON2_SUBTYPE, True),
@@ -450,8 +450,8 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.is_outputs_for_reputations_commands_valid() is answer
-        structure.quite_bc = True
-        assert validator.is_outputs_for_reputations_commands_valid() is True  # if quite_bc is true should succeed
+        structure.quiet_bc = True
+        assert validator.is_outputs_for_reputations_commands_valid() is True  # if quiet_bc is true should succeed
 
     CASE_EXISTS_WITH_DEFAULT_TRUE = [
         {"name": "endpoint", "arguments": [{"name": "ip", "required": False, "default": True}],
@@ -639,8 +639,8 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.is_not_valid_display_configuration() is not answer
-        structure.quite_bc = True
-        assert validator.is_not_valid_display_configuration() is False  # if quite_bc is true should always succeed
+        structure.quiet_bc = True
+        assert validator.is_not_valid_display_configuration() is False  # if quiet_bc is true should always succeed
 
     VALID_FEED = [
         # Valid feed
@@ -844,7 +844,6 @@ class TestIntegrationValidator:
         Then
             - an integration with an invalid file path is invalid.
         """
-
         structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
         validator = IntegrationValidator(structure_validator)
         validator.file_path = 'Packs/VirusTotal/Integrations/VirusTotal/integration-VirusTotal_5.5.yml'
@@ -1057,6 +1056,17 @@ class TestIsFetchParamsExist:
         self.validator.current_file['configuration'] = [t for t in self.validator.current_file['configuration']
                                                         if t['name'] != 'incidentType']
         assert self.validator.is_valid_fetch() is False, 'is_valid_fetch() returns True instead False'
+
+    def test_missing_max_fetch_text(self, capsys):
+        # missing param in configuration
+        self.validator.current_file['configuration'] = [t for t in self.validator.current_file['configuration']
+                                                        if t['name'] != 'incidentType']
+        assert self.validator.is_valid_fetch() is False
+        captured = capsys.readouterr()
+        out = captured.out
+        print(out)
+        assert "display: Incident type" not in out
+        assert '''A required parameter "incidentType" is missing from the YAML file.''' in out
 
     def test_missing_field(self):
         # missing param
@@ -1396,3 +1406,37 @@ class TestisContextChanged:
             res = validator.is_context_correct_in_readme()
             assert res == expected
         patcher.stop()
+
+    README_TEST_DATA = [(False, False, True),
+                        (False, True, True),
+                        (True, False, False),
+                        (True, True, True),
+                        ]
+
+    @pytest.mark.parametrize("remove_readme, validate_all, expected_result", README_TEST_DATA)
+    @pytest.mark.parametrize("unified", [True, False])
+    def test_validate_readme_exists(self, repo, unified, remove_readme, validate_all, expected_result):
+        """
+              Given:
+                  - An integration yml that was added or modified to validate
+
+              When:
+                    All the tests occur twice for unified integrations = [True - False]
+                  - The integration is missing a readme.md file in the same folder
+                  - The integration has a readme.md file in the same folder
+                  - The integration is missing a readme.md file in the same folder but has not been changed or added
+                      (This check is for backward compatibility)
+
+              Then:
+                  - Ensure readme exists and validation fails
+                  - Ensure readme exists and validation passes
+                  - Ensure readme exists and validation passes
+        """
+        read_me_pack = repo.create_pack('README_test')
+        integration = read_me_pack.create_integration('integration1', create_unified=unified)
+
+        structure_validator = StructureValidator(integration.yml.path)
+        integration_validator = IntegrationValidator(structure_validator, validate_all=validate_all)
+        if remove_readme:
+            os.remove(integration.readme.path)
+        assert integration_validator.validate_readme_exists(integration_validator.validate_all) is expected_result

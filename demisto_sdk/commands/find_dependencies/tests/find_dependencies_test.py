@@ -5,8 +5,8 @@ import networkx as nx
 import pytest
 
 import demisto_sdk.commands.create_id_set.create_id_set as cis
-from demisto_sdk.commands.common.constants import (DEFAULT_JOB_FROM_VERSION,
-                                                   FileType)
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION, FileType, MarketplaceVersions)
 from demisto_sdk.commands.find_dependencies.find_dependencies import (
     PackDependencies, calculate_single_pack_dependencies,
     get_packs_dependent_on_given_packs,
@@ -437,12 +437,15 @@ class TestIdSetFilters:
 
     def test_search_for_specific_pack_script_item(self, module_repo):
         pack_id = "PrismaCloudCompute"
-
+        import os
         expected_result = [
             {
                 "PrismaCloudComputeParseAuditAlert": {
                     "name": "PrismaCloudComputeParseAuditAlert",
-                    "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseAuditAlert/PrismaCloudComputeParseAuditAlert.yml",
+                    "file_path": os.path.join(
+                        module_repo.path,
+                        "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseAuditAlert/PrismaCloudComputeParseAuditAlert.yml"
+                    ),
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute",
@@ -452,7 +455,10 @@ class TestIdSetFilters:
             {
                 "PrismaCloudComputeParseCloudDiscoveryAlert": {
                     "name": "PrismaCloudComputeParseCloudDiscoveryAlert",
-                    "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseCloudDiscoveryAlert/PrismaCloudComputeParseCloudDiscoveryAlert.yml",
+                    "file_path": os.path.join(
+                        module_repo.path,
+                        "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseCloudDiscoveryAlert/PrismaCloudComputeParseCloudDiscoveryAlert.yml"
+                    ),
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute",
@@ -462,7 +468,10 @@ class TestIdSetFilters:
             {
                 "PrismaCloudComputeParseComplianceAlert": {
                     "name": "PrismaCloudComputeParseComplianceAlert",
-                    "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseComplianceAlert/PrismaCloudComputeParseComplianceAlert.yml",
+                    "file_path": os.path.join(
+                        module_repo.path,
+                        "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseComplianceAlert/PrismaCloudComputeParseComplianceAlert.yml"
+                    ),
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute",
@@ -472,7 +481,10 @@ class TestIdSetFilters:
             {
                 "PrismaCloudComputeParseVulnerabilityAlert": {
                     "name": "PrismaCloudComputeParseVulnerabilityAlert",
-                    "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseVulnerabilityAlert/PrismaCloudComputeParseVulnerabilityAlert.yml",
+                    "file_path": os.path.join(
+                        module_repo.path,
+                        "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseVulnerabilityAlert/PrismaCloudComputeParseVulnerabilityAlert.yml"
+                    ),
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "pack": "PrismaCloudCompute",
@@ -1473,6 +1485,57 @@ class TestDependsOnPlaybook:
 
         assert set(found_result) == set(expected_result)
 
+    @staticmethod
+    def test_collect_playbook_dependencies_with_field_aliasing():
+        playbook_info = {
+            'Playbook': {
+                'name': 'Cookbook',
+                'pack': 'Cookbook',
+                'marketplaces': [
+                    'xsoar',
+                    'marketplacev2',
+                ],
+                'implementing_scripts': [
+                ],
+                'implementing_playbooks': [
+                ],
+                'command_to_integration': {
+                },
+                'incident_fields': [
+                    'filenames',
+                ],
+            }
+        }
+        id_set = {
+            'scripts': [],
+            'integrations': [],
+            'playbooks': [],
+            'Lists': [],
+            'IndicatorFields': [],
+            'IncidentFields': [
+                {
+                    'incident_filename': {
+                        'name': 'File Name',
+                        'pack': 'CoreAlertFields',
+                        'marketplaces': ['marketplacev2'],
+                        'aliases': ['filenames', 'File Names'],
+                    }
+                },
+                {
+                    'incident_filenames': {
+                        'name': 'File Names',
+                        'pack': 'CommonTypes',
+                        'marketplaces': ['xsoar'],
+                        'cliname': 'filenames',
+                    }
+                },
+            ],
+        }
+        found_result = PackDependencies._collect_playbooks_dependencies([playbook_info], id_set, True,
+                                                                        marketplace=MarketplaceVersions.MarketplaceV2.value)
+
+        assert set(found_result) == {('CoreAlertFields', True)}
+
 
 class TestDependsOnLayout:
     @pytest.mark.parametrize('pack_name, expected_dependencies', [
@@ -2313,6 +2376,64 @@ class TestDependsOnMappers:
 
         assert set(found_result) == set(expected_result)
 
+    @staticmethod
+    def test_collect_mapper_dependencies_with_field_aliasing():
+        """
+        Given
+            - An xsoar-only incident field.
+            - An incident field with alias of the first field.
+            - A mapper using the xsoar-only field.
+
+        When
+            creating an ID set for marketplacev2
+
+        Then
+            the ID set should not filter the mapper.
+
+        """
+        mapper_info = {
+            'Mapper': {
+                'name': 'Agari Phishing Defense - Mapper',
+                'pack': 'AgariPhishingDefense',
+                'marketplaces': [
+                    'xsoar',
+                    'marketplacev2',
+                ],
+                'incident_types': [],
+                'incident_fields': [
+                    'File Names',
+                ],
+            }
+        }
+        id_set = {
+            'GenericFields': [],
+            'GenericTypes': [],
+            'IncidentFields': [
+                {
+                    'incident_filename': {
+                        'name': 'File Name',
+                        'pack': 'CoreAlertFields',
+                        'marketplaces': ['marketplacev2'],
+                        'aliases': ['filenames', 'File Names'],
+                    }
+                },
+                {
+                    'incident_filenames': {
+                        'name': 'File Names',
+                        'pack': 'CommonTypes',
+                        'marketplaces': ['xsoar'],
+                        'cliname': 'filenames',
+                    }
+                },
+            ],
+            'IncidentTypes': [],
+            'scripts': []
+        }
+        found_result = PackDependencies._collect_mappers_dependencies([mapper_info], id_set, True,
+                                                                      marketplace=MarketplaceVersions.MarketplaceV2.value)
+
+        assert set(found_result) == {('CoreAlertFields', True)}
+
 
 class TestDependsOnWidgets:
     def test_collect_widgets_dependencies(self, module_repo):
@@ -2477,7 +2598,7 @@ class TestDependsOnJob:
                     "pack": "pack0",
                     "playbookId": "Pentera Run Scan",
                     "selectedFeeds": selected_feeds,
-                    "fromVersion": DEFAULT_JOB_FROM_VERSION
+                    "fromVersion": FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)
                 }
             }
         ]
@@ -2509,7 +2630,7 @@ class TestDependsOnJob:
                     "pack": "pack0",
                     "playbookId": "Pentera Run Scan",
                     "selectedFeeds": selected_feeds,
-                    "fromVersion": DEFAULT_JOB_FROM_VERSION
+                    "fromVersion": FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)
                 }
             }
         ]

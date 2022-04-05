@@ -174,7 +174,6 @@ jobs:
         - checkout
         - attach_workspace:
             at: ~/project
-        - <<: *install_demisto_sdk
         - <<: *install_build_dependencies
         - <<: *install_node_ci
         - run:
@@ -196,7 +195,7 @@ jobs:
               poetry run demisto-sdk -v
               export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
 
-              gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
+              poetry run gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
               poetry run demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json --fail-duplicates
         - run:
             name: Test validate files and yaml

@@ -376,23 +376,24 @@ def get_integration_data(file_path, packs: Dict[str, Dict] = None):
 
     id_ = data_dictionary.get('commonfields', {}).get('id', '-')
     name = data_dictionary.get('name', '-')
+    script = data_dictionary.get('script', {})
 
-    type_ = data_dictionary.get('type', '')
+    type_ = script.get('type', '')
     if type_ == 'python':
-        type_ = data_dictionary.get('subtype', type_)
+        type_ = script.get('subtype', type_)
     deprecated = data_dictionary.get('deprecated', False)
     tests = data_dictionary.get('tests')
     toversion = data_dictionary.get('toversion')
     fromversion = data_dictionary.get('fromversion')
-    docker_image = data_dictionary.get('script', {}).get('dockerimage')
-    commands = data_dictionary.get('script', {}).get('commands', [])
+    docker_image = script.get('dockerimage')
+    commands = script.get('commands', [])
     cmd_list = [command.get('name') for command in commands]
     pack = get_pack_name(file_path)
     integration_api_modules = get_integration_api_modules(file_path, data_dictionary, is_unified_integration)
     default_classifier = data_dictionary.get('defaultclassifier')
     default_incident_type = data_dictionary.get('defaultIncidentType')
-    is_fetch = data_dictionary.get('script', {}).get('isfetch', False)
-    is_feed = data_dictionary.get('script', {}).get('feed', False)
+    is_fetch = script.get('isfetch', False)
+    is_feed = script.get('feed', False)
     marketplaces = get_item_marketplaces(file_path, item_data=data_dictionary, packs=packs)
     mappers = set()
 

@@ -406,9 +406,6 @@ class ValidateManager:
 
         return all(content_entities_validation_results)
 
-    def foo(self):
-        return 'foo'
-
     def run_validation_on_package(self, package_path, pack_error_ignore_list):
         package_entities_validation_results = set()
 

@@ -853,8 +853,8 @@ def get_integration_command_names(file_path):
             integration_path_full = os.path.join(integrations_dir_path, integration, f'{integration}.yml')
             yml_dict = get_yaml(integration_path_full)
             commands = yml_dict.get("script", {}).get('commands', [])
-            command_names.update({command.get('name') for command in commands})
-            command_names.update(integration)
+            command_names.union({command.get('name') for command in commands})
+            command_names.union(integration)
 
         click.secho(f'commands names: {command_names}')
     return command_names
@@ -884,7 +884,8 @@ def get_scripts_names(file_path):
         for script in found_scripts:
             script_path_full = os.path.join(scripts_dir_path, script, f'{script}.yml')
             yml_dict = get_yaml(script_path_full)
-            scripts_names.update(yml_dict.get("name"))
+            print(f'name: {yml_dict.get("name")}')
+            scripts_names.add(yml_dict.get("name"))
 
         click.secho(f'scripts names: {scripts_names}')
     return scripts_names

@@ -449,6 +449,8 @@ WORDS = [
     ('AGoodSpelledWord', True, True),
     ('IPs', False, False),
     ('IPs**', False, False),
+    ('invalid-word-kebabb-casee', True, True),
+    ('valid-word-kebab-case', False, False)
 ]
 
 

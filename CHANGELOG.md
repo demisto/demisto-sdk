@@ -5,6 +5,7 @@ the same as the last release note version.
 * Fixed an issue where *dockerimage* changes in Scripts weren't recognized by the **update-release-notes** command.
 * Fixed an issue where **update-xsoar-config-file** did not properly insert the marketplace packs list to the file.
 * Added the pack name to the known words by default when running the **doc-review** command.
+Added the integration name, the commands name and the script name to the known words by default when running the **doc-review** command.
 
 # 1.6.3
 * **Breaking change**: Fixed a typo in the **validate** `--quiet-bc-validation` flag (was `--quite-bc-validation`). @upstart-swiss

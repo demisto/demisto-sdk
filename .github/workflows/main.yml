@@ -15,20 +15,22 @@ jobs:
         uses: tj-actions/verify-changed-files@v9
         id: need-changelog
         with:
+          fetch-depth: 0 
           files: |
             **/*.py
             pyproject.toml
-      
+            
       - name: Check whether CHANGELOG.md changed
         uses: tj-actions/verify-changed-files@v9
         id: changelog-status
         with:
+          fetch-depth: 0
           files: CHANGELOG.md
-        
+            
       - name: Missing changed file
         if: |
-          steps.need-changelog.outputs.files_changed == 'true' &&
-          steps.changelog-status.outputs.files_changed == 'false'
+          steps.need-changelog.outputs.any_changed == 'true' &&
+          steps.changelog-status.outputs.any_modified == 'true'
         uses: actions/github-script@v3
         with:
           script: |

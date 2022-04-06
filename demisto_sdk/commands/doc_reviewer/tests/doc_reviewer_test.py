@@ -77,9 +77,8 @@ class TestDocReviewFilesAreFound:
             Ensure the files that git reports are the same found that are meant to be doc-reviewed.
         """
         changed_files_mock = [
-                                 valid_spelled_content_pack.integrations[0].yml.path,
-                                 valid_spelled_content_pack.scripts[0].yml.path
-                             ] + [rn.path for rn in valid_spelled_content_pack.release_notes]
+            valid_spelled_content_pack.integrations[0].yml.path, valid_spelled_content_pack.scripts[0].yml.path
+        ] + [rn.path for rn in valid_spelled_content_pack.release_notes]
 
         mocker.patch.object(
             DocReviewer,
@@ -168,7 +167,7 @@ class TestDocReviewOnReleaseNotesOnly:
         assert set(doc_reviewer.files) == {rn.path for rn in valid_spelled_content_pack.release_notes}
 
     def test_get_invalid_files_from_git_with_release_notes(
-            self, mocker, malformed_integration_yml, malformed_incident_field
+        self, mocker, malformed_integration_yml, malformed_incident_field
     ):
         """
         Given -
@@ -516,14 +515,12 @@ def test_having_two_known_words_files(repo, file_content, unknown_words, known_w
 
 @pytest.mark.parametrize('file_content, unknown_words, known_words_files_contents, packs_known_words_content, '
                          'review_success',
-                         [(
-                                 "This is nomnomone, nomnomtwo", set(), [["nomnomone"]], ["[known_words]", "nomnomtwo"],
-                                 True),
-                             ("This is nomnomone, nomnomtwo", {"nomnomone"}, [], ["[known_words]", "nomnomtwo"], False),
-                             ("This is nomnomone, nomnomtwo, nomnomthree", {"nomnomthree"}, [["nomnomone"]],
-                              ["[known_words]", "nomnomtwo"], False),
-                             ("This is nomnomone, nomnomtwo, nomnomthree", set(),
-                              [["nomnomone"], ["nomnomthree"]], ["[known_words]", "nomnomtwo"], True)])
+                         [("This is nomnomone, nomnomtwo", set(), [["nomnomone"]], ["[known_words]", "nomnomtwo"], True),
+                          ("This is nomnomone, nomnomtwo", {"nomnomone"}, [], ["[known_words]", "nomnomtwo"], False),
+                          ("This is nomnomone, nomnomtwo, nomnomthree", {"nomnomthree"}, [["nomnomone"]],
+                           ["[known_words]", "nomnomtwo"], False),
+                          ("This is nomnomone, nomnomtwo, nomnomthree", set(),
+                           [["nomnomone"], ["nomnomthree"]], ["[known_words]", "nomnomtwo"], True)])
 def test_adding_known_words_from_pack(repo, file_content, unknown_words, known_words_files_contents,
                                       packs_known_words_content, review_success):
     """
@@ -633,8 +630,7 @@ def test_having_two_file_paths_same_pack(repo, mocker, first_file_content, secon
                           ])
 def test_having_two_file_paths_different_pack(repo, mocker, first_file_content, second_file_content, unknown_word_calls,
                                               known_words_files_contents, review_success, misspelled_files_num,
-                                              first_packs_known_words_content, second_packs_known_words_content,
-                                              load_known_words_from_pack):
+                                              first_packs_known_words_content, second_packs_known_words_content, load_known_words_from_pack):
     """
     Given:
         - 2 release notes files with two misspelled words each.
@@ -796,7 +792,7 @@ def test_find_known_words_from_pack_ignore_commands_name(repo):
     pack_integration_path = os.path.join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
     valid_integration_yml = get_yaml(pack_integration_path)
     pack.create_integration(name="first_integration", yml=valid_integration_yml)
-    rn_file = pack.create_release_notes(version='1_0_0', content=f'azure-hidden-command \n azure-get-indicators')
+    rn_file = pack.create_release_notes(version='1_0_0', content='azure-hidden-command \n azure-get-indicators')
     doc_reviewer = DocReviewer(file_paths=[])
     with ChangeCWD(repo.path):
         found_known_words = doc_reviewer.find_known_words_from_pack(rn_file.path)[1]

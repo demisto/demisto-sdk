@@ -406,6 +406,9 @@ class ValidateManager:
 
         return all(content_entities_validation_results)
 
+    def do_nothing(self):
+        return
+
     def run_validation_on_package(self, package_path, pack_error_ignore_list):
         package_entities_validation_results = set()
 
@@ -1522,7 +1525,9 @@ class ValidateManager:
                 file_path = str(path)
 
             try:
-                formatted_path, old_path, valid_file_extension = self.check_file_relevance_and_format_path(file_path, old_path, old_format_files)
+                formatted_path, old_path, valid_file_extension = self.check_file_relevance_and_format_path(file_path,
+                                                                                                           old_path,
+                                                                                                           old_format_files)
                 valid_types.add(valid_file_extension)
                 if formatted_path:
                     if old_path:

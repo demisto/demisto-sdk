@@ -1,0 +1,23 @@
+# This is a basic workflow to help you get started with Actions
+
+name: ValidateChangelog
+
+on: pull_request
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      - name: Get Changelog Change Status
+        uses: tj-actions/verify-changed-files@v9
+        id: verify-changed-files
+        with:
+          files: |
+             CHANGELOG.md
+      - name: Missing changed file
+        if: steps.get-changelog-change-status.outputs.files_changed == 'false'
+        run: core.setFailed('Changefile has not changed')

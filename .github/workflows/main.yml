@@ -20,4 +20,7 @@ jobs:
         
       - name: Missing changed file
         if: steps.changelog-status.outputs.files_changed == 'false'
-        run: core.setFailed('No CHANGELOG.md update found')
+        uses: actions/github-script@v3
+        with:
+          script: |
+              core.setFailed('Missing CHANGELOG.md update!')

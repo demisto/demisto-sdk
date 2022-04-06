@@ -548,7 +548,7 @@ class ReadMeValidator(BaseValidator):
     @contextmanager
     def start_mdx_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None):
         if not ReadMeValidator.are_modules_installed_for_verify(get_content_path(), True):
-            return False 
+            return False
 
         with ReadMeValidator._MDX_SERVER_LOCK:
             if not ReadMeValidator._MDX_SERVER_PROCESS:

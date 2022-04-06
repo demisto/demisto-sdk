@@ -20,4 +20,4 @@ jobs:
         
       - name: Missing changed file
         if: steps.changelog-status.outputs.files_changed == 'false'
-        run: core.setFailed('Changefile has not changed')
+        run: core.setFailed('No CHANGELOG.md update found')

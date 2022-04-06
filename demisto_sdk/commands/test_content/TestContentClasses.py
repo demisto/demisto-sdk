@@ -463,6 +463,7 @@ class BuildContext:
     def __init__(self, kwargs: dict, logging_module: ParallelLoggingManager):
         self.logging_module: ParallelLoggingManager = logging_module
         self.api_key = kwargs['api_key']
+        self.auth_id = kwargs.get('auth_id')
         self.server = kwargs['server']
         self.conf, self.secret_conf = self._load_conf_files(kwargs['conf'], kwargs['secret'])
         self.env_json = self._load_env_results_json()
@@ -514,6 +515,7 @@ class BuildContext:
         """
         tmp_client = demisto_client.configure(base_url=server_url,
                                               api_key=self.api_key,
+                                              auth_id=self.auth_id,
                                               verify_ssl=False)
         self.logging_module.debug('Getting all integrations instances')
         try:
@@ -1992,13 +1994,17 @@ class ServerContext:
         Iterates the mockable tests queue and executes them as long as there are tests to execute
         """
         self.proxy.configure_proxy_in_demisto(proxy=self.proxy.ami.internal_ip + ':' + self.proxy.PROXY_PORT,
-                                              username=self.build_context.secret_conf.server_username,
-                                              password=self.build_context.secret_conf.server_password,
+                                              username=self.build_context.secret_conf.server_username if not self.build_context.auth_id else None,
+                                              password=self.build_context.secret_conf.server_password if not self.build_context.auth_id else None,
+                                              api_key=self.build_context.api_key,
+                                              auth_id=self.build_context.auth_id,
                                               server=self.server_url)
         self._execute_tests(self.build_context.mockable_tests_to_run)
         self.proxy.configure_proxy_in_demisto(proxy='',
-                                              username=self.build_context.secret_conf.server_username,
-                                              password=self.build_context.secret_conf.server_password,
+                                              username=self.build_context.secret_conf.server_username if not self.build_context.auth_id else None,
+                                              password=self.build_context.secret_conf.server_password if not self.build_context.auth_id else None,
+                                              api_key=self.build_context.api_key,
+                                              auth_id=self.build_context.auth_id,
                                               server=self.server_url)
 
     def _execute_failed_tests(self):
@@ -2036,6 +2042,7 @@ class ServerContext:
             del self.client
         self.client = demisto_client.configure(base_url=self.server_url,
                                                api_key=self.build_context.api_key,
+                                               auth_id=self.build_context.auth_id,
                                                verify_ssl=False)
 
     def _reset_containers(self):

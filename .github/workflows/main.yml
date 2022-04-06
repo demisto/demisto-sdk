@@ -28,7 +28,7 @@ jobs:
       - name: Missing changed file
         if: |
           steps.need-changelog.outputs.any_changed == 'true' &&
-          steps.changelog-status.outputs.any_modified == 'true'
+          steps.changelog-status.outputs.any_modified == 'false'
         uses: actions/github-script@v3
         with:
           script: |

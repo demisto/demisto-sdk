@@ -791,7 +791,7 @@ def test_find_known_words_from_pack_ignore_commands_name(repo):
 
     pack = repo.create_pack('test_pack')
     pack_integration_path = os.path.join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
-    valid_integration_yml = get_yaml(pack_integration_path)
+    valid_integration_yml = get_yaml(pack_integration_path, cache_clear=True)
     pack.create_integration(name="first_integration", yml=valid_integration_yml)
     rn_file = pack.create_release_notes(version='1_0_0', content='azure-hidden-command \n azure-get-indicators')
     doc_reviewer = DocReviewer(file_paths=[])

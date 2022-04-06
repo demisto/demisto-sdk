@@ -469,15 +469,16 @@ class TestPlaybook:
                 'id': incident_id,
                 'CustomFields': {}
             }
+            self.build_context.logging_module.info(f'{body=}')
             res = demisto_client.generic_request_func(self=client, method='POST',
                                                       path='/incident/close', body=body)
         except ApiException:
             self.build_context.logging_module.warning(
-                'Failed to close incident, error trying to communicate with demisto server')
+                f'Failed to close incident, error trying to communicate with demisto server: {res=}')
             return False
 
         if int(res[1]) != 200:
-            self.build_context.logging_module.warning(f'close incident failed with Status code {res[1]}')
+            self.build_context.logging_module.warning(f'Close incident failed with Status code {res[1]}')
             self.build_context.logging_module.warning(pformat(res))
             return False
 

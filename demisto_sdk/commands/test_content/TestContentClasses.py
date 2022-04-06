@@ -469,9 +469,10 @@ class TestPlaybook:
                 'id': incident_id,
                 'CustomFields': {}
             }
-            self.build_context.logging_module.info(f'{body=}')
             res = demisto_client.generic_request_func(self=client, method='POST',
                                                       path='/incident/close', body=body)
+            self.build_context.logging_module.info(f'Closed incident: {incident_id}, '
+                                                   f'because investigation completed successfully..')
         except ApiException:
             self.build_context.logging_module.warning(
                 f'Failed to close incident, error trying to communicate with demisto server.')
@@ -1758,7 +1759,7 @@ class TestContext:
                 docker_test_results = self._run_docker_threshold_test()
                 if not docker_test_results:
                     playbook_state = PB_Status.FAILED_DOCKER_TEST
-            self._clean_incident_if_successful(playbook_state)
+                self._clean_incident_if_successful(playbook_state)
         return playbook_state
 
     def _execute_unmockable_test(self) -> bool:

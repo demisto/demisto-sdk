@@ -165,7 +165,7 @@ class IntegrationScriptUnifier(YAMLUnifier):
                                                             contributor_url, author)
 
         if self.test:
-            yml_unified = self.add_test(yml_unified)
+            yml_unified = self.add_test_section(yml_unified)
 
         output_map = self.write_yaml_with_docker(yml_unified, self.yml_data, script_obj)
         unifier_outputs = list(output_map.keys()), self.yml_path, script_path, image_path, desc_path
@@ -173,7 +173,6 @@ class IntegrationScriptUnifier(YAMLUnifier):
 
         return unifier_outputs[0]
 
-    @staticmethod
     def add_test_section(self, unified_yml: Dict) -> Dict:
         """
             Args:
@@ -185,7 +184,7 @@ class IntegrationScriptUnifier(YAMLUnifier):
         to_append = ' - Test'
         if unified_yml.get('name'):
             unified_yml['name'] += to_append
-        if unified_yml.get('commonfields').get('id'):
+        if unified_yml.get('commonfields').get('id'):   # type:ignore
             unified_yml['commonfields']['id'] += to_append
         if not self.is_script_package:
             if unified_yml.get('display'):

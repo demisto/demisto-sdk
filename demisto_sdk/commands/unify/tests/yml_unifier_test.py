@@ -1042,7 +1042,7 @@ def test_add_contributors_support(tmp_path):
     assert unified_yml["display"] == 'Test Integration (Partner Contribution)'
 
 
-def test_add_test(tmp_path):
+def test_add_test_section(tmp_path):
     '''
         Given:
             - an Integration to unify
@@ -1059,7 +1059,7 @@ def test_add_test(tmp_path):
         'commonfields': {'id': 'Integration id'},
         'name': 'Integration name'
     }
-    unified = unifier.add_test(unified_yml)
+    unified = unifier.add_test_section(unified_yml)
     assert unified.get('display') == 'Integration display - Test'
     assert unified.get('name') == 'Integration name - Test'
     assert unified.get('commonfields').get('id') == 'Integration id - Test'
@@ -1071,17 +1071,17 @@ def test_empty_yml(tmp_path):
         - An empty unified yml
 
     When:
-        - calling the add_test when using the -t flag
+        - calling the add_test_section when using the -t flag
 
     Then:
         - Check that the function will not raise any errors.
     """
     unifier = IntegrationScriptUnifier(str(tmp_path))
-    unifier.add_test({})
+    unifier.add_test_section({})
 
 
 @pytest.mark.parametrize("flag", [True, False])
-def test_add_test_flag_integration(repo, flag):
+def test_add_test_section_flag_integration(repo, flag):
     """
         Given:
             - An integration with a name of sample(yml)
@@ -1113,7 +1113,7 @@ def test_add_test_flag_integration(repo, flag):
                 assert unified_yml_data.get('name') == 'Sample'
 
 
-def test_add_test_flag(repo):
+def test_add_test_section_flag(repo):
     """
         Given:
             - A script with the name sample_script(yml)

@@ -850,15 +850,14 @@ def get_integration_command_names(file_path):
         click.secho(f'no integrations found')
     else:
         for integration in found_integrations:
+            command_names.add(integration)
+
             integration_path_full = os.path.join(integrations_dir_path, integration, f'{integration}.yml')
             yml_dict = get_yaml(integration_path_full)
             commands = yml_dict.get("script", {}).get('commands', [])
-            command_names.union({command.get('name') for command in commands})
-            click.secho(f'commands names1: {command_names}')
-            command_names.add(integration)
-            click.secho(f'integration: {integration}')
+            command_names = command_names.union({command.get('name') for command in commands})
 
-        #click.secho(f'commands names3: {command_names}')
+        click.secho(f'commands names3: {command_names}')
     return command_names
 
 

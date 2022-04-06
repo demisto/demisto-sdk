@@ -474,7 +474,7 @@ class TestPlaybook:
                                                       path='/incident/close', body=body)
         except ApiException:
             self.build_context.logging_module.warning(
-                f'Failed to close incident, error trying to communicate with demisto server: {res=}')
+                f'Failed to close incident, error trying to communicate with demisto server.')
             return False
 
         if int(res[1]) != 200:

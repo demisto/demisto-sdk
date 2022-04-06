@@ -184,7 +184,7 @@ class IntegrationScriptUnifier(YAMLUnifier):
         to_append = ' - Test'
         if unified_yml.get('name'):
             unified_yml['name'] += to_append
-        if unified_yml.get('commonfields').get('id'):   # type:ignore
+        if unified_yml.get('commonfields', {}).get('id'):
             unified_yml['commonfields']['id'] += to_append
         if not self.is_script_package:
             if unified_yml.get('display'):

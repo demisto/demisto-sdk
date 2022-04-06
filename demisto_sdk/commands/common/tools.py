@@ -830,8 +830,9 @@ def add_default_pack_known_words(file_path):
     """
     Ignores the pack's content:
     1. Pack's name.
-    2. Integrations name'.
+    2. Integrations name.
     3. Integrations command names'.
+    4. Scripts name.
 
     Note: please add to this function any further ignores in the future.
     Args:

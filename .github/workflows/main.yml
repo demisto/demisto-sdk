@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Check whether a changelog is necessary
+      - name: Find changed files that require changelog update
         uses: tj-actions/changed-files@v18.6
         id: need-changelog
         with:
@@ -19,13 +19,13 @@ jobs:
             **/*.py
             pyproject.toml
             
-      - name: Check whether CHANGELOG.md changed
+      - name: Check whether CHANGELOG.md has been modified
         uses: tj-actions/changed-files@v18.6
         id: changelog-status
         with:
           files: CHANGELOG.md
             
-      - name: Missing changed file
+      - name: Missing CHANGELOG.md update
         if: |
           steps.need-changelog.outputs.any_changed == 'true' &&
           steps.changelog-status.outputs.any_modified == 'false'

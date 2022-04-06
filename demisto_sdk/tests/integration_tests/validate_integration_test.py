@@ -23,6 +23,7 @@ from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
@@ -3000,6 +3001,7 @@ class TestAllFilesValidator:
         mocker.patch.object(tools, 'is_external_repository', return_value=False)
         mocker.patch.object(PackUniqueFilesValidator, 'are_valid_files', return_value='')
         mocker.patch.object(ValidateManager, 'validate_readme', return_value=True)
+        mocker.patch.object(ReadMeValidator, 'are_modules_installed_for_verify', return_value=True)
         pack1 = repo.create_pack('PackName1')
         pack1.author_image.write(DEFAULT_IMAGE_BASE64)
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
@@ -3046,6 +3048,7 @@ class TestAllFilesValidator:
         mocker.patch.object(PackUniqueFilesValidator, 'are_valid_files', return_value='')
         mocker.patch.object(ValidateManager, 'validate_readme', return_value=True)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
+        mocker.patch.object(ReadMeValidator, 'are_modules_installed_for_verify', return_value=True)
         pack1 = repo.create_pack('PackName1')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path, cache_clear=True)

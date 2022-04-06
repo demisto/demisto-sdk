@@ -327,15 +327,15 @@ class DocReviewer:
         else:
             sub_words.append(word)
 
-        self.unknown_words[word] = []
+        self.unknown_words[word] = set()
         for sub_word in sub_words:
             sub_word = self.remove_punctuation(sub_word)
             if sub_word.isalpha() and self.spellchecker.unknown([sub_word]):
-                self.unknown_words[word].extend(list(self.spellchecker.candidates(sub_word))[:5])
+                self.unknown_words[word].update(list(self.spellchecker.candidates(sub_word))[:5])
 
         if not self.unknown_words[word]:
             del self.unknown_words[word]
-        if word in self.unknown_words.keys() and word in self.unknown_words[word]:
+        elif word in self.unknown_words[word]:
             # Do not suggest the same word as a correction.
             self.unknown_words[word].remove(word)
 

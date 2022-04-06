@@ -17,7 +17,7 @@ from functools import lru_cache
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
-from typing import Callable, Dict, List, Match, Optional, Tuple, Union
+from typing import Callable, Dict, List, Match, Optional, Tuple, Union, Set
 
 import click
 import colorama
@@ -860,7 +860,7 @@ def get_integration_name_and_command_names(file_path):
 
     """
     integrations_dir_path = os.path.join(PACKS_DIR, get_pack_name(file_path), INTEGRATIONS_DIR)
-    command_names = set()
+    command_names: Set[str] = set()
     if not glob.glob(integrations_dir_path):
         return command_names
 
@@ -889,7 +889,7 @@ def get_scripts_names(file_path):
 
     """
     scripts_dir_path = os.path.join(PACKS_DIR, get_pack_name(file_path), SCRIPTS_DIR)
-    scripts_names = set()
+    scripts_names: Set[str] = set()
     if not glob.glob(scripts_dir_path):
         click.secho(f'no scripts path found')
         return scripts_names

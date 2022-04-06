@@ -19,7 +19,6 @@ jobs:
           files: |
             **/*.py
             pyproject.toml
-            poetry.lock
       
       - name: Check whether CHANGELOG.md changed
         uses: tj-actions/verify-changed-files@v9

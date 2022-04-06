@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Check whether a changelog is necessary
-        uses: tj-actions/verify-changed-files@v9
+        uses: tj-actions/changed-files@v18.6
         id: need-changelog
         with:
           fetch-depth: 0 
@@ -21,7 +21,7 @@ jobs:
             pyproject.toml
             
       - name: Check whether CHANGELOG.md changed
-        uses: tj-actions/verify-changed-files@v9
+        uses: tj-actions/changed-files@v18.6
         id: changelog-status
         with:
           fetch-depth: 0

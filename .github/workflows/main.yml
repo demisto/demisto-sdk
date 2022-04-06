@@ -12,9 +12,9 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
 
-      - name: changelog-status
+      - name: Check whether CHANGELOG.md changed
         uses: tj-actions/verify-changed-files@v9
-        id: verify-changed-files
+        id: changelog-status
         with:
           files: CHANGELOG.md
         

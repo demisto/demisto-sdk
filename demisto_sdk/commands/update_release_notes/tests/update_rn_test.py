@@ -1,7 +1,8 @@
-import json
+import glob
 import os
 import shutil
 import unittest
+from collections import Counter
 from typing import Dict, Optional
 
 import mock
@@ -9,10 +10,13 @@ import pytest
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION, FileType)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.common.update_id_set import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+
+json = JSON_Handler()
 
 
 class TestRNUpdate(unittest.TestCase):
@@ -946,7 +950,6 @@ class TestRNUpdateUnit:
             - Case 4: Return True and throw error saying "The master branch is currently ahead of
                       your pack's version. Please pull from master and re-run the command."
         """
-        import json
         from subprocess import Popen
 
         from demisto_sdk.commands.update_release_notes.update_rn import \
@@ -1093,6 +1096,34 @@ class TestRNUpdateUnit:
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command', return_value=return_value)
 
         assert check_docker_image_changed(main_branch='origin/master', packfile='test.yml') is None
+
+    @pytest.mark.parametrize('return_value_mock',
+                             [('+  dockerimage: demisto/python3:3.9.8.24399'),
+                              ('+dockerimage: demisto/python3:3.9.8.24399')])
+    def test_check_docker_image_changed(self, mocker, return_value_mock):
+        """
+        This test checks that for both integration and script YMLs, where the docker image resides at a different level,
+        changes made to this key are found correctly by 'check_docker_image_changed' function.
+        Given
+            - Case 1: a git diff mock of a modified integration .yml file where the docker is changed and there're spaces between the
+            '+' and the dockerimage
+            - Case 2: a git diff mock of a modified sccript .yml file where the docker is changed and there's no space between the
+            '+' and the dockerimage
+        When
+            - calling the check_docker_image_changed function
+        Then
+            Ensure that the dockerimage was extracted correctly for each case where each case demonstrate either integration
+            yml or Script yml.
+            - Case 1: Should extract the dockerimage version for integration yml demonstration.
+            - Case 2: Should extract the dockerimage version for script yml demonstration.
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            check_docker_image_changed
+
+        return_value = '+  dockerimage: demisto/python3:3.9.8.24399'
+
+        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command', return_value=return_value)
+        assert check_docker_image_changed(main_branch='origin/master', packfile='test.yml') == 'demisto/python3:3.9.8.24399'
 
     def test_update_docker_image_in_yml(self, mocker):
         """
@@ -1457,3 +1488,38 @@ def test_force_and_text_update_rn(repo, text, expected_rn_string):
 
     rn_string = client.build_rn_template({})
     assert rn_string == expected_rn_string
+
+
+CREATE_MD_IF_CURRENTVERSION_IS_HIGHER_TEST_BANK_ = [(['0_0_1'], ['0_0_1', '0_0_3'])]
+
+
+@pytest.mark.parametrize('first_expected_results, second_expected_results', CREATE_MD_IF_CURRENTVERSION_IS_HIGHER_TEST_BANK_)
+def test_create_md_if_currentversion_is_higher(mocker, first_expected_results, second_expected_results, repo):
+    """
+        Given:
+            - Case 1: the expected RN files.
+        When:
+            - creating a new markdown file.
+        Then:
+            Ensure that the creation was done correctly although the currentversion wasn't matching the latest RN.
+            - Case 1: Should create a new RN according to currentversion.
+    """
+    yml_mock = {'display': 'test', 'script': {'type': 'python', 'dockerimage': 'demisto/python3:3.9.5.123'}}
+    pack = repo.create_pack('PackName')
+    mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.check_docker_image_changed',
+                 return_value='demisto/python3:3.9.5.124')
+    integration = pack.create_integration('integration', 'bla', yml_mock)
+    integration.create_default_integration()
+    integration.yml.update({'display': 'Sample1'})
+    pack.pack_metadata.write_json({'currentVersion': '0.0.1'})
+    client = UpdateRN(pack_path=str(pack.path), update_type='revision',
+                      modified_files_in_pack={f'{str(integration.path)}/integration.yml'}, added_files=set())
+    client.execute_update()
+    updated_rn_folder = glob.glob(pack.path + '/ReleaseNotes/*')
+    updated_versions_list = [rn[rn.rindex('/') + 1:-3] for rn in updated_rn_folder]
+    assert Counter(first_expected_results) == Counter(updated_versions_list)
+    pack.pack_metadata.write_json({'currentVersion': '0.0.3'})
+    client.execute_update()
+    updated_rn_folder = glob.glob(pack.path + '/ReleaseNotes/*')
+    updated_versions_list = [rn[rn.rindex('/') + 1:-3] for rn in updated_rn_folder]
+    assert Counter(second_expected_results) == Counter(updated_versions_list)

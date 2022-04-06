@@ -1,4 +1,3 @@
-import json
 import os
 from typing import NamedTuple
 
@@ -9,8 +8,10 @@ from git import Repo
 from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
                                                             GitCredentials,
                                                             GitProvider)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 
+json = JSON_Handler()
 GIT_ROOT = git_path()
 VALID_GITLAB_RESPONSE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/valid_gitlab_search_response.json"
 

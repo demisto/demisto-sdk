@@ -3,7 +3,6 @@ This script is used to create a release notes template
 """
 import copy
 import errno
-import json
 import os
 import re
 from distutils.version import LooseVersion
@@ -15,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
     IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
@@ -27,6 +27,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_yaml, pack_name_to_path,
                                                print_color, print_error,
                                                print_warning, run_command)
+
+json = JSON_Handler()
 
 
 class UpdateRN:
@@ -826,7 +828,7 @@ def check_docker_image_changed(main_branch: str, packfile: str) -> Optional[str]
             if 'dockerimage:' in diff_line:  # search whether exists a line that notes that the Docker image was
                 # changed.
                 split_line = diff_line.split()
-                if split_line[0] == '+':
+                if split_line[0].startswith('+'):
                     return split_line[-1]
         return None
 

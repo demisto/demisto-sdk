@@ -1,5 +1,4 @@
 import glob
-import json
 import os
 import sys
 from copy import deepcopy
@@ -16,6 +15,7 @@ from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION, GENERIC_COMMANDS_NAMES,
     IGNORED_PACKS_IN_DEPENDENCY_CALC, PACKS_DIR)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (ProcessPoolHandler,
                                                get_content_id_set,
                                                get_content_path, get_pack_name,
@@ -27,6 +27,9 @@ from demisto_sdk.commands.common.update_id_set import (
     merge_id_sets, update_excluded_items_dict)
 from demisto_sdk.commands.create_id_set.create_id_set import (IDSetCreator,
                                                               get_id_set)
+
+json = JSON_Handler()
+
 
 MINIMUM_DEPENDENCY_VERSION = Version('6.0.0')
 COMMON_TYPES_PACK = 'CommonTypes'

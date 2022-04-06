@@ -1,16 +1,18 @@
 import io
-import json
 import os
 from pathlib import Path
 
 import pytest
 
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.convert.converters.layout.layout_6_0_0_converter import \
     LayoutSixConverter
 from TestSuite.pack import Pack as MockPack
 from TestSuite.repo import Repo
+
+json = JSON_Handler()
 
 
 def util_load_json(path):

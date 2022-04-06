@@ -1,5 +1,4 @@
 import io
-import json
 import math
 import os
 import string
@@ -9,19 +8,24 @@ from typing import DefaultDict
 import PyPDF2
 from bs4 import BeautifulSoup
 
-# secrets settings
-# Entropy score is determined by shanon's entropy algorithm, most English words will score between 1.5 and 3.5
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     PACKS_DIR, PACKS_INTEGRATION_README_REGEX, PACKS_WHITELIST_FILE_NAME,
     FileType, re)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_pack_name,
                                                is_file_path_in_pack,
                                                print_color, print_error,
                                                print_warning, run_command)
+
+json = JSON_Handler()
+
+
+# secrets settings
+# Entropy score is determined by shanon's entropy algorithm, most English words will score between 1.5 and 3.5
 
 ENTROPY_THRESHOLD = 4.0
 ACCEPTED_FILE_STATUSES = ['m', 'a']

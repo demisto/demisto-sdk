@@ -15,7 +15,6 @@ jobs:
         uses: tj-actions/changed-files@v18.6
         id: need-changelog
         with:
-          fetch-depth: 0 
           files: |
             **/*.py
             pyproject.toml
@@ -24,7 +23,6 @@ jobs:
         uses: tj-actions/changed-files@v18.6
         id: changelog-status
         with:
-          fetch-depth: 0
           files: CHANGELOG.md
             
       - name: Missing changed file

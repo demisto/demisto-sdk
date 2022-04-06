@@ -2102,29 +2102,25 @@ class ServerContext:
         """
         # we running XSIAM without proxy. This code wont be executed on xsiam servers
         if not IS_XSIAM:
-            self.proxy.configure_proxy_in_demisto(  # type: ignore[union-attr]
-                proxy=self.proxy.ami.internal_ip + ':' + self.proxy.PROXY_PORT,  # type: ignore[union-attr]
-                username=self.build_context.secret_conf.server_username,
-                password=self.build_context.secret_conf.server_password,
-                server=self.server_url)
-        self.proxy.configure_proxy_in_demisto(proxy=self.proxy.ami.internal_ip + ':' + self.proxy.PROXY_PORT,
-                                              username=self.build_context.secret_conf.server_username if not self.build_context.auth_id else None,
-                                              password=self.build_context.secret_conf.server_password if not self.build_context.auth_id else None,
-                                              api_key=self.build_context.api_key,
-                                              auth_id=self.build_context.auth_id,
-                                              server=self.server_url)
+            self.proxy.configure_proxy_in_demisto(      # type: ignore[union-attr]
+                proxy=self.proxy.ami.internal_ip + ':' + self.proxy.PROXY_PORT, # type: ignore[union-attr]
+                username=self.build_context.secret_conf.server_username if not self.build_context.auth_id else None,
+                password=self.build_context.secret_conf.server_password if not self.build_context.auth_id else None,
+                api_key=self.build_context.api_key,
+                auth_id=self.build_context.auth_id,
+                server=self.server_url
+            )
         self._execute_tests(self.build_context.mockable_tests_to_run)
         if not IS_XSIAM:
-            self.proxy.configure_proxy_in_demisto(proxy='',  # type: ignore[union-attr]
-                                                  username=self.build_context.secret_conf.server_username,
-                                                  password=self.build_context.secret_conf.server_password,
-                                                  server=self.server_url)
-        self.proxy.configure_proxy_in_demisto(proxy='',
-                                              username=self.build_context.secret_conf.server_username if not self.build_context.auth_id else None,
-                                              password=self.build_context.secret_conf.server_password if not self.build_context.auth_id else None,
-                                              api_key=self.build_context.api_key,
-                                              auth_id=self.build_context.auth_id,
-                                              server=self.server_url)
+
+            self.proxy.configure_proxy_in_demisto(
+                proxy='',  # type: ignore[union-attr]
+                username=self.build_context.secret_conf.server_username if not self.build_context.auth_id else None,
+                password=self.build_context.secret_conf.server_password if not self.build_context.auth_id else None,
+                api_key=self.build_context.api_key,
+                auth_id=self.build_context.auth_id,
+                server=self.server_url
+            )
 
     def _execute_failed_tests(self):
         self._execute_tests(self.build_context.test_retries_queue)

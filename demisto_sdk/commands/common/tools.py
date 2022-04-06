@@ -17,7 +17,7 @@ from functools import lru_cache
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
-from typing import Callable, Dict, List, Match, Optional, Tuple, Union, Set
+from typing import Callable, Dict, List, Match, Optional, Set, Tuple, Union
 
 import click
 import colorama

@@ -7,9 +7,10 @@ import pytest
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.tools import find_type, get_yaml
 from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
+from demisto_sdk.tests.integration_tests.validate_integration_test import \
+    AZURE_FEED_PACK_PATH
 from TestSuite.json_based import JSONBased
 from TestSuite.test_tools import ChangeCWD
-from demisto_sdk.tests.integration_tests.validate_integration_test import AZURE_FEED_PACK_PATH
 
 
 class TestDocReviewFilesAreFound:

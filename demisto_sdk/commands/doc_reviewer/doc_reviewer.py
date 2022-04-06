@@ -22,7 +22,7 @@ from demisto_sdk.commands.common.content.objects.abstract_objects import \
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
     YAMLContentObject
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.tools import find_type, get_pack_name, get_integration_command_names, get_scripts_names
+from demisto_sdk.commands.common.tools import find_type, add_default_pack_known_words
 from demisto_sdk.commands.doc_reviewer.known_words import KNOWN_WORDS
 from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
 
@@ -92,11 +92,7 @@ class DocReviewer:
         if 'Packs' in file_path_obj.parts:
             pack_name = file_path_obj.parts[file_path_obj.parts.index('Packs') + 1]
             packs_ignore_path = os.path.join("Packs", pack_name, PACKS_PACK_IGNORE_FILE_NAME)
-            default_pack_known_words = [
-                get_pack_name(file_path),
-            ]
-            default_pack_known_words.extend(get_integration_command_names(file_path))
-            default_pack_known_words.extend(get_scripts_names(file_path))
+            default_pack_known_words = add_default_pack_known_words(file_path)
             if os.path.isfile(packs_ignore_path):
                 config = ConfigParser(allow_no_value=True)
                 config.read(packs_ignore_path)

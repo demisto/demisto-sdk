@@ -826,13 +826,33 @@ def is_file_path_in_pack(file_path):
     return bool(re.findall(PACKS_DIR_REGEX, file_path))
 
 
-def get_integration_command_names(file_path):
+def add_default_pack_known_words(file_path):
     """
-    1. Get the RN file path
-    2. Check if integrations exist in the current pack
-    3. For each integration, load yml file
-    3. Keep in a set all the commands names
-    4. Keep in a set all the integrations names
+    Ignores the pack's content:
+    1. Pack's name.
+    2. Integrations name'.
+    3. Integrations command names'.
+
+    Note: please add to this function any further ignores in the future.
+    Args:
+        file_path: RN file path
+
+    Returns: A list of all the Pack's content the doc_reviewer should ignore.
+
+    """
+    default_pack_known_words = [get_pack_name(file_path), ]
+    default_pack_known_words.extend(get_integration_name_and_command_names(file_path))
+    default_pack_known_words.extend(get_scripts_names(file_path))
+    return default_pack_known_words
+
+
+def get_integration_name_and_command_names(file_path):
+    """
+    1. Get the RN file path.
+    2. Check if integrations exist in the current pack.
+    3. For each integration, load the yml file.
+    3. Keep in a set all the commands names.
+    4. Keep in a set all the integrations names.
     Args:
         file_path: RN file path
 
@@ -842,13 +862,10 @@ def get_integration_command_names(file_path):
     integrations_dir_path = os.path.join(PACKS_DIR, get_pack_name(file_path), INTEGRATIONS_DIR)
     command_names = set()
     if not glob.glob(integrations_dir_path):
-        click.secho(f'no integrations path found')
         return command_names
 
     found_integrations: List[str] = os.listdir(integrations_dir_path)
-    if len(found_integrations) == 0:
-        click.secho(f'no integrations found')
-    else:
+    if len(found_integrations) != 0:
         for integration in found_integrations:
             command_names.add(integration)
 
@@ -857,7 +874,6 @@ def get_integration_command_names(file_path):
             commands = yml_dict.get("script", {}).get('commands', [])
             command_names = command_names.union({command.get('name') for command in commands})
 
-        click.secho(f'commands names3: {command_names}')
     return command_names
 
 

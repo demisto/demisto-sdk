@@ -1065,6 +1065,21 @@ def test_add_test(tmp_path):
     assert unified.get('commonfields').get('id') == 'Integration id - Test'
 
 
+def test_empty_yml(tmp_path):
+    """
+    Given:
+        - An empty unified yml
+
+    When:
+        - calling the add_test when using the -t flag
+
+    Then:
+        - Check that the function will not raise any errors.
+    """
+    unifier = IntegrationScriptUnifier(str(tmp_path))
+    unifier.add_test({})
+
+
 @pytest.mark.parametrize("flag", [True, False])
 def test_add_test_flag_integration(repo, flag):
     """

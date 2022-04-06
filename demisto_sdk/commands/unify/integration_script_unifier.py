@@ -173,7 +173,8 @@ class IntegrationScriptUnifier(YAMLUnifier):
 
         return unifier_outputs[0]
 
-    def add_test(self, unified_yml):
+    @staticmethod
+    def add_test_section(self, unified_yml: Dict) -> Dict:
         """
             Args:
                 unified_yml - The unified_yml
@@ -182,12 +183,12 @@ class IntegrationScriptUnifier(YAMLUnifier):
                  if the fields exsits.
         """
         to_append = ' - Test'
-        if unified_yml['name']:
+        if unified_yml.get('name'):
             unified_yml['name'] += to_append
-        if unified_yml['commonfields']['id']:
+        if unified_yml.get('commonfields').get('id'):
             unified_yml['commonfields']['id'] += to_append
         if not self.is_script_package:
-            if unified_yml['display']:
+            if unified_yml.get('display'):
                 unified_yml['display'] += to_append
 
         return unified_yml

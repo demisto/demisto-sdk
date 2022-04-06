@@ -177,7 +177,9 @@ jobs:
             at: ~/project
         - <<: *install_demisto_sdk
         - <<: *install_build_dependencies
-        - <<: *install_node_ci
+        - node/install-packages:
+            cache-path: ~/project/content/node_modules
+            cache-version: << pipeline.parameters.cache-version >>
         - run:
             name: Set Up & Create Id Set
             when: always

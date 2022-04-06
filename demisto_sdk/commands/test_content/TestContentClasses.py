@@ -454,6 +454,35 @@ class TestPlaybook:
 
         return True
 
+    def close_incident(self, client: DefaultApi, incident_id: str) -> bool:
+        """
+        Closes a Demisto incident
+        Args:
+            client: demisto_client instance to use
+            incident_id: Incident to close
+
+        Returns:
+            True if incident was closed else False
+        """
+        try:
+            body = {
+                'id': incident_id,
+                'CustomFields': {}
+            }
+            res = demisto_client.generic_request_func(self=client, method='POST',
+                                                      path='/incident/close', body=body)
+        except ApiException:
+            self.build_context.logging_module.warning(
+                'Failed to close incident, error trying to communicate with demisto server')
+            return False
+
+        if int(res[1]) != 200:
+            self.build_context.logging_module.warning(f'close incident failed with Status code {res[1]}')
+            self.build_context.logging_module.warning(pformat(res))
+            return False
+
+        return True
+
     def print_context_to_log(self, client: DefaultApi, incident_id: str) -> None:
         try:
             body = {
@@ -1553,8 +1582,10 @@ class TestContext:
         """
         test_passed = playbook_state in (PB_Status.COMPLETED, PB_Status.NOT_SUPPORTED_VERSION)
         if self.incident_id and test_passed:
-            # todo: change it... batchDelete is not supported in XSIAM
-            if not IS_XSIAM:
+            # batchDelete is not supported in XSIAM, only close
+            if IS_XSIAM:
+                self.playbook.close_incident(self.client, self.incident_id)
+            else:
                 self.playbook.delete_incident(self.client, self.incident_id)
             self.playbook.delete_integration_instances(self.client)
 

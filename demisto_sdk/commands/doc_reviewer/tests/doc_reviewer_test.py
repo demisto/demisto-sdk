@@ -1,13 +1,15 @@
+import os
 from os import path
 from typing import List
 
 import pytest
 
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.tools import find_type
+from demisto_sdk.commands.common.tools import find_type, get_yaml
 from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
 from TestSuite.json_based import JSONBased
 from TestSuite.test_tools import ChangeCWD
+from demisto_sdk.tests.integration_tests.validate_integration_test import AZURE_FEED_PACK_PATH
 
 
 class TestDocReviewFilesAreFound:
@@ -75,8 +77,9 @@ class TestDocReviewFilesAreFound:
             Ensure the files that git reports are the same found that are meant to be doc-reviewed.
         """
         changed_files_mock = [
-            valid_spelled_content_pack.integrations[0].yml.path, valid_spelled_content_pack.scripts[0].yml.path
-        ] + [rn.path for rn in valid_spelled_content_pack.release_notes]
+                                 valid_spelled_content_pack.integrations[0].yml.path,
+                                 valid_spelled_content_pack.scripts[0].yml.path
+                             ] + [rn.path for rn in valid_spelled_content_pack.release_notes]
 
         mocker.patch.object(
             DocReviewer,
@@ -165,7 +168,7 @@ class TestDocReviewOnReleaseNotesOnly:
         assert set(doc_reviewer.files) == {rn.path for rn in valid_spelled_content_pack.release_notes}
 
     def test_get_invalid_files_from_git_with_release_notes(
-        self, mocker, malformed_integration_yml, malformed_incident_field
+            self, mocker, malformed_integration_yml, malformed_incident_field
     ):
         """
         Given -
@@ -513,12 +516,14 @@ def test_having_two_known_words_files(repo, file_content, unknown_words, known_w
 
 @pytest.mark.parametrize('file_content, unknown_words, known_words_files_contents, packs_known_words_content, '
                          'review_success',
-                         [("This is nomnomone, nomnomtwo", set(), [["nomnomone"]], ["[known_words]", "nomnomtwo"], True),
-                          ("This is nomnomone, nomnomtwo", {"nomnomone"}, [], ["[known_words]", "nomnomtwo"], False),
-                          ("This is nomnomone, nomnomtwo, nomnomthree", {"nomnomthree"}, [["nomnomone"]],
-                           ["[known_words]", "nomnomtwo"], False),
-                          ("This is nomnomone, nomnomtwo, nomnomthree", set(),
-                           [["nomnomone"], ["nomnomthree"]], ["[known_words]", "nomnomtwo"], True)])
+                         [(
+                                 "This is nomnomone, nomnomtwo", set(), [["nomnomone"]], ["[known_words]", "nomnomtwo"],
+                                 True),
+                             ("This is nomnomone, nomnomtwo", {"nomnomone"}, [], ["[known_words]", "nomnomtwo"], False),
+                             ("This is nomnomone, nomnomtwo, nomnomthree", {"nomnomthree"}, [["nomnomone"]],
+                              ["[known_words]", "nomnomtwo"], False),
+                             ("This is nomnomone, nomnomtwo, nomnomthree", set(),
+                              [["nomnomone"], ["nomnomthree"]], ["[known_words]", "nomnomtwo"], True)])
 def test_adding_known_words_from_pack(repo, file_content, unknown_words, known_words_files_contents,
                                       packs_known_words_content, review_success):
     """
@@ -628,7 +633,8 @@ def test_having_two_file_paths_same_pack(repo, mocker, first_file_content, secon
                           ])
 def test_having_two_file_paths_different_pack(repo, mocker, first_file_content, second_file_content, unknown_word_calls,
                                               known_words_files_contents, review_success, misspelled_files_num,
-                                              first_packs_known_words_content, second_packs_known_words_content, load_known_words_from_pack):
+                                              first_packs_known_words_content, second_packs_known_words_content,
+                                              load_known_words_from_pack):
     """
     Given:
         - 2 release notes files with two misspelled words each.
@@ -748,6 +754,78 @@ def test_find_known_words_from_pack(repo, known_words_content, expected_known_wo
     with ChangeCWD(repo.path):
         assert doc_reviewer.find_known_words_from_pack(rn_file.path) == ('Packs/test_pack/.pack-ignore',
                                                                          expected_known_words)
+
+
+def test_find_known_words_from_pack_ignore_integrations_name(repo):
+    """
+    Given:
+        - Pack's structure is correct and pack-ignore file is present.
+
+    When:
+        - Running DocReviewer.find_known_words_from_pack.
+
+    Then:
+        - Ensure the found path result is appropriate.
+        - Ensure the integrations name are ignored.
+    """
+    pack = repo.create_pack('test_pack')
+    integration1 = pack.create_integration(name="first_integration")
+    integration2 = pack.create_integration(name="second_integration")
+    rn_file = pack.create_release_notes(version='1_0_0', content=f'{integration1.name}\n{integration2.name}')
+    doc_reviewer = DocReviewer(file_paths=[])
+    with ChangeCWD(repo.path):
+        found_known_words = doc_reviewer.find_known_words_from_pack(rn_file.path)[1]
+        assert integration1.name in found_known_words
+        assert integration2.name in found_known_words
+
+
+def test_find_known_words_from_pack_ignore_commands_name(repo):
+    """
+    Given:
+        - Pack's structure is correct and pack-ignore file is present.
+
+    When:
+        - Running DocReviewer.find_known_words_from_pack.
+
+    Then:
+        - Ensure the found path result is appropriate.
+        - Ensure the commands names are ignored.
+    """
+
+    pack = repo.create_pack('test_pack')
+    pack_integration_path = os.path.join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+    valid_integration_yml = get_yaml(pack_integration_path)
+    pack.create_integration(name="first_integration", yml=valid_integration_yml)
+    rn_file = pack.create_release_notes(version='1_0_0', content=f'azure-hidden-command \n azure-get-indicators')
+    doc_reviewer = DocReviewer(file_paths=[])
+    with ChangeCWD(repo.path):
+        found_known_words = doc_reviewer.find_known_words_from_pack(rn_file.path)[1]
+        assert 'azure-hidden-command' in found_known_words
+        assert 'azure-get-indicators' in found_known_words
+
+
+def test_find_known_words_from_pack_ignore_scripts_name(repo):
+    """
+    Given:
+        - Pack's structure is correct and pack-ignore file is present.
+
+    When:
+        - Running DocReviewer.find_known_words_from_pack.
+
+    Then:
+        - Ensure the found path result is appropriate.
+        - Ensure the scripts names are ignored.
+    """
+
+    pack = repo.create_pack('test_pack')
+    script1 = pack.create_script(name='first_script')
+    script2 = pack.create_script(name='second_script')
+    rn_file = pack.create_release_notes(version='1_0_0', content=f'{script1.name}\n{script2.name}')
+    doc_reviewer = DocReviewer(file_paths=[])
+    with ChangeCWD(repo.path):
+        found_known_words = doc_reviewer.find_known_words_from_pack(rn_file.path)[1]
+        assert script1.name in found_known_words
+        assert script2.name in found_known_words
 
 
 def test_camel_case_split():

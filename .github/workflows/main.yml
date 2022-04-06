@@ -1,7 +1,4 @@
-# This is a basic workflow to help you get started with Actions
-
-name: ValidateChangelog
-
+name: Validate Changelog
 on: pull_request
 
 jobs:
@@ -18,18 +15,17 @@ jobs:
           files: |
             **/*.py
             pyproject.toml
-            
+
       - name: Check whether CHANGELOG.md has been modified
         uses: tj-actions/changed-files@v18.6
         id: changelog-status
         with:
           files: CHANGELOG.md
-            
+
       - name: Missing CHANGELOG.md update
         if: |
           steps.need-changelog.outputs.any_changed == 'true' &&
           steps.changelog-status.outputs.any_modified == 'false'
         uses: actions/github-script@v3
         with:
-          script: |
-              core.setFailed('Missing CHANGELOG.md update!')
+          script: core.setFailed('Missing CHANGELOG.md update!')

@@ -349,6 +349,4 @@ workflows:
                 only: *version_tag_regex
               branches:
                 ignore: /.*/
-          requires:
-            - build
-          # <<: *requires_all
+          <<: *requires_all

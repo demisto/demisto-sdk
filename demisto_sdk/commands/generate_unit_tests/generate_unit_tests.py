@@ -21,8 +21,6 @@ from demisto_sdk.commands.generate_unit_tests.test_case_builder import (
 from demisto_sdk.commands.generate_unit_tests.test_module_builder import \
     TestModule
 
-if 'typed_ast' in sys.modules:
-    del sys.modules['typed_ast']
 
 logger = logging.getLogger('demisto-sdk')
 

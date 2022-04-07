@@ -17,7 +17,7 @@ from functools import lru_cache
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
-from typing import Callable, Dict, List, Match, Optional, Tuple, Union
+from typing import Callable, Dict, List, Match, Optional, Set, Tuple, Union
 
 import click
 import colorama
@@ -53,7 +53,6 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 
 json = JSON_Handler()
-
 
 logger = logging.getLogger("demisto-sdk")
 yaml = YAML_Handler()
@@ -828,6 +827,89 @@ def is_file_path_in_pack(file_path):
     return bool(re.findall(PACKS_DIR_REGEX, file_path))
 
 
+def add_default_pack_known_words(file_path):
+    """
+    Ignores the pack's content:
+    1. Pack's name.
+    2. Integrations name.
+    3. Integrations command names'.
+    4. Scripts name.
+
+    Note: please add to this function any further ignores in the future.
+    Args:
+        file_path: RN file path
+
+    Returns: A list of all the Pack's content the doc_reviewer should ignore.
+
+    """
+    default_pack_known_words = [get_pack_name(file_path), ]
+    default_pack_known_words.extend(get_integration_name_and_command_names(file_path))
+    default_pack_known_words.extend(get_scripts_names(file_path))
+    return default_pack_known_words
+
+
+def get_integration_name_and_command_names(file_path):
+    """
+    1. Get the RN file path.
+    2. Check if integrations exist in the current pack.
+    3. For each integration, load the yml file.
+    3. Keep in a set all the commands names.
+    4. Keep in a set all the integrations names.
+    Args:
+        file_path: RN file path
+
+    Returns: (set) of all the commands and integrations names found.
+
+    """
+    integrations_dir_path = os.path.join(PACKS_DIR, get_pack_name(file_path), INTEGRATIONS_DIR)
+    command_names: Set[str] = set()
+    if not glob.glob(integrations_dir_path):
+        return command_names
+
+    found_integrations: List[str] = os.listdir(integrations_dir_path)
+    if found_integrations:
+        for integration in found_integrations:
+            command_names.add(integration)
+
+            integration_path_full = os.path.join(integrations_dir_path, integration, f'{integration}.yml')
+            yml_dict = get_yaml(integration_path_full)
+            commands = yml_dict.get("script", {}).get('commands', [])
+            command_names = command_names.union({command.get('name') for command in commands})
+
+    return command_names
+
+
+def get_scripts_names(file_path):
+    """
+    1. Get the RN file path
+    2. Check if scripts exist in the current pack
+    3. Keep in a set all the scripts names
+    Args:
+        file_path: RN file path
+
+    Returns: (set) of all the scripts names found.
+
+    """
+    scripts_dir_path = os.path.join(PACKS_DIR, get_pack_name(file_path), SCRIPTS_DIR)
+    scripts_names: Set[str] = set()
+    if not glob.glob(scripts_dir_path):
+        click.secho(f'no scripts path found')
+        return scripts_names
+
+    found_scripts: List[str] = os.listdir(scripts_dir_path)
+    if not found_scripts:
+        click.secho(f'no scripts found')
+    else:
+        for script in found_scripts:
+            script_path_full = os.path.join(scripts_dir_path, script, f'{script}.yml')
+            yml_dict = get_yaml(script_path_full)
+            click.secho(f'name: {yml_dict.get("name")}')
+            scripts_names.add(yml_dict.get("name"))
+
+        click.secho(f'scripts names: {scripts_names}')
+    return scripts_names
+
+
 def get_pack_name(file_path):
     """
     extract pack name (folder name) from file path
@@ -1175,12 +1257,12 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
 
 
 def find_type(
-    path: str = '',
-    _dict=None,
-    file_type: Optional[str] = None,
-    ignore_sub_categories: bool = False,
-    ignore_invalid_schema_file: bool = False,
-    clear_cache: bool = False
+        path: str = '',
+        _dict=None,
+        file_type: Optional[str] = None,
+        ignore_sub_categories: bool = False,
+        ignore_invalid_schema_file: bool = False,
+        clear_cache: bool = False
 ):
     """
     returns the content file type

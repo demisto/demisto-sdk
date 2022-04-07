@@ -27,7 +27,7 @@ references:
     tag_filter: &tag_filter
       filters:
         tags:
-          only: /^v\d+\.\d+\.\d+$/
+          only: /^v\d+\.\d+\.\d+$/  # version regex v.x.x.x (x is number)
 
     reqs_content_checkout: &reqs_content_checkout
       requires:
@@ -273,10 +273,23 @@ jobs:
       steps:
         - checkout
         - run:
+            name: Build disturbution
+            command: poetry build
+        - run:
+            name: Set test-pypy as a repository
+            command: poetry config repositories.testpypi https://test.pypi.org/legacy/
+        - run:
             name: Deploy
-            when: always
             command: |
-              poetry run ./demisto_sdk/utils/deploy.sh
+              if [[ "${CIRCLE_BRANCH}" == "master" ]]; then
+                echo "Deploying to Pypi test site."
+                poetry publish -r testpypy -u __token__ -p ${PYPI_TEST_TOKEN}
+              elif [[ $(echo "${CIRCLE_TAG}" | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+$") ]]; then
+                  echo "Deploying to Pypi production site"
+                  poetry publish -u __token__ -p ${PYPI_TOKEN} --dry-run
+              else
+                  echo "Skipping Pypi deploy as we are not building a tag or on master"
+              fi
 workflows:
   version: 2.1
   build_and_release:

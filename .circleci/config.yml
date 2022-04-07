@@ -72,6 +72,7 @@ references:
             - validate-files
             - create-content-artifacts
             - test-lint
+            - run-unit-tests
             - build
 
 jobs:
@@ -322,6 +323,7 @@ workflows:
       - precommit-checks:
           <<: *tag_filter
       - run-unit-tests:
+          <<: *tag_filter
           matrix:
             parameters:
               pythonversion: [3.8.12, 3.9.10, 3.10.2]   

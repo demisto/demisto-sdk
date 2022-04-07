@@ -340,7 +340,7 @@ workflows:
           <<: *tag_filter
           <<: *reqs_content_checkout
       - build:
-        <<: *tag_filter
+          <<: *tag_filter
       - publish:
           filters:
               tags:

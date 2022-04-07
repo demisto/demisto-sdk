@@ -279,7 +279,7 @@ def extract_code(config, **kwargs):
     "-o", "--output", help="The output dir to write the unified yml to", required=False
 )
 @click.option(
-    "-t", "--test", help="Add test label to unified yml id/name/display", required=False, is_flag=True,
+    "-c", "--custom", help="Add test label to unified yml id/name/display", required=False,
 )
 @click.option(
     "-f", "--force", help="Forcefully overwrites the preexisting yml if one exists",
@@ -301,7 +301,7 @@ def unify(**kwargs):
     # Input is of type Path.
     kwargs['input'] = str(kwargs['input'])
     file_type = find_type(kwargs['input'])
-    test = kwargs.pop('test')
+    custom = kwargs.pop('custom')
 
     if file_type == FileType.GENERIC_MODULE:
         from demisto_sdk.commands.unify.generic_module_unifier import \
@@ -316,7 +316,7 @@ def unify(**kwargs):
             IntegrationScriptUnifier
 
         # pass arguments to YML unifier and call the command
-        yml_unifier = IntegrationScriptUnifier(**kwargs, test=test)
+        yml_unifier = IntegrationScriptUnifier(**kwargs, custom=custom)
         yml_unifier.unify()
 
     return 0

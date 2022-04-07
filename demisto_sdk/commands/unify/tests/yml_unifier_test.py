@@ -1048,12 +1048,12 @@ def test_add_test_section(tmp_path):
             - an Integration to unify
 
         When:
-            - the --test flag is True
+            - the --custom flag is True
 
         Then:
-            - Add a "- Test" to the name/display/id of the integration if the yml exsits.
+            - Add a "Test" to the name/display/id of the integration if the yml exsits.
     '''
-    unifier = IntegrationScriptUnifier(str(tmp_path))
+    unifier = IntegrationScriptUnifier(str(tmp_path), custom='Test')
     unified_yml = {
         'display': 'Integration display',
         'commonfields': {'id': 'Integration id'},
@@ -1081,18 +1081,18 @@ def test_empty_yml(tmp_path):
 
 
 @pytest.mark.parametrize("flag", [True, False])
-def test_add_test_section_flag_integration(repo, flag):
+def test_add_custom_section_flag_integration(repo, flag):
     """
         Given:
             - An integration with a name of sample(yml)
 
         When:
             - Running the Unify command
-            first run with -t flag on
-            second run without -t flag
+            first run with -c flag on
+            second run without -c flag
 
         Then:
-            - Check that the '- Test' label was added or not to the unified yml
+            - Check that the 'Test' label was added or not to the unified yml
     """
     pack = repo.create_pack('PackName')
     integration = pack.create_integration('dummy-integration', 'bla', INTEGRATION_YAML)
@@ -1101,7 +1101,7 @@ def test_add_test_section_flag_integration(repo, flag):
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
         if flag:
-            runner.invoke(main, [UNIFY_CMD, '-i', f'{integration.path}', '-t'])
+            runner.invoke(main, [UNIFY_CMD, '-i', f'{integration.path}', '-c', 'Test'])
         else:
             runner.invoke(main, [UNIFY_CMD, '-i', f'{integration.path}'])
 
@@ -1113,16 +1113,16 @@ def test_add_test_section_flag_integration(repo, flag):
                 assert unified_yml_data.get('name') == 'Sample'
 
 
-def test_add_test_section_flag(repo):
+def test_add_custom_section_flag(repo):
     """
         Given:
             - A script with the name sample_script(yml)
 
         When:
-            - running the Unify command with the -t flag
+            - running the Unify command with the -c flag
 
         Then:
-            - check that the ' - Test' label was appended to the name of the script
+            - check that the 'Test' label was appended to the name of the script
             in the unified yml
     """
     pack = repo.create_pack('PackName')
@@ -1131,7 +1131,7 @@ def test_add_test_section_flag(repo):
 
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
-        runner.invoke(main, [UNIFY_CMD, '-i', f'{script.path}', '-t'])
+        runner.invoke(main, [UNIFY_CMD, '-i', f'{script.path}', '-c', 'Test'])
         with open(os.path.join(script.path, 'script-dummy-script.yml')) as unified_yml:
             unified_yml_data = yaml.load(unified_yml)
             assert unified_yml_data.get('name') == 'sample_script - Test'

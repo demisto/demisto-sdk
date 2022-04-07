@@ -17,8 +17,8 @@ This command has two main functions:
       The path to the directory into which to write the unified yml file
     * **-f, --force**
       Forcefully overwrites the preexisting yml if one exists
-    * **-t, --test**
-      Adds a ' - Test' label to the name/display/id of the unified yml
+    * **-c, --custom**
+      Adds a custom label to the name/display/id of the unified yml
 
     **Examples**:
     `demisto-sdk unify -i Integrations/MyInt -o Integrations`
@@ -31,7 +31,7 @@ This command has two main functions:
     that will be created in the "Scripts" directory.
     <br/><br/>
 
-    `demisto-sdk unify -u Integrations/MyInt -t`
+    `demisto-sdk unify -u Integrations/MyInt -c Test`
     This will append to the unified yml name/script/id a label ' - Test' that will prevent bumps
     with the uploaded unified yml and the original integration/script on the server.
     origin yml: `{name: integration}` --> unified yml: `{name: integration - Test}`

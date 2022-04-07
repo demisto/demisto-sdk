@@ -339,7 +339,8 @@ workflows:
       - create-content-artifacts:
           <<: *tag_filter
           <<: *reqs_content_checkout
-      - build
+      - build:
+        <<: *tag_filter
       - publish:
           filters:
               tags:

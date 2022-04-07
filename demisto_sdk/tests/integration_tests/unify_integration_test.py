@@ -175,3 +175,27 @@ class TestIntegrationScriptUnifier:
                     assert unified_yml_data.get('name') == 'Sample - Test'
                 else:
                     assert unified_yml_data.get('name') == 'Sample'
+
+    def test_add_custom_section_flag(self, repo):
+        """
+            Given:
+                - A script with the name sample_script(yml)
+
+            When:
+                - running the Unify command with the -c flag
+
+            Then:
+                - check that the 'Test' label was appended to the name of the script
+                in the unified yml
+        """
+        pack = repo.create_pack('PackName')
+        script = pack.create_script('dummy-script', 'script-code')
+        script.create_default_script()
+
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            runner.invoke(main, [UNIFY_CMD, '-i', f'{script.path}', '-c', 'Test'])
+            with open(os.path.join(script.path, 'script-dummy-script.yml')) as unified_yml:
+                unified_yml_data = yaml.load(unified_yml)
+                assert unified_yml_data.get('name') == 'sample_script - Test'
+

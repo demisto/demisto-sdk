@@ -165,7 +165,7 @@ class IntegrationScriptUnifier(YAMLUnifier):
                  the unified yml with the id/name/display appended with the custom label
                  if the fields exsits.
         """
-        to_append = ' - ' + self.custom
+        to_append = f' - {self.custom}'
         if unified_yml.get('name'):
             unified_yml['name'] += to_append
         if unified_yml.get('commonfields', {}).get('id'):

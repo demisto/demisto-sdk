@@ -24,11 +24,13 @@ parameters:
 
 
 references:
-    branch_master_and_tag_filter: &branch_master_and_tag_filter
-      filters:
-        tags:
+    filter_tag_only: &filter_tag_only
+      tags:
           # version regex vx.x.x (i.e. v1.2.3)
           only: /^v\d+\.\d+\.\d+$/
+    branch_master_and_tag_filter: &branch_master_and_tag_filter
+      filters:
+        <<: *filter_tag_only
         branches:
           only: master
 

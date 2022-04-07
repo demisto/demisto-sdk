@@ -276,14 +276,19 @@ jobs:
               poetry run demisto-sdk create-content-artifacts -a ./tmp
         - store_artifacts:
             path: content/tmp
+  build:
+      docker:
+        - image: << pipeline.parameters.global-docker-image >>
+      steps:
+          - checkout
+          - run:
+              name: Build Distrubution
+              command: poetry build
   deploy:
       docker:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
-        - run:
-            name: Build disturbution
-            command: poetry build
         - run:
             name: Set test-pypi as a repository
             command: poetry config repositories.testpypi https://test.pypi.org/legacy/
@@ -293,11 +298,11 @@ jobs:
               branches:
                 only: 
                   - master
-            command: poetry publish -r testpypi -u __token__ -p ${PYPI_TEST_TOKEN} --dry-run
+            command: poetry publish -r testpypi -u __token__ -p ${PYPI_TEST_TOKEN} --dry-run --build
         - run:
             name: Deploy Release to Official PyPi
             <<: *tag_filter
-            command: poetry publish -u __token__ -p ${PYPI_TOKEN} --dry-run
+            command: poetry publish -u __token__ -p ${PYPI_TOKEN} --dry-run --build
 workflows:
   version: 2.1
   build_and_release:

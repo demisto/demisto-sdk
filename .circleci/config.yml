@@ -31,12 +31,6 @@ references:
       tags:
           only: *version_tag_regex
 
-    only_branch_master_and_tag_filter: &only_branch_master_and_tag_filter
-      filters:
-        <<: *filter_tag_only
-        branches:
-          only: master
-
     tag_filter: &tag_filter
       filters:
         tags:
@@ -313,8 +307,8 @@ jobs:
         - attach_workspace:
             at: ~/project
         - run:
-            name: Deploy Release to Official PyPi
-            command: poetry publish -u __token__ -p ${PYPI_TOKEN} --dry-run
+            name: Deploy Release to PyPi
+            command: poetry publish -u __token__ -p ${PYPI_TOKEN}
 workflows:
   version: 2.1
   build_and_release:

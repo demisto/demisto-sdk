@@ -392,7 +392,7 @@ class TestPlaybook:
         inc_filter.query = f'id: {inc_id}'
         if IS_XSIAM:
             # in xsiam `create_incident` response don`t return created incident id.
-            inc_filter.query = f'name: "{incident_name}"'
+            inc_filter.query = f'name:"{incident_name}"'
         # inc_filter.query
         search_filter.filter = inc_filter
 

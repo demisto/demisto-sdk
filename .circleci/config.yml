@@ -72,6 +72,7 @@ references:
             - validate-files
             - create-content-artifacts
             - test-lint
+            - run-integration-tests
             - run-unit-tests
             - build
 
@@ -329,6 +330,7 @@ workflows:
               pythonversion: [3.8.12, 3.9.10, 3.10.2]   
           name: run-unit-tests-<< matrix.pythonversion >>
       - run-integration-tests:
+          <<: *tag_filter
           matrix:
             parameters:
               pythonversion: [3.8.12, 3.9.10, 3.10.2]   

@@ -283,13 +283,11 @@ jobs:
             filters:
               branches:
                 only: master
-            command: |
-              poetry publish -r testpypy -u __token__ -p ${PYPI_TEST_TOKEN}
+            command: poetry publish -r testpypy -u __token__ -p ${PYPI_TEST_TOKEN} --dry-run
         - run:
             name: Deploy Release to Official PyPi
             <<: *tag_filter
-            command: |
-               poetry publish -u __token__ -p ${PYPI_TOKEN} --dry-run
+            command: poetry publish -u __token__ -p ${PYPI_TOKEN} --dry-run
 workflows:
   version: 2.1
   build_and_release:

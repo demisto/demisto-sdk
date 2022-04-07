@@ -35,6 +35,7 @@ references:
 
     install_node_ci: &install_node_ci
       - node/install-packages:
+          override-ci-command: npm install -g
           cache-version: << pipeline.parameters.cache-version >>
           
     install_demisto_sdk: &install_demisto_sdk
@@ -164,9 +165,6 @@ jobs:
               cd content
               git config diff.renameLimit 5000
               git --no-pager log -1
-        - node/install-packages:
-            cache-path: ~/project/content/node_modules
-            cache-version: << pipeline.parameters.cache-version >>
         - persist_to_workspace:
             root: ~/project
             paths:
@@ -180,9 +178,7 @@ jobs:
             at: ~/project
         - <<: *install_demisto_sdk
         - <<: *install_build_dependencies
-        - node/install-packages:
-            cache-path: ~/project/content/node_modules
-            cache-version: << pipeline.parameters.cache-version >>
+        - <<: *install_node_ci
         - run:
             name: Set Up & Create Id Set
             when: always

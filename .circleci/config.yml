@@ -208,7 +208,7 @@ jobs:
               ln -s $PWD/node_modules/ content/node_modules
               cd content
               ls
-              cd node_modules/
+              cd node_modules
               ls
               poetry run demisto-sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"

@@ -1,4 +1,6 @@
 # Changelog
+
+* demisto-sdk is now disturbuting with a **wheel** package.
 * Fixed a bug where any edited json file that contained a forward slash (`/`) escaped.
 * Added a new validation to **validate** command to verify that the metadata *currentVersion* is
 the same as the last release note version.

@@ -8,6 +8,7 @@ the same as the last release note version.
 * Added support for new XSIAM entities in **create-id-set** command.
 * Added support for new XSIAM entities in **create-content-artifacts** command.
 * Added support for Parsing/Modeling Rule content item in the **unify** command.
+* Added a flag '-t' '--test' to the **unify** command, if True will append to the unified yml name/display/id the label ' - Test'
 
 # 1.6.3
 * **Breaking change**: Fixed a typo in the **validate** `--quiet-bc-validation` flag (was `--quite-bc-validation`). @upstart-swiss

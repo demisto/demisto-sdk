@@ -183,7 +183,6 @@ jobs:
             environment:
               CI_COMMIT_BRANCH: "master"
             command: |
-              ln -s node_modules content/node_modules
               cd content
               poetry run demisto-sdk -v
               poetry run demisto-sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
@@ -205,6 +204,7 @@ jobs:
             environment:
               CI_COMMIT_BRANCH: "master"
             command: |
+              ln -s node_modules content/node_modules
               cd content
               poetry run demisto-sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"

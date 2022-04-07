@@ -24,12 +24,12 @@ parameters:
 
 
 references:
-    version_tag: &version_tag
+    version_regex: &version_regex
       /^v\d+\.\d+\.\d+$/ # version regex vx.x.x (i.e. v1.2.3)
 
     filter_tag_only: &filter_tag_only
       tags:
-          only: *version_tag
+          only: *version_regex
 
     only_branch_master_and_tag_filter: &only_branch_master_and_tag_filter
       filters:
@@ -42,13 +42,12 @@ references:
         branches:
           ignore: master
         tags:
-          ignore: *version_tag
+          ignore: *version_regex
 
     tag_filter: &tag_filter
       filters:
         tags:
-          # version regex vx.x.x (i.e. v1.2.3)
-          only: /^v\d+\.\d+\.\d+$/
+          only: *version_regex
 
     reqs_content_checkout: &reqs_content_checkout
       requires:

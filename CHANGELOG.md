@@ -1,6 +1,6 @@
 # Changelog
 
-* demisto-sdk is now disturbuting with a **wheel** package.
+* The `demisto-sdk` pack will now be distributed via PyPi with a **wheel** file.
 * Fixed a bug where any edited json file that contained a forward slash (`/`) escaped.
 * Added a new validation to **validate** command to verify that the metadata *currentVersion* is
 the same as the last release note version.

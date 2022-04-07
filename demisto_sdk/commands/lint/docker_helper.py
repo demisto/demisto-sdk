@@ -22,17 +22,24 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ''):
 
     global DOCKER_CLIENT
     if DOCKER_CLIENT is None:
+        if log_prompt:
+            logger.debug(f'{log_prompt} - init and login the docker client')
+        else:
+            logger.debug('init and login the docker client')
+        from_env_kwargs = {'timeout': timeout}
+        if os.getenv('CI', False):
+            from_env_kwargs['max_pool_size'] = 20
+        DOCKER_CLIENT = docker.from_env(**from_env_kwargs)
+        docker_user = os.getenv('DOCKERHUB_USER')
+        docker_pass = os.getenv('DOCKERHUB_PASSWORD')
+        DOCKER_CLIENT.loged_in = False
         try:
-            if log_prompt:
-                logger.debug(f'{log_prompt} - init and login the docker client')
-            else:
-                logger.debug('init and login the docker client')
-            DOCKER_CLIENT = docker.from_env(timeout=timeout)
-            docker_user = os.getenv('DOCKERHUB_USER')
-            docker_pass = os.getenv('DOCKERHUB_PASSWORD')
-            DOCKER_CLIENT.login(username=docker_user,
-                                password=docker_pass,
-                                registry="https://index.docker.io/v1")
+            if docker_user and docker_pass:
+                DOCKER_CLIENT.login(username=docker_user,
+                                    password=docker_pass,
+                                    registry="https://index.docker.io/v1")
+                DOCKER_CLIENT.loged_in = True
+
         except Exception:
             logger.exception(f'{log_prompt} - failed to login to docker registry')
 

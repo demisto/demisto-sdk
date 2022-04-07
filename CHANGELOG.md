@@ -1,5 +1,5 @@
 # Changelog
-
+* Added a code *type* indication for integration and script objects in the *ID Set*.
 * Fixed a bug where any edited json file that contained a forward slash (`/`) escaped.
 * Added a new validation to **validate** command to verify that the metadata *currentVersion* is
 the same as the last release note version.

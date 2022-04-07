@@ -24,12 +24,12 @@ parameters:
 
 
 references:
-    version_regex: &version_regex
+    version_tag_regex: &version_tag_regex
       /^v\d+\.\d+\.\d+$/ # version regex vx.x.x (i.e. v1.2.3)
 
     filter_tag_only: &filter_tag_only
       tags:
-          only: *version_regex
+          only: *version_tag_regex
 
     only_branch_master_and_tag_filter: &only_branch_master_and_tag_filter
       filters:
@@ -37,17 +37,10 @@ references:
         branches:
           only: master
 
-    ignore_only_branch_master_and_tag_filter: &ignore_only_branch_master_and_tag_filter
-      filters:
-        branches:
-          ignore: master
-        tags:
-          ignore: *version_regex
-
     tag_filter: &tag_filter
       filters:
         tags:
-          only: *version_regex
+          only: *version_tag_regex
 
     reqs_content_checkout: &reqs_content_checkout
       requires:
@@ -305,30 +298,24 @@ jobs:
           - store_artifacts:
               path: dist
 
-  deploy:
+  build_and_deploy:
       docker:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
         - run:
-            name: Set test-pypi as a repository
-            command: poetry config repositories.testpypi https://test.pypi.org/legacy/
-        - run:
             name: Build Distrubution
             command: poetry build
-        - run:
-            name: Deploy To TestPYPI
-            filters:
-              branches:
-                only: 
-                  - master
-            command: poetry publish -r testpypi -u __token__ -p ${PYPI_TEST_TOKEN} --dry-run
-        - run:
-            name: Deploy Release to Official PyPi
-            <<: *tag_filter
-            command: poetry publish -u __token__ -p ${PYPI_TOKEN} --dry-run
         - store_artifacts:
               path: dist
+        - run:
+            name: Deploy Release to Official PyPi
+            filters:
+              tags:
+                only: *version_tag_regex
+              branches:
+                ignore
+            command: poetry publish -u __token__ -p ${PYPI_TOKEN} --dry-run
 workflows:
   version: 2.1
   build_and_release:
@@ -355,8 +342,5 @@ workflows:
       - create-content-artifacts:
           <<: *tag_filter
           <<: *reqs_content_checkout
-      - build:
-          <<: *ignore_only_branch_master_and_tag_filter
-      - deploy:
-          <<: *only_branch_master_and_tag_filter
+      - build_and_deploy
           # <<: *requires_all

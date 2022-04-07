@@ -24,10 +24,17 @@ parameters:
 
 
 references:
+    version_tag_regex: &version_tag_regex
+      /^v\d+\.\d+\.\d+$/ # version regex vx.x.x (i.e. v1.2.3)
+
+    filter_tag_only: &filter_tag_only
+      tags:
+          only: *version_tag_regex
+
     tag_filter: &tag_filter
       filters:
         tags:
-          only: /^v\d+\.\d+\.\d+$/
+          only: *version_tag_regex
 
     reqs_content_checkout: &reqs_content_checkout
       requires:
@@ -36,7 +43,7 @@ references:
     install_node_ci: &install_node_ci
       - node/install-packages:
           cache-version: << pipeline.parameters.cache-version >>
-          
+
     install_demisto_sdk: &install_demisto_sdk
       - python/install-packages:
           pkg-manager: "poetry"
@@ -52,6 +59,16 @@ references:
       - python/install-packages: 
                 pkg-manager: "poetry"
                 args: "--extras build"
+    
+    requires_all: &requires_all
+      requires:
+            - precommit-checks
+            - validate-files
+            - create-content-artifacts
+            - test-lint
+            - run-integration-tests
+            - run-unit-tests
+            - build
 
 jobs:
   run-unit-tests:
@@ -267,16 +284,31 @@ jobs:
               poetry run demisto-sdk create-content-artifacts -a ./tmp
         - store_artifacts:
             path: content/tmp
+  build:
+      docker:
+        - image: << pipeline.parameters.global-docker-image >>
+      steps:
+          - checkout
+          - run:
+              name: Build Distrubution
+              command: poetry build
+          - persist_to_workspace:
+              root: ~/project
+              paths:
+                - dist
+          - store_artifacts:
+              path: dist
+
   deploy:
       docker:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
+        - attach_workspace:
+            at: ~/project
         - run:
-            name: Deploy
-            when: always
-            command: |
-              poetry run ./demisto_sdk/utils/deploy.sh
+            name: Deploy Release to PyPi
+            command: poetry publish -u __token__ -p ${PYPI_TOKEN}
 workflows:
   version: 2.1
   build_and_release:
@@ -286,11 +318,13 @@ workflows:
       - precommit-checks:
           <<: *tag_filter
       - run-unit-tests:
+          <<: *tag_filter
           matrix:
             parameters:
               pythonversion: [3.8.12, 3.9.10, 3.10.2]   
           name: run-unit-tests-<< matrix.pythonversion >>
       - run-integration-tests:
+          <<: *tag_filter
           matrix:
             parameters:
               pythonversion: [3.8.12, 3.9.10, 3.10.2]   
@@ -303,10 +337,12 @@ workflows:
       - create-content-artifacts:
           <<: *tag_filter
           <<: *reqs_content_checkout
-      - deploy:
+      - build:
           <<: *tag_filter
-          requires:
-            - precommit-checks
-            - validate-files
-            - create-content-artifacts
-            - test-lint
+      - deploy:
+          filters:
+              tags:
+                only: *version_tag_regex
+              branches:
+                ignore: /.*/
+          <<: *requires_all

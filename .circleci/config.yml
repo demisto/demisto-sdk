@@ -27,7 +27,8 @@ references:
     tag_filter: &tag_filter
       filters:
         tags:
-          only: /^v\d+\.\d+\.\d+$/  # version regex vx.x.x (i.e. v1.2.3)
+          # version regex vx.x.x (i.e. v1.2.3)
+          only: /^v\d+\.\d+\.\d+$/
 
     reqs_content_checkout: &reqs_content_checkout
       requires:

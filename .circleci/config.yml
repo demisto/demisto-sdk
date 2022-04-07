@@ -299,7 +299,7 @@ jobs:
           - store_artifacts:
               path: dist
 
-  publish:
+  deploy:
       docker:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
@@ -308,7 +308,7 @@ jobs:
             at: ~/project
         - run:
             name: Deploy Release to PyPi
-            command: poetry publish -u __token__ -p ${PYPI_TOKEN}
+            command: poetry publish -u __token__ -p ${PYPI_TOKEN} --dry-run
 workflows:
   version: 2.1
   build_and_release:
@@ -339,7 +339,7 @@ workflows:
           <<: *reqs_content_checkout
       - build:
           <<: *tag_filter
-      - publish:
+      - deploy:
           filters:
               tags:
                 only: *version_tag_regex

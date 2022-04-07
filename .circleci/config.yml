@@ -205,7 +205,11 @@ jobs:
               CI_COMMIT_BRANCH: "master"
             command: |
               ln -s node_modules content/node_modules
+            
               cd content
+              cd node_modules
+              ls
+              cd ..
               poetry run demisto-sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
 

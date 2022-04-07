@@ -279,17 +279,17 @@ jobs:
             name: Set test-pypy as a repository
             command: poetry config repositories.testpypi https://test.pypi.org/legacy/
         - run:
-            name: Deploy
+            name: Deploy To TestPYPI
+            filters:
+              branches:
+                only: master
             command: |
-              if [[ "${CIRCLE_BRANCH}" == "master" ]]; then
-                echo "Deploying to Pypi test site."
-                poetry publish -r testpypy -u __token__ -p ${PYPI_TEST_TOKEN}
-              elif [[ $(echo "${CIRCLE_TAG}" | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+$") ]]; then
-                  echo "Deploying to Pypi production site"
-                  poetry publish -u __token__ -p ${PYPI_TOKEN} --dry-run
-              else
-                  echo "Skipping Pypi deploy as we are not building a tag or on master"
-              fi
+              poetry publish -r testpypy -u __token__ -p ${PYPI_TEST_TOKEN}
+        - run:
+            name: Deploy Release to Official PyPi
+            <<: *tag_filter
+            command: |
+               poetry publish -u __token__ -p ${PYPI_TOKEN} --dry-run
 workflows:
   version: 2.1
   build_and_release:

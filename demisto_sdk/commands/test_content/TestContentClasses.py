@@ -471,8 +471,7 @@ class TestPlaybook:
             }
             res = demisto_client.generic_request_func(self=client, method='POST',
                                                       path='/incident/close', body=body)
-            self.build_context.logging_module.info(f'Closed incident: {incident_id}, '
-                                                   f'because investigation completed successfully..')
+            self.build_context.logging_module.info(f'Closed incident: {incident_id}.')
         except ApiException:
             self.build_context.logging_module.warning(
                 'Failed to close incident, error trying to communicate with demisto server.')
@@ -520,11 +519,13 @@ class BuildContext:
             self.env_json = [self.xsiam_conf.get(self.xsiam_machine, {})]
             self.api_key = self.env_json[0].get('api_key')
             self.auth_id = self.env_json[0].get('x-xdr-auth-id')
+            self.xsiam_ui_path = self.env_json[0].get('ui_url')
         else:
             self.api_key = kwargs['api_key']
             self.env_json = self._load_env_results_json()
             self.xsiam_conf = None
             self.auth_id = None
+            self.xsiam_ui_path = None
         self.is_nightly = kwargs['nightly']
         self.slack_client = SlackClient(kwargs['slack'])
         self.circleci_token = kwargs['circleci']
@@ -1557,7 +1558,12 @@ class TestContext:
             self.build_context.logging_module.info(f'Found incident with incident ID: {investigation_id}.')
 
             server_url = self.client.api_client.configuration.host
-            if not IS_XSIAM:
+            if IS_XSIAM:
+                self.build_context.logging_module.info(
+                    f'First? Investigation URL: {self.build_context.xsiam_ui_path}incident-view?caseId={investigation_id}')
+                self.build_context.logging_module.info(
+                    f'Second? Investigation URL: {self.build_context.xsiam_ui_path}incident-view/alerts_and_insights?caseId={investigation_id}&action:openAlertDetails={investigation_id}-work_plan')
+            else:
                 self.build_context.logging_module.info(f'Investigation URL: {server_url}/#/WorkPlan/{investigation_id}')
             playbook_state = self._poll_for_playbook_state()
             self.build_context.logging_module.info(f'Got incident: {investigation_id} status: {playbook_state}.')

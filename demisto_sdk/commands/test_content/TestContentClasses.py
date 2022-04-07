@@ -1583,12 +1583,13 @@ class TestContext:
             playbook_state: The state of the playbook with which we can check if the test was successful
         """
         test_passed = playbook_state in (PB_Status.COMPLETED, PB_Status.NOT_SUPPORTED_VERSION)
-        if self.incident_id and test_passed:
-            # batchDelete is not supported in XSIAM, only close
-            if IS_XSIAM:
-                self.playbook.close_incident(self.client, self.incident_id)
-            else:
-                self.playbook.delete_incident(self.client, self.incident_id)
+        # batchDelete is not supported in XSIAM, only close.
+        # in XSAIAM we are closing both successful and failed incidents
+        if IS_XSIAM and self.incident_id:
+            self.playbook.close_incident(self.client, self.incident_id)
+            self.playbook.delete_integration_instances(self.client)
+        elif self.incident_id and test_passed:
+            self.playbook.delete_incident(self.client, self.incident_id)
             self.playbook.delete_integration_instances(self.client)
 
     def _run_docker_threshold_test(self):

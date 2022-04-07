@@ -1560,9 +1560,8 @@ class TestContext:
             server_url = self.client.api_client.configuration.host
             if IS_XSIAM:
                 self.build_context.logging_module.info(
-                    f'First? Investigation URL: {self.build_context.xsiam_ui_path}incident-view?caseId={investigation_id}')
-                self.build_context.logging_module.info(
-                    f'Second? Investigation URL: {self.build_context.xsiam_ui_path}incident-view/alerts_and_insights?caseId={investigation_id}&action:openAlertDetails={investigation_id}-work_plan')
+                    f'Investigation URL: {self.build_context.xsiam_ui_path}incident-view/alerts_and_insights?caseId='
+                    f'{investigation_id}&action:openAlertDetails={investigation_id}-work_plan')
             else:
                 self.build_context.logging_module.info(f'Investigation URL: {server_url}/#/WorkPlan/{investigation_id}')
             playbook_state = self._poll_for_playbook_state()

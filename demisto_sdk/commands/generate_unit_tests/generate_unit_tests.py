@@ -10,7 +10,7 @@ from klara.contract import solver
 from klara.contract.solver import MANAGER, ContractSolver, nodes
 
 from demisto_sdk.commands.common.logger import Colors
-from demisto_sdk.commands.common.tools import (print_error, print_success)
+from demisto_sdk.commands.common.tools import print_error, print_success
 from demisto_sdk.commands.generate_docs.common import execute_command
 from demisto_sdk.commands.generate_docs.generate_integration_doc import \
     get_command_examples

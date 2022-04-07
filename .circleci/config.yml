@@ -35,7 +35,6 @@ references:
 
     install_node_ci: &install_node_ci
       - node/install-packages:
-          override-ci-command: npm install -g .
           cache-version: << pipeline.parameters.cache-version >>
           
     install_demisto_sdk: &install_demisto_sdk
@@ -184,6 +183,7 @@ jobs:
             environment:
               CI_COMMIT_BRANCH: "master"
             command: |
+              ln -s node_modules content/node_modules
               cd content
               poetry run demisto-sdk -v
               poetry run demisto-sdk create-id-set -o ./Tests/id_set.json --fail-duplicates

@@ -206,7 +206,7 @@ jobs:
             command: |
               cd content
               ls
-              export PWD=pwd
+              cd .. 
               cp node_modules content
               cd content
               poetry run demisto-sdk -v

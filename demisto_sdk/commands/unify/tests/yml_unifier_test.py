@@ -1012,8 +1012,8 @@ def test_invalid_path_to_unifier(repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [UNIFY_CMD, '-i', f'{integration.path}/integration.yml'])
     assert '''Unsupported input. Please provide either:
-1. a directory of an integration or a script.
-2. a path of a GenericModule file.''' in result.stdout
+1. Path to directory of an integration or a script.
+2. Path to directory of a Parsing/Modeling rule.''' in result.stdout
 
 
 def test_add_contributors_support(tmp_path):

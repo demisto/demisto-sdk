@@ -1,8 +1,15 @@
+# validations
 demisto-sdk/demisto_sdk/commands/validate/validate_manager.py @idovandijk
 demisto_sdk/commands/common/hook_validations/ @idovandijk
 
+# VS Code plugin
 .vscode/ @jochman
 .devcontainer/ @jochman
 
-Pipfile* @dorschw
+# CircleCI
 .circleci/ @dorschw
+
+# Dependencies
+Pipfile* @dorschw
+pyproject.toml @dorschw
+poetry.lock @dorschw

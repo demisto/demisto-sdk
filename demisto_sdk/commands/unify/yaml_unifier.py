@@ -12,8 +12,8 @@ from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import get_yml_paths_in_dir, print_error
 
 UNSUPPORTED_INPUT_ERR_MSG = '''Unsupported input. Please provide either:
-1. a directory of an integration or a script.
-2. a path of a GenericModule file.'''
+1. Path to directory of an integration or a script.
+2. Path to directory of a Parsing/Modeling rule.'''
 
 
 class YAMLUnifier(ABC):
@@ -52,6 +52,7 @@ class YAMLUnifier(ABC):
 
         self.use_force = force
         self.dest_path = output
+        self.dir_name = ''
 
         yml_paths, self.yml_path = get_yml_paths_in_dir(self.package_path, Errors.no_yml_file(self.package_path))
         for path in yml_paths:
@@ -77,3 +78,50 @@ class YAMLUnifier(ABC):
     def unify(self):
         """Merges the various components to create an output yml file."""
         ...
+
+    def _set_dest_path(
+        self,
+        file_name_suffix: Optional[str] = None,
+    ):
+        """Sets the target (destination) output path for the unified YAML, based on:
+            - Integration/Script directory name.
+            - Content item type (Integration/Script/Rule).
+            - Content item prefix (integration/script/parsingrule/modelingrule).
+            - Provided file name suffix.
+
+        Args:
+            file_name_suffix(str): An optional suffix to concat to the filename.
+        """
+        package_dir_name = os.path.basename(self.package_path)
+        output_filename = '{}-{}.yml'.format(DIR_TO_PREFIX[self.dir_name], package_dir_name)
+
+        if file_name_suffix:
+            # append suffix to output file name
+            output_filename = file_name_suffix.join(os.path.splitext(output_filename))
+
+        if self.dest_path:
+            self.dest_path = os.path.join(self.dest_path, output_filename)
+        else:
+            self.dest_path = os.path.join(self.package_path, output_filename)
+
+    def _output_yaml(
+        self,
+        file_path: Optional[str],
+        file_data: dict,
+    ):
+        """Writes the YAML unified to the given path.
+        Checks whether the unified YAML already exists, and either fail or overwrite it forced to.
+
+        Args:
+            file_path(str): The file path to output the YAML to.
+            file_data(dict): The unified YAML contents.
+        """
+        if os.path.isfile(file_path) and not self.use_force:  # type: ignore[arg-type]
+            raise ValueError(
+                f'Output file already exists: {self.dest_path}.'
+                ' Make sure to remove this file from source control'
+                ' or rename this package (for example if it is a v2).'
+            )
+
+        with io.open(file_path, mode='w', encoding='utf-8') as file_:  # type: ignore[arg-type]
+            self.yaml.dump(file_data, file_)

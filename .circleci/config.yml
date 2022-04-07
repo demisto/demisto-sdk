@@ -350,7 +350,6 @@ workflows:
           <<: *reqs_content_checkout
       - build:
           <<: *ignore_only_branch_master_and_tag_filter
-          # <<: *requires_all
       - deploy:
           <<: *only_branch_master_and_tag_filter
-          # <<: *requires_all
+          <<: *requires_all

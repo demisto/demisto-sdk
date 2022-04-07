@@ -67,6 +67,14 @@ class DictionaryBasedObject(GeneralObject):
         as_dict = self.to_dict()
         if 'commonfields' in as_dict.keys():
             return as_dict.get('commonfields', {}).get('id')
+        elif 'dashboards_data' in as_dict.keys():
+            return as_dict.get('dashboards_data', [{}])[0].get('global_id')
+        elif 'templates_data' in as_dict.keys():
+            return as_dict.get('templates_data', [{}])[0].get('global_id')
+        elif 'global_rule_id' in as_dict.keys():
+            return as_dict.get('global_rule_id')
+        elif 'trigger_id' in as_dict.keys():
+            return as_dict.get('trigger_id')
         else:
             return as_dict.get('id')
 

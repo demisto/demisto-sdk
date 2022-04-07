@@ -13,8 +13,8 @@ from ruamel.yaml.scalarstring import FoldedScalarString
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
-    DEFAULT_IMAGE_PREFIX, DIR_TO_PREFIX, INTEGRATIONS_DIR, SCRIPTS_DIR,
-    TYPE_TO_EXTENSION, FileType)
+    DEFAULT_IMAGE_PREFIX, INTEGRATIONS_DIR, SCRIPTS_DIR, TYPE_TO_EXTENSION,
+    FileType)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                find_type, get_pack_name,
@@ -116,29 +116,13 @@ class IntegrationScriptUnifier(YAMLUnifier):
                 output_path45: yml_unified45,
             }
         for file_path, file_data in output_map.items():
-            if os.path.isfile(file_path) and self.use_force is False:  # type: ignore[arg-type]
-                raise ValueError(f'Output file already exists: {self.dest_path}.'
-                                 ' Make sure to remove this file from source control'
-                                 ' or rename this package (for example if it is a v2).')
-
-            with io.open(file_path, mode='w', encoding='utf-8') as file_:  # type: ignore[arg-type]
-                self.yaml.dump(file_data, file_)
+            self._output_yaml(file_path, file_data)
 
         return output_map
 
     def unify(self, file_name_suffix=None):
         print("Merging package: {}".format(self.package_path))
-        package_dir_name = os.path.basename(self.package_path)
-        output_filename = '{}-{}.yml'.format(DIR_TO_PREFIX[self.dir_name], package_dir_name)
-
-        if file_name_suffix:
-            # append suffix to output file name
-            output_filename = file_name_suffix.join(os.path.splitext(output_filename))
-
-        if self.dest_path:
-            self.dest_path = os.path.join(self.dest_path, output_filename)
-        else:
-            self.dest_path = os.path.join(self.package_path, output_filename)
+        self._set_dest_path(file_name_suffix)
 
         script_obj = self.yml_data
 

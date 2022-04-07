@@ -204,12 +204,11 @@ jobs:
             environment:
               CI_COMMIT_BRANCH: "master"
             command: |
-              export PWD=pwd
-              ln -s $PWD/node_modules/ content/node_modules
               cd content
               ls
-              cd node_modules
-              ls
+              export PWD=pwd
+              cp $PWD/node_modules content
+              cd content
               poetry run demisto-sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
 

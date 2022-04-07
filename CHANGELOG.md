@@ -8,6 +8,7 @@ the same as the last release note version.
 * Added support for new XSIAM entities in **create-id-set** command.
 * Added support for new XSIAM entities in **create-content-artifacts** command.
 * Added support for Parsing/Modeling Rule content item in the **unify** command.
+* Added the integration name, the commands name and the script name to the known words by default when running the **doc-review** command.
 * Added a flag '-c' '--custom' to the **unify** command, if True will append to the unified yml name/display/id the label ' - Test'
 
 # 1.6.3

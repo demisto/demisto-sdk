@@ -1080,39 +1080,6 @@ def test_empty_yml(tmp_path):
     unifier.add_custom_section({})
 
 
-@pytest.mark.parametrize("flag", [True, False])
-def test_add_custom_section_flag_integration(repo, flag):
-    """
-        Given:
-            - An integration with a name of sample(yml)
-
-        When:
-            - Running the Unify command
-            first run with -c flag on
-            second run without -c flag
-
-        Then:
-            - Check that the 'Test' label was added or not to the unified yml
-    """
-    pack = repo.create_pack('PackName')
-    integration = pack.create_integration('dummy-integration', 'bla', INTEGRATION_YAML)
-    integration.create_default_integration()
-
-    with ChangeCWD(pack.repo_path):
-        runner = CliRunner(mix_stderr=False)
-        if flag:
-            runner.invoke(main, [UNIFY_CMD, '-i', f'{integration.path}', '-c', 'Test'])
-        else:
-            runner.invoke(main, [UNIFY_CMD, '-i', f'{integration.path}'])
-
-        with open(os.path.join(integration.path, 'integration-dummy-integration.yml')) as unified_yml:
-            unified_yml_data = yaml.load(unified_yml)
-            if flag:
-                assert unified_yml_data.get('name') == 'Sample - Test'
-            else:
-                assert unified_yml_data.get('name') == 'Sample'
-
-
 def test_add_custom_section_flag(repo):
     """
         Given:

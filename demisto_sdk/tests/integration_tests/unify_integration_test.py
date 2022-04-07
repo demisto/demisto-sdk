@@ -1,5 +1,6 @@
 import os
 
+import pytest
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
@@ -140,3 +141,37 @@ class TestModelingRuleUnifier:
             unified_rule = yaml.load(unified_rule_file)
             with open(pack.modeling_rules[0].rules.path) as rules_xif_file:
                 assert unified_rule['rules'] == rules_xif_file.read()
+
+
+class TestIntegrationScriptUnifier:
+    @pytest.mark.parametrize("flag", [True, False])
+    def test_add_custom_section_flag_integration(self, repo, flag):
+        """
+            Given:
+                - An integration with a name of sample(yml)
+
+            When:
+                - Running the Unify command
+                first run with -c flag on
+                second run without -c flag
+
+            Then:
+                - Check that the 'Test' label was added or not to the unified yml
+        """
+        pack = repo.create_pack('PackName')
+        integration = pack.create_integration('dummy-integration')
+        integration.create_default_integration()
+
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            if flag:
+                runner.invoke(main, [UNIFY_CMD, '-i', f'{integration.path}', '-c', 'Test'])
+            else:
+                runner.invoke(main, [UNIFY_CMD, '-i', f'{integration.path}'])
+
+            with open(os.path.join(integration.path, 'integration-dummy-integration.yml')) as unified_yml:
+                unified_yml_data = yaml.load(unified_yml)
+                if flag:
+                    assert unified_yml_data.get('name') == 'Sample - Test'
+                else:
+                    assert unified_yml_data.get('name') == 'Sample'

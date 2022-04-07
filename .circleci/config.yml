@@ -308,7 +308,7 @@ jobs:
             at: ~/project
         - run:
             name: Deploy Release to PyPi
-            command: poetry publish -u __token__ -p ${PYPI_TOKEN} --dry-run
+            command: poetry publish -u __token__ -p ${PYPI_TOKEN}
 workflows:
   version: 2.1
   build_and_release:

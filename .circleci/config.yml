@@ -342,5 +342,6 @@ workflows:
       - create-content-artifacts:
           <<: *tag_filter
           <<: *reqs_content_checkout
-      - build_and_deploy
+      - build_and_deploy:
+          <<: *tag_filter
           # <<: *requires_all

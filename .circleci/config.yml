@@ -207,7 +207,7 @@ jobs:
               cd content
               ls
               export PWD=pwd
-              cp $PWD/node_modules content
+              cp node_modules content
               cd content
               poetry run demisto-sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"

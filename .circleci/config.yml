@@ -24,15 +24,25 @@ parameters:
 
 
 references:
+    version_tag: &version_tag
+      /^v\d+\.\d+\.\d+$/ # version regex vx.x.x (i.e. v1.2.3)
+
     filter_tag_only: &filter_tag_only
       tags:
-          # version regex vx.x.x (i.e. v1.2.3)
-          only: /^v\d+\.\d+\.\d+$/
-    branch_master_and_tag_filter: &branch_master_and_tag_filter
+          only: *version_tag
+
+    only_branch_master_and_tag_filter: &only_branch_master_and_tag_filter
       filters:
         <<: *filter_tag_only
         branches:
           only: master
+
+    ignore_only_branch_master_and_tag_filter: &ignore_only_branch_master_and_tag_filter
+      filters:
+        branches:
+          ignore: master
+        tags:
+          ignore: *version_tag
 
     tag_filter: &tag_filter
       filters:
@@ -47,7 +57,7 @@ references:
     install_node_ci: &install_node_ci
       - node/install-packages:
           cache-version: << pipeline.parameters.cache-version >>
-          
+
     install_demisto_sdk: &install_demisto_sdk
       - python/install-packages:
           pkg-manager: "poetry"
@@ -63,6 +73,13 @@ references:
       - python/install-packages: 
                 pkg-manager: "poetry"
                 args: "--extras build"
+    
+    requires_all: &requires_all
+      requires:
+            - precommit-checks
+            - validate-files
+            - create-content-artifacts
+            - test-lint
 
 jobs:
   run-unit-tests:
@@ -331,11 +348,10 @@ workflows:
       - create-content-artifacts:
           <<: *tag_filter
           <<: *reqs_content_checkout
-      - build
+      - build:
+          <<: *ignore_only_branch_master_and_tag_filter
+          # <<: *requires_all
+      - test-lint
       - deploy:
-          <<: *branch_master_and_tag_filter
-          # requires:
-            # - precommit-checks
-            # - validate-files
-            # - create-content-artifacts
-            # - test-lint
+          <<: *only_branch_master_and_tag_filter
+          # <<: *requires_all

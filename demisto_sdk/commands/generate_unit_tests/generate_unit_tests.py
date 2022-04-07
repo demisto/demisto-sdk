@@ -1,6 +1,5 @@
 import json
 import logging
-import sys
 from pathlib import Path
 from typing import List
 
@@ -20,7 +19,6 @@ from demisto_sdk.commands.generate_unit_tests.test_case_builder import (
     ArgsBuilder, TestCase)
 from demisto_sdk.commands.generate_unit_tests.test_module_builder import \
     TestModule
-
 
 logger = logging.getLogger('demisto-sdk')
 

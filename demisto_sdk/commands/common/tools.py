@@ -866,7 +866,7 @@ def get_integration_name_and_command_names(file_path):
         return command_names
 
     found_integrations: List[str] = os.listdir(integrations_dir_path)
-    if len(found_integrations) != 0:
+    if found_integrations:
         for integration in found_integrations:
             command_names.add(integration)
 
@@ -896,7 +896,7 @@ def get_scripts_names(file_path):
         return scripts_names
 
     found_scripts: List[str] = os.listdir(scripts_dir_path)
-    if len(found_scripts) == 0:
+    if not found_scripts:
         click.secho(f'no scripts found')
     else:
         for script in found_scripts:

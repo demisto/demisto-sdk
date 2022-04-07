@@ -198,4 +198,3 @@ class TestIntegrationScriptUnifier:
             with open(os.path.join(script.path, 'script-dummy-script.yml')) as unified_yml:
                 unified_yml_data = yaml.load(unified_yml)
                 assert unified_yml_data.get('name') == 'sample_script - Test'
-

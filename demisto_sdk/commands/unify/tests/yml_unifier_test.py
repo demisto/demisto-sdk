@@ -1078,5 +1078,3 @@ def test_empty_yml(tmp_path):
     """
     unifier = IntegrationScriptUnifier(str(tmp_path))
     unifier.add_custom_section({})
-
-

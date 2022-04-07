@@ -61,16 +61,21 @@ class TestUnitTestsGenerator:
         - ensure the config file is generated
         - the config file should be identical to the one we have under resources folder
         """
-        args.update({'input_path': self.input_path,
-                     'output_dir': self.output_dir,
-                     'test_data_path': 'demisto_sdk/commands/generate_unit_tests/tests/test_files/outputs'})
 
         mocker.patch.object(UnitTestsGenerator, "execute_commands_into_dict", return_value=(EXAMPLES, []))
 
         output_path = Path(self.output_dir, 'malwarebazaar_test.py')
         desired = Path(self.output_dir, expected_result)
 
-        run_generate_unit_tests(**args)
+        run_generate_unit_tests(
+            input_path=self.input_path,
+            commands=args.get('commands', ''),
+            output_dir=self.output_dir,
+            examples='',
+            insecure=False,
+            use_demisto=False,
+            append=False
+        )
 
         with open(output_path, 'r') as f:
             output_source = f.read()

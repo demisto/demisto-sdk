@@ -26,6 +26,7 @@ from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
 json = JSON_Handler()
 
+
 # Third party packages
 
 # Common tools
@@ -140,7 +141,8 @@ def main(config, version, release_notes):
             __version__ = get_distribution('demisto-sdk').version
         except DistributionNotFound:
             __version__ = 'dev'
-            print_warning('Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.')
+            print_warning(
+                'Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.')
         else:
             last_release = get_last_remote_release_version()
             print_warning(f'You are using demisto-sdk {__version__}.')
@@ -274,7 +276,8 @@ def extract_code(config, **kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-i", "--input", help="The directory path to the files or path to the file to unify", required=True, type=click.Path(dir_okay=True)
+    "-i", "--input", help="The directory path to the files or path to the file to unify", required=True,
+    type=click.Path(dir_okay=True)
 )
 @click.option(
     "-o", "--output", help="The output dir to write the unified yml to", required=False
@@ -2104,8 +2107,18 @@ def convert(config, **kwargs):
          " Each command should be in a separate line.")
 @click.option(
     "-a", "--append",
-    help="Append generated test file to the existing <integration_name>_test.py. Else, overwriting existing UT", is_flag=True)
-def generate_unit_tests(**kwargs):
+    help="Append generated test file to the existing <integration_name>_test.py. Else, overwriting existing UT",
+    is_flag=True)
+def generate_unit_tests(input_path: str = '',
+                        commands: list = [],
+                        output_dir: str = '',
+                        examples: str = '',
+                        insecure: bool = False,
+                        use_demisto: bool = False,
+                        append: bool = False,
+                        verbose: bool = 1,
+                        quiet: bool = False,
+                        log_path: str = ''):
     """
     This command is used to generate unit tests automatically from an  integration python code.
     Also supports generating unit tests for specific commands.
@@ -2116,10 +2129,18 @@ def generate_unit_tests(**kwargs):
     from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import \
         run_generate_unit_tests
-    logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
-                  quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
-                  log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
-    return run_generate_unit_tests(**kwargs)
+    logging_setup(verbose=verbose,  # type: ignore[arg-type]
+                  quiet=quiet,  # type: ignore[arg-type]
+                  log_path=log_path)  # type: ignore[arg-type]
+    return run_generate_unit_tests(
+        input_path,
+        commands,
+        output_dir,
+        examples,
+        insecure,
+        use_demisto,
+        append
+    )
 
 
 @main.command(

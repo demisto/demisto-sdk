@@ -210,15 +210,14 @@ class CustomContactSolver(ContractSolver):
         return test_module
 
 
-def run_generate_unit_tests(**kwargs):
+def run_generate_unit_tests(input_path: str,
+                            commands: list,
+                            output_dir: str,
+                            examples: str,
+                            insecure: bool,
+                            use_demisto: bool,
+                            append: bool):
     global logger
-    input_path = kwargs.get('input_path', '')
-    output_dir = kwargs.get('output_dir', '')
-    commands = arg_to_list(kwargs.get('commands', ''))
-    commands_examples_path = kwargs.get('examples', '')
-    insecure = kwargs.get('insecure', False)
-    use_demisto = kwargs.get('use_demisto', False)
-    append = kwargs.get('append', False)
 
     click.echo("================= Running Unit Testing Generator ===================")
     # validate inputs
@@ -242,14 +241,15 @@ def run_generate_unit_tests(**kwargs):
     test_data_path = dirname / 'test_data'
     if not test_data_path.is_dir():
         test_data_path.mkdir(parents=True, exist_ok=True)
-        outputs_path = test_data_path / 'outputs'
+    outputs_path = test_data_path / 'outputs'
+    if not outputs_path.is_dir():
         outputs_path.mkdir(parents=True, exist_ok=True)
 
     if not output_dir:
         output_dir = Path(input_path).parent
 
-    if not commands_examples_path:
-        commands_examples_path = input_path_obj.parent / 'command_examples'
+    if not examples:
+        examples = input_path_obj.parent / 'command_examples'
 
     # Check the directory exists and if not, try to create it
     output_dir_path_obj = Path(output_dir)
@@ -271,7 +271,7 @@ def run_generate_unit_tests(**kwargs):
                                    commands,
                                    output_dir,
                                    file_name,
-                                   commands_examples_path,
+                                   examples,
                                    insecure,
                                    use_demisto,
                                    append)
@@ -279,8 +279,9 @@ def run_generate_unit_tests(**kwargs):
     logger.debug(f"Created generator object with the following params: input - {input_path},"
                  f" test data path - {test_data_path},"
                  f" commands -  {commands},"
+                 f" module_name - {file_name},"
                  f" output_dir - {output_dir},"
-                 f" commands_examples - {commands_examples_path},"
+                 f" commands_examples - {examples},"
                  f" insecure - {insecure},"
                  f" use_demisto - {use_demisto},"
                  f" append - {append}")

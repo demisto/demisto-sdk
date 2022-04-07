@@ -419,7 +419,7 @@ python-versions = "*"
 
 [[package]]
 name = "docker"
-version = "4.3.0"
+version = "4.4.4"
 description = "A Python library for the Docker Engine API."
 category = "main"
 optional = false
@@ -1698,7 +1698,7 @@ python-versions = "*"
 
 [[package]]
 name = "soupsieve"
-version = "2.3.1"
+version = "2.3.2"
 description = "A modern CSS selector implementation for Beautiful Soup."
 category = "main"
 optional = false
@@ -1860,7 +1860,7 @@ python-versions = "*"
 
 [[package]]
 name = "types-pyvmomi"
-version = "7.0.6"
+version = "7.0.7"
 description = "Typing stubs for pyvmomi"
 category = "main"
 optional = false
@@ -2114,7 +2114,7 @@ build = ["gsutil"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "eb3655d31d1cef3c5cc466ca0a2d3c55829cac2a9ed8c2f4cdc2625030920214"
+content-hash = "308c9d4ad00cc678f2685a27df859d4dc9be1e0e2ff589e70501d623b7df5d28"
 
 [metadata.files]
 aiohttp = [
@@ -2514,8 +2514,8 @@ distlib = [
     {file = "distlib-0.3.4.zip", hash = "sha256:e4b58818180336dc9c529bfb9a0b58728ffc09ad92027a3f30b7cd91e3458579"},
 ]
 docker = [
-    {file = "docker-4.3.0-py2.py3-none-any.whl", hash = "sha256:ba118607b0ba6bfc1b236ec32019a355c47b5d012d01d976467d4692ef443929"},
-    {file = "docker-4.3.0.tar.gz", hash = "sha256:431a268f2caf85aa30613f9642da274c62f6ee8bae7d70d968e01529f7d6af93"},
+    {file = "docker-4.4.4-py2.py3-none-any.whl", hash = "sha256:f3607d5695be025fa405a12aca2e5df702a57db63790c73b927eb6a94aac60af"},
+    {file = "docker-4.4.4.tar.gz", hash = "sha256:d3393c878f575d3a9ca3b94471a3c89a6d960b35feb92f033c0de36cc9d934db"},
 ]
 docopt = [
     {file = "docopt-0.6.2.tar.gz", hash = "sha256:49b3a825280bd66b3aa83585ef59c4a8c82f2c8a522dbe754a8bc8d08c85c491"},
@@ -3422,8 +3422,8 @@ sortedcontainers = [
     {file = "sortedcontainers-2.4.0.tar.gz", hash = "sha256:25caa5a06cc30b6b83d11423433f65d1f9d76c4c6a0c90e3379eaa43b9bfdb88"},
 ]
 soupsieve = [
-    {file = "soupsieve-2.3.1-py3-none-any.whl", hash = "sha256:1a3cca2617c6b38c0343ed661b1fa5de5637f257d4fe22bd9f1338010a1efefb"},
-    {file = "soupsieve-2.3.1.tar.gz", hash = "sha256:b8d49b1cd4f037c7082a9683dfa1801aa2597fb11c3a1155b7a5b94829b4f1f9"},
+    {file = "soupsieve-2.3.2-py3-none-any.whl", hash = "sha256:a714129d3021ec17ce5be346b1007300558b378332c289a1a20e7d4de6ff18a5"},
+    {file = "soupsieve-2.3.2.tar.gz", hash = "sha256:0bcc6d7432153063e3df09c3ac9442af3eba488715bfcad6a4c38ccb2a523124"},
 ]
 stevedore = [
     {file = "stevedore-3.5.0-py3-none-any.whl", hash = "sha256:a547de73308fd7e90075bb4d301405bebf705292fa90a90fc3bcf9133f58616c"},
@@ -3555,8 +3555,8 @@ types-pytz = [
     {file = "types_pytz-2021.3.6-py3-none-any.whl", hash = "sha256:6805c72d51118923c5bf98633c39593d5b464d2ab49a803440e2d7ab6b8920df"},
 ]
 types-pyvmomi = [
-    {file = "types-pyvmomi-7.0.6.tar.gz", hash = "sha256:04a3e4cf468dad3337b7f34446c9fb378edea36b9e45713eaf5e5ffe91804539"},
-    {file = "types_pyvmomi-7.0.6-py3-none-any.whl", hash = "sha256:ff10512bcdf895016ccd6bce884855ddca53f62de5ef6bf757d5dc183ca1bf70"},
+    {file = "types-pyvmomi-7.0.7.tar.gz", hash = "sha256:60a11be7a3e449d7f3ec0e0c42274cd84952a17fdcd05ba6c1603bad8c9bb98d"},
+    {file = "types_pyvmomi-7.0.7-py3-none-any.whl", hash = "sha256:83aa6b53cbd8e52d6959d8aae75733b313789d7704a9c9f6f6e87a80a36546dc"},
 ]
 types-pyyaml = [
     {file = "types-PyYAML-6.0.5.tar.gz", hash = "sha256:464e050914f3d1d83a8c038e1cf46da5cb96b7cd02eaa096bcaa03675edd8a2e"},

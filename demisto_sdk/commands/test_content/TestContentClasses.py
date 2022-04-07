@@ -475,7 +475,7 @@ class TestPlaybook:
                                                    f'because investigation completed successfully..')
         except ApiException:
             self.build_context.logging_module.warning(
-                f'Failed to close incident, error trying to communicate with demisto server.')
+                'Failed to close incident, error trying to communicate with demisto server.')
             return False
 
         if int(res[1]) != 200:
@@ -2105,7 +2105,7 @@ class ServerContext:
         # we running XSIAM without proxy. This code wont be executed on xsiam servers
         if not IS_XSIAM:
             self.proxy.configure_proxy_in_demisto(      # type: ignore[union-attr]
-                proxy=self.proxy.ami.internal_ip + ':' + self.proxy.PROXY_PORT, # type: ignore[union-attr]
+                proxy=self.proxy.ami.internal_ip + ':' + self.proxy.PROXY_PORT,  # type: ignore[union-attr]
                 username=self.build_context.secret_conf.server_username if not self.build_context.auth_id else None,
                 password=self.build_context.secret_conf.server_password if not self.build_context.auth_id else None,
                 api_key=self.build_context.api_key,
@@ -2114,9 +2114,8 @@ class ServerContext:
             )
         self._execute_tests(self.build_context.mockable_tests_to_run)
         if not IS_XSIAM:
-
-            self.proxy.configure_proxy_in_demisto(
-                proxy='',  # type: ignore[union-attr]
+            self.proxy.configure_proxy_in_demisto(  # type: ignore[union-attr]
+                proxy='',
                 username=self.build_context.secret_conf.server_username if not self.build_context.auth_id else None,
                 password=self.build_context.secret_conf.server_password if not self.build_context.auth_id else None,
                 api_key=self.build_context.api_key,

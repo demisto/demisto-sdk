@@ -277,14 +277,14 @@ jobs:
             name: Build disturbution
             command: poetry build
         - run:
-            name: Set test-pypy as a repository
+            name: Set test-pypi as a repository
             command: poetry config repositories.testpypi https://test.pypi.org/legacy/
         - run:
             name: Deploy To TestPYPI
             filters:
               branches:
                 only: master
-            command: poetry publish -r testpypy -u __token__ -p ${PYPI_TEST_TOKEN} --dry-run
+            command: poetry publish -r testpypi -u __token__ -p ${PYPI_TEST_TOKEN} --dry-run
         - run:
             name: Deploy Release to Official PyPi
             <<: *tag_filter
@@ -315,10 +315,9 @@ workflows:
       - create-content-artifacts:
           <<: *tag_filter
           <<: *reqs_content_checkout
-      - deploy:
-          <<: *tag_filter
-          requires:
-            - precommit-checks
-            - validate-files
-            - create-content-artifacts
-            - test-lint
+      - deploy
+          # requires:
+            # - precommit-checks
+            # - validate-files
+            # - create-content-artifacts
+            # - test-lint

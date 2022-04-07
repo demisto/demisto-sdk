@@ -72,6 +72,7 @@ references:
             - validate-files
             - create-content-artifacts
             - test-lint
+            - build
 
 jobs:
   run-unit-tests:
@@ -295,26 +296,22 @@ jobs:
           - run:
               name: Build Distrubution
               command: poetry build
+          - persist_to_workspace:
+              root: ~/project
+              paths:
+                - dist
           - store_artifacts:
               path: dist
 
-  build_and_deploy:
+  publish:
       docker:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
-        - run:
-            name: Build Distrubution
-            command: poetry build
-        - store_artifacts:
-              path: dist
+        - attach_workspace:
+            at: ~/project
         - run:
             name: Deploy Release to Official PyPi
-            filters:
-              tags:
-                only: *version_tag_regex
-              branches:
-                ignore: /.*/
             command: poetry publish -u __token__ -p ${PYPI_TOKEN} --dry-run
 workflows:
   version: 2.1
@@ -342,6 +339,11 @@ workflows:
       - create-content-artifacts:
           <<: *tag_filter
           <<: *reqs_content_checkout
-      - build_and_deploy:
-          <<: *tag_filter
-          # <<: *requires_all
+      - build
+      - publish:
+          filters:
+              tags:
+                only: *version_tag_regex
+              branches:
+                ignore: /.*/
+          <<: *requires_all

@@ -314,7 +314,7 @@ jobs:
               tags:
                 only: *version_tag_regex
               branches:
-                ignore
+                ignore: /.*/
             command: poetry publish -u __token__ -p ${PYPI_TOKEN} --dry-run
 workflows:
   version: 2.1

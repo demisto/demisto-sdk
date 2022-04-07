@@ -179,7 +179,6 @@ class ReadMeValidator(BaseValidator):
         valid = True
         # Check node exist
         stdout, stderr, exit_code = run_command_os('node -v', cwd=content_path)
-        print_error(f'There is no node installed on the machine, Test Failed, error - {stderr}, {stdout}, {exit_code}\n')
         if exit_code:
             if print_errors:
                 print_error(f'There is no node installed on the machine, Test Failed, error - {stderr}, {stdout}\n')
@@ -190,7 +189,7 @@ class ReadMeValidator(BaseValidator):
             # Check npm modules exsits
             stdout, stderr, exit_code = run_command_os(f'npm ls --json {" ".join(REQUIRED_MDX_PACKS)}',
                                                        cwd=content_path)
-            print_error(f'stderr - {stderr}, stdout - {stdout}, exit code - {exit_code}\n')
+            print_error(f'stderr - {stderr}, stdout - {stdout}, exit code - {exit_code}\n{content_path}\n')
             if exit_code:  # all are missinig
                 missing_module.extend(REQUIRED_MDX_PACKS)
             else:

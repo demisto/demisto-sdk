@@ -545,7 +545,7 @@ class ReadMeValidator(BaseValidator):
             if not ReadMeValidator._MDX_SERVER_PROCESS:
                 mdx_parse_server = Path(__file__).parent.parent / 'mdx-parse-server.js'
                 try:
-                    ReadMeValidator._MDX_SERVER_PROCESS = subprocess.Popen(['jjjj', str(mdx_parse_server)],
+                    ReadMeValidator._MDX_SERVER_PROCESS = subprocess.Popen(['node', str(mdx_parse_server)],
                                                                            stdout=subprocess.PIPE, text=True)
                 except FileNotFoundError:
                     error_message = '\nTest Failed\n\n' \

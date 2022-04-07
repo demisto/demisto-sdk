@@ -330,8 +330,8 @@ workflows:
           <<: *tag_filter
           <<: *reqs_content_checkout
       - build
-      - deploy:
-          <<: *branch_master_and_tag_filter
+      - deploy
+          # <<: *branch_master_and_tag_filter
           # requires:
             # - precommit-checks
             # - validate-files

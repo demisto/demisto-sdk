@@ -2116,7 +2116,7 @@ def generate_unit_tests(input_path: str = '',
                         insecure: bool = False,
                         use_demisto: bool = False,
                         append: bool = False,
-                        verbose: bool = 1,
+                        verbose: int = 1,
                         quiet: bool = False,
                         log_path: str = ''):
     """

@@ -24,6 +24,14 @@ parameters:
 
 
 references:
+    branch_master_and_tag_filter: &branch_master_and_tag_filter
+      filters:
+        tags:
+          # version regex vx.x.x (i.e. v1.2.3)
+          only: /^v\d+\.\d+\.\d+$/
+        branches:
+          only: master
+
     tag_filter: &tag_filter
       filters:
         tags:
@@ -283,7 +291,8 @@ jobs:
             name: Deploy To TestPYPI
             filters:
               branches:
-                only: master
+                only: 
+                  - master
             command: poetry publish -r testpypi -u __token__ -p ${PYPI_TEST_TOKEN} --dry-run
         - run:
             name: Deploy Release to Official PyPi
@@ -315,7 +324,9 @@ workflows:
       - create-content-artifacts:
           <<: *tag_filter
           <<: *reqs_content_checkout
-      - deploy
+      - build
+      - deploy:
+          <<: *branch_master_and_tag_filter
           # requires:
             # - precommit-checks
             # - validate-files

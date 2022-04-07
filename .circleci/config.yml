@@ -303,6 +303,9 @@ jobs:
           - run:
               name: Build Distrubution
               command: poetry build
+          - store_artifacts:
+              path: dist
+
   deploy:
       docker:
         - image: << pipeline.parameters.global-docker-image >>
@@ -312,16 +315,21 @@ jobs:
             name: Set test-pypi as a repository
             command: poetry config repositories.testpypi https://test.pypi.org/legacy/
         - run:
+            name: Build Distrubution
+            command: poetry build
+        - run:
             name: Deploy To TestPYPI
             filters:
               branches:
                 only: 
                   - master
-            command: poetry publish -r testpypi -u __token__ -p ${PYPI_TEST_TOKEN} --dry-run --build
+            command: poetry publish -r testpypi -u __token__ -p ${PYPI_TEST_TOKEN} --dry-run
         - run:
             name: Deploy Release to Official PyPi
             <<: *tag_filter
-            command: poetry publish -u __token__ -p ${PYPI_TOKEN} --dry-run --build
+            command: poetry publish -u __token__ -p ${PYPI_TOKEN} --dry-run
+        - store_artifacts:
+              path: dist
 workflows:
   version: 2.1
   build_and_release:
@@ -352,4 +360,4 @@ workflows:
           <<: *ignore_only_branch_master_and_tag_filter
       - deploy:
           <<: *only_branch_master_and_tag_filter
-          <<: *requires_all
+          # <<: *requires_all

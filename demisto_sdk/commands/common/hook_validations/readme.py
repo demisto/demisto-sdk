@@ -179,6 +179,7 @@ class ReadMeValidator(BaseValidator):
         valid = True
         # Check node exist
         stdout, stderr, exit_code = run_command_os('node -v', cwd=content_path)
+        print_error(f'There is no node installed on the machine, Test Failed, error - {stderr}, {stdout}, {exit_code}\n')
         if exit_code:
             if print_errors:
                 print_error(f'There is no node installed on the machine, Test Failed, error - {stderr}, {stdout}\n')

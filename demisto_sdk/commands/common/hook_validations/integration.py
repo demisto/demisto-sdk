@@ -570,7 +570,7 @@ class IntegrationValidator(ContentEntityValidator):
         for command in commands:
             # If this happens, an error message will be shown from is_valid_default_argument(), but still need to check
             # for it here to avoid crash
-            if command.get('arguments') is None:
+            if command.get('arguments', []) is None:
                 continue
             arg_names = []  # type: list
             for arg in command.get('arguments', []):

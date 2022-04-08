@@ -12,6 +12,7 @@ the same as the last release note version.
 * Added support for Parsing/Modeling Rule content item in the **unify** command.
 * Added the integration name, the commands name and the script name to the known words by default when running the **doc-review** command.
 * Added an argument '-c' '--custom' to the **unify** command, if True will append to the unified yml name/display/id the custom label provided
+* Fixed an issue where *None* arguments in integration commands cause the **validate** and **format** commands to fail unexpectedly.
 
 # 1.6.3
 * **Breaking change**: Fixed a typo in the **validate** `--quiet-bc-validation` flag (was `--quite-bc-validation`). @upstart-swiss

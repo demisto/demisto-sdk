@@ -385,7 +385,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         for command in commands:
             default_args = set()
-            if command.get('arguments') is None:
+            if command.get('arguments', []) is None:
                 error_message, error_code = Errors.empty_command_arguments(command.get('name'))
                 if self.handle_error(error_message, error_code, file_path=self.file_path,
                                      suggested_fix=Errors.suggest_fix(self.file_path)):

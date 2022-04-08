@@ -386,11 +386,15 @@ class TestIntegrationValidator:
     MULTIPLE_DEFAULT_ARGS_INVALID_1 = [
         {"name": "msgraph-list-users",
          "arguments": [{"name": "users", "required": False, "default": True}, {"name": "verbose", "default": True}]}]
+    NONE_ARGS_INVALID = [
+        {"name": "msgraph-list-users",
+         "arguments": None}]
 
     DEFAULT_ARGS_INPUTS = [
         (MULTIPLE_DEFAULT_ARGS_1, True),
         (MULTIPLE_DEFAULT_ARGS_2, True),
         (MULTIPLE_DEFAULT_ARGS_INVALID_1, False),
+        (NONE_ARGS_INVALID, False),
     ]
 
     @pytest.mark.parametrize("current, answer", DEFAULT_ARGS_INPUTS)
@@ -400,7 +404,7 @@ class TestIntegrationValidator:
 
         When: running is_valid_default_argument command.
 
-        Then: Validate that up to 1 default arg name yields True, else yields False.
+        Then: Validate that up to 1 default arg name yields True and that the arguments are not None, else yields False.
         """
         current = {"script": {"commands": current}}
         structure = mock_structure("", current)

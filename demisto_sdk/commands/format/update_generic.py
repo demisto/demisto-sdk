@@ -199,7 +199,7 @@ class BaseUpdate:
                     if sequence and sequence[0].get('mapping'):
                         if data[field] is None:
                             if self.verbose:
-                                print(f'Adding value to {field} field')
+                                print(f'Adding an empty array - `[]` as the value of the `{field}` field')
                             data[field] = []
                         else:
                             for list_element in data[field]:

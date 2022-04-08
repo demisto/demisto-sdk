@@ -224,6 +224,7 @@ ERROR_CODE = {
     "changed_integration_yml_fields": {'code': "IN147", "ui_applicable": False, 'related_field': 'script'},
     "parameter_is_malformed": {'code': "IN148", 'ui_applicable': False, 'related_field': 'configuration'},
     'empty_outputs_common_paths': {'code': 'IN149', 'ui_applicable': False, 'related_field': 'contextOutput'},
+    "empty_command_arguments": {'code': 'IN150', 'ui_applicable': False, 'related_field': 'arguments'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -443,6 +444,11 @@ class Errors:
     @staticmethod
     def suggest_fix(file_path: str, *args: Any, cmd: str = 'format') -> str:
         return f'To fix the problem, try running `demisto-sdk {cmd} -i {file_path} {" ".join(args)}`'
+
+    @staticmethod
+    @error_code_decorator
+    def empty_command_arguments(command_name):
+        return f"The integration command: {command_name} has None as arguments."
 
     @staticmethod
     @error_code_decorator

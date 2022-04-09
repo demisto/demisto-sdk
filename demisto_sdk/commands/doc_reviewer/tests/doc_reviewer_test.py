@@ -1,11 +1,14 @@
+import os
 from os import path
 from typing import List
 
 import pytest
 
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.tools import find_type
+from demisto_sdk.commands.common.tools import find_type, get_yaml
 from demisto_sdk.commands.doc_reviewer.doc_reviewer import DocReviewer
+from demisto_sdk.tests.integration_tests.validate_integration_test import \
+    AZURE_FEED_PACK_PATH
 from TestSuite.json_based import JSONBased
 from TestSuite.test_tools import ChangeCWD
 
@@ -750,6 +753,78 @@ def test_find_known_words_from_pack(repo, known_words_content, expected_known_wo
     with ChangeCWD(repo.path):
         assert doc_reviewer.find_known_words_from_pack(rn_file.path) == ('Packs/test_pack/.pack-ignore',
                                                                          expected_known_words)
+
+
+def test_find_known_words_from_pack_ignore_integrations_name(repo):
+    """
+    Given:
+        - Pack's structure is correct and pack-ignore file is present.
+
+    When:
+        - Running DocReviewer.find_known_words_from_pack.
+
+    Then:
+        - Ensure the found path result is appropriate.
+        - Ensure the integrations name are ignored.
+    """
+    pack = repo.create_pack('test_pack')
+    integration1 = pack.create_integration(name="first_integration")
+    integration2 = pack.create_integration(name="second_integration")
+    rn_file = pack.create_release_notes(version='1_0_0', content=f'{integration1.name}\n{integration2.name}')
+    doc_reviewer = DocReviewer(file_paths=[])
+    with ChangeCWD(repo.path):
+        found_known_words = doc_reviewer.find_known_words_from_pack(rn_file.path)[1]
+        assert integration1.name in found_known_words
+        assert integration2.name in found_known_words
+
+
+def test_find_known_words_from_pack_ignore_commands_name(repo):
+    """
+    Given:
+        - Pack's structure is correct and pack-ignore file is present.
+
+    When:
+        - Running DocReviewer.find_known_words_from_pack.
+
+    Then:
+        - Ensure the found path result is appropriate.
+        - Ensure the commands names are ignored.
+    """
+
+    pack = repo.create_pack('test_pack')
+    pack_integration_path = os.path.join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
+    valid_integration_yml = get_yaml(pack_integration_path, cache_clear=True)
+    pack.create_integration(name="first_integration", yml=valid_integration_yml)
+    rn_file = pack.create_release_notes(version='1_0_0', content='azure-hidden-command \n azure-get-indicators')
+    doc_reviewer = DocReviewer(file_paths=[])
+    with ChangeCWD(repo.path):
+        found_known_words = doc_reviewer.find_known_words_from_pack(rn_file.path)[1]
+        assert 'azure-hidden-command' in found_known_words
+        assert 'azure-get-indicators' in found_known_words
+
+
+def test_find_known_words_from_pack_ignore_scripts_name(repo):
+    """
+    Given:
+        - Pack's structure is correct and pack-ignore file is present.
+
+    When:
+        - Running DocReviewer.find_known_words_from_pack.
+
+    Then:
+        - Ensure the found path result is appropriate.
+        - Ensure the scripts names are ignored.
+    """
+
+    pack = repo.create_pack('test_pack')
+    script1 = pack.create_script(name='first_script')
+    script2 = pack.create_script(name='second_script')
+    rn_file = pack.create_release_notes(version='1_0_0', content=f'{script1.name}\n{script2.name}')
+    doc_reviewer = DocReviewer(file_paths=[])
+    with ChangeCWD(repo.path):
+        found_known_words = doc_reviewer.find_known_words_from_pack(rn_file.path)[1]
+        assert script1.name in found_known_words
+        assert script2.name in found_known_words
 
 
 def test_camel_case_split():

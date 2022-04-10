@@ -8,8 +8,6 @@ import docker
 from demisto_sdk.commands.common.logger import logger
 from demisto_sdk.commands.lint.docker_helper import init_global_docker_client
 
-client = init_global_docker_client()
-
 
 class ContainerRunner:
     def __init__(self, image: str, container_name: Optional[str] = None):
@@ -39,7 +37,7 @@ class ContainerRunner:
     def _create_container(self, **kwargs):
         if self._container_obj:
             self.remove_container()
-        self._container_obj = client.containers.create(image=self._image_name, name=self.container_name, **kwargs)
+        self._container_obj = init_global_docker_client().containers.create(image=self._image_name, name=self.container_name, **kwargs)
 
     def exec(self, command: Union[str, List[str]], **kwargs) -> Dict[str, Union[bytes, Dict, int]]:
         """
@@ -153,7 +151,7 @@ class DockerTools:
             docker.errors.NotFound in case that the container doesn't exist
         """
         try:
-            client.containers.get(name_or_id).remove(force=force)
+            init_global_docker_client().containers.get(name_or_id).remove(force=force)
         except docker.errors.NotFound as not_found:
             if not ignore_container_not_found:
                 raise not_found
@@ -176,7 +174,7 @@ class DockerTools:
 
         """
         try:
-            client.images.remove(name_or_id, force=force)
+            init_global_docker_client().images.remove(name_or_id, force=force)
         except docker.errors.ImageNotFound as not_found:
             if not ignore_image_not_found:
                 raise not_found

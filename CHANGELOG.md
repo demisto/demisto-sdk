@@ -1,6 +1,6 @@
 # Changelog
 
-* [Vulture](https://github.com/jendrikseipp/vulture) added to the pre-commit hook.
+* Added the [Vulture](https://github.com/jendrikseipp/vulture) linter to the pre-commit hook.
 * The `demisto-sdk` pack will now be distributed via PyPi with a **wheel** file.
 * Fixed a bug where any edited json file that contained a forward slash (`/`) escaped.
 * Added a new validation to **validate** command to verify that the metadata *currentVersion* is

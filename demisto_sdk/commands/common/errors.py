@@ -329,7 +329,6 @@ ERROR_CODE = {
     "template_sentence_in_readme": {'code': "RM107", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
     "missing_readme_file": {'code': "RM109", 'ui_applicable': False, 'related_field': ''},
-    "error_uninstall_node": {'code': "RM110", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -768,10 +767,11 @@ class Errors:
                f'Try running the following command: `npm install`'
 
     @staticmethod
-    @error_code_decorator
     def error_uninstall_node():
-        return 'There is no `node` installed on the machine\n' \
-               'Try running the following command: `node install`'
+        return '\nTest Failed\n\n' \
+               'There is no `node` installed on the machine.\n' \
+               'Please download and install `node` and rerun\n' \
+               'The official Node.js website, has installation instruction for Node.js: https://nodejs.org'
 
     @staticmethod
     @error_code_decorator

@@ -26,8 +26,8 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (
     compare_context_path_in_yml_and_readme, get_content_path,
-    get_url_with_retries, get_yaml, get_yml_paths_in_dir, print_warning, print_error,
-    run_command_os)
+    get_url_with_retries, get_yaml, get_yml_paths_in_dir, print_error,
+    print_warning, run_command_os)
 
 json = JSON_Handler()
 
@@ -548,10 +548,7 @@ class ReadMeValidator(BaseValidator):
                     ReadMeValidator._MDX_SERVER_PROCESS = subprocess.Popen(['node', str(mdx_parse_server)],
                                                                            stdout=subprocess.PIPE, text=True)
                 except FileNotFoundError:
-                    error_message = '\nTest Failed\n\n' \
-                                    'There is no `node` installed on the machine.\n' \
-                                    'Please download and install `node` and rerun\n' \
-                                    'more information.....'
+                    error_message = Errors.error_uninstall_node()
                     print_error(error_message)
                     sys.exit(1)
 

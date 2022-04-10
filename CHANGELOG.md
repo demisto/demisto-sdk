@@ -15,6 +15,8 @@ the same as the last release note version.
 * Added an argument '-c' '--custom' to the **unify** command, if True will append to the unified yml name/display/id the custom label provided
 * Added support for sub words suggestion in kebab-case sentences when running the **doc-review** command.
 * Enhanced the message of alternative suggestion words shown when running **doc-review** command.
+* Added the *IN148* to the allowed ignored errors.
+
 
 ## 1.6.3
 

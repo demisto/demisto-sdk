@@ -492,15 +492,15 @@ def get_file(file_path: Union[str, Path], file_extension: str, clear_cache: bool
     file_path = Path(file_path)
     data_dictionary = None
 
-    if file_extension[0] == '.':  # standardizes extension
-        file_extension = file_extension[1:]
+    if file_extension.lstrip('.') not in GET_FILE_SUPPORTED_EXTENSIONS:
+        raise ValueError(f'Unsupported file extension ({file_extension})')
+
+    if file_extension[0] != '.':  # standardizes extension
+        file_extension = f'.{file_extension}'
 
     if file_path.suffix != file_extension:
         raise ValueError(f'called get_file with an extension that is different '
                          f'from the actual file extension: {file_extension=} != {file_path.suffix=}')
-
-    if file_path.suffix not in GET_FILE_SUPPORTED_EXTENSIONS:
-        raise ValueError(f'Unsupported file extension ({file_extension})')
 
     with open(file_path.expanduser(), mode="r", encoding="utf8") as f:
         read_file = f.read()

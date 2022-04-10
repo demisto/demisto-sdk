@@ -1,5 +1,4 @@
 # Site packages
-import json
 import logging
 import os
 import sys
@@ -8,21 +7,28 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
 from typing import IO
 
-# Third party packages
 import click
 import git
 from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
-# Common tools
 from demisto_sdk.commands.common.constants import (
-    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, FileType)
+    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, MODELING_RULES_DIR, PARSING_RULES_DIR,
+    FileType)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
                                                get_release_note_entries,
                                                is_external_repository,
                                                print_error, print_success,
                                                print_warning)
+from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
+
+json = JSON_Handler()
+
+# Third party packages
+
+# Common tools
 
 
 class PathsParamType(click.Path):
@@ -63,6 +69,9 @@ class VersionParamType(click.ParamType):
         else:
             self.fail(f"Version {value} is not according to the expected format. "
                       f"The format of version should be in x.y.z format, e.g: <2.1.3>", param, ctx)
+
+
+json = JSON_Handler()
 
 
 class DemistoSDK:
@@ -199,7 +208,6 @@ def split(config, **kwargs):
     to multiple files(To a package format - https://demisto.pan.dev/docs/package-dir).
     """
     from demisto_sdk.commands.split.jsonsplitter import JsonSplitter
-    from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
     check_configuration_file('split', kwargs)
     file_type: FileType = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
@@ -266,31 +274,40 @@ def extract_code(config, **kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-i", "--input", help="The directory path to the files to unify", required=True, type=click.Path(dir_okay=True)
+    "-i", "--input", help="The directory path to the files or path to the file to unify", required=True, type=click.Path(dir_okay=True)
 )
 @click.option(
     "-o", "--output", help="The output dir to write the unified yml to", required=False
 )
 @click.option(
-    "--force", help="Forcefully overwrites the preexisting yml if one exists",
+    "-c", "--custom", help="Add test label to unified yml id/name/display", required=False,
+)
+@click.option(
+    "-f", "--force", help="Forcefully overwrites the preexisting yml if one exists",
     is_flag=True,
     show_default=False
 )
 def unify(**kwargs):
     """
-    This command has two main functions:
+    This command has three main functions:
 
-    1. YML Unifier - Unifies integration/script code, image, description and yml files to a single XSOAR yml file.
+    1. Integration/Script Unifier - Unifies integration/script code, image, description and yml files to a single XSOAR yml file.
      * Note that this should be used on a single integration/script and not a pack, not multiple scripts/integrations.
      * To use this function - set as input a path to the *directory* of the integration/script to unify.
 
     2. GenericModule Unifier - Unifies a GenericModule with its Dashboards to a single JSON object.
      * To use this function - set as input a path to a GenericModule *file*.
+
+    3. Parsing/Modeling Rule Unifier - Unifies Parsing/Modeling rule YML, XIF and samples JSON files to a single YML file.
+     * Note that this should be used on a single parsing/modeling rule and not a pack, not multiple rules.
+     * To use this function - set as input a path to the *directory* of the parsing/modeling rule to unify.
     """
     check_configuration_file('unify', kwargs)
     # Input is of type Path.
     kwargs['input'] = str(kwargs['input'])
     file_type = find_type(kwargs['input'])
+    custom = kwargs.pop('custom')
+
     if file_type == FileType.GENERIC_MODULE:
         from demisto_sdk.commands.unify.generic_module_unifier import \
             GenericModuleUnifier
@@ -298,13 +315,16 @@ def unify(**kwargs):
         # pass arguments to GenericModule unifier and call the command
         generic_module_unifier = GenericModuleUnifier(**kwargs)
         generic_module_unifier.merge_generic_module_with_its_dashboards()
-
+    elif any(rule_dir in os.path.abspath(kwargs['input']) for rule_dir in [PARSING_RULES_DIR, MODELING_RULES_DIR]):
+        from demisto_sdk.commands.unify.rule_unifier import RuleUnifier
+        rule_unifier = RuleUnifier(**kwargs)
+        rule_unifier.unify()
     else:
         from demisto_sdk.commands.unify.integration_script_unifier import \
             IntegrationScriptUnifier
 
         # pass arguments to YML unifier and call the command
-        yml_unifier = IntegrationScriptUnifier(**kwargs)
+        yml_unifier = IntegrationScriptUnifier(**kwargs, custom=custom)
         yml_unifier.unify()
 
     return 0

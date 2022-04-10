@@ -1,7 +1,6 @@
 import argparse
 import glob
 import io
-import json
 import logging
 import os
 import re
@@ -14,11 +13,11 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
 from distutils.version import LooseVersion
 from enum import Enum
-from functools import lru_cache, partial
+from functools import lru_cache
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
-from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
+from typing import Callable, Dict, List, Match, Optional, Set, Tuple, Union
 
 import click
 import colorama
@@ -38,19 +37,22 @@ from demisto_sdk.commands.common.constants import (
     DOC_FILES_DIR, ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR,
     INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
-    MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME,
+    MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME, MODELING_RULES_DIR,
     OFFICIAL_CONTENT_ID_SET_PATH, PACK_METADATA_IRON_BANK_TAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
     PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
-    PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
-    RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-    XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys, IdSetKeys,
-    MarketplaceVersions, urljoin)
+    PACKS_README_FILE_NAME, PARSING_RULES_DIR, PLAYBOOKS_DIR,
+    PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
+    SCRIPTS_DIR, SIEM_ONLY_ENTITIES, TEST_PLAYBOOKS_DIR, TRIGGER_DIR,
+    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSIAM_DASHBOARDS_DIR,
+    XSIAM_REPORTS_DIR, XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys,
+    IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
                                                             GitProvider)
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+
+json = JSON_Handler()
 
 logger = logging.getLogger("demisto-sdk")
 yaml = YAML_Handler()
@@ -726,12 +728,15 @@ def get_latest_release_notes_text(rn_path):
         print_warning('Path to release notes not found.')
         rn = None
     else:
-        with open(rn_path) as f:
-            rn = f.read()
+        try:
+            with open(rn_path) as f:
+                rn = f.read()
 
-        if not rn:
-            print_error(f'Release Notes may not be empty. Please fill out correctly. - {rn_path}')
-            return None
+            if not rn:
+                print_error(f'Release Notes may not be empty. Please fill out correctly. - {rn_path}')
+                return None
+        except IOError:
+            return ''
 
     return rn if rn else None
 
@@ -747,7 +752,9 @@ def format_version(version):
         The formatted server version.
     """
     formatted_version = version
-    if len(version.split('.')) == 1:
+    if not version:
+        formatted_version = '0.0.0'
+    elif len(version.split('.')) == 1:
         formatted_version = f'{version}.0.0'
     elif len(version.split('.')) == 2:
         formatted_version = f'{version}.0'
@@ -781,6 +788,26 @@ def server_version_compare(v1, v2):
     return -1
 
 
+def get_max_version(versions: List[str]) -> str:
+    """get max version between Demisto versions.
+
+    Args:
+        versions (list): list of strings representing Demisto version.
+
+    Returns:
+        str.
+        max version.
+    """
+
+    if len(versions) == 0:
+        raise BaseException("Error: empty versions list")
+    max_version = versions[0]
+    for version in versions[1:]:
+        if server_version_compare(version, max_version) == 1:
+            max_version = version
+    return max_version
+
+
 def run_threads_list(threads_list):
     """
     Start a list of threads and wait for completion (join)
@@ -798,6 +825,89 @@ def run_threads_list(threads_list):
 
 def is_file_path_in_pack(file_path):
     return bool(re.findall(PACKS_DIR_REGEX, file_path))
+
+
+def add_default_pack_known_words(file_path):
+    """
+    Ignores the pack's content:
+    1. Pack's name.
+    2. Integrations name.
+    3. Integrations command names'.
+    4. Scripts name.
+
+    Note: please add to this function any further ignores in the future.
+    Args:
+        file_path: RN file path
+
+    Returns: A list of all the Pack's content the doc_reviewer should ignore.
+
+    """
+    default_pack_known_words = [get_pack_name(file_path), ]
+    default_pack_known_words.extend(get_integration_name_and_command_names(file_path))
+    default_pack_known_words.extend(get_scripts_names(file_path))
+    return default_pack_known_words
+
+
+def get_integration_name_and_command_names(file_path):
+    """
+    1. Get the RN file path.
+    2. Check if integrations exist in the current pack.
+    3. For each integration, load the yml file.
+    3. Keep in a set all the commands names.
+    4. Keep in a set all the integrations names.
+    Args:
+        file_path: RN file path
+
+    Returns: (set) of all the commands and integrations names found.
+
+    """
+    integrations_dir_path = os.path.join(PACKS_DIR, get_pack_name(file_path), INTEGRATIONS_DIR)
+    command_names: Set[str] = set()
+    if not glob.glob(integrations_dir_path):
+        return command_names
+
+    found_integrations: List[str] = os.listdir(integrations_dir_path)
+    if found_integrations:
+        for integration in found_integrations:
+            command_names.add(integration)
+
+            integration_path_full = os.path.join(integrations_dir_path, integration, f'{integration}.yml')
+            yml_dict = get_yaml(integration_path_full)
+            commands = yml_dict.get("script", {}).get('commands', [])
+            command_names = command_names.union({command.get('name') for command in commands})
+
+    return command_names
+
+
+def get_scripts_names(file_path):
+    """
+    1. Get the RN file path
+    2. Check if scripts exist in the current pack
+    3. Keep in a set all the scripts names
+    Args:
+        file_path: RN file path
+
+    Returns: (set) of all the scripts names found.
+
+    """
+    scripts_dir_path = os.path.join(PACKS_DIR, get_pack_name(file_path), SCRIPTS_DIR)
+    scripts_names: Set[str] = set()
+    if not glob.glob(scripts_dir_path):
+        click.secho(f'no scripts path found')
+        return scripts_names
+
+    found_scripts: List[str] = os.listdir(scripts_dir_path)
+    if not found_scripts:
+        click.secho(f'no scripts found')
+    else:
+        for script in found_scripts:
+            script_path_full = os.path.join(scripts_dir_path, script, f'{script}.yml')
+            yml_dict = get_yaml(script_path_full)
+            click.secho(f'name: {yml_dict.get("name")}')
+            scripts_names.add(yml_dict.get("name"))
+
+        click.secho(f'scripts names: {scripts_names}')
+    return scripts_names
 
 
 def get_pack_name(file_path):
@@ -1059,6 +1169,8 @@ def get_dict_from_file(path: str,
                 return get_json(path, cache_clear=clear_cache), 'json'
             elif path.endswith('.py'):
                 return {}, 'py'
+            elif path.endswith('.xif'):
+                return {}, 'xif'
     except FileNotFoundError as e:
         if raises_error:
             raise
@@ -1103,6 +1215,12 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.JOB
         elif INDICATOR_TYPES_DIR in path.parts:
             return FileType.REPUTATION
+        elif XSIAM_DASHBOARDS_DIR in path.parts:
+            return FileType.XSIAM_DASHBOARD
+        elif XSIAM_REPORTS_DIR in path.parts:
+            return FileType.XSIAM_REPORT
+        elif TRIGGER_DIR in path.parts:
+            return FileType.TRIGGER
 
     # integration image
     if path.name.endswith('_image.png'):
@@ -1123,6 +1241,9 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
     if path.suffix == '.js':
         return FileType.JAVASCRIPT_FILE
 
+    if path.suffix == '.xif':
+        return FileType.XIF_FILE
+
     if path.name.endswith(XSOAR_CONFIG_FILE):
         return FileType.XSOAR_CONFIG
 
@@ -1136,12 +1257,12 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
 
 
 def find_type(
-    path: str = '',
-    _dict=None,
-    file_type: Optional[str] = None,
-    ignore_sub_categories: bool = False,
-    ignore_invalid_schema_file: bool = False,
-    clear_cache: bool = False
+        path: str = '',
+        _dict=None,
+        file_type: Optional[str] = None,
+        ignore_sub_categories: bool = False,
+        ignore_invalid_schema_file: bool = False,
+        clear_cache: bool = False
 ):
     """
     returns the content file type
@@ -1193,6 +1314,16 @@ def find_type(
                 return FileType.TEST_PLAYBOOK
 
             return FileType.PLAYBOOK
+
+        if 'rules' in _dict:
+            if 'samples' in _dict and PARSING_RULES_DIR in Path(path).parts:
+                return FileType.PARSING_RULE
+
+            if MODELING_RULES_DIR in Path(path).parts:
+                return FileType.MODELING_RULE
+
+        if 'global_rule_id' in _dict:
+            return FileType.CORRELATION_RULE
 
     if file_type == 'json':
         if 'widgetType' in _dict:
@@ -1249,6 +1380,15 @@ def find_type(
 
         if isinstance(_dict, dict) and {'isAllFeeds', 'selectedFeeds', 'isFeed'}.issubset(_dict.keys()):
             return FileType.JOB
+
+        if 'dashboards_data' in _dict:
+            return FileType.XSIAM_DASHBOARD
+
+        if 'templates_data' in _dict:
+            return FileType.XSIAM_REPORT
+
+        if 'trigger_id' in _dict:
+            return FileType.TRIGGER
 
         # When using it for all files validation- sometimes 'id' can be integer
         if 'id' in _dict:
@@ -1646,33 +1786,6 @@ def get_parent_directory_name(path: str, abs_path: bool = False) -> str:
     if abs_path:
         return parent_dir_name
     return os.path.basename(parent_dir_name)
-
-
-def get_content_file_type_dump(file_path: str) -> Callable[[str], str]:
-    """
-    Return a method with which 'curr' (the current key the lies in the path of the error) should be printed with
-    If the file is a yml file:
-        will return a yaml.dump function
-    If the file is a json file:
-        will return a json.dumps function configured with indent=4
-    In any other case- will just print the string representation of the key.
-
-    The file type is checked according to the file extension
-
-    Args:
-        file_path: The file path whose type is determined in this method
-
-    Returns:
-        A function that returns string representation of 'curr'
-    """
-    # Setting the method that should the curr path
-    file_extension = os.path.splitext(file_path)[-1]
-    curr_string_transformer: Union[partial[str], Type[str], Callable] = str
-    if file_extension in ['.yml', '.yaml']:
-        curr_string_transformer = yaml.dumps
-    elif file_extension == '.json':
-        curr_string_transformer = partial(json.dumps, indent=4)
-    return curr_string_transformer
 
 
 def get_code_lang(file_data: dict, file_entity: str) -> str:
@@ -2236,7 +2349,7 @@ def get_current_repo() -> Tuple[str, str, str]:
         return "Unknown source", '', ''
 
 
-def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None) -> List:
+def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None, item_type: str = None) -> List:
     """
     Return the supporting marketplaces of the item.
 
@@ -2244,9 +2357,13 @@ def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[st
         item_path: the item path.
         item_data: the item data.
         packs: the pack mapping from the ID set.
+        item_type: The item type.
 
     Returns: the list of supporting marketplaces.
     """
+
+    if item_type and item_type in SIEM_ONLY_ENTITIES:
+        return [MarketplaceVersions.MarketplaceV2.value]
 
     if not item_data:
         file_type = Path(item_path).suffix

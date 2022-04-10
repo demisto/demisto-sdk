@@ -1,4 +1,3 @@
-import json
 import re
 from abc import abstractmethod
 from typing import Dict, Iterator, List, Union
@@ -9,6 +8,9 @@ from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classif
     Classifier
 from demisto_sdk.commands.common.content.objects.pack_objects.layout.layout import \
     LayoutObject
+from demisto_sdk.commands.common.handlers import JSON_Handler
+
+json = JSON_Handler()
 
 
 class BaseConverter:

@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 from typing import Tuple
 
@@ -8,6 +7,7 @@ from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS, BANG_COMMAND_NAMES, BETA_INTEGRATION,
     FEED_REQUIRED_PARAMS, INCIDENT_FETCH_REQUIRED_PARAMS, INTEGRATION,
     TYPE_PWSH, MarketplaceVersions)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_item_marketplaces, get_json)
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
@@ -15,6 +15,8 @@ from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
+
+json = JSON_Handler()
 
 
 class IntegrationYMLFormat(BaseUpdateYML):

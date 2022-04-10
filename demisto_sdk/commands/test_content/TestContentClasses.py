@@ -1,5 +1,4 @@
 import ast
-import json
 import logging
 import os
 import re
@@ -26,6 +25,7 @@ from slack import WebClient as SlackClient
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
     FILTER_CONF, PB_Status)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import get_demisto_version
 from demisto_sdk.commands.test_content.constants import (
     CONTENT_BUILD_SSH_USER, LOAD_BALANCER_DNS)
@@ -38,6 +38,9 @@ from demisto_sdk.commands.test_content.ParallelLoggingManager import \
     ParallelLoggingManager
 from demisto_sdk.commands.test_content.tools import (
     is_redhat_instance, update_server_configuration)
+
+json = JSON_Handler()
+
 
 ENV_RESULTS_PATH = './artifacts/env_results.json'
 FAILED_MATCH_INSTANCE_MSG = "{} Failed to run.\n There are {} instances of {}, please select one of them by using " \
@@ -460,6 +463,7 @@ class BuildContext:
     def __init__(self, kwargs: dict, logging_module: ParallelLoggingManager):
         self.logging_module: ParallelLoggingManager = logging_module
         self.api_key = kwargs['api_key']
+        self.auth_id = kwargs.get('auth_id')
         self.server = kwargs['server']
         self.conf, self.secret_conf = self._load_conf_files(kwargs['conf'], kwargs['secret'])
         self.env_json = self._load_env_results_json()
@@ -511,6 +515,7 @@ class BuildContext:
         """
         tmp_client = demisto_client.configure(base_url=server_url,
                                               api_key=self.api_key,
+                                              auth_id=self.auth_id,
                                               verify_ssl=False)
         self.logging_module.debug('Getting all integrations instances')
         try:
@@ -1989,13 +1994,17 @@ class ServerContext:
         Iterates the mockable tests queue and executes them as long as there are tests to execute
         """
         self.proxy.configure_proxy_in_demisto(proxy=self.proxy.ami.internal_ip + ':' + self.proxy.PROXY_PORT,
-                                              username=self.build_context.secret_conf.server_username,
-                                              password=self.build_context.secret_conf.server_password,
+                                              username=self.build_context.secret_conf.server_username if not self.build_context.auth_id else None,
+                                              password=self.build_context.secret_conf.server_password if not self.build_context.auth_id else None,
+                                              api_key=self.build_context.api_key,
+                                              auth_id=self.build_context.auth_id,
                                               server=self.server_url)
         self._execute_tests(self.build_context.mockable_tests_to_run)
         self.proxy.configure_proxy_in_demisto(proxy='',
-                                              username=self.build_context.secret_conf.server_username,
-                                              password=self.build_context.secret_conf.server_password,
+                                              username=self.build_context.secret_conf.server_username if not self.build_context.auth_id else None,
+                                              password=self.build_context.secret_conf.server_password if not self.build_context.auth_id else None,
+                                              api_key=self.build_context.api_key,
+                                              auth_id=self.build_context.auth_id,
                                               server=self.server_url)
 
     def _execute_failed_tests(self):
@@ -2033,6 +2042,7 @@ class ServerContext:
             del self.client
         self.client = demisto_client.configure(base_url=self.server_url,
                                                api_key=self.build_context.api_key,
+                                               auth_id=self.build_context.auth_id,
                                                verify_ssl=False)
 
     def _reset_containers(self):
@@ -2074,66 +2084,81 @@ class ServerContext:
 
 def replace_external_playbook_configuration(client: DefaultApi, external_playbook_configuration: dict,
                                             logger_module: logging.Logger = logging.getLogger('demisto-sdk')):
-    """ Takes external configuration of shape {"playbookID": "Isolate Endpoint - Generic V2",
-                                               "input_parameters":{"Endpoint_hostname": ["simple", "test"]}
+    """ takes external configuration of shape {"playbookID": "Isolate Endpoint - Generic V2",
+                                               "input_parameters":{"Endpoint_hostname": {"simple", "test"}}}
         and changes the specified playbook configuration to the mentioned one.
         If playbook's inputs had changed, revert will be needed.
         Returns (Whether the Playbook changed, The values to restore, the path to use when restoring)
         Only to be used with server version 6.2 and above. """
+
+    # Checking configuration
     if not external_playbook_configuration:
         logger_module.info("External Playbook Configuration not provided, skipping re-configuration.")
         return False, {}, ''
+
+    # Checking server version
     server_version = get_demisto_version(client)
 
     if LooseVersion(server_version.base_version) < LooseVersion('6.2.0'):  # type: ignore
         logger_module.info("External Playbook not supported in versions previous to 6.2.0, skipping re-configuration.")
         return False, {}, ''
 
-    # if external_playbook_configuration:
     logger_module.info("External Playbook in use, starting re-configuration.")
-    restore_needed = False
 
+    # Getting current configuration
     external_playbook_id = external_playbook_configuration['playbookID']
     external_playbook_path = f'/playbook/{external_playbook_id}'
     res, _, _ = demisto_client.generic_request_func(client, method='GET',
                                                     path=external_playbook_path, response_type='object')
-    # Save Default Configuration.
+
     inputs = res.get('inputs', [])
     if not inputs:
         raise Exception("External Playbook was not found or has no inputs.")
 
+    # Save current for default Configuration.
     inputs_default = deepcopy(inputs)
     logger_module.info("Saved current configuration.")
-    """ takes external configuration of shape {"playbookID": "Isolate Endpoint - Generic V2",
-                                               "input_parameters":{"Endpoint_hostname": {"simple", "test"}}}"""
+
     changed_keys = []
     failed_keys = []
+
     # Change Configuration for external pb.
     for input_ in external_playbook_configuration["input_parameters"]:
         matching_record = list(filter(lambda x: x.get('key') == input_, inputs))
         if matching_record:
             existing_val = matching_record[0]
-            existing_val['value']["simple"] = external_playbook_configuration["input_parameters"][input_].get("simple")
-            existing_val['value']["complex"] = external_playbook_configuration["input_parameters"][input_].get("complex")
+            simple = external_playbook_configuration["input_parameters"][input_].get("simple")
+            complex = external_playbook_configuration["input_parameters"][input_].get("complex")
+
+            # If no value (simple or complex) was found, It is a typo
+            if complex is None and simple is None:
+                raise Exception(f'Could not found neither a `simple` nor `complex` value for field: {input_}. '
+                                'A valid configuration should be of the followng format: '
+                                '{<param name>: {"simple", <required value>}}')
+
+            existing_val['value']["simple"] = simple
+            existing_val['value']["complex"] = complex
             changed_keys.append(input_)
 
         else:
             failed_keys.append(input_)
+
     if failed_keys:
         raise Exception(f'Some input keys was not found in playbook: {",".join(failed_keys)}.')
-    logger_module.info(f"Changing keys: {changed_keys}.")
 
+    logger_module.info(f"Changing keys: {changed_keys}.")
     saving_inputs_path = f'/playbook/inputs/{external_playbook_id}'
+
     try:
         if changed_keys:
             demisto_client.generic_request_func(client, method='POST', path=saving_inputs_path, body=inputs)
-            restore_needed = True
+
     except Exception as e:
         raise Exception(f"Could not change inputs in playbook configuration. Error: {e}")
 
     logger_module.info(f"Re-configured {external_playbook_id} successfully with {len(changed_keys)} new values.")
 
-    return restore_needed, inputs_default, saving_inputs_path
+    return True, inputs_default, saving_inputs_path
 
 
 def restore_external_playbook_configuration(client: DefaultApi, restore_path: str, restore_values: dict,

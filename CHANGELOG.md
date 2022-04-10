@@ -13,6 +13,7 @@ the same as the last release note version.
 * Added the integration name, the commands name and the script name to the known words by default when running the **doc-review** command.
 * Added an argument '-c' '--custom' to the **unify** command, if True will append to the unified yml name/display/id the custom label provided
 * Added support for sub words suggestion in kebab-case sentences when running the **doc-review** command.
+* Added support for new XSIAM entities in **update-release-notes** command.
 
 # 1.6.3
 * **Breaking change**: Fixed a typo in the **validate** `--quiet-bc-validation` flag (was `--quite-bc-validation`). @upstart-swiss

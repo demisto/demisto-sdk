@@ -362,14 +362,17 @@ class UpdateRN:
             name = file_data.get('id', None)
         elif 'trigger_id' in file_data:
             name = file_data.get('trigger_id')
+
         elif 'dashboards_data' in file_data and file_data.get('dashboards_data') \
                 and isinstance(file_data['dashboards_data'], list):
-            d_name = file_data.get('dashboards_data')[0]
-            name = d_name.get('name') if isinstance(d_name, dict) else None
+            dashboard_data = file_data.get('dashboards_data', [])[0]
+            name = dashboard_data.get('name')
+
         elif 'templates_data' in file_data and file_data.get('templates_data') \
                 and isinstance(file_data['templates_data'], list):
-            r_name = file_data.get('templates_data')[0]
-            name = r_name.get('report_name') if isinstance(r_name, dict) else None
+            r_name = file_data.get('templates_data', [])[0]
+            name = r_name.get('report_name')
+
         else:
             name = os.path.basename(file_path)
         return name

@@ -485,11 +485,11 @@ def get_last_remote_release_version():
 
 
 @lru_cache()
-def get_file(file_path: Union[str, Path], file_extension: str, clear_cache: bool = False) -> Union[dict, list]:
+def get_file(path: Union[str, Path], file_extension: str, clear_cache: bool = False) -> Union[dict, list]:
     """ Returns the content of a dictionary file """
     if clear_cache:
         get_file.cache_clear()
-    file_path = Path(file_path)
+    path = Path(path).absolute()
     data_dictionary = None
 
     if file_extension.lstrip('.') not in GET_FILE_SUPPORTED_EXTENSIONS:
@@ -498,28 +498,28 @@ def get_file(file_path: Union[str, Path], file_extension: str, clear_cache: bool
     if file_extension[0] != '.':  # standardizes extension
         file_extension = f'.{file_extension}'
 
-    if file_path.suffix != file_extension:
+    if path.suffix != file_extension:
         raise ValueError(f'called get_file with an extension that is different '
-                         f'from the actual file extension: {file_extension=} != {file_path.suffix=}')
+                         f'from the actual file extension: {file_extension=} != {path.suffix=}')
 
-    with open(file_path.expanduser(), mode="r", encoding="utf8") as f:
+    with open(path, mode="r", encoding="utf8") as f:
         read_file = f.read()
         replaced = read_file.replace("simple: =", "simple: '='")
         # revert str to stream for loader
         stream = io.StringIO(replaced)
         try:
-            if file_extension == 'yml':
+            if file_extension == '.yml':
                 data_dictionary = yaml.load(stream)
-            elif file_extension == 'json':
+            elif file_extension == '.json':
                 data_dictionary = json.load(stream)
         except Exception as e:
-            raise ValueError(f"Could not read {file_path}: {str(e)}")
+            raise ValueError(f"Could not read {path}: {str(e)}")
 
     if isinstance(data_dictionary, (dict, list)):
         return data_dictionary
 
     else:
-        log_message = f'Read file {file_path} but result was neither dict nor list}'
+        log_message = f'Read file {path} but result was neither dict nor list'
         try:
             data_dictionary = str(data_dictionary)
             log_message += f': {str(data_dictionary)}'

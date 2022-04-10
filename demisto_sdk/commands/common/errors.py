@@ -769,9 +769,9 @@ class Errors:
     @staticmethod
     def error_uninstall_node():
         return '\nTEST FAILED\n\n' \
-               'There is no `node` installed on the machine.\n' \
-               'Please download and install `node` and rerun\n' \
-               'The official Node.js website, has installation instruction for Node.js: https://nodejs.org'
+               'The `node` runtime is not installed on the machine, while it is required for the validation process.\n' \
+               'Please download and install `node` to proceed\n' \
+               'See https://nodejs.org for installation instructions.'
 
     @staticmethod
     @error_code_decorator

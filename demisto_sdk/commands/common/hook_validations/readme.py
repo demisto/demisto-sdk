@@ -1,7 +1,6 @@
 import os
 import re
 import subprocess
-import sys
 import tempfile
 from contextlib import contextmanager
 from functools import lru_cache
@@ -26,8 +25,8 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (
     compare_context_path_in_yml_and_readme, get_content_path,
-    get_url_with_retries, get_yaml, get_yml_paths_in_dir, print_error,
-    print_warning, run_command_os)
+    get_url_with_retries, get_yaml, get_yml_paths_in_dir, print_warning,
+    run_command_os)
 
 json = JSON_Handler()
 
@@ -549,8 +548,9 @@ class ReadMeValidator(BaseValidator):
                                                                            stdout=subprocess.PIPE, text=True)
                 except FileNotFoundError:
                     error_message = Errors.error_uninstall_node()
-                    print_error(error_message)
-                    sys.exit(1)
+                    from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
+                        BlockingValidationFailureException
+                    raise BlockingValidationFailureException(error_message)
 
                 line = ReadMeValidator._MDX_SERVER_PROCESS.stdout.readline()  # type: ignore
                 if 'MDX server is listening on port' not in line:

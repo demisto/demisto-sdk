@@ -13,8 +13,11 @@ the same as the last release note version.
 * Added the integration name, the commands name and the script name to the known words by default when running the **doc-review** command.
 * Added an argument '-c' '--custom' to the **unify** command, if True will append to the unified yml name/display/id the custom label provided
 * Added support for sub words suggestion in kebab-case sentences when running the **doc-review** command.
+* Enhanced the message of alternative suggestion words shown when running **doc-review** command.
+* Fixed an incorrect error message, in case `node` is not installed on the machine.
 
-# 1.6.3
+## 1.6.3
+
 * **Breaking change**: Fixed a typo in the **validate** `--quiet-bc-validation` flag (was `--quite-bc-validation`). @upstart-swiss
 * Dropped support for python 3.7: Demisto-SDK is now supported on Python 3.8 or newer.
 * Added an argument to YAMLHandler, allowing to set a maximal width for YAML files. This fixes an issue where a wrong default was used.

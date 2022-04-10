@@ -125,8 +125,6 @@ def create_integration(mocker) -> Callable:
 @pytest.fixture
 def docker_mock(mocker):
     def _docker_mock(BuildException: Optional[Exception] = None, image_id: str = "image-id"):
-        import docker
-
         from demisto_sdk.commands.lint import linter
-        mocker.patch.object(docker, 'from_env')
+        mocker.patch('demisto_sdk.commands.lint.docker_helper.init_global_docker_client')
         mocker.patch.object(linter, '')

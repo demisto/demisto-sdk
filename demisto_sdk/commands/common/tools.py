@@ -76,6 +76,7 @@ LOG_VERBOSE = False
 LAYOUT_CONTAINER_FIELDS = {'details', 'detailsV2', 'edit', 'close', 'mobile', 'quickView', 'indicatorsQuickView',
                            'indicatorsDetails'}
 SDK_PYPI_VERSION = r'https://pypi.org/pypi/demisto-sdk/json'
+GET_FILE_SUPPORTED_EXTENSIONS = {'yml', 'json'}
 
 
 def set_log_verbose(verbose: bool):
@@ -484,29 +485,48 @@ def get_last_remote_release_version():
 
 
 @lru_cache()
-def get_file(file_path, type_of_file, clear_cache=False):
+def get_file(file_path: Union[str, Path], file_extension: str, clear_cache: bool = False) -> Union[dict, list]:
+    """ Returns the content of a dictionary file """
     if clear_cache:
         get_file.cache_clear()
     file_path = Path(file_path)
     data_dictionary = None
+
+    if file_extension[0] == '.':  # standardizes extension
+        file_extension = file_extension[1:]
+
+    if file_path.suffix != file_extension:
+        raise ValueError(f'called get_file with an extension that is different '
+                         f'from the actual file extension: {file_extension=} != {file_path.suffix=}')
+
+    if file_path.suffix not in GET_FILE_SUPPORTED_EXTENSIONS:
+        raise ValueError(f'Unsupported file extension ({file_extension})')
+
     with open(file_path.expanduser(), mode="r", encoding="utf8") as f:
-        if type_of_file in file_path.suffix:
-            read_file = f.read()
-            replaced = read_file.replace("simple: =", "simple: '='")
-            # revert str to stream for loader
-            stream = io.StringIO(replaced)
-            try:
-                if type_of_file in ('yml', '.yml'):
-                    data_dictionary = yaml.load(stream)
+        read_file = f.read()
+        replaced = read_file.replace("simple: =", "simple: '='")
+        # revert str to stream for loader
+        stream = io.StringIO(replaced)
+        try:
+            if file_extension == 'yml':
+                data_dictionary = yaml.load(stream)
+            elif file_extension == 'json':
+                data_dictionary = json.load(stream)
+        except Exception as e:
+            raise ValueError(f"Could not read {file_path}: {str(e)}")
 
-                else:
-                    data_dictionary = json.load(stream)
-
-            except Exception as e:
-                raise ValueError(
-                    "{} has a structure issue of file type {}. Error was: {}".format(file_path, type_of_file, str(e)))
     if isinstance(data_dictionary, (dict, list)):
         return data_dictionary
+
+    else:
+        log_message = f'Read file {file_path} but result was neither dict nor list}'
+        try:
+            data_dictionary = str(data_dictionary)
+            log_message += f': {str(data_dictionary)}'
+        except TypeError:
+            pass
+        logger.warning(log_message)
+
     return {}
 
 
@@ -2349,7 +2369,8 @@ def get_current_repo() -> Tuple[str, str, str]:
         return "Unknown source", '', ''
 
 
-def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None, item_type: str = None) -> List:
+def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None,
+                          item_type: str = None) -> List:
     """
     Return the supporting marketplaces of the item.
 

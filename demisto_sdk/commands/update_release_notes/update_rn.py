@@ -360,6 +360,16 @@ class UpdateRN:
             name = file_data.get('brandName', None)
         elif 'id' in file_data:
             name = file_data.get('id', None)
+        elif 'trigger_id' in file_data:
+            name = file_data.get('trigger_id')
+        elif 'dashboards_data' in file_data and file_data.get('dashboards_data') \
+                and isinstance(file_data['dashboards_data'], list):
+            d_name = file_data.get('dashboards_data')[0]
+            name = d_name.get('name') if isinstance(d_name, dict) else None
+        elif 'templates_data' in file_data and file_data.get('templates_data') \
+                and isinstance(file_data['templates_data'], list):
+            r_name = file_data.get('templates_data')[0]
+            name = r_name.get('report_name') if isinstance(r_name, dict) else None
         else:
             name = os.path.basename(file_path)
         return name
@@ -744,7 +754,7 @@ def get_file_description(path, file_type) -> str:
         print_warning(f'Cannot get file description: "{path}" file does not exist')
         return ''
 
-    elif file_type in (FileType.PLAYBOOK, FileType.INTEGRATION):
+    elif file_type in (FileType.PLAYBOOK, FileType.INTEGRATION, FileType.CORRELATION_RULE):
         yml_file = get_yaml(path)
         return yml_file.get('description', '')
 
@@ -752,7 +762,8 @@ def get_file_description(path, file_type) -> str:
         yml_file = get_yaml(path)
         return yml_file.get('comment', '')
 
-    elif file_type in (FileType.CLASSIFIER, FileType.REPORT, FileType.WIDGET, FileType.DASHBOARD, FileType.JOB):
+    elif file_type in (FileType.CLASSIFIER, FileType.REPORT, FileType.WIDGET, FileType.DASHBOARD, FileType.JOB,
+                       FileType.TRIGGER):
         json_file = get_json(path)
         return json_file.get('description', '')
 

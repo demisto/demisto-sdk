@@ -646,7 +646,7 @@ def secrets(config, **kwargs):
               default='Tests/id_set.json')
 @click.option("-cdam", "--check-dependent-api-module", is_flag=True, help="Run unit tests and lint on all packages that "
               "are dependent on the found "
-              "modified api modules.", default=True)
+              "modified api modules.", default=False)
 @click.option("--time-measurements-dir", help="Specify directory for the time measurements report file",
               type=PathsParamType())
 def lint(**kwargs):

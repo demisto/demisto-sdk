@@ -123,7 +123,7 @@ class DocReviewer:
         """check if a given word is in camel case"""
         if word != word.lower() and word != word.upper() and "_" not in word and word != word.title():
             # check if word is an upper case plural, like IPs. If it is, then the word is not in camel case
-            return not self.is_upper_case_word_plural(self.remove_punctuation(word))
+            return not self.is_upper_case_word_plural(word)
         return False
 
     @staticmethod
@@ -178,7 +178,10 @@ class DocReviewer:
     @staticmethod
     def print_unknown_words(unknown_words):
         for word, corrections in unknown_words.items():
-            click.secho(f'  - {word} - did you mean: {corrections}', fg='bright_red')
+            if corrections:
+                click.secho(f'  - {word} - did you mean: {corrections}', fg='bright_red')
+            else:
+                click.secho(f'  - {word}', fg='bright_red')
         click.secho('If these are not misspelled consider adding them to a known_words file:\n'
                     '  Pack related words: content/Packs/<PackName>/.pack-ignore under the [known_words] section.\n'
                     '  Not pack specific words: content/Tests/known_words.txt\n'
@@ -318,20 +321,24 @@ class DocReviewer:
     def check_word(self, word):
         """Check if a word is legal"""
         # check camel cases
-        if not self.no_camel_case and self.is_camel_case(word):
-            word = self.remove_punctuation(word)
-            sub_words = self.camel_case_split(word)
-            for sub_word in sub_words:
-                sub_word = self.remove_punctuation(sub_word)
-                if sub_word.isalpha() and self.spellchecker.unknown([sub_word]):
-                    self.unknown_words[word] = list(self.spellchecker.candidates(sub_word))[:5]
-
+        word = self.remove_punctuation(word)
+        sub_words = []
+        if '-' in word:
+            sub_words.extend(word.split('-'))
+        elif not self.no_camel_case and self.is_camel_case(word):
+            sub_words.extend(self.camel_case_split(word))
         else:
-            word = self.remove_punctuation(word)
-            if word.isalpha() and self.spellchecker.unknown([word]):
-                self.unknown_words[word] = list(self.spellchecker.candidates(word))[:5]
+            sub_words.append(word)
 
-        if word in self.unknown_words.keys() and word in self.unknown_words[word]:
+        self.unknown_words[word] = set()
+        for sub_word in sub_words:
+            sub_word = self.remove_punctuation(sub_word)
+            if sub_word.isalpha() and self.spellchecker.unknown([sub_word]):
+                self.unknown_words[word].update(list(self.spellchecker.candidates(sub_word))[:5])
+
+        if not self.unknown_words[word]:
+            del self.unknown_words[word]
+        elif word in self.unknown_words[word]:
             # Do not suggest the same word as a correction.
             self.unknown_words[word].remove(word)
 

@@ -11,7 +11,7 @@ the same as the last release note version.
 * Added the reattach mechanism to the **upload** command, If you set the --input-config-file flag, any detached item in your XSOAR instance that isn't currently in the repo's SystemPacks folder will be re-attached.
 * Fixed an issue in the **validate** command did not work properly when using the *-g* flag.
 * Enhanced the dependency message shown when running **lint**.
-* The **validate** command now checks if there're none-deprecated integration commands that apear only in the integration yml but not in the readme file.
+* The **validate** command now checks if there're none-deprecated integration commands that are missing from the readme file.
 * Fixed an issue where *dockerimage* changes in Scripts weren't recognized by the **update-release-notes** command.
 * Fixed an issue where **update-xsoar-config-file** did not properly insert the marketplace packs list to the file.
 * Added the pack name to the known words by default when running the **doc-review** command.

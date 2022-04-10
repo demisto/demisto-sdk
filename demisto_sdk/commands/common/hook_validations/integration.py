@@ -131,6 +131,7 @@ class IntegrationValidator(ContentEntityValidator):
                 skip_test_conf (bool): If true then will skip test playbook configuration validation
                 check_is_unskipped (bool): Whether to check if the integration is unskipped.
                 conf_json_data (dict): The conf.json file data.
+                is_modified (bool): Wether the given files are modified or not.
 
             Returns:
                 bool: True if integration is valid, False otherwise.
@@ -1480,9 +1481,11 @@ class IntegrationValidator(ContentEntityValidator):
     def verify_yml_commands_match_readme(self, is_modified=False):
         """
         Checks if there are commands that doesn't appear in the readme but appear in the .yml file
+        Args:
+            is_modified (bool): Wether the given files are modified or not.
 
         Return:
-            True if all commands appear in the readme, and False if it does'nt.
+            bool: True if all commands appear in the readme, and False if it doesn't.
         """
         if not is_modified:
             return True

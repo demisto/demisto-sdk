@@ -2636,13 +2636,14 @@ def order_dict(data):
                         for k, v in sorted(data.items())})
 
 
-def extract_none_deprecated_command_names_from_yml(yml_data: dict):
+def extract_none_deprecated_command_names_from_yml(yml_data: dict) -> list:
     """
     Go over all the commands in a yml file and return their names.
     Args:
-        yml_data: the yml content as a dict
-
-    Returns: a list of all the commands names
+        yml_data (dict): the yml content as a dict
+        
+    Returns:
+        list: a list of all the commands names
     """
     commands_ls = []
     for command in yml_data.get('script', {}).get('commands', {}):

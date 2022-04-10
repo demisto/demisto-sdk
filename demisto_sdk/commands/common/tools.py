@@ -485,7 +485,7 @@ def get_last_remote_release_version():
 
 
 @lru_cache()
-def get_file(path: Union[str, Path], file_extension: str, clear_cache: bool = False) -> Union[dict, list]:
+def get_file(path: Union[str, Path], file_extension: str, clear_cache: bool = False):
     """ Returns the content of a dictionary file """
     if clear_cache:
         get_file.cache_clear()

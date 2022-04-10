@@ -237,6 +237,7 @@ jobs:
         - run:
             name: Test lint on python and ps files
             when: always
+            no_output_timeout: 20m
             command: |
               pip3 uninstall virtualenv -y && pip3 install virtualenv==16.7.7
               cd ~/project

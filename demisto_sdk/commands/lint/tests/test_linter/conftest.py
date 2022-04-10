@@ -12,7 +12,7 @@ yaml = YAML_Handler()
 
 @pytest.fixture
 def linter_obj(mocker) -> Linter:
-    mocker.patch.object(linter, 'docker')
+    mocker.patch.object(linter, 'init_global_docker_client')
     return Linter(pack_dir=Path(__file__).parent / 'content' / 'Integrations' / 'Sample_integration',
                   content_repo=Path(__file__).parent / 'data',
                   req_3=["pytest==3.0"],

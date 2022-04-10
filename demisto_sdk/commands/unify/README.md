@@ -15,8 +15,10 @@ This command has three main functions:
       The path to the directory of an integration/script in which the files reside
     * **-o, --output**
       The path to the directory into which to write the unified yml file
-    * **--force**
+    * **-f, --force**
       Forcefully overwrites the preexisting yml if one exists
+    * **-c, --custom**
+      Adds a custom label to the name/display/id of the unified yml
 
     **Examples**:
     `demisto-sdk unify -i Integrations/MyInt -o Integrations`
@@ -27,31 +29,37 @@ This command has three main functions:
     `demisto-sdk unify -i Scripts/MyScr -o Scripts`
     This will grab the script components in "Scripts/MyScr" directory and unify them to a single yaml file
     that will be created in the "Scripts" directory.
-
- 2. #### GenericModule Unifier:
-
-    Unifies a GenericModule with its Dashboards to a single JSON object.
-
-    **Use Cases**:
-    This command is used in order to create a unified GenericModule file, able to be uploaded to Demisto.
-
-    **Arguments**:
-    * **-i, --input**
-      The path to a GenericModule *file* to unify
-    * **-o, --output**
-      The path to the directory into which to write the unified GenericModule file
-    * **--force**
-      Forcefully overwrites the preexisting unified GenericModule file if one exists
-
-    **Examples**:
-    `demisto-sdk unify -i Packs/RBVM/GenericModules/genericmodule-RBVM.json`
-    This will take the GenericModule input file "genericmodule-RBVM.json", unify it with its dashboards and save
-    the unified file in the same directory as the input file ("Packs/RBVM/GenericModules").
     <br/><br/>
 
-    `demisto-sdk unify -i Packs/RBVM/GenericModules/genericmodule-RBVM.json -o Packs/RBVM/`
-    This will take the GenericModule input file "genericmodule-RBVM.json", unify it with its dashboards and save
-    the unified file in the given output directory ("Packs/RBVM/").
+    `demisto-sdk unify -u Integrations/MyInt -c Test`
+    This will append to the unified yml name/script/id a label ' - Test' that will prevent bumps
+    with the uploaded unified yml and the original integration/script on the server.
+    origin yml: `{name: integration}` --> unified yml: `{name: integration - Test}`
+
+2. #### GenericModule Unifier:
+
+   Unifies a GenericModule with its Dashboards to a single JSON object.
+
+   **Use Cases**:
+   This command is used in order to create a unified GenericModule file, able to be uploaded to Demisto.
+
+   **Arguments**:
+   * **-i, --input**
+     The path to a GenericModule *file* to unify
+   * **-o, --output**
+     The path to the directory into which to write the unified GenericModule file
+   * **-f --force**
+     Forcefully overwrites the preexisting unified GenericModule file if one exists
+
+   **Examples**:
+   `demisto-sdk unify -i Packs/RBVM/GenericModules/genericmodule-RBVM.json`
+   This will take the GenericModule input file "genericmodule-RBVM.json", unify it with its dashboards and save
+   the unified file in the same directory as the input file ("Packs/RBVM/GenericModules").
+   <br/><br/>
+
+   `demisto-sdk unify -i Packs/RBVM/GenericModules/genericmodule-RBVM.json -o Packs/RBVM/`
+   This will take the GenericModule input file "genericmodule-RBVM.json", unify it with its dashboards and save
+   the unified file in the given output directory ("Packs/RBVM/").
 
 3. #### Parsing/Modeling Rule Unifier:
 

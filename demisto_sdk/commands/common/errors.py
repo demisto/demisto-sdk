@@ -448,7 +448,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def empty_command_arguments(command_name):
-        return f"The arguments of the integration command `{command_name}` are None."
+        return f"The arguments of the integration command `{command_name}` can not be None. If the command has no arguments, " \
+               f"use `arguments: []` or remove the `arguments` field."
 
     @staticmethod
     @error_code_decorator

@@ -6,8 +6,9 @@ from typing import Dict, List, Optional, Union
 import docker
 
 from demisto_sdk.commands.common.logger import logger
+from demisto_sdk.commands.lint.docker_helper import init_global_docker_client
 
-client = docker.from_env()
+client = init_global_docker_client()
 
 
 class ContainerRunner:

@@ -154,6 +154,7 @@ class QuietModeController:
             self.logger.setLevel(logging.ERROR)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        self.logger.debug('{} {} {}'.format(exc_type, exc_val, exc_tb))
         sys.stdout = self.old_stdout
         self.logger.setLevel(self.prev_logger_level)
 

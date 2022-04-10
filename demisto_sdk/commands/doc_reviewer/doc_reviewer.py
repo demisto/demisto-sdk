@@ -22,7 +22,8 @@ from demisto_sdk.commands.common.content.objects.abstract_objects import \
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
     YAMLContentObject
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.tools import find_type, get_pack_name
+from demisto_sdk.commands.common.tools import (add_default_pack_known_words,
+                                               find_type)
 from demisto_sdk.commands.doc_reviewer.known_words import KNOWN_WORDS
 from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
 
@@ -92,9 +93,7 @@ class DocReviewer:
         if 'Packs' in file_path_obj.parts:
             pack_name = file_path_obj.parts[file_path_obj.parts.index('Packs') + 1]
             packs_ignore_path = os.path.join("Packs", pack_name, PACKS_PACK_IGNORE_FILE_NAME)
-            default_pack_known_words = [
-                get_pack_name(file_path),
-            ]
+            default_pack_known_words = add_default_pack_known_words(file_path)
             if os.path.isfile(packs_ignore_path):
                 config = ConfigParser(allow_no_value=True)
                 config.read(packs_ignore_path)
@@ -124,7 +123,7 @@ class DocReviewer:
         """check if a given word is in camel case"""
         if word != word.lower() and word != word.upper() and "_" not in word and word != word.title():
             # check if word is an upper case plural, like IPs. If it is, then the word is not in camel case
-            return not self.is_upper_case_word_plural(self.remove_punctuation(word))
+            return not self.is_upper_case_word_plural(word)
         return False
 
     @staticmethod
@@ -223,6 +222,7 @@ class DocReviewer:
             return True
 
         self.add_known_words()
+
         for file in self.files:
             click.echo(f'\nChecking file {file}')
             restarted_spellchecker = self.update_known_words_from_pack(file)
@@ -318,20 +318,24 @@ class DocReviewer:
     def check_word(self, word):
         """Check if a word is legal"""
         # check camel cases
-        if not self.no_camel_case and self.is_camel_case(word):
-            word = self.remove_punctuation(word)
-            sub_words = self.camel_case_split(word)
-            for sub_word in sub_words:
-                sub_word = self.remove_punctuation(sub_word)
-                if sub_word.isalpha() and self.spellchecker.unknown([sub_word]):
-                    self.unknown_words[word] = list(self.spellchecker.candidates(sub_word))[:5]
-
+        word = self.remove_punctuation(word)
+        sub_words = []
+        if '-' in word:
+            sub_words.extend(word.split('-'))
+        elif not self.no_camel_case and self.is_camel_case(word):
+            sub_words.extend(self.camel_case_split(word))
         else:
-            word = self.remove_punctuation(word)
-            if word.isalpha() and self.spellchecker.unknown([word]):
-                self.unknown_words[word] = list(self.spellchecker.candidates(word))[:5]
+            sub_words.append(word)
 
-        if word in self.unknown_words.keys() and word in self.unknown_words[word]:
+        self.unknown_words[word] = set()
+        for sub_word in sub_words:
+            sub_word = self.remove_punctuation(sub_word)
+            if sub_word.isalpha() and self.spellchecker.unknown([sub_word]):
+                self.unknown_words[word].update(list(self.spellchecker.candidates(sub_word))[:5])
+
+        if not self.unknown_words[word]:
+            del self.unknown_words[word]
+        elif word in self.unknown_words[word]:
             # Do not suggest the same word as a correction.
             self.unknown_words[word].remove(word)
 

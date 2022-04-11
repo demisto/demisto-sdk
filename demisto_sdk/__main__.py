@@ -26,7 +26,6 @@ from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
 json = JSON_Handler()
 
-
 # Third party packages
 
 # Common tools
@@ -141,8 +140,7 @@ def main(config, version, release_notes):
             __version__ = get_distribution('demisto-sdk').version
         except DistributionNotFound:
             __version__ = 'dev'
-            print_warning(
-                'Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.')
+            print_warning('Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.')
         else:
             last_release = get_last_remote_release_version()
             print_warning(f'You are using demisto-sdk {__version__}.')
@@ -276,14 +274,16 @@ def extract_code(config, **kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-i", "--input", help="The directory path to the files or path to the file to unify", required=True,
-    type=click.Path(dir_okay=True)
+    "-i", "--input", help="The directory path to the files or path to the file to unify", required=True, type=click.Path(dir_okay=True)
 )
 @click.option(
     "-o", "--output", help="The output dir to write the unified yml to", required=False
 )
 @click.option(
-    "--force", help="Forcefully overwrites the preexisting yml if one exists",
+    "-c", "--custom", help="Add test label to unified yml id/name/display", required=False,
+)
+@click.option(
+    "-f", "--force", help="Forcefully overwrites the preexisting yml if one exists",
     is_flag=True,
     show_default=False
 )
@@ -306,6 +306,8 @@ def unify(**kwargs):
     # Input is of type Path.
     kwargs['input'] = str(kwargs['input'])
     file_type = find_type(kwargs['input'])
+    custom = kwargs.pop('custom')
+
     if file_type == FileType.GENERIC_MODULE:
         from demisto_sdk.commands.unify.generic_module_unifier import \
             GenericModuleUnifier
@@ -322,7 +324,7 @@ def unify(**kwargs):
             IntegrationScriptUnifier
 
         # pass arguments to YML unifier and call the command
-        yml_unifier = IntegrationScriptUnifier(**kwargs)
+        yml_unifier = IntegrationScriptUnifier(**kwargs, custom=custom)
         yml_unifier.unify()
 
     return 0
@@ -544,14 +546,12 @@ def validate(config, **kwargs):
 @click.option('-mp', '--marketplace', help='The marketplace the artifacts are created for, that '
                                            'determines which artifacts are created for each pack. '
                                            'Default is the XSOAR marketplace, that has all of the packs '
-                                           'artifacts.', default='xsoar',
-              type=click.Choice(['xsoar', 'marketplacev2', 'v2']))
+                                           'artifacts.', default='xsoar', type=click.Choice(['xsoar', 'marketplacev2', 'v2']))
 @click.option('-fbi', '--filter-by-id-set', is_flag=True,
               help='Whether to use the id set as content items guide, meaning only include in the packs the '
                    'content items that appear in the id set.', default=False, hidden=True)
 @click.option('-af', '--alternate-fields', is_flag=True,
-              help='Use the alternative fields if such are present in the yml or json of the content item.',
-              default=False, hidden=True)
+              help='Use the alternative fields if such are present in the yml or json of the content item.', default=False, hidden=True)
 def create_content_artifacts(**kwargs) -> int:
     """Generating the following artifacts:
        1. content_new - Contains all content objects of type json,yaml (from_version < 6.0.0)
@@ -664,10 +664,9 @@ def secrets(config, **kwargs):
                                             "--check-dependent-api-module flag.",
               type=click.Path(resolve_path=True),
               default='Tests/id_set.json')
-@click.option("-cdam", "--check-dependent-api-module", is_flag=True,
-              help="Run unit tests and lint on all packages that "
-                   "are dependent on the found "
-                   "modified api modules.", default=True)
+@click.option("-cdam", "--check-dependent-api-module", is_flag=True, help="Run unit tests and lint on all packages that "
+              "are dependent on the found "
+              "modified api modules.", default=False)
 @click.option("--time-measurements-dir", help="Specify directory for the time measurements report file",
               type=PathsParamType())
 def lint(**kwargs):
@@ -742,8 +741,7 @@ def lint(**kwargs):
     "--report-dir", help="Directory of the coverage report files.",
     default='coverage_report', type=PathsParamType(resolve_path=True))
 @click.option(
-    "--report-type", help="The type of coverage report (posible values: 'text', 'html', 'xml', 'json' or 'all').",
-    type=str)
+    "--report-type", help="The type of coverage report (posible values: 'text', 'html', 'xml', 'json' or 'all').", type=str)
 @click.option("--no-min-coverage-enforcement", help="Do not enforce minimum coverage.", is_flag=True)
 @click.option(
     "--previous-coverage-report-url", help="URL of the previous coverage report.",
@@ -1001,8 +999,7 @@ def download(**kwargs):
     multiple=False)
 @click.option(
     "-pd", "--pack-data", help="The Pack Data to add to XSOAR Configuration File - "
-                               "Pack URL for Custom Pack and Pack Version for OOTB Pack", required=False,
-    multiple=False)
+           "Pack URL for Custom Pack and Pack Version for OOTB Pack", required=False, multiple=False)
 @click.option(
     "-mp", "--add-marketplace-pack", help="Add a Pack to the MarketPlace Packs section in the Configuration File",
     required=False, is_flag=True)
@@ -1271,7 +1268,6 @@ def generate_test_playbook(**kwargs):
         print_error(str(e))
         return 1
 
-
 # ====================== init ====================== #
 
 
@@ -1299,7 +1295,7 @@ def generate_test_playbook(**kwargs):
                              "Script template options: HelloWorldScript")
 @click.option(
     "-a", "--author-image", help="Path of the file 'Author_image.png'. \n "
-                                 "Image will be presented in marketplace under PUBLISHER section. File should be up to 4kb and dimensions of 120x50"
+    "Image will be presented in marketplace under PUBLISHER section. File should be up to 4kb and dimensions of 120x50"
 )
 @click.option(
     '--demisto_mock', is_flag=True,
@@ -1472,8 +1468,7 @@ def create_id_set(**kwargs):
     id_set, excluded_items_by_pack, excluded_items_by_type = id_set_creator.create_id_set()
 
     if excluded_items_by_pack:
-        remove_dependencies_from_id_set(id_set, excluded_items_by_pack, excluded_items_by_type,
-                                        kwargs.get('marketplace', ''))
+        remove_dependencies_from_id_set(id_set, excluded_items_by_pack, excluded_items_by_type, kwargs.get('marketplace', ''))
         id_set_creator.save_id_set()
 
 
@@ -1611,8 +1606,7 @@ def update_release_notes(**kwargs):
                                                "The json file will be saved under the path given in the "
                                                "'--output-path' argument", required=False, is_flag=True)
 @click.option("-o", "--output-path", help="The destination path for the packs dependencies json file. This argument is "
-                                          "only relevant for when using the '--all-packs-dependecies' flag.",
-              required=False)
+              "only relevant for when using the '--all-packs-dependecies' flag.", required=False)
 @click.option("--get-dependent-on", help="Get only the packs dependent ON the given pack. Note: this flag can not be"
                                          " used for the packs ApiModules and Base", required=False,
               is_flag=True)
@@ -2070,77 +2064,6 @@ def convert(config, **kwargs):
         sys.exit(1)
 
     sys.exit(0)
-
-
-# ====================== generate-unit-tests ====================== #
-
-@main.command(short_help='''Generates unit tests for integration code.''')
-@click.help_option(
-    '-h', '--help'
-)
-@click.option(
-    "-c", "--commands", help="Specific commands name to generate unit test for (e.g. xdr-get-incidents)",
-    required=False)
-@click.option(
-    '-o', '--output_dir', help='Directory to store the output in (default is the input integration directory)',
-    required=False)
-@click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
-              type=click.IntRange(0, 3, clamp=True), default=1, show_default=True)
-@click.option(
-    "-i", "--input_path",
-    help="Valid integration file path.",
-    required=True)
-@click.option('-q', "--quiet", is_flag=True, help="Quiet output, only output results in the end")
-@click.option("-lp", "--log-path", help="Path to store all levels of logs",
-              type=click.Path(resolve_path=True))
-@click.option(
-    '-d', '--use_demisto',
-    help="Run commands at Demisto automatically.", is_flag=True
-)
-@click.option(
-    "--insecure",
-    help="Skip certificate validation", is_flag=True
-)
-@click.option(
-    "-e", "--examples",
-    help="Integrations: path for file containing command examples."
-         " Each command should be in a separate line.")
-@click.option(
-    "-a", "--append",
-    help="Append generated test file to the existing <integration_name>_test.py. Else, overwriting existing UT",
-    is_flag=True)
-def generate_unit_tests(input_path: str = '',
-                        commands: list = [],
-                        output_dir: str = '',
-                        examples: str = '',
-                        insecure: bool = False,
-                        use_demisto: bool = False,
-                        append: bool = False,
-                        verbose: int = 1,
-                        quiet: bool = False,
-                        log_path: str = ''):
-    """
-    This command is used to generate unit tests automatically from an  integration python code.
-    Also supports generating unit tests for specific commands.
-    """
-
-    klara_logger = logging.getLogger('PYSCA')
-    klara_logger.propagate = False
-    from demisto_sdk.commands.common.logger import logging_setup
-    from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import \
-        run_generate_unit_tests
-    logging_setup(verbose=verbose,  # type: ignore[arg-type]
-                  quiet=quiet,  # type: ignore[arg-type]
-                  log_path=log_path)  # type: ignore[arg-type]
-    return run_generate_unit_tests(
-        input_path,
-        commands,
-        output_dir,
-        examples,
-        insecure,
-        use_demisto,
-        append
-    )
 
 
 @main.command(

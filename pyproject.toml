@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.6.2"
+version = "1.6.3"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -14,9 +14,16 @@ classifiers=[
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: Implementation :: CPython'
 ]
+exclude = ["TestSuite/**", "*/tests/*", "tests"]
 
 [tool.poetry.scripts]
 demisto-sdk = "demisto_sdk.__main__:main"
+
+[tool.vulture]
+exclude = ["*/tests/*"]
+min_confidence = 80
+paths = ["demisto_sdk", "TestSuite"]
+sort_by_size = true
 
 [tool.poetry.dependencies]
 python = "^3.8"

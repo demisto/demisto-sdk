@@ -779,7 +779,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def node_modules_are_missing(missing_modules):
-        return f"The npm modules: {missing_modules} are not installed, Readme mdx validation skipped.\n" \
+        return f"The npm modules: [{missing_modules}] are not installed, Readme mdx validation skipped.\n" \
                f"Use `npm install' to install all required node dependencies"
 
     @staticmethod

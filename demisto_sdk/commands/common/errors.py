@@ -330,6 +330,7 @@ ERROR_CODE = {
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
     "missing_readme_file": {'code': "RM109", 'ui_applicable': False, 'related_field': ''},
     "error_uninstall_node": {'code': "RN110", 'ui_applicable': False, 'related_field': ''},
+    "node_modules_are_missing": {'code': "RN111", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -774,6 +775,12 @@ class Errors:
                'while it is required for the validation process.\n' \
                'Please download and install `node` to proceed\n' \
                'See https://nodejs.org for installation instructions.'
+
+    @staticmethod
+    @error_code_decorator
+    def node_modules_are_missing(missing_modules):
+        return f"The npm modules: {missing_modules} are not installed, Readme mdx validation skipped.\n" \
+               f"Use `npm install' to install all required node dependencies"
 
     @staticmethod
     @error_code_decorator

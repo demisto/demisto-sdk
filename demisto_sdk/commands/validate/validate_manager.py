@@ -90,7 +90,9 @@ from demisto_sdk.commands.common.tools import (
     get_relative_path_from_packs_dir, get_yaml, open_id_set_file,
     run_command_os)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+from demisto_sdk.commands.common.handlers import JSON_Handler
 
+REQUIRED_MDX_PACKS = ['@mdx-js/mdx', 'fs-extra', 'commander']
 
 class ValidateManager:
     def __init__(
@@ -124,7 +126,7 @@ class ValidateManager:
         self.check_is_unskipped = check_is_unskipped
         self.conf_json_data = {}
         self.run_with_multiprocessing = multiprocessing
-        self.is_possible_validate_readme = self.is_node_exist()
+        self.is_possible_validate_readme, self.error_message_mdx_server = self.are_node_and_modules_installed_for_verify()
 
         if json_file_path:
             self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \
@@ -199,15 +201,36 @@ class ValidateManager:
             self.conf_json_validator = ConfJsonValidator()
             self.conf_json_data = self.conf_json_validator.conf_data
 
-    def is_node_exist(self) -> bool:
+    def are_node_and_modules_installed_for_verify(self) -> bool:
+        """ Check the following:
+            1. npm packages installed - see packs var for specific pack details.
+            2. node interperter exists.
+        Returns:
+            bool: True If all req ok else False
+        """
 
+        json = JSON_Handler()
         content_path = get_content_path()
-
+        missing_module = []
+        valid = True, ''
         # Check node exist
         stdout, stderr, exit_code = run_command_os('node -v', cwd=content_path)
         if exit_code:
-            return False
-        return True
+            valid = False, 'node'
+        else:
+            # Check npm modules exsits
+            stdout, stderr, exit_code = run_command_os(f'npm ls --json {" ".join(REQUIRED_MDX_PACKS)}',
+                                                       cwd=content_path)
+            if exit_code:  # all are missinig
+                missing_module.extend(REQUIRED_MDX_PACKS)
+            else:
+                deps = json.loads(stdout).get('dependencies', {})
+                for pack in REQUIRED_MDX_PACKS:
+                    if pack not in deps:
+                        missing_module.append(pack)
+        if missing_module:
+            valid = False, missing_module
+        return valid
 
     def print_final_report(self, valid):
         self.print_ignored_files_report(self.print_ignored_files)
@@ -575,7 +598,10 @@ class ValidateManager:
 
         elif file_type == FileType.README:
             if not self.is_possible_validate_readme:
-                error_message, error_code = Errors.error_uninstall_node()
+                if isinstance(self.error_message_mdx_server, list):
+                    error_message, error_code = Errors.node_modules_are_missing(self.error_message_mdx_server)
+                else:
+                    error_message, error_code = Errors.error_uninstall_node()
                 if self.handle_error(error_message=error_message, error_code=error_code,
                                      file_path=file_path):
                     return False

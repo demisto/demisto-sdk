@@ -13,7 +13,8 @@ from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, FileType)
+    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, MODELING_RULES_DIR, PARSING_RULES_DIR,
+    FileType)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
@@ -273,31 +274,40 @@ def extract_code(config, **kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-i", "--input", help="The directory path to the files to unify", required=True, type=click.Path(dir_okay=True)
+    "-i", "--input", help="The directory path to the files or path to the file to unify", required=True, type=click.Path(dir_okay=True)
 )
 @click.option(
     "-o", "--output", help="The output dir to write the unified yml to", required=False
 )
 @click.option(
-    "--force", help="Forcefully overwrites the preexisting yml if one exists",
+    "-c", "--custom", help="Add test label to unified yml id/name/display", required=False,
+)
+@click.option(
+    "-f", "--force", help="Forcefully overwrites the preexisting yml if one exists",
     is_flag=True,
     show_default=False
 )
 def unify(**kwargs):
     """
-    This command has two main functions:
+    This command has three main functions:
 
-    1. YML Unifier - Unifies integration/script code, image, description and yml files to a single XSOAR yml file.
+    1. Integration/Script Unifier - Unifies integration/script code, image, description and yml files to a single XSOAR yml file.
      * Note that this should be used on a single integration/script and not a pack, not multiple scripts/integrations.
      * To use this function - set as input a path to the *directory* of the integration/script to unify.
 
     2. GenericModule Unifier - Unifies a GenericModule with its Dashboards to a single JSON object.
      * To use this function - set as input a path to a GenericModule *file*.
+
+    3. Parsing/Modeling Rule Unifier - Unifies Parsing/Modeling rule YML, XIF and samples JSON files to a single YML file.
+     * Note that this should be used on a single parsing/modeling rule and not a pack, not multiple rules.
+     * To use this function - set as input a path to the *directory* of the parsing/modeling rule to unify.
     """
     check_configuration_file('unify', kwargs)
     # Input is of type Path.
     kwargs['input'] = str(kwargs['input'])
     file_type = find_type(kwargs['input'])
+    custom = kwargs.pop('custom')
+
     if file_type == FileType.GENERIC_MODULE:
         from demisto_sdk.commands.unify.generic_module_unifier import \
             GenericModuleUnifier
@@ -305,13 +315,16 @@ def unify(**kwargs):
         # pass arguments to GenericModule unifier and call the command
         generic_module_unifier = GenericModuleUnifier(**kwargs)
         generic_module_unifier.merge_generic_module_with_its_dashboards()
-
+    elif any(rule_dir in os.path.abspath(kwargs['input']) for rule_dir in [PARSING_RULES_DIR, MODELING_RULES_DIR]):
+        from demisto_sdk.commands.unify.rule_unifier import RuleUnifier
+        rule_unifier = RuleUnifier(**kwargs)
+        rule_unifier.unify()
     else:
         from demisto_sdk.commands.unify.integration_script_unifier import \
             IntegrationScriptUnifier
 
         # pass arguments to YML unifier and call the command
-        yml_unifier = IntegrationScriptUnifier(**kwargs)
+        yml_unifier = IntegrationScriptUnifier(**kwargs, custom=custom)
         yml_unifier.unify()
 
     return 0
@@ -655,7 +668,7 @@ def secrets(config, **kwargs):
               default='Tests/id_set.json')
 @click.option("-cdam", "--check-dependent-api-module", is_flag=True, help="Run unit tests and lint on all packages that "
               "are dependent on the found "
-              "modified api modules.", default=True)
+              "modified api modules.", default=False)
 @click.option("--time-measurements-dir", help="Specify directory for the time measurements report file",
               type=PathsParamType())
 def lint(**kwargs):

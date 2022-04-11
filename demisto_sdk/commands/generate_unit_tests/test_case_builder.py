@@ -260,7 +260,7 @@ class TestCase:
     @staticmethod
     def create_command_results_assertion(arg: str, value: Union[ast_mod.Name, ast_mod.Constant]):
         """
-        Inpust: arg: CommandResults argument
+        Inputs: arg: CommandResults argument
                 value: CommandResults argument value
         Returns: Single assertion as part of command results assertions
         """

@@ -543,15 +543,8 @@ class ReadMeValidator(BaseValidator):
         with ReadMeValidator._MDX_SERVER_LOCK:
             if not ReadMeValidator._MDX_SERVER_PROCESS:
                 mdx_parse_server = Path(__file__).parent.parent / 'mdx-parse-server.js'
-                try:
-                    ReadMeValidator._MDX_SERVER_PROCESS = subprocess.Popen(['node', str(mdx_parse_server)],
-                                                                           stdout=subprocess.PIPE, text=True)
-                except FileNotFoundError:
-                    error_message = Errors.error_uninstall_node()
-                    from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
-                        BlockingValidationFailureException
-                    raise BlockingValidationFailureException(error_message)
-
+                ReadMeValidator._MDX_SERVER_PROCESS = subprocess.Popen(['node', str(mdx_parse_server)],
+                                                                       stdout=subprocess.PIPE, text=True)
                 line = ReadMeValidator._MDX_SERVER_PROCESS.stdout.readline()  # type: ignore
                 if 'MDX server is listening on port' not in line:
                     ReadMeValidator.stop_mdx_server()

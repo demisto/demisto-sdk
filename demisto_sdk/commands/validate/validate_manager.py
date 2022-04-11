@@ -85,9 +85,10 @@ from demisto_sdk.commands.common.hook_validations.xsoar_config_json import \
     XSOARConfigJsonValidator
 from demisto_sdk.commands.common.tools import (
     _get_file_id, find_type, get_api_module_ids,
-    get_api_module_integrations_set, get_file, get_pack_ignore_file_path,
-    get_pack_name, get_pack_names_from_files, get_relative_path_from_packs_dir,
-    get_yaml, open_id_set_file)
+    get_api_module_integrations_set, get_content_path, get_file,
+    get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
+    get_relative_path_from_packs_dir, get_yaml, open_id_set_file,
+    run_command_os)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
@@ -123,6 +124,7 @@ class ValidateManager:
         self.check_is_unskipped = check_is_unskipped
         self.conf_json_data = {}
         self.run_with_multiprocessing = multiprocessing
+        self.is_possible_validate_readme = self.is_node_exist()
 
         if json_file_path:
             self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \
@@ -196,6 +198,16 @@ class ValidateManager:
         if not self.skip_conf_json:
             self.conf_json_validator = ConfJsonValidator()
             self.conf_json_data = self.conf_json_validator.conf_data
+
+    def is_node_exist(self) -> bool:
+
+        content_path = get_content_path()
+
+        # Check node exist
+        stdout, stderr, exit_code = run_command_os('node -v', cwd=content_path)
+        if exit_code:
+            return False
+        return True
 
     def print_final_report(self, valid):
         self.print_ignored_files_report(self.print_ignored_files)
@@ -334,21 +346,28 @@ class ValidateManager:
         all_packs.sort(key=str.lower)
 
         ReadMeValidator.add_node_env_vars()
-        with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):
-            if self.run_with_multiprocessing:
-                with pebble.ProcessPool(max_workers=4) as executor:
-                    futures = []
-                    for pack_path in all_packs:
-                        futures.append(executor.schedule(self.run_validations_on_pack, args=(pack_path,)))
-                    self.wait_futures_complete(futures_list=futures,
-                                               done_fn=lambda x, y: (all_packs_valid.add(x),  # type: ignore
-                                                                     FOUND_FILES_AND_ERRORS.extend(y)))  # type: ignore
-            else:
+        if self.is_possible_validate_readme:
+            with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):
+                return self.packs_validation(all_packs, all_packs_valid, count, num_of_packs)
+        else:
+            return self.packs_validation(all_packs, all_packs_valid, count, num_of_packs)
+
+    def packs_validation(self, all_packs, all_packs_valid, count, num_of_packs):
+
+        if self.run_with_multiprocessing:
+            with pebble.ProcessPool(max_workers=4) as executor:
+                futures = []
                 for pack_path in all_packs:
-                    self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
-                    all_packs_valid.add(self.run_validations_on_pack(pack_path)[0])
-                    count += 1
-            return all(all_packs_valid)
+                    futures.append(executor.schedule(self.run_validations_on_pack, args=(pack_path,)))
+                self.wait_futures_complete(futures_list=futures,
+                                           done_fn=lambda x, y: (all_packs_valid.add(x),  # type: ignore
+                                                                 FOUND_FILES_AND_ERRORS.extend(y)))  # type: ignore
+        else:
+            for pack_path in all_packs:
+                self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
+                all_packs_valid.add(self.run_validations_on_pack(pack_path)[0])
+                count += 1
+        return all(all_packs_valid)
 
     def run_validations_on_pack(self, pack_path):
         """Runs validation on all files in given pack. (i,g,a)
@@ -555,6 +574,11 @@ class ValidateManager:
             return self.validate_description(file_path, pack_error_ignore_list)
 
         elif file_type == FileType.README:
+            if not self.is_possible_validate_readme:
+                error_message, error_code = Errors.error_uninstall_node()
+                if self.handle_error(error_message=error_message, error_code=error_code,
+                                     file_path=file_path):
+                    return False
             if not self.validate_all:
                 ReadMeValidator.add_node_env_vars()
                 with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):

@@ -16,8 +16,6 @@ from demisto_sdk.commands.common.constants import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, MODELING_RULES_DIR, PARSING_RULES_DIR,
     FileType)
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
-    BlockingValidationFailureException
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
                                                get_release_note_entries,
@@ -516,13 +514,9 @@ def validate(config, **kwargs):
         print_error("\nYou may not be running `demisto-sdk validate` command in the content directory.\n"
                     "Please run the command from content directory")
         sys.exit(1)
-    except BlockingValidationFailureException as e:
-        print_error(e)
-        sys.exit(1)
+
 
 # ====================== create-content-artifacts ====================== #
-
-
 @main.command(hidden=True)
 @click.help_option(
     '-h', '--help'

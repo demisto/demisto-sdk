@@ -329,6 +329,7 @@ ERROR_CODE = {
     "template_sentence_in_readme": {'code': "RM107", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
     "missing_readme_file": {'code': "RM109", 'ui_applicable': False, 'related_field': ''},
+    "error_uninstall_node": {'code': "RN110", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -767,9 +768,10 @@ class Errors:
                f'Try running the following command: `npm install`'
 
     @staticmethod
+    @error_code_decorator
     def error_uninstall_node():
-        return '\nTEST FAILED\n\n' \
-               'The `node` runtime is not installed on the machine, while it is required for the validation process.\n' \
+        return 'The `node` runtime is not installed on the machine,\n' \
+               'while it is required for the validation process.\n' \
                'Please download and install `node` to proceed\n' \
                'See https://nodejs.org for installation instructions.'
 

@@ -20,13 +20,15 @@ EX_FAIL = 1
 
 class PacksZipper:
 
-    def __init__(self, pack_paths: str, output: str, content_version: str, zip_all: bool, quiet_mode: bool = False):
+    def __init__(self, pack_paths: str, output: str, content_version: str, zip_all: bool, marketplace: str = 'xsoar',
+                 quiet_mode: bool = False):
         self.artifacts_manager = PacksManager(
             pack_paths=pack_paths,
             artifacts_path=output,
             content_version=content_version,
             all_in_one_zip=zip_all,
             quiet_mode=quiet_mode,
+            marketplace=marketplace
         )
 
     def zip_packs(self):
@@ -55,8 +57,8 @@ class PacksManager(ArtifactsManager):
 
     """
 
-    def __init__(self, pack_paths: str, all_in_one_zip: bool, quiet_mode: bool, **kwargs):
-        super().__init__(packs=True, zip=True, cpus=1, suffix='', **kwargs)
+    def __init__(self, pack_paths: str, all_in_one_zip: bool, quiet_mode: bool, marketplace: str, **kwargs):
+        super().__init__(packs=True, zip=True, cpus=1, suffix='', marketplace=marketplace, **kwargs)
         self.init_packs(pack_paths)
         self.zip_all = all_in_one_zip
         self.quiet_mode = quiet_mode

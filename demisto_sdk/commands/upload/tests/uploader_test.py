@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 import click
 import demisto_client
 import pytest
+import zipfile
 from click.testing import CliRunner
 from demisto_client.demisto_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
@@ -669,6 +670,7 @@ TEST_DATA = src_root() / 'commands' / 'upload' / 'tests' / 'data'
 CONTENT_PACKS_ZIP = str(TEST_DATA / 'content_packs.zip')
 TEST_PACK_ZIP = str(TEST_DATA / 'TestPack.zip')
 TEST_PACK = 'Packs/TestPack'
+TEST_XSIAM_PACK = 'Packs/TestXSIAMPack'
 INVALID_ZIP = 'invalid_zip'
 INVALID_ZIP_ERROR = 'Error: Given input path: {path} does not exist'
 API_CLIENT = DefaultApi()
@@ -1059,6 +1061,32 @@ class TestZippedPackUpload:
         except KeyError:
             skip_value = None
         assert not skip_value
+
+    def test_xsiam(self, mocker):
+        """
+        Given:
+            - XSIAM pack to upload
+        When:
+            - call to upload command
+        Then:
+            - Make sure XSIAM entities are in the zip we want to upload
+        """
+        # prepare
+        mock_api_client(mocker)
+        mocker.patch.object(Uploader, 'zipped_pack_uploader')
+
+        # run
+        click.Context(command=upload).invoke(upload, input=TEST_XSIAM_PACK, xsiam=True, zip=True)
+
+        zip_file_path = Uploader.zipped_pack_uploader.call_args[1]['path']
+
+        assert 'uploadable_packs.zip' in zip_file_path
+
+        unzipped_uploadable_packs = zipfile.ZipFile(zip_file_path, "r")
+        unzipped_xsiam_pack = zipfile.ZipFile(unzipped_uploadable_packs.filelist[0].filename, "r")
+        xsiam_pack_files = unzipped_xsiam_pack.namelist()
+        assert 'Triggers/' in xsiam_pack_files
+        assert 'XSIAMDashboards/' in xsiam_pack_files
 
 
 class TestItemDetacher:

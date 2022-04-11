@@ -2,7 +2,7 @@ import ast as ast_mod
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from ordered_set import OrderedSet
 
@@ -45,7 +45,7 @@ class ArgsBuilder:
                 logger.debug('Creating local argument object for parametrize.')
                 self.build_local_args()
 
-    def get_keys_values(self, input_arg):
+    def get_keys_values(self, input_arg: dict):
         """
         parsing input arguments into an ast dictionary.
         """
@@ -92,7 +92,8 @@ class ArgsBuilder:
 
 
 class TestCase:
-    def __init__(self, func, directory_path, client_ast, example_dict, id=0, module=None):
+    def __init__(self, func: ast_mod.FunctionDef, directory_path: Path, client_ast: ast_mod.ClassDef,
+                 example_dict: dict, id: int = 0, module: ast_mod.Module = None):
         self.asserts = []
         self.func = func
         self.id = id
@@ -162,7 +163,7 @@ class TestCase:
                                      keywords=[ret_val])
             self.mocks.append(ast_mod.Expr(value=mock_call))
 
-    def load_mock_from_json_ast_builder(self, name, call):
+    def load_mock_from_json_ast_builder(self, name: str, call: str):
         """
         Args: name: name of the object to store the json.
               call: name of the call, used to decide which file to choose from outputs directory.
@@ -199,7 +200,7 @@ class TestCase:
                     return keyword.value.value
         return None
 
-    def get_call_params_from_http_request(self, def_name):
+    def get_call_params_from_http_request(self, def_name: str):
         """
         Args: def_name: name of the client function that was called.
         Return: url suffix of the API request, call method (post/get)
@@ -237,7 +238,7 @@ class TestCase:
             logger.warning('No return values were detected, thus no assertions being generated.')
 
     @staticmethod
-    def assertions_builder(call, ops, comperators):
+    def assertions_builder(call: ast_mod.Attribute, ops: list, comperators: list):
         """
         Args: call: rhs of the assertions, item to check
                 ops: operation to check
@@ -247,7 +248,7 @@ class TestCase:
         return ast_mod.Assert(test=ast_mod.Compare(left=call, ops=ops, comparators=comperators), msg=None)
 
     @staticmethod
-    def get_links(value):
+    def get_links(value: ast_mod.Name):
         """
         returns the name of the request whom response is stored in raw_response
         """
@@ -257,7 +258,7 @@ class TestCase:
             return None
 
     @staticmethod
-    def create_command_results_assertion(arg, value):
+    def create_command_results_assertion(arg: str, value: Union[ast_mod.Name, ast_mod.Constant]):
         """
         Inpust: arg: CommandResults argument
                 value: CommandResults argument value

@@ -57,14 +57,14 @@ class UnitTestsGenerator:
         with open(self.input_path, 'r') as input_file:
             return input_file.read()
 
-    def decision_maker(self, command_name):
+    def decision_maker(self, command_name: str):
         """
         Returns true if unit test should be generated to a command, false otherwise
         """
         return len(self.commands) == 0 or command_name in self.commands_to_generate
 
     @staticmethod
-    def command_name_transformer(command_name):
+    def command_name_transformer(command_name: str):
         return command_name.strip('!').replace('-', '_') + '_command'
 
     def execute_commands_into_dict(self):
@@ -125,7 +125,7 @@ class CustomContactSolver(ContractSolver):
         """
         super().__init__(cfg, as_tree, '')
 
-    def solve_function(self, func: nodes.FunctionDef, client_ast, generator) -> TestCase:
+    def solve_function(self, func: nodes.FunctionDef, client_ast: nodes.ClassDef, generator: UnitTestsGenerator) -> TestCase:
         """
             Args: func: ast_node of the function analayzed.
                   client_ast: ast sub-tree of the client class.
@@ -307,7 +307,7 @@ def run_generate_unit_tests(input_path: str,
     return 0
 
 
-def run(source, generator):
+def run(source: str, generator: UnitTestsGenerator):
     global logger
     logger.info(f"\n{Colors.Fg.green}Running code parser and testing generator.{Colors.reset}")
     logger.debug("Starting parsing input code into ast.")

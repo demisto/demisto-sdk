@@ -7,7 +7,7 @@ logger = logging.getLogger('demisto-sdk')
 
 
 class TestModule:
-    def __init__(self, tree, module_name, to_concat, module=None):
+    def __init__(self, tree: ast_mod.Module, module_name: str, to_concat: bool, module: ast_mod.Module = None):
         self.functions = []
         self.imports = [ast_mod.Import(names=[ast_mod.alias(name='pytest', asname=None)]),
                         ast_mod.Import(names=[ast_mod.alias(name='io', asname=None)]),
@@ -112,7 +112,7 @@ class TestModule:
         return None
 
     @staticmethod
-    def get_client_init_args(client_ast):
+    def get_client_init_args(client_ast: ast_mod.ClassDef):
         global logger
         for func in client_ast.body:
             if func.name == '__init__':
@@ -120,6 +120,6 @@ class TestModule:
         logger.debug('No init function was found in Client class.')
         return None
 
-    def build_imports(self, names_to_import):
+    def build_imports(self, names_to_import: list):
         aliases = [ast_name(name) for name in names_to_import]
         return ast_mod.ImportFrom(module=self.module_name, names=aliases, level=0)

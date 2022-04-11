@@ -1,8 +1,9 @@
 import ast as ast_mod
 import json
+from typing import Union
 
 
-def ast_name(id, ctx=ast_mod.Load()):
+def ast_name(id: str, ctx: Union[ast_mod.Load, ast_mod.Store, ast_mod.Del] = ast_mod.Load()):
     """
     Creates an ast Name node.
     """

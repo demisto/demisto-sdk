@@ -297,7 +297,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return False
 
-    @error_codes('pa104')
+    @error_codes('PA104')
     def _is_pack_ignore_file_structure_valid(self):
         """Check if .pack-ignore structure is parse-able"""
         try:
@@ -773,7 +773,6 @@ class PackUniqueFilesValidator(BaseValidator):
             else:
                 raise
 
-    @error_codes('PA124')
     def validate_core_pack_dependencies(self, dependencies_packs):
 
         found_dependencies = []

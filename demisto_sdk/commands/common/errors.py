@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.constants import (
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 ALLOWED_IGNORE_ERRORS = [
-    'BA101', 'BA106 ', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113',
+    'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113',
     'DS107',
     'GF102',
     'IF100', 'IF106', 'IF115', 'IF116',

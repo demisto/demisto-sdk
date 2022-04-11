@@ -1380,6 +1380,7 @@ class TestContext:
 
                 self.build_context.logging_module.error(f'Playbook {self.playbook} has failed:')
                 for entry in entries:
+                    self.build_context.logging_module.error(f'  The entry is:\n{entry} for playbook {self.playbook}')
                     if entry['type'] == ENTRY_TYPE_ERROR and entry['parentContent']:
                         self.build_context.logging_module.error(f'- Task ID: {entry["taskId"]}')
                         # Checks for passwords and replaces them with "******"
@@ -1573,6 +1574,7 @@ class TestContext:
             'number_of_executions': self.playbook.configuration.number_of_executions,
             'number_of_successful_runs': self.playbook.configuration.number_of_successful_runs,
             'failed_stage': failed_stage,
+            'ssh_tunnel': self.tunnel_command,
         })
 
     @staticmethod

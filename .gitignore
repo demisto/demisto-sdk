@@ -84,7 +84,7 @@ venv*/
 ENV/
 requirements.txt
 requirements-dev.txt
-pyproject.toml
+
 
 # Spyder project settings
 .spyderproject

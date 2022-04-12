@@ -5,6 +5,7 @@
 * Fixed a bug where any edited json file that contained a forward slash (`/`) escaped.
 * Added a new validation to **validate** command to verify that the metadata *currentVersion* is
 the same as the last release note version.
+* The **validate** command now checks if there're none-deprecated integration commands that are missing from the readme file.
 * Fixed an issue where *dockerimage* changes in Scripts weren't recognized by the **update-release-notes** command.
 * Fixed an issue where **update-xsoar-config-file** did not properly insert the marketplace packs list to the file.
 * Added the pack name to the known words by default when running the **doc-review** command.
@@ -17,6 +18,7 @@ the same as the last release note version.
 * Enhanced the message of alternative suggestion words shown when running **doc-review** command.
 * Fixed an incorrect error message, in case `node` is not installed on the machine.
 * Fixed an issue in the **lint** command where the *check-dependent-api-modules* argument was set to true by default.
+* Added a new command **generate-unit-tests**.
 
 ## 1.6.3
 

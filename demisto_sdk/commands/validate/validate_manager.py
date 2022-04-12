@@ -931,7 +931,7 @@ class ValidateManager:
         if is_modified and self.is_backward_check:
             return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json,
                                                             check_is_unskipped=self.check_is_unskipped,
-                                                            conf_json_data=self.conf_json_data),
+                                                            conf_json_data=self.conf_json_data, is_modified=is_modified),
                         integration_validator.is_backward_compatible()])
         else:
             return integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json,

@@ -1522,7 +1522,8 @@ class ValidateManager:
                 file_path = str(path)
 
             try:
-                formatted_path, old_path, valid_file_extension = self.check_file_relevance_and_format_path(file_path, old_path, old_format_files)
+                formatted_path, old_path, valid_file_extension =\
+                    self.check_file_relevance_and_format_path(file_path, old_path, old_format_files)
                 valid_types.add(valid_file_extension)
                 if formatted_path:
                     if old_path:
@@ -1676,16 +1677,20 @@ class ValidateManager:
 
     @staticmethod
     def is_old_file_format(file_path, file_type):
+        if file_type not in {FileType.INTEGRATION, FileType.SCRIPT}:
+            return False
+
         file_yml = get_yaml(file_path)
         # check for unified integration
-        if file_type == FileType.INTEGRATION and file_yml.get('script', {}).get('script', '-') not in ['-', '']:
-            if file_yml.get('script', {}).get('type', 'javascript') != 'python':
+        if file_type == FileType.INTEGRATION:
+            script = file_yml.get('script', {})
+            if script.get('script', '-') not in ['-', ''] and script.get('type', 'javascript') != 'python':
                 return False
             return True
 
         # check for unified script
-        if file_type == FileType.SCRIPT and file_yml.get('script', '-') not in ['-', '']:
-            if file_yml.get('type', 'javascript') != 'python':
+        if file_type == FileType.SCRIPT:
+            if file_yml.get('script', '-') not in ['-', ''] and file_yml.get('type', 'javascript') != 'python':
                 return False
             return True
         return False

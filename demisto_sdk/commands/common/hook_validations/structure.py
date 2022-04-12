@@ -20,7 +20,7 @@ from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (get_remote_file,
-                                               is_file_path_in_pack)
+                                               is_file_path_in_pack, get_file)
 from demisto_sdk.commands.format.format_constants import \
     OLD_FILE_DEFAULT_1_FROMVERSION
 
@@ -261,18 +261,9 @@ class StructureValidator(BaseValidator):
              (dict)
         """
         file_extension = os.path.splitext(self.file_path)[1]
-        if file_extension in ACCEPTED_FILE_EXTENSIONS:
-            if file_extension in self.FILE_SUFFIX_TO_LOAD_FUNCTION:
-                load_function = self.FILE_SUFFIX_TO_LOAD_FUNCTION[file_extension]
-                with open(self.file_path, 'r') as file_obj:
-                    loaded_file_data = load_function(file_obj)  # type: ignore
-                    return loaded_file_data
-
-            # Ignore loading image and markdown
-            elif file_extension in ['.png', '.md']:
-                return {}
-
-        return {}
+        if file_extension in ('.png', '.md'):  # Ignore loading image and markdown
+            return {}
+        return get_file(self.file_path)
 
     def get_file_type(self):
         # type: () -> Optional[str]

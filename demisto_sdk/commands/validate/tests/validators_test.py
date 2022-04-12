@@ -1823,11 +1823,12 @@ def test_job_unexpected_field_values_in_non_feed_job(repo, capsys,
 
 
 @pytest.mark.parametrize('file_set,expected_output,expected_result,added_files',
-                         (({'mock_file_description.md'}, "[BA115]", False, set()),
+                         (({'Packs/Integration/mock_file_description.md'}, "[BA115]", False, set()),
                           (set(), "", True, set()),
-                          ({'doc_files/image.png'}, "", True, set()),
-                          ({'mock_playbook.yml'}, "", True, {'renamed_mock_playbook.yml'}),
-                          ({Path('mock_playbook.yml')}, "", True, {Path('renamed_mock_playbook.yml')})))
+                          ({'Packs/Integration/doc_files/image.png'}, "", True, set()),
+                          ({'Packs/Integration/Playbooks/mock_playbook.yml'}, "", True, {'renamed_mock_playbook.yml'}),
+                          ({Path('Packs/Integration/Playbooks/mock_playbook.yml')}, "", True, {Path('renamed_mock_playbook.yml')}),
+                          ({Path('non_content_deleted_file.yml')}, "[BA115]", False, set())))
 def test_validate_deleted_files(capsys, file_set, expected_output, expected_result, added_files, mocker):
     """
     Given

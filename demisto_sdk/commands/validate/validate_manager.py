@@ -1,6 +1,7 @@
 import os
 from concurrent.futures._base import Future, as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
+from pathlib import Path
 from typing import Callable, List, Optional, Set, Tuple
 
 import click
@@ -1215,12 +1216,19 @@ class ValidateManager:
 
         is_valid = True
         for file_path in deleted_files:
-            file_path = str(file_path)
-            if not self.was_file_renamed_but_labeled_as_deleted(file_path, added_files):
-                if not self.is_file_allowed_to_be_deleted(file_path):
-                    error_message, error_code = Errors.file_cannot_be_deleted(file_path)
-                    if self.handle_error(error_message, error_code, file_path):
-                        is_valid = False
+            if 'Packs' not in Path(file_path).absolute().parts:
+                # not allowed to delete non-content files
+                error_message, error_code = Errors.file_cannot_be_deleted(file_path)
+                if self.handle_error(error_message, error_code, file_path):
+                    is_valid = False
+
+            else:
+                file_path = str(file_path)
+                if not self.was_file_renamed_but_labeled_as_deleted(file_path, added_files):
+                    if not self.is_file_allowed_to_be_deleted(file_path):
+                        error_message, error_code = Errors.file_cannot_be_deleted(file_path)
+                        if self.handle_error(error_message, error_code, file_path):
+                            is_valid = False
 
         return is_valid
 

@@ -18,6 +18,7 @@ the same as the last release note version.
 * Enhanced the message of alternative suggestion words shown when running **doc-review** command.
 * Fixed an issue in the **lint** command where the *check-dependent-api-modules* argument was set to true by default.
 * Added a new command **generate-unit-tests**.
+* Fixed an issue where the **validate** command did not work properly when deleting non-content items.
 
 ## 1.6.3
 

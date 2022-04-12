@@ -471,7 +471,7 @@ class ItemDetacher:
         for file_path in all_files:
             if os.path.isfile(file_path) and self.is_valid_file_for_detach(file_path):
                 file_type = self.find_item_type_to_detach(file_path)
-                file_data = get_file(file_path, file_type)
+                file_data = get_file(file_path)
                 file_id = file_data.get('id')
                 if file_id:
                     detach_files_list.append({'file_id': file_id, 'file_type': file_type, 'file_path': file_path})
@@ -488,7 +488,7 @@ class ItemDetacher:
 
     def find_item_id_to_detach(self):
         file_type = self.find_item_type_to_detach(self.file_path)
-        file_data = get_file(self.file_path, file_type)
+        file_data = get_file(self.file_path)
         file_id = file_data.get('id')
         return file_id
 

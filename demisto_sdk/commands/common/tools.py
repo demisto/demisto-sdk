@@ -485,59 +485,46 @@ def get_last_remote_release_version():
 
 
 @lru_cache()
-def get_file(path: Union[str, Path], file_extension: str, clear_cache: bool = False):
+def get_file(path: Union[str, Path], clear_cache: bool = False):
     """ Returns the content of a dictionary file """
     if clear_cache:
         get_file.cache_clear()
     path = Path(path).absolute()
-    data_dictionary = None
+    file_extension = path.suffix.lstrip('.').lower()
 
-    if file_extension.lstrip('.') not in GET_FILE_SUPPORTED_EXTENSIONS:
+    if file_extension not in GET_FILE_SUPPORTED_EXTENSIONS:
         raise ValueError(f'Unsupported file extension ({file_extension})')
 
-    if file_extension[0] != '.':  # standardizes extension
-        file_extension = f'.{file_extension}'
-
-    if path.suffix != file_extension:
-        raise ValueError(f'called get_file with an extension that is different '
-                         f'from the actual file extension: {file_extension=} != {path.suffix=}')
-
     with open(path, mode="r", encoding="utf8") as f:
-        read_file = f.read()
-        replaced = read_file.replace("simple: =", "simple: '='")
-        # revert str to stream for loader
-        stream = io.StringIO(replaced)
+        replaced = f.read().replace("simple: =", "simple: '='")
+        stream = io.StringIO(replaced)  # revert str to stream for loader
         try:
-            if file_extension == '.yml':
-                data_dictionary = yaml.load(stream)
-            elif file_extension == '.json':
-                data_dictionary = json.load(stream)
+            if file_extension == 'yml':
+                data = yaml.load(stream)
+            elif file_extension == 'json':
+                data = json.load(stream)
         except Exception as e:
             raise ValueError(f"Could not read {path}: {str(e)}")
 
-    if isinstance(data_dictionary, (dict, list)):
-        return data_dictionary
-
+    if isinstance(data, (dict, list)):
+        return data
     else:
         log_message = f'Read file {path} but result was neither dict nor list'
         try:
-            data_dictionary = str(data_dictionary)
-            log_message += f': {str(data_dictionary)}'
+            log_message += f': {str(data)}'
         except TypeError:
-            pass
-        logger.warning(log_message)
-
-    return {}
+            log_message += f': (data is of type {type(data)})'
+        raise ValueError(log_message)
 
 
 def get_yaml(file_path, cache_clear=False):
-    return get_file(file_path, 'yml', clear_cache=cache_clear)
+    return get_file(file_path, clear_cache=cache_clear)
 
 
 def get_json(file_path, cache_clear=False):
     if cache_clear:
         get_file.cache_clear()
-    return get_file(file_path, 'json', clear_cache=cache_clear)
+    return get_file(file_path, clear_cache=cache_clear)
 
 
 def get_script_or_integration_id(file_path):
@@ -2388,7 +2375,7 @@ def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[st
 
     if not item_data:
         file_type = Path(item_path).suffix
-        item_data = get_file(item_path, file_type)
+        item_data = get_file(item_path)
 
     # first check, check field 'marketplaces' in the item's file
     marketplaces = item_data.get('marketplaces', [])  # type: ignore

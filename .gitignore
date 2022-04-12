@@ -95,7 +95,6 @@ requirements-dev.txt
 git_push.sh
 .swagger-codegen
 .vscode
-.demisto-sdk-report
 .pytest_cache
 .idea
 .mypy_cache

@@ -69,7 +69,7 @@ class IncidentTypeValidator(ContentEntityValidator):
         """
         return super(IncidentTypeValidator, self)._is_id_equals_name('incident_type')
 
-    @error_codes('if110')
+    @error_codes('IF110')
     def is_changed_from_version(self):
         # type: () -> bool
         """Check if fromversion has been changed.

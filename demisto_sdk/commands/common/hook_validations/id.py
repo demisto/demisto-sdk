@@ -504,7 +504,7 @@ class IDSetValidations(BaseValidator):
                 return commands_to_integration
         return commands_to_integration
 
-    @error_codes('PB111,PB117')
+    @error_codes('PB110,PB117')
     def is_entity_version_match_playbook_version(self, implemented_entity_list_from_playbook,
                                                  main_playbook_version, entity_set_from_id_set,
                                                  playbook_name, file_path, main_playbook_data):

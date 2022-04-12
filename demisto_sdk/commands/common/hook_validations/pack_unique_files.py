@@ -265,7 +265,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return True
 
-    @error_codes('rm105')
+    @error_codes('RM105')
     def validate_pack_readme_and_pack_description(self):
         """
         Validates that README.md file is not the same as the pack description.

@@ -125,7 +125,7 @@ class PreProcessRuleValidator(ContentEntityValidator):
 
         return False
 
-    @error_codes('PP101')
+    @error_codes('PP102')
     def are_incident_fields_exist(self, id_set_file, is_ci) -> bool:
         """Checks if incident field is valid - exist in the content.
 

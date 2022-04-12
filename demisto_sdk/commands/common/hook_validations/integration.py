@@ -814,7 +814,7 @@ class IntegrationValidator(ContentEntityValidator):
                 return True
         return False
 
-    @error_codes('IN116,')
+    @error_codes('IN116')
     def is_added_required_fields(self):
         # type: () -> bool
         """Check if required field were added."""
@@ -932,7 +932,7 @@ class IntegrationValidator(ContentEntityValidator):
                     return False
         return True
 
-    @error_codes('IN121')
+    @error_codes('IN121,IN148')
     def is_valid_fetch(self) -> bool:
         """
         validate that all required fields in integration that have fetch incidents are in the yml file.

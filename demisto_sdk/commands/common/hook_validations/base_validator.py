@@ -22,20 +22,17 @@ from demisto_sdk.commands.common.tools import (
 json = JSON_Handler()
 
 
-def error_codes(error_codes_str):
+def error_codes(error_codes_str: str):
 
     def error_codes_decorator(func):
 
         def wrapper(self, *args, **kwargs):
             if self.specific_validations:
-                # if specific validations were selected, we check if the current validation error codes matches the
-                # specific validation the user specified.
                 error_codes = error_codes_str.split(',')
                 for error_code in error_codes:
                     if self.should_run_validation(error_code):
                         return func(self, *args, **kwargs)
             else:
-                # if no specific validations were mentioned, we return the function outputs.
                 return func(self, *args, **kwargs)
 
             return True
@@ -48,7 +45,7 @@ def error_codes(error_codes_str):
 class BaseValidator:
 
     def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False,
-                 json_file_path: Optional[str] = None, specific_validations=None):
+                 json_file_path: Optional[str] = None, specific_validations: Optional[list] = None):
         self.ignored_errors = ignored_errors if ignored_errors else {}
         self.print_as_warnings = print_as_warnings
         self.checked_files = set()  # type: ignore
@@ -73,8 +70,9 @@ class BaseValidator:
 
         return False
 
-    def should_run_validation(self, error_code):
-        """Return True if the validation should run, and False otherwise"""
+    def should_run_validation(self, error_code: str):
+        if not self.specific_validations:
+            return True
         return error_code in self.specific_validations or error_code[:2] in self.specific_validations
 
     def handle_error(self, error_message, error_code, file_path, should_print=True, suggested_fix=None, warning=False,

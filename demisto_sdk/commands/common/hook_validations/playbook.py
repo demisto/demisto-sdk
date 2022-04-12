@@ -212,6 +212,7 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_valid = is_all_condition_branches_handled = False
         return is_all_condition_branches_handled
 
+    @error_codes('PB102')
     def is_script_condition_branches_handled(self, task: Dict) -> bool:
         """Checks whether a script conditional task branches are handled properly
 

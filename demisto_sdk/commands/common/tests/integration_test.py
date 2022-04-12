@@ -15,6 +15,7 @@ from demisto_sdk.commands.common.hook_validations.integration import \
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from TestSuite.integration import Integration
 from TestSuite.test_tools import ChangeCWD
 
 default_additional_info = load_default_additional_info_dict()
@@ -1318,6 +1319,36 @@ class TestIsFeedParamsExist:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.is_there_a_runnable() is False
+
+    VERIFY_YML_COMMANDS_MATCH_README_DATA = [
+        (True, {'script': {'commands': [{'name': 'command_name'}]}}, "## Commands\n### command_name\n somename", True),
+        (True, {'script': {'commands': [{'name': 'get-mapping-fields'}]}}, "", True),
+        (True, {'script': {'commands': [{'name': 'command_name'}]}}, "", False),
+        (False, {'script': {'commands': [{'name': 'command_name'}]}}, "", True),
+    ]
+
+    @pytest.mark.parametrize("is_modified, yml_data, readme_text, excepted_results", VERIFY_YML_COMMANDS_MATCH_README_DATA)
+    def test_verify_yml_commands_match_readme(self, is_modified, yml_data, readme_text, excepted_results, integration: Integration):
+        """
+        Given
+        - Case 1: integration with one command mentioned in both the yml and the readme files that were modified.
+        - Case 2: integration with one command that should be excluded from the readme file and mentioned in the yml file that were modified.
+        - Case 3: integration with one command mentioned only in the yml file that were modified.
+        - Case 4: integration with one command mentioned only in the yml file that aren't modified.
+        When
+        - Running verify_yml_commands_match_readme on the integration.
+        Then
+        - Ensure validation correctly identifies missed commands from yml or readme files.
+        - Case 1: Should return True.
+        - Case 2: Should return True.
+        - Case 3: Should return False.
+        - Case 4: Should return True.
+        """
+        integration.yml.write_dict(yml_data)
+        integration.readme.write(readme_text)
+        struct = mock_structure(current_file=yml_data, file_path=integration.yml.path)
+        integration_validator = IntegrationValidator(struct)
+        assert integration_validator.verify_yml_commands_match_readme(is_modified) == excepted_results
 
 
 class TestisContextChanged:

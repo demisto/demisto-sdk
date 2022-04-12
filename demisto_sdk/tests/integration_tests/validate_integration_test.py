@@ -3000,6 +3000,7 @@ class TestAllFilesValidator:
         mocker.patch.object(tools, 'is_external_repository', return_value=False)
         mocker.patch.object(PackUniqueFilesValidator, 'are_valid_files', return_value='')
         mocker.patch.object(ValidateManager, 'validate_readme', return_value=True)
+        mocker.patch.object(ValidateManager, 'are_node_and_modules_installed_for_verify', return_value=(True, ''))
         pack1 = repo.create_pack('PackName1')
         pack1.author_image.write(DEFAULT_IMAGE_BASE64)
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")

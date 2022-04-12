@@ -19,8 +19,8 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
-from demisto_sdk.commands.common.tools import (get_remote_file,
-                                               is_file_path_in_pack, get_file)
+from demisto_sdk.commands.common.tools import (get_file, get_remote_file,
+                                               is_file_path_in_pack)
 from demisto_sdk.commands.format.format_constants import \
     OLD_FILE_DEFAULT_1_FROMVERSION
 

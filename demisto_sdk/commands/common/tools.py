@@ -493,7 +493,7 @@ def get_file(path: Union[str, Path], clear_cache: bool = False):
     file_extension = path.suffix.lstrip('.').lower()
 
     if file_extension not in GET_FILE_SUPPORTED_EXTENSIONS:
-        raise ValueError(f'Unsupported file extension ({file_extension})')
+        raise ValueError(f'Unsupported file extension ({file_extension}) for file {path}')
 
     with open(path, mode="r", encoding="utf8") as f:
         replaced = f.read().replace("simple: =", "simple: '='")

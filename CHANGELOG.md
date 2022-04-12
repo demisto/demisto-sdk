@@ -14,6 +14,8 @@ the same as the last release note version.
 * Added an argument '-c' '--custom' to the **unify** command, if True will append to the unified yml name/display/id the custom label provided
 * Added support for sub words suggestion in kebab-case sentences when running the **doc-review** command.
 * Enhanced the message of alternative suggestion words shown when running **doc-review** command.
+* Fixed an issue in the **lint** command where the *check-dependent-api-modules* argument was set to true by default.
+* Added a new command **generate-unit-tests**.
 * Fixed an issue where relative paths to files were not read properly.
 
 ## 1.6.3

@@ -16,6 +16,7 @@ the same as the last release note version.
 * Added support for sub words suggestion in kebab-case sentences when running the **doc-review** command.
 * Enhanced the message of alternative suggestion words shown when running **doc-review** command.
 * Fixed an issue in the **lint** command where the *check-dependent-api-modules* argument was set to true by default.
+* Added a new command **generate-unit-tests**.
 
 ## 1.6.3
 

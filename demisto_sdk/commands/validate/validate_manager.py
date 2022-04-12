@@ -1681,6 +1681,7 @@ class ValidateManager:
             return False
 
         file_yml = get_yaml(file_path)
+
         # check for unified integration
         if file_type == FileType.INTEGRATION:
             script = file_yml.get('script', {})

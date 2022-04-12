@@ -222,13 +222,10 @@ class ValidateManager:
             # Check npm modules exsits
             stdout, stderr, exit_code = run_command_os(f'npm ls --json {" ".join(REQUIRED_MDX_PACKS)}',
                                                        cwd=content_path)
-            if exit_code:  # all are missinig
-                missing_module.extend(REQUIRED_MDX_PACKS)
-            else:
-                deps = json.loads(stdout).get('dependencies', {})
-                for pack in REQUIRED_MDX_PACKS:
-                    if pack not in deps:
-                        missing_module.append(pack)
+            deps = json.loads(stdout).get('dependencies', {})
+            for pack in REQUIRED_MDX_PACKS:
+                if pack not in deps:
+                    missing_module.append(pack)
         if missing_module:
             return False, ", ".join(missing_module)
         return True, ''

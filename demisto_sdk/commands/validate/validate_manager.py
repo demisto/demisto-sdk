@@ -1685,15 +1685,17 @@ class ValidateManager:
         # check for unified integration
         if file_type == FileType.INTEGRATION:
             script = file_yml.get('script', {})
-            if script.get('script', '-') not in ['-', ''] and script.get('type', 'javascript') != 'python':
-                return False
-            return True
+            if script.get('script', '-') not in ['-', '']:
+                if script.get('type', 'javascript') != 'python':
+                    return False
+                return True
 
         # check for unified script
-        if file_type == FileType.SCRIPT:
+        elif file_type == FileType.SCRIPT:
             if file_yml.get('script', '-') not in ['-', ''] and file_yml.get('type', 'javascript') != 'python':
                 return False
             return True
+
         return False
 
     @staticmethod

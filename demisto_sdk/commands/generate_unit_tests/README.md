@@ -41,6 +41,7 @@ Also supports generating unit tests for specific commands.
 * Every command method must have the `client` parameter which must be typed (`client: Client`, where `Client` extends `BaseClient`).
 * Each HTTP request made during the flow of the command must be done using the `_http_request()` method. (`method` must be passed).
 * Every command must return a `CommandResults` object.
+* Client class must include `__init__` function.
 * Client class `__init__` function arguments have to include types (None will be passed otherwise).
 
 

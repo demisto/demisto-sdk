@@ -11,7 +11,8 @@ from mock import patch
 import demisto_sdk.commands.validate.validate_manager
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
-    CONF_PATH, FILETYPE_TO_DEFAULT_FROMVERSION, PACKS_PACK_META_FILE_NAME, FileType)
+    CONF_PATH, FILETYPE_TO_DEFAULT_FROMVERSION, PACKS_PACK_META_FILE_NAME,
+    FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -64,16 +65,16 @@ from demisto_sdk.tests.constants_test import (
     INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
     INVALID_REPUTATION_PATH, INVALID_SCRIPT_PATH, INVALID_WIDGET_PATH,
     LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET, PLAYBOOK_TARGET,
-    SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET, VALID_BETA_INTEGRATION,
-    VALID_BETA_PLAYBOOK_PATH, VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH,
-    VALID_INCIDENT_TYPE_PATH, VALID_INDICATOR_FIELD_PATH,
-    VALID_INTEGRATION_ID_PATH, VALID_INTEGRATION_TEST_PATH,
-    VALID_LAYOUT_CONTAINER_PATH, VALID_LAYOUT_PATH, VALID_MD,
-    VALID_MULTI_LINE_CHANGELOG_PATH, VALID_MULTI_LINE_LIST_CHANGELOG_PATH,
-    VALID_ONE_LINE_CHANGELOG_PATH, VALID_ONE_LINE_LIST_CHANGELOG_PATH,
-    VALID_PACK, VALID_PLAYBOOK_CONDITION, VALID_REPUTATION_PATH,
-    VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
-    WIDGET_TARGET, TEST_PLAYBOOK_FULL_PATH)
+    SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET, TEST_PLAYBOOK_FULL_PATH,
+    VALID_BETA_INTEGRATION, VALID_BETA_PLAYBOOK_PATH, VALID_DASHBOARD_PATH,
+    VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH,
+    VALID_INDICATOR_FIELD_PATH, VALID_INTEGRATION_ID_PATH,
+    VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_CONTAINER_PATH,
+    VALID_LAYOUT_PATH, VALID_MD, VALID_MULTI_LINE_CHANGELOG_PATH,
+    VALID_MULTI_LINE_LIST_CHANGELOG_PATH, VALID_ONE_LINE_CHANGELOG_PATH,
+    VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_PACK, VALID_PLAYBOOK_CONDITION,
+    VALID_REPUTATION_PATH, VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH,
+    VALID_WIDGET_PATH, WIDGET_TARGET)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
 from TestSuite.pack import Pack
@@ -1076,7 +1077,7 @@ class TestValidators:
         - Ensure true is returned.
         """
         rn = pack.create_release_notes('1_0_1', is_bc=True)
-        rn_config_path: str = str(rn.path).replace('md', 'json')
+        rn_config_path = str(Path(rn.path).with_suffix('.json'))
         validate_manager: ValidateManager = ValidateManager()
         assert validate_manager.run_validations_on_file(rn_config_path, list())
 

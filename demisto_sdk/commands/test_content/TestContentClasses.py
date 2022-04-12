@@ -1038,7 +1038,7 @@ class Integration:
             if IS_XSIAM:
                 self.build_context.logging_module.warning('Trying to configure "Demisto REST API" for XSIAM server, '
                                                           'this integration will not work on XSIAM, '
-                                                          'consider to use CoreRestAPI.')
+                                                          'consider using CoreRestAPI.')
             self.configuration.params = {  # type: ignore
                 'url': 'https://localhost',
                 'apikey': self.build_context.api_key,
@@ -1760,7 +1760,7 @@ class TestContext:
         # We don't want to run docker tests on redhat instance because it does not use docker and it does not support
         # the threshold configurations.
         if playbook_state == PB_Status.COMPLETED and self.server_context.is_instance_using_docker:
-            #  todo: cant run this cmd on xsiam machine, check this
+            #  currently not supported on XSIAM (etc/#47908)
             if not IS_XSIAM:
                 docker_test_results = self._run_docker_threshold_test()
                 if not docker_test_results:
@@ -2055,7 +2055,7 @@ class ServerContext:
             self.server_url = f'https://localhost:{tunnel_port}' if tunnel_port else f'https://{self.server_ip}'
         self.client: Optional[DefaultApi] = None
         self._configure_new_client()
-        # in xsiam we will not use proxy
+        # currently not supported on XSIAM (etc/#47851)
         if IS_XSIAM:
             self.proxy = None
         else:

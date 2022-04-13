@@ -1055,7 +1055,9 @@ def dump_link_files(artifact_manager: ArtifactsManager, content_object: ContentO
 def calc_relative_packs_dir(artifact_manager: ArtifactsManager, content_object: ContentObject) -> Path:
     relative_pack_path = artifact_manager.get_relative_pack_path(content_object)
     if ((INTEGRATIONS_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != INTEGRATIONS_DIR) or
-            (SCRIPTS_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != SCRIPTS_DIR)):
+            (SCRIPTS_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != SCRIPTS_DIR) or
+            (PARSING_RULES_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != PARSING_RULES_DIR) or
+            (MODELING_RULES_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != MODELING_RULES_DIR)):
         relative_pack_path = relative_pack_path.parent.parent
     else:
         relative_pack_path = relative_pack_path.parent

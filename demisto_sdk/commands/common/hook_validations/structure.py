@@ -298,7 +298,7 @@ class StructureValidator(BaseValidator):
                     return file_type
         return None
 
-    @error_codes("ST105")
+    @error_codes('ST105')
     def is_valid_file_path(self):
         """Returns is valid filepath exists.
 
@@ -401,6 +401,7 @@ class StructureValidator(BaseValidator):
 
         return clean_path
 
+    @error_codes('ST107,ST109')
     def parse_missing_key_line(self, error_path: List[str], error_msg: str) -> Tuple[str, str, bool]:
         """Parse a missing key pykwalify error.
 
@@ -423,6 +424,7 @@ class StructureValidator(BaseValidator):
             error_message, error_code = Errors.pykwalify_missing_in_root(str(error_key))
             return error_message, error_code, True
 
+    @error_codes('ST111,ST108')
     def parse_undefined_key_line(self, error_path: List[str], error_msg: str) -> Tuple[str, str, bool]:
         """Parse a undefined key pykwalify error.
 
@@ -444,6 +446,7 @@ class StructureValidator(BaseValidator):
             error_message, error_code = Errors.pykwalify_field_undefined(str(error_key))
             return error_message, error_code, True
 
+    @error_codes('ST112')
     def parse_enum_error_line(self, error_path: List[str], error_msg: str) -> Tuple[str, str, bool]:
         """Parse a wrong enum value pykwalify error.
 

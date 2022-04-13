@@ -89,7 +89,7 @@ from demisto_sdk.commands.common.tools import (
     _get_file_id, find_type, get_api_module_ids,
     get_api_module_integrations_set, get_content_path, get_file,
     get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
-    get_relative_path_from_packs_dir, get_yaml, open_id_set_file,
+    get_relative_path_from_packs_dir, get_yaml, open_id_set_file, print_error,
     run_command_os)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
@@ -222,9 +222,11 @@ class ValidateManager:
         else:
             # Check npm modules exsits
             stdout, stderr, exit_code = run_command_os(f'npm ls --json -g {" ".join(REQUIRED_MDX_PACKS)}',
-                                                       cwd=content_path)
+                                                       cwd=content_path, shel=True)
+            print_error(f'{stdout=},\n\n\n{exit_code=}\n\n\n{stderr=}')
             if stdout:
                 deps = json.loads(stdout).get('dependencies', {})
+                print_error(f'{deps=}')
                 for pack in REQUIRED_MDX_PACKS:
                     if pack not in deps:
                         missing_module.append(pack)

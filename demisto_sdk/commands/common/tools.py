@@ -1468,7 +1468,7 @@ def get_content_path() -> str:
     return ''
 
 
-def run_command_os(command: str, cwd: Union[Path, str], env: Union[os._Environ, dict] = os.environ) -> \
+def run_command_os(command: str, cwd: Union[Path, str], env: Union[os._Environ, dict] = os.environ, shel: bool = False) -> \
         Tuple[str, str, int]:
     """ Run command in subprocess tty
     Args:
@@ -1489,7 +1489,8 @@ def run_command_os(command: str, cwd: Union[Path, str], env: Union[os._Environ, 
             env=env,
             stdout=PIPE,
             stderr=PIPE,
-            universal_newlines=True
+            universal_newlines=True,
+            shell=shel
         )
         stdout, stderr = process.communicate()
     except OSError as e:

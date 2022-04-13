@@ -829,14 +829,20 @@ class ValidateManager:
                                                         json_file_path=self.json_file_path)
         return test_playbook_validator.is_valid_test_playbook(validate_rn=False)
 
-    def validate_release_notes(self, file_path, added_files, modified_files, pack_error_ignore_list, is_modified):
-        pack_name = get_pack_name(file_path)
-
-        # added new RN to a new pack
+    @error_codes('RN108')
+    def validate_release_notes_for_new_pack(self, pack_name, file_path):
         if pack_name in self.new_packs:
             error_message, error_code = Errors.added_release_notes_for_new_pack(pack_name)
             if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path):
                 return False
+        return True
+
+    def validate_release_notes(self, file_path, added_files, modified_files, pack_error_ignore_list, is_modified):
+        pack_name = get_pack_name(file_path)
+
+        # added new RN to a new pack
+        if not self.validate_release_notes_for_new_pack(pack_name, file_path):
+            return False
 
         if pack_name != 'NonSupported':
             if not added_files:

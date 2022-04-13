@@ -1,11 +1,12 @@
 from unittest.mock import ANY
+
 import demisto_client
 import pytest
 
 from demisto_sdk.commands.test_content.TestContentClasses import (
     Integration, IntegrationConfiguration, TestConfiguration, TestPlaybook)
-from demisto_sdk.commands.test_content.tests.build_context_test import \
-    get_mocked_build_context, create_xsiam_build
+from demisto_sdk.commands.test_content.tests.build_context_test import (
+    create_xsiam_build, get_mocked_build_context)
 from demisto_sdk.commands.test_content.tests.DemistoClientMock import \
     DemistoClientMock
 from demisto_sdk.commands.test_content.tests.server_context_test import \
@@ -69,4 +70,3 @@ def test_close_incident(mocker, tmp_path, expected_res, client_res):
     test_playbook = TestPlaybook(build_context, test_playbook_configuration)
     res = test_playbook.close_incident(client=mocked_demisto_client, incident_id='1')
     assert res == expected_res
-

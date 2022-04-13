@@ -221,7 +221,7 @@ class ValidateManager:
             return False, ''
         else:
             # Check npm modules exsits
-            stdout, stderr, exit_code = run_command_os(f'npm ls --json {" ".join(REQUIRED_MDX_PACKS)}',
+            stdout, stderr, exit_code = run_command_os(f'npm ls --json -g {" ".join(REQUIRED_MDX_PACKS)}',
                                                        cwd=content_path)
             if stdout:
                 deps = json.loads(stdout).get('dependencies', {})

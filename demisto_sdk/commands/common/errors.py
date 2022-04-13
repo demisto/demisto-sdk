@@ -409,6 +409,16 @@ ERROR_CODE = {
         'ui_applicable': False,
         'related_field': 'name'
     },
+
+    # WZ - Wizards
+    "invalid_fromversion_in_wizard": {
+        'code': "WZ100", 'ui_applicable': False,
+        'related_field': 'fromVersion'
+    },
+    "invalid_content_item_id_wizard": {
+        'code': "WZ101", 'ui_applicable': False,
+        'related_field': '',
+    }
 }
 
 
@@ -462,7 +472,7 @@ class Errors:
         return "The file type is not supported in the validate command.\n" \
                "The validate command supports: Integrations, Scripts, Playbooks, " \
                "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields, Object types," \
-               " Object modules, Images, Release notes, Layouts, Jobs and Descriptions."
+               " Object modules, Images, Release notes, Layouts, Jobs, Wizards, and Descriptions."
 
     @staticmethod
     @error_code_decorator
@@ -2207,3 +2217,13 @@ class Errors:
 
         return f"The following command outputs are missing: \n{commands_str}\n" \
                f"please type them or run demisto-sdk format -i {yaml_path}"
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_fromversion_in_wizard(version):
+        return f'fromVersion field in Job needs to be at least {FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)} (found {version})'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_content_item_id_wizard(invalid_content_item_id):
+        return f'Failed to find {invalid_content_item_id} in content repo. Please check it\'s written correctly.'

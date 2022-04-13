@@ -1662,6 +1662,74 @@ class PackDependencies:
         return all_job_dependencies
 
     @staticmethod
+    def _collect_wizards_dependencies(pack_wizards: list,
+                                      id_set: dict,
+                                      verbose: bool,
+                                      exclude_ignored_dependencies: bool = True,
+                                      get_dependent_items: bool = False,
+                                      marketplace: str = '',
+                                      ) -> Union[Tuple[Any, Any], Set[Any]]:
+        """
+        Collects integrations dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
+        and the packs containing them.
+
+        Args:
+            pack_wizards: collection of pack job data.
+            id_set: id set json.
+            verbose: Whether to log the dependencies to the console.
+            exclude_ignored_dependencies: Determines whether to include unsupported dependencies or not.
+            marketplace: The dependency calculation desired marketplace.
+
+        Returns:
+            set: dependencies data that includes pack id and whether is mandatory or not.
+            if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
+
+        """
+        # TODO: Reimplement
+        all_job_dependencies: set = set()
+        items_dependencies: dict = dict()
+
+        if verbose:
+            click.secho('### Jobs', fg='white')
+
+        for job in pack_wizards:
+            job_id = list(job.keys())[0]
+            job_data = next(iter(job.values()))
+            job_dependencies = set()
+
+            # Playbook dependency
+            packs_found_from_playbooks, packs_and_playbooks_dict = PackDependencies._search_packs_by_items_names_or_ids(
+                job_data.get('playbookId', ''), id_set['playbooks'], exclude_ignored_dependencies, 'Both', 'playbook',
+                marketplace=marketplace)
+            pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_playbooks)
+            job_dependencies.update(pack_dependencies_data)
+            if get_dependent_items:
+                update_items_dependencies(pack_dependencies_data, items_dependencies, 'job',
+                                          job_id,
+                                          packs_and_playbooks_dict)
+            # Specified feeds dependencies
+            packs_found_from_feeds, packs_and_feeds_dict = PackDependencies._search_packs_by_items_names_or_ids(
+                job_data.get('selectedFeeds', []), id_set['integrations'], exclude_ignored_dependencies, 'Both',
+                'integration', marketplace=marketplace)
+            pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_feeds)
+            job_dependencies.update(pack_dependencies_data)
+            if get_dependent_items:
+                update_items_dependencies(pack_dependencies_data, items_dependencies, 'job',
+                                          job_id,
+                                          packs_and_feeds_dict)
+            if job_dependencies:
+                # do not trim spaces from the end of the string, they are required for the MD structure.
+                if verbose:
+                    click.secho(
+                        f'{os.path.basename(job_data.get("file_path", ""))} depends on: {job_dependencies}',
+                        fg='white')
+            all_job_dependencies.update(job_dependencies)
+
+        if get_dependent_items:
+            return all_job_dependencies, items_dependencies
+        return all_job_dependencies
+
+    @staticmethod
     def _collect_pack_items(pack_id: str, id_set: dict) -> dict:
         """
         Collects script and playbook content items inside specific pack.
@@ -1693,7 +1761,8 @@ class PackDependencies:
                                      ('generic_modules', 'GenericModules'),
                                      ('generic_definitions', 'GenericDefinitions'),
                                      ('lists', 'Lists'),
-                                     ('jobs', 'Jobs')):
+                                     ('jobs', 'Jobs'),
+                                     ('wizards', 'Wizards')):
             if id_set_key not in id_set:
                 raise RuntimeError(
                     "\n".join((f"Error: the {id_set_key} content type is missing from the id_set.",
@@ -1869,12 +1938,21 @@ class PackDependencies:
             marketplace=marketplace,
         )
 
+        wizards_dependencies, wizards_items_dependencies = PackDependencies._collect_wizards_dependencies(
+            pack_items['wizards'],
+            id_set,
+            verbose,
+            exclude_ignored_dependencies,
+            get_dependent_items=True,
+            marketplace=marketplace
+        )
+
         pack_dependencies = (
             scripts_dependencies | playbooks_dependencies | layouts_dependencies | incidents_fields_dependencies |
             indicators_types_dependencies | integrations_dependencies | incidents_types_dependencies |
             classifiers_dependencies | mappers_dependencies | widget_dependencies | dashboards_dependencies |
             reports_dependencies | generic_types_dependencies | generic_modules_dependencies |
-            generic_fields_dependencies | jobs_dependencies
+            generic_fields_dependencies | jobs_dependencies | wizards_dependencies
         )
 
         items_depenencies = {**scripts_items_dependencies, **playbooks_items_dependencies, **widgets_items_dependencies,
@@ -1884,7 +1962,8 @@ class PackDependencies:
                              **mappers_items_dependencies, **dashboards_items_dependencies,
                              **reports_items_dependencies,
                              **generic_types_items_dependencies, **generic_fields_items_dependencies,
-                             **generic_modules_items_dependencies, **jobs_items_dependencies}
+                             **generic_modules_items_dependencies, **jobs_items_dependencies,
+                             }
 
         return pack_dependencies, items_depenencies
 

@@ -608,7 +608,7 @@ class UpdateRN:
 
             _header_by_type = RN_HEADER_BY_FILE_TYPE.get(_type)
             if _type in (FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT,
-                         FileType.INCIDENT_FIELD, FileType.JOB):
+                         FileType.INCIDENT_FIELD, FileType.JOB, FileType.WIZARD):
                 rn_desc = f'\n- **{content_name}**'
 
             elif _type in (FileType.GENERIC_TYPE, FileType.GENERIC_FIELD):
@@ -752,7 +752,8 @@ def get_file_description(path, file_type) -> str:
         yml_file = get_yaml(path)
         return yml_file.get('comment', '')
 
-    elif file_type in (FileType.CLASSIFIER, FileType.REPORT, FileType.WIDGET, FileType.DASHBOARD, FileType.JOB):
+    elif file_type in (FileType.CLASSIFIER, FileType.REPORT, FileType.WIDGET, FileType.DASHBOARD, FileType.JOB,
+                       FileType.WIZARD):
         json_file = get_json(path)
         return json_file.get('description', '')
 

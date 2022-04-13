@@ -18,6 +18,7 @@ the same as the last release note version.
 * Enhanced the message of alternative suggestion words shown when running **doc-review** command.
 * Fixed an issue in the **lint** command where the *check-dependent-api-modules* argument was set to true by default.
 * Added a new command **generate-unit-tests**.
+* Fixed the destination path of the unified parsing/modeling rules in **create-content-artifacts** command.
 * Fixed an issue where the validation for readme existence ran on the `ApiModules` pack in the **validate** command.
 
 ## 1.6.3

@@ -132,14 +132,6 @@ class ContentGitRepo:
             res = runner.invoke(main, "lint -g --no-test")
             assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
 
-            res = runner.invoke(
-                main,
-                "validate -g --staged --skip-pack-dependencies --skip-pack-release-notes "
-                "--no-docker-checks --debug-git --allow-skipped"
-            )
-
-            assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
-
             # build flow - validate on all changed files
             res = runner.invoke(main, "validate -g --skip-pack-dependencies --no-docker-checks --debug-git "
                                       "--allow-skipped")

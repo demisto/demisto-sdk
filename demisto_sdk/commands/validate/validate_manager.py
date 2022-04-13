@@ -3,7 +3,6 @@ from concurrent.futures._base import Future, as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from typing import Callable, List, Optional, Set, Tuple
 
-import json
 import click
 import pebble
 from colorama import Fore
@@ -210,25 +209,25 @@ class ValidateManager:
         Returns:
             bool: True If all req ok else False
         """
-
+        # json = JSON_Handler()
         content_path = get_content_path()
-        missing_module = []
+        # missing_module = []
 
         # Check node exist
         stdout, stderr, exit_code = run_command_os('node -v', cwd=content_path)
         if exit_code:
             return False, ''
-        else:
-            # Check npm modules exsits
-            stdout, stderr, exit_code = run_command_os(f'npm ls --json {" ".join(REQUIRED_MDX_PACKS)}',
-                                                       cwd=content_path)
-            if stdout:
-                deps = json.loads(stdout).get('dependencies', {})
-                for pack in REQUIRED_MDX_PACKS:
-                    if pack not in deps:
-                        missing_module.append(pack)
-        if missing_module:
-            return False, ", ".join(missing_module)
+        # else:
+        #     # Check npm modules exsits
+        #     stdout, stderr, exit_code = run_command_os(f'npm ls --json {" ".join(REQUIRED_MDX_PACKS)}',
+        #                                                cwd=content_path)
+        #     if stdout:
+        #         deps = json.loads(stdout).get('dependencies', {})
+        #         for pack in REQUIRED_MDX_PACKS:
+        #             if pack not in deps:
+        #                 missing_module.append(pack)
+        # if missing_module:
+        #     return False, ", ".join(missing_module)
         return True, ''
 
     def print_final_report(self, valid):

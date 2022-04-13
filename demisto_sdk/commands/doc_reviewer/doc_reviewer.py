@@ -178,7 +178,10 @@ class DocReviewer:
     @staticmethod
     def print_unknown_words(unknown_words):
         for word, corrections in unknown_words.items():
-            click.secho(f'  - {word} - did you mean: {corrections}', fg='bright_red')
+            if corrections:
+                click.secho(f'  - {word} - did you mean: {corrections}', fg='bright_red')
+            else:
+                click.secho(f'  - {word}', fg='bright_red')
         click.secho('If these are not misspelled consider adding them to a known_words file:\n'
                     '  Pack related words: content/Packs/<PackName>/.pack-ignore under the [known_words] section.\n'
                     '  Not pack specific words: content/Tests/known_words.txt\n'

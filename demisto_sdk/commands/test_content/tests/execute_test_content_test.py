@@ -66,7 +66,7 @@ def test_add_pr_comment(mocker, comment, skipped_flow, coverage_flow):
             coverage_deleted = m.delete('https://github.com/comment_67890')
             result = m.post('https://api.github.com/search/issues/1')
 
-            _add_pr_comment(comment, "")
+            _add_pr_comment(comment, "", "")
 
     assert json.loads(result.last_request.text).get('body') == comment
     assert skipped_deleted.called == skipped_flow

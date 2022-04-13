@@ -1213,7 +1213,7 @@ class ValidateManager:
                             return True
         return False
 
-    def validate_deleted_files(self, deleted_files: Set[Union[str, Path]], added_files: Set[Union[str, Path]]) -> bool:
+    def validate_deleted_files(self, deleted_files: set, added_files: set) -> bool:
         click.secho(f'\n================= Checking for prohibited deleted files =================',
                     fg="bright_cyan")
 

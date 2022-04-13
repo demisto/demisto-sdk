@@ -5,8 +5,8 @@ from distutils.version import LooseVersion
 from typing import Optional
 
 from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_FROM_VERSION, ENTITY_NAME_SEPARATORS,
-    EXCLUDED_DISPLAY_NAME_WORDS, FEATURE_BRANCHES,
+    API_MODULES_PACK, DEFAULT_CONTENT_ITEM_FROM_VERSION,
+    ENTITY_NAME_SEPARATORS, EXCLUDED_DISPLAY_NAME_WORDS, FEATURE_BRANCHES,
     GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION, OLDEST_SUPPORTED_VERSION,
     FileType)
 from demisto_sdk.commands.common.content import Content
@@ -350,7 +350,7 @@ class ContentEntityValidator(BaseValidator):
 
             Note: APIModules don't need readme file (issue 47965).
         """
-        if validate_all or 'APIModules' in self.file_path:
+        if validate_all or API_MODULES_PACK in self.file_path:
             return True
 
         file_path = os.path.normpath(self.file_path)

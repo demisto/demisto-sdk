@@ -19,7 +19,7 @@ the same as the last release note version.
 * Fixed an issue in the **lint** command where the *check-dependent-api-modules* argument was set to true by default.
 * Added a new command **generate-unit-tests**.
 * Fixed the destination path of the unified parsing/modeling rules in **create-content-artifacts** command.
-* Fixed an issue where the validation for readme existence ran on the `ApiModules` pack in the **validate** command.
+* Fixed an issue in the **validate** command, where we validated wrongfully the existence of readme file for the *ApiModules* pack.
 
 ## 1.6.3
 

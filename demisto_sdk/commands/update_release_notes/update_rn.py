@@ -365,12 +365,12 @@ class UpdateRN:
 
         elif 'dashboards_data' in file_data and file_data.get('dashboards_data') \
                 and isinstance(file_data['dashboards_data'], list):
-            dashboard_data = file_data.get('dashboards_data', [])[0]
+            dashboard_data = file_data.get('dashboards_data', [{}])[0]
             name = dashboard_data.get('name')
 
         elif 'templates_data' in file_data and file_data.get('templates_data') \
                 and isinstance(file_data['templates_data'], list):
-            r_name = file_data.get('templates_data', [])[0]
+            r_name = file_data.get('templates_data', [{}])[0]
             name = r_name.get('report_name')
 
         else:

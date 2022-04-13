@@ -3,6 +3,7 @@ from concurrent.futures._base import Future, as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from typing import Callable, List, Optional, Set, Tuple
 
+import json
 import click
 import pebble
 from colorama import Fore
@@ -210,7 +211,6 @@ class ValidateManager:
             bool: True If all req ok else False
         """
 
-        json = JSON_Handler()
         content_path = get_content_path()
         missing_module = []
 
@@ -222,6 +222,7 @@ class ValidateManager:
             # Check npm modules exsits
             stdout, stderr, exit_code = run_command_os(f'npm ls --json {" ".join(REQUIRED_MDX_PACKS)}',
                                                        cwd=content_path)
+            stdout = stdout.encode("utf-8")
             deps = json.loads(stdout).get('dependencies', {})
             for pack in REQUIRED_MDX_PACKS:
                 if pack not in deps:

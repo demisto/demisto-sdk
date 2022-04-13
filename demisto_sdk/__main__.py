@@ -2068,6 +2068,77 @@ def convert(config, **kwargs):
 
     sys.exit(0)
 
+# ====================== generate-unit-tests ====================== #
+
+
+@main.command(short_help='''Generates unit tests for integration code.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-c", "--commands", help="Specific commands name to generate unit test for (e.g. xdr-get-incidents)",
+    required=False)
+@click.option(
+    '-o', '--output_dir', help='Directory to store the output in (default is the input integration directory)',
+    required=False)
+@click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
+              type=click.IntRange(0, 3, clamp=True), default=1, show_default=True)
+@click.option(
+    "-i", "--input_path",
+    help="Valid integration file path.",
+    required=True)
+@click.option('-q', "--quiet", is_flag=True, help="Quiet output, only output results in the end")
+@click.option("-lp", "--log-path", help="Path to store all levels of logs",
+              type=click.Path(resolve_path=True))
+@click.option(
+    '-d', '--use_demisto',
+    help="Run commands at Demisto automatically.", is_flag=True
+)
+@click.option(
+    "--insecure",
+    help="Skip certificate validation", is_flag=True
+)
+@click.option(
+    "-e", "--examples",
+    help="Integrations: path for file containing command examples."
+         " Each command should be in a separate line.")
+@click.option(
+    "-a", "--append",
+    help="Append generated test file to the existing <integration_name>_test.py. Else, overwriting existing UT",
+    is_flag=True)
+def generate_unit_tests(input_path: str = '',
+                        commands: list = [],
+                        output_dir: str = '',
+                        examples: str = '',
+                        insecure: bool = False,
+                        use_demisto: bool = False,
+                        append: bool = False,
+                        verbose: int = 1,
+                        quiet: bool = False,
+                        log_path: str = ''):
+    """
+    This command is used to generate unit tests automatically from an  integration python code.
+    Also supports generating unit tests for specific commands.
+    """
+
+    klara_logger = logging.getLogger('PYSCA')
+    klara_logger.propagate = False
+    from demisto_sdk.commands.common.logger import logging_setup
+    from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import \
+        run_generate_unit_tests
+    logging_setup(verbose=verbose,  # type: ignore[arg-type]
+                  quiet=quiet,  # type: ignore[arg-type]
+                  log_path=log_path)  # type: ignore[arg-type]
+    return run_generate_unit_tests(
+        input_path,
+        commands,
+        output_dir,
+        examples,
+        insecure,
+        use_demisto,
+        append
+    )
+
 
 @main.command(
     name='error-code',

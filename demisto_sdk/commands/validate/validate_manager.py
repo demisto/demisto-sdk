@@ -93,7 +93,7 @@ from demisto_sdk.commands.common.tools import (
     run_command_os)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
-REQUIRED_MDX_PACKS = ['@mdx-js/mdx fs-extra commander']
+REQUIRED_MDX_PACKS = ['@mdx-js/mdx', 'fs-extra', 'commander']
 
 
 class ValidateManager:
@@ -221,7 +221,7 @@ class ValidateManager:
             return False, ''
         else:
             # Check npm modules exsits
-            stdout, stderr, exit_code = run_command_os(f'npm ls --json {REQUIRED_MDX_PACKS}',
+            stdout, stderr, exit_code = run_command_os(f'npm ls --json {" ".join(REQUIRED_MDX_PACKS)}',
                                                        cwd=content_path)
             print_error(f'{stdout},\n\n\n{exit_code}\n\n\n{stderr}')
             if stdout:

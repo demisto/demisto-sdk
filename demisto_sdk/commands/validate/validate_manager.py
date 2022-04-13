@@ -8,7 +8,7 @@ import pebble
 from colorama import Fore
 from git import InvalidGitRepositoryError
 from packaging import version
-from functools import lru_cache
+from functools import lru_cache 
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration

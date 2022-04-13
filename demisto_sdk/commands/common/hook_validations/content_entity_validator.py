@@ -347,8 +347,10 @@ class ContentEntityValidator(BaseValidator):
                 validate_all: (bool) is the validation being run with -a
             Return:
                True if the readme file exits False with an error otherwise
+
+            Note: APIModules don't need readme file (issue 47965).
         """
-        if validate_all:
+        if validate_all or 'APIModules' in self.file_path:
             return True
 
         file_path = os.path.normpath(self.file_path)

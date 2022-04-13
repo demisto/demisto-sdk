@@ -200,10 +200,28 @@ def test_validate_readme_exists_not_checking_on_test_playbook(repo, mocker):
     - Validating if a readme file exists
 
     Then:
-    - Ensure that True is beeing returned since we dont validate a readme for test playbooks.
+    - Ensure that True is being returned since we don't validate a readme for test playbooks.
     """
     pack = repo.create_pack('TEST_PALYBOOK')
     test_playbook = pack.create_test_playbook('test_playbook1')
     structue_validator = StructureValidator(test_playbook.yml.path)
+    content_entity_validator = ContentEntityValidator(structue_validator)
+    assert content_entity_validator.validate_readme_exists()
+
+
+def test_validate_readme_exists_not_checking_on_api_modules(repo):
+    """
+    Given:
+    - An APIModules script
+
+    When:
+    - Validating if a readme file exists
+
+    Then:
+    - Ensure that True is being returned since we don't validate a readme for APIModules files.
+    """
+    pack = repo.create_pack('APIModules')
+    api_modules = pack.create_script('TestApiModule', readme=None)
+    structue_validator = StructureValidator(api_modules.yml.path)
     content_entity_validator = ContentEntityValidator(structue_validator)
     assert content_entity_validator.validate_readme_exists()

@@ -1,5 +1,7 @@
 # Changelog
 
+
+* Added a code *type* indication for integration and script objects in the *ID Set*.
 * Added the [Vulture](https://github.com/jendrikseipp/vulture) linter to the pre-commit hook.
 * The `demisto-sdk` pack will now be distributed via PyPi with a **wheel** file.
 * Fixed a bug where any edited json file that contained a forward slash (`/`) escaped.

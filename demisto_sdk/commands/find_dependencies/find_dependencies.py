@@ -2122,17 +2122,21 @@ class PackDependencies:
             click.echo(click.style(dependent_packs, bold=True))
 
         elif dependency:
-            dependent_packs, _ = get_packs_dependent_on_given_packs(input_paths, id_set_path,  # type: ignore[arg-type]
+            dependent_packs, _ = get_packs_dependent_on_given_packs([dependency], id_set_path,  # type: ignore[arg-type]
                                                                     output_path, verbose=True)
-            dependent_items = dependent_packs[Path(input_paths[0]).name].get('packsDependentOnThisPackMandatorily')  # type: ignore[attr-defined]
-            if dependency in dependent_items:
-                print_success(f"The pack \"{dependency}\" depends on \"{Path(input_paths[0]).name}\" "
+            input_pack_name = get_pack_name(input_paths[0])
+            dependency_pack_name = get_pack_name(dependency)
+            dependent_items = dependent_packs[dependency_pack_name].get('packsDependentOnThisPackMandatorily')
+            if input_pack_name in dependent_items:
+                # The input and the dependency arguments are in reverse by design since we're using the function
+                # get_packs_dependent_on_given_packs
+                print_success(f"The pack \"{input_pack_name}\" depends on \"{dependency_pack_name}\" "
                               f"with the following items:")
-                packs_dependencies = dependent_items.get(dependency)
+                packs_dependencies = dependent_items.get(input_pack_name)
                 dependencies = json.dumps(packs_dependencies, indent=4)
                 click.echo(click.style(dependencies, bold=True))
             else:
-                print_warning("Could not find dependencies between the two packs.")
+                print_warning(f"Could not find dependencies between the two packs: {input_pack_name} and {dependency}")
 
         elif all_packs_dependencies:
             calculate_all_packs_dependencies(id_set_path, output_path, verbose)  # type: ignore[arg-type]

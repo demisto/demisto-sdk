@@ -1,9 +1,11 @@
 from unittest.mock import ANY
+import demisto_client
+import pytest
 
 from demisto_sdk.commands.test_content.TestContentClasses import (
     Integration, IntegrationConfiguration, TestConfiguration, TestPlaybook)
 from demisto_sdk.commands.test_content.tests.build_context_test import \
-    get_mocked_build_context
+    get_mocked_build_context, create_xsiam_build
 from demisto_sdk.commands.test_content.tests.DemistoClientMock import \
     DemistoClientMock
 from demisto_sdk.commands.test_content.tests.server_context_test import \
@@ -54,3 +56,17 @@ def test_set_prev_server_keys(mocker, tmp_path):
         error_msg='Failed to set server keys',
         logging_manager=ANY
     )
+
+
+@pytest.mark.parametrize('expected_res,client_res', [(True, (None, 200, None)),
+                                                     (False, (None, 400, None))])
+def test_close_incident(mocker, tmp_path, expected_res, client_res):
+    mocked_demisto_client = DemistoClientMock()
+    build_context = create_xsiam_build(mocker, tmp_path)
+    test_playbook_configuration = TestConfiguration({}, 0)
+    mocker.patch.object(demisto_client, 'generic_request_func', return_value=client_res)
+
+    test_playbook = TestPlaybook(build_context, test_playbook_configuration)
+    res = test_playbook.close_incident(client=mocked_demisto_client, incident_id='1')
+    assert res == expected_res
+

@@ -8,6 +8,7 @@ import pebble
 from colorama import Fore
 from git import InvalidGitRepositoryError
 from packaging import version
+from functools import lru_cache
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
@@ -202,6 +203,7 @@ class ValidateManager:
             self.conf_json_validator = ConfJsonValidator()
             self.conf_json_data = self.conf_json_validator.conf_data
 
+    @lru_cache(None)
     def are_node_and_modules_installed_for_verify(self) -> Tuple[bool, str]:
         """ Check the following:
             1. npm packages installed - see packs var for specific pack details.
@@ -209,25 +211,25 @@ class ValidateManager:
         Returns:
             bool: True If all req ok else False
         """
-        # json = JSON_Handler()
+        json = JSON_Handler()
         content_path = get_content_path()
-        # missing_module = []
+        missing_module = []
 
         # Check node exist
         stdout, stderr, exit_code = run_command_os('node -v', cwd=content_path)
         if exit_code:
             return False, ''
-        # else:
-        #     # Check npm modules exsits
-        #     stdout, stderr, exit_code = run_command_os(f'npm ls --json {" ".join(REQUIRED_MDX_PACKS)}',
-        #                                                cwd=content_path)
-        #     if stdout:
-        #         deps = json.loads(stdout).get('dependencies', {})
-        #         for pack in REQUIRED_MDX_PACKS:
-        #             if pack not in deps:
-        #                 missing_module.append(pack)
-        # if missing_module:
-        #     return False, ", ".join(missing_module)
+        else:
+            # Check npm modules exsits
+            stdout, stderr, exit_code = run_command_os(f'npm ls --json {" ".join(REQUIRED_MDX_PACKS)}',
+                                                       cwd=content_path)
+            if stdout:
+                deps = json.loads(stdout).get('dependencies', {})
+                for pack in REQUIRED_MDX_PACKS:
+                    if pack not in deps:
+                        missing_module.append(pack)
+        if missing_module:
+            return False, ", ".join(missing_module)
         return True, ''
 
     def print_final_report(self, valid):

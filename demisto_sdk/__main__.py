@@ -13,7 +13,8 @@ from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, FileType)
+    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, MODELING_RULES_DIR, PARSING_RULES_DIR,
+    FileType)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
@@ -273,31 +274,40 @@ def extract_code(config, **kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-i", "--input", help="The directory path to the files to unify", required=True, type=click.Path(dir_okay=True)
+    "-i", "--input", help="The directory path to the files or path to the file to unify", required=True, type=click.Path(dir_okay=True)
 )
 @click.option(
     "-o", "--output", help="The output dir to write the unified yml to", required=False
 )
 @click.option(
-    "--force", help="Forcefully overwrites the preexisting yml if one exists",
+    "-c", "--custom", help="Add test label to unified yml id/name/display", required=False,
+)
+@click.option(
+    "-f", "--force", help="Forcefully overwrites the preexisting yml if one exists",
     is_flag=True,
     show_default=False
 )
 def unify(**kwargs):
     """
-    This command has two main functions:
+    This command has three main functions:
 
-    1. YML Unifier - Unifies integration/script code, image, description and yml files to a single XSOAR yml file.
+    1. Integration/Script Unifier - Unifies integration/script code, image, description and yml files to a single XSOAR yml file.
      * Note that this should be used on a single integration/script and not a pack, not multiple scripts/integrations.
      * To use this function - set as input a path to the *directory* of the integration/script to unify.
 
     2. GenericModule Unifier - Unifies a GenericModule with its Dashboards to a single JSON object.
      * To use this function - set as input a path to a GenericModule *file*.
+
+    3. Parsing/Modeling Rule Unifier - Unifies Parsing/Modeling rule YML, XIF and samples JSON files to a single YML file.
+     * Note that this should be used on a single parsing/modeling rule and not a pack, not multiple rules.
+     * To use this function - set as input a path to the *directory* of the parsing/modeling rule to unify.
     """
     check_configuration_file('unify', kwargs)
     # Input is of type Path.
     kwargs['input'] = str(kwargs['input'])
     file_type = find_type(kwargs['input'])
+    custom = kwargs.pop('custom')
+
     if file_type == FileType.GENERIC_MODULE:
         from demisto_sdk.commands.unify.generic_module_unifier import \
             GenericModuleUnifier
@@ -305,13 +315,16 @@ def unify(**kwargs):
         # pass arguments to GenericModule unifier and call the command
         generic_module_unifier = GenericModuleUnifier(**kwargs)
         generic_module_unifier.merge_generic_module_with_its_dashboards()
-
+    elif any(rule_dir in os.path.abspath(kwargs['input']) for rule_dir in [PARSING_RULES_DIR, MODELING_RULES_DIR]):
+        from demisto_sdk.commands.unify.rule_unifier import RuleUnifier
+        rule_unifier = RuleUnifier(**kwargs)
+        rule_unifier.unify()
     else:
         from demisto_sdk.commands.unify.integration_script_unifier import \
             IntegrationScriptUnifier
 
         # pass arguments to YML unifier and call the command
-        yml_unifier = IntegrationScriptUnifier(**kwargs)
+        yml_unifier = IntegrationScriptUnifier(**kwargs, custom=custom)
         yml_unifier.unify()
 
     return 0
@@ -653,7 +666,7 @@ def secrets(config, **kwargs):
               default='Tests/id_set.json')
 @click.option("-cdam", "--check-dependent-api-module", is_flag=True, help="Run unit tests and lint on all packages that "
               "are dependent on the found "
-              "modified api modules.", default=True)
+              "modified api modules.", default=False)
 @click.option("--time-measurements-dir", help="Specify directory for the time measurements report file",
               type=PathsParamType())
 def lint(**kwargs):
@@ -2053,6 +2066,77 @@ def convert(config, **kwargs):
         sys.exit(1)
 
     sys.exit(0)
+
+# ====================== generate-unit-tests ====================== #
+
+
+@main.command(short_help='''Generates unit tests for integration code.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-c", "--commands", help="Specific commands name to generate unit test for (e.g. xdr-get-incidents)",
+    required=False)
+@click.option(
+    '-o', '--output_dir', help='Directory to store the output in (default is the input integration directory)',
+    required=False)
+@click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
+              type=click.IntRange(0, 3, clamp=True), default=1, show_default=True)
+@click.option(
+    "-i", "--input_path",
+    help="Valid integration file path.",
+    required=True)
+@click.option('-q', "--quiet", is_flag=True, help="Quiet output, only output results in the end")
+@click.option("-lp", "--log-path", help="Path to store all levels of logs",
+              type=click.Path(resolve_path=True))
+@click.option(
+    '-d', '--use_demisto',
+    help="Run commands at Demisto automatically.", is_flag=True
+)
+@click.option(
+    "--insecure",
+    help="Skip certificate validation", is_flag=True
+)
+@click.option(
+    "-e", "--examples",
+    help="Integrations: path for file containing command examples."
+         " Each command should be in a separate line.")
+@click.option(
+    "-a", "--append",
+    help="Append generated test file to the existing <integration_name>_test.py. Else, overwriting existing UT",
+    is_flag=True)
+def generate_unit_tests(input_path: str = '',
+                        commands: list = [],
+                        output_dir: str = '',
+                        examples: str = '',
+                        insecure: bool = False,
+                        use_demisto: bool = False,
+                        append: bool = False,
+                        verbose: int = 1,
+                        quiet: bool = False,
+                        log_path: str = ''):
+    """
+    This command is used to generate unit tests automatically from an  integration python code.
+    Also supports generating unit tests for specific commands.
+    """
+
+    klara_logger = logging.getLogger('PYSCA')
+    klara_logger.propagate = False
+    from demisto_sdk.commands.common.logger import logging_setup
+    from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import \
+        run_generate_unit_tests
+    logging_setup(verbose=verbose,  # type: ignore[arg-type]
+                  quiet=quiet,  # type: ignore[arg-type]
+                  log_path=log_path)  # type: ignore[arg-type]
+    return run_generate_unit_tests(
+        input_path,
+        commands,
+        output_dir,
+        examples,
+        insecure,
+        use_demisto,
+        append
+    )
 
 
 @main.command(

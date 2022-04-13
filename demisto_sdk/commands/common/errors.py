@@ -262,6 +262,7 @@ ERROR_CODE = {
     "cant_open_pack_file": {'code': "PA101", 'ui_applicable': False, 'related_field': ''},
     "cant_read_pack_file": {'code': "PA102", 'ui_applicable': False, 'related_field': ''},
     "cant_parse_pack_file_to_list": {'code': "PA103", 'ui_applicable': False, 'related_field': ''},
+    "pack_file_bad_format": {'code': "PA104", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_empty": {'code': "PA105", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_should_be_dict": {'code': "PA106", 'ui_applicable': False, 'related_field': ''},
     "missing_field_iin_pack_metadata": {'code': "PA107", 'ui_applicable': False, 'related_field': ''},

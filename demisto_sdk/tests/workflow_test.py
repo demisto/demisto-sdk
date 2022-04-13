@@ -132,6 +132,14 @@ class ContentGitRepo:
             res = runner.invoke(main, "lint -g --no-test")
             assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
 
+            res = runner.invoke(
+                main,
+                "validate -g --staged --skip-pack-dependencies --skip-pack-release-notes "
+                "--no-docker-checks --debug-git --allow-skipped"
+            )
+
+            assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
+
             # build flow - validate on all changed files
             res = runner.invoke(main, "validate -g --skip-pack-dependencies --no-docker-checks --debug-git "
                                       "--allow-skipped")
@@ -214,12 +222,12 @@ def init_pack(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     author_image_rel_path = \
         r"demisto_sdk/tests/test_files/artifacts/AuthorImageTest/SanityCheck"
     author_image_abs_path = os.path.abspath(f"./{author_image_rel_path}/{AUTHOR_IMAGE_FILE_NAME}")
-    monkeypatch.chdir(content_repo.content)
     runner = CliRunner(mix_stderr=False)
-    res = runner.invoke(
-        main, f"init -a {author_image_abs_path} --pack --name Sample",
-        input="\n".join(["y", "Sample", "description", "1", "1", "n", "6.0.0"])
-    )
+    with ChangeCWD(content_repo.content):
+        res = runner.invoke(
+            main, f"init -a {author_image_abs_path} --pack --name Sample",
+            input="\n".join(["y", "Sample", "description", "1", "1", "n", "6.0.0"])
+        )
     assert res.exit_code == 0, f"Could not run the init command.\nstdout={res.stdout}\nstderr={res.stderr}\n" \
                                f"author_image_abs_path={author_image_abs_path}"
     content_repo.run_validations()

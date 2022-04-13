@@ -89,7 +89,7 @@ jobs:
             no_output_timeout: 15m
             command: |
               shopt -u globstar
-              npm install @mdx-js/mdx fs-extra commander 
+              npm install .
               # The first sed expression is to remove test files from under the demisto_sdk/commands/init/templates
               # directory from the globbed list of files. Need to manually remove them since the pytest 'ignore'
               # argument in pytest.ini is itself ignored when explicitly passing tests to pytest. The second is to
@@ -222,7 +222,7 @@ jobs:
               CI_COMMIT_BRANCH: "master"
             command: |
               cd content
-              npm install com@mdx-js/mdx fs-extra commander
+              npm install .
               poetry run demisto-sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
 

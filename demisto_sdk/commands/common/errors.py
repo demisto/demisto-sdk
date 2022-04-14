@@ -224,6 +224,7 @@ ERROR_CODE = {
     "changed_integration_yml_fields": {'code': "IN147", "ui_applicable": False, 'related_field': 'script'},
     "parameter_is_malformed": {'code': "IN148", 'ui_applicable': False, 'related_field': 'configuration'},
     'empty_outputs_common_paths': {'code': 'IN149', 'ui_applicable': False, 'related_field': 'contextOutput'},
+    'invalid_siem_integration_name': {'code': 'IN150', 'ui_applicable': True, 'related_field': 'display'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -357,7 +358,6 @@ ERROR_CODE = {
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
     "is_valid_script_file_path_in_folder": {'code': "SC103", 'ui_applicable': False, 'related_field': ''},
-    "is_valid_script_file_path_in_scripts_folder": {'code': "SC104", 'ui_applicable': False, 'related_field': ''},
     "incident_in_script_arg": {'code': "SC105", 'ui_applicable': True, 'related_field': 'args.name'},
     "runas_is_dbotrole": {'code': "SC106", 'ui_applicable': False, 'related_field': 'runas'},
 
@@ -813,6 +813,13 @@ class Errors:
         return f"The display name of this v{version_number} integration is incorrect , " \
                f"should be **name** v{version_number}.\n" \
                f"e.g: Kenna v{version_number}, Jira v{version_number}"
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_siem_integration_name(display_name: str):
+        return f"The display name of this siem integration is incorrect , " \
+               f"should end with \"Event Collector\".\n" \
+               f"e.g: {display_name} Event Collector"
 
     @staticmethod
     @error_code_decorator
@@ -1277,13 +1284,7 @@ class Errors:
     @error_code_decorator
     def is_valid_script_file_path_in_folder(script_file):
         return f"The script file name: {script_file} is invalid, " \
-               f"The script file name should be the same as the name of the folder that contains it."
-
-    @staticmethod
-    @error_code_decorator
-    def is_valid_script_file_path_in_scripts_folder(script_file):
-        return f"The script file name: {script_file} is invalid, " \
-               f"The script file name should start with 'script-'."
+               f"The script file name should be the same as the name of the folder that contains it, e.g. `Packs/MyPack/Scripts/MyScript/MyScript.yml`."
 
     @staticmethod
     @error_code_decorator

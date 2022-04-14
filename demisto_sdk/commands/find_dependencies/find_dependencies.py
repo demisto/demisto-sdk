@@ -1686,48 +1686,15 @@ class PackDependencies:
 
         """
         # TODO: Reimplement
-        all_job_dependencies: set = set()
+        all_wizard_dependencies: set = set()
         items_dependencies: dict = dict()
 
         if verbose:
-            click.secho('### Jobs', fg='white')
-
-        for job in pack_wizards:
-            job_id = list(job.keys())[0]
-            job_data = next(iter(job.values()))
-            job_dependencies = set()
-
-            # Playbook dependency
-            packs_found_from_playbooks, packs_and_playbooks_dict = PackDependencies._search_packs_by_items_names_or_ids(
-                job_data.get('playbookId', ''), id_set['playbooks'], exclude_ignored_dependencies, 'Both', 'playbook',
-                marketplace=marketplace)
-            pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_playbooks)
-            job_dependencies.update(pack_dependencies_data)
-            if get_dependent_items:
-                update_items_dependencies(pack_dependencies_data, items_dependencies, 'job',
-                                          job_id,
-                                          packs_and_playbooks_dict)
-            # Specified feeds dependencies
-            packs_found_from_feeds, packs_and_feeds_dict = PackDependencies._search_packs_by_items_names_or_ids(
-                job_data.get('selectedFeeds', []), id_set['integrations'], exclude_ignored_dependencies, 'Both',
-                'integration', marketplace=marketplace)
-            pack_dependencies_data = PackDependencies._label_as_mandatory(packs_found_from_feeds)
-            job_dependencies.update(pack_dependencies_data)
-            if get_dependent_items:
-                update_items_dependencies(pack_dependencies_data, items_dependencies, 'job',
-                                          job_id,
-                                          packs_and_feeds_dict)
-            if job_dependencies:
-                # do not trim spaces from the end of the string, they are required for the MD structure.
-                if verbose:
-                    click.secho(
-                        f'{os.path.basename(job_data.get("file_path", ""))} depends on: {job_dependencies}',
-                        fg='white')
-            all_job_dependencies.update(job_dependencies)
+            click.secho('### Wizards', fg='white')
 
         if get_dependent_items:
-            return all_job_dependencies, items_dependencies
-        return all_job_dependencies
+            return all_wizard_dependencies, items_dependencies
+        return all_wizard_dependencies
 
     @staticmethod
     def _collect_pack_items(pack_id: str, id_set: dict) -> dict:

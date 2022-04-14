@@ -19,7 +19,7 @@ ALLOWED_IGNORE_ERRORS = [
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107',
-    'RM100', 'RM102', 'RM104', 'RM106', 'RM108',
+    'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM 110',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
     'IM111'
@@ -330,6 +330,7 @@ ERROR_CODE = {
     "template_sentence_in_readme": {'code': "RM107", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
     "missing_readme_file": {'code': "RM109", 'ui_applicable': False, 'related_field': ''},
+    "missing_commands_from_readme": {'code': "RM110", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -2206,6 +2207,14 @@ class Errors:
     @error_code_decorator
     def missing_readme_file(location):
         return f'{location} is missing a README file'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_commands_from_readme(yml_name, missing_commands_from_readme):
+        error_msg = f'The following commands appear in {yml_name} but not in the README file:\n'
+        for command in missing_commands_from_readme:
+            error_msg += f'{command}\n'
+        return error_msg
 
     @staticmethod
     @error_code_decorator

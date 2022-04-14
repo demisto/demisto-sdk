@@ -2634,3 +2634,19 @@ def order_dict(data):
     """
     return OrderedDict({k: order_dict(v) if isinstance(v, dict) else v
                         for k, v in sorted(data.items())})
+
+
+def extract_none_deprecated_command_names_from_yml(yml_data: dict) -> list:
+    """
+    Go over all the commands in a yml file and return their names.
+    Args:
+        yml_data (dict): the yml content as a dict
+
+    Returns:
+        list: a list of all the commands names
+    """
+    commands_ls = []
+    for command in yml_data.get('script', {}).get('commands', {}):
+        if command.get('name') and not command.get('deprecated'):
+            commands_ls.append(command.get('name'))
+    return commands_ls

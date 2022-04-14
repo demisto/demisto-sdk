@@ -1,10 +1,13 @@
 # Changelog
 
+
+* Added a code *type* indication for integration and script objects in the *ID Set*.
 * Added the [Vulture](https://github.com/jendrikseipp/vulture) linter to the pre-commit hook.
 * The `demisto-sdk` pack will now be distributed via PyPi with a **wheel** file.
 * Fixed a bug where any edited json file that contained a forward slash (`/`) escaped.
 * Added a new validation to **validate** command to verify that the metadata *currentVersion* is
 the same as the last release note version.
+* The **validate** command now checks if there're none-deprecated integration commands that are missing from the readme file.
 * Fixed an issue where *dockerimage* changes in Scripts weren't recognized by the **update-release-notes** command.
 * Fixed an issue where **update-xsoar-config-file** did not properly insert the marketplace packs list to the file.
 * Added the pack name to the known words by default when running the **doc-review** command.
@@ -16,6 +19,9 @@ the same as the last release note version.
 * Added support for sub words suggestion in kebab-case sentences when running the **doc-review** command.
 * Enhanced the message of alternative suggestion words shown when running **doc-review** command.
 * Fixed an issue in the **lint** command where the *check-dependent-api-modules* argument was set to true by default.
+* Added a new command **generate-unit-tests**.
+* Fixed the destination path of the unified parsing/modeling rules in **create-content-artifacts** command.
+* Fixed an issue in the **validate** command, where we validated wrongfully the existence of readme file for the *ApiModules* pack.
 * Fixed an issue where *None* arguments in integration commands caused the **validate** and **format** commands to fail unexpectedly.
 
 ## 1.6.3

@@ -398,6 +398,7 @@ class TestIntegrations:
             "source": ['github.com', 'demisto', 'demisto-sdk'],
             "marketplaces": ["xsoar"],
             "docker_image": "demisto/python3:3.7.4.977",
+            "type": "python3",
             "commands": ['xdr-get-incidents',
                          'xdr-get-incident-extra-data',
                          'xdr-update-incident',
@@ -432,6 +433,7 @@ class TestIntegrations:
             "fromversion": "4.1.0",
             "source": ['github.com', 'demisto', 'demisto-sdk'],
             "marketplaces": ["xsoar"],
+            "type": "python3",
             "commands": ['xdr-get-incidents',
                          'xdr-get-incident-extra-data',
                          'xdr-update-incident',
@@ -541,6 +543,7 @@ class TestScripts:
             "marketplaces": ["xsoar"],
             "fromversion": "5.0.0",
             "docker_image": "demisto/python3:3.7.3.286",
+            "type": "python3",
             "tests": [
                 "No test - no need to test widget"
             ]
@@ -555,6 +558,7 @@ class TestScripts:
             "marketplaces": ["xsoar"],
             "fromversion": "5.0.0",
             "docker_image": "demisto/python3:3.7.3.286",
+            "type": "python3",
             "tests": [
                 "No test - no need to test widget"
             ],
@@ -570,6 +574,7 @@ class TestScripts:
             "marketplaces": ["xsoar"],
             "fromversion": "5.0.0",
             "docker_image": "demisto/python3:3.7.3.286",
+            "type": "python3",
             "tests": [
                 "No test - no need to test widget"
             ],
@@ -584,6 +589,7 @@ class TestScripts:
             "source": ['github.com', 'demisto', 'demisto-sdk'],
             "marketplaces": ["xsoar"],
             "docker_image": "demisto/python3:3.8.2.6981",
+            "type": "python3",
             "pack": "DummyPack",
         }
     }

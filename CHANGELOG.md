@@ -17,12 +17,17 @@ the same as the last release note version.
 * Added the integration name, the commands name and the script name to the known words by default when running the **doc-review** command.
 * Added an argument '-c' '--custom' to the **unify** command, if True will append to the unified yml name/display/id the custom label provided
 * Added support for sub words suggestion in kebab-case sentences when running the **doc-review** command.
+* Added support for new XSIAM entities in **update-release-notes** command.
 * Enhanced the message of alternative suggestion words shown when running **doc-review** command.
 * Fixed an issue in the **lint** command where the *check-dependent-api-modules* argument was set to true by default.
 * Added a new command **generate-unit-tests**.
+* Added a new validation to **validate** all SIEM integration have the same suffix.
 * Fixed the destination path of the unified parsing/modeling rules in **create-content-artifacts** command.
+* Fixed an issue in the **validate** command, where we validated wrongfully the existence of readme file for the *ApiModules* pack.
+* Fixed an issue in the **validate** command, where an error message that was displayed for scripts validation was incorrect.
+* Fixed an issue in the **validate** and **format** commands where *None* arguments in integration commands caused the commands to fail unexpectedly.
 * Enhanced the message of the validation checking for the existence of the *toversion* field.
-* 
+ 
 ## 1.6.3
 
 * **Breaking change**: Fixed a typo in the **validate** `--quiet-bc-validation` flag (was `--quite-bc-validation`). @upstart-swiss

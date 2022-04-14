@@ -8,7 +8,6 @@ import pebble
 from colorama import Fore
 from git import InvalidGitRepositoryError
 from packaging import version
-from functools import lru_cache 
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
@@ -27,7 +26,6 @@ from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
                                                 PRESET_ERROR_TO_IGNORE, Errors,
                                                 get_all_error_codes)
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.author_image import \
     AuthorImageValidator
 from demisto_sdk.commands.common.hook_validations.base_validator import \
@@ -86,14 +84,11 @@ from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import \
     XSOARConfigJsonValidator
 from demisto_sdk.commands.common.tools import (
-    _get_file_id, find_type, get_api_module_ids,
-    get_api_module_integrations_set, get_content_path, get_file,
-    get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
-    get_relative_path_from_packs_dir, get_yaml, open_id_set_file, print_error,
-    run_command_os)
+    _get_file_id, find_type, get_api_module_ids, run_command_os,
+    get_api_module_integrations_set, get_file, get_pack_ignore_file_path,
+    get_pack_name, get_pack_names_from_files, get_relative_path_from_packs_dir,
+    get_yaml, open_id_set_file)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
-
-REQUIRED_MDX_PACKS = ['@mdx-js/mdx', 'fs-extra', 'commander']
 
 
 class ValidateManager:
@@ -128,7 +123,7 @@ class ValidateManager:
         self.check_is_unskipped = check_is_unskipped
         self.conf_json_data = {}
         self.run_with_multiprocessing = multiprocessing
-        self.is_possible_validate_readme, self.error_message_mdx_server = self.are_node_and_modules_installed_for_verify()
+        self.is_possible_validate_readme, self.error_message_mdx_server = self.is_node_exist()
 
         if json_file_path:
             self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \
@@ -203,35 +198,15 @@ class ValidateManager:
             self.conf_json_validator = ConfJsonValidator()
             self.conf_json_data = self.conf_json_validator.conf_data
 
-    @lru_cache(None)
-    def are_node_and_modules_installed_for_verify(self) -> Tuple[bool, str]:
-        """ Check the following:
-            1. npm packages installed - see packs var for specific pack details.
-            2. node interperter exists.
+    def is_node_exist(self) -> Tuple[bool, str]:
+        """ Check if node interpreter exists.
         Returns:
-            bool: True If all req ok else False
+            bool: True If node exist else False
         """
-        json = JSON_Handler()
-        content_path = get_content_path()
-        missing_module = []
-
         # Check node exist
         stdout, stderr, exit_code = run_command_os('node -v', cwd=content_path)
         if exit_code:
             return False, ''
-        else:
-            # Check npm modules exsits
-            stdout, stderr, exit_code = run_command_os(f'npm ls --json {" ".join(REQUIRED_MDX_PACKS)}',
-                                                       cwd=content_path)
-            print_error(f'{stdout},\n\n\n{exit_code}\n\n\n{stderr}')
-            if stdout:
-                deps = json.loads(stdout).get('dependencies', {})
-                print_error(f'{deps=}')
-                for pack in REQUIRED_MDX_PACKS:
-                    if pack not in deps:
-                        missing_module.append(pack)
-        if missing_module:
-            return False, ", ".join(missing_module)
         return True, ''
 
     def print_final_report(self, valid):
@@ -600,10 +575,7 @@ class ValidateManager:
 
         elif file_type == FileType.README:
             if not self.is_possible_validate_readme:
-                if self.error_message_mdx_server:
-                    error_message, error_code = Errors.node_modules_are_missing(self.error_message_mdx_server)
-                else:
-                    error_message, error_code = Errors.error_uninstall_node()
+                error_message, error_code = Errors.error_uninstall_node()
                 if self.handle_error(error_message=error_message, error_code=error_code,
                                      file_path=file_path):
                     return False

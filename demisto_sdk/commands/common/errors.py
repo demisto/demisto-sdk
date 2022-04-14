@@ -819,7 +819,7 @@ class Errors:
     @error_code_decorator
     def invalid_siem_integration_name(display_name: str):
         return f"The display name of this siem integration is incorrect , " \
-               f"should end with Event Collector.\n" \
+               f"should end with \"Event Collector\".\n" \
                f"e.g: {display_name} Event Collector"
 
     @staticmethod

@@ -202,7 +202,7 @@ class ValidateManager:
     def is_node_exist(self) -> bool:
         """ Check if node interpreter exists.
         Returns:
-            bool: True If node exist else False
+            bool: True if node exist, else False
         """
         # Check node exist
         content_path = get_content_path()
@@ -350,11 +350,12 @@ class ValidateManager:
         ReadMeValidator.add_node_env_vars()
         if self.is_possible_validate_readme:
             with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):
-                return self.packs_validation(all_packs, all_packs_valid, count, num_of_packs)
+                return self.validate_packs(all_packs, all_packs_valid, count, num_of_packs)
         else:
-            return self.packs_validation(all_packs, all_packs_valid, count, num_of_packs)
+            return self.validate_packs(all_packs, all_packs_valid, count, num_of_packs)
 
-    def packs_validation(self, all_packs, all_packs_valid, count, num_of_packs):
+    def validate_packs(self, all_packs: list, all_packs_valid: set,
+                       count: int, num_of_packs: int) -> bool:
 
         if self.run_with_multiprocessing:
             with pebble.ProcessPool(max_workers=4) as executor:

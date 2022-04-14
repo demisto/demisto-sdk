@@ -330,7 +330,7 @@ ERROR_CODE = {
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
     "missing_readme_file": {'code': "RM109", 'ui_applicable': False, 'related_field': ''},
     "missing_commands_from_readme": {'code': "RM110", 'ui_applicable': False, 'related_field': ''},
-    "error_uninstall_node": {'code': "RN111", 'ui_applicable': False, 'related_field': ''},
+    "error_uninstall_node": {'code': "RM111", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},

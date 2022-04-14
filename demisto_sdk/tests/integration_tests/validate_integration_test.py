@@ -3000,7 +3000,7 @@ class TestAllFilesValidator:
         mocker.patch.object(tools, 'is_external_repository', return_value=False)
         mocker.patch.object(PackUniqueFilesValidator, 'are_valid_files', return_value='')
         mocker.patch.object(ValidateManager, 'validate_readme', return_value=True)
-        mocker.patch.object(ValidateManager, 'is_node_exist', return_value=(True, ''))
+        mocker.patch.object(ValidateManager, 'is_node_exist', return_value=True)
         pack1 = repo.create_pack('PackName1')
         pack1.author_image.write(DEFAULT_IMAGE_BASE64)
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
@@ -3046,6 +3046,7 @@ class TestAllFilesValidator:
         mocker.patch.object(tools, 'is_external_repository', return_value=False)
         mocker.patch.object(PackUniqueFilesValidator, 'are_valid_files', return_value='')
         mocker.patch.object(ValidateManager, 'validate_readme', return_value=True)
+        mocker.patch.object(ValidateManager, 'is_node_exist', return_value=False)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         pack1 = repo.create_pack('PackName1')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
@@ -3079,6 +3080,7 @@ class TestAllFilesValidator:
         assert 'The content key must be set to True.' in result.stdout
         assert 'SC100' in result.stdout
         assert 'The name of this v2 script is incorrect' in result.stdout
+        assert 'RM111' in result.stdout
         assert result.exit_code == 1
 
 

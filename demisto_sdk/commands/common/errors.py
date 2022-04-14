@@ -1283,7 +1283,7 @@ class Errors:
     @error_code_decorator
     def is_valid_script_file_path_in_scripts_folder(script_file):
         return f"The script file name: {script_file} is invalid, " \
-               f"Scripts should be placed under a folder with the same name as the script, i.e. `Scripts/script_name/script_name.yml`."
+               f"Script names should match the folder in which they're located, e.g. `Packs/MyPack/Scripts/MyScript/MyScript.yml`."
 
     @staticmethod
     @error_code_decorator

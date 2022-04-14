@@ -84,10 +84,11 @@ from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import \
     XSOARConfigJsonValidator
 from demisto_sdk.commands.common.tools import (
-    _get_file_id, find_type, get_api_module_ids, run_command_os, get_content_path,
-    get_api_module_integrations_set, get_file, get_pack_ignore_file_path,
-    get_pack_name, get_pack_names_from_files, get_relative_path_from_packs_dir,
-    get_yaml, open_id_set_file)
+    _get_file_id, find_type, get_api_module_ids,
+    get_api_module_integrations_set, get_content_path, get_file,
+    get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
+    get_relative_path_from_packs_dir, get_yaml, open_id_set_file,
+    run_command_os)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 
@@ -205,7 +206,7 @@ class ValidateManager:
         """
         # Check node exist
         content_path = get_content_path()
-        stdout, stderr, exit_code = run_command_os('jjj -v', cwd=content_path)
+        stdout, stderr, exit_code = run_command_os('node -v', cwd=content_path)
         if exit_code:
             return False
         return True

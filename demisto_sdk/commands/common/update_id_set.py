@@ -381,20 +381,24 @@ def get_integration_data(file_path, packs: Dict[str, Dict] = None):
 
     id_ = data_dictionary.get('commonfields', {}).get('id', '-')
     name = data_dictionary.get('name', '-')
+    script = data_dictionary.get('script', {})
 
+    type_ = script.get('type', '')
+    if type_ == 'python':
+        type_ = script.get('subtype', type_)
     deprecated = data_dictionary.get('deprecated', False)
     tests = data_dictionary.get('tests')
     toversion = data_dictionary.get('toversion')
     fromversion = data_dictionary.get('fromversion')
-    docker_image = data_dictionary.get('script', {}).get('dockerimage')
-    commands = data_dictionary.get('script', {}).get('commands', [])
+    docker_image = script.get('dockerimage')
+    commands = script.get('commands', [])
     cmd_list = [command.get('name') for command in commands]
     pack = get_pack_name(file_path)
     integration_api_modules = get_integration_api_modules(file_path, data_dictionary, is_unified_integration)
     default_classifier = data_dictionary.get('defaultclassifier')
     default_incident_type = data_dictionary.get('defaultIncidentType')
-    is_fetch = data_dictionary.get('script', {}).get('isfetch', False)
-    is_feed = data_dictionary.get('script', {}).get('feed', False)
+    is_fetch = script.get('isfetch', False)
+    is_feed = script.get('feed', False)
     marketplaces = get_item_marketplaces(file_path, item_data=data_dictionary, packs=packs)
     mappers = set()
 
@@ -413,6 +417,8 @@ def get_integration_data(file_path, packs: Dict[str, Dict] = None):
                                                  pack=pack,
                                                  marketplaces=marketplaces,
                                                  )
+    if type_:
+        integration_data['type'] = type_
     if docker_image:
         integration_data['docker_image'] = docker_image
     if cmd_list:
@@ -623,6 +629,9 @@ def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None):
 
     name = data_dictionary.get('name', '-')
 
+    type_ = data_dictionary.get('type', '')
+    if type_ == 'python':
+        type_ = data_dictionary.get('subtype', type_)
     tests = data_dictionary.get('tests')
     toversion = data_dictionary.get('toversion')
     deprecated = data_dictionary.get('deprecated', False)
@@ -635,6 +644,8 @@ def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None):
 
     script_data = create_common_entity_data(path=file_path, name=name, to_version=toversion, from_version=fromversion,
                                             pack=pack, marketplaces=marketplaces)
+    if type_:
+        script_data['type'] = type_
     if deprecated:
         script_data['deprecated'] = deprecated
     if depends_on:

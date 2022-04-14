@@ -33,11 +33,11 @@ class WizardValidator(ContentEntityValidator):
         return True
 
     def is_valid_integrations(self):
-        #TODO: Implement
+        # TODO: Implement
         pass
 
     def is_valid_playbooks(self):
-        #TODO: Implement
+        # TODO: Implement
         pass
 
     def is_valid_file(self, validate_rn=True):

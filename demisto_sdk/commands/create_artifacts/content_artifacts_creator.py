@@ -21,8 +21,9 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR,
     LAYOUTS_DIR, LISTS_DIR, MODELING_RULES_DIR, PACKS_DIR, PARSING_RULES_DIR,
     PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, REPORTS_DIR,
-    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR, TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR,
-    XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, ContentItems, MarketplaceVersions)
+    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR, TRIGGER_DIR, WIDGETS_DIR,
+    WIZARDS_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, ContentItems,
+    MarketplaceVersions)
 from demisto_sdk.commands.common.content import (Content, ContentError,
                                                  ContentFactoryError, Pack)
 from demisto_sdk.commands.common.content.objects.abstract_objects.text_object import \

@@ -30,8 +30,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    TOOLS_DIR, TRIGGER_DIR,
-                                                   WIDGETS_DIR,
-                                                   WIZARDS_DIR,
+                                                   WIDGETS_DIR, WIZARDS_DIR,
                                                    XSIAM_DASHBOARDS_DIR,
                                                    XSIAM_REPORTS_DIR, FileType)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
@@ -192,6 +191,7 @@ class Pack:
     def widgets(self) -> Iterator[Widget]:
         return self._content_files_list_generator_factory(dir_name=WIDGETS_DIR,
                                                           suffix="json")
+
     @property
     def wizards(self) -> Iterator[Wizard]:
         return self._content_files_list_generator_factory(dir_name=WIZARDS_DIR,

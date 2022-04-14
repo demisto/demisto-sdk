@@ -23,6 +23,7 @@ the same as the last release note version.
 * Added a new validation to **validate** all SIEM integration have the same suffix.
 * Fixed the destination path of the unified parsing/modeling rules in **create-content-artifacts** command.
 * Fixed an issue in the **validate** command, where we validated wrongfully the existence of readme file for the *ApiModules* pack.
+* Fixed an issue in the **validate** command, where an error message that was displayed for scripts validation was incorrect.
 
 ## 1.6.3
 

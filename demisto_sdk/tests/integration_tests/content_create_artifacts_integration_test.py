@@ -120,8 +120,8 @@ def test_all_packs_creation(repo):
             result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp, '-p', 'all'])
 
             assert result.exit_code == 0
-            assert os.path.exists(os.path.join(str(temp), 'uploadable_packs', 'Pack1.zip'))
-            assert os.path.exists(os.path.join(str(temp), 'uploadable_packs', 'Pack2.zip'))
+            assert (temp / 'uploadable_packs' / 'Pack1.zip').exists()
+            assert (temp / 'uploadable_packs' / 'Pack2.zip').exists()
 
 
 def test_create_packs_with_filter_by_id_set(repo):

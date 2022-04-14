@@ -1200,8 +1200,7 @@ class ValidateManager:
         """
         if added_files:
             file_path = str(file_path)
-            file_type = find_type(file_path)
-            if file_type:
+            if file_type := find_type(file_path):
                 deleted_file_dict = get_file(file_path, file_type)
                 deleted_file_id = _get_file_id(file_path, deleted_file_dict)
                 if deleted_file_id:

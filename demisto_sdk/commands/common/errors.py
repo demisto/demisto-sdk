@@ -332,6 +332,7 @@ ERROR_CODE = {
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
     "missing_readme_file": {'code': "RM109", 'ui_applicable': False, 'related_field': ''},
     "missing_commands_from_readme": {'code': "RM110", 'ui_applicable': False, 'related_field': ''},
+    "error_uninstall_node": {'code': "RM111", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -773,6 +774,14 @@ class Errors:
     def error_starting_mdx_server(line):
         return f'Failed starting mdx server. stdout: {line}.\n' \
                f'Try running the following command: `npm install`'
+
+    @staticmethod
+    @error_code_decorator
+    def error_uninstall_node():
+        return 'The `node` runtime is not installed on the machine,\n' \
+               'while it is required for the validation process.\n' \
+               'Please download and install `node` to proceed\n' \
+               'See https://nodejs.org for installation instructions.'
 
     @staticmethod
     @error_code_decorator

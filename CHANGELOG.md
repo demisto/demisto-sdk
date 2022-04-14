@@ -19,6 +19,7 @@ the same as the last release note version.
 * Added support for sub words suggestion in kebab-case sentences when running the **doc-review** command.
 * Added support for new XSIAM entities in **update-release-notes** command.
 * Enhanced the message of alternative suggestion words shown when running **doc-review** command.
+* Fixed an incorrect error message, in case `node` is not installed on the machine.
 * Fixed an issue in the **lint** command where the *check-dependent-api-modules* argument was set to true by default.
 * Added a new command **generate-unit-tests**.
 * Added a new validation to **validate** all SIEM integration have the same suffix.

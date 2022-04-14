@@ -197,7 +197,7 @@ class ContentItemsHandler:
             ContentItems.XSIAM_DASHBOARDS: [],
             ContentItems.XSIAM_REPORTS: [],
             ContentItems.TRIGGERS: [],
-            ContentItems.WIZARDS: [],
+            ContentItems.WIZARD: [],
         }
         self.content_folder_name_to_func: Dict[str, Callable] = {
             SCRIPTS_DIR: self.add_script_as_content_item,
@@ -429,7 +429,7 @@ class ContentItemsHandler:
         })
 
     def add_wizards_as_content_item(self, content_object: ContentObject):
-        self.content_items[ContentItems.WIZARDS].append({
+        self.content_items[ContentItems.WIZARD].append({
             'name': content_object.get('name', ''),
             'description': content_object.get('description', '')
         })

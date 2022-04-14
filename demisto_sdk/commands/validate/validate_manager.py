@@ -84,7 +84,7 @@ from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import \
     XSOARConfigJsonValidator
 from demisto_sdk.commands.common.tools import (
-    _get_file_id, find_type, get_api_module_ids, run_command_os,
+    _get_file_id, find_type, get_api_module_ids, run_command_os, get_content_path,
     get_api_module_integrations_set, get_file, get_pack_ignore_file_path,
     get_pack_name, get_pack_names_from_files, get_relative_path_from_packs_dir,
     get_yaml, open_id_set_file)
@@ -123,7 +123,7 @@ class ValidateManager:
         self.check_is_unskipped = check_is_unskipped
         self.conf_json_data = {}
         self.run_with_multiprocessing = multiprocessing
-        self.is_possible_validate_readme, self.error_message_mdx_server = self.is_node_exist()
+        self.is_possible_validate_readme = self.is_node_exist()
 
         if json_file_path:
             self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \
@@ -198,16 +198,17 @@ class ValidateManager:
             self.conf_json_validator = ConfJsonValidator()
             self.conf_json_data = self.conf_json_validator.conf_data
 
-    def is_node_exist(self) -> Tuple[bool, str]:
+    def is_node_exist(self) -> bool:
         """ Check if node interpreter exists.
         Returns:
             bool: True If node exist else False
         """
         # Check node exist
-        stdout, stderr, exit_code = run_command_os('node -v', cwd=content_path)
+        content_path = get_content_path()
+        stdout, stderr, exit_code = run_command_os('jjj -v', cwd=content_path)
         if exit_code:
-            return False, ''
-        return True, ''
+            return False
+        return True
 
     def print_final_report(self, valid):
         self.print_ignored_files_report(self.print_ignored_files)

@@ -20,9 +20,11 @@ the same as the last release note version.
 * Enhanced the message of alternative suggestion words shown when running **doc-review** command.
 * Fixed an issue in the **lint** command where the *check-dependent-api-modules* argument was set to true by default.
 * Added a new command **generate-unit-tests**.
+* Added a new validation to **validate** all SIEM integration have the same suffix.
 * Fixed the destination path of the unified parsing/modeling rules in **create-content-artifacts** command.
 * Fixed an issue in the **validate** command, where we validated wrongfully the existence of readme file for the *ApiModules* pack.
-* Fixed an issue where *None* arguments in integration commands caused the **validate** and **format** commands to fail unexpectedly.
+* Fixed an issue in the **validate** command, where an error message that was displayed for scripts validation was incorrect.
+* Fixed an issue in the **validate** and **format** commands where *None* arguments in integration commands caused the commands to fail unexpectedly.
 
 ## 1.6.3
 

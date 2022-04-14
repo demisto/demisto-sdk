@@ -701,6 +701,28 @@ class TestIntegrationValidator:
         validator.current_file = current
         assert validator.is_valid_display_name() is answer
 
+    V2_VALID_SIEM_1 = {"display": "PhishTank v2", "script": {"isFetchEvents": False}}
+    V2_VALID_SIEM_2 = {"display": "PhishTank v2 Event Collector", "script": {"isFetchEvents": True}}
+    V2_VALID_SIEM_3 = {"display": "PhishTank v2 Event Collector", "script": {}}
+    V2_VALID_SIEM_4 = {"display": "PhishTank v2 Event Collector"}
+    V2_INVALID_SIEM = {"display": "PhishTank v2", "script": {"isFetchEvents": True}}
+
+    V2_SIEM_NAME_INPUTS = [
+        (V2_VALID_SIEM_1, True),
+        (V2_VALID_SIEM_2, True),
+        (V2_VALID_SIEM_3, True),
+        (V2_VALID_SIEM_4, True),
+        (V2_INVALID_SIEM, False),
+    ]
+
+    @pytest.mark.parametrize("current, answer", V2_SIEM_NAME_INPUTS)
+    def test_is_valid_display_name_siem(self, current, answer):
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+
+        assert validator.is_valid_display_name_for_siem() is answer
+
     def test_is_valid_description_positive(self):
         integration_path = os.path.normpath(
             os.path.join(f'{git_path()}/demisto_sdk/tests', 'test_files', 'integration-Zoom.yml')

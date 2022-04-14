@@ -1771,9 +1771,9 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_package_structure():
-        return 'You should update the following file to the package format, for further details please visit ' \
-               'https://xsoar.pan.dev/docs/integrations/package-dir.'
+    def missing_toversion_nondepreceted_content():
+        return 'The toversion field must be present on non-deprecated content items. ' \
+               'Please either add it or mark the file as deprecated.'
 
     @staticmethod
     @error_code_decorator

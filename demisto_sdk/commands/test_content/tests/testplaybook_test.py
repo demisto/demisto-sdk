@@ -62,6 +62,17 @@ def test_set_prev_server_keys(mocker, tmp_path):
 @pytest.mark.parametrize('expected_res,client_res', [(True, (None, 200, None)),
                                                      (False, (None, 400, None))])
 def test_close_incident(mocker, tmp_path, expected_res, client_res):
+    """
+    Given:
+        - Test playbook to run on XSIAM build
+
+    When:
+        - Cleaning server config when closing the incidents
+
+    Then:
+        - Ensure incident closed if status code is 200
+        - incident not closed but there is no exception, when code is 400
+    """
     mocked_demisto_client = DemistoClientMock()
     build_context = create_xsiam_build(mocker, tmp_path)
     test_playbook_configuration = TestConfiguration({}, 0)

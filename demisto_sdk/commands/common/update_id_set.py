@@ -2614,9 +2614,9 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         progress_bar.update(1)
 
-        if 'Jobs' in objects_to_create:
+        if 'Wizards' in objects_to_create:
             print_color("\nStarting iteration over Wizards", LOG_COLORS.GREEN)
-            for arr in pool.map(partial(process_jobs,
+            for arr in pool.map(partial(process_wizards,
                                         packs=packs_dict,
                                         marketplace=marketplace,
                                         print_logs=print_logs,

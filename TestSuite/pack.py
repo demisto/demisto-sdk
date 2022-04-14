@@ -77,6 +77,7 @@ class Pack:
         self.xsiam_dashboards: List[JSONBased] = list()
         self.xsiam_reports: List[JSONBased] = list()
         self.triggers: List[JSONBased] = list()
+        self.wizards: List[JSONBased] = list()
 
         # Create base pack
         self._pack_path = packs_dir / self.name
@@ -136,6 +137,9 @@ class Pack:
 
         self._widget_path = self._pack_path / 'Widgets'
         self._widget_path.mkdir()
+
+        self._wizard_path = self._pack_path / 'Wizards'
+        self._wizard_path.mkdir()
 
         self._release_notes = self._pack_path / 'ReleaseNotes'
         self._release_notes.mkdir()
@@ -460,6 +464,16 @@ class Pack:
         widget = self._create_json_based(name, prefix, content, dir_path=self._widget_path)
         self.widgets.append(widget)
         return widget
+
+    def create_wizrd(
+            self,
+            name,
+            content: dict = None
+    ) -> JSONBased:
+        prefix = 'wizard'
+        wizard = self._create_json_based(name, prefix, content, dir_path=self._wizard_path)
+        self.wizards.append(wizard)
+        return wizard
 
     def create_list(
             self,

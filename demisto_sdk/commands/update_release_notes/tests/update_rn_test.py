@@ -51,7 +51,7 @@ class TestRNUpdate(unittest.TestCase):
             "\n#### Reports\n##### Hello World Report\n- %%UPDATE_RN%%\n" \
             "\n#### Scripts\n##### Hello World Script\n- %%UPDATE_RN%%\n" \
             "\n#### Widgets\n##### Hello World Widget\n- %%UPDATE_RN%%\n" \
-            "\n#### Wizards\n##### Hello World Wizard\n- %%UPDATE_RN%%\n"
+            "\n#### Wizard\n##### Hello World Wizard\n- %%UPDATE_RN%%\n"
 
         mock_master.return_value = '1.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},

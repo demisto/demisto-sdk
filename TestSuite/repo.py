@@ -165,6 +165,11 @@ class Repo:
         widget.update({'name': f'{name} - widget'})
         widget.update({'widgetType': ''})
 
+        wizard = pack.create_wizrd(f'{name}_wizard')
+        wizard.write_json({'id': f'{name} - wizard'})
+        wizard.update({'name': f'{name} - wizard'})
+        wizard.update({'wizard': {}})
+
         list_item = pack.create_list(f'{name}_list')
         list_item.write_json({'id': f'{name} - list'})
         list_item.update({'name': f'{name} - list'})

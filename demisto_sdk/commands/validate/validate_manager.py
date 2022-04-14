@@ -2,8 +2,7 @@ import os
 from concurrent.futures._base import Future, as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
-from typing import Callable, List, Optional, Set, Tuple, Union
-
+from typing import Callable, List, Optional, Set, Tuple
 import click
 import pebble
 from colorama import Fore

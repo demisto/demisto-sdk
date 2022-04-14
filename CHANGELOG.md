@@ -21,7 +21,8 @@ the same as the last release note version.
 * Fixed an issue in the **lint** command where the *check-dependent-api-modules* argument was set to true by default.
 * Added a new command **generate-unit-tests**.
 * Fixed the destination path of the unified parsing/modeling rules in **create-content-artifacts** command.
-
+* Enhanced the message of the validation checking for the existance of the *toversion* field.
+* 
 ## 1.6.3
 
 * **Breaking change**: Fixed a typo in the **validate** `--quiet-bc-validation` flag (was `--quite-bc-validation`). @upstart-swiss

@@ -225,6 +225,7 @@ ERROR_CODE = {
     "parameter_is_malformed": {'code': "IN148", 'ui_applicable': False, 'related_field': 'configuration'},
     'empty_outputs_common_paths': {'code': 'IN149', 'ui_applicable': False, 'related_field': 'contextOutput'},
     'invalid_siem_integration_name': {'code': 'IN150', 'ui_applicable': True, 'related_field': 'display'},
+    "empty_command_arguments": {'code': 'IN151', 'ui_applicable': False, 'related_field': 'arguments'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -444,6 +445,12 @@ class Errors:
     @staticmethod
     def suggest_fix(file_path: str, *args: Any, cmd: str = 'format') -> str:
         return f'To fix the problem, try running `demisto-sdk {cmd} -i {file_path} {" ".join(args)}`'
+
+    @staticmethod
+    @error_code_decorator
+    def empty_command_arguments(command_name):
+        return f"The arguments of the integration command `{command_name}` can not be None. If the command has no arguments, " \
+               f"use `arguments: []` or remove the `arguments` field."
 
     @staticmethod
     @error_code_decorator

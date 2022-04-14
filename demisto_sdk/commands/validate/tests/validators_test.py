@@ -1594,7 +1594,8 @@ def test_check_file_relevance_and_format_path_ignore_test_file(mocker, input_fil
 @pytest.mark.parametrize('input_file_path, file_type',
                          [('Packs/some_file.py', FileType.PYTHON_FILE),
                           ('Packs/some_file.ps1', FileType.POWERSHELL_FILE),
-                          ('Packs/some_file.js', FileType.JAVASCRIPT_FILE)]
+                          ('Packs/some_file.js', FileType.JAVASCRIPT_FILE),
+                          ('Packs/some_file.xif', FileType.XIF_FILE)]
                          )
 def test_check_file_relevance_and_format_path_file_to_format(mocker, input_file_path, file_type):
     """

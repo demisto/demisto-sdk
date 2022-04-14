@@ -22,6 +22,7 @@ the same as the last release note version.
 * Added a new command **generate-unit-tests**.
 * Fixed the destination path of the unified parsing/modeling rules in **create-content-artifacts** command.
 * Fixed an issue in the **validate** command, where we validated wrongfully the existence of readme file for the *ApiModules* pack.
+* Added support to test XSIAM machines in our build, in **test-content** command.
 
 ## 1.6.3
 

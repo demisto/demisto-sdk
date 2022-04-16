@@ -1927,6 +1927,15 @@ def openapi_codegen(**kwargs):
     help='Should use retries mechanism or not (if test-playbook fails, it will execute it again few times and '
          'determine success according to most of the runs',
     default=False)
+@click.option(
+    '--server-type',
+    help='Which server runs the tests? XSIAM or XSOAR',
+    default='XSOAR')
+@click.option(
+    '-x',
+    '--xsiam-machine',
+    help='XSIAM machine to use, if it is XSIAM build.')
+@click.option('--xsiam-servers-path', help='Path to secret xsiam server metadata file.')
 def test_content(**kwargs):
     """Configure instances for the integration needed to run tests_to_run tests.
     Run test module on each integration.

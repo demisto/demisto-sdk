@@ -1,9 +1,13 @@
 # Changelog
+
+
+* Added a code *type* indication for integration and script objects in the *ID Set*.
 * Added the [Vulture](https://github.com/jendrikseipp/vulture) linter to the pre-commit hook.
 * The `demisto-sdk` pack will now be distributed via PyPi with a **wheel** file.
 * Fixed a bug where any edited json file that contained a forward slash (`/`) escaped.
 * Added a new validation to **validate** command to verify that the metadata *currentVersion* is
 the same as the last release note version.
+* The **validate** command now checks if there're none-deprecated integration commands that are missing from the readme file.
 * Fixed an issue where *dockerimage* changes in Scripts weren't recognized by the **update-release-notes** command.
 * Fixed an issue where **update-xsoar-config-file** did not properly insert the marketplace packs list to the file.
 * Added the pack name to the known words by default when running the **doc-review** command.
@@ -13,9 +17,17 @@ the same as the last release note version.
 * Added the integration name, the commands name and the script name to the known words by default when running the **doc-review** command.
 * Added an argument '-c' '--custom' to the **unify** command, if True will append to the unified yml name/display/id the custom label provided
 * Added support for sub words suggestion in kebab-case sentences when running the **doc-review** command.
+* Added support for new XSIAM entities in **update-release-notes** command.
 * Enhanced the message of alternative suggestion words shown when running **doc-review** command.
+* Fixed an incorrect error message, in case `node` is not installed on the machine.
 * Fixed an issue in the **lint** command where the *check-dependent-api-modules* argument was set to true by default.
 * Added a new command **generate-unit-tests**.
+* Added a new validation to **validate** all SIEM integration have the same suffix.
+* Fixed the destination path of the unified parsing/modeling rules in **create-content-artifacts** command.
+* Fixed an issue in the **validate** command, where we validated wrongfully the existence of readme file for the *ApiModules* pack.
+* Fixed an issue in the **validate** command, where an error message that was displayed for scripts validation was incorrect.
+* Fixed an issue in the **validate** and **format** commands where *None* arguments in integration commands caused the commands to fail unexpectedly.
+* Added support for running tests on XSIAM machines in the **test-content** command.
 * Fixed an issue where relative paths to files were not read properly.
 
 ## 1.6.3

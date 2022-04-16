@@ -26,7 +26,8 @@ from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.tools import (
-    _get_file_id, compare_context_path_in_yml_and_readme, get_core_pack_list,
+    _get_file_id, compare_context_path_in_yml_and_readme,
+    extract_none_deprecated_command_names_from_yml, get_core_pack_list,
     get_file_version_suffix_if_exists, get_files_in_dir, get_item_marketplaces,
     get_pack_name, is_iron_bank_pack, print_error, server_version_compare)
 
@@ -102,6 +103,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_fetch(),
             self.is_there_a_runnable(),
             self.is_valid_display_name(),
+            self.is_valid_display_name_for_siem(),
             self.is_valid_pwsh(),
             self.is_valid_image(),
             self.is_valid_max_fetch_and_first_fetch(),
@@ -121,7 +123,7 @@ class IntegrationValidator(ContentEntityValidator):
         return all(answers)
 
     def is_valid_file(self, validate_rn: bool = True, skip_test_conf: bool = False,
-                      check_is_unskipped: bool = True, conf_json_data: dict = {}) -> bool:
+                      check_is_unskipped: bool = True, conf_json_data: dict = {}, is_modified=False) -> bool:
         """Check whether the Integration is valid or not according to the LEVEL SUPPORT OPTIONS
         that depends on the contributor type
 
@@ -130,6 +132,7 @@ class IntegrationValidator(ContentEntityValidator):
                 skip_test_conf (bool): If true then will skip test playbook configuration validation
                 check_is_unskipped (bool): Whether to check if the integration is unskipped.
                 conf_json_data (dict): The conf.json file data.
+                is_modified (bool): Wether the given files are modified or not.
 
             Returns:
                 bool: True if integration is valid, False otherwise.
@@ -140,6 +143,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_hidden_params(),
             self.is_valid_description(beta_integration=False),
             self.is_context_correct_in_readme(),
+            self.verify_yml_commands_match_readme(is_modified),
         ]
 
         if check_is_unskipped:
@@ -385,6 +389,13 @@ class IntegrationValidator(ContentEntityValidator):
 
         for command in commands:
             default_args = set()
+            if command.get('arguments', []) is None:
+                error_message, error_code = Errors.empty_command_arguments(command.get('name'))
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     suggested_fix=Errors.suggest_fix(self.file_path)):
+                    is_valid = False  # do not break the main loop as there can be multiple invalid commands
+                    continue
+
             for arg in command.get('arguments', []):
                 if arg.get('default'):
                     default_args.add(arg.get('name'))
@@ -561,6 +572,10 @@ class IntegrationValidator(ContentEntityValidator):
         commands = self.current_file.get('script', {}).get('commands', [])
         does_not_have_duplicate_args = True
         for command in commands:
+            # If this happens, an error message will be shown from is_valid_default_argument(), but still need to check
+            # for it here to avoid crash
+            if command.get('arguments', []) is None:
+                continue
             arg_names = []  # type: list
             for arg in command.get('arguments', []):
                 arg_name = arg.get('name')
@@ -1029,6 +1044,18 @@ class IntegrationValidator(ContentEntityValidator):
 
             return True
 
+    def is_valid_display_name_for_siem(self) -> bool:
+        is_siem = self.current_file.get('script', {}).get('isFetchEvents')
+
+        if is_siem:
+            display_name = self.current_file.get('display', '')
+            if not display_name.endswith('Event Collector'):
+                error_message, error_code = Errors.invalid_siem_integration_name(display_name)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
+
+        return True
+
     def is_valid_hidden_params(self) -> bool:
         """
         Verify there are no non-allowed hidden integration parameters.
@@ -1474,3 +1501,31 @@ class IntegrationValidator(ContentEntityValidator):
                 return False
 
         return True
+
+    def verify_yml_commands_match_readme(self, is_modified=False):
+        """
+        Checks if there are commands that doesn't appear in the readme but appear in the .yml file
+        Args:
+            is_modified (bool): Wether the given files are modified or not.
+
+        Return:
+            bool: True if all commands appear in the readme, and False if it doesn't.
+        """
+        if not is_modified:
+            return True
+        yml_commands_list = extract_none_deprecated_command_names_from_yml(self.current_file)
+        is_valid = True
+        dir_path = os.path.dirname(self.file_path)
+        readme_path = os.path.join(dir_path, 'README.md')
+        with open(readme_path, 'r') as readme:
+            readme_content = readme.read()
+        excluded_from_readme_commands = ['get-mapping-fields', 'xsoar-search-incidents', 'xsoar-get-incident', 'get-remote-data']
+        missing_commands_from_readme = [
+            command for command in yml_commands_list if command not in readme_content and command not in excluded_from_readme_commands]
+        if missing_commands_from_readme:
+            error_message, error_code = Errors.missing_commands_from_readme(
+                os.path.basename(self.file_path), missing_commands_from_readme)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                is_valid = False
+
+        return is_valid

@@ -1594,7 +1594,8 @@ def test_check_file_relevance_and_format_path_ignore_test_file(mocker, input_fil
 @pytest.mark.parametrize('input_file_path, file_type',
                          [('Packs/some_file.py', FileType.PYTHON_FILE),
                           ('Packs/some_file.ps1', FileType.POWERSHELL_FILE),
-                          ('Packs/some_file.js', FileType.JAVASCRIPT_FILE)]
+                          ('Packs/some_file.js', FileType.JAVASCRIPT_FILE),
+                          ('Packs/some_file.xif', FileType.XIF_FILE)]
                          )
 def test_check_file_relevance_and_format_path_file_to_format(mocker, input_file_path, file_type):
     """
@@ -1823,11 +1824,12 @@ def test_job_unexpected_field_values_in_non_feed_job(repo, capsys,
 
 
 @pytest.mark.parametrize('file_set,expected_output,expected_result,added_files',
-                         (({'mock_file_description.md'}, "[BA115]", False, set()),
+                         (({'Packs/Integration/mock_file_description.md'}, "[BA115]", False, set()),
                           (set(), "", True, set()),
-                          ({'doc_files/image.png'}, "", True, set()),
-                          ({'mock_playbook.yml'}, "", True, {'renamed_mock_playbook.yml'}),
-                          ({Path('mock_playbook.yml')}, "", True, {Path('renamed_mock_playbook.yml')})))
+                          ({'Packs/Integration/doc_files/image.png'}, "", True, set()),
+                          ({'Packs/Integration/Playbooks/mock_playbook.yml'}, "", True, {'renamed_mock_playbook.yml'}),
+                          ({Path('Packs/Integration/Playbooks/mock_playbook.yml')}, "", True, {Path('renamed_mock_playbook.yml')}),
+                          (({'non_content_item.txt'}, "[BA115]", False, set()))))
 def test_validate_deleted_files(capsys, file_set, expected_output, expected_result, added_files, mocker):
     """
     Given

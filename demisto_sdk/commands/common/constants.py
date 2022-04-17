@@ -168,7 +168,13 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.GENERIC_TYPE: 'Object Types',
     FileType.GENERIC_FIELD: 'Object Fields',
     FileType.LISTS: 'Lists',
-    FileType.JOB: 'Jobs'
+    FileType.JOB: 'Jobs',
+    FileType.PARSING_RULE: 'Parsing Rules',
+    FileType.MODELING_RULE: 'Modeling Rules',
+    FileType.CORRELATION_RULE: 'Correlation Rules',
+    FileType.XSIAM_DASHBOARD: 'XSIAM Dashboards',
+    FileType.XSIAM_REPORT: 'XSIAM Reports',
+    FileType.TRIGGER: 'Triggers',
 }
 
 ENTITY_TYPE_TO_DIR = {

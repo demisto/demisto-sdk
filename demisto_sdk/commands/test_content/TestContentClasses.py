@@ -1677,9 +1677,8 @@ class TestContext:
             'number_of_executions': self.playbook.configuration.number_of_executions,
             'number_of_successful_runs': self.playbook.configuration.number_of_successful_runs,
             'failed_stage': failed_stage,
-            'error_block': 'test',
             'ssh_tunnel': self.tunnel_command,
-            'error_block1': 'test',
+            'error_block': self,
         })
 
     @staticmethod

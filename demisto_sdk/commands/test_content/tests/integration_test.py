@@ -65,7 +65,7 @@ def test_create_module(mocker, incident_configuration, expected):
         unmockable_integrations = []
 
     test_build_params = {'api_key': '', 'server': '', 'conf': '', 'secret': '', 'nightly': '', 'circleci': '',
-                         'slack': '',
+                         'slack': '', 'server_type': 'XSOAR',
                          'build_number': '', 'branch_name': '', 'is_ami': '', 'mem_check': '', 'server_version': ''}
     mocker.patch.object(BuildContext, '_load_conf_files', return_value=(Dummyconf(), ''))
     mocker.patch.object(BuildContext, '_load_env_results_json')

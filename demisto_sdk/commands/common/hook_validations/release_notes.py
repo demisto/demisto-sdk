@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.tools import (extract_docker_image_from_text,
                                                get_latest_release_notes_text,
                                                get_pack_name,
                                                get_release_notes_file_path,
-                                               get_yaml)
+                                               get_yaml, get_dict_from_file)
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
 
@@ -117,6 +117,18 @@ class ReleaseNotesValidator(BaseValidator):
 
         return True
 
+    def is_breaking_change(self):
+        is_valid = True
+        if 'breaking change' in self.latest_release_notes.lower():
+            json_path = self.release_notes_file_path[:-2]+'json'
+            try:
+                js = get_dict_from_file(path=json_path)[0]  # extract only the dictionary
+                if 'breakingChanges' not in js or not js.get('breakingChanges'):
+                    is_valid = False
+            except FileNotFoundError:
+                is_valid = False
+        return is_valid
+
     @staticmethod
     def get_docker_version_from_rn(section: str) -> str:
         """
@@ -172,6 +184,7 @@ class ReleaseNotesValidator(BaseValidator):
             bool. True if file's release notes are valid, False otherwise.
         """
         validations = [
+            self.is_breaking_change(),
             self.has_release_notes_been_filled_out(),
             self.are_release_notes_complete(),
             self.is_docker_image_same_as_yml()

@@ -51,8 +51,6 @@ repos:
                     types-tabulate==0.1.1,
                     types-python-dateutil==0.1.4,
                 ]
-            args: [
-            "--python-version", "3.8"]
     - repo: https://gitlab.com/smop/pre-commit-hooks
       rev: v1.0.0
       hooks:

@@ -466,7 +466,7 @@ def zip_packs(**kwargs) -> int:
     is_flag=True, default=False)
 @click.option(
     '-sv', '--run-specific-validations',
-    help="run specific validations.",
+    help="Run specific validations by stating the error codes.",
     is_flag=False)
 @pass_config
 def validate(config, **kwargs):

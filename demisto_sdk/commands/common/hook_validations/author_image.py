@@ -17,10 +17,10 @@ class AuthorImageValidator(ImageValidator):
     author_image_suffix: str = 'Author_image.png'
 
     def __init__(self, file_path: str, ignored_errors=None, print_as_warnings=False,
-                 suppress_print=False, json_file_path=None, maximum_image_size: Optional[int] = None):
+                 suppress_print=False, json_file_path=None, maximum_image_size: Optional[int] = None, specific_validations=None):
         super().__init__(file_path=file_path, ignored_errors=ignored_errors,
                          print_as_warnings=print_as_warnings, suppress_print=suppress_print,
-                         json_file_path=json_file_path)
+                         json_file_path=json_file_path, specific_validations=specific_validations)
         self.pack_path = os.path.join(PACKS_DIR, get_pack_name(file_path))
         self.maximum_image_size = maximum_image_size if maximum_image_size else self.IMAGE_MAX_SIZE
 

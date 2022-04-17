@@ -590,6 +590,7 @@ class PackUniqueFilesValidator(BaseValidator):
                 return False
         return True
 
+    @error_codes('RN106,PA131')
     def _is_right_version(self):
         """Checks whether the currentVersion field in the pack metadata match the version of the latest release note.
 
@@ -759,11 +760,11 @@ class PackUniqueFilesValidator(BaseValidator):
             non_supported_pack = first_level_dependencies.get('NonSupported', {})
             deprecated_pack = first_level_dependencies.get('DeprecatedContent', {})
 
-            if (non_supported_pack.get('mandatory')) or (deprecated_pack.get('mandatory')):
-                error_message, error_code = Errors.invalid_package_dependencies(self.pack)
-                if self._add_error((error_message, error_code), file_path=self.pack_path):
-                    return False
+            if not self.is_invalid_package_dependencies(non_supported_pack, deprecated_pack):
+                return False
+
             return True
+
         except ValueError as e:
             if "Couldn't find any items for pack" in str(e):
                 error_message, error_code = Errors.invalid_id_set()
@@ -773,6 +774,15 @@ class PackUniqueFilesValidator(BaseValidator):
             else:
                 raise
 
+    @error_codes('PA116')
+    def is_invalid_package_dependencies(self, non_supported_pack, deprecated_pack):
+        if (non_supported_pack.get('mandatory')) or (deprecated_pack.get('mandatory')):
+            error_message, error_code = Errors.invalid_package_dependencies(self.pack)
+            if self._add_error((error_message, error_code), file_path=self.pack_path):
+                return False
+        return True
+
+    @error_codes('PA124')
     def validate_core_pack_dependencies(self, dependencies_packs):
 
         found_dependencies = []

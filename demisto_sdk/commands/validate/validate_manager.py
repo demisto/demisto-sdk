@@ -200,7 +200,7 @@ class ValidateManager:
             self.check_is_unskipped = False
 
         if not self.skip_conf_json:
-            self.conf_json_validator = ConfJsonValidator()
+            self.conf_json_validator = ConfJsonValidator(specific_validations=self.specific_validations)
             self.conf_json_data = self.conf_json_validator.conf_data
 
     def print_final_report(self, valid):
@@ -830,7 +830,7 @@ class ValidateManager:
         return test_playbook_validator.is_valid_test_playbook(validate_rn=False)
 
     @error_codes('RN108')
-    def validate_release_notes_for_new_pack(self, pack_name, file_path):
+    def validate_no_release_notes_for_new_pack(self, pack_name, file_path):
         if pack_name in self.new_packs:
             error_message, error_code = Errors.added_release_notes_for_new_pack(pack_name)
             if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path):
@@ -841,7 +841,7 @@ class ValidateManager:
         pack_name = get_pack_name(file_path)
 
         # added new RN to a new pack
-        if not self.validate_release_notes_for_new_pack(pack_name, file_path):
+        if not self.validate_no_release_notes_for_new_pack(pack_name, file_path):
             return False
 
         if pack_name != 'NonSupported':
@@ -956,13 +956,14 @@ class ValidateManager:
     def validate_image(self, file_path, pack_error_ignore_list):
         image_validator = ImageValidator(file_path, ignored_errors=pack_error_ignore_list,
                                          print_as_warnings=self.print_ignored_errors,
-                                         json_file_path=self.json_file_path)
+                                         json_file_path=self.json_file_path, specific_validations=self.specific_validations)
         return image_validator.is_valid()
 
     def validate_author_image(self, file_path, pack_error_ignore_list):
         author_image_validator: AuthorImageValidator = AuthorImageValidator(file_path,
                                                                             ignored_errors=pack_error_ignore_list,
-                                                                            print_as_warnings=self.print_ignored_errors)
+                                                                            print_as_warnings=self.print_ignored_errors,
+                                                                            specific_validations=self.specific_validations)
         return author_image_validator.is_valid()
 
     def validate_report(self, structure_validator, pack_error_ignore_list):
@@ -1142,7 +1143,8 @@ class ValidateManager:
                                                                private_repo=self.is_external_repo,
                                                                skip_id_set_creation=self.skip_id_set_creation,
                                                                prev_ver=self.prev_ver,
-                                                               json_file_path=self.json_file_path)
+                                                               json_file_path=self.json_file_path,
+                                                               specific_validations=self.specific_validations)
         pack_errors = pack_unique_files_validator.are_valid_files(self.id_set_validations)
         if pack_errors:
             click.secho(pack_errors, fg="bright_red")

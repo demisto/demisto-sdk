@@ -1507,3 +1507,17 @@ FileType_ALLOWED_TO_DELETE = {
     FileType.DOC_IMAGE,
     FileType.TEST_PLAYBOOK,
 }
+
+
+class ParameterType(Enum):
+    STRING = 0
+    NUMBER = 1
+    ENCRYPTED = 4
+    BOOLEAN = 8
+    AUTH = 9
+    DOWNLOAD_LINK = 11
+    TEXT_AREA = 12
+    INCIDENT_TYPE = 13
+    TEXT_AREA_ENCRYPTED = 14
+    SINGLE_SELECT = 15
+    MULTI_SELECT = 16

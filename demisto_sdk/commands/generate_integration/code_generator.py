@@ -2,13 +2,13 @@ import logging
 import os
 import re
 from distutils.util import strtobool
-from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import autopep8
 
 import demisto_sdk.commands.common.tools as tools
+from demisto_sdk.commands.common.constants import ParameterType
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.generate_integration.base_code import (
     BASE_ARGUMENT, BASE_BASIC_AUTH, BASE_BEARER_TOKEN, BASE_CLIENT,
@@ -43,20 +43,6 @@ def json_body_to_code(request_json_body):
         s = s.replace(leaf, leaf.replace('"{', '').replace('}"', '').lower(), 1)
 
     return f'data={s}'
-
-
-class ParameterType(Enum):
-    STRING = 0
-    NUMBER = 1
-    ENCRYPTED = 4
-    BOOLEAN = 8
-    AUTH = 9
-    DOWNLOAD_LINK = 11
-    TEXT_AREA = 12
-    INCIDENT_TYPE = 13
-    TEXT_AREA_ENCRYPTED = 14
-    SINGLE_SELECT = 15
-    MULTI_SELECT = 16
 
 
 class IntegrationGeneratorOutput:

@@ -104,6 +104,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_there_a_runnable(),
             self.is_valid_display_name(),
             self.is_valid_display_name_for_siem(),
+            self.is_valid_default_value_for_checkbox(),
             self.is_valid_pwsh(),
             self.is_valid_image(),
             self.is_valid_max_fetch_and_first_fetch(),
@@ -1043,6 +1044,16 @@ class IntegrationValidator(ContentEntityValidator):
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 
+        return True
+
+    def is_valid_default_value_for_checkbox(self) -> bool:
+        config = self.current_file.get('configuration', {})
+        for param in config:
+            if param.get('type') == 8:
+                if param.get('defaultvalue') not in [None, 'true', 'false']:
+                    error_message, error_code = Errors.invalid_defaultvalue_for_checkbox_field(param.get('defaultvalue'))
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        return False
         return True
 
     def is_valid_hidden_params(self) -> bool:

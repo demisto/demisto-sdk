@@ -225,6 +225,7 @@ ERROR_CODE = {
     "parameter_is_malformed": {'code': "IN148", 'ui_applicable': False, 'related_field': 'configuration'},
     'empty_outputs_common_paths': {'code': 'IN149', 'ui_applicable': False, 'related_field': 'contextOutput'},
     'invalid_siem_integration_name': {'code': 'IN150', 'ui_applicable': True, 'related_field': 'display'},
+    'invalid_defaultvalue_for_checkbox_field': {'code': 'IN151', 'ui_applicable': True, 'related_field': 'defaultvalue'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -821,6 +822,13 @@ class Errors:
         return f"The display name of this siem integration is incorrect , " \
                f"should end with \"Event Collector\".\n" \
                f"e.g: {display_name} Event Collector"
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_defaultvalue_for_checkbox_field(defaultvalue: [None, bool]):
+        return f"The {defaultvalue=} for the checkbox is incorrect, " \
+               f"should be true or false.\n" \
+               f"e.g: defaultvalue: true"
 
     @staticmethod
     @error_code_decorator

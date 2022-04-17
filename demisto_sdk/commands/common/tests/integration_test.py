@@ -719,6 +719,33 @@ class TestIntegrationValidator:
 
         assert validator.is_valid_display_name_for_siem() is answer
 
+    VALID_DEFAULTVALUE_CHECKBOX_1 = {'configuration': [{'defaultvalue': 'true', 'type': 8}]}
+    VALID_DEFAULTVALUE_CHECKBOX_2 = {'configuration': [{'type': 8, 'defaultvalue': 'false'}]}
+    VALID_DEFAULTVALUE_CHECKBOX_3 = {'configuration': [{'type': 0, 'defaultvalue': True}]}
+    VALID_DEFAULTVALUE_CHECKBOX_4 = {'configuration': [{'type': 8}]}
+
+    INVALID_DEFAULTVALUE_CHECKBOX_1 = {'configuration': [{'type': 8, 'defaultvalue': True}]}
+    INVALID_DEFAULTVALUE_CHECKBOX_2 = {'configuration': [{'type': 8, 'defaultvalue': False}]}
+    INVALID_DEFAULTVALUE_CHECKBOX_3 = {'configuration': [{'type': 8, 'defaultvalue': 'True'}]}
+
+    DEFAULTVALUE_CHECKBOX_INPUTS = [
+        (VALID_DEFAULTVALUE_CHECKBOX_1, True),
+        (VALID_DEFAULTVALUE_CHECKBOX_2, True),
+        (VALID_DEFAULTVALUE_CHECKBOX_3, True),
+        (VALID_DEFAULTVALUE_CHECKBOX_4, True),
+        (INVALID_DEFAULTVALUE_CHECKBOX_1, False),
+        (INVALID_DEFAULTVALUE_CHECKBOX_2, False),
+        (INVALID_DEFAULTVALUE_CHECKBOX_3, False),
+    ]
+
+    @pytest.mark.parametrize("current, answer", DEFAULTVALUE_CHECKBOX_INPUTS)
+    def test_is_valid_defaultvalue_for_checkbox(self, current, answer):
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+
+        assert validator.is_valid_default_value_for_checkbox() is answer
+
     def test_is_valid_description_positive(self):
         integration_path = os.path.normpath(
             os.path.join(f'{git_path()}/demisto_sdk/tests', 'test_files', 'integration-Zoom.yml')

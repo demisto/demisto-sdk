@@ -841,9 +841,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_defaultvalue_for_checkbox_field(defaultvalue: [None, bool]):
-        return f"The {defaultvalue=} for the checkbox is incorrect, " \
-               f"should be true or false.\n" \
-               f"e.g: defaultvalue: true"
+        return f"The {defaultvalue=} for the checkbox is incorrect, should be true or false.\n e.g: defaultvalue: true"
 
     @staticmethod
     @error_code_decorator

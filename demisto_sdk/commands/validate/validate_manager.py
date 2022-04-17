@@ -1,6 +1,7 @@
 import os
 from concurrent.futures._base import Future, as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
+from pathlib import Path
 from typing import Callable, List, Optional, Set, Tuple
 
 import click
@@ -1212,6 +1213,7 @@ class ValidateManager:
         Returns: True if the file allowed to be deleted, else False.
 
         """
+        file_path = str(file_path)
         file_type = find_type(file_path)
         return file_type in FileType_ALLOWED_TO_DELETE or not file_type
 
@@ -1226,28 +1228,38 @@ class ValidateManager:
         """
         if added_files:
             file_path = str(file_path)
-            deleted_file_dict = get_file(file_path, find_type(file_path))
-            deleted_file_id = _get_file_id(file_path, deleted_file_dict)
-            if deleted_file_id:
-                for file in added_files:
-                    file = str(file)
-                    file_dict = get_file(file, find_type(file))
-                    if deleted_file_id == _get_file_id(file, file_dict):
-                        return True
+            if file_type := find_type(file_path):
+                deleted_file_dict = get_file(file_path, file_type)
+                deleted_file_id = _get_file_id(file_path, deleted_file_dict)
+                if deleted_file_id:
+                    for file in added_files:
+                        file = str(file)
+                        file_dict = get_file(file, find_type(file))
+                        if deleted_file_id == _get_file_id(file, file_dict):
+                            return True
         return False
 
-    def validate_deleted_files(self, deleted_files, added_files) -> bool:
+    def validate_deleted_files(self, deleted_files: set, added_files: set) -> bool:
         click.secho(f'\n================= Checking for prohibited deleted files =================',
                     fg="bright_cyan")
 
         is_valid = True
         for file_path in deleted_files:
-            file_path = str(file_path)
-            if not self.was_file_renamed_but_labeled_as_deleted(file_path, added_files):
-                if not self.is_file_allowed_to_be_deleted(file_path):
-                    error_message, error_code = Errors.file_cannot_be_deleted(file_path)
-                    if self.handle_error(error_message, error_code, file_path):
-                        is_valid = False
+            file_path = Path(file_path)
+            if 'Packs' not in file_path.absolute().parts:
+                # not allowed to delete non-content files
+                file_path = str(file_path)
+                error_message, error_code = Errors.file_cannot_be_deleted(file_path)
+                if self.handle_error(error_message, error_code, file_path):
+                    is_valid = False
+
+            else:
+                if not self.was_file_renamed_but_labeled_as_deleted(file_path, added_files):
+                    if not self.is_file_allowed_to_be_deleted(file_path):
+                        file_path = str(file_path)
+                        error_message, error_code = Errors.file_cannot_be_deleted(file_path)
+                        if self.handle_error(error_message, error_code, file_path):
+                            is_valid = False
 
         return is_valid
 

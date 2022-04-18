@@ -268,6 +268,17 @@ class TestDocReviewPack:
         assert len(doc_reviewer.files_with_misspells) == 0
         assert doc_reviewer.files_with_misspells == set()
 
+    def test_failure_on_malformed_rns(self, pack):
+        rn = pack.create_release_notes(
+            version="release-note-0",
+            content="\n#### Script\n##### Script Name\n- blah blah"
+        )
+        doc_reviewer = DocReviewer(file_paths=[pack.path])
+        result = doc_reviewer.run_doc_review()
+        assert rn.path in doc_reviewer.malformed_rn_files
+        assert not doc_reviewer.found_misspelled
+        assert result is False
+
 
 @pytest.mark.usefixtures("are_mock_calls_supported_in_python_version")
 class TestDocReviewPrinting:

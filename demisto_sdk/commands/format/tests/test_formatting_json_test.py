@@ -1292,3 +1292,46 @@ class TestFormattingReport:
         bs = OldClassifierJSONFormat(input=classifier.path, assume_yes=True)
         bs.run_format()
         assert bs.data['fromVersion'] == VERSION_5_5_0
+
+
+def test_not_updating_id_in_old_json_file(repo):
+    """
+    Given
+        - An old json file with non matching name and id.
+    When
+        - Run format on file
+    Then
+        - Ensure that name and id are still not matching
+    """
+    pack = repo.create_pack()
+    json_incident_type = pack.create_incident_type(name="some_name")
+
+    json_object = BaseUpdateJSON(input=json_incident_type.path)
+    json_object.data['name'] = "name"
+    json_object.data['id'] = "not_name"
+    json_object.old_file = json_object.data
+    json_object.update_id()
+    assert json_object.data['id'] == "not_name"
+    assert json_object.data['id'] == "name"
+
+
+def test_updating_id_in_old_json_file(repo):
+    """
+    Given
+        - An old json file with non matching name and id.
+        - New id modification.
+    When
+        - Run format on  file.
+    Then
+        - Ensure that name and id are matching.
+    """
+    pack = repo.create_pack()
+    json_incident_type = pack.create_incident_type(name="some_name")
+
+    json_object = BaseUpdateJSON(input=json_incident_type.path)
+    json_object.data['name'] = "name"
+    json_object.data['id'] = "not_name"
+    json_object.old_file = json_object.data
+    json_object.data['id'] = "another_name"
+    json_object.update_id()
+    assert json_object.data['name'] == json_object.data['id']

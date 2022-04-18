@@ -27,7 +27,7 @@ class WizardValidator(ContentEntityValidator):
         deps_are_valid = True
         wizard_dependencies = {}
         for category in self.current_file.get("dependency_packs", {}).values():
-            wizard_dependencies.update(category.get("packs", {}))
+            wizard_dependencies.update(category.get("packs", []))
         packs = id_set_file.get('Packs', {})
         for dep in wizard_dependencies:
             if dep not in packs:

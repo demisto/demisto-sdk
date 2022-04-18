@@ -16,6 +16,8 @@ from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
 yaml = YAML_Handler()
 
+SCRIPT_QUERY_TYPE = 'script'
+
 LAYOUTS_CONTAINER_KINDS = ['edit',
                            'indicatorsDetails',
                            'indicatorsQuickView',
@@ -24,6 +26,9 @@ LAYOUTS_CONTAINER_KINDS = ['edit',
                            'details',
                            'detailsV2',
                            'mobile']
+
+LAYOUTS_CONTAINER_CHECK_SCRIPTS = ['indicatorsDetails', 'detailsV2']
+
 LAYOUT_KIND = 'layout'
 LAYOUTS_CONTAINER_PREFIX = 'layoutscontainer-'
 LAYOUT_PREFIX = 'layout-'
@@ -89,6 +94,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         self.set_version_to_default(self.data['layout'])
         self.set_toVersion()
         self.layout__set_output_path()
+        self.remove_copy_and_dev_suffixes_from_layout()
 
     def layout__set_output_path(self):
         output_basename = os.path.basename(self.output_file)
@@ -109,6 +115,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         self.set_group_field()
         self.layoutscontainer__set_output_path()
         self.update_id(field='name')
+        self.remove_copy_and_dev_suffixes_from_layoutscontainer()
 
     def layoutscontainer__set_output_path(self):
         output_basename = os.path.basename(self.output_file)
@@ -211,3 +218,47 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 second_level_args[kind] = set(self.data[kind].keys()) - set(kind_schema)
 
         return first_level_args, second_level_args
+
+    @staticmethod
+    def remove_copy_and_dev_suffixes_from_str(field_name):
+        return field_name.replace('_dev', '').replace('_copy', '')
+
+    def remove_copy_and_dev_suffixes_from_layoutscontainer(self):
+        if self.data.get('name'):
+            self.data['name'] = self.remove_copy_and_dev_suffixes_from_str(self.data.get('name'))
+
+        container = ''
+        for kind in LAYOUTS_CONTAINER_CHECK_SCRIPTS:
+            if self.data[kind]:
+                container = kind
+                break
+        if container:
+            for tab in self.data.get(container).get('tabs'):
+                if tab.get('sections'):
+                    for section in tab.get('sections'):
+                        if section.get('queryType') == SCRIPT_QUERY_TYPE:
+                            section['query'] = self.remove_copy_and_dev_suffixes_from_str(section.get('query'))
+                            section['name'] = self.remove_copy_and_dev_suffixes_from_str(section.get('name'))
+
+    def remove_copy_and_dev_suffixes_from_layout(self):
+        if self.data.get('TypeName'):
+            self.data['TypeName'] = self.remove_copy_and_dev_suffixes_from_str(self.data.get('TypeName'))
+        if self.data.get('typeId'):
+            self.data['typeId'] = self.remove_copy_and_dev_suffixes_from_str(self.data.get('typeId'))
+
+        layout_tabs = self.data.get('layout').get('tabs')
+
+        layout_sections = self.data.get('layout').get('sections')
+        if layout_tabs:
+            for tab in layout_tabs:
+                if tab.get('sections'):
+                    for section in tab.get('sections'):
+                        if section.get('queryType') == SCRIPT_QUERY_TYPE:
+                            section['query'] = self.remove_copy_and_dev_suffixes_from_str(section.get('query'))
+                            section['name'] = self.remove_copy_and_dev_suffixes_from_str(section.get('name'))
+
+        elif layout_sections:
+            for section in layout_sections:
+                if section.get('queryType') == SCRIPT_QUERY_TYPE:
+                    section['query'] = self.remove_copy_and_dev_suffixes_from_str(section.get('query'))
+                    section['name'] = self.remove_copy_and_dev_suffixes_from_str(section.get('name'))

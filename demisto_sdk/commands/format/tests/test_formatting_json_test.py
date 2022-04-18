@@ -582,6 +582,22 @@ class TestFormattingLayoutscontainer:
         layoutscontainer_formatter.update_id()
         assert layoutscontainer_formatter.data['name'] == layoutscontainer_formatter.data['id']
 
+    def test_remove_copy_and_dev_suffixes_from_layoutcontainer(self, layoutscontainer_formatter):
+        """
+        Given
+            - A layoutscontainer file with _copy suffix in the layout name ans sub script
+        When
+            - Run format on layout file
+        Then
+            - Ensure that name and sub script does not include the _copy suffix
+        """
+        layoutscontainer_formatter.remove_copy_and_dev_suffixes_from_layoutscontainer()
+        assert layoutscontainer_formatter.data['name'] == 'IP hadas'
+        assert layoutscontainer_formatter.data.get('indicatorsDetails').get('tabs')[0].get('sections')[9].get(
+            'query') == "script_test"
+        assert layoutscontainer_formatter.data.get('indicatorsDetails').get('tabs')[0].get('sections')[9].get(
+            'name') == "testing"
+
     @pytest.mark.parametrize('schema', [GENERICFIELD_SCHEMA_PATH,
                                         INCIDENTFIELD_SCHEMA_PATH,
                                         INDICATORFIELD_SCHEMA_PATH])
@@ -749,6 +765,20 @@ class TestFormattingLayout:
         """
         layouts_formatter.set_toVersion()
         assert layouts_formatter.data.get('toVersion') == '5.9.9'
+
+    def test_remove_copy_and_dev_suffixes_from_layout(self, layouts_formatter):
+        """
+        Given
+            - A layout file with _copy suffix in one of the script in a dynamic section
+        When
+            - Run format on layout file
+        Then
+            - Ensure that the script name does not include the _copy suffix
+        """
+        layouts_formatter.remove_copy_and_dev_suffixes_from_layout()
+        assert layouts_formatter.data.get('typeId') == 'ExtraHop Detection'
+        assert layouts_formatter.data.get('layout').get('sections')[1].get('query') == 'scriptName'
+        assert layouts_formatter.data.get('layout').get('sections')[1].get('name') == 'test'
 
     def test_set_output_path(self, invalid_path_layouts_formatter):
         """

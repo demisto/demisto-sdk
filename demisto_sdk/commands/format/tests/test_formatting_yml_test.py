@@ -652,9 +652,12 @@ class TestFormatting:
         assert base_yml.data['tasks']['29']['task']['playbookName'] == \
             'File Enrichment - Virus Total Private API_dev_copy'
         base_yml.remove_copy_and_dev_suffixes_from_subplaybook()
+        base_yml.remove_copy_and_dev_suffixes_from_subscripts()
 
         assert base_yml.data['tasks']['29']['task']['name'] == 'Fake name'
         assert base_yml.data['tasks']['29']['task']['playbookName'] == 'File Enrichment - Virus Total Private API'
+        assert base_yml.data['tasks']['30']['task']['scriptName'] == 'AssignAnalystToIncident'
+        assert base_yml.data['tasks']['31']['task']['scriptName'] == 'AssignAnalystToIncident'
 
     @patch('builtins.input', lambda *args: 'no')
     def test_run_format_on_tpb(self):

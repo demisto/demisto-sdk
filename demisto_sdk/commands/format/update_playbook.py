@@ -173,6 +173,12 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
                 task['task']['name'] = task['task'].get('name').replace('_dev', ''). \
                     replace('_copy', '')
 
+    def remove_copy_and_dev_suffixes_from_subscripts(self):
+        for task_id, task in self.data.get('tasks', {}).items():
+            if task['task'].get('scriptName'):
+                task['task']['scriptName'] = task['task'].get('scriptName').replace('_dev', ''). \
+                    replace('_copy', '')
+
     def update_playbook_task_name(self):
         """Updates the name of the task to be the same as playbookName it is running."""
         if self.verbose:
@@ -202,6 +208,7 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             self.update_tests()
             self.remove_copy_and_dev_suffixes_from_subplaybook()
+            self.remove_copy_and_dev_suffixes_from_subscripts()
             self.update_conf_json('playbook')
             self.delete_sourceplaybookid()
             self.update_playbook_task_name()

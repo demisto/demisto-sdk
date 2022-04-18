@@ -229,7 +229,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
         container = None
         for kind in LAYOUTS_CONTAINER_CHECK_SCRIPTS:
-            if self.data[kind]:
+            if self.data.get(kind):
                 container = self.data.get(kind)
                 break
         if container:

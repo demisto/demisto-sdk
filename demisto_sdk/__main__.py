@@ -2045,6 +2045,34 @@ def integration_diff(**kwargs):
     sys.exit(1)
 
 
+# ====================== generate_yml_from_python ====================== #
+@main.command(name="generate-yml-from-python",
+              help='''Generate YML file from Python code that includes special syntax.\n
+                      The output file name will be the same as the Python code with the `.yml` extension instead of `.py`.\n
+                      The generation currently supports integrations only.\n
+                      For more information on usage and installation visit the command's README.md file.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i', '--input', type=click.Path(exists=True), help='The path to the python code to generate from', required=True)
+@click.option(
+    '-v', '--verbose', is_flag=True, type=bool, help='Indicate for extended prints.', required=False)
+@click.option(
+    '-f', '--force', is_flag=True, type=bool, help='Override existing yml file.', required=False)
+def generate_yml_from_python(**kwargs):
+    """
+    Checks for differences between two versions of an integration, and verified that the new version covered the old version.
+    """
+    from demisto_sdk.commands.generate_yml_from_python.generate_yml import \
+        YMLGenerator
+
+    yml_generator = YMLGenerator(filename=kwargs.get('input', ''), verbose=kwargs.get('verbose', False),
+                                 force=kwargs.get('force', False))
+    yml_generator.generate()
+    yml_generator.save_to_yml_file()
+
+
 # ====================== convert ====================== #
 @main.command()
 @click.help_option(

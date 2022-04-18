@@ -269,6 +269,18 @@ class TestDocReviewPack:
         assert doc_reviewer.files_with_misspells == set()
 
     def test_failure_on_malformed_rns(self, pack):
+        """
+        Given -
+            Pack files with malformed release notes but correct spelling.
+
+        When -
+            Running doc-review.
+
+        Then -
+            Ensure malformed release notes are found.
+            Ensure no misspelled words were found.
+            Ensure doc-review returned False to indicate failure.
+        """
         rn = pack.create_release_notes(
             version="release-note-0",
             content="\n#### Script\n##### Script Name\n- blah blah"

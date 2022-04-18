@@ -21,8 +21,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    LAYOUTS_DIR, PLAYBOOKS_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
-                                                   WIDGETS_DIR,
-                                                   FileType)
+                                                   WIDGETS_DIR, FileType)
 from demisto_sdk.commands.common.content.errors import ContentFactoryError
 from demisto_sdk.commands.common.content.objects.abstract_objects import (
     JSONObject, YAMLObject)

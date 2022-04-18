@@ -1,8 +1,10 @@
-from demisto_sdk.commands.common.constants import (WIZARD, FILETYPE_TO_DEFAULT_FROMVERSION, FileType)
+import click
+
+from demisto_sdk.commands.common.constants import (
+    FILETYPE_TO_DEFAULT_FROMVERSION, WIZARD, FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
-import click
 
 
 class WizardValidator(ContentEntityValidator):
@@ -33,6 +35,10 @@ class WizardValidator(ContentEntityValidator):
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     deps_are_valid = False
         return deps_are_valid
+
+    def is_valid_version(self):
+        # not validated
+        return True
 
     def is_valid_file(self, validate_rn=True, id_set_file=None):
         return all((

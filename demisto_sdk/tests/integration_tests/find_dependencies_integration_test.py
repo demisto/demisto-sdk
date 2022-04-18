@@ -28,7 +28,8 @@ EMPTY_ID_SET = {
     'GenericModules': [],
     'GenericDefinitions': [],
     'Lists': [],
-    'Jobs': []
+    'Jobs': [],
+    'Wizards': [],
 }
 
 
@@ -93,7 +94,6 @@ class TestFindDependencies:  # Use classes to speed up test - multi threaded py 
         assert secho.call_args_list[14][0][0] == '### Generic Fields'
         assert secho.call_args_list[15][0][0] == '### Generic Modules'
         assert secho.call_args_list[16][0][0] == '### Jobs'
-        assert secho.call_args_list[17][0][0] == '### Wizards'  # last log is regarding all the deps
         assert secho.call_args_list[17][0][0] == 'All level dependencies are: []'  # last log is regarding all the deps        assert result.exit_code == 0
         assert result.stderr == ""
 

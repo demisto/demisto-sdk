@@ -38,10 +38,10 @@ def timer(group_name='Common'):
         def wrapper_timer(*args, **kwargs):
             nonlocal total_time, call_count
             if group_name == 'lint':
-                if pack_name := args[0]._pack_name:
-                    if func.__qualname__ not in packs:
-                        packs[func.__qualname__] = []
-                    packs[func.__qualname__].append((pack_name, 0))
+                pack_name = args[0]._pack_name
+                if func.__qualname__ not in packs:
+                    packs[func.__qualname__] = []
+                packs[func.__qualname__].append((pack_name, '-1'))  # to see who is stuck (deadlock?)
             tic = time.perf_counter()
             value = func(*args, **kwargs)
             toc = time.perf_counter()
@@ -51,7 +51,7 @@ def timer(group_name='Common'):
             total_time += elapsed_time
             call_count += 1
 
-            if group_name == 'lint' and pack_name:
+            if group_name == 'lint':
                 packs[func.__qualname__][-1] = (pack_name, f'{elapsed_time:0.4f}')
             return value
 
@@ -124,6 +124,7 @@ def write_measure_to_file(time_measurements_dir, group_name, csv_data):
                 file.write(f"\n{','.join(stat)}")
     except Exception as e:
         logger.error(f"can't write time measure to file {e}")
+
 
 def write_lint_measures(time_measurements_dir, func_name, data):
     try:

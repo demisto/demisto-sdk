@@ -241,7 +241,6 @@ class ReadMeValidator(BaseValidator):
             return False
         return True
 
-    @error_codes('RM108')
     def check_readme_relative_image_paths(self, is_pack_readme: bool = False) -> list:
         """ Validate readme images relative paths.
             (1) prints an error if relative paths in the pack README are found since they are not supported.
@@ -290,7 +289,6 @@ class ReadMeValidator(BaseValidator):
 
         return error_list
 
-    @error_codes('RM108')
     def check_readme_absolute_image_paths(self, is_pack_readme: bool = False) -> list:
         """ Validate readme images absolute paths - Check if absolute paths are not broken.
 

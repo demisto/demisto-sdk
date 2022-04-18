@@ -109,6 +109,10 @@ This will validate all files under the content pack `HelloWorld`
 This will validate all files under the content pack `HelloWorld` using only the validation corresponds to the error code BA101.
 <br><br>
 
+`demisto-sdk validate -i Packs/HelloWorld --run-specific-validations BA`
+This will validate all files under the content pack `HelloWorld` using only the validations from error type of BA.
+<br><br>
+
 ### Error Codes and Ignoring Them
 Starting in version 1.0.9 of Demisto-SDK, each error found by validate (excluding `pykwalify` errors) has an error
 code attached to it - the code can be found in brackets preceding the error itself.

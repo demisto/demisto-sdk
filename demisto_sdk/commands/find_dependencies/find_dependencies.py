@@ -1662,41 +1662,6 @@ class PackDependencies:
         return all_job_dependencies
 
     @staticmethod
-    def _collect_wizards_dependencies(pack_wizards: list,
-                                      id_set: dict,
-                                      verbose: bool,
-                                      exclude_ignored_dependencies: bool = True,
-                                      get_dependent_items: bool = False,
-                                      marketplace: str = '',
-                                      ) -> Union[Tuple[Any, Any], Set[Any]]:
-        """
-        Collects integrations dependencies. If get_dependent_on flag is on, collect the items causing the dependencies
-        and the packs containing them.
-
-        Args:
-            pack_wizards: collection of pack job data.
-            id_set: id set json.
-            verbose: Whether to log the dependencies to the console.
-            exclude_ignored_dependencies: Determines whether to include unsupported dependencies or not.
-            marketplace: The dependency calculation desired marketplace.
-
-        Returns:
-            set: dependencies data that includes pack id and whether is mandatory or not.
-            if get_dependent_on: returns also dict: found {pack, (item_type, item_id)} ids
-
-        """
-        # TODO: Reimplement
-        all_wizard_dependencies: set = set()
-        items_dependencies: dict = dict()
-
-        if verbose:
-            click.secho('### Wizards', fg='white')
-
-        if get_dependent_items:
-            return all_wizard_dependencies, items_dependencies
-        return all_wizard_dependencies
-
-    @staticmethod
     def _collect_pack_items(pack_id: str, id_set: dict) -> dict:
         """
         Collects script and playbook content items inside specific pack.
@@ -1905,21 +1870,12 @@ class PackDependencies:
             marketplace=marketplace,
         )
 
-        wizards_dependencies, wizards_items_dependencies = PackDependencies._collect_wizards_dependencies(
-            pack_items['wizards'],
-            id_set,
-            verbose,
-            exclude_ignored_dependencies,
-            get_dependent_items=True,
-            marketplace=marketplace
-        )
-
         pack_dependencies = (
             scripts_dependencies | playbooks_dependencies | layouts_dependencies | incidents_fields_dependencies |
             indicators_types_dependencies | integrations_dependencies | incidents_types_dependencies |
             classifiers_dependencies | mappers_dependencies | widget_dependencies | dashboards_dependencies |
             reports_dependencies | generic_types_dependencies | generic_modules_dependencies |
-            generic_fields_dependencies | jobs_dependencies | wizards_dependencies
+            generic_fields_dependencies | jobs_dependencies
         )
 
         items_depenencies = {**scripts_items_dependencies, **playbooks_items_dependencies, **widgets_items_dependencies,

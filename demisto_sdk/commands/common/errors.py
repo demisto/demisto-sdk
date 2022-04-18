@@ -412,13 +412,10 @@ ERROR_CODE = {
     },
 
     # WZ - Wizards
-    "invalid_fromversion_in_wizard": {
-        'code': "WZ100", 'ui_applicable': False,
-        'related_field': 'fromVersion'
-    },
-    "invalid_content_item_id_wizard": {
-        'code': "WZ101", 'ui_applicable': False,
-        'related_field': '',
+    "invalid_dependency_pack_in_wizard": {
+        'code': "WZ100",
+        'ui_applicable': False,
+        'related_field': 'dependency_packs'
     }
 }
 
@@ -2229,10 +2226,10 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_fromversion_in_wizard(version):
-        return f'fromVersion field in Job needs to be at least {FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)} (found {version})'
+    def invalid_content_item_id_wizard(invalid_content_item_id):
+        return f'Failed to find {invalid_content_item_id} in content repo. Please check it\'s written correctly.'
 
     @staticmethod
     @error_code_decorator
-    def invalid_content_item_id_wizard(invalid_content_item_id):
-        return f'Failed to find {invalid_content_item_id} in content repo. Please check it\'s written correctly.'
+    def invalid_dependency_pack_in_wizard(dep_pack):
+        return f"Dependency Pack {dep_pack} was not found. Please check the it's written correctly."

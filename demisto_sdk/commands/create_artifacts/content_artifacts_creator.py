@@ -432,7 +432,7 @@ class ContentItemsHandler:
     def add_wizards_as_content_item(self, content_object: ContentObject):
         self.content_items[ContentItems.WIZARD].append({
             'name': content_object.get('name', ''),
-            'description': content_object.get('description', '')
+            'description': content_object.get('description', ''),
         })
 
 

@@ -1060,7 +1060,7 @@ class ValidateManager:
         wizard_validator = WizardValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                            print_as_warnings=self.print_ignored_errors,
                                            json_file_path=self.json_file_path)
-        return wizard_validator.is_valid_file(validate_rn=False)
+        return wizard_validator.is_valid_file(validate_rn=False, id_set_file=self.id_set_file)
 
     def validate_generic_field(self, structure_validator, pack_error_ignore_list, is_added_file):
         generic_field_validator = GenericFieldValidator(structure_validator, ignored_errors=pack_error_ignore_list,

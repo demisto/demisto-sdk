@@ -1371,7 +1371,10 @@ def test_get_from_version_at_update_rn(integration):
 @pytest.mark.parametrize('data, answer', [({'brandName': 'TestBrand'}, 'TestBrand'), ({'id': 'TestID'}, 'TestID'),
                                           ({'name': 'TestName'}, 'TestName'), ({'TypeName': 'TestType'}, 'TestType'),
                                           ({'display': 'TestDisplay'}, 'TestDisplay'),
-                                          ({'layout': {'id': 'Testlayout'}}, 'Testlayout')])
+                                          ({'trigger_id': 'T Name'}, 'T Name'),
+                                          ({'layout': {'id': 'Testlayout'}}, 'Testlayout'),
+                                          ({'dashboards_data': [{'name': 'D Name'}]}, 'D Name'),
+                                          ({'templates_data': [{'report_name': 'R Name'}]}, 'R Name')])
 def test_get_display_name(data, answer, mocker):
     """
         Given

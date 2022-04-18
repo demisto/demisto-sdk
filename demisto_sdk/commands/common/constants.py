@@ -172,6 +172,12 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.GENERIC_FIELD: 'Object Fields',
     FileType.LISTS: 'Lists',
     FileType.JOB: 'Jobs',
+    FileType.PARSING_RULE: 'Parsing Rules',
+    FileType.MODELING_RULE: 'Modeling Rules',
+    FileType.CORRELATION_RULE: 'Correlation Rules',
+    FileType.XSIAM_DASHBOARD: 'XSIAM Dashboards',
+    FileType.XSIAM_REPORT: 'XSIAM Reports',
+    FileType.TRIGGER: 'Triggers',
     FileType.WIZARD: 'Wizard',
 }
 
@@ -1524,3 +1530,17 @@ FileType_ALLOWED_TO_DELETE = {
     FileType.DOC_IMAGE,
     FileType.TEST_PLAYBOOK,
 }
+
+
+class ParameterType(Enum):
+    STRING = 0
+    NUMBER = 1
+    ENCRYPTED = 4
+    BOOLEAN = 8
+    AUTH = 9
+    DOWNLOAD_LINK = 11
+    TEXT_AREA = 12
+    INCIDENT_TYPE = 13
+    TEXT_AREA_ENCRYPTED = 14
+    SINGLE_SELECT = 15
+    MULTI_SELECT = 16

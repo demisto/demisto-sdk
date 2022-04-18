@@ -38,10 +38,10 @@ def timer(group_name='Common'):
         def wrapper_timer(*args, **kwargs):
             nonlocal total_time, call_count
             if group_name == 'lint':
-                pack_name = args[0]._pack_name
-                if func.__qualname__ not in packs:
-                    packs[func.__qualname__] = []
-                packs[func.__qualname__].append((pack_name, 0))
+                if pack_name := args[0]._pack_name:
+                    if func.__qualname__ not in packs:
+                        packs[func.__qualname__] = []
+                    packs[func.__qualname__].append((pack_name, 0))
             tic = time.perf_counter()
             value = func(*args, **kwargs)
             toc = time.perf_counter()
@@ -51,8 +51,8 @@ def timer(group_name='Common'):
             total_time += elapsed_time
             call_count += 1
 
-            if group_name == 'lint':
-                packs[func.__qualname__][-1] = (pack_name, elapsed_time)
+            if group_name == 'lint' and pack_name:
+                packs[func.__qualname__][-1] = (pack_name, f'{elapsed_time:0.4f}')
             return value
 
         def stat_info():
@@ -76,8 +76,9 @@ def report_time_measurements(group_name='Common', time_measurements_dir='time_me
     """
     if group_name == 'lint':
         for func_name, data in packs.items():
+            data = sorted(data, key=lambda x: float(x[1]), reverse=True)
             write_mesure_to_logger(func_name, data)
-            write_measure_to_file(time_measurements_dir, func_name, data)
+            write_lint_measures(time_measurements_dir, func_name, data)
     timers = registered_timers.get(group_name)
     if timers:
 

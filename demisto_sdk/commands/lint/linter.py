@@ -108,6 +108,14 @@ class Linter:
             "warning_code": SUCCESS,
         }
 
+        yml_file: Optional[Path] = self._pack_abs_dir.glob([r'*.yaml', r'*.yml', r'!*unified*.yml'], flags=NEGATE)
+        if not yml_file:
+            logger.info(f"{self._pack_abs_dir} - Skipping no yaml file found {yml_file}")
+            self._pkg_lint_status["errors"].append('Unable to find yml file in package')
+        else:
+            self._yml_file = next(yml_file)
+        self._pack_name = self._yml_file.stem
+
     @timer(group_name='lint')
     def run_dev_packages(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
                          no_xsoar_linter: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, no_test: bool, modules: dict,
@@ -180,29 +188,17 @@ class Linter:
             bool: Indicating if to continue further or not, if False exit Thread, Else continue.
         """
         # Looking for pkg yaml
-        yml_file: Optional[Path] = self._pack_abs_dir.glob([r'*.yaml', r'*.yml', r'!*unified*.yml'], flags=NEGATE)
-        if not yml_file:
-            logger.info(f"{self._pack_abs_dir} - Skipping no yaml file found {yml_file}")
-            self._pkg_lint_status["errors"].append('Unable to find yml file in package')
-            return True
-        else:
-            try:
-                yml_file = next(yml_file)
-            except StopIteration:
-                return True
-        # Get pack name
-        self._pack_name = yml_file.stem
         log_prompt = f"{self._pack_name} - Facts"
-        self._pkg_lint_status["pkg"] = yml_file.stem
-        logger.info(f"{log_prompt} - Using yaml file {yml_file}")
+        self._pkg_lint_status["pkg"] = self._pack_name
+        logger.info(f"{log_prompt} - Using yaml file {self._yml_file}")
         # Parsing pack yaml - in order to verify if check needed
         try:
 
             script_obj: Dict = {}
-            yml_obj: Dict = YAML_Handler().load(yml_file)
+            yml_obj: Dict = YAML_Handler().load(self._yml_file)
             if isinstance(yml_obj, dict):
                 script_obj = yml_obj.get('script', {}) if isinstance(yml_obj.get('script'), dict) else yml_obj
-            self._facts['is_script'] = True if 'Scripts' in yml_file.parts else False
+            self._facts['is_script'] = True if 'Scripts' in self._yml_file.parts else False
             self._facts['is_long_running'] = script_obj.get('longRunning')
             self._facts['commands'] = self._get_commands_list(script_obj)
             self._pkg_lint_status["pack_type"] = script_obj.get('type')

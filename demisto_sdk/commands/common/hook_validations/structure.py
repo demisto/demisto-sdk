@@ -94,7 +94,7 @@ class StructureValidator(BaseValidator):
 
             if self.old_file:  # In case the file is modified
                 click.secho(f'Validating backwards compatibility for {self.file_path}')
-                answers.append(not self.is_id_modified())
+                answers.append(self.is_id_not_modified())
                 answers.append(self.is_valid_fromversion_on_modified())
 
             return all(answers)
@@ -202,7 +202,7 @@ class StructureValidator(BaseValidator):
         return True
 
     @error_codes('ST102')
-    def is_id_modified(self):
+    def is_id_not_modified(self):
         # type: () -> bool
         """Check if the ID of the file has been changed.
 
@@ -211,17 +211,17 @@ class StructureValidator(BaseValidator):
             (bool): Whether the file's ID has been modified or not.
         """
         if not self.old_file:
-            return False
+            return True
 
         old_version_id = self.get_file_id_from_loaded_file_data(self.old_file)
         new_file_id = self.get_file_id_from_loaded_file_data(self.current_file)
         if not (new_file_id == old_version_id):
             error_message, error_code = Errors.file_id_changed(old_version_id, new_file_id)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
-                return True
+                return False
 
-        # False - the id has not changed.
-        return False
+        # True - the id has not changed.
+        return True
 
     @error_codes('ST103')
     def is_valid_fromversion_on_modified(self):

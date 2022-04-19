@@ -1369,6 +1369,7 @@ class ValidateManager:
         click.secho("\nNo duplicated release notes found.\n", fg="bright_green")
         return True
 
+    @error_codes('RN106')
     def validate_no_missing_release_notes(self, modified_files, old_format_files, added_files):
         """Validate that there are no missing RN for changed files
 
@@ -1420,7 +1421,7 @@ class ValidateManager:
                     error_message, error_code = Errors.missing_release_notes_for_pack(pack)
                 if not BaseValidator(ignored_errors=ignored_errors_list,
                                      print_as_warnings=self.print_ignored_errors,
-                                     json_file_path=self.json_file_path).handle_error(
+                                     json_file_path=self.json_file_path, specific_validations=self.specific_validations).handle_error(
                     error_message, error_code,
                     file_path=os.path.join(os.getcwd(), PACKS_DIR, pack, PACKS_PACK_META_FILE_NAME)
                 ):

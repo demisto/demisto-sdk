@@ -91,10 +91,10 @@ class BaseValidator:
         Returns:
             str. Will return the formatted error message if it is not ignored, an None if it is ignored
         """
-        if self.specific_validations:
-            if not self.should_run_validation(error_code):
-                # if the error code is not specified in the specific_validations list, we exit the function and return None
-                return None
+        # if self.specific_validations:
+        # if not self.should_run_validation(error_code):
+        # if the error code is not specified in the specific_validations list, we exit the function and return None
+        # return None
 
         def formatted_error_str(error_type):
             if error_type not in {'ERROR', 'WARNING'}:

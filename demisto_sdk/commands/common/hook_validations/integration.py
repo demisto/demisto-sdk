@@ -81,9 +81,9 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_not_valid_display_configuration(),
             self.is_changed_removed_yml_fields(),
             # will move to is_valid_integration after https://github.com/demisto/etc/issues/17949
-            not self.is_outputs_for_reputations_commands_valid(),
+            self.is_outputs_for_reputations_commands_valid(),
         ]
-        return not any(answers)
+        return all(answers)
 
     def core_integration_validations(self, validate_rn: bool = True):
         """Perform the core integration validations (common to both beta and regular integrations)
@@ -470,7 +470,9 @@ class IntegrationValidator(ContentEntityValidator):
                         error_message, error_code = Errors.dbot_invalid_description(command_name,
                                                                                     missing_descriptions,
                                                                                     context_standard)
-                        self.handle_error(error_message, error_code, file_path=self.file_path, warning=True)
+                        if self.handle_error(error_message, error_code, file_path=self.file_path, warning=True):
+                            self.is_valid = False
+                            output_for_reputation_valid = False
 
                 # validate the IOC output
                 reputation_output = IOC_OUTPUTS_DICT.get(command_name)
@@ -513,9 +515,9 @@ class IntegrationValidator(ContentEntityValidator):
                     if self.handle_error(error_message, error_code, file_path=self.file_path,
                                          warning=self.structure_validator.quiet_bc):
                         self.is_valid = False
-                        return True
+                        return False
 
-        return False
+        return True
 
     def is_valid_beta(self):
         # type: () -> bool
@@ -686,7 +688,7 @@ class IntegrationValidator(ContentEntityValidator):
         """Check if a command name or argument as been changed.
 
         Returns:
-            bool. Whether a command name or argument as been changed.
+            bool. True if valid, and False otherwise.
         """
         current_command_to_args = self._get_command_to_args(self.current_file)
         old_command_to_args = self._get_command_to_args(self.old_file)
@@ -698,9 +700,9 @@ class IntegrationValidator(ContentEntityValidator):
                 if self.handle_error(error_message, error_code, file_path=self.file_path,
                                      warning=self.structure_validator.quiet_bc):
                     self.is_valid = False
-                    return True
+                    return False
 
-        return False
+        return True
 
     @staticmethod
     def _is_sub_set(supposed_bigger_list, supposed_smaller_list):
@@ -750,11 +752,11 @@ class IntegrationValidator(ContentEntityValidator):
         old_command_to_context_paths = self._get_command_to_context_paths(self.old_file)
         # if old integration command has no outputs, no change of context will occur.
         if not old_command_to_context_paths:
-            return False
+            return True
         # if new integration command has no outputs, and old one does, a change of context will occur.
         if not current_command_to_context_paths and old_command_to_context_paths \
                 and not self.structure_validator.quiet_bc:
-            return True
+            return False
         for old_command, old_context_paths in old_command_to_context_paths.items():
             if old_command in current_command_to_context_paths.keys():
                 if not self._is_sub_set(current_command_to_context_paths[old_command], old_context_paths):
@@ -762,15 +764,15 @@ class IntegrationValidator(ContentEntityValidator):
                     if self.handle_error(error_message, error_code, file_path=self.file_path,
                                          warning=self.structure_validator.quiet_bc):
                         self.is_valid = False
-                        return True
+                        return False
 
-        return False
+        return True
 
     @error_codes('IN129')
     def is_removed_integration_parameters(self):
         # type: () -> bool
         """Check if integration parameters were removed."""
-        is_removed_parameter = False
+        is_removed_parameter = True
         current_configuration = self.current_file.get('configuration', [])
         old_configuration = self.old_file.get('configuration', [])
         current_param_names = {param.get('name') for param in current_configuration}
@@ -781,7 +783,7 @@ class IntegrationValidator(ContentEntityValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path,
                                  warning=self.structure_validator.quiet_bc):
                 self.is_valid = False
-                is_removed_parameter = True
+                is_removed_parameter = False
 
         return is_removed_parameter
 
@@ -803,7 +805,9 @@ class IntegrationValidator(ContentEntityValidator):
 
     @error_codes('IN147')
     def is_changed_removed_yml_fields(self):
-        """checks if some specific Fields in the yml file were changed from true to false or removed"""
+        """checks if some specific Fields in the yml file were changed from true to false or removed
+        Retruns True if valid, and false otherwise.
+        """
         fields = ['feed', 'isfetch', 'longRunning', 'longRunningPort', 'ismappable', 'isremotesyncin',
                   'isremotesyncout']
         currentscript = self.current_file.get('script', {})
@@ -826,8 +830,8 @@ class IntegrationValidator(ContentEntityValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path,
                                  warning=self.structure_validator.quiet_bc):
                 self.is_valid = False
-                return True
-        return False
+                return False
+        return True
 
     @error_codes('IN116')
     def is_added_required_fields(self):
@@ -835,7 +839,7 @@ class IntegrationValidator(ContentEntityValidator):
         """Check if required field were added."""
         current_field_to_required = self._get_field_to_required_dict(self.current_file)
         old_field_to_required = self._get_field_to_required_dict(self.old_file)
-        is_added_required = False
+        is_added_required = True
         for field, required in current_field_to_required.items():
             if field in old_field_to_required.keys():
                 # if required is True and old_field is False.
@@ -844,7 +848,7 @@ class IntegrationValidator(ContentEntityValidator):
                     if self.handle_error(error_message, error_code, file_path=self.file_path,
                                          warning=self.structure_validator.quiet_bc):
                         self.is_valid = False
-                        is_added_required = True
+                        is_added_required = False
 
             # if required is True but no old field.
             elif required:
@@ -852,7 +856,7 @@ class IntegrationValidator(ContentEntityValidator):
                 if self.handle_error(error_message, error_code, file_path=self.file_path,
                                      warning=self.structure_validator.quiet_bc):
                     self.is_valid = False
-                    is_added_required = True
+                    is_added_required = False
 
         return is_added_required
 
@@ -870,6 +874,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         Returns:
             bool. Whether the display is there for non-hidden fields.
+            Returns True if valid, and false otherwise.
         """
         configuration = self.current_file.get('configuration', [])
         for configuration_param in configuration:
@@ -884,7 +889,7 @@ class IntegrationValidator(ContentEntityValidator):
                     if self.handle_error(error_message, error_code, file_path=self.file_path,
                                          warning=self.structure_validator.quiet_bc):
                         self.is_valid = False
-                        return True
+                        return False
 
             elif not is_field_hidden and not configuration_display and not configuration_param.get('displaypassword') \
                     and configuration_param['name'] not in ('feedExpirationPolicy', 'feedExpirationInterval'):
@@ -892,9 +897,9 @@ class IntegrationValidator(ContentEntityValidator):
                 if self.handle_error(error_message, error_code, file_path=self.file_path,
                                      warning=self.structure_validator.quiet_bc):
                     self.is_valid = False
-                    return True
+                    return False
 
-        return False
+        return True
 
     def is_docker_image_valid(self):
         # type: () -> bool

@@ -1,5 +1,6 @@
 import os
 from copy import deepcopy
+from pickle import TRUE
 from typing import Dict, List, Optional
 
 import pytest
@@ -56,10 +57,10 @@ class TestIntegrationValidator:
     REQUIED_FIELDS_FALSE = {"configuration": [{"name": "test", "required": False}]}
     REQUIED_FIELDS_TRUE = {"configuration": [{"name": "test", "required": True}]}
     IS_ADDED_REQUIRED_FIELDS_INPUTS = [
-        (REQUIED_FIELDS_FALSE, REQUIED_FIELDS_TRUE, False),
-        (REQUIED_FIELDS_TRUE, REQUIED_FIELDS_FALSE, True),
-        (REQUIED_FIELDS_TRUE, REQUIED_FIELDS_TRUE, False),
-        (REQUIED_FIELDS_FALSE, REQUIED_FIELDS_FALSE, False)
+        (REQUIED_FIELDS_FALSE, REQUIED_FIELDS_TRUE, True),
+        (REQUIED_FIELDS_TRUE, REQUIED_FIELDS_FALSE, False),
+        (REQUIED_FIELDS_TRUE, REQUIED_FIELDS_TRUE, True),
+        (REQUIED_FIELDS_FALSE, REQUIED_FIELDS_FALSE, True)
     ]
 
     @pytest.mark.parametrize("current_file, old_file, answer", IS_ADDED_REQUIRED_FIELDS_INPUTS)
@@ -68,13 +69,13 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_added_required_fields() is answer
         structure.quiet_bc = True
-        assert validator.is_added_required_fields() is False  # if quiet_bc is true should always succeed
+        assert validator.is_added_required_fields() is True  # if quiet_bc is true should always succeed
 
     IS_CHANGED_REMOVED_YML_FIELDS_INPUTS = [
-        ({"script": {"isfetch": True, "feed": False}}, {"script": {"isfetch": True, "feed": False}}, False),
-        ({"script": {"isfetch": True}}, {"script": {"isfetch": True, "feed": False}}, False),
-        ({"script": {"isfetch": False, "feed": False}}, {"script": {"isfetch": True, "feed": False}}, True),
-        ({"script": {"feed": False}}, {"script": {"isfetch": True, "feed": False}}, True),
+        ({"script": {"isfetch": True, "feed": False}}, {"script": {"isfetch": True, "feed": False}}, True),
+        ({"script": {"isfetch": True}}, {"script": {"isfetch": True, "feed": False}}, True),
+        ({"script": {"isfetch": False, "feed": False}}, {"script": {"isfetch": True, "feed": False}}, False),
+        ({"script": {"feed": False}}, {"script": {"isfetch": True, "feed": False}}, False),
 
     ]
 
@@ -88,22 +89,22 @@ class TestIntegrationValidator:
         - running the validation is_changed_removed_yml_fields()
 
         Then
-        - upon removal or change of some fields from true to false: it should set is_valid to False and return True
-        - upon non removal or change of some fields from true to false: it should set is_valid to True and return False
+        - upon removal or change of some fields from true to false: it should set is_valid to False and return False
+        - upon non removal or change of some fields from true to false: it should set is_valid to True and return True
         """
 
         structure = mock_structure("", current_file, old_file)
         validator = IntegrationValidator(structure)
         assert validator.is_changed_removed_yml_fields() is answer
-        assert validator.is_valid is not answer
+        assert validator.is_valid is answer
         structure.quiet_bc = True
-        assert validator.is_changed_removed_yml_fields() is False  # if quiet_bc is true should always succeed
+        assert validator.is_changed_removed_yml_fields() is True  # if quiet_bc is true should always succeed
 
     IS_REMOVED_INTEGRATION_PARAMETERS_INPUTS = [
-        ({"configuration": [{"name": "test"}]}, {"configuration": [{"name": "test"}]}, False),
-        ({"configuration": [{"name": "test"}, {"name": "test2"}]}, {"configuration": [{"name": "test"}]}, False),
-        ({"configuration": [{"name": "test"}]}, {"configuration": [{"name": "test"}, {"name": "test2"}]}, True),
-        ({"configuration": [{"name": "test"}]}, {"configuration": [{"name": "old_param"}, {"name": "test2"}]}, True),
+        ({"configuration": [{"name": "test"}]}, {"configuration": [{"name": "test"}]}, True),
+        ({"configuration": [{"name": "test"}, {"name": "test2"}]}, {"configuration": [{"name": "test"}]}, True),
+        ({"configuration": [{"name": "test"}]}, {"configuration": [{"name": "test"}, {"name": "test2"}]}, False),
+        ({"configuration": [{"name": "test"}]}, {"configuration": [{"name": "old_param"}, {"name": "test2"}]}, False),
     ]
 
     @pytest.mark.parametrize("current_file, old_file, answer", IS_REMOVED_INTEGRATION_PARAMETERS_INPUTS)
@@ -116,15 +117,15 @@ class TestIntegrationValidator:
         - running the validation is_removed_integration_parameters()
 
         Then
-        - upon removal of parameters: it should set is_valid to False and return True
-        - upon non removal or addition of parameters: it should set is_valid to True and return False
+        - upon removal of parameters: it should set is_valid to False and return False
+        - upon non removal or addition of parameters: it should set is_valid to True and return True
         """
         structure = mock_structure("", current_file, old_file)
         validator = IntegrationValidator(structure)
         assert validator.is_removed_integration_parameters() is answer
-        assert validator.is_valid is not answer
+        assert validator.is_valid is answer
         structure.quiet_bc = True
-        assert validator.is_removed_integration_parameters() is False  # if quiet_bc is true should always succeed
+        assert validator.is_removed_integration_parameters() is True  # if quiet_bc is true should always succeed
 
     CONFIGURATION_JSON_1 = {"configuration": [{"name": "test", "required": False}, {"name": "test1", "required": True}]}
     EXPECTED_JSON_1 = {"test": False, "test1": True}
@@ -143,14 +144,14 @@ class TestIntegrationValidator:
                                         {"name": "test2", "outputs": [{"contextPath": "new command"}]}]
     IS_CONTEXT_CHANGED_NO_OUTPUTS = [{"name": "test"}]
     IS_CHANGED_CONTEXT_INPUTS = [
-        (IS_CONTEXT_CHANGED_OLD, IS_CONTEXT_CHANGED_OLD, False),
-        (IS_CONTEXT_CHANGED_NEW, IS_CONTEXT_CHANGED_OLD, True),
-        (IS_CONTEXT_CHANGED_NEW, IS_CONTEXT_CHANGED_ADDED_PATH, True),
-        (IS_CONTEXT_CHANGED_ADDED_PATH, IS_CONTEXT_CHANGED_NEW, False),
-        (IS_CONTEXT_CHANGED_ADDED_COMMAND, IS_CONTEXT_CHANGED_OLD, False),
-        (IS_CONTEXT_CHANGED_ADDED_COMMAND, IS_CONTEXT_CHANGED_NEW, True),
-        (IS_CONTEXT_CHANGED_NO_OUTPUTS, IS_CONTEXT_CHANGED_NO_OUTPUTS, False),
-        (IS_CONTEXT_CHANGED_NO_OUTPUTS, IS_CONTEXT_CHANGED_OLD, True),
+        (IS_CONTEXT_CHANGED_OLD, IS_CONTEXT_CHANGED_OLD, True),
+        (IS_CONTEXT_CHANGED_NEW, IS_CONTEXT_CHANGED_OLD, False),
+        (IS_CONTEXT_CHANGED_NEW, IS_CONTEXT_CHANGED_ADDED_PATH, False),
+        (IS_CONTEXT_CHANGED_ADDED_PATH, IS_CONTEXT_CHANGED_NEW, True),
+        (IS_CONTEXT_CHANGED_ADDED_COMMAND, IS_CONTEXT_CHANGED_OLD, True),
+        (IS_CONTEXT_CHANGED_ADDED_COMMAND, IS_CONTEXT_CHANGED_NEW, False),
+        (IS_CONTEXT_CHANGED_NO_OUTPUTS, IS_CONTEXT_CHANGED_NO_OUTPUTS, True),
+        (IS_CONTEXT_CHANGED_NO_OUTPUTS, IS_CONTEXT_CHANGED_OLD, False),
     ]
 
     @pytest.mark.parametrize("current, old, answer", IS_CHANGED_CONTEXT_INPUTS)
@@ -161,7 +162,7 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_changed_context_path() is answer
         structure.quiet_bc = True
-        assert validator.is_changed_context_path() is False  # if quiet_bc is true should always succeed
+        assert validator.is_changed_context_path() is True  # if quiet_bc is true should always succeed
 
     CHANGED_COMMAND_INPUT_1 = [{"name": "test", "arguments": [{"name": "test"}]}]
     CHANGED_COMMAND_INPUT_2 = [{"name": "test", "arguments": [{"name": "test1"}]}]
@@ -171,14 +172,14 @@ class TestIntegrationValidator:
     CHANGED_COMMAND_INPUT_ADDED_REQUIRED = [
         {"name": "test", "arguments": [{"name": "test"}, {"name": "test1", "required": True}]}]
     CHANGED_COMMAND_OR_ARG_INPUTS = [
-        (CHANGED_COMMAND_INPUT_1, CHANGED_COMMAND_INPUT_REQUIRED, False),
-        (CHANGED_COMMAND_INPUT_ADDED_REQUIRED, CHANGED_COMMAND_INPUT_1, True),
-        (CHANGED_COMMAND_INPUT_1, CHANGED_COMMAND_INPUT_ADDED_REQUIRED, True),
-        (CHANGED_COMMAND_INPUT_ADDED_ARG, CHANGED_COMMAND_INPUT_1, False),
-        (CHANGED_COMMAND_INPUT_1, CHANGED_COMMAND_INPUT_ADDED_ARG, True),
-        (CHANGED_COMMAND_INPUT_1, CHANGED_COMMAND_INPUT_2, True),
-        (CHANGED_COMMAND_NAME_INPUT, CHANGED_COMMAND_INPUT_1, True),
-        (CHANGED_COMMAND_NAME_INPUT, CHANGED_COMMAND_NAME_INPUT, False),
+        (CHANGED_COMMAND_INPUT_1, CHANGED_COMMAND_INPUT_REQUIRED, True),
+        (CHANGED_COMMAND_INPUT_ADDED_REQUIRED, CHANGED_COMMAND_INPUT_1, False),
+        (CHANGED_COMMAND_INPUT_1, CHANGED_COMMAND_INPUT_ADDED_REQUIRED, False),
+        (CHANGED_COMMAND_INPUT_ADDED_ARG, CHANGED_COMMAND_INPUT_1, True),
+        (CHANGED_COMMAND_INPUT_1, CHANGED_COMMAND_INPUT_ADDED_ARG, False),
+        (CHANGED_COMMAND_INPUT_1, CHANGED_COMMAND_INPUT_2, False),
+        (CHANGED_COMMAND_NAME_INPUT, CHANGED_COMMAND_INPUT_1, False),
+        (CHANGED_COMMAND_NAME_INPUT, CHANGED_COMMAND_NAME_INPUT, True),
     ]
 
     @pytest.mark.parametrize("current, old, answer", CHANGED_COMMAND_OR_ARG_INPUTS)
@@ -189,11 +190,11 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_changed_command_name_or_arg() is answer
         structure.quiet_bc = True
-        assert validator.is_changed_command_name_or_arg() is False  # if quiet_bc is true should always succeed
+        assert validator.is_changed_command_name_or_arg() is True  # if quiet_bc is true should always succeed
 
     WITHOUT_DUP = [{"name": "test"}, {"name": "test1"}]
     DUPLICATE_PARAMS_INPUTS = [
-        (WITHOUT_DUP, True)
+        (WITHOUT_DUP, False)
     ]
 
     @pytest.mark.parametrize("current, answer", DUPLICATE_PARAMS_INPUTS)
@@ -308,10 +309,10 @@ class TestIntegrationValidator:
         "subtype": "blabla"
     }
     INPUTS_SUBTYPE_TEST = [
-        (PYTHON2_SUBTYPE, PYTHON3_SUBTYPE, True),
-        (PYTHON3_SUBTYPE, PYTHON2_SUBTYPE, True),
-        (PYTHON3_SUBTYPE, PYTHON3_SUBTYPE, False),
-        (PYTHON2_SUBTYPE, PYTHON2_SUBTYPE, False)
+        (PYTHON2_SUBTYPE, PYTHON3_SUBTYPE, False),
+        (PYTHON3_SUBTYPE, PYTHON2_SUBTYPE, False),
+        (PYTHON3_SUBTYPE, PYTHON3_SUBTYPE, True),
+        (PYTHON2_SUBTYPE, PYTHON2_SUBTYPE, True)
     ]
 
     @pytest.mark.parametrize("current, old, answer", INPUTS_SUBTYPE_TEST)
@@ -321,7 +322,7 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_changed_subtype() is answer
         structure.quiet_bc = True
-        assert validator.is_changed_subtype() is False  # if quiet_bc is true should always succeed
+        assert validator.is_changed_subtype() is True  # if quiet_bc is true should always succeed
 
     INPUTS_VALID_SUBTYPE_TEST = [
         (PYTHON2_SUBTYPE, True),
@@ -628,14 +629,14 @@ class TestIntegrationValidator:
         {"name": "credentials", "type": 9, "display": "", "displaypassword": "some display password", "required": True,
          "hiddenusername": True}]
     IS_VALID_DISPLAY_INPUTS = [
-        (VALID_DISPLAY_NON_HIDDEN, True),
-        (VALID_DISPLAY_HIDDEN, True),
-        (INVALID_DISPLAY_NON_HIDDEN, False),
-        (INVALID_NO_DISPLAY_NON_HIDDEN, False),
-        (VALID_NO_DISPLAY_TYPE_EXPIRATION, True),
-        (INVALID_DISPLAY_TYPE_EXPIRATION, False),
-        (FEED_REQUIRED_PARAMS_STRUCTURE, True),
-        (INVALID_DISPLAY_BUT_VALID_DISPLAYPASSWORD, True)
+        (VALID_DISPLAY_NON_HIDDEN, False),
+        (VALID_DISPLAY_HIDDEN, False),
+        (INVALID_DISPLAY_NON_HIDDEN, True),
+        (INVALID_NO_DISPLAY_NON_HIDDEN, True),
+        (VALID_NO_DISPLAY_TYPE_EXPIRATION, False),
+        (INVALID_DISPLAY_TYPE_EXPIRATION, True),
+        (FEED_REQUIRED_PARAMS_STRUCTURE, False),
+        (INVALID_DISPLAY_BUT_VALID_DISPLAYPASSWORD, False)
     ]
 
     @pytest.mark.parametrize("configuration_setting, answer", IS_VALID_DISPLAY_INPUTS)
@@ -646,7 +647,7 @@ class TestIntegrationValidator:
         validator.current_file = current
         assert validator.is_not_valid_display_configuration() is not answer
         structure.quiet_bc = True
-        assert validator.is_not_valid_display_configuration() is False  # if quiet_bc is true should always succeed
+        assert validator.is_not_valid_display_configuration() is True  # if quiet_bc is true should always succeed
 
     VALID_FEED = [
         # Valid feed

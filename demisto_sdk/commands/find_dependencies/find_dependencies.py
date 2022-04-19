@@ -2122,7 +2122,9 @@ class PackDependencies:
             click.echo(click.style(dependent_packs, bold=True))
 
         elif dependency:
-            input_pack_name = get_pack_name(input_paths[0])
+            input_pack_name = ''
+            if input_paths:
+                input_pack_name = get_pack_name(input_paths[0])
             dependency_pack_name = get_pack_name(dependency)
             dependencies = find_dependencies_between_two_packs(input_paths, output_path, dependency, id_set_path,
                                                                verbose)
@@ -2501,7 +2503,9 @@ def find_dependencies_between_two_packs(input_paths: Tuple = None, output_path: 
     """
     dependent_packs, _ = get_packs_dependent_on_given_packs([dependency], id_set_path,  # type: ignore[arg-type]
                                                             output_path, verbose=True)
-    input_pack_name = get_pack_name(input_paths[0])
+    input_pack_name = ''
+    if input_paths:
+        input_pack_name = get_pack_name(input_paths[0])
     dependency_pack_name = get_pack_name(dependency)
     dependent_items = dependent_packs[dependency_pack_name].get('packsDependentOnThisPackMandatorily')
     if input_pack_name in dependent_items:

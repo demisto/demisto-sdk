@@ -1,6 +1,5 @@
 import os
 from copy import deepcopy
-from pickle import TRUE
 from typing import Dict, List, Optional
 
 import pytest
@@ -194,7 +193,7 @@ class TestIntegrationValidator:
 
     WITHOUT_DUP = [{"name": "test"}, {"name": "test1"}]
     DUPLICATE_PARAMS_INPUTS = [
-        (WITHOUT_DUP, False)
+        (WITHOUT_DUP, True)
     ]
 
     @pytest.mark.parametrize("current, answer", DUPLICATE_PARAMS_INPUTS)

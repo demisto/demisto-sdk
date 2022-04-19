@@ -285,7 +285,7 @@ class ScriptValidator(ContentEntityValidator):
         if scripts_folder == 'Scripts':
             if not script_file.startswith('script-'):
 
-                error_message, error_code = Errors.is_valid_script_file_path_in_scripts_folder(script_file)
+                error_message, error_code = Errors.is_valid_script_file_path_in_folder(script_file)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 

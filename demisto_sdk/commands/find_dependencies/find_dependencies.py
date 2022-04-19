@@ -2505,17 +2505,10 @@ def find_dependencies_between_two_packs(input_paths: Tuple = None, output_path: 
     dependency_pack_name = get_pack_name(dependency)
     dependent_items = dependent_packs[dependency_pack_name].get('packsDependentOnThisPackMandatorily')
     if input_pack_name in dependent_items:
-        # The input and the dependency arguments are in reverse by design since we're using the function
-        # get_packs_dependent_on_given_packs
-        # print_success(f"The pack \"{input_pack_name}\" depends on \"{dependency_pack_name}\" "
-        #               f"with the following items:")
         packs_dependencies = dependent_items.get(input_pack_name)
         dependencies = json.dumps(packs_dependencies, indent=4)
 
         return dependencies
-        # click.echo(click.style(dependencies, bold=True))
-    # else:
-    #     print_warning(f"Could not find dependencies between the two packs: {input_pack_name} and {dependency}")
 
 
 def update_items_dependencies(pack_dependencies_data, items_dependencies, current_entity_type, current_entity_id,

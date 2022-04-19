@@ -94,7 +94,7 @@ def report_time_measurements(group_name='Common', time_measurements_dir='time_me
         for func_name, data in packs.items():
             data = {k: v for k, v in sorted(data.items(), key=lambda x: float(x[1].total_time), reverse=True)}
             data = [(k, *v) for k, v in data.items()]
-            if 'run_dev_packages' in func_name:  # not spam the logger to much
+            if 'run_pac' in func_name:  # not spam the logger to much
                 write_mesure_to_logger(func_name, data, is_packs=True)
             write_measure_to_file(time_measurements_dir, func_name, data, is_packs=True)
     timers = registered_timers.get(group_name)

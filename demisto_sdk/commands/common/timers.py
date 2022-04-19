@@ -1,7 +1,10 @@
 # STD python packages
 import logging
 import time
+from dataclasses import dataclass, astuple
+from typing import NamedTuple, Optional
 from collections import defaultdict, namedtuple
+from datetime import datetime
 from functools import wraps
 from pathlib import Path
 
@@ -15,11 +18,23 @@ logger = logging.getLogger('demisto-sdk')
 
 CSV_HEADERS = ['Function', 'Avg', 'Total', 'Call count']
 
+PACK_CSV_HEADERS = ['Pack', 'Start Time', 'End Time', 'Total Time']
+
 StatInfo = namedtuple("StatInfo", ["total_time", "call_count", "avg_time"])
 
 registered_timers: dict = defaultdict(set)
 
-packs = {}
+packs: dict = {}
+
+
+@dataclass()
+class PackStatInfo:
+    start_time: str
+    end_time: Optional[str] = None
+    total_time: Optional[str] = None
+
+    def __iter__(self):
+        return iter(astuple(self))
 
 
 def timer(group_name='Common'):
@@ -40,8 +55,8 @@ def timer(group_name='Common'):
             if group_name == 'lint':
                 pack_name = args[0]._pack_name
                 if func.__qualname__ not in packs:
-                    packs[func.__qualname__] = []
-                packs[func.__qualname__].append((pack_name, '-1'))  # to see who is stuck (deadlock?)
+                    packs[func.__qualname__] = {}
+                packs[func.__qualname__][pack_name] = PackStatInfo(start_time=datetime.now().isoformat())
             tic = time.perf_counter()
             value = func(*args, **kwargs)
             toc = time.perf_counter()
@@ -52,7 +67,8 @@ def timer(group_name='Common'):
             call_count += 1
 
             if group_name == 'lint':
-                packs[func.__qualname__][-1] = (pack_name, f'{elapsed_time:0.4f}')
+                packs[func.__qualname__][pack_name].end_time = datetime.now().isoformat()
+                packs[func.__qualname__][pack_name].total_time = f'{elapsed_time:0.4f}'
             return value
 
         def stat_info():
@@ -76,9 +92,11 @@ def report_time_measurements(group_name='Common', time_measurements_dir='time_me
     """
     if group_name == 'lint':
         for func_name, data in packs.items():
-            data = sorted(data, key=lambda x: float(x[1]), reverse=True)
-            write_mesure_to_logger(func_name, data)
-            write_lint_measures(time_measurements_dir, func_name, data)
+            data = {k: v for k, v in sorted(data.items(), key=lambda x: float(x[1].total_time), reverse=True)}
+            data = [(k, *v) for k, v in data.items()]
+            if 'run_dev_packages' in func_name:  # not spam the logger to much
+                write_mesure_to_logger(func_name, data, is_packs=True)
+            write_measure_to_file(time_measurements_dir, func_name, data, is_packs=True)
     timers = registered_timers.get(group_name)
     if timers:
 
@@ -102,38 +120,25 @@ def report_time_measurements(group_name='Common', time_measurements_dir='time_me
         logger.debug(f'There is no timers registered for the group {group_name}')
 
 
-def write_mesure_to_logger(name, csv_data):
+def write_mesure_to_logger(name, csv_data, is_packs=False):
     sentence = f'Time measurements stat for {name}'
     output_msg = f"\n{Colors.Fg.cyan}{'#' * len(sentence)}\n" \
                  f"{sentence}\n" \
                  f"{'#' * len(sentence)}\n{Colors.reset}"
 
-    stat_info_table = tabulate(csv_data, headers=CSV_HEADERS)
+    stat_info_table = tabulate(csv_data, headers=CSV_HEADERS if not is_packs else PACK_CSV_HEADERS)
     output_msg += stat_info_table
     logger.info(output_msg)
 
 
-def write_measure_to_file(time_measurements_dir, group_name, csv_data):
+def write_measure_to_file(time_measurements_dir, group_name, csv_data, is_packs=False):
     try:
         time_measurements_path = Path(time_measurements_dir)
         if not time_measurements_path.exists():
             time_measurements_path.mkdir(parents=True)
         with open(time_measurements_path / f'{group_name}_time_measurements.csv', 'w+') as file:
-            file.write(','.join(CSV_HEADERS))
+            file.write(','.join(CSV_HEADERS if not is_packs else PACK_CSV_HEADERS))
             for stat in csv_data:
-                file.write(f"\n{','.join(stat)}")
-    except Exception as e:
-        logger.error(f"can't write time measure to file {e}")
-
-
-def write_lint_measures(time_measurements_dir, func_name, data):
-    try:
-        time_measurements_path = Path(time_measurements_dir)
-        if not time_measurements_path.exists():
-            time_measurements_path.mkdir(parents=True)
-        with open(time_measurements_path / f'{func_name}_time_measurements.csv', 'w+') as file:
-            file.write(','.join(['PACK_NAME', 'TIME (Fractional seconds)']))
-            for stat in data:
                 file.write(f"\n{','.join(stat)}")
     except Exception as e:
         logger.error(f"can't write time measure to file {e}")

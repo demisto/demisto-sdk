@@ -16,6 +16,7 @@ from demisto_sdk.commands.common.constants import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, MODELING_RULES_DIR, PARSING_RULES_DIR,
     FileType)
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.timeout import timeout
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
                                                get_release_note_entries,
@@ -25,6 +26,7 @@ from demisto_sdk.commands.common.tools import (find_type,
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
 json = JSON_Handler()
+
 
 # Third party packages
 
@@ -140,7 +142,8 @@ def main(config, version, release_notes):
             __version__ = get_distribution('demisto-sdk').version
         except DistributionNotFound:
             __version__ = 'dev'
-            print_warning('Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.')
+            print_warning(
+                'Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.')
         else:
             last_release = get_last_remote_release_version()
             print_warning(f'You are using demisto-sdk {__version__}.')
@@ -274,7 +277,8 @@ def extract_code(config, **kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-i", "--input", help="The directory path to the files or path to the file to unify", required=True, type=click.Path(dir_okay=True)
+    "-i", "--input", help="The directory path to the files or path to the file to unify", required=True,
+    type=click.Path(dir_okay=True)
 )
 @click.option(
     "-o", "--output", help="The output dir to write the unified yml to", required=False
@@ -546,12 +550,14 @@ def validate(config, **kwargs):
 @click.option('-mp', '--marketplace', help='The marketplace the artifacts are created for, that '
                                            'determines which artifacts are created for each pack. '
                                            'Default is the XSOAR marketplace, that has all of the packs '
-                                           'artifacts.', default='xsoar', type=click.Choice(['xsoar', 'marketplacev2', 'v2']))
+                                           'artifacts.', default='xsoar',
+              type=click.Choice(['xsoar', 'marketplacev2', 'v2']))
 @click.option('-fbi', '--filter-by-id-set', is_flag=True,
               help='Whether to use the id set as content items guide, meaning only include in the packs the '
                    'content items that appear in the id set.', default=False, hidden=True)
 @click.option('-af', '--alternate-fields', is_flag=True,
-              help='Use the alternative fields if such are present in the yml or json of the content item.', default=False, hidden=True)
+              help='Use the alternative fields if such are present in the yml or json of the content item.',
+              default=False, hidden=True)
 def create_content_artifacts(**kwargs) -> int:
     """Generating the following artifacts:
        1. content_new - Contains all content objects of type json,yaml (from_version < 6.0.0)
@@ -664,11 +670,13 @@ def secrets(config, **kwargs):
                                             "--check-dependent-api-module flag.",
               type=click.Path(resolve_path=True),
               default='Tests/id_set.json')
-@click.option("-cdam", "--check-dependent-api-module", is_flag=True, help="Run unit tests and lint on all packages that "
-              "are dependent on the found "
-              "modified api modules.", default=False)
+@click.option("-cdam", "--check-dependent-api-module", is_flag=True,
+              help="Run unit tests and lint on all packages that "
+                   "are dependent on the found "
+                   "modified api modules.", default=False)
 @click.option("--time-measurements-dir", help="Specify directory for the time measurements report file",
               type=PathsParamType())
+@click.option('-t', '--timeout', help='timeout for the task', default=4.5 * 3600)
 def lint(**kwargs):
     """Lint command will perform:
         1. Package in host checks - flake8, bandit, mypy, vulture.
@@ -695,7 +703,7 @@ def lint(**kwargs):
         id_set_path=kwargs.get('id_set_path'),  # type: ignore[arg-type]
         check_dependent_api_module=kwargs.get('check_dependent_api_module'),  # type: ignore[arg-type]
     )
-    return lint_manager.run_dev_packages(
+    return lint_manager.run(
         parallel=kwargs.get('parallel'),  # type: ignore[arg-type]
         no_flake8=kwargs.get('no_flake8'),  # type: ignore[arg-type]
         no_bandit=kwargs.get('no_bandit'),  # type: ignore[arg-type]
@@ -713,6 +721,7 @@ def lint(**kwargs):
         coverage_report=kwargs.get('coverage_report'),  # type: ignore[arg-type]
         docker_timeout=kwargs.get('docker_timeout'),  # type: ignore[arg-type]
         time_measurements_dir=kwargs.get('time_measurements_dir'),  # type: ignore[arg-type]
+        total_timeout=kwargs.get('timeout')  # type: ignore[arg-type]
     )
 
 
@@ -741,7 +750,8 @@ def lint(**kwargs):
     "--report-dir", help="Directory of the coverage report files.",
     default='coverage_report', type=PathsParamType(resolve_path=True))
 @click.option(
-    "--report-type", help="The type of coverage report (posible values: 'text', 'html', 'xml', 'json' or 'all').", type=str)
+    "--report-type", help="The type of coverage report (posible values: 'text', 'html', 'xml', 'json' or 'all').",
+    type=str)
 @click.option("--no-min-coverage-enforcement", help="Do not enforce minimum coverage.", is_flag=True)
 @click.option(
     "--previous-coverage-report-url", help="URL of the previous coverage report.",
@@ -999,7 +1009,8 @@ def download(**kwargs):
     multiple=False)
 @click.option(
     "-pd", "--pack-data", help="The Pack Data to add to XSOAR Configuration File - "
-           "Pack URL for Custom Pack and Pack Version for OOTB Pack", required=False, multiple=False)
+                               "Pack URL for Custom Pack and Pack Version for OOTB Pack", required=False,
+    multiple=False)
 @click.option(
     "-mp", "--add-marketplace-pack", help="Add a Pack to the MarketPlace Packs section in the Configuration File",
     required=False, is_flag=True)
@@ -1268,6 +1279,7 @@ def generate_test_playbook(**kwargs):
         print_error(str(e))
         return 1
 
+
 # ====================== init ====================== #
 
 
@@ -1295,7 +1307,7 @@ def generate_test_playbook(**kwargs):
                              "Script template options: HelloWorldScript")
 @click.option(
     "-a", "--author-image", help="Path of the file 'Author_image.png'. \n "
-    "Image will be presented in marketplace under PUBLISHER section. File should be up to 4kb and dimensions of 120x50"
+                                 "Image will be presented in marketplace under PUBLISHER section. File should be up to 4kb and dimensions of 120x50"
 )
 @click.option(
     '--demisto_mock', is_flag=True,
@@ -1468,7 +1480,8 @@ def create_id_set(**kwargs):
     id_set, excluded_items_by_pack, excluded_items_by_type = id_set_creator.create_id_set()
 
     if excluded_items_by_pack:
-        remove_dependencies_from_id_set(id_set, excluded_items_by_pack, excluded_items_by_type, kwargs.get('marketplace', ''))
+        remove_dependencies_from_id_set(id_set, excluded_items_by_pack, excluded_items_by_type,
+                                        kwargs.get('marketplace', ''))
         id_set_creator.save_id_set()
 
 
@@ -1606,7 +1619,8 @@ def update_release_notes(**kwargs):
                                                "The json file will be saved under the path given in the "
                                                "'--output-path' argument", required=False, is_flag=True)
 @click.option("-o", "--output-path", help="The destination path for the packs dependencies json file. This argument is "
-              "only relevant for when using the '--all-packs-dependecies' flag.", required=False)
+                                          "only relevant for when using the '--all-packs-dependecies' flag.",
+              required=False)
 @click.option("--get-dependent-on", help="Get only the packs dependent ON the given pack. Note: this flag can not be"
                                          " used for the packs ApiModules and Base", required=False,
               is_flag=True)
@@ -2101,6 +2115,7 @@ def convert(config, **kwargs):
         sys.exit(1)
 
     sys.exit(0)
+
 
 # ====================== generate-unit-tests ====================== #
 

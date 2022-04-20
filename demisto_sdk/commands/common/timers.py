@@ -1,12 +1,12 @@
 # STD python packages
 import logging
 import time
-from dataclasses import dataclass, astuple
-from typing import NamedTuple, Optional
 from collections import defaultdict, namedtuple
+from dataclasses import astuple, dataclass
 from datetime import datetime
 from functools import wraps
 from pathlib import Path
+from typing import Optional
 
 # Third party packages
 from tabulate import tabulate
@@ -83,7 +83,7 @@ def timer(group_name='Common'):
                 packs[func.__qualname__][pack_name] = []
             index = len(packs[func.__qualname__][pack_name])
             packs[func.__qualname__][pack_name].append(PackStatInfo(start_time=datetime.now().isoformat()))
-            return pack_name,index
+            return pack_name, index
 
         def lint_end_measure(pack_name, index, elapsed_time):
             packs[func.__qualname__][pack_name][index].end_time = datetime.now().isoformat()

@@ -5,15 +5,15 @@ import os
 import re
 import sys
 import textwrap
-from typing import Any, Dict, List, Set, Union, Tuple
+from typing import Any, Dict, List, Set, Union
 
 import docker
 import docker.errors
 import git
+import pebble.concurrent
 import requests.exceptions
 import urllib3.exceptions
 from wcmatch.pathlib import Path, PosixPath
-import pebble.concurrent
 
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON,
@@ -465,10 +465,10 @@ class LintManager:
         }
 
         # Python or powershell or both
-        pkgs_type = []
+        pkgs_type: list = []
 
         # Detailed packages status
-        pkgs_status = {}
+        pkgs_status: dict = {}
 
         # Skiped lint and test codes
         skipped_code = build_skipped_exit_code(no_flake8=no_flake8, no_bandit=no_bandit, no_mypy=no_mypy,

@@ -116,8 +116,8 @@ class Linter:
 
     @timer(group_name='lint')
     def run_pack(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
-                    no_xsoar_linter: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, no_test: bool, modules: dict,
-                    keep_container: bool, test_xml: str, no_coverage: bool) -> dict:
+                 no_xsoar_linter: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, no_test: bool, modules: dict,
+                 keep_container: bool, test_xml: str, no_coverage: bool) -> dict:
         """ Run lint and tests on single package
         Performing the follow:
             1. Run the lint on OS - flake8, bandit, mypy.

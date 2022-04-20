@@ -190,6 +190,35 @@ class TestIntegrationValidator:
         structure.quiet_bc = True
         assert validator.is_changed_command_name_or_arg() is False  # if quiet_bc is true should always succeed
 
+    CHANGED_COMMAND_OR_ARG_MST_TEST_INPUTS = [
+        ([{"name": "test", "arguments": [{"name": "test1"}]}, {"name": "test2", "arguments": [{"name": "test3"}]}],
+         [{"name": "test", "arguments": [{"name": "test"}, {"name": "test1", "required": True}]},
+         {"name": "test2", "arguments": [{"name": "test2"}, {"name": "test3", "required": True}]}],
+         "[ERROR]: : [BC104] - Possible backwards compatibility break, You've changed the name of some of the command(s) or its arg in the file,"
+         " please undo, the following commands:\ntest\ntest2")
+    ]
+
+    @pytest.mark.parametrize("current, old, expected_error_msg", CHANGED_COMMAND_OR_ARG_MST_TEST_INPUTS)
+    def test_is_changed_command_name_or_arg_msg(self, capsys, current, old, expected_error_msg):
+        """
+        Given
+        - Case 1: previous yml content with 2 commands and current yml content with the 2 commands with name
+
+        When
+        - running the validation test_is_changed_command_name_or_arg_msg()
+
+        Then
+        Ensure that the error massage was created correctly.
+        - Case 1: Should include two commands in the changed commands list.
+        """
+        current = {'script': {'commands': current}}
+        old = {'script': {'commands': old}}
+        structure = mock_structure("", current, old)
+        validator = IntegrationValidator(structure)
+        validator.is_changed_command_name_or_arg()
+        stdout = capsys.readouterr().out
+        assert expected_error_msg == stdout.strip()
+
     WITHOUT_DUP = [{"name": "test"}, {"name": "test1"}]
     DUPLICATE_PARAMS_INPUTS = [
         (WITHOUT_DUP, True)

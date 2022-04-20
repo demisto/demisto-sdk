@@ -24,7 +24,7 @@ def logging_setup(verbose: int, quiet: Optional[bool] = False,
 
     log_level = logging.getLevelName((6 - 2 * verbose) * 10)
 
-    fmt = logging.Formatter('[%(levelname)s] %(message)s')
+    fmt = logging.Formatter('%(asctime)s [%(levelname)s]: %(message)s')
     console_handler_index = -1
     file_handler_index = -1
 

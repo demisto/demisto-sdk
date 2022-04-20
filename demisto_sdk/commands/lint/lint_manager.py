@@ -338,9 +338,9 @@ class LintManager:
             keep_container(bool): Whether to keep the test container
             test_xml(str): Path for saving pytest xml results
             docker_timeout(int): timeout for docker requests
-            pkgs_type:
-            pkgs_status:
-            lint_status:
+            pkgs_type: List of the pack types
+            pkgs_status: Dictionary for pack status (keys are packs, the values are their status)
+            lint_status: Dictionary for the lint status  (the keys are the linters, the values are a list of packs)
 
         Returns:
             Tuple[int, int]: exit code, warning code
@@ -399,6 +399,14 @@ class LintManager:
                 except Exception:
                     pass
                 return 1, 0
+            except TimeoutError as e:
+                print_warning(f"Stop demisto-sdk lint - Due to timeout error {e}")
+                try:
+                    executor.shutdown(wait=False)
+                except Exception:
+                    pass
+                return 1, 0
+
             except Exception as e:
                 print_warning(f"Stop demisto-sdk lint - Due to Exception {e}")
                 try:
@@ -406,6 +414,7 @@ class LintManager:
                 except Exception:
                     pass
                 return 1, 0
+            return 1, 0
 
     def run(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
             no_pylint: bool, no_coverage: bool, coverage_report: str,

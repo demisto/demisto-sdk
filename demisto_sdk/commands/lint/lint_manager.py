@@ -5,7 +5,7 @@ import os
 import re
 import sys
 import textwrap
-from typing import Any, Dict, List, Set, Union
+from typing import Any, Dict, List, Set, Union, Tuple
 
 import docker
 import docker.errors
@@ -321,7 +321,7 @@ class LintManager:
                              docker_timeout: int,
                              lint_status: dict,
                              pkgs_status: dict,
-                             pkgs_type: list) -> pebble.ProcessFuture:
+                             pkgs_type: list) -> tuple[int, int]:
         """ Runs the Lint command on all given packages.
 
         Args:
@@ -809,7 +809,7 @@ class LintManager:
                 failed = failed.union(lint_status[key])
             if key.startswith('warning'):
                 warnings = warnings.union(lint_status[key])
-        num_passed = len([pack for pack in pkgs_status if pack.get('EXIT_CODE') == 0])
+        num_passed = len([pack for pack in pkgs_status if pack.get('exit_code') == 0])
         # Log unit-tests summary
         sentence = " Summary "
         print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")

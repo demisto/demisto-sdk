@@ -8,7 +8,8 @@ from demisto_sdk.commands.common.constants import (PACK_METADATA_SUPPORT,
                                                    PACKS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    FileType)
-from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
+from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
+                                                FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE,
@@ -35,39 +36,46 @@ class BaseValidator:
     @staticmethod
     def should_ignore_error(error_code, ignored_errors):
         """Return True is code should be ignored and False otherwise"""
+        # the file is not part of the .pack-ignore
         if ignored_errors is None:
             return False
 
         # check if specific codes are ignored
         if error_code in ignored_errors:
-            return True
+            return error_code in ALLOWED_IGNORE_ERRORS
 
-        # in case a whole section of codes are selected
+        # in case a whole section of codes are selected, e.g.: ST,BA
         code_type = error_code[:2]
         if code_type in ignored_errors:
             return True
+            # return any([code_type in allowed_code for allowed_code in ALLOWED_IGNORE_ERRORS])
 
         return False
 
     def handle_error(self, error_message, error_code, file_path, should_print=True, suggested_fix=None, warning=False,
                      drop_line=False):
-        """Handle an error that occurred during validation
+        """
+        Handle an error that occurred during validation.
 
         Args:
             drop_line (bool): Whether to drop a line at the beginning of the error message
             warning (bool): Print the error as a warning
-            suggested_fix(str): A suggested fix
-            error_message(str): The error message
-            file_path(str): The file from which the error occurred
-            error_code(str): The error code
-            should_print(bool): whether the command should be printed
+            suggested_fix (str): A suggested fix
+            error_message (str): The error message
+            file_path (str): The file from which the error occurred
+            error_code (str): The error code
+            should_print (bool): whether the command should be printed
 
         Returns:
-            str. Will return the formatted error message if it is not ignored, an None if it is ignored
+            str: formatted error message if it should be ignored, None otherwise.
         """
         def formatted_error_str(error_type):
             if error_type not in {'ERROR', 'WARNING'}:
                 raise ValueError("Error type is not valid. Should be in {'ERROR', 'WARNING'}")
+            # if the error should not be ignored and the file contains errors from the .pack-ignore
+            if not should_error_be_ignored and error_code in (ignored_errors or []):
+                return f"ERROR-CODE: [{error_code}] can not be ignored in .pack-ignore\n"
+
             formatted = f"[{error_type}]: {file_path}: [{error_code}] - {error_message}".rstrip("\n") + "\n"
             if drop_line:
                 formatted = '\n' + formatted
@@ -87,8 +95,9 @@ class BaseValidator:
             rel_file_path = 'No-Name'
 
         ignored_errors = self.ignored_errors.get(file_name) or self.ignored_errors.get(rel_file_path)
+        should_error_be_ignored = self.should_ignore_error(error_code, ignored_errors)
 
-        if self.should_ignore_error(error_code, ignored_errors) or warning:
+        if should_error_be_ignored or warning:
             if self.print_as_warnings or warning:
                 click.secho(formatted_error_str('WARNING'), fg="yellow")
                 self.json_output(file_path, error_code, error_message, warning)
@@ -97,7 +106,7 @@ class BaseValidator:
 
         formatted_error = formatted_error_str('ERROR')
         if should_print and not self.suppress_print:
-            if suggested_fix:
+            if suggested_fix and 'ERROR-CODE' not in formatted_error:
                 click.secho(formatted_error[:-1], fg="bright_red")
                 if error_code == 'ST109':
                     click.secho("Please add to the root of the yml.\n", fg="bright_red")

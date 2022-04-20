@@ -97,7 +97,7 @@ def test_handle_error_file_with_path(pack):
     assert f'{integration.readme.path} - [BA101]' in FOUND_FILES_AND_ERRORS
 
     formatted_error = base_validator.handle_error("Error-message", "ST109", integration.readme.path)
-    assert formatted_error is None
+    assert formatted_error == 'ERROR-CODE: [ST109] can not be ignored in .pack-ignore\n'
     assert f'{integration.readme.path} - [ST109]' not in FOUND_FILES_AND_ERRORS
     assert f'{integration.readme.path} - [ST109]' in FOUND_FILES_AND_IGNORED_ERRORS
 

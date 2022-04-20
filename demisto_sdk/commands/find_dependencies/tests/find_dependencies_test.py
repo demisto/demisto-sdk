@@ -3179,6 +3179,15 @@ class TestGetDependentOnGivenPack:
             (('type_item_3', 'item3'), ('type_item_b', 'item_b'))]
 
     def test_find_dependencies_between_two_packs(self, mocker):
+        """
+        Given
+            - A dependency pack
+            - Input pack
+        When
+            - Running the find_dependencies_between_two_packs
+        Then
+            - assuring that the result given is the dependant items between those 2 packs
+        """
         dependent_pack_dict = {
             'pack3': {'packsDependentOnThisPackMandatorily': {
                 'pack1': {'mandatory': True, 'dependent_items': [(('type_item_3', 'item3'),

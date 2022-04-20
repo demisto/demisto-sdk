@@ -825,8 +825,7 @@ class Linter:
             # Running pytest container
             cov = '' if no_coverage else self._pack_abs_dir.stem
             uid = os.getuid() or 4000
-            logger.debug(
-                f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logger-sensitive-data]
+            logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container = Docker.create_container(
                 name=container_name, image=test_image, user=f"{uid}:4000",
                 command=[build_pytest_command(test_xml=test_xml, json=True, cov=cov)],
@@ -863,8 +862,7 @@ class Linter:
                     cov_data = cov_data if isinstance(cov_data, bytes) else cov_data.encode()
                     with open(cov_file_path, 'wb') as coverage_file:
                         coverage_file.write(cov_data)
-                    coverage_report_editor(cov_file_path,
-                                           os.path.join(self._pack_abs_dir, f'{self._pack_abs_dir.stem}.py'))
+                    coverage_report_editor(cov_file_path, os.path.join(self._pack_abs_dir, f'{self._pack_abs_dir.stem}.py'))
 
                 test_json = json.loads(get_file_from_container(container_obj=container,
                                                                container_path="/devwork/report_pytest.json",
@@ -933,8 +931,7 @@ class Linter:
         output = ""
         try:
             uid = os.getuid() or 4000
-            logger.debug(
-                f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logger-sensitive-data]
+            logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container = Docker.create_container(name=container_name, image=test_image,
                                                 user=f"{uid}:4000", environment=self._facts["env_vars"],
                                                 files_to_push=[(self._pack_abs_dir, '/devwork')],
@@ -1003,8 +1000,7 @@ class Linter:
         output = ""
         try:
             uid = os.getuid() or 4000
-            logger.debug(
-                f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logger-sensitive-data]
+            logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container: docker.models.containers.Container = Docker.create_container(
                 files_to_push=[(self._pack_abs_dir, '/devwork')],
                 name=container_name, image=test_image, command=build_pwsh_test_command(),

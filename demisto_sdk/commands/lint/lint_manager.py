@@ -5,6 +5,7 @@ import os
 import re
 import sys
 import textwrap
+from concurrent.futures import ALL_COMPLETED
 from typing import Any, Dict, List, Set, Union, Tuple
 
 import docker
@@ -375,7 +376,7 @@ class LintManager:
                                                    test_xml=test_xml,
                                                    no_coverage=no_coverage))
 
-                for future in concurrent.futures.as_completed(results):
+                for future in results:
                     pkg_status = future.result()
                     pkgs_status[pkg_status["pkg"]] = pkg_status
                     if pkg_status["exit_code"]:
@@ -392,7 +393,7 @@ class LintManager:
                             return_warning_code += pkg_status["warning_code"]
                     if pkg_status["pack_type"] not in pkgs_type:
                         pkgs_type.append(pkg_status["pack_type"])
-                    return return_exit_code, return_warning_code
+                return return_exit_code, return_warning_code
         except KeyboardInterrupt:
             print_warning("Stop demisto-sdk lint - Due to 'Ctrl C' signal")
             try:
@@ -407,7 +408,6 @@ class LintManager:
             except Exception:
                 pass
             return 1, 0
-        return 1, 0
 
     def run(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
             no_pylint: bool, no_coverage: bool, coverage_report: str,

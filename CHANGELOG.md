@@ -1,4 +1,5 @@
 # Changelog
+* enhanced ***is_changed_command_name_or_arg*** to show all the changed commands names instead of only one.
 
 ## 1.6.4
 

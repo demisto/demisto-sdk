@@ -1,8 +1,9 @@
+import pytest
 import os
 from os.path import join
 
 from demisto_sdk.commands.common.constants import PACK_METADATA_SUPPORT
-from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
+from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS, ALLOWED_IGNORE_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE, Errors)
@@ -18,6 +19,48 @@ json = JSON_Handler()
 
 DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = BaseValidator.create_reverse_ignored_errors_list(
     PRESET_ERROR_TO_CHECK['deprecated'])
+
+
+# return None on errors codes that can be ignored.
+# return original error on error codes that were not in the pack-ignore which means they should not have been ignored.
+# return 'ERROR-CODE: [{error_code}] can not be ignored in .pack-ignore\n on error codes which are in .pack-ignore but cannot be ignored.
+
+@pytest.mark.parametrize(
+    'ignored_errors, error_code',
+    [
+        (
+            {'file_name': ['SC109']}, 'SC109'  # SC109 can not be ignored
+        ),
+        (
+            {'file_name': ['PA116', 'PA117']}, 'PA117'  # PA116 can be ignored, PA117 can not be ignored
+        ),
+        (
+            {'file_name': ['PB109', 'PB104']}, 'PB109'  # PB104 can be ignored, PB109 can not be ignored
+        )
+    ]
+)
+def test_handle_error_on_unignorable_error_codes(mocker, ignored_errors, error_code):
+    """
+    Given
+    - ignore errors which cannot be ignored.
+
+    When
+    - Running handle_error method
+
+    Then
+    - Ensure that the error message that is returned and printed indicates that this error code cannot be ignored.
+    """
+    import click
+    base_validator = BaseValidator(ignored_errors=ignored_errors)
+    expected_error = f'ERROR-CODE: [{error_code}] can not be ignored in .pack-ignore\n'
+
+    click_mock = mocker.patch.object(click, 'secho')
+    result = base_validator.handle_error(
+        error_message='test', error_code=error_code, file_path='file_name', suggested_fix='fix'
+    )
+    assert result == expected_error
+    assert click_mock.called
+    assert click_mock.call_args.args[0] == expected_error
 
 
 def test_handle_error(mocker):

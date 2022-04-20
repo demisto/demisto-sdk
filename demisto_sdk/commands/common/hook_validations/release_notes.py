@@ -117,7 +117,10 @@ class ReleaseNotesValidator(BaseValidator):
 
         return True
 
-    def is_breaking_change(self):
+    def is_breaking_change(self) -> bool:
+        """
+        In case of a breaking change in the release note, ensure the existence of a proper json file.
+        """
         is_valid = True
         if 'breaking change' in self.latest_release_notes.lower():
             json_path = self.release_notes_file_path[:-2]+'json'

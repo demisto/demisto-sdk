@@ -8,8 +8,11 @@ from demisto_sdk.commands.common.hook_validations.release_notes import \
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.tools import get_dict_from_file
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from TestSuite.pack import Pack
+from TestSuite.repo import Repo
+
 
 
 def get_validator(file_path='', modified_files=None, added_files=None):
@@ -472,3 +475,48 @@ def test_get_categories_from_rn(method_to_check, release_notes_content, filled_e
     - Case 3: Should Create a dict with two keys of integraition 1 and integration 2.
     """
     assert method_to_check(ReleaseNotesValidator, release_notes_content) == filled_expected_result
+
+
+def update_json(path, key, value):
+    import json
+
+    js = get_dict_from_file(path=path)[0]
+    js[key] = value
+    with open(path, 'w') as f:
+        json.dump(js, f)
+
+
+TEST_RELEASE_NOTES_BREAKING_CHANGE = [
+    ("\n#### Integrations\n##### Integration name\n" +
+     "- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n", False, False, True),
+    ("\n#### Integrations\n##### Integration name\n" +
+         "- Breaking change test\n", False, False, False),
+    ("\n#### Integrations\n##### Integration name\n" +
+     "- Breaking change test\n", True, True, False),
+    ("\n#### Integrations\n##### Integration name\n" +
+     "- Breaking change test\n", True, False, True)
+    ]
+
+
+@pytest.mark.parametrize('release_notes_content, has_json, change_json, expected_result', TEST_RELEASE_NOTES_BREAKING_CHANGE)
+def test_is_breaking_change(release_notes_content, has_json, change_json, expected_result, mocker, repo):
+    """
+    Given
+    - A release note.
+    When
+    - Run is_breaking_change validation.
+    Then
+    - Ensure that if the release note contains 'breaking change', there is also an appropriate json file.
+    """
+    mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
+    validator = get_validator(release_notes_content, MODIFIED_FILES)
+    pack = repo.create_pack('test_pack')
+    if has_json:
+        release_note = pack.create_release_notes(version='1.0.0', content=release_notes_content, is_bc=True)
+    else:
+        release_note = pack.create_release_notes(version='1.0.0', content=release_notes_content)
+    if change_json:
+        update_json(path=release_note.path[:-2]+'json', key='breakingChanges', value=False)
+
+    validator.release_notes_file_path = release_note.path
+    assert validator.is_breaking_change() == expected_result

@@ -31,7 +31,7 @@ packs: dict = {}
 class PackStatInfo:
     start_time: str
     end_time: Optional[str] = None
-    total_time: Optional[float] = None
+    total_time: Optional[str] = None
 
     def __iter__(self):
         return iter(astuple(self))
@@ -39,12 +39,10 @@ class PackStatInfo:
     def __lt__(self, other):
         if not isinstance(other, PackStatInfo):
             raise Exception('Not PackStatInfo')
-        return self.total_time < other.total_time
-
-    def __gt__(self, other):
-        if not isinstance(other, PackStatInfo):
-            raise Exception('Not PackStatInfo')
-        return float(self.total_time) > float(self.total_time)
+        if self.total_time is None or other.total_time is None:
+            # If the pack didn't finish, we don't really care about their order
+            return True
+        return float(self.total_time) < float(self.total_time)
 
 
 def timer(group_name='Common'):

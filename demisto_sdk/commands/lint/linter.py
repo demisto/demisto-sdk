@@ -41,9 +41,11 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
 
 json = JSON_Handler()
 
+
 # 3-rd party packages
 
 # Local packages
+
 logger = logging.getLogger('demisto-sdk')
 
 
@@ -693,8 +695,7 @@ class Linter:
                 f"{log_prompt} - Creating image based on {docker_base_image[0]} - Could take 2-3 minutes at first "
                 f"time")
             try:
-                Docker.create_image(docker_base_image[0], test_image_name,
-                                    container_type=self._pkg_lint_status["pack_type"],
+                Docker.create_image(docker_base_image[0], test_image_name, container_type=self._pkg_lint_status["pack_type"],
                                     install_packages=pip_requirements)
 
                 if self._docker_hub_login:
@@ -799,8 +800,7 @@ class Linter:
         return exit_code, output
 
     @timer(group_name='lint')
-    def _docker_run_pytest(self, test_image: str, keep_container: bool, test_xml: str, no_coverage: bool = False) -> \
-            Tuple[int, str, dict]:
+    def _docker_run_pytest(self, test_image: str, keep_container: bool, test_xml: str, no_coverage: bool = False) -> Tuple[int, str, dict]:
         """ Run Pytest in created test image
 
         Args:

@@ -504,7 +504,8 @@ class IntegrationValidator(ContentEntityValidator):
     @error_codes('BC100')
     def is_changed_subtype(self):
         # type: () -> bool
-        """Validate that the subtype was not changed."""
+        """Validate that the subtype was not changed.
+        Returns True if valid, and False otherwise."""
         type_ = self.current_file.get('script', {}).get('type')
         if type_ == 'python':
             subtype = self.current_file.get('script', {}).get('subtype')
@@ -746,7 +747,7 @@ class IntegrationValidator(ContentEntityValidator):
         """Check if a context path as been changed.
 
         Returns:
-            bool. Whether a context path as been changed.
+            bool. True if valid, and False otherwise.
         """
         current_command_to_context_paths = self._get_command_to_context_paths(self.current_file)
         old_command_to_context_paths = self._get_command_to_context_paths(self.old_file)
@@ -771,7 +772,9 @@ class IntegrationValidator(ContentEntityValidator):
     @error_codes('IN129')
     def is_removed_integration_parameters(self):
         # type: () -> bool
-        """Check if integration parameters were removed."""
+        """Check if integration parameters were removed.
+        Returns True if valid, and False otherwise.
+        """
         is_removed_parameter = True
         current_configuration = self.current_file.get('configuration', [])
         old_configuration = self.old_file.get('configuration', [])
@@ -806,7 +809,7 @@ class IntegrationValidator(ContentEntityValidator):
     @error_codes('IN147')
     def is_changed_removed_yml_fields(self):
         """checks if some specific Fields in the yml file were changed from true to false or removed
-        Retruns True if valid, and false otherwise.
+        Returns True if valid, and False otherwise.
         """
         fields = ['feed', 'isfetch', 'longRunning', 'longRunningPort', 'ismappable', 'isremotesyncin',
                   'isremotesyncout']
@@ -836,7 +839,9 @@ class IntegrationValidator(ContentEntityValidator):
     @error_codes('IN116')
     def is_added_required_fields(self):
         # type: () -> bool
-        """Check if required field were added."""
+        """Check if required field were added.
+        Returns True if valid, and False otherwise.
+        """
         current_field_to_required = self._get_field_to_required_dict(self.current_file)
         old_field_to_required = self._get_field_to_required_dict(self.old_file)
         is_added_required = True
@@ -864,7 +869,7 @@ class IntegrationValidator(ContentEntityValidator):
         """Check whether the integration's ID is equal to its name
 
         Returns:
-            bool. Whether the integration's id equals to its name
+            bool. True if valid, and False otherwise.
         """
         return super(IntegrationValidator, self)._is_id_equals_name('integration')
 
@@ -874,7 +879,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         Returns:
             bool. Whether the display is there for non-hidden fields.
-            Returns True if valid, and false otherwise.
+            Returns True if valid, and False otherwise.
         """
         configuration = self.current_file.get('configuration', [])
         for configuration_param in configuration:

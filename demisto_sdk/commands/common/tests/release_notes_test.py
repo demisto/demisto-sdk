@@ -11,8 +11,6 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_dict_from_file
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from TestSuite.pack import Pack
-from TestSuite.repo import Repo
-
 
 
 def get_validator(file_path='', modified_files=None, added_files=None):
@@ -490,12 +488,12 @@ TEST_RELEASE_NOTES_BREAKING_CHANGE = [
     ("\n#### Integrations\n##### Integration name\n" +
      "- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n", False, False, True),
     ("\n#### Integrations\n##### Integration name\n" +
-         "- Breaking change test\n", False, False, False),
+     "- Breaking change test\n", False, False, False),
     ("\n#### Integrations\n##### Integration name\n" +
      "- Breaking change test\n", True, True, False),
     ("\n#### Integrations\n##### Integration name\n" +
      "- Breaking change test\n", True, False, True)
-    ]
+]
 
 
 @pytest.mark.parametrize('release_notes_content, has_json, change_json, expected_result', TEST_RELEASE_NOTES_BREAKING_CHANGE)

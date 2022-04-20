@@ -16,7 +16,6 @@ from demisto_sdk.commands.common.constants import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, MODELING_RULES_DIR, PARSING_RULES_DIR,
     FileType)
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.timeout import timeout
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
                                                get_release_note_entries,

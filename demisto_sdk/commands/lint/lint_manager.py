@@ -13,13 +13,13 @@ import git
 import requests.exceptions
 import urllib3.exceptions
 from wcmatch.pathlib import Path, PosixPath
+import pebble.concurrent
 
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON,
                                                    DemistoException)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import Colors
-from demisto_sdk.commands.common.timeout import timeout
 from demisto_sdk.commands.common.timers import report_time_measurements
 from demisto_sdk.commands.common.tools import (find_file, find_type,
                                                get_api_module_dependencies,
@@ -303,6 +303,7 @@ class LintManager:
 
         return list(pkgs_to_check)
 
+    @pebble.concurrent.process()
     def execute_all_packages(self,
                              parallel: int,
                              no_flake8: bool,
@@ -320,7 +321,7 @@ class LintManager:
                              docker_timeout: int,
                              lint_status: dict,
                              pkgs_status: dict,
-                             pkgs_type: list) -> Tuple[int, int]:
+                             pkgs_type: list) -> pebble.ProcessFuture:
         """ Runs the Lint command on all given packages.
 
         Args:
@@ -345,35 +346,35 @@ class LintManager:
         Returns:
             Tuple[int, int]: exit code, warning code
         """
+        try:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as executor:
+                return_exit_code: int = 0
+                return_warning_code: int = 0
+                results = []
+                # Executing lint checks in different threads
+                for pack in sorted(self._pkgs):
+                    linter: Linter = Linter(pack_dir=pack,
+                                            content_repo="" if not self._facts["content_repo"] else
+                                            Path(self._facts["content_repo"].working_dir),
+                                            req_2=self._facts["requirements_2"],
+                                            req_3=self._facts["requirements_3"],
+                                            docker_engine=self._facts["docker_engine"],
+                                            docker_timeout=docker_timeout)
+                    results.append(executor.submit(linter.run_pack,
+                                                   no_flake8=no_flake8,
+                                                   no_bandit=no_bandit,
+                                                   no_mypy=no_mypy,
+                                                   no_vulture=no_vulture,
+                                                   no_xsoar_linter=no_xsoar_linter,
+                                                   no_pylint=no_pylint,
+                                                   no_test=no_test,
+                                                   no_pwsh_analyze=no_pwsh_analyze,
+                                                   no_pwsh_test=no_pwsh_test,
+                                                   modules=self._facts["test_modules"],
+                                                   keep_container=keep_container,
+                                                   test_xml=test_xml,
+                                                   no_coverage=no_coverage))
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as executor:
-            return_exit_code: int = 0
-            return_warning_code: int = 0
-            results = []
-            # Executing lint checks in different threads
-            for pack in sorted(self._pkgs):
-                linter: Linter = Linter(pack_dir=pack,
-                                        content_repo="" if not self._facts["content_repo"] else
-                                        Path(self._facts["content_repo"].working_dir),
-                                        req_2=self._facts["requirements_2"],
-                                        req_3=self._facts["requirements_3"],
-                                        docker_engine=self._facts["docker_engine"],
-                                        docker_timeout=docker_timeout)
-                results.append(executor.submit(linter.run_pack,
-                                               no_flake8=no_flake8,
-                                               no_bandit=no_bandit,
-                                               no_mypy=no_mypy,
-                                               no_vulture=no_vulture,
-                                               no_xsoar_linter=no_xsoar_linter,
-                                               no_pylint=no_pylint,
-                                               no_test=no_test,
-                                               no_pwsh_analyze=no_pwsh_analyze,
-                                               no_pwsh_test=no_pwsh_test,
-                                               modules=self._facts["test_modules"],
-                                               keep_container=keep_container,
-                                               test_xml=test_xml,
-                                               no_coverage=no_coverage))
-            try:
                 for future in concurrent.futures.as_completed(results):
                     pkg_status = future.result()
                     pkgs_status[pkg_status["pkg"]] = pkg_status
@@ -392,29 +393,21 @@ class LintManager:
                     if pkg_status["pack_type"] not in pkgs_type:
                         pkgs_type.append(pkg_status["pack_type"])
                     return return_exit_code, return_warning_code
-            except KeyboardInterrupt:
-                print_warning("Stop demisto-sdk lint - Due to 'Ctrl C' signal")
-                try:
-                    executor.shutdown(wait=False)
-                except Exception:
-                    pass
-                return 1, 0
-            except TimeoutError as e:
-                print_warning(f"Stop demisto-sdk lint - Due to timeout error {e}")
-                try:
-                    executor.shutdown(wait=False)
-                except Exception:
-                    pass
-                return 1, 0
-
-            except Exception as e:
-                print_warning(f"Stop demisto-sdk lint - Due to Exception {e}")
-                try:
-                    executor.shutdown(wait=False)
-                except Exception:
-                    pass
-                return 1, 0
+        except KeyboardInterrupt:
+            print_warning("Stop demisto-sdk lint - Due to 'Ctrl C' signal")
+            try:
+                executor.shutdown(wait=False)
+            except Exception:
+                pass
             return 1, 0
+        except Exception as e:
+            print_warning(f"Stop demisto-sdk lint - Due to Exception {e}")
+            try:
+                executor.shutdown(wait=False)
+            except Exception:
+                pass
+            return 1, 0
+        return 1, 0
 
     def run(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
             no_pylint: bool, no_coverage: bool, coverage_report: str,
@@ -482,25 +475,30 @@ class LintManager:
                                                no_vulture=no_vulture, no_xsoar_linter=no_xsoar_linter,
                                                no_pylint=no_pylint, no_test=no_test, no_pwsh_analyze=no_pwsh_analyze,
                                                no_pwsh_test=no_pwsh_test, docker_engine=self._facts["docker_engine"])
-
-        with timeout(total_timeout):
-            return_exit_code, return_warning_code = self.execute_all_packages(parallel=parallel,
-                                                                              no_flake8=no_flake8,
-                                                                              no_xsoar_linter=no_xsoar_linter,
-                                                                              no_bandit=no_bandit,
-                                                                              no_mypy=no_mypy,
-                                                                              no_pylint=no_pylint,
-                                                                              no_coverage=no_coverage,
-                                                                              no_vulture=no_vulture,
-                                                                              no_test=no_test,
-                                                                              no_pwsh_test=no_pwsh_test,
-                                                                              keep_container=keep_container,
-                                                                              test_xml=test_xml,
-                                                                              docker_timeout=docker_timeout,
-                                                                              no_pwsh_analyze=no_pwsh_analyze,
-                                                                              lint_status=lint_status,
-                                                                              pkgs_status=pkgs_status,
-                                                                              pkgs_type=pkgs_type)
+        p = self.execute_all_packages(parallel=parallel,
+                                      no_flake8=no_flake8,
+                                      no_xsoar_linter=no_xsoar_linter,
+                                      no_bandit=no_bandit,
+                                      no_mypy=no_mypy,
+                                      no_pylint=no_pylint,
+                                      no_coverage=no_coverage,
+                                      no_vulture=no_vulture,
+                                      no_test=no_test,
+                                      no_pwsh_test=no_pwsh_test,
+                                      keep_container=keep_container,
+                                      test_xml=test_xml,
+                                      docker_timeout=docker_timeout,
+                                      no_pwsh_analyze=no_pwsh_analyze,
+                                      lint_status=lint_status,
+                                      pkgs_status=pkgs_status,
+                                      pkgs_type=pkgs_type,
+                                      )
+        try:
+            return_exit_code, return_warning_code = p.result(timeout=total_timeout)
+        except (TimeoutError, concurrent.futures.TimeoutError) as e:
+            p.cancel()
+            return_exit_code, return_warning_code = 1, 0
+            logger.error(f'Got timeout, error: {e}')
         self._report_results(lint_status=lint_status,
                              pkgs_status=pkgs_status,
                              return_exit_code=return_exit_code,
@@ -559,7 +557,7 @@ class LintManager:
             else:
                 generate_coverage_report()
 
-        self.report_summary(pkg=self._pkgs, lint_status=lint_status, all_packs=self._all_packs)
+        self.report_summary(pkg=self._pkgs, pkgs_status=pkgs_status, lint_status=lint_status, all_packs=self._all_packs)
         self.create_json_output()
 
     @staticmethod
@@ -786,7 +784,7 @@ class LintManager:
                     print(wrapper_error.fill(image["image_errors"]))
 
     @staticmethod
-    def report_summary(pkg, lint_status: dict, all_packs: bool = False):
+    def report_summary(pkg, pkgs_status: dict, lint_status: dict, all_packs: bool = False):
         """ Log failed image creation if occured
 
         Args:
@@ -811,13 +809,14 @@ class LintManager:
                 failed = failed.union(lint_status[key])
             if key.startswith('warning'):
                 warnings = warnings.union(lint_status[key])
+        num_passed = len([pack for pack in pkgs_status if pack.get('EXIT_CODE') == 0])
         # Log unit-tests summary
         sentence = " Summary "
         print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
         print(f"{sentence}")
         print(f"{'#' * len(sentence)}{Colors.reset}")
         print(f"Packages: {len(pkg)}")
-        print(f"Packages PASS: {Colors.Fg.green}{len(pkg) - len(failed)}{Colors.reset}")
+        print(f"Packages PASS: {Colors.Fg.green}{num_passed}{Colors.reset}")
         print(f"Packages FAIL: {Colors.Fg.red}{len(failed)}{Colors.reset}")
         print(f"Packages WARNING (can either PASS or FAIL): {Colors.Fg.orange}{len(warnings)}{Colors.reset}\n")
 

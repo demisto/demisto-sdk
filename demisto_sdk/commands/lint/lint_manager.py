@@ -42,7 +42,9 @@ json = JSON_Handler()
 # Third party packages
 
 # Local packages
-
+logging.basicConfig(
+        format='%(asctime)s [%(levelname)-8s] %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S')
 logger = logging.getLogger('demisto-sdk')
 sha1Regex = re.compile(r'\b[0-9a-fA-F]{40}\b', re.M)
 

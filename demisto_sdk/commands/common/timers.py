@@ -36,6 +36,16 @@ class PackStatInfo:
     def __iter__(self):
         return iter(astuple(self))
 
+    def __lt__(self, other):
+        if not isinstance(other, PackStatInfo):
+            raise Exception('Not PackStatInfo')
+        return self.total_time < other.total_time
+
+    def __gt__(self, other):
+        if not isinstance(other, PackStatInfo):
+            raise Exception('Not PackStatInfo')
+        return float(self.total_time) > float(self.total_time)
+
 
 def timer(group_name='Common'):
     """
@@ -71,16 +81,15 @@ def timer(group_name='Common'):
             pack_name = args[0]._pack_name
             if func.__qualname__ not in packs:
                 packs[func.__qualname__] = {}
-            if not packs[func.__qualname__][pack_name]:
+            if pack_name not in packs[func.__qualname__]:
                 packs[func.__qualname__][pack_name] = []
             index = len(packs[func.__qualname__][pack_name])
             packs[func.__qualname__][pack_name].append(PackStatInfo(start_time=datetime.now().isoformat()))
             return pack_name,index
 
-
         def lint_end_measure(pack_name, index, elapsed_time):
             packs[func.__qualname__][pack_name][index].end_time = datetime.now().isoformat()
-            packs[func.__qualname__][pack_name][index].total_time = elapsed_time
+            packs[func.__qualname__][pack_name][index].total_time = f'{elapsed_time:0.4f}'
 
         def stat_info():
             return StatInfo(total_time, call_count, total_time / call_count if call_count != 0 else 0)
@@ -103,8 +112,9 @@ def report_time_measurements(group_name='Common', time_measurements_dir='time_me
     """
     if group_name == 'lint':
         for func_name, data in packs.items():
-            data = {k: v for k, v in sorted(data.items(), key=lambda x: max(x[1].total_time), reverse=True)}
+            data = {k: v for k, v in sorted(data.items(), key=lambda x: max(x[1]), reverse=True)}
             data = [(k, *v1) for k, v in data.items() for v1 in v]
+
             if 'run_pack' in func_name:  # not spam the logger to much
                 write_mesure_to_logger(func_name, data, is_packs=True)
             write_measure_to_file(time_measurements_dir, func_name, data, is_packs=True)

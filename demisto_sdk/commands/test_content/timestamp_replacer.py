@@ -1,4 +1,5 @@
 import functools
+import json
 import logging
 import urllib.parse
 from ast import literal_eval
@@ -15,13 +16,10 @@ from mitmproxy.addons.serverplayback import ServerPlayback
 from mitmproxy.http import HTTPFlow, Request
 from mitmproxy.script import concurrent
 
-from demisto_sdk.commands.common.handlers import JSON_Handler
-
-json = JSON_Handler()
-
-
-logging.basicConfig(level=logging.DEBUG,
-                    format='[%(asctime)s] - [%(funcName)s] - %(message)s')
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='[%(asctime)s] - [%(funcName)s] - %(message)s'
+)
 
 
 def record_concurrently(replaying: bool = False):

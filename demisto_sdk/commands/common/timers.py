@@ -7,7 +7,7 @@ from datetime import datetime
 from enum import Enum
 from functools import wraps
 from pathlib import Path
-from typing import Optional, Dict, Sequence
+from typing import Dict, Optional, Sequence
 
 # Third party packages
 from tabulate import tabulate
@@ -136,7 +136,7 @@ def report_time_measurements(group_name='Common', time_measurements_dir='time_me
                 write_measure_to_logger(func_name, data, MeasureType.PACKS, debug=False)
             else:
                 write_measure_to_logger(func_name, data, MeasureType.PACKS, debug=True)
-            write_measure_to_file(time_measurements_dir, func_name, data, is_packs=True)
+            write_measure_to_file(time_measurements_dir, func_name, data, measure_type=MeasureType.PACKS)
     timers = registered_timers.get(group_name)
     if timers:
 
@@ -160,7 +160,7 @@ def report_time_measurements(group_name='Common', time_measurements_dir='time_me
         logger.debug(f'There is no timers registered for the group {group_name}')
 
 
-def write_measure_to_logger(name: str, csv_data: dict, measure_type: MeasureType = MeasureType.FUNCTIONS,
+def write_measure_to_logger(name: str, csv_data, measure_type: MeasureType = MeasureType.FUNCTIONS,
                             debug: bool = False):
     """
 

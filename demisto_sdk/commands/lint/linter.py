@@ -107,14 +107,18 @@ class Linter:
             "exit_code": SUCCESS,
             "warning_code": SUCCESS,
         }
-
+        self._pack_name = None
         yml_file: Optional[Path] = self._pack_abs_dir.glob([r'*.yaml', r'*.yml', r'!*unified*.yml'], flags=NEGATE)
         if not yml_file:
             logger.info(f"{self._pack_abs_dir} - Skipping no yaml file found {yml_file}")
             self._pkg_lint_status["errors"].append('Unable to find yml file in package')
         else:
-            self._yml_file = next(yml_file)
-        self._pack_name = self._yml_file.stem
+            try:
+                self._yml_file = next(yml_file)
+                self._pack_name = self._yml_file.stem
+            except StopIteration:
+                logger.info(f"{self._pack_abs_dir} - Skipping no yaml file found {yml_file}")
+                self._pkg_lint_status["errors"].append('Unable to find yml file in package')
 
     @timer(group_name='lint')
     def run_pack(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,

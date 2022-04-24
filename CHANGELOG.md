@@ -1,5 +1,8 @@
 # Changelog
 
+* Added timestamp to `demisto-sdk` logger.
+* Added time measurements for packs in **lint**.
+
 ## 1.6.4
 
 * Added the new **generate-yml-from-python** command.

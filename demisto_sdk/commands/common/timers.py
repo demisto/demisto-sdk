@@ -61,7 +61,7 @@ def timer(group_name='Common'):
         def wrapper_timer(*args, **kwargs):
             nonlocal total_time, call_count
             if group_name == 'lint':
-                pack_name, index = lint_start_measure(args)
+                pack_name, run_count = start_measure_pack(args)
             tic = time.perf_counter()
             value = func(*args, **kwargs)
             toc = time.perf_counter()
@@ -72,22 +72,33 @@ def timer(group_name='Common'):
             call_count += 1
 
             if group_name == 'lint':
-                lint_end_measure(pack_name, index, elapsed_time)
+                end_measure_pack(pack_name, run_count, elapsed_time)
             return value
 
-        def lint_start_measure(args):
+        def start_measure_pack(args):
+            """
+            start measuring the time of the pack
+            Args:
+                args: the args to the function
+
+            Returns:
+                The pack name and the time that this function run in the pack
+
+            """
             pack_name = args[0]._pack_name
+            # __qualname__ is the function full name
             if func.__qualname__ not in packs:
                 packs[func.__qualname__] = {}
             if pack_name not in packs[func.__qualname__]:
                 packs[func.__qualname__][pack_name] = []
-            index = len(packs[func.__qualname__][pack_name])
+            run_count = len(packs[func.__qualname__][pack_name])
             packs[func.__qualname__][pack_name].append(PackStatInfo(start_time=datetime.now().isoformat()))
-            return pack_name, index
+            return pack_name, run_count
 
-        def lint_end_measure(pack_name, index, elapsed_time):
-            packs[func.__qualname__][pack_name][index].end_time = datetime.now().isoformat()
-            packs[func.__qualname__][pack_name][index].total_time = f'{elapsed_time:0.4f}'
+        def end_measure_pack(pack_name, run_count, elapsed_time):
+            # __qualname__ is the function full name
+            packs[func.__qualname__][pack_name][run_count].end_time = datetime.now().isoformat()
+            packs[func.__qualname__][pack_name][run_count].total_time = f'{elapsed_time:0.4f}'
 
         def stat_info():
             return StatInfo(total_time, call_count, total_time / call_count if call_count != 0 else 0)

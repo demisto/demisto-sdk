@@ -644,12 +644,13 @@ class TestValidators:
 
     def test_get_error_ignore_list(self, mocker):
         """
-            Given:
-                - A file path to pack ignore
-            When:
-                - running get_error_ignore_list from validate manager
-            Then:
-                - verify that the created ignored_errors list is correct
+        Given:
+            - A file path to pack ignore
+        When:
+            - running get_error_ignore_list from validate manager
+        Then:
+            - verify that the created ignored_errors list is being created with all of the
+            error codes that is in the .pack-ignore, also the error codes which cannot be ignored.
         """
         files_path = os.path.normpath(
             os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
@@ -660,7 +661,7 @@ class TestValidators:
 
         validate_manager = ValidateManager()
         ignore_errors_list = validate_manager.get_error_ignore_list("fake")
-        assert ignore_errors_list['file_name'] == ['BA101', 'SC101', 'BA106']
+        assert ignore_errors_list['file_name'] == ['BA101', 'SC101', 'IN117', 'BA106', 'IN100']
         assert 'SC100' not in ignore_errors_list['file_name']
 
     def test_create_ignored_errors_list(self):

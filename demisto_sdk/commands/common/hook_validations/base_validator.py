@@ -34,23 +34,43 @@ class BaseValidator:
         self.json_file_path = json_file_path
 
     @staticmethod
-    def should_ignore_error(error_code, ignored_errors):
-        """Return True is code should be ignored and False otherwise"""
-        # the file is not part of the .pack-ignore
-        if ignored_errors is None:
-            return False
+    def should_ignore_error(error_code, ignored_errors, is_error_code_in_allowed_ignore_errors=True):
+        """
+        Determine if the error code is part of the .pack-ignore and whether the error code is allowed/disallowed
+        to be ignored.
 
-        # check if specific codes are ignored
-        if error_code in ignored_errors:
-            return error_code in ALLOWED_IGNORE_ERRORS
+        Args:
+            error_code (str): the error code of the validation.
+            ignored_errors (list[str]): a list of ignored errors which should be ignored in the file (a single row).
+            is_error_code_in_allowed_ignore_errors (bool): indicates whether error code should be in
+                ALLOWED_IGNORE_ERRORS or not, True if it should be in ALLOWED_IGNORE_ERRORS, False if not.
 
-        # in case a whole section of codes are selected, e.g.: ST,BA
+        Returns:
+            True if error code is part of the .pack-ignore and error code is expected/not expected
+                (according to is_error_code_in_allowed_ignore_errors)
+                to be part of the ALLOWED_IGNORE_ERRORS, False otherwise.
+        """
         code_type = error_code[:2]
-        if code_type in ignored_errors:
-            return True
-            # return any([code_type in allowed_code for allowed_code in ALLOWED_IGNORE_ERRORS])
+        return (
+                error_code in ignored_errors or code_type in ignored_errors
+            ) and (
+                (error_code in ALLOWED_IGNORE_ERRORS) == is_error_code_in_allowed_ignore_errors
+            )
 
-        return False
+    def should_error_code_not_be_ignored_in_pack_ignore(self, error_code, ignored_errors):
+        """
+        Determine whether an error code that is in the .pack-ignore should not be ignored.
+
+         Args:
+            error_code (str): the error code of the validation.
+            ignored_errors (list[str]): a list of ignored errors which should be ignored in the file (a single row).
+
+        Returns:
+            True if error code can not be ignored, False otherwise.
+        """
+        return self.should_ignore_error(
+            error_code=error_code, ignored_errors=ignored_errors, is_error_code_in_allowed_ignore_errors=False
+        )
 
     def handle_error(self, error_message, error_code, file_path, should_print=True, suggested_fix=None, warning=False,
                      drop_line=False):
@@ -72,11 +92,14 @@ class BaseValidator:
         def formatted_error_str(error_type):
             if error_type not in {'ERROR', 'WARNING'}:
                 raise ValueError("Error type is not valid. Should be in {'ERROR', 'WARNING'}")
-            # if the error should not be ignored and the file contains errors from the .pack-ignore
-            if not should_error_be_ignored and error_code in (ignored_errors or []):
-                return f"ERROR-CODE: [{error_code}] can not be ignored in .pack-ignore\n"
 
-            formatted = f"[{error_type}]: {file_path}: [{error_code}] - {error_message}".rstrip("\n") + "\n"
+            formatted_error_message_prefix = f"[{error_type}]: {file_path}: [{error_code}]"
+            if self.should_error_code_not_be_ignored_in_pack_ignore(
+                error_code=error_code, ignored_errors=ignored_errors
+            ):
+                formatted = f"{formatted_error_message_prefix} can not be ignored in .pack-ignore\n"
+            else:
+                formatted = f"{formatted_error_message_prefix} - {error_message}".rstrip("\n") + "\n"
             if drop_line:
                 formatted = '\n' + formatted
             return formatted
@@ -94,10 +117,9 @@ class BaseValidator:
             file_name = 'No-Name'
             rel_file_path = 'No-Name'
 
-        ignored_errors = self.ignored_errors.get(file_name) or self.ignored_errors.get(rel_file_path)
-        should_error_be_ignored = self.should_ignore_error(error_code, ignored_errors)
+        ignored_errors = self.ignored_errors.get(file_name) or self.ignored_errors.get(rel_file_path) or []
 
-        if should_error_be_ignored or warning:
+        if self.should_ignore_error(error_code, ignored_errors) or warning:
             if self.print_as_warnings or warning:
                 click.secho(formatted_error_str('WARNING'), fg="yellow")
                 self.json_output(file_path, error_code, error_message, warning)
@@ -106,7 +128,7 @@ class BaseValidator:
 
         formatted_error = formatted_error_str('ERROR')
         if should_print and not self.suppress_print:
-            if suggested_fix and 'ERROR-CODE' not in formatted_error:
+            if suggested_fix and 'can not be ignored in .pack-ignore' not in formatted_error:
                 click.secho(formatted_error[:-1], fg="bright_red")
                 if error_code == 'ST109':
                     click.secho("Please add to the root of the yml.\n", fg="bright_red")

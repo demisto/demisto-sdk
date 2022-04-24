@@ -21,10 +21,6 @@ DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = BaseValidator.create_reverse_ignored_err
     PRESET_ERROR_TO_CHECK['deprecated'])
 
 
-# return None on errors codes that can be ignored.
-# return original error on error codes that were not in the pack-ignore which means they should not have been ignored.
-# return 'ERROR-CODE: [{error_code}] can not be ignored in .pack-ignore\n on error codes which are in .pack-ignore but cannot be ignored.
-
 @pytest.mark.parametrize(
     'ignored_errors, error_code',
     [
@@ -36,31 +32,46 @@ DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = BaseValidator.create_reverse_ignored_err
         ),
         (
             {'file_name': ['PB109', 'PB104']}, 'PB109'  # PB104 can be ignored, PB109 can not be ignored
+        ),
+        (
+            {'file_name': ['RM']}, 'RM109'  # RM109 can not be ignored
+        ),
+        (
+            {'file_name': ['RM']}, 'RM105'  # RM106 can not be ignored
+        ),
+        (
+            {'file_name': ['RM', 'SC']}, 'SC102'  # SC102 can not be ignored
         )
     ]
 )
 def test_handle_error_on_unignorable_error_codes(mocker, ignored_errors, error_code):
     """
     Given
-    - ignore errors which cannot be ignored.
+    - error code which is not allowed to be ignored.
+    - error codes/prefix error codes as the ignored errors from the pack-ignore file
 
     When
     - Running handle_error method
 
     Then
-    - Ensure that the error message that is returned and printed indicates that this error code cannot be ignored.
+    - Ensure that the correct error message is returned
+    - Ensure that the correct error message is printed out.
+    - Ensure that the un-ignorable errors are in FOUND_FILES_AND_ERRORS list.
+    - Ensure that the un-ignorable errors are not in FOUND_FILES_AND_IGNORED_ERRORS list.
     """
     import click
     base_validator = BaseValidator(ignored_errors=ignored_errors)
-    expected_error = f'ERROR-CODE: [{error_code}] can not be ignored in .pack-ignore\n'
+    expected_error = f'[ERROR]: file_name: [{error_code}] can not be ignored in .pack-ignore\n'
 
     click_mock = mocker.patch.object(click, 'secho')
     result = base_validator.handle_error(
-        error_message='test', error_code=error_code, file_path='file_name', suggested_fix='fix'
+        error_message='', error_code=error_code, file_path='file_name', suggested_fix='fix'
     )
     assert result == expected_error
     assert click_mock.called
     assert click_mock.call_args.args[0] == expected_error
+    assert f'file_name - [{error_code}]' in FOUND_FILES_AND_ERRORS
+    assert f'file_name - [{error_code}]' not in FOUND_FILES_AND_IGNORED_ERRORS
 
 
 def test_handle_error(mocker):
@@ -140,9 +151,9 @@ def test_handle_error_file_with_path(pack):
     assert f'{integration.readme.path} - [BA101]' in FOUND_FILES_AND_ERRORS
 
     formatted_error = base_validator.handle_error("Error-message", "ST109", integration.readme.path)
-    assert formatted_error == 'ERROR-CODE: [ST109] can not be ignored in .pack-ignore\n'
-    assert f'{integration.readme.path} - [ST109]' not in FOUND_FILES_AND_ERRORS
-    assert f'{integration.readme.path} - [ST109]' in FOUND_FILES_AND_IGNORED_ERRORS
+    assert formatted_error == f'[ERROR]: {integration.readme.path}: [ST109] can not be ignored in .pack-ignore\n'
+    assert f'{integration.readme.path} - [ST109]' in FOUND_FILES_AND_ERRORS
+    assert f'{integration.readme.path} - [ST109]' not in FOUND_FILES_AND_IGNORED_ERRORS
 
     formatted_error = base_validator.handle_error("Error-message", "ST109", pack.readme.path)
     assert formatted_error == f'[ERROR]: {pack.readme.path}: [ST109] - Error-message\n'

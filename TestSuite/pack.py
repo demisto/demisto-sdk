@@ -1,3 +1,4 @@
+import os.path
 from pathlib import Path
 from typing import List, Optional
 
@@ -280,7 +281,7 @@ class Pack:
             content: dict = {},
     ) -> YAML:
         yaml_name = f"{name}.yml"
-        yaml_path = dir_path / yaml_name
+        yaml_path = Path(os.path.join(dir_path, yaml_name))
         obj = YAML(yaml_path, self.repo_path)
         obj.write_dict(content)
         return obj
@@ -535,11 +536,11 @@ class Pack:
         return contributors
 
     def create_parsing_rule(
-        self,
-        name: Optional[str] = None,
-        yml: Optional[dict] = None,
-        rules: Optional[str] = None,
-        samples: Optional[list] = None,
+            self,
+            name: Optional[str] = None,
+            yml: Optional[dict] = None,
+            rules: Optional[str] = None,
+            samples: Optional[list] = None,
     ) -> Rule:
         if not name:
             name = f'parsingrule_{len(self.parsing_rules)}'
@@ -569,10 +570,10 @@ class Pack:
         return rule
 
     def create_modeling_rule(
-        self,
-        name: Optional[str] = None,
-        yml: Optional[dict] = None,
-        rules: Optional[str] = None,
+            self,
+            name: Optional[str] = None,
+            yml: Optional[dict] = None,
+            rules: Optional[str] = None,
     ) -> Rule:
         if not name:
             name = f'modelingrule_{len(self.modeling_rules)}'

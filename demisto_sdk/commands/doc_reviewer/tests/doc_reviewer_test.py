@@ -168,7 +168,7 @@ class TestDocReviewOnReleaseNotesOnly:
         assert set(doc_reviewer.files) == {rn.path for rn in valid_spelled_content_pack.release_notes}
 
     def test_get_invalid_files_from_git_with_release_notes(
-        self, mocker, malformed_integration_yml, malformed_incident_field
+            self, mocker, malformed_integration_yml, malformed_incident_field
     ):
         """
         Given -
@@ -633,7 +633,8 @@ def test_having_two_file_paths_same_pack(repo, mocker, first_file_content, secon
                           ])
 def test_having_two_file_paths_different_pack(repo, mocker, first_file_content, second_file_content, unknown_word_calls,
                                               known_words_files_contents, review_success, misspelled_files_num,
-                                              first_packs_known_words_content, second_packs_known_words_content, load_known_words_from_pack):
+                                              first_packs_known_words_content, second_packs_known_words_content,
+                                              load_known_words_from_pack):
     """
     Given:
         - 2 release notes files with two misspelled words each.
@@ -824,6 +825,33 @@ def test_find_known_words_from_pack_ignore_scripts_name(repo):
     with ChangeCWD(repo.path):
         found_known_words = doc_reviewer.find_known_words_from_pack(rn_file.path)[1]
         assert script1.name in found_known_words
+        assert script2.name in found_known_words
+
+
+def test_find_known_words_from_pack_ignore_commons_scripts_name(repo):
+    """
+    Given:
+        - Pack's structure is correct and pack-ignore file is present.
+        - The scripts are in the old version (JS code), no Scripts' dir exists (only yml amd md files).
+
+    When:
+        - Running DocReviewer.find_known_words_from_pack.
+
+    Then:
+        - Ensure the found path result is appropriate.
+        - Ensure the scripts names are ignored.
+    """
+
+    pack = repo.create_pack('test_pack')
+    script1_name = 'script-first_script'
+    pack._create_yaml_based(name=script1_name, dir_path=f'{pack.path}//Scripts', content={'name': script1_name})
+    script2 = pack.create_script(name='second_script')
+    rn_file = pack.create_release_notes(version='1_0_0', content=f'{script1_name}\n{script2.name}')
+    doc_reviewer = DocReviewer(file_paths=[])
+
+    with ChangeCWD(repo.path):
+        found_known_words = doc_reviewer.find_known_words_from_pack(rn_file.path)[1]
+        assert script1_name in found_known_words
         assert script2.name in found_known_words
 
 

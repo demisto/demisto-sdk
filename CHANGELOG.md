@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
+
 ## 1.6.4
 
 * Added the new **generate-yml-from-python** command.

@@ -2,9 +2,9 @@
 
 ## Unreleased
 
-* Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
 * Added timestamp to `demisto-sdk` logger.
 * Added time measurements for packs in **lint**.
+* Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
 
 ## 1.6.4
 

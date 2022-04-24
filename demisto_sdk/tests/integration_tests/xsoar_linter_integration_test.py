@@ -9,7 +9,7 @@ For Valid file use: XSOAR_LINTER_PY3_VALID
 For a new checker, add the invalid statement in the relevant file and add it to the relevant test.
 """
 
-from pathlib import Path
+from wcmatch.pathlib import Path
 
 import pytest
 
@@ -153,7 +153,6 @@ def test_xsoar_linter_errors(mocker, file, python_version, support_level, long_r
     mocker.patch.object(linter.Linter, '_update_support_level')
     linter.Linter._docker_login.return_value = False
     test_path = Path(f"{GIT_ROOT}/demisto_sdk/tests/test_files")
-
     runner = linter.Linter(content_repo=test_path,
                            pack_dir=test_path,
                            req_2=[],

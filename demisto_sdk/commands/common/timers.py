@@ -16,8 +16,10 @@ from demisto_sdk.commands.common.logger import Colors
 
 logger = logging.getLogger('demisto-sdk')
 
+# Table for functions
 CSV_HEADERS = ['Function', 'Avg', 'Total', 'Call count']
 
+# Table for packs
 PACK_CSV_HEADERS = ['Pack', 'Start Time', 'End Time', 'Total Time']
 
 StatInfo = namedtuple("StatInfo", ["total_time", "call_count", "avg_time"])
@@ -124,8 +126,10 @@ def report_time_measurements(group_name='Common', time_measurements_dir='time_me
             data = {k: v for k, v in sorted(data.items(), key=lambda x: max(x[1]), reverse=True)}
             data = [(k, *v1) for k, v in data.items() for v1 in v]
 
-            if 'run_pack' in func_name:  # not spam the logger to much
-                write_mesure_to_logger(func_name, data, is_packs=True)
+            if 'run_pack' in func_name:  # not spam stdout too much
+                write_measure_to_logger(func_name, data, is_packs=True, debug=False)
+            else:
+                write_measure_to_logger(func_name, data, is_packs=True, debug=True)
             write_measure_to_file(time_measurements_dir, func_name, data, is_packs=True)
     timers = registered_timers.get(group_name)
     if timers:
@@ -142,15 +146,26 @@ def report_time_measurements(group_name='Common', time_measurements_dir='time_me
         # sort by the total time
         list.sort(method_states, key=lambda method_stat: float(method_stat[2]), reverse=True)
 
-        write_mesure_to_logger(group_name, csv_data=method_states)
-        write_measure_to_file(time_measurements_dir=time_measurements_dir, group_name=group_name,
+        write_measure_to_logger(group_name, csv_data=method_states)
+        write_measure_to_file(time_measurements_dir=time_measurements_dir, name=group_name,
                               csv_data=method_states)
 
     else:
         logger.debug(f'There is no timers registered for the group {group_name}')
 
 
-def write_mesure_to_logger(name, csv_data, is_packs=False):
+def write_measure_to_logger(name, csv_data, is_packs=False, debug=False):
+    """
+
+    Args:
+        debug: if write to debug
+        name: name of the table
+        csv_data: the data
+        is_packs: if we want to create table for packs (default is table for functions)
+
+    Returns:
+
+    """
     sentence = f'Time measurements stat for {name}'
     output_msg = f"\n{Colors.Fg.cyan}{'#' * len(sentence)}\n" \
                  f"{sentence}\n" \
@@ -158,15 +173,29 @@ def write_mesure_to_logger(name, csv_data, is_packs=False):
 
     stat_info_table = tabulate(csv_data, headers=CSV_HEADERS if not is_packs else PACK_CSV_HEADERS)
     output_msg += stat_info_table
-    logger.info(output_msg)
+    if debug:
+        logger.debug(output_msg)
+    else:
+        logger.info(output_msg)
 
 
-def write_measure_to_file(time_measurements_dir, group_name, csv_data, is_packs=False):
+def write_measure_to_file(time_measurements_dir, name, csv_data, is_packs=False):
+    """
+
+    Args:
+        time_measurements_dir: Directory to save the data
+        name: name of the table
+        csv_data: the data
+        is_packs: if we want to create table for packs (default is table for functions)
+
+    Returns:
+
+    """
     try:
         time_measurements_path = Path(time_measurements_dir)
         if not time_measurements_path.exists():
             time_measurements_path.mkdir(parents=True)
-        with open(time_measurements_path / f'{group_name}_time_measurements.csv', 'w+') as file:
+        with open(time_measurements_path / f'{name}_time_measurements.csv', 'w+') as file:
             file.write(','.join(CSV_HEADERS if not is_packs else PACK_CSV_HEADERS))
             for stat in csv_data:
                 file.write(f"\n{','.join(stat)}")

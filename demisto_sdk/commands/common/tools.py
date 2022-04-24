@@ -900,8 +900,10 @@ def get_scripts_names(file_path):
     if not found_scripts:
         click.secho(f'no scripts found')
     else:
+        click.secho(f'All scripts found: {found_scripts}')
         for script in found_scripts:
             script_path_full = os.path.join(scripts_dir_path, script, f'{script}.yml')
+            click.secho(f'Current script path: {script_path_full}')
             yml_dict = get_yaml(script_path_full)
             click.secho(f'name: {yml_dict.get("name")}')
             scripts_names.add(yml_dict.get("name"))

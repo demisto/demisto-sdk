@@ -1,6 +1,9 @@
 # Changelog
 
-* Fixed an issue where **doc-review** command returned success on malformed release notes.
+demisto_sdk.tests.integration_tests.content_create_artifacts_integration_test
+
+## 1.6.4
+
 * Added the new **generate-yml-from-python** command.
 * Added a code *type* indication for integration and script objects in the *ID Set*.
 * Added the [Vulture](https://github.com/jendrikseipp/vulture) linter to the pre-commit hook.

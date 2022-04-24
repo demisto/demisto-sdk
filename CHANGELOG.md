@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+* Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
+* Added a new flag to the **validate** command, allowing to run specific validations.
+
 ## 1.6.4
 
 * Added the new **generate-yml-from-python** command.
@@ -31,8 +36,6 @@ the same as the last release note version.
 * Fixed an issue in the **validate** and **format** commands where *None* arguments in integration commands caused the commands to fail unexpectedly.
 * Added support for running tests on XSIAM machines in the **test-content** command.
 * Fixed an issue where the **validate** command did not work properly when deleting non-content items.
-* Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
-* Added a new flag to the **validate** command, allowing to run specific validations.
 
 ## 1.6.3
 

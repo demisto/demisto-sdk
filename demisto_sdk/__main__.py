@@ -666,7 +666,7 @@ def secrets(config, **kwargs):
               default='Tests/id_set.json')
 @click.option("-cdam", "--check-dependent-api-module", is_flag=True, help="Run unit tests and lint on all packages that "
               "are dependent on the found "
-              "modified api modules.", default=True)
+              "modified api modules.", default=False)
 @click.option("--time-measurements-dir", help="Specify directory for the time measurements report file",
               type=PathsParamType())
 def lint(**kwargs):
@@ -1616,8 +1616,9 @@ def update_release_notes(**kwargs):
 @click.option("-o", "--output-path", help="The destination path for the packs dependencies json file. This argument is "
               "only relevant for when using the '--all-packs-dependecies' flag.", required=False)
 @click.option("--get-dependent-on", help="Get only the packs dependent ON the given pack. Note: this flag can not be"
-                                         " used for the packs ApiModules and Base", required=False,
-              is_flag=True)
+                                         " used for the packs ApiModules and Base", required=False, is_flag=True)
+@click.option("-d", "--dependency", help="Find which items in a specific content pack appears as a mandatory "
+                                         "dependency of the searched pack ", required=False)
 def find_dependencies(**kwargs):
     """Find pack dependencies and update pack metadata."""
     from demisto_sdk.commands.find_dependencies.find_dependencies import \
@@ -1631,7 +1632,7 @@ def find_dependencies(**kwargs):
     all_packs_dependencies = kwargs.get('all_packs_dependencies', False)
     get_dependent_on = kwargs.get('get_dependent_on', False)
     output_path = kwargs.get('output_path', ALL_PACKS_DEPENDENCIES_DEFAULT_PATH)
-
+    dependency = kwargs.get('dependency', '')
     try:
 
         PackDependencies.find_dependencies_manager(
@@ -1643,6 +1644,7 @@ def find_dependencies(**kwargs):
             all_packs_dependencies=all_packs_dependencies,
             get_dependent_on=get_dependent_on,
             output_path=output_path,
+            dependency=dependency,
         )
 
     except ValueError as exp:
@@ -1935,6 +1937,15 @@ def openapi_codegen(**kwargs):
     help='Should use retries mechanism or not (if test-playbook fails, it will execute it again few times and '
          'determine success according to most of the runs',
     default=False)
+@click.option(
+    '--server-type',
+    help='Which server runs the tests? XSIAM or XSOAR',
+    default='XSOAR')
+@click.option(
+    '-x',
+    '--xsiam-machine',
+    help='XSIAM machine to use, if it is XSIAM build.')
+@click.option('--xsiam-servers-path', help='Path to secret xsiam server metadata file.')
 def test_content(**kwargs):
     """Configure instances for the integration needed to run tests_to_run tests.
     Run test module on each integration.
@@ -2041,6 +2052,34 @@ def integration_diff(**kwargs):
     sys.exit(1)
 
 
+# ====================== generate_yml_from_python ====================== #
+@main.command(name="generate-yml-from-python",
+              help='''Generate YML file from Python code that includes special syntax.\n
+                      The output file name will be the same as the Python code with the `.yml` extension instead of `.py`.\n
+                      The generation currently supports integrations only.\n
+                      For more information on usage and installation visit the command's README.md file.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i', '--input', type=click.Path(exists=True), help='The path to the python code to generate from', required=True)
+@click.option(
+    '-v', '--verbose', is_flag=True, type=bool, help='Indicate for extended prints.', required=False)
+@click.option(
+    '-f', '--force', is_flag=True, type=bool, help='Override existing yml file.', required=False)
+def generate_yml_from_python(**kwargs):
+    """
+    Checks for differences between two versions of an integration, and verified that the new version covered the old version.
+    """
+    from demisto_sdk.commands.generate_yml_from_python.generate_yml import \
+        YMLGenerator
+
+    yml_generator = YMLGenerator(filename=kwargs.get('input', ''), verbose=kwargs.get('verbose', False),
+                                 force=kwargs.get('force', False))
+    yml_generator.generate()
+    yml_generator.save_to_yml_file()
+
+
 # ====================== convert ====================== #
 @main.command()
 @click.help_option(
@@ -2072,6 +2111,77 @@ def convert(config, **kwargs):
         sys.exit(1)
 
     sys.exit(0)
+
+# ====================== generate-unit-tests ====================== #
+
+
+@main.command(short_help='''Generates unit tests for integration code.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    "-c", "--commands", help="Specific commands name to generate unit test for (e.g. xdr-get-incidents)",
+    required=False)
+@click.option(
+    '-o', '--output_dir', help='Directory to store the output in (default is the input integration directory)',
+    required=False)
+@click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
+              type=click.IntRange(0, 3, clamp=True), default=1, show_default=True)
+@click.option(
+    "-i", "--input_path",
+    help="Valid integration file path.",
+    required=True)
+@click.option('-q', "--quiet", is_flag=True, help="Quiet output, only output results in the end")
+@click.option("-lp", "--log-path", help="Path to store all levels of logs",
+              type=click.Path(resolve_path=True))
+@click.option(
+    '-d', '--use_demisto',
+    help="Run commands at Demisto automatically.", is_flag=True
+)
+@click.option(
+    "--insecure",
+    help="Skip certificate validation", is_flag=True
+)
+@click.option(
+    "-e", "--examples",
+    help="Integrations: path for file containing command examples."
+         " Each command should be in a separate line.")
+@click.option(
+    "-a", "--append",
+    help="Append generated test file to the existing <integration_name>_test.py. Else, overwriting existing UT",
+    is_flag=True)
+def generate_unit_tests(input_path: str = '',
+                        commands: list = [],
+                        output_dir: str = '',
+                        examples: str = '',
+                        insecure: bool = False,
+                        use_demisto: bool = False,
+                        append: bool = False,
+                        verbose: int = 1,
+                        quiet: bool = False,
+                        log_path: str = ''):
+    """
+    This command is used to generate unit tests automatically from an  integration python code.
+    Also supports generating unit tests for specific commands.
+    """
+
+    klara_logger = logging.getLogger('PYSCA')
+    klara_logger.propagate = False
+    from demisto_sdk.commands.common.logger import logging_setup
+    from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import \
+        run_generate_unit_tests
+    logging_setup(verbose=verbose,  # type: ignore[arg-type]
+                  quiet=quiet,  # type: ignore[arg-type]
+                  log_path=log_path)  # type: ignore[arg-type]
+    return run_generate_unit_tests(
+        input_path,
+        commands,
+        output_dir,
+        examples,
+        insecure,
+        use_demisto,
+        append
+    )
 
 
 @main.command(

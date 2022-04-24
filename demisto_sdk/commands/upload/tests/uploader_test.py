@@ -1,11 +1,11 @@
 import inspect
+import zipfile
 from functools import wraps
 from unittest.mock import MagicMock, patch
 
 import click
 import demisto_client
 import pytest
-import zipfile
 from click.testing import CliRunner
 from demisto_client.demisto_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
@@ -1062,7 +1062,7 @@ class TestZippedPackUpload:
             skip_value = None
         assert not skip_value
 
-    def test_xsiam(self, mocker):
+    def test_upload_xsiam_pack(self, mocker):
         """
         Given:
             - XSIAM pack to upload
@@ -1082,7 +1082,7 @@ class TestZippedPackUpload:
 
         assert 'uploadable_packs.zip' in zip_file_path
 
-        unzipped_uploadable_packs = zipfile.ZipFile(zip_file_path, "r")
+        unzipped_uploadable_packs = zipfile.ZipFile(zip_file_path, "r").extractall()
         unzipped_xsiam_pack = zipfile.ZipFile(unzipped_uploadable_packs.filelist[0].filename, "r")
         xsiam_pack_files = unzipped_xsiam_pack.namelist()
         assert 'Triggers/' in xsiam_pack_files

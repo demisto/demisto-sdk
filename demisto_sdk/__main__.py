@@ -13,8 +13,8 @@ from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, MODELING_RULES_DIR, PARSING_RULES_DIR, MarketplaceVersions,
-    FileType)
+    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, MODELING_RULES_DIR, PARSING_RULES_DIR,
+    FileType, MarketplaceVersions)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
@@ -945,6 +945,7 @@ def upload(**kwargs):
         kwargs.pop('zip')
         kwargs.pop('keep_zip')
         kwargs.pop('input_config_file')
+        kwargs.pop('xsiam')
 
     check_configuration_file('upload', kwargs)
     return Uploader(**kwargs).upload()

@@ -1,5 +1,7 @@
 # Changelog
 
+* Fixed an issue in the **format** command where the `id` field was updated in old json files.
+
 ## 1.6.4
 
 * Added the new **generate-yml-from-python** command.

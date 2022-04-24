@@ -5,13 +5,11 @@ import os
 import re
 import sys
 import textwrap
-from concurrent.futures import ALL_COMPLETED
-from typing import Any, Dict, List, Set, Union, Tuple
+from typing import Any, Dict, List, Set, Tuple, Union
 
 import docker
 import docker.errors
 import git
-import pebble.concurrent
 import requests.exceptions
 import urllib3.exceptions
 from wcmatch.pathlib import Path, PosixPath
@@ -21,7 +19,6 @@ from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
                                                    DemistoException)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import Colors
-from demisto_sdk.commands.common.timeout import Timeout
 from demisto_sdk.commands.common.timers import report_time_measurements
 from demisto_sdk.commands.common.tools import (find_file, find_type,
                                                get_api_module_dependencies,
@@ -323,7 +320,7 @@ class LintManager:
                              lint_status: dict,
                              pkgs_status: dict,
                              pkgs_type: list,
-                             ) -> tuple[int, int]:
+                             ) -> Tuple[int, int]:
         """ Runs the Lint command on all given packages.
 
         Args:
@@ -415,8 +412,7 @@ class LintManager:
             no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
             keep_container: bool,
             test_xml: str, failure_report: str, docker_timeout: int,
-            time_measurements_dir: str = None,
-            total_timeout: int = None) -> int:
+            time_measurements_dir: str = None) -> int:
         """ Runs the Lint command on all given packages.
 
         Args:

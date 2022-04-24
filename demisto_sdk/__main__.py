@@ -669,7 +669,6 @@ def secrets(config, **kwargs):
               "modified api modules.", default=False)
 @click.option("--time-measurements-dir", help="Specify directory for the time measurements report file",
               type=PathsParamType())
-@click.option('-t', '--timeout', help='timeout for the task (default not timeout)', default=0, type=int)
 def lint(**kwargs):
     """Lint command will perform:
         1. Package in host checks - flake8, bandit, mypy, vulture.
@@ -714,7 +713,6 @@ def lint(**kwargs):
         coverage_report=kwargs.get('coverage_report'),  # type: ignore[arg-type]
         docker_timeout=kwargs.get('docker_timeout'),  # type: ignore[arg-type]
         time_measurements_dir=kwargs.get('time_measurements_dir'),  # type: ignore[arg-type]
-        total_timeout=kwargs.get('timeout')  # type: ignore[arg-type]
     )
 
 

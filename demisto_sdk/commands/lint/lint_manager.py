@@ -21,6 +21,7 @@ from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
                                                    DemistoException)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import Colors
+from demisto_sdk.commands.common.timeout import Timeout
 from demisto_sdk.commands.common.timers import report_time_measurements
 from demisto_sdk.commands.common.tools import (find_file, find_type,
                                                get_api_module_dependencies,
@@ -304,7 +305,6 @@ class LintManager:
 
         return list(pkgs_to_check)
 
-    @pebble.concurrent.process()
     def execute_all_packages(self,
                              parallel: int,
                              no_flake8: bool,
@@ -322,7 +322,8 @@ class LintManager:
                              docker_timeout: int,
                              lint_status: dict,
                              pkgs_status: dict,
-                             pkgs_type: list) -> tuple[int, int]:
+                             pkgs_type: list,
+                             ) -> tuple[int, int]:
         """ Runs the Lint command on all given packages.
 
         Args:
@@ -376,7 +377,7 @@ class LintManager:
                                                    test_xml=test_xml,
                                                    no_coverage=no_coverage))
 
-                for future in results:
+                for future in concurrent.futures.as_completed(results):
                     pkg_status = future.result()
                     pkgs_status[pkg_status["pkg"]] = pkg_status
                     if pkg_status["exit_code"]:
@@ -475,30 +476,24 @@ class LintManager:
                                                no_vulture=no_vulture, no_xsoar_linter=no_xsoar_linter,
                                                no_pylint=no_pylint, no_test=no_test, no_pwsh_analyze=no_pwsh_analyze,
                                                no_pwsh_test=no_pwsh_test, docker_engine=self._facts["docker_engine"])
-        p = self.execute_all_packages(parallel=parallel,
-                                      no_flake8=no_flake8,
-                                      no_xsoar_linter=no_xsoar_linter,
-                                      no_bandit=no_bandit,
-                                      no_mypy=no_mypy,
-                                      no_pylint=no_pylint,
-                                      no_coverage=no_coverage,
-                                      no_vulture=no_vulture,
-                                      no_test=no_test,
-                                      no_pwsh_test=no_pwsh_test,
-                                      keep_container=keep_container,
-                                      test_xml=test_xml,
-                                      docker_timeout=docker_timeout,
-                                      no_pwsh_analyze=no_pwsh_analyze,
-                                      lint_status=lint_status,
-                                      pkgs_status=pkgs_status,
-                                      pkgs_type=pkgs_type,
-                                      )
-        try:
-            return_exit_code, return_warning_code = p.result(timeout=total_timeout)
-        except (TimeoutError, concurrent.futures.TimeoutError) as e:
-            p.cancel()
-            return_exit_code, return_warning_code = 1, 0
-            logger.error(f'Got timeout, error: {e}')
+        return_exit_code, return_warning_code = self.execute_all_packages(parallel=parallel,
+                                                                          no_flake8=no_flake8,
+                                                                          no_xsoar_linter=no_xsoar_linter,
+                                                                          no_bandit=no_bandit,
+                                                                          no_mypy=no_mypy,
+                                                                          no_pylint=no_pylint,
+                                                                          no_coverage=no_coverage,
+                                                                          no_vulture=no_vulture,
+                                                                          no_test=no_test,
+                                                                          no_pwsh_test=no_pwsh_test,
+                                                                          keep_container=keep_container,
+                                                                          test_xml=test_xml,
+                                                                          docker_timeout=docker_timeout,
+                                                                          no_pwsh_analyze=no_pwsh_analyze,
+                                                                          lint_status=lint_status,
+                                                                          pkgs_status=pkgs_status,
+                                                                          pkgs_type=pkgs_type,
+                                                                          )
         self._report_results(lint_status=lint_status,
                              pkgs_status=pkgs_status,
                              return_exit_code=return_exit_code,

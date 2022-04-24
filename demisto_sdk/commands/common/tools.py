@@ -913,6 +913,8 @@ def get_scripts_names(file_path):
             else:
                 script_path_full = os.path.join(scripts_dir_path, script, f'{script}.yml')
                 click.secho(f'Current script path: {script_path_full}')
+                if script_path_full == 'Packs/CommonScripts/Scripts/GetlistRow/GetlistRow.yml':
+                    continue
                 yml_dict = get_yaml(script_path_full)
                 click.secho(f'name: {yml_dict.get("name")}')
                 scripts_names.add(yml_dict.get("name"))

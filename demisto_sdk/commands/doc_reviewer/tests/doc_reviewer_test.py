@@ -168,7 +168,7 @@ class TestDocReviewOnReleaseNotesOnly:
         assert set(doc_reviewer.files) == {rn.path for rn in valid_spelled_content_pack.release_notes}
 
     def test_get_invalid_files_from_git_with_release_notes(
-            self, mocker, malformed_integration_yml, malformed_incident_field
+        self, mocker, malformed_integration_yml, malformed_incident_field
     ):
         """
         Given -

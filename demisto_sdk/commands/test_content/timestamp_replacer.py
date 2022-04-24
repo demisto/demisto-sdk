@@ -1,3 +1,9 @@
+"""BEWARE:
+
+This file is used outside of the demisto-sdk.
+DO NOT import anything from custom packages, only use builtins.
+"""
+
 import functools
 import json
 import logging

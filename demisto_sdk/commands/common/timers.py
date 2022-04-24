@@ -170,7 +170,7 @@ def write_measure_to_logger(name, csv_data, is_packs=False, debug=False):
     output_msg = f"\n{Colors.Fg.cyan}{'#' * len(sentence)}\n" \
                  f"{sentence}\n" \
                  f"{'#' * len(sentence)}\n{Colors.reset}"
-
+    # if we construct packs measurement we will use PACK_CSV_HEADERS
     stat_info_table = tabulate(csv_data, headers=CSV_HEADERS if not is_packs else PACK_CSV_HEADERS)
     output_msg += stat_info_table
     if debug:
@@ -196,6 +196,7 @@ def write_measure_to_file(time_measurements_dir, name, csv_data, is_packs=False)
         if not time_measurements_path.exists():
             time_measurements_path.mkdir(parents=True)
         with open(time_measurements_path / f'{name}_time_measurements.csv', 'w+') as file:
+            # if we construct packs measurement we will use PACK_CSV_HEADERS
             file.write(','.join(CSV_HEADERS if not is_packs else PACK_CSV_HEADERS))
             for stat in csv_data:
                 file.write(f"\n{','.join(stat)}")

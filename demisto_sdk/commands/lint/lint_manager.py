@@ -779,6 +779,7 @@ class LintManager:
         """ Log failed image creation if occured
 
         Args:
+            pkgs_status: The packs status
             lint_status(dict): Overall lint status
             all_packs(bool): True when running lint command with -a flag.
      """
@@ -800,7 +801,7 @@ class LintManager:
                 failed = failed.union(lint_status[key])
             if key.startswith('warning'):
                 warnings = warnings.union(lint_status[key])
-        num_passed = len([pack for pack in pkgs_status if pack.get('exit_code') == 0])
+        num_passed = len([pack for pack, result in pkgs_status.items() if result.get('exit_code') == 0])
         # Log unit-tests summary
         sentence = " Summary "
         print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")

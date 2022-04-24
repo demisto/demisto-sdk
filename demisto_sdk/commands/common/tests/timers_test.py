@@ -2,9 +2,9 @@ import logging
 import tempfile
 from pathlib import Path
 
-from demisto_sdk.commands.common.timers import (CSV_HEADERS,
+from demisto_sdk.commands.common.timers import (MEASURE_TYPE_TO_HEADERS,
                                                 report_time_measurements,
-                                                timer)
+                                                timer, MeasureType)
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -31,7 +31,7 @@ def test_timers__happy_path(mocker):
     with tempfile.TemporaryDirectory() as dir:
         report_time_measurements(group_name='test_group', time_measurements_dir=str(dir))
         assert some_func.stat_info().call_count == 2
-        assert all(header in logger.info.call_args[0][0] for header in CSV_HEADERS)
+        assert all(header in logger.info.call_args[0][0] for header in MEASURE_TYPE_TO_HEADERS[MeasureType.FUNCTIONS])
         assert (Path(dir) / 'test_group_time_measurements.csv').exists()
 
 

@@ -1309,10 +1309,10 @@ def test_not_updating_id_in_old_json_file(repo):
     json_object = BaseUpdateJSON(input=json_incident_type.path)
     json_object.data['name'] = "name"
     json_object.data['id'] = "not_name"
-    json_object.old_file = json_object.data
+    json_object.old_file = json_object.data.copy()
     json_object.update_id()
     assert json_object.data['id'] == "not_name"
-    assert json_object.data['id'] == "name"
+    assert json_object.data['name'] == "name"
 
 
 def test_updating_id_in_old_json_file(repo):
@@ -1321,7 +1321,7 @@ def test_updating_id_in_old_json_file(repo):
         - An old json file with non matching name and id.
         - New id modification.
     When
-        - Run format on  file.
+        - Run format on file.
     Then
         - Ensure that name and id are matching.
     """
@@ -1331,7 +1331,7 @@ def test_updating_id_in_old_json_file(repo):
     json_object = BaseUpdateJSON(input=json_incident_type.path)
     json_object.data['name'] = "name"
     json_object.data['id'] = "not_name"
-    json_object.old_file = json_object.data
+    json_object.old_file = json_object.data.copy()
     json_object.data['id'] = "another_name"
     json_object.update_id()
     assert json_object.data['name'] == json_object.data['id']

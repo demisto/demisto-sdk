@@ -4,9 +4,10 @@ import time
 from collections import defaultdict, namedtuple
 from dataclasses import astuple, dataclass
 from datetime import datetime
+from enum import Enum
 from functools import wraps
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, Sequence
 
 # Third party packages
 from tabulate import tabulate
@@ -16,17 +17,22 @@ from demisto_sdk.commands.common.logger import Colors
 
 logger = logging.getLogger('demisto-sdk')
 
-# Table for functions
-CSV_HEADERS = ['Function', 'Avg', 'Total', 'Call count']
-
-# Table for packs
-PACK_CSV_HEADERS = ['Pack', 'Start Time', 'End Time', 'Total Time']
-
 StatInfo = namedtuple("StatInfo", ["total_time", "call_count", "avg_time"])
 
 registered_timers: dict = defaultdict(set)
 
 packs: dict = {}
+
+
+class MeasureType(Enum):
+    FUNCTIONS = 'functions'
+    PACKS = 'packs'
+
+
+MEASURE_TYPE_TO_HEADERS: Dict[MeasureType, Sequence[str]] = {
+    MeasureType.FUNCTIONS: ['Function', 'Avg', 'Total', 'Call count'],
+    MeasureType.PACKS: ['Pack', 'Start Time', 'End Time', 'Total Time']
+}
 
 
 @dataclass()
@@ -127,9 +133,9 @@ def report_time_measurements(group_name='Common', time_measurements_dir='time_me
             data = [(k, *v1) for k, v in data.items() for v1 in v]
 
             if 'run_pack' in func_name:  # not spam stdout too much
-                write_measure_to_logger(func_name, data, is_packs=True, debug=False)
+                write_measure_to_logger(func_name, data, MeasureType.PACKS, debug=False)
             else:
-                write_measure_to_logger(func_name, data, is_packs=True, debug=True)
+                write_measure_to_logger(func_name, data, MeasureType.PACKS, debug=True)
             write_measure_to_file(time_measurements_dir, func_name, data, is_packs=True)
     timers = registered_timers.get(group_name)
     if timers:
@@ -154,14 +160,15 @@ def report_time_measurements(group_name='Common', time_measurements_dir='time_me
         logger.debug(f'There is no timers registered for the group {group_name}')
 
 
-def write_measure_to_logger(name, csv_data, is_packs=False, debug=False):
+def write_measure_to_logger(name: str, csv_data: dict, measure_type: MeasureType = MeasureType.FUNCTIONS,
+                            debug: bool = False):
     """
 
     Args:
         debug: if write to debug
         name: name of the table
         csv_data: the data
-        is_packs: if we want to create table for packs (default is table for functions)
+        measure_type: The measure type (default is functions)
 
     Returns:
 
@@ -170,8 +177,7 @@ def write_measure_to_logger(name, csv_data, is_packs=False, debug=False):
     output_msg = f"\n{Colors.Fg.cyan}{'#' * len(sentence)}\n" \
                  f"{sentence}\n" \
                  f"{'#' * len(sentence)}\n{Colors.reset}"
-    # if we construct packs measurement we will use PACK_CSV_HEADERS
-    stat_info_table = tabulate(csv_data, headers=CSV_HEADERS if not is_packs else PACK_CSV_HEADERS)
+    stat_info_table = tabulate(csv_data, headers=MEASURE_TYPE_TO_HEADERS[measure_type])
     output_msg += stat_info_table
     if debug:
         logger.debug(output_msg)
@@ -179,14 +185,14 @@ def write_measure_to_logger(name, csv_data, is_packs=False, debug=False):
         logger.info(output_msg)
 
 
-def write_measure_to_file(time_measurements_dir, name, csv_data, is_packs=False):
+def write_measure_to_file(time_measurements_dir, name, csv_data, measure_type: MeasureType = MeasureType.FUNCTIONS):
     """
 
     Args:
         time_measurements_dir: Directory to save the data
         name: name of the table
         csv_data: the data
-        is_packs: if we want to create table for packs (default is table for functions)
+        measure_type: The measure type (default is functions)
 
     Returns:
 
@@ -197,7 +203,7 @@ def write_measure_to_file(time_measurements_dir, name, csv_data, is_packs=False)
             time_measurements_path.mkdir(parents=True)
         with open(time_measurements_path / f'{name}_time_measurements.csv', 'w+') as file:
             # if we construct packs measurement we will use PACK_CSV_HEADERS
-            file.write(','.join(CSV_HEADERS if not is_packs else PACK_CSV_HEADERS))
+            file.write(','.join(MEASURE_TYPE_TO_HEADERS[measure_type]))
             for stat in csv_data:
                 file.write(f"\n{','.join(stat)}")
     except Exception as e:

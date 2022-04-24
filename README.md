@@ -89,7 +89,7 @@ Supported commands:
 1. [openapi-codegen](https://xsoar.pan.dev/docs/integrations/openapi-codegen)
 1. [postman-codegen](https://xsoar.pan.dev/docs/integrations/postman-codegen)
 1. [generate-integration](https://xsoar.pan.dev/docs/integrations/code-generator)
-
+1. [generate-yml-from-python](https://xsoar.pan.dev/docs/integrations/yml-from-python-code-gen.md)
 ---
 
 ### Customizable command configuration

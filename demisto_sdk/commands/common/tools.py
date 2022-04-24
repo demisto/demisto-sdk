@@ -900,24 +900,20 @@ def get_scripts_names(file_path):
     if not found_scripts:
         click.secho(f'no scripts found')
     else:
-        #click.secho(f'All scripts found: {found_scripts}')
         for script in found_scripts:
-            if script.endswith('.yml'):
-                # in case the script is in the old version of CommonScripts - JS code
+            if script.endswith('.md'):
+                continue  # in case the script is in the old version of CommonScripts - JS code, ignore the md file
+            elif script.endswith('.yml'):
+                # in case the script is in the old version of CommonScripts - JS code, only yml exists not in a dir
                 script_path_full = os.path.join(scripts_dir_path, script)
-                yml_dict = get_yaml(script_path_full)
-                click.secho(f'name: {yml_dict.get("name")}')
-                scripts_names.add(yml_dict.get("name"))
-            elif script.endswith('.md'):
-                continue
             else:
                 script_path_full = os.path.join(scripts_dir_path, script, f'{script}.yml')
-                click.secho(f'Current script path: {script_path_full}')
-                if script_path_full == 'Packs/CommonScripts/Scripts/GetlistRow/GetlistRow.yml':
-                    continue
+            try:
                 yml_dict = get_yaml(script_path_full)
-                click.secho(f'name: {yml_dict.get("name")}')
                 scripts_names.add(yml_dict.get("name"))
+            except FileNotFoundError:
+                # we couldn't load the script as the path is not fit Content convention scripts' names
+                scripts_names.add(script)
         click.secho(f'scripts names: {scripts_names}')
     return scripts_names
 

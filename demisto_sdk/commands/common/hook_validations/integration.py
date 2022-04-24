@@ -1564,6 +1564,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
+    @error_codes('RM110')
     def verify_yml_commands_match_readme(self, is_modified=False):
         """
         Checks if there are commands that doesn't appear in the readme but appear in the .yml file

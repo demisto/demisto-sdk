@@ -99,7 +99,6 @@ class ReadMeValidator(BaseValidator):
             self.verify_template_not_in_readme()
         ])
 
-    @error_codes('RM100')
     def mdx_verify(self) -> bool:
         mdx_parse = Path(__file__).parent.parent / 'mdx-parse.js'
         readme_content = self.fix_mdx()

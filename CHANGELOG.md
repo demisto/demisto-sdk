@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
+* Fixed an issue where **doc-review** failed recognizing scripts' names from old structure.
 
 ## 1.6.4
 

@@ -1608,8 +1608,9 @@ def update_release_notes(**kwargs):
 @click.option("-o", "--output-path", help="The destination path for the packs dependencies json file. This argument is "
               "only relevant for when using the '--all-packs-dependecies' flag.", required=False)
 @click.option("--get-dependent-on", help="Get only the packs dependent ON the given pack. Note: this flag can not be"
-                                         " used for the packs ApiModules and Base", required=False,
-              is_flag=True)
+                                         " used for the packs ApiModules and Base", required=False, is_flag=True)
+@click.option("-d", "--dependency", help="Find which items in a specific content pack appears as a mandatory "
+                                         "dependency of the searched pack ", required=False)
 def find_dependencies(**kwargs):
     """Find pack dependencies and update pack metadata."""
     from demisto_sdk.commands.find_dependencies.find_dependencies import \
@@ -1623,7 +1624,7 @@ def find_dependencies(**kwargs):
     all_packs_dependencies = kwargs.get('all_packs_dependencies', False)
     get_dependent_on = kwargs.get('get_dependent_on', False)
     output_path = kwargs.get('output_path', ALL_PACKS_DEPENDENCIES_DEFAULT_PATH)
-
+    dependency = kwargs.get('dependency', '')
     try:
 
         PackDependencies.find_dependencies_manager(
@@ -1635,6 +1636,7 @@ def find_dependencies(**kwargs):
             all_packs_dependencies=all_packs_dependencies,
             get_dependent_on=get_dependent_on,
             output_path=output_path,
+            dependency=dependency,
         )
 
     except ValueError as exp:

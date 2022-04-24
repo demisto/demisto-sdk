@@ -205,7 +205,7 @@ class TestIntegrationValidator:
         - Case 1: previous yml content with 2 commands and current yml content with the 2 commands with name
 
         When
-        - running the validation test_is_changed_command_name_or_arg_msg()
+        - running the validation is_changed_command_name_or_arg()
 
         Then
         Ensure that the error massage was created correctly.

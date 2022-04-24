@@ -51,11 +51,9 @@ class BaseValidator:
                 to be part of the ALLOWED_IGNORE_ERRORS, False otherwise.
         """
         code_type = error_code[:2]
-        return (
-                error_code in ignored_errors or code_type in ignored_errors
-            ) and (
-                (error_code in ALLOWED_IGNORE_ERRORS) == is_error_code_in_allowed_ignore_errors
-            )
+        is_error_code_in_pack_ignore = error_code in ignored_errors or code_type in ignored_errors
+        code_allowed_to_be_ignored = (error_code in ALLOWED_IGNORE_ERRORS) == is_error_code_in_allowed_ignore_errors
+        return is_error_code_in_pack_ignore and code_allowed_to_be_ignored
 
     def should_error_code_not_be_ignored_in_pack_ignore(self, error_code, ignored_errors):
         """

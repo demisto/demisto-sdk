@@ -1,9 +1,10 @@
-import pytest
 import os
 from os.path import join
 
+import pytest
+
 from demisto_sdk.commands.common.constants import PACK_METADATA_SUPPORT
-from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS, ALLOWED_IGNORE_ERRORS,
+from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE, Errors)

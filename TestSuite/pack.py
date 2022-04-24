@@ -1,4 +1,3 @@
-import os.path
 from pathlib import Path
 from typing import List, Optional
 
@@ -281,7 +280,7 @@ class Pack:
             content: dict = {},
     ) -> YAML:
         yaml_name = f"{name}.yml"
-        yaml_path = Path(os.path.join(dir_path, yaml_name))
+        yaml_path = Path(dir_path, yaml_name)
         obj = YAML(yaml_path, self.repo_path)
         obj.write_dict(content)
         return obj

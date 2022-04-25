@@ -1012,8 +1012,8 @@ def test_invalid_path_to_unifier(repo):
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [UNIFY_CMD, '-i', f'{integration.path}/integration.yml'])
     assert '''Unsupported input. Please provide either:
-1. a directory of an integration or a script.
-2. a path of a GenericModule file.''' in result.stdout
+1. Path to directory of an integration or a script.
+2. Path to directory of a Parsing/Modeling rule.''' in result.stdout
 
 
 def test_add_contributors_support(tmp_path):
@@ -1040,3 +1040,41 @@ def test_add_contributors_support(tmp_path):
         contributor_url='',
     )
     assert unified_yml["display"] == 'Test Integration (Partner Contribution)'
+
+
+def test_add_custom_section(tmp_path):
+    '''
+        Given:
+            - an Integration to unify
+
+        When:
+            - the --custom flag is True
+
+        Then:
+            - Add a "Test" to the name/display/id of the integration if the yml exsits.
+    '''
+    unifier = IntegrationScriptUnifier(str(tmp_path), custom='Test')
+    unified_yml = {
+        'display': 'Integration display',
+        'commonfields': {'id': 'Integration id'},
+        'name': 'Integration name'
+    }
+    unified = unifier.add_custom_section(unified_yml)
+    assert unified.get('display') == 'Integration display - Test'
+    assert unified.get('name') == 'Integration name - Test'
+    assert unified.get('commonfields').get('id') == 'Integration id - Test'
+
+
+def test_empty_yml(tmp_path):
+    """
+    Given:
+        - An empty unified yml
+
+    When:
+        - calling the add_custom_section when using the -t flag
+
+    Then:
+        - Check that the function will not raise any errors.
+    """
+    unifier = IntegrationScriptUnifier(str(tmp_path))
+    unifier.add_custom_section({})

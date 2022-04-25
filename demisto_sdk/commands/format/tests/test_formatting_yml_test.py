@@ -651,6 +651,8 @@ class TestFormatting:
 
         assert base_yml.data['tasks']['29']['task']['playbookName'] == \
             'File Enrichment - Virus Total Private API_dev_copy'
+        assert base_yml.data['tasks']['30']['task']['scriptName'] == 'AssignAnalystToIncident_copy'
+        assert base_yml.data['tasks']['31']['task']['scriptName'] == 'AssignAnalystToIncident_dev'
         base_yml.remove_copy_and_dev_suffixes_from_subplaybook()
         base_yml.remove_copy_and_dev_suffixes_from_subscripts()
 

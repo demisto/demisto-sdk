@@ -8,7 +8,7 @@ import click
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
-                                               print_error)
+                                               print_error, remove_copy_and_dev_suffixes_from_str)
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_FROMVERSION,
     SKIP_RETURN_CODE, SUCCESS_RETURN_CODE, VERSION_6_0_0)
@@ -219,13 +219,9 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
         return first_level_args, second_level_args
 
-    @staticmethod
-    def remove_copy_and_dev_suffixes_from_str(field_name):
-        return field_name.replace('_dev', '').replace('_copy', '')
-
     def remove_copy_and_dev_suffixes_from_layoutscontainer(self):
-        if self.data.get('name'):
-            self.data['name'] = self.remove_copy_and_dev_suffixes_from_str(self.data.get('name'))
+        if name := self.data.get('name'):
+            self.data['name'] = remove_copy_and_dev_suffixes_from_str(name)
 
         container = None
         for kind in LAYOUTS_CONTAINER_CHECK_SCRIPTS:
@@ -235,16 +231,16 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         if container:
             for tab in container.get('tabs'):
                 if tab.get('sections'):
-                    for section in tab.get('sections'):
+                    for section in tab.get('sections', ()):
                         if section.get('queryType') == SCRIPT_QUERY_TYPE:
-                            section['query'] = self.remove_copy_and_dev_suffixes_from_str(section.get('query'))
-                            section['name'] = self.remove_copy_and_dev_suffixes_from_str(section.get('name'))
+                            section['query'] = remove_copy_and_dev_suffixes_from_str(section.get('query'))
+                            section['name'] = remove_copy_and_dev_suffixes_from_str(section.get('name'))
 
     def remove_copy_and_dev_suffixes_from_layout(self):
-        if self.data.get('TypeName'):
-            self.data['TypeName'] = self.remove_copy_and_dev_suffixes_from_str(self.data.get('TypeName'))
-        if self.data.get('typeId'):
-            self.data['typeId'] = self.remove_copy_and_dev_suffixes_from_str(self.data.get('typeId'))
+        if typename := self.data.get('TypeName'):
+            self.data['TypeName'] = remove_copy_and_dev_suffixes_from_str(typename)
+        if type_id := self.data.get('typeId'):
+            self.data['typeId'] = remove_copy_and_dev_suffixes_from_str(type_id)
 
         layout_data = self.data.get('layout')
         if layout_data:
@@ -253,13 +249,13 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             if layout_tabs:
                 for tab in layout_tabs:
                     if tab.get('sections'):
-                        for section in tab.get('sections'):
+                        for section in tab.get('sections', ()):
                             if section.get('queryType') == SCRIPT_QUERY_TYPE:
-                                section['query'] = self.remove_copy_and_dev_suffixes_from_str(section.get('query'))
-                                section['name'] = self.remove_copy_and_dev_suffixes_from_str(section.get('name'))
+                                section['query'] = remove_copy_and_dev_suffixes_from_str(section.get('query'))
+                                section['name'] = remove_copy_and_dev_suffixes_from_str(section.get('name'))
 
             elif layout_sections:
                 for section in layout_sections:
                     if section.get('queryType') == SCRIPT_QUERY_TYPE:
-                        section['query'] = self.remove_copy_and_dev_suffixes_from_str(section.get('query'))
-                        section['name'] = self.remove_copy_and_dev_suffixes_from_str(section.get('name'))
+                        section['query'] = remove_copy_and_dev_suffixes_from_str(section.get('query'))
+                        section['name'] = remove_copy_and_dev_suffixes_from_str(section.get('name'))

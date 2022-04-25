@@ -2650,3 +2650,7 @@ def extract_none_deprecated_command_names_from_yml(yml_data: dict) -> list:
         if command.get('name') and not command.get('deprecated'):
             commands_ls.append(command.get('name'))
     return commands_ls
+
+
+def remove_copy_and_dev_suffixes_from_str(field_name):
+    return field_name.removesuffix('_dev').removesuffix('_copy')

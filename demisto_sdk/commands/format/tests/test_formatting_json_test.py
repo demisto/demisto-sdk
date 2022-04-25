@@ -591,6 +591,11 @@ class TestFormattingLayoutscontainer:
         Then
             - Ensure that name and sub script does not include the _copy suffix
         """
+        assert layoutscontainer_formatter.data['name'] == 'IP hadas_copy'
+        assert layoutscontainer_formatter.data.get('indicatorsDetails').get('tabs')[0].get('sections')[9].get(
+            'query') == "script_test_dev"
+        assert layoutscontainer_formatter.data.get('indicatorsDetails').get('tabs')[0].get('sections')[9].get(
+            'name') == "testing_copy"
         layoutscontainer_formatter.remove_copy_and_dev_suffixes_from_layoutscontainer()
         assert layoutscontainer_formatter.data['name'] == 'IP hadas'
         assert layoutscontainer_formatter.data.get('indicatorsDetails').get('tabs')[0].get('sections')[9].get(
@@ -775,6 +780,10 @@ class TestFormattingLayout:
         Then
             - Ensure that the script name does not include the _copy suffix
         """
+        assert layouts_formatter.data.get('typeId') == 'ExtraHop Detection_dev'
+        assert layouts_formatter.data.get('layout').get('sections')[1].get('query') == 'scriptName_copy'
+        assert layouts_formatter.data.get('layout').get('sections')[1].get('name') == 'test_copy'
+
         layouts_formatter.remove_copy_and_dev_suffixes_from_layout()
         assert layouts_formatter.data.get('typeId') == 'ExtraHop Detection'
         assert layouts_formatter.data.get('layout').get('sections')[1].get('query') == 'scriptName'

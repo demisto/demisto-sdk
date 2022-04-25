@@ -54,7 +54,7 @@ class PackStatInfo:
         if self.total_time is None or other.total_time is None:
             # If the pack didn't finish, we don't really care about their order
             return True
-        return float(self.total_time) < float(self.total_time)
+        return float(self.total_time) < float(other.total_time)
 
 
 def timer(group_name='Common'):

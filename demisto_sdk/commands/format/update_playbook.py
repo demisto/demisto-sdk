@@ -7,8 +7,9 @@ from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.constants import PLAYBOOK, FileType
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.tools import (find_type, get_yaml,
-                                               is_string_uuid, write_yml, remove_copy_and_dev_suffixes_from_str)
+from demisto_sdk.commands.common.tools import (
+    find_type, get_yaml, is_string_uuid, remove_copy_and_dev_suffixes_from_str,
+    write_yml)
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SCHEMAS_PATH,
                                                           SKIP_RETURN_CODE,

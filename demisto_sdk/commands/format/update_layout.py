@@ -7,8 +7,9 @@ import click
 
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
-                                               print_error, remove_copy_and_dev_suffixes_from_str)
+from demisto_sdk.commands.common.tools import (
+    LOG_COLORS, print_color, print_error,
+    remove_copy_and_dev_suffixes_from_str)
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_FROMVERSION,
     SKIP_RETURN_CODE, SUCCESS_RETURN_CODE, VERSION_6_0_0)

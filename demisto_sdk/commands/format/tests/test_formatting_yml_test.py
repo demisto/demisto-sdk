@@ -236,6 +236,8 @@ class TestFormatting:
         base_yml = PlaybookYMLFormat(source_path, path=schema_path, verbose=True)
         base_yml.add_description()
         base_yml.update_playbook_task_name()
+
+        assert base_yml.data['tasks']['29']['task']['name'] == 'File Enrichment - Virus Total Private API_dev_copy'
         base_yml.remove_copy_and_dev_suffixes_from_subplaybook()
 
         assert 'description' in base_yml.data['tasks']['7']['task']

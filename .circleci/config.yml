@@ -255,12 +255,15 @@ jobs:
               pip3 install -r .circleci/build-requirements.txt >> /tmp/lint_env_installation.log
               
               # installing local sdk inside venv
+              
+              # uninstall demisto-sdk that installed from content
               pip3 uninstall -y demisto-sdk
               pip3 install ~/project >> /tmp/lint_env_installation.log
               demisto-sdk -v
               echo ""
               echo "lint files changed running lint"
               # python file (CommonServerPython lint is running over python 3 and 2)
+              # we use `demisto-sdk` because we're inside content local env and not on poetry local env
               demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPython
               
               # ps file

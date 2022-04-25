@@ -1,5 +1,6 @@
 import os
 from os import path
+from pathlib import Path
 from typing import List
 
 import pytest
@@ -840,11 +841,16 @@ def test_find_known_words_from_pack_ignore_commons_scripts_name(repo):
     Then:
         - Ensure the found path result is appropriate.
         - Ensure the scripts names are ignored.
+        - Ensure script readme name is not handled (bla.md)
     """
 
     pack = repo.create_pack('test_pack')
     script1_name = 'script-first_script'
+    # add a yml script directly into Scripts folder
     pack._create_yaml_based(name=script1_name, dir_path=f'{pack.path}//Scripts', content={'name': script1_name})
+    # add a .md file script directly into Scripts folder
+    pack._create_text_based('bla.md', '', dir_path=Path(f'{pack.path}//Scripts'))
+    # add a script into second_script folder
     script2 = pack.create_script(name='second_script')
     rn_file = pack.create_release_notes(version='1_0_0', content=f'{script1_name}\n{script2.name}')
     doc_reviewer = DocReviewer(file_paths=[])
@@ -853,6 +859,7 @@ def test_find_known_words_from_pack_ignore_commons_scripts_name(repo):
         found_known_words = doc_reviewer.find_known_words_from_pack(rn_file.path)[1]
         assert script1_name in found_known_words
         assert script2.name in found_known_words
+        assert 'bla.md' not in found_known_words
 
 
 def test_camel_case_split():

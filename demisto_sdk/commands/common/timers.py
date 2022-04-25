@@ -132,7 +132,7 @@ def report_time_measurements(group_name='Common', time_measurements_dir='time_me
             data = {k: v for k, v in sorted(data.items(), key=lambda x: max(x[1]), reverse=True)}
             data = [(k, *v1) for k, v in data.items() for v1 in v]
 
-            if 'run_pack' in func_name:  # not spam stdout too much
+            if 'run_pack' in func_name:  # don't spam stdout too much
                 write_measure_to_logger(func_name, data, MeasureType.PACKS, debug=False)
             else:
                 write_measure_to_logger(func_name, data, MeasureType.PACKS, debug=True)

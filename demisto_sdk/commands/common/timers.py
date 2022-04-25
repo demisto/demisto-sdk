@@ -35,6 +35,10 @@ MEASURE_TYPE_TO_HEADERS: Dict[MeasureType, Sequence[str]] = {
 }
 
 
+class PackStatInfoException(Exception):
+    pass
+
+
 @dataclass()
 class PackStatInfo:
     start_time: str
@@ -46,7 +50,7 @@ class PackStatInfo:
 
     def __lt__(self, other):
         if not isinstance(other, PackStatInfo):
-            raise Exception('Not PackStatInfo')
+            raise PackStatInfoException(f'Cannot compare between `PackStatInfo` and `{type(other)}')
         if self.total_time is None or other.total_time is None:
             # If the pack didn't finish, we don't really care about their order
             return True

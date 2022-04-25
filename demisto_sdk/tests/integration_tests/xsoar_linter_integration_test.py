@@ -9,8 +9,9 @@ For Valid file use: XSOAR_LINTER_PY3_VALID
 For a new checker, add the invalid statement in the relevant file and add it to the relevant test.
 """
 
+from pathlib import Path
+
 import pytest
-from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.lint import linter
 from demisto_sdk.tests.constants_test import (

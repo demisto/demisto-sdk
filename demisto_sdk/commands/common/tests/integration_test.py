@@ -387,11 +387,15 @@ class TestIntegrationValidator:
     MULTIPLE_DEFAULT_ARGS_INVALID_1 = [
         {"name": "msgraph-list-users",
          "arguments": [{"name": "users", "required": False, "default": True}, {"name": "verbose", "default": True}]}]
+    NONE_ARGS_INVALID = [
+        {"name": "msgraph-list-users",
+         "arguments": None}]
 
     DEFAULT_ARGS_INPUTS = [
         (MULTIPLE_DEFAULT_ARGS_1, True),
         (MULTIPLE_DEFAULT_ARGS_2, True),
         (MULTIPLE_DEFAULT_ARGS_INVALID_1, False),
+        (NONE_ARGS_INVALID, False),
     ]
 
     @pytest.mark.parametrize("current, answer", DEFAULT_ARGS_INPUTS)
@@ -401,7 +405,7 @@ class TestIntegrationValidator:
 
         When: running is_valid_default_argument command.
 
-        Then: Validate that up to 1 default arg name yields True, else yields False.
+        Then: Validate that up to 1 default arg name yields True and that the arguments are not None, else yields False.
         """
         current = {"script": {"commands": current}}
         structure = mock_structure("", current)
@@ -696,6 +700,28 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.is_valid_display_name() is answer
+
+    V2_VALID_SIEM_1 = {"display": "PhishTank v2", "script": {"isFetchEvents": False}}
+    V2_VALID_SIEM_2 = {"display": "PhishTank v2 Event Collector", "script": {"isFetchEvents": True}}
+    V2_VALID_SIEM_3 = {"display": "PhishTank v2 Event Collector", "script": {}}
+    V2_VALID_SIEM_4 = {"display": "PhishTank v2 Event Collector"}
+    V2_INVALID_SIEM = {"display": "PhishTank v2", "script": {"isFetchEvents": True}}
+
+    V2_SIEM_NAME_INPUTS = [
+        (V2_VALID_SIEM_1, True),
+        (V2_VALID_SIEM_2, True),
+        (V2_VALID_SIEM_3, True),
+        (V2_VALID_SIEM_4, True),
+        (V2_INVALID_SIEM, False),
+    ]
+
+    @pytest.mark.parametrize("current, answer", V2_SIEM_NAME_INPUTS)
+    def test_is_valid_display_name_siem(self, current, answer):
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+
+        assert validator.is_valid_display_name_for_siem() is answer
 
     def test_is_valid_description_positive(self):
         integration_path = os.path.normpath(

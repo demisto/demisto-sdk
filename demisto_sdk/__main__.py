@@ -1608,8 +1608,9 @@ def update_release_notes(**kwargs):
 @click.option("-o", "--output-path", help="The destination path for the packs dependencies json file. This argument is "
               "only relevant for when using the '--all-packs-dependecies' flag.", required=False)
 @click.option("--get-dependent-on", help="Get only the packs dependent ON the given pack. Note: this flag can not be"
-                                         " used for the packs ApiModules and Base", required=False,
-              is_flag=True)
+                                         " used for the packs ApiModules and Base", required=False, is_flag=True)
+@click.option("-d", "--dependency", help="Find which items in a specific content pack appears as a mandatory "
+                                         "dependency of the searched pack ", required=False)
 def find_dependencies(**kwargs):
     """Find pack dependencies and update pack metadata."""
     from demisto_sdk.commands.find_dependencies.find_dependencies import \
@@ -1623,7 +1624,7 @@ def find_dependencies(**kwargs):
     all_packs_dependencies = kwargs.get('all_packs_dependencies', False)
     get_dependent_on = kwargs.get('get_dependent_on', False)
     output_path = kwargs.get('output_path', ALL_PACKS_DEPENDENCIES_DEFAULT_PATH)
-
+    dependency = kwargs.get('dependency', '')
     try:
 
         PackDependencies.find_dependencies_manager(
@@ -1635,6 +1636,7 @@ def find_dependencies(**kwargs):
             all_packs_dependencies=all_packs_dependencies,
             get_dependent_on=get_dependent_on,
             output_path=output_path,
+            dependency=dependency,
         )
 
     except ValueError as exp:
@@ -1927,6 +1929,15 @@ def openapi_codegen(**kwargs):
     help='Should use retries mechanism or not (if test-playbook fails, it will execute it again few times and '
          'determine success according to most of the runs',
     default=False)
+@click.option(
+    '--server-type',
+    help='Which server runs the tests? XSIAM or XSOAR',
+    default='XSOAR')
+@click.option(
+    '-x',
+    '--xsiam-machine',
+    help='XSIAM machine to use, if it is XSIAM build.')
+@click.option('--xsiam-servers-path', help='Path to secret xsiam server metadata file.')
 def test_content(**kwargs):
     """Configure instances for the integration needed to run tests_to_run tests.
     Run test module on each integration.
@@ -2031,6 +2042,34 @@ def integration_diff(**kwargs):
         sys.exit(0)
 
     sys.exit(1)
+
+
+# ====================== generate_yml_from_python ====================== #
+@main.command(name="generate-yml-from-python",
+              help='''Generate YML file from Python code that includes special syntax.\n
+                      The output file name will be the same as the Python code with the `.yml` extension instead of `.py`.\n
+                      The generation currently supports integrations only.\n
+                      For more information on usage and installation visit the command's README.md file.''')
+@click.help_option(
+    '-h', '--help'
+)
+@click.option(
+    '-i', '--input', type=click.Path(exists=True), help='The path to the python code to generate from', required=True)
+@click.option(
+    '-v', '--verbose', is_flag=True, type=bool, help='Indicate for extended prints.', required=False)
+@click.option(
+    '-f', '--force', is_flag=True, type=bool, help='Override existing yml file.', required=False)
+def generate_yml_from_python(**kwargs):
+    """
+    Checks for differences between two versions of an integration, and verified that the new version covered the old version.
+    """
+    from demisto_sdk.commands.generate_yml_from_python.generate_yml import \
+        YMLGenerator
+
+    yml_generator = YMLGenerator(filename=kwargs.get('input', ''), verbose=kwargs.get('verbose', False),
+                                 force=kwargs.get('force', False))
+    yml_generator.generate()
+    yml_generator.save_to_yml_file()
 
 
 # ====================== convert ====================== #

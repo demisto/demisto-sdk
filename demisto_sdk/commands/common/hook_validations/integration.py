@@ -103,6 +103,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_fetch(),
             self.is_there_a_runnable(),
             self.is_valid_display_name(),
+            self.is_valid_display_name_for_siem(),
             self.is_valid_pwsh(),
             self.is_valid_image(),
             self.is_valid_max_fetch_and_first_fetch(),
@@ -388,6 +389,13 @@ class IntegrationValidator(ContentEntityValidator):
 
         for command in commands:
             default_args = set()
+            if command.get('arguments', []) is None:
+                error_message, error_code = Errors.empty_command_arguments(command.get('name'))
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     suggested_fix=Errors.suggest_fix(self.file_path)):
+                    is_valid = False  # do not break the main loop as there can be multiple invalid commands
+                    continue
+
             for arg in command.get('arguments', []):
                 if arg.get('default'):
                     default_args.add(arg.get('name'))
@@ -564,6 +572,10 @@ class IntegrationValidator(ContentEntityValidator):
         commands = self.current_file.get('script', {}).get('commands', [])
         does_not_have_duplicate_args = True
         for command in commands:
+            # If this happens, an error message will be shown from is_valid_default_argument(), but still need to check
+            # for it here to avoid crash
+            if command.get('arguments', []) is None:
+                continue
             arg_names = []  # type: list
             for arg in command.get('arguments', []):
                 arg_name = arg.get('name')
@@ -1031,6 +1043,18 @@ class IntegrationValidator(ContentEntityValidator):
                     return False
 
             return True
+
+    def is_valid_display_name_for_siem(self) -> bool:
+        is_siem = self.current_file.get('script', {}).get('isFetchEvents')
+
+        if is_siem:
+            display_name = self.current_file.get('display', '')
+            if not display_name.endswith('Event Collector'):
+                error_message, error_code = Errors.invalid_siem_integration_name(display_name)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
+
+        return True
 
     def is_valid_hidden_params(self) -> bool:
         """

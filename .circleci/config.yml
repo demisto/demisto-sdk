@@ -256,7 +256,7 @@ jobs:
               
               # installing local sdk inside venv
               
-              # uninstall demisto-sdk that installed from content
+              # uninstall demisto-sdk that installed from content (could be dependency conflict between them)
               pip3 uninstall -y demisto-sdk
               pip3 install ~/project >> /tmp/lint_env_installation.log
               demisto-sdk -v

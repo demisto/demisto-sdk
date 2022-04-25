@@ -1,6 +1,8 @@
 import inspect
+import re
 import zipfile
 from functools import wraps
+from io import BytesIO
 from unittest.mock import MagicMock, patch
 
 import click
@@ -1082,9 +1084,14 @@ class TestZippedPackUpload:
 
         assert 'uploadable_packs.zip' in zip_file_path
 
-        unzipped_uploadable_packs = zipfile.ZipFile(zip_file_path, "r").extractall()
-        unzipped_xsiam_pack = zipfile.ZipFile(unzipped_uploadable_packs.filelist[0].filename, "r")
-        xsiam_pack_files = unzipped_xsiam_pack.namelist()
+        with zipfile.ZipFile(zip_file_path, "r") as zfile:
+            for name in zfile.namelist():
+                if re.search(r'\.zip$', name) is not None:
+                    # We have a zip within a zip
+                    zfiledata = BytesIO(zfile.read(name))
+                    with zipfile.ZipFile(zfiledata) as xsiamzipfile:
+                        xsiam_pack_files = xsiamzipfile.namelist()
+
         assert 'Triggers/' in xsiam_pack_files
         assert 'XSIAMDashboards/' in xsiam_pack_files
 

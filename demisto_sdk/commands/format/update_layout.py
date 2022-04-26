@@ -5,6 +5,7 @@ from typing import Tuple
 
 import click
 
+from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
                                                print_error)
@@ -60,7 +61,6 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 self.layoutscontainer__run_format()
             else:
                 self.layout__run_format()
-            self.update_json()
             self.set_description()
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
@@ -83,6 +83,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
     def layout__run_format(self):
         """toVersion 5.9.9 layout format"""
+        self.update_json(file_type=FileType.LAYOUT.value)
         self.set_layout_key()
         # version is both in layout key and in base dict
         self.set_version_to_default(self.data['layout'])
@@ -104,7 +105,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
     def layoutscontainer__run_format(self) -> None:
         """fromVersion 6.0.0 layout (container) format"""
-        self.set_fromVersion(from_version=VERSION_6_0_0)
+        super().update_json(default_from_version=VERSION_6_0_0)
         self.set_group_field()
         self.layoutscontainer__set_output_path()
         self.update_id(field='name')

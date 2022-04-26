@@ -2,11 +2,9 @@ import base64
 import copy
 import glob
 import io
-import json
 import os
 import re
 import shutil
-import sys
 from typing import Dict, List, Tuple, Union
 
 import click
@@ -15,16 +13,18 @@ from ruamel.yaml.scalarstring import FoldedScalarString
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
-    DEFAULT_IMAGE_PREFIX, DIR_TO_PREFIX, INTEGRATIONS_DIR, SCRIPTS_DIR,
-    TYPE_TO_EXTENSION, FileType)
-from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.handlers import YAML_Handler
+    DEFAULT_IMAGE_PREFIX, INTEGRATIONS_DIR, SCRIPTS_DIR, TYPE_TO_EXTENSION,
+    FileType)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
                                                find_type, get_pack_name,
                                                get_yaml, get_yml_paths_in_dir,
-                                               print_color, print_error,
-                                               print_warning,
+                                               print_color, print_warning,
                                                server_version_compare)
+from demisto_sdk.commands.unify.yaml_unifier import YAMLUnifier
+
+json = JSON_Handler()
+
 
 PACK_METADATA_PATH = 'pack_metadata.json'
 CONTRIBUTOR_DISPLAY_NAME = ' ({} Contribution)'
@@ -43,58 +43,23 @@ CONTRIBUTOR_COMMUNITY_DETAILED_DESC = '### Community Contributed Integration\n '
 CONTRIBUTORS_LIST = ['partner', 'developer', 'community']
 COMMUNITY_CONTRIBUTOR = 'community'
 INTEGRATIONS_DOCS_REFERENCE = 'https://xsoar.pan.dev/docs/reference/integrations/'
-UNSUPPORTED_INPUT_ERR_MSG = 'Unsupported input. Please provide either: ' \
-                            '1. a directory of an integration or a script. ' \
-                            '2. a path of a GenericModule file.'
 
 
-class YmlUnifier:
+class IntegrationScriptUnifier(YAMLUnifier):
 
     def __init__(self, input: str, dir_name=INTEGRATIONS_DIR, output: str = '',
-                 image_prefix=DEFAULT_IMAGE_PREFIX, force: bool = False, yml_modified_data=None):
-
-        directory_name = ''
-        # Changing relative path to current abspath fixed problem with default output file name.
-        if input == '.':
-            input = os.path.abspath(input)
-        if not os.path.isdir(input):
-            print_error(UNSUPPORTED_INPUT_ERR_MSG)
-            sys.exit(1)
-        for optional_dir_name in DIR_TO_PREFIX:
-            if optional_dir_name in input:
-                directory_name = optional_dir_name
-
-        if not directory_name:
-            print_error(UNSUPPORTED_INPUT_ERR_MSG)
+                 image_prefix=DEFAULT_IMAGE_PREFIX, force: bool = False, yml_modified_data=None, custom: str = ''):
 
         self.image_prefix = image_prefix
-        self.package_path = input
-        self.use_force = force
-        if self.package_path.endswith(os.sep):
-            self.package_path = self.package_path.rstrip(os.sep)
-
-        self.dest_path = output
-
-        yml_paths, self.yml_path = get_yml_paths_in_dir(self.package_path, Errors.no_yml_file(self.package_path))
-        for path in yml_paths:
-            # The plugin creates a unified YML file for the package.
-            # In case this script runs locally and there is a unified YML file in the package we need to ignore it.
-            # Also,
-            # we don't take the unified file by default because
-            # there might be packages that were not created by the plugin.
-            if 'unified' not in path and os.path.basename(os.path.dirname(path)) not in [SCRIPTS_DIR, INTEGRATIONS_DIR]:
-                self.yml_path = path
-                break
-
-        self.yaml = YAML_Handler(width=50000)  # make sure long lines will not break (relevant for code section)
+        self.custom = custom
         if yml_modified_data:
             self.yml_data = yml_modified_data
-        elif self.yml_path:
-            with io.open(self.yml_path, 'r', encoding='utf8') as yml_file:
-                self.yml_data = self.yaml.load(yml_file)
-        else:
-            self.yml_data = {}
-            print_error(f'No yml found in path: {self.package_path}')
+
+        super().__init__(
+            input=input,
+            output=output,
+            force=force,
+        )
 
         # script key for scripts is a string.
         # script key for integrations is a dictionary.
@@ -146,37 +111,19 @@ class YmlUnifier:
             else:  # no value for dockerimage45 remove the dockerimage entry
                 del yml_unified45['dockerimage']
 
-            output_path45 = re.sub(r'\.yml$', '_45.yml', self.dest_path)
+            output_path45 = re.sub(r'\.yml$', '_45.yml', self.dest_path)  # type: ignore[type-var]
             output_map = {
                 self.dest_path: yml_unified,
                 output_path45: yml_unified45,
             }
         for file_path, file_data in output_map.items():
-            if os.path.isfile(file_path) and self.use_force is False:
-                raise ValueError(f'Output file already exists: {self.dest_path}.'
-                                 ' Make sure to remove this file from source control'
-                                 ' or rename this package (for example if it is a v2).')
-
-            with io.open(file_path, mode='w', encoding='utf-8') as file_:
-                self.yaml.dump(file_data, file_)
+            self._output_yaml(file_path, file_data)
 
         return output_map
 
-    def merge_script_package_to_yml(self, file_name_suffix=None):
-        """Merge the various components to create an output yml file
-        """
+    def unify(self, file_name_suffix=None):
         print("Merging package: {}".format(self.package_path))
-        package_dir_name = os.path.basename(self.package_path)
-        output_filename = '{}-{}.yml'.format(DIR_TO_PREFIX[self.dir_name], package_dir_name)
-
-        if file_name_suffix:
-            # append suffix to output file name
-            output_filename = file_name_suffix.join(os.path.splitext(output_filename))
-
-        if self.dest_path:
-            self.dest_path = os.path.join(self.dest_path, output_filename)
-        else:
-            self.dest_path = os.path.join(self.package_path, output_filename)
+        self._set_dest_path(file_name_suffix)
 
         script_obj = self.yml_data
 
@@ -201,11 +148,33 @@ class YmlUnifier:
                 yml_unified = self.add_contributors_support(yml_unified, contributor_type, contributor_email,
                                                             contributor_url, author)
 
+        if self.custom:
+            yml_unified = self.add_custom_section(yml_unified)
+
         output_map = self.write_yaml_with_docker(yml_unified, self.yml_data, script_obj)
         unifier_outputs = list(output_map.keys()), self.yml_path, script_path, image_path, desc_path
         print_color(f'Created unified yml: {list(output_map.keys())}', LOG_COLORS.GREEN)
 
         return unifier_outputs[0]
+
+    def add_custom_section(self, unified_yml: Dict) -> Dict:
+        """
+            Args:
+                unified_yml - The unified_yml
+            Returns:
+                 the unified yml with the id/name/display appended with the custom label
+                 if the fields exsits.
+        """
+        to_append = f' - {self.custom}'
+        if unified_yml.get('name'):
+            unified_yml['name'] += to_append
+        if unified_yml.get('commonfields', {}).get('id'):
+            unified_yml['commonfields']['id'] += to_append
+        if not self.is_script_package:
+            if unified_yml.get('display'):
+                unified_yml['display'] += to_append
+
+        return unified_yml
 
     def insert_image_to_yml(self, yml_data, yml_unified):
         image_data, found_img_path = self.get_data(self.package_path, "*png")
@@ -333,7 +302,7 @@ class YmlUnifier:
             code_type = get_yaml(yml_path).get('type')
         else:
             code_type = get_yaml(yml_path).get('script', {}).get('type')
-        unifier = YmlUnifier(self.package_path)
+        unifier = IntegrationScriptUnifier(self.package_path)
         code_path = unifier.get_code_file(TYPE_TO_EXTENSION[code_type])
         with io.open(code_path, 'r', encoding='utf-8') as code_file:
             code = code_file.read()
@@ -368,7 +337,7 @@ class YmlUnifier:
         """
 
         module_path = os.path.join('./Packs', 'ApiModules', 'Scripts', module_name, module_name + '.py')
-        module_code = YmlUnifier._get_api_module_code(module_name, module_path)
+        module_code = IntegrationScriptUnifier._get_api_module_code(module_name, module_path)
 
         # the wrapper numbers represents the number of generated lines added
         # before (negative) or after (positive) the registration line

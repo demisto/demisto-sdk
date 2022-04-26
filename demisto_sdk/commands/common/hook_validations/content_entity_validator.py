@@ -1,4 +1,3 @@
-import json
 import os
 import re
 from abc import abstractmethod
@@ -6,14 +5,14 @@ from distutils.version import LooseVersion
 from typing import Optional
 
 from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_FROM_VERSION, ENTITY_NAME_SEPARATORS,
-    EXCLUDED_DISPLAY_NAME_WORDS, FEATURE_BRANCHES,
+    API_MODULES_PACK, DEFAULT_CONTENT_ITEM_FROM_VERSION,
+    ENTITY_NAME_SEPARATORS, EXCLUDED_DISPLAY_NAME_WORDS, FEATURE_BRANCHES,
     GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION, OLDEST_SUPPORTED_VERSION,
     FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
@@ -23,6 +22,7 @@ from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
                                                is_test_config_match,
                                                run_command)
 
+json = JSON_Handler()
 yaml = YAML_Handler()
 
 
@@ -347,8 +347,10 @@ class ContentEntityValidator(BaseValidator):
                 validate_all: (bool) is the validation being run with -a
             Return:
                True if the readme file exits False with an error otherwise
+
+            Note: APIModules don't need readme file (issue 47965).
         """
-        if validate_all:
+        if validate_all or API_MODULES_PACK in self.file_path:
             return True
 
         file_path = os.path.normpath(self.file_path)

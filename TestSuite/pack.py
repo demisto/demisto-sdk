@@ -1,16 +1,28 @@
 from pathlib import Path
 from typing import List, Optional
 
-from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
+from demisto_sdk.commands.common.constants import (CORRELATION_RULES_DIR,
+                                                   DEFAULT_IMAGE_BASE64,
+                                                   MODELING_RULES_DIR,
+                                                   PARSING_RULES_DIR,
+                                                   TRIGGER_DIR,
+                                                   XSIAM_DASHBOARDS_DIR,
+                                                   XSIAM_REPORTS_DIR)
+from TestSuite.correlation_rule import CorrelationRule
 from TestSuite.file import File
 from TestSuite.integration import Integration
 from TestSuite.job import Job
 from TestSuite.json_based import JSONBased
 from TestSuite.playbook import Playbook
+from TestSuite.rule import Rule
 from TestSuite.script import Script
 from TestSuite.secrets import Secrets
 from TestSuite.test_tools import suite_join_path
 from TestSuite.text_based import TextBased
+from TestSuite.trigger import Trigger
+from TestSuite.xsiam_dashboard import XSIAMDashboard
+from TestSuite.xsiam_report import XSIAMReport
+from TestSuite.yml import YAML
 
 
 class Pack:
@@ -59,6 +71,12 @@ class Pack:
         self.release_notes: List[TextBased] = list()
         self.release_notes_config: List[JSONBased] = list()
         self.jobs: List[Job] = list()
+        self.parsing_rules: List[Rule] = list()
+        self.modeling_rules: List[Rule] = list()
+        self.correlation_rules: List[YAML] = list()
+        self.xsiam_dashboards: List[JSONBased] = list()
+        self.xsiam_reports: List[JSONBased] = list()
+        self.triggers: List[JSONBased] = list()
 
         # Create base pack
         self._pack_path = packs_dir / self.name
@@ -124,6 +142,24 @@ class Pack:
 
         self._lists_path = self._pack_path / 'Lists'
         self._lists_path.mkdir()
+
+        self._parsing_rules_path = self._pack_path / PARSING_RULES_DIR
+        self._parsing_rules_path.mkdir()
+
+        self._modeling_rules_path = self._pack_path / MODELING_RULES_DIR
+        self._modeling_rules_path.mkdir()
+
+        self._correlation_rules_path = self._pack_path / CORRELATION_RULES_DIR
+        self._correlation_rules_path.mkdir()
+
+        self._xsiam_dashboards_path = self._pack_path / XSIAM_DASHBOARDS_DIR
+        self._xsiam_dashboards_path.mkdir()
+
+        self._xsiam_reports_path = self._pack_path / XSIAM_REPORTS_DIR
+        self._xsiam_reports_path.mkdir()
+
+        self._triggers_path = self._pack_path / TRIGGER_DIR
+        self._triggers_path.mkdir()
 
         self.secrets = Secrets(self._pack_path)
 
@@ -235,6 +271,18 @@ class Pack:
         else:
             obj = JSONBased(self._pack_path, name, prefix)
         obj.write_json(content)
+        return obj
+
+    def _create_yaml_based(
+            self,
+            name,
+            dir_path,
+            content: dict = {},
+    ) -> YAML:
+        yaml_name = f"{name}.yml"
+        yaml_path = Path(dir_path, yaml_name)
+        obj = YAML(yaml_path, self.repo_path)
+        obj.write_dict(content)
         return obj
 
     def _create_text_based(
@@ -485,3 +533,88 @@ class Pack:
         contributors = self._create_text_based('CONTRIBUTORS.md', content)
         self.contributors = contributors
         return contributors
+
+    def create_parsing_rule(
+        self,
+        name: Optional[str] = None,
+        yml: Optional[dict] = None,
+        rules: Optional[str] = None,
+        samples: Optional[list] = None,
+    ) -> Rule:
+        if not name:
+            name = f'parsingrule_{len(self.parsing_rules)}'
+        if not yml:
+            yml = {
+                'id': 'parsing-rule',
+                'name': 'Parsing Rule',
+                'fromversion': 3.3,
+                'tags': 'tag',
+                'rules': '',
+                'samples': '',
+            }
+        if not rules:
+            rules = '[INGEST:vendor="vendor", product="product", target_dataset="dataset", no_hit=drop]'
+
+        rule = Rule(
+            tmpdir=self._parsing_rules_path,
+            name=name,
+            repo=self._repo,
+        )
+        rule.build(
+            yml=yml,
+            rules=rules,
+            samples=samples,
+        )
+        self.parsing_rules.append(rule)
+        return rule
+
+    def create_modeling_rule(
+        self,
+        name: Optional[str] = None,
+        yml: Optional[dict] = None,
+        rules: Optional[str] = None,
+    ) -> Rule:
+        if not name:
+            name = f'modelingrule_{len(self.modeling_rules)}'
+        if not yml:
+            yml = {
+                'id': 'modeling-rule',
+                'name': 'Modeling Rule',
+                'fromversion': 3.3,
+                'tags': 'tag',
+                'rules': '',
+            }
+        if not rules:
+            rules = '[MODEL: dataset="dataset", model="Model", version=0.1]'
+
+        rule = Rule(
+            tmpdir=self._modeling_rules_path,
+            name=name,
+            repo=self._repo,
+        )
+        rule.build(
+            yml=yml,
+            rules=rules,
+        )
+        self.modeling_rules.append(rule)
+        return rule
+
+    def create_correlation_rule(self, name, content: dict = {}) -> CorrelationRule:
+        correlation_rule = CorrelationRule(name, self._correlation_rules_path, self.repo_path, content)
+        self.correlation_rules.append(correlation_rule)
+        return correlation_rule
+
+    def create_xsiam_dashboard(self, name, content: dict = {}) -> XSIAMDashboard:
+        xsiam_dashboard = XSIAMDashboard(name, self._xsiam_dashboards_path, content)
+        self.xsiam_dashboards.append(xsiam_dashboard)
+        return xsiam_dashboard
+
+    def create_xsiam_report(self, name, content: dict = {}) -> XSIAMReport:
+        xsiam_report = XSIAMReport(name, self._xsiam_reports_path, content)
+        self.xsiam_reports.append(xsiam_report)
+        return xsiam_report
+
+    def create_trigger(self, name, content: dict = {}) -> Trigger:
+        trigger = Trigger(name, self._triggers_path, content)
+        self.triggers.append(trigger)
+        return trigger

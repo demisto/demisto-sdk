@@ -15,6 +15,7 @@ from demisto_sdk.commands.common.hook_validations.integration import \
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from TestSuite.integration import Integration
 from TestSuite.test_tools import ChangeCWD
 
 default_additional_info = load_default_additional_info_dict()
@@ -23,7 +24,7 @@ FEED_REQUIRED_PARAMS_STRUCTURE = [dict(required_param.get('must_equal'), **requi
                                        name=required_param.get('name')) for required_param in FEED_REQUIRED_PARAMS]
 
 
-def mock_structure(file_path=None, current_file=None, old_file=None, quite_bc=False):
+def mock_structure(file_path=None, current_file=None, old_file=None, quiet_bc=False):
     # type: (Optional[str], Optional[dict], Optional[dict], Optional[bool]) -> StructureValidator
     with patch.object(StructureValidator, '__init__', lambda a, b: None):
         structure = StructureValidator(file_path)
@@ -34,7 +35,7 @@ def mock_structure(file_path=None, current_file=None, old_file=None, quite_bc=Fa
         structure.old_file = old_file
         structure.prev_ver = 'master'
         structure.branch_name = ''
-        structure.quite_bc = quite_bc
+        structure.quiet_bc = quiet_bc
         return structure
 
 
@@ -65,8 +66,8 @@ class TestIntegrationValidator:
         structure = mock_structure("", current_file, old_file)
         validator = IntegrationValidator(structure)
         assert validator.is_added_required_fields() is answer
-        structure.quite_bc = True
-        assert validator.is_added_required_fields() is False  # if quite_bc is true should always succeed
+        structure.quiet_bc = True
+        assert validator.is_added_required_fields() is False  # if quiet_bc is true should always succeed
 
     IS_CHANGED_REMOVED_YML_FIELDS_INPUTS = [
         ({"script": {"isfetch": True, "feed": False}}, {"script": {"isfetch": True, "feed": False}}, False),
@@ -94,8 +95,8 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_changed_removed_yml_fields() is answer
         assert validator.is_valid is not answer
-        structure.quite_bc = True
-        assert validator.is_changed_removed_yml_fields() is False  # if quite_bc is true should always succeed
+        structure.quiet_bc = True
+        assert validator.is_changed_removed_yml_fields() is False  # if quiet_bc is true should always succeed
 
     IS_REMOVED_INTEGRATION_PARAMETERS_INPUTS = [
         ({"configuration": [{"name": "test"}]}, {"configuration": [{"name": "test"}]}, False),
@@ -121,8 +122,8 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         assert validator.is_removed_integration_parameters() is answer
         assert validator.is_valid is not answer
-        structure.quite_bc = True
-        assert validator.is_removed_integration_parameters() is False  # if quite_bc is true should always succeed
+        structure.quiet_bc = True
+        assert validator.is_removed_integration_parameters() is False  # if quiet_bc is true should always succeed
 
     CONFIGURATION_JSON_1 = {"configuration": [{"name": "test", "required": False}, {"name": "test1", "required": True}]}
     EXPECTED_JSON_1 = {"test": False, "test1": True}
@@ -158,8 +159,8 @@ class TestIntegrationValidator:
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
         assert validator.is_changed_context_path() is answer
-        structure.quite_bc = True
-        assert validator.is_changed_context_path() is False  # if quite_bc is true should always succeed
+        structure.quiet_bc = True
+        assert validator.is_changed_context_path() is False  # if quiet_bc is true should always succeed
 
     CHANGED_COMMAND_INPUT_1 = [{"name": "test", "arguments": [{"name": "test"}]}]
     CHANGED_COMMAND_INPUT_2 = [{"name": "test", "arguments": [{"name": "test1"}]}]
@@ -186,8 +187,8 @@ class TestIntegrationValidator:
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
         assert validator.is_changed_command_name_or_arg() is answer
-        structure.quite_bc = True
-        assert validator.is_changed_command_name_or_arg() is False  # if quite_bc is true should always succeed
+        structure.quiet_bc = True
+        assert validator.is_changed_command_name_or_arg() is False  # if quiet_bc is true should always succeed
 
     WITHOUT_DUP = [{"name": "test"}, {"name": "test1"}]
     DUPLICATE_PARAMS_INPUTS = [
@@ -318,8 +319,8 @@ class TestIntegrationValidator:
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
         assert validator.is_changed_subtype() is answer
-        structure.quite_bc = True
-        assert validator.is_changed_subtype() is False  # if quite_bc is true should always succeed
+        structure.quiet_bc = True
+        assert validator.is_changed_subtype() is False  # if quiet_bc is true should always succeed
 
     INPUTS_VALID_SUBTYPE_TEST = [
         (PYTHON2_SUBTYPE, True),
@@ -386,11 +387,15 @@ class TestIntegrationValidator:
     MULTIPLE_DEFAULT_ARGS_INVALID_1 = [
         {"name": "msgraph-list-users",
          "arguments": [{"name": "users", "required": False, "default": True}, {"name": "verbose", "default": True}]}]
+    NONE_ARGS_INVALID = [
+        {"name": "msgraph-list-users",
+         "arguments": None}]
 
     DEFAULT_ARGS_INPUTS = [
         (MULTIPLE_DEFAULT_ARGS_1, True),
         (MULTIPLE_DEFAULT_ARGS_2, True),
         (MULTIPLE_DEFAULT_ARGS_INVALID_1, False),
+        (NONE_ARGS_INVALID, False),
     ]
 
     @pytest.mark.parametrize("current, answer", DEFAULT_ARGS_INPUTS)
@@ -400,7 +405,7 @@ class TestIntegrationValidator:
 
         When: running is_valid_default_argument command.
 
-        Then: Validate that up to 1 default arg name yields True, else yields False.
+        Then: Validate that up to 1 default arg name yields True and that the arguments are not None, else yields False.
         """
         current = {"script": {"commands": current}}
         structure = mock_structure("", current)
@@ -450,8 +455,8 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.is_outputs_for_reputations_commands_valid() is answer
-        structure.quite_bc = True
-        assert validator.is_outputs_for_reputations_commands_valid() is True  # if quite_bc is true should succeed
+        structure.quiet_bc = True
+        assert validator.is_outputs_for_reputations_commands_valid() is True  # if quiet_bc is true should succeed
 
     CASE_EXISTS_WITH_DEFAULT_TRUE = [
         {"name": "endpoint", "arguments": [{"name": "ip", "required": False, "default": True}],
@@ -639,8 +644,8 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.is_not_valid_display_configuration() is not answer
-        structure.quite_bc = True
-        assert validator.is_not_valid_display_configuration() is False  # if quite_bc is true should always succeed
+        structure.quiet_bc = True
+        assert validator.is_not_valid_display_configuration() is False  # if quiet_bc is true should always succeed
 
     VALID_FEED = [
         # Valid feed
@@ -695,6 +700,28 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.is_valid_display_name() is answer
+
+    V2_VALID_SIEM_1 = {"display": "PhishTank v2", "script": {"isFetchEvents": False}}
+    V2_VALID_SIEM_2 = {"display": "PhishTank v2 Event Collector", "script": {"isFetchEvents": True}}
+    V2_VALID_SIEM_3 = {"display": "PhishTank v2 Event Collector", "script": {}}
+    V2_VALID_SIEM_4 = {"display": "PhishTank v2 Event Collector"}
+    V2_INVALID_SIEM = {"display": "PhishTank v2", "script": {"isFetchEvents": True}}
+
+    V2_SIEM_NAME_INPUTS = [
+        (V2_VALID_SIEM_1, True),
+        (V2_VALID_SIEM_2, True),
+        (V2_VALID_SIEM_3, True),
+        (V2_VALID_SIEM_4, True),
+        (V2_INVALID_SIEM, False),
+    ]
+
+    @pytest.mark.parametrize("current, answer", V2_SIEM_NAME_INPUTS)
+    def test_is_valid_display_name_siem(self, current, answer):
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+
+        assert validator.is_valid_display_name_for_siem() is answer
 
     def test_is_valid_description_positive(self):
         integration_path = os.path.normpath(
@@ -1317,6 +1344,36 @@ class TestIsFeedParamsExist:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.is_there_a_runnable() is False
+
+    VERIFY_YML_COMMANDS_MATCH_README_DATA = [
+        (True, {'script': {'commands': [{'name': 'command_name'}]}}, "## Commands\n### command_name\n somename", True),
+        (True, {'script': {'commands': [{'name': 'get-mapping-fields'}]}}, "", True),
+        (True, {'script': {'commands': [{'name': 'command_name'}]}}, "", False),
+        (False, {'script': {'commands': [{'name': 'command_name'}]}}, "", True),
+    ]
+
+    @pytest.mark.parametrize("is_modified, yml_data, readme_text, excepted_results", VERIFY_YML_COMMANDS_MATCH_README_DATA)
+    def test_verify_yml_commands_match_readme(self, is_modified, yml_data, readme_text, excepted_results, integration: Integration):
+        """
+        Given
+        - Case 1: integration with one command mentioned in both the yml and the readme files that were modified.
+        - Case 2: integration with one command that should be excluded from the readme file and mentioned in the yml file that were modified.
+        - Case 3: integration with one command mentioned only in the yml file that were modified.
+        - Case 4: integration with one command mentioned only in the yml file that aren't modified.
+        When
+        - Running verify_yml_commands_match_readme on the integration.
+        Then
+        - Ensure validation correctly identifies missed commands from yml or readme files.
+        - Case 1: Should return True.
+        - Case 2: Should return True.
+        - Case 3: Should return False.
+        - Case 4: Should return True.
+        """
+        integration.yml.write_dict(yml_data)
+        integration.readme.write(readme_text)
+        struct = mock_structure(current_file=yml_data, file_path=integration.yml.path)
+        integration_validator = IntegrationValidator(struct)
+        assert integration_validator.verify_yml_commands_match_readme(is_modified) == excepted_results
 
 
 class TestisContextChanged:

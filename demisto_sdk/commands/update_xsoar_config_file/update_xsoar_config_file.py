@@ -1,11 +1,14 @@
-import json
 import logging
 import os
 from typing import Dict, List
 
 import demisto_client
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import LOG_COLORS, print_color
+
+json = JSON_Handler()
+
 
 XSOAR_CONFIG_FILE_JSON = "xsoar_config.json"
 MARKETPLACE_PACKS_SECTION = "marketplace_packs"
@@ -128,7 +131,10 @@ class XSOARConfigFileUpdater:
         """
         config_file_info = self.get_xsoar_config_data()
         if config_file_info.get(section_name):
-            config_file_info[section_name].append(data_to_update)
+            if isinstance(data_to_update, list):
+                config_file_info[section_name].extend(data_to_update)
+            if isinstance(data_to_update, dict):
+                config_file_info[section_name].append(data_to_update)
         else:
             config_file_info[section_name] = [data_to_update] if isinstance(data_to_update, dict) else data_to_update
         self.set_xsoar_config_data(config_file_info=config_file_info)

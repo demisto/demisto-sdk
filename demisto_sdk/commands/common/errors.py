@@ -4,12 +4,9 @@ from typing import Any, Dict, List, Optional
 import decorator
 from requests import Response
 
-from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
-                                                   CONF_PATH,
-                                                   DEFAULT_JOB_FROM_VERSION,
-                                                   INTEGRATION_CATEGORIES,
-                                                   PACK_METADATA_DESC,
-                                                   PACK_METADATA_NAME)
+from demisto_sdk.commands.common.constants import (
+    BETA_INTEGRATION_DISCLAIMER, CONF_PATH, FILETYPE_TO_DEFAULT_FROMVERSION,
+    INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME, FileType)
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
@@ -22,7 +19,7 @@ ALLOWED_IGNORE_ERRORS = [
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107',
-    'RM100', 'RM102', 'RM104', 'RM106', 'RM108',
+    'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM 110',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
     'IM111'
@@ -227,6 +224,8 @@ ERROR_CODE = {
     "changed_integration_yml_fields": {'code': "IN147", "ui_applicable": False, 'related_field': 'script'},
     "parameter_is_malformed": {'code': "IN148", 'ui_applicable': False, 'related_field': 'configuration'},
     'empty_outputs_common_paths': {'code': 'IN149', 'ui_applicable': False, 'related_field': 'contextOutput'},
+    'invalid_siem_integration_name': {'code': 'IN150', 'ui_applicable': True, 'related_field': 'display'},
+    "empty_command_arguments": {'code': 'IN151', 'ui_applicable': False, 'related_field': 'arguments'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -292,6 +291,7 @@ ERROR_CODE = {
     "required_pack_file_does_not_exist": {'code': "PA128", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_missing_categories": {'code': "PA129", 'ui_applicable': False, 'related_field': ''},
     "wrong_version_format": {'code': "PA130", 'ui_applicable': False, 'related_field': ''},
+    "pack_metadata_version_diff_from_rn": {'code': "PA131", 'ui_applicable': False, 'related_field': ''},
 
     # PB - Playbooks
     "playbook_cant_have_rolename": {'code': "PB100", 'ui_applicable': True, 'related_field': 'rolename'},
@@ -331,6 +331,8 @@ ERROR_CODE = {
     "template_sentence_in_readme": {'code': "RM107", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
     "missing_readme_file": {'code': "RM109", 'ui_applicable': False, 'related_field': ''},
+    "missing_commands_from_readme": {'code': "RM110", 'ui_applicable': False, 'related_field': ''},
+    "error_uninstall_node": {'code': "RM111", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -358,7 +360,6 @@ ERROR_CODE = {
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
     "is_valid_script_file_path_in_folder": {'code': "SC103", 'ui_applicable': False, 'related_field': ''},
-    "is_valid_script_file_path_in_scripts_folder": {'code': "SC104", 'ui_applicable': False, 'related_field': ''},
     "incident_in_script_arg": {'code': "SC105", 'ui_applicable': True, 'related_field': 'args.name'},
     "runas_is_dbotrole": {'code': "SC106", 'ui_applicable': False, 'related_field': 'runas'},
 
@@ -445,6 +446,12 @@ class Errors:
     @staticmethod
     def suggest_fix(file_path: str, *args: Any, cmd: str = 'format') -> str:
         return f'To fix the problem, try running `demisto-sdk {cmd} -i {file_path} {" ".join(args)}`'
+
+    @staticmethod
+    @error_code_decorator
+    def empty_command_arguments(command_name):
+        return f"The arguments of the integration command `{command_name}` can not be None. If the command has no arguments, " \
+               f"use `arguments: []` or remove the `arguments` field."
 
     @staticmethod
     @error_code_decorator
@@ -770,6 +777,14 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def error_uninstall_node():
+        return 'The `node` runtime is not installed on the machine,\n' \
+               'while it is required for the validation process.\n' \
+               'Please download and install `node` to proceed\n' \
+               'See https://nodejs.org for installation instructions.'
+
+    @staticmethod
+    @error_code_decorator
     def missing_output_context(command, context_paths):
         return f'The Following context paths for command {command} are found in the README file ' \
                f'but are missing from the YML file: {context_paths}'
@@ -814,6 +829,13 @@ class Errors:
         return f"The display name of this v{version_number} integration is incorrect , " \
                f"should be **name** v{version_number}.\n" \
                f"e.g: Kenna v{version_number}, Jira v{version_number}"
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_siem_integration_name(display_name: str):
+        return f"The display name of this siem integration is incorrect , " \
+               f"should end with \"Event Collector\".\n" \
+               f"e.g: {display_name} Event Collector"
 
     @staticmethod
     @error_code_decorator
@@ -1134,9 +1156,9 @@ class Errors:
     @error_code_decorator
     def release_notes_file_empty():
         return "Your release notes file is empty, please complete it\nHaving empty release notes " \
-               "looks bad in the product UI.\nIf the change you made was minor, please use " \
-               "\"Maintenance and stability enhancements.\" for general changes, or use " \
-               "\"Documentation and metadata improvements.\" for changes to documentation."
+               "looks bad in the product UI.\nMake sure the release notes explicitly describe what changes were made, even if they are minor.\n" \
+               "For changes to documentation you can use " \
+               "\"Documentation and metadata improvements.\" "
 
     @staticmethod
     @error_code_decorator
@@ -1278,13 +1300,7 @@ class Errors:
     @error_code_decorator
     def is_valid_script_file_path_in_folder(script_file):
         return f"The script file name: {script_file} is invalid, " \
-               f"The script file name should be the same as the name of the folder that contains it."
-
-    @staticmethod
-    @error_code_decorator
-    def is_valid_script_file_path_in_scripts_folder(script_file):
-        return f"The script file name: {script_file} is invalid, " \
-               f"The script file name should start with 'script-'."
+               f"The script file name should be the same as the name of the folder that contains it, e.g. `Packs/MyPack/Scripts/MyScript/MyScript.yml`."
 
     @staticmethod
     @error_code_decorator
@@ -1841,7 +1857,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_fromversion_in_job(version):
-        return f'fromVersion field in Job needs to be at least {DEFAULT_JOB_FROM_VERSION} (found {version})'
+        return f'fromVersion field in Job needs to be at least {FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)} (found {version})'
 
     @staticmethod
     @error_code_decorator
@@ -2178,6 +2194,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def pack_metadata_version_diff_from_rn(pack_path, rn_version, pack_metadata_version):
+        return f'There is a difference between the version in the pack metadata' \
+               f'file and the version of the latest release note.\nexpected latest release note to be {pack_metadata_version} '\
+               f'instead found {rn_version}.\nTo fix the problem, try running `demisto-sdk update-release-notes -i {pack_path}`'
+
+    @staticmethod
+    @error_code_decorator
     def invalid_marketplaces_in_alias(invalid_aliases: List[str]):
         return 'The following fields exist as aliases and have invalid "marketplaces" key value:' \
                f'\n{invalid_aliases}\n' \
@@ -2194,6 +2217,14 @@ class Errors:
     @error_code_decorator
     def missing_readme_file(location):
         return f'{location} is missing a README file'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_commands_from_readme(yml_name, missing_commands_from_readme):
+        error_msg = f'The following commands appear in {yml_name} but not in the README file:\n'
+        for command in missing_commands_from_readme:
+            error_msg += f'{command}\n'
+        return error_msg
 
     @staticmethod
     @error_code_decorator

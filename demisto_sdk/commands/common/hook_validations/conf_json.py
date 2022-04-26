@@ -1,12 +1,14 @@
-import json
 from pathlib import Path
 
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK, CONF_PATH,
                                                    FileType)
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import _get_file_id, get_pack_name
+
+json = JSON_Handler()
 
 
 class ConfJsonValidator(BaseValidator):

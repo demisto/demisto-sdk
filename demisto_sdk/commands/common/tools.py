@@ -1,7 +1,6 @@
 import argparse
 import glob
 import io
-import json
 import logging
 import os
 import re
@@ -14,11 +13,11 @@ from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
 from distutils.version import LooseVersion
 from enum import Enum
-from functools import lru_cache, partial
+from functools import lru_cache
 from pathlib import Path, PosixPath
 from subprocess import DEVNULL, PIPE, Popen, check_output
 from time import sleep
-from typing import Callable, Dict, List, Match, Optional, Tuple, Type, Union
+from typing import Callable, Dict, List, Match, Optional, Set, Tuple, Union
 
 import click
 import colorama
@@ -38,17 +37,22 @@ from demisto_sdk.commands.common.constants import (
     DOC_FILES_DIR, ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR,
     INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
     INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
-    MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME,
+    MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME, MODELING_RULES_DIR,
     OFFICIAL_CONTENT_ID_SET_PATH, PACK_METADATA_IRON_BANK_TAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
     PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
-    PACKS_README_FILE_NAME, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
-    RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR,
-    XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys, GitContentConfig,
+    PACKS_README_FILE_NAME, PARSING_RULES_DIR, PLAYBOOKS_DIR,
+    PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
+    SCRIPTS_DIR, SIEM_ONLY_ENTITIES, TEST_PLAYBOOKS_DIR, TRIGGER_DIR,
+    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSIAM_DASHBOARDS_DIR,
+    XSIAM_REPORTS_DIR, XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys,
     IdSetKeys, MarketplaceVersions, urljoin)
+from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
+                                                            GitProvider)
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+
+json = JSON_Handler()
 
 logger = logging.getLogger("demisto-sdk")
 yaml = YAML_Handler()
@@ -179,6 +183,7 @@ core_pack_list: Optional[
     list] = None  # Initiated in get_core_pack_list function. Here to create a "cached" core_pack_list
 
 
+@lru_cache(maxsize=128)
 def get_core_pack_list() -> list:
     """Getting the core pack list from Github content
 
@@ -190,21 +195,123 @@ def get_core_pack_list() -> list:
         return core_pack_list
     if not is_external_repository():
         core_pack_list = get_remote_file(
-            'Tests/Marketplace/core_packs_list.json', github_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+            'Tests/Marketplace/core_packs_list.json',
+            git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
         ) or []
+        core_pack_list.extend(get_remote_file(
+            'Tests/Marketplace/core_packs_mpv2_list.json',
+            git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
+        ) or [])
+        core_pack_list = list(set(core_pack_list))
     else:
         # no core packs in external repos.
         core_pack_list = []
     return core_pack_list
 
 
-# @lru_cache(maxsize=64)
+def get_local_remote_file(
+        full_file_path: str,
+        tag: str = 'master',
+        return_content: bool = False,
+):
+    repo = git.Repo(search_parent_directories=True)  # the full file path could be a git file path
+    repo_git_util = GitUtil(repo)
+    git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
+    file_content = repo_git_util.get_local_remote_file_content(git_path)
+    if return_content:
+        return file_content.encode()
+    return get_file_details(file_content, full_file_path)
+
+
+def get_remote_file_from_api(
+        full_file_path: str,
+        git_content_config: Optional[GitContentConfig],
+        tag: str = 'master',
+        return_content: bool = False,
+        suppress_print: bool = False,
+):
+    if not git_content_config:
+        git_content_config = GitContentConfig()
+    if git_content_config.git_provider == GitProvider.GitLab:
+        full_file_path_quote_plus = urllib.parse.quote_plus(full_file_path)
+        git_path = urljoin(git_content_config.base_api, 'files', full_file_path_quote_plus, 'raw')
+    else:  # github
+        git_path = urljoin(git_content_config.base_api, tag, full_file_path)
+
+    github_token: Optional[str] = None
+    gitlab_token: Optional[str] = None
+    try:
+        github_token = git_content_config.credentials.github_token
+        gitlab_token = git_content_config.credentials.gitlab_token
+        if git_content_config.git_provider == GitProvider.GitLab:
+            res = requests.get(git_path,
+                               params={'ref': tag},
+                               headers={'PRIVATE-TOKEN': gitlab_token},
+                               verify=False)
+            res.raise_for_status()
+        else:  # Github
+            res = requests.get(git_path, verify=False, timeout=10, headers={
+                'Authorization': f"Bearer {github_token}" if github_token else None,
+                'Accept': f'application/vnd.github.VERSION.raw',
+            })  # Sometime we need headers
+            if not res.ok:  # sometime we need param token
+                res = requests.get(
+                    git_path,
+                    verify=False,
+                    timeout=10,
+                    params={'token': github_token}
+                )
+
+        res.raise_for_status()
+    except requests.exceptions.RequestException as exc:
+        # Replace token secret if needed
+        err_msg: str = str(exc).replace(github_token, 'XXX') if github_token else str(exc)
+        err_msg = err_msg.replace(gitlab_token, 'XXX') if gitlab_token else err_msg
+        if not suppress_print:
+            if is_external_repository():
+                click.secho(
+                    f'You are working in a private repository: "{git_content_config.current_repository}".\n'
+                    f'The github/gitlab token in your environment is undefined.\n'
+                    f'Getting file from local repository instead. \n'
+                    f'If you wish to get the file from the remote repository, \n'
+                    f'Please define your github or gitlab token in your environment.\n'
+                    f'`export {git_content_config.credentials.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n'
+                    f'export {git_content_config.credentials.ENV_GITLAB_TOKEN_NAME}=<TOKEN>', fg='yellow'
+                )
+
+            click.secho(
+                f'Could not find the old entity file under "{git_path}".\n'
+                'please make sure that you did not break backward compatibility.\n'
+                f'Reason: {err_msg}', fg='yellow'
+            )
+        return {}
+    file_content = res.content
+    if return_content:
+        return file_content
+    return get_file_details(file_content, full_file_path)
+
+
+def get_file_details(
+        file_content,
+        full_file_path: str,
+) -> Dict:
+    if full_file_path.endswith('json'):
+        file_details = json.loads(file_content)
+    elif full_file_path.endswith('yml'):
+        file_details = yaml.load(file_content)
+    # if neither yml nor json then probably a CHANGELOG or README file.
+    else:
+        file_details = {}
+    return file_details
+
+
+@lru_cache(maxsize=128)
 def get_remote_file(
         full_file_path: str,
         tag: str = 'master',
         return_content: bool = False,
         suppress_print: bool = False,
-        github_repo: Optional[str] = None
+        git_content_config: Optional[GitContentConfig] = None,
 ):
     """
     Args:
@@ -212,95 +319,20 @@ def get_remote_file(
         tag: The branch name. default is 'master'
         return_content: Determines whether to return the file's raw content or the dict representation of it.
         suppress_print: whether to suppress the warning message in case the file was not found.
-        github_repo: The repository to grab the file from
+        git_content_config: The content config to take the file from
     Returns:
         The file content in the required format.
 
     """
-    git_config = GitContentConfig(github_repo)
-    if git_config.GITLAB_ID:
-        full_file_path_quote_plus = urllib.parse.quote_plus(full_file_path)
-        git_path = urljoin(git_config.BASE_RAW_GITLAB_LINK, 'files', full_file_path_quote_plus, 'raw')
-        tag = tag.replace('origin/', '')
-    else:  # github
-        # 'origin/' prefix is used to compared with remote branches but it is not a part of the github url.
-        tag = tag.replace('origin/', '').replace('demisto/', '')
-        git_path = urljoin(git_config.CONTENT_GITHUB_LINK, tag, full_file_path)
-
-    local_content = '{}'
-
-    github_token: Optional[str] = None
-    gitlab_token: Optional[str] = None
-    try:
-        external_repo = is_external_repository()
-        if external_repo:
-            github_token = git_config.Credentials.GITHUB_TOKEN
-            gitlab_token = git_config.Credentials.GITLAB_TOKEN
-            if gitlab_token and git_config.GITLAB_ID:
-                res = requests.get(git_path,
-                                   params={'ref': tag},
-                                   headers={'PRIVATE-TOKEN': gitlab_token},
-                                   verify=False)
-                res.raise_for_status()
-            elif github_token:
-                res = requests.get(git_path, verify=False, timeout=10, headers={
-                    'Authorization': f"Bearer {github_token}",
-                    'Accept': f'application/vnd.github.VERSION.raw',
-                })  # Sometime we need headers
-                if not res.ok:  # sometime we need param token
-                    res = requests.get(
-                        git_path,
-                        verify=False,
-                        timeout=10,
-                        params={'token': github_token}
-                    )
-                res.raise_for_status()
-            else:
-                # If no token defined, maybe it's a open repo. 🤷‍♀️
-                res = requests.get(git_path, verify=False, timeout=10)
-                # And maybe it's just not defined. 😢
-                if not res.ok:
-                    if not suppress_print:
-                        click.secho(
-                            f'You are working in a private repository: "{git_config.CURRENT_REPOSITORY}".\n'
-                            f'The github token in your environment is undefined.\n'
-                            f'Getting file from local repository instead. \n'
-                            f'If you wish to get the file from the remote repository, \n'
-                            f'Please define your github or gitlab token in your environment.\n'
-                            f'`export {git_config.Credentials.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n'
-                            f'export {git_config.Credentials.ENV_GITLAB_TOKEN_NAME}=<TOKEN>', fg='yellow'
-                        )
-                        click.echo("Getting file from local environment")
-                    # Get from local git origin/master instead
-                    repo = git.Repo(os.path.dirname(full_file_path), search_parent_directories=True)
-                    repo_git_util = GitUtil(repo)
-                    git_path = repo_git_util.get_local_remote_file_path(full_file_path, tag)
-                    local_content = repo_git_util.get_local_remote_file_content(git_path)
-        else:
-            res = requests.get(git_path, verify=False, timeout=10)
-            res.raise_for_status()
-    except Exception as exc:
-        # Replace token secret if needed
-        err_msg: str = str(exc).replace(github_token, 'XXX') if github_token else str(exc)
-        err_msg = err_msg.replace(gitlab_token, 'XXX') if gitlab_token else err_msg
-        if not suppress_print:
-            click.secho(
-                f'Could not find the old entity file under "{git_path}".\n'
-                'please make sure that you did not break backward compatibility.\n'
-                f'Reason: {err_msg}', fg='yellow'
-            )
-        return {}
-    file_content = res.content if res.ok else local_content
-    if return_content:
-        return file_content
-    if full_file_path.endswith('json'):
-        details = res.json() if res.ok else json.loads(local_content)
-    elif full_file_path.endswith('yml'):
-        details = yaml.load(file_content)
-    # if neither yml nor json then probably a CHANGELOG or README file.
-    else:
-        details = {}
-    return details
+    tag = tag.replace('origin/', '').replace('demisto/', '')
+    if not git_content_config:
+        try:
+            return get_local_remote_file(full_file_path, tag, return_content)
+        except Exception as e:
+            if not suppress_print:
+                click.secho(f"Could not get local remote file because of: {str(e)}\n"
+                            f"Searching the remote file content with the API.")
+    return get_remote_file_from_api(full_file_path, git_content_config, tag, return_content, suppress_print)
 
 
 def filter_files_on_pack(pack: str, file_paths_list=str()) -> set:
@@ -483,6 +515,8 @@ def get_yaml(file_path, cache_clear=False):
 
 
 def get_json(file_path, cache_clear=False):
+    if cache_clear:
+        get_file.cache_clear()
     return get_file(file_path, 'json', clear_cache=cache_clear)
 
 
@@ -599,6 +633,8 @@ def get_to_version(file_path):
 
 
 def str2bool(v):
+    if isinstance(v, bool):
+        return v
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
 
@@ -692,12 +728,15 @@ def get_latest_release_notes_text(rn_path):
         print_warning('Path to release notes not found.')
         rn = None
     else:
-        with open(rn_path) as f:
-            rn = f.read()
+        try:
+            with open(rn_path) as f:
+                rn = f.read()
 
-        if not rn:
-            print_error(f'Release Notes may not be empty. Please fill out correctly. - {rn_path}')
-            return None
+            if not rn:
+                print_error(f'Release Notes may not be empty. Please fill out correctly. - {rn_path}')
+                return None
+        except IOError:
+            return ''
 
     return rn if rn else None
 
@@ -713,7 +752,9 @@ def format_version(version):
         The formatted server version.
     """
     formatted_version = version
-    if len(version.split('.')) == 1:
+    if not version:
+        formatted_version = '0.0.0'
+    elif len(version.split('.')) == 1:
         formatted_version = f'{version}.0.0'
     elif len(version.split('.')) == 2:
         formatted_version = f'{version}.0'
@@ -747,6 +788,26 @@ def server_version_compare(v1, v2):
     return -1
 
 
+def get_max_version(versions: List[str]) -> str:
+    """get max version between Demisto versions.
+
+    Args:
+        versions (list): list of strings representing Demisto version.
+
+    Returns:
+        str.
+        max version.
+    """
+
+    if len(versions) == 0:
+        raise BaseException("Error: empty versions list")
+    max_version = versions[0]
+    for version in versions[1:]:
+        if server_version_compare(version, max_version) == 1:
+            max_version = version
+    return max_version
+
+
 def run_threads_list(threads_list):
     """
     Start a list of threads and wait for completion (join)
@@ -764,6 +825,97 @@ def run_threads_list(threads_list):
 
 def is_file_path_in_pack(file_path):
     return bool(re.findall(PACKS_DIR_REGEX, file_path))
+
+
+def add_default_pack_known_words(file_path):
+    """
+    Ignores the pack's content:
+    1. Pack's name.
+    2. Integrations name.
+    3. Integrations command names'.
+    4. Scripts name.
+
+    Note: please add to this function any further ignores in the future.
+    Args:
+        file_path: RN file path
+
+    Returns: A list of all the Pack's content the doc_reviewer should ignore.
+
+    """
+    default_pack_known_words = [get_pack_name(file_path), ]
+    default_pack_known_words.extend(get_integration_name_and_command_names(file_path))
+    default_pack_known_words.extend(get_scripts_names(file_path))
+    return default_pack_known_words
+
+
+def get_integration_name_and_command_names(file_path):
+    """
+    1. Get the RN file path.
+    2. Check if integrations exist in the current pack.
+    3. For each integration, load the yml file.
+    3. Keep in a set all the commands names.
+    4. Keep in a set all the integrations names.
+    Args:
+        file_path: RN file path
+
+    Returns: (set) of all the commands and integrations names found.
+
+    """
+    integrations_dir_path = os.path.join(PACKS_DIR, get_pack_name(file_path), INTEGRATIONS_DIR)
+    command_names: Set[str] = set()
+    if not glob.glob(integrations_dir_path):
+        return command_names
+
+    found_integrations: List[str] = os.listdir(integrations_dir_path)
+    if found_integrations:
+        for integration in found_integrations:
+            command_names.add(integration)
+
+            integration_path_full = os.path.join(integrations_dir_path, integration, f'{integration}.yml')
+            yml_dict = get_yaml(integration_path_full)
+            commands = yml_dict.get("script", {}).get('commands', [])
+            command_names = command_names.union({command.get('name') for command in commands})
+
+    return command_names
+
+
+def get_scripts_names(file_path):
+    """
+    1. Get the RN file path
+    2. Check if scripts exist in the current pack
+    3. Keep in a set all the scripts names
+    Args:
+        file_path: RN file path
+
+    Returns: (set) of all the scripts names found.
+
+    """
+    scripts_dir_path = os.path.join(PACKS_DIR, get_pack_name(file_path), SCRIPTS_DIR)
+    scripts_names: Set[str] = set()
+    if not glob.glob(scripts_dir_path):
+        click.secho(f'no scripts path found')
+        return scripts_names
+
+    found_scripts: List[str] = os.listdir(scripts_dir_path)
+    if not found_scripts:
+        click.secho(f'no scripts found')
+    else:
+        for script in found_scripts:
+            if script.endswith('.md'):
+                continue  # in case the script is in the old version of CommonScripts - JS code, ignore the md file
+            elif script.endswith('.yml'):
+                # in case the script is in the old version of CommonScripts - JS code, only yml exists not in a dir
+                script_path_full = os.path.join(scripts_dir_path, script)
+            else:
+                script_path_full = os.path.join(scripts_dir_path, script, f'{script}.yml')
+            try:
+                yml_dict = get_yaml(script_path_full)
+                scripts_names.add(yml_dict.get("name"))
+            except FileNotFoundError:
+                # we couldn't load the script as the path is not fit Content convention scripts' names
+                scripts_names.add(script)
+        click.secho(f'scripts names: {scripts_names}')
+    return scripts_names
 
 
 def get_pack_name(file_path):
@@ -1025,6 +1177,8 @@ def get_dict_from_file(path: str,
                 return get_json(path, cache_clear=clear_cache), 'json'
             elif path.endswith('.py'):
                 return {}, 'py'
+            elif path.endswith('.xif'):
+                return {}, 'xif'
     except FileNotFoundError as e:
         if raises_error:
             raise
@@ -1069,6 +1223,12 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.JOB
         elif INDICATOR_TYPES_DIR in path.parts:
             return FileType.REPUTATION
+        elif XSIAM_DASHBOARDS_DIR in path.parts:
+            return FileType.XSIAM_DASHBOARD
+        elif XSIAM_REPORTS_DIR in path.parts:
+            return FileType.XSIAM_REPORT
+        elif TRIGGER_DIR in path.parts:
+            return FileType.TRIGGER
 
     # integration image
     if path.name.endswith('_image.png'):
@@ -1089,8 +1249,14 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
     if path.suffix == '.js':
         return FileType.JAVASCRIPT_FILE
 
+    if path.suffix == '.xif':
+        return FileType.XIF_FILE
+
     if path.name.endswith(XSOAR_CONFIG_FILE):
         return FileType.XSOAR_CONFIG
+
+    if path.suffix == '.yml' and (path.parts[0] == '.circleci' or path.parts[0] == '.gitlab'):
+        return FileType.BUILD_CONFIG_FILE
 
     return None
 
@@ -1099,12 +1265,12 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
 
 
 def find_type(
-    path: str = '',
-    _dict=None,
-    file_type: Optional[str] = None,
-    ignore_sub_categories: bool = False,
-    ignore_invalid_schema_file: bool = False,
-    clear_cache: bool = False
+        path: str = '',
+        _dict=None,
+        file_type: Optional[str] = None,
+        ignore_sub_categories: bool = False,
+        ignore_invalid_schema_file: bool = False,
+        clear_cache: bool = False
 ):
     """
     returns the content file type
@@ -1156,6 +1322,16 @@ def find_type(
                 return FileType.TEST_PLAYBOOK
 
             return FileType.PLAYBOOK
+
+        if 'rules' in _dict:
+            if 'samples' in _dict and PARSING_RULES_DIR in Path(path).parts:
+                return FileType.PARSING_RULE
+
+            if MODELING_RULES_DIR in Path(path).parts:
+                return FileType.MODELING_RULE
+
+        if 'global_rule_id' in _dict:
+            return FileType.CORRELATION_RULE
 
     if file_type == 'json':
         if 'widgetType' in _dict:
@@ -1212,6 +1388,15 @@ def find_type(
 
         if isinstance(_dict, dict) and {'isAllFeeds', 'selectedFeeds', 'isFeed'}.issubset(_dict.keys()):
             return FileType.JOB
+
+        if 'dashboards_data' in _dict:
+            return FileType.XSIAM_DASHBOARD
+
+        if 'templates_data' in _dict:
+            return FileType.XSIAM_REPORT
+
+        if 'trigger_id' in _dict:
+            return FileType.TRIGGER
 
         # When using it for all files validation- sometimes 'id' can be integer
         if 'id' in _dict:
@@ -1611,33 +1796,6 @@ def get_parent_directory_name(path: str, abs_path: bool = False) -> str:
     return os.path.basename(parent_dir_name)
 
 
-def get_content_file_type_dump(file_path: str) -> Callable[[str], str]:
-    """
-    Return a method with which 'curr' (the current key the lies in the path of the error) should be printed with
-    If the file is a yml file:
-        will return a yaml.dump function
-    If the file is a json file:
-        will return a json.dumps function configured with indent=4
-    In any other case- will just print the string representation of the key.
-
-    The file type is checked according to the file extension
-
-    Args:
-        file_path: The file path whose type is determined in this method
-
-    Returns:
-        A function that returns string representation of 'curr'
-    """
-    # Setting the method that should the curr path
-    file_extension = os.path.splitext(file_path)[-1]
-    curr_string_transformer: Union[partial[str], Type[str], Callable] = str
-    if file_extension in ['.yml', '.yaml']:
-        curr_string_transformer = yaml.dumps
-    elif file_extension == '.json':
-        curr_string_transformer = partial(json.dumps, indent=4)
-    return curr_string_transformer
-
-
 def get_code_lang(file_data: dict, file_entity: str) -> str:
     """
     Returns the code language by the file entity
@@ -1964,7 +2122,7 @@ def get_approved_usecases() -> list:
     """
     return get_remote_file(
         'Tests/Marketplace/approved_usecases.json',
-        github_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+        git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
     ).get('approved_list', [])
 
 
@@ -1976,7 +2134,7 @@ def get_approved_tags() -> list:
     """
     return get_remote_file(
         'Tests/Marketplace/approved_tags.json',
-        github_repo=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
+        git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
     ).get('approved_list', [])
 
 
@@ -2053,7 +2211,8 @@ def get_release_note_entries(version='') -> list:
 
     changelog_file_content = get_remote_file(full_file_path='CHANGELOG.md',
                                              return_content=True,
-                                             github_repo='demisto/demisto-sdk').decode('utf-8').split('\n')
+                                             git_content_config=GitContentConfig(repo_name='demisto/demisto-sdk')
+                                             ).decode('utf-8').split('\n')
 
     if not version or 'dev' in version:
         version = 'Changelog'
@@ -2198,7 +2357,7 @@ def get_current_repo() -> Tuple[str, str, str]:
         return "Unknown source", '', ''
 
 
-def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None) -> List:
+def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None, item_type: str = None) -> List:
     """
     Return the supporting marketplaces of the item.
 
@@ -2206,9 +2365,13 @@ def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[st
         item_path: the item path.
         item_data: the item data.
         packs: the pack mapping from the ID set.
+        item_type: The item type.
 
     Returns: the list of supporting marketplaces.
     """
+
+    if item_type and item_type in SIEM_ONLY_ENTITIES:
+        return [MarketplaceVersions.MarketplaceV2.value]
 
     if not item_data:
         file_type = Path(item_path).suffix
@@ -2479,3 +2642,19 @@ def order_dict(data):
     """
     return OrderedDict({k: order_dict(v) if isinstance(v, dict) else v
                         for k, v in sorted(data.items())})
+
+
+def extract_none_deprecated_command_names_from_yml(yml_data: dict) -> list:
+    """
+    Go over all the commands in a yml file and return their names.
+    Args:
+        yml_data (dict): the yml content as a dict
+
+    Returns:
+        list: a list of all the commands names
+    """
+    commands_ls = []
+    for command in yml_data.get('script', {}).get('commands', {}):
+        if command.get('name') and not command.get('deprecated'):
+            commands_ls.append(command.get('name'))
+    return commands_ls

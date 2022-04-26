@@ -9,7 +9,16 @@
             "url": "Packs/TestPack"
         }
     ],
-    "marketplace_packs": [],
+    "marketplace_packs": [
+        {
+            "id": "FeedJSON",
+            "version": "*"
+        },
+        {
+            "id": "GoogleCloudStorage",
+            "version": "*"
+        }
+    ],
     "lists": [],
     "jobs": []
 }

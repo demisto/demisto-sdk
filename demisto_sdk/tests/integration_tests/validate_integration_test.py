@@ -1,4 +1,5 @@
 import copy
+from copy import deepcopy
 from os.path import join
 
 import pytest
@@ -513,6 +514,7 @@ class TestDeprecatedIntegration:
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml = deepcopy(valid_integration_yml)
         valid_integration_yml['deprecated'] = True
         valid_integration_yml['display'] = 'ServiceNow (Deprecated)'
         valid_integration_yml['description'] = 'Deprecated. Use the ServiceNow v2 integration instead.'
@@ -541,6 +543,7 @@ class TestDeprecatedIntegration:
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         invalid_integration_yml = get_yaml(pack_integration_path)
+        invalid_integration_yml = deepcopy(invalid_integration_yml)
         invalid_integration_yml['deprecated'] = True
         invalid_integration_yml['description'] = 'Deprecated.'
         integration = pack.create_integration(yml=invalid_integration_yml)
@@ -569,6 +572,7 @@ class TestDeprecatedIntegration:
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         invalid_integration_yml = get_yaml(pack_integration_path)
+        invalid_integration_yml = deepcopy(invalid_integration_yml)
         invalid_integration_yml['deprecated'] = True
         invalid_integration_yml['display'] = '(Deprecated)'
         integration = pack.create_integration(yml=invalid_integration_yml)
@@ -597,6 +601,7 @@ class TestDeprecatedIntegration:
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml = deepcopy(valid_integration_yml)
         valid_integration_yml['deprecated'] = True
         valid_integration_yml['display'] = 'ServiceNow (Deprecated)'
         valid_integration_yml['description'] = 'Deprecated. Use the ServiceNow v2 integration instead.'
@@ -631,6 +636,7 @@ class TestDeprecatedIntegration:
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml = deepcopy(valid_integration_yml)
         valid_integration_yml['deprecated'] = True
         valid_integration_yml['display'] = 'ServiceNow (Deprecated)'
         valid_integration_yml['description'] = 'Deprecated. Use the ServiceNow v2 integration instead.'
@@ -670,6 +676,7 @@ class TestDeprecatedIntegration:
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml = deepcopy(valid_integration_yml)
         valid_integration_yml['toversion'] = '4.4.4'
         valid_integration_yml['commonfields']['version'] = -2
         integration = pack.create_integration(yml=valid_integration_yml)
@@ -702,6 +709,7 @@ class TestDeprecatedIntegration:
         pack = repo.create_pack('PackName')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path)
+        valid_integration_yml = deepcopy(valid_integration_yml)
         valid_integration_yml['toversion'] = '4.4.4'
         valid_integration_yml['commonfields']['version'] = -2
         integration = pack.create_integration(yml=valid_integration_yml)
@@ -2992,6 +3000,7 @@ class TestAllFilesValidator:
         mocker.patch.object(tools, 'is_external_repository', return_value=False)
         mocker.patch.object(PackUniqueFilesValidator, 'are_valid_files', return_value='')
         mocker.patch.object(ValidateManager, 'validate_readme', return_value=True)
+        mocker.patch.object(ValidateManager, 'is_node_exist', return_value=True)
         pack1 = repo.create_pack('PackName1')
         pack1.author_image.write(DEFAULT_IMAGE_BASE64)
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
@@ -3037,6 +3046,7 @@ class TestAllFilesValidator:
         mocker.patch.object(tools, 'is_external_repository', return_value=False)
         mocker.patch.object(PackUniqueFilesValidator, 'are_valid_files', return_value='')
         mocker.patch.object(ValidateManager, 'validate_readme', return_value=True)
+        mocker.patch.object(ValidateManager, 'is_node_exist', return_value=False)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         pack1 = repo.create_pack('PackName1')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
@@ -3070,6 +3080,7 @@ class TestAllFilesValidator:
         assert 'The content key must be set to True.' in result.stdout
         assert 'SC100' in result.stdout
         assert 'The name of this v2 script is incorrect' in result.stdout
+        assert 'RM111' in result.stdout
         assert result.exit_code == 1
 
 
@@ -3091,6 +3102,7 @@ class TestValidationUsingGit:
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path, cache_clear=True)
         integration = pack1.create_integration('integration0', yml=valid_integration_yml)
+        integration.readme.write("azure-get-indicators\nazure-hidden-command")
         incident_field = pack1.create_incident_field('incident-field', content=INCIDENT_FIELD)
         dashboard = pack1.create_dashboard('dashboard', content=DASHBOARD)
 

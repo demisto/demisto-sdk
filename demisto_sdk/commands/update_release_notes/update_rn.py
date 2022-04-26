@@ -3,7 +3,6 @@ This script is used to create a release notes template
 """
 import copy
 import errno
-import json
 import os
 import re
 from distutils.version import LooseVersion
@@ -15,6 +14,7 @@ from demisto_sdk.commands.common.constants import (
     IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
@@ -27,6 +27,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_yaml, pack_name_to_path,
                                                print_color, print_error,
                                                print_warning, run_command)
+
+json = JSON_Handler()
 
 
 class UpdateRN:
@@ -358,6 +360,19 @@ class UpdateRN:
             name = file_data.get('brandName', None)
         elif 'id' in file_data:
             name = file_data.get('id', None)
+        elif 'trigger_id' in file_data:
+            name = file_data.get('trigger_id')
+
+        elif 'dashboards_data' in file_data and file_data.get('dashboards_data') \
+                and isinstance(file_data['dashboards_data'], list):
+            dashboard_data = file_data.get('dashboards_data', [{}])[0]
+            name = dashboard_data.get('name')
+
+        elif 'templates_data' in file_data and file_data.get('templates_data') \
+                and isinstance(file_data['templates_data'], list):
+            r_name = file_data.get('templates_data', [{}])[0]
+            name = r_name.get('report_name')
+
         else:
             name = os.path.basename(file_path)
         return name
@@ -405,7 +420,7 @@ class UpdateRN:
             The pack metadata dictionary
         """
         try:
-            data_dictionary = get_json(self.metadata_path)
+            data_dictionary = get_json(self.metadata_path, cache_clear=True)
         except FileNotFoundError as e:
             raise FileNotFoundError(f'Pack {self.pack} was not found. Please verify the pack name is correct.') from e
         return data_dictionary
@@ -451,7 +466,8 @@ class UpdateRN:
             version[2] = '0'
             new_version = '.'.join(version)
         # We validate the input via click
-        elif self.update_type in ['revision', 'maintenance', 'documentation']:
+
+        elif self.update_type in ['revision', 'documentation']:
             version = current_version.split('.')
             version[2] = str(int(version[2]) + 1)
             if int(version[2]) > 99:
@@ -459,6 +475,9 @@ class UpdateRN:
                                  f"Please verify the currentVersion is correct. If it is, "
                                  f"then consider bumping to a new Minor version.")
             new_version = '.'.join(version)
+        elif self.update_type == 'maintenance':
+            raise ValueError("The *maintenance* option is no longer supported."
+                             " Please use the \"revision\" option and make sure to provide informative release notes.")
         if pre_release:
             new_version = new_version + '_prerelease'
         data_dictionary['currentVersion'] = new_version
@@ -565,9 +584,7 @@ class UpdateRN:
                 rn_desc += '\n'
             else:
                 rn_desc = f'##### {content_name}\n'
-                if self.update_type == 'maintenance':
-                    rn_desc += '- Maintenance and stability enhancements.\n'
-                elif self.update_type == 'documentation':
+                if self.update_type == 'documentation':
                     rn_desc += '- Documentation and metadata improvements.\n'
                 else:
                     rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
@@ -740,7 +757,7 @@ def get_file_description(path, file_type) -> str:
         print_warning(f'Cannot get file description: "{path}" file does not exist')
         return ''
 
-    elif file_type in (FileType.PLAYBOOK, FileType.INTEGRATION):
+    elif file_type in (FileType.PLAYBOOK, FileType.INTEGRATION, FileType.CORRELATION_RULE):
         yml_file = get_yaml(path)
         return yml_file.get('description', '')
 
@@ -748,7 +765,8 @@ def get_file_description(path, file_type) -> str:
         yml_file = get_yaml(path)
         return yml_file.get('comment', '')
 
-    elif file_type in (FileType.CLASSIFIER, FileType.REPORT, FileType.WIDGET, FileType.DASHBOARD, FileType.JOB):
+    elif file_type in (FileType.CLASSIFIER, FileType.REPORT, FileType.WIDGET, FileType.DASHBOARD, FileType.JOB,
+                       FileType.TRIGGER):
         json_file = get_json(path)
         return json_file.get('description', '')
 
@@ -824,7 +842,7 @@ def check_docker_image_changed(main_branch: str, packfile: str) -> Optional[str]
             if 'dockerimage:' in diff_line:  # search whether exists a line that notes that the Docker image was
                 # changed.
                 split_line = diff_line.split()
-                if split_line[0] == '+':
+                if split_line[0].startswith('+'):
                     return split_line[-1]
         return None
 

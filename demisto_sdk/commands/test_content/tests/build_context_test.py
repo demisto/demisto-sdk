@@ -1,10 +1,11 @@
-import json
-
 import pytest
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.test_content.ParallelLoggingManager import \
     ParallelLoggingManager
 from demisto_sdk.commands.test_content.TestContentClasses import BuildContext
+
+json = JSON_Handler()
 
 
 def generate_test_configuration(playbook_id: str,
@@ -138,6 +139,29 @@ def generate_env_results_content(
     return env_results
 
 
+def generate_xsiam_servers_data():
+    return {
+        "qa2-test-111111": {
+            "ui_url": "https://xsiam1.paloaltonetworks.com/",
+            "instance_name": "qa2-test-111111",
+            "api_key": "1234567890",
+            "x-xdr-auth-id": 1,
+            "base_url": "https://api1.paloaltonetworks.com/",
+            "xsiam_version": "3.2.0",
+            "demisto_version": "99.99.98"
+        },
+        "qa2-test-222222": {
+            "ui_url": "https://xsoar-content-2.xdr-qa2-uat.us.paloaltonetworks.com/",
+            "instance_name": "qa2-test-222222",
+            "api_key": "1234567890",
+            "x-xdr-auth-id": 1,
+            "base_url": "https://api-xsoar-content-2.xdr-qa2-uat.us.paloaltonetworks.com",
+            "xsiam_version": "3.2.0",
+            "demisto_version": "99.99.98"
+        }
+    }
+
+
 def get_mocked_build_context(
         mocker,
         tmp_file,
@@ -191,9 +215,67 @@ def get_mocked_build_context(
         'build_number': '11111',
         'branch_name': 'branch',
         'server_version': server_version,
-        'mem_check': False
+        'mem_check': False,
+        'server_type': 'XSOAR'
     }
     return BuildContext(kwargs, logging_manager)
+
+
+def create_xsiam_build(mocker, tmp_file):
+    logging_manager = ParallelLoggingManager(tmp_file / 'log_file.log')
+    conf_path = tmp_file / 'conf_path'
+    conf_path.write_text(json.dumps(generate_content_conf_json()))
+
+    secret_conf_path = tmp_file / 'secret_conf_path'
+    secret_conf_path.write_text(json.dumps(generate_secret_conf_json()))
+
+    xsiam_servers_path = tmp_file / 'xsiam_servers_path.json'
+    xsiam_servers_path.write_text(json.dumps(generate_xsiam_servers_data()))
+
+    env_results_path = tmp_file / 'env_results_path'
+    env_results_path.write_text(json.dumps(generate_env_results_content()))
+    mocker.patch('demisto_sdk.commands.test_content.TestContentClasses.ENV_RESULTS_PATH', str(env_results_path))
+
+    filtered_tests_path = tmp_file / 'filtered_tests_path'
+    filtered_tests_path.write_text('[]')
+    mocker.patch('demisto_sdk.commands.test_content.TestContentClasses.FILTER_CONF', str(filtered_tests_path))
+
+    mocker.patch('demisto_sdk.commands.test_content.TestContentClasses.BuildContext._retrieve_slack_user_id',
+                 return_value='some_user_id')
+    mocker.patch('demisto_sdk.commands.test_content.TestContentClasses.BuildContext._get_all_integration_config',
+                 return_value=[])
+    kwargs = {
+        'api_key': 'api_key',
+        'server': None,
+        'conf': conf_path,
+        'secret': secret_conf_path,
+        'slack': 'slack_token',
+        'nightly': False,
+        'is_ami': True,
+        'circleci': 'circle_token',
+        'build_number': '11111',
+        'branch_name': 'branch',
+        'server_version': 'XSIAM Master',
+        'mem_check': False,
+        'server_type': 'XSIAM',
+        'xsiam_servers_path': xsiam_servers_path,
+        'xsiam_machine': 'qa2-test-111111'
+    }
+    return BuildContext(kwargs, logging_manager)
+
+
+def test_build_creation(mocker, tmp_path):
+    """
+    Given:
+        - A build context for xsiam run
+    When:
+        - Running test-content command and creating xsiam build context
+    Then:
+        - All xsiam build  parameters created as expected
+    """
+    build_contex = create_xsiam_build(mocker, tmp_path)
+    assert build_contex.is_xsiam
+    assert build_contex.auth_id == 1
 
 
 def test_non_filtered_tests_are_skipped(mocker, tmp_path):

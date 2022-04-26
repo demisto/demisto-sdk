@@ -4,9 +4,10 @@ from typing import List, Optional, Union
 from wcmatch.pathlib import EXTMATCH, Path
 
 import demisto_sdk.commands.common.content.errors as exc
-from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
-                                                   SCRIPTS_DIR, FileType)
-from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
+from demisto_sdk.commands.common.constants import ENTITY_TYPE_TO_DIR, FileType
+from demisto_sdk.commands.unify.integration_script_unifier import \
+    IntegrationScriptUnifier
+from demisto_sdk.commands.unify.rule_unifier import RuleUnifier
 
 from .yaml_content_object import YAMLContentObject
 
@@ -45,6 +46,16 @@ class YAMLContentUnifiedObject(YAMLContentObject):
         """
         patterns = ["test_*.py", "*_test.py"]
         return next(self._path.parent.glob(patterns=patterns), None)
+
+    @property
+    def rules_path(self) -> Optional[Path]:
+        """YAML related code path.
+
+        Returns:
+            Code path or None if code file not found.
+        """
+        patterns = [f"{self.path.stem}.@(xif)"]
+        return next(self._path.parent.glob(patterns=patterns, flags=EXTMATCH), None)
 
     @property
     def script(self) -> dict:
@@ -89,6 +100,9 @@ class YAMLContentUnifiedObject(YAMLContentObject):
         Returns:
             bool: True if unified else False.
         """
+        if self._content_type in [FileType.PARSING_RULE, FileType.MODELING_RULE]:
+            return self.rules_path is None
+
         return self.code_path is None
 
     def _unify(self, dest_dir: Path) -> List[Path]:
@@ -105,11 +119,19 @@ class YAMLContentUnifiedObject(YAMLContentObject):
             2. Verbosity to quiet mode option in unify module.
         """
         # Directory configuration - Integrations or Scripts
-        unify_dir = SCRIPTS_DIR if self._content_type == FileType.SCRIPT else INTEGRATIONS_DIR
+        unify_dir = ENTITY_TYPE_TO_DIR[self._content_type.value]
+
         # Unify step
-        unifier = YmlUnifier(input=str(self.path.parent), dir_name=unify_dir, output=dest_dir, force=True,
-                             yml_modified_data=self.to_dict())
-        created_files: List[str] = unifier.merge_script_package_to_yml()
+        unifier: Union[IntegrationScriptUnifier, RuleUnifier]
+        if self._content_type in [FileType.SCRIPT, FileType.INTEGRATION]:
+            unifier = IntegrationScriptUnifier(input=str(self.path.parent), dir_name=unify_dir, output=dest_dir, force=True,
+                                               yml_modified_data=self.to_dict())
+
+        elif self._content_type in [FileType.PARSING_RULE, FileType.MODELING_RULE]:
+            unifier = RuleUnifier(input=str(self.path.parent), output=dest_dir, force=True)
+
+        created_files: List[str] = unifier.unify()
+
         # Validate that unify succeed - there is not exception raised in unify module.
         if not created_files:
             raise exc.ContentDumpError(self, self.path, "Unable to unify object")
@@ -135,10 +157,10 @@ class YAMLContentUnifiedObject(YAMLContentObject):
             2. Verbosity to quiet mode option in unify module.
         """
         # Directory configuration - Integrations or Scripts
-        unify_dir = SCRIPTS_DIR if self._content_type == FileType.SCRIPT else INTEGRATIONS_DIR
+        unify_dir = ENTITY_TYPE_TO_DIR[self._content_type.value]
         # Split step
-        unifier = YmlUnifier(input=str(self.path.parent), dir_name=unify_dir, output=str(dest_dir / self.path.name),
-                             force=True)
+        unifier = IntegrationScriptUnifier(input=str(self.path.parent), dir_name=unify_dir, output=str(dest_dir / self.path.name),
+                                           force=True)
         yaml_dict = self.to_dict()
         yaml_dict_copy = copy.deepcopy(yaml_dict)
         script_object = self.script

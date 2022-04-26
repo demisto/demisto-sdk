@@ -1,7 +1,13 @@
+"""BEWARE:
+
+This file is used outside of the demisto-sdk.
+DO NOT import anything from custom packages, only use builtins.
+"""
+
 import functools
 import json
 import logging
-import urllib
+import urllib.parse
 from ast import literal_eval
 from collections import OrderedDict
 from copy import deepcopy
@@ -13,11 +19,13 @@ from dateparser import parse
 from mitmproxy import ctx
 from mitmproxy.addonmanager import Loader
 from mitmproxy.addons.serverplayback import ServerPlayback
-from mitmproxy.http import HTTPFlow, HTTPRequest
+from mitmproxy.http import HTTPFlow, Request
 from mitmproxy.script import concurrent
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='[%(asctime)s] - [%(funcName)s] - %(message)s')
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='[%(asctime)s] - [%(funcName)s] - %(message)s'
+)
 
 
 def record_concurrently(replaying: bool = False):
@@ -110,7 +118,7 @@ class TimestampReplacer:
         """Print details of the request"""
         req = flow.request
         logging.info(f'{req.method} {req.pretty_url}')
-        _, _, path, _, query, _ = urllib.parse.urlparse(req.url)
+        _, _, _, _, query, _ = urllib.parse.urlparse(req.url)
         queriesArray = urllib.parse.parse_qsl(query, keep_blank_values=True)
         logging.info(f'queriesArray={queriesArray}')
         if req.multipart_form:
@@ -143,28 +151,28 @@ class TimestampReplacer:
             self.clean_bad_keys(req)
 
     @staticmethod
-    def replace_boundary(req: HTTPRequest):
+    def replace_boundary(req: Request):
         fixed_boundary = 'fixed_boundary'
         content_type_header, old_boundary = req.headers['Content-Type'].split('boundary=')
         req.headers['Content-Type'] = 'boundary='.join([content_type_header, fixed_boundary])
         req.content = req.content.replace(old_boundary.encode(), fixed_boundary.encode())
 
-    def clean_bad_keys(self, req: HTTPRequest) -> None:
+    def clean_bad_keys(self, req: Request) -> None:
         """Modify the request so that values of problematic keys are constant data
 
         Args:
-            req (HTTPRequest): The request to modify
+            req (Request): The request to modify
         """
         self.clean_url_query(req)
         self.clean_urlencoded_form(req)
         self.clean_multipart_form(req)
         self.clean_json_body(req)
 
-    def clean_url_query(self, req: HTTPRequest) -> None:
+    def clean_url_query(self, req: Request) -> None:
         """Replace any problematic values of query parameters with constant data
 
         Args:
-            req (HTTPRequest): The request to modify
+            req (Request): The request to modify
         """
         query_data = sorted(req._get_query())
         logging.info('fetched query_data: {}'.format(query_data))
@@ -178,11 +186,11 @@ class TimestampReplacer:
         req._set_query(updated_query_data or query_data)
         logging.info(f'updated query_data: {req._get_query()}')
 
-    def clean_urlencoded_form(self, req: HTTPRequest) -> None:
+    def clean_urlencoded_form(self, req: Request) -> None:
         """Replace any problematic values of urlencoded form keys with constant data
 
         Args:
-            req (HTTPRequest): The request to modify
+            req (Request): The request to modify
         """
         if req.urlencoded_form and self.form_keys:
             updated_urlencoded_form_data = []
@@ -193,11 +201,11 @@ class TimestampReplacer:
                     updated_urlencoded_form_data.append((key, val))
             req._set_urlencoded_form(updated_urlencoded_form_data)
 
-    def clean_multipart_form(self, req: HTTPRequest) -> None:
+    def clean_multipart_form(self, req: Request) -> None:
         """Replace any problematic values of multipart form keys with constant data
 
         Args:
-            req (HTTPRequest): The request to modify
+            req (Request): The request to modify
         """
         if req.multipart_form and self.form_keys:
             updated_multipart_form_data = []
@@ -208,11 +216,11 @@ class TimestampReplacer:
                     updated_multipart_form_data.append((key, val))
             req._set_multipart_form(updated_multipart_form_data)
 
-    def clean_json_body(self, req: HTTPRequest) -> None:
+    def clean_json_body(self, req: Request) -> None:
         """Replace any problematic values of keys in the request's json body (if it has one)
 
         Args:
-            req (HTTPRequest): The request to modify
+            req (Request): The request to modify
         """
         if req.method == 'POST':
             raw_content = req.raw_content
@@ -235,16 +243,16 @@ class TimestampReplacer:
                     logging.exception(f'failed to run literal_eval on content {content}')
                 try:
                     logging.info('parsing the request body with "literal_eval" failed - trying with "json.loads"')
-                    content = json.loads(content, object_pairs_hook=OrderedDict)
+                    content = json.loads(content)
                     self.modify_json_body(req, content)
                 except Exception:
                     logging.exception(f'failed to run json.loads on content {content}')
 
-    def modify_json_body(self, req: HTTPRequest, json_body: dict) -> None:
+    def modify_json_body(self, req: Request, json_body: dict) -> None:
         """Modify the json body of a request by replacing any timestamp data with constant data
 
         Args:
-            req (HTTPRequest): The request whose json body will be modified.
+            req (Request): The request whose json body will be modified.
             json_body (dict): The request body to modify.
         """
         original_content = deepcopy(json_body)
@@ -283,21 +291,21 @@ class TimestampReplacer:
             logging.info('modified request body:\n{}'.format(json.dumps(json_body, indent=4)))
             req.set_content(json.dumps(json_body).encode())
 
-    def run_all_key_detections(self, req: HTTPRequest) -> None:
+    def run_all_key_detections(self, req: Request) -> None:
         """Used to detect problematic keys in
         1. request query parameters
         2. urlencoded forms parameters and multipart forms parameters
         3. json request body
 
         Args:
-            req (HTTPRequest): The request to inspect for problematic keys
+            req (Request): The request to inspect for problematic keys
         """
         self.handle_url_query(req)
         self.handle_urlencoded_form(req)
         self.handle_multipart_form(req)
         self.handle_json_body(req)
 
-    def handle_url_query(self, req: HTTPRequest) -> None:
+    def handle_url_query(self, req: Request) -> None:
         query_data = req._get_query()
         logging.info('query_data: {}'.format(query_data))
         for key, val in query_data:
@@ -306,11 +314,11 @@ class TimestampReplacer:
                 if self.safely_parse(val):
                     self.query_keys.add(key)
 
-    def handle_multipart_form(self, req: HTTPRequest) -> None:
+    def handle_multipart_form(self, req: Request) -> None:
         """Used when detecting what keys in a multipart form to replace with constants.
 
         Args:
-            req (HTTPRequest): The request to inspect
+            req (Request): The request to inspect
         """
         if req.multipart_form:
             for key, val in req.multipart_form.items(multi=True):
@@ -319,11 +327,11 @@ class TimestampReplacer:
                     if self.safely_parse(val):
                         self.form_keys.add(key)
 
-    def handle_urlencoded_form(self, req: HTTPRequest) -> None:
+    def handle_urlencoded_form(self, req: Request) -> None:
         """Used when detecting what keys in an url encoded parameters to replace with constants.
 
         Args:
-            req (HTTPRequest): The request to inspect
+            req (Request): The request to inspect
         """
         if req.urlencoded_form:
             for key, val in req.urlencoded_form.items(multi=True):
@@ -332,11 +340,11 @@ class TimestampReplacer:
                     if self.safely_parse(val):
                         self.form_keys.add(key)
 
-    def handle_json_body(self, req: HTTPRequest) -> None:
+    def handle_json_body(self, req: Request) -> None:
         """Used when detecting what keys in a request's json body to replace with constants.
 
         Args:
-            req (HTTPRequest): The request to inspect
+            req (Request): The request to inspect
         """
         if req.method == 'POST':
             raw_content = req.raw_content
@@ -360,7 +368,7 @@ class TimestampReplacer:
                     logging.exception(f'failed to run literal_eval content: {content}')
                 try:
                     logging.info('parsing the request body with "literal_eval" failed - trying with "json.loads"')
-                    content = json.loads(content, object_pairs_hook=OrderedDict)
+                    content = json.loads(content)
                     json_keys = self.determine_problematic_keys(content)
                     self.json_keys.update(json_keys)
                 except Exception:
@@ -512,8 +520,8 @@ class TimestampReplacer:
         try:
             if parse(val):
                 return True
-        except Exception:
-            logging.exception(f'Failed to parse as date object: {val}')
+        except Exception as exc:
+            logging.exception(f'Failed to parse as date object: {val}', exc)
         return False
 
 

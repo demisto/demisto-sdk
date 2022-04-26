@@ -289,7 +289,7 @@ class TestDocReviewPack:
         result = doc_reviewer.run_doc_review()
         assert rn.path in doc_reviewer.malformed_rn_files
         assert not doc_reviewer.found_misspelled
-        assert result is False
+        assert not result
 
 
 @pytest.mark.usefixtures("are_mock_calls_supported_in_python_version")

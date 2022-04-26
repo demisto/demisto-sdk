@@ -78,8 +78,11 @@ class ReadMeValidator(BaseValidator):
         self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent
         self.node_modules_path = self.content_path / Path('node_modules')
-        with open(self.file_path) as f:
-            readme_content = f.read()
+        if self.file_path:
+            with open(self.file_path) as f:
+                readme_content = f.read()
+        else:
+            raise Exception("MY ERROR")
         self.readme_content = readme_content
 
     def is_valid_file(self) -> bool:

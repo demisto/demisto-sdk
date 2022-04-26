@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (
     find_type, get_file_displayed_name, get_json, get_pack_name,
-    get_relative_path_from_packs_dir, get_yaml)
+    get_relative_path_from_packs_dir, get_yaml, get_pack_metadata)
 
 json = JSON_Handler()
 
@@ -27,47 +27,66 @@ class BaseValidator:
 
     def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False,
                  json_file_path: Optional[str] = None):
-        self.ignored_errors = ignored_errors if ignored_errors else {}
+        # these are the ignored errors from the .pack-ignore including un-allowed error codes
+        self.ignored_errors_pack_ignore = ignored_errors if ignored_errors else {}
+        # these are the predefined ignored errors from packs which are partner/community support based.
+        # represented by PRESET_ERROR_TO_IGNORE
+        self.predefined_by_support_ignored_errors = set()
+        # these are the predefined ignored errors from packs which are deprecated.
+        # represented by PRESET_ERROR_TO_CHECK
+        self.predefined_deprecated_ignored_errors = set()
         self.print_as_warnings = print_as_warnings
         self.checked_files = set()  # type: ignore
         self.suppress_print = suppress_print
         self.json_file_path = json_file_path
 
-    @staticmethod
-    def should_ignore_error(error_code, ignored_errors, is_error_code_in_allowed_ignore_errors=True):
+    @property
+    def ignored_errors(self):
+        return self.ignored_errors_pack_ignore
+
+    def should_ignore_error(self, error_code, ignored_errors_pack_ignore):
         """
-        Determine if the error code is part of the .pack-ignore and whether the error code is allowed/disallowed
-        to be ignored.
+        Determine if an error should be ignored or not.
 
         Args:
             error_code (str): the error code of the validation.
-            ignored_errors (list[str]): a list of ignored errors which should be ignored in the file (a single row).
-            is_error_code_in_allowed_ignore_errors (bool): indicates whether error code should be in
-                ALLOWED_IGNORE_ERRORS or not, True if it should be in ALLOWED_IGNORE_ERRORS, False if not.
+            ignored_errors_pack_ignore (list[str]): a list of ignored errors which is
+                part of the .pack-ignore that belongs to a specific file.
 
         Returns:
-            True if error code is part of the .pack-ignore and error code is expected/not expected
-                (according to is_error_code_in_allowed_ignore_errors)
-                to be part of the ALLOWED_IGNORE_ERRORS, False otherwise.
+            True if error should be ignored, False if not.
         """
-        code_type = error_code[:2]
-        is_error_code_in_pack_ignore = error_code in ignored_errors or code_type in ignored_errors
-        code_allowed_to_be_ignored = (error_code in ALLOWED_IGNORE_ERRORS) == is_error_code_in_allowed_ignore_errors
-        return is_error_code_in_pack_ignore and code_allowed_to_be_ignored
+        error_type = error_code[:2]
 
-    def should_error_code_not_be_ignored_in_pack_ignore(self, error_code, ignored_errors):
+        if error_code in self.predefined_deprecated_ignored_errors or error_type in self.predefined_deprecated_ignored_errors:
+            return True
+
+        if error_code in self.predefined_by_support_ignored_errors or error_type in self.predefined_by_support_ignored_errors:
+            return True
+
+        return (
+            error_code in ignored_errors_pack_ignore or error_type in ignored_errors_pack_ignore
+        ) and (
+            error_code in ALLOWED_IGNORE_ERRORS
+        )
+
+    @staticmethod
+    def should_error_code_not_be_ignored_in_pack_ignore(error_code, ignored_errors_pack_ignore):
         """
         Determine whether an error code that is in the .pack-ignore should not be ignored.
 
          Args:
             error_code (str): the error code of the validation.
-            ignored_errors (list[str]): a list of ignored errors which should be ignored in the file (a single row).
+            ignored_errors_pack_ignore (list[str]): a list of ignored errors which should be ignored in the file (a single row).
 
         Returns:
             True if error code can not be ignored, False otherwise.
         """
-        return self.should_ignore_error(
-            error_code=error_code, ignored_errors=ignored_errors, is_error_code_in_allowed_ignore_errors=False
+        error_type = error_code[:2]
+        return (
+            error_code in ignored_errors_pack_ignore or error_type in ignored_errors_pack_ignore
+        ) and (
+            error_code not in ALLOWED_IGNORE_ERRORS
         )
 
     def handle_error(self, error_message, error_code, file_path, should_print=True, suggested_fix=None, warning=False,
@@ -87,13 +106,14 @@ class BaseValidator:
         Returns:
             str: formatted error message if it should be ignored, None otherwise.
         """
+
         def formatted_error_str(error_type):
             if error_type not in {'ERROR', 'WARNING'}:
                 raise ValueError("Error type is not valid. Should be in {'ERROR', 'WARNING'}")
 
             formatted_error_message_prefix = f"[{error_type}]: {file_path}: [{error_code}]"
             if self.should_error_code_not_be_ignored_in_pack_ignore(
-                error_code=error_code, ignored_errors=ignored_errors
+                error_code=error_code, ignored_errors_pack_ignore=ignored_errors_pack_ignore
             ):
                 formatted = f"{formatted_error_message_prefix} can not be ignored in .pack-ignore\n"
             else:
@@ -115,9 +135,9 @@ class BaseValidator:
             file_name = 'No-Name'
             rel_file_path = 'No-Name'
 
-        ignored_errors = self.ignored_errors.get(file_name) or self.ignored_errors.get(rel_file_path) or []
+        ignored_errors_pack_ignore = self.ignored_errors_pack_ignore.get(file_name) or self.ignored_errors_pack_ignore.get(rel_file_path) or []
 
-        if self.should_ignore_error(error_code, ignored_errors) or warning:
+        if self.should_ignore_error(error_code, ignored_errors_pack_ignore) or warning:
             if self.print_as_warnings or warning:
                 click.secho(formatted_error_str('WARNING'), fg="yellow")
                 self.json_output(file_path, error_code, error_message, warning)
@@ -155,7 +175,7 @@ class BaseValidator:
         if file_path.endswith('.yml'):
             yml_dict = get_yaml(file_path)
             if yml_dict.get('deprecated'):
-                self.add_flag_to_ignore_list(file_path, 'deprecated')
+                self.add_flag_to_ignore_list('deprecated')
 
     @staticmethod
     def get_metadata_file_content(meta_file_path):
@@ -175,7 +195,7 @@ class BaseValidator:
             support = metadata_json.get(PACK_METADATA_SUPPORT)
 
             if support in ('partner', 'community'):
-                self.add_flag_to_ignore_list(file_path, support)
+                self.add_flag_to_ignore_list(support)
 
     @staticmethod
     def create_reverse_ignored_errors_list(errors_to_check):
@@ -188,20 +208,15 @@ class BaseValidator:
 
         return ignored_error_list
 
-    def add_flag_to_ignore_list(self, file_path, flag):
-        additional_ignored_errors = []
+    def add_flag_to_ignore_list(self, flag):
         if flag in PRESET_ERROR_TO_IGNORE:
-            additional_ignored_errors = PRESET_ERROR_TO_IGNORE[flag]
+            for predefined_error_code in PRESET_ERROR_TO_IGNORE[flag]:
+                self.predefined_by_support_ignored_errors.add(predefined_error_code)
 
         elif flag in PRESET_ERROR_TO_CHECK:
-            additional_ignored_errors = self.create_reverse_ignored_errors_list(PRESET_ERROR_TO_CHECK[flag])
-
-        file_name = os.path.basename(file_path)
-        if file_name in self.ignored_errors:
-            self.ignored_errors[file_name].extend(additional_ignored_errors)
-
-        else:
-            self.ignored_errors[file_name] = additional_ignored_errors
+            deprecated_ignored_errors = self.create_reverse_ignored_errors_list(PRESET_ERROR_TO_CHECK[flag])
+            for ignored_error in deprecated_ignored_errors:
+                self.predefined_deprecated_ignored_errors.add(ignored_error)
 
     @staticmethod
     def add_to_report_error_list(error_code, file_path, error_list) -> bool:

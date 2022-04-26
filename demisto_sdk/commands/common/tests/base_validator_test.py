@@ -18,8 +18,8 @@ from TestSuite.test_tools import ChangeCWD
 json = JSON_Handler()
 
 
-DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = BaseValidator.create_reverse_ignored_errors_list(
-    PRESET_ERROR_TO_CHECK['deprecated'])
+DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = set(BaseValidator.create_reverse_ignored_errors_list(
+    PRESET_ERROR_TO_CHECK['deprecated']))
 
 
 @pytest.mark.parametrize(
@@ -49,7 +49,7 @@ def test_handle_error_on_unignorable_error_codes(mocker, ignored_errors, error_c
     """
     Given
     - error code which is not allowed to be ignored.
-    - error codes/prefix error codes as the ignored errors from the pack-ignore file
+    - error codes/prefix error codes as the ignored errors from the pack-ignore file.
 
     When
     - Running handle_error method
@@ -128,7 +128,7 @@ def test_handle_error_file_with_path(pack):
     Then
     _ Ensure ignoring right file when full path mentioned in .pack-ignore.
     - Ensure the resulting error messages are correctly formatted.
-    - Ensure ignored error codes return None.
+    - Ensure ignored error codes which can be ignored return None.
     - Ensure non ignored errors are in FOUND_FILES_AND_ERRORS list.
     - Ensure ignored error are not in FOUND_FILES_AND_ERRORS and in FOUND_FILES_AND_IGNORED_ERRORS
     """
@@ -144,21 +144,21 @@ def test_handle_error_file_with_path(pack):
     pack.pack_ignore.write_text(pack_ignore_text)
 
     base_validator = BaseValidator(ignored_errors={rel_path_pack_readme: ["BA101"],
-                                                   rel_path_integration_readme: ["ST109"]},
+                                                   rel_path_integration_readme: ["PA113"]},
                                    print_as_warnings=True)
 
     formatted_error = base_validator.handle_error("Error-message", "BA101", integration.readme.path)
     assert formatted_error == f'[ERROR]: {integration.readme.path}: [BA101] - Error-message\n'
     assert f'{integration.readme.path} - [BA101]' in FOUND_FILES_AND_ERRORS
 
-    formatted_error = base_validator.handle_error("Error-message", "ST109", integration.readme.path)
-    assert formatted_error == f'[ERROR]: {integration.readme.path}: [ST109] can not be ignored in .pack-ignore\n'
-    assert f'{integration.readme.path} - [ST109]' in FOUND_FILES_AND_ERRORS
-    assert f'{integration.readme.path} - [ST109]' not in FOUND_FILES_AND_IGNORED_ERRORS
+    formatted_error = base_validator.handle_error("Error-message", "PA113", integration.readme.path)
+    assert formatted_error is None
+    assert f'{integration.readme.path} - [PA113]' not in FOUND_FILES_AND_ERRORS
+    assert f'{integration.readme.path} - [PA113]' in FOUND_FILES_AND_IGNORED_ERRORS
 
-    formatted_error = base_validator.handle_error("Error-message", "ST109", pack.readme.path)
-    assert formatted_error == f'[ERROR]: {pack.readme.path}: [ST109] - Error-message\n'
-    assert f'{pack.readme.path} - [ST109]' in FOUND_FILES_AND_ERRORS
+    formatted_error = base_validator.handle_error("Error-message", "PA113", pack.readme.path)
+    assert formatted_error == f'[ERROR]: {pack.readme.path}: [PA113] - Error-message\n'
+    assert f'{pack.readme.path} - [PA113]' in FOUND_FILES_AND_ERRORS
 
     formatted_error = base_validator.handle_error("Error-message", "BA101", pack.readme.path)
     assert formatted_error is None
@@ -169,14 +169,16 @@ def test_handle_error_file_with_path(pack):
 def test_check_deprecated_where_ignored_list_exists(repo):
     """
     Given
-    - An deprecated integration yml.
+    - deprecated integration yml.
     - A pre-existing ignored errors list for the integration.
 
     When
     - Running check_deprecated method.
 
     Then
-    - Ensure the resulting ignored errors list included the existing errors as well as the deprecated default error list.
+    - Ensure the predefined deprecated ignored errors contains the default error list.
+    - Ensure the ignored errors pack ignore does not contain the default error list, but only the pack-ignore errors.
+    - Ensure the predefined by support ignored errors does not contain anything.
     """
     pack = repo.create_pack('pack')
     integration = pack.create_integration('integration')
@@ -185,7 +187,9 @@ def test_check_deprecated_where_ignored_list_exists(repo):
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={'integration.yml': ['BA101']})
         base_validator.check_deprecated(files_path)
-    assert base_validator.ignored_errors['integration.yml'] == ["BA101"] + DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
+    assert base_validator.predefined_deprecated_ignored_errors == DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
+    assert base_validator.ignored_errors == {'integration.yml': ['BA101']}
+    assert not base_validator.predefined_by_support_ignored_errors
 
 
 def test_check_deprecated_where_ignored_list_does_not_exist(repo):
@@ -198,7 +202,9 @@ def test_check_deprecated_where_ignored_list_does_not_exist(repo):
     - Running check_deprecated method.
 
     Then
-    - Ensure the resulting ignored errors list included the deprecated default error list only.
+    - Ensure the predefined deprecated ignored errors contains the default error list.
+    - Ensure the ignored errors pack ignore does not contain anything.
+    - Ensure the predefined by support ignored errors does not contain anything.
     """
     pack = repo.create_pack('pack')
     integration = pack.create_integration('integration')
@@ -207,7 +213,9 @@ def test_check_deprecated_where_ignored_list_does_not_exist(repo):
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
         base_validator.check_deprecated(files_path)
-    assert base_validator.ignored_errors['integration.yml'] == DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
+    assert base_validator.predefined_deprecated_ignored_errors == DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
+    assert not base_validator.ignored_errors
+    assert not base_validator.predefined_by_support_ignored_errors
 
 
 def test_check_deprecated_non_deprecated_integration_no_ignored_errors(repo):
@@ -263,7 +271,7 @@ def test_check_deprecated_playbook(repo):
     - Running check_deprecated method.
 
     Then
-    - Ensure the resulting ignored errors list included the deprecated default error list only.
+    - Ensure the predefined deprecated ignored errors list includes the deprecated default error list only.
     """
     pack = repo.create_pack('pack')
     playbook = pack.create_integration('playbook-somePlaybook')
@@ -275,7 +283,7 @@ def test_check_deprecated_playbook(repo):
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
         base_validator.check_deprecated(files_path)
-    assert base_validator.ignored_errors['playbook-somePlaybook.yml'] == DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
+    assert base_validator.predefined_deprecated_ignored_errors == DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
 
 
 def test_check_support_status_xsoar_file(repo, mocker):
@@ -312,7 +320,7 @@ def test_check_support_status_partner_file(repo, mocker):
     - Running check_support_status method.
 
     Then
-    - Ensure the resulting ignored errors list includes the partner ignore-list.
+    - Ensure the 'predefined by support ignored_errors' list includes the partner ignore-list.
     """
     pack = repo.create_pack('pack')
     integration = pack.create_integration('integration')
@@ -325,7 +333,7 @@ def test_check_support_status_partner_file(repo, mocker):
         base_validator = BaseValidator(ignored_errors={})
         base_validator.update_checked_flags_by_support_level(integration.yml.rel_path)
 
-        assert base_validator.ignored_errors['integration.yml'] == PRESET_ERROR_TO_IGNORE['partner']
+        assert base_validator.predefined_by_support_ignored_errors == set(PRESET_ERROR_TO_IGNORE['partner'])
 
 
 def test_check_support_status_community_file(repo, mocker):
@@ -337,7 +345,7 @@ def test_check_support_status_community_file(repo, mocker):
     - Running check_support_status method.
 
     Then
-    - Ensure the resulting ignored errors list does not include the integration file name.
+    - Ensure the 'predefined by support ignored errors' list includes the community ignore-list.
     """
     pack = repo.create_pack('pack')
     integration = pack.create_integration('integration')
@@ -350,7 +358,7 @@ def test_check_support_status_community_file(repo, mocker):
         base_validator = BaseValidator(ignored_errors={})
         base_validator.update_checked_flags_by_support_level(integration.yml.rel_path)
 
-        assert base_validator.ignored_errors['integration.yml'] == PRESET_ERROR_TO_IGNORE['community']
+        assert base_validator.predefined_by_support_ignored_errors == set(PRESET_ERROR_TO_IGNORE['community'])
 
 
 class TestJsonOutput:

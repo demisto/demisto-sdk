@@ -907,10 +907,9 @@ class Errors:
     @classmethod
     @error_code_decorator
     def breaking_backwards_command_arg_changed(cls, commands_ls):
-        error_msg = "{}, You've changed the name of some of the command(s) or its arg in" \
-            " the file, please undo, the following commands:".format(cls.BACKWARDS)
-        for command in commands_ls:
-            error_msg += "\n{}".format(command)
+        error_msg = "{}, Your updates to this file contains changes to a name or an argument of an existing command(s).\n" \
+            "Please undo you changes to the following command(s):\n".format(cls.BACKWARDS)
+        error_msg += '\n'.join(commands_ls)
         return error_msg
 
     @staticmethod

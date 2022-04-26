@@ -191,7 +191,8 @@ class TestIntegrationValidator:
         assert validator.is_changed_command_name_or_arg() is False  # if quiet_bc is true should always succeed
 
     CHANGED_COMMAND_OR_ARG_MST_TEST_INPUTS = [
-        ([{"name": "test", "arguments": [{"name": "test1"}]}, {"name": "test2", "arguments": [{"name": "test3"}]}],
+        ([{"name": "command_test_name_1", "arguments": [{"name": "argument_test_name_1"}]}, {"name": "command_test_name_2",
+           "arguments": [{"name": "argument_test_name_3"}]}],
          [{"name": "test", "arguments": [{"name": "test"}, {"name": "test1", "required": True}]},
          {"name": "test2", "arguments": [{"name": "test2"}, {"name": "test3", "required": True}]}],
          "[ERROR]: : [BC104] - Possible backwards compatibility break, You've changed the name of some of the command(s) or its arg in the file,"

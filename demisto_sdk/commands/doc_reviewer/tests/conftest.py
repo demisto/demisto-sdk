@@ -9,7 +9,7 @@ def valid_spelled_content_pack(pack):
     for i in range(3):
         pack.create_release_notes(
             version=f"release-note-{i}",
-            content="\n#### Scripts\n##### ScriptName\n- Added a feature"
+            content="\n#### Scripts\n##### ScriptName\n- Added the feature."
         )
         pack.create_integration(name=f"integration-{i}", yml={"category": "category"})
         pack.create_incident_field(name=f"incident-field-{i}", content={"test": "test"})
@@ -29,7 +29,7 @@ def invalid_spelled_content_pack(pack):
     for i in range(3):
         rn = pack.create_release_notes(
             version=f"release-note-{i}",
-            content="\n#### Scipt\n##### SciptName\n- Added a feature"
+            content="\n#### Scipt\n##### SciptName\n- Added the feature."
         )
         misspelled_files.add(rn.path)
         integration = pack.create_integration(

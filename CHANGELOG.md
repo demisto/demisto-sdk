@@ -2,8 +2,12 @@
 
 ## Unreleased
 
+* Fixed an issue where the **doc-review** command was successful even when the release-note is malformed.
+* Added timestamps to the `demisto-sdk` logger.
+* Added time measurements to **lint**.
 * Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
 * Added a new validation to **validate** command to verify that *cliName* and *id* keys of the incident field or the indicator field are matches.
+* Fixed an issue where **doc-review** failed to recognize script names, in scripts using the old file structure.
 
 ## 1.6.4
 

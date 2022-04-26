@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
+* Fixed an issue where **update-release-notes** used the *trigger_id* field instead of the *trigger_name* field.
 
 ## 1.6.4
 

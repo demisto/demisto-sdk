@@ -3,7 +3,7 @@ import os
 import sys
 from typing import Optional
 
-DATE_FORMAT = '%d-%b-%y %H:%M:%S'
+DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
 
 def logging_setup(verbose: int, quiet: Optional[bool] = False,

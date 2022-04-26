@@ -215,23 +215,23 @@ class FieldBaseValidator(ContentEntityValidator):
             (bool): True if all tests passes, false otherwise.
         """
         return self.is_cli_name_is_builtin_key() and self.is_matching_cli_name_regex() \
-            and self.is_cli_name_and_id_are_matches()
+            and self.does_cli_name_match_id()
 
-    def is_cli_name_and_id_are_matches(self):
+    def does_cli_name_match_id(self):
         """
         Checks if the field cliName matched to id.
         Returns:
             (bool): True if cliName matched to id, False otherwise.
         """
         cli_name = self.current_file.get('cliName', '')
-        _id = self.current_file.get('id', '')
+        _id = self.current_file.get('id', '').lower().replace('_', '').replace('-', '')
         if _id.startswith('incident'):
-            _id = re.split('incident', _id, maxsplit=1)[1].lower().replace('_', '')
+            cli_name_expected = _id[len('incident'):]
         elif _id.startswith('indicator'):
-            _id = re.split('indicator', _id, maxsplit=1)[1].lower().replace('_', '')
+            cli_name_expected = _id[len('indicator'):]
         else:
             return True
-        if cli_name != _id:
+        if cli_name != cli_name_expected and cli_name != _id:
             error_message, error_code = Errors.cli_name_and_id_are_not_matches(_id)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False

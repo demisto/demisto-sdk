@@ -199,7 +199,7 @@ class TestFieldValidator:
     ]
 
     @pytest.mark.parametrize("_id, cliname", VALID_CLINAMES)
-    def test_is_cli_name_and_id_are_matches(self, _id, cliname):
+    def test_does_cli_name_match_id(self, _id, cliname):
         with patch.object(StructureValidator, '__init__', lambda a, b: None):
             current_file = {"id": _id, "cliName": cliname}
             structure = StructureValidator("")
@@ -211,7 +211,7 @@ class TestFieldValidator:
             structure.branch_name = ''
             validator = FieldBaseValidator(structure, set(), set())
             validator.current_file = current_file
-            assert validator.is_cli_name_and_id_are_matches()
+            assert validator.does_cli_name_match_id()
 
     INVALID_CLINAMES = [
         ("incident_testforfortest", "testfortest"),
@@ -220,7 +220,7 @@ class TestFieldValidator:
     ]
 
     @pytest.mark.parametrize("_id, cliname", INVALID_CLINAMES)
-    def test_is_cli_name_and_id_are_matches_invalid(self, _id, cliname):
+    def test_does_cli_name_match_id_invalid(self, _id, cliname):
         with patch.object(StructureValidator, '__init__', lambda a, b: None):
             current_file = {"id": _id, "cliName": cliname}
             structure = StructureValidator("")
@@ -232,7 +232,7 @@ class TestFieldValidator:
             structure.branch_name = ''
             validator = FieldBaseValidator(structure, set(), set())
             validator.current_file = current_file
-            assert not validator.is_cli_name_and_id_are_matches()
+            assert not validator.does_cli_name_match_id()
 
     VALID_CLINAMES = [
         "agoodid",

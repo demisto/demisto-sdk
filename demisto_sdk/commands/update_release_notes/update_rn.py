@@ -360,8 +360,8 @@ class UpdateRN:
             name = file_data.get('brandName', None)
         elif 'id' in file_data:
             name = file_data.get('id', None)
-        elif 'trigger_id' in file_data:
-            name = file_data.get('trigger_id')
+        elif 'trigger_name' in file_data:
+            name = file_data.get('trigger_name')
 
         elif 'dashboards_data' in file_data and file_data.get('dashboards_data') \
                 and isinstance(file_data['dashboards_data'], list):

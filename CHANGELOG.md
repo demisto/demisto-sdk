@@ -6,6 +6,7 @@
 * Added time measurements to **lint**.
 * Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
 * Fixed an issue where **doc-review** failed to recognize script names, in scripts using the old file structure.
+* Fixed an issue in **lint** whith opening files which could cause deadlocks.
 
 ## 1.6.4
 

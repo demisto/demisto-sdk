@@ -93,22 +93,23 @@ class BaseUpdateJSON(BaseUpdate):
     def update_id(self, field='name') -> None:
         """Updates the id to be the same as the provided field ."""
         updated_integration_id_dict = {}
-        should_update_id = True
         if self.old_file:
             current_id = self.data.get('id')
             old_id = self.old_file.get('id')
-            should_update_id = (current_id != old_id)
-
-        if should_update_id:
+            if current_id != old_id:
+                click.secho(
+                    f'The modified JSON file corresponding to the path: {self.relative_content_path} ID does not match the ID in remote file.'
+                    f' Changing the ID from {current_id} back to {old_id}.', fg="yellow")
+                self.data['id'] = old_id
+        else:
             if self.verbose:
-                click.echo('Updating ID')
+                click.echo('Updating ID to be the same as JSON name')
             if field not in self.data:
                 print_error(f'Missing {field} field in file {self.source_file} - add this field manually')
                 return None
             if 'id' in self.data and is_uuid(self.data['id']):  # only happens if id had been defined
                 updated_integration_id_dict[self.data['id']] = self.data[field]
             self.data['id'] = self.data[field]
-
             if updated_integration_id_dict:
                 self.updated_ids.update(updated_integration_id_dict)
 

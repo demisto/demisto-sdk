@@ -1323,15 +1323,15 @@ def test_updating_id_in_old_json_file(repo):
     When
         - Run format on file.
     Then
-        - Ensure that name and id are matching.
+        - Ensure that name id was not updated.
     """
     pack = repo.create_pack()
     json_incident_type = pack.create_incident_type(name="some_name")
 
     json_object = BaseUpdateJSON(input=json_incident_type.path)
     json_object.data['name'] = "name"
-    json_object.data['id'] = "not_name"
+    json_object.data['id'] = "old_name"
     json_object.old_file = json_object.data.copy()
-    json_object.data['id'] = "another_name"
+    json_object.data['id'] = "new_name"
     json_object.update_id()
-    assert json_object.data['name'] == json_object.data['id']
+    assert json_object.data['id'] == "old_name"

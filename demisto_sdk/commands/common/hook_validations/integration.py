@@ -1517,8 +1517,11 @@ class IntegrationValidator(ContentEntityValidator):
         is_valid = True
         dir_path = os.path.dirname(self.file_path)
         readme_path = os.path.join(dir_path, 'README.md')
-        with open(readme_path, 'r') as readme:
-            readme_content = readme.read()
+        if os.path.exists(readme_path):
+            with open(readme_path, 'r') as readme:
+                readme_content = readme.read()
+        else:
+            raise Exception("LALALALALA")
         excluded_from_readme_commands = ['get-mapping-fields', 'xsoar-search-incidents', 'xsoar-get-incident', 'get-remote-data']
         missing_commands_from_readme = [
             command for command in yml_commands_list if command not in readme_content and command not in excluded_from_readme_commands]

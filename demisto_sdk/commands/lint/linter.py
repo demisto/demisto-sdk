@@ -13,6 +13,7 @@ import docker.models.containers
 import git
 import requests.exceptions
 import urllib3.exceptions
+from filelock import FileLock
 from packaging.version import parse
 from wcmatch.pathlib import NEGATE, Path
 
@@ -864,9 +865,10 @@ class Linter:
                     cov_data = get_file_from_container(container_obj=container,
                                                        container_path="/devwork/.coverage")
                     cov_data = cov_data if isinstance(cov_data, bytes) else cov_data.encode()
-                    with open(cov_file_path, 'wb') as coverage_file:
-                        coverage_file.write(cov_data)
-                    coverage_report_editor(cov_file_path, os.path.join(self._pack_abs_dir, f'{self._pack_abs_dir.stem}.py'))
+                    with FileLock(cov_file_path):  # cov_file_path could be a shared resource between threads
+                        with open(cov_file_path, 'wb') as coverage_file:
+                            coverage_file.write(cov_data)
+                        coverage_report_editor(cov_file_path, os.path.join(self._pack_abs_dir, f'{self._pack_abs_dir.stem}.py'))
 
                 test_json = json.loads(get_file_from_container(container_obj=container,
                                                                container_path="/devwork/report_pytest.json",
@@ -977,7 +979,8 @@ class Linter:
     def _update_support_level(self):
         pack_dir = self._pack_abs_dir.parent if self._pack_abs_dir.parts[-1] == INTEGRATIONS_DIR else \
             self._pack_abs_dir.parent.parent
-        pack_meta_content: Dict = json.load((pack_dir / PACKS_PACK_META_FILE_NAME).open())
+        with (pack_dir / PACKS_PACK_META_FILE_NAME).open() as f:
+            pack_meta_content: Dict = json.load(f)
         self._facts['support_level'] = pack_meta_content.get('support')
         if self._facts['support_level'] == 'partner' and pack_meta_content.get('Certification'):
             self._facts['support_level'] = 'certified partner'

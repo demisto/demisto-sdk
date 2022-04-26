@@ -1853,6 +1853,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "types-filelock"
+version = "3.2.5"
+description = "Typing stubs for filelock"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "types-ipaddress"
 version = "1.0.8"
 description = "Typing stubs for ipaddress"
@@ -2167,7 +2175,7 @@ build = ["gsutil"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "dc7662afc2c6010850be2f4c965f46b607c8e969a04a3b449f85de635d2c2da3"
+content-hash = "7bf3471e4df787b1126d292833537b013f3012ee9bbf404e32a968d6ebd6b899"
 
 [metadata.files]
 aiohttp = [
@@ -3599,6 +3607,10 @@ types-dateparser = [
 types-emoji = [
     {file = "types-emoji-1.2.7.tar.gz", hash = "sha256:3be036d560ff90351944bb08f8e70447c7e831660fe51c4599974a326585aacb"},
     {file = "types_emoji-1.2.7-py3-none-any.whl", hash = "sha256:003f6140fffe8ab8a606bf030416f8a48785039882c97e3d1c5d9a1baf7c7673"},
+]
+types-filelock = [
+    {file = "types-filelock-3.2.5.tar.gz", hash = "sha256:2481d41a2916af1605bcd0305e13c0450c7afc568268bd669249e7b08cf958ac"},
+    {file = "types_filelock-3.2.5-py3-none-any.whl", hash = "sha256:1021c6b8850f94a57e22f32263cd1d754326555dc2dc56e233c957262e42eb93"},
 ]
 types-ipaddress = [
     {file = "types-ipaddress-1.0.8.tar.gz", hash = "sha256:a03df3be5935e50ba03fa843daabff539a041a28e73e0fce2c5705bee54d3841"},

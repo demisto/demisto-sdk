@@ -223,7 +223,7 @@ class FieldBaseValidator(ContentEntityValidator):
         Returns:
             (bool): True if cliName matched to id, False otherwise.
         """
-        cli_name = self.current_file.get('cliName', '')
+        cli_name = self.current_file['cliName']
         _id = self.current_file.get('id', '').lower().replace('_', '').replace('-', '')
         if _id.startswith('incident'):
             cli_name_expected = _id[len('incident'):]
@@ -232,7 +232,7 @@ class FieldBaseValidator(ContentEntityValidator):
         else:
             return True
         if cli_name != cli_name_expected and cli_name != _id:
-            error_message, error_code = Errors.cli_name_and_id_are_not_matches(_id)
+            error_message, error_code = Errors.cli_name_and_id_do_not_match(_id)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True

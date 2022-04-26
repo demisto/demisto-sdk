@@ -198,10 +198,10 @@ class TestFieldValidator:
         ("indicator_indicator_test_for_test", "indicatortestfortest")
     ]
 
-    @pytest.mark.parametrize("_id, cliname", VALID_CLINAMES)
+    @pytest.mark.parametrize('_id, cliname', VALID_CLINAMES)
     def test_does_cli_name_match_id(self, _id, cliname):
         with patch.object(StructureValidator, '__init__', lambda a, b: None):
-            current_file = {"id": _id, "cliName": cliname}
+            current_file = {'id': _id, 'cliName': cliname}
             structure = StructureValidator("")
             structure.current_file = current_file
             structure.old_file = None
@@ -219,10 +219,10 @@ class TestFieldValidator:
         ("indicator_test_for_for_test", "testfortest"),
     ]
 
-    @pytest.mark.parametrize("_id, cliname", INVALID_CLINAMES)
+    @pytest.mark.parametrize('_id, cliname', INVALID_CLINAMES)
     def test_does_cli_name_match_id_invalid(self, _id, cliname):
         with patch.object(StructureValidator, '__init__', lambda a, b: None):
-            current_file = {"id": _id, "cliName": cliname}
+            current_file = {'id': _id, 'cliName': cliname}
             structure = StructureValidator("")
             structure.current_file = current_file
             structure.old_file = None
@@ -282,9 +282,9 @@ class TestFieldValidator:
         ("indicator_validind", "validind", GroupFieldTypes.INDICATOR_FIELD)
     ]
 
-    @pytest.mark.parametrize("_id, cliname, group", VALID_CLINAMES_AND_GROUPS)
+    @pytest.mark.parametrize('_id, cliname, group', VALID_CLINAMES_AND_GROUPS)
     def test_is_valid_cliname(self, _id, cliname, group):
-        current_file = {"id": _id, "cliName": cliname, "group": group}
+        current_file = {'id': _id, 'cliName': cliname, 'group': group}
         with patch.object(StructureValidator, '__init__', lambda a, b: None):
             structure = StructureValidator("")
             structure.current_file = current_file

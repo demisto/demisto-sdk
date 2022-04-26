@@ -24,9 +24,9 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ''):
     if DOCKER_CLIENT is None:
         try:
             if log_prompt:
-                logger.debug(f'{log_prompt} - init and login the docker client')
+                logger.info(f'{log_prompt} - init and login the docker client')
             else:
-                logger.debug('init and login the docker client')
+                logger.info('init and login the docker client')
             DOCKER_CLIENT = docker.from_env(timeout=timeout)
             docker_user = os.getenv('DOCKERHUB_USER')
             docker_pass = os.getenv('DOCKERHUB_PASSWORD')
@@ -84,7 +84,10 @@ class DockerBase:
         try:
             return docker_client.images.get(image)
         except docker.errors.ImageNotFound:
-            return docker_client.images.pull(image)
+            logger.debug(f'docker image {image} not found, pulling')
+            docker_client.images.pull(image)
+            logger.debug(f'docker image {image} finished pulling')
+            return docker_client
 
     @staticmethod
     def copy_files_container(container: docker.models.containers.Container, files: FILES_SRC_TARGET):
@@ -132,6 +135,7 @@ class DockerBase:
             3. committing the docker changes (installed packages) to a new local image
         """
         self.requirements.write_text('\n'.join(install_packages) if install_packages else '')
+        logger.debug(f'Trying to pull image {base_image}')
         self.pull_image(base_image)
         container = self.create_container(image=base_image, files_to_push=self.installation_files(container_type), command='/install.sh')
         container.start()

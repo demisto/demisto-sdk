@@ -1315,7 +1315,7 @@ def test_not_updating_id_in_old_json_file(repo):
     assert json_object.data['name'] == "name"
 
 
-def test_updating_id_in_old_json_file(repo):
+def test_not_updating_modified_id_in_old_json_file(repo):
     """
     Given
         - An old json file with non matching name and id.
@@ -1323,7 +1323,7 @@ def test_updating_id_in_old_json_file(repo):
     When
         - Run format on file.
     Then
-        - Ensure that name id was not updated.
+        - Ensure that id was not updated.
     """
     pack = repo.create_pack()
     json_incident_type = pack.create_incident_type(name="some_name")

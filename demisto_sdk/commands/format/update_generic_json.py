@@ -98,8 +98,9 @@ class BaseUpdateJSON(BaseUpdate):
             old_id = self.old_file.get('id')
             if current_id != old_id:
                 click.secho(
-                    f'The modified JSON file corresponding to the path: {self.relative_content_path} ID does not match the ID in remote file.'
-                    f' Changing the ID from {current_id} back to {old_id}.', fg="yellow")
+                    f'The modified JSON file corresponding to the path: {self.relative_content_path} contains an '
+                    f'ID which does not match the ID in remote file. Changing the ID from {current_id} back '
+                    f'to {old_id}.', fg="yellow")
                 self.data['id'] = old_id
         else:
             if self.verbose:

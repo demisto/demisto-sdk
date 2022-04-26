@@ -28,7 +28,7 @@ class BaseValidator:
     def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False,
                  json_file_path: Optional[str] = None):
         # these are the ignored errors from the .pack-ignore including un-allowed error codes
-        self.ignored_errors_pack_ignore = ignored_errors if ignored_errors else {}
+        self.ignored_errors = ignored_errors if ignored_errors else {}
         # these are the predefined ignored errors from packs which are partner/community support based.
         # represented by PRESET_ERROR_TO_IGNORE
         self.predefined_by_support_ignored_errors = set()
@@ -39,10 +39,6 @@ class BaseValidator:
         self.checked_files = set()  # type: ignore
         self.suppress_print = suppress_print
         self.json_file_path = json_file_path
-
-    @property
-    def ignored_errors(self):
-        return self.ignored_errors_pack_ignore
 
     def should_ignore_error(self, error_code, ignored_errors_pack_ignore):
         """

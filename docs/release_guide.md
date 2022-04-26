@@ -24,7 +24,7 @@ In order to release a new version of `demisto-sdk` to the public follow these st
 10) In Demisto's content-private repository create a new branch and go to the build configuration file [**config.yml**](https://github.com/demisto/content-private/blob/master/.github/workflows/config.yml) and update the SDK installation command by replacing `pip3 install demisto-sdk` with `pip3 install git+https://github.com/demisto/demisto-sdk.git@<sdk-release-branch-name>.`
 11) Open a PR for that content-private branch, and verify the build triggered is green. Note that **this PR is for SDK version check only, and it shouldn't be merged**, once the build is successful, discard this change and close the PR.
 
-**Note:** Steps 5, 6, 8, 10 can be performed at the same time (no need to wait for one to finish before starting the other).
+**Note:** Steps 6, 7, 9, 11 can be performed at the same time (no need to wait for one to finish before starting the other).
 
 ### Release process
 

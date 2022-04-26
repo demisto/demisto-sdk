@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Fixed an issue where the **doc-review** command was successful even when the release-note is malformed.
 * Added timestamps to the `demisto-sdk` logger.
 * Added time measurements to **lint**.
 * Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.

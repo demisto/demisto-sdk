@@ -269,6 +269,29 @@ class TestDocReviewPack:
         assert len(doc_reviewer.files_with_misspells) == 0
         assert doc_reviewer.files_with_misspells == set()
 
+    def test_failure_on_malformed_rns(self, pack):
+        """
+        Given -
+            Pack files with malformed release notes but correct spelling.
+
+        When -
+            Running doc-review.
+
+        Then -
+            Ensure malformed release notes are found.
+            Ensure no misspelled words were found.
+            Ensure doc-review returned False to indicate failure.
+        """
+        rn = pack.create_release_notes(
+            version="release-note-0",
+            content="\n#### Script\n##### Script Name\n- blah blah"
+        )
+        doc_reviewer = DocReviewer(file_paths=[pack.path])
+        result = doc_reviewer.run_doc_review()
+        assert rn.path in doc_reviewer.malformed_rn_files
+        assert not doc_reviewer.found_misspelled
+        assert not result
+
 
 @pytest.mark.usefixtures("are_mock_calls_supported_in_python_version")
 class TestDocReviewPrinting:
@@ -483,9 +506,9 @@ def test_check_word_functionality(word, is_invalid_word, no_camelcase):
 
 
 @pytest.mark.parametrize('file_content, unknown_words, known_words_files_contents, review_success',
-                         [("This is nomnomone, nomnomtwo", {},
+                         [("Added the nomnomone, nomnomtwo.", {},
                            [{"nomnomone", "killaone"}, {"nomnomtwo", "killatwo"}], True),
-                          ("This is nomnomone, nomnomtwo", {"nomnomtwo": set()},
+                          ("Added the nomnomone, nomnomtwo.", {"nomnomtwo": set()},
                            [{"nomnomone", "killaone"}], False)])
 def test_having_two_known_words_files(repo, file_content, unknown_words, known_words_files_contents,
                                       review_success):
@@ -519,11 +542,11 @@ def test_having_two_known_words_files(repo, file_content, unknown_words, known_w
 
 @pytest.mark.parametrize('file_content, unknown_words, known_words_files_contents, packs_known_words_content, '
                          'review_success',
-                         [("This is nomnomone, nomnomtwo", set(), [["nomnomone"]], ["[known_words]", "nomnomtwo"], True),
-                          ("This is nomnomone, nomnomtwo", {"nomnomone"}, [], ["[known_words]", "nomnomtwo"], False),
-                          ("This is nomnomone, nomnomtwo, nomnomthree", {"nomnomthree"}, [["nomnomone"]],
+                         [("Added the nomnomone, nomnomtwo.", set(), [["nomnomone"]], ["[known_words]", "nomnomtwo"], True),
+                          ("Added the nomnomone, nomnomtwo.", {"nomnomone"}, [], ["[known_words]", "nomnomtwo"], False),
+                          ("Added the nomnomone, nomnomtwo, nomnomthree.", {"nomnomthree"}, [["nomnomone"]],
                            ["[known_words]", "nomnomtwo"], False),
-                          ("This is nomnomone, nomnomtwo, nomnomthree", set(),
+                          ("Added the nomnomone, nomnomtwo, nomnomthree.", set(),
                            [["nomnomone"], ["nomnomthree"]], ["[known_words]", "nomnomtwo"], True)])
 def test_adding_known_words_from_pack(repo, file_content, unknown_words, known_words_files_contents,
                                       packs_known_words_content, review_success):
@@ -560,14 +583,14 @@ def test_adding_known_words_from_pack(repo, file_content, unknown_words, known_w
 
 @pytest.mark.parametrize('first_file_content, second_file_content, unknown_word_calls, known_words_files_contents, '
                          'review_success, misspelled_files_num, packs_known_words_content, load_known_words_from_pack',
-                         [("This is nomnomone, nomnomtwo", "This is killa", set(),
+                         [("Added the nomnomone, nomnomtwo.", "Added the killa.", set(),
                            [["nomnomone", "killaone"], ["nomnomtwo", "killatwo"]], True, 0, [], False),
-                          ("This is nomnomone, nomnomtwo", "This is killa", [{"nomnomtwo": set()}],
+                          ("Added the nomnomone, nomnomtwo.", "Added the killa.", [{"nomnomtwo": set()}],
                            [["nomnomone", "killaone"]], False, 1, [], False),
-                          ("This is nomnomone, nomnomtwo", "This is killa, killatwo", [{"killatwo": set()},
-                                                                                       {"nomnomtwo": set()}],
+                          ("Added the nomnomone, nomnomtwo.", "Added the killa, killatwo.", [{"killatwo": set()},
+                                                                                             {"nomnomtwo": set()}],
                            [["nomnomone", "killaone"]], False, 2, [], False),
-                          ("This is nomnomone, nomnomtwo", "This is killa", [],
+                          ("Added the nomnomone, nomnomtwo.", "Added the killa.", [],
                            [["nomnomone", "killaone"]], True, 0, ["[known_words]", "nomnomtwo", "killatwo"], True)
                           ])
 def test_having_two_file_paths_same_pack(repo, mocker, first_file_content, second_file_content, unknown_word_calls,
@@ -615,20 +638,20 @@ def test_having_two_file_paths_same_pack(repo, mocker, first_file_content, secon
 @pytest.mark.parametrize('first_file_content, second_file_content, unknown_word_calls, known_words_files_contents, '
                          'review_success, misspelled_files_num, first_packs_known_words_content, '
                          'second_packs_known_words_content, load_known_words_from_pack',
-                         [("This is nomnomone, nomnomtwo", "This is killaone", [],
+                         [("Added the nomnomone, nomnomtwo.", "Added the killaone.", [],
                            [["nomnomone", "killaone"], ["nomnomtwo", "killatwo"]], True, 0, [], [], False),
-                          ("This is nomnomone, nomnomtwo", "This is killaone", [{"nomnomtwo": set()}],
+                          ("Added the nomnomone, nomnomtwo.", "Added the killaone.", [{"nomnomtwo": set()}],
                            [["nomnomone", "killaone"]], False, 1, [], [], False),
-                          ("This is nomnomone, nomnomtwo", "This is killaone, killatwo", [{"killatwo": set()},
-                                                                                          {"nomnomtwo": set()}],
+                          ("Added the nomnomone, nomnomtwo.", "Added the killaone, killatwo.", [{"killatwo": set()},
+                                                                                                {"nomnomtwo": set()}],
                            [["nomnomone", "killaone"]], False, 2, [], [], False),
 
-                          ("This is nomnomone, nomnomtwo", "This is killaone, killatwo", [{"nomnomtwo": set()},
-                                                                                          {"killaone": set()}],
+                          ("Added the nomnomone, nomnomtwo.", "Added the killaone, killatwo.", [{"nomnomtwo": set()},
+                                                                                                {"killaone": set()}],
                            [], False, 2, ["[known_words]", "nomnomone", "killaone"],
                            ["[known_words]", "nomnomtwo", "killatwo"], True),
 
-                          ("This is killaone, nomnomone", "This is killatwo, nomnomtwo", [],
+                          ("Added the killaone, nomnomone.", "Added the killatwo, nomnomtwo.", [],
                            [], True, 0, ["[known_words]", "nomnomone", "killaone"],
                            ["[known_words]", "nomnomtwo", "killatwo"], True),
                           ])
@@ -679,12 +702,12 @@ def test_having_two_file_paths_different_pack(repo, mocker, first_file_content, 
 
 @pytest.mark.parametrize('first_file_content, second_file_content, unknown_word_calls, known_words_files_contents, '
                          'review_success, misspelled_files_num, packs_known_words_content, load_known_words_from_pack',
-                         [("This is nomnomone, nomnomtwo", "This is killa", [],
+                         [("Added the nomnomone, nomnomtwo.", "Added the killa.", [],
                            [["nomnomone", "killaone"], ["nomnomtwo", "killatwo"]], True, 0, [], False),
-                          ("This is nomnomone, nomnomtwo", "This is killa", [{"nomnomtwo": set()}],
+                          ("Added the nomnomone, nomnomtwo.", "Added the killa.", [{"nomnomtwo": set()}],
                            [["nomnomone", "killaone"]], False, 1, [], False),
-                          ("This is nomnomone, nomnomtwo", "This is killa, killatwo", [{"killatwo": set()},
-                                                                                       {"nomnomtwo": set()}],
+                          ("Added the nomnomone, nomnomtwo.", "Added the killa, killatwo.", [{"killatwo": set()},
+                                                                                             {"nomnomtwo": set()}],
                            [["nomnomone", "killaone"]], False, 2, [], False),
                           ])
 def test_having_two_file_paths_not_same_pack(repo, mocker, first_file_content, second_file_content, unknown_word_calls,

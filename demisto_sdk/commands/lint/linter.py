@@ -13,7 +13,6 @@ import docker.models.containers
 import git
 import requests.exceptions
 import urllib3.exceptions
-from filelock import FileLock
 from packaging.version import parse
 from wcmatch.pathlib import NEGATE, Path
 
@@ -865,10 +864,9 @@ class Linter:
                     cov_data = get_file_from_container(container_obj=container,
                                                        container_path="/devwork/.coverage")
                     cov_data = cov_data if isinstance(cov_data, bytes) else cov_data.encode()
-                    with FileLock(cov_file_path):  # cov_file_path could be a shared resource between threads
-                        with open(cov_file_path, 'wb') as coverage_file:
-                            coverage_file.write(cov_data)
-                        coverage_report_editor(cov_file_path, os.path.join(self._pack_abs_dir, f'{self._pack_abs_dir.stem}.py'))
+                    with open(cov_file_path, 'wb') as coverage_file:
+                        coverage_file.write(cov_data)
+                    coverage_report_editor(cov_file_path, os.path.join(self._pack_abs_dir, f'{self._pack_abs_dir.stem}.py'))
 
                 test_json = json.loads(get_file_from_container(container_obj=container,
                                                                container_path="/devwork/report_pytest.json",

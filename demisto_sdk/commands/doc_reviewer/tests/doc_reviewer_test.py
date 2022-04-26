@@ -1,5 +1,6 @@
 import os
 from os import path
+from pathlib import Path
 from typing import List
 
 import pytest
@@ -633,7 +634,8 @@ def test_having_two_file_paths_same_pack(repo, mocker, first_file_content, secon
                           ])
 def test_having_two_file_paths_different_pack(repo, mocker, first_file_content, second_file_content, unknown_word_calls,
                                               known_words_files_contents, review_success, misspelled_files_num,
-                                              first_packs_known_words_content, second_packs_known_words_content, load_known_words_from_pack):
+                                              first_packs_known_words_content, second_packs_known_words_content,
+                                              load_known_words_from_pack):
     """
     Given:
         - 2 release notes files with two misspelled words each.
@@ -825,6 +827,39 @@ def test_find_known_words_from_pack_ignore_scripts_name(repo):
         found_known_words = doc_reviewer.find_known_words_from_pack(rn_file.path)[1]
         assert script1.name in found_known_words
         assert script2.name in found_known_words
+
+
+def test_find_known_words_from_pack_ignore_commons_scripts_name(repo):
+    """
+    Given:
+        - Pack's structure is correct and pack-ignore file is present.
+        - The scripts are in the old version (JS code), no Scripts' dir exists (only yml amd md files).
+
+    When:
+        - Running DocReviewer.find_known_words_from_pack.
+
+    Then:
+        - Ensure the found path result is appropriate.
+        - Ensure the scripts names are ignored.
+        - Ensure script readme name is not handled (bla.md)
+    """
+
+    pack = repo.create_pack('test_pack')
+    script1_name = 'script-first_script'
+    # add a yml script directly into Scripts folder
+    pack._create_yaml_based(name=script1_name, dir_path=f'{pack.path}//Scripts', content={'name': script1_name})
+    # add a .md file script directly into Scripts folder
+    pack._create_text_based('bla.md', '', dir_path=Path(f'{pack.path}//Scripts'))
+    # add a script into second_script folder
+    script2 = pack.create_script(name='second_script')
+    rn_file = pack.create_release_notes(version='1_0_0', content=f'{script1_name}\n{script2.name}')
+    doc_reviewer = DocReviewer(file_paths=[])
+
+    with ChangeCWD(repo.path):
+        found_known_words = doc_reviewer.find_known_words_from_pack(rn_file.path)[1]
+        assert script1_name in found_known_words
+        assert script2.name in found_known_words
+        assert 'bla.md' not in found_known_words
 
 
 def test_camel_case_split():

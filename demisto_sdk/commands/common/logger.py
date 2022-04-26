@@ -3,6 +3,8 @@ import os
 import sys
 from typing import Optional
 
+DATE_FORMAT = '%d-%b-%y %H:%M:%S'
+
 
 def logging_setup(verbose: int, quiet: Optional[bool] = False,
                   log_path: Optional[str] = None) -> logging.Logger:
@@ -24,7 +26,7 @@ def logging_setup(verbose: int, quiet: Optional[bool] = False,
 
     log_level = logging.getLevelName((6 - 2 * verbose) * 10)
 
-    fmt = logging.Formatter('[%(levelname)s] %(message)s')
+    fmt = logging.Formatter('%(asctime)s [%(levelname)s]: %(message)s', datefmt=DATE_FORMAT)
     console_handler_index = -1
     file_handler_index = -1
 

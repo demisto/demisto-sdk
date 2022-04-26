@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+* Added timestamps to the `demisto-sdk` logger.
+* Added time measurements to **lint**.
+* Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
+* Fixed an issue where **doc-review** failed to recognize script names, in scripts using the old file structure.
+
+## 1.6.4
+
 * Added the new **generate-yml-from-python** command.
 * Added a code *type* indication for integration and script objects in the *ID Set*.
 * Added the [Vulture](https://github.com/jendrikseipp/vulture) linter to the pre-commit hook.

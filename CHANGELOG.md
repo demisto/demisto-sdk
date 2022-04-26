@@ -7,7 +7,7 @@
 * Added time measurements to **lint**.
 * Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
 * Fixed an issue where **doc-review** failed to recognize script names, in scripts using the old file structure.
-* Fixed an issue where **validate** failed when trying to read README.md file when the file does not exist.
+* Fixed an issue where **validate** failed on nonexistent `README.md` files.
 
 ## 1.6.4
 

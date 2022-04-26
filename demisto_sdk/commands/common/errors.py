@@ -52,6 +52,7 @@ ERROR_CODE = {
     "spaces_in_the_end_of_name": {'code': "BA113", 'ui_applicable': False, 'related_field': 'name'},
     "changed_pack_name": {'code': "BA114", 'ui_applicable': False, 'related_field': 'name'},
     "file_cannot_be_deleted": {'code': "BA115", 'ui_applicable': False, 'related_field': ''},
+    "cli_name_and_id_are_not_matches": {'code': "BA116", 'ui_applicable': False, 'related_field': 'cliName'},
 
     # BC - Backward Compatible
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -2162,6 +2163,13 @@ class Errors:
     @error_code_decorator
     def spaces_in_the_end_of_name(name: str):
         return f'Content item name "{name}" should not have trailing spaces. Please remove.'
+
+    @staticmethod
+    @error_code_decorator
+    def cli_name_and_id_are_not_matches(cli_name_correct):
+        return "`cliName` and `id` are not matches\n" \
+               "Please fix it so that it is matches except the prefix\n" \
+               f"HINT -> cliName: `{cli_name_correct}`"
 
     @staticmethod
     @error_code_decorator

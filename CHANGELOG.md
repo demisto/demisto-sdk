@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
+* Added a new validation to **validate** command to verify that *cliName* and *id* keys of the incident field or the indicator field are matches.
 
 ## 1.6.4
 

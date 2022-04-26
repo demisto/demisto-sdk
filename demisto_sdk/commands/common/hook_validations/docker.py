@@ -22,7 +22,7 @@ ACCEPT_HEADER = {
 }
 
 # use 10 seconds timeout for requests
-TIMEOUT = 10
+TIMEOUT = 20
 DEFAULT_REGISTRY = 'registry-1.docker.io'
 
 

@@ -1376,6 +1376,21 @@ class TestIsFeedParamsExist:
         assert integration_validator.verify_yml_commands_match_readme(is_modified) == excepted_results
 
 
+    def test_verify_yml_commands_match_readme_no_readme_file(self, is_modified, yml_data, integration: Integration):
+        """
+        Given
+        - integration with no readme file.
+        When
+        - Running verify_yml_commands_match_readme on the integration.
+        Then
+        - Ensure validation stops before checking if there is a match between the yml and readme.
+        """
+        integration.yml.write_dict(yml_data)
+        struct = mock_structure(current_file=yml_data, file_path=integration.yml.path)
+        integration_validator = IntegrationValidator(struct)
+        assert integration_validator.verify_yml_commands_match_readme(is_modified) is False
+
+
 class TestisContextChanged:
     invalid_readme = """
 #### Base Command

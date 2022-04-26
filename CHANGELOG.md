@@ -1,5 +1,5 @@
 # Changelog
-* enhanced ***is_changed_command_name_or_arg*** to show all the changed commands names instead of only one.
+* enhanced ***validate*** command to list all command names affected by a backward compatibility break, instead of only one.
 
 ## Unreleased
 

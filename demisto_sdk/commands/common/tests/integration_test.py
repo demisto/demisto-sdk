@@ -191,26 +191,31 @@ class TestIntegrationValidator:
         assert validator.is_changed_command_name_or_arg() is False  # if quiet_bc is true should always succeed
 
     CHANGED_COMMAND_OR_ARG_MST_TEST_INPUTS = [
-        ([{"name": "command_test_name_1", "arguments": [{"name": "argument_test_name_1"}]}, {"name": "command_test_name_2",
-           "arguments": [{"name": "argument_test_name_3"}]}],
-         [{"name": "test", "arguments": [{"name": "test"}, {"name": "test1", "required": True}]},
-         {"name": "test2", "arguments": [{"name": "test2"}, {"name": "test3", "required": True}]}],
-         "[ERROR]: : [BC104] - Possible backwards compatibility break, You've changed the name of some of the command(s) or its arg in the file,"
-         " please undo, the following commands:\ntest\ntest2")
+        ([{"name": "command_test_name_1", "arguments": [{"name": "argument_test_name_1", "required": True}]},
+          {"name": "command_test_name_2", "arguments": [{"name": "argument_test_name_2", "required": True}]}],
+         [{"name": "test1", "arguments": [{"name": "argument_test_name_1", "required": True}]},
+          {"name": "test2", "arguments": [{"name": "argument_test_name_2", "required": True}]}],
+         "[ERROR]: : [BC104] - Possible backwards compatibility break, Your updates to this file contains changes"
+         " to a name or an argument of an existing command(s).\nPlease undo you changes to the following command(s):\ntest1\ntest2")
     ]
 
     @pytest.mark.parametrize("current, old, expected_error_msg", CHANGED_COMMAND_OR_ARG_MST_TEST_INPUTS)
     def test_is_changed_command_name_or_arg_msg(self, capsys, current, old, expected_error_msg):
         """
         Given
-        - Case 1: previous yml content with 2 commands and current yml content with the 2 commands with name
+        An integration with BC break in the following way:
+        - Case 1: Old and New coppies of a yml file.
+        Old copy: Has two commands - command_test_name_1 and command_test_name_2
+        where each command has 1 argument - argument_test_name_1, argument_test_name_2 respectively.
+        New copy: Has two commands - command_test_name_1 and command_test_name_2
+        where each command has 1 argument - argument_test_name_1, argument_test_name_2 respectively.
 
         When
         - running the validation is_changed_command_name_or_arg()
 
         Then
         Ensure that the error massage was created correctly.
-        - Case 1: Should include two commands in the changed commands list.
+        - Case 1: Should include both command_test_name_1 and command_test_name_2 in the commands list in the error as they both have BC break changes.
         """
         current = {'script': {'commands': current}}
         old = {'script': {'commands': old}}
@@ -218,6 +223,7 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.is_changed_command_name_or_arg()
         stdout = capsys.readouterr().out
+        print(expected_error_msg)
         assert expected_error_msg == stdout.strip()
 
     WITHOUT_DUP = [{"name": "test"}, {"name": "test1"}]

@@ -2167,8 +2167,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def cli_name_and_id_do_not_match(cli_name_correct):
-        return 'cliName and id do not match.\n' \
-              f'Please change cliName to {cli_name_correct} (the flat-case version of id)'
+        return f'cliName and id do not match.\n' \
+               f'Please change cliName to {cli_name_correct} (the flat-case version of id)'
 
     @staticmethod
     @error_code_decorator

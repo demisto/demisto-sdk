@@ -28,7 +28,7 @@ LAYOUTS_CONTAINER_KINDS = ['edit',
                            'detailsV2',
                            'mobile']
 
-LAYOUTS_CONTAINER_CHECK_SCRIPTS = ['indicatorsDetails', 'detailsV2']
+LAYOUTS_CONTAINER_CHECK_SCRIPTS = ('indicatorsDetails', 'detailsV2')
 
 LAYOUT_KIND = 'layout'
 LAYOUTS_CONTAINER_PREFIX = 'layoutscontainer-'
@@ -230,7 +230,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 container = self.data.get(kind)
                 break
         if container:
-            for tab in container.get('tabs'):
+            for tab in container.get('tabs', ()):
                 if tab.get('sections'):
                     for section in tab.get('sections', ()):
                         if section.get('queryType') == SCRIPT_QUERY_TYPE:
@@ -243,11 +243,8 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         if type_id := self.data.get('typeId'):
             self.data['typeId'] = remove_copy_and_dev_suffixes_from_str(type_id)
 
-        layout_data = self.data.get('layout')
-        if layout_data:
-            layout_tabs = layout_data.get('tabs')
-            layout_sections = layout_data.get('sections')
-            if layout_tabs:
+        if layout_data := self.data.get('layout'):
+            if layout_tabs := layout_data.get('tabs', ()):
                 for tab in layout_tabs:
                     if tab.get('sections'):
                         for section in tab.get('sections', ()):
@@ -255,7 +252,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                                 section['query'] = remove_copy_and_dev_suffixes_from_str(section.get('query'))
                                 section['name'] = remove_copy_and_dev_suffixes_from_str(section.get('name'))
 
-            elif layout_sections:
+            elif layout_sections := layout_data.get('sections'):
                 for section in layout_sections:
                     if section.get('queryType') == SCRIPT_QUERY_TYPE:
                         section['query'] = remove_copy_and_dev_suffixes_from_str(section.get('query'))

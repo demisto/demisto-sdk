@@ -155,7 +155,26 @@
 						"w": 2,
 						"x": 0,
 						"y": 3
-					}
+					},
+      {
+        "description": "",
+        "h": 1,
+        "hideName": false,
+        "i": "sfmcsjvzpo-7d51dbd0-af07-11ea-a169-995a487457b1",
+        "items": [],
+        "maxW": 3,
+        "minH": 1,
+        "minW": 1,
+        "moved": false,
+        "name": "testing_copy",
+        "query": "script_test_dev",
+        "queryType": "script",
+        "static": false,
+        "type": "dynamic",
+        "w": 1,
+        "x": 2,
+        "y": 0
+      }
 				],
 				"type": "custom"
 			}
@@ -165,7 +184,7 @@
 	"itemVersion": "",
 	"locked": false,
 	"mobile": null,
-	"name": "IP hadas",
+	"name": "IP hadas_copy",
 	"packID": "",
 	"propagationLabels": [
 		"all"

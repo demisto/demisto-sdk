@@ -77,6 +77,8 @@ LAYOUT_CONTAINER_FIELDS = {'details', 'detailsV2', 'edit', 'close', 'mobile', 'q
                            'indicatorsDetails'}
 SDK_PYPI_VERSION = r'https://pypi.org/pypi/demisto-sdk/json'
 
+SUFFIX_TO_REMOVE = ('_dev', '_copy')
+
 
 def set_log_verbose(verbose: bool):
     global LOG_VERBOSE
@@ -2658,3 +2660,11 @@ def extract_none_deprecated_command_names_from_yml(yml_data: dict) -> list:
         if command.get('name') and not command.get('deprecated'):
             commands_ls.append(command.get('name'))
     return commands_ls
+
+
+def remove_copy_and_dev_suffixes_from_str(field_name: str) -> str:
+    for _ in range(field_name.count('_')):
+        for suffix in SUFFIX_TO_REMOVE:
+            if field_name.endswith(suffix):
+                field_name = field_name[:-len(suffix)]
+    return field_name

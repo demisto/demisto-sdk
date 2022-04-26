@@ -231,11 +231,10 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 break
         if container:
             for tab in container.get('tabs', ()):
-                if tab.get('sections'):
-                    for section in tab.get('sections', ()):
-                        if section.get('queryType') == SCRIPT_QUERY_TYPE:
-                            section['query'] = remove_copy_and_dev_suffixes_from_str(section.get('query'))
-                            section['name'] = remove_copy_and_dev_suffixes_from_str(section.get('name'))
+                for section in tab.get('sections', ()):
+                    if section.get('queryType') == SCRIPT_QUERY_TYPE:
+                        section['query'] = remove_copy_and_dev_suffixes_from_str(section.get('query'))
+                        section['name'] = remove_copy_and_dev_suffixes_from_str(section.get('name'))
 
     def remove_copy_and_dev_suffixes_from_layout(self):
         if typename := self.data.get('TypeName'):
@@ -246,11 +245,10 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         if layout_data := self.data.get('layout'):
             if layout_tabs := layout_data.get('tabs', ()):
                 for tab in layout_tabs:
-                    if tab.get('sections'):
-                        for section in tab.get('sections', ()):
-                            if section.get('queryType') == SCRIPT_QUERY_TYPE:
-                                section['query'] = remove_copy_and_dev_suffixes_from_str(section.get('query'))
-                                section['name'] = remove_copy_and_dev_suffixes_from_str(section.get('name'))
+                    for section in tab.get('sections', ()):
+                        if section.get('queryType') == SCRIPT_QUERY_TYPE:
+                            section['query'] = remove_copy_and_dev_suffixes_from_str(section.get('query'))
+                            section['name'] = remove_copy_and_dev_suffixes_from_str(section.get('name'))
 
             elif layout_sections := layout_data.get('sections'):
                 for section in layout_sections:

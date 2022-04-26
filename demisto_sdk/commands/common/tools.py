@@ -2656,7 +2656,7 @@ def extract_none_deprecated_command_names_from_yml(yml_data: dict) -> list:
 
 def remove_copy_and_dev_suffixes_from_str(field_name: str) -> str:
     split_by_delimiter = len(field_name.split('_'))
-    for index in range(split_by_delimiter-1):
+    for index in range(split_by_delimiter - 1):
         for suffix in SUFFIX_TO_REMOVE:
             if field_name.endswith(suffix):
                 field_name = field_name[:-len(suffix)]

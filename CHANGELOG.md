@@ -8,6 +8,7 @@
 * Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
 * Fixed an issue where **doc-review** failed to recognize script names, in scripts using the old file structure.
 * Fixed an issue in the **format** command where `_dev` or `_copy` suffixes weren't removed from the subscript names in playbooks and layouts.
+* Fixed an issue where **validate** failed on nonexistent `README.md` files.
 
 ## 1.6.4
 

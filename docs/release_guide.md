@@ -9,13 +9,13 @@ In order to release a new version of `demisto-sdk` to the public follow these st
 3) In the release branch, update the version of the demisto-sdk using the command `poetry version <version>` to the future version we'll be releasing.
 4) Make sure that both `sdk-nightly` and `sdk-master` builds passed.
    * If **new SDK commits** were pushed after the nightly tests had started, manually trigger the sdk nightly build again as written in steps 4 and 5. This will test the sdk release branch on what was content's master (until you branched out in step 4).
-   * If **no new SDK commits** were done after the nightly tests, skip steps 4 and 5.
+   * If **no new SDK commits** were done after the nightly tests, skip steps 5 to 11.
 5) Enter the content repo, open a new branch and update the version of the SDK in Demisto's Content repository by updating the demisto-sdk version in the [**dev-requirements-py3.txt**](https://github.com/demisto/content/blob/master/dev-requirements-py3.txt) file. Use the release branch first - replace the `demisto-sdk==version` line with this line: `git+https://github.com/demisto/demisto-sdk.git@release-branch-name.`
 6) Push your branch to remote, and run `./Utils/gitlab_triggers/trigger_content_nightly_build.sh -ct <GitLab_token> -b <new_content_branch_name>`.
   **Note:** if you're on `content/master`, a notification will be sent to the content-team slack channel. The destination channel can be set via argument.
   Wait until the nightly sdk completes (around 2-3h, mostly for validation)
 7) Open a PR for that content branch, and verify that the build triggered is green. Note that in order to trigger the build, opening the PR is required.
-8) Enter the content-internal-dist repo, open a new branch and update the demisto-sdk version in the [**.gitlab-ci.yml**](https://code.pan.run/xsoar/content-internal-dist/-/blob/master/.gitlab/.gitlab-ci.yml) file. Use the release branch - replace the `pip3 install git+https://github.com/demisto/demisto-sdk.git@master` line with this line: `pip3 install git+https://github.com/demisto/demisto-sdk.git@release-branch-name.`
+8) Enter the content-internal-dist repo, open a new branch and update the demisto-sdk version in the [**.gitlab-ci.yml**](https://code.pan.run/xsoar/content-internal-dist/-/blob/master/.gitlab/.gitlab-ci.yml) file. Use the release branch - replace the `pip3 install git+https://github.com/demisto/demisto-sdk.git@master#egg=demisto-sdk` line with this line: `pip3 install git+https://github.com/demisto/demisto-sdk.git@release-branch-name#egg=demisto-sdk.`
 9) Push your branch to remote, and run `./.gitlab/trigger_content_gold_nightly_build.sh -ct <GitLab_token> -b <new_internal_dist_branch_name>`.
   **Note:** if you're on `content-internal-dist/master`, a notification will be sent to the content-team slack channel. The destination channel can be set via argument.
   Wait until the nightly sdk completes.

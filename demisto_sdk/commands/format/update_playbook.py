@@ -7,8 +7,9 @@ from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.constants import PLAYBOOK, FileType
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.tools import (find_type, get_yaml,
-                                               is_string_uuid, write_yml)
+from demisto_sdk.commands.common.tools import (
+    find_type, get_yaml, is_string_uuid, remove_copy_and_dev_suffixes_from_str,
+    write_yml)
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SCHEMAS_PATH,
                                                           SKIP_RETURN_CODE,
@@ -168,10 +169,14 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
     def remove_copy_and_dev_suffixes_from_subplaybook(self):
         for task_id, task in self.data.get('tasks', {}).items():
             if task['task'].get('playbookName'):
-                task['task']['playbookName'] = task['task'].get('playbookName').replace('_dev', ''). \
-                    replace('_copy', '')
-                task['task']['name'] = task['task'].get('name').replace('_dev', ''). \
-                    replace('_copy', '')
+                task['task']['playbookName'] = remove_copy_and_dev_suffixes_from_str(task['task'].get('playbookName'))
+
+                task['task']['name'] = remove_copy_and_dev_suffixes_from_str(task['task'].get('name'))
+
+    def remove_copy_and_dev_suffixes_from_subscripts(self):
+        for task_id, task in self.data.get('tasks', {}).items():
+            if task['task'].get('scriptName'):
+                task['task']['scriptName'] = remove_copy_and_dev_suffixes_from_str(task['task'].get('scriptName'))
 
     def update_playbook_task_name(self):
         """Updates the name of the task to be the same as playbookName it is running."""
@@ -202,6 +207,7 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             self.update_tests()
             self.remove_copy_and_dev_suffixes_from_subplaybook()
+            self.remove_copy_and_dev_suffixes_from_subscripts()
             self.update_conf_json('playbook')
             self.delete_sourceplaybookid()
             self.update_playbook_task_name()

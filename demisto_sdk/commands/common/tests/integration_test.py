@@ -55,14 +55,14 @@ class TestIntegrationValidator:
 
     REQUIED_FIELDS_FALSE = {"configuration": [{"name": "test", "required": False}]}
     REQUIED_FIELDS_TRUE = {"configuration": [{"name": "test", "required": True}]}
-    no_added_required_fields_INPUTS = [
+    NO_ADDED_REQUIRED_FIELDS_INPUTS = [
         (REQUIED_FIELDS_FALSE, REQUIED_FIELDS_TRUE, True),
         (REQUIED_FIELDS_TRUE, REQUIED_FIELDS_FALSE, False),
         (REQUIED_FIELDS_TRUE, REQUIED_FIELDS_TRUE, True),
         (REQUIED_FIELDS_FALSE, REQUIED_FIELDS_FALSE, True)
     ]
 
-    @pytest.mark.parametrize("current_file, old_file, answer", no_added_required_fields_INPUTS)
+    @pytest.mark.parametrize("current_file, old_file, answer", NO_ADDED_REQUIRED_FIELDS_INPUTS)
     def test_no_added_required_fields(self, current_file, old_file, answer):
         structure = mock_structure("", current_file, old_file)
         validator = IntegrationValidator(structure)
@@ -70,7 +70,7 @@ class TestIntegrationValidator:
         structure.quiet_bc = True
         assert validator.no_added_required_fields() is True  # if quiet_bc is true should always succeed
 
-    no_changed_removed_yml_fields_INPUTS = [
+    NO_CHANGED_REMOVED_YML_FIELDS_INPUTS = [
         ({"script": {"isfetch": True, "feed": False}}, {"script": {"isfetch": True, "feed": False}}, True),
         ({"script": {"isfetch": True}}, {"script": {"isfetch": True, "feed": False}}, True),
         ({"script": {"isfetch": False, "feed": False}}, {"script": {"isfetch": True, "feed": False}}, False),
@@ -78,7 +78,7 @@ class TestIntegrationValidator:
 
     ]
 
-    @pytest.mark.parametrize("current_file, old_file, answer", no_changed_removed_yml_fields_INPUTS)
+    @pytest.mark.parametrize("current_file, old_file, answer", NO_CHANGED_REMOVED_YML_FIELDS_INPUTS)
     def test_no_changed_removed_yml_fields(self, current_file, old_file, answer):
         """
         Given
@@ -99,14 +99,14 @@ class TestIntegrationValidator:
         structure.quiet_bc = True
         assert validator.no_changed_removed_yml_fields() is True  # if quiet_bc is true should always succeed
 
-    no_removed_integration_parameters_INPUTS = [
+    NO_REMOVED_INTEGRATION_PARAMETERS_INPUTS = [
         ({"configuration": [{"name": "test"}]}, {"configuration": [{"name": "test"}]}, True),
         ({"configuration": [{"name": "test"}, {"name": "test2"}]}, {"configuration": [{"name": "test"}]}, True),
         ({"configuration": [{"name": "test"}]}, {"configuration": [{"name": "test"}, {"name": "test2"}]}, False),
         ({"configuration": [{"name": "test"}]}, {"configuration": [{"name": "old_param"}, {"name": "test2"}]}, False),
     ]
 
-    @pytest.mark.parametrize("current_file, old_file, answer", no_removed_integration_parameters_INPUTS)
+    @pytest.mark.parametrize("current_file, old_file, answer", NO_REMOVED_INTEGRATION_PARAMETERS_INPUTS)
     def test_no_removed_integration_parameters(self, current_file, old_file, answer):
         """
         Given

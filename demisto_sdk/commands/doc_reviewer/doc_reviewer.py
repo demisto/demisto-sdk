@@ -99,6 +99,7 @@ class DocReviewer:
                 config.read(packs_ignore_path)
                 if 'known_words' in config.sections():
                     packs_known_words = default_pack_known_words + list(config['known_words'])
+                    click.secho(f'\nhere: {packs_known_words}')
                     return packs_ignore_path, packs_known_words
                 else:
                     click.secho(f'\nNo [known_words] section was found within: {packs_ignore_path}', fg='yellow')

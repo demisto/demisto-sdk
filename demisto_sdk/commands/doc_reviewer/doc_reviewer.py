@@ -278,13 +278,11 @@ class DocReviewer:
                     restarted_spellchecker = True
 
             if known_pack_words_file_path:
-                click.secho(f'HERE 3 known words: {known_words}')
+                #click.secho(f'HERE 3 known words: {known_words}')
                 self.known_pack_words_file_path = known_pack_words_file_path
                 if known_words:
                     # Add the new known_words packs file
                     self.spellchecker.word_frequency.load_words(known_words)
-                    restarted_spellchecker = True
-                    click.secho(f'HERE 4: {self.spellchecker.word_frequency._dictionary}')
 
         return restarted_spellchecker
 

@@ -250,7 +250,7 @@ class DocReviewer:
                 self.files_without_misspells.add(file)
 
         self.print_file_report()
-        if self.found_misspelled and not self.no_failure:
+        if (self.found_misspelled or self.malformed_rn_files) and not self.no_failure:
             return False
 
         return True

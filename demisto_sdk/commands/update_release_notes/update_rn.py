@@ -11,7 +11,8 @@ from typing import Optional, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEFAULT_ID_SET_PATH,
-    IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, FileType)
+    IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, XSIAM_CONTENT_ITEMS_TYPES,
+    FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -73,6 +74,7 @@ class UpdateRN:
             :return
                 The new file path if was changed
         """
+
         def validate_new_path(expected_path: str):
             if not Path(expected_path).exists():
                 print_warning(f"file {file_path} implies the existence of {str(expected_path)}, which is missing. "
@@ -569,25 +571,30 @@ class UpdateRN:
             :return
             The release notes description
         """
-        if _type in (FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT,
-                     FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD):
-            rn_desc = f'- **{content_name}**\n'
+        if is_new_file:
+            rn_desc = f'##### New: {content_name}\n'
 
-        elif _type in (FileType.GENERIC_TYPE, FileType.GENERIC_FIELD):
+            if desc != '':
+                rn_desc += f'- {desc}'
+            else:
+                rn_desc += f'- {text or "%%UPDATE_RN%%"}'
+
+            if from_version and from_version != '' and _type not in XSIAM_CONTENT_ITEMS_TYPES:
+                # for now, we decided not to add this description for XSIAM entities (issue 40020)
+                rn_desc += f' (Available from Cortex XSOAR {from_version}).\n'
+
+        else:
+            rn_desc = f'##### {content_name}\n'
+
+            if self.update_type == 'documentation':
+                rn_desc += '- Documentation and metadata improvements.\n'
+            else:
+                rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
+
+        if _type in (FileType.GENERIC_TYPE, FileType.GENERIC_FIELD):
             definition_name = get_definition_name(path, self.pack_path)
             rn_desc = f'- **({definition_name}) - {content_name}**\n'
-        else:
-            if is_new_file:
-                rn_desc = f'##### New: {content_name}\n- {desc}'
-                if from_version:
-                    rn_desc += f' (Available from Cortex XSOAR {from_version}).'
-                rn_desc += '\n'
-            else:
-                rn_desc = f'##### {content_name}\n'
-                if self.update_type == 'documentation':
-                    rn_desc += '- Documentation and metadata improvements.\n'
-                else:
-                    rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
+
         if docker_image:
             rn_desc += f'- Updated the Docker image to: *{docker_image}*.\n'
         return rn_desc

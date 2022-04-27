@@ -1,7 +1,6 @@
 import glob
 import os
 import shutil
-import unittest
 from collections import Counter
 from typing import Dict, Optional
 
@@ -19,7 +18,7 @@ from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 json = JSON_Handler()
 
 
-class TestRNUpdate(unittest.TestCase):
+class TestRNUpdate:
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
 
     @mock.patch.object(UpdateRN, 'get_master_version')
@@ -444,7 +443,9 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='revision',
                              modified_files_in_pack={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
-        self.assertRaises(ValueError, update_rn.bump_version_number)
+        with pytest.raises(ValueError):
+            update_rn.bump_version_number()
+        # self.assertRaises(ValueError, update_rn.bump_version_number)
         os.remove(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
@@ -467,7 +468,9 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
-        self.assertRaises(ValueError, update_rn.bump_version_number)
+        with pytest.raises(ValueError):
+            update_rn.bump_version_number()
+        # self.assertRaises(ValueError, update_rn.bump_version_number)
         os.remove(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
@@ -490,7 +493,9 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='major', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
-        self.assertRaises(ValueError, update_rn.bump_version_number)
+        with pytest.raises(ValueError):
+            update_rn.bump_version_number()
+        # self.assertRaises(ValueError, update_rn.bump_version_number)
         os.remove(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
@@ -663,6 +668,89 @@ class TestRNUpdate(unittest.TestCase):
         assert filtered_set == set()
         assert old_format_files == set()
 
+    @staticmethod
+    def test_update_rn_new_dashboard(repo):
+        """
+        Case - new dashboard, XSOAR, fromversion exists, description exists
+        Expected - release note should contain New, description and version
+        """
+        pack = repo.create_pack('test_pack')
+        new_dashboard = pack.create_dashboard(name='dashboard',
+                                              content={'description': 'description for testing',
+                                                       'fromversion': '6.0.0'})
+        update_rn = UpdateRN(pack_path=pack.path, update_type='minor', added_files=new_dashboard.path,
+                             modified_files_in_pack=set())
+
+        rn_desc = update_rn.build_rn_desc(_type=FileType.DASHBOARD, content_name=pack.name, is_new_file=True,
+                                          desc=new_dashboard.read_json_as_dict().get('description'),
+                                          from_version=new_dashboard.read_json_as_dict().get('fromversion'))
+
+        assert '##### New:' in rn_desc  # check if release note contains New - when new file
+        assert 'description for testing' in rn_desc  # check if release note contains description when description not empty
+        assert '(Available from Cortex XSOAR 6.0.0).' in rn_desc  # check if release note contains fromversion when exists
+
+    @staticmethod
+    def test_update_rn_new_mapper(repo):
+        """
+        Case - new mapper, XSOAR, fromversion exists, description exists
+        Expected - release note should contain New but should not contain description version
+        """
+        pack = repo.create_pack('test_pack')
+        new_mapper = pack.create_mapper(name='mapper', content={'description': ''})
+        update_rn = UpdateRN(pack_path=pack.path, update_type='minor', added_files=new_mapper.path,
+                             modified_files_in_pack=set())
+
+        rn_desc = update_rn.build_rn_desc(_type=FileType.MAPPER, content_name=pack.name, is_new_file=True,
+                                          desc=new_mapper.read_json_as_dict().get('description'),
+                                          from_version=new_mapper.read_json_as_dict().get('fromversion'))
+
+        assert '##### New:' in rn_desc  # check if release note contains New - when new file
+        assert 'description for testing' not in rn_desc  # check if release note does not contain description when description is empty
+        assert '(Available from Cortex XSOAR 6.0.0).' not in rn_desc  # check if release note does not contain fromversion when None
+
+    @staticmethod
+    def test_update_rn_new_incident_field(repo):
+        """
+        Case - new incident field, XSOAR, fromversion exists, description exists
+        Expected - release note should contain New, description and version
+        """
+        pack = repo.create_pack('test_pack')
+        new_incident_field = pack.create_incident_field(name='incident field',
+                                                        content={'description': 'description for testing',
+                                                                 'fromversion': '6.5.0'})
+        update_rn = UpdateRN(pack_path=pack.path, update_type='minor', added_files=new_incident_field.path,
+                             modified_files_in_pack=set())
+
+        rn_desc = update_rn.build_rn_desc(_type=FileType.INCIDENT_FIELD, content_name=pack.name, is_new_file=True,
+                                          desc=new_incident_field.read_json_as_dict().get('description'),
+                                          from_version=new_incident_field.read_json_as_dict().get('fromversion'))
+
+        assert '##### New:' in rn_desc  # check if release note contains New - when new file
+        assert 'description for testing' in rn_desc  # check if release note contains description when description not empty
+        assert '(Available from Cortex XSOAR 6.5.0).' in rn_desc  # check if release note contains fromversion when exists
+
+    @staticmethod
+    def test_update_rn_new_trigger(repo):
+        """
+        Case - new trigger, XSIAM, fromversion exists, description exists
+        Expected - release note should contain New, description and version but should not contain
+        (Available from Cortex XSOAR {fromversion}).
+        """
+        pack = repo.create_pack('test_pack')
+        new_trigger = pack.create_trigger(name='incident field',
+                                          content={'description': 'description for testing',
+                                                   'fromversion': '6.5.0'})
+        update_rn = UpdateRN(pack_path=pack.path, update_type='minor', added_files=new_trigger.path,
+                             modified_files_in_pack=set())
+
+        rn_desc = update_rn.build_rn_desc(_type=FileType.TRIGGER, content_name=pack.name, is_new_file=True,
+                                          desc=new_trigger.read_json_as_dict().get('description'),
+                                          from_version=new_trigger.read_json_as_dict().get('fromversion'))
+
+        assert '##### New:' in rn_desc  # check if release note contains New - when new file
+        assert 'description for testing' in rn_desc  # check if release note contains description when description not empty
+        assert '(Available from Cortex XSOAR 6.5.0).' not in rn_desc  # check if release note contains fromversion when exists
+
 
 class TestRNUpdateUnit:
     META_BACKUP = ""
@@ -688,9 +776,9 @@ class TestRNUpdateUnit:
         ("Nothing", None): {"description": "", "is_new_file": False},
         ("Sample", FileType.INTEGRATION): {"description": "", "is_new_file": False},
         ("Sample GenericField", FileType.GENERIC_FIELD): {"description": "", "is_new_file": False, "path": "Packs"
-                                                          "/HelloWorld/GenericField/asset/Sample_GenericType"},
+                                                                                                           "/HelloWorld/GenericField/asset/Sample_GenericType"},
         ("Sample GenericType", FileType.GENERIC_TYPE): {"description": "", "is_new_file": False, "path": "Packs"
-                                                        "/HelloWorld/GenericType/asset/Sample_GenericType"}
+                                                                                                         "/HelloWorld/GenericType/asset/Sample_GenericType"}
     }
     EXPECTED_RN_RES = """
 #### Incident Types
@@ -1123,7 +1211,8 @@ class TestRNUpdateUnit:
         return_value = '+  dockerimage: demisto/python3:3.9.8.24399'
 
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command', return_value=return_value)
-        assert check_docker_image_changed(main_branch='origin/master', packfile='test.yml') == 'demisto/python3:3.9.8.24399'
+        assert check_docker_image_changed(main_branch='origin/master',
+                                          packfile='test.yml') == 'demisto/python3:3.9.8.24399'
 
     def test_update_docker_image_in_yml(self, mocker):
         """
@@ -1496,7 +1585,8 @@ def test_force_and_text_update_rn(repo, text, expected_rn_string):
 CREATE_MD_IF_CURRENTVERSION_IS_HIGHER_TEST_BANK_ = [(['0_0_1'], ['0_0_1', '0_0_3'])]
 
 
-@pytest.mark.parametrize('first_expected_results, second_expected_results', CREATE_MD_IF_CURRENTVERSION_IS_HIGHER_TEST_BANK_)
+@pytest.mark.parametrize('first_expected_results, second_expected_results',
+                         CREATE_MD_IF_CURRENTVERSION_IS_HIGHER_TEST_BANK_)
 def test_create_md_if_currentversion_is_higher(mocker, first_expected_results, second_expected_results, repo):
     """
         Given:

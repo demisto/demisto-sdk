@@ -10,6 +10,7 @@
 * Fixed an issue where concurrent processes created by **lint** caused deadlocks when opening files.
 * Fixed an issue in the **format** command where `_dev` or `_copy` suffixes weren't removed from the subscript names in playbooks and layouts.
 * Fixed an issue where **validate** failed on nonexistent `README.md` files.
+* Added a new validation to **validate** command in case `Breaking changes` appear in a pack release-notes, verify a suitable json is present with the same name.
 
 ## 1.6.4
 

@@ -326,11 +326,11 @@ class DocReviewer:
     def check_word(self, word):
         """Check if a word is legal"""
         # check camel cases
-        word = self.remove_punctuation(word)
+        #word = self.remove_punctuation(word)
         sub_words = []
-        if '-' in word:
-            sub_words.extend(word.split('-'))
-        elif not self.no_camel_case and self.is_camel_case(word):
+        # if '-' in word:
+        #     sub_words.extend(word.split('-'))
+        if not self.no_camel_case and self.is_camel_case(word):
             sub_words.extend(self.camel_case_split(word))
         else:
             sub_words.append(word)
@@ -346,6 +346,9 @@ class DocReviewer:
         elif word in self.unknown_words[word]:
             # Do not suggest the same word as a correction.
             self.unknown_words[word].remove(word)
+
+        click.secho(f"all unknown  words: {self.unknown_words}")
+
 
     def check_md_file(self, file_path):
         """Runs spell check on .md file. Adds unknown words to given unknown_words set.

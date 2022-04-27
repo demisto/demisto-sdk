@@ -941,8 +941,7 @@ class ValidateManager:
         if is_modified and self.is_backward_check:
             return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json,
                                                             check_is_unskipped=self.check_is_unskipped,
-                                                            conf_json_data=self.conf_json_data,
-                                                            is_modified=is_modified),
+                                                            conf_json_data=self.conf_json_data, is_modified=is_modified),
                         integration_validator.is_backward_compatible()])
         else:
             return integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json,
@@ -1630,9 +1629,7 @@ class ValidateManager:
                 file_path = str(path)
 
             try:
-                formatted_path, old_path, valid_file_extension = self.check_file_relevance_and_format_path(file_path,
-                                                                                                           old_path,
-                                                                                                           old_format_files)
+                formatted_path, old_path, valid_file_extension = self.check_file_relevance_and_format_path(file_path, old_path, old_format_files)
                 valid_types.add(valid_file_extension)
                 if formatted_path:
                     if old_path:
@@ -1677,8 +1674,7 @@ class ValidateManager:
         if file_type in [FileType.PYTHON_FILE, FileType.POWERSHELL_FILE, FileType.JAVASCRIPT_FILE, FileType.XIF_FILE]:
             if not (str(file_path).endswith('_test.py') or str(file_path).endswith('.Tests.ps1') or
                     str(file_path).endswith('_test.js')):
-                file_path = file_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml').replace(
-                    '.xif', '.yml')
+                file_path = file_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml').replace('.xif', '.yml')
 
                 if old_path:
                     old_path = old_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml')

@@ -10,8 +10,7 @@
 * Fixed an issue where concurrent processes created by **lint** caused deadlocks when opening files.
 * Fixed an issue in the **format** command where `_dev` or `_copy` suffixes weren't removed from the subscript names in playbooks and layouts.
 * Fixed an issue where **validate** failed on nonexistent `README.md` files.
-* Added the XSIAM content items into the **validate** command.
-
+* Added support of XSIAM content items to the **validate** command.
 ## 1.6.4
 
 * Added the new **generate-yml-from-python** command.

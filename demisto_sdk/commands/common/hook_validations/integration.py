@@ -73,13 +73,13 @@ class IntegrationValidator(ContentEntityValidator):
             return True
 
         answers = [
-            self.is_changed_context_path(),
-            self.is_removed_integration_parameters(),
-            self.is_added_required_fields(),
-            self.is_changed_command_name_or_arg(),
-            self.is_changed_subtype(),
-            self.is_not_valid_display_configuration(),
-            self.is_changed_removed_yml_fields(),
+            self.no_change_to_context_path(),
+            self.no_removed_integration_parameters(),
+            self.no_added_required_fields(),
+            self.no_changed_command_name_or_arg(),
+            self.no_changed_subtype(),
+            self.is_valid_display_configuration(),
+            self.no_changed_removed_yml_fields(),
             # will move to is_valid_integration after https://github.com/demisto/etc/issues/17949
             self.is_outputs_for_reputations_commands_valid(),
         ]
@@ -502,7 +502,7 @@ class IntegrationValidator(ContentEntityValidator):
         return True
 
     @error_codes('BC100')
-    def is_changed_subtype(self):
+    def no_changed_subtype(self):
         # type: () -> bool
         """Validate that the subtype was not changed.
         Returns True if valid, and False otherwise."""
@@ -684,7 +684,7 @@ class IntegrationValidator(ContentEntityValidator):
         return command_to_args
 
     @error_codes('BC104')
-    def is_changed_command_name_or_arg(self):
+    def no_changed_command_name_or_arg(self):
         # type: () -> bool
         """Check if a command name or argument as been changed.
 
@@ -742,7 +742,7 @@ class IntegrationValidator(ContentEntityValidator):
         return command_to_context_dict
 
     @error_codes('BC102')
-    def is_changed_context_path(self):
+    def no_change_to_context_path(self):
         # type: () -> bool
         """Check if a context path as been changed.
 
@@ -770,12 +770,12 @@ class IntegrationValidator(ContentEntityValidator):
         return True
 
     @error_codes('IN129')
-    def is_removed_integration_parameters(self):
+    def no_removed_integration_parameters(self):
         # type: () -> bool
         """Check if integration parameters were removed.
         Returns True if valid, and False otherwise.
         """
-        is_removed_parameter = True
+        no_removed_parameter = True
         current_configuration = self.current_file.get('configuration', [])
         old_configuration = self.old_file.get('configuration', [])
         current_param_names = {param.get('name') for param in current_configuration}
@@ -786,9 +786,9 @@ class IntegrationValidator(ContentEntityValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path,
                                  warning=self.structure_validator.quiet_bc):
                 self.is_valid = False
-                is_removed_parameter = False
+                no_removed_parameter = False
 
-        return is_removed_parameter
+        return no_removed_parameter
 
     @staticmethod
     def _get_field_to_required_dict(integration_json):
@@ -807,7 +807,7 @@ class IntegrationValidator(ContentEntityValidator):
         return field_to_required
 
     @error_codes('IN147')
-    def is_changed_removed_yml_fields(self):
+    def no_changed_removed_yml_fields(self):
         """checks if some specific Fields in the yml file were changed from true to false or removed
         Returns True if valid, and False otherwise.
         """
@@ -837,14 +837,14 @@ class IntegrationValidator(ContentEntityValidator):
         return True
 
     @error_codes('IN116')
-    def is_added_required_fields(self):
+    def no_added_required_fields(self):
         # type: () -> bool
         """Check if required field were added.
         Returns True if valid, and False otherwise.
         """
         current_field_to_required = self._get_field_to_required_dict(self.current_file)
         old_field_to_required = self._get_field_to_required_dict(self.old_file)
-        is_added_required = True
+        no_added_required = True
         for field, required in current_field_to_required.items():
             if field in old_field_to_required.keys():
                 # if required is True and old_field is False.
@@ -853,7 +853,7 @@ class IntegrationValidator(ContentEntityValidator):
                     if self.handle_error(error_message, error_code, file_path=self.file_path,
                                          warning=self.structure_validator.quiet_bc):
                         self.is_valid = False
-                        is_added_required = False
+                        no_added_required = False
 
             # if required is True but no old field.
             elif required:
@@ -861,9 +861,9 @@ class IntegrationValidator(ContentEntityValidator):
                 if self.handle_error(error_message, error_code, file_path=self.file_path,
                                      warning=self.structure_validator.quiet_bc):
                     self.is_valid = False
-                    is_added_required = False
+                    no_added_required = False
 
-        return is_added_required
+        return no_added_required
 
     def is_id_equals_name(self):
         """Check whether the integration's ID is equal to its name
@@ -874,7 +874,7 @@ class IntegrationValidator(ContentEntityValidator):
         return super(IntegrationValidator, self)._is_id_equals_name('integration')
 
     @error_codes('IN117,IN118')
-    def is_not_valid_display_configuration(self):
+    def is_valid_display_configuration(self):
         """Validate that the display settings are not empty for non-hidden fields and for type 17 params.
 
         Returns:

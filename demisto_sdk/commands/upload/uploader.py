@@ -206,10 +206,10 @@ class Uploader:
                 try:
                     result = upload_object.upload(self.client)  # type: ignore
                     if self.log_verbose:
-                        if isinstance(result, str):
-                            print_v(f'Result:\n{result}', self.log_verbose)
-                        else:
+                        if hasattr(result, 'to_str'):
                             print_v(f'Result:\n{result.to_str()}', self.log_verbose)
+                        else:
+                            print_v(f'Result:\n{result}', self.log_verbose)
                         click.secho(f'Uploaded {entity_type} - \'{os.path.basename(path)}\': successfully', fg='green')
                     self.successfully_uploaded_files.append((file_name, entity_type.value))
                     return SUCCESS_RETURN_CODE

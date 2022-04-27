@@ -326,7 +326,7 @@ class DocReviewer:
     def check_word(self, word):
         """Check if a word is legal"""
         # check camel cases
-        #word = self.remove_punctuation(word)
+        word = self.remove_punctuation(word)
         sub_words = []
         # if '-' in word:
         #     sub_words.extend(word.split('-'))
@@ -348,7 +348,6 @@ class DocReviewer:
             self.unknown_words[word].remove(word)
 
         click.secho(f"all unknown  words: {self.unknown_words}")
-
 
     def check_md_file(self, file_path):
         """Runs spell check on .md file. Adds unknown words to given unknown_words set.

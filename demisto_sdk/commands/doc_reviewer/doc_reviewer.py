@@ -231,6 +231,7 @@ class DocReviewer:
             click.echo(f'\nChecking file {file}')
             restarted_spellchecker = self.update_known_words_from_pack(file)
             if restarted_spellchecker:
+                click.echo(f'HERE 5: {restarted_spellchecker}')
                 self.add_known_words()
             self.unknown_words = {}
             if file.endswith('.md'):
@@ -290,6 +291,7 @@ class DocReviewer:
         """Add known words to the spellchecker from external and internal files"""
         # adding known words file if given - these words will not count as misspelled
         if self.known_words_file_paths:
+            click.echo(f'HERE 6: {self.known_words_file_paths}')
             for known_words_file_path in self.known_words_file_paths:
                 self.spellchecker.word_frequency.load_text_file(known_words_file_path)
 

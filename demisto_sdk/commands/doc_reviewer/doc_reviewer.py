@@ -99,10 +99,10 @@ class DocReviewer:
                 config.read(packs_ignore_path)
                 if 'known_words' in config.sections():
                     packs_known_words = default_pack_known_words + list(config['known_words'])
-                    click.secho(f'\nhere: {packs_known_words}')
                     return packs_ignore_path, packs_known_words
                 else:
                     click.secho(f'\nNo [known_words] section was found within: {packs_ignore_path}', fg='yellow')
+                    click.secho(f'\nhere: {default_pack_known_words}')
                     return packs_ignore_path, default_pack_known_words
 
             click.secho(f'\nNo .pack-ignore file was found within pack: {packs_ignore_path}', fg='yellow')
@@ -267,6 +267,7 @@ class DocReviewer:
         restarted_spellchecker = False
         if self.load_known_words_from_pack:
             known_pack_words_file_path, known_words = self.find_known_words_from_pack(file_path)
+            click.secho(f'\nHERE2: Using known words file found within pack: {known_pack_words_file_path}')
             if self.known_pack_words_file_path != known_pack_words_file_path:
                 click.secho(f'\nUsing known words file found within pack: {known_pack_words_file_path}', fg='yellow')
                 if self.known_pack_words_file_path:
@@ -276,10 +277,12 @@ class DocReviewer:
                     restarted_spellchecker = True
 
             if known_pack_words_file_path:
+                click.secho('HERE 3')
                 self.known_pack_words_file_path = known_pack_words_file_path
                 if known_words:
                     # Add the new known_words packs file
                     self.spellchecker.word_frequency.load_words(known_words)
+                    click.secho('HERE 4')
 
         return restarted_spellchecker
 

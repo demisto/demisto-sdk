@@ -847,7 +847,6 @@ def add_default_pack_known_words(file_path):
     default_pack_known_words = [get_pack_name(file_path), ]
     default_pack_known_words.extend(get_integration_name_and_command_names(file_path))
     default_pack_known_words.extend(get_scripts_names(file_path))
-    click.secho(f'command names: {default_pack_known_words}')
     return default_pack_known_words
 
 

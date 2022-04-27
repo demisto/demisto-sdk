@@ -877,6 +877,7 @@ def get_integration_name_and_command_names(file_path):
             yml_dict = get_yaml(integration_path_full)
             commands = yml_dict.get("script", {}).get('commands', [])
             command_names = command_names.union({command.get('name') for command in commands})
+            click.secho(f'command names: {command_names}')
 
     return command_names
 

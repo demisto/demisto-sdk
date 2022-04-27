@@ -243,6 +243,86 @@ tasks:
     note: false
     timertriggers: []
     ignoreworker: false
+  "30":
+    id: "30"
+    taskid: fc1a3a27-1849-4965-8815-94cd27e18982
+    type: regular
+    task:
+      id: fc1a3a27-1849-4965-8815-94cd27e18982
+      version: -1
+      name: test
+      description: |
+        Assign the incident to an analyst based on the analyst’s organizational role.
+      scriptName: AssignAnalystToIncident_copy
+      type: regular
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+        - "28"
+    scriptarguments:
+      assignBy: {}
+      email: {}
+      onCall:
+        complex:
+          root: inputs.OnCall
+      roles:
+        complex:
+          root: inputs.Role
+      username: {}
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 925,
+          "y": 1880
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+  "31":
+    id: "31"
+    taskid: fc1a3a27-1849-4965-8815-94cd27e18982
+    type: regular
+    task:
+      id: fc1a3a27-1849-4965-8815-94cd27e18982
+      version: -1
+      name: second test
+      description: |
+        Assign the incident to an analyst based on the analyst’s organizational role.
+      scriptName: AssignAnalystToIncident_dev
+      type: regular
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+        - "28"
+    scriptarguments:
+      assignBy: {}
+      email: {}
+      onCall:
+        complex:
+          root: inputs.OnCall
+      roles:
+        complex:
+          root: inputs.Role
+      username: {}
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 925,
+          "y": 1880
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
 view: |-
   {
     "linkLabelsPosition": {

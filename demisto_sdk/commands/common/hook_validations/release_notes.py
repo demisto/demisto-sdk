@@ -123,7 +123,7 @@ class ReleaseNotesValidator(BaseValidator):
         """
         is_valid = True
         if 'breaking change' in self.latest_release_notes.lower():
-            json_path = self.release_notes_file_path[:-2]+'json'
+            json_path = self.release_notes_file_path[:-2] + 'json'
             try:
                 js = get_dict_from_file(path=json_path)[0]  # extract only the dictionary
                 if 'breakingChanges' not in js or not js.get('breakingChanges'):

@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "main sdk",
+            "name": "Python: Upload AbuseDB",
             "type": "python",
             "request": "launch",
             "module": "demisto_sdk",
@@ -10,7 +10,7 @@
             "args": [
                 "upload",
                 "-i",
-                "/content/Packs/AbuseDB/Integrations/AbuseDB"
+                "${env:CONTENT}/Packs/AbuseDB/Integrations/AbuseDB"
             ]
         },
         {

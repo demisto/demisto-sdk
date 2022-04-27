@@ -325,7 +325,8 @@ def test_report_summary_with_warnings(capsys):
                    'warning_packs_pytest': [], 'warning_packs_pwsh_analyze': [], 'warning_packs_pwsh_test': [],
                    'warning_packs_image': []}
     pkg = [PosixPath('/Users/test_user/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse')]
-    lint_manager.LintManager.report_summary(pkg=pkg, lint_status=lint_status)
+    pkgs_status = {'Maltiverse': {'exit_code': 1}}
+    lint_manager.LintManager.report_summary(pkg=pkg, pkgs_status=pkgs_status, lint_status=lint_status)
     captured = capsys.readouterr()
     assert "Packages PASS: \x1b[32m0\x1b[0m" in captured.out
     assert "Packages WARNING (can either PASS or FAIL): \x1b[33m1\x1b[0m" in captured.out
@@ -353,7 +354,8 @@ def test_report_summary_no_warnings(capsys):
                    'warning_packs_pytest': [], 'warning_packs_pwsh_analyze': [], 'warning_packs_pwsh_test': [],
                    'warning_packs_image': []}
     pkg = [PosixPath('/Users/test_user/dev/demisto/content/Packs/Maltiverse/Integrations/Maltiverse')]
-    lint_manager.LintManager.report_summary(pkg=pkg, lint_status=lint_status)
+    pkgs_status = {'Maltiverse': {'exit_code': 0}}
+    lint_manager.LintManager.report_summary(pkg=pkg, lint_status=lint_status, pkgs_status=pkgs_status)
     captured = capsys.readouterr()
     assert "Packages PASS: \x1b[32m1\x1b[0m" in captured.out
     assert "Packages WARNING (can either PASS or FAIL): \x1b[33m0\x1b[0m" in captured.out

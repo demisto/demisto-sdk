@@ -280,7 +280,7 @@ class Pack:
             content: dict = {},
     ) -> YAML:
         yaml_name = f"{name}.yml"
-        yaml_path = dir_path / yaml_name
+        yaml_path = Path(dir_path, yaml_name)
         obj = YAML(yaml_path, self.repo_path)
         obj.write_dict(content)
         return obj

@@ -328,9 +328,9 @@ class DocReviewer:
         # check camel cases
         word = self.remove_punctuation(word)
         sub_words = []
-        # if '-' in word:
-        #     sub_words.extend(word.split('-'))
-        if not self.no_camel_case and self.is_camel_case(word):
+        if '-' in word:
+            sub_words.extend(word.split('-'))
+        elif not self.no_camel_case and self.is_camel_case(word):
             sub_words.extend(self.camel_case_split(word))
         else:
             sub_words.append(word)

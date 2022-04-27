@@ -355,9 +355,9 @@ def get_file_from_container(container_obj: Container, container_path: str, encod
     """
     data: Union[str, bytes] = b''
     archive, stat = container_obj.get_archive(container_path)
-    file_like = io.BytesIO(b"".join(b for b in archive))
-    tar = tarfile.open(fileobj=file_like)
-    before_read = tar.extractfile(stat['name'])
+    file_like = io.BytesIO(b"".join(archive))
+    with tarfile.open(fileobj=file_like) as tar:
+        before_read = tar.extractfile(stat['name'])
     if isinstance(before_read, io.BufferedReader):
         data = before_read.read()
     if encoding and isinstance(data, bytes):

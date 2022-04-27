@@ -283,6 +283,7 @@ class DocReviewer:
                 if known_words:
                     # Add the new known_words packs file
                     self.spellchecker.word_frequency.load_words(known_words)
+                    restarted_spellchecker = True
                     click.secho('HERE 4')
 
         return restarted_spellchecker

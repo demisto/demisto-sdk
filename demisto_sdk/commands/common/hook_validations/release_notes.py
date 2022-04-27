@@ -10,11 +10,11 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.tools import (extract_docker_image_from_text,
-                                               find_type,
+                                               find_type, get_dict_from_file,
                                                get_latest_release_notes_text,
                                                get_pack_name,
                                                get_release_notes_file_path,
-                                               get_yaml, get_dict_from_file)
+                                               get_yaml)
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 
 

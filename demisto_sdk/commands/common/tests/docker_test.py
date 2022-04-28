@@ -70,8 +70,8 @@ def mock_docker_image_validator():
         docker_image_validator.checked_files = set()
         docker_image_validator.suppress_print = False
         docker_image_validator.json_file_path = ''
-        docker_image_validator.predefined_deprecated_ignored_errors = set()
-        docker_image_validator.predefined_by_support_ignored_errors = set()
+        docker_image_validator.predefined_deprecated_ignored_errors = {}
+        docker_image_validator.predefined_by_support_ignored_errors = {}
         return docker_image_validator
 
 

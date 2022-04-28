@@ -13,8 +13,8 @@ def get_validator(file_path='', diff=''):
     release_notes_validator.ignored_errors = {}
     release_notes_validator.checked_files = set()
     release_notes_validator.json_file_path = ''
-    release_notes_validator.predefined_by_support_ignored_errors = set()
-    release_notes_validator.predefined_deprecated_ignored_errors = set()
+    release_notes_validator.predefined_by_support_ignored_errors = {}
+    release_notes_validator.predefined_deprecated_ignored_errors = {}
     return release_notes_validator
 
 

@@ -18,8 +18,10 @@ from TestSuite.test_tools import ChangeCWD
 UPDATE_RN_COMMAND = "update-release-notes"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
 TEST_FILES_PATH = join(git_path(), 'demisto_sdk', 'tests')
-AZURE_FEED_PACK_PATH = join(TEST_FILES_PATH, 'test_files', 'content_repo_example', 'Packs', 'FeedAzureValid')
-RN_FOLDER = join(git_path(), 'Packs', 'FeedAzureValid', 'ReleaseNotes')
+CONTENT_EXAMPLE_REPO = join(TEST_FILES_PATH, 'test_files', 'content_repo_example')
+AZURE_FEED_PACK_PATH = join(CONTENT_EXAMPLE_REPO, 'Packs', 'FeedAzureValid')
+# RN_FOLDER = join(git_path(), 'Packs', 'FeedAzureValid', 'ReleaseNotes')
+RN_FOLDER = join(CONTENT_EXAMPLE_REPO, 'Packs', 'FeedAzureValid', 'ReleaseNotes')
 VMWARE_PACK_PATH = join(TEST_FILES_PATH, 'test_files', 'content_repo_example', 'Packs', 'VMware')
 VMWARE_RN_PACK_PATH = join(git_path(), 'Packs', 'VMware', 'ReleaseNotes')
 THINKCANARY_RN_FOLDER = join(git_path(), 'Packs', 'ThinkCanary', 'ReleaseNotes')
@@ -50,7 +52,6 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
     expected_rn = '\n' + '#### Integrations\n' + \
                   '##### New: **Azure Feed**\n' + \
                   '- Azure.CloudIPs Feed Integration. (Available from Cortex XSOAR 5.5.0).\n'
-
     added_files = {join(AZURE_FEED_PACK_PATH, 'Integrations', 'FeedAzureValid', 'FeedAzureValid.yml')}
     rn_path = join(RN_FOLDER, '1_0_1.md')
     runner = CliRunner(mix_stderr=True)
@@ -67,8 +68,8 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
 
     if os.path.exists(rn_path):
         os.remove(rn_path)
-
-    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'FeedAzureValid')])
+    with ChangeCWD(CONTENT_EXAMPLE_REPO):
+        result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join(TEST_FILES_PATH, 'test_files', 'content_repo_example', 'Packs', 'FeedAzureValid')])
     assert result.exit_code == 0
     assert os.path.isfile(rn_path)
     assert not result.exception
@@ -78,6 +79,8 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
     with open(rn_path, 'r') as f:
         rn = f.read()
     assert expected_rn == rn
+    if os.path.exists(rn_path):
+        os.remove(rn_path)
 
 
 def test_update_release_notes_modified_integration(demisto_client, mocker):
@@ -97,34 +100,39 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
     expected_rn = '\n' + '#### Integrations\n' + \
                   '- **Azure Feed**\n' + \
                   '- %%UPDATE_RN%%\n'
-    modified_files = {join(AZURE_FEED_PACK_PATH, 'Integrations', 'FeedAzureValid', 'FeedAzureValid.yml')}
-    rn_path = join(RN_FOLDER, '1_0_1.md')
+    with ChangeCWD(CONTENT_EXAMPLE_REPO):
+        modified_files = {join(AZURE_FEED_PACK_PATH, 'Integrations', 'FeedAzureValid', 'FeedAzureValid.yml')}
+        rn_path = join(RN_FOLDER, '1_0_1.md')
 
-    runner = CliRunner(mix_stderr=False)
-    mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
+        runner = CliRunner(mix_stderr=False)
+        mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
 
-    mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
-    mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
-    mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git', return_value=(modified_files, set(),
-                                                                                                set()))
-    mocker.patch.object(GitUtil, 'get_current_working_branch', return_value="branch_name")
-    mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
-    mocker.patch.object(UpdateRN, 'get_master_version', return_value='1.0.0')
+        mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
+        mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
+        mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git', return_value=(modified_files, set(),
+                                                                                                    set()))
+        mocker.patch.object(GitUtil, 'get_current_working_branch', return_value="branch_name")
+        mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
+        mocker.patch.object(UpdateRN, 'get_master_version', return_value='1.0.0')
 
-    if os.path.exists(rn_path):
-        os.remove(rn_path)
+        if os.path.exists(rn_path):
+            os.remove(rn_path)
 
-    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'FeedAzureValid')])
+        result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", AZURE_FEED_PACK_PATH])
 
-    assert result.exit_code == 0
-    assert os.path.isfile(rn_path)
-    assert not result.exception
-    assert 'Changes were detected. Bumping FeedAzureValid to version: 1.0.1' in result.stdout
-    assert 'Finished updating release notes for FeedAzureValid.' in result.stdout
+        assert result.exit_code == 0
+        assert os.path.isfile(rn_path)
+        assert not result.exception
+        assert 'Changes were detected. Bumping FeedAzureValid to version: 1.0.1' in result.stdout
+        assert 'Finished updating release notes for FeedAzureValid.' in result.stdout
 
     with open(rn_path, 'r') as f:
         rn = f.read()
+
     assert expected_rn == rn
+
+    if os.path.exists(rn_path):
+        os.remove(rn_path)
 
 
 def test_update_release_notes_incident_field(demisto_client, mocker):

@@ -32,24 +32,24 @@ class TestRNUpdate:
                 - return a markdown string
         """
         expected_result = \
-            "\n#### Classifiers\n##### Hello World Classifier\n- %%UPDATE_RN%%\n" \
-            "\n#### Connections\n- **Hello World Connection**\n" \
-            "\n#### Dashboards\n##### Hello World Dashboard\n- %%UPDATE_RN%%\n" \
-            "\n#### Incident Fields\n- **Hello World IncidentField**\n" \
-            "\n#### Incident Types\n- **Hello World Incident Type**\n" \
-            "\n#### Indicator Fields\n- **Hello World Indicator Field**\n" \
-            "\n#### Indicator Types\n- **Hello World Indicator Type**\n" \
-            "\n#### Integrations\n##### Hello World Integration\n- %%UPDATE_RN%%\n" \
-            "\n#### Jobs\n##### Hello World Job #1\n- %%UPDATE_RN%%" \
-            "\n##### Hello World Job #2\n- %%UPDATE_RN%%\n" \
-            "\n#### Layouts\n- **Hello World Layout**\n" \
-            "- **Second Hello World Layout**\n" \
-            "\n#### Modules\n##### Hello World Generic Module\n- %%UPDATE_RN%%\n" \
-            "\n#### Objects\n##### Hello World Generic Definition\n- %%UPDATE_RN%%\n" \
-            "\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%\n" \
-            "\n#### Reports\n##### Hello World Report\n- %%UPDATE_RN%%\n" \
-            "\n#### Scripts\n##### Hello World Script\n- %%UPDATE_RN%%\n" \
-            "\n#### Widgets\n##### Hello World Widget\n- %%UPDATE_RN%%\n"
+            "\n#### Classifiers\n- **Hello World Classifier**\n- %%UPDATE_RN%%\n" \
+            "\n#### Connections\n- **Hello World Connection**\n- %%UPDATE_RN%%\n" \
+            "\n#### Dashboards\n- **Hello World Dashboard**\n- %%UPDATE_RN%%\n" \
+            "\n#### Incident Fields\n- **Hello World IncidentField**\n- %%UPDATE_RN%%\n" \
+            "\n#### Incident Types\n- **Hello World Incident Type**\n- %%UPDATE_RN%%\n" \
+            "\n#### Indicator Fields\n- **Hello World Indicator Field**\n- %%UPDATE_RN%%\n" \
+            "\n#### Indicator Types\n- **Hello World Indicator Type**\n- %%UPDATE_RN%%\n" \
+            "\n#### Integrations\n- **Hello World Integration**\n- %%UPDATE_RN%%\n" \
+            "\n#### Jobs\n- **Hello World Job #1**\n- %%UPDATE_RN%%\n" \
+            "- **Hello World Job #2**\n- %%UPDATE_RN%%\n" \
+            "\n#### Layouts\n- **Hello World Layout**\n- %%UPDATE_RN%%\n" \
+            "- **Second Hello World Layout**\n- %%UPDATE_RN%%\n" \
+            "\n#### Modules\n- **Hello World Generic Module**\n- %%UPDATE_RN%%\n" \
+            "\n#### Objects\n- **Hello World Generic Definition**\n- %%UPDATE_RN%%\n" \
+            "\n#### Playbooks\n- **Hello World Playbook**\n- %%UPDATE_RN%%\n" \
+            "\n#### Reports\n- **Hello World Report**\n- %%UPDATE_RN%%\n" \
+            "\n#### Scripts\n- **Hello World Script**\n- %%UPDATE_RN%%\n" \
+            "\n#### Widgets\n- **Hello World Widget**\n- %%UPDATE_RN%%\n"
 
         mock_master.return_value = '1.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
@@ -77,7 +77,7 @@ class TestRNUpdate:
             ("Hello World Job #2", FileType.JOB): {"description": "yet another job", "is_new_file": False}
         }
         release_notes = update_rn.build_rn_template(changed_items)
-        assert expected_result == release_notes
+        assert expected_result in release_notes
 
     @mock.patch.object(UpdateRN, 'get_master_version')
     def test_build_rn_template_integration_for_generic(self, mock_master):
@@ -117,7 +117,7 @@ class TestRNUpdate:
             Then:
                 - return a markdown string
         """
-        expected_result = "\n#### Playbooks\n##### New: Hello World Playbook\n- Hello World Playbook description\n"
+        expected_result = "\n#### Playbooks\n##### New: **Hello World Playbook**\n- Hello World Playbook description"
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
         mock_master.return_value = '1.0.0'
@@ -164,7 +164,7 @@ class TestRNUpdate:
             Then:
                 - return a markdown string
         """
-        expected_result = "\n#### Incident Fields\n- **Hello World IncidentField**\n"
+        expected_result = "\n#### Incident Fields\n- **Hello World IncidentField**\n- %%UPDATE_RN%%\n"
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
         mock_master.return_value = '1.0.0'

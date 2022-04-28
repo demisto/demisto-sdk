@@ -169,7 +169,7 @@ def test_update_release_notes_incident_field(demisto_client, mocker):
 
     with open(rn_path, 'r') as f:
         rn = f.read()
-    assert expected_rn == rn
+    assert expected_rn in rn
 
 
 def test_update_release_notes_unified_yml_integration(demisto_client, mocker):

@@ -572,7 +572,7 @@ class UpdateRN:
             The release notes description
         """
         if is_new_file:
-            rn_desc = f'##### New: {content_name}\n'
+            rn_desc = f'##### New: **{content_name}**\n'
 
             if desc != '':
                 rn_desc += f'- {desc}'
@@ -584,7 +584,7 @@ class UpdateRN:
                 rn_desc += f' (Available from Cortex XSOAR {from_version}).\n'
 
         else:
-            rn_desc = f'##### {content_name}\n'
+            rn_desc = f'- **{content_name}**\n'
 
             if self.update_type == 'documentation':
                 rn_desc += '- Documentation and metadata improvements.\n'

@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Added support in the **validate** command to fail validations on non-ignorable errors which are part of the .pack-ignore.
 * Fixed an issue in the **format** command where the `id` field was overwritten for existing JSON files.
 * Fixed an issue where the **doc-review** command was successful even when the release-note is malformed.
 * Added timestamps to the `demisto-sdk` logger.

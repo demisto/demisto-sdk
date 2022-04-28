@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (
     find_type, get_file_displayed_name, get_json, get_pack_name,
-    get_relative_path_from_packs_dir, get_yaml, get_pack_metadata)
+    get_relative_path_from_packs_dir, get_yaml)
 
 json = JSON_Handler()
 
@@ -31,16 +31,22 @@ class BaseValidator:
         self.ignored_errors = ignored_errors if ignored_errors else {}
         # these are the predefined ignored errors from packs which are partner/community support based.
         # represented by PRESET_ERROR_TO_IGNORE
-        self.predefined_by_support_ignored_errors = set()
+        self.predefined_by_support_ignored_errors = {}  # type: ignore[var-annotated]
         # these are the predefined ignored errors from packs which are deprecated.
         # represented by PRESET_ERROR_TO_CHECK
-        self.predefined_deprecated_ignored_errors = set()
+        self.predefined_deprecated_ignored_errors = {}  # type: ignore[var-annotated]
         self.print_as_warnings = print_as_warnings
         self.checked_files = set()  # type: ignore
         self.suppress_print = suppress_print
         self.json_file_path = json_file_path
 
-    def should_ignore_error(self, error_code, ignored_errors_pack_ignore):
+    @staticmethod
+    def should_ignore_error(
+        error_code,
+        ignored_errors_pack_ignore,
+        predefined_deprecated_ignored_errors,
+        predefined_by_support_ignored_errors
+    ):
         """
         Determine if an error should be ignored or not.
 
@@ -48,16 +54,20 @@ class BaseValidator:
             error_code (str): the error code of the validation.
             ignored_errors_pack_ignore (list[str]): a list of ignored errors which is
                 part of the .pack-ignore that belongs to a specific file.
+            predefined_deprecated_ignored_errors (list[str]): a list of ignored errors which are part of a deprecated
+                content entity.
+            predefined_by_support_ignored_errors (list[str)): a list of ignored errors which are part of the support
+                level of a pack.
 
         Returns:
             True if error should be ignored, False if not.
         """
         error_type = error_code[:2]
 
-        if error_code in self.predefined_deprecated_ignored_errors or error_type in self.predefined_deprecated_ignored_errors:
+        if error_code in predefined_deprecated_ignored_errors or error_type in predefined_deprecated_ignored_errors:
             return True
 
-        if error_code in self.predefined_by_support_ignored_errors or error_type in self.predefined_by_support_ignored_errors:
+        if error_code in predefined_by_support_ignored_errors or error_type in predefined_by_support_ignored_errors:
             return True
 
         return (
@@ -132,8 +142,14 @@ class BaseValidator:
             rel_file_path = 'No-Name'
 
         ignored_errors_pack_ignore = self.ignored_errors.get(file_name) or self.ignored_errors.get(rel_file_path) or []
+        predefined_deprecated_ignored_errors = self.predefined_deprecated_ignored_errors.get(file_name) or self.predefined_deprecated_ignored_errors.get(rel_file_path) or []  # noqa: E501
+        predefined_by_support_ignored_errors = self.predefined_by_support_ignored_errors.get(file_path) or self.predefined_by_support_ignored_errors.get(rel_file_path) or []  # noqa: E501
 
-        if self.should_ignore_error(error_code, ignored_errors_pack_ignore) or warning:
+        if self.should_ignore_error(
+            error_code, ignored_errors_pack_ignore,
+            predefined_deprecated_ignored_errors,
+            predefined_by_support_ignored_errors
+        ) or warning:
             if self.print_as_warnings or warning:
                 click.secho(formatted_error_str('WARNING'), fg="yellow")
                 self.json_output(file_path, error_code, error_message, warning)
@@ -171,7 +187,7 @@ class BaseValidator:
         if file_path.endswith('.yml'):
             yml_dict = get_yaml(file_path)
             if yml_dict.get('deprecated'):
-                self.add_flag_to_ignore_list('deprecated')
+                self.add_flag_to_ignore_list(file_path, 'deprecated')
 
     @staticmethod
     def get_metadata_file_content(meta_file_path):
@@ -191,7 +207,7 @@ class BaseValidator:
             support = metadata_json.get(PACK_METADATA_SUPPORT)
 
             if support in ('partner', 'community'):
-                self.add_flag_to_ignore_list(support)
+                self.add_flag_to_ignore_list(file_path, support)
 
     @staticmethod
     def create_reverse_ignored_errors_list(errors_to_check):
@@ -204,15 +220,19 @@ class BaseValidator:
 
         return ignored_error_list
 
-    def add_flag_to_ignore_list(self, flag):
+    def add_flag_to_ignore_list(self, file_path, flag):
         if flag in PRESET_ERROR_TO_IGNORE:
             for predefined_error_code in PRESET_ERROR_TO_IGNORE[flag]:
-                self.predefined_by_support_ignored_errors.add(predefined_error_code)
+                if file_path not in self.predefined_by_support_ignored_errors:
+                    self.predefined_by_support_ignored_errors[file_path] = []
+                self.predefined_by_support_ignored_errors[file_path].append(predefined_error_code)
 
         elif flag in PRESET_ERROR_TO_CHECK:
             deprecated_ignored_errors = self.create_reverse_ignored_errors_list(PRESET_ERROR_TO_CHECK[flag])
             for ignored_error in deprecated_ignored_errors:
-                self.predefined_deprecated_ignored_errors.add(ignored_error)
+                if file_path not in self.predefined_deprecated_ignored_errors:
+                    self.predefined_deprecated_ignored_errors[file_path] = []
+                self.predefined_deprecated_ignored_errors[file_path].append(ignored_error)
 
     @staticmethod
     def add_to_report_error_list(error_code, file_path, error_list) -> bool:

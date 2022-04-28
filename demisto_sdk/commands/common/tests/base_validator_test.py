@@ -18,8 +18,8 @@ from TestSuite.test_tools import ChangeCWD
 json = JSON_Handler()
 
 
-DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = set(BaseValidator.create_reverse_ignored_errors_list(
-    PRESET_ERROR_TO_CHECK['deprecated']))
+DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST = BaseValidator.create_reverse_ignored_errors_list(
+    PRESET_ERROR_TO_CHECK['deprecated'])
 
 
 @pytest.mark.parametrize(
@@ -187,7 +187,9 @@ def test_check_deprecated_where_ignored_list_exists(repo):
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={'integration.yml': ['BA101']})
         base_validator.check_deprecated(files_path)
-    assert base_validator.predefined_deprecated_ignored_errors == DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
+    assert base_validator.predefined_deprecated_ignored_errors == {
+        files_path: DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
+    }
     assert base_validator.ignored_errors == {'integration.yml': ['BA101']}
     assert not base_validator.predefined_by_support_ignored_errors
 
@@ -213,7 +215,9 @@ def test_check_deprecated_where_ignored_list_does_not_exist(repo):
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
         base_validator.check_deprecated(files_path)
-    assert base_validator.predefined_deprecated_ignored_errors == DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
+    assert base_validator.predefined_deprecated_ignored_errors == {
+        files_path: DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
+    }
     assert not base_validator.ignored_errors
     assert not base_validator.predefined_by_support_ignored_errors
 
@@ -229,6 +233,8 @@ def test_check_deprecated_non_deprecated_integration_no_ignored_errors(repo):
 
     Then
     - Ensure there is no resulting ignored errors list.
+    - Ensure there is no result in the predefined_deprecated_ignored_errors list.
+    - Ensure there is no result in the predefined_by_support_ignored_errors list.
     """
     pack = repo.create_pack('pack')
     integration = pack.create_integration('integration')
@@ -238,6 +244,8 @@ def test_check_deprecated_non_deprecated_integration_no_ignored_errors(repo):
         base_validator = BaseValidator(ignored_errors={})
         base_validator.check_deprecated(files_path)
     assert 'integration' not in base_validator.ignored_errors
+    assert 'integration' not in base_validator.predefined_deprecated_ignored_errors
+    assert 'integration' not in base_validator.predefined_by_support_ignored_errors
 
 
 def test_check_deprecated_non_deprecated_integration_with_ignored_errors(repo):
@@ -283,7 +291,9 @@ def test_check_deprecated_playbook(repo):
     with ChangeCWD(repo.path):
         base_validator = BaseValidator(ignored_errors={})
         base_validator.check_deprecated(files_path)
-    assert base_validator.predefined_deprecated_ignored_errors == DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
+    assert base_validator.predefined_deprecated_ignored_errors == {
+        files_path: DEPRECATED_IGNORE_ERRORS_DEFAULT_LIST
+    }
 
 
 def test_check_support_status_xsoar_file(repo, mocker):
@@ -333,7 +343,7 @@ def test_check_support_status_partner_file(repo, mocker):
         base_validator = BaseValidator(ignored_errors={})
         base_validator.update_checked_flags_by_support_level(integration.yml.rel_path)
 
-        assert base_validator.predefined_by_support_ignored_errors == set(PRESET_ERROR_TO_IGNORE['partner'])
+        assert base_validator.predefined_by_support_ignored_errors[integration.yml.rel_path] == PRESET_ERROR_TO_IGNORE['partner']  # noqa: E501
 
 
 def test_check_support_status_community_file(repo, mocker):
@@ -358,7 +368,7 @@ def test_check_support_status_community_file(repo, mocker):
         base_validator = BaseValidator(ignored_errors={})
         base_validator.update_checked_flags_by_support_level(integration.yml.rel_path)
 
-        assert base_validator.predefined_by_support_ignored_errors == set(PRESET_ERROR_TO_IGNORE['community'])
+        assert base_validator.predefined_by_support_ignored_errors[integration.yml.rel_path] == PRESET_ERROR_TO_IGNORE['community']  # noqa: E501
 
 
 class TestJsonOutput:

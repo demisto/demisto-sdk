@@ -144,7 +144,7 @@ SOURCE_FORMAT_INDICATORTYPE_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/for
 DESTINATION_FORMAT_INDICATORTYPE_COPY = "Packs/Base/Misc/reputation-copy.json"
 INDICATORTYPE_PATH = "Packs/Base/Misc"
 
-SOURCE_FORMAT_LAYOUT_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_layout-copy.json"
+SOURCE_FORMAT_LAYOUT_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_layout-dev.json"
 DESTINATION_FORMAT_LAYOUT_COPY = "Layouts/layout-copy.json"
 DESTINATION_FORMAT_LAYOUT_INVALID_NAME_COPY = "Layouts/layoutt-copy.json"
 LAYOUT_PATH = "Layouts"

@@ -101,7 +101,6 @@ class XSOARIntegration:
                      options: Optional[list] = None):
             self.name = name
             self.display = display
-            self.defaultvalue = defaultvalue
             self.type = type_
             self.required = required
             if options:

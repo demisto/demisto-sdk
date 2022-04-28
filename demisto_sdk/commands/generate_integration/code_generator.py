@@ -107,7 +107,7 @@ class IntegrationGeneratorCommand:
 
 
 class IntegrationGeneratorParam:
-    def __init__(self, name: str, display: str, type_: Union[ParameterType, str], required: bool, defaultvalue: str = '',
+    def __init__(self, name: str, display: str, type_: Union[ParameterType, str], required: bool, defaultvalue: str = 'false',
                  options: Optional[list] = None):
         self.name = name
         self.display = display

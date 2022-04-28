@@ -97,7 +97,7 @@ class XSOARIntegration:
             self.version = version
 
     class Configuration:
-        def __init__(self, name: str, display: str, type_: int, required: bool, defaultvalue: str = '',
+        def __init__(self, name: str, display: str, type_: int, required: bool, defaultvalue: str = 'false',
                      options: Optional[list] = None):
             self.name = name
             self.display = display

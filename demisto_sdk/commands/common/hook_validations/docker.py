@@ -21,8 +21,8 @@ ACCEPT_HEADER = {
               'application/vnd.docker.distribution.manifest.list.v2+json'
 }
 
-# use 20 seconds timeout for requests
-TIMEOUT = 20
+# use 60 seconds timeout for requests
+TIMEOUT = 60
 DEFAULT_REGISTRY = 'registry-1.docker.io'
 
 

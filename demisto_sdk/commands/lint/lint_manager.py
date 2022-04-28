@@ -374,7 +374,7 @@ class LintManager:
                                                    test_xml=test_xml,
                                                    no_coverage=no_coverage))
 
-                for future in concurrent.futures.as_completed(results, timeout=960):
+                for future in concurrent.futures.as_completed(results):
                     pkg_status = future.result()
                     pkgs_status[pkg_status["pkg"]] = pkg_status
                     if pkg_status["exit_code"]:

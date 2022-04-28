@@ -34,6 +34,8 @@ from demisto_sdk.commands.common.hook_validations.classifier import \
     ClassifierValidator
 from demisto_sdk.commands.common.hook_validations.conf_json import \
     ConfJsonValidator
+from demisto_sdk.commands.common.hook_validations.correlation_rule import \
+    CorrelationRuleValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
     DashboardValidator
 from demisto_sdk.commands.common.hook_validations.description import \
@@ -61,8 +63,12 @@ from demisto_sdk.commands.common.hook_validations.layout import (
     LayoutsContainerValidator, LayoutValidator)
 from demisto_sdk.commands.common.hook_validations.lists import ListsValidator
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
+from demisto_sdk.commands.common.hook_validations.modeling_rule import \
+    ModelingRuleValidator
 from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
+from demisto_sdk.commands.common.hook_validations.parsing_rule import \
+    ParsingRuleValidator
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.pre_process_rule import \
@@ -80,7 +86,13 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.hook_validations.test_playbook import \
     TestPlaybookValidator
+from demisto_sdk.commands.common.hook_validations.triggers import \
+    TriggersValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
+from demisto_sdk.commands.common.hook_validations.xsiam_dashboard import \
+    XSIAMDashboardValidator
+from demisto_sdk.commands.common.hook_validations.xsiam_report import \
+    XSIAMReportValidator
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import \
     XSOARConfigJsonValidator
 from demisto_sdk.commands.common.tools import (
@@ -649,6 +661,24 @@ class ValidateManager:
         elif file_type == FileType.WIDGET:
             return self.validate_widget(structure_validator, pack_error_ignore_list)
 
+        elif file_type == FileType.TRIGGER:
+            return self.validate_triggers(structure_validator, pack_error_ignore_list)
+
+        elif file_type == FileType.PARSING_RULE:
+            return self.validate_parsing_rule(structure_validator, pack_error_ignore_list)
+
+        elif file_type == FileType.MODELING_RULE:
+            return self.validate_modeling_rule(structure_validator, pack_error_ignore_list)
+
+        elif file_type == FileType.CORRELATION_RULE:
+            return self.validate_correlation_rule(structure_validator, pack_error_ignore_list)
+
+        elif file_type == FileType.XSIAM_DASHBOARD:
+            return self.validate_xsiam_dashboard(structure_validator, pack_error_ignore_list)
+
+        elif file_type == FileType.XSIAM_REPORT:
+            return self.validate_xsiam_report(structure_validator, pack_error_ignore_list)
+
         elif file_type == FileType.GENERIC_FIELD:
             return self.validate_generic_field(structure_validator, pack_error_ignore_list, is_added_file)
 
@@ -1078,6 +1108,44 @@ class ValidateManager:
                                            print_as_warnings=self.print_ignored_errors,
                                            json_file_path=self.json_file_path)
         return widget_validator.is_valid_file(validate_rn=False)
+
+    def validate_triggers(self, structure_validator, pack_error_ignore_list):
+        triggers_validator = TriggersValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                               print_as_warnings=self.print_ignored_errors,
+                                               json_file_path=self.json_file_path)
+        return triggers_validator.is_valid_file(validate_rn=False)
+
+    def validate_xsiam_report(self, structure_validator, pack_error_ignore_list):
+        xsiam_report_validator = XSIAMReportValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                                      print_as_warnings=self.print_ignored_errors,
+                                                      json_file_path=self.json_file_path)
+        return xsiam_report_validator.is_valid_file(validate_rn=False)
+
+    def validate_xsiam_dashboard(self, structure_validator, pack_error_ignore_list):
+        xsiam_dashboard_validator = XSIAMDashboardValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                                            print_as_warnings=self.print_ignored_errors,
+                                                            json_file_path=self.json_file_path)
+        return xsiam_dashboard_validator.is_valid_file(validate_rn=False)
+
+    def validate_parsing_rule(self, structure_validator, pack_error_ignore_list):
+        parsing_rule_validator = ParsingRuleValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                                      print_as_warnings=self.print_ignored_errors,
+                                                      json_file_path=self.json_file_path)
+        return parsing_rule_validator.is_valid_file(validate_rn=False)
+
+    def validate_correlation_rule(self, structure_validator, pack_error_ignore_list):
+        correlation_rule_validator = CorrelationRuleValidator(structure_validator,
+                                                              ignored_errors=pack_error_ignore_list,
+                                                              print_as_warnings=self.print_ignored_errors,
+                                                              json_file_path=self.json_file_path)
+        return correlation_rule_validator.is_valid_file(validate_rn=False)
+
+    def validate_modeling_rule(self, structure_validator, pack_error_ignore_list):
+        modeling_rule_validator = ModelingRuleValidator(structure_validator,
+                                                        ignored_errors=pack_error_ignore_list,
+                                                        print_as_warnings=self.print_ignored_errors,
+                                                        json_file_path=self.json_file_path)
+        return modeling_rule_validator.is_valid_file(validate_rn=False)
 
     def validate_generic_field(self, structure_validator, pack_error_ignore_list, is_added_file):
         generic_field_validator = GenericFieldValidator(structure_validator, ignored_errors=pack_error_ignore_list,

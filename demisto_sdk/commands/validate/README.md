@@ -74,7 +74,7 @@ Set backwards compatibility validation's errors as warnings.
 Don't fail on skipped integrations or when all test playbooks are skipped.
 
 **Examples**:
-`demisto-sdk validate -g --no-backwards-comp`
+`demisto-sdk validate -g --no-backward-comp`
 This will validate only changed files from content origin/master branch and will exclude backwards
 compatibility checks.
 <br><br>

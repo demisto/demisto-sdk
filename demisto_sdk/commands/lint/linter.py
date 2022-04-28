@@ -130,6 +130,7 @@ class Linter:
             2. Run in package docker - pylint, pytest.
 
         Args:
+            no_xsoar_linter(bool): Whether to skip xsoar-linter
             no_flake8(bool): Whether to skip flake8
             no_bandit(bool): Whether to skip bandit
             no_mypy(bool): Whether to skip mypy

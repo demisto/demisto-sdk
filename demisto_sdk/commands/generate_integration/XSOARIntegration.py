@@ -97,16 +97,19 @@ class XSOARIntegration:
             self.version = version
 
     class Configuration:
-        def __init__(self, name: str, display: str, type_: int, required: bool, defaultvalue: str = 'false',
+        def __init__(self, name: str, display: str, type_: int, required: bool, defaultvalue: str = '',
                      options: Optional[list] = None):
             self.name = name
             self.display = display
+            self.defaultvalue = defaultvalue
             self.type = type_
             self.required = required
             if options:
                 self.options = options
             if defaultvalue:
                 self.defaultvalue = defaultvalue
+            if self.type == 8 and not self.defaultvalue:
+                self.defaultvalue = 'false'
 
     class Script:
         def __init__(self, script: str, type_: str, subtype: str, dockerimage: str, isfetch: bool,

@@ -107,7 +107,7 @@ class IntegrationGeneratorCommand:
 
 
 class IntegrationGeneratorParam:
-    def __init__(self, name: str, display: str, type_: Union[ParameterType, str], required: bool, defaultvalue: str = 'false',
+    def __init__(self, name: str, display: str, type_: Union[ParameterType, str], required: bool, defaultvalue: str = '',
                  options: Optional[list] = None):
         self.name = name
         self.display = display
@@ -123,6 +123,8 @@ class IntegrationGeneratorParam:
             self.options = options
         if defaultvalue:
             self.defaultvalue = defaultvalue
+        if self.type_ == ParameterType.BOOLEAN and not self.defaultvalue:
+            self.defaultvalue = 'false'
 
 
 class IntegrationGeneratorConfig:

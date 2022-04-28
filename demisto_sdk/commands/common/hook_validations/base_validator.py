@@ -28,7 +28,7 @@ class BaseValidator:
     def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False,
                  json_file_path: Optional[str] = None):
         # these are the ignored errors from the .pack-ignore including un-allowed error codes
-        self.ignored_errors = ignored_errors if ignored_errors else {}
+        self.ignored_errors = ignored_errors or {}
         # these are the predefined ignored errors from packs which are partner/community support based.
         # represented by PRESET_ERROR_TO_IGNORE
         self.predefined_by_support_ignored_errors = {}  # type: ignore[var-annotated]
@@ -48,7 +48,9 @@ class BaseValidator:
         predefined_by_support_ignored_errors
     ):
         """
-        Determine if an error should be ignored or not.
+        Determine if an error should be ignored or not. That includes all types of ignored errors,
+        errors which come from .pack-ignore, pre-defined errors of partner/community packs and pre-defined errors
+        of deprecated packs.
 
         Args:
             error_code (str): the error code of the validation.
@@ -110,7 +112,7 @@ class BaseValidator:
             should_print (bool): whether the command should be printed
 
         Returns:
-            str: formatted error message if it should be ignored, None otherwise.
+            str: formatted error message.
         """
 
         def formatted_error_str(error_type):
@@ -118,9 +120,7 @@ class BaseValidator:
                 raise ValueError("Error type is not valid. Should be in {'ERROR', 'WARNING'}")
 
             formatted_error_message_prefix = f"[{error_type}]: {file_path}: [{error_code}]"
-            if self.should_error_code_not_be_ignored_in_pack_ignore(
-                error_code=error_code, ignored_errors_pack_ignore=ignored_errors_pack_ignore
-            ):
+            if should_error_code_not_be_ignored_in_pack_ignore:
                 formatted = f"{formatted_error_message_prefix} can not be ignored in .pack-ignore\n"
             else:
                 formatted = f"{formatted_error_message_prefix} - {error_message}".rstrip("\n") + "\n"
@@ -145,6 +145,10 @@ class BaseValidator:
         predefined_deprecated_ignored_errors = self.predefined_deprecated_ignored_errors.get(file_name) or self.predefined_deprecated_ignored_errors.get(rel_file_path) or []  # noqa: E501
         predefined_by_support_ignored_errors = self.predefined_by_support_ignored_errors.get(file_path) or self.predefined_by_support_ignored_errors.get(rel_file_path) or []  # noqa: E501
 
+        should_error_code_not_be_ignored_in_pack_ignore = self.should_error_code_not_be_ignored_in_pack_ignore(
+            error_code=error_code, ignored_errors_pack_ignore=ignored_errors_pack_ignore
+        )
+
         if self.should_ignore_error(
             error_code, ignored_errors_pack_ignore,
             predefined_deprecated_ignored_errors,
@@ -158,7 +162,7 @@ class BaseValidator:
 
         formatted_error = formatted_error_str('ERROR')
         if should_print and not self.suppress_print:
-            if suggested_fix and 'can not be ignored in .pack-ignore' not in formatted_error:
+            if suggested_fix and not should_error_code_not_be_ignored_in_pack_ignore:
                 click.secho(formatted_error[:-1], fg="bright_red")
                 if error_code == 'ST109':
                     click.secho("Please add to the root of the yml.\n", fg="bright_red")

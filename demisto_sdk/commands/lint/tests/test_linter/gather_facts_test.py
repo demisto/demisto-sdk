@@ -7,7 +7,7 @@ from demisto_sdk.commands.lint import linter
 
 def initiate_linter(demisto_content, integration_path, docker_engine=False):
     return linter.Linter(content_repo=demisto_content,
-                         pack_dir=integration_path,
+                         pack_dir=Path(integration_path),
                          req_2=[],
                          req_3=[],
                          docker_engine=docker_engine,

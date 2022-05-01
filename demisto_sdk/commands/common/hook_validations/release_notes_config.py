@@ -3,8 +3,8 @@ from __future__ import print_function
 import os
 
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator, error_codes)
 
 
 class ReleaseNotesConfigValidator(BaseValidator):
@@ -15,9 +15,9 @@ class ReleaseNotesConfigValidator(BaseValidator):
     """
 
     def __init__(self, rn_config_path: str, ignored_errors=None, print_as_warnings=False, suppress_print=False,
-                 json_file_path=None):
+                 json_file_path=None, specific_validations=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print, json_file_path=json_file_path)
+                         suppress_print=suppress_print, json_file_path=json_file_path, specific_validations=specific_validations)
         self.rn_config_path = rn_config_path
 
     def is_file_valid(self) -> bool:
@@ -32,6 +32,7 @@ class ReleaseNotesConfigValidator(BaseValidator):
 
         return all(validations)
 
+    @error_codes('RN110')
     def has_corresponding_rn_file(self) -> bool:
         """
         Checks whether config RN has a corresponding RN file.

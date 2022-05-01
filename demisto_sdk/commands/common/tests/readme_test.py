@@ -351,6 +351,7 @@ def test_demisto_in_integration_readme(repo):
 def init_readmeValidator(readme_validator, repo, readme_path):
     readme_validator.content_path = str(repo.path)
     readme_validator.file_path = readme_path
+    readme_validator.specific_validations = None
 
 
 def test_demisto_in_repo_readme(mocker, repo):

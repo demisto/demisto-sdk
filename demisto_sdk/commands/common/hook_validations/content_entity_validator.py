@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from abc import abstractmethod
@@ -12,9 +13,9 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator, error_codes)
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
@@ -22,7 +23,6 @@ from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
                                                is_test_config_match,
                                                run_command)
 
-json = JSON_Handler()
 yaml = YAML_Handler()
 
 
@@ -34,7 +34,8 @@ class ContentEntityValidator(BaseValidator):
                  suppress_print=False, json_file_path=None, oldest_supported_version=None):
         # type: (StructureValidator, dict, bool, bool, bool, Optional[str], Optional[str]) -> None
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print, json_file_path=json_file_path)
+                         suppress_print=suppress_print, json_file_path=json_file_path,
+                         specific_validations=structure_validator.specific_validations)
         self.structure_validator = structure_validator
         self.current_file = structure_validator.current_file
         self.old_file = structure_validator.old_file
@@ -66,6 +67,7 @@ class ContentEntityValidator(BaseValidator):
         # type: () -> bool
         pass
 
+    @error_codes('BA100')
     def _is_valid_version(self):
         # type: () -> bool
         """Base is_valid_version method for files that version is their root.
@@ -81,6 +83,7 @@ class ContentEntityValidator(BaseValidator):
                 return False
         return True
 
+    @error_codes('BA111')
     def name_does_not_contain_excluded_word(self) -> bool:
         """
         Checks whether given object contains excluded word.
@@ -140,6 +143,7 @@ class ContentEntityValidator(BaseValidator):
                 return False
         return True
 
+    @error_codes('BA101')
     def _is_id_equals_name(self, file_type):
         """Validate that the id of the file equals to the name.
          Args:
@@ -163,6 +167,7 @@ class ContentEntityValidator(BaseValidator):
         with open(self.CONF_PATH) as data_file:
             return json.load(data_file)
 
+    @error_codes('CJ104,CJ102')
     def are_tests_registered_in_conf_json_file_or_yml_file(self, test_playbooks: list) -> bool:
         """
         If the file is a test playbook:
@@ -218,6 +223,7 @@ class ContentEntityValidator(BaseValidator):
 
         return True
 
+    @error_codes('CJ103')
     def yml_has_test_key(self, test_playbooks: list, file_type: str) -> bool:
         """
         Checks if tests are configured.
@@ -244,6 +250,7 @@ class ContentEntityValidator(BaseValidator):
 
         return True
 
+    @error_codes('BA106')
     def is_valid_fromversion(self):
         """Check if the file has a fromversion 5.0.0 or higher
             This is not checked if checking on or against a feature branch.
@@ -267,6 +274,7 @@ class ContentEntityValidator(BaseValidator):
 
         return True
 
+    @error_codes('BA106')
     def is_valid_fromversion_for_generic_objects(self):
         """
             Check if the file has a fromversion 6.5.0 or higher
@@ -304,6 +312,7 @@ class ContentEntityValidator(BaseValidator):
 
         return base_name
 
+    @error_codes('BA113')
     def is_there_spaces_in_the_end_of_name(self):
         """Validate that the id of the file equals to the name.
         Returns:
@@ -321,6 +330,7 @@ class ContentEntityValidator(BaseValidator):
 
         return True
 
+    @error_codes('BA112')
     def is_there_spaces_in_the_end_of_id(self):
         """Validate that the id of the file equals to the name.
          Returns:
@@ -338,6 +348,7 @@ class ContentEntityValidator(BaseValidator):
 
         return True
 
+    @error_codes('RM109')
     def validate_readme_exists(self, validate_all: bool = False):
         """
             Validates if there is a readme file in the same folder as the caller file.

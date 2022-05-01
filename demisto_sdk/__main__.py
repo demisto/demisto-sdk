@@ -464,6 +464,10 @@ def zip_packs(**kwargs) -> int:
     "--no-multiprocessing",
     help="run validate all without multiprocessing, for debugging purposes.",
     is_flag=True, default=False)
+@click.option(
+    '-sv', '--run-specific-validations',
+    help="Run specific validations by stating the error codes.",
+    is_flag=False)
 @pass_config
 def validate(config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
@@ -507,6 +511,7 @@ def validate(config, **kwargs):
             quiet_bc=kwargs.get('quiet_bc_validation'),
             multiprocessing=run_with_mp,
             check_is_unskipped=not kwargs.get('allow_skipped', False),
+            specific_validations=kwargs.get('run_specific_validations'),
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:

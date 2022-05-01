@@ -1511,16 +1511,18 @@ class IntegrationValidator(ContentEntityValidator):
             is_modified (bool): Wether the given files are modified or not.
 
         Return:
-            bool: True if all commands appear in the readme, and False if it doesn't.
+            bool: True if all commands are documented in the README, False if there's no README file in the expected
+             path, or any of the commands is missing.
         """
         if not is_modified:
             return True
         yml_commands_list = extract_none_deprecated_command_names_from_yml(self.current_file)
         is_valid = True
-        dir_path = os.path.dirname(self.file_path)
-        readme_path = os.path.join(dir_path, 'README.md')
-        with open(readme_path, 'r') as readme:
-            readme_content = readme.read()
+        readme_path = Path(self.file_path).parent / 'README.md'
+        if not readme_path.exists():
+            return False
+
+        readme_content = readme_path.read_text()
         excluded_from_readme_commands = ['get-mapping-fields', 'xsoar-search-incidents', 'xsoar-get-incident', 'get-remote-data']
         missing_commands_from_readme = [
             command for command in yml_commands_list if command not in readme_content and command not in excluded_from_readme_commands]

@@ -1388,12 +1388,15 @@ class TestIsFeedParamsExist:
         (False, {'script': {'commands': [{'name': 'command_name'}]}}, "", True),
     ]
 
-    @pytest.mark.parametrize("is_modified, yml_data, readme_text, excepted_results", VERIFY_YML_COMMANDS_MATCH_README_DATA)
-    def test_verify_yml_commands_match_readme(self, is_modified, yml_data, readme_text, excepted_results, integration: Integration):
+    @pytest.mark.parametrize("is_modified, yml_data, readme_text, excepted_results",
+                             VERIFY_YML_COMMANDS_MATCH_README_DATA)
+    def test_verify_yml_commands_match_readme(self, is_modified, yml_data, readme_text, excepted_results,
+                                              integration: Integration):
         """
         Given
         - Case 1: integration with one command mentioned in both the yml and the readme files that were modified.
-        - Case 2: integration with one command that should be excluded from the readme file and mentioned in the yml file that were modified.
+        - Case 2: integration with one command that should be excluded from the readme file and mentioned in the yml
+         file that were modified.
         - Case 3: integration with one command mentioned only in the yml file that were modified.
         - Case 4: integration with one command mentioned only in the yml file that aren't modified.
         When
@@ -1410,6 +1413,21 @@ class TestIsFeedParamsExist:
         struct = mock_structure(current_file=yml_data, file_path=integration.yml.path)
         integration_validator = IntegrationValidator(struct)
         assert integration_validator.verify_yml_commands_match_readme(is_modified) == excepted_results
+
+    def test_verify_yml_commands_match_readme_no_readme_file(self, integration: Integration):
+        """
+        Given
+        - integration with no readme file.
+        When
+        - Running verify_yml_commands_match_readme on the integration.
+        Then
+        - Ensure validation stops before checking if there is a match between the yml and readme.
+        """
+        yml_data = {'script': {'commands': [{'name': 'command_name'}]}}
+        integration.yml.write_dict(yml_data)
+        struct = mock_structure(current_file=yml_data, file_path=integration.yml.path)
+        integration_validator = IntegrationValidator(struct)
+        assert integration_validator.verify_yml_commands_match_readme(is_modified=True) is False
 
 
 class TestisContextChanged:

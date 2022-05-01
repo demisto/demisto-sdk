@@ -1861,7 +1861,10 @@ def get_wizard_data(path: str, packs: Dict[str, Dict] = None):
                                      pack=get_pack_name(path),
                                      marketplaces=marketplaces,
                                      )
-
+    dependency_packs = set()
+    for dep_packs in json_data.get('dependency_packs', []):
+        dependency_packs.update({pack['name'] for pack in dep_packs['packs']})
+    data['dependency_packs'] = dependency_packs
     return {json_data.get('id'): data}
 
 

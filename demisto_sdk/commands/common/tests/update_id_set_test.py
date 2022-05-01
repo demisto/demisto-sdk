@@ -10,7 +10,8 @@ import pytest
 import demisto_sdk.commands.common.tools as tools
 import demisto_sdk.commands.common.update_id_set as uis
 from demisto_sdk.commands.common.constants import (
-    FILETYPE_TO_DEFAULT_FROMVERSION, JOBS_DIR, FileType, MarketplaceVersions)
+    FILETYPE_TO_DEFAULT_FROMVERSION, JOBS_DIR, WIZARDS_DIR, FileType,
+    MarketplaceVersions)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
@@ -27,8 +28,8 @@ from demisto_sdk.commands.common.update_id_set import (
     get_values_for_keys_recursively, get_widget_data, get_xsiam_dashboard_data,
     get_xsiam_report_data, has_duplicate, merge_id_sets, process_general_items,
     process_incident_fields, process_integration, process_jobs,
-    process_layoutscontainers, process_script, re_create_id_set,
-    should_skip_item_by_mp)
+    process_layoutscontainers, process_script, process_wizards,
+    re_create_id_set, should_skip_item_by_mp)
 from TestSuite.utils import IsEqualFunctions
 
 json = JSON_Handler()
@@ -2783,6 +2784,45 @@ class TestJob:
         with pytest.raises(FileNotFoundError):
             assert not process_jobs(str(job_json_path), {pack.name: {}}, MarketplaceVersions.XSOAR.value, print_logs)
         assert f"failed to process job {job_json_path}" in capsys.readouterr().out
+
+
+class TestWizard:
+    EXPECTED_DEPENDENCY_PACKS = {'MicrosoftDefenderAdvancedThreatProtection', 'CrowdStrikeFalcon'}
+
+    @staticmethod
+    @pytest.mark.parametrize('print_logs', (True, False))
+    def test_process_wizards(capsys, repo, print_logs: bool, mocker):
+        """
+        Given
+            - A repo with a wizard object.
+            - Whether to print logs.
+        When
+            - Parsing wizard files.
+        Then
+            - Verify output to logs.
+        """
+        pack = repo.create_pack()
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
+        wizard = pack.create_wizard('wizard')
+        res = process_wizards(wizard.path, {pack.name: {}}, MarketplaceVersions.XSOAR.value, print_logs)
+
+        captured = capsys.readouterr()
+        assert len(res) == 1
+        datum = res[0][wizard.id]
+        assert datum['name'] == wizard.id
+        assert datum['dependency_packs'] == TestWizard.EXPECTED_DEPENDENCY_PACKS
+        path = Path(datum['file_path'])
+        assert path.name == wizard.name
+        assert path.exists()
+        assert path.is_file()
+        assert path.suffix == '.json'
+        assert path.parts[-2] == WIZARDS_DIR
+        assert path.parts[-3] == pack.name
+
+        assert datum['fromversion'] == FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.WIZARD)
+        assert datum['pack'] == pack.name
+
+        assert (f'adding {wizard.path} to id_set' in captured.out) == print_logs
 
 
 class TestParsingRules:

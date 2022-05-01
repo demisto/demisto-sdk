@@ -1,6 +1,10 @@
 # Changelog
+* enhanced ***validate*** command to list all command names affected by a backward compatibility break, instead of only one.
 
 ## Unreleased
+
+## 1.6.5
+
 * Fixed an issue in the **format** command where the `id` field was overwritten for existing JSON files.
 * Fixed an issue where the **doc-review** command was successful even when the release-note is malformed.
 * Added timestamps to the `demisto-sdk` logger.

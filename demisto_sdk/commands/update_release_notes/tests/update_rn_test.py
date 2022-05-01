@@ -140,7 +140,7 @@ class TestRNUpdate:
             Then:
                 - return a markdown string
         """
-        expected_result = "\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%\n"
+        expected_result = "\n#### Playbooks\n- **Hello World Playbook**\n- %%UPDATE_RN%%\n"
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
         mock_master.return_value = '1.0.0'
@@ -187,7 +187,7 @@ class TestRNUpdate:
             Then:
                 - return a markdown string
         """
-        expected_result = "\n#### Integrations\n##### Hello World Integration\n" \
+        expected_result = "\n#### Integrations\n- **Hello World Integration**\n" \
                           "- Documentation and metadata improvements.\n"
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
@@ -1562,7 +1562,7 @@ def test_handle_existing_rn_with_docker_image(new_rn: str, header_by_type: str, 
 
 
 @pytest.mark.parametrize('text, expected_rn_string',
-                         [('Testing the upload', '##### PackName\n- Testing the upload\n')])
+                         [('Testing the upload', '- **PackName**\n- Testing the upload\n')])
 def test_force_and_text_update_rn(repo, text, expected_rn_string):
     """
     Given:

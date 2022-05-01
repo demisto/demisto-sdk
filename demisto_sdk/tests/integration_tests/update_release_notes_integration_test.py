@@ -24,7 +24,7 @@ AZURE_FEED_PACK_PATH = join(CONTENT_EXAMPLE_REPO, 'Packs', 'FeedAzureValid')
 RN_FOLDER = join(CONTENT_EXAMPLE_REPO, 'Packs', 'FeedAzureValid', 'ReleaseNotes')
 VMWARE_PACK_PATH = join(TEST_FILES_PATH, 'test_files', 'content_repo_example', 'Packs', 'VMware')
 VMWARE_RN_PACK_PATH = join(git_path(), 'Packs', 'VMware', 'ReleaseNotes')
-THINKCANARY_RN_FOLDER = join(git_path(), 'Packs', 'ThinkCanary', 'ReleaseNotes')
+THINKCANARY_RN_FOLDER = join(CONTENT_EXAMPLE_REPO, 'Packs', 'ThinkCanary', 'ReleaseNotes')
 
 
 @pytest.fixture
@@ -166,8 +166,8 @@ def test_update_release_notes_incident_field(demisto_client, mocker):
 
     if os.path.exists(rn_path):
         os.remove(rn_path)
-
-    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'FeedAzureValid')])
+    with ChangeCWD(CONTENT_EXAMPLE_REPO):
+        result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'FeedAzureValid')])
 
     assert result.exit_code == 0
     assert os.path.isfile(rn_path)
@@ -289,7 +289,8 @@ def test_update_release_notes_existing(demisto_client, mocker):
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='1.0.0')
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
-    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'FeedAzureValid')])
+    with ChangeCWD(CONTENT_EXAMPLE_REPO):
+        result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'FeedAzureValid')])
 
     assert result.exit_code == 0
     assert os.path.exists(rn_path)
@@ -561,10 +562,11 @@ def test_force_update_release(demisto_client, mocker, repo):
                  return_value={'ThinkCanary'})
 
     runner = CliRunner(mix_stderr=True)
-    result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'ThinkCanary'), "--force"])
+    with ChangeCWD(CONTENT_EXAMPLE_REPO):
+        result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'ThinkCanary'), "--force"])
     assert 'Bumping ThinkCanary to version: 1.0.1' in result.stdout
     assert 'Finished updating release notes for ThinkCanary.' in result.stdout
 
     with open(rn_path, 'r') as f:
         rn = f.read()
-    assert '##### ThinkCanary\n- %%UPDATE_RN%%\n' == rn
+    assert '- **ThinkCanary**\n- %%UPDATE_RN%%\n' == rn

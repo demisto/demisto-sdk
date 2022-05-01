@@ -1,4 +1,5 @@
 # Changelog
+* enhanced ***validate*** command to list all command names affected by a backward compatibility break, instead of only one.
 
 ## Unreleased
 * Fixed an issue in the **format** command where the `id` field was overwritten for existing JSON files.

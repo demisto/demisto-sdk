@@ -666,18 +666,20 @@ class IntegrationValidator(ContentEntityValidator):
         Returns:
             bool. Whether a command name or argument as been changed.
         """
+        changed_commands = []
         current_command_to_args = self._get_command_to_args(self.current_file)
         old_command_to_args = self._get_command_to_args(self.old_file)
 
         for command, args_dict in old_command_to_args.items():
             if command not in current_command_to_args.keys() or \
                     not self.is_subset_dictionary(current_command_to_args[command], args_dict):
-                error_message, error_code = Errors.breaking_backwards_command_arg_changed(command)
-                if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                     warning=self.structure_validator.quiet_bc):
-                    self.is_valid = False
-                    return True
-
+                changed_commands.append(command)
+        if changed_commands:
+            error_message, error_code = Errors.breaking_backwards_command_arg_changed(changed_commands)
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 warning=self.structure_validator.quiet_bc):
+                self.is_valid = False
+                return True
         return False
 
     @staticmethod

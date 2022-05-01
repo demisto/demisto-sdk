@@ -1,5 +1,6 @@
 # Changelog
 * enhanced ***validate*** command to list all command names affected by a backward compatibility break, instead of only one.
+* Added the flag '-x', '--xsiam' to **upload** command to upload XSIAM entities to XSIAM server.
 
 ## Unreleased
 

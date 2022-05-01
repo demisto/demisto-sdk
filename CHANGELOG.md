@@ -11,7 +11,11 @@
 * Fixed an issue in the **format** command where `_dev` or `_copy` suffixes weren't removed from the subscript names in playbooks and layouts.
 * Fixed an issue where **validate** failed on nonexistent `README.md` files.
 * Added support of XSIAM content items to the **validate** command.
+<<<<<<< ds-relative-path
 * Fixed an issue where relative paths were not accessed correctly.
+=======
+* Report **lint** summary results and failed packages after reporting time measurements.
+>>>>>>> master
 
 ## 1.6.4
 

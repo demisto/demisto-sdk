@@ -490,6 +490,10 @@ class LintManager:
                                                                           pkgs_status=pkgs_status,
                                                                           pkgs_type=pkgs_type,
                                                                           )
+
+        if time_measurements_dir:
+            report_time_measurements(group_name='lint', time_measurements_dir=time_measurements_dir)
+
         self._report_results(lint_status=lint_status,
                              pkgs_status=pkgs_status,
                              return_exit_code=return_exit_code,
@@ -500,9 +504,6 @@ class LintManager:
                              coverage_report=coverage_report)
 
         self._create_failed_packs_report(lint_status=lint_status, path=failure_report)
-
-        if time_measurements_dir:
-            report_time_measurements(group_name='lint', time_measurements_dir=time_measurements_dir)
 
         # check if there were any errors during lint run , if so set to FAIL as some error codes are bigger
         # then 512 and will not cause failure on the exit code.

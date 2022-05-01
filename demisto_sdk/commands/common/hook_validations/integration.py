@@ -666,18 +666,20 @@ class IntegrationValidator(ContentEntityValidator):
         Returns:
             bool. Whether a command name or argument as been changed.
         """
+        changed_commands = []
         current_command_to_args = self._get_command_to_args(self.current_file)
         old_command_to_args = self._get_command_to_args(self.old_file)
 
         for command, args_dict in old_command_to_args.items():
             if command not in current_command_to_args.keys() or \
                     not self.is_subset_dictionary(current_command_to_args[command], args_dict):
-                error_message, error_code = Errors.breaking_backwards_command_arg_changed(command)
-                if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                     warning=self.structure_validator.quiet_bc):
-                    self.is_valid = False
-                    return True
-
+                changed_commands.append(command)
+        if changed_commands:
+            error_message, error_code = Errors.breaking_backwards_command_arg_changed(changed_commands)
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 warning=self.structure_validator.quiet_bc):
+                self.is_valid = False
+                return True
         return False
 
     @staticmethod
@@ -1509,16 +1511,18 @@ class IntegrationValidator(ContentEntityValidator):
             is_modified (bool): Wether the given files are modified or not.
 
         Return:
-            bool: True if all commands appear in the readme, and False if it doesn't.
+            bool: True if all commands are documented in the README, False if there's no README file in the expected
+             path, or any of the commands is missing.
         """
         if not is_modified:
             return True
         yml_commands_list = extract_none_deprecated_command_names_from_yml(self.current_file)
         is_valid = True
-        dir_path = os.path.dirname(self.file_path)
-        readme_path = os.path.join(dir_path, 'README.md')
-        with open(readme_path, 'r') as readme:
-            readme_content = readme.read()
+        readme_path = Path(self.file_path).parent / 'README.md'
+        if not readme_path.exists():
+            return False
+
+        readme_content = readme_path.read_text()
         excluded_from_readme_commands = ['get-mapping-fields', 'xsoar-search-incidents', 'xsoar-get-incident', 'get-remote-data']
         missing_commands_from_readme = [
             command for command in yml_commands_list if command not in readme_content and command not in excluded_from_readme_commands]

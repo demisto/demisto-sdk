@@ -190,6 +190,41 @@ class TestIntegrationValidator:
         structure.quiet_bc = True
         assert validator.is_changed_command_name_or_arg() is False  # if quiet_bc is true should always succeed
 
+    CHANGED_COMMAND_OR_ARG_MST_TEST_INPUTS = [
+        ([{"name": "command_test_name_1", "arguments": [{"name": "argument_test_name_1", "required": True}]},
+          {"name": "command_test_name_2", "arguments": [{"name": "argument_test_name_2", "required": True}]}],
+         [{"name": "test1", "arguments": [{"name": "argument_test_name_1", "required": True}]},
+          {"name": "test2", "arguments": [{"name": "argument_test_name_2", "required": True}]}],
+         "[ERROR]: : [BC104] - Possible backwards compatibility break, Your updates to this file contains changes"
+         " to a name or an argument of an existing command(s).\nPlease undo you changes to the following command(s):\ntest1\ntest2")
+    ]
+
+    @pytest.mark.parametrize("current, old, expected_error_msg", CHANGED_COMMAND_OR_ARG_MST_TEST_INPUTS)
+    def test_is_changed_command_name_or_arg_msg(self, capsys, current, old, expected_error_msg):
+        """
+        Given
+        An integration with BC break in the following way:
+        - Case 1: Old and New coppies of a yml file.
+        Old copy: Has two commands - command_test_name_1 and command_test_name_2
+        where each command has 1 argument - argument_test_name_1, argument_test_name_2 respectively.
+        New copy: Has two commands - command_test_name_1 and command_test_name_2
+        where each command has 1 argument - argument_test_name_1, argument_test_name_2 respectively.
+
+        When
+        - running the validation is_changed_command_name_or_arg()
+
+        Then
+        Ensure that the error massage was created correctly.
+        - Case 1: Should include both command_test_name_1 and command_test_name_2 in the commands list in the error as they both have BC break changes.
+        """
+        current = {'script': {'commands': current}}
+        old = {'script': {'commands': old}}
+        structure = mock_structure("", current, old)
+        validator = IntegrationValidator(structure)
+        validator.is_changed_command_name_or_arg()
+        stdout = capsys.readouterr().out
+        assert expected_error_msg == stdout.strip()
+
     WITHOUT_DUP = [{"name": "test"}, {"name": "test1"}]
     DUPLICATE_PARAMS_INPUTS = [
         (WITHOUT_DUP, True)
@@ -1352,12 +1387,15 @@ class TestIsFeedParamsExist:
         (False, {'script': {'commands': [{'name': 'command_name'}]}}, "", True),
     ]
 
-    @pytest.mark.parametrize("is_modified, yml_data, readme_text, excepted_results", VERIFY_YML_COMMANDS_MATCH_README_DATA)
-    def test_verify_yml_commands_match_readme(self, is_modified, yml_data, readme_text, excepted_results, integration: Integration):
+    @pytest.mark.parametrize("is_modified, yml_data, readme_text, excepted_results",
+                             VERIFY_YML_COMMANDS_MATCH_README_DATA)
+    def test_verify_yml_commands_match_readme(self, is_modified, yml_data, readme_text, excepted_results,
+                                              integration: Integration):
         """
         Given
         - Case 1: integration with one command mentioned in both the yml and the readme files that were modified.
-        - Case 2: integration with one command that should be excluded from the readme file and mentioned in the yml file that were modified.
+        - Case 2: integration with one command that should be excluded from the readme file and mentioned in the yml
+         file that were modified.
         - Case 3: integration with one command mentioned only in the yml file that were modified.
         - Case 4: integration with one command mentioned only in the yml file that aren't modified.
         When
@@ -1374,6 +1412,21 @@ class TestIsFeedParamsExist:
         struct = mock_structure(current_file=yml_data, file_path=integration.yml.path)
         integration_validator = IntegrationValidator(struct)
         assert integration_validator.verify_yml_commands_match_readme(is_modified) == excepted_results
+
+    def test_verify_yml_commands_match_readme_no_readme_file(self, integration: Integration):
+        """
+        Given
+        - integration with no readme file.
+        When
+        - Running verify_yml_commands_match_readme on the integration.
+        Then
+        - Ensure validation stops before checking if there is a match between the yml and readme.
+        """
+        yml_data = {'script': {'commands': [{'name': 'command_name'}]}}
+        integration.yml.write_dict(yml_data)
+        struct = mock_structure(current_file=yml_data, file_path=integration.yml.path)
+        integration_validator = IntegrationValidator(struct)
+        assert integration_validator.verify_yml_commands_match_readme(is_modified=True) is False
 
 
 class TestisContextChanged:

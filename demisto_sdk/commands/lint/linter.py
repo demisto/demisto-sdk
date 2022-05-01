@@ -130,6 +130,7 @@ class Linter:
             2. Run in package docker - pylint, pytest.
 
         Args:
+            no_xsoar_linter(bool): Whether to skip xsoar-linter
             no_flake8(bool): Whether to skip flake8
             no_bandit(bool): Whether to skip bandit
             no_mypy(bool): Whether to skip mypy
@@ -216,7 +217,7 @@ class Linter:
             return True
         # Docker images
         if self._facts["docker_engine"]:
-            logger.info(f"{log_prompt} - Pulling docker images, can take up to 1-2 minutes if not exists locally ")
+            logger.info(f'{log_prompt} - Collecting all docker images to pull')
             self._facts["images"] = [[image, -1] for image in get_all_docker_images(script_obj=script_obj)]
             # Gather environment variables for docker execution
             self._facts["env_vars"] = {
@@ -977,7 +978,8 @@ class Linter:
     def _update_support_level(self):
         pack_dir = self._pack_abs_dir.parent if self._pack_abs_dir.parts[-1] == INTEGRATIONS_DIR else \
             self._pack_abs_dir.parent.parent
-        pack_meta_content: Dict = json.load((pack_dir / PACKS_PACK_META_FILE_NAME).open())
+        with (pack_dir / PACKS_PACK_META_FILE_NAME).open() as f:
+            pack_meta_content: Dict = json.load(f)
         self._facts['support_level'] = pack_meta_content.get('support')
         if self._facts['support_level'] == 'partner' and pack_meta_content.get('Certification'):
             self._facts['support_level'] = 'certified partner'

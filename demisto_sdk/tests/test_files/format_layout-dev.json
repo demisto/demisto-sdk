@@ -1,5 +1,5 @@
 {
-  "typeId": "ExtraHop Detection",
+  "typeId": "ExtraHop Detection_dev",
   "fromServerVersion": "",
   "locked": false,
   "quickView": null,
@@ -41,6 +41,25 @@
         "description": "",
         "query": null,
         "queryType": ""
+      },
+      {
+        "description": "",
+        "h": 1,
+        "hideName": false,
+        "i": "sfmcsjvzpo-7d51dbd0-af07-11ea-a169-995a487457b1",
+        "items": [],
+        "maxW": 3,
+        "minH": 1,
+        "minW": 1,
+        "moved": false,
+        "name": "test_copy",
+        "query": "scriptName_copy",
+        "queryType": "script",
+        "static": false,
+        "type": "dynamic",
+        "w": 1,
+        "x": 2,
+        "y": 0
       }
     ]
   }

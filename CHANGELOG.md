@@ -1,7 +1,8 @@
 # Changelog
-* enhanced ***validate*** command to list all command names affected by a backward compatibility break, instead of only one.
 
 ## Unreleased
+* enhanced ***validate*** command to list all command names affected by a backward compatibility break, instead of only one.
+* Added support for Wizard content item in the **format**, **validate**, **upload**, **create-id-set**, **find-dependecies** and **create-content-artifacts** commands.
 
 ## 1.6.5
 
@@ -9,7 +10,6 @@
 * Fixed an issue where the **doc-review** command was successful even when the release-note is malformed.
 * Added timestamps to the `demisto-sdk` logger.
 * Added time measurements to **lint**.
-* Added support for Wizard content item in the **format**, **validate**, **upload**, **create-id-set**, **find-dependecies** and **create-content-artifacts** commands.
 * Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
 * Fixed an issue where **doc-review** failed to recognize script names, in scripts using the old file structure.
 * Fixed an issue where concurrent processes created by **lint** caused deadlocks when opening files.

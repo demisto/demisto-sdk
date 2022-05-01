@@ -1491,7 +1491,7 @@ def process_wizards(file_path: str, packs: Dict[str, Dict], marketplace: str, pr
         if find_type(file_path) == FileType.WIZARD:
             if print_logs:
                 print(f'adding {file_path} to id_set')
-            result.append(get_wizrd_data(file_path, packs=packs))
+            result.append(get_wizard_data(file_path, packs=packs))
     except Exception as exp:  # noqa
         print_error(f'failed to process wizard {file_path}, Error: {str(exp)}')
         raise
@@ -1851,7 +1851,7 @@ def get_list_data(path: str, packs: Dict[str, Dict] = None):
     return {json_data.get('id'): data}
 
 
-def get_wizrd_data(path: str, packs: Dict[str, Dict] = None):
+def get_wizard_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
     marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
     data = create_common_entity_data(path=path,

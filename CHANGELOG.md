@@ -4,6 +4,7 @@
 
 * Added timestamps to the `demisto-sdk` logger.
 * Added time measurements to **lint**.
+* Added support for Wizard content item in the **format**, **validate**, **upload**, **create-id-set**, **find-dependecies** and **create-content-artifacts** commands.
 * Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
 
 ## 1.6.4
@@ -37,7 +38,6 @@ the same as the last release note version.
 * Fixed an issue in the **validate** and **format** commands where *None* arguments in integration commands caused the commands to fail unexpectedly.
 * Added support for running tests on XSIAM machines in the **test-content** command.
 * Fixed an issue where the **validate** command did not work properly when deleting non-content items.
-* Added support for Wizard content item in the **format**, **validate**, **upload**, **create-id-set**, **find-dependecies** and **create-content-artifacts** commands.
 
 ## 1.6.3
 

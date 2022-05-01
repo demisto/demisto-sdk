@@ -1861,7 +1861,6 @@ def get_wizrd_data(path: str, packs: Dict[str, Dict] = None):
                                      pack=get_pack_name(path),
                                      marketplaces=marketplaces,
                                      )
-    # TODO: consider adding dependency packs here
 
     return {json_data.get('id'): data}
 

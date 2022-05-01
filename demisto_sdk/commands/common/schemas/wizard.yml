@@ -2,13 +2,12 @@ type: map
 mapping:
   id:
     type: str
-    required: True
+    required: true
   version:
     type: int
-    required: True
   name:
     type: str
-    required: True
+    required: true
   modified:
     type: str
   description:
@@ -19,24 +18,32 @@ mapping:
     type: bool
   fromVersion:
     type: str
+    required: true
   toVersion:
     type: str
   dependency_packs:
-    type: map
+    type: seq
     required: true
-    mapping:
-      - regex;(.+):
-          type: map
-          required: true
-          mapping:
-            min_required:
-              type: int
-              required: true
-            packs:
-              type: seq
-              required: true
-              sequence:
-                - type: str
+    sequence:
+      - type: map
+        required: true
+        mapping:
+          name:
+            type: str
+            required: true
+          min_required:
+            type: int
+            required: true
+          packs:
+            type: seq
+            required: true
+            sequence:
+            - type: map
+              mapping:
+                name:
+                  type: str
+                display_name:
+                  type: str
   wizard:
     type: map
     required: true
@@ -57,8 +64,9 @@ mapping:
         sequence:
           - include: playbook_schema
       next:
-        type: map
-        required: true
+        type: seq
+        sequence:
+          - include: next_schema
 
 schema;integrations_schema:
   type: map
@@ -66,12 +74,20 @@ schema;integrations_schema:
     name:
       type: str
       required: true
-    action:
-      type: map
-      required: true
     description:
       type: str
       required: true
+    action:
+      type: map
+      required: true
+      mapping:
+        existing:
+          type: str
+        new:
+          type: str
+    priority:
+      type: int
+      required: false
 
 schema;playbook_schema:
   type: map
@@ -82,3 +98,19 @@ schema;playbook_schema:
     link_to_integration:
       type: str
       required: true
+
+schema;next_schema:
+  type: map
+  required: true
+  mapping:
+    name:
+      type: str
+      required: true
+    action:
+      type: map
+      required: true
+      mapping:
+        existing:
+          type: str
+        new:
+          type: str

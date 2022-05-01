@@ -70,7 +70,8 @@ class Repo:
             'GenericFields': [],
             'GenericModules': [],
             'GenericDefinitions': [],
-            'Jobs': []
+            'Jobs': [],
+            'Wizards': [],
         })
 
     def __del__(self):
@@ -165,7 +166,7 @@ class Repo:
         widget.update({'name': f'{name} - widget'})
         widget.update({'widgetType': ''})
 
-        wizard = pack.create_wizrd(f'{name}_wizard')
+        wizard = pack.create_wizard(f'{name}_wizard')
         wizard.write_json({'id': f'{name} - wizard'})
         wizard.update({'name': f'{name} - wizard'})
         wizard.update({'wizard': {}})

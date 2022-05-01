@@ -3,6 +3,8 @@ from distutils.version import LooseVersion
 from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION, JOB, FileType)
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 
@@ -23,6 +25,7 @@ class JobValidator(ContentEntityValidator):
         # not validated
         return True
 
+    @error_codes('JB100')
     def is_valid_fromversion(self):
         if not self.from_version or LooseVersion(self.from_version) < LooseVersion(FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)):
             error_message, error_code = Errors.invalid_fromversion_in_job(self.from_version)
@@ -32,6 +35,7 @@ class JobValidator(ContentEntityValidator):
                 return False
         return True
 
+    @error_codes('JB101,JB103,JB102')
     def is_valid_feed_fields(self):
         is_feed = self.current_file.get('isFeed')
         selected_feeds = self.current_file.get('selectedFeeds')
@@ -69,6 +73,7 @@ class JobValidator(ContentEntityValidator):
 
         return True
 
+    @error_codes('JB104')
     def is_name_not_empty(self):
         name = self.current_file.get('name')
         if (not name) or (name.isspace()):

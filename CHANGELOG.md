@@ -3,6 +3,7 @@
 ## Unreleased
 * enhanced ***validate*** command to list all command names affected by a backward compatibility break, instead of only one.
 * Added support for Wizard content item in the **format**, **validate**, **upload**, **create-id-set**, **find-dependecies** and **create-content-artifacts** commands.
+* Added a new flag to the **validate** command, allowing to run specific validations.
 
 ## 1.6.5
 

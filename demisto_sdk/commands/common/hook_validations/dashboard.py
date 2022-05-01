@@ -1,4 +1,6 @@
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import print_error
@@ -50,6 +52,7 @@ class DashboardValidator(ContentEntityValidator):
         """
         return super(DashboardValidator, self)._is_id_equals_name('dashboard')
 
+    @error_codes('DA100,WD100')
     def contains_forbidden_fields(self):
         # type: () -> bool
         """Return if root and widgets exclude the unnecessary fields.
@@ -86,6 +89,7 @@ class DashboardValidator(ContentEntityValidator):
             print_error(error_msg)
         return is_valid
 
+    @error_codes('DA101,WD101')
     def is_including_fields(self):
         # type: () -> bool
         """Return if root and inner widgets includes the necessary fields.

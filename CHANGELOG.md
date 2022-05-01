@@ -17,7 +17,6 @@
 * Fixed an issue where **validate** failed on nonexistent `README.md` files.
 * Added support of XSIAM content items to the **validate** command.
 * Report **lint** summary results and failed packages after reporting time measurements.
-* Added a new flag to the **validate** command, allowing to run specific validations.
 
 ## 1.6.4
 

@@ -1064,10 +1064,10 @@ class TestZippedPackUpload:
             skip_value = None
         assert not skip_value
 
-    def test_upload_xsiam_pack(self, mocker):
+    def test_upload_xsiam_pack_to_xsiam(self, mocker):
         """
         Given:
-            - XSIAM pack to upload
+            - XSIAM pack to upload to XSIAM
         When:
             - call to upload command
         Then:
@@ -1094,6 +1094,38 @@ class TestZippedPackUpload:
 
         assert 'Triggers/' in xsiam_pack_files
         assert 'XSIAMDashboards/' in xsiam_pack_files
+
+    def test_upload_xsiam_pack_to_xsoar(self, mocker):
+        """
+        Given:
+            - XSIAM pack to upload to XSOAR
+        When:
+            - call to upload command
+        Then:
+            - Make sure XSIAM entities are not in the zip we want to upload
+        """
+        # prepare
+        mock_api_client(mocker)
+        mocker.patch.object(Uploader, 'zipped_pack_uploader')
+
+        # run
+        click.Context(command=upload).invoke(upload, input=TEST_XSIAM_PACK, xsiam=False, zip=True)
+
+        zip_file_path = Uploader.zipped_pack_uploader.call_args[1]['path']
+
+        assert 'uploadable_packs.zip' in zip_file_path
+
+        with zipfile.ZipFile(zip_file_path, "r") as zfile:
+            for name in zfile.namelist():
+                if re.search(r'\.zip$', name) is not None:
+                    # We have a zip within a zip
+                    zfiledata = BytesIO(zfile.read(name))
+                    with zipfile.ZipFile(zfiledata) as xsiamzipfile:
+                        xsiam_pack_files = xsiamzipfile.namelist()
+
+        # XSIAM entities are not supposed to get upload to XSOAR
+        assert 'Triggers/' not in xsiam_pack_files
+        assert 'XSIAMDashboards/' not in xsiam_pack_files
 
 
 class TestItemDetacher:

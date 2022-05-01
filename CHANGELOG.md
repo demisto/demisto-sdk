@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
+* Added the flag '-x', '--xsiam' to **upload** command to upload XSIAM entities to XSIAM server.
 
 ## 1.6.4
 

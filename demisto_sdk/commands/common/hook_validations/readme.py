@@ -21,8 +21,8 @@ from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 Errors)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator, error_codes)
 from demisto_sdk.commands.common.tools import (
     compare_context_path_in_yml_and_readme, get_content_path,
     get_url_with_retries, get_yaml, get_yml_paths_in_dir, print_warning,
@@ -71,9 +71,9 @@ class ReadMeValidator(BaseValidator):
     MINIMUM_README_LENGTH = 30
 
     def __init__(self, file_path: str, ignored_errors=None, print_as_warnings=False, suppress_print=False,
-                 json_file_path=None):
+                 json_file_path=None, specific_validations=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print, json_file_path=json_file_path)
+                         suppress_print=suppress_print, json_file_path=json_file_path, specific_validations=specific_validations)
         self.content_path = get_content_path()
         self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent
@@ -209,6 +209,7 @@ class ReadMeValidator(BaseValidator):
             self.readme_content.startswith('<!DOCTYPE html>') or \
             ('<thead>' in self.readme_content and '<tbody>' in self.readme_content)
 
+    @error_codes('RM101')
     def is_image_path_valid(self) -> bool:
         """ Validate images absolute paths, and prints the suggested path if its not valid.
 
@@ -344,6 +345,7 @@ class ReadMeValidator(BaseValidator):
 
         return error_list
 
+    @error_codes('RM100')
     def verify_no_empty_sections(self) -> bool:
         """ Check that if the following headlines exists, they are not empty:
             1. Troubleshooting
@@ -394,6 +396,7 @@ class ReadMeValidator(BaseValidator):
                 errors += f'Replace "{section}" with a suitable info.\n'
         return errors
 
+    @error_codes('RM100')
     def verify_no_default_sections_left(self) -> bool:
         """ Check that there are no default leftovers such as:
             1. 'FILL IN REQUIRED PERMISSIONS HERE'.
@@ -413,6 +416,7 @@ class ReadMeValidator(BaseValidator):
 
         return is_valid
 
+    @error_codes('RM100')
     def verify_readme_is_not_too_short(self):
         is_valid = True
         readme_size = len(self.readme_content)
@@ -426,6 +430,7 @@ class ReadMeValidator(BaseValidator):
             is_valid = False
         return is_valid
 
+    @error_codes('RM102,IN136')
     def is_context_different_in_yml(self) -> bool:
         """
         Checks if there has been a corresponding change to the integration's README
@@ -490,6 +495,7 @@ class ReadMeValidator(BaseValidator):
 
         return valid
 
+    @error_codes('RM106')
     def verify_demisto_in_readme_content(self):
         """
         Checks if there are the word 'Demisto' in the README content.
@@ -516,6 +522,7 @@ class ReadMeValidator(BaseValidator):
 
         return is_valid
 
+    @error_codes('RM107')
     def verify_template_not_in_readme(self):
         """
         Checks if there are the generic sentence '%%FILL HERE%%' in the README content.

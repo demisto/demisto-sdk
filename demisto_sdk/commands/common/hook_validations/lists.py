@@ -2,6 +2,8 @@ from distutils.version import LooseVersion
 from typing import List
 
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 
@@ -38,6 +40,7 @@ class ListsValidator(ContentEntityValidator):
         """
         return self._is_valid_version()
 
+    @error_codes('LI100,LI101')
     def is_valid_from_server_version(self) -> bool:
         """Checks if from version field is valid.
 

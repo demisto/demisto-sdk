@@ -1,5 +1,3 @@
-from typing import Optional
-
 import pytest
 from mock import patch
 
@@ -9,7 +7,6 @@ from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None, quiet_bc=False):
-    # type: (Optional[str], Optional[dict], Optional[dict]) -> StructureValidator
     with patch.object(StructureValidator, '__init__', lambda a, b: None):
         structure = StructureValidator(file_path)
         structure.is_valid = True
@@ -20,6 +17,7 @@ def mock_structure(file_path=None, current_file=None, old_file=None, quiet_bc=Fa
         structure.prev_ver = 'master'
         structure.branch_name = ''
         structure.quiet_bc = quiet_bc
+        structure.specific_validations = None
         return structure
 
 

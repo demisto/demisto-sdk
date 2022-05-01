@@ -7,7 +7,7 @@ from shutil import make_archive
 
 import click
 
-from demisto_sdk.commands.common.constants import PACKS_DIR
+from demisto_sdk.commands.common.constants import PACKS_DIR, MarketplaceVersions
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.tools import arg_to_list
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
@@ -20,8 +20,8 @@ EX_FAIL = 1
 
 class PacksZipper:
 
-    def __init__(self, pack_paths: str, output: str, content_version: str, zip_all: bool, marketplace: str = 'xsoar',
-                 quiet_mode: bool = False):
+    def __init__(self, pack_paths: str, output: str, content_version: str, zip_all: bool,
+                 marketplace: str = MarketplaceVersions.XSOAR.value, quiet_mode: bool = False):
         self.artifacts_manager = PacksManager(
             pack_paths=pack_paths,
             artifacts_path=output,
@@ -57,7 +57,8 @@ class PacksManager(ArtifactsManager):
 
     """
 
-    def __init__(self, pack_paths: str, all_in_one_zip: bool, quiet_mode: bool, marketplace: str, **kwargs):
+    def __init__(self, pack_paths: str, all_in_one_zip: bool, quiet_mode: bool,
+                 marketplace: str = MarketplaceVersions.XSOAR.value, **kwargs):
         super().__init__(packs=True, zip=True, cpus=1, suffix='', marketplace=marketplace, **kwargs)
         self.init_packs(pack_paths)
         self.zip_all = all_in_one_zip

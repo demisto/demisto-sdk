@@ -148,7 +148,9 @@ def get_test_modules(content_repo: Optional[git.Repo], is_external_repo: bool) -
 
         for module in modules:
             try:
-                modules_content[module] = (content_repo.working_dir / module).read_bytes()
+                module_full_path = content_repo.working_dir / module
+                logger.debug(f'read file {module_full_path}')
+                modules_content[module] = (module_full_path).read_bytes()
             except FileNotFoundError:
                 module_not_found = True
                 logger.warning(f'Module {module} was not found, possibly deleted due to being in a feature branch')
@@ -163,7 +165,7 @@ def get_test_modules(content_repo: Optional[git.Repo], is_external_repo: bool) -
                 res = requests.get(url=url,
                                    verify=False)
                 if res.ok:
-                    # ok - not 4XX or 5XX
+                    logger.debug('got file {module} - ok - not 4XX or 5XX')
                     modules_content[module] = res.content
                     break
                 elif trial == 2:
@@ -278,9 +280,6 @@ def add_tmp_lint_files(content_repo: git.Repo, pack_path: Path, lint_files: List
     except Exception as e:
         logger.error(f'add_tmp_lint_files unexpected exception: {str(e)}')
         raise
-    finally:
-        # If we want to change handling of files after finishing - do it here
-        pass
 
 
 @lru_cache(maxsize=300)
@@ -356,9 +355,9 @@ def get_file_from_container(container_obj: Container, container_path: str, encod
     """
     data: Union[str, bytes] = b''
     archive, stat = container_obj.get_archive(container_path)
-    file_like = io.BytesIO(b"".join(b for b in archive))
-    tar = tarfile.open(fileobj=file_like)
-    before_read = tar.extractfile(stat['name'])
+    file_like = io.BytesIO(b"".join(archive))
+    with tarfile.open(fileobj=file_like) as tar:
+        before_read = tar.extractfile(stat['name'])
     if isinstance(before_read, io.BufferedReader):
         data = before_read.read()
     if encoding and isinstance(data, bytes):
@@ -412,7 +411,7 @@ def stream_docker_container_output(streamer: Generator) -> None:
         for chunk in streamer:
             logger.info(wrapper.fill(str(chunk.decode('utf-8'))))
     except Exception:
-        pass
+        logger.info('Failed to stream a container log.')
 
 
 @contextmanager

@@ -11,7 +11,7 @@ from demisto_sdk.commands.common.constants import (
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 ALLOWED_IGNORE_ERRORS = [
-    'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113',
+    'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113', 'BA116',
     'DS107',
     'GF102',
     'IF100', 'IF106', 'IF115', 'IF116',
@@ -52,6 +52,7 @@ ERROR_CODE = {
     "spaces_in_the_end_of_name": {'code': "BA113", 'ui_applicable': False, 'related_field': 'name'},
     "changed_pack_name": {'code': "BA114", 'ui_applicable': False, 'related_field': 'name'},
     "file_cannot_be_deleted": {'code': "BA115", 'ui_applicable': False, 'related_field': ''},
+    "cli_name_and_id_do_not_match": {'code': "BA116", 'ui_applicable': False, 'related_field': 'cliName'},
 
     # BC - Backward Compatible
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -906,9 +907,11 @@ class Errors:
 
     @classmethod
     @error_code_decorator
-    def breaking_backwards_command_arg_changed(cls, command):
-        return "{}, You've changed the name of a command or its arg in" \
-               " the file, please undo, the command was:\n{}".format(cls.BACKWARDS, command)
+    def breaking_backwards_command_arg_changed(cls, commands_ls):
+        error_msg = "{}, Your updates to this file contains changes to a name or an argument of an existing command(s).\n" \
+            "Please undo you changes to the following command(s):\n".format(cls.BACKWARDS)
+        error_msg += '\n'.join(commands_ls)
+        return error_msg
 
     @staticmethod
     @error_code_decorator
@@ -2162,6 +2165,12 @@ class Errors:
     @error_code_decorator
     def spaces_in_the_end_of_name(name: str):
         return f'Content item name "{name}" should not have trailing spaces. Please remove.'
+
+    @staticmethod
+    @error_code_decorator
+    def cli_name_and_id_do_not_match(cli_name_correct):
+        return f'cliName and id do not match.\n' \
+               f'Please change cliName to {cli_name_correct} (the flat-case version of id, excluding item-type prefixes)'
 
     @staticmethod
     @error_code_decorator

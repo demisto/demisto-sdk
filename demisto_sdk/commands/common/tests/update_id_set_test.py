@@ -2810,7 +2810,7 @@ class TestWizard:
         assert len(res) == 1
         datum = res[0][wizard.id]
         assert datum['name'] == wizard.id
-        assert datum['dependency_packs'] == TestWizard.EXPECTED_DEPENDENCY_PACKS
+        assert set(datum['dependency_packs']) == set(TestWizard.EXPECTED_DEPENDENCY_PACKS)
         path = Path(datum['file_path'])
         assert path.name == wizard.name
         assert path.exists()

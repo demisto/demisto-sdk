@@ -7,8 +7,8 @@ import re
 from demisto_sdk.commands.common.constants import (
     PACKS_DIR, RN_HEADER_BY_FILE_TYPE, SKIP_RELEASE_NOTES_FOR_TYPES)
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator, error_codes)
 from demisto_sdk.commands.common.tools import (extract_docker_image_from_text,
                                                find_type,
                                                get_latest_release_notes_text,
@@ -28,9 +28,9 @@ class ReleaseNotesValidator(BaseValidator):
     """
 
     def __init__(self, release_notes_file_path, modified_files=None, pack_name=None, added_files=None, ignored_errors=None,
-                 print_as_warnings=False, suppress_print=False, json_file_path=None):
+                 print_as_warnings=False, suppress_print=False, json_file_path=None, specific_validations=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print, json_file_path=json_file_path)
+                         suppress_print=suppress_print, json_file_path=json_file_path, specific_validations=specific_validations)
         self.release_notes_file_path = release_notes_file_path
         self.modified_files = modified_files
         self.added_files = added_files
@@ -39,6 +39,7 @@ class ReleaseNotesValidator(BaseValidator):
         self.release_notes_path = get_release_notes_file_path(self.release_notes_file_path)
         self.latest_release_notes = get_latest_release_notes_text(self.release_notes_path)
 
+    @error_codes('RN107')
     def are_release_notes_complete(self):
         is_valid = True
         modified_added_files = itertools.chain.from_iterable((self.added_files or [], self.modified_files or []))
@@ -67,6 +68,7 @@ class ReleaseNotesValidator(BaseValidator):
                                 is_valid = False
         return is_valid
 
+    @error_codes('RN104,RN103')
     def has_release_notes_been_filled_out(self):
         release_notes_comments = self.strip_exclusion_tag(self.latest_release_notes)
         if len(release_notes_comments) == 0:
@@ -79,6 +81,7 @@ class ReleaseNotesValidator(BaseValidator):
                 return False
         return True
 
+    @error_codes('RN111')
     def is_docker_image_same_as_yml(self) -> bool:
         """
         Iterates on all modified yaml files,

@@ -5,6 +5,8 @@ import click
 from demisto_sdk.commands.common.constants import \
     LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import \
@@ -58,6 +60,7 @@ class MapperValidator(ContentEntityValidator):
         ]
         return not any(answers)
 
+    @error_codes('MP108,MP107')
     def is_field_mapping_removed(self):
         """checks if some incidents fields or incidents types were removed"""
         old_mapper = self.old_file.get('mapping', {})
@@ -96,6 +99,7 @@ class MapperValidator(ContentEntityValidator):
 
         return False
 
+    @error_codes('MP100,MP103')
     def is_valid_from_version(self):
         """Checks if from version field is valid.
 
@@ -117,6 +121,7 @@ class MapperValidator(ContentEntityValidator):
                 return False
         return True
 
+    @error_codes('MP101')
     def is_valid_to_version(self):
         """Checks if to version is valid.
 
@@ -132,6 +137,7 @@ class MapperValidator(ContentEntityValidator):
                     return False
         return True
 
+    @error_codes('CL106')
     def is_to_version_higher_from_version(self):
         """Checks if to version field is higher than from version field.
 
@@ -145,6 +151,7 @@ class MapperValidator(ContentEntityValidator):
                     return False
         return True
 
+    @error_codes('MP104')
     def is_valid_type(self):
         """Checks if type field is valid.
 
@@ -157,6 +164,7 @@ class MapperValidator(ContentEntityValidator):
                 return False
         return True
 
+    @error_codes('MP106')
     def is_incident_field_exist(self, id_set_file, is_circle) -> bool:
         """Checks if incident field is valid - exist in the content.
 

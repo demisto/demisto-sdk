@@ -3462,3 +3462,81 @@ class TestValidationUsingGit:
         assert f'Validating {script.yml.rel_path}' in result.stdout
         assert f'Validating {integration_2.yml.rel_path}' not in result.stdout
         assert f'Validating {script_2.yml.rel_path}' not in result.stdout
+
+
+class TestSpecificValidations:
+    def test_validate_with_different_specific_validation(self, mocker, repo):
+        """
+        Given
+        - an invalid Reputation - negative integer in expiration field.
+
+        When
+        - Running validate on it with flag --run-specific-validations BA101.
+
+        Then
+        - Ensure validate doesn't fail on RP101 - wrong value in expiration field
+        due to the flag.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        reputation_copy = REPUTATION.copy()
+        reputation_copy['expiration'] = -1
+        reputation = pack._create_json_based(name='reputation', prefix='', content=reputation_copy)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', reputation.path, '--run-specific-validations', 'BA101'], catch_exceptions=False)
+        assert f'Validating {reputation.path} as reputation' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_validate_with_flag_specific_validation(self, mocker, repo):
+        """
+        Given
+        - an invalid Reputation - negative integer in expiration field and a 'details' that does not match its id.
+
+        When
+        - Running validate on it with flag --run-specific-validations RP101.
+
+        Then
+        - Ensure validate fails on RP101 - wrong value in expiration field and not on RP102 - id and details fields are not equal.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        reputation_copy = REPUTATION.copy()
+        reputation_copy['expiration'] = -1
+        reputation_copy["details"] = "reputationn"
+        reputation = pack._create_json_based(name='reputation', prefix='', content=reputation_copy)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', reputation.path, '--run-specific-validations', 'RP101'], catch_exceptions=False)
+        assert f'Validating {reputation.path} as reputation' in result.stdout
+        assert 'RP101' in result.stdout
+        assert 'Expiration field should have a positive numeric value.' in result.stdout
+        assert result.exit_code == 1
+
+    def test_validate_with_flag_specific_validation_entire_code_section(self, mocker, repo):
+        """
+        Given
+        - an invalid Reputation - negative integer in expiration field and a 'details' that does not match its id.
+
+        When
+        - Running validate on it with flag --run-specific-validations RP.
+
+        Then
+        - Ensure validate fails on RP101 - wrong value in expiration field and on RP102 - id and details fields are not equal.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        reputation_copy = REPUTATION.copy()
+        reputation_copy['expiration'] = -1
+        reputation_copy["details"] = "reputationn"
+        reputation = pack._create_json_based(name='reputation', prefix='', content=reputation_copy)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', reputation.path, '--run-specific-validations', 'RP'], catch_exceptions=False)
+        assert f'Validating {reputation.path} as reputation' in result.stdout
+        assert 'RP101' in result.stdout
+        assert 'Expiration field should have a positive numeric value.' in result.stdout
+        assert 'RP102' in result.stdout
+        assert 'id and details fields are not equal.' in result.stdout
+        assert result.exit_code == 1

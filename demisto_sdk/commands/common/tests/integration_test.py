@@ -223,7 +223,6 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.is_changed_command_name_or_arg()
         stdout = capsys.readouterr().out
-        print(expected_error_msg)
         assert expected_error_msg == stdout.strip()
 
     WITHOUT_DUP = [{"name": "test"}, {"name": "test1"}]

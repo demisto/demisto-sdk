@@ -19,6 +19,7 @@ def get_validator(current_file=None, old_file=None, file_path=""):
         structure.prev_ver = 'master'
         structure.branch_name = ''
         structure.quiet_bc = False
+        structure.specific_validations = None
         validator = WizardValidator(structure)
         validator.current_file = current_file
     return validator

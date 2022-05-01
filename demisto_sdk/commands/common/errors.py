@@ -419,7 +419,22 @@ ERROR_CODE = {
         'code': "WZ100",
         'ui_applicable': False,
         'related_field': 'dependency_packs'
-    }
+    },
+    "missing_dependency_pack_in_wizard": {
+        'code': "WZ101",
+        'ui_applicable': False,
+        'related_field': 'dependency_packs'
+    },
+    "invalid_integration_in_wizard": {
+        'code': "WZ102",
+        'ui_applicable': False,
+        'related_field': 'wizard'
+    },
+    "invalid_playbook_in_wizard": {
+        'code': "WZ103",
+        'ui_applicable': False,
+        'related_field': 'wizard'
+    },
 }
 
 
@@ -2258,4 +2273,19 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_dependency_pack_in_wizard(dep_pack):
-        return f"Dependency Pack {dep_pack} was not found. Please check the it's written correctly."
+        return f"Dependency Pack \"{dep_pack}\" was not found. Please check it's written correctly."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_integration_in_wizard(integration):
+        return f"Integration \"{integration}\" does not exist. Please check it's written correctly."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_playbook_in_wizard(playbook):
+        return f"Playbook \"{playbook}\" does not exist. Please check it's written correctly."
+
+    @staticmethod
+    @error_code_decorator
+    def missing_dependency_pack_in_wizard(pack, content_item):
+        return f"Pack {pack} is missing from the \"dependency_packs\". This pack is required for {content_item}."

@@ -201,7 +201,7 @@ class TestIntegrationValidator:
     ]
 
     @pytest.mark.parametrize("current, old, expected_error_msg", CHANGED_COMMAND_OR_ARG_MST_TEST_INPUTS)
-    def test_is_changed_command_name_or_arg_msg(self, capsys, current, old, expected_error_msg):
+    def test_no_changed_command_name_or_arg_msg(self, capsys, current, old, expected_error_msg):
         """
         Given
         An integration with BC break in the following way:
@@ -212,7 +212,7 @@ class TestIntegrationValidator:
         where each command has 1 argument - argument_test_name_1, argument_test_name_2 respectively.
 
         When
-        - running the validation is_changed_command_name_or_arg()
+        - running the validation no_changed_command_name_or_arg()
 
         Then
         Ensure that the error massage was created correctly.
@@ -222,7 +222,7 @@ class TestIntegrationValidator:
         old = {'script': {'commands': old}}
         structure = mock_structure("", current, old)
         validator = IntegrationValidator(structure)
-        validator.is_changed_command_name_or_arg()
+        validator.no_changed_command_name_or_arg()
         stdout = capsys.readouterr().out
         assert expected_error_msg == stdout.strip()
 

@@ -2787,7 +2787,7 @@ class TestJob:
 
 
 class TestWizard:
-    EXPECTED_DEPENDENCY_PACKS = {'MicrosoftDefenderAdvancedThreatProtection', 'CrowdStrikeFalcon'}
+    EXPECTED_DEPENDENCY_PACKS = ['CrowdStrikeFalcon', 'MicrosoftDefenderAdvancedThreatProtection']
 
     @staticmethod
     @pytest.mark.parametrize('print_logs', (True, False))

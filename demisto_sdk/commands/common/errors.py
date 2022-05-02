@@ -10,6 +10,7 @@ from demisto_sdk.commands.common.constants import (
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
+# allowed errors to be ignored in XSOAR supported packs only if they appear in the .pack-ignore
 ALLOWED_IGNORE_ERRORS = [
     'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113', 'BA116',
     'DS107',
@@ -25,11 +26,13 @@ ALLOWED_IGNORE_ERRORS = [
     'IM111'
 ]
 
+# predefined errors to be ignored in partner/community supported packs even if they do not appear in .pack-ignore
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126', 'IN140'],
     'partner': ['CJ', 'IN140']
 }
 
+# predefined errors to be ignored in deprecated content entities even if they do not appear in .pack-ignore
 PRESET_ERROR_TO_CHECK = {
     "deprecated": ['ST', 'BC', 'BA', 'IN127', 'IN128', 'PB104', 'SC101'],
 }

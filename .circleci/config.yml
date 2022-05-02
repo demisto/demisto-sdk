@@ -20,7 +20,7 @@ parameters:
     default: v3  # Change this parameter to clear cache.
   global-docker-image:
     type: string
-    default: cimg/python:3.10.2-node
+    default: cimg/python:3.10.4-node
 
 
 references:

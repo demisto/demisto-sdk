@@ -149,15 +149,13 @@ def test_xsoar_linter_errors(mocker, file, python_version, support_level, long_r
     - Ensure invalid files fail with the correct error messages.
     """
 
-    mocker.patch.object(linter.Linter, '_docker_login')
     mocker.patch.object(linter.Linter, '_update_support_level')
-    linter.Linter._docker_login.return_value = False
     test_path = Path(f"{GIT_ROOT}/demisto_sdk/tests/test_files")
     runner = linter.Linter(content_repo=test_path,
                            pack_dir=test_path,
                            req_2=[],
                            req_3=[],
-                           docker_engine=True,
+                           docker_engine=False,
                            docker_timeout=60)
     runner._facts['support_level'] = support_level
     runner._facts['is_long_running'] = long_running

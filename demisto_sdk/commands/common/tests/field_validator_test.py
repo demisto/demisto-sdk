@@ -214,6 +214,7 @@ class TestFieldValidator:
             structure.is_valid = True
             structure.prev_ver = 'master'
             structure.branch_name = ''
+            structure.specific_validations = None
             validator = FieldBaseValidator(structure, set(), set())
             validator.current_file = current_file
             assert validator.does_cli_name_match_id()
@@ -235,6 +236,7 @@ class TestFieldValidator:
             structure.is_valid = True
             structure.prev_ver = 'master'
             structure.branch_name = ''
+            structure.specific_validations = None
             validator = FieldBaseValidator(structure, set(), set())
             validator.current_file = current_file
             assert not validator.does_cli_name_match_id()

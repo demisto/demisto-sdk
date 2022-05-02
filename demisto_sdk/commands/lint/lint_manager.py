@@ -474,24 +474,26 @@ class LintManager:
                                                no_vulture=no_vulture, no_xsoar_linter=no_xsoar_linter,
                                                no_pylint=no_pylint, no_test=no_test, no_pwsh_analyze=no_pwsh_analyze,
                                                no_pwsh_test=no_pwsh_test, docker_engine=self._facts["docker_engine"])
-        return_exit_code, return_warning_code = self.execute_all_packages(parallel=parallel,
-                                                                          no_flake8=no_flake8,
-                                                                          no_xsoar_linter=no_xsoar_linter,
-                                                                          no_bandit=no_bandit,
-                                                                          no_mypy=no_mypy,
-                                                                          no_pylint=no_pylint,
-                                                                          no_coverage=no_coverage,
-                                                                          no_vulture=no_vulture,
-                                                                          no_test=no_test,
-                                                                          no_pwsh_test=no_pwsh_test,
-                                                                          keep_container=keep_container,
-                                                                          test_xml=test_xml,
-                                                                          docker_timeout=docker_timeout,
-                                                                          no_pwsh_analyze=no_pwsh_analyze,
-                                                                          lint_status=lint_status,
-                                                                          pkgs_status=pkgs_status,
-                                                                          pkgs_type=pkgs_type,
-                                                                          )
+
+        return_exit_code, return_warning_code = self.execute_all_packages(
+            parallel=parallel,
+            no_flake8=no_flake8,
+            no_xsoar_linter=no_xsoar_linter,
+            no_bandit=no_bandit,
+            no_mypy=no_mypy,
+            no_pylint=no_pylint,
+            no_coverage=no_coverage,
+            no_vulture=no_vulture,
+            no_test=no_test,
+            no_pwsh_test=no_pwsh_test,
+            keep_container=keep_container,
+            test_xml=test_xml,
+            docker_timeout=docker_timeout,
+            no_pwsh_analyze=no_pwsh_analyze,
+            lint_status=lint_status,
+            pkgs_status=pkgs_status,
+            pkgs_type=pkgs_type,
+      )
 
         if time_measurements_dir:
             report_time_measurements(group_name='lint', time_measurements_dir=time_measurements_dir)

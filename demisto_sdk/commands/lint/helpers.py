@@ -483,7 +483,7 @@ def coverage_report_editor(coverage_file, code_file_absolute_path):
         but our tests (pytest step) are running inside a docker container.
         so we have to change the path to the correct one.
     """
-    logger.info('Editing coverage report')
+    logger.info(f'Editing coverage report for {coverage_file}')
     with sqlite3.connect(coverage_file) as sql_connection:
         cursor = sql_connection.cursor()
         index = cursor.execute('SELECT count(*) FROM file').fetchall()[0][0]

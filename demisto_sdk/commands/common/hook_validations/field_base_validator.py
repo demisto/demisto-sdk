@@ -9,6 +9,8 @@ from typing import List, Set
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, MarketplaceVersions)
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import (get_core_pack_list,
@@ -110,6 +112,7 @@ class FieldBaseValidator(ContentEntityValidator):
             answers.append(self.is_valid_unsearchable_key())
         return all(answers)
 
+    @error_codes('IF100')
     def is_valid_name(self):
         """Validate that the name and cliName does not contain any potential incident synonyms."""
         name = self.current_file.get("name", "")
@@ -146,6 +149,7 @@ class FieldBaseValidator(ContentEntityValidator):
 
         return True
 
+    @error_codes('IF101')
     def is_valid_content_flag(self):
         """
         Validates that the field is marked as content.
@@ -159,6 +163,7 @@ class FieldBaseValidator(ContentEntityValidator):
                 return False
         return True
 
+    @error_codes('IF102')
     def is_valid_system_flag(self):
         """
         Validates that system flag is false.
@@ -180,6 +185,7 @@ class FieldBaseValidator(ContentEntityValidator):
         """
         return super(FieldBaseValidator, self)._is_valid_version()
 
+    @error_codes('IF103')
     def is_valid_type(self) -> bool:
         """
         Checks if given field type is valid.
@@ -192,6 +198,7 @@ class FieldBaseValidator(ContentEntityValidator):
                 return False
         return True
 
+    @error_codes('IF104')
     def is_valid_group(self) -> bool:
         """
         Checks if given group number is a valid number.
@@ -237,6 +244,7 @@ class FieldBaseValidator(ContentEntityValidator):
                 return False
         return True
 
+    @error_codes('IF105')
     def is_matching_cli_name_regex(self) -> bool:
         """
         Checks if the field cliName matches the expected cliName regex.
@@ -251,6 +259,7 @@ class FieldBaseValidator(ContentEntityValidator):
             return False
         return True
 
+    @error_codes('IF106')
     def is_cli_name_is_builtin_key(self) -> bool:
         """
         Checks if given CLI name is a reserved word that cannot be used due to Bleve mapping.
@@ -265,6 +274,7 @@ class FieldBaseValidator(ContentEntityValidator):
                 is_valid = True
         return is_valid
 
+    @error_codes('IF109')
     def is_valid_required(self) -> bool:
         """Validate that the incident field is not required."""
         # due to a current platform limitation, incident fields can not be set to required
@@ -276,6 +286,7 @@ class FieldBaseValidator(ContentEntityValidator):
                 return False
         return True
 
+    @error_codes('IF110')
     def is_changed_from_version(self) -> bool:
         """
         Checks if given from version field value has been changed.
@@ -294,6 +305,7 @@ class FieldBaseValidator(ContentEntityValidator):
 
         return is_from_version_changed
 
+    @error_codes('IF111')
     def is_changed_type(self) -> bool:
         """
         Validates that the field type was not changed.
@@ -312,6 +324,7 @@ class FieldBaseValidator(ContentEntityValidator):
 
         return is_type_changed
 
+    @error_codes('IF113')
     def is_valid_field_name_prefix(self) -> bool:
         """
         Validate that a field name starts with its pack name or one of the itemPrefixes from pack metadata.
@@ -338,6 +351,7 @@ class FieldBaseValidator(ContentEntityValidator):
 
         return True
 
+    @error_codes('IF115')
     def is_valid_unsearchable_key(self) -> bool:
         """
         Validate that the unsearchable key is true.
@@ -351,6 +365,7 @@ class FieldBaseValidator(ContentEntityValidator):
                 return False
         return True
 
+    @error_codes('IF112')
     def is_valid_from_version_field(self, min_from_version: LooseVersion, reason_for_min_version: str):
         """
         Validates that the from version field is set to the expected minimum.
@@ -373,6 +388,7 @@ class FieldBaseValidator(ContentEntityValidator):
                 return False
         return True
 
+    @error_codes('IF116')
     def does_not_have_empty_select_values(self) -> bool:
         """
         Due to UI issues, we cannot allow empty values for selectValues field.
@@ -386,6 +402,7 @@ class FieldBaseValidator(ContentEntityValidator):
                 return False
         return True
 
+    @error_codes('IF117,IF118')
     def is_aliased_fields_are_valid(self) -> bool:
         """
         Validates that the aliased fields (fields that appear as Aliases in another field) are valid.

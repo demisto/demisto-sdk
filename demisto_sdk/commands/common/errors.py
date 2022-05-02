@@ -320,6 +320,7 @@ ERROR_CODE = {
     "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
                                                          'related_field': 'fromServerVersion'},
     "invalid_incident_field_in_pre_process_rules": {'code': "PP101", 'ui_applicable': False, 'related_field': ''},
+    "unknown_fields_in_pre_process_rules": {'code': "PP102", 'ui_applicable': False, 'related_field': ''},
 
     # RM - READMEs
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
@@ -907,9 +908,11 @@ class Errors:
 
     @classmethod
     @error_code_decorator
-    def breaking_backwards_command_arg_changed(cls, command):
-        return "{}, You've changed the name of a command or its arg in" \
-               " the file, please undo, the command was:\n{}".format(cls.BACKWARDS, command)
+    def breaking_backwards_command_arg_changed(cls, commands_ls):
+        error_msg = "{}, Your updates to this file contains changes to a name or an argument of an existing command(s).\n" \
+            "Please undo you changes to the following command(s):\n".format(cls.BACKWARDS)
+        error_msg += '\n'.join(commands_ls)
+        return error_msg
 
     @staticmethod
     @error_code_decorator

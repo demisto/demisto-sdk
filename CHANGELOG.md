@@ -3,7 +3,7 @@
 ## Unreleased
 * enhanced ***validate*** command to list all command names affected by a backward compatibility break, instead of only one.
 * Added a new flag to the **validate** command, allowing to run specific validations.
-
+* Fixed an issue in **upload** where list items were not uploaded.
 ## 1.6.5
 
 * Fixed an issue in the **format** command where the `id` field was overwritten for existing JSON files.
@@ -11,7 +11,6 @@
 * Added timestamps to the `demisto-sdk` logger.
 * Added time measurements to **lint**.
 * Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
-* Fixed an issue in the **upload** where list items were not uploaded .
 * Fixed an issue where **doc-review** failed to recognize script names, in scripts using the old file structure.
 * Fixed an issue where concurrent processes created by **lint** caused deadlocks when opening files.
 * Fixed an issue in the **format** command where `_dev` or `_copy` suffixes weren't removed from the subscript names in playbooks and layouts.

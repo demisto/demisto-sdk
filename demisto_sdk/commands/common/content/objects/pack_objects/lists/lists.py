@@ -1,6 +1,7 @@
+import pprint
 from typing import Union
 
-import demisto_client
+from demisto_client.demisto_api import DefaultApi
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import LISTS, FileType
@@ -15,7 +16,7 @@ class Lists(JSONContentObject):
     def __init__(self, path: Union[Path, str]):
         super().__init__(path, LISTS)
 
-    def upload(self, client: demisto_client):
+    def upload(self, client: DefaultApi):
         """
         Upload the lists item to demisto_client
         Args:
@@ -24,11 +25,14 @@ class Lists(JSONContentObject):
         Returns:
             The result of the upload command from demisto_client
         """
-        return client.generic_request_func(
+        response = client.generic_request(
             method='POST',
             path='lists/save',
-            body=json.dumps(self._as_dict),
-        )
+            body=self.to_dict(),
+            response_type='object'
+        )[0]
+
+        return pprint.pformat(response)
 
     def type(self):
         return FileType.LISTS

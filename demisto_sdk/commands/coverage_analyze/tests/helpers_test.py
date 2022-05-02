@@ -350,3 +350,14 @@ class TestGetCoverageObj:
         assert data[0] == (1, '/Users/username/dev/demisto/content/Packs/HealthCheck/Scripts/'
                            'HealthCheckAnalyzeLargeInvestigations/HealthCheckAnalyzeLargeInvestigations.py')
         assert data[1] == (2, '/Users/username/dev/demisto/content/Packs/VirusTotal/Integrations/VirusTotalV3/VirusTotalV3.py')
+
+
+@pytest.mark.parametrize('verbose, logging_level', [
+    (1, logging.INFO),
+    (2, logging.WARNING),
+    (3, logging.DEBUG)
+])
+def test_verbose(verbose: int, logging_level):
+    import logging
+    logger = logging_setup(verbose=3)
+    assert logger.level == logging.DEBUG

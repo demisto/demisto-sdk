@@ -28,7 +28,7 @@ def logging_setup(verbose: int, quiet: Optional[bool] = False,
         2: logging.WARNING,
         3: logging.DEBUG
     }
-    log_level = levels[verbose]
+    log_level: int = levels.get(log_level, levels[3])
     l.setLevel(log_level)
     fmt = logging.Formatter('%(asctime)s [%(levelname)s]: %(message)s', datefmt=DATE_FORMAT)
     console_handler_index = -1

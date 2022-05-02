@@ -72,6 +72,8 @@ Whether to print the pykwalify log errors.
 Set backwards compatibility validation's errors as warnings.
 * **--allow-skipped**
 Don't fail on skipped integrations or when all test playbooks are skipped.
+* **-sv, --run-specific-validations**
+Validate only specific validations by error codes.
 
 **Examples**:
 `demisto-sdk validate -g --no-backwards-comp`
@@ -94,13 +96,22 @@ This indicates that the command runs post commit.
 `demisto-sdk validate -i Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml`
 This will validate the file Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml only.
 <br><br>
+
 `demisto-sdk validate -a`
 This will validate all files under `Packs` directory
 <br><br>
+
 `demisto-sdk validate -i Packs/HelloWorld`
 This will validate all files under the content pack `HelloWorld`
 <br><br>
 
+`demisto-sdk validate -i Packs/HelloWorld --run-specific-validations BA101`
+This will validate all files under the content pack `HelloWorld` using only the validation corresponds to the error code BA101.
+<br><br>
+
+`demisto-sdk validate -i Packs/HelloWorld --run-specific-validations BA`
+This will validate all files under the content pack `HelloWorld` using only the validations from error type of BA.
+<br><br>
 
 ### Error Codes and Ignoring Them
 Starting in version 1.0.9 of Demisto-SDK, each error found by validate (excluding `pykwalify` errors) has an error

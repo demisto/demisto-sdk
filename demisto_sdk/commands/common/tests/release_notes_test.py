@@ -27,6 +27,7 @@ def get_validator(file_path='', modified_files=None, added_files=None):
     release_notes_validator.json_file_path = ''
     release_notes_validator.pack_path = 'Path/CortexXDR'
     release_notes_validator.suppress_print = False
+    release_notes_validator.specific_validations = None
     release_notes_validator.predefined_by_support_ignored_errors = {}
     release_notes_validator.predefined_deprecated_ignored_errors = {}
     return release_notes_validator

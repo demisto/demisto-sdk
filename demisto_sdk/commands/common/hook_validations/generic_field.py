@@ -2,6 +2,8 @@
 This module is designed to validate the correctness of generic field entities in content.
 """
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 
@@ -32,6 +34,7 @@ class GenericFieldValidator(ContentEntityValidator):
     def is_valid_version(self):
         pass
 
+    @error_codes('GF100')
     def is_valid_group(self):
         # type: () -> bool
         group = self.current_file.get("group")
@@ -44,6 +47,7 @@ class GenericFieldValidator(ContentEntityValidator):
 
         return True
 
+    @error_codes('GF101')
     def is_valid_id_prefix(self):
         # type: () -> bool
         """
@@ -59,6 +63,7 @@ class GenericFieldValidator(ContentEntityValidator):
 
         return True
 
+    @error_codes('GF102')
     def is_valid_unsearchable_key(self):
         # type: () -> bool
         """Validate that the unsearchable key is set to true

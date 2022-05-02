@@ -6,6 +6,7 @@
 * enhanced ***validate*** command to list all command names affected by a backward compatibility break, instead of only one.
 * Added a new flag to the **validate** command, allowing to run specific validations.
 * Fixed an issue in **upload** where list items were not uploaded.
+* Added a new validation to **validate** command to verify that *cliName* and *id* keys of the incident field or the indicator field are matches.
 
 ## 1.6.5
 

@@ -63,7 +63,7 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.XSIAM_DASHBOARD: XSIAMDashboard,
     FileType.XSIAM_REPORT: XSIAMReport,
     FileType.TRIGGER: Trigger,
-    FileType.WIZARD: Wizard
+    FileType.WIZARD: Wizard,
 }
 
 TYPE_CONVERSION_BY_FILE_NAME = {

@@ -178,7 +178,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.XSIAM_DASHBOARD: 'XSIAM Dashboards',
     FileType.XSIAM_REPORT: 'XSIAM Reports',
     FileType.TRIGGER: 'Triggers',
-    FileType.WIZARD: 'Wizard',
+    FileType.WIZARD: 'Wizards',
 }
 
 ENTITY_TYPE_TO_DIR = {
@@ -609,7 +609,7 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'pre_process_rule',
     'lists',
     JOB,
-    WIZARD
+    WIZARD,
 ]
 
 INTEGRATION_PREFIX = 'integration'
@@ -788,7 +788,7 @@ JSON_ALL_JOB_REGEXES = [
 ]
 
 JSON_ALL_WIZARD_REGEXES = [
-    WIZARD_JSON_REGEX
+    WIZARD_JSON_REGEX,
 ]
 
 CHECKED_TYPES_REGEXES = [
@@ -1338,7 +1338,7 @@ VALIDATED_PACK_ITEM_TYPES = [
     'PreProcessRules',
     'Lists',
     'Jobs',
-    'Wizard',
+    'Wizards',
 ]
 
 FIRST_FETCH = 'first_fetch'
@@ -1406,7 +1406,7 @@ class ContentItems(Enum):
     XSIAM_DASHBOARDS = 'xsiamdashboard'
     XSIAM_REPORTS = 'xsiamreport'
     TRIGGERS = 'trigger',
-    WIZARD = 'wizard'
+    WIZARDS = 'wizard',
 
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {

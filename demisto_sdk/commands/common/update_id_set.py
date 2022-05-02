@@ -1452,7 +1452,7 @@ def process_jobs(file_path: str, packs: Dict[str, Dict], marketplace: str, print
     Args:
         file_path: The file path from object field folder.
         packs: The pack mapping from the ID set.
-        marketplace: The marketplace this id set is designated for.
+        marketplace: The marketplace that this ID set is designated for.
         print_logs: Whether to print logs to stdout.
 
     Returns:
@@ -1478,11 +1478,11 @@ def process_wizards(file_path: str, packs: Dict[str, Dict], marketplace: str, pr
     Args:
         file_path: The file path from object field folder.
         packs: The pack mapping from the ID set.
-        marketplace: The marketplace this id set is designated for.
+        marketplace: The marketplace that this ID set is designated for.
         print_logs: Whether to print logs to stdout.
 
     Returns:
-        a list of Job data.
+        a list of Wizard data.
     """
     result: List = []
     try:

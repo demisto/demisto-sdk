@@ -26,9 +26,6 @@ class WizardValidator(ContentEntityValidator):
         self._supporting_integrations = self.collect_integrations(integration_category='supporting_integrations')
         self._set_playbooks = self.collect_set_playbooks()
 
-    def get_errors(self):
-        return "\n".join(self._errors)
-
     def collect_packs_dependencies(self) -> set:
         wizard_dependencies = set()
         for pack_metadata in self.current_file.get("dependency_packs", []):

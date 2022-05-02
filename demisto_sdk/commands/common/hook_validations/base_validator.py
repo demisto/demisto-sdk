@@ -22,15 +22,36 @@ from demisto_sdk.commands.common.tools import (
 json = JSON_Handler()
 
 
+def error_codes(error_codes_str: str):
+
+    def error_codes_decorator(func):
+
+        def wrapper(self, *args, **kwargs):
+            if self.specific_validations:
+                error_codes = error_codes_str.split(',')
+                for error_code in error_codes:
+                    if self.should_run_validation(error_code):
+                        return func(self, *args, **kwargs)
+            else:
+                return func(self, *args, **kwargs)
+
+            return True
+
+        return wrapper
+
+    return error_codes_decorator
+
+
 class BaseValidator:
 
     def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False,
-                 json_file_path: Optional[str] = None):
+                 json_file_path: Optional[str] = None, specific_validations: Optional[list] = None):
         self.ignored_errors = ignored_errors if ignored_errors else {}
         self.print_as_warnings = print_as_warnings
         self.checked_files = set()  # type: ignore
         self.suppress_print = suppress_print
         self.json_file_path = json_file_path
+        self.specific_validations = specific_validations
 
     @staticmethod
     def should_ignore_error(error_code, ignored_errors):
@@ -49,6 +70,11 @@ class BaseValidator:
 
         return False
 
+    def should_run_validation(self, error_code: str):
+        if not self.specific_validations:
+            return True
+        return error_code in self.specific_validations or error_code[:2] in self.specific_validations
+
     def handle_error(self, error_message, error_code, file_path, should_print=True, suggested_fix=None, warning=False,
                      drop_line=False):
         """Handle an error that occurred during validation
@@ -65,6 +91,11 @@ class BaseValidator:
         Returns:
             str. Will return the formatted error message if it is not ignored, an None if it is ignored
         """
+        if self.specific_validations:
+            if not self.should_run_validation(error_code):
+                # if the error code is not specified in the specific_validations list, we exit the function and return None
+                return None
+
         def formatted_error_str(error_type):
             if error_type not in {'ERROR', 'WARNING'}:
                 raise ValueError("Error type is not valid. Should be in {'ERROR', 'WARNING'}")

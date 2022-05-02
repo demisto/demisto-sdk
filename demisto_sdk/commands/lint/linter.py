@@ -218,7 +218,7 @@ class Linter:
             logger.info(f"{log_prompt} - Skipping due to not Python, Powershell package - Pack is"
                         f" {self._pkg_lint_status['pack_type']}")
             return True
-        
+
         # Docker images
         if self._facts["docker_engine"]:
             logger.info(f'{log_prompt} - Collecting all docker images to pull')
@@ -241,7 +241,7 @@ class Linter:
                     logger.info(f"{self._pack_name} - Facts - {image[0]} - Python {py_num}")
                     if not self._facts["python_version"]:
                         self._facts["python_version"] = py_num
-                
+
                 # Checking whatever *test* exists in package
                 self._facts["test"] = True if next(self._pack_abs_dir.glob([r'test_*.py', r'*_test.py']),
                                                    None) else False
@@ -263,7 +263,7 @@ class Linter:
                 pynum = '3.7' if (script_obj.get('subtype', 'python3') == 'python3') else '2.7'
                 self._facts["python_version"] = pynum
                 logger.info(f"{log_prompt} - Using python version from yml: {pynum}")
-            
+
             # Get lint files
             lint_files = set(self._pack_abs_dir.glob(["*.py", "!__init__.py", "!*.tmp"],
                                                      flags=NEGATE))
@@ -386,7 +386,6 @@ class Linter:
                 else:
                     self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
         logger.info(f'{log_prompt} - Finished successfully')
-
 
     @timer(group_name='lint')
     def _run_flake8(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
@@ -653,8 +652,6 @@ class Linter:
             logger.info(f'{log_promopt} - Finished linting on docker image {image[0]}')
 
         logger.info(f'{log_promopt} - Finished linting. Number of images={self._facts["images"]}')
-
-
 
     def _docker_login(self) -> bool:
         """ Login to docker-hub using environment variables:

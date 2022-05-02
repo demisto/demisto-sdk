@@ -38,7 +38,6 @@ from demisto_sdk.commands.lint.linter import Linter
 
 json = JSON_Handler()
 
-
 # Third party packages
 
 # Local packages
@@ -194,7 +193,8 @@ class LintManager:
         logger.debug("Docker daemon test passed")
         return facts
 
-    def _get_packages(self, content_repo: git.Repo, input: Union[str, List[str]], git: bool = False, all_packs: bool = False,
+    def _get_packages(self, content_repo: git.Repo, input: Union[str, List[str]], git: bool = False,
+                      all_packs: bool = False,
                       base_branch: str = 'master') -> List[PosixPath]:
         """ Get packages paths to run lint command.
 
@@ -669,7 +669,7 @@ class LintManager:
                                 tmp = name.split('::')
                                 test_file_name = tmp[0]
                                 failing_unit_test = tmp[1]
-                                failing_unit_tests_dict.setdefault(test_file_name, []).append(failing_unit_test)
+                                test_body = ''
                                 print(wrapper_test.fill(name))
                                 if test_case.get("call", {}).get("longrepr"):
                                     print(wrapper_docker_image.fill(image['image']))
@@ -679,7 +679,10 @@ class LintManager:
                                                 test_case.get("call", {}).get("longrepr")[i]))
                                         else:
                                             print(wrapper_sec_error.fill(test_case.get("call", {}).get("longrepr")[i]))
+                                        test_body += test_case.get("call", {}).get("longrepr")[i] + '\n'
                                     print('\n')
+                                failing_unit_tests_dict.setdefault(test_file_name, []).append(
+                                    {'name': failing_unit_test, 'test_body': test_body})
                         if self.failed_unit_tests_file:
                             with open(self.failed_unit_tests_file, 'a') as f:
                                 json.dump(failing_unit_tests_dict, f)

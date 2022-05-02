@@ -1678,6 +1678,7 @@ class TestContext:
             'number_of_successful_runs': self.playbook.configuration.number_of_successful_runs,
             'failed_stage': failed_stage,
             'ssh_tunnel': self.tunnel_command,
+            'server_url': self.client.api_client.configuration.host,
             'self': str(self),
         })
 

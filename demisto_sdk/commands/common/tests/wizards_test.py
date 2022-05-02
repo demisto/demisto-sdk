@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.hook_validations.wizard import WizardValidator
 json = JSON_Handler()
 
 
-def get_validator(current_file=None, old_file=None, file_path=""):
+def get_validator(current_file=None, old_file=None, file_path="Packs/exists"):
     with patch.object(StructureValidator, '__init__', lambda a, b: None):
         structure = StructureValidator("")
         structure.current_file = current_file
@@ -26,20 +26,62 @@ def get_validator(current_file=None, old_file=None, file_path=""):
 
 
 class TestWizardValidator:
-    @pytest.mark.parametrize('current_file, answer, id_set', [
-        ({}, True, None),
-        ({"dependency_packs": [{"packs": [{"name": "not_exists"}]}]}, False, {'Packs': {'exists': {}}}),
-        ({"dependency_packs": [{"packs": [{"name": "exists"}]}]}, True, {'Packs': {'exists': {}}}),
-        ({"dependency_packs": [{"packs": [{"name": "exists"}, {"name": "not_exists"}]}]}, False, {'Packs': {'exists': {}}}),
+    @pytest.mark.parametrize('current_file,id_set,answer', [
+        ({}, None, True),
+        ({"dependency_packs": [{"packs": [{"name": "not_exists"}]}]}, {'Packs': {'exists': {}}}, False),
+        ({"dependency_packs": [{"packs": [{"name": "exists"}]}]}, {'Packs': {'exists': {}}}, True),
+        ({"dependency_packs": [{"packs": [{"name": "exists"}, {"name": "not_exists"}]}]}, {'Packs': {'exists': {}}},
+         False),
     ])
-    def test_deleted_context_path(self, current_file, answer, id_set):
+    def test_are_dependency_packs_valid(self, current_file, id_set, answer):
         """
             Given
-            - A list with fromVersion of 6.5.0 and version of -1 OR A list with fromVersion of 1 and version of 1
+            - a valid wizard
+            - an id_set describing packs
             When
-            - Validating a list
+            - Validating a wizard are_dependency_packs_valid
             Then
-            - Return that the list is valid
+            - Return whether the wizard is valid
         """
         validator = get_validator(current_file)
         assert validator.are_dependency_packs_valid(id_set) is answer
+
+    @pytest.mark.parametrize('current_file,id_set,answer', [
+        ({}, None, True),
+        ({"dependency_packs": [{"packs": [{"name": "not_exists"}]}],
+          'wizard': {'fetching_integrations': [{'name': 'not_exists'}]}},
+         {'integrations': [{'exists': {'pack': 'exists'}}]}, False),  # False - missing from id_set
+        ({'wizard': {'fetching_integrations': [{'name': 'not_exists'}]}}, {'integrations': [
+            {'exists': {'pack': 'exists'}}, {'not_exists': {'pack': 'not_exists'}}]}, False),
+        # False - missing from dependency_packs
+        ({'wizard': {'fetching_integrations': [{'name': 'exists'}]}},
+         {'integrations': [{'exists': {'pack': 'exists'}}]},
+         True),
+    ])
+    def test_are_integrations_in_dependency_packs(self, current_file, id_set, answer):
+        """
+            Given
+            - a valid wizard
+            - an id_set describing packs
+            When
+            - Validating a wizard are_dependency_packs_valid
+            Then
+            - Return whether the wizard is valid
+        """
+        validator = get_validator(current_file)
+        assert validator.are_integrations_in_dependency_packs(id_set) is answer
+
+    @pytest.mark.parametrize('current_file,id_set,answer', [
+        ({}, None, True),
+        ({"dependency_packs": [{"packs": [{"name": "not_exists"}]}],
+          'wizard': {'set_playbook': [{'name': 'not_exists'}]}},
+         {'playbooks': [{'exists': {'pack': 'exists'}}]}, False),  # False - missing from id_set
+        ({'wizard': {'set_playbook': [{'name': 'not_exists'}]}}, {'playbooks': [{'exists': {'pack': 'exists'}},
+                                                                                {'not_exists': {
+                                                                                    'pack': 'not_exists'}}]}, False),
+        # False - missing from dependency_packs
+        ({'wizard': {'set_playbook': [{'name': 'exists'}]}}, {'playbooks': [{'exists': {'pack': 'exists'}}]}, True),
+    ])
+    def test_are_playbooks_in_dependency_packs(self, current_file, id_set, answer):
+        validator = get_validator(current_file)
+        assert validator.are_playbooks_in_dependency_packs(id_set) is answer

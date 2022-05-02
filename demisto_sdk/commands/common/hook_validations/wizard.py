@@ -37,7 +37,7 @@ class WizardValidator(ContentEntityValidator):
         return wizard_dependencies
 
     def collect_set_playbooks(self) -> set:
-        set_playbooks = self.current_file.get('wizard', {}).get('set_playbook')
+        set_playbooks = self.current_file.get('wizard', {}).get('set_playbook', [])
         return {playbook.get('name', '') for playbook in set_playbooks}
 
     def collect_integrations(self, integration_category: str) -> set:

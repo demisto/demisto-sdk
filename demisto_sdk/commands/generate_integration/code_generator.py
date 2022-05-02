@@ -123,6 +123,8 @@ class IntegrationGeneratorParam:
             self.options = options
         if defaultvalue:
             self.defaultvalue = defaultvalue
+        if self.type_ == ParameterType.BOOLEAN and not self.defaultvalue:
+            self.defaultvalue = 'false'
 
 
 class IntegrationGeneratorConfig:

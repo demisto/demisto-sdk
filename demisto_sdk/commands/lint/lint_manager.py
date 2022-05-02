@@ -374,8 +374,11 @@ class LintManager:
                                                    test_xml=test_xml,
                                                    no_coverage=no_coverage))
 
-                for future in concurrent.futures.as_completed(results):
+                logger.info('Waiting for futures to complete')
+                for i, future in enumerate(concurrent.futures.as_completed(results)):
+                    logger.info(f'Waiting for future index {i}')
                     pkg_status = future.result()
+                    logger.info(f'Got lint results for {pkg_status["pkg"]}')
                     pkgs_status[pkg_status["pkg"]] = pkg_status
                     if pkg_status["exit_code"]:
                         for check, code in EXIT_CODES.items():
@@ -391,20 +394,19 @@ class LintManager:
                             return_warning_code += pkg_status["warning_code"]
                     if pkg_status["pack_type"] not in pkgs_type:
                         pkgs_type.append(pkg_status["pack_type"])
+                logger.info('Finished all futures')
                 return return_exit_code, return_warning_code
         except KeyboardInterrupt:
-            print_warning("Stop demisto-sdk lint - Due to 'Ctrl C' signal")
-            try:
-                executor.shutdown(wait=False)
-            except Exception:
-                pass
+            msg = "Stop demisto-sdk lint - Due to 'Ctrl C' signal"
+            print_warning(msg)
+            logger.warning(msg)
+            executor.shutdown(wait=False)  # If keyboard interrupt no need to wait to clean resources
             return 1, 0
         except Exception as e:
-            print_warning(f"Stop demisto-sdk lint - Due to Exception {e}")
-            try:
-                executor.shutdown(wait=False)
-            except Exception:
-                pass
+            msg = f"Stop demisto-sdk lint - Due to Exception {e}"
+            print_warning(msg)
+            logger.warning(msg)
+            executor.shutdown(wait=True)  # wait for the resources to be cleaned. Note that `cancel_futures` not supported in python 3.8
             return 1, 0
 
     def run(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,

@@ -989,8 +989,9 @@ class TestPackValidation:
         mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_tags',
                      return_value=[])
         runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(main, [VALIDATE_CMD, "-i", VALID_PACK_PATH, "--no-conf-json",
-                                      "--allow-skipped"])
+        with ChangeCWD(CONTENT_REPO_EXAMPLE_ROOT):
+            result = runner.invoke(main, [VALIDATE_CMD, "-i", VALID_PACK_PATH, "--no-conf-json",
+                                          "--allow-skipped"])
         assert f"{VALID_PACK_PATH} unique pack files" in result.stdout
         assert f"Validating pack {VALID_PACK_PATH}" in result.stdout
         assert f"{VALID_PACK_PATH}/Integrations/FeedAzureValid/FeedAzureValid.yml" in result.stdout

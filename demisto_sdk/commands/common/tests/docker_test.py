@@ -70,6 +70,7 @@ def mock_docker_image_validator():
         docker_image_validator.checked_files = set()
         docker_image_validator.suppress_print = False
         docker_image_validator.json_file_path = ''
+        docker_image_validator.specific_validations = None
         return docker_image_validator
 
 

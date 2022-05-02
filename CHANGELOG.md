@@ -1,6 +1,11 @@
 # Changelog
 
 ## Unreleased
+* enhanced ***validate*** command to list all command names affected by a backward compatibility break, instead of only one.
+* Added a new flag to the **validate** command, allowing to run specific validations.
+
+## 1.6.5
+
 * Fixed an issue in the **format** command where the `id` field was overwritten for existing JSON files.
 * Fixed an issue where the **doc-review** command was successful even when the release-note is malformed.
 * Added timestamps to the `demisto-sdk` logger.
@@ -11,6 +16,8 @@
 * Fixed an issue where concurrent processes created by **lint** caused deadlocks when opening files.
 * Fixed an issue in the **format** command where `_dev` or `_copy` suffixes weren't removed from the subscript names in playbooks and layouts.
 * Fixed an issue where **validate** failed on nonexistent `README.md` files.
+* Added support of XSIAM content items to the **validate** command.
+* Report **lint** summary results and failed packages after reporting time measurements.
 
 ## 1.6.4
 

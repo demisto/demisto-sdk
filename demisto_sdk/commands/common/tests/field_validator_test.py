@@ -72,6 +72,7 @@ class TestFieldValidator:
             structure.is_valid = True
             structure.prev_ver = 'master'
             structure.branch_name = ''
+            structure.specific_validations = None
             validator = FieldBaseValidator(structure, set(), set())
             validator.current_file = current_file
 
@@ -115,6 +116,7 @@ class TestFieldValidator:
             structure.is_valid = True
             structure.prev_ver = 'master'
             structure.branch_name = ''
+            structure.specific_validations = None
             validator = FieldBaseValidator(structure, set(), set())
             validator.current_file = current_file
             assert validator.is_valid_content_flag() is answer
@@ -144,6 +146,7 @@ class TestFieldValidator:
             structure.is_valid = True
             structure.prev_ver = 'master'
             structure.branch_name = ''
+            structure.specific_validations = None
             validator = FieldBaseValidator(structure, set(), set())
             validator.current_file = current_file
             assert validator.is_valid_system_flag() is answer
@@ -165,6 +168,7 @@ class TestFieldValidator:
             structure.is_valid = True
             structure.prev_ver = 'master'
             structure.branch_name = ''
+            structure.specific_validations = None
             validator = FieldBaseValidator(structure, set(), set())
             validator.current_file = current_file
             assert validator.is_cli_name_is_builtin_key()
@@ -186,6 +190,7 @@ class TestFieldValidator:
             structure.is_valid = True
             structure.prev_ver = 'master'
             structure.branch_name = ''
+            structure.specific_validations = None
             validator = FieldBaseValidator(structure, set(), {'id'})
             validator.current_file = current_file
             assert not validator.is_cli_name_is_builtin_key()
@@ -206,6 +211,7 @@ class TestFieldValidator:
             structure.is_valid = True
             structure.prev_ver = 'master'
             structure.branch_name = ''
+            structure.specific_validations = None
             validator = FieldBaseValidator(structure, set(), set())
             validator.current_file = current_file
             assert validator.is_matching_cli_name_regex()
@@ -228,6 +234,7 @@ class TestFieldValidator:
             structure.is_valid = True
             structure.prev_ver = 'master'
             structure.branch_name = ''
+            structure.specific_validations = None
             validator = FieldBaseValidator(structure, set(), set())
             validator.current_file = current_file
             assert not validator.is_matching_cli_name_regex()
@@ -243,6 +250,7 @@ class TestFieldValidator:
             structure.is_valid = True
             structure.prev_ver = 'master'
             structure.branch_name = ''
+            structure.specific_validations = None
             validator = FieldBaseValidator(structure, set(), set())
             validator.current_file = current_file
             assert validator.is_valid_cli_name()
@@ -258,6 +266,7 @@ class TestFieldValidator:
             structure.is_valid = True
             structure.prev_ver = 'master'
             structure.branch_name = ''
+            structure.specific_validations = None
             validator = FieldBaseValidator(structure, set(), {'id'})
             validator.current_file = current_file
             assert not validator.is_valid_cli_name()
@@ -378,6 +387,7 @@ class TestFieldValidator:
             structure.is_valid = True
             structure.prev_ver = 'master'
             structure.branch_name = ''
+            structure.specific_validations = None
             validator = FieldBaseValidator(structure, set(), set())
             validator.current_file = current_file
             mocker.patch.object(field_base_validator, 'get_pack_metadata', return_value=pack_metadata)

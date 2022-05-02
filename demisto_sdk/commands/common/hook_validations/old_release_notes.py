@@ -4,8 +4,8 @@ import os
 import re
 
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator, error_codes)
 from demisto_sdk.commands.common.tools import (
     old_get_latest_release_notes_text, old_get_release_notes_file_path,
     run_command)
@@ -25,9 +25,9 @@ class OldReleaseNotesValidator(BaseValidator):
     MULTI_LINE_REAL_COMMENT_REGEX = r'(\t+| {2,4})- .*\.$'
     LINK_TO_RELEASE_NOTES_STANDARD = 'https://xsoar.pan.dev/docs/integrations/changelog'
 
-    def __init__(self, file_path, ignored_errors=None, print_as_warnings=False, suppress_print=False):
+    def __init__(self, file_path, ignored_errors=None, print_as_warnings=False, suppress_print=False, specific_validations=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print)
+                         suppress_print=suppress_print, specific_validations=specific_validations)
         self.file_path = file_path
         self.release_notes_path = old_get_release_notes_file_path(self.file_path)
         self.latest_release_notes = old_get_latest_release_notes_text(self.release_notes_path)
@@ -46,6 +46,7 @@ class OldReleaseNotesValidator(BaseValidator):
         return run_command(F'git diff --unified=100 '
                            F'origin/master {self.release_notes_path}')
 
+    @error_codes('RN101')
     def is_release_notes_changed(self):
         """Validates that a new comment was added to release notes.
 
@@ -92,6 +93,7 @@ class OldReleaseNotesValidator(BaseValidator):
 
         return True
 
+    @error_codes('RN101,RN102')
     def is_valid_release_notes_structure(self):
         """Validates that the release notes written in the correct manner.
 
@@ -132,6 +134,7 @@ class OldReleaseNotesValidator(BaseValidator):
 
         return True
 
+    @error_codes('RN100')
     def validate_file_release_notes_exists(self):
         """Validate that the file has proper release notes when modified.
 

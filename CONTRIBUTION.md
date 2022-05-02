@@ -33,17 +33,15 @@ This will be used as your testing environment, you do not need to update it agai
 
 1. Make sure you have python3 installed.
 
-2. Make sure you have pipenv installed.
+2. Make sure you have [Poetry](https://python-poetry.org/) installed.
 
-3. run `pipenv install --dev`
+3. run `poetry install``
 
-4. To install local version of demisto-sdk, run `pipenv install --keep-outdated -e <path to your demisto-sdk repo>`
-
-5. For further reading about pipenv, you can refer to [pipenv documentation](https://pipenv.pypa.io/en/latest/).
+4. For further reading about Poetry, you can refer to [Poetry documentation](https://python-poetry.org/).
 
 You have now setup the your `demisto-sdk` dev environment!
 
-To activate it simply run: `pipenv shell`.
+To activate it simply run: `poetry shell`.
    * Check that the demisto-sdk installed is your local version by running `demisto-sdk -v` - you will should see something similar to `demisto-sdk 1.X.X.dev`.
 
 To deactivate the virtual environment and return simply run: `exit`.

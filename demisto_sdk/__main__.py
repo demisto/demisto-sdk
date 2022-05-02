@@ -464,6 +464,10 @@ def zip_packs(**kwargs) -> int:
     "--no-multiprocessing",
     help="run validate all without multiprocessing, for debugging purposes.",
     is_flag=True, default=False)
+@click.option(
+    '-sv', '--run-specific-validations',
+    help="Run specific validations by stating the error codes.",
+    is_flag=False)
 @pass_config
 def validate(config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
@@ -507,6 +511,7 @@ def validate(config, **kwargs):
             quiet_bc=kwargs.get('quiet_bc_validation'),
             multiprocessing=run_with_mp,
             check_is_unskipped=not kwargs.get('allow_skipped', False),
+            specific_validations=kwargs.get('run_specific_validations'),
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
@@ -698,7 +703,7 @@ def lint(**kwargs):
         id_set_path=kwargs.get('id_set_path'),  # type: ignore[arg-type]
         check_dependent_api_module=kwargs.get('check_dependent_api_module'),  # type: ignore[arg-type]
     )
-    return lint_manager.run_dev_packages(
+    return lint_manager.run(
         parallel=kwargs.get('parallel'),  # type: ignore[arg-type]
         no_flake8=kwargs.get('no_flake8'),  # type: ignore[arg-type]
         no_bandit=kwargs.get('no_bandit'),  # type: ignore[arg-type]
@@ -744,7 +749,8 @@ def lint(**kwargs):
     "--report-dir", help="Directory of the coverage report files.",
     default='coverage_report', type=PathsParamType(resolve_path=True))
 @click.option(
-    "--report-type", help="The type of coverage report (posible values: 'text', 'html', 'xml', 'json' or 'all').", type=str)
+    "--report-type", help="The type of coverage report (posible values: 'text', 'html', 'xml', 'json' or 'all').",
+    type=str)
 @click.option("--no-min-coverage-enforcement", help="Do not enforce minimum coverage.", is_flag=True)
 @click.option(
     "--previous-coverage-report-url", help="URL of the previous coverage report.",
@@ -1002,7 +1008,8 @@ def download(**kwargs):
     multiple=False)
 @click.option(
     "-pd", "--pack-data", help="The Pack Data to add to XSOAR Configuration File - "
-           "Pack URL for Custom Pack and Pack Version for OOTB Pack", required=False, multiple=False)
+                               "Pack URL for Custom Pack and Pack Version for OOTB Pack", required=False,
+    multiple=False)
 @click.option(
     "-mp", "--add-marketplace-pack", help="Add a Pack to the MarketPlace Packs section in the Configuration File",
     required=False, is_flag=True)
@@ -1271,6 +1278,7 @@ def generate_test_playbook(**kwargs):
         print_error(str(e))
         return 1
 
+
 # ====================== init ====================== #
 
 
@@ -1298,7 +1306,7 @@ def generate_test_playbook(**kwargs):
                              "Script template options: HelloWorldScript")
 @click.option(
     "-a", "--author-image", help="Path of the file 'Author_image.png'. \n "
-    "Image will be presented in marketplace under PUBLISHER section. File should be up to 4kb and dimensions of 120x50"
+                                 "Image will be presented in marketplace under PUBLISHER section. File should be up to 4kb and dimensions of 120x50"
 )
 @click.option(
     '--demisto_mock', is_flag=True,
@@ -1471,7 +1479,8 @@ def create_id_set(**kwargs):
     id_set, excluded_items_by_pack, excluded_items_by_type = id_set_creator.create_id_set()
 
     if excluded_items_by_pack:
-        remove_dependencies_from_id_set(id_set, excluded_items_by_pack, excluded_items_by_type, kwargs.get('marketplace', ''))
+        remove_dependencies_from_id_set(id_set, excluded_items_by_pack, excluded_items_by_type,
+                                        kwargs.get('marketplace', ''))
         id_set_creator.save_id_set()
 
 
@@ -1609,10 +1618,12 @@ def update_release_notes(**kwargs):
                                                "The json file will be saved under the path given in the "
                                                "'--output-path' argument", required=False, is_flag=True)
 @click.option("-o", "--output-path", help="The destination path for the packs dependencies json file. This argument is "
-              "only relevant for when using the '--all-packs-dependecies' flag.", required=False)
+                                          "only relevant for when using the '--all-packs-dependecies' flag.",
+              required=False)
 @click.option("--get-dependent-on", help="Get only the packs dependent ON the given pack. Note: this flag can not be"
-                                         " used for the packs ApiModules and Base", required=False,
-              is_flag=True)
+                                         " used for the packs ApiModules and Base", required=False, is_flag=True)
+@click.option("-d", "--dependency", help="Find which items in a specific content pack appears as a mandatory "
+                                         "dependency of the searched pack ", required=False)
 def find_dependencies(**kwargs):
     """Find pack dependencies and update pack metadata."""
     from demisto_sdk.commands.find_dependencies.find_dependencies import \
@@ -1626,7 +1637,7 @@ def find_dependencies(**kwargs):
     all_packs_dependencies = kwargs.get('all_packs_dependencies', False)
     get_dependent_on = kwargs.get('get_dependent_on', False)
     output_path = kwargs.get('output_path', ALL_PACKS_DEPENDENCIES_DEFAULT_PATH)
-
+    dependency = kwargs.get('dependency', '')
     try:
 
         PackDependencies.find_dependencies_manager(
@@ -1638,6 +1649,7 @@ def find_dependencies(**kwargs):
             all_packs_dependencies=all_packs_dependencies,
             get_dependent_on=get_dependent_on,
             output_path=output_path,
+            dependency=dependency,
         )
 
     except ValueError as exp:
@@ -2104,6 +2116,7 @@ def convert(config, **kwargs):
         sys.exit(1)
 
     sys.exit(0)
+
 
 # ====================== generate-unit-tests ====================== #
 

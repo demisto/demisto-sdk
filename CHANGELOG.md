@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+* enhanced ***validate*** command to list all command names affected by a backward compatibility break, instead of only one.
+* Added a new flag to the **validate** command, allowing to run specific validations.
+* Fixed an issue in **upload** where list items were not uploaded.
+## 1.6.5
+
+* Fixed an issue in the **format** command where the `id` field was overwritten for existing JSON files.
+* Fixed an issue where the **doc-review** command was successful even when the release-note is malformed.
+* Added timestamps to the `demisto-sdk` logger.
+* Added time measurements to **lint**.
+* Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
+* Fixed an issue where **doc-review** failed to recognize script names, in scripts using the old file structure.
+* Fixed an issue where concurrent processes created by **lint** caused deadlocks when opening files.
+* Fixed an issue in the **format** command where `_dev` or `_copy` suffixes weren't removed from the subscript names in playbooks and layouts.
+* Fixed an issue where **validate** failed on nonexistent `README.md` files.
+* Added support of XSIAM content items to the **validate** command.
+* Report **lint** summary results and failed packages after reporting time measurements.
+
+## 1.6.4
+
 * Added the new **generate-yml-from-python** command.
 * Added a code *type* indication for integration and script objects in the *ID Set*.
 * Added the [Vulture](https://github.com/jendrikseipp/vulture) linter to the pre-commit hook.
@@ -29,6 +49,7 @@ the same as the last release note version.
 * Fixed an issue in the **validate** and **format** commands where *None* arguments in integration commands caused the commands to fail unexpectedly.
 * Added support for running tests on XSIAM machines in the **test-content** command.
 * Fixed an issue where the **validate** command did not work properly when deleting non-content items.
+* Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
 
 ## 1.6.3
 

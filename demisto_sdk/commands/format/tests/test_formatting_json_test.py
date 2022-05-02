@@ -582,6 +582,27 @@ class TestFormattingLayoutscontainer:
         layoutscontainer_formatter.update_id()
         assert layoutscontainer_formatter.data['name'] == layoutscontainer_formatter.data['id']
 
+    def test_remove_copy_and_dev_suffixes_from_layoutcontainer(self, layoutscontainer_formatter):
+        """
+        Given
+            - A layoutscontainer file with _copy suffix in the layout name ans sub script
+        When
+            - Run format on layout file
+        Then
+            - Ensure that name and sub script does not include the _copy suffix
+        """
+        assert layoutscontainer_formatter.data['name'] == 'IP hadas_copy'
+        assert layoutscontainer_formatter.data.get('indicatorsDetails').get('tabs')[0].get('sections')[9].get(
+            'query') == "script_test_dev"
+        assert layoutscontainer_formatter.data.get('indicatorsDetails').get('tabs')[0].get('sections')[9].get(
+            'name') == "testing_copy"
+        layoutscontainer_formatter.remove_copy_and_dev_suffixes_from_layoutscontainer()
+        assert layoutscontainer_formatter.data['name'] == 'IP hadas'
+        assert layoutscontainer_formatter.data.get('indicatorsDetails').get('tabs')[0].get('sections')[9].get(
+            'query') == "script_test"
+        assert layoutscontainer_formatter.data.get('indicatorsDetails').get('tabs')[0].get('sections')[9].get(
+            'name') == "testing"
+
     @pytest.mark.parametrize('schema', [GENERICFIELD_SCHEMA_PATH,
                                         INCIDENTFIELD_SCHEMA_PATH,
                                         INDICATORFIELD_SCHEMA_PATH])
@@ -749,6 +770,24 @@ class TestFormattingLayout:
         """
         layouts_formatter.set_toVersion()
         assert layouts_formatter.data.get('toVersion') == '5.9.9'
+
+    def test_remove_copy_and_dev_suffixes_from_layout(self, layouts_formatter):
+        """
+        Given
+            - A layout file with _copy suffix in one of the script in a dynamic section
+        When
+            - Run format on layout file
+        Then
+            - Ensure that the script name does not include the _copy suffix
+        """
+        assert layouts_formatter.data.get('typeId') == 'ExtraHop Detection_dev'
+        assert layouts_formatter.data.get('layout').get('sections')[1].get('query') == 'scriptName_copy'
+        assert layouts_formatter.data.get('layout').get('sections')[1].get('name') == 'test_copy'
+
+        layouts_formatter.remove_copy_and_dev_suffixes_from_layout()
+        assert layouts_formatter.data.get('typeId') == 'ExtraHop Detection'
+        assert layouts_formatter.data.get('layout').get('sections')[1].get('query') == 'scriptName'
+        assert layouts_formatter.data.get('layout').get('sections')[1].get('name') == 'test'
 
     def test_set_output_path(self, invalid_path_layouts_formatter):
         """
@@ -1292,3 +1331,46 @@ class TestFormattingReport:
         bs = OldClassifierJSONFormat(input=classifier.path, assume_yes=True)
         bs.run_format()
         assert bs.data['fromVersion'] == VERSION_5_5_0
+
+
+def test_not_updating_id_in_old_json_file(repo):
+    """
+    Given
+        - An old json file with non matching name and id.
+    When
+        - Run format on file
+    Then
+        - Ensure that name and id are still not matching
+    """
+    pack = repo.create_pack()
+    json_incident_type = pack.create_incident_type(name="some_name")
+
+    json_object = BaseUpdateJSON(input=json_incident_type.path)
+    json_object.data['name'] = "name"
+    json_object.data['id'] = "not_name"
+    json_object.old_file = json_object.data.copy()
+    json_object.update_id()
+    assert json_object.data['id'] == "not_name"
+    assert json_object.data['name'] == "name"
+
+
+def test_not_updating_modified_id_in_old_json_file(repo):
+    """
+    Given
+        - An old json file with non matching name and id.
+        - New id modification.
+    When
+        - Run format on file.
+    Then
+        - Ensure that id was not updated.
+    """
+    pack = repo.create_pack()
+    json_incident_type = pack.create_incident_type(name="some_name")
+
+    json_object = BaseUpdateJSON(input=json_incident_type.path)
+    json_object.data['name'] = "name"
+    json_object.data['id'] = "old_name"
+    json_object.old_file = json_object.data.copy()
+    json_object.data['id'] = "new_name"
+    json_object.update_id()
+    assert json_object.data['id'] == "old_name"

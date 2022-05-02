@@ -77,6 +77,8 @@ LAYOUT_CONTAINER_FIELDS = {'details', 'detailsV2', 'edit', 'close', 'mobile', 'q
                            'indicatorsDetails'}
 SDK_PYPI_VERSION = r'https://pypi.org/pypi/demisto-sdk/json'
 
+SUFFIX_TO_REMOVE = ('_dev', '_copy')
+
 
 def set_log_verbose(verbose: bool):
     global LOG_VERBOSE
@@ -901,11 +903,19 @@ def get_scripts_names(file_path):
         click.secho(f'no scripts found')
     else:
         for script in found_scripts:
-            script_path_full = os.path.join(scripts_dir_path, script, f'{script}.yml')
-            yml_dict = get_yaml(script_path_full)
-            click.secho(f'name: {yml_dict.get("name")}')
-            scripts_names.add(yml_dict.get("name"))
-
+            if script.endswith('.md'):
+                continue  # in case the script is in the old version of CommonScripts - JS code, ignore the md file
+            elif script.endswith('.yml'):
+                # in case the script is in the old version of CommonScripts - JS code, only yml exists not in a dir
+                script_path_full = os.path.join(scripts_dir_path, script)
+            else:
+                script_path_full = os.path.join(scripts_dir_path, script, f'{script}.yml')
+            try:
+                yml_dict = get_yaml(script_path_full)
+                scripts_names.add(yml_dict.get("name"))
+            except FileNotFoundError:
+                # we couldn't load the script as the path is not fit Content convention scripts' names
+                scripts_names.add(script)
         click.secho(f'scripts names: {scripts_names}')
     return scripts_names
 
@@ -2650,3 +2660,11 @@ def extract_none_deprecated_command_names_from_yml(yml_data: dict) -> list:
         if command.get('name') and not command.get('deprecated'):
             commands_ls.append(command.get('name'))
     return commands_ls
+
+
+def remove_copy_and_dev_suffixes_from_str(field_name: str) -> str:
+    for _ in range(field_name.count('_')):
+        for suffix in SUFFIX_TO_REMOVE:
+            if field_name.endswith(suffix):
+                field_name = field_name[:-len(suffix)]
+    return field_name

@@ -493,7 +493,7 @@ class LintManager:
             lint_status=lint_status,
             pkgs_status=pkgs_status,
             pkgs_type=pkgs_type,
-      )
+        )
 
         if time_measurements_dir:
             report_time_measurements(group_name='lint', time_measurements_dir=time_measurements_dir)

@@ -139,11 +139,12 @@ class BaseValidator:
             should_print (bool): whether the command should be printed
 
         Returns:
-            str: formatted error message.
+            str: formatted error message, None in case validation should be skipped or can be ignored.
         """
         if self.specific_validations:
             if not self.should_run_validation(error_code):
-                # if the error code is not specified in the specific_validations list, we exit the function and return None
+                # if the error code is not specified in the
+                # specific_validations list, we exit the function and return None
                 return None
 
         def formatted_error_str(error_type):

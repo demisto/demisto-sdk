@@ -106,6 +106,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_fetch(),
             self.is_there_a_runnable(),
             self.is_valid_display_name(),
+            self.is_valid_default_value_for_checkbox(),
             self.is_valid_display_name_for_siem(),
             self.is_valid_pwsh(),
             self.is_valid_image(),
@@ -227,6 +228,17 @@ class IntegrationValidator(ContentEntityValidator):
                     is_valid = False
 
         return is_valid
+
+    @error_codes('IN152')
+    def is_valid_default_value_for_checkbox(self) -> bool:
+        config = self.current_file.get('configuration', {})
+        for param in config:
+            if param.get('type') == 8:
+                if param.get('defaultvalue') not in [None, 'true', 'false']:
+                    error_message, error_code = Errors.invalid_defaultvalue_for_checkbox_field(param.get('defaultvalue'))
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        return False
+        return True
 
     def are_tests_configured(self) -> bool:
         """

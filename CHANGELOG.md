@@ -9,6 +9,7 @@
 * Added a new validation to **validate** command to verify that *cliName* and *id* keys of the incident field or the indicator field are matches.
 * Added the flag '-x', '--xsiam' to **upload** command to upload XSIAM entities to XSIAM server.
 * Fixed the integration field *isFetchEvents* to be in lowercase.
+* Added HelloWorldSlim template option for *--template* flag in **demisto-sdk init** command.
 
 ## 1.6.5
 

@@ -68,9 +68,10 @@ class Initiator:
     HELLO_WORLD_INTEGRATION = 'HelloWorld'
     HELLO_IAM_WORLD_INTEGRATION = 'HelloIAMWorld'
     HELLO_WORLD_FEED_INTEGRATION = 'FeedHelloWorld'
+    HELLO_WORLD_SLIM_INTEGRATION = 'HelloWorldSlim'
 
     INTEGRATION_TEMPLATE_OPTIONS = [HELLO_WORLD_INTEGRATION, HELLO_IAM_WORLD_INTEGRATION, HELLO_WORLD_FEED_INTEGRATION,
-                                    DEFAULT_INTEGRATION_TEMPLATE]
+                                    DEFAULT_INTEGRATION_TEMPLATE, HELLO_WORLD_SLIM_INTEGRATION]
 
     TEMPLATE_INTEGRATION_NAME = '%%TEMPLATE_NAME%%'
     TEMPLATE_INTEGRATION_FILES = {f'{TEMPLATE_INTEGRATION_NAME}.py',
@@ -93,6 +94,9 @@ class Initiator:
     HELLO_WORLD_FEED_TEST_DATA_FILES = {os.path.join(TEST_DATA_DIR, 'build_iterator_results.json'),
                                         os.path.join(TEST_DATA_DIR, 'get_indicators_command_results.json'),
                                         os.path.join(TEST_DATA_DIR, 'FeedHelloWorld_mock.txt')}
+
+    HELLO_WORLD_SLIM_TEST_DATA_FILES = {os.path.join(TEST_DATA_DIR, 'get_alert.json'),
+                                        os.path.join(TEST_DATA_DIR, 'update_alert_status.json')}
 
     ''' SCRIPT TEMPLATES CONSTANTS '''
     DEFAULT_SCRIPT_TEMPLATE = 'BaseScript'
@@ -677,6 +681,9 @@ class Initiator:
 
             elif self.template == self.HELLO_WORLD_FEED_INTEGRATION:
                 template_files = template_files.union(self.HELLO_WORLD_FEED_TEST_DATA_FILES)
+
+            elif self.template == self.HELLO_WORLD_SLIM_INTEGRATION:
+                template_files = template_files.union(self.HELLO_WORLD_SLIM_TEST_DATA_FILES)
 
             elif self.template == self.DEFAULT_INTEGRATION_TEMPLATE:
                 template_files = template_files.union(self.DEFAULT_INTEGRATION_TEST_DATA_FILES)

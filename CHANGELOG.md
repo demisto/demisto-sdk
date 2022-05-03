@@ -8,6 +8,7 @@
 * Fixed an issue in **upload** where list items were not uploaded.
 * Added a new validation to **validate** command to verify that *cliName* and *id* keys of the incident field or the indicator field are matches.
 * Added the flag '-x', '--xsiam' to **upload** command to upload XSIAM entities to XSIAM server.
+* Fixed an issue where **validate -i** run after **format -i** on an existing file in the repo instead of **validate -g**.
 
 ## 1.6.5
 

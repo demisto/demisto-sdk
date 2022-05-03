@@ -1105,7 +1105,7 @@ class IntegrationValidator(ContentEntityValidator):
 
     @error_codes('IN150')
     def is_valid_display_name_for_siem(self) -> bool:
-        is_siem = self.current_file.get('script', {}).get('isFetchEvents')
+        is_siem = self.current_file.get('script', {}).get('isfetchevents')
 
         if is_siem:
             display_name = self.current_file.get('display', '')

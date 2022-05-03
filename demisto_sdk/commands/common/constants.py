@@ -142,6 +142,7 @@ class FileType(Enum):
     XSIAM_DASHBOARD = 'xsiamdashboard'
     XSIAM_REPORT = 'xsiamreport'
     TRIGGER = 'trigger'
+    PACK_IGNORE = '.pack-ignore'
 
 
 RN_HEADER_BY_FILE_TYPE = {

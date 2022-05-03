@@ -1260,6 +1260,9 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
     if path.suffix == '.yml' and (path.parts[0] == '.circleci' or path.parts[0] == '.gitlab'):
         return FileType.BUILD_CONFIG_FILE
 
+    if path.name == '.pack_ignore':
+        return FileType.PACK_IGNORE
+
     return None
 
 

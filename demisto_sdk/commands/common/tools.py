@@ -607,7 +607,8 @@ def get_from_version(file_path):
 
     if data_dictionary:
 
-        from_version = data_dictionary.get('fromversion', '')
+        from_version = data_dictionary.get('fromversion') if 'fromversion' in data_dictionary \
+            else data_dictionary.get('fromVersion', '')
 
         if not from_version:
             return from_version

@@ -686,7 +686,10 @@ class UpdateRN:
         if len(rn_parts) > 1:
             # Splitting again by content name to append the docker image release note to corresponding
             # content entry only
-            content_parts = rn_parts[1].split(f'**{content_name}**\n')
+            if "**" in rn_parts[1]:
+                content_parts = rn_parts[1].split(f'**{content_name}**\n')
+            else:
+                content_parts = rn_parts[1].split(f'{content_name}\n')
             new_rn = f'{rn_parts[0]}{header_by_type}{content_parts[0]}**{content_name}**\n{new_rn_part}\n' \
                      f'{content_parts[1]}'
         else:

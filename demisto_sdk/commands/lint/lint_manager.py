@@ -2,6 +2,7 @@
 import concurrent.futures
 import logging
 import os
+import platform
 import re
 import sys
 import textwrap
@@ -10,6 +11,7 @@ from typing import Any, Dict, List, Set, Tuple, Union
 import docker
 import docker.errors
 import git
+from packaging.version import Version
 import requests.exceptions
 import urllib3.exceptions
 from wcmatch.pathlib import Path, PosixPath
@@ -406,9 +408,10 @@ class LintManager:
             msg = f"Stop demisto-sdk lint - Due to Exception {e}"
             print_warning(msg)
             logger.error(msg)
-            try:
+
+            if Version(platform.python_version) > Version('3.9'):
                 executor.shutdown(wait=True, cancel_futures=True)  # type: ignore[call-arg]
-            except TypeError:
+            else:
                 logger.info('Using Python under 3.8, we will cancel futures manually.')
                 executor.shutdown(wait=True)  # Note that `cancel_futures` not supported in python 3.8
                 for res in results:

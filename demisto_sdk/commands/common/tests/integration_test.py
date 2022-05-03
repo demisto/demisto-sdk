@@ -737,11 +737,11 @@ class TestIntegrationValidator:
         validator.current_file = current
         assert validator.is_valid_display_name() is answer
 
-    V2_VALID_SIEM_1 = {"display": "PhishTank v2", "script": {"isFetchEvents": False}}
-    V2_VALID_SIEM_2 = {"display": "PhishTank v2 Event Collector", "script": {"isFetchEvents": True}}
+    V2_VALID_SIEM_1 = {"display": "PhishTank v2", "script": {"isfetchevents": False}}
+    V2_VALID_SIEM_2 = {"display": "PhishTank v2 Event Collector", "script": {"isfetchevents": True}}
     V2_VALID_SIEM_3 = {"display": "PhishTank v2 Event Collector", "script": {}}
     V2_VALID_SIEM_4 = {"display": "PhishTank v2 Event Collector"}
-    V2_INVALID_SIEM = {"display": "PhishTank v2", "script": {"isFetchEvents": True}}
+    V2_INVALID_SIEM = {"display": "PhishTank v2", "script": {"isfetchevents": True}}
 
     V2_SIEM_NAME_INPUTS = [
         (V2_VALID_SIEM_1, True),

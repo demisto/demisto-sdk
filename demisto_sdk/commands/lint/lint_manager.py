@@ -11,9 +11,9 @@ from typing import Any, Dict, List, Set, Tuple, Union
 import docker
 import docker.errors
 import git
-from packaging.version import Version
 import requests.exceptions
 import urllib3.exceptions
+from packaging.version import Version
 from wcmatch.pathlib import Path, PosixPath
 
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,

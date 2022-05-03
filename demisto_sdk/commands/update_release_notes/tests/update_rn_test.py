@@ -50,7 +50,8 @@ class TestRNUpdate(unittest.TestCase):
             "\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%\n" \
             "\n#### Reports\n##### Hello World Report\n- %%UPDATE_RN%%\n" \
             "\n#### Scripts\n##### Hello World Script\n- %%UPDATE_RN%%\n" \
-            "\n#### Widgets\n##### Hello World Widget\n- %%UPDATE_RN%%\n"
+            "\n#### Widgets\n##### Hello World Widget\n- %%UPDATE_RN%%\n" \
+            "\n#### Wizards\n##### Hello World Wizard\n- %%UPDATE_RN%%\n"
 
         mock_master.return_value = '1.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
@@ -75,7 +76,8 @@ class TestRNUpdate(unittest.TestCase):
             ("Hello World Generic Module", FileType.GENERIC_MODULE): {"description": "", "is_new_file": False},
             ("Hello World Generic Definition", FileType.GENERIC_DEFINITION): {"description": "", "is_new_file": False},
             ("Hello World Job #1", FileType.JOB): {"description": "sample job", "is_new_file": False},
-            ("Hello World Job #2", FileType.JOB): {"description": "yet another job", "is_new_file": False}
+            ("Hello World Job #2", FileType.JOB): {"description": "yet another job", "is_new_file": False},
+            ("Hello World Wizard", FileType.WIZARD): {"description": "sample wizard", "is_new_file": False}
         }
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
@@ -688,9 +690,9 @@ class TestRNUpdateUnit:
         ("Nothing", None): {"description": "", "is_new_file": False},
         ("Sample", FileType.INTEGRATION): {"description": "", "is_new_file": False},
         ("Sample GenericField", FileType.GENERIC_FIELD): {"description": "", "is_new_file": False, "path": "Packs"
-                                                          "/HelloWorld/GenericField/asset/Sample_GenericType"},
+                                                                                                           "/HelloWorld/GenericField/asset/Sample_GenericType"},
         ("Sample GenericType", FileType.GENERIC_TYPE): {"description": "", "is_new_file": False, "path": "Packs"
-                                                        "/HelloWorld/GenericType/asset/Sample_GenericType"}
+                                                                                                         "/HelloWorld/GenericType/asset/Sample_GenericType"}
     }
     EXPECTED_RN_RES = """
 #### Incident Types
@@ -1123,7 +1125,8 @@ class TestRNUpdateUnit:
         return_value = '+  dockerimage: demisto/python3:3.9.8.24399'
 
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command', return_value=return_value)
-        assert check_docker_image_changed(main_branch='origin/master', packfile='test.yml') == 'demisto/python3:3.9.8.24399'
+        assert check_docker_image_changed(main_branch='origin/master',
+                                          packfile='test.yml') == 'demisto/python3:3.9.8.24399'
 
     def test_update_docker_image_in_yml(self, mocker):
         """
@@ -1496,7 +1499,8 @@ def test_force_and_text_update_rn(repo, text, expected_rn_string):
 CREATE_MD_IF_CURRENTVERSION_IS_HIGHER_TEST_BANK_ = [(['0_0_1'], ['0_0_1', '0_0_3'])]
 
 
-@pytest.mark.parametrize('first_expected_results, second_expected_results', CREATE_MD_IF_CURRENTVERSION_IS_HIGHER_TEST_BANK_)
+@pytest.mark.parametrize('first_expected_results, second_expected_results',
+                         CREATE_MD_IF_CURRENTVERSION_IS_HIGHER_TEST_BANK_)
 def test_create_md_if_currentversion_is_higher(mocker, first_expected_results, second_expected_results, repo):
     """
         Given:

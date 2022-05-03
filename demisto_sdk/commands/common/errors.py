@@ -293,6 +293,7 @@ ERROR_CODE = {
     "pack_metadata_missing_categories": {'code': "PA129", 'ui_applicable': False, 'related_field': ''},
     "wrong_version_format": {'code': "PA130", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_version_diff_from_rn": {'code': "PA131", 'ui_applicable': False, 'related_field': ''},
+    "missing_marketplace_v2_in_marketplaces": {'code': "PA132", 'ui_applicable': False, 'related_field': ''},
 
     # PB - Playbooks
     "playbook_cant_have_rolename": {'code': "PB100", 'ui_applicable': True, 'related_field': 'rolename'},
@@ -1544,6 +1545,12 @@ class Errors:
     @error_code_decorator
     def missing_field_iin_pack_metadata(pack_meta_file, missing_fields):
         return f'{pack_meta_file} - Missing fields in the pack metadata: {missing_fields}'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_marketplace_v2_in_marketplaces():
+        return 'This pack belongs to xsiam\n' \
+               'Please insert `marketplacev2` into the `marketplaces` key'
 
     @staticmethod
     @error_code_decorator

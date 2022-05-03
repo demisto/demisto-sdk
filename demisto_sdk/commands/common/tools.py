@@ -958,6 +958,35 @@ def get_pack_names_from_files(file_paths, skip_file_types=None):
     return packs
 
 
+def get_all_files_in_dir(path: str) -> list:
+    files: list = []
+    
+    for item in glob.glob(path + '/*'):
+        if os.path.isdir(item):
+            files.extend(get_all_files_in_dir(item))
+        else:
+            files.append(item)
+    return files
+
+
+def get_all_types_of_pack(path: str) -> set:
+    files = get_all_files_in_dir(path)
+    types: set = set()
+    
+    for i in files:
+        if file_type := find_type(i):
+            types.add(file_type)
+    return types
+
+
+def does_pack_belong_siam(path: str) -> bool:
+    types: set = get_all_types_of_pack(path)
+    for i in types:
+        if i.value in SIEM_ONLY_ENTITIES:
+            return True
+    return False
+
+
 def filter_files_by_type(file_paths=None, skip_file_types=None) -> set:
     """get set of files and return the set whiteout the types to skip
 

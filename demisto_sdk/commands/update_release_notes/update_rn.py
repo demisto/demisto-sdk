@@ -593,9 +593,9 @@ class UpdateRN:
         if _type in (FileType.GENERIC_TYPE, FileType.GENERIC_FIELD):
             definition_name = get_definition_name(path, self.pack_path)
             rn_desc = f'- **({definition_name}) - {content_name}**\n'
-            if docker_image:
-                rn_desc += f'- Updated the Docker image to: *{docker_image}*.\n'
-            return rn_desc
+        if docker_image:
+            rn_desc += f'- Updated the Docker image to: *{docker_image}*.\n'
+        return rn_desc
 
     def update_existing_rn(self, current_rn, changed_files) -> str:
         """ Update the existing release notes.

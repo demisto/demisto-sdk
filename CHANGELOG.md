@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Fixed an issue where `mdx server` did not close when stopped in mid run.
 * Fixed an issue where `-vvv` flag did not print logs on debug level.
 * enhanced ***validate*** command to list all command names affected by a backward compatibility break, instead of only one.
 * Added a new flag to the **validate** command, allowing to run specific validations.

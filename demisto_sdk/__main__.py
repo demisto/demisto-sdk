@@ -888,7 +888,7 @@ def format(
 )
 @click.option(
     "-x", "--xsiam",
-    help="Upload the pack to XSIAM server.", is_flag=True
+    help="Upload the pack to XSIAM server. Must be used together with -z", is_flag=True
 )
 @click.option(
     "--keep-zip", help="Directory where to store the zip after creation, this argument is relevant only for packs "

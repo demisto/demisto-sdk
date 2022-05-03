@@ -376,7 +376,7 @@ class LintManager:
 
                 logger.info('Waiting for futures to complete')
                 for i, future in enumerate(concurrent.futures.as_completed(results)):
-                    logger.debug(f'checking output of future {i=}')  # type: ignore[syntax]
+                    logger.debug(f'checking output of future {i=}')
                     pkg_status = future.result()
                     logger.info(f'Got lint results for {pkg_status["pkg"]}')
                     pkgs_status[pkg_status["pkg"]] = pkg_status

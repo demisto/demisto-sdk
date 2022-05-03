@@ -399,7 +399,7 @@ class LintManager:
         except KeyboardInterrupt:
             msg = "Stop demisto-sdk lint - Due to 'Ctrl C' signal"
             print_warning(msg)
-            logger.error(msg)
+            logger.warning(msg)
             executor.shutdown(wait=False)  # If keyboard interrupt no need to wait to clean resources
             return 1, 0
         except Exception as e:
@@ -407,9 +407,10 @@ class LintManager:
             print_warning(msg)
             logger.error(msg)
             try:
-                executor.shutdown(wait=True, cancel_futures=True)
-            except Exception:
-                executor.shutdown(wait=True)  # wait for the resources to be cleaned. Note that `cancel_futures` not supported in python 3.8
+                executor.shutdown(wait=True, cancel_futures=True)  # type: ignore[call-arg]
+            except TypeError:
+                logger.info('Using Python under 3.8, we will cancel futures manually.')
+                executor.shutdown(wait=True)  # Note that `cancel_futures` not supported in python 3.8
                 for res in results:
                     res.cancel()
             return 1, 0

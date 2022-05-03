@@ -1391,7 +1391,7 @@ def find_type(
         if isinstance(_dict, dict) and {'isAllFeeds', 'selectedFeeds', 'isFeed'}.issubset(_dict.keys()):
             return FileType.JOB
 
-        if isinstance(_dict, dict) and 'wizard' in _dict.keys():
+        if isinstance(_dict, dict) and 'wizard' in _dict:
             return FileType.WIZARD
 
         if 'dashboards_data' in _dict:

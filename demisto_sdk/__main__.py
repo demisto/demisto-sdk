@@ -951,7 +951,7 @@ def upload(**kwargs):
         kwargs.pop('zip')
         kwargs.pop('keep_zip')
         kwargs.pop('input_config_file')
-        kwargs.pop('xsiam')
+        kwargs.pop('xsiam', None)
 
     check_configuration_file('upload', kwargs)
     return Uploader(**kwargs).upload()

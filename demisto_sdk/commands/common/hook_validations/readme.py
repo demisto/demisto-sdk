@@ -562,8 +562,10 @@ class ReadMeValidator(BaseValidator):
 
                     else:
                         raise Exception(error_message)
-        yield True
-        ReadMeValidator.stop_mdx_server()
+        try:
+            yield True
+        finally:
+            ReadMeValidator.stop_mdx_server()
 
     @staticmethod
     def add_node_env_vars():

@@ -1,9 +1,15 @@
 # Changelog
 
 ## Unreleased
+
+* Fixed an issue where `-vvv` flag did not print logs on debug level.
 * enhanced ***validate*** command to list all command names affected by a backward compatibility break, instead of only one.
 * Added support for Wizard content item in the **format**, **validate**, **upload**, **create-id-set**, **find-dependecies** and **create-content-artifacts** commands.
 * Added a new flag to the **validate** command, allowing to run specific validations.
+* Fixed an issue in **upload** where list items were not uploaded.
+* Added a new validation to **validate** command to verify that *cliName* and *id* keys of the incident field or the indicator field are matches.
+* Added the flag '-x', '--xsiam' to **upload** command to upload XSIAM entities to XSIAM server.
+* Fixed the integration field *isFetchEvents* to be in lowercase.
 
 ## 1.6.5
 
@@ -51,6 +57,7 @@ the same as the last release note version.
 * Added support for running tests on XSIAM machines in the **test-content** command.
 * Fixed an issue where the **validate** command did not work properly when deleting non-content items.
 * Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
+* Added a new validation to **validate** proper defaultvalue for checkbox fields.
 
 ## 1.6.3
 

@@ -57,9 +57,9 @@ EX_FAIL = 1
 
 class ArtifactsManager:
     def __init__(self, artifacts_path: str, zip: bool, packs: bool, content_version: str, suffix: str,
-                 cpus: int, marketplace: str = 'xsoar', id_set_path: str = '', pack_names: str = 'all', signature_key: str = '',
-                 sign_directory: Path = None, remove_test_playbooks: bool = True,
-                 filter_by_id_set: bool = False, alternate_fields: bool = False):
+                 cpus: int, marketplace: str = MarketplaceVersions.XSOAR.value, id_set_path: str = '',
+                 pack_names: str = 'all', signature_key: str = '', sign_directory: Path = None,
+                 remove_test_playbooks: bool = True, filter_by_id_set: bool = False, alternate_fields: bool = False):
         """ Content artifacts configuration
 
         Args:

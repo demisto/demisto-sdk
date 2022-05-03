@@ -95,7 +95,7 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
     """
 
     expected_rn = '\n' + '#### Integrations\n' + \
-                  '- ** Azure Feed**\n' + \
+                  '- **Azure Feed**\n' + \
                   '- %%UPDATE_RN%%\n'
     modified_files = {join(AZURE_FEED_PACK_PATH, 'Integrations', 'FeedAzureValid', 'FeedAzureValid.yml')}
     rn_path = join(RN_FOLDER, '1_0_1.md')

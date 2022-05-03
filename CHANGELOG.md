@@ -3,6 +3,7 @@
 ## Unreleased
 * enhanced ***validate*** command to list all command names affected by a backward compatibility break, instead of only one.
 * Added a new flag to the **validate** command, allowing to run specific validations.
+* Fixed an issue where **validate -i** run after **format -i** on an existing file in the repo instead of **validate -g**.
 
 ## 1.6.5
 

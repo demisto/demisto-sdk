@@ -7,6 +7,8 @@
 * Added a new flag to the **validate** command, allowing to run specific validations.
 * Fixed an issue in **upload** where list items were not uploaded.
 * Added a new validation to **validate** command to verify that *cliName* and *id* keys of the incident field or the indicator field are matches.
+* Added the flag '-x', '--xsiam' to **upload** command to upload XSIAM entities to XSIAM server.
+* Fixed the integration field *isFetchEvents* to be in lowercase.
 * Updated the release note template to include a uniform format for all items.
 
 ## 1.6.5

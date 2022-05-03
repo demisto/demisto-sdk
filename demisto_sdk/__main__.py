@@ -14,7 +14,7 @@ from pkg_resources import DistributionNotFound, get_distribution
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, MODELING_RULES_DIR, PARSING_RULES_DIR,
-    FileType)
+    FileType, MarketplaceVersions)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
@@ -887,6 +887,10 @@ def format(
     help="Compress the pack to zip before upload, this flag is relevant only for packs.", is_flag=True
 )
 @click.option(
+    "-x", "--xsiam",
+    help="Upload the pack to XSIAM server. Must be used together with -z", is_flag=True
+)
+@click.option(
     "--keep-zip", help="Directory where to store the zip after creation, this argument is relevant only for packs "
                        "and in case the --zip flag is used.", required=False, type=click.Path(exists=True))
 @click.option(
@@ -929,10 +933,14 @@ def upload(**kwargs):
             pack_path = config_file_to_parse.parse_file()
             kwargs['detached_files'] = True
             kwargs.pop('input_config_file')
+        if kwargs.pop('xsiam', False):
+            marketplace = MarketplaceVersions.MarketplaceV2.value
+        else:
+            marketplace = MarketplaceVersions.XSOAR.value
 
         output_zip_path = kwargs.pop('keep_zip') or tempfile.gettempdir()
         packs_unifier = PacksZipper(pack_paths=pack_path, output=output_zip_path,
-                                    content_version='0.0.0', zip_all=True, quiet_mode=True)
+                                    content_version='0.0.0', zip_all=True, quiet_mode=True, marketplace=marketplace)
         packs_zip_path, pack_names = packs_unifier.zip_packs()
         if packs_zip_path is None and not kwargs.get('detached_files'):
             return EX_FAIL
@@ -943,6 +951,7 @@ def upload(**kwargs):
         kwargs.pop('zip')
         kwargs.pop('keep_zip')
         kwargs.pop('input_config_file')
+        kwargs.pop('xsiam', None)
 
     check_configuration_file('upload', kwargs)
     return Uploader(**kwargs).upload()

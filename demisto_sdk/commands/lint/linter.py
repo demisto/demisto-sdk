@@ -589,9 +589,9 @@ class Linter:
 
         """
         log_promopt = f'{self._pack_name} - Run Lint On Docker Image'
-        logger.info(f'{log_promopt} - Start linting. Number of images={self._facts["images"]}')
+        logger.info(f'{log_promopt} - Running lint: Number of images={self._facts["images"]}')
         for image in self._facts["images"]:
-            logger.info(f'{log_promopt} - Starting linting on docker image {image[0]}')
+            logger.info(f'{log_promopt} - Running lint on docker image {image[0]}')
             # Docker image status - visualize
             status = {
                 "image": image[0],

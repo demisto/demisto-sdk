@@ -1,5 +1,4 @@
 # Changelog
-
 ## Unreleased
 
 * Fixed an issue where `mdx server` did not close when stopped in mid run.
@@ -12,6 +11,7 @@
 * Added the flag '-x', '--xsiam' to **upload** command to upload XSIAM entities to XSIAM server.
 * Fixed the integration field *isFetchEvents* to be in lowercase.
 * Fixed an issue where **validate -i** run after **format -i** on an existing file in the repo instead of **validate -g**.
+* Added the following commands: 'update-remote-data', 'get-modified-remote-data', 'update-remote-system' to be ignored by the **verify_yml_commands_match_readme** validation, the validation will no longer fail if these commands are not in the readme file.
 
 ## 1.6.5
 

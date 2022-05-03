@@ -409,7 +409,7 @@ class LintManager:
             print_warning(msg)
             logger.error(msg)
 
-            if Version(platform.python_version) > Version('3.9'):
+            if Version(platform.python_version()) > Version('3.9'):
                 executor.shutdown(wait=True, cancel_futures=True)  # type: ignore[call-arg]
             else:
                 logger.info('Using Python under 3.8, we will cancel futures manually.')

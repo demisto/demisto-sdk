@@ -156,7 +156,7 @@ class Linter:
             if skip:
                 return self._pkg_lint_status
             # Locate mandatory files in pack path - for more info checkout the context manager LintFiles
-            with add_tmp_lint_files(content_repo=self._content_repo,  # type: ignore
+            with add_tmp_lint_files(content_repo=self._content_repo,
                                     pack_path=self._pack_abs_dir,
                                     lint_files=self._facts["lint_files"],
                                     modules=modules,

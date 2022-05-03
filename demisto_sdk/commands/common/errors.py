@@ -437,6 +437,16 @@ ERROR_CODE = {
         'ui_applicable': False,
         'related_field': 'wizard'
     },
+    "wrong_link_in_wizard": {
+        'code': "WZ104",
+        'ui_applicable': False,
+        'related_field': 'wizard'
+    },
+    "wizard_integrations_without_playbooks": {
+        'code': "WZ105",
+        'ui_applicable': False,
+        'related_field': 'wizard'
+    }
 }
 
 
@@ -2282,19 +2292,29 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_dependency_pack_in_wizard(dep_pack):
-        return f"Dependency Pack \"{dep_pack}\" was not found. Please check it's written correctly."
+        return f'Dependency Pack "{dep_pack}" was not found. Please check it\'s written correctly.'
 
     @staticmethod
     @error_code_decorator
-    def invalid_integration_in_wizard(integration):
-        return f"Integration \"{integration}\" does not exist. Please check it's written correctly."
+    def invalid_integration_in_wizard(integration: str):
+        return f'Integration "{integration}" does not exist. Please check it\'s written correctly.'
 
     @staticmethod
     @error_code_decorator
-    def invalid_playbook_in_wizard(playbook):
-        return f"Playbook \"{playbook}\" does not exist. Please check it's written correctly."
+    def invalid_playbook_in_wizard(playbook: str):
+        return f'Playbook "{playbook}" does not exist. Please check it\'s written correctly.'
 
     @staticmethod
     @error_code_decorator
-    def missing_dependency_pack_in_wizard(pack, content_item):
-        return f"Pack {pack} is missing from the \"dependency_packs\". This pack is required for {content_item}."
+    def missing_dependency_pack_in_wizard(pack: str, content_item: str):
+        return f'Pack "{pack}" is missing from the "dependency_packs". This pack is required for {content_item}.'
+
+    @staticmethod
+    @error_code_decorator
+    def wrong_link_in_wizard(link):
+        return f'Provided integration link "{link}" was not provided in fetching_integrations. Make sure it\'s written correctly.'
+
+    @staticmethod
+    @error_code_decorator
+    def wizard_integrations_without_playbooks(integrations: set):
+        return f'The following integrations are missing a set_playbook: {integrations}'

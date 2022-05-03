@@ -85,3 +85,16 @@ class TestWizardValidator:
     def test_are_playbooks_in_dependency_packs(self, current_file, id_set, answer):
         validator = get_validator(current_file)
         assert validator.are_playbooks_in_dependency_packs(id_set) is answer
+
+    @pytest.mark.parametrize('current_file,answer', [
+        ({}, True),
+        ({'wizard': {'set_playbook': [{'name': 'exists', 'link_to_integration': 'exists'}],
+                     'fetching_integrations': [{'name': 'exists'}, {'name': 'exists2'}]}}, False),
+        ({'wizard': {'set_playbook': [{'name': 'exists', 'link_to_integration': 'not_exists'}],
+                     'fetching_integrations': [{'name': 'exists'}]}}, False),
+        ({'wizard': {'set_playbook': [{'name': 'exists', 'link_to_integration': 'exists'}],
+                     'fetching_integrations': [{'name': 'exists'}]}}, True),
+    ])
+    def test_do_all_fetch_integrations_have_playbook(self, current_file, answer):
+        validator = get_validator(current_file)
+        assert validator.do_all_fetch_integrations_have_playbook() is answer

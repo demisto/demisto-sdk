@@ -19,7 +19,7 @@ from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 json = JSON_Handler()
 
 
-class TestRNUpdate(unittest.TestCase):
+class TestRNUpdate:
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
 
     @mock.patch.object(UpdateRN, 'get_master_version')
@@ -33,24 +33,24 @@ class TestRNUpdate(unittest.TestCase):
                 - return a markdown string
         """
         expected_result = \
-            "\n#### Classifiers\n##### Hello World Classifier\n- %%UPDATE_RN%%\n" \
-            "\n#### Connections\n- **Hello World Connection**\n" \
-            "\n#### Dashboards\n##### Hello World Dashboard\n- %%UPDATE_RN%%\n" \
-            "\n#### Incident Fields\n- **Hello World IncidentField**\n" \
-            "\n#### Incident Types\n- **Hello World Incident Type**\n" \
-            "\n#### Indicator Fields\n- **Hello World Indicator Field**\n" \
-            "\n#### Indicator Types\n- **Hello World Indicator Type**\n" \
-            "\n#### Integrations\n##### Hello World Integration\n- %%UPDATE_RN%%\n" \
-            "\n#### Jobs\n##### Hello World Job #1\n- %%UPDATE_RN%%" \
-            "\n##### Hello World Job #2\n- %%UPDATE_RN%%\n" \
-            "\n#### Layouts\n- **Hello World Layout**\n" \
-            "- **Second Hello World Layout**\n" \
-            "\n#### Modules\n##### Hello World Generic Module\n- %%UPDATE_RN%%\n" \
-            "\n#### Objects\n##### Hello World Generic Definition\n- %%UPDATE_RN%%\n" \
-            "\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%\n" \
-            "\n#### Reports\n##### Hello World Report\n- %%UPDATE_RN%%\n" \
-            "\n#### Scripts\n##### Hello World Script\n- %%UPDATE_RN%%\n" \
-            "\n#### Widgets\n##### Hello World Widget\n- %%UPDATE_RN%%\n"
+            "\n#### Classifiers\n- **Hello World Classifier**\n- %%UPDATE_RN%%\n" \
+            "\n#### Connections\n- **Hello World Connection**\n- %%UPDATE_RN%%\n" \
+            "\n#### Dashboards\n- **Hello World Dashboard**\n- %%UPDATE_RN%%\n" \
+            "\n#### Incident Fields\n- **Hello World IncidentField**\n- %%UPDATE_RN%%\n" \
+            "\n#### Incident Types\n- **Hello World Incident Type**\n- %%UPDATE_RN%%\n" \
+            "\n#### Indicator Fields\n- **Hello World Indicator Field**\n- %%UPDATE_RN%%\n" \
+            "\n#### Indicator Types\n- **Hello World Indicator Type**\n- %%UPDATE_RN%%\n" \
+            "\n#### Integrations\n- **Hello World Integration**\n- %%UPDATE_RN%%\n" \
+            "\n#### Jobs\n- **Hello World Job #1**\n- %%UPDATE_RN%%\n" \
+            "- **Hello World Job #2**\n- %%UPDATE_RN%%\n" \
+            "\n#### Layouts\n- **Hello World Layout**\n- %%UPDATE_RN%%\n" \
+            "- **Second Hello World Layout**\n- %%UPDATE_RN%%\n" \
+            "\n#### Modules\n- **Hello World Generic Module**\n- %%UPDATE_RN%%\n" \
+            "\n#### Objects\n- **Hello World Generic Definition**\n- %%UPDATE_RN%%\n" \
+            "\n#### Playbooks\n- **Hello World Playbook**\n- %%UPDATE_RN%%\n" \
+            "\n#### Reports\n- **Hello World Report**\n- %%UPDATE_RN%%\n" \
+            "\n#### Scripts\n- **Hello World Script**\n- %%UPDATE_RN%%\n" \
+            "\n#### Widgets\n- **Hello World Widget**\n- %%UPDATE_RN%%\n"
 
         mock_master.return_value = '1.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
@@ -78,7 +78,7 @@ class TestRNUpdate(unittest.TestCase):
             ("Hello World Job #2", FileType.JOB): {"description": "yet another job", "is_new_file": False}
         }
         release_notes = update_rn.build_rn_template(changed_items)
-        assert expected_result == release_notes
+        assert expected_result in release_notes
 
     @mock.patch.object(UpdateRN, 'get_master_version')
     def test_build_rn_template_integration_for_generic(self, mock_master):
@@ -118,7 +118,7 @@ class TestRNUpdate(unittest.TestCase):
             Then:
                 - return a markdown string
         """
-        expected_result = "\n#### Playbooks\n##### New: Hello World Playbook\n- Hello World Playbook description\n"
+        expected_result = "\n#### Playbooks\n##### New: **Hello World Playbook**\n- Hello World Playbook description"
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
         mock_master.return_value = '1.0.0'
@@ -141,7 +141,7 @@ class TestRNUpdate(unittest.TestCase):
             Then:
                 - return a markdown string
         """
-        expected_result = "\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%\n"
+        expected_result = "\n#### Playbooks\n- **Hello World Playbook**\n- %%UPDATE_RN%%\n"
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
         mock_master.return_value = '1.0.0'
@@ -165,7 +165,7 @@ class TestRNUpdate(unittest.TestCase):
             Then:
                 - return a markdown string
         """
-        expected_result = "\n#### Incident Fields\n- **Hello World IncidentField**\n"
+        expected_result = "\n#### Incident Fields\n- **Hello World IncidentField**\n- %%UPDATE_RN%%\n"
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
         mock_master.return_value = '1.0.0'
@@ -188,7 +188,7 @@ class TestRNUpdate(unittest.TestCase):
             Then:
                 - return a markdown string
         """
-        expected_result = "\n#### Integrations\n##### Hello World Integration\n" \
+        expected_result = "\n#### Integrations\n- **Hello World Integration**\n" \
                           "- Documentation and metadata improvements.\n"
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
@@ -444,7 +444,8 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='revision',
                              modified_files_in_pack={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
-        self.assertRaises(ValueError, update_rn.bump_version_number)
+        with pytest.raises(ValueError):
+            update_rn.bump_version_number()
         os.remove(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
@@ -467,7 +468,8 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
-        self.assertRaises(ValueError, update_rn.bump_version_number)
+        with pytest.raises(ValueError):
+            update_rn.bump_version_number()
         os.remove(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
@@ -490,7 +492,8 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='major', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
-        self.assertRaises(ValueError, update_rn.bump_version_number)
+        with pytest.raises(ValueError):
+            update_rn.bump_version_number()
         os.remove(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
@@ -1436,13 +1439,13 @@ def test_docker_image_is_added_for_every_integration(mocker, repo):
 
 
 HANDLE_EXISTING_RN_WITH_DOCKER_IMAGE_INPUTS = [
-    ('#### Integrations\n##### IBM QRadar v2\n- %%UPDATE_RN%%\n##### IBM QRadar v3\n- %%UPDATE_RN%%',
+    ('#### Integrations\n- **IBM QRadar v2**\n- %%UPDATE_RN%%\n- **IBM QRadar v3**\n- %%UPDATE_RN%%',
      'Integrations', 'demisto/python3:3.9.5.21276', 'IBM QRadar v3',
-     '#### Integrations\n##### IBM QRadar v2\n- %%UPDATE_RN%%\n##### IBM QRadar v3\n- Updated the Docker image to: '
+     '#### Integrations\n- **IBM QRadar v2**\n- %%UPDATE_RN%%\n- **IBM QRadar v3**\n- Updated the Docker image to: '
      '*demisto/python3:3.9.5.21276*.\n- %%UPDATE_RN%%'),
-    ('#### Integrations\n##### IBM QRadar v3\n- %%UPDATE_RN%%',
+    ('#### Integrations\n- **IBM QRadar v3**\n- %%UPDATE_RN%%',
      'Integrations', 'demisto/python3:3.9.5.21276', 'IBM QRadar v3',
-     '#### Integrations\n##### IBM QRadar v3\n- Updated the Docker image to: '
+     '#### Integrations\n- **IBM QRadar v3**\n- Updated the Docker image to: '
      '*demisto/python3:3.9.5.21276*.\n- %%UPDATE_RN%%')]
 
 
@@ -1473,7 +1476,7 @@ def test_handle_existing_rn_with_docker_image(new_rn: str, header_by_type: str, 
 
 
 @pytest.mark.parametrize('text, expected_rn_string',
-                         [('Testing the upload', '##### PackName\n- Testing the upload\n')])
+                         [('Testing the upload', '- **PackName**\n- Testing the upload\n')])
 def test_force_and_text_update_rn(repo, text, expected_rn_string):
     """
     Given:

@@ -376,7 +376,7 @@ class LintManager:
 
                 logger.info('Waiting for futures to complete')
                 for i, future in enumerate(concurrent.futures.as_completed(results)):
-                    logger.info(f'Waiting for future index {i}')
+                    logger.debug(f'Waiting for future index {i}')
                     pkg_status = future.result()
                     logger.info(f'Got lint results for {pkg_status["pkg"]}')
                     pkgs_status[pkg_status["pkg"]] = pkg_status
@@ -399,14 +399,19 @@ class LintManager:
         except KeyboardInterrupt:
             msg = "Stop demisto-sdk lint - Due to 'Ctrl C' signal"
             print_warning(msg)
-            logger.warning(msg)
+            logger.error(msg)
             executor.shutdown(wait=False)  # If keyboard interrupt no need to wait to clean resources
             return 1, 0
         except Exception as e:
             msg = f"Stop demisto-sdk lint - Due to Exception {e}"
             print_warning(msg)
-            logger.warning(msg)
-            executor.shutdown(wait=True)  # wait for the resources to be cleaned. Note that `cancel_futures` not supported in python 3.8
+            logger.error(msg)
+            try:
+                executor.shutdown(wait=True, cancel_futures=True)
+            except Exception:
+                executor.shutdown(wait=True)  # wait for the resources to be cleaned. Note that `cancel_futures` not supported in python 3.8
+                for res in results:
+                    res.cancel()
             return 1, 0
 
     def run(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,

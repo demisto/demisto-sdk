@@ -5,15 +5,21 @@ from typing import Tuple
 
 import click
 
-from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.constants import (
+    FileType,
+    LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
+)
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS, print_color, print_error,
-    remove_copy_and_dev_suffixes_from_str)
+    remove_copy_and_dev_suffixes_from_str,
+    get_all_incident_and_indicator_fields_from_id_set, LAYOUT_CONTAINER_FIELDS
+)
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_FROMVERSION,
     SKIP_RETURN_CODE, SUCCESS_RETURN_CODE, VERSION_6_0_0)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
+from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 
 yaml = YAML_Handler()
 
@@ -96,6 +102,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         self.set_toVersion()
         self.layout__set_output_path()
         self.remove_copy_and_dev_suffixes_from_layout()
+        self.remove_inexistent_fields_layout()
 
     def layout__set_output_path(self):
         output_basename = os.path.basename(self.output_file)
@@ -117,6 +124,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         self.layoutscontainer__set_output_path()
         self.update_id(field='name')
         self.remove_copy_and_dev_suffixes_from_layoutscontainer()
+        self.remove_inexistent_fields_layoutscontainer()
 
     def layoutscontainer__set_output_path(self):
         output_basename = os.path.basename(self.output_file)
@@ -255,3 +263,80 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                     if section.get('queryType') == SCRIPT_QUERY_TYPE:
                         section['query'] = remove_copy_and_dev_suffixes_from_str(section.get('query'))
                         section['name'] = remove_copy_and_dev_suffixes_from_str(section.get('name'))
+
+    def remove_inexistent_fields_layoutscontainer(self):
+        """
+        Remove in-existent incident/indicator fields from a container layout.
+        """
+        if not self.id_set_file:
+            return
+
+        content_incident_fields = get_all_incident_and_indicator_fields_from_id_set(self.id_set_file, 'layout')
+
+        layout_container_items = [
+            layout_container_field for layout_container_field in LAYOUT_CONTAINER_FIELDS
+            if self.data.get(layout_container_field)
+        ]
+
+        built_in_fields = [field.lower() for field in BUILT_IN_FIELDS] + LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
+        layout_incident_fields = set()
+
+        for layout_container_item in layout_container_items:
+            layout = self.data.get(layout_container_item, {})
+            layout_tabs = layout.get('tabs', [])
+
+            for layout_tab in layout_tabs:
+                layout_sections = layout_tab.get('sections', [])
+
+                for section in layout_sections:
+                    if section and section.get('items'):
+                        existing_items = []
+                        for item in section.get('items', []):
+                            field = item.get('fieldId', '').replace('incident_', '').replace('indicator', '').lower()
+                            if (
+                                field in built_in_fields or field in content_incident_fields
+                            ) and field not in layout_incident_fields:
+                                layout_incident_fields.add(field)
+                                existing_items.append(item)
+                        section['items'] = existing_items
+
+    def remove_inexistent_fields_layout(self):
+        """
+        Remove in-existent incident/indicator fields from a layout.
+        """
+        if not self.id_set_file:
+            return
+
+        content_incident_fields = get_all_incident_and_indicator_fields_from_id_set(self.id_set_file, 'layout')
+        built_in_fields = [field.lower() for field in BUILT_IN_FIELDS] + LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
+        layout_incident_fields = set()
+
+        layout = self.data.get('layout', {})
+        layout_sections = layout.get('sections', [])
+        for section in layout_sections:
+            fields = []
+            for field in section.get('fields', []):
+                field = field.get('fieldId', '').replace('incident', '').replace('indicator', '').lower()
+                if (
+                    field in built_in_fields or field in content_incident_fields
+                ) and field not in layout_incident_fields:
+                    layout_incident_fields.add(field)
+                    fields.append(field)
+            section['fields'] = fields
+
+        layout_tabs = layout.get('tabs', [])
+        for tab in layout_tabs:
+            layout_sections = tab.get('sections', [])
+            for section in layout_sections:
+                if section and section.get('items'):
+                    existing_items = []
+                    for item in section.get('items', []):
+                        field = item.get('fieldId', '').replace('incident_', '').replace('indicator_', '').lower()
+                        if (
+                            field in built_in_fields or field in content_incident_fields
+                        ) and field not in layout_incident_fields:
+                            layout_incident_fields.add(field)
+                            existing_items.append(field)
+                    section['items'] = existing_items
+
+

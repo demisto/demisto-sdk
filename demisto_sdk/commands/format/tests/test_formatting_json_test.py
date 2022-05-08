@@ -1,4 +1,5 @@
 import os
+import random
 import shutil
 from typing import Optional
 
@@ -59,6 +60,7 @@ from demisto_sdk.tests.constants_test import (
     SOURCE_FORMAT_LAYOUTS_CONTAINER_COPY, SOURCE_FORMAT_LISTS_COPY,
     SOURCE_FORMAT_MAPPER, SOURCE_FORMAT_PRE_PROCESS_RULES_COPY,
     SOURCE_FORMAT_REPORT, SOURCE_FORMAT_WIDGET, WIDGET_PATH)
+from TestSuite.json_based import JSONBased
 
 json = JSON_Handler()
 
@@ -554,6 +556,65 @@ class TestFormattingLayoutscontainer:
             input=layoutscontainer_copy, output=DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY, clear_cache=True)
         layoutscontainer_formatter.schema_path = LAYOUTS_CONTAINER_SCHEMA_PATH
         yield layoutscontainer_formatter
+
+    @pytest.fixture
+    def create_layout(self, pack):
+        return pack.create_layout(
+            name='layout-test',
+            content={"layout": {"tabs": [{"sections": [{"items": [{"fieldId": "Incident Field"}]}]}]}}
+        )
+
+    @pytest.fixture()
+    def create_layoutscontainer(self, pack):
+        random_layoutscontainer_field = random.choice(
+            ['details', 'detailsV2', 'edit', 'close', 'mobile', 'quickView', 'indicatorsQuickView', 'indicatorsDetails']
+        )
+        return pack.create_layoutcontainer(
+            name='layoutscontainer-test',
+            content={
+                random_layoutscontainer_field: {
+                    "tabs": [
+                        {
+                            "sections": [
+                                {
+                                    "items": [
+                                        {"fieldId": "incident-field-1"},
+                                        {"fieldId": "incident-field-2"},
+                                        {"fieldId": "incident-field-3"}
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        )
+
+    @pytest.fixture()
+    def create_id_set(self, tmp_path):
+        id_set_file = JSONBased(
+            dir_path=tmp_path,
+            name="id_set_file",
+            prefix=''
+        )
+        id_set_file.write_json(
+            {
+                "IncidentFields": [
+                    {"incident_incident-field-1": {"name": "Incident Field"}},
+                    {'incident_incident-field-2': {"name": "Incident Field"}}
+                ],
+                "IndicatorFields": [
+                    {"indicator_indicator-field-1": {"name": "Indicator Field"}},
+                    {"indicator_indicator-field-2": {"name": "Indicator Field"}}
+                ]
+            }
+        )
+        return id_set_file
+
+    def test_remove_inexistent_fields_container_layout(self, create_layoutscontainer, create_id_set):
+        formatter = LayoutBaseFormat(input=create_layoutscontainer.path, id_set_path=create_id_set.path)
+        formatter.remove_inexistent_fields_layoutscontainer()
+        assert True
 
     @patch('builtins.input', lambda *args: 'incident')
     def test_set_group_field(self, layoutscontainer_formatter):

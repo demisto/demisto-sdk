@@ -1391,6 +1391,9 @@ def find_type(
         if isinstance(_dict, dict) and {'isAllFeeds', 'selectedFeeds', 'isFeed'}.issubset(_dict.keys()):
             return FileType.JOB
 
+        if isinstance(_dict, dict) and 'wizard' in _dict:
+            return FileType.WIZARD
+
         if 'dashboards_data' in _dict:
             return FileType.XSIAM_DASHBOARD
 
@@ -1991,7 +1994,7 @@ def get_file_displayed_name(file_path):
     elif file_type in [FileType.MAPPER, FileType.CLASSIFIER, FileType.INCIDENT_FIELD, FileType.INCIDENT_TYPE,
                        FileType.INDICATOR_FIELD, FileType.LAYOUTS_CONTAINER, FileType.PRE_PROCESS_RULES,
                        FileType.DASHBOARD, FileType.WIDGET,
-                       FileType.REPORT, FileType.JOB]:
+                       FileType.REPORT, FileType.JOB, FileType.WIZARD]:
         return get_json(file_path).get('name')
     elif file_type == FileType.OLD_CLASSIFIER:
         return get_json(file_path).get('brandName')

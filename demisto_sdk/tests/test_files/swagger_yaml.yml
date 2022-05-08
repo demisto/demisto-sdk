@@ -13,16 +13,16 @@ configuration:
   name: api_key
   required: true
   type: 4
-- defaultvalue: ''
-  display: Trust any certificate (not secure)
+- display: Trust any certificate (not secure)
   name: insecure
   required: false
   type: 8
-- defaultvalue: ''
-  display: Use system proxy settings
+  defaultvalue: 'false'
+- display: Use system proxy settings
   name: proxy
   required: false
   type: 8
+  defaultvalue: 'false'
 description: 'This is a sample server Petstore server.  You can find out more about     Swagger
   at [http://swagger.io](http://swagger.io) or on [irc.freenode.net, #swagger](http://swagger.io/irc/).      For
   this sample, you can use the api key `special-key` to test the authorization     filters.'

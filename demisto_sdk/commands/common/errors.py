@@ -230,6 +230,7 @@ ERROR_CODE = {
     'empty_outputs_common_paths': {'code': 'IN149', 'ui_applicable': False, 'related_field': 'contextOutput'},
     'invalid_siem_integration_name': {'code': 'IN150', 'ui_applicable': True, 'related_field': 'display'},
     "empty_command_arguments": {'code': 'IN151', 'ui_applicable': False, 'related_field': 'arguments'},
+    'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True, 'related_field': 'defaultvalue'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -417,6 +418,38 @@ ERROR_CODE = {
         'ui_applicable': False,
         'related_field': 'name'
     },
+
+    # WZ - Wizards
+    "invalid_dependency_pack_in_wizard": {
+        'code': "WZ100",
+        'ui_applicable': False,
+        'related_field': 'dependency_packs'
+    },
+    "missing_dependency_pack_in_wizard": {
+        'code': "WZ101",
+        'ui_applicable': False,
+        'related_field': 'dependency_packs'
+    },
+    "invalid_integration_in_wizard": {
+        'code': "WZ102",
+        'ui_applicable': False,
+        'related_field': 'wizard'
+    },
+    "invalid_playbook_in_wizard": {
+        'code': "WZ103",
+        'ui_applicable': False,
+        'related_field': 'wizard'
+    },
+    "wrong_link_in_wizard": {
+        'code': "WZ104",
+        'ui_applicable': False,
+        'related_field': 'wizard'
+    },
+    "wizard_integrations_without_playbooks": {
+        'code': "WZ105",
+        'ui_applicable': False,
+        'related_field': 'wizard'
+    }
 }
 
 
@@ -476,7 +509,7 @@ class Errors:
         return "The file type is not supported in the validate command.\n" \
                "The validate command supports: Integrations, Scripts, Playbooks, " \
                "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields, Object types," \
-               " Object modules, Images, Release notes, Layouts, Jobs and Descriptions."
+               " Object modules, Images, Release notes, Layouts, Jobs, Wizards, and Descriptions."
 
     @staticmethod
     @error_code_decorator
@@ -841,6 +874,13 @@ class Errors:
         return f"The display name of this siem integration is incorrect , " \
                f"should end with \"Event Collector\".\n" \
                f"e.g: {display_name} Event Collector"
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_defaultvalue_for_checkbox_field(defaultvalue: bool):
+        return f"The defaultvalue={defaultvalue} for the checkbox is incorrect, " \
+               f"should be true or false.\n " \
+               f"e.g: defaultvalue: true"
 
     @staticmethod
     @error_code_decorator
@@ -2246,3 +2286,38 @@ class Errors:
 
         return f"The following command outputs are missing: \n{commands_str}\n" \
                f"please type them or run demisto-sdk format -i {yaml_path}"
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_content_item_id_wizard(invalid_content_item_id):
+        return f'Failed to find {invalid_content_item_id} in content repo. Please check it\'s written correctly.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_dependency_pack_in_wizard(dep_pack):
+        return f'Dependency Pack "{dep_pack}" was not found. Please check it\'s written correctly.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_integration_in_wizard(integration: str):
+        return f'Integration "{integration}" does not exist. Please check it\'s written correctly.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_playbook_in_wizard(playbook: str):
+        return f'Playbook "{playbook}" does not exist. Please check it\'s written correctly.'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_dependency_pack_in_wizard(pack: str, content_item: str):
+        return f'Pack "{pack}" is missing from the "dependency_packs". This pack is required for {content_item}.'
+
+    @staticmethod
+    @error_code_decorator
+    def wrong_link_in_wizard(link):
+        return f'Provided integration link "{link}" was not provided in fetching_integrations. Make sure it\'s written correctly.'
+
+    @staticmethod
+    @error_code_decorator
+    def wizard_integrations_without_playbooks(integrations: set):
+        return f'The following integrations are missing a set_playbook: {integrations}'

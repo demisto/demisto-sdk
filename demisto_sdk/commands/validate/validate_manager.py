@@ -89,6 +89,7 @@ from demisto_sdk.commands.common.hook_validations.test_playbook import \
 from demisto_sdk.commands.common.hook_validations.triggers import \
     TriggersValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
+from demisto_sdk.commands.common.hook_validations.wizard import WizardValidator
 from demisto_sdk.commands.common.hook_validations.xsiam_dashboard import \
     XSIAMDashboardValidator
 from demisto_sdk.commands.common.hook_validations.xsiam_report import \
@@ -697,6 +698,9 @@ class ValidateManager:
         elif file_type == FileType.XSIAM_REPORT:
             return self.validate_xsiam_report(structure_validator, pack_error_ignore_list)
 
+        elif file_type == FileType.WIZARD:
+            return self.validate_wizard(structure_validator, pack_error_ignore_list)
+
         elif file_type == FileType.GENERIC_FIELD:
             return self.validate_generic_field(structure_validator, pack_error_ignore_list, is_added_file)
 
@@ -1179,6 +1183,12 @@ class ValidateManager:
                                                         print_as_warnings=self.print_ignored_errors,
                                                         json_file_path=self.json_file_path)
         return modeling_rule_validator.is_valid_file(validate_rn=False)
+
+    def validate_wizard(self, structure_validator, pack_error_ignore_list):
+        wizard_validator = WizardValidator(structure_validator, ignored_errors=pack_error_ignore_list,
+                                           print_as_warnings=self.print_ignored_errors,
+                                           json_file_path=self.json_file_path)
+        return wizard_validator.is_valid_file(validate_rn=False, id_set_file=self.id_set_file)
 
     def validate_generic_field(self, structure_validator, pack_error_ignore_list, is_added_file):
         generic_field_validator = GenericFieldValidator(structure_validator, ignored_errors=pack_error_ignore_list,

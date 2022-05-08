@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 
+* Added the `Note: XXX` and `XXX now generally available.` release notes templates to **doc-review** command.
 * Fixed an issue where `mdx server` did not close when stopped in mid run.
 * Fixed an issue where `-vvv` flag did not print logs on debug level.
 * enhanced ***validate*** command to list all command names affected by a backward compatibility break, instead of only one.

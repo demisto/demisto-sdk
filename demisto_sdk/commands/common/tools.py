@@ -59,7 +59,7 @@ yaml = YAML_Handler()
 
 urllib3.disable_warnings()
 
-# inialize color palette
+# initialize color palette
 colorama.init()
 
 
@@ -1260,8 +1260,14 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
     if path.suffix == '.yml' and (path.parts[0] == '.circleci' or path.parts[0] == '.gitlab'):
         return FileType.BUILD_CONFIG_FILE
 
-    if path.name == '.pack_ignore':
+    if path.name == FileType.PACK_IGNORE.value:
         return FileType.PACK_IGNORE
+
+    if path.name == FileType.SECRET_IGNORE.value:
+        return FileType.SECRET_IGNORE
+
+    if path.parent.name == DOC_FILES_DIR:
+        return FileType.DOC_FILE
 
     return None
 
@@ -2362,7 +2368,8 @@ def get_current_repo() -> Tuple[str, str, str]:
         return "Unknown source", '', ''
 
 
-def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None, item_type: str = None) -> List:
+def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None,
+                          item_type: str = None) -> List:
     """
     Return the supporting marketplaces of the item.
 

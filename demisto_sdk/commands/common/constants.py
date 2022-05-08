@@ -143,7 +143,8 @@ class FileType(Enum):
     XSIAM_REPORT = 'xsiamreport'
     TRIGGER = 'trigger'
     PACK_IGNORE = '.pack-ignore'
-
+    SECRET_IGNORE = '.secrets-ignore'
+    DOC_FILE = 'doc_files'
 
 RN_HEADER_BY_FILE_TYPE = {
     FileType.PLAYBOOK: 'Playbooks',

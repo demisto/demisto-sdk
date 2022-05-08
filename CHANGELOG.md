@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-
+* Added debug print when excluding item from ID set due to missing dependency.
 * Added a validation to the **validate** command, failing when non-ignorable errors are present in .pack-ignore.
 * Fixed an issue where `mdx server` did not close when stopped in mid run.
 * Fixed an issue where `-vvv` flag did not print logs on debug level.

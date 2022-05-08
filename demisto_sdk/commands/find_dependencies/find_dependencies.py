@@ -2647,6 +2647,9 @@ def calculate_dependencies(excluded_items: dict, id_set: dict, marketplace: str)
                     dependent_items_to_exclude_from_id_set.setdefault(mandatory_pack_name, set()).update(
                         dependent_entities_list)
 
+                    # for debug purposes
+                    print(f'Removing {dependent_entities_list} due to {entity_dependent_on}')
+
     return dependent_items_to_exclude_from_id_set
 
 

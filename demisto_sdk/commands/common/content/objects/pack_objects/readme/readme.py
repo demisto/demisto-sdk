@@ -34,6 +34,7 @@ class Readme(TextObject):
                 text = f.read()
                 f.seek(0)
                 f.write(MARKETPLACE_TAG_PARSER.parse_text(text))
+                f.truncate()
         except Exception as e:
             print(e)
 

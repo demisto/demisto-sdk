@@ -78,7 +78,7 @@ script:
     deprecated: false
     description: Update the status for an alert.
     execution: false
-    name: HelloWorldSlim-update-alert-status
+    name: helloworldslim-update-alert-status
     outputs:
     - contextPath: HelloWorldSlim.Alert.alert_id
       description: Alert ID.

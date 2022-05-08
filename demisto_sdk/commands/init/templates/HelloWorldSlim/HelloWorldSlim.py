@@ -11,7 +11,6 @@ modify the alert's status.
 """
 import urllib3
 from typing import Any, Dict
-import json
 
 
 import demistomock as demisto  # noqa: E402 lgtm [py/polluting-import]

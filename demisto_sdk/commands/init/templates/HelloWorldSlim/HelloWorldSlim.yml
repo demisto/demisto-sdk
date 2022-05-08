@@ -98,8 +98,6 @@ script:
   script: '-'
   subtype: python3
   type: python
-defaultmapperin: HelloWorld-mapper
-defaultclassifier: HelloWorld
 marketplaces:
 - xsoar
 - marketplacev2

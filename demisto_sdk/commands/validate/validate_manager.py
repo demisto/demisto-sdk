@@ -20,8 +20,7 @@ from demisto_sdk.commands.common.constants import (
     VALIDATION_USING_GIT_IGNORABLE_DATA, FileType, FileType_ALLOWED_TO_DELETE,
     PathLevel)
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
-                                                FOUND_FILES_AND_ERRORS,
+from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE, Errors,
@@ -1784,18 +1783,9 @@ class ValidateManager:
 
         return ignored_error_list
 
-    @staticmethod
-    def get_allowed_ignored_errors_from_list(error_list):
-        allowed_ignore_list = []
-        for error in error_list:
-            if error in ALLOWED_IGNORE_ERRORS:
-                allowed_ignore_list.append(error)
-
-        return allowed_ignore_list
-
     def add_ignored_errors_to_list(self, config, section, key, ignored_errors_list):
         if key == 'ignore':
-            ignored_errors_list.extend(self.get_allowed_ignored_errors_from_list(str(config[section][key]).split(',')))
+            ignored_errors_list.extend(str(config[section][key]).split(','))
 
         if key in PRESET_ERROR_TO_IGNORE:
             ignored_errors_list.extend(PRESET_ERROR_TO_IGNORE.get(key))

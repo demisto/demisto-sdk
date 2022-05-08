@@ -195,8 +195,9 @@ def main() -> None:
     # if your Client class inherits from BaseClient, system proxy is handled
     # out of the box by it, just pass ``proxy`` to the Client constructor
     proxy = demisto.params().get('proxy', False)
+    command = demisto.command()
 
-    demisto.debug(f'Command being called is {demisto.command()}')
+    demisto.debug(f'Command being called is {command}')
     try:
         headers = {
             'Authorization': f'Bearer {api_key}'
@@ -207,21 +208,20 @@ def main() -> None:
             headers=headers,
             proxy=proxy)
 
-        if demisto.command() == 'test-module':
+        if command == 'test-module':
             # This is the call made when pressing the integration Test button.
             result = test_module(client, first_fetch_time)
             return_results(result)
 
-        elif demisto.command() == 'helloworld-get-alert':
+        elif command == 'helloworld-get-alert':
             return_results(get_alert_command(client, demisto.args()))
 
-        elif demisto.command() == 'helloworld-update-alert-status':
+        elif command == 'helloworld-update-alert-status':
             return_results(update_alert_status_command(client, demisto.args()))
 
     # Log exceptions and return errors
     except Exception as e:
-        demisto.error(traceback.format_exc())  # print the traceback
-        return_error(f'Failed to execute {demisto.command()} command.\nError:\n{str(e)}')
+        return_error(f'Failed to execute {command} command.\nError:\n{str(e)}', error=e)
 
 
 if __name__ in ('__main__', '__builtin__', 'builtins'):  # pragma: no cover

@@ -1,4 +1,5 @@
 # Changelog
+
 ## Unreleased
 
 * Added a validation to the **validate** command, failing when non-ignorable errors are present in .pack-ignore.
@@ -13,6 +14,7 @@
 * Fixed the integration field *isFetchEvents* to be in lowercase.
 * Fixed an issue where **validate -i** run after **format -i** on an existing file in the repo instead of **validate -g**.
 * Added the following commands: 'update-remote-data', 'get-modified-remote-data', 'update-remote-system' to be ignored by the **verify_yml_commands_match_readme** validation, the validation will no longer fail if these commands are not in the readme file.
+* Updated the release note template to include a uniform format for all items.
 
 ## 1.6.5
 

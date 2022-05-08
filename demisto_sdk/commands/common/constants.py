@@ -147,6 +147,16 @@ class FileType(Enum):
     WIZARD = 'wizard'
 
 
+XSIAM_CONTENT_ITEMS_TYPES = [
+    FileType.PARSING_RULE,
+    FileType.MODELING_RULE,
+    FileType.CORRELATION_RULE,
+    FileType.XSIAM_DASHBOARD,
+    FileType.XSIAM_REPORT,
+    FileType.TRIGGER,
+
+]
+
 RN_HEADER_BY_FILE_TYPE = {
     FileType.PLAYBOOK: 'Playbooks',
     FileType.INTEGRATION: 'Integrations',

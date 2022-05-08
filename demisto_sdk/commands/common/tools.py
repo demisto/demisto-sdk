@@ -607,9 +607,11 @@ def get_from_version(file_path):
 
     if data_dictionary:
         from_version = data_dictionary.get('fromversion') if 'fromversion' in data_dictionary \
-            else data_dictionary.get('fromVersion', DEFAULT_CONTENT_ITEM_FROM_VERSION)
-        if from_version == '':
-            return DEFAULT_CONTENT_ITEM_FROM_VERSION
+            else data_dictionary.get('fromVersion', '')
+
+        if not from_version:
+            logging.warning(f'fromversion/fromVersion was not found in {data_dictionary.get("id", "")}')
+            return ''
 
         if not re.match(r'^\d{1,2}\.\d{1,2}\.\d{1,2}$', from_version):
             raise ValueError(f'{file_path} fromversion is invalid "{from_version}". '
@@ -617,7 +619,7 @@ def get_from_version(file_path):
 
         return from_version
 
-    return DEFAULT_CONTENT_ITEM_FROM_VERSION
+    return ''
 
 
 def get_to_version(file_path):

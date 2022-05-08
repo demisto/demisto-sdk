@@ -30,8 +30,9 @@ class Readme(TextObject):
 
     def handle_marketplace_tags(self):
         try:
-            with open(self._path) as f:
+            with open(self._path, 'r+') as f:
                 text = f.read()
+                f.seek(0)
                 f.write(MARKETPLACE_TAG_PARSER.parse_text(text))
         except Exception as e:
             print(e)

@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     LayoutsContainer, Lists, ModelingRule, OldClassifier, OldIndicatorType,
     PackIgnore, PackMetaData, ParsingRule, Playbook, PreProcessRule, Readme,
     ReleaseNote, ReleaseNoteConfig, Report, Script, SecretIgnore, Trigger,
-    Widget, XSIAMDashboard, XSIAMReport)
+    Widget, Wizard, XSIAMDashboard, XSIAMReport)
 from demisto_sdk.commands.common.content.objects.root_objects import \
     Documentation
 from demisto_sdk.commands.common.tools import find_type
@@ -62,7 +62,8 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.CORRELATION_RULE: CorrelationRule,
     FileType.XSIAM_DASHBOARD: XSIAMDashboard,
     FileType.XSIAM_REPORT: XSIAMReport,
-    FileType.TRIGGER: Trigger
+    FileType.TRIGGER: Trigger,
+    FileType.WIZARD: Wizard,
 }
 
 TYPE_CONVERSION_BY_FILE_NAME = {

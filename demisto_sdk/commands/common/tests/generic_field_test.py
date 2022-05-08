@@ -27,6 +27,9 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
         structure.ignored_errors = dict()
         structure.suppress_print = True
         structure.json_file_path = None
+        structure.specific_validations = None
+        structure.predefined_deprecated_ignored_errors = {}
+        structure.predefined_by_support_ignored_errors = {}
         return structure
 
 

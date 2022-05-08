@@ -156,7 +156,7 @@ INDICATOR_FIELD = {
     "ownerOnly": False,
     "placeholder": "",
     "description": "",
-    "cliName": "indicator",
+    "cliName": "indicatorfield",
     "type": "singleSelect",
     "closeForm": False,
     "editForm": True,

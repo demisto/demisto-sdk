@@ -130,6 +130,7 @@ class Linter:
             2. Run in package docker - pylint, pytest.
 
         Args:
+            no_xsoar_linter(bool): Whether to skip xsoar-linter
             no_flake8(bool): Whether to skip flake8
             no_bandit(bool): Whether to skip bandit
             no_mypy(bool): Whether to skip mypy
@@ -147,13 +148,15 @@ class Linter:
             dict: lint and test all status, pkg status)
         """
         # Gather information for lint check information
-        skip = self._gather_facts(modules)
-        # If not python pack - skip pack
-        if skip:
-            return self._pkg_lint_status
+        log_prompt = f'{self._pack_name} - Run'
+        logger.info(f'{log_prompt} - Start')
         try:
+            skip = self._gather_facts(modules)
+        # If not python pack - skip pack
+            if skip:
+                return self._pkg_lint_status
             # Locate mandatory files in pack path - for more info checkout the context manager LintFiles
-            with add_tmp_lint_files(content_repo=self._content_repo,  # type: ignore
+            with add_tmp_lint_files(content_repo=self._content_repo,
                                     pack_path=self._pack_abs_dir,
                                     lint_files=self._facts["lint_files"],
                                     modules=modules,
@@ -180,6 +183,7 @@ class Linter:
             logger.error(f"{err}. Traceback: {traceback.format_exc()}")
             self._pkg_lint_status["errors"].append(err)
             self._pkg_lint_status['exit_code'] += FAIL
+        logger.info(f'{log_prompt} - Finished Successfully')
         return self._pkg_lint_status
 
     @timer(group_name='lint')
@@ -214,6 +218,7 @@ class Linter:
             logger.info(f"{log_prompt} - Skipping due to not Python, Powershell package - Pack is"
                         f" {self._pkg_lint_status['pack_type']}")
             return True
+
         # Docker images
         if self._facts["docker_engine"]:
             logger.info(f'{log_prompt} - Collecting all docker images to pull')
@@ -223,6 +228,7 @@ class Linter:
                 "CI": os.getenv("CI", False),
                 "DEMISTO_LINT_UPDATE_CERTS": os.getenv('DEMISTO_LINT_UPDATE_CERTS', "yes")
             }
+
         lint_files = set()
         # Facts for python pack
         if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
@@ -235,6 +241,7 @@ class Linter:
                     logger.info(f"{self._pack_name} - Facts - {image[0]} - Python {py_num}")
                     if not self._facts["python_version"]:
                         self._facts["python_version"] = py_num
+
                 # Checking whatever *test* exists in package
                 self._facts["test"] = True if next(self._pack_abs_dir.glob([r'test_*.py', r'*_test.py']),
                                                    None) else False
@@ -242,7 +249,7 @@ class Linter:
                     logger.info(f"{log_prompt} - Tests found")
                 else:
                     logger.info(f"{log_prompt} - Tests not found")
-                # Gather package requirements embedded test-requirements.py file
+                # Gather package requirements embedded in test-requirements.py file
                 test_requirements = self._pack_abs_dir / 'test-requirements.txt'
                 if test_requirements.exists():
                     try:
@@ -256,6 +263,7 @@ class Linter:
                 pynum = '3.7' if (script_obj.get('subtype', 'python3') == 'python3') else '2.7'
                 self._facts["python_version"] = pynum
                 logger.info(f"{log_prompt} - Using python version from yml: {pynum}")
+
             # Get lint files
             lint_files = set(self._pack_abs_dir.glob(["*.py", "!__init__.py", "!*.tmp"],
                                                      flags=NEGATE))
@@ -331,6 +339,8 @@ class Linter:
             no_mypy(bool): Whether to skip mypy.
             no_vulture(bool): Whether to skip Vulture.
         """
+        log_prompt = f'{self._pack_name} - Run Lint In Host'
+        logger.info(f'{log_prompt} - Started')
         warning = []
         error = []
         other = []
@@ -375,6 +385,7 @@ class Linter:
                 # if there were errors but they do not start with E
                 else:
                     self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
+        logger.info(f'{log_prompt} - Finished successfully')
 
     @timer(group_name='lint')
     def _run_flake8(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
@@ -577,7 +588,10 @@ class Linter:
             no_coverage(bool): Run pytest without coverage report
 
         """
+        log_promopt = f'{self._pack_name} - Run Lint On Docker Image'
+        logger.info(f'{log_promopt} - Running lint: Number of images={self._facts["images"]}')
         for image in self._facts["images"]:
+            logger.info(f'{log_promopt} - Running lint on docker image {image[0]}')
             # Docker image status - visualize
             status = {
                 "image": image[0],
@@ -633,9 +647,11 @@ class Linter:
             else:
                 status["image_errors"] = str(errors)
                 self._pkg_lint_status["exit_code"] += EXIT_CODES["image"]
-
             # Add image status to images
             self._pkg_lint_status["images"].append(status)
+            logger.info(f'{log_promopt} - Finished linting on docker image {image[0]}')
+
+        logger.info(f'{log_promopt} - Finished linting. Number of images={self._facts["images"]}')
 
     def _docker_login(self) -> bool:
         """ Login to docker-hub using environment variables:
@@ -905,7 +921,7 @@ class Linter:
         except (docker.errors.ImageNotFound, docker.errors.APIError) as e:
             logger.critical(f"{log_prompt} - Unable to run pytest container {e}")
             exit_code = RERUN
-
+        logger.info(f'{self._pack_name} - Pytest finished image {test_image}')
         return exit_code, output, test_json
 
     def _docker_run_pwsh_analyze(self, test_image: str, keep_container: bool) -> Tuple[int, str]:

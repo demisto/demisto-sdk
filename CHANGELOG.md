@@ -1,6 +1,23 @@
 # Changelog
 
 ## Unreleased
+
+* Added a validation to the **validate** command, failing when non-ignorable errors are present in .pack-ignore.
+* Fixed an issue where `mdx server` did not close when stopped in mid run.
+* Fixed an issue where `-vvv` flag did not print logs on debug level.
+* enhanced ***validate*** command to list all command names affected by a backward compatibility break, instead of only one.
+* Added support for Wizard content item in the **format**, **validate**, **upload**, **create-id-set**, **find-dependecies** and **create-content-artifacts** commands.
+* Added a new flag to the **validate** command, allowing to run specific validations.
+* Fixed an issue in **upload** where list items were not uploaded.
+* Added a new validation to **validate** command to verify that *cliName* and *id* keys of the incident field or the indicator field are matches.
+* Added the flag '-x', '--xsiam' to **upload** command to upload XSIAM entities to XSIAM server.
+* Fixed the integration field *isFetchEvents* to be in lowercase.
+* Fixed an issue where **validate -i** run after **format -i** on an existing file in the repo instead of **validate -g**.
+* Added the following commands: 'update-remote-data', 'get-modified-remote-data', 'update-remote-system' to be ignored by the **verify_yml_commands_match_readme** validation, the validation will no longer fail if these commands are not in the readme file.
+* Updated the release note template to include a uniform format for all items.
+
+## 1.6.5
+
 * Fixed an issue in the **format** command where the `id` field was overwritten for existing JSON files.
 * Fixed an issue where the **doc-review** command was successful even when the release-note is malformed.
 * Added timestamps to the `demisto-sdk` logger.
@@ -12,6 +29,8 @@
 * Fixed an issue in the **format** command where `_dev` or `_copy` suffixes weren't removed from the subscript names in playbooks and layouts.
 * Fixed an issue where **validate** failed on nonexistent `README.md` files.
 * Added support of XSIAM content items to the **validate** command.
+* Report **lint** summary results and failed packages after reporting time measurements.
+
 ## 1.6.4
 
 * Added the new **generate-yml-from-python** command.
@@ -44,6 +63,7 @@ the same as the last release note version.
 * Added support for running tests on XSIAM machines in the **test-content** command.
 * Fixed an issue where the **validate** command did not work properly when deleting non-content items.
 * Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
+* Added a new validation to **validate** proper defaultvalue for checkbox fields.
 
 ## 1.6.3
 

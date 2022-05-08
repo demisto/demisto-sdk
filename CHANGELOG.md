@@ -15,6 +15,7 @@
 * Fixed an issue where **validate -i** run after **format -i** on an existing file in the repo instead of **validate -g**.
 * Added the following commands: 'update-remote-data', 'get-modified-remote-data', 'update-remote-system' to be ignored by the **verify_yml_commands_match_readme** validation, the validation will no longer fail if these commands are not in the readme file.
 * Updated the release note template to include a uniform format for all items.
+* Added HelloWorldSlim template option for *--template* flag in **demisto-sdk init** command.
 
 ## 1.6.5
 

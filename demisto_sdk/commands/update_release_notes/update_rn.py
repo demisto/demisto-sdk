@@ -595,6 +595,9 @@ class UpdateRN:
             definition_name = get_definition_name(path, self.pack_path)
             rn_desc = f'- **({definition_name}) - {content_name}**\n'
 
+        if _type == FileType.TRIGGER:
+            rn_desc = f'- {desc}'  # Issue - https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
+
         if docker_image:
             rn_desc += f'- Updated the Docker image to: *{docker_image}*.\n'
         return rn_desc
@@ -634,6 +637,9 @@ class UpdateRN:
             elif _type in (FileType.GENERIC_TYPE, FileType.GENERIC_FIELD):
                 definition_name = get_definition_name(path, self.pack_path)
                 rn_desc = f'\n- **({definition_name}) - {content_name}**'
+
+            elif _type == FileType.TRIGGER:
+                rn_desc = f'\n- {desc}'  # Issue https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
 
             else:
                 rn_desc = f'\n##### New: {content_name}\n- {desc}\n' if is_new_file \

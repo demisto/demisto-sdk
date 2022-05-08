@@ -17,8 +17,8 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_TYPES_DIR, INTEGRATION_CATEGORIES, INTEGRATIONS_DIR, JOBS_DIR,
     LAYOUTS_DIR, MARKETPLACE_LIVE_DISCUSSIONS, MARKETPLACES,
     PACK_INITIAL_VERSION, PACK_SUPPORT_OPTIONS, PLAYBOOKS_DIR, REPORTS_DIR,
-    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT,
-    XSOAR_SUPPORT_URL)
+    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, WIZARDS_DIR, XSOAR_AUTHOR,
+    XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
@@ -125,7 +125,7 @@ class Initiator:
     DIR_LIST = [INTEGRATIONS_DIR, SCRIPTS_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
                 PLAYBOOKS_DIR, LAYOUTS_DIR, TEST_PLAYBOOKS_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, DASHBOARDS_DIR,
                 INDICATOR_TYPES_DIR, REPORTS_DIR, WIDGETS_DIR, DOC_FILES_DIR, GENERIC_MODULES_DIR,
-                GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR, JOBS_DIR]
+                GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR, JOBS_DIR, WIZARDS_DIR]
 
     def __init__(self, output: str, name: str = '', id: str = '', integration: bool = False, template: str = '',
                  category: str = '', script: bool = False, pack: bool = False, author_image: str = '',

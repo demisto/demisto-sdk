@@ -4,6 +4,7 @@ from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION, GENERAL_DEFAULT_FROMVERSION, FileType)
 from demisto_sdk.commands.format.format_constants import VERSION_6_0_0
 from demisto_sdk.commands.format.update_generic import BaseUpdate
+from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 
 class TestFormattingFromVersionKey:
@@ -140,3 +141,29 @@ class TestFormattingFromVersionKey:
         self.init_BaseUpdate(base_update)
         base_update.set_fromVersion('5.5.0')
         assert base_update.data.get(base_update.from_version_key) == GENERAL_DEFAULT_FROMVERSION
+
+
+@pytest.mark.parametrize("is_old_file, function_validate", [(False, 'run_validation_on_specific_files'),
+                         (True, 'run_validation_using_git')])
+def test_initiate_file_validator(mocker, is_old_file, function_validate):
+    """
+    Given
+        - New file
+        - Existing file in the repo
+    When
+        - Running validate on the file
+    Then
+        - Running validate -i on new files
+        - Running validate -g on modified files
+    """
+    mocker.patch.object(BaseUpdate, '__init__', return_value=None)
+    base_update = BaseUpdate()
+    base_update.no_validate = False
+    base_update.output_file = 'output_file_path'
+    base_update.validate_manager = ValidateManager
+    mocker.patch.object(BaseUpdate, 'is_old_file', return_value=is_old_file)
+
+    result = mocker.patch.object(ValidateManager, function_validate)
+
+    base_update.initiate_file_validator()
+    assert result.call_count == 1

@@ -24,8 +24,8 @@ from demisto_sdk.commands.common.constants import (
     INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, JOBS_DIR,
     LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR, MODELING_RULES_DIR, MP_V2_ID_SET_PATH,
     PARSING_RULES_DIR, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
-    TRIGGER_DIR, WIDGETS_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR,
-    FileType, MarketplaceVersions)
+    TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR, XSIAM_DASHBOARDS_DIR,
+    XSIAM_REPORTS_DIR, FileType, MarketplaceVersions)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_current_repo, get_file,
@@ -42,13 +42,13 @@ json = JSON_Handler()
 CONTENT_ENTITIES = ['Packs', 'Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                     'Layouts', 'Reports', 'Widgets', 'Mappers', 'GenericTypes',
-                    'GenericFields', 'GenericModules', 'GenericDefinitions', 'Lists', 'Jobs']
+                    'GenericFields', 'GenericModules', 'GenericDefinitions', 'Lists', 'Jobs', 'Wizards']
 
 ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'GenericTypes', 'GenericFields', 'GenericModules',
                    'GenericDefinitions', 'Lists', 'Jobs', 'ParsingRules', 'ModelingRules',
-                   'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers']
+                   'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'Wizards']
 
 CONTENT_MP_V2_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                           'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
@@ -1452,7 +1452,7 @@ def process_jobs(file_path: str, packs: Dict[str, Dict], marketplace: str, print
     Args:
         file_path: The file path from object field folder.
         packs: The pack mapping from the ID set.
-        marketplace: The marketplace this id set is designated for.
+        marketplace: The marketplace that this ID set is designated for.
         print_logs: Whether to print logs to stdout.
 
     Returns:
@@ -1468,6 +1468,32 @@ def process_jobs(file_path: str, packs: Dict[str, Dict], marketplace: str, print
             result.append(get_job_data(file_path, packs=packs))
     except Exception as exp:  # noqa
         print_error(f'failed to process job {file_path}, Error: {str(exp)}')
+        raise
+    return result
+
+
+def process_wizards(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool) -> list:
+    """
+    Process a JSON file representing a Wizard object.
+    Args:
+        file_path: The file path from object field folder.
+        packs: The pack mapping from the ID set.
+        marketplace: The marketplace that this ID set is designated for.
+        print_logs: Whether to print logs to stdout.
+
+    Returns:
+        a list of Wizard data.
+    """
+    result: List = []
+    try:
+        if should_skip_item_by_mp(file_path, marketplace, {}, packs=packs, print_logs=print_logs):
+            return []
+        if find_type(file_path) == FileType.WIZARD:
+            if print_logs:
+                print(f'adding {file_path} to id_set')
+            result.append(get_wizard_data(file_path, packs=packs))
+    except Exception as exp:  # noqa
+        print_error(f'failed to process wizard {file_path}, Error: {str(exp)}')
         raise
     return result
 
@@ -1825,6 +1851,23 @@ def get_list_data(path: str, packs: Dict[str, Dict] = None):
     return {json_data.get('id'): data}
 
 
+def get_wizard_data(path: str, packs: Dict[str, Dict] = None):
+    json_data = get_json(path)
+    marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
+    data = create_common_entity_data(path=path,
+                                     name=json_data.get('name'),
+                                     to_version=json_data.get('toVersion'),
+                                     from_version=json_data.get('fromVersion'),
+                                     pack=get_pack_name(path),
+                                     marketplaces=marketplaces,
+                                     )
+    dependency_packs: List[str] = []
+    for dep_packs in json_data.get('dependency_packs', []):
+        dependency_packs.extend({pack['name'] for pack in dep_packs['packs']})
+    data['dependency_packs'] = dependency_packs
+    return {json_data.get('id'): data}
+
+
 class IDSetType(Enum):
     PLAYBOOK = 'playbooks'
     INTEGRATION = 'integrations'
@@ -1847,6 +1890,7 @@ class IDSetType(Enum):
     GENERIC_DEFINITION = 'GenericDefinitions'
     JOBS = 'Jobs'
     LISTS = 'Lists'
+    WIZARDS = 'Wizards'
 
     @classmethod
     def has_value(cls, value):
@@ -2019,6 +2063,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     xsiam_dashboards_list = []
     xsiam_reports_list = []
     triggers_list = []
+    wizards_list = []
     packs_dict: Dict[str, Dict] = {}
     excluded_items_by_pack: Dict[str, set] = {}
     excluded_items_by_type: Dict[str, set] = {}
@@ -2572,6 +2617,21 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         progress_bar.update(1)
 
+        if 'Wizards' in objects_to_create:
+            print_color("\nStarting iteration over Wizards", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_wizards,
+                                        packs=packs_dict,
+                                        marketplace=marketplace,
+                                        print_logs=print_logs,
+                                        ),
+                                get_general_paths(WIZARDS_DIR, pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('wizards', []).append(_id)
+                wizards_list.extend(arr)
+
+        progress_bar.update(1)
+
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something
     # it shouldn't take too much time
@@ -2594,6 +2654,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['XSIAMDashboards'] = sort(xsiam_dashboards_list)
     new_ids_dict['XSIAMReports'] = sort(xsiam_reports_list)
     new_ids_dict['Triggers'] = sort(triggers_list)
+    new_ids_dict['Wizards'] = sort(wizards_list)
     new_ids_dict['Packs'] = packs_dict
 
     if marketplace != MarketplaceVersions.MarketplaceV2.value:

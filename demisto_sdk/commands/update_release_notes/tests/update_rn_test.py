@@ -49,7 +49,8 @@ class TestRNUpdate:
             "\n#### Playbooks\n- **Hello World Playbook**\n- %%UPDATE_RN%%\n" \
             "\n#### Reports\n- **Hello World Report**\n- %%UPDATE_RN%%\n" \
             "\n#### Scripts\n- **Hello World Script**\n- %%UPDATE_RN%%\n" \
-            "\n#### Widgets\n- **Hello World Widget**\n- %%UPDATE_RN%%\n"
+            "\n#### Widgets\n- **Hello World Widget**\n- %%UPDATE_RN%%\n" \
+            "\n#### Wizards\n##### Hello World Wizard\n- %%UPDATE_RN%%\n"
 
         mock_master.return_value = '1.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
@@ -74,7 +75,8 @@ class TestRNUpdate:
             ("Hello World Generic Module", FileType.GENERIC_MODULE): {"description": "", "is_new_file": False},
             ("Hello World Generic Definition", FileType.GENERIC_DEFINITION): {"description": "", "is_new_file": False},
             ("Hello World Job #1", FileType.JOB): {"description": "sample job", "is_new_file": False},
-            ("Hello World Job #2", FileType.JOB): {"description": "yet another job", "is_new_file": False}
+            ("Hello World Job #2", FileType.JOB): {"description": "yet another job", "is_new_file": False},
+            ("Hello World Wizard", FileType.WIZARD): {"description": "sample wizard", "is_new_file": False}
         }
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result in release_notes

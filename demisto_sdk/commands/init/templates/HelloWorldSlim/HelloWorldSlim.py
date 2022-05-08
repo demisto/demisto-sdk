@@ -10,9 +10,7 @@ modify the alert's status.
 
 """
 import urllib3
-import dateparser
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
-import traceback
+from typing import Any, Dict
 from demisto_sdk.commands.common.handlers import JSON_Handler
 json = JSON_Handler()
 

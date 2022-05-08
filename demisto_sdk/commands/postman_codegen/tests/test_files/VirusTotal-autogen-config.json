@@ -1198,14 +1198,14 @@
         {
             "name": "proxy",
             "display": "Use system proxy",
-            "defaultvalue": "",
+            "defaultvalue": "false",
             "type_": "BOOLEAN",
             "required": false
         },
         {
             "name": "insecure",
             "display": "Trust any certificate",
-            "defaultvalue": "",
+            "defaultvalue": "false",
             "type_": "BOOLEAN",
             "required": false
         },

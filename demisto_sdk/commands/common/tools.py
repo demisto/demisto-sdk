@@ -611,6 +611,7 @@ def get_from_version(file_path):
             else data_dictionary.get('fromVersion', '')
 
         if not from_version:
+            logging.warning(f'fromversion/fromVersion was not found in {data_dictionary["id"]}')
             return ''
 
         if not re.match(r'^\d{1,2}\.\d{1,2}\.\d{1,2}$', from_version):

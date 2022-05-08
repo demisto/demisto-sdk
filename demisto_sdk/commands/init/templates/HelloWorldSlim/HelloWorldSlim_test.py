@@ -90,4 +90,3 @@ def test_update_alert_status(requests_mock):
     assert response.outputs == mock_response
     assert response.outputs_prefix == 'HelloWorld.Alert'
     assert response.outputs_key_field == 'alert_id'
-

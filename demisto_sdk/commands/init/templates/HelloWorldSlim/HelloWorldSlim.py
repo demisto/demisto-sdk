@@ -78,6 +78,7 @@ class Client(BaseClient):   # type: ignore
             }
         )
 
+
 def test_module(client: Client) -> str:
     """
     Tests API connectivity and authentication

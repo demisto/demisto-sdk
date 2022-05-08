@@ -746,7 +746,7 @@ class TestRNUpdate:
                                           desc=new_trigger.read_json_as_dict().get('description'),
                                           from_version=new_trigger.read_json_as_dict().get('fromversion'))
 
-        assert '##### New:' in rn_desc  # check if release note contains New - when new file
+        assert '##### New:' not in rn_desc  # https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
         assert 'description for testing' in rn_desc  # check if release note contains description when description not empty
         assert '(Available from Cortex XSOAR 6.5.0).' not in rn_desc  # check if release note contains fromversion when exists
 

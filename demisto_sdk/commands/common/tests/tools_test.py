@@ -1661,3 +1661,22 @@ class TestGetItemMarketplaces:
 
         assert len(marketplaces) == 1
         assert 'xsoar' in marketplaces
+
+#
+# class TestTagParser:
+#     def test_parse_marketplace_text(self):
+#         # assert parse_marketplace_text(MarketplaceVersions.XSOAR.value, 'some text') == 'some text'
+#         text = '''### Sections:
+# <~XSOAR>
+# XSOAR PARAGRAPH
+# </~XSOAR>
+# <~XSIAM>
+# XSIAM PARAGRAPH
+# </~XSIAM>
+#
+# ### Inline:
+# <~XSOAR>xsoar text 1</~XSOAR><~XSIAM>xsiam text 1</~XSIAM>'''
+#         xsoar_text = MARKETPLACE_TAG_PARSER.parse_text(text)
+#         MARKETPLACE_TAG_PARSER.marketplace = MarketplaceVersions.MarketplaceV2.value
+#         xsiam_text = MARKETPLACE_TAG_PARSER.parse_text(text)
+#         assert 1 == 1

@@ -46,7 +46,7 @@ from demisto_sdk.commands.common.constants import (
     SCRIPTS_DIR, SIEM_ONLY_ENTITIES, TEST_PLAYBOOKS_DIR, TRIGGER_DIR,
     TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR, XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys,
-    IdSetKeys, MarketplaceVersions, urljoin)
+    IdSetKeys, MarketplaceTags, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
                                                             GitProvider)
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -70,6 +70,86 @@ class LOG_COLORS:
     YELLOW = colorama.Fore.YELLOW
     WHITE = colorama.Fore.WHITE
 
+
+class TagParser:
+    def __init__(self, tag_prefix: str, tag_suffix: str, remove_tag_text: bool = True):
+        self._tag_prefix = tag_prefix
+        self._tag_suffix = tag_suffix
+        self._pattern = re.compile(fr'{tag_prefix}((.|\s)+?){tag_suffix}')
+        self._remove_tag_text = remove_tag_text
+
+    def parse(self, text: str, remove_tag: Optional[bool] = None) -> str:
+        """
+        Given a prefix and suffix of an expected tag, remove the tag and the text it's wrapping, or just the wrappers
+        Args:
+            text (str): text that may contain given tags.
+            remove_tag (bool): overrides remove_tag_text value. Determines whether to remove the tag
+
+        Returns:
+            Text with no wrapper tags.
+        """
+        if text and 0 <= text.find(self._tag_prefix) < text.find(self._tag_suffix):
+            remove_tag = remove_tag if isinstance(remove_tag, bool) else self._remove_tag_text
+            # collect {orignal_text: text_to_replace}
+            matches = re.finditer(self._pattern, text)
+            replace_map = {}
+            for match in matches:
+                replace_val = '' if remove_tag else match.group(1)
+                replace_map[re.escape(match.group())] = replace_val
+
+            # replace collected text->replacement
+            pattern = re.compile("|".join(replace_map.keys()))
+            text = pattern.sub(lambda m: replace_map[re.escape(m.group(0))], text)
+        return text
+
+
+class MarketplaceTagParser:
+    def __init__(self, marketplace: str = MarketplaceVersions.XSOAR.value):
+        self.marketplace = marketplace
+        self._xsoar_parser = TagParser(
+            tag_prefix=MarketplaceTags.XSOAR_PREFIX.value,
+            tag_suffix=MarketplaceTags.XSOAR_SUFFIX.value,
+        )
+        self._xsoar_inline_parser = TagParser(
+            tag_prefix=MarketplaceTags.XSOAR_INLINE_PREFIX.value,
+            tag_suffix=MarketplaceTags.XSOAR_INLINE_SUFFIX.value,
+        )
+        self._xsiam_parser = TagParser(
+            tag_prefix=MarketplaceTags.XSIAM_PREFIX.value,
+            tag_suffix=MarketplaceTags.XSIAM_SUFFIX.value,
+        )
+        self._xsiam_inline_parser = TagParser(
+            tag_prefix=MarketplaceTags.XSIAM_INLINE_PREFIX.value,
+            tag_suffix=MarketplaceTags.XSIAM_INLINE_SUFFIX.value,
+        )
+
+    @property
+    def marketplace(self):
+        return self._marketplace
+
+    @marketplace.setter
+    def marketplace(self, marketplace):
+        self._marketplace = marketplace
+        self._should_remove_xsoar_text = marketplace != MarketplaceVersions.XSOAR.value
+        self._should_remove_xsiam_text = marketplace != MarketplaceVersions.MarketplaceV2.value
+
+    def parse_text(self, text):
+        return self._xsiam_inline_parser.parse(
+            remove_tag=self._should_remove_xsiam_text,
+            text=self._xsiam_parser.parse(
+                remove_tag=self._should_remove_xsiam_text,
+                text=self._xsoar_inline_parser.parse(
+                    remove_tag=self._should_remove_xsoar_text,
+                    text=self._xsoar_parser.parse(
+                        remove_tag=self._should_remove_xsoar_text,
+                        text=text,
+                    ),
+                ),
+            ),
+        )
+
+
+MARKETPLACE_TAG_PARSER = MarketplaceTagParser()
 
 LOG_VERBOSE = False
 

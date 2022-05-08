@@ -5,6 +5,7 @@ from wcmatch.pathlib import Path
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.content.objects.abstract_objects import \
     TextObject
+from demisto_sdk.commands.common.tools import MARKETPLACE_TAG_PARSER
 
 
 class Readme(TextObject):
@@ -27,6 +28,15 @@ class Readme(TextObject):
         except Exception as e:
             print(e)
 
+    def handle_marketplace_tags(self):
+        try:
+            with open(self._path) as f:
+                text = f.read()
+                f.write(MARKETPLACE_TAG_PARSER.parse_text(text))
+        except Exception as e:
+            print(e)
+
     def dump(self, dest_dir: Optional[Union[Path, str]] = None) -> List[Path]:
         self.mention_contributors_in_readme()
+        self.handle_marketplace_tags()
         return super().dump(dest_dir)

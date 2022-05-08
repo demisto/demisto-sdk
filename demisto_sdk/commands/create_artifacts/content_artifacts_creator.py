@@ -29,7 +29,8 @@ from demisto_sdk.commands.common.content.objects.abstract_objects.text_object im
     TextObject
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     JSONContentObject, Script, YAMLContentObject, YAMLContentUnifiedObject)
-from demisto_sdk.commands.common.tools import (alternate_item_fields,
+from demisto_sdk.commands.common.tools import (MARKETPLACE_TAG_PARSER,
+                                               alternate_item_fields,
                                                arg_to_list, open_id_set_file,
                                                should_alternate_field_by_item)
 
@@ -88,6 +89,7 @@ class ArtifactsManager:
         self.signDirectory = sign_directory
         self.remove_test_playbooks = remove_test_playbooks
         self.marketplace = marketplace.lower()
+        MARKETPLACE_TAG_PARSER.marketplace = self.marketplace
         self.filter_by_id_set = filter_by_id_set
         self.pack_names = arg_to_list(pack_names)
         self.packs_section_from_id_set: dict = {}

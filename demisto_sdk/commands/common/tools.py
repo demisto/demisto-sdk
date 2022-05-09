@@ -198,11 +198,13 @@ def get_core_pack_list() -> list:
     if not is_external_repository():
         core_pack_list = get_remote_file(
             'Tests/Marketplace/core_packs_list.json',
-            git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
+            git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
+                                                git_provider=GitProvider.GitHub)
         ) or []
         core_pack_list.extend(get_remote_file(
             'Tests/Marketplace/core_packs_mpv2_list.json',
-            git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
+            git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
+                                                git_provider=GitProvider.GitHub)
         ) or [])
         core_pack_list = list(set(core_pack_list))
     else:

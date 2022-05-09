@@ -66,9 +66,10 @@ class GitContentConfig:
             project_id: The project id, relevant for gitlab.
         """
         self.current_repository = repo_name if repo_name else None
+        self.project_id: Optional[int] = None
         if project_id:
             git_provider = GitProvider.GitLab
-
+            self.project_id = int(project_id)
         self.credentials = GitCredentials()
         hostname = urlparse(repo_hostname).hostname
         self.repo_hostname = hostname or repo_hostname or os.getenv(GitContentConfig.ENV_REPO_HOSTNAME_NAME)
@@ -99,7 +100,7 @@ class GitContentConfig:
                                     self.current_repository)
         else:  # gitlab
             self.base_api = GitContentConfig.BASE_RAW_GITLAB_LINK.format(GITLAB_HOST=self.repo_hostname,
-                                                                         GITLAB_ID=self.gitlab_id)
+                                                                         GITLAB_ID=self.project_id)
 
     @staticmethod
     def _get_repository_properties() -> Optional[giturlparse.result.GitUrlParsed]:
@@ -117,6 +118,12 @@ class GitContentConfig:
         return None
 
     def _set_repo_config(self, hostname, organization=None, repo_name=None, project_id=None):
+        if self.current_repository and self.git_provider == GitProvider.GitHub and self.repo_hostname:
+            if self._search_github_repo(self.repo_hostname, repo_name=self.current_repository):
+                return
+        if self.project_id and self.git_provider == GitProvider.GitLab and self.repo_hostname:
+            if self._search_gitlab_repo(self.repo_hostname, project_id=self.project_id):
+                return
 
         gitlab_hostname, gitlab_id = (self._search_gitlab_repo(hostname, project_id=project_id)) or \
                                      (self._search_gitlab_repo(self.repo_hostname, project_id=project_id)) or \
@@ -136,7 +143,7 @@ class GitContentConfig:
 
         if gitlab_id is not None:
             self.git_provider = GitProvider.GitLab
-            self.gitlab_id: int = gitlab_id
+            self.project_id = gitlab_id
             self.repo_hostname = gitlab_hostname
         else:  # github
             current_repo = f'{organization}/{repo_name}' if organization and repo_name else self.current_repository

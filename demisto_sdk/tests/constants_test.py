@@ -94,8 +94,8 @@ SCRIPT_TARGET = f"{PACK_TARGET}/Scripts/script-test.yml"
 SCRIPT_RELEASE_NOTES_TARGET = f"{PACK_TARGET}/Scripts/script-test_CHANGELOG.md"
 INTEGRATION_RELEASE_NOTES_TARGET = f"{PACK_TARGET}/Integrations/integration-test_CHANGELOG.md"
 SOURCE_FORMAT_INTEGRATION_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_New_Integration_copy.yml"
-SOURCE_FORMAT_INTEGRATION_DEFAULT_VALUE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/" \
-                                         f"format_integration_defaultvalue_test.yml"
+SOURCE_FORMAT_INTEGRATION_DEFAULT_VALUE = f"{GIT_ROOT}/demisto_sdk/tests/test_files" \
+                                          f"/format_integration_defaultvalue_test.yml "
 SOURCE_BETA_INTEGRATION_FILE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/source_beta_integration.yml"
 DESTINATION_FORMAT_INTEGRATION_COPY = "new_format_New_Integration_copy.yml"
 SOURCE_FORMAT_SCRIPT_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_New_script_copy.yml"

@@ -1,4 +1,3 @@
-import json
 import os
 from typing import Any, Dict, Iterator, Optional, Tuple
 
@@ -6,9 +5,12 @@ from jsonschema import Draft7Validator, ValidationError
 from prettytable import PrettyTable
 
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator, error_codes)
 from demisto_sdk.commands.common.tools import get_dict_from_file
+
+json = JSON_Handler()
 
 
 class XSOARConfigJsonValidator(BaseValidator):
@@ -24,9 +26,9 @@ class XSOARConfigJsonValidator(BaseValidator):
     """
 
     def __init__(self, configuration_file_path, json_file_path=None,
-                 ignored_errors=None, print_as_warnings=False, suppress_print=False):
+                 ignored_errors=None, print_as_warnings=False, suppress_print=False, specific_validations=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print, json_file_path=json_file_path)
+                         suppress_print=suppress_print, json_file_path=json_file_path, specific_validations=specific_validations)
         self._is_valid = True
         self.configuration_file_path = configuration_file_path
         self.schema_path = os.path.normpath(os.path.join(__file__, '..', '..', 'schemas', 'xsoar_config.json'))
@@ -71,6 +73,7 @@ class XSOARConfigJsonValidator(BaseValidator):
 
         return errors_table, errors_found
 
+    @error_codes('XC101')
     def is_valid_xsoar_config_file(self):
         """Runs the schema validation on the configuration data, with the schema data.
 

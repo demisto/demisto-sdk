@@ -9,6 +9,8 @@ from typing import List, Set
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, MarketplaceVersions)
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import (get_core_pack_list,
@@ -110,6 +112,7 @@ class FieldBaseValidator(ContentEntityValidator):
             answers.append(self.is_valid_unsearchable_key())
         return all(answers)
 
+    @error_codes('IF100')
     def is_valid_name(self):
         """Validate that the name and cliName does not contain any potential incident synonyms."""
         name = self.current_file.get("name", "")
@@ -146,6 +149,7 @@ class FieldBaseValidator(ContentEntityValidator):
 
         return True
 
+    @error_codes('IF101')
     def is_valid_content_flag(self):
         """
         Validates that the field is marked as content.
@@ -159,6 +163,7 @@ class FieldBaseValidator(ContentEntityValidator):
                 return False
         return True
 
+    @error_codes('IF102')
     def is_valid_system_flag(self):
         """
         Validates that system flag is false.
@@ -180,6 +185,7 @@ class FieldBaseValidator(ContentEntityValidator):
         """
         return super(FieldBaseValidator, self)._is_valid_version()
 
+    @error_codes('IF103')
     def is_valid_type(self) -> bool:
         """
         Checks if given field type is valid.
@@ -192,6 +198,7 @@ class FieldBaseValidator(ContentEntityValidator):
                 return False
         return True
 
+    @error_codes('IF104')
     def is_valid_group(self) -> bool:
         """
         Checks if given group number is a valid number.
@@ -214,8 +221,30 @@ class FieldBaseValidator(ContentEntityValidator):
         Returns:
             (bool): True if all tests passes, false otherwise.
         """
-        return self.is_cli_name_is_builtin_key() and self.is_matching_cli_name_regex()
+        return self.is_cli_name_is_builtin_key() and self.is_matching_cli_name_regex() \
+            and self.does_cli_name_match_id()
 
+    def does_cli_name_match_id(self):
+        """
+        Checks if the field cliName matched to id.
+        Returns:
+            (bool): True if cliName matched to id, False otherwise.
+        """
+        cli_name = self.current_file['cliName']
+        _id = self.current_file.get('id', '').lower().replace('_', '').replace('-', '')
+        if _id.startswith('incident'):
+            cli_name_expected = _id[len('incident'):]
+        elif _id.startswith('indicator'):
+            cli_name_expected = _id[len('indicator'):]
+        else:
+            return True
+        if cli_name != cli_name_expected and cli_name != _id:
+            error_message, error_code = Errors.cli_name_and_id_do_not_match(_id)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                return False
+        return True
+
+    @error_codes('IF105')
     def is_matching_cli_name_regex(self) -> bool:
         """
         Checks if the field cliName matches the expected cliName regex.
@@ -230,6 +259,7 @@ class FieldBaseValidator(ContentEntityValidator):
             return False
         return True
 
+    @error_codes('IF106')
     def is_cli_name_is_builtin_key(self) -> bool:
         """
         Checks if given CLI name is a reserved word that cannot be used due to Bleve mapping.
@@ -244,6 +274,7 @@ class FieldBaseValidator(ContentEntityValidator):
                 is_valid = True
         return is_valid
 
+    @error_codes('IF109')
     def is_valid_required(self) -> bool:
         """Validate that the incident field is not required."""
         # due to a current platform limitation, incident fields can not be set to required
@@ -255,6 +286,7 @@ class FieldBaseValidator(ContentEntityValidator):
                 return False
         return True
 
+    @error_codes('IF110')
     def is_changed_from_version(self) -> bool:
         """
         Checks if given from version field value has been changed.
@@ -268,11 +300,12 @@ class FieldBaseValidator(ContentEntityValidator):
             if old_from_version != current_from_version:
                 error_message, error_code = Errors.from_version_modified_after_rename()
                 if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                     warning=self.structure_validator.quite_bc):
+                                     warning=self.structure_validator.quiet_bc):
                     is_from_version_changed = True
 
         return is_from_version_changed
 
+    @error_codes('IF111')
     def is_changed_type(self) -> bool:
         """
         Validates that the field type was not changed.
@@ -286,11 +319,12 @@ class FieldBaseValidator(ContentEntityValidator):
             if old_type and old_type != current_type:
                 error_message, error_code = Errors.incident_field_type_change()
                 if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                     warning=self.structure_validator.quite_bc):
+                                     warning=self.structure_validator.quiet_bc):
                     is_type_changed = True
 
         return is_type_changed
 
+    @error_codes('IF113')
     def is_valid_field_name_prefix(self) -> bool:
         """
         Validate that a field name starts with its pack name or one of the itemPrefixes from pack metadata.
@@ -317,6 +351,7 @@ class FieldBaseValidator(ContentEntityValidator):
 
         return True
 
+    @error_codes('IF115')
     def is_valid_unsearchable_key(self) -> bool:
         """
         Validate that the unsearchable key is true.
@@ -330,6 +365,7 @@ class FieldBaseValidator(ContentEntityValidator):
                 return False
         return True
 
+    @error_codes('IF112')
     def is_valid_from_version_field(self, min_from_version: LooseVersion, reason_for_min_version: str):
         """
         Validates that the from version field is set to the expected minimum.
@@ -348,10 +384,11 @@ class FieldBaseValidator(ContentEntityValidator):
             error_message, error_code = Errors.field_version_is_not_correct(current_version, min_from_version,
                                                                             reason_for_min_version)
             if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                 warning=self.structure_validator.quite_bc):
+                                 warning=self.structure_validator.quiet_bc):
                 return False
         return True
 
+    @error_codes('IF116')
     def does_not_have_empty_select_values(self) -> bool:
         """
         Due to UI issues, we cannot allow empty values for selectValues field.
@@ -361,10 +398,11 @@ class FieldBaseValidator(ContentEntityValidator):
         if any(select_value == '' for select_value in (self.current_file.get('selectValues') or [])):
             error_message, error_code = Errors.select_values_cannot_contain_empty_values()
             if self.handle_error(error_message, error_code, file_path=self.file_path,
-                                 warning=self.structure_validator.quite_bc):
+                                 warning=self.structure_validator.quiet_bc):
                 return False
         return True
 
+    @error_codes('IF117,IF118')
     def is_aliased_fields_are_valid(self) -> bool:
         """
         Validates that the aliased fields (fields that appear as Aliases in another field) are valid.
@@ -393,7 +431,7 @@ class FieldBaseValidator(ContentEntityValidator):
             invalid_aliases = [alias.get("cliname") for alias in self._get_incident_fields_by_aliases(aliases) if validator(alias)]
             if invalid_aliases:
                 error_message, error_code = error_generator(invalid_aliases)
-                if self.handle_error(error_message, error_code, file_path=self.file_path, warning=self.structure_validator.quite_bc):
+                if self.handle_error(error_message, error_code, file_path=self.file_path, warning=self.structure_validator.quiet_bc):
                     is_valid = False
 
         return is_valid

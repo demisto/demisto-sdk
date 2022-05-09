@@ -14,6 +14,8 @@ from demisto_sdk.commands.common.constants import (
     PACKS_PACK_IGNORE_FILE_NAME, PLAYBOOKS_DIR, SCRIPTS_DIR,
     TEST_PLAYBOOKS_DIR, FileType)
 from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
+                                                            GitCredentials)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
@@ -48,6 +50,8 @@ from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
+
+GIT_ROOT = git_path()
 
 
 class TestGenericFunctions:
@@ -240,7 +244,7 @@ class TestGetRemoteFile:
     def test_get_remote_file_sanity(self):
         hello_world_yml = tools.get_remote_file(
             'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml',
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert hello_world_yml
         assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
@@ -249,7 +253,7 @@ class TestGetRemoteFile:
         hello_world_py = tools.get_remote_file(
             'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
             return_content=True,
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert hello_world_py
 
@@ -257,7 +261,7 @@ class TestGetRemoteFile:
         hello_world_py = tools.get_remote_file(
             'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
             return_content=True,
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         hello_world_text = hello_world_py.decode()
         assert isinstance(hello_world_py, bytes)
@@ -269,7 +273,7 @@ class TestGetRemoteFile:
         hello_world_yml = tools.get_remote_file(
             'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml',
             'master',
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert hello_world_yml
         assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
@@ -278,7 +282,7 @@ class TestGetRemoteFile:
         gmail_yml = tools.get_remote_file(
             'Integrations/Gmail/Gmail.yml',
             '19.10.0',
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert gmail_yml
         assert gmail_yml['commonfields']['id'] == 'Gmail'
@@ -287,7 +291,7 @@ class TestGetRemoteFile:
         gmail_yml = tools.get_remote_file(
             'Integrations/Gmail/Gmail.yml',
             'origin/19.10.0',
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert gmail_yml
         assert gmail_yml['commonfields']['id'] == 'Gmail'
@@ -296,7 +300,7 @@ class TestGetRemoteFile:
         invalid_yml = tools.get_remote_file(
             'Integrations/File/File.yml',
             '19.10.0',
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert not invalid_yml
 
@@ -304,7 +308,7 @@ class TestGetRemoteFile:
         invalid_yml = tools.get_remote_file(
             'Integrations/Gmail/Gmail.yml',
             'NoSuchBranch',
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert not invalid_yml
 
@@ -312,7 +316,7 @@ class TestGetRemoteFile:
         invalid_yml = tools.get_remote_file(
             'Integrations/Gmail/Gmail.yml',
             'origin/NoSuchBranch',
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert not invalid_yml
 
@@ -320,7 +324,7 @@ class TestGetRemoteFile:
         hello_world_readme = tools.get_remote_file(
             'Packs/HelloWorld/README.md',
             'master',
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert hello_world_readme == {}
 
@@ -384,9 +388,10 @@ class TestGetRemoteFileLocally:
             ok = False
 
         mocker.patch.object(requests, 'get', return_value=Response)
-        mocker.patch.object(os, 'getenv', return_value=False)
-        some_file_json = tools.get_remote_file(os.path.join(self.REPO_NAME, self.FILE_NAME),
-                                               github_repo=self.REPO_NAME)
+        mocker.patch.dict(os.environ, {GitCredentials.ENV_GITHUB_TOKEN_NAME: '',
+                                       GitCredentials.ENV_GITLAB_TOKEN_NAME: ''})
+        with ChangeCWD(self.REPO_NAME):
+            some_file_json = tools.get_remote_file(self.FILE_NAME)
         assert some_file_json
         assert some_file_json['id'] == 'some_file'
 
@@ -1133,7 +1138,7 @@ def test_get_relative_path_from_packs_dir():
     ('1.3.8', ['* Updated the **secrets** command to work on forked branches.']),
     ('1.3', [])
 ])
-def test_get_release_note_entries(version, expected_result):
+def test_get_release_note_entries(requests_mock, version, expected_result):
     """
     Given:
         - Version of the demisto-sdk.
@@ -1144,6 +1149,11 @@ def test_get_release_note_entries(version, expected_result):
     Then:
         - Ensure that the result as expected.
     """
+    requests_mock.get('https://api.github.com/repos/demisto/demisto-sdk')
+    #
+    with open(f'{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/test_changelog.md', 'rb') as f:
+        changelog = f.read()
+    requests_mock.get('https://raw.githubusercontent.com/demisto/demisto-sdk/master/CHANGELOG.md', content=changelog)
 
     assert get_release_note_entries(version) == expected_result
 

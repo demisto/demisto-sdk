@@ -28,13 +28,13 @@ def mock_git(mocker):
 
 
 def test_integration_create_content_artifacts_no_zip(repo):
-    expected_artifacts_path = ARTIFACTS_EXPEXTED_RESULTS / 'content'
+    expected_artifacts_path = ARTIFACTS_EXPEXTED_RESULTS / 'integration_test'
 
     with ChangeCWD(repo.path):
         dir_path = repo.make_dir()
         runner = CliRunner()
         result = runner.invoke(main, [ARTIFACTS_CMD, '-a', dir_path, '--no-zip'])
-
+        os.rmdir(dir_path + '/content_packs')
         assert same_folders(dir_path, expected_artifacts_path)
         assert result.exit_code == 0
 
@@ -120,8 +120,8 @@ def test_all_packs_creation(repo):
             result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp, '-p', 'all'])
 
             assert result.exit_code == 0
-            assert os.path.exists(os.path.join(str(temp), 'uploadable_packs', 'Pack1.zip'))
-            assert os.path.exists(os.path.join(str(temp), 'uploadable_packs', 'Pack2.zip'))
+            assert (temp / 'uploadable_packs' / 'Pack1.zip').exists()
+            assert (temp / 'uploadable_packs' / 'Pack2.zip').exists()
 
 
 def test_create_packs_with_filter_by_id_set(repo):

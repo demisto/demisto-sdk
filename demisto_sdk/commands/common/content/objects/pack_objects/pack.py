@@ -8,6 +8,7 @@ from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    CONNECTIONS_DIR,
+                                                   CORRELATION_RULES_DIR,
                                                    DASHBOARDS_DIR,
                                                    DOC_FILES_DIR,
                                                    GENERIC_DEFINITIONS_DIR,
@@ -20,21 +21,26 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INDICATOR_TYPES_DIR,
                                                    INTEGRATIONS_DIR, JOBS_DIR,
                                                    LAYOUTS_DIR, LISTS_DIR,
+                                                   MODELING_RULES_DIR,
                                                    PACK_VERIFY_KEY,
+                                                   PARSING_RULES_DIR,
                                                    PLAYBOOKS_DIR,
                                                    PRE_PROCESS_RULES_DIR,
                                                    RELEASE_NOTES_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
-                                                   TOOLS_DIR, WIDGETS_DIR,
-                                                   FileType)
+                                                   TOOLS_DIR, TRIGGER_DIR,
+                                                   WIDGETS_DIR, WIZARDS_DIR,
+                                                   XSIAM_DASHBOARDS_DIR,
+                                                   XSIAM_REPORTS_DIR, FileType)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, Classifier, ClassifierMapper, Connection,
-    Contributors, Dashboard, DocFile, GenericDefinition, GenericField,
-    GenericModule, GenericType, IncidentField, IncidentType, IndicatorField,
-    IndicatorType, Integration, Job, LayoutObject, Lists, OldClassifier,
-    PackIgnore, PackMetaData, Playbook, PreProcessRule, Readme, ReleaseNote,
-    ReleaseNoteConfig, Report, Script, SecretIgnore, Widget)
+    Contributors, CorrelationRule, Dashboard, DocFile, GenericDefinition,
+    GenericField, GenericModule, GenericType, IncidentField, IncidentType,
+    IndicatorField, IndicatorType, Integration, Job, LayoutObject, Lists,
+    ModelingRule, OldClassifier, PackIgnore, PackMetaData, ParsingRule,
+    Playbook, PreProcessRule, Readme, ReleaseNote, ReleaseNoteConfig, Report,
+    Script, SecretIgnore, Trigger, Widget, Wizard, XSIAMDashboard, XSIAMReport)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from demisto_sdk.commands.common.tools import (get_demisto_version,
@@ -69,9 +75,13 @@ class Pack:
         objects_path = (self._path / dir_name).glob(patterns=[f"*.{suffix}", f"*/*.{suffix}"])
         for object_path in objects_path:
             content_object = path_to_pack_object(object_path)
-            # skip content items that are not displayed in the id set, if the corresponding flag is used
+            # skip content items that are not displayed in the id set, if the corresponding flag is used,
+            # We excluding ReleaseNotes and TestPlaybooks, because they missing from the id set
+            # but are needed in the pack's zip.
             if self._filter_items_by_id_set and content_object.type().value not in [FileType.RELEASE_NOTES.value,
-                                                                                    FileType.RELEASE_NOTES_CONFIG.value]:
+                                                                                    FileType.RELEASE_NOTES_CONFIG.value,
+                                                                                    FileType.TEST_PLAYBOOK.value]:
+
                 object_id = content_object.get_id()
                 if is_object_in_id_set(object_id, self._pack_info_from_id_set):
                     yield content_object
@@ -183,6 +193,11 @@ class Pack:
                                                           suffix="json")
 
     @property
+    def wizards(self) -> Iterator[Wizard]:
+        return self._content_files_list_generator_factory(dir_name=WIZARDS_DIR,
+                                                          suffix="json")
+
+    @property
     def release_notes(self) -> Iterator[ReleaseNote]:
         return self._content_files_list_generator_factory(dir_name=RELEASE_NOTES_DIR,
                                                           suffix="md")
@@ -224,6 +239,36 @@ class Pack:
     @property
     def jobs(self) -> Iterator[Job]:
         return self._content_files_list_generator_factory(JOBS_DIR,
+                                                          suffix="json")
+
+    @property
+    def parsing_rules(self) -> Iterator[ParsingRule]:
+        return self._content_files_list_generator_factory(dir_name=PARSING_RULES_DIR,
+                                                          suffix="yml")
+
+    @property
+    def modeling_rules(self) -> Iterator[ModelingRule]:
+        return self._content_files_list_generator_factory(dir_name=MODELING_RULES_DIR,
+                                                          suffix="yml")
+
+    @property
+    def correlation_rules(self) -> Iterator[CorrelationRule]:
+        return self._content_files_list_generator_factory(dir_name=CORRELATION_RULES_DIR,
+                                                          suffix="yml")
+
+    @property
+    def xsiam_dashboards(self) -> Iterator[XSIAMDashboard]:
+        return self._content_files_list_generator_factory(dir_name=XSIAM_DASHBOARDS_DIR,
+                                                          suffix="json")
+
+    @property
+    def xsiam_reports(self) -> Iterator[XSIAMReport]:
+        return self._content_files_list_generator_factory(dir_name=XSIAM_REPORTS_DIR,
+                                                          suffix="json")
+
+    @property
+    def triggers(self) -> Iterator[Trigger]:
+        return self._content_files_list_generator_factory(dir_name=TRIGGER_DIR,
                                                           suffix="json")
 
     @property

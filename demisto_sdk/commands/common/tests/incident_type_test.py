@@ -20,6 +20,7 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
         structure.old_file = old_file
         structure.prev_ver = 'master'
         structure.branch_name = ''
+        structure.specific_validations = None
         return structure
 
 
@@ -87,7 +88,7 @@ def test_is_changed_from_version(current_from_version, old_from_version, answer)
     structure.current_file = current_from_version
     validator = IncidentTypeValidator(structure)
     assert validator.is_changed_from_version() is answer
-    structure.quite_bc = True
+    structure.quiet_bc = True
     assert validator.is_changed_from_version() is False
 
 

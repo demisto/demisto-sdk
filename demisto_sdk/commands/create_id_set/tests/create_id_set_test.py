@@ -1,14 +1,17 @@
-import json
 import os
 import shutil
 from collections import OrderedDict
 from tempfile import mkdtemp
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import ID_SET_ENTITIES
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
+
+json = JSON_Handler()
+
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
 
@@ -85,7 +88,8 @@ class TestIDSetCreator:
         expected_keys = {'scripts', 'playbooks', 'integrations', 'TestPlaybooks', 'Classifiers', 'Dashboards',
                          'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes', 'Layouts', 'Reports',
                          'Widgets', 'Mappers', 'Packs', 'GenericTypes', 'GenericFields', 'GenericModules',
-                         'GenericDefinitions', 'Lists', 'Jobs'}
+                         'GenericDefinitions', 'Lists', 'Jobs', 'ParsingRules', 'ModelingRules',
+                         'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'Wizards'}
 
         assert keys == expected_keys, f'missing keys: {expected_keys.difference(keys)}\n' \
                                       f' unexpected keys: {keys.difference(expected_keys)}'
@@ -175,6 +179,9 @@ def test_create_id_set_flow(repo, mocker):
     assert not IsEqualFunctions.is_dicts_equal(id_set_content, {})
     assert set(id_set_content.keys()) == set(ID_SET_ENTITIES + ['Packs'])
     for id_set_entity in ID_SET_ENTITIES:
+        if id_set_entity in ['ParsingRules', 'ModelingRules', 'CorrelationRules',
+                             'XSIAMDashboards', 'XSIAMReports', 'Triggers']:
+            continue
         entity_content_in_id_set = id_set_content.get(id_set_entity)
         assert entity_content_in_id_set, f'ID set for {id_set_entity} is empty'
 

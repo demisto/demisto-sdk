@@ -1,4 +1,5 @@
 from distutils.version import LooseVersion
+from typing import Optional
 
 import click
 import ujson
@@ -8,7 +9,7 @@ from demisto_sdk.commands.common.constants import \
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import find_type, is_uuid, print_error
 from demisto_sdk.commands.format.format_constants import (
-    ARGUMENTS_DEFAULT_VALUES, GENERIC_OBJECTS_FILE_TYPES, TO_VERSION_5_9_9)
+    ARGUMENTS_DEFAULT_VALUES, TO_VERSION_5_9_9)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
 yaml = YAML_Handler()
@@ -29,9 +30,10 @@ class BaseUpdateJSON(BaseUpdate):
                  from_version: str = '',
                  no_validate: bool = False,
                  verbose: bool = False,
+                 clear_cache: bool = False,
                  **kwargs):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
-                         verbose=verbose, **kwargs)
+                         verbose=verbose, clear_cache=clear_cache, **kwargs)
 
     def set_default_values_as_needed(self):
         """Sets basic arguments of reputation commands to be default, isArray and required."""
@@ -49,7 +51,7 @@ class BaseUpdateJSON(BaseUpdate):
             ujson.dump(self.data, file, indent=4, encode_html_chars=True, escape_forward_slashes=False,
                        ensure_ascii=False)
 
-    def update_json(self):
+    def update_json(self, default_from_version: Optional[str] = '', file_type: str = ''):
         """Manager function for the generic JSON updates."""
         self.set_version_to_default()
         self.remove_null_fields()
@@ -57,10 +59,7 @@ class BaseUpdateJSON(BaseUpdate):
         self.remove_spaces_end_of_id_and_name()
         source_file_type = find_type(self.source_file)
         super().add_alternative_fields(source_file_type)
-        if source_file_type in GENERIC_OBJECTS_FILE_TYPES:
-            self.set_fromVersion(from_version=self.from_version, file_type=source_file_type)
-        else:
-            self.set_fromVersion(from_version=self.from_version)
+        self.set_fromVersion(default_from_version=default_from_version, file_type=file_type)
         self.sync_data_to_master()
 
     def set_toVersion(self):
@@ -96,24 +95,34 @@ class BaseUpdateJSON(BaseUpdate):
     def update_id(self, field='name') -> None:
         """Updates the id to be the same as the provided field ."""
         updated_integration_id_dict = {}
-
-        if self.verbose:
-            click.echo('Updating ID')
-        if field not in self.data:
-            print_error(f'Missing {field} field in file {self.source_file} - add this field manually')
-            return None
-        if 'id' in self.data and is_uuid(self.data['id']):  # only happens if id had been defined
-            updated_integration_id_dict[self.data['id']] = self.data[field]
-        self.data['id'] = self.data[field]
-
-        if updated_integration_id_dict:
-            self.updated_ids.update(updated_integration_id_dict)
+        if self.old_file:
+            current_id = self.data.get('id')
+            old_id = self.old_file.get('id')
+            if current_id != old_id:
+                click.secho(
+                    f'The modified JSON file corresponding to the path: {self.relative_content_path} contains an '
+                    f'ID which does not match the ID in remote file. Changing the ID from {current_id} back '
+                    f'to {old_id}.', fg="yellow")
+                self.data['id'] = old_id
+        else:
+            if self.verbose:
+                click.echo('Updating ID to be the same as JSON name')
+            if field not in self.data:
+                print_error(f'Missing {field} field in file {self.source_file} - add this field manually')
+                return None
+            if 'id' in self.data and is_uuid(self.data['id']):  # only happens if id had been defined
+                updated_integration_id_dict[self.data['id']] = self.data[field]
+            self.data['id'] = self.data[field]
+            if updated_integration_id_dict:
+                self.updated_ids.update(updated_integration_id_dict)
 
     def remove_spaces_end_of_id_and_name(self):
         """Updates the id and name of the json to have no spaces on its end
                 """
         if not self.old_file:
             if self.verbose:
-                click.echo('Updating YML ID and name to be without spaces at the end')
-            self.data['name'] = self.data['name'].strip()
-            self.data['id'] = self.data['id'].strip()
+                click.echo('Updating json ID and name to be without spaces at the end')
+            if 'name' in self.data:
+                self.data['name'] = self.data['name'].strip()
+            if 'id' in self.data:
+                self.data['id'] = self.data['id'].strip()

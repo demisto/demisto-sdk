@@ -1,9 +1,11 @@
-import json
 from typing import Optional
 
 from ruamel.yaml.scalarstring import FoldedScalarString
 
 import demisto_sdk.commands.common.tools as tools
+from demisto_sdk.commands.common.handlers import JSON_Handler
+
+json = JSON_Handler()
 
 
 class XSOARIntegration:
@@ -106,6 +108,8 @@ class XSOARIntegration:
                 self.options = options
             if defaultvalue:
                 self.defaultvalue = defaultvalue
+            if self.type == 8 and not self.defaultvalue:
+                self.defaultvalue = 'false'
 
     class Script:
         def __init__(self, script: str, type_: str, subtype: str, dockerimage: str, isfetch: bool,

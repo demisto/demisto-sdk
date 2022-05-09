@@ -1,4 +1,3 @@
-import json
 import os
 import shutil
 from typing import Optional
@@ -6,7 +5,8 @@ from typing import Optional
 import pytest
 from mock import patch
 
-from demisto_sdk.commands.common.constants import FileType, MarketplaceVersions
+from demisto_sdk.commands.common.constants import MarketplaceVersions, FileType
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.format import (update_dashboard, update_incidenttype,
                                          update_indicatortype)
 from demisto_sdk.commands.format.format_module import format_manager
@@ -14,6 +14,7 @@ from demisto_sdk.commands.format.update_classifier import (
     ClassifierJSONFormat, OldClassifierJSONFormat)
 from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
+from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 from demisto_sdk.commands.format.update_genericfield import \
     GenericFieldJSONFormat
@@ -60,6 +61,8 @@ from demisto_sdk.tests.constants_test import (
     SOURCE_FORMAT_LAYOUTS_CONTAINER_COPY, SOURCE_FORMAT_LISTS_COPY,
     SOURCE_FORMAT_MAPPER, SOURCE_FORMAT_PRE_PROCESS_RULES_COPY,
     SOURCE_FORMAT_REPORT, SOURCE_FORMAT_WIDGET, WIDGET_PATH)
+
+json = JSON_Handler()
 
 
 class TestFormattingJson:
@@ -338,6 +341,7 @@ def test_update_connection_removes_unnecessary_keys(tmpdir, monkeypatch):
         output=connection_file_path,
         path=CONNECTION_SCHEMA_PATH,
     )
+    connection_formatter.assume_yes = True
     monkeypatch.setattr(
         'builtins.input',
         lambda _: 'N'
@@ -566,7 +570,7 @@ class TestFormattingLayoutscontainer:
     @pytest.fixture(autouse=True)
     def layoutscontainer_formatter(self, layoutscontainer_copy):
         layoutscontainer_formatter = LayoutBaseFormat(
-            input=layoutscontainer_copy, output=DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY)
+            input=layoutscontainer_copy, output=DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY, clear_cache=True)
         layoutscontainer_formatter.schema_path = LAYOUTS_CONTAINER_SCHEMA_PATH
         yield layoutscontainer_formatter
 
@@ -596,6 +600,27 @@ class TestFormattingLayoutscontainer:
         layoutscontainer_formatter.data['id'] = "id"
         layoutscontainer_formatter.update_id()
         assert layoutscontainer_formatter.data['name'] == layoutscontainer_formatter.data['id']
+
+    def test_remove_copy_and_dev_suffixes_from_layoutcontainer(self, layoutscontainer_formatter):
+        """
+        Given
+            - A layoutscontainer file with _copy suffix in the layout name ans sub script
+        When
+            - Run format on layout file
+        Then
+            - Ensure that name and sub script does not include the _copy suffix
+        """
+        assert layoutscontainer_formatter.data['name'] == 'IP hadas_copy'
+        assert layoutscontainer_formatter.data.get('indicatorsDetails').get('tabs')[0].get('sections')[9].get(
+            'query') == "script_test_dev"
+        assert layoutscontainer_formatter.data.get('indicatorsDetails').get('tabs')[0].get('sections')[9].get(
+            'name') == "testing_copy"
+        layoutscontainer_formatter.remove_copy_and_dev_suffixes_from_layoutscontainer()
+        assert layoutscontainer_formatter.data['name'] == 'IP hadas'
+        assert layoutscontainer_formatter.data.get('indicatorsDetails').get('tabs')[0].get('sections')[9].get(
+            'query') == "script_test"
+        assert layoutscontainer_formatter.data.get('indicatorsDetails').get('tabs')[0].get('sections')[9].get(
+            'name') == "testing"
 
     @pytest.mark.parametrize('schema', [GENERICFIELD_SCHEMA_PATH,
                                         INCIDENTFIELD_SCHEMA_PATH,
@@ -680,10 +705,14 @@ class TestFormattingLayoutscontainer:
         When
             - Run format on layout file
         Then
-            - Ensure that fromVersion field was updated successfully with '6.0.0' value
+            - Ensure that fromVersion field was updated successfully with GENERAL_DEFAULT_FROMVERSION value
         """
-        layoutscontainer_formatter.set_fromVersion('6.0.0')
-        assert layoutscontainer_formatter.data.get('fromVersion') == '6.0.0'
+        from demisto_sdk.commands.common.constants import \
+            GENERAL_DEFAULT_FROMVERSION
+
+        layoutscontainer_formatter.from_version = GENERAL_DEFAULT_FROMVERSION
+        layoutscontainer_formatter.set_fromVersion()
+        assert layoutscontainer_formatter.data.get('fromVersion') == GENERAL_DEFAULT_FROMVERSION
 
     def test_set_output_path(self, layoutscontainer_formatter):
         """
@@ -760,6 +789,24 @@ class TestFormattingLayout:
         """
         layouts_formatter.set_toVersion()
         assert layouts_formatter.data.get('toVersion') == '5.9.9'
+
+    def test_remove_copy_and_dev_suffixes_from_layout(self, layouts_formatter):
+        """
+        Given
+            - A layout file with _copy suffix in one of the script in a dynamic section
+        When
+            - Run format on layout file
+        Then
+            - Ensure that the script name does not include the _copy suffix
+        """
+        assert layouts_formatter.data.get('typeId') == 'ExtraHop Detection_dev'
+        assert layouts_formatter.data.get('layout').get('sections')[1].get('query') == 'scriptName_copy'
+        assert layouts_formatter.data.get('layout').get('sections')[1].get('name') == 'test_copy'
+
+        layouts_formatter.remove_copy_and_dev_suffixes_from_layout()
+        assert layouts_formatter.data.get('typeId') == 'ExtraHop Detection'
+        assert layouts_formatter.data.get('layout').get('sections')[1].get('query') == 'scriptName'
+        assert layouts_formatter.data.get('layout').get('sections')[1].get('name') == 'test'
 
     def test_set_output_path(self, invalid_path_layouts_formatter):
         """
@@ -873,22 +920,7 @@ class TestFormattingClassifier:
 
     @pytest.fixture(autouse=True)
     def classifier_formatter(self, classifier_copy):
-        yield ClassifierJSONFormat(input=classifier_copy, output=DESTINATION_FORMAT_CLASSIFIER)
-
-    def test_remove_unnecessary_keys(self, classifier_formatter):
-        """
-        Given
-            - A classifier file with fields that dont exit in classifier schema.
-        When
-            - Run format on classifier file
-        Then
-            - Ensure that unnecessary keys were removed
-        """
-        classifier_formatter.schema_path = CLASSIFIER_SCHEMA_PATH
-        classifier_formatter.remove_unnecessary_keys()
-        for field in ['brands', 'instanceIds', 'itemVersion', 'locked', 'logicalVersion', 'mapping', 'packID',
-                      'system', 'toServerVersion']:
-            assert field not in classifier_formatter.data
+        yield ClassifierJSONFormat(input=classifier_copy, output=DESTINATION_FORMAT_CLASSIFIER, clear_cache=True)
 
     def test_arguments_to_remove(self, classifier_formatter):
         """
@@ -904,6 +936,21 @@ class TestFormattingClassifier:
         expected_args = ['brands', 'instanceIds', 'itemVersion', 'locked', 'logicalVersion', 'mapping', 'packID',
                          'system', 'toServerVersion', 'sourceClassifierId', 'fromServerVersion', 'nameRaw']
         assert set(expected_args) == args_to_remove
+
+    def test_remove_unnecessary_keys(self, classifier_formatter):
+        """
+        Given
+            - A classifier file with fields that dont exit in classifier schema.
+        When
+            - Run format on classifier file
+        Then
+            - Ensure that unnecessary keys were removed
+        """
+        classifier_formatter.schema_path = CLASSIFIER_SCHEMA_PATH
+        classifier_formatter.remove_unnecessary_keys()
+        for field in ['brands', 'instanceIds', 'itemVersion', 'locked', 'logicalVersion', 'mapping', 'packID',
+                      'system', 'toServerVersion']:
+            assert field not in classifier_formatter.data
 
     def test_set_keyTypeMap(self, classifier_formatter):
         """
@@ -938,8 +985,12 @@ class TestFormattingClassifier:
         Then
             - Ensure that fromVersion field was updated successfully with '6.0.0' value
         """
-        classifier_formatter.set_fromVersion('6.0.0')
-        assert classifier_formatter.data.get('fromVersion') == '6.0.0'
+        from demisto_sdk.commands.common.constants import \
+            GENERAL_DEFAULT_FROMVERSION
+
+        classifier_formatter.from_version = GENERAL_DEFAULT_FROMVERSION
+        classifier_formatter.set_fromVersion()
+        assert classifier_formatter.data.get('fromVersion') == GENERAL_DEFAULT_FROMVERSION
 
 
 class TestFormattingOldClassifier:
@@ -1023,17 +1074,21 @@ class TestFormattingMapper:
         for field in ['locked', 'sourceClassifierId', 'toServerVersion']:
             assert field not in mapper_formatter.data
 
-    def test_set_toVersion(self, mapper_formatter):
+    def test_set_fromVersion(self, mapper_formatter):
         """
         Given
             - A mapper file without a fromVersion field
         When
             - Run format on mapper file
         Then
-            - Ensure that fromVersion field was updated successfully with '6.0.0' value
+            - Ensure that fromVersion field was updated successfully with GENERAL_DEFAULT_FROMVERSION value
         """
-        mapper_formatter.set_fromVersion('6.0.0')
-        assert mapper_formatter.data.get('fromVersion') == '6.0.0'
+        from demisto_sdk.commands.common.constants import \
+            GENERAL_DEFAULT_FROMVERSION
+
+        mapper_formatter.from_version = GENERAL_DEFAULT_FROMVERSION
+        mapper_formatter.set_fromVersion()
+        assert mapper_formatter.data.get('fromVersion') == GENERAL_DEFAULT_FROMVERSION
 
     def test_update_id(self, mapper_formatter):
         """
@@ -1174,7 +1229,7 @@ class TestFormattingReport:
         assert report_formatter.data.get('orientation') == 'landscape'
 
     @staticmethod
-    def exception_raise(placeholder=None):
+    def exception_raise(default_from_version: str = '', file_type: Optional[str] = None):
         raise ValueError("MY ERROR")
 
     FORMAT_OBJECT = [
@@ -1189,7 +1244,9 @@ class TestFormattingReport:
         LayoutBaseFormat,
         ReportJSONFormat,
         WidgetJSONFormat,
-        ConnectionJSONFormat
+        ConnectionJSONFormat,
+        ListsFormat,
+        PreProcessRulesFormat
     ]
 
     @pytest.mark.parametrize(argnames='format_object', argvalues=FORMAT_OBJECT)
@@ -1198,7 +1255,7 @@ class TestFormattingReport:
         Given
             - A JSON object formatter
         When
-            - Run run_format command and and exception is raised.
+            - Run run_format command and exception is raised.
         Then
             - Ensure the error is printed.
         """
@@ -1219,13 +1276,16 @@ class TestFormattingReport:
         When
             - Run format command
         Then
-            - Ensure that the integration fromversion is set to 6.0.0
+            - Ensure that the integration fromversion is set to GENERAL_DEFAULT_FROMVERSION
         """
+        from demisto_sdk.commands.common.constants import \
+            GENERAL_DEFAULT_FROMVERSION
+
         pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
         incident_type = pack.create_incident_type(name='TestType', content={})
-        bs = BaseUpdateJSON(input=incident_type.path)
+        bs = BaseUpdate(input=incident_type.path, assume_yes=True)
         bs.set_fromVersion()
-        assert bs.data['fromVersion'] == '6.0.0'
+        assert bs.data['fromVersion'] == GENERAL_DEFAULT_FROMVERSION
 
     def test_set_fromversion_six_new_contributor_pack(self, pack):
         """
@@ -1235,17 +1295,101 @@ class TestFormattingReport:
         When
             - Run format command
         Then
-            - Ensure that the integration fromversion is set to 6.0.0
+            - Ensure that the integration fromversion is set to GENERAL_DEFAULT_FROMVERSION
         """
+        from demisto_sdk.commands.common.constants import \
+            GENERAL_DEFAULT_FROMVERSION
+
         pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
-        incident_type = pack.create_incident_type(name='TestType', content={'fromVersion': '5.5.0'})
-        incident_field = pack.create_incident_field(name='TestField', content={'fromVersion': '5.5.0'})
-        indicator_field = pack.create_indicator_field(name='TestFeild', content={'fromVersion': '5.5.0'})
-        indicator_type = pack.create_indicator_type(name='TestType', content={'fromVersion': '5.5.0'})
-        classifier = pack.create_classifier(name='TestClassifier', content={'fromVersion': '5.5.0'})
-        layout = pack.create_layout(name='TestLayout', content={'fromVersion': '5.5.0'})
+        incident_type = pack.create_incident_type(name='TestType')
+        incident_field = pack.create_incident_field(name='TestField')
+        indicator_field = pack.create_indicator_field(name='TestField')
+        indicator_type = pack.create_indicator_type(name='TestType')
+        classifier = pack.create_classifier(name='TestClassifier')
+        layout = pack.create_layout(name='TestLayout')
         for path in [incident_type.path, incident_field.path, indicator_field.path, indicator_type.path,
                      classifier.path, layout.path]:
-            bs = BaseUpdateJSON(input=path)
+            bs = BaseUpdate(input=path, assume_yes=True)
             bs.set_fromVersion()
-            assert bs.data['fromVersion'] == '6.0.0'
+            assert bs.data['fromVersion'] == GENERAL_DEFAULT_FROMVERSION
+
+    def test_json_run_format_old_layout(self, mocker, pack):
+        """
+        Given
+            - A new (old) layout.
+        When
+            - Run format command.
+        Then
+            - Ensure that the fromversion is set to 5.5.0.
+        """
+        from demisto_sdk.commands.common.constants import VERSION_5_5_0
+        mocker.patch.object(BaseUpdateJSON, 'remove_null_fields')
+        mocker.patch.object(LayoutBaseFormat, 'remove_unnecessary_keys')
+        mocker.patch.object(BaseUpdate, 'sync_data_to_master')
+
+        layout = pack.create_layout(name='TestType', content={})
+        bs = LayoutBaseFormat(input=layout.path, assume_yes=True)
+        bs.run_format()
+        assert bs.data['fromVersion'] == VERSION_5_5_0
+
+    def test_json_run_format_old_classifier(self, mocker, pack):
+        """
+        Given
+            - A new old_classifier.
+        When
+            - Run format command.
+        Then
+            - Ensure that the fromversion is set to 5.5.0.
+        """
+        from demisto_sdk.commands.common.constants import VERSION_5_5_0
+        mocker.patch.object(BaseUpdateJSON, 'remove_null_fields')
+        mocker.patch.object(BaseUpdate, 'remove_unnecessary_keys')
+        mocker.patch.object(BaseUpdate, 'sync_data_to_master')
+
+        classifier = pack.create_classifier(name='TestType', content={})
+        bs = OldClassifierJSONFormat(input=classifier.path, assume_yes=True)
+        bs.run_format()
+        assert bs.data['fromVersion'] == VERSION_5_5_0
+
+
+def test_not_updating_id_in_old_json_file(repo):
+    """
+    Given
+        - An old json file with non matching name and id.
+    When
+        - Run format on file
+    Then
+        - Ensure that name and id are still not matching
+    """
+    pack = repo.create_pack()
+    json_incident_type = pack.create_incident_type(name="some_name")
+
+    json_object = BaseUpdateJSON(input=json_incident_type.path)
+    json_object.data['name'] = "name"
+    json_object.data['id'] = "not_name"
+    json_object.old_file = json_object.data.copy()
+    json_object.update_id()
+    assert json_object.data['id'] == "not_name"
+    assert json_object.data['name'] == "name"
+
+
+def test_not_updating_modified_id_in_old_json_file(repo):
+    """
+    Given
+        - An old json file with non matching name and id.
+        - New id modification.
+    When
+        - Run format on file.
+    Then
+        - Ensure that id was not updated.
+    """
+    pack = repo.create_pack()
+    json_incident_type = pack.create_incident_type(name="some_name")
+
+    json_object = BaseUpdateJSON(input=json_incident_type.path)
+    json_object.data['name'] = "name"
+    json_object.data['id'] = "old_name"
+    json_object.old_file = json_object.data.copy()
+    json_object.data['id'] = "new_name"
+    json_object.update_id()
+    assert json_object.data['id'] == "old_name"

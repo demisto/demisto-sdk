@@ -3,7 +3,6 @@ This script is used to create a release notes template
 """
 import copy
 import errno
-import json
 import os
 import re
 from distutils.version import LooseVersion
@@ -12,9 +11,11 @@ from typing import Optional, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEFAULT_ID_SET_PATH,
-    IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, FileType)
+    IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, XSIAM_CONTENT_ITEMS_TYPES,
+    FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
@@ -27,6 +28,8 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_yaml, pack_name_to_path,
                                                print_color, print_error,
                                                print_warning, run_command)
+
+json = JSON_Handler()
 
 
 class UpdateRN:
@@ -71,6 +74,7 @@ class UpdateRN:
             :return
                 The new file path if was changed
         """
+
         def validate_new_path(expected_path: str):
             if not Path(expected_path).exists():
                 print_warning(f"file {file_path} implies the existence of {str(expected_path)}, which is missing. "
@@ -358,6 +362,19 @@ class UpdateRN:
             name = file_data.get('brandName', None)
         elif 'id' in file_data:
             name = file_data.get('id', None)
+        elif 'trigger_name' in file_data:
+            name = file_data.get('trigger_name')
+
+        elif 'dashboards_data' in file_data and file_data.get('dashboards_data') \
+                and isinstance(file_data['dashboards_data'], list):
+            dashboard_data = file_data.get('dashboards_data', [{}])[0]
+            name = dashboard_data.get('name')
+
+        elif 'templates_data' in file_data and file_data.get('templates_data') \
+                and isinstance(file_data['templates_data'], list):
+            r_name = file_data.get('templates_data', [{}])[0]
+            name = r_name.get('report_name')
+
         else:
             name = os.path.basename(file_path)
         return name
@@ -405,7 +422,7 @@ class UpdateRN:
             The pack metadata dictionary
         """
         try:
-            data_dictionary = get_json(self.metadata_path)
+            data_dictionary = get_json(self.metadata_path, cache_clear=True)
         except FileNotFoundError as e:
             raise FileNotFoundError(f'Pack {self.pack} was not found. Please verify the pack name is correct.') from e
         return data_dictionary
@@ -451,7 +468,8 @@ class UpdateRN:
             version[2] = '0'
             new_version = '.'.join(version)
         # We validate the input via click
-        elif self.update_type in ['revision', 'maintenance', 'documentation']:
+
+        elif self.update_type in ['revision', 'documentation']:
             version = current_version.split('.')
             version[2] = str(int(version[2]) + 1)
             if int(version[2]) > 99:
@@ -459,6 +477,9 @@ class UpdateRN:
                                  f"Please verify the currentVersion is correct. If it is, "
                                  f"then consider bumping to a new Minor version.")
             new_version = '.'.join(version)
+        elif self.update_type == 'maintenance':
+            raise ValueError("The *maintenance* option is no longer supported."
+                             " Please use the \"revision\" option and make sure to provide informative release notes.")
         if pre_release:
             new_version = new_version + '_prerelease'
         data_dictionary['currentVersion'] = new_version
@@ -550,27 +571,33 @@ class UpdateRN:
             :return
             The release notes description
         """
-        if _type in (FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT,
-                     FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD):
+        if is_new_file:
+            rn_desc = f'##### New: **{content_name}**\n'
+
+            if desc != '':
+                rn_desc += f'- {desc}'
+            else:
+                rn_desc += f'- {text or "%%UPDATE_RN%%"}'
+
+            if from_version and from_version != '' and _type not in XSIAM_CONTENT_ITEMS_TYPES:
+                # for now, we decided not to add this description for XSIAM entities (issue 40020)
+                rn_desc += f' (Available from Cortex XSOAR {from_version}).\n'
+
+        else:
             rn_desc = f'- **{content_name}**\n'
 
-        elif _type in (FileType.GENERIC_TYPE, FileType.GENERIC_FIELD):
+            if self.update_type == 'documentation':
+                rn_desc += '- Documentation and metadata improvements.\n'
+            else:
+                rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
+
+        if _type in (FileType.GENERIC_TYPE, FileType.GENERIC_FIELD):
             definition_name = get_definition_name(path, self.pack_path)
             rn_desc = f'- **({definition_name}) - {content_name}**\n'
-        else:
-            if is_new_file:
-                rn_desc = f'##### New: {content_name}\n- {desc}'
-                if from_version:
-                    rn_desc += f' (Available from Cortex XSOAR {from_version}).'
-                rn_desc += '\n'
-            else:
-                rn_desc = f'##### {content_name}\n'
-                if self.update_type == 'maintenance':
-                    rn_desc += '- Maintenance and stability enhancements.\n'
-                elif self.update_type == 'documentation':
-                    rn_desc += '- Documentation and metadata improvements.\n'
-                else:
-                    rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
+
+        if _type == FileType.TRIGGER:
+            rn_desc = f'- {desc}'  # Issue - https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
+
         if docker_image:
             rn_desc += f'- Updated the Docker image to: *{docker_image}*.\n'
         return rn_desc
@@ -604,12 +631,15 @@ class UpdateRN:
 
             _header_by_type = RN_HEADER_BY_FILE_TYPE.get(_type)
             if _type in (FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT,
-                         FileType.INCIDENT_FIELD, FileType.JOB):
+                         FileType.INCIDENT_FIELD, FileType.JOB, FileType.WIZARD):
                 rn_desc = f'\n- **{content_name}**'
 
             elif _type in (FileType.GENERIC_TYPE, FileType.GENERIC_FIELD):
                 definition_name = get_definition_name(path, self.pack_path)
                 rn_desc = f'\n- **({definition_name}) - {content_name}**'
+
+            elif _type == FileType.TRIGGER:
+                rn_desc = f'\n- {desc}'  # Issue https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
 
             else:
                 rn_desc = f'\n##### New: {content_name}\n- {desc}\n' if is_new_file \
@@ -664,8 +694,12 @@ class UpdateRN:
         if len(rn_parts) > 1:
             # Splitting again by content name to append the docker image release note to corresponding
             # content entry only
-            content_parts = rn_parts[1].split(f'{content_name}\n')
-            new_rn = f'{rn_parts[0]}{header_by_type}{content_parts[0]}{content_name}\n{new_rn_part}\n' \
+            if "**" in rn_parts[1]:
+                content_parts = rn_parts[1].split(f'**{content_name}**\n')
+            else:
+                content_parts = rn_parts[1].split(f'{content_name}\n')
+
+            new_rn = f'{rn_parts[0]}{header_by_type}{content_parts[0]}**{content_name}**\n{new_rn_part}\n' \
                      f'{content_parts[1]}'
         else:
             print_warning(f'Could not parse release notes {new_rn} by header type: {header_by_type}')
@@ -740,7 +774,7 @@ def get_file_description(path, file_type) -> str:
         print_warning(f'Cannot get file description: "{path}" file does not exist')
         return ''
 
-    elif file_type in (FileType.PLAYBOOK, FileType.INTEGRATION):
+    elif file_type in (FileType.PLAYBOOK, FileType.INTEGRATION, FileType.CORRELATION_RULE):
         yml_file = get_yaml(path)
         return yml_file.get('description', '')
 
@@ -748,7 +782,8 @@ def get_file_description(path, file_type) -> str:
         yml_file = get_yaml(path)
         return yml_file.get('comment', '')
 
-    elif file_type in (FileType.CLASSIFIER, FileType.REPORT, FileType.WIDGET, FileType.DASHBOARD, FileType.JOB):
+    elif file_type in (FileType.CLASSIFIER, FileType.REPORT, FileType.WIDGET, FileType.DASHBOARD, FileType.JOB,
+                       FileType.TRIGGER, FileType.WIZARD):
         json_file = get_json(path)
         return json_file.get('description', '')
 
@@ -824,7 +859,7 @@ def check_docker_image_changed(main_branch: str, packfile: str) -> Optional[str]
             if 'dockerimage:' in diff_line:  # search whether exists a line that notes that the Docker image was
                 # changed.
                 split_line = diff_line.split()
-                if split_line[0] == '+':
+                if split_line[0].startswith('+'):
                     return split_line[-1]
         return None
 

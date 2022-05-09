@@ -28,7 +28,8 @@ EMPTY_ID_SET = {
     'GenericModules': [],
     'GenericDefinitions': [],
     'Lists': [],
-    'Jobs': []
+    'Jobs': [],
+    'Wizards': [],
 }
 
 

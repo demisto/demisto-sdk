@@ -5,15 +5,19 @@ from typing import Tuple
 
 import click
 
+from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
-                                               print_error)
+from demisto_sdk.commands.common.tools import (
+    LOG_COLORS, print_color, print_error,
+    remove_copy_and_dev_suffixes_from_str)
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_FROMVERSION,
     SKIP_RETURN_CODE, SUCCESS_RETURN_CODE, VERSION_6_0_0)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
 yaml = YAML_Handler()
+
+SCRIPT_QUERY_TYPE = 'script'
 
 LAYOUTS_CONTAINER_KINDS = ['edit',
                            'indicatorsDetails',
@@ -23,6 +27,9 @@ LAYOUTS_CONTAINER_KINDS = ['edit',
                            'details',
                            'detailsV2',
                            'mobile']
+
+LAYOUTS_CONTAINER_CHECK_SCRIPTS = ('indicatorsDetails', 'detailsV2')
+
 LAYOUT_KIND = 'layout'
 LAYOUTS_CONTAINER_PREFIX = 'layoutscontainer-'
 LAYOUT_PREFIX = 'layout-'
@@ -37,9 +44,10 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                  from_version: str = '',
                  no_validate: bool = False,
                  verbose: bool = False,
+                 clear_cache: bool = False,
                  **kwargs):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
-                         verbose=verbose, **kwargs)
+                         verbose=verbose, clear_cache=clear_cache, **kwargs)
 
         # layoutscontainer kinds are unique fields to containers, and shouldn't be in layouts
         self.is_container = any(self.data.get(kind) for kind in LAYOUTS_CONTAINER_KINDS)
@@ -59,7 +67,6 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 self.layoutscontainer__run_format()
             else:
                 self.layout__run_format()
-            self.update_json()
             self.set_description()
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
@@ -82,11 +89,13 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
     def layout__run_format(self):
         """toVersion 5.9.9 layout format"""
+        self.update_json(file_type=FileType.LAYOUT.value)
         self.set_layout_key()
         # version is both in layout key and in base dict
         self.set_version_to_default(self.data['layout'])
         self.set_toVersion()
         self.layout__set_output_path()
+        self.remove_copy_and_dev_suffixes_from_layout()
 
     def layout__set_output_path(self):
         output_basename = os.path.basename(self.output_file)
@@ -103,10 +112,11 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
     def layoutscontainer__run_format(self) -> None:
         """fromVersion 6.0.0 layout (container) format"""
-        self.set_fromVersion(from_version=VERSION_6_0_0)
+        super().update_json(default_from_version=VERSION_6_0_0)
         self.set_group_field()
         self.layoutscontainer__set_output_path()
         self.update_id(field='name')
+        self.remove_copy_and_dev_suffixes_from_layoutscontainer()
 
     def layoutscontainer__set_output_path(self):
         output_basename = os.path.basename(self.output_file)
@@ -209,3 +219,39 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 second_level_args[kind] = set(self.data[kind].keys()) - set(kind_schema)
 
         return first_level_args, second_level_args
+
+    def remove_copy_and_dev_suffixes_from_layoutscontainer(self):
+        if name := self.data.get('name'):
+            self.data['name'] = remove_copy_and_dev_suffixes_from_str(name)
+
+        container = None
+        for kind in LAYOUTS_CONTAINER_CHECK_SCRIPTS:
+            if self.data.get(kind):
+                container = self.data.get(kind)
+                break
+        if container:
+            for tab in container.get('tabs', ()):
+                for section in tab.get('sections', ()):
+                    if section.get('queryType') == SCRIPT_QUERY_TYPE:
+                        section['query'] = remove_copy_and_dev_suffixes_from_str(section.get('query'))
+                        section['name'] = remove_copy_and_dev_suffixes_from_str(section.get('name'))
+
+    def remove_copy_and_dev_suffixes_from_layout(self):
+        if typename := self.data.get('TypeName'):
+            self.data['TypeName'] = remove_copy_and_dev_suffixes_from_str(typename)
+        if type_id := self.data.get('typeId'):
+            self.data['typeId'] = remove_copy_and_dev_suffixes_from_str(type_id)
+
+        if layout_data := self.data.get('layout'):
+            if layout_tabs := layout_data.get('tabs', ()):
+                for tab in layout_tabs:
+                    for section in tab.get('sections', ()):
+                        if section.get('queryType') == SCRIPT_QUERY_TYPE:
+                            section['query'] = remove_copy_and_dev_suffixes_from_str(section.get('query'))
+                            section['name'] = remove_copy_and_dev_suffixes_from_str(section.get('name'))
+
+            elif layout_sections := layout_data.get('sections'):
+                for section in layout_sections:
+                    if section.get('queryType') == SCRIPT_QUERY_TYPE:
+                        section['query'] = remove_copy_and_dev_suffixes_from_str(section.get('query'))
+                        section['name'] = remove_copy_and_dev_suffixes_from_str(section.get('name'))

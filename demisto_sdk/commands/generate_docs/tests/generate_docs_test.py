@@ -1,9 +1,9 @@
-import json
 import os
 from typing import Dict, List
 
 import pytest
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json, get_yaml
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
@@ -15,6 +15,9 @@ from demisto_sdk.commands.generate_docs.generate_integration_doc import (
 from demisto_sdk.commands.generate_docs.generate_script_doc import \
     generate_script_doc
 from TestSuite.pack import Pack
+
+json = JSON_Handler()
+
 
 FILES_PATH = os.path.normpath(os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files'))
 FAKE_ID_SET = get_json(os.path.join(FILES_PATH, 'fake_id_set.json'))
@@ -1102,7 +1105,7 @@ TEST_EMPTY_SCRIPTDATA_SECTION = [
     ({'script': 'some info'}, ['']),
     ({'subtype': 'python2', 'tags': []}, ['## Script data', '---', '', '| **Name** | **Description** |', '| --- | --- |', '| Script Type | python2 |', '']),
     ({'tags': []}, ['']),
-    ({'fromversion': '6.0.0'}, ['## Script data', '---', '', '| **Name** | **Description** |', '| --- | --- |', '| Cortex XSOAR Version | 6.0.0 |', ''])
+    ({'fromversion': '0.0.0'}, ['## Script data', '---', '', '| **Name** | **Description** |', '| --- | --- |', '| Cortex XSOAR Version | 0.0.0 |', ''])
 ]
 
 
@@ -1113,7 +1116,7 @@ def test_missing_data_sections_when_generating_table_section(yml_content, expect
     - Case 1: yml with no relevant tags for 'get_script_info' function.
     - Case 2: yml with 'subtype' section filled in and empty 'tags' section.
     - Case 3: yml that contain empty 'tags' section.
-    - Case 4: yml that contain 'fromversion' section that is different from 'DEFAULT_CONTENT_ITEM_FROM_VERSION' (which is 0.0.0).
+    - Case 4: yml that contain 'fromversion' section that is different from 'DEFAULT_CONTENT_ITEM_FROM_VERSION_FOR_RN' (which is 6.0.0).
     When
     - running the get_script_info command on the inputs and then generate_table_section.
     Then
@@ -1131,6 +1134,6 @@ def test_missing_data_sections_when_generating_table_section(yml_content, expect
     script_pack = pack.create_script()
     script_pack.yml.write_dict(yml_content)
 
-    script_info = get_script_info(script_pack.yml.path)
+    script_info = get_script_info(script_pack.yml.path, clear_cache=True)
     section = generate_table_section(script_info, "Script data")
     assert section == expected_result

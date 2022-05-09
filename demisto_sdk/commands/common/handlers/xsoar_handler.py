@@ -3,17 +3,18 @@ abstract class for xsoar handlers (yaml, json, etc...)
 """
 
 from abc import ABC, abstractmethod
+from typing import IO, Any, AnyStr
 
 
 class XSOAR_Handler(ABC):
     @abstractmethod
-    def load(self, stream):
+    def load(self, stream: IO[str]) -> Any:
         pass
 
     @abstractmethod
-    def dump(self, data, stream, sort_keys=False):
+    def dump(self, data: AnyStr, fp: IO[str], indent=0, sort_keys=False):
         pass
 
     @abstractmethod
-    def dumps(self, data, sort_keys=False):
+    def dumps(self, obj: Any, indent=0, sort_keys=False) -> str:
         pass

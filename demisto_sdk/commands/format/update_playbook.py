@@ -1,20 +1,19 @@
 import os
-import re
 import uuid
-from distutils.version import LooseVersion
 from typing import Tuple
 
 import click
 from git import InvalidGitRepositoryError
 
-from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_FROM_VERSION, PLAYBOOK, FileType)
+from demisto_sdk.commands.common.constants import PLAYBOOK, FileType
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.tools import (find_type, get_yaml,
-                                               is_string_uuid, write_yml)
-from demisto_sdk.commands.format.format_constants import (
-    ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_5_0_FROMVERSION, SCHEMAS_PATH,
-    SKIP_RETURN_CODE, SUCCESS_RETURN_CODE)
+from demisto_sdk.commands.common.tools import (
+    find_type, get_yaml, is_string_uuid, remove_copy_and_dev_suffixes_from_str,
+    write_yml)
+from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
+                                                          SCHEMAS_PATH,
+                                                          SKIP_RETURN_CODE,
+                                                          SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 
 
@@ -30,10 +29,11 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                  deprecate: bool = False,
                  add_tests: bool = False,
                  interactive: bool = True,
+                 clear_cache: bool = False,
                  id_set_path: str = ''):
         super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
                          verbose=verbose, assume_yes=assume_yes, deprecate=deprecate, add_tests=add_tests,
-                         interactive=interactive, id_set_path=id_set_path)
+                         interactive=interactive, clear_cache=clear_cache, id_set_path=id_set_path)
 
     def add_description(self):
         """Add empty description to playbook and tasks."""
@@ -62,56 +62,6 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
             if not task['task'].get('description') and task['type'] in ['title', 'start', 'playbook']:
                 task['task'].update({'description': ''})
 
-    def update_fromversion_by_user(self):
-        """If no fromversion is specified, asks the user for it's value and updates the playbook."""
-
-        if not self.data.get('fromversion', ''):
-
-            if self.assume_yes:
-                if self.verbose:
-                    if self.from_version:
-                        click.echo(f"Adding `fromversion: {self.from_version}`")
-
-                    else:
-                        click.echo(f"Adding `fromversion: {NEW_FILE_DEFAULT_5_5_0_FROMVERSION}`")
-                self.data[
-                    'fromversion'] = self.from_version if self.from_version else NEW_FILE_DEFAULT_5_5_0_FROMVERSION
-                return
-
-            click.secho('No fromversion is specified for this playbook, would you like me to update for you? [Y/n]',
-                        fg='red')
-            user_answer = input()
-            if user_answer in ['n', 'N', 'no', 'No']:
-                click.secho('Moving forward without updating fromversion tag', fg='yellow')
-                return
-
-            if self.from_version:
-                if self.verbose:
-                    click.echo(f"Adding `fromversion: {self.from_version}`")
-                self.data['fromversion'] = self.from_version
-                return
-
-            is_input_version_valid = False
-            while not is_input_version_valid:
-                click.secho('Please specify the desired version X.X.X', fg='yellow')
-                user_desired_version = input()
-                if re.match(r'\d+\.\d+\.\d+', user_desired_version):
-                    self.data['fromversion'] = user_desired_version
-                    is_input_version_valid = True
-                else:
-                    click.secho('Version format is not valid', fg='red')
-
-        elif not self.old_file and LooseVersion(self.data.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION)) < \
-                LooseVersion(NEW_FILE_DEFAULT_5_5_0_FROMVERSION):
-            if self.assume_yes:
-                self.data['fromversion'] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION
-            else:
-                set_from_version = str(
-                    input(f"\nYour current fromversion is: '{self.data.get('fromversion')}'. Do you want "
-                          f"to set it to '5.5.0'? Y/N ")).lower()
-                if set_from_version in ['y', 'yes']:
-                    self.data['fromversion'] = NEW_FILE_DEFAULT_5_5_0_FROMVERSION
-
     def update_task_uuid(self):
         """If taskid field and the id under the task field are not from uuid type, generate uuid instead"""
         for task_key, task in self.data.get('tasks', {}).items():
@@ -126,7 +76,6 @@ class BasePlaybookYMLFormat(BaseUpdateYML):
                 task['task']['id'] = generated_uuid
 
     def run_format(self) -> int:
-        self.update_fromversion_by_user()
         self.update_playbook_usages()
         super().update_yml(file_type=PLAYBOOK)
         self.add_description()
@@ -221,10 +170,14 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
     def remove_copy_and_dev_suffixes_from_subplaybook(self):
         for task_id, task in self.data.get('tasks', {}).items():
             if task['task'].get('playbookName'):
-                task['task']['playbookName'] = task['task'].get('playbookName').replace('_dev', ''). \
-                    replace('_copy', '')
-                task['task']['name'] = task['task'].get('name').replace('_dev', ''). \
-                    replace('_copy', '')
+                task['task']['playbookName'] = remove_copy_and_dev_suffixes_from_str(task['task'].get('playbookName'))
+
+                task['task']['name'] = remove_copy_and_dev_suffixes_from_str(task['task'].get('name'))
+
+    def remove_copy_and_dev_suffixes_from_subscripts(self):
+        for task_id, task in self.data.get('tasks', {}).items():
+            if task['task'].get('scriptName'):
+                task['task']['scriptName'] = remove_copy_and_dev_suffixes_from_str(task['task'].get('scriptName'))
 
     def update_playbook_task_name(self):
         """Updates the name of the task to be the same as playbookName it is running."""
@@ -255,6 +208,7 @@ class PlaybookYMLFormat(BasePlaybookYMLFormat):
             click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             self.update_tests()
             self.remove_copy_and_dev_suffixes_from_subplaybook()
+            self.remove_copy_and_dev_suffixes_from_subscripts()
             self.update_conf_json('playbook')
             self.delete_sourceplaybookid()
             self.update_playbook_task_name()

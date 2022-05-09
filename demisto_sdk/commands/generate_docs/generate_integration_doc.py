@@ -1,4 +1,3 @@
-import json
 import os.path
 import re
 from pathlib import Path
@@ -10,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     CONTEXT_OUTPUT_README_TABLE_HEADER, DOCS_COMMAND_SECTION_REGEX)
 from demisto_sdk.commands.common.default_additional_info_loader import \
     load_default_additional_info_dict
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
                                                print_color, print_error,
                                                print_warning)
@@ -18,6 +18,9 @@ from demisto_sdk.commands.generate_docs.common import (
     generate_table_section, save_output, string_escape_md)
 from demisto_sdk.commands.integration_diff.integration_diff_detector import \
     IntegrationDiffDetector
+
+json = JSON_Handler()
+
 
 CREDENTIALS = 9
 
@@ -88,7 +91,7 @@ def generate_integration_doc(
         if not output:  # default output dir will be the dir of the input file
             output = os.path.dirname(os.path.realpath(input_path))
         errors: list = []
-        example_dict = {}
+        example_dict: dict = {}
         if examples:
             specific_commands = command.split(',') if command else None
             command_examples = get_command_examples(examples, specific_commands)

@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.constants import (
     GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
     INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR,
     LAYOUTS_DIR, LISTS_DIR, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, REPORTS_DIR,
-    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR)
+    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, WIZARDS_DIR)
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (get_child_files, get_json,
                                                get_yaml)
@@ -149,6 +149,7 @@ class Environment:
             PRE_PROCESS_RULES_DIR: [],
             LISTS_DIR: [],
             JOBS_DIR: [],
+            WIZARDS_DIR: [],
             TEST_PLAYBOOKS_DIR: [], REPORTS_DIR: [], DASHBOARDS_DIR: [], WIDGETS_DIR: [], INCIDENT_FIELDS_DIR: [],
             INDICATOR_FIELDS_DIR: [], INCIDENT_TYPES_DIR: [], CLASSIFIERS_DIR: [], CONNECTIONS_DIR: [],
             INDICATOR_TYPES_DIR: [], GENERIC_TYPES_DIR: [], GENERIC_FIELDS_DIR: [], GENERIC_MODULES_DIR: [],
@@ -247,15 +248,20 @@ class TestHelperMethods:
 
 
 class TestFlagHandlers:
-    @pytest.mark.parametrize('lf, a, o, i, r, res, err', [
-        (True, True, True, True, None, True, ''),
-        (False, False, False, True, None, False, "Error: Missing option '-o' / '--output'."),
-        (False, False, True, False, None, False, "Error: Missing option '-i' / '--input'."),
-        (False, True, True, False, None, True, ''),
-        (False, True, True, True, None, True, ''),
-        (False, False, True, False, 'Some Regex', True, '')
+    @pytest.mark.parametrize('system, it, lf, a, o, i, r, res, err', [
+        (True, True, False, False, True, True, None, True, ''),
+        (False, True, False, False, True, True, None, False, 'The item type option is just for downloading system '
+                                                             'items.'),
+        (True, False, False, False, True, True, None, False, "Error: Missing option '-it' / '--item-type', "
+                                                             "you should specify the system item type to download."),
+        (False, False, True, True, True, True, None, True, ''),
+        (False, False, False, False, False, True, None, False, "Error: Missing option '-o' / '--output'."),
+        (False, False, False, False, True, False, None, False, "Error: Missing option '-i' / '--input'."),
+        (False, False, False, True, True, False, None, True, ''),
+        (False, False, False, True, True, True, None, True, ''),
+        (False, False, False, False, True, False, 'Some Regex', True, '')
     ])
-    def test_verify_flags(self, lf, a, o, i, r, res, err, capsys):
+    def test_verify_flags(self, system, it, lf, a, o, i, r, res, err, capsys):
         with patch.object(Downloader, "__init__", lambda x, y, z: None):
             downloader = Downloader('', '')
             downloader.list_files = lf
@@ -263,6 +269,8 @@ class TestFlagHandlers:
             downloader.output_pack_path = o
             downloader.input_files = i
             downloader.regex = r
+            downloader.download_system_item = system
+            downloader.system_item_type = it
             answer = downloader.verify_flags()
             stdout, _ = capsys.readouterr()
             if err:
@@ -506,7 +514,7 @@ class TestMergeExistingFile:
             for param in parameters:
                 downloader.merge_existing_file(param['custom_content_object'], param['ending'])
                 assert os.path.isfile(param['instance_path'])
-                file_data = param['method'](param['instance_path'])
+                file_data = param['method'](param['instance_path'], cache_clear=True)
                 for field in param['fields']:
                     if file_data.get(field):
                         assert True
@@ -694,3 +702,60 @@ class TestVerifyPackPath:
         env = Environment(tmp_path)
         downloader = Downloader(output=f'{env.CONTENT_BASE_PATH}/{output_path}', input='', regex='')
         assert downloader.verify_output_pack_is_pack() is valid_ans
+
+
+@pytest.mark.parametrize('input, system, it, insecure, endpoint, req_type, req_body', [
+    (['PB1', 'PB2'], True, 'Playbook', False, '/playbook/search', 'POST', {"query": "name:PB1 or PB2"}),
+    (['Mapper1', 'Mapper2'], True, 'Mapper', True, '/classifier/search', 'POST',
+     {"query": "name:Mapper1 or Mapper2"}),
+    (['Field1', 'Field2'], True, 'Field', True, '/incidentfields', 'GET', {}),
+    (['Classifier1', 'Classifier2'], True, 'Classifier', False, '/classifier/search', 'POST',
+     {"query": "name:Classifier1 or Classifier2"}),
+
+])
+def test_build_req_params(input, system, it, insecure, endpoint, req_type, req_body, monkeypatch):
+    with patch.object(Downloader, "__init__", lambda x, y, z: None):
+        monkeypatch.setenv('DEMISTO_BASE_URL', 'http://demisto.instance.com:8080/')
+        monkeypatch.setenv('DEMISTO_API_KEY', 'API_KEY')
+        downloader = Downloader('', '')
+        downloader.system_item_type = it
+        downloader.insecure = insecure
+        downloader.input_files = input
+        res_endpoint, res_req_type, res_req_body = downloader.build_req_params()
+        assert endpoint == res_endpoint
+        assert req_type == res_req_type
+        assert req_body == res_req_body
+
+
+def test_arrange_response():
+    with patch.object(Downloader, "__init__", lambda x, y, z: None):
+        downloader = Downloader('', '')
+
+        downloader.system_item_type = 'Playbook'
+        system_items_list = downloader.arrange_response({'playbooks': []})
+        assert system_items_list == []
+
+        downloader.system_item_type = 'Classifier'
+        system_items_list = downloader.arrange_response({'classifiers': []})
+        assert system_items_list == []
+
+        downloader.system_item_type = 'Automation'
+        system_items_list = downloader.arrange_response([])
+        assert system_items_list == []
+
+
+def test_build_file_name():
+    with patch.object(Downloader, "__init__", lambda x, y, z: None):
+        downloader = Downloader('', '')
+
+        downloader.system_item_type = 'Playbook'
+        file_name = downloader.build_file_name({'name': 'name 1', 'id': 'id'})
+        assert file_name == 'name_1.yml'
+
+        downloader.system_item_type = 'Field'
+        file_name = downloader.build_file_name({'name': 'name 1', 'id': 'id'})
+        assert file_name == 'name_1.json'
+
+        downloader.system_item_type = 'Field'
+        file_name = downloader.build_file_name({'id': 'id 1'})
+        assert file_name == 'id_1.json'

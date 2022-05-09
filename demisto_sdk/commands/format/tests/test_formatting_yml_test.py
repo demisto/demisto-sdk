@@ -734,9 +734,9 @@ class TestFormatting:
 
         formatter = IntegrationYMLFormat(input=SOURCE_FORMAT_INTEGRATION_DEFAULT_VALUE)
         formatter.set_default_value_for_checkbox()
-        assert 'false' in formatter.data['configuration'][1]['defaultvalue']
-        assert 'true' in formatter.data['configuration'][2]['defaultvalue']
-        assert 'false' in formatter.data['configuration'][3]['defaultvalue']
+        assert 'false' == formatter.data['configuration'][1]['defaultvalue']
+        assert 'true' == formatter.data['configuration'][2]['defaultvalue']
+        assert 'false' == formatter.data['configuration'][3]['defaultvalue']
 
     @patch('builtins.input', lambda *args: 'no')
     def test_update_tests_on_playbook_with_test_playbook(self):

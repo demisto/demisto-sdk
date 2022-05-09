@@ -19,6 +19,7 @@
 * Added HelloWorldSlim template option for *--template* flag in **demisto-sdk init** command.
 * Fixed an issue where the HelloWorldSlim template in **demisto-sdk init** command had an integration id that was conflicting with HelloWorld integration id.
 * Updated the SDK to use demisto-py 3.1.6, allowing use of a proxy with an environment variable.
+* Set the default logger level to `warning`, to avoid unwanted debug logs.
 * The **format** command now validates that default value of checkbox parameters is a string 'true' or 'false'.
 * Fixed an issue where `FileType.PLAYBOOK` would show instead of `Playbook` in readme error messages.
 

@@ -380,7 +380,7 @@ python-versions = ">=3.5"
 
 [[package]]
 name = "demisto-py"
-version = "3.1.5"
+version = "3.1.6"
 description = "A Python library for the Demisto API"
 category = "main"
 optional = false
@@ -921,7 +921,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "jsonschema"
-version = "4.4.0"
+version = "4.5.1"
 description = "An implementation of JSON Schema validation for Python"
 category = "main"
 optional = false
@@ -1200,7 +1200,7 @@ totp = ["cryptography"]
 
 [[package]]
 name = "pbr"
-version = "5.8.1"
+version = "5.9.0"
 description = "Python Build Reasonableness"
 category = "main"
 optional = false
@@ -1257,7 +1257,7 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "pre-commit"
-version = "2.18.1"
+version = "2.19.0"
 description = "A framework for managing and maintaining multi-language pre-commit hooks."
 category = "dev"
 optional = false
@@ -1273,7 +1273,7 @@ virtualenv = ">=20.0.8"
 
 [[package]]
 name = "prettytable"
-version = "3.2.0"
+version = "3.3.0"
 description = "A simple Python library for easily displaying tabular data in a visually appealing ASCII table format"
 category = "main"
 optional = false
@@ -1888,7 +1888,7 @@ python-versions = "*"
 
 [[package]]
 name = "types-python-dateutil"
-version = "2.8.14"
+version = "2.8.15"
 description = "Typing stubs for python-dateutil"
 category = "main"
 optional = false
@@ -1896,7 +1896,7 @@ python-versions = "*"
 
 [[package]]
 name = "types-pytz"
-version = "2021.3.7"
+version = "2021.3.8"
 description = "Typing stubs for pytz"
 category = "main"
 optional = false
@@ -1936,7 +1936,7 @@ python-versions = "*"
 
 [[package]]
 name = "types-tabulate"
-version = "0.8.8"
+version = "0.8.9"
 description = "Typing stubs for tabulate"
 category = "main"
 optional = false
@@ -2128,7 +2128,7 @@ multidict = ">=4.0"
 
 [[package]]
 name = "z3-solver"
-version = "4.8.16.0"
+version = "4.8.17.0"
 description = "an efficient SMT solver library"
 category = "main"
 optional = false
@@ -2166,7 +2166,7 @@ build = ["gsutil"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "6354781d24454b3050ff3b337b5975e249553896910b304c6cbbd94b859e164b"
+content-hash = "b6c80bc8af83ac4910d8a17d657e2bdcfd71652eca0e5e2c77e1f7d1b11b2c4d"
 
 [metadata.files]
 aiohttp = [
@@ -2555,8 +2555,8 @@ decorator = [
     {file = "decorator-5.1.1.tar.gz", hash = "sha256:637996211036b6385ef91435e4fae22989472f9d571faba8927ba8253acbc330"},
 ]
 demisto-py = [
-    {file = "demisto-py-3.1.5.tar.gz", hash = "sha256:abc07f1519618eb1d04713cf75dd211d3ac765da91ad3014959ff786a02fab84"},
-    {file = "demisto_py-3.1.5-py3-none-any.whl", hash = "sha256:51b35b3a7be58eb7f82897beeb81fcae80df440b018b3f0bf7a4c41b2c38b529"},
+    {file = "demisto-py-3.1.6.tar.gz", hash = "sha256:c269ad1668d76995c9bc404e36a3f12bd4a092b1ff10ff5fe48568863b5c5823"},
+    {file = "demisto_py-3.1.6-py3-none-any.whl", hash = "sha256:1bb94c7725c4e51a989ec7847868d377d141b6353a4491e55ca59fe84d6f1341"},
 ]
 deprecated = [
     {file = "Deprecated-1.2.13-py2.py3-none-any.whl", hash = "sha256:64756e3e14c8c5eea9795d93c524551432a0be75629f8f29e67ab8caf076c76d"},
@@ -2825,8 +2825,8 @@ joblib = [
     {file = "joblib-1.1.0.tar.gz", hash = "sha256:4158fcecd13733f8be669be0683b96ebdbbd38d23559f54dca7205aea1bf1e35"},
 ]
 jsonschema = [
-    {file = "jsonschema-4.4.0-py3-none-any.whl", hash = "sha256:77281a1f71684953ee8b3d488371b162419767973789272434bbc3f29d9c8823"},
-    {file = "jsonschema-4.4.0.tar.gz", hash = "sha256:636694eb41b3535ed608fe04129f26542b59ed99808b4f688aa32dcf55317a83"},
+    {file = "jsonschema-4.5.1-py3-none-any.whl", hash = "sha256:71b5e39324422543546572954ce71c67728922c104902cb7ce252e522235b33f"},
+    {file = "jsonschema-4.5.1.tar.gz", hash = "sha256:7c6d882619340c3347a1bf7315e147e6d3dae439033ae6383d6acb908c101dfc"},
 ]
 kaitaistruct = [
     {file = "kaitaistruct-0.9.tar.gz", hash = "sha256:3d5845817ec8a4d5504379cc11bd570b038850ee49c4580bc0998c8fb1d327ad"},
@@ -3097,8 +3097,8 @@ passlib = [
     {file = "passlib-1.7.4.tar.gz", hash = "sha256:defd50f72b65c5402ab2c573830a6978e5f202ad0d984793c8dde2c4152ebe04"},
 ]
 pbr = [
-    {file = "pbr-5.8.1-py2.py3-none-any.whl", hash = "sha256:27108648368782d07bbf1cb468ad2e2eeef29086affd14087a6d04b7de8af4ec"},
-    {file = "pbr-5.8.1.tar.gz", hash = "sha256:66bc5a34912f408bb3925bf21231cb6f59206267b7f63f3503ef865c1a292e25"},
+    {file = "pbr-5.9.0-py2.py3-none-any.whl", hash = "sha256:e547125940bcc052856ded43be8e101f63828c2d94239ffbe2b327ba3d5ccf0a"},
+    {file = "pbr-5.9.0.tar.gz", hash = "sha256:e8dca2f4b43560edef58813969f52a56cef023146cbb8931626db80e6c1c4308"},
 ]
 pebble = [
     {file = "Pebble-4.6.3-py2.py3-none-any.whl", hash = "sha256:46e02767b239a29b8150466514fabb5c6632bea8c9b7456dfdb715f4636fc8a3"},
@@ -3117,12 +3117,12 @@ pluggy = [
     {file = "pluggy-1.0.0.tar.gz", hash = "sha256:4224373bacce55f955a878bf9cfa763c1e360858e330072059e10bad68531159"},
 ]
 pre-commit = [
-    {file = "pre_commit-2.18.1-py2.py3-none-any.whl", hash = "sha256:02226e69564ebca1a070bd1f046af866aa1c318dbc430027c50ab832ed2b73f2"},
-    {file = "pre_commit-2.18.1.tar.gz", hash = "sha256:5d445ee1fa8738d506881c5d84f83c62bb5be6b2838e32207433647e8e5ebe10"},
+    {file = "pre_commit-2.19.0-py2.py3-none-any.whl", hash = "sha256:10c62741aa5704faea2ad69cb550ca78082efe5697d6f04e5710c3c229afdd10"},
+    {file = "pre_commit-2.19.0.tar.gz", hash = "sha256:4233a1e38621c87d9dda9808c6606d7e7ba0e087cd56d3fe03202a01d2919615"},
 ]
 prettytable = [
-    {file = "prettytable-3.2.0-py3-none-any.whl", hash = "sha256:f6c5ec87c3ef9df5bba1d32d826c1b862ecad0344dddb6082e3562caf71fe085"},
-    {file = "prettytable-3.2.0.tar.gz", hash = "sha256:ae7d96c64100543dc61662b40a28f3b03c0f94a503ed121c6fca2782c5816f81"},
+    {file = "prettytable-3.3.0-py3-none-any.whl", hash = "sha256:d1c34d72ea2c0ffd6ce5958e71c428eb21a3d40bf3133afe319b24aeed5af407"},
+    {file = "prettytable-3.3.0.tar.gz", hash = "sha256:118eb54fd2794049b810893653b20952349df6d3bc1764e7facd8a18064fa9b0"},
 ]
 protobuf = [
     {file = "protobuf-3.19.4-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:f51d5a9f137f7a2cec2d326a74b6e3fc79d635d69ffe1b036d39fc7d75430d37"},
@@ -3616,12 +3616,12 @@ types-pymysql = [
     {file = "types_PyMySQL-1.0.19-py3-none-any.whl", hash = "sha256:fc43dceda3f3fc4ac388db7dd57b157c13d94cb84e30cca4848df590c314bf68"},
 ]
 types-python-dateutil = [
-    {file = "types-python-dateutil-2.8.14.tar.gz", hash = "sha256:367c1ffa1a52a4b2a534c9b30b40b01f2b7f2ea47a97fd821f6c76d1c7ae3129"},
-    {file = "types_python_dateutil-2.8.14-py3-none-any.whl", hash = "sha256:6ac40f66cf23a5200bd179b78d6be52e81a7750e4f8e45d7cfaf3ddda60ff01f"},
+    {file = "types-python-dateutil-2.8.15.tar.gz", hash = "sha256:7db1e4ed4916bd128cbee3eecdee0e06cc5684da2a1cdfd57f98541cdfbe0861"},
+    {file = "types_python_dateutil-2.8.15-py3-none-any.whl", hash = "sha256:9d6f01382d5ffe1977dc29f0782a01228dfaa36da148a7f4076cbd9beba26647"},
 ]
 types-pytz = [
-    {file = "types-pytz-2021.3.7.tar.gz", hash = "sha256:11d5ba06268167953ccc4a3eee192c24b42d00d2aef456c160a8798893cb2081"},
-    {file = "types_pytz-2021.3.7-py3-none-any.whl", hash = "sha256:0f67528c1df2017b61a45f2f9cfa2d45b16ce1dc135f09c7d2fd258998aade58"},
+    {file = "types-pytz-2021.3.8.tar.gz", hash = "sha256:41253a3a2bf028b6a3f17b58749a692d955af0f74e975de94f6f4d2d3cd01dbd"},
+    {file = "types_pytz-2021.3.8-py3-none-any.whl", hash = "sha256:aef4a917ab28c585d3f474bfce4f4b44b91e95d9d47d4de29dd845e0db8e3910"},
 ]
 types-pyvmomi = [
     {file = "types-pyvmomi-7.0.7.tar.gz", hash = "sha256:60a11be7a3e449d7f3ec0e0c42274cd84952a17fdcd05ba6c1603bad8c9bb98d"},
@@ -3640,8 +3640,8 @@ types-six = [
     {file = "types_six-1.16.15-py3-none-any.whl", hash = "sha256:18f6856a7df44fc7a292c2d73093908333e5f7cb858667b8cbefc8ed1e91942e"},
 ]
 types-tabulate = [
-    {file = "types-tabulate-0.8.8.tar.gz", hash = "sha256:0b319c7e10dd561f7c15f56dec347c3193fd865f4ebe5ff1ecb020eafa793bc3"},
-    {file = "types_tabulate-0.8.8-py3-none-any.whl", hash = "sha256:628912bf968b449fc8603f5a92a45739d464da38a6eb25d9e0b78a353a6e584c"},
+    {file = "types-tabulate-0.8.9.tar.gz", hash = "sha256:2fc3fa4fe1853ac987cf50e8d4599e3fe446dd53064fe86a46a407a98e9fc04f"},
+    {file = "types_tabulate-0.8.9-py3-none-any.whl", hash = "sha256:7971ed0cd40454eb18d82c01e2f18bcd09ca23cc9eb901c62d2b04e5d1f57f84"},
 ]
 typing-extensions = [
     {file = "typing_extensions-4.2.0-py3-none-any.whl", hash = "sha256:6657594ee297170d19f67d55c05852a874e7eb634f4f753dbd667855e07c1708"},
@@ -3877,11 +3877,11 @@ yarl = [
     {file = "yarl-1.7.2.tar.gz", hash = "sha256:45399b46d60c253327a460e99856752009fcee5f5d3c80b2f7c0cae1c38d56dd"},
 ]
 z3-solver = [
-    {file = "z3-solver-4.8.16.0.tar.gz", hash = "sha256:a84ade2852d4c3ca2ae32a3ddc554b8f3da6d5d69efd474b5627ab6db509e787"},
-    {file = "z3_solver-4.8.16.0-py2.py3-none-macosx_10_16_x86_64.whl", hash = "sha256:0e6ebe511bf2ae51da6aa7b69f1588760255339495cf99f1f9959815b1cfc5b7"},
-    {file = "z3_solver-4.8.16.0-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:34ca1e605f752b6aa8a003af3d8679d045f0dfbb5d3ddde26cb01256c0ad5246"},
-    {file = "z3_solver-4.8.16.0-py2.py3-none-win32.whl", hash = "sha256:ced3ff653407350f8c00a9aa0365ba31a2243d99cf114e9a920e86207177cd39"},
-    {file = "z3_solver-4.8.16.0-py2.py3-none-win_amd64.whl", hash = "sha256:f0d5aecda8c4beb456aed7bffc0f7428c394260508622e5e50ace7e03139f61b"},
+    {file = "z3-solver-4.8.17.0.tar.gz", hash = "sha256:67abd61898039d6c8c07196949d2962f461402b670a137b2347a65c3c1890f73"},
+    {file = "z3_solver-4.8.17.0-py2.py3-none-macosx_10_16_x86_64.whl", hash = "sha256:db526f27c1dce8c3c1f0b4eaebae0e9f3ab9bc0940578af8f9923c1fc22aa6e0"},
+    {file = "z3_solver-4.8.17.0-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:00efe464e61fdcdb1d1b7821269ff2449817ae1a5f3a4cb9b47640a82f109eb2"},
+    {file = "z3_solver-4.8.17.0-py2.py3-none-win32.whl", hash = "sha256:f1b2a10befac07b44bc4388b7ac9a01d72b82c6c424bc9607b4b13c3616d90f4"},
+    {file = "z3_solver-4.8.17.0-py2.py3-none-win_amd64.whl", hash = "sha256:72284c94b5310724c38202776873788e46213237aecbe2882bad61b4c9739826"},
 ]
 zipp = [
     {file = "zipp-3.8.0-py3-none-any.whl", hash = "sha256:c4f6e5bbf48e74f7a38e7cc5b0480ff42b0ae5178957d564d18932525d5cf099"},

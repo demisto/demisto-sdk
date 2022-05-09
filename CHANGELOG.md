@@ -8,6 +8,7 @@
 * enhanced ***validate*** command to list all command names affected by a backward compatibility break, instead of only one.
 * Added support for Wizard content item in the **format**, **validate**, **upload**, **create-id-set**, **find-dependecies** and **create-content-artifacts** commands.
 * Added a new flag to the **validate** command, allowing to run specific validations.
+* Added support in **unify** and **create-content-artifacts** for displaying different documentations (detailed description + readme) for content items, depending on the marketplace version.
 * Fixed an issue in **upload** where list items were not uploaded.
 * Added a new validation to **validate** command to verify that *cliName* and *id* keys of the incident field or the indicator field are matches.
 * Added the flag '-x', '--xsiam' to **upload** command to upload XSIAM entities to XSIAM server.
@@ -18,6 +19,7 @@
 * Added HelloWorldSlim template option for *--template* flag in **demisto-sdk init** command.
 * Fixed an issue where the HelloWorldSlim template in **demisto-sdk init** command had an integration id that was conflicting with HelloWorld integration id.
 * Updated the SDK to use demisto-py 3.1.6, allowing use of a proxy with an environment variable.
+* The **format** command now validates that default value of checkbox parameters is a string 'true' or 'false'.
 * Fixed an issue where `FileType.PLAYBOOK` would show instead of `Playbook` in readme error messages.
 
 ## 1.6.5

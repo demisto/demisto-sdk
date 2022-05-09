@@ -34,10 +34,10 @@ from demisto_sdk.tests.constants_test import (
     FEED_INTEGRATION_EMPTY_VALID, FEED_INTEGRATION_INVALID,
     FEED_INTEGRATION_VALID, GIT_ROOT, INTEGRATION_PATH, PLAYBOOK_PATH,
     PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS, SOURCE_BETA_INTEGRATION_FILE,
-    SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_INTEGRATION_INVALID,
-    SOURCE_FORMAT_INTEGRATION_VALID, SOURCE_FORMAT_PLAYBOOK,
-    SOURCE_FORMAT_PLAYBOOK_COPY, SOURCE_FORMAT_SCRIPT_COPY,
-    SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
+    SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_INTEGRATION_DEFAULT_VALUE,
+    SOURCE_FORMAT_INTEGRATION_INVALID, SOURCE_FORMAT_INTEGRATION_VALID,
+    SOURCE_FORMAT_PLAYBOOK, SOURCE_FORMAT_PLAYBOOK_COPY,
+    SOURCE_FORMAT_SCRIPT_COPY, SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
 from TestSuite.test_tools import ChangeCWD
 
 yaml = YAML_Handler()
@@ -716,6 +716,27 @@ class TestFormatting:
         formatter.update_beta_integration()
         assert '(Beta)' in formatter.data['display']
         assert formatter.data['beta'] is True
+
+    def test_format_boolean_default_value(self):
+        """
+        Given
+            - Field with defaultvalue False (boolean)
+            - Field with defaultvalue 'True' (str)
+            - Field with defaultvalue 'False' (str)
+        When
+            - Run set_default_value_for_checkbox function
+        Then
+            - Check the field has changed to 'false'
+            - Check the field has changed to 'true'
+            - Check the field has changed to 'false'
+
+        """
+
+        formatter = IntegrationYMLFormat(input=SOURCE_FORMAT_INTEGRATION_DEFAULT_VALUE)
+        formatter.set_default_value_for_checkbox()
+        assert 'false' in formatter.data['configuration'][1]['defaultvalue']
+        assert 'true' in formatter.data['configuration'][2]['defaultvalue']
+        assert 'false' in formatter.data['configuration'][3]['defaultvalue']
 
     @patch('builtins.input', lambda *args: 'no')
     def test_update_tests_on_playbook_with_test_playbook(self):

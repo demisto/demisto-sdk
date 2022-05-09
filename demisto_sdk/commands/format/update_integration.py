@@ -6,7 +6,7 @@ import click
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS, BANG_COMMAND_NAMES, BETA_INTEGRATION,
     FEED_REQUIRED_PARAMS, INCIDENT_FETCH_REQUIRED_PARAMS, INTEGRATION,
-    TYPE_PWSH, MarketplaceVersions)
+    TYPE_PWSH, MarketplaceVersions, ParameterType)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_item_marketplaces, get_json)
@@ -192,6 +192,16 @@ class IntegrationYMLFormat(BaseUpdateYML):
         self.data['display'] = self.data['name'] + ' (Beta)'
         self.data['beta'] = True
 
+    def set_default_value_for_checkbox(self):
+        """Check the boolean default value are true or false lowercase"""
+        config = self.data.get('configuration', {})
+        for param in config:
+            if param.get('type') == ParameterType.BOOLEAN.value:
+                if 'true' == str(param.get('defaultvalue')).lower():
+                    param['defaultvalue'] = 'true'
+                if 'false' == str(param.get('defaultvalue')).lower():
+                    param['defaultvalue'] = 'false'
+
     def run_format(self) -> int:
         try:
             click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
@@ -205,6 +215,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
             self.set_fetch_params_in_config()
             self.set_feed_params_in_config()
             self.update_docker_image()
+            self.set_default_value_for_checkbox()
 
             if self.is_beta:
                 self.update_beta_integration()

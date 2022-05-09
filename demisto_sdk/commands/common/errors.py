@@ -2276,8 +2276,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def missing_readme_file(location):
-        return f'{location} is missing a README file'
+    def missing_readme_file(location: FileType):
+        return f'{location.name} is missing a README file'
 
     @staticmethod
     @error_code_decorator

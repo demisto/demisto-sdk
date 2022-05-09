@@ -353,9 +353,9 @@ class TestGetCoverageObj:
 
 
 @pytest.mark.parametrize('verbose, logging_level', [
-    (1, logging.INFO),
-    (2, logging.WARNING),
-    (3, logging.DEBUG),
+    (0, logging.INFO),
+    (1, logging.WARNING),
+    (2, logging.DEBUG),
     (10, logging.DEBUG)
 ])
 def test_verbose(verbose: int, logging_level: int):

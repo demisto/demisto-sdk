@@ -1105,7 +1105,7 @@ class IntegrationValidator(ContentEntityValidator):
 
     @error_codes('IN150')
     def is_valid_display_name_for_siem(self) -> bool:
-        is_siem = self.current_file.get('script', {}).get('isFetchEvents')
+        is_siem = self.current_file.get('script', {}).get('isfetchevents')
 
         if is_siem:
             display_name = self.current_file.get('display', '')
@@ -1598,7 +1598,8 @@ class IntegrationValidator(ContentEntityValidator):
             return False
 
         readme_content = readme_path.read_text()
-        excluded_from_readme_commands = ['get-mapping-fields', 'xsoar-search-incidents', 'xsoar-get-incident', 'get-remote-data']
+        excluded_from_readme_commands = ['get-mapping-fields', 'xsoar-search-incidents', 'xsoar-get-incident',
+                                         'get-remote-data', 'update-remote-data', 'get-modified-remote-data', 'update-remote-system']
         missing_commands_from_readme = [
             command for command in yml_commands_list if command not in readme_content and command not in excluded_from_readme_commands]
         if missing_commands_from_readme:

@@ -53,8 +53,8 @@ class GitContentConfig:
     ENV_REPO_HOSTNAME_NAME = 'DEMISTO_SDK_REPO_HOSTNAME'
 
     ALLOWED_REPOS = [
-        {(GitProvider.GitHub, OFFICIAL_CONTENT_REPO_NAME),
-         (GitProvider.GitLab, OFFICIAL_CONTENT_PROJECT_ID)}
+        ('github.com', OFFICIAL_CONTENT_REPO_NAME),
+        ('code.pan.run', OFFICIAL_CONTENT_PROJECT_ID)
     ]
 
     def __init__(
@@ -124,15 +124,6 @@ class GitContentConfig:
         return None
 
     def _set_repo_config(self, hostname, organization=None, repo_name=None, project_id=None):
-        if self.current_repository and self.git_provider == GitProvider.GitHub and self.repo_hostname:
-            if (self.git_provider, self.current_repository) in GitContentConfig.ALLOWED_REPOS or\
-                    self._search_github_repo(self.repo_hostname, repo_name=self.current_repository):
-                return
-        if self.project_id and self.git_provider == GitProvider.GitLab and self.repo_hostname:
-            if (self.git_provider, self.project_id) in GitContentConfig.ALLOWED_REPOS or\
-                    self._search_gitlab_repo(self.repo_hostname, project_id=self.project_id):
-                return
-
         gitlab_hostname, gitlab_id = (self._search_gitlab_repo(hostname, project_id=project_id)) or \
                                      (self._search_gitlab_repo(self.repo_hostname, project_id=project_id)) or \
                                      (self._search_gitlab_repo(hostname, repo_name=repo_name)) or \
@@ -186,6 +177,9 @@ class GitContentConfig:
         if not github_hostname or not repo_name:
             return None
         api_host = github_hostname if github_hostname != GitContentConfig.GITHUB_USER_CONTENT else 'github.com'
+        if (api_host, repo_name) in GitContentConfig.ALLOWED_REPOS:
+            return github_hostname, repo_name
+
         if api_host.lower() == 'github.com':
             github_hostname = GitContentConfig.GITHUB_USER_CONTENT
         try:
@@ -230,6 +224,8 @@ class GitContentConfig:
                 gitlab_hostname == GitContentConfig.GITHUB_USER_CONTENT or \
                 gitlab_hostname == 'github.com':
             return None
+        if (gitlab_hostname, project_id) in GitContentConfig.ALLOWED_REPOS:
+            return gitlab_hostname, project_id
         try:
             if project_id:
                 res = requests.get(f"https://{gitlab_hostname}/api/v4/projects/{project_id}",

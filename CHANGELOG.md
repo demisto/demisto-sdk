@@ -17,6 +17,7 @@
 * Updated the release note template to include a uniform format for all items.
 * Added HelloWorldSlim template option for *--template* flag in **demisto-sdk init** command.
 * Fixed an issue where the HelloWorldSlim template in **demisto-sdk init** command had an integration id that was conflicting with HelloWorld integration id.
+* Updated the SDK to use demisto-py 3.1.6, allowing use of a proxy with an environment variable.
 
 ## 1.6.5
 
@@ -25,6 +26,7 @@
 * Added timestamps to the `demisto-sdk` logger.
 * Added time measurements to **lint**.
 * Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
+* Fixed an issue where **update-release-notes** used the *trigger_id* field instead of the *trigger_name* field.
 * Fixed an issue where **doc-review** failed to recognize script names, in scripts using the old file structure.
 * Fixed an issue where concurrent processes created by **lint** caused deadlocks when opening files.
 * Fixed an issue in the **format** command where `_dev` or `_copy` suffixes weren't removed from the subscript names in playbooks and layouts.

@@ -42,6 +42,7 @@ from .secret_ignore.secret_ignore import SecretIgnore
 from .tool.agent_tool import AgentTool
 from .trigger.trigger import Trigger
 from .widget.widget import Widget
+from .wizard.wizard import Wizard
 from .xsiam_dashboard.xsiam_dashboard import XSIAMDashboard
 from .xsiam_report.xsiam_report import XSIAMReport
 

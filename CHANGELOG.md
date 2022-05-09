@@ -1,8 +1,23 @@
 # Changelog
 
 ## Unreleased
+* Added debug print when excluding item from ID set due to missing dependency.
+* Added a validation to the **validate** command, failing when non-ignorable errors are present in .pack-ignore.
+* Fixed an issue where `mdx server` did not close when stopped in mid run.
+* Fixed an issue where `-vvv` flag did not print logs on debug level.
 * enhanced ***validate*** command to list all command names affected by a backward compatibility break, instead of only one.
+* Added support for Wizard content item in the **format**, **validate**, **upload**, **create-id-set**, **find-dependecies** and **create-content-artifacts** commands.
 * Added a new flag to the **validate** command, allowing to run specific validations.
+* Fixed an issue in **upload** where list items were not uploaded.
+* Added a new validation to **validate** command to verify that *cliName* and *id* keys of the incident field or the indicator field are matches.
+* Added the flag '-x', '--xsiam' to **upload** command to upload XSIAM entities to XSIAM server.
+* Fixed the integration field *isFetchEvents* to be in lowercase.
+* Fixed an issue where **validate -i** run after **format -i** on an existing file in the repo instead of **validate -g**.
+* Added the following commands: 'update-remote-data', 'get-modified-remote-data', 'update-remote-system' to be ignored by the **verify_yml_commands_match_readme** validation, the validation will no longer fail if these commands are not in the readme file.
+* Updated the release note template to include a uniform format for all items.
+* Added HelloWorldSlim template option for *--template* flag in **demisto-sdk init** command.
+* Fixed an issue where the HelloWorldSlim template in **demisto-sdk init** command had an integration id that was conflicting with HelloWorld integration id.
+* Updated the SDK to use demisto-py 3.1.6, allowing use of a proxy with an environment variable.
 
 ## 1.6.5
 
@@ -11,6 +26,7 @@
 * Added timestamps to the `demisto-sdk` logger.
 * Added time measurements to **lint**.
 * Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
+* Fixed an issue where **update-release-notes** used the *trigger_id* field instead of the *trigger_name* field.
 * Fixed an issue where **doc-review** failed to recognize script names, in scripts using the old file structure.
 * Fixed an issue where concurrent processes created by **lint** caused deadlocks when opening files.
 * Fixed an issue in the **format** command where `_dev` or `_copy` suffixes weren't removed from the subscript names in playbooks and layouts.
@@ -50,6 +66,7 @@ the same as the last release note version.
 * Added support for running tests on XSIAM machines in the **test-content** command.
 * Fixed an issue where the **validate** command did not work properly when deleting non-content items.
 * Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
+* Added a new validation to **validate** proper defaultvalue for checkbox fields.
 
 ## 1.6.3
 

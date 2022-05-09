@@ -10,8 +10,9 @@ from demisto_sdk.commands.common.constants import (
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
+# allowed errors to be ignored in any supported pack (XSOAR/Partner/Community) only if they appear in the .pack-ignore
 ALLOWED_IGNORE_ERRORS = [
-    'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113',
+    'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113', 'BA116',
     'DS107',
     'GF102',
     'IF100', 'IF106', 'IF115', 'IF116',
@@ -19,17 +20,19 @@ ALLOWED_IGNORE_ERRORS = [
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107',
-    'RM100', 'RM102', 'RM104', 'RM106', 'RM108',
+    'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM 110',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
     'IM111'
 ]
 
+# predefined errors to be ignored in partner/community supported packs even if they do not appear in .pack-ignore
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126', 'IN140'],
     'partner': ['CJ', 'IN140']
 }
 
+# predefined errors to be ignored in deprecated content entities even if they do not appear in .pack-ignore
 PRESET_ERROR_TO_CHECK = {
     "deprecated": ['ST', 'BC', 'BA', 'IN127', 'IN128', 'PB104', 'SC101'],
 }
@@ -52,6 +55,7 @@ ERROR_CODE = {
     "spaces_in_the_end_of_name": {'code': "BA113", 'ui_applicable': False, 'related_field': 'name'},
     "changed_pack_name": {'code': "BA114", 'ui_applicable': False, 'related_field': 'name'},
     "file_cannot_be_deleted": {'code': "BA115", 'ui_applicable': False, 'related_field': ''},
+    "cli_name_and_id_do_not_match": {'code': "BA116", 'ui_applicable': False, 'related_field': 'cliName'},
 
     # BC - Backward Compatible
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -224,6 +228,9 @@ ERROR_CODE = {
     "changed_integration_yml_fields": {'code': "IN147", "ui_applicable": False, 'related_field': 'script'},
     "parameter_is_malformed": {'code': "IN148", 'ui_applicable': False, 'related_field': 'configuration'},
     'empty_outputs_common_paths': {'code': 'IN149', 'ui_applicable': False, 'related_field': 'contextOutput'},
+    'invalid_siem_integration_name': {'code': 'IN150', 'ui_applicable': True, 'related_field': 'display'},
+    "empty_command_arguments": {'code': 'IN151', 'ui_applicable': False, 'related_field': 'arguments'},
+    'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True, 'related_field': 'defaultvalue'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -317,6 +324,7 @@ ERROR_CODE = {
     "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
                                                          'related_field': 'fromServerVersion'},
     "invalid_incident_field_in_pre_process_rules": {'code': "PP101", 'ui_applicable': False, 'related_field': ''},
+    "unknown_fields_in_pre_process_rules": {'code': "PP102", 'ui_applicable': False, 'related_field': ''},
 
     # RM - READMEs
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
@@ -329,6 +337,8 @@ ERROR_CODE = {
     "template_sentence_in_readme": {'code': "RM107", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
     "missing_readme_file": {'code': "RM109", 'ui_applicable': False, 'related_field': ''},
+    "missing_commands_from_readme": {'code': "RM110", 'ui_applicable': False, 'related_field': ''},
+    "error_uninstall_node": {'code': "RM111", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -356,7 +366,6 @@ ERROR_CODE = {
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
     "is_valid_script_file_path_in_folder": {'code': "SC103", 'ui_applicable': False, 'related_field': ''},
-    "is_valid_script_file_path_in_scripts_folder": {'code': "SC104", 'ui_applicable': False, 'related_field': ''},
     "incident_in_script_arg": {'code': "SC105", 'ui_applicable': True, 'related_field': 'args.name'},
     "runas_is_dbotrole": {'code': "SC106", 'ui_applicable': False, 'related_field': 'runas'},
 
@@ -409,6 +418,38 @@ ERROR_CODE = {
         'ui_applicable': False,
         'related_field': 'name'
     },
+
+    # WZ - Wizards
+    "invalid_dependency_pack_in_wizard": {
+        'code': "WZ100",
+        'ui_applicable': False,
+        'related_field': 'dependency_packs'
+    },
+    "missing_dependency_pack_in_wizard": {
+        'code': "WZ101",
+        'ui_applicable': False,
+        'related_field': 'dependency_packs'
+    },
+    "invalid_integration_in_wizard": {
+        'code': "WZ102",
+        'ui_applicable': False,
+        'related_field': 'wizard'
+    },
+    "invalid_playbook_in_wizard": {
+        'code': "WZ103",
+        'ui_applicable': False,
+        'related_field': 'wizard'
+    },
+    "wrong_link_in_wizard": {
+        'code': "WZ104",
+        'ui_applicable': False,
+        'related_field': 'wizard'
+    },
+    "wizard_integrations_without_playbooks": {
+        'code': "WZ105",
+        'ui_applicable': False,
+        'related_field': 'wizard'
+    }
 }
 
 
@@ -446,6 +487,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def empty_command_arguments(command_name):
+        return f"The arguments of the integration command `{command_name}` can not be None. If the command has no arguments, " \
+               f"use `arguments: []` or remove the `arguments` field."
+
+    @staticmethod
+    @error_code_decorator
     def wrong_version(expected="-1"):
         return "The version for our files should always " \
                "be {}, please update the file.".format(expected)
@@ -462,7 +509,7 @@ class Errors:
         return "The file type is not supported in the validate command.\n" \
                "The validate command supports: Integrations, Scripts, Playbooks, " \
                "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields, Object types," \
-               " Object modules, Images, Release notes, Layouts, Jobs and Descriptions."
+               " Object modules, Images, Release notes, Layouts, Jobs, Wizards, and Descriptions."
 
     @staticmethod
     @error_code_decorator
@@ -768,6 +815,14 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def error_uninstall_node():
+        return 'The `node` runtime is not installed on the machine,\n' \
+               'while it is required for the validation process.\n' \
+               'Please download and install `node` to proceed\n' \
+               'See https://nodejs.org for installation instructions.'
+
+    @staticmethod
+    @error_code_decorator
     def missing_output_context(command, context_paths):
         return f'The Following context paths for command {command} are found in the README file ' \
                f'but are missing from the YML file: {context_paths}'
@@ -812,6 +867,20 @@ class Errors:
         return f"The display name of this v{version_number} integration is incorrect , " \
                f"should be **name** v{version_number}.\n" \
                f"e.g: Kenna v{version_number}, Jira v{version_number}"
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_siem_integration_name(display_name: str):
+        return f"The display name of this siem integration is incorrect , " \
+               f"should end with \"Event Collector\".\n" \
+               f"e.g: {display_name} Event Collector"
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_defaultvalue_for_checkbox_field(defaultvalue: bool):
+        return f"The defaultvalue={defaultvalue} for the checkbox is incorrect, " \
+               f"should be true or false.\n " \
+               f"e.g: defaultvalue: true"
 
     @staticmethod
     @error_code_decorator
@@ -882,9 +951,11 @@ class Errors:
 
     @classmethod
     @error_code_decorator
-    def breaking_backwards_command_arg_changed(cls, command):
-        return "{}, You've changed the name of a command or its arg in" \
-               " the file, please undo, the command was:\n{}".format(cls.BACKWARDS, command)
+    def breaking_backwards_command_arg_changed(cls, commands_ls):
+        error_msg = "{}, Your updates to this file contains changes to a name or an argument of an existing command(s).\n" \
+            "Please undo you changes to the following command(s):\n".format(cls.BACKWARDS)
+        error_msg += '\n'.join(commands_ls)
+        return error_msg
 
     @staticmethod
     @error_code_decorator
@@ -1276,13 +1347,7 @@ class Errors:
     @error_code_decorator
     def is_valid_script_file_path_in_folder(script_file):
         return f"The script file name: {script_file} is invalid, " \
-               f"The script file name should be the same as the name of the folder that contains it."
-
-    @staticmethod
-    @error_code_decorator
-    def is_valid_script_file_path_in_scripts_folder(script_file):
-        return f"The script file name: {script_file} is invalid, " \
-               f"The script file name should start with 'script-'."
+               f"The script file name should be the same as the name of the folder that contains it, e.g. `Packs/MyPack/Scripts/MyScript/MyScript.yml`."
 
     @staticmethod
     @error_code_decorator
@@ -2147,6 +2212,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def cli_name_and_id_do_not_match(cli_name_correct):
+        return f'cliName and id do not match.\n' \
+               f'Please change cliName to {cli_name_correct} (the flat-case version of id, excluding item-type prefixes)'
+
+    @staticmethod
+    @error_code_decorator
     def non_default_additional_info(params: List[str]):
         return f'The additionalinfo of params {params} is not the default value, please consider changing it.'
 
@@ -2202,8 +2273,51 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def missing_commands_from_readme(yml_name, missing_commands_from_readme):
+        error_msg = f'The following commands appear in {yml_name} but not in the README file:\n'
+        for command in missing_commands_from_readme:
+            error_msg += f'{command}\n'
+        return error_msg
+
+    @staticmethod
+    @error_code_decorator
     def empty_outputs_common_paths(paths: Dict[str, List[str]], yaml_path: str):
         commands_str = '\n'.join(f'{command}:\t' + ", ".join(outputs) for command, outputs in paths.items())
 
         return f"The following command outputs are missing: \n{commands_str}\n" \
                f"please type them or run demisto-sdk format -i {yaml_path}"
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_content_item_id_wizard(invalid_content_item_id):
+        return f'Failed to find {invalid_content_item_id} in content repo. Please check it\'s written correctly.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_dependency_pack_in_wizard(dep_pack):
+        return f'Dependency Pack "{dep_pack}" was not found. Please check it\'s written correctly.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_integration_in_wizard(integration: str):
+        return f'Integration "{integration}" does not exist. Please check it\'s written correctly.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_playbook_in_wizard(playbook: str):
+        return f'Playbook "{playbook}" does not exist. Please check it\'s written correctly.'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_dependency_pack_in_wizard(pack: str, content_item: str):
+        return f'Pack "{pack}" is missing from the "dependency_packs". This pack is required for {content_item}.'
+
+    @staticmethod
+    @error_code_decorator
+    def wrong_link_in_wizard(link):
+        return f'Provided integration link "{link}" was not provided in fetching_integrations. Make sure it\'s written correctly.'
+
+    @staticmethod
+    @error_code_decorator
+    def wizard_integrations_without_playbooks(integrations: set):
+        return f'The following integrations are missing a set_playbook: {integrations}'

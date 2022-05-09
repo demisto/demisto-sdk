@@ -20,14 +20,21 @@ parameters:
     default: v3  # Change this parameter to clear cache.
   global-docker-image:
     type: string
-    default: cimg/python:3.10.2-node
+    default: cimg/python:3.10.4-node
 
 
 references:
+    version_tag_regex: &version_tag_regex
+      /^v\d+\.\d+\.\d+$/ # version regex vx.x.x (i.e. v1.2.3)
+
+    filter_tag_only: &filter_tag_only
+      tags:
+          only: *version_tag_regex
+
     tag_filter: &tag_filter
       filters:
         tags:
-          only: /^v\d+\.\d+\.\d+$/
+          only: *version_tag_regex
 
     reqs_content_checkout: &reqs_content_checkout
       requires:
@@ -36,11 +43,11 @@ references:
     install_node_ci: &install_node_ci
       - node/install-packages:
           cache-version: << pipeline.parameters.cache-version >>
-          
+
     install_demisto_sdk: &install_demisto_sdk
       - python/install-packages:
-          pkg-manager: "pipenv"
-          args: "--system"
+          pkg-manager: "poetry"
+          args: "--no-dev"
           cache-version: << pipeline.parameters.cache-version >>
           pre-install-steps:
             - run:
@@ -50,8 +57,18 @@ references:
 
     install_build_dependencies: &install_build_dependencies
       - python/install-packages: 
-                pkg-manager: "pip"
-                pip-dependency-file: "requirements-build.txt"
+                pkg-manager: "poetry"
+                args: "--extras build"
+    
+    requires_all: &requires_all
+      requires:
+            - precommit-checks
+            - validate-files
+            - create-content-artifacts
+            - test-lint
+            - run-integration-tests
+            - run-unit-tests
+            - build
 
 jobs:
   run-unit-tests:
@@ -63,9 +80,10 @@ jobs:
       parallelism: 8
       steps:
         - checkout
+        - setup_remote_docker:
+            version: 20.10.12
         - python/install-packages:
-            pkg-manager: "pipenv"
-            args: "--dev --system"
+            pkg-manager: "poetry"
             cache-version: << pipeline.parameters.cache-version >>
         - <<: *install_node_ci
         - run:
@@ -85,7 +103,7 @@ jobs:
               TEST_FILES=$(echo "$TEST_FILES" | circleci tests split --split-by=timings)
 
               mkdir test-results
-              python -m pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml $TEST_FILES
+              poetry run pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml $TEST_FILES
         - store_test_results:
             path: test-results
         - store_artifacts:
@@ -109,9 +127,10 @@ jobs:
         - image: cimg/python:<< parameters.pythonversion >>-node
       steps:
         - checkout
+        - setup_remote_docker:
+            version: 20.10.12
         - python/install-packages:
-            pkg-manager: "pipenv"
-            args: "--dev --system"
+            pkg-manager: "poetry"
             cache-version: << pipeline.parameters.cache-version >>
         - <<: *install_node_ci
         - run:
@@ -122,7 +141,7 @@ jobs:
               TEST_FILES=$(circleci tests glob "demisto_sdk/tests/integration_tests/**/*_test.py")
 
               mkdir integration-test-results
-              python -m pytest -v --junitxml=integration-test-results/junit.xml $TEST_FILES
+              poetry run pytest -v --junitxml=integration-test-results/junit.xml $TEST_FILES
         - store_test_results:
             path: integration-test-results
 
@@ -136,17 +155,19 @@ jobs:
             at: ~/project
         - <<: *install_build_dependencies
         - run:
+            name: create cache key for pre-commit
             command: |
               cp .pre-commit-config.yaml pre-commit-cache-key.txt
-              python --version --version >> pre-commit-cache-key.txt
+              poetry run python --version --version >> pre-commit-cache-key.txt
+              cat poetry.lock >> pre-commit-cache-key.txt
         - restore_cache:
             keys:
             - v1-pc-cache-{{ checksum "pre-commit-cache-key.txt" }}
         - run:
             name: Pre-commit
             command: |
-              pre-commit --version
-              pre-commit run -a
+              poetry run pre-commit --version
+              poetry run pre-commit run -a
         - save_cache:
             key: v1-pc-cache-{{ checksum "pre-commit-cache-key.txt" }}
             paths:
@@ -175,7 +196,6 @@ jobs:
         - checkout
         - attach_workspace:
             at: ~/project
-        - <<: *install_demisto_sdk
         - <<: *install_build_dependencies
         - <<: *install_node_ci
         - run:
@@ -185,9 +205,8 @@ jobs:
               CI_COMMIT_BRANCH: "master"
             command: |
               cd content
-              python -m demisto_sdk -v
-
-              python -m demisto_sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
+              poetry run demisto-sdk -v
+              poetry run demisto-sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
         - run:
             name: Merge Id Set
             when: always
@@ -195,11 +214,11 @@ jobs:
               CI_COMMIT_BRANCH: "master"
             command: |
               cd content
-              python -m demisto_sdk -v
+              poetry run demisto-sdk -v
               export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
 
-              gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
-              python -m demisto_sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json --fail-duplicates
+              poetry run gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
+              poetry run demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json --fail-duplicates
         - run:
             name: Test validate files and yaml
             when: always
@@ -207,22 +226,23 @@ jobs:
               CI_COMMIT_BRANCH: "master"
             command: |
               cd content
-              python -m demisto_sdk -v
+              poetry run demisto-sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
 
-              ./Tests/scripts/validate.sh
+              poetry run ./Tests/scripts/validate.sh
   test-lint:
       docker:
         - image: devdemisto/content-build:3.0.0.27979
       steps:
         - checkout
-        - setup_remote_docker
+        - setup_remote_docker:
+            version: 20.10.12
         - attach_workspace:
             at: ~/project
-        - <<: *install_demisto_sdk
         - run:
             name: Test lint on python and ps files
             when: always
+            no_output_timeout: 20m
             command: |
               pip3 uninstall virtualenv -y && pip3 install virtualenv==16.7.7
               cd ~/project
@@ -240,14 +260,19 @@ jobs:
               pip3 install -r .circleci/build-requirements.txt >> /tmp/lint_env_installation.log
               
               # installing local sdk inside venv
+              
+              # uninstall demisto-sdk that installed from content (could be dependency conflict between them)
+              pip3 uninstall -y demisto-sdk
               pip3 install ~/project >> /tmp/lint_env_installation.log
+              demisto-sdk -v
               echo ""
               echo "lint files changed running lint"
               # python file (CommonServerPython lint is running over python 3 and 2)
-              python3 -m demisto_sdk lint -i ./Packs/Base/Scripts/CommonServerPython
+              # we use `demisto-sdk` because we're inside content local env and not on poetry local env
+              demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPython
               
               # ps file
-              python3 -m demisto_sdk lint -i ./Packs/Base/Scripts/CommonServerPowerShell
+              demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPowerShell
               
         - store_artifacts:
             path: /tmp/lint_env_installation.log
@@ -264,22 +289,37 @@ jobs:
             when: always
             command: |
               cd content
-              python -m demisto_sdk -v
+              poetry run demisto-sdk -v
               mkdir ./tmp
 
-              python -m demisto_sdk create-content-artifacts -a ./tmp
+              poetry run demisto-sdk create-content-artifacts -a ./tmp
         - store_artifacts:
             path: content/tmp
+  build:
+      docker:
+        - image: << pipeline.parameters.global-docker-image >>
+      steps:
+          - checkout
+          - run:
+              name: Build Distrubution
+              command: poetry build
+          - persist_to_workspace:
+              root: ~/project
+              paths:
+                - dist
+          - store_artifacts:
+              path: dist
+
   deploy:
       docker:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
+        - attach_workspace:
+            at: ~/project
         - run:
-            name: Deploy
-            when: always
-            command: |
-              ./demisto_sdk/utils/deploy.sh
+            name: Deploy Release to PyPi
+            command: poetry publish -u __token__ -p ${PYPI_TOKEN}
 workflows:
   version: 2.1
   build_and_release:
@@ -289,11 +329,13 @@ workflows:
       - precommit-checks:
           <<: *tag_filter
       - run-unit-tests:
+          <<: *tag_filter
           matrix:
             parameters:
               pythonversion: [3.8.12, 3.9.10, 3.10.2]   
           name: run-unit-tests-<< matrix.pythonversion >>
       - run-integration-tests:
+          <<: *tag_filter
           matrix:
             parameters:
               pythonversion: [3.8.12, 3.9.10, 3.10.2]   
@@ -306,10 +348,12 @@ workflows:
       - create-content-artifacts:
           <<: *tag_filter
           <<: *reqs_content_checkout
-      - deploy:
+      - build:
           <<: *tag_filter
-          requires:
-            - precommit-checks
-            - validate-files
-            - create-content-artifacts
-            - test-lint
+      - deploy:
+          filters:
+              tags:
+                only: *version_tag_regex
+              branches:
+                ignore: /.*/
+          <<: *requires_all

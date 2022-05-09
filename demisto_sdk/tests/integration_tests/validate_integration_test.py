@@ -3000,6 +3000,7 @@ class TestAllFilesValidator:
         mocker.patch.object(tools, 'is_external_repository', return_value=False)
         mocker.patch.object(PackUniqueFilesValidator, 'are_valid_files', return_value='')
         mocker.patch.object(ValidateManager, 'validate_readme', return_value=True)
+        mocker.patch.object(ValidateManager, 'is_node_exist', return_value=True)
         pack1 = repo.create_pack('PackName1')
         pack1.author_image.write(DEFAULT_IMAGE_BASE64)
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
@@ -3045,6 +3046,7 @@ class TestAllFilesValidator:
         mocker.patch.object(tools, 'is_external_repository', return_value=False)
         mocker.patch.object(PackUniqueFilesValidator, 'are_valid_files', return_value='')
         mocker.patch.object(ValidateManager, 'validate_readme', return_value=True)
+        mocker.patch.object(ValidateManager, 'is_node_exist', return_value=False)
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         pack1 = repo.create_pack('PackName1')
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
@@ -3078,6 +3080,7 @@ class TestAllFilesValidator:
         assert 'The content key must be set to True.' in result.stdout
         assert 'SC100' in result.stdout
         assert 'The name of this v2 script is incorrect' in result.stdout
+        assert 'RM111' in result.stdout
         assert result.exit_code == 1
 
 
@@ -3099,6 +3102,7 @@ class TestValidationUsingGit:
         pack_integration_path = join(AZURE_FEED_PACK_PATH, "Integrations/FeedAzure/FeedAzure.yml")
         valid_integration_yml = get_yaml(pack_integration_path, cache_clear=True)
         integration = pack1.create_integration('integration0', yml=valid_integration_yml)
+        integration.readme.write("azure-get-indicators\nazure-hidden-command")
         incident_field = pack1.create_incident_field('incident-field', content=INCIDENT_FIELD)
         dashboard = pack1.create_dashboard('dashboard', content=DASHBOARD)
 
@@ -3458,3 +3462,81 @@ class TestValidationUsingGit:
         assert f'Validating {script.yml.rel_path}' in result.stdout
         assert f'Validating {integration_2.yml.rel_path}' not in result.stdout
         assert f'Validating {script_2.yml.rel_path}' not in result.stdout
+
+
+class TestSpecificValidations:
+    def test_validate_with_different_specific_validation(self, mocker, repo):
+        """
+        Given
+        - an invalid Reputation - negative integer in expiration field.
+
+        When
+        - Running validate on it with flag --run-specific-validations BA101.
+
+        Then
+        - Ensure validate doesn't fail on RP101 - wrong value in expiration field
+        due to the flag.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        reputation_copy = REPUTATION.copy()
+        reputation_copy['expiration'] = -1
+        reputation = pack._create_json_based(name='reputation', prefix='', content=reputation_copy)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', reputation.path, '--run-specific-validations', 'BA101'], catch_exceptions=False)
+        assert f'Validating {reputation.path} as reputation' in result.stdout
+        assert 'The files are valid' in result.stdout
+        assert result.exit_code == 0
+
+    def test_validate_with_flag_specific_validation(self, mocker, repo):
+        """
+        Given
+        - an invalid Reputation - negative integer in expiration field and a 'details' that does not match its id.
+
+        When
+        - Running validate on it with flag --run-specific-validations RP101.
+
+        Then
+        - Ensure validate fails on RP101 - wrong value in expiration field and not on RP102 - id and details fields are not equal.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        reputation_copy = REPUTATION.copy()
+        reputation_copy['expiration'] = -1
+        reputation_copy["details"] = "reputationn"
+        reputation = pack._create_json_based(name='reputation', prefix='', content=reputation_copy)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', reputation.path, '--run-specific-validations', 'RP101'], catch_exceptions=False)
+        assert f'Validating {reputation.path} as reputation' in result.stdout
+        assert 'RP101' in result.stdout
+        assert 'Expiration field should have a positive numeric value.' in result.stdout
+        assert result.exit_code == 1
+
+    def test_validate_with_flag_specific_validation_entire_code_section(self, mocker, repo):
+        """
+        Given
+        - an invalid Reputation - negative integer in expiration field and a 'details' that does not match its id.
+
+        When
+        - Running validate on it with flag --run-specific-validations RP.
+
+        Then
+        - Ensure validate fails on RP101 - wrong value in expiration field and on RP102 - id and details fields are not equal.
+        """
+        mocker.patch.object(tools, 'is_external_repository', return_value=True)
+        pack = repo.create_pack('PackName')
+        reputation_copy = REPUTATION.copy()
+        reputation_copy['expiration'] = -1
+        reputation_copy["details"] = "reputationn"
+        reputation = pack._create_json_based(name='reputation', prefix='', content=reputation_copy)
+        with ChangeCWD(pack.repo_path):
+            runner = CliRunner(mix_stderr=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', reputation.path, '--run-specific-validations', 'RP'], catch_exceptions=False)
+        assert f'Validating {reputation.path} as reputation' in result.stdout
+        assert 'RP101' in result.stdout
+        assert 'Expiration field should have a positive numeric value.' in result.stdout
+        assert 'RP102' in result.stdout
+        assert 'id and details fields are not equal.' in result.stdout
+        assert result.exit_code == 1

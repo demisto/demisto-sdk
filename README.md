@@ -16,19 +16,27 @@ The library uses python 3.8+.
 1. **Upgrade** - `pip3 install --upgrade demisto-sdk`
 1. **Connect demisto-sdk with Cortex XSOAR server** - In order that demisto-sdk and Cortex XSOAR server communicate, perfrom the following steps:
 
-   1. Get an API key for XSOAR-server - `Settings` -> `Integrations` -> `API keys` -> `Get your Key` (copy it)
+   1. Get an API key for Cortex XSOAR/XSIAM-server - `Settings` -> `Integrations` -> `API keys` -> `Get your Key` (copy it)
    1. Add the following parameters to your environment. You can also use a [.env file](https://pypi.org/project/python-dotenv/), the demisto-sdk will automatically load that file.:
 
       ```bash
       export DEMISTO_BASE_URL=<http or https>://<demisto-server url or ip>:<port>
       export DEMISTO_API_KEY=<API key>
       ```
+      To use on Cortex XSIAM the `XSIAM_AUTH_ID` environment variable should also be set.
+      ```bash
+      export XSIAM_AUTH_ID=<auth id>
+      ```
 
       for example:
-
       ```bash
       export DEMISTO_BASE_URL=http://127.0.0.1:8080
       export DEMISTO_API_KEY=XXXXXXXXXXXXXXXXXXXXXX
+      ```
+      As long as `XSIAM_AUTH_ID` environment variable is set, SDK commands will be configured to work with an XSIAM instance.
+      In order to set Demisto SDK to work with Cortex XSOAR instance, you need to delete the XSIAM_AUTH_ID parameter from your environment.
+      ```bash
+      unset XSIAM_AUTH_ID
       ```
 
       >For more configurations, check the [demisto-py](https://github.com/demisto/demisto-py) repository (which is used by the demisto-sdk to communicate with Cortex XSOAR).
@@ -81,7 +89,7 @@ Supported commands:
 1. [openapi-codegen](https://xsoar.pan.dev/docs/integrations/openapi-codegen)
 1. [postman-codegen](https://xsoar.pan.dev/docs/integrations/postman-codegen)
 1. [generate-integration](https://xsoar.pan.dev/docs/integrations/code-generator)
-
+1. [generate-yml-from-python](https://xsoar.pan.dev/docs/integrations/yml-from-python-code-gen.md)
 ---
 
 ### Customizable command configuration

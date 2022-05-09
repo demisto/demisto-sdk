@@ -6,6 +6,9 @@ from typing import Dict, List
 
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
 NOT_TEST = '(?!Test)'
+
+# NAMES OF ENTITY DIRECTORIES
+
 INTEGRATIONS_DIR = 'Integrations'
 SCRIPTS_DIR = 'Scripts'
 PLAYBOOKS_DIR = 'Playbooks'
@@ -34,6 +37,16 @@ DOCUMENTATION_DIR = 'Documentation'
 JOBS_DIR = 'Jobs'
 PRE_PROCESS_RULES_DIR = 'PreProcessRules'
 LISTS_DIR = 'Lists'
+PARSING_RULES_DIR = 'ParsingRules'
+MODELING_RULES_DIR = 'ModelingRules'
+SAMPLES_DIR = 'Samples'
+CORRELATION_RULES_DIR = 'CorrelationRules'
+XSIAM_DASHBOARDS_DIR = 'XSIAMDashboards'
+XSIAM_REPORTS_DIR = 'XSIAMReports'
+TRIGGER_DIR = 'Triggers'
+WIZARDS_DIR = 'Wizards'
+
+# NAMES OF ENTITIES
 
 SCRIPT = 'script'
 AUTOMATION = 'automation'
@@ -67,6 +80,13 @@ GENERIC_TYPE = 'generictype'
 GENERIC_MODULE = 'genericmodule'
 GENERIC_DEFINITION = 'genericdefinition'
 JOB = 'job'
+PARSING_RULE = 'parsingrule'
+MODELING_RULE = 'modelingrule'
+CORRELATION_RULE = 'correlationrule'
+XSIAM_DASHBOARD = 'xsiamdashboard'
+XSIAM_REPORT = 'xsiamreport'
+TRIGGER = 'trigger'
+WIZARD = 'wizard'
 
 MARKETPLACE_KEY_PACK_METADATA = 'marketplaces'
 
@@ -100,6 +120,7 @@ class FileType(Enum):
     AUTHOR_IMAGE = 'author_image'
     DOC_IMAGE = 'doc_image'
     PYTHON_FILE = 'pythonfile'
+    XIF_FILE = 'xiffile'
     JAVASCRIPT_FILE = 'javascriptfile'
     POWERSHELL_FILE = 'powershellfile'
     CONF_JSON = 'confjson'
@@ -117,7 +138,24 @@ class FileType(Enum):
     LISTS = 'list'
     JOB = 'job'
     BUILD_CONFIG_FILE = 'build-config-file'
+    PARSING_RULE = 'parsingrule'
+    MODELING_RULE = 'modelingrule'
+    CORRELATION_RULE = 'correlationrule'
+    XSIAM_DASHBOARD = 'xsiamdashboard'
+    XSIAM_REPORT = 'xsiamreport'
+    TRIGGER = 'trigger'
+    WIZARD = 'wizard'
 
+
+XSIAM_CONTENT_ITEMS_TYPES = [
+    FileType.PARSING_RULE,
+    FileType.MODELING_RULE,
+    FileType.CORRELATION_RULE,
+    FileType.XSIAM_DASHBOARD,
+    FileType.XSIAM_REPORT,
+    FileType.TRIGGER,
+
+]
 
 RN_HEADER_BY_FILE_TYPE = {
     FileType.PLAYBOOK: 'Playbooks',
@@ -143,7 +181,14 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.GENERIC_TYPE: 'Object Types',
     FileType.GENERIC_FIELD: 'Object Fields',
     FileType.LISTS: 'Lists',
-    FileType.JOB: 'Jobs'
+    FileType.JOB: 'Jobs',
+    FileType.PARSING_RULE: 'Parsing Rules',
+    FileType.MODELING_RULE: 'Modeling Rules',
+    FileType.CORRELATION_RULE: 'Correlation Rules',
+    FileType.XSIAM_DASHBOARD: 'XSIAM Dashboards',
+    FileType.XSIAM_REPORT: 'XSIAM Reports',
+    FileType.TRIGGER: 'Triggers Recommendations',  # https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
+    FileType.WIZARD: 'Wizards',
 }
 
 ENTITY_TYPE_TO_DIR = {
@@ -170,8 +215,20 @@ ENTITY_TYPE_TO_DIR = {
     FileType.GENERIC_FIELD.value: GENERIC_FIELDS_DIR,
     FileType.GENERIC_TYPE.value: GENERIC_TYPES_DIR,
     FileType.LISTS.value: LISTS_DIR,
-    FileType.JOB.value: JOBS_DIR
+    FileType.JOB.value: JOBS_DIR,
+    FileType.PARSING_RULE.value: PARSING_RULES_DIR,
+    FileType.MODELING_RULE.value: MODELING_RULES_DIR,
+    FileType.WIZARD.value: WIZARDS_DIR,
 }
+
+SIEM_ONLY_ENTITIES = [
+    FileType.PARSING_RULE.value,
+    FileType.MODELING_RULE.value,
+    FileType.CORRELATION_RULE.value,
+    FileType.XSIAM_DASHBOARD.value,
+    FileType.XSIAM_REPORT.value,
+    FileType.TRIGGER.value
+]
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
 
@@ -202,7 +259,8 @@ CONTENT_ENTITIES_DIRS = [
     GENERIC_DEFINITIONS_DIR,
     PRE_PROCESS_RULES_DIR,
     LISTS_DIR,
-    JOBS_DIR
+    JOBS_DIR,
+    WIZARDS_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -220,7 +278,8 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
     DASHBOARDS_DIR,
     PRE_PROCESS_RULES_DIR,
     LISTS_DIR,
-    JOBS_DIR
+    JOBS_DIR,
+    WIZARDS_DIR,
 ]
 
 DEFAULT_IMAGE_PREFIX = 'data:image/png;base64,'
@@ -467,6 +526,9 @@ PACKS_CLASSIFIER_JSON_REGEX = fr'{_PACKS_CLASSIFIER_BASE_REGEX}\.json'
 JOBS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{JOBS_DIR}'
 JOB_JSON_REGEX = fr'{JOBS_DIR_REGEX}\/job-([^/]+)\.json'
 
+WIZARD_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{WIZARDS_DIR}'
+WIZARD_JSON_REGEX = fr'{WIZARD_DIR_REGEX}\/wizard-([^/]+)\.json'
+
 # old classifier structure
 _PACKS_CLASSIFIER_BASE_5_9_9_REGEX = fr'{PACKS_CLASSIFIERS_DIR_REGEX}\/*classifier-(?!mapper).*_5_9_9'
 PACKS_CLASSIFIER_JSON_5_9_9_REGEX = fr'{_PACKS_CLASSIFIER_BASE_5_9_9_REGEX}\.json'
@@ -556,11 +618,14 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'mapper',
     'pre_process_rule',
     'lists',
-    JOB
+    JOB,
+    WIZARD,
 ]
 
 INTEGRATION_PREFIX = 'integration'
 SCRIPT_PREFIX = 'script'
+PARSING_RULE_PREFIX = 'parsingrule'
+MODELING_RULE_PREFIX = 'modelingrule'
 
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
@@ -732,6 +797,10 @@ JSON_ALL_JOB_REGEXES = [
     JOB_JSON_REGEX
 ]
 
+JSON_ALL_WIZARD_REGEXES = [
+    WIZARD_JSON_REGEX,
+]
+
 CHECKED_TYPES_REGEXES = [
     # Playbooks
     PLAYBOOK_YML_REGEX,
@@ -772,6 +841,7 @@ CHECKED_TYPES_REGEXES = [
     PACKS_TOOLS_REGEX,
     CONNECTIONS_REGEX,
     JOB_JSON_REGEX,
+    WIZARD_JSON_REGEX,
 
     # ReleaseNotes
     PACKS_RELEASE_NOTES_REGEX
@@ -818,7 +888,8 @@ DIR_LIST_FOR_REGULAR_ENTETIES = [
     CONNECTIONS_DIR,
     INDICATOR_FIELDS_DIR,
     LISTS_DIR,
-    JOBS_DIR
+    JOBS_DIR,
+    WIZARDS_DIR,
 ]
 PACKS_DIRECTORIES = [
     SCRIPTS_DIR,
@@ -832,7 +903,8 @@ PACKS_DIRECTORIES = [
     REPORTS_DIR,
     CONNECTIONS_DIR,
     PLAYBOOKS_DIR,
-    JOBS_DIR
+    JOBS_DIR,
+    WIZARDS_DIR,
 ]
 SPELLCHECK_FILE_TYPES = [
     PACKS_INTEGRATION_YML_REGEX,
@@ -990,7 +1062,8 @@ SCHEMA_TO_REGEX = {
     'generictype': JSON_ALL_GENERIC_TYPES_REGEXES,
     'genericmodule': JSON_ALL_GENERIC_MODULES_REGEXES,
     'genericdefinition': JSON_ALL_GENERIC_DEFINITIONS_REGEXES,
-    JOB: JSON_ALL_JOB_REGEXES
+    JOB: JSON_ALL_JOB_REGEXES,
+    WIZARD: JSON_ALL_WIZARD_REGEXES,
 }
 
 EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
@@ -1004,7 +1077,9 @@ DEF_DOCKER_PWSH = 'demisto/powershell:6.2.3.5563'
 
 DIR_TO_PREFIX = {
     'Integrations': INTEGRATION_PREFIX,
-    'Scripts': SCRIPT_PREFIX
+    'Scripts': SCRIPT_PREFIX,
+    'ModelingRules': MODELING_RULE_PREFIX,
+    'ParsingRules': PARSING_RULE_PREFIX,
 }
 
 ENTITY_NAME_SEPARATORS = [' ', '_', '-']
@@ -1067,9 +1142,10 @@ MARKETPLACES = ['xsoar', 'marketplacev2']
 
 # From Version constants
 FILETYPE_TO_DEFAULT_FROMVERSION = {
-    FileType.JOB: '7.0.0',
+    FileType.WIZARD: '6.8.0',
+    FileType.JOB: '6.8.0',
+    FileType.PRE_PROCESS_RULES: '6.8.0',
     FileType.LISTS: '6.5.0',
-    FileType.PRE_PROCESS_RULES: '7.0.0',
     FileType.GENERIC_TYPE: '6.5.0',
     FileType.GENERIC_FIELD: '6.5.0',
     FileType.GENERIC_MODULE: '6.5.0',
@@ -1271,7 +1347,8 @@ VALIDATED_PACK_ITEM_TYPES = [
     'Layouts',
     'PreProcessRules',
     'Lists',
-    'Jobs'
+    'Jobs',
+    'Wizards',
 ]
 
 FIRST_FETCH = 'first_fetch'
@@ -1333,6 +1410,13 @@ class ContentItems(Enum):
     PRE_PROCESS_RULES = 'pre-process-rule'
     LISTS = 'list'
     JOB = 'job'
+    PARSING_RULES = 'parsingrule'
+    MODELING_RULES = 'modelingrule'
+    CORRELATION_RULES = 'correlationrule'
+    XSIAM_DASHBOARDS = 'xsiamdashboard'
+    XSIAM_REPORTS = 'xsiamreport'
+    TRIGGERS = 'trigger',
+    WIZARDS = 'wizard',
 
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {
@@ -1350,7 +1434,14 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     CLASSIFIERS_DIR,
     WIDGETS_DIR,
     JOBS_DIR,
-    LISTS_DIR
+    LISTS_DIR,
+    PARSING_RULES_DIR,
+    MODELING_RULES_DIR,
+    CORRELATION_RULES_DIR,
+    XSIAM_DASHBOARDS_DIR,
+    XSIAM_REPORTS_DIR,
+    TRIGGER_DIR,
+    WIZARDS_DIR,
 }
 
 
@@ -1403,6 +1494,12 @@ class IdSetKeys(Enum):
     REPORTS = "Reports"
     WIDGETS = "Widgets"
     DASHBOARDS = "Dashboards"
+    PARSING_RULES = "ParsingRules"
+    MODELING_RULES = "ModelingRules"
+    CORRELATION_RULES = "CorrelationRules"
+    XSIAM_DASHBOARDS = "XSIAMDashboards"
+    XSIAM_REPORTS = "XSIAMReports"
+    TRIGGERS = "Triggers"
 
 
 FileTypeToIDSetKeys = {
@@ -1429,7 +1526,13 @@ FileTypeToIDSetKeys = {
     FileType.GENERIC_FIELD: IdSetKeys.GENERIC_FIELDS.value,
     FileType.GENERIC_MODULE: IdSetKeys.GENERIC_MODULES.value,
     FileType.GENERIC_DEFINITION: IdSetKeys.GENERIC_DEFINITIONS.value,
-    FileType.JOB: IdSetKeys.JOBS.value
+    FileType.JOB: IdSetKeys.JOBS.value,
+    FileType.PARSING_RULE: IdSetKeys.PARSING_RULES.value,
+    FileType.MODELING_RULE: IdSetKeys.MODELING_RULES.value,
+    FileType.CORRELATION_RULE: IdSetKeys.CORRELATION_RULES.value,
+    FileType.XSIAM_DASHBOARD: IdSetKeys.XSIAM_DASHBOARDS.value,
+    FileType.XSIAM_REPORT: IdSetKeys.XSIAM_REPORTS.value,
+    FileType.TRIGGER: IdSetKeys.TRIGGERS.value
 }
 
 FileType_ALLOWED_TO_DELETE = {
@@ -1437,3 +1540,17 @@ FileType_ALLOWED_TO_DELETE = {
     FileType.DOC_IMAGE,
     FileType.TEST_PLAYBOOK,
 }
+
+
+class ParameterType(Enum):
+    STRING = 0
+    NUMBER = 1
+    ENCRYPTED = 4
+    BOOLEAN = 8
+    AUTH = 9
+    DOWNLOAD_LINK = 11
+    TEXT_AREA = 12
+    INCIDENT_TYPE = 13
+    TEXT_AREA_ENCRYPTED = 14
+    SINGLE_SELECT = 15
+    MULTI_SELECT = 16

@@ -1,8 +1,7 @@
 import os
 import random
 
-from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_ID_SET_PATH)
+from demisto_sdk.commands.common.constants import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.common.tools import (get_from_version, get_yaml,
                                                open_id_set_file, print_error,
                                                print_warning)
@@ -88,13 +87,15 @@ def generate_script_doc(input_path, examples, output: str = None, permissions: s
                 doc.extend(generate_list_section('Used In', used_in, True,
                                                  text='This script is used in the following playbooks and scripts.'))
             else:  # if we have more than 10 use a sample
-                print_warning(f'"Used In" section found too many scripts/playbooks ({len(used_in)}). Will use a sample of 10.'
-                              ' Full list is available as a comment in the README file.')
+                print_warning(
+                    f'"Used In" section found too many scripts/playbooks ({len(used_in)}). Will use a sample of 10.'
+                    ' Full list is available as a comment in the README file.')
                 sample_used_in = random.sample(used_in, 10)
                 doc.extend(generate_list_section('Used In', sorted(sample_used_in), True,
                                                  text='Sample usage of this script can be found in the following playbooks and scripts.'))
                 used_in_str = '\n'.join(used_in)
-                doc.append(f"<!--\nUsed In: list was truncated. Full list commented out for reference:\n\n{used_in_str}\n -->\n")
+                doc.append(
+                    f"<!--\nUsed In: list was truncated. Full list commented out for reference:\n\n{used_in_str}\n -->\n")
 
         doc.extend(generate_table_section(inputs, 'Inputs', 'There are no inputs for this script.'))
 
@@ -124,13 +125,14 @@ def generate_script_doc(input_path, examples, output: str = None, permissions: s
             return
 
 
-def get_script_info(script_path):
+def get_script_info(script_path: str, clear_cache: bool = False):
     """
     Gets script information(type, tags, docker image and demisto version).
     :param script_path: the script yml file path.
+    :param clear_cache: whether to clear cache before getting yml.
     :return: list of dicts contains the script information.
     """
-    script = get_yaml(script_path)
+    script = get_yaml(script_path, cache_clear=clear_cache)
     script_type = script.get('subtype')
     if not script_type:
         script_type = script.get('type')
@@ -144,7 +146,7 @@ def get_script_info(script_path):
         res.append({'Name': 'Script Type', 'Description': script_type})
     if tags:
         res.append({'Name': 'Tags', 'Description': tags})
-    if from_version != DEFAULT_CONTENT_ITEM_FROM_VERSION:
+    if from_version != '':
         res.append({'Name': 'Cortex XSOAR Version', 'Description': from_version})
     return res
 

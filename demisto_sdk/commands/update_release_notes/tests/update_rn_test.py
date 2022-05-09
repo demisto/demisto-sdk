@@ -1,7 +1,6 @@
 import glob
 import os
 import shutil
-import unittest
 from collections import Counter
 from typing import Dict, Optional
 
@@ -19,7 +18,7 @@ from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 json = JSON_Handler()
 
 
-class TestRNUpdate(unittest.TestCase):
+class TestRNUpdate:
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
 
     @mock.patch.object(UpdateRN, 'get_master_version')
@@ -33,24 +32,25 @@ class TestRNUpdate(unittest.TestCase):
                 - return a markdown string
         """
         expected_result = \
-            "\n#### Classifiers\n##### Hello World Classifier\n- %%UPDATE_RN%%\n" \
-            "\n#### Connections\n- **Hello World Connection**\n" \
-            "\n#### Dashboards\n##### Hello World Dashboard\n- %%UPDATE_RN%%\n" \
-            "\n#### Incident Fields\n- **Hello World IncidentField**\n" \
-            "\n#### Incident Types\n- **Hello World Incident Type**\n" \
-            "\n#### Indicator Fields\n- **Hello World Indicator Field**\n" \
-            "\n#### Indicator Types\n- **Hello World Indicator Type**\n" \
-            "\n#### Integrations\n##### Hello World Integration\n- %%UPDATE_RN%%\n" \
-            "\n#### Jobs\n##### Hello World Job #1\n- %%UPDATE_RN%%" \
-            "\n##### Hello World Job #2\n- %%UPDATE_RN%%\n" \
-            "\n#### Layouts\n- **Hello World Layout**\n" \
-            "- **Second Hello World Layout**\n" \
-            "\n#### Modules\n##### Hello World Generic Module\n- %%UPDATE_RN%%\n" \
-            "\n#### Objects\n##### Hello World Generic Definition\n- %%UPDATE_RN%%\n" \
-            "\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%\n" \
-            "\n#### Reports\n##### Hello World Report\n- %%UPDATE_RN%%\n" \
-            "\n#### Scripts\n##### Hello World Script\n- %%UPDATE_RN%%\n" \
-            "\n#### Widgets\n##### Hello World Widget\n- %%UPDATE_RN%%\n"
+            "\n#### Classifiers\n- **Hello World Classifier**\n- %%UPDATE_RN%%\n" \
+            "\n#### Connections\n- **Hello World Connection**\n- %%UPDATE_RN%%\n" \
+            "\n#### Dashboards\n- **Hello World Dashboard**\n- %%UPDATE_RN%%\n" \
+            "\n#### Incident Fields\n- **Hello World IncidentField**\n- %%UPDATE_RN%%\n" \
+            "\n#### Incident Types\n- **Hello World Incident Type**\n- %%UPDATE_RN%%\n" \
+            "\n#### Indicator Fields\n- **Hello World Indicator Field**\n- %%UPDATE_RN%%\n" \
+            "\n#### Indicator Types\n- **Hello World Indicator Type**\n- %%UPDATE_RN%%\n" \
+            "\n#### Integrations\n- **Hello World Integration**\n- %%UPDATE_RN%%\n" \
+            "\n#### Jobs\n- **Hello World Job #1**\n- %%UPDATE_RN%%\n" \
+            "- **Hello World Job #2**\n- %%UPDATE_RN%%\n" \
+            "\n#### Layouts\n- **Hello World Layout**\n- %%UPDATE_RN%%\n" \
+            "- **Second Hello World Layout**\n- %%UPDATE_RN%%\n" \
+            "\n#### Modules\n- **Hello World Generic Module**\n- %%UPDATE_RN%%\n" \
+            "\n#### Objects\n- **Hello World Generic Definition**\n- %%UPDATE_RN%%\n" \
+            "\n#### Playbooks\n- **Hello World Playbook**\n- %%UPDATE_RN%%\n" \
+            "\n#### Reports\n- **Hello World Report**\n- %%UPDATE_RN%%\n" \
+            "\n#### Scripts\n- **Hello World Script**\n- %%UPDATE_RN%%\n" \
+            "\n#### Widgets\n- **Hello World Widget**\n- %%UPDATE_RN%%\n" \
+            "\n#### Wizards\n- **Hello World Wizard**\n- %%UPDATE_RN%%\n"
 
         mock_master.return_value = '1.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
@@ -75,10 +75,11 @@ class TestRNUpdate(unittest.TestCase):
             ("Hello World Generic Module", FileType.GENERIC_MODULE): {"description": "", "is_new_file": False},
             ("Hello World Generic Definition", FileType.GENERIC_DEFINITION): {"description": "", "is_new_file": False},
             ("Hello World Job #1", FileType.JOB): {"description": "sample job", "is_new_file": False},
-            ("Hello World Job #2", FileType.JOB): {"description": "yet another job", "is_new_file": False}
+            ("Hello World Job #2", FileType.JOB): {"description": "yet another job", "is_new_file": False},
+            ("Hello World Wizard", FileType.WIZARD): {"description": "sample wizard", "is_new_file": False}
         }
         release_notes = update_rn.build_rn_template(changed_items)
-        assert expected_result == release_notes
+        assert expected_result in release_notes
 
     @mock.patch.object(UpdateRN, 'get_master_version')
     def test_build_rn_template_integration_for_generic(self, mock_master):
@@ -118,7 +119,7 @@ class TestRNUpdate(unittest.TestCase):
             Then:
                 - return a markdown string
         """
-        expected_result = "\n#### Playbooks\n##### New: Hello World Playbook\n- Hello World Playbook description\n"
+        expected_result = "\n#### Playbooks\n##### New: **Hello World Playbook**\n- Hello World Playbook description"
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
         mock_master.return_value = '1.0.0'
@@ -141,7 +142,7 @@ class TestRNUpdate(unittest.TestCase):
             Then:
                 - return a markdown string
         """
-        expected_result = "\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%\n"
+        expected_result = "\n#### Playbooks\n- **Hello World Playbook**\n- %%UPDATE_RN%%\n"
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
         mock_master.return_value = '1.0.0'
@@ -165,7 +166,7 @@ class TestRNUpdate(unittest.TestCase):
             Then:
                 - return a markdown string
         """
-        expected_result = "\n#### Incident Fields\n- **Hello World IncidentField**\n"
+        expected_result = "\n#### Incident Fields\n- **Hello World IncidentField**\n- %%UPDATE_RN%%\n"
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
         mock_master.return_value = '1.0.0'
@@ -188,7 +189,7 @@ class TestRNUpdate(unittest.TestCase):
             Then:
                 - return a markdown string
         """
-        expected_result = "\n#### Integrations\n##### Hello World Integration\n" \
+        expected_result = "\n#### Integrations\n- **Hello World Integration**\n" \
                           "- Documentation and metadata improvements.\n"
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
@@ -444,7 +445,8 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='revision',
                              modified_files_in_pack={'HelloWorld'}, added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
-        self.assertRaises(ValueError, update_rn.bump_version_number)
+        with pytest.raises(ValueError):
+            update_rn.bump_version_number()
         os.remove(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
@@ -467,7 +469,8 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
-        self.assertRaises(ValueError, update_rn.bump_version_number)
+        with pytest.raises(ValueError):
+            update_rn.bump_version_number()
         os.remove(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
@@ -490,7 +493,8 @@ class TestRNUpdate(unittest.TestCase):
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='major', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         update_rn.metadata_path = os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json')
-        self.assertRaises(ValueError, update_rn.bump_version_number)
+        with pytest.raises(ValueError):
+            update_rn.bump_version_number()
         os.remove(os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
         shutil.copy(src=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/_pack_metadata.json'),
                     dst=os.path.join(TestRNUpdate.FILES_PATH, 'fake_pack_invalid/pack_metadata.json'))
@@ -663,6 +667,89 @@ class TestRNUpdate(unittest.TestCase):
         assert filtered_set == set()
         assert old_format_files == set()
 
+    @staticmethod
+    def test_update_rn_new_dashboard(repo):
+        """
+        Case - new dashboard, XSOAR, fromversion exists, description exists
+        Expected - release note should contain New, description and version
+        """
+        pack = repo.create_pack('test_pack')
+        new_dashboard = pack.create_dashboard(name='dashboard',
+                                              content={'description': 'description for testing',
+                                                       'fromversion': '6.0.0'})
+        update_rn = UpdateRN(pack_path=pack.path, update_type='minor', added_files=new_dashboard.path,
+                             modified_files_in_pack=set())
+
+        rn_desc = update_rn.build_rn_desc(_type=FileType.DASHBOARD, content_name=pack.name, is_new_file=True,
+                                          desc=new_dashboard.read_json_as_dict().get('description'),
+                                          from_version=new_dashboard.read_json_as_dict().get('fromversion'))
+
+        assert '##### New:' in rn_desc  # check if release note contains New - when new file
+        assert 'description for testing' in rn_desc  # check if release note contains description when description not empty
+        assert '(Available from Cortex XSOAR 6.0.0).' in rn_desc  # check if release note contains fromversion when exists
+
+    @staticmethod
+    def test_update_rn_new_mapper(repo):
+        """
+        Case - new mapper, XSOAR, fromversion exists, description exists
+        Expected - release note should contain New but should not contain description version
+        """
+        pack = repo.create_pack('test_pack')
+        new_mapper = pack.create_mapper(name='mapper', content={'description': ''})
+        update_rn = UpdateRN(pack_path=pack.path, update_type='minor', added_files=new_mapper.path,
+                             modified_files_in_pack=set())
+
+        rn_desc = update_rn.build_rn_desc(_type=FileType.MAPPER, content_name=pack.name, is_new_file=True,
+                                          desc=new_mapper.read_json_as_dict().get('description'),
+                                          from_version=new_mapper.read_json_as_dict().get('fromversion'))
+
+        assert '##### New:' in rn_desc  # check if release note contains New - when new file
+        assert 'description for testing' not in rn_desc  # check if release note does not contain description when description is empty
+        assert '(Available from Cortex XSOAR 6.0.0).' not in rn_desc  # check if release note does not contain fromversion when None
+
+    @staticmethod
+    def test_update_rn_new_incident_field(repo):
+        """
+        Case - new incident field, XSOAR, fromversion exists, description exists
+        Expected - release note should contain New, description and version
+        """
+        pack = repo.create_pack('test_pack')
+        new_incident_field = pack.create_incident_field(name='incident field',
+                                                        content={'description': 'description for testing',
+                                                                 'fromversion': '6.5.0'})
+        update_rn = UpdateRN(pack_path=pack.path, update_type='minor', added_files=new_incident_field.path,
+                             modified_files_in_pack=set())
+
+        rn_desc = update_rn.build_rn_desc(_type=FileType.INCIDENT_FIELD, content_name=pack.name, is_new_file=True,
+                                          desc=new_incident_field.read_json_as_dict().get('description'),
+                                          from_version=new_incident_field.read_json_as_dict().get('fromversion'))
+
+        assert '##### New:' in rn_desc  # check if release note contains New - when new file
+        assert 'description for testing' in rn_desc  # check if release note contains description when description not empty
+        assert '(Available from Cortex XSOAR 6.5.0).' in rn_desc  # check if release note contains fromversion when exists
+
+    @staticmethod
+    def test_update_rn_new_trigger(repo):
+        """
+        Case - new trigger, XSIAM, fromversion exists, description exists
+        Expected - release note should contain New, description and version but should not contain
+        (Available from Cortex XSOAR {fromversion}).
+        """
+        pack = repo.create_pack('test_pack')
+        new_trigger = pack.create_trigger(name='incident field',
+                                          content={'description': 'description for testing',
+                                                   'fromversion': '6.5.0'})
+        update_rn = UpdateRN(pack_path=pack.path, update_type='minor', added_files=new_trigger.path,
+                             modified_files_in_pack=set())
+
+        rn_desc = update_rn.build_rn_desc(_type=FileType.TRIGGER, content_name=pack.name, is_new_file=True,
+                                          desc=new_trigger.read_json_as_dict().get('description'),
+                                          from_version=new_trigger.read_json_as_dict().get('fromversion'))
+
+        assert '##### New:' not in rn_desc  # https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
+        assert 'description for testing' in rn_desc  # check if release note contains description when description not empty
+        assert '(Available from Cortex XSOAR 6.5.0).' not in rn_desc  # check if release note contains fromversion when exists
+
 
 class TestRNUpdateUnit:
     META_BACKUP = ""
@@ -688,9 +775,9 @@ class TestRNUpdateUnit:
         ("Nothing", None): {"description": "", "is_new_file": False},
         ("Sample", FileType.INTEGRATION): {"description": "", "is_new_file": False},
         ("Sample GenericField", FileType.GENERIC_FIELD): {"description": "", "is_new_file": False, "path": "Packs"
-                                                          "/HelloWorld/GenericField/asset/Sample_GenericType"},
+                                                                                                           "/HelloWorld/GenericField/asset/Sample_GenericType"},
         ("Sample GenericType", FileType.GENERIC_TYPE): {"description": "", "is_new_file": False, "path": "Packs"
-                                                        "/HelloWorld/GenericType/asset/Sample_GenericType"}
+                                                                                                         "/HelloWorld/GenericType/asset/Sample_GenericType"}
     }
     EXPECTED_RN_RES = """
 #### Incident Types
@@ -1097,6 +1184,35 @@ class TestRNUpdateUnit:
 
         assert check_docker_image_changed(main_branch='origin/master', packfile='test.yml') is None
 
+    @pytest.mark.parametrize('return_value_mock',
+                             [('+  dockerimage: demisto/python3:3.9.8.24399'),
+                              ('+dockerimage: demisto/python3:3.9.8.24399')])
+    def test_check_docker_image_changed(self, mocker, return_value_mock):
+        """
+        This test checks that for both integration and script YMLs, where the docker image resides at a different level,
+        changes made to this key are found correctly by 'check_docker_image_changed' function.
+        Given
+            - Case 1: a git diff mock of a modified integration .yml file where the docker is changed and there're spaces between the
+            '+' and the dockerimage
+            - Case 2: a git diff mock of a modified sccript .yml file where the docker is changed and there's no space between the
+            '+' and the dockerimage
+        When
+            - calling the check_docker_image_changed function
+        Then
+            Ensure that the dockerimage was extracted correctly for each case where each case demonstrate either integration
+            yml or Script yml.
+            - Case 1: Should extract the dockerimage version for integration yml demonstration.
+            - Case 2: Should extract the dockerimage version for script yml demonstration.
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            check_docker_image_changed
+
+        return_value = '+  dockerimage: demisto/python3:3.9.8.24399'
+
+        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.run_command', return_value=return_value)
+        assert check_docker_image_changed(main_branch='origin/master',
+                                          packfile='test.yml') == 'demisto/python3:3.9.8.24399'
+
     def test_update_docker_image_in_yml(self, mocker):
         """
         Given
@@ -1340,7 +1456,10 @@ def test_get_from_version_at_update_rn(integration):
 @pytest.mark.parametrize('data, answer', [({'brandName': 'TestBrand'}, 'TestBrand'), ({'id': 'TestID'}, 'TestID'),
                                           ({'name': 'TestName'}, 'TestName'), ({'TypeName': 'TestType'}, 'TestType'),
                                           ({'display': 'TestDisplay'}, 'TestDisplay'),
-                                          ({'layout': {'id': 'Testlayout'}}, 'Testlayout')])
+                                          ({'trigger_name': 'T Name'}, 'T Name'),
+                                          ({'layout': {'id': 'Testlayout'}}, 'Testlayout'),
+                                          ({'dashboards_data': [{'name': 'D Name'}]}, 'D Name'),
+                                          ({'templates_data': [{'report_name': 'R Name'}]}, 'R Name')])
 def test_get_display_name(data, answer, mocker):
     """
         Given
@@ -1405,13 +1524,13 @@ def test_docker_image_is_added_for_every_integration(mocker, repo):
 
 
 HANDLE_EXISTING_RN_WITH_DOCKER_IMAGE_INPUTS = [
-    ('#### Integrations\n##### IBM QRadar v2\n- %%UPDATE_RN%%\n##### IBM QRadar v3\n- %%UPDATE_RN%%',
+    ('#### Integrations\n- **IBM QRadar v2**\n- %%UPDATE_RN%%\n- **IBM QRadar v3**\n- %%UPDATE_RN%%',
      'Integrations', 'demisto/python3:3.9.5.21276', 'IBM QRadar v3',
-     '#### Integrations\n##### IBM QRadar v2\n- %%UPDATE_RN%%\n##### IBM QRadar v3\n- Updated the Docker image to: '
+     '#### Integrations\n- **IBM QRadar v2**\n- %%UPDATE_RN%%\n- **IBM QRadar v3**\n- Updated the Docker image to: '
      '*demisto/python3:3.9.5.21276*.\n- %%UPDATE_RN%%'),
-    ('#### Integrations\n##### IBM QRadar v3\n- %%UPDATE_RN%%',
+    ('#### Integrations\n- **IBM QRadar v3**\n- %%UPDATE_RN%%',
      'Integrations', 'demisto/python3:3.9.5.21276', 'IBM QRadar v3',
-     '#### Integrations\n##### IBM QRadar v3\n- Updated the Docker image to: '
+     '#### Integrations\n- **IBM QRadar v3**\n- Updated the Docker image to: '
      '*demisto/python3:3.9.5.21276*.\n- %%UPDATE_RN%%')]
 
 
@@ -1442,7 +1561,7 @@ def test_handle_existing_rn_with_docker_image(new_rn: str, header_by_type: str, 
 
 
 @pytest.mark.parametrize('text, expected_rn_string',
-                         [('Testing the upload', '##### PackName\n- Testing the upload\n')])
+                         [('Testing the upload', '- **PackName**\n- Testing the upload\n')])
 def test_force_and_text_update_rn(repo, text, expected_rn_string):
     """
     Given:
@@ -1465,7 +1584,8 @@ def test_force_and_text_update_rn(repo, text, expected_rn_string):
 CREATE_MD_IF_CURRENTVERSION_IS_HIGHER_TEST_BANK_ = [(['0_0_1'], ['0_0_1', '0_0_3'])]
 
 
-@pytest.mark.parametrize('first_expected_results, second_expected_results', CREATE_MD_IF_CURRENTVERSION_IS_HIGHER_TEST_BANK_)
+@pytest.mark.parametrize('first_expected_results, second_expected_results',
+                         CREATE_MD_IF_CURRENTVERSION_IS_HIGHER_TEST_BANK_)
 def test_create_md_if_currentversion_is_higher(mocker, first_expected_results, second_expected_results, repo):
     """
         Given:

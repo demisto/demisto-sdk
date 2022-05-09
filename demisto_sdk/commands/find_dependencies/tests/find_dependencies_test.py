@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.constants import (
     FILETYPE_TO_DEFAULT_FROMVERSION, FileType, MarketplaceVersions)
 from demisto_sdk.commands.find_dependencies.find_dependencies import (
     PackDependencies, calculate_single_pack_dependencies,
-    get_packs_dependent_on_given_packs,
+    find_dependencies_between_two_packs, get_packs_dependent_on_given_packs,
     remove_items_from_content_entities_sections,
     remove_items_from_packs_section)
 from TestSuite.test_tools import ChangeCWD
@@ -448,6 +448,7 @@ class TestIdSetFilters:
                     ),
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
+                    "type": "python3",
                     "pack": "PrismaCloudCompute",
                     "marketplaces": ["xsoar"],
                     "source": ['Unknown source', '', '']}
@@ -461,6 +462,7 @@ class TestIdSetFilters:
                     ),
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
+                    "type": "python3",
                     "pack": "PrismaCloudCompute",
                     "marketplaces": ["xsoar"],
                     "source": ['Unknown source', '', '']}
@@ -474,6 +476,7 @@ class TestIdSetFilters:
                     ),
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
+                    "type": "python3",
                     "pack": "PrismaCloudCompute",
                     "marketplaces": ["xsoar"],
                     "source": ['Unknown source', '', '']}
@@ -487,6 +490,7 @@ class TestIdSetFilters:
                     ),
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
+                    "type": "python3",
                     "pack": "PrismaCloudCompute",
                     "marketplaces": ["xsoar"],
                     "source": ['Unknown source', '', '']
@@ -3173,6 +3177,43 @@ class TestGetDependentOnGivenPack:
             (('type_item_3', 'item3'), ('type_item_a', 'item_a'))]
         assert dependent_packs_dict['pack3']['packsDependentOnThisPackMandatorily']['pack2']['dependent_items'] == [
             (('type_item_3', 'item3'), ('type_item_b', 'item_b'))]
+
+    def test_find_dependencies_between_two_packs(self, mocker):
+        """
+        Given
+            - A dependency pack
+            - Input pack
+        When
+            - Running the find_dependencies_between_two_packs
+        Then
+            - assuring that the result given is the dependant items between those 2 packs
+        """
+        dependent_pack_dict = {
+            'pack3': {'packsDependentOnThisPackMandatorily': {
+                'pack1': {'mandatory': True, 'dependent_items': [(('type_item_3', 'item3'),
+                                                                  ('type_item_a', 'item_a'))]},
+                'pack2': {'mandatory': True, 'dependent_items': [(('type_item_3', 'item3'),
+                                                                  ('type_item_b', 'item_b'))]}}, 'path': 'Packs/pack3', 'fullPath': 'tests/Packs/pack3'}}
+        mocker.patch('demisto_sdk.commands.find_dependencies.find_dependencies.get_packs_dependent_on_given_packs',
+                     return_value=(dependent_pack_dict, {'pack2', 'pack1'}))
+
+        result = find_dependencies_between_two_packs(input_paths=('Packs/pack1', ''), dependency='Packs/pack3')
+        expected_results = '''{
+    "mandatory": true,
+    "dependent_items": [
+        [
+            [
+                "type_item_3",
+                "item3"
+            ],
+            [
+                "type_item_a",
+                "item_a"
+            ]
+        ]
+    ]
+}'''
+        assert expected_results == result
 
 
 ID_SET = {

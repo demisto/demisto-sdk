@@ -70,22 +70,28 @@ class Repo:
             'GenericFields': [],
             'GenericModules': [],
             'GenericDefinitions': [],
-            'Jobs': []
+            'Jobs': [],
+            'Wizards': [],
         })
 
     def __del__(self):
         shutil.rmtree(self.path, ignore_errors=True)
 
-    def setup_one_pack(self, name) -> Pack:
+    def setup_one_pack(self, name, marketplaces: list = None) -> Pack:
         """Sets up a new pack in the repo, and includes one per each content entity.
 
         Args:
             name (string): Name of the desired pack.
+            marketplaces (list): List of the marketplaces to setup the packs.
 
         Returns:
             Pack. The pack object created.
 
         """
+
+        if not marketplaces:
+            marketplaces = ['xsoar']
+
         pack = self.create_pack(name)
 
         script = pack.create_script(f'{name}_script')
@@ -160,6 +166,8 @@ class Repo:
         widget.update({'name': f'{name} - widget'})
         widget.update({'widgetType': ''})
 
+        pack.create_wizard(f'{name}_wizard')
+
         list_item = pack.create_list(f'{name}_list')
         list_item.write_json({'id': f'{name} - list'})
         list_item.update({'name': f'{name} - list'})
@@ -208,17 +216,27 @@ class Repo:
         pack.create_job(is_feed=False, name=name)
         pack.create_job(is_feed=True, name=f'{name}_all_feeds')
 
+        if 'marketplacev2' in marketplaces:
+            pack.create_parsing_rule(f'{name}_parsingrule', {"id": "parsing_rule_id", "rules": "", "name": "parsing_rule_name"})
+            pack.create_modeling_rule(f'{name}_modelingrule', {"id": "modeling_rule_id", "rules": "", "name": "modeling_rule_name"})
+            pack.create_correlation_rule(f'{name}_correlationrule', {"global_rule_id": "correlation_rule_id",
+                                         "name": "correlation_rule_name", "alert_category": ""})
+            pack.create_xsiam_dashboard(f'{name}_xsiamdashboard', {"dashboards_data": [{"global_id": "xsiam_dashboard_id", "name": "xsiam_dashboard_name"}]})
+            pack.create_xsiam_report(f'{name}_xsiamreport', {"templates_data": [{"global_id": "xsiam_report_id", "name": "xsiam_report_name"}]})
+            pack.create_trigger(f'{name}_trigger', {"trigger_id": "trigger_id", "trigger_name": "trigger_name"})
+            print('parsing done')
         return pack
 
-    def setup_content_repo(self, number_of_packs):
+    def setup_content_repo(self, number_of_packs, marketplaces: list = None):
         """Creates a fully constructed content repository, where packs names will pack_<index>.
 
         Args:
             number_of_packs (int): Amount of packs to be created in the repo.
+            marketplaces (list): List of the marketplaces to setup the packs.
 
         """
         for i in range(number_of_packs):
-            self.setup_one_pack(f'pack_{i}')
+            self.setup_one_pack(f'pack_{i}', marketplaces)
 
     def create_pack(self, name: Optional[str] = None):
         if name is None:

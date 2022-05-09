@@ -644,12 +644,13 @@ class TestValidators:
 
     def test_get_error_ignore_list(self, mocker):
         """
-            Given:
-                - A file path to pack ignore
-            When:
-                - running get_error_ignore_list from validate manager
-            Then:
-                - verify that the created ignored_errors list is correct
+        Given:
+            - A file path to pack ignore
+        When:
+            - running get_error_ignore_list from validate manager
+        Then:
+            - verify that the created ignored_errors list is being created with all of the
+            error codes that is in the .pack-ignore, also the error codes which cannot be ignored.
         """
         files_path = os.path.normpath(
             os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
@@ -660,7 +661,7 @@ class TestValidators:
 
         validate_manager = ValidateManager()
         ignore_errors_list = validate_manager.get_error_ignore_list("fake")
-        assert ignore_errors_list['file_name'] == ['BA101', 'SC101', 'BA106']
+        assert ignore_errors_list['file_name'] == ['BA101', 'SC101', 'IN117', 'BA106', 'IN100']
         assert 'SC100' not in ignore_errors_list['file_name']
 
     def test_create_ignored_errors_list(self):
@@ -677,8 +678,8 @@ class TestValidators:
                              "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC", "GF", "PP", "JB", "LI100",
                              "LI101"]
         error_list = validate_manager.create_ignored_errors_list(errors_to_exclude)
-        assert ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
-                "BA110", 'BA111', "BA112", "BA113", "BA114", "BA115", "BC101", "BC102", "BC103", "BC104"] <= error_list
+        assert {"BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
+                "BA110", 'BA111', "BA112", "BA113", "BA114", "BA115", "BC101", "BC102", "BC103", "BC104"}.issubset(error_list)
 
     def test_added_files_type_using_function(self, repo, mocker):
         """
@@ -1594,7 +1595,8 @@ def test_check_file_relevance_and_format_path_ignore_test_file(mocker, input_fil
 @pytest.mark.parametrize('input_file_path, file_type',
                          [('Packs/some_file.py', FileType.PYTHON_FILE),
                           ('Packs/some_file.ps1', FileType.POWERSHELL_FILE),
-                          ('Packs/some_file.js', FileType.JAVASCRIPT_FILE)]
+                          ('Packs/some_file.js', FileType.JAVASCRIPT_FILE),
+                          ('Packs/some_file.xif', FileType.XIF_FILE)]
                          )
 def test_check_file_relevance_and_format_path_file_to_format(mocker, input_file_path, file_type):
     """
@@ -1823,11 +1825,12 @@ def test_job_unexpected_field_values_in_non_feed_job(repo, capsys,
 
 
 @pytest.mark.parametrize('file_set,expected_output,expected_result,added_files',
-                         (({'mock_file_description.md'}, "[BA115]", False, set()),
+                         (({'Packs/Integration/mock_file_description.md'}, "[BA115]", False, set()),
                           (set(), "", True, set()),
-                          ({'doc_files/image.png'}, "", True, set()),
-                          ({'mock_playbook.yml'}, "", True, {'renamed_mock_playbook.yml'}),
-                          ({Path('mock_playbook.yml')}, "", True, {Path('renamed_mock_playbook.yml')})))
+                          ({'Packs/Integration/doc_files/image.png'}, "", True, set()),
+                          ({'Packs/Integration/Playbooks/mock_playbook.yml'}, "", True, {'renamed_mock_playbook.yml'}),
+                          ({Path('Packs/Integration/Playbooks/mock_playbook.yml')}, "", True, {Path('renamed_mock_playbook.yml')}),
+                          (({'non_content_item.txt'}, "[BA115]", False, set()))))
 def test_validate_deleted_files(capsys, file_set, expected_output, expected_result, added_files, mocker):
     """
     Given

@@ -9,6 +9,8 @@ from demisto_sdk.commands.common.constants import (
     LAYOUT_AND_MAPPER_BUILT_IN_FIELDS,
     LAYOUTS_CONTAINERS_OLDEST_SUPPORTED_VERSION)
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import (
@@ -49,6 +51,7 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
         """
         return self._is_valid_version()
 
+    @error_codes('CL106')
     def is_to_version_higher_than_from_version(self) -> bool:
         """Checks if to version field is higher than from version field.
 
@@ -88,6 +91,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
                     self.is_id_equals_name(),
                     ])
 
+    @error_codes('LO101')
     def is_valid_from_version(self) -> bool:
         """Checks if from version field is valid.
 
@@ -100,6 +104,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
                 return False
         return True
 
+    @error_codes('LO101')
     def is_valid_to_version(self) -> bool:
         """Checks if to version field is valid.
 
@@ -112,6 +117,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
                 return False
         return True
 
+    @error_codes('LO103')
     def is_valid_file_path(self) -> bool:
         output_basename = os.path.basename(self.file_path)
         if not output_basename.startswith('layoutscontainer-'):
@@ -120,6 +126,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
                 return False
         return True
 
+    @error_codes('LO104')
     def is_incident_field_exist(self, id_set_file, is_circle) -> bool:
         """Checks if incident field is valid - exist in the content.
 
@@ -177,6 +184,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
 
 class LayoutValidator(LayoutBaseValidator):
 
+    @error_codes('LO100')
     def is_valid_from_version(self) -> bool:
         """Checks if from version field is valid.
 
@@ -190,6 +198,7 @@ class LayoutValidator(LayoutBaseValidator):
                     return False
         return True
 
+    @error_codes('LO100')
     def is_valid_to_version(self) -> bool:
         """Checks if to version field is valid.
 
@@ -202,6 +211,7 @@ class LayoutValidator(LayoutBaseValidator):
                 return False
         return True
 
+    @error_codes('LO102')
     def is_valid_file_path(self) -> bool:
         output_basename = os.path.basename(self.file_path)
         if not output_basename.startswith('layout-'):
@@ -210,6 +220,7 @@ class LayoutValidator(LayoutBaseValidator):
                 return False
         return True
 
+    @error_codes('LO104')
     def is_incident_field_exist(self, id_set_file, is_circle) -> bool:
         """Checks if incident field is valid - exist in the content.
 

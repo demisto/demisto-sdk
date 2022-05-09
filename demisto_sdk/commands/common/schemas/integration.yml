@@ -79,6 +79,8 @@ mapping:
         - type: str
       isfetch:
         type: bool
+      isfetchevents:
+        type: bool
       longRunning:
         type: bool
       longRunningPort:

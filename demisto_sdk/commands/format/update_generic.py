@@ -197,11 +197,16 @@ class BaseUpdate:
                 else:
                     sequence = schema.get(field, {}).get('sequence', [])
                     if sequence and sequence[0].get('mapping'):
-                        for list_element in data[field]:
-                            self.recursive_remove_unnecessary_keys(
-                                sequence[0].get('mapping'),
-                                list_element
-                            )
+                        if data[field] is None:
+                            if self.verbose:
+                                print(f'Adding an empty array - `[]` as the value of the `{field}` field')
+                            data[field] = []
+                        else:
+                            for list_element in data[field]:
+                                self.recursive_remove_unnecessary_keys(
+                                    sequence[0].get('mapping'),
+                                    list_element
+                                )
 
     def regex_matching_key(self, field, schema_keys):
         """
@@ -326,7 +331,10 @@ class BaseUpdate:
             return SKIP_RETURN_CODE
         else:
             self.validate_manager.file_path = self.output_file
-            validation_result = self.validate_manager.run_validation_on_specific_files()
+            if self.is_old_file(self.output_file):
+                validation_result = self.validate_manager.run_validation_using_git()
+            else:
+                validation_result = self.validate_manager.run_validation_on_specific_files()
 
             if not validation_result:
                 return ERROR_RETURN_CODE

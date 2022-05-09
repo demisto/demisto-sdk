@@ -2,16 +2,18 @@
 import concurrent.futures
 import logging
 import os
+import platform
 import re
 import sys
 import textwrap
-from typing import Any, Dict, List, Set, Union
+from typing import Any, Dict, List, Set, Tuple, Union
 
 import docker
 import docker.errors
 import git
 import requests.exceptions
 import urllib3.exceptions
+from packaging.version import Version
 from wcmatch.pathlib import Path, PosixPath
 
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
@@ -38,12 +40,11 @@ from demisto_sdk.commands.lint.linter import Linter
 
 json = JSON_Handler()
 
-
 # Third party packages
 
 # Local packages
-
 logger = logging.getLogger('demisto-sdk')
+
 sha1Regex = re.compile(r'\b[0-9a-fA-F]{40}\b', re.M)
 
 
@@ -189,7 +190,8 @@ class LintManager:
         logger.debug("Docker daemon test passed")
         return facts
 
-    def _get_packages(self, content_repo: git.Repo, input: Union[str, List[str]], git: bool = False, all_packs: bool = False,
+    def _get_packages(self, content_repo: git.Repo, input: Union[str, List[str]], git: bool = False,
+                      all_packs: bool = False,
                       base_branch: str = 'master') -> List[PosixPath]:
         """ Get packages paths to run lint command.
 
@@ -302,12 +304,126 @@ class LintManager:
 
         return list(pkgs_to_check)
 
-    def run_dev_packages(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
-                         no_pylint: bool, no_coverage: bool, coverage_report: str,
-                         no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
-                         keep_container: bool,
-                         test_xml: str, failure_report: str, docker_timeout: int,
-                         time_measurements_dir: str = None) -> int:
+    def execute_all_packages(self,
+                             parallel: int,
+                             no_flake8: bool,
+                             no_xsoar_linter: bool,
+                             no_bandit: bool,
+                             no_mypy: bool,
+                             no_pylint: bool,
+                             no_coverage: bool,
+                             no_vulture: bool,
+                             no_test: bool,
+                             no_pwsh_analyze: bool,
+                             no_pwsh_test: bool,
+                             keep_container: bool,
+                             test_xml: str,
+                             docker_timeout: int,
+                             lint_status: dict,
+                             pkgs_status: dict,
+                             pkgs_type: list,
+                             ) -> Tuple[int, int]:
+        """ Runs the Lint command on all given packages.
+
+        Args:
+            parallel(int): Whether to run command on multiple threads
+            no_flake8(bool): Whether to skip flake8
+            no_xsoar_linter(bool): Whether to skip xsoar linter
+            no_bandit(bool): Whether to skip bandit
+            no_mypy(bool): Whether to skip mypy
+            no_vulture(bool): Whether to skip vulture
+            no_pylint(bool): Whether to skip pylint
+            no_coverage(bool): Run pytest without coverage report
+            no_test(bool): Whether to skip pytest
+            no_pwsh_analyze(bool): Whether to skip powershell code analyzing
+            no_pwsh_test(bool): whether to skip powershell tests
+            keep_container(bool): Whether to keep the test container
+            test_xml(str): Path for saving pytest xml results
+            docker_timeout(int): timeout for docker requests
+            pkgs_type: List of the pack types
+            pkgs_status: Dictionary for pack status (keys are packs, the values are their status)
+            lint_status: Dictionary for the lint status  (the keys are the linters, the values are a list of packs)
+
+        Returns:
+            Tuple[int, int]: exit code, warning code
+        """
+        try:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as executor:
+                return_exit_code: int = 0
+                return_warning_code: int = 0
+                results = []
+                # Executing lint checks in different threads
+                for pack in sorted(self._pkgs):
+                    linter: Linter = Linter(pack_dir=pack,
+                                            content_repo="" if not self._facts["content_repo"] else
+                                            Path(self._facts["content_repo"].working_dir),
+                                            req_2=self._facts["requirements_2"],
+                                            req_3=self._facts["requirements_3"],
+                                            docker_engine=self._facts["docker_engine"],
+                                            docker_timeout=docker_timeout)
+                    results.append(executor.submit(linter.run_pack,
+                                                   no_flake8=no_flake8,
+                                                   no_bandit=no_bandit,
+                                                   no_mypy=no_mypy,
+                                                   no_vulture=no_vulture,
+                                                   no_xsoar_linter=no_xsoar_linter,
+                                                   no_pylint=no_pylint,
+                                                   no_test=no_test,
+                                                   no_pwsh_analyze=no_pwsh_analyze,
+                                                   no_pwsh_test=no_pwsh_test,
+                                                   modules=self._facts["test_modules"],
+                                                   keep_container=keep_container,
+                                                   test_xml=test_xml,
+                                                   no_coverage=no_coverage))
+
+                logger.info('Waiting for futures to complete')
+                for i, future in enumerate(concurrent.futures.as_completed(results)):
+                    logger.debug(f'checking output of future {i=}')
+                    pkg_status = future.result()
+                    logger.info(f'Got lint results for {pkg_status["pkg"]}')
+                    pkgs_status[pkg_status["pkg"]] = pkg_status
+                    if pkg_status["exit_code"]:
+                        for check, code in EXIT_CODES.items():
+                            if pkg_status["exit_code"] & code:
+                                lint_status[f"fail_packs_{check}"].append(pkg_status["pkg"])
+                        if not return_exit_code & pkg_status["exit_code"]:
+                            return_exit_code += pkg_status["exit_code"]
+                    if pkg_status["warning_code"]:
+                        for check, code in EXIT_CODES.items():
+                            if pkg_status["warning_code"] & code:
+                                lint_status[f"warning_packs_{check}"].append(pkg_status["pkg"])
+                        if not return_warning_code & pkg_status["warning_code"]:
+                            return_warning_code += pkg_status["warning_code"]
+                    if pkg_status["pack_type"] not in pkgs_type:
+                        pkgs_type.append(pkg_status["pack_type"])
+                logger.info('Finished all futures')
+                return return_exit_code, return_warning_code
+        except KeyboardInterrupt:
+            msg = "Stop demisto-sdk lint - Due to 'Ctrl C' signal"
+            print_warning(msg)
+            logger.warning(msg)
+            executor.shutdown(wait=False)  # If keyboard interrupt no need to wait to clean resources
+            return 1, 0
+        except Exception as e:
+            msg = f"Stop demisto-sdk lint - Due to Exception {e}"
+            print_warning(msg)
+            logger.error(msg)
+
+            if Version(platform.python_version()) > Version('3.9'):
+                executor.shutdown(wait=True, cancel_futures=True)  # type: ignore[call-arg]
+            else:
+                logger.info('Using Python under 3.8, we will cancel futures manually.')
+                executor.shutdown(wait=True)  # Note that `cancel_futures` not supported in python 3.8
+                for res in results:
+                    res.cancel()
+            return 1, 0
+
+    def run(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
+            no_pylint: bool, no_coverage: bool, coverage_report: str,
+            no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
+            keep_container: bool,
+            test_xml: str, failure_report: str, docker_timeout: int,
+            time_measurements_dir: str = None) -> int:
         """ Runs the Lint command on all given packages.
 
         Args:
@@ -328,6 +444,7 @@ class LintManager:
             failure_report(str): Path for store failed packs report
             docker_timeout(int): timeout for docker requests
             time_measurements_dir(str): the directory fo exporting the time measurements info
+            total_timeout (int): amount of seconds for the task
 
         Returns:
             int: exit code by fail exit codes by var EXIT_CODES
@@ -356,10 +473,10 @@ class LintManager:
         }
 
         # Python or powershell or both
-        pkgs_type = []
+        pkgs_type: list = []
 
         # Detailed packages status
-        pkgs_status = {}
+        pkgs_status: dict = {}
 
         # Skiped lint and test codes
         skipped_code = build_skipped_exit_code(no_flake8=no_flake8, no_bandit=no_bandit, no_mypy=no_mypy,
@@ -367,65 +484,28 @@ class LintManager:
                                                no_pylint=no_pylint, no_test=no_test, no_pwsh_analyze=no_pwsh_analyze,
                                                no_pwsh_test=no_pwsh_test, docker_engine=self._facts["docker_engine"])
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as executor:
-            return_exit_code: int = 0
-            return_warning_code: int = 0
-            results = []
-            # Executing lint checks in different threads
-            for pack in sorted(self._pkgs):
-                linter: Linter = Linter(pack_dir=pack,
-                                        content_repo="" if not self._facts["content_repo"] else
-                                        Path(self._facts["content_repo"].working_dir),
-                                        req_2=self._facts["requirements_2"],
-                                        req_3=self._facts["requirements_3"],
-                                        docker_engine=self._facts["docker_engine"],
-                                        docker_timeout=docker_timeout)
-                results.append(executor.submit(linter.run_dev_packages,
-                                               no_flake8=no_flake8,
-                                               no_bandit=no_bandit,
-                                               no_mypy=no_mypy,
-                                               no_vulture=no_vulture,
-                                               no_xsoar_linter=no_xsoar_linter,
-                                               no_pylint=no_pylint,
-                                               no_test=no_test,
-                                               no_pwsh_analyze=no_pwsh_analyze,
-                                               no_pwsh_test=no_pwsh_test,
-                                               modules=self._facts["test_modules"],
-                                               keep_container=keep_container,
-                                               test_xml=test_xml,
-                                               no_coverage=no_coverage))
-            try:
-                for future in concurrent.futures.as_completed(results):
-                    pkg_status = future.result()
-                    pkgs_status[pkg_status["pkg"]] = pkg_status
-                    if pkg_status["exit_code"]:
-                        for check, code in EXIT_CODES.items():
-                            if pkg_status["exit_code"] & code:
-                                lint_status[f"fail_packs_{check}"].append(pkg_status["pkg"])
-                        if not return_exit_code & pkg_status["exit_code"]:
-                            return_exit_code += pkg_status["exit_code"]
-                    if pkg_status["warning_code"]:
-                        for check, code in EXIT_CODES.items():
-                            if pkg_status["warning_code"] & code:
-                                lint_status[f"warning_packs_{check}"].append(pkg_status["pkg"])
-                        if not return_warning_code & pkg_status["warning_code"]:
-                            return_warning_code += pkg_status["warning_code"]
-                    if pkg_status["pack_type"] not in pkgs_type:
-                        pkgs_type.append(pkg_status["pack_type"])
-            except KeyboardInterrupt:
-                print_warning("Stop demisto-sdk lint - Due to 'Ctrl C' signal")
-                try:
-                    executor.shutdown(wait=False)
-                except Exception:
-                    pass
-                return 1
-            except Exception as e:
-                print_warning(f"Stop demisto-sdk lint - Due to Exception {e}")
-                try:
-                    executor.shutdown(wait=False)
-                except Exception:
-                    pass
-                return 1
+        return_exit_code, return_warning_code = self.execute_all_packages(
+            parallel=parallel,
+            no_flake8=no_flake8,
+            no_xsoar_linter=no_xsoar_linter,
+            no_bandit=no_bandit,
+            no_mypy=no_mypy,
+            no_pylint=no_pylint,
+            no_coverage=no_coverage,
+            no_vulture=no_vulture,
+            no_test=no_test,
+            no_pwsh_test=no_pwsh_test,
+            keep_container=keep_container,
+            test_xml=test_xml,
+            docker_timeout=docker_timeout,
+            no_pwsh_analyze=no_pwsh_analyze,
+            lint_status=lint_status,
+            pkgs_status=pkgs_status,
+            pkgs_type=pkgs_type,
+        )
+
+        if time_measurements_dir:
+            report_time_measurements(group_name='lint', time_measurements_dir=time_measurements_dir)
 
         self._report_results(lint_status=lint_status,
                              pkgs_status=pkgs_status,
@@ -437,9 +517,6 @@ class LintManager:
                              coverage_report=coverage_report)
 
         self._create_failed_packs_report(lint_status=lint_status, path=failure_report)
-
-        if time_measurements_dir:
-            report_time_measurements(group_name='lint', time_measurements_dir=time_measurements_dir)
 
         # check if there were any errors during lint run , if so set to FAIL as some error codes are bigger
         # then 512 and will not cause failure on the exit code.
@@ -485,7 +562,7 @@ class LintManager:
             else:
                 generate_coverage_report()
 
-        self.report_summary(pkg=self._pkgs, lint_status=lint_status, all_packs=self._all_packs)
+        self.report_summary(pkg=self._pkgs, pkgs_status=pkgs_status, lint_status=lint_status, all_packs=self._all_packs)
         self.create_json_output()
 
     @staticmethod
@@ -712,10 +789,11 @@ class LintManager:
                     print(wrapper_error.fill(image["image_errors"]))
 
     @staticmethod
-    def report_summary(pkg, lint_status: dict, all_packs: bool = False):
+    def report_summary(pkg, pkgs_status: dict, lint_status: dict, all_packs: bool = False):
         """ Log failed image creation if occured
 
         Args:
+            pkgs_status: The packs status
             lint_status(dict): Overall lint status
             all_packs(bool): True when running lint command with -a flag.
      """
@@ -737,13 +815,14 @@ class LintManager:
                 failed = failed.union(lint_status[key])
             if key.startswith('warning'):
                 warnings = warnings.union(lint_status[key])
+        num_passed = len([pack for pack, result in pkgs_status.items() if result.get('exit_code') == 0])
         # Log unit-tests summary
         sentence = " Summary "
         print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
         print(f"{sentence}")
         print(f"{'#' * len(sentence)}{Colors.reset}")
         print(f"Packages: {len(pkg)}")
-        print(f"Packages PASS: {Colors.Fg.green}{len(pkg) - len(failed)}{Colors.reset}")
+        print(f"Packages PASS: {Colors.Fg.green}{num_passed}{Colors.reset}")
         print(f"Packages FAIL: {Colors.Fg.red}{len(failed)}{Colors.reset}")
         print(f"Packages WARNING (can either PASS or FAIL): {Colors.Fg.orange}{len(warnings)}{Colors.reset}\n")
 

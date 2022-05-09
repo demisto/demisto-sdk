@@ -18,7 +18,7 @@
 * Added HelloWorldSlim template option for *--template* flag in **demisto-sdk init** command.
 * Fixed an issue where the HelloWorldSlim template in **demisto-sdk init** command had an integration id that was conflicting with HelloWorld integration id.
 * Updated the SDK to use demisto-py 3.1.6, allowing use of a proxy with an environment variable.
-
+* Added a validation to the **validate** command, failing when 'fromversion' or 'toversion' in a test-playbook are incorrect format.
 ## 1.6.5
 
 * Fixed an issue in the **format** command where the `id` field was overwritten for existing JSON files.

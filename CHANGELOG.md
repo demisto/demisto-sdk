@@ -3,6 +3,7 @@
 ## Unreleased
 * enhanced ***validate*** command to list all command names affected by a backward compatibility break, instead of only one.
 * Added a new flag to the **validate** command, allowing to run specific validations.
+* Added support in **unify** and **create-content-artifacts** for slightly different documentations (detailed description + readme) depending on the marketplace version.
 
 ## 1.6.5
 

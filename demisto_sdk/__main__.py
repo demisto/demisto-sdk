@@ -287,6 +287,10 @@ def extract_code(config, **kwargs):
     is_flag=True,
     show_default=False
 )
+@click.option('-mp', '--marketplace',
+              help='The marketplace the content items are created for, that determines usage of marketplace '
+                   'unique text. Default is the XSOAR marketplace.',
+              default='xsoar', type=click.Choice(['xsoar', 'marketplacev2', 'v2']))
 def unify(**kwargs):
     """
     This command has three main functions:

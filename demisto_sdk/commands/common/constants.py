@@ -1436,11 +1436,11 @@ class MarketplaceVersions(Enum):
 
 class MarketplaceTags(Enum):
     XSOAR_PREFIX = '<~XSOAR>\n'
-    XSOAR_SUFFIX = '</~XSOAR>\n'
+    XSOAR_SUFFIX = '\n</~XSOAR>\n'
     XSOAR_INLINE_PREFIX = '<~XSOAR>'
     XSOAR_INLINE_SUFFIX = '</~XSOAR>'
     XSIAM_PREFIX = '<~XSIAM>\n'
-    XSIAM_SUFFIX = '</~XSIAM>\n'
+    XSIAM_SUFFIX = '\n</~XSIAM>\n'
     XSIAM_INLINE_PREFIX = '<~XSIAM>'
     XSIAM_INLINE_SUFFIX = '</~XSIAM>'
 

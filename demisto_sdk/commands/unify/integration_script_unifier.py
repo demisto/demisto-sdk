@@ -5,7 +5,7 @@ import io
 import os
 import re
 import shutil
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import click
 from inflection import dasherize, underscore
@@ -50,7 +50,8 @@ INTEGRATIONS_DOCS_REFERENCE = 'https://xsoar.pan.dev/docs/reference/integrations
 class IntegrationScriptUnifier(YAMLUnifier):
 
     def __init__(self, input: str, dir_name=INTEGRATIONS_DIR, output: str = '',
-                 image_prefix=DEFAULT_IMAGE_PREFIX, force: bool = False, yml_modified_data=None, custom: str = ''):
+                 image_prefix=DEFAULT_IMAGE_PREFIX, force: bool = False, yml_modified_data=None, custom: str = '',
+                 marketplace: Optional[str] = None):
 
         self.image_prefix = image_prefix
         self.custom = custom
@@ -61,6 +62,7 @@ class IntegrationScriptUnifier(YAMLUnifier):
             input=input,
             output=output,
             force=force,
+            marketplace=marketplace,
         )
 
         # script key for scripts is a string.

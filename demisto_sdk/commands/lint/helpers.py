@@ -221,7 +221,7 @@ def add_typing_module(lint_files: List[Path], python_version: str):
 
 
 @contextmanager
-def add_tmp_lint_files(content_repo: git.Repo, pack_path: Path, lint_files: List[Path], modules: Dict[Path, bytes],
+def add_tmp_lint_files(content_repo: Path, pack_path: Path, lint_files: List[Path], modules: Dict[Path, bytes],
                        pack_type: str):
     """ LintFiles is context manager to mandatory files for lint and test
             1. Entrance - download missing files to pack.
@@ -483,6 +483,7 @@ def coverage_report_editor(coverage_file, code_file_absolute_path):
         but our tests (pytest step) are running inside a docker container.
         so we have to change the path to the correct one.
     """
+    logger.info(f'Editing coverage report for {coverage_file}')
     with sqlite3.connect(coverage_file) as sql_connection:
         cursor = sql_connection.cursor()
         index = cursor.execute('SELECT count(*) FROM file').fetchall()[0][0]

@@ -8,12 +8,12 @@ configuration:
   name: url
   required: true
   type: 0
-- defaultvalue: ''
+- defaultvalue: 'false'
   display: Use system proxy
   name: proxy
   required: false
   type: 8
-- defaultvalue: ''
+- defaultvalue: 'false'
   display: Trust any certificate
   name: insecure
   required: false

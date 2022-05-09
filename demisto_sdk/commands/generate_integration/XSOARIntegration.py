@@ -108,6 +108,8 @@ class XSOARIntegration:
                 self.options = options
             if defaultvalue:
                 self.defaultvalue = defaultvalue
+            if self.type == 8 and not self.defaultvalue:
+                self.defaultvalue = 'false'
 
     class Script:
         def __init__(self, script: str, type_: str, subtype: str, dockerimage: str, isfetch: bool,

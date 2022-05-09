@@ -21,11 +21,17 @@ def logging_setup(verbose: int, quiet: Optional[bool] = False,
     """
     if quiet:
         verbose = 0
+    logging.basicConfig()
     l: logging.Logger = logging.getLogger('demisto-sdk')
-    l.setLevel(logging.DEBUG)
 
-    log_level = logging.getLevelName((6 - 2 * verbose) * 10)
+    levels = {
+        0: logging.INFO,
+        1: logging.WARNING,
+        2: logging.DEBUG
+    }
 
+    log_level: int = levels.get(verbose, levels[2])
+    l.setLevel(log_level)
     fmt = logging.Formatter('%(asctime)s [%(levelname)s]: %(message)s', datefmt=DATE_FORMAT)
     console_handler_index = -1
     file_handler_index = -1

@@ -44,6 +44,7 @@ CORRELATION_RULES_DIR = 'CorrelationRules'
 XSIAM_DASHBOARDS_DIR = 'XSIAMDashboards'
 XSIAM_REPORTS_DIR = 'XSIAMReports'
 TRIGGER_DIR = 'Triggers'
+WIZARDS_DIR = 'Wizards'
 
 # NAMES OF ENTITIES
 
@@ -85,6 +86,7 @@ CORRELATION_RULE = 'correlationrule'
 XSIAM_DASHBOARD = 'xsiamdashboard'
 XSIAM_REPORT = 'xsiamreport'
 TRIGGER = 'trigger'
+WIZARD = 'wizard'
 
 MARKETPLACE_KEY_PACK_METADATA = 'marketplaces'
 
@@ -142,7 +144,18 @@ class FileType(Enum):
     XSIAM_DASHBOARD = 'xsiamdashboard'
     XSIAM_REPORT = 'xsiamreport'
     TRIGGER = 'trigger'
+    WIZARD = 'wizard'
 
+
+XSIAM_CONTENT_ITEMS_TYPES = [
+    FileType.PARSING_RULE,
+    FileType.MODELING_RULE,
+    FileType.CORRELATION_RULE,
+    FileType.XSIAM_DASHBOARD,
+    FileType.XSIAM_REPORT,
+    FileType.TRIGGER,
+
+]
 
 RN_HEADER_BY_FILE_TYPE = {
     FileType.PLAYBOOK: 'Playbooks',
@@ -174,7 +187,8 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.CORRELATION_RULE: 'Correlation Rules',
     FileType.XSIAM_DASHBOARD: 'XSIAM Dashboards',
     FileType.XSIAM_REPORT: 'XSIAM Reports',
-    FileType.TRIGGER: 'Triggers',
+    FileType.TRIGGER: 'Triggers Recommendations',  # https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
+    FileType.WIZARD: 'Wizards',
 }
 
 ENTITY_TYPE_TO_DIR = {
@@ -204,6 +218,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.JOB.value: JOBS_DIR,
     FileType.PARSING_RULE.value: PARSING_RULES_DIR,
     FileType.MODELING_RULE.value: MODELING_RULES_DIR,
+    FileType.WIZARD.value: WIZARDS_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -244,7 +259,8 @@ CONTENT_ENTITIES_DIRS = [
     GENERIC_DEFINITIONS_DIR,
     PRE_PROCESS_RULES_DIR,
     LISTS_DIR,
-    JOBS_DIR
+    JOBS_DIR,
+    WIZARDS_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -262,7 +278,8 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
     DASHBOARDS_DIR,
     PRE_PROCESS_RULES_DIR,
     LISTS_DIR,
-    JOBS_DIR
+    JOBS_DIR,
+    WIZARDS_DIR,
 ]
 
 DEFAULT_IMAGE_PREFIX = 'data:image/png;base64,'
@@ -509,6 +526,9 @@ PACKS_CLASSIFIER_JSON_REGEX = fr'{_PACKS_CLASSIFIER_BASE_REGEX}\.json'
 JOBS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{JOBS_DIR}'
 JOB_JSON_REGEX = fr'{JOBS_DIR_REGEX}\/job-([^/]+)\.json'
 
+WIZARD_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{WIZARDS_DIR}'
+WIZARD_JSON_REGEX = fr'{WIZARD_DIR_REGEX}\/wizard-([^/]+)\.json'
+
 # old classifier structure
 _PACKS_CLASSIFIER_BASE_5_9_9_REGEX = fr'{PACKS_CLASSIFIERS_DIR_REGEX}\/*classifier-(?!mapper).*_5_9_9'
 PACKS_CLASSIFIER_JSON_5_9_9_REGEX = fr'{_PACKS_CLASSIFIER_BASE_5_9_9_REGEX}\.json'
@@ -598,7 +618,8 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'mapper',
     'pre_process_rule',
     'lists',
-    JOB
+    JOB,
+    WIZARD,
 ]
 
 INTEGRATION_PREFIX = 'integration'
@@ -776,6 +797,10 @@ JSON_ALL_JOB_REGEXES = [
     JOB_JSON_REGEX
 ]
 
+JSON_ALL_WIZARD_REGEXES = [
+    WIZARD_JSON_REGEX,
+]
+
 CHECKED_TYPES_REGEXES = [
     # Playbooks
     PLAYBOOK_YML_REGEX,
@@ -816,6 +841,7 @@ CHECKED_TYPES_REGEXES = [
     PACKS_TOOLS_REGEX,
     CONNECTIONS_REGEX,
     JOB_JSON_REGEX,
+    WIZARD_JSON_REGEX,
 
     # ReleaseNotes
     PACKS_RELEASE_NOTES_REGEX
@@ -862,7 +888,8 @@ DIR_LIST_FOR_REGULAR_ENTETIES = [
     CONNECTIONS_DIR,
     INDICATOR_FIELDS_DIR,
     LISTS_DIR,
-    JOBS_DIR
+    JOBS_DIR,
+    WIZARDS_DIR,
 ]
 PACKS_DIRECTORIES = [
     SCRIPTS_DIR,
@@ -876,7 +903,8 @@ PACKS_DIRECTORIES = [
     REPORTS_DIR,
     CONNECTIONS_DIR,
     PLAYBOOKS_DIR,
-    JOBS_DIR
+    JOBS_DIR,
+    WIZARDS_DIR,
 ]
 SPELLCHECK_FILE_TYPES = [
     PACKS_INTEGRATION_YML_REGEX,
@@ -1034,7 +1062,8 @@ SCHEMA_TO_REGEX = {
     'generictype': JSON_ALL_GENERIC_TYPES_REGEXES,
     'genericmodule': JSON_ALL_GENERIC_MODULES_REGEXES,
     'genericdefinition': JSON_ALL_GENERIC_DEFINITIONS_REGEXES,
-    JOB: JSON_ALL_JOB_REGEXES
+    JOB: JSON_ALL_JOB_REGEXES,
+    WIZARD: JSON_ALL_WIZARD_REGEXES,
 }
 
 EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
@@ -1113,9 +1142,10 @@ MARKETPLACES = ['xsoar', 'marketplacev2']
 
 # From Version constants
 FILETYPE_TO_DEFAULT_FROMVERSION = {
-    FileType.JOB: '7.0.0',
+    FileType.WIZARD: '6.8.0',
+    FileType.JOB: '6.8.0',
+    FileType.PRE_PROCESS_RULES: '6.8.0',
     FileType.LISTS: '6.5.0',
-    FileType.PRE_PROCESS_RULES: '7.0.0',
     FileType.GENERIC_TYPE: '6.5.0',
     FileType.GENERIC_FIELD: '6.5.0',
     FileType.GENERIC_MODULE: '6.5.0',
@@ -1317,7 +1347,8 @@ VALIDATED_PACK_ITEM_TYPES = [
     'Layouts',
     'PreProcessRules',
     'Lists',
-    'Jobs'
+    'Jobs',
+    'Wizards',
 ]
 
 FIRST_FETCH = 'first_fetch'
@@ -1382,7 +1413,8 @@ class ContentItems(Enum):
     CORRELATION_RULES = 'correlationrule'
     XSIAM_DASHBOARDS = 'xsiamdashboard'
     XSIAM_REPORTS = 'xsiamreport'
-    TRIGGERS = 'trigger'
+    TRIGGERS = 'trigger',
+    WIZARDS = 'wizard',
 
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {
@@ -1406,7 +1438,8 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     CORRELATION_RULES_DIR,
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
-    TRIGGER_DIR
+    TRIGGER_DIR,
+    WIZARDS_DIR,
 }
 
 

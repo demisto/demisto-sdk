@@ -46,7 +46,7 @@ from demisto_sdk.commands.common.constants import (
     SCRIPTS_DIR, SIEM_ONLY_ENTITIES, TEST_PLAYBOOKS_DIR, TRIGGER_DIR,
     TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR, XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys,
-    IdSetKeys, MarketplaceTags, MarketplaceVersions, urljoin)
+    IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
                                                             GitProvider)
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -104,23 +104,32 @@ class TagParser:
 
 
 class MarketplaceTagParser:
+    XSOAR_PREFIX = '<~XSOAR>\n'
+    XSOAR_SUFFIX = '\n</~XSOAR>\n'
+    XSOAR_INLINE_PREFIX = '<~XSOAR>'
+    XSOAR_INLINE_SUFFIX = '</~XSOAR>'
+    XSIAM_PREFIX = '<~XSIAM>\n'
+    XSIAM_SUFFIX = '\n</~XSIAM>\n'
+    XSIAM_INLINE_PREFIX = '<~XSIAM>'
+    XSIAM_INLINE_SUFFIX = '</~XSIAM>'
+
     def __init__(self, marketplace: str = MarketplaceVersions.XSOAR.value):
         self.marketplace = marketplace
         self._xsoar_parser = TagParser(
-            tag_prefix=MarketplaceTags.XSOAR_PREFIX.value,
-            tag_suffix=MarketplaceTags.XSOAR_SUFFIX.value,
+            tag_prefix=self.XSOAR_PREFIX,
+            tag_suffix=self.XSOAR_SUFFIX,
         )
         self._xsoar_inline_parser = TagParser(
-            tag_prefix=MarketplaceTags.XSOAR_INLINE_PREFIX.value,
-            tag_suffix=MarketplaceTags.XSOAR_INLINE_SUFFIX.value,
+            tag_prefix=self.XSOAR_INLINE_PREFIX,
+            tag_suffix=self.XSOAR_INLINE_SUFFIX,
         )
         self._xsiam_parser = TagParser(
-            tag_prefix=MarketplaceTags.XSIAM_PREFIX.value,
-            tag_suffix=MarketplaceTags.XSIAM_SUFFIX.value,
+            tag_prefix=self.XSIAM_PREFIX,
+            tag_suffix=self.XSIAM_SUFFIX,
         )
         self._xsiam_inline_parser = TagParser(
-            tag_prefix=MarketplaceTags.XSIAM_INLINE_PREFIX.value,
-            tag_suffix=MarketplaceTags.XSIAM_INLINE_SUFFIX.value,
+            tag_prefix=self.XSIAM_INLINE_PREFIX,
+            tag_suffix=self.XSIAM_INLINE_SUFFIX,
         )
 
     @property

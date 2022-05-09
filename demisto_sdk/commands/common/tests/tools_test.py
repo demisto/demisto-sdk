@@ -12,7 +12,7 @@ from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION, INTEGRATIONS_DIR, LAYOUTS_DIR, PACKS_DIR,
     PACKS_PACK_IGNORE_FILE_NAME, PLAYBOOKS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, FileType, MarketplaceTags, MarketplaceVersions)
+    TEST_PLAYBOOKS_DIR, FileType, MarketplaceVersions)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
                                                             GitCredentials)
@@ -1724,11 +1724,11 @@ class TestMarketplaceTagParser:
     MARKETPLACE_TAG_PARSER = MarketplaceTagParser()
     TEXT_WITH_TAGS = f'''
 ### Sections:
-{MarketplaceTags.XSOAR_PREFIX.value} - XSOAR PARAGRAPH{MarketplaceTags.XSOAR_SUFFIX.value}
-{MarketplaceTags.XSIAM_PREFIX.value} - XSIAM PARAGRAPH{MarketplaceTags.XSIAM_SUFFIX.value}
+{MARKETPLACE_TAG_PARSER.XSOAR_PREFIX} - XSOAR PARAGRAPH{MARKETPLACE_TAG_PARSER.XSOAR_SUFFIX}
+{MARKETPLACE_TAG_PARSER.XSIAM_PREFIX} - XSIAM PARAGRAPH{MARKETPLACE_TAG_PARSER.XSIAM_SUFFIX}
 ### Inline:
-{MarketplaceTags.XSOAR_INLINE_PREFIX.value}xsoar inline text{MarketplaceTags.XSOAR_INLINE_SUFFIX.value}
-{MarketplaceTags.XSIAM_INLINE_PREFIX.value}xsiam inline text{MarketplaceTags.XSIAM_INLINE_SUFFIX.value}'''
+{MARKETPLACE_TAG_PARSER.XSOAR_INLINE_PREFIX}xsoar inline text{MARKETPLACE_TAG_PARSER.XSOAR_INLINE_SUFFIX}
+{MARKETPLACE_TAG_PARSER.XSIAM_INLINE_PREFIX}xsiam inline text{MARKETPLACE_TAG_PARSER.XSIAM_INLINE_SUFFIX}'''
 
     def test_invalid_marketplace_version(self):
         """
@@ -1744,8 +1744,8 @@ class TestMarketplaceTagParser:
         actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
         assert '### Sections:' in actual
         assert '### Inline:' in actual
-        assert MarketplaceTags.XSOAR_PREFIX.value not in actual
-        assert MarketplaceTags.XSIAM_PREFIX.value not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XSOAR_PREFIX not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XSIAM_PREFIX not in actual
         assert 'XSOAR' not in actual
         assert 'xsoar' not in actual
         assert 'XSIAM' not in actual
@@ -1767,8 +1767,8 @@ class TestMarketplaceTagParser:
         assert '### Inline:' in actual
         assert 'XSOAR' in actual
         assert 'xsoar' in actual
-        assert MarketplaceTags.XSOAR_PREFIX.value not in actual
-        assert MarketplaceTags.XSIAM_PREFIX.value not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XSOAR_PREFIX not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XSIAM_PREFIX not in actual
         assert 'XSIAM' not in actual
         assert 'xsiam' not in actual
 
@@ -1788,7 +1788,7 @@ class TestMarketplaceTagParser:
         assert '### Inline:' in actual
         assert 'XSOAR' not in actual
         assert 'xsoar' not in actual
-        assert MarketplaceTags.XSOAR_PREFIX.value not in actual
-        assert MarketplaceTags.XSIAM_PREFIX.value not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XSOAR_PREFIX not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XSIAM_PREFIX not in actual
         assert 'XSIAM' in actual
         assert 'xsiam' in actual

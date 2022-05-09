@@ -1434,17 +1434,6 @@ class MarketplaceVersions(Enum):
     MarketplaceV2 = 'marketplacev2'
 
 
-class MarketplaceTags(Enum):
-    XSOAR_PREFIX = '<~XSOAR>\n'
-    XSOAR_SUFFIX = '\n</~XSOAR>\n'
-    XSOAR_INLINE_PREFIX = '<~XSOAR>'
-    XSOAR_INLINE_SUFFIX = '</~XSOAR>'
-    XSIAM_PREFIX = '<~XSIAM>\n'
-    XSIAM_SUFFIX = '\n</~XSIAM>\n'
-    XSIAM_INLINE_PREFIX = '<~XSIAM>'
-    XSIAM_INLINE_SUFFIX = '</~XSIAM>'
-
-
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {'html': LooseVersion('6.1.0'), 'grid': LooseVersion('5.5.0')}
 
 

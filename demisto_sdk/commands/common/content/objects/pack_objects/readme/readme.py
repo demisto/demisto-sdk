@@ -29,12 +29,15 @@ class Readme(TextObject):
             print(e)
 
     def handle_marketplace_tags(self):
+        """Remove marketplace tags depending on marketplace version"""
         try:
             with open(self._path, 'r+') as f:
                 text = f.read()
-                f.seek(0)
-                f.write(MARKETPLACE_TAG_PARSER.parse_text(text))
-                f.truncate()
+                parsed_text = MARKETPLACE_TAG_PARSER.parse_text(text)
+                if len(text) != len(parsed_text):
+                    f.seek(0)
+                    f.write(parsed_text)
+                    f.truncate()
         except Exception as e:
             print(e)
 

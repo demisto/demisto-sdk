@@ -5,7 +5,7 @@ import io
 import os
 import re
 import shutil
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import click
 from inflection import dasherize, underscore
@@ -16,9 +16,11 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_IMAGE_PREFIX, INTEGRATIONS_DIR, SCRIPTS_DIR, TYPE_TO_EXTENSION,
     FileType)
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
-                                               find_type, get_pack_name,
-                                               get_yaml, get_yml_paths_in_dir,
+from demisto_sdk.commands.common.tools import (LOG_COLORS,
+                                               MARKETPLACE_TAG_PARSER,
+                                               arg_to_list, find_type,
+                                               get_pack_name, get_yaml,
+                                               get_yml_paths_in_dir,
                                                print_color, print_warning,
                                                server_version_compare)
 from demisto_sdk.commands.unify.yaml_unifier import YAMLUnifier
@@ -48,7 +50,8 @@ INTEGRATIONS_DOCS_REFERENCE = 'https://xsoar.pan.dev/docs/reference/integrations
 class IntegrationScriptUnifier(YAMLUnifier):
 
     def __init__(self, input: str, dir_name=INTEGRATIONS_DIR, output: str = '',
-                 image_prefix=DEFAULT_IMAGE_PREFIX, force: bool = False, yml_modified_data=None, custom: str = ''):
+                 image_prefix=DEFAULT_IMAGE_PREFIX, force: bool = False, yml_modified_data=None, custom: str = '',
+                 marketplace: Optional[str] = None):
 
         self.image_prefix = image_prefix
         self.custom = custom
@@ -59,6 +62,7 @@ class IntegrationScriptUnifier(YAMLUnifier):
             input=input,
             output=output,
             force=force,
+            marketplace=marketplace,
         )
 
         # script key for scripts is a string.
@@ -200,7 +204,7 @@ class IntegrationScriptUnifier(YAMLUnifier):
 
         detailed_description = ''
         if desc_data:
-            detailed_description = FoldedScalarString(desc_data.decode('utf-8'))
+            detailed_description = MARKETPLACE_TAG_PARSER.parse_text(FoldedScalarString(desc_data.decode('utf-8')))
 
         integration_doc_link = ''
         if '[View Integration Documentation]' not in detailed_description:

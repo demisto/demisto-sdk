@@ -153,7 +153,7 @@ class GitContentConfig:
             self.git_provider = GitProvider.GitHub
             if not github_hostname or not github_repo:  # github was not found.
                 click.secho(f'If your repo is in private github repo, '
-                            f'configure `{GitCredentials.ENV_GITLAB_TOKEN_NAME}` environment variable '
+                            f'configure `{GitCredentials.ENV_GITHUB_TOKEN_NAME}` environment variable '
                             f'or configure `{GitContentConfig.ENV_REPO_HOSTNAME_NAME}` environment variable',
                             fg='yellow')
                 click.secho('Could not find the repository name on gitlab - defaulting to demisto/content', fg='yellow')

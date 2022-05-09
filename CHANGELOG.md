@@ -20,6 +20,7 @@
 * Fixed an issue where the HelloWorldSlim template in **demisto-sdk init** command had an integration id that was conflicting with HelloWorld integration id.
 * Updated the SDK to use demisto-py 3.1.6, allowing use of a proxy with an environment variable.
 * The **format** command now validates that default value of checkbox parameters is a string 'true' or 'false'.
+* Fixed an issue where `FileType.PLAYBOOK` would show instead of `Playbook` in readme error messages.
 
 ## 1.6.5
 

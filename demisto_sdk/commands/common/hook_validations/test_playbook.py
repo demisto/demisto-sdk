@@ -1,11 +1,13 @@
 import re
+
+from demisto_sdk.commands.common.constants import FROM_TO_VERSION_REGEX
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import is_string_uuid
-from demisto_sdk.commands.common.constants import FROM_TO_VERSION_REGEX
+
 
 class TestPlaybookValidator(ContentEntityValidator):
     """TestPlaybookValidator is designed to validate the correctness of the file structure we enter to content repo for
@@ -38,7 +40,7 @@ class TestPlaybookValidator(ContentEntityValidator):
         ])
 
     def are_fromversion_and_toversion_in_correct_format(self) -> bool:
-        
+
         version_structure = re.compile(FROM_TO_VERSION_REGEX)
         if not version_structure.fullmatch(self.current_file.get('fromversion', '00.00.00')):
             error_message, error_code = Errors.from_and_to_version_are_incorrect_format(
@@ -52,7 +54,6 @@ class TestPlaybookValidator(ContentEntityValidator):
             return False
 
         return True
-
 
     def is_valid_version(self):  # type: () -> bool
         """Check whether the test playbook version is equal to DEFAULT_VERSION (see base_validator class)

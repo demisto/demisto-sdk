@@ -2083,7 +2083,6 @@ class Errors:
         return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id_}, " \
                f"must be with equal value. "
 
-
     @staticmethod
     @error_code_decorator
     def from_and_to_version_are_incorrect_format(incorrect_key):

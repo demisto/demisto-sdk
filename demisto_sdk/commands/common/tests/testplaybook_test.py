@@ -3,11 +3,10 @@ from typing import Optional
 import pytest
 from mock import patch
 
-
-from demisto_sdk.commands.common.hook_validations.test_playbook import \
-    TestPlaybookValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
+from demisto_sdk.commands.common.hook_validations.test_playbook import \
+    TestPlaybookValidator
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None):
@@ -66,7 +65,7 @@ FROM_AND_TO_VERSION_FOR_TEST = [
 ]
 
 
-@pytest.mark.parametrize('current_file, expected_result',FROM_AND_TO_VERSION_FOR_TEST)
+@pytest.mark.parametrize('current_file, expected_result', FROM_AND_TO_VERSION_FOR_TEST)
 def test_are_fromversion_and_toversion_in_correct_format(current_file, expected_result):
 
     structure_validator = mock_structure('', current_file=current_file)

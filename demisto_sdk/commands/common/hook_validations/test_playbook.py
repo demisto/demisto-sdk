@@ -45,7 +45,7 @@ class TestPlaybookValidator(ContentEntityValidator):
                 'fromversion')
             self.handle_error(error_message, error_code, file_path=self.file_path)
             return False
-        if not version_structure.fullmatch(self.current_file.get('tovesion', '00.00.00')):
+        if not version_structure.fullmatch(self.current_file.get('toversion', '00.00.00')):
             error_message, error_code = Errors.from_and_to_version_are_incorrect_format(
                 'tovesion')
             self.handle_error(error_message, error_code, file_path=self.file_path)

@@ -196,12 +196,13 @@ class IntegrationYMLFormat(BaseUpdateYML):
         """Check the boolean default value are true or false lowercase"""
         config = self.data.get('configuration', {})
         for param in config:
-            if param.get('type') == ParameterType.BOOLEAN.value \
-                    and (value := param.get('defaultvalue') not in ('true', 'false')):
-                if 'true' == str(value).lower():
-                    param['defaultvalue'] = 'true'
-                elif 'false' == str(value).lower():
-                    param['defaultvalue'] = 'false'
+            if param.get('type') == ParameterType.BOOLEAN.value:
+                value = param.get('defaultvalue')
+                if value not in ('true', 'false'):
+                    if 'true' == str(value).lower():
+                        param['defaultvalue'] = 'true'
+                    elif 'false' == str(value).lower():
+                        param['defaultvalue'] = 'false'
 
     def run_format(self) -> int:
         try:

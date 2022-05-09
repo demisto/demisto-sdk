@@ -143,6 +143,8 @@ class MarketplaceTagParser:
         self._should_remove_xsiam_text = marketplace != MarketplaceVersions.MarketplaceV2.value
 
     def parse_text(self, text):
+        # the order of parse is important. inline should always be checked after paragraph tag
+        # xsoar->xsoar_inline->xsiam->xsiam_inline
         return self._xsiam_inline_parser.parse(
             remove_tag=self._should_remove_xsiam_text,
             text=self._xsiam_parser.parse(

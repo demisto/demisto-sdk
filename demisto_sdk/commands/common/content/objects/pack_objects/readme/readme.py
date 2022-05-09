@@ -1,3 +1,4 @@
+import logging
 from typing import List, Optional, Union
 
 from wcmatch.pathlib import Path
@@ -39,7 +40,7 @@ class Readme(TextObject):
                     f.write(parsed_text)
                     f.truncate()
         except Exception as e:
-            print(e)
+            logging.error(e)
 
     def dump(self, dest_dir: Optional[Union[Path, str]] = None) -> List[Path]:
         self.mention_contributors_in_readme()

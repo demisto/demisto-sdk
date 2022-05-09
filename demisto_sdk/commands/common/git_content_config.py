@@ -43,6 +43,7 @@ class GitContentConfig:
     BASE_RAW_GITHUB_LINK = r'https://raw.{GITHUB_HOST}/'
     SDK_API_GITHUB_RELEASES = r'https://api.github.com/repos/demisto/demisto-sdk/releases'
     OFFICIAL_CONTENT_REPO_NAME = 'demisto/content'
+    OFFICIAL_CONTENT_PROJECT_ID = 2596
     CONTENT_GITHUB_UPSTREAM = r'upstream.*demisto/content'
     CONTENT_GITHUB_ORIGIN = r'origin.*demisto/content'
     GITHUB_USER_CONTENT = 'githubusercontent.com'
@@ -50,6 +51,11 @@ class GitContentConfig:
     BASE_RAW_GITLAB_LINK = "https://{GITLAB_HOST}/api/v4/projects/{GITLAB_ID}/repository"
 
     ENV_REPO_HOSTNAME_NAME = 'DEMISTO_SDK_REPO_HOSTNAME'
+
+    ALLOWED_REPOS = [
+        {(GitProvider.GitHub, OFFICIAL_CONTENT_REPO_NAME),
+         (GitProvider.GitLab, OFFICIAL_CONTENT_PROJECT_ID)}
+    ]
 
     def __init__(
             self,
@@ -119,10 +125,12 @@ class GitContentConfig:
 
     def _set_repo_config(self, hostname, organization=None, repo_name=None, project_id=None):
         if self.current_repository and self.git_provider == GitProvider.GitHub and self.repo_hostname:
-            if self._search_github_repo(self.repo_hostname, repo_name=self.current_repository):
+            if (self.git_provider, self.current_repository) in GitContentConfig.ALLOWED_REPOS or\
+                    self._search_github_repo(self.repo_hostname, repo_name=self.current_repository):
                 return
         if self.project_id and self.git_provider == GitProvider.GitLab and self.repo_hostname:
-            if self._search_gitlab_repo(self.repo_hostname, project_id=self.project_id):
+            if (self.git_provider, self.project_id) in GitContentConfig.ALLOWED_REPOS or\
+                    self._search_gitlab_repo(self.repo_hostname, project_id=self.project_id):
                 return
 
         gitlab_hostname, gitlab_id = (self._search_gitlab_repo(hostname, project_id=project_id)) or \
@@ -163,7 +171,7 @@ class GitContentConfig:
                 self.repo_hostname = github_hostname
                 self.current_repository = github_repo
 
-    @lru_cache(maxsize=128)
+    @lru_cache(128)
     def _search_github_repo(self, github_hostname, repo_name) -> Optional[Tuple[str, str]]:
         """
         Searches the github API for the repo
@@ -195,7 +203,7 @@ class GitContentConfig:
                              timeout=10)
             if r.ok:
                 return github_hostname, repo_name
-            logger.debug('Could not access GitHub api in `_search_github_repo`')
+            logger.debug(f'Could not access GitHub api in `_search_github_repo`. status code={r.status_code}, reason={r.reason}')
             return None
         except requests.exceptions.ConnectionError as e:
             logger.debug(str(e), exc_info=True)
@@ -245,7 +253,7 @@ class GitContentConfig:
                 if gitlab_id is None:
                     return None
                 return gitlab_hostname, gitlab_id
-            logger.debug('Could not access GitLab api in `_search_gitlab_repo`')
+            logger.debug(f'Could not access GitLab api in `_search_gitlab_repo`. status code={res.status_code}. reason={res.reason}')
             return None
 
         except (requests.exceptions.ConnectionError, json.JSONDecodeError, AssertionError) as e:

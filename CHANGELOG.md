@@ -8,6 +8,7 @@
 * enhanced ***validate*** command to list all command names affected by a backward compatibility break, instead of only one.
 * Added support for Wizard content item in the **format**, **validate**, **upload**, **create-id-set**, **find-dependecies** and **create-content-artifacts** commands.
 * Added a new flag to the **validate** command, allowing to run specific validations.
+* Added support in **unify** and **create-content-artifacts** for displaying different documentations (detailed description + readme) for content items, depending on the marketplace version.
 * Fixed an issue in **upload** where list items were not uploaded.
 * Added a new validation to **validate** command to verify that *cliName* and *id* keys of the incident field or the indicator field are matches.
 * Added the flag '-x', '--xsiam' to **upload** command to upload XSIAM entities to XSIAM server.

@@ -48,9 +48,8 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
     """
 
     expected_rn = '\n' + '#### Integrations\n' + \
-                  '##### New: Azure Feed\n' + \
+                  '##### New: **Azure Feed**\n' + \
                   '- Azure.CloudIPs Feed Integration. (Available from Cortex XSOAR 5.5.0).\n'
-
     added_files = {join(AZURE_FEED_PACK_PATH, 'Integrations', 'FeedAzureValid', 'FeedAzureValid.yml')}
     rn_path = join(RN_FOLDER, '1_0_1.md')
     runner = CliRunner(mix_stderr=True)
@@ -67,7 +66,6 @@ def test_update_release_notes_new_integration(demisto_client, mocker):
 
     if os.path.exists(rn_path):
         os.remove(rn_path)
-
     result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'FeedAzureValid')])
     assert result.exit_code == 0
     assert os.path.isfile(rn_path)
@@ -95,8 +93,9 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
     """
 
     expected_rn = '\n' + '#### Integrations\n' + \
-                  '##### Azure Feed\n' + \
+                  '- **Azure Feed**\n' + \
                   '- %%UPDATE_RN%%\n'
+
     modified_files = {join(AZURE_FEED_PACK_PATH, 'Integrations', 'FeedAzureValid', 'FeedAzureValid.yml')}
     rn_path = join(RN_FOLDER, '1_0_1.md')
 
@@ -124,6 +123,7 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
 
     with open(rn_path, 'r') as f:
         rn = f.read()
+
     assert expected_rn == rn
 
 
@@ -169,7 +169,7 @@ def test_update_release_notes_incident_field(demisto_client, mocker):
 
     with open(rn_path, 'r') as f:
         rn = f.read()
-    assert expected_rn == rn
+    assert expected_rn in rn
 
 
 def test_update_release_notes_unified_yml_integration(demisto_client, mocker):
@@ -187,7 +187,7 @@ def test_update_release_notes_unified_yml_integration(demisto_client, mocker):
     """
 
     expected_rn = '\n' + '#### Integrations\n' + \
-                  '##### VMware\n' + \
+                  '- **VMware**\n' + \
                   '- %%UPDATE_RN%%\n'
 
     runner = CliRunner(mix_stderr=False)
@@ -281,6 +281,7 @@ def test_update_release_notes_existing(demisto_client, mocker):
     mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value={'currentVersion': '1.0.0'})
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='1.0.0')
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
+
     result = runner.invoke(main, [UPDATE_RN_COMMAND, "-i", join('Packs', 'FeedAzureValid')])
 
     assert result.exit_code == 0
@@ -559,4 +560,4 @@ def test_force_update_release(demisto_client, mocker, repo):
 
     with open(rn_path, 'r') as f:
         rn = f.read()
-    assert '##### ThinkCanary\n- %%UPDATE_RN%%\n' == rn
+    assert '- **ThinkCanary**\n- %%UPDATE_RN%%\n' == rn

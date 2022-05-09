@@ -79,7 +79,7 @@ mapping:
         - type: str
       isfetch:
         type: bool
-      isFetchEvents:
+      isfetchevents:
         type: bool
       longRunning:
         type: bool

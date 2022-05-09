@@ -460,7 +460,7 @@ class PackUniqueFilesValidator(BaseValidator):
             if not self._is_version_format_valid(version):
                 return False
 
-            # Checks if under the `marketplaces` key there is 'marketplacev2'  item in case this pack belongs to xsiam
+            # Checks if under the `marketplaces` key there is 'marketplacev2'  item in case this pack belongs to xsiem
             if tools.does_pack_belong_siam(self.pack_path):
                 if 'marketplacev2' not in metadata['marketplaces']:
                     if self._add_error(Errors.missing_marketplace_v2_in_marketplaces(), self.pack_meta_file):

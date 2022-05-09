@@ -40,6 +40,7 @@ from demisto_sdk.commands.format.update_lists import ListsFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
 from demisto_sdk.commands.format.update_playbook import (PlaybookYMLFormat,
                                                          TestPlaybookYMLFormat)
+from demisto_sdk.commands.format.update_pack_metadata import PackMetaDataFormat
 from demisto_sdk.commands.format.update_pre_process_rules import \
     PreProcessRulesFormat
 from demisto_sdk.commands.format.update_pythonfile import PythonFileFormat
@@ -148,7 +149,7 @@ def format_manager(input: str = None,
     log_list = []
     error_list: List[Tuple[int, int]] = []
     if files:
-        format_excluded_file = excluded_files + ['pack_metadata.json']
+        format_excluded_file = excluded_files
         for file in files:
             file_path = file.replace('\\', '/')
             file_type = find_type(file_path, clear_cache=clear_cache)
@@ -289,7 +290,10 @@ def run_format_on_file(input: str, file_type: str, from_version: str, interactiv
     if file_type != FileType.INCIDENT_FIELD.value and 'id_set_path' in kwargs:
         # relevant only for incidentfield
         del kwargs['id_set_path']
-    update_object = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path, from_version=from_version,
+    if file_type is FileType.METADATA.value:
+        update_object = PackMetaDataFormat(input=input, interactive=interactive, **kwargs)
+    else:
+        update_object = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path, from_version=from_version,
                                                           interactive=interactive, **kwargs)
     format_res, validate_res = update_object.format_file()  # type: ignore
     CONTENT_ENTITY_IDS_TO_UPDATE.update(update_object.updated_ids)

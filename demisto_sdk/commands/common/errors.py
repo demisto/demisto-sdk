@@ -1558,7 +1558,7 @@ class Errors:
     @error_code_decorator
     def missing_marketplace_v2_in_marketplaces():
         return 'This pack belongs to xsiam\n' \
-               'Please insert `marketplacev2` into the `marketplaces` key'
+               'Please insert `marketplacev2` into the marketplaces key'
 
     @staticmethod
     @error_code_decorator

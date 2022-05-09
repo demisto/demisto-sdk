@@ -958,31 +958,25 @@ def get_pack_names_from_files(file_paths, skip_file_types=None):
     return packs
 
 
-def get_all_files_in_dir(path: str) -> list:
-    files: list = []
-    
-    for item in glob.glob(path + '/*'):
-        if os.path.isdir(item):
-            files.extend(get_all_files_in_dir(item))
-        else:
-            files.append(item)
-    return files
-
-
-def get_all_types_of_pack(path: str) -> set:
-    files = get_all_files_in_dir(path)
-    types: set = set()
-    
-    for i in files:
-        if file_type := find_type(i):
-            types.add(file_type)
-    return types
-
-
 def does_pack_belong_siam(path: str) -> bool:
-    types: set = get_all_types_of_pack(path)
-    for i in types:
-        if i.value in SIEM_ONLY_ENTITIES:
+    dirs: list[str] = [f.split('/')[-2] for f in glob.glob(path+'/*/')]
+    dirs_siem_only_entities = [entity+'s' for entity in SIEM_ONLY_ENTITIES]
+    for i in dirs:
+        if i.lower() in dirs_siem_only_entities:
+            return True
+
+    integrations_path = path + '/' + INTEGRATIONS_DIR
+    ymls_integration = get_files_in_dir(integrations_path, ['yml'])
+    for yml_integration in ymls_integration:
+        _dict, _ = get_dict_from_file(yml_integration)
+        if _dict.get('script', {}).get('isfetchevent'):
+            return True
+    
+    playbooks_path = path + '/' + PLAYBOOKS_DIR
+    ymls_playbook = get_files_in_dir(playbooks_path, ['yml'])
+    for yml_playbook in ymls_playbook:
+        _dict, _ = get_dict_from_file(yml_playbook)
+        if 'marketplacev2' in _dict.get('marketplaces'):
             return True
     return False
 
@@ -1260,6 +1254,8 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.XSIAM_REPORT
         elif TRIGGER_DIR in path.parts:
             return FileType.TRIGGER
+        elif PACKS_PACK_META_FILE_NAME in path.parts:
+            return FileType.METADATA
 
     # integration image
     if path.name.endswith('_image.png'):

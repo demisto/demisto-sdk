@@ -717,6 +717,8 @@ class ValidateManager:
             # This is temporarily - need to add a proper contributors validations
             return True
 
+        elif file_type == FileType.METADATA:
+            return self.validate_pack_unique_files()
         else:
             return self.file_type_not_supported(file_path)
         return True

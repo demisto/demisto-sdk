@@ -319,6 +319,7 @@ ERROR_CODE = {
     "playbook_tasks_not_quiet_mode": {'code': "PB115", 'ui_applicable': False, 'related_field': 'tasks'},
     "playbook_tasks_continue_on_error": {'code': "PB116", 'ui_applicable': False, 'related_field': 'tasks'},
     "content_entity_is_not_in_id_set": {'code': "PB117", 'ui_applicable': False, 'related_field': ''},
+    "from_and_to_version_are_incorrect_format": {'code': "PB118", 'ui_applicable': False, 'related_field': ''},
 
     # PP - Pre-Process Rules
     "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
@@ -2081,6 +2082,13 @@ class Errors:
     def taskid_different_from_id(task_key, id_, taskid):
         return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id_}, " \
                f"must be with equal value. "
+
+
+    @staticmethod
+    @error_code_decorator
+    def from_and_to_version_are_incorrect_format(incorrect_key):
+        return f"The format of the {incorrect_key} is incorrect\n" \
+               f"Please fix this so that it is in xx.xx.xx format and each member is a number only"
 
     @staticmethod
     @error_code_decorator

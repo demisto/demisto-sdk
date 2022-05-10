@@ -22,6 +22,7 @@
 * Set the default logger level to `warning`, to avoid unwanted debug logs.
 * The **format** command now validates that default value of checkbox parameters is a string 'true' or 'false'.
 * Fixed an issue where `FileType.PLAYBOOK` would show instead of `Playbook` in readme error messages.
+* Updated the logs shown during the docker build step.
 
 ## 1.6.5
 

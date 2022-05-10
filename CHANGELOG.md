@@ -22,6 +22,7 @@
 * Set the default logger level to `warning`, to avoid unwanted debug logs.
 * The **format** command now validates that default value of checkbox parameters is a string 'true' or 'false'.
 * Fixed an issue where `FileType.PLAYBOOK` would show instead of `Playbook` in readme error messages.
+* Added a new validation to **validate** proper defaultvalue for checkbox fields.
 
 ## 1.6.5
 
@@ -70,7 +71,6 @@ the same as the last release note version.
 * Added support for running tests on XSIAM machines in the **test-content** command.
 * Fixed an issue where the **validate** command did not work properly when deleting non-content items.
 * Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
-* Added a new validation to **validate** proper defaultvalue for checkbox fields.
 
 ## 1.6.3
 

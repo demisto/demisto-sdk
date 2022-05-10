@@ -721,7 +721,7 @@ class ValidateManager:
             return True
 
         elif file_type == FileType.METADATA:
-            return self.validate_pack_unique_files()
+            return self.validte_pack_metadata(file_path, pack_error_ignore_list)
         else:
             return self.file_type_not_supported(file_path)
         return True
@@ -1273,6 +1273,27 @@ class ValidateManager:
         is_valid = job_validator.is_valid_file()
         if not is_valid:
             click.secho(job_validator.get_errors(), fg="bright_red")
+
+        return is_valid
+
+    def validte_pack_metadata(self, file_path: str, pack_error_ignore_list: dict, should_version_raise=False) -> bool:
+
+        pack_path = str(Path(file_path).parent)
+        pack_unique_files_validator = PackUniqueFilesValidator(pack=os.path.basename(pack_path),
+                                                               pack_path=pack_path,
+                                                               ignored_errors=pack_error_ignore_list,
+                                                               print_as_warnings=self.print_ignored_errors,
+                                                               should_version_raise=should_version_raise,
+                                                               validate_dependencies=not self.skip_dependencies,
+                                                               id_set_path=self.id_set_path,
+                                                               private_repo=self.is_external_repo,
+                                                               skip_id_set_creation=self.skip_id_set_creation,
+                                                               prev_ver=self.prev_ver,
+                                                               json_file_path=self.json_file_path,
+                                                               specific_validations=self.specific_validations)
+        is_valid = pack_unique_files_validator.validate_pack_meta_file()
+        if not is_valid:
+            click.secho(pack_unique_files_validator.get_errors(), fg="bright_red")
 
         return is_valid
 

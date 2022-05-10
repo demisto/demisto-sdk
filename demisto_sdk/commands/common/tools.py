@@ -1069,7 +1069,7 @@ def does_pack_belong_siam(path: str) -> bool:
     ymls_playbook = get_files_in_dir(playbooks_path, ['yml'])
     for yml_playbook in ymls_playbook:
         _dict, _ = get_dict_from_file(yml_playbook)
-        if 'marketplacev2' in _dict.get('marketplaces'):
+        if 'marketplacev2' in _dict.get('marketplaces', []):
             return True
     return False
 

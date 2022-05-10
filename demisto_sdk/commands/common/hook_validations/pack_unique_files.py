@@ -383,7 +383,7 @@ class PackUniqueFilesValidator(BaseValidator):
         integration_dir: Path = Path(self.pack_path) / INTEGRATIONS_DIR
         return integration_dir.exists() and not self._is_empty_dir(dir_path=integration_dir)
 
-    @error_codes('PA105,PA106,PA107,PA109,PA110,PA115,PA111,PA129,PA118,PA112')
+    @error_codes('PA105,PA106,PA107,PA109,PA110,PA115,PA111,PA129,PA118,PA112,PA132')
     def _is_pack_meta_file_structure_valid(self):
         """Check if pack_metadata.json structure is json parse-able and valid"""
         try:

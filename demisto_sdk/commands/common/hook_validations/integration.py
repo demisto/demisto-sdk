@@ -1578,6 +1578,9 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
+    def exclude_get_indicators_commands(self, errors_ls):
+        return [error for error in errors_ls if not error.endswith('get-indicators')]
+
     @error_codes('RM110')
     def verify_yml_commands_match_readme(self, is_modified=False):
         """
@@ -1602,6 +1605,7 @@ class IntegrationValidator(ContentEntityValidator):
                                          'get-remote-data', 'update-remote-data', 'get-modified-remote-data', 'update-remote-system']
         missing_commands_from_readme = [
             command for command in yml_commands_list if command not in readme_content and command not in excluded_from_readme_commands]
+        missing_commands_from_readme = self.exclude_get_indicators_commands(missing_commands_from_readme)
         if missing_commands_from_readme:
             error_message, error_code = Errors.missing_commands_from_readme(
                 os.path.basename(self.file_path), missing_commands_from_readme)

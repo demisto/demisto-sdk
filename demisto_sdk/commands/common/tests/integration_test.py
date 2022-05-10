@@ -1410,7 +1410,7 @@ class TestIsFeedParamsExist:
 
     VERIFY_YML_COMMANDS_MATCH_README_DATA = [
         (True, {'script': {'commands': [{'name': 'command_name'}]}}, "## Commands\n### command_name\n somename", True),
-        (True, {'script': {'commands': [{'name': 'get-mapping-fields'}]}}, "", True),
+        (True, {'script': {'commands': [{'name': 'get-mapping-fields'}, {'name': 'test-get-indicators'}]}}, "", True),
         (True, {'script': {'commands': [{'name': 'command_name'}]}}, "", False),
         (False, {'script': {'commands': [{'name': 'command_name'}]}}, "", True),
     ]
@@ -1422,7 +1422,7 @@ class TestIsFeedParamsExist:
         """
         Given
         - Case 1: integration with one command mentioned in both the yml and the readme files that were modified.
-        - Case 2: integration with one command that should be excluded from the readme file and mentioned in the yml
+        - Case 2: integration with two commands that should be excluded from the readme file and mentioned in the yml
          file that were modified.
         - Case 3: integration with one command mentioned only in the yml file that were modified.
         - Case 4: integration with one command mentioned only in the yml file that aren't modified.

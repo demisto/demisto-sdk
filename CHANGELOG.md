@@ -1,5 +1,4 @@
 # Changelog
-
 ## Unreleased
 * Added debug print when excluding item from ID set due to missing dependency.
 * Added a validation to the **validate** command, failing when non-ignorable errors are present in .pack-ignore.
@@ -14,7 +13,7 @@
 * Added the flag '-x', '--xsiam' to **upload** command to upload XSIAM entities to XSIAM server.
 * Fixed the integration field *isFetchEvents* to be in lowercase.
 * Fixed an issue where **validate -i** run after **format -i** on an existing file in the repo instead of **validate -g**.
-* Added the following commands: 'update-remote-data', 'get-modified-remote-data', 'update-remote-system' to be ignored by the **verify_yml_commands_match_readme** validation, the validation will no longer fail if these commands are not in the readme file.
+* Added the following commands: 'update-remote-data', 'get-modified-remote-data', 'update-remote-system' and 'integration-get-indicators' to be ignored by the **verify_yml_commands_match_readme** validation, the validation will no longer fail if these commands are not in the readme file.
 * Updated the release note template to include a uniform format for all items.
 * Added HelloWorldSlim template option for *--template* flag in **demisto-sdk init** command.
 * Fixed an issue where the HelloWorldSlim template in **demisto-sdk init** command had an integration id that was conflicting with HelloWorld integration id.

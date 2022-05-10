@@ -1931,5 +1931,6 @@ def test_alternative_fields(mocker, path, result):
     """
 
     mocker.patch.object(PlaybookValidator, 'is_script_id_valid', return_value=True)
+    mocker.patch.object(ContentEntityValidator, 'validate_readme_exists', return_value=True)
     validate_manager = ValidateManager(id_set_path=ALTERNATIVE_FIELDS_ID_SET_PATH)
     assert result == validate_manager.run_validations_on_file(path, None)

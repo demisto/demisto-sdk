@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Updated the logs shown during the docker build step.
 
 
 ## 1.6.6
@@ -26,7 +27,6 @@
 * The **format** command now validates that default value of checkbox parameters is a string 'true' or 'false'.
 * Fixed an issue where `FileType.PLAYBOOK` would show instead of `Playbook` in readme error messages.
 * Added a new validation to **validate** proper defaultvalue for checkbox fields.
-* Updated the logs shown during the docker build step.
 
 ## 1.6.5
 

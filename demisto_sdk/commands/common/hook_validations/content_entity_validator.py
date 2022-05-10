@@ -53,6 +53,7 @@ class ContentEntityValidator(BaseValidator):
             self.name_does_not_contain_excluded_word(),
             self.is_there_spaces_in_the_end_of_name(),
             self.is_there_spaces_in_the_end_of_id(),
+            self.are_fromversion_and_toversion_in_correct_format(),
         ]
         return all(tests)
 
@@ -250,6 +251,7 @@ class ContentEntityValidator(BaseValidator):
 
         return True
 
+    @error_codes('BA117')
     def are_fromversion_and_toversion_in_correct_format(self) -> bool:
 
         if self.file_path.endswith('.json'):

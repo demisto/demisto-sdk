@@ -27,7 +27,6 @@ class TestPlaybookValidator(ContentEntityValidator):
             self.is_valid_file(validate_rn),
             self._is_id_uuid(),
             self._is_taskid_equals_id(),
-            self.are_fromversion_and_toversion_in_correct_format()
         ]
         return all(test_playbooks_check)
 

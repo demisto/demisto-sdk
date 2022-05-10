@@ -1,7 +1,7 @@
 import os
 
 import pytest
-from mock import patch
+# from mock import patch
 
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
                                                    EXCLUDED_DISPLAY_NAME_WORDS)
@@ -288,18 +288,19 @@ FROM_AND_TO_VERSION_FOR_TEST = [
 
 
 @pytest.mark.parametrize('current_file, file_path, expected_result', FROM_AND_TO_VERSION_FOR_TEST)
-def test_are_fromversion_and_toversion_in_correct_format(current_file, file_path, expected_result):
+def test_are_fromversion_and_toversion_in_correct_format(mocker, current_file, file_path, expected_result):
 
-    with patch.object(StructureValidator, '__init__', lambda a, b: None):
-        structure = StructureValidator('test')
-        structure.is_valid = True
-        structure.scheme_name = 'playbook'
-        structure.file_path = file_path
-        structure.current_file = current_file
-        structure.old_file = None
-        structure.prev_ver = 'master'
-        structure.branch_name = ''
-        structure.specific_validations = None
-        
-        content_entity_validator = ContentEntityValidator(structure)
-        assert content_entity_validator.are_fromversion_and_toversion_in_correct_format() == expected_result
+    mocker.patch.object(StructureValidator, '__init__', lambda a, b: None)
+    structure = StructureValidator(file_path)
+    structure.is_valid = True
+    structure.scheme_name = 'playbook'
+    structure.file_path = file_path
+    structure.current_file = current_file
+    structure.old_file = None
+    structure.prev_ver = 'master'
+    structure.branch_name = ''
+    structure.specific_validations = None
+
+    content_entity_validator = ContentEntityValidator(structure)
+    mocker.patch.object(ContentEntityValidator, 'handle_error', return_value=current_file)
+    assert content_entity_validator.are_fromversion_and_toversion_in_correct_format() == expected_result

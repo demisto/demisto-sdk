@@ -1872,7 +1872,7 @@ types-cryptography = "*"
 
 [[package]]
 name = "types-protobuf"
-version = "3.19.18"
+version = "3.19.19"
 description = "Typing stubs for protobuf"
 category = "main"
 optional = false
@@ -2166,7 +2166,7 @@ build = ["gsutil"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "b6c80bc8af83ac4910d8a17d657e2bdcfd71652eca0e5e2c77e1f7d1b11b2c4d"
+content-hash = "5c19ac30558bd50e0231a11a74092c6a9fa3ffccb3536cd50eb4da4d0d597ebb"
 
 [metadata.files]
 aiohttp = [
@@ -3608,8 +3608,8 @@ types-paramiko = [
     {file = "types_paramiko-2.10.0-py3-none-any.whl", hash = "sha256:f558bb26ff3b085f7282125559927ebf9e1c08410cd4aac5766addbf4d15c8bc"},
 ]
 types-protobuf = [
-    {file = "types-protobuf-3.19.18.tar.gz", hash = "sha256:670b25c1a4f3d650a9d8a009b0cf19a1aa0e7cba044045648b563e825f35d4d3"},
-    {file = "types_protobuf-3.19.18-py3-none-any.whl", hash = "sha256:78d677fefb10e3ea88b8c0fab543833e82cd6eb27e3f71aeda2d5cd9bd503ae1"},
+    {file = "types-protobuf-3.19.19.tar.gz", hash = "sha256:c040828ff12685ec6884d2c985ed05adcbef233620290b830c8a79fbed26c3fa"},
+    {file = "types_protobuf-3.19.19-py3-none-any.whl", hash = "sha256:2f7a000395668178569476b63fc3152d22fd932a27a2e1041d69b9ea4e62aee3"},
 ]
 types-pymysql = [
     {file = "types-PyMySQL-1.0.19.tar.gz", hash = "sha256:f79a1f4d9df4a65db999537f9a47de419be162dfeab3b2c91bcba8bb1a362a65"},

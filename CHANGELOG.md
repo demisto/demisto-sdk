@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+
+
+## 1.6.6
+
 * Added debug print when excluding item from ID set due to missing dependency.
 * Added a validation to the **validate** command, failing when non-ignorable errors are present in .pack-ignore.
 * Fixed an issue where `mdx server` did not close when stopped in mid run.

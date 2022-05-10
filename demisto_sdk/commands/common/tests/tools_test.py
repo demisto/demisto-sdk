@@ -12,19 +12,20 @@ from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION, INTEGRATIONS_DIR, LAYOUTS_DIR, PACKS_DIR,
     PACKS_PACK_IGNORE_FILE_NAME, PLAYBOOKS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, FileType)
+    TEST_PLAYBOOKS_DIR, FileType, MarketplaceVersions)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
                                                             GitCredentials)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
-    LOG_COLORS, arg_to_list, compare_context_path_in_yml_and_readme,
-    filter_files_by_type, filter_files_on_pack, filter_packagify_changes,
-    find_type, get_code_lang, get_current_repo, get_dict_from_file,
-    get_entity_id_by_entity_type, get_entity_name_by_entity_type,
-    get_file_displayed_name, get_file_version_suffix_if_exists,
-    get_files_in_dir, get_ignore_pack_skipped_tests, get_item_marketplaces,
+    LOG_COLORS, MarketplaceTagParser, TagParser, arg_to_list,
+    compare_context_path_in_yml_and_readme, filter_files_by_type,
+    filter_files_on_pack, filter_packagify_changes, find_type, get_code_lang,
+    get_current_repo, get_dict_from_file, get_entity_id_by_entity_type,
+    get_entity_name_by_entity_type, get_file_displayed_name,
+    get_file_version_suffix_if_exists, get_files_in_dir,
+    get_ignore_pack_skipped_tests, get_item_marketplaces,
     get_last_release_version, get_last_remote_release_version,
     get_latest_release_notes_text, get_pack_metadata,
     get_relative_path_from_packs_dir, get_release_note_entries,
@@ -1701,3 +1702,133 @@ class TestMissingAlternativeFields:
         """
         id_set = tools.get_json(ALTERNATIVE_FIELDS_ID_SET_PATH)
         assert result == tools.get_missing_alternative_fields(data, field, id_set)
+
+
+class TestTagParser:
+    def test_no_text_to_remove(self):
+        """
+        Given:
+            - prefix <>
+            - suffix </>
+            - text with no prefix / suffix
+        When:
+            - Calling TagParser.parse()
+        Then:
+            - Text shouldn't change
+        """
+        prefix = '<>'
+        suffix = '</>'
+        text = 'some text'
+        tag_parser = TagParser(prefix, suffix, remove_tag_text=False)
+        for tag in (prefix, suffix):
+            assert tag_parser.parse(text + tag) == text + tag
+
+    def test_remove_text(self):
+        """
+        Given:
+            - prefix <>
+            - suffix </>
+            - text with prefix + suffix
+        When:
+            - Calling TagParser.parse() with text removal
+        Then:
+            - Text shouldn't have tags or their text
+        """
+        prefix = '<>'
+        suffix = '</>'
+        text = 'some text<>more text</>'
+        expected_text = 'some text'
+        tag_parser = TagParser(prefix, suffix, remove_tag_text=True)
+        assert tag_parser.parse(text) == expected_text
+
+    def test_remove_tags_only(self):
+        """
+        Given:
+            - prefix <>
+            - suffix </>
+            - text with prefix + suffix
+        When:
+            - Calling TagParser.parse() without text removal
+        Then:
+            - Text shouldn't have tags, but keep the text
+        """
+        prefix = '<>'
+        suffix = '</>'
+        text = 'some text <>tag text</>'
+        expected_text = 'some text tag text'
+        tag_parser = TagParser(prefix, suffix, remove_tag_text=False)
+        assert tag_parser.parse(text) == expected_text
+
+
+class TestMarketplaceTagParser:
+    MARKETPLACE_TAG_PARSER = MarketplaceTagParser()
+    TEXT_WITH_TAGS = f'''
+### Sections:
+{MARKETPLACE_TAG_PARSER.XSOAR_PREFIX} - XSOAR PARAGRAPH{MARKETPLACE_TAG_PARSER.XSOAR_SUFFIX}
+{MARKETPLACE_TAG_PARSER.XSIAM_PREFIX} - XSIAM PARAGRAPH{MARKETPLACE_TAG_PARSER.XSIAM_SUFFIX}
+### Inline:
+{MARKETPLACE_TAG_PARSER.XSOAR_INLINE_PREFIX}xsoar inline text{MARKETPLACE_TAG_PARSER.XSOAR_INLINE_SUFFIX}
+{MARKETPLACE_TAG_PARSER.XSIAM_INLINE_PREFIX}xsiam inline text{MARKETPLACE_TAG_PARSER.XSIAM_INLINE_SUFFIX}'''
+
+    def test_invalid_marketplace_version(self):
+        """
+        Given:
+            - Invalid marketplace version
+            - Text with XSOAR tags and XSIAM tags
+        When:
+            - Calling MarketplaceTagParser.parse_text()
+        Then:
+            - Remove all tags and their text
+        """
+        self.MARKETPLACE_TAG_PARSER.marketplace = 'invalid'
+        actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
+        assert '### Sections:' in actual
+        assert '### Inline:' in actual
+        assert self.MARKETPLACE_TAG_PARSER.XSOAR_PREFIX not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XSIAM_PREFIX not in actual
+        assert 'XSOAR' not in actual
+        assert 'xsoar' not in actual
+        assert 'XSIAM' not in actual
+        assert 'xsiam' not in actual
+
+    def test_xsoar_marketplace_version(self):
+        """
+        Given:
+            - xsoar marketplace version
+            - Text with XSOAR tags and XSIAM tags
+        When:
+            - Calling MarketplaceTagParser.parse_text()
+        Then:
+            - Remove all XSIAM tags and their text, and keep XSOAR text with tags
+        """
+        self.MARKETPLACE_TAG_PARSER.marketplace = MarketplaceVersions.XSOAR.value
+        actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
+        assert '### Sections:' in actual
+        assert '### Inline:' in actual
+        assert 'XSOAR' in actual
+        assert 'xsoar' in actual
+        assert self.MARKETPLACE_TAG_PARSER.XSOAR_PREFIX not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XSIAM_PREFIX not in actual
+        assert 'XSIAM' not in actual
+        assert 'xsiam' not in actual
+
+    def test_xsiam_marketplace_version(self):
+        """
+        Given:
+            - xsiam marketplace version
+            - Text with XSOAR tags and XSIAM tags
+        When:
+            - Calling MarketplaceTagParser.parse_text()
+        Then:
+            - Remove all XSOAR tags and their text, and keep XSIAM text with tags
+        """
+        self.MARKETPLACE_TAG_PARSER.marketplace = MarketplaceVersions.MarketplaceV2.value
+        actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
+        assert '### Sections:' in actual
+        assert '### Inline:' in actual
+        assert 'XSOAR' not in actual
+        assert 'xsoar' not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XSOAR_PREFIX not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XSIAM_PREFIX not in actual
+        assert 'XSIAM' in actual
+        assert 'xsiam' in actual

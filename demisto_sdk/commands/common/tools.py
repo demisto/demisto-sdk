@@ -72,6 +72,97 @@ class LOG_COLORS:
     WHITE = colorama.Fore.WHITE
 
 
+class TagParser:
+    def __init__(self, tag_prefix: str, tag_suffix: str, remove_tag_text: bool = True):
+        self._tag_prefix = tag_prefix
+        self._tag_suffix = tag_suffix
+        self._pattern = re.compile(fr'{tag_prefix}((.|\s)+?){tag_suffix}')
+        self._remove_tag_text = remove_tag_text
+
+    def parse(self, text: str, remove_tag: Optional[bool] = None) -> str:
+        """
+        Given a prefix and suffix of an expected tag, remove the tag and the text it's wrapping, or just the wrappers
+        Args:
+            text (str): text that may contain given tags.
+            remove_tag (bool): overrides remove_tag_text value. Determines whether to remove the tag
+
+        Returns:
+            Text with no wrapper tags.
+        """
+        if text and 0 <= text.find(self._tag_prefix) < text.find(self._tag_suffix):
+            remove_tag = remove_tag if isinstance(remove_tag, bool) else self._remove_tag_text
+            # collect {orignal_text: text_to_replace}
+            matches = re.finditer(self._pattern, text)
+            replace_map = {}
+            for match in matches:
+                replace_val = '' if remove_tag else match.group(1)
+                replace_map[re.escape(match.group())] = replace_val
+
+            # replace collected text->replacement
+            pattern = re.compile("|".join(replace_map.keys()))
+            text = pattern.sub(lambda m: replace_map[re.escape(m.group(0))], text)
+        return text
+
+
+class MarketplaceTagParser:
+    XSOAR_PREFIX = '<~XSOAR>\n'
+    XSOAR_SUFFIX = '\n</~XSOAR>\n'
+    XSOAR_INLINE_PREFIX = '<~XSOAR>'
+    XSOAR_INLINE_SUFFIX = '</~XSOAR>'
+    XSIAM_PREFIX = '<~XSIAM>\n'
+    XSIAM_SUFFIX = '\n</~XSIAM>\n'
+    XSIAM_INLINE_PREFIX = '<~XSIAM>'
+    XSIAM_INLINE_SUFFIX = '</~XSIAM>'
+
+    def __init__(self, marketplace: str = MarketplaceVersions.XSOAR.value):
+        self.marketplace = marketplace
+        self._xsoar_parser = TagParser(
+            tag_prefix=self.XSOAR_PREFIX,
+            tag_suffix=self.XSOAR_SUFFIX,
+        )
+        self._xsoar_inline_parser = TagParser(
+            tag_prefix=self.XSOAR_INLINE_PREFIX,
+            tag_suffix=self.XSOAR_INLINE_SUFFIX,
+        )
+        self._xsiam_parser = TagParser(
+            tag_prefix=self.XSIAM_PREFIX,
+            tag_suffix=self.XSIAM_SUFFIX,
+        )
+        self._xsiam_inline_parser = TagParser(
+            tag_prefix=self.XSIAM_INLINE_PREFIX,
+            tag_suffix=self.XSIAM_INLINE_SUFFIX,
+        )
+
+    @property
+    def marketplace(self):
+        return self._marketplace
+
+    @marketplace.setter
+    def marketplace(self, marketplace):
+        self._marketplace = marketplace
+        self._should_remove_xsoar_text = marketplace != MarketplaceVersions.XSOAR.value
+        self._should_remove_xsiam_text = marketplace != MarketplaceVersions.MarketplaceV2.value
+
+    def parse_text(self, text):
+        # the order of parse is important. inline should always be checked after paragraph tag
+        # xsoar->xsoar_inline->xsiam->xsiam_inline
+        return self._xsiam_inline_parser.parse(
+            remove_tag=self._should_remove_xsiam_text,
+            text=self._xsiam_parser.parse(
+                remove_tag=self._should_remove_xsiam_text,
+                text=self._xsoar_inline_parser.parse(
+                    remove_tag=self._should_remove_xsoar_text,
+                    text=self._xsoar_parser.parse(
+                        remove_tag=self._should_remove_xsoar_text,
+                        text=text,
+                    ),
+                ),
+            ),
+        )
+
+
+MARKETPLACE_TAG_PARSER = MarketplaceTagParser()
+
 LOG_VERBOSE = False
 
 LAYOUT_CONTAINER_FIELDS = {'details', 'detailsV2', 'edit', 'close', 'mobile', 'quickView', 'indicatorsQuickView',

@@ -18,6 +18,7 @@ class RuleUnifier(YAMLUnifier):
         input: str,
         output: Optional[str] = None,
         force: bool = False,
+        marketplace: Optional[str] = None,
     ):
         self.input_rule = input
 
@@ -25,6 +26,7 @@ class RuleUnifier(YAMLUnifier):
             input=input,
             output=output,
             force=force,
+            marketplace=marketplace
         )
 
         self.dir_name = os.path.basename(os.path.dirname(self.package_path))

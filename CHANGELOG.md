@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Updated the logs shown during the docker build step.
 
 
 ## 1.6.6

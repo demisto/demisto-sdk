@@ -29,14 +29,14 @@ In order to release a new version of `demisto-sdk` to the public follow these st
 ### Release process
 
 1) Click [Here](https://github.com/demisto/demisto-sdk/releases/new) (alternatively: visit the [SDK github page](https://github.com/demisto/demisto-sdk), click on **releases**, and then **Draft a new release**)
-1) Set **Tag** and **Release title** to be `vX.X.X`.
-1) Select the SDK release branch as the **Target**.
-1) In the **Describe the release** text box, paste the `CHANGELOG` contents for this release.
-1) Click **Publish release**. Your release will go through a deploy build (follow it on the [CI website](https://app.circleci.com/pipelines/github/demisto/demisto-sdk). If the build is successful, your release will be public 🎉.
-1) Update [**dev-requirements-py3.txt**](https://github.com/demisto/content/blob/master/dev-requirements-py3.txt) in a new branch, using the newly-released version, e.g `demisto-sdk==x.x.x`.
-1) Wait for the build to finish, or force merge your PR to the Content repository.
-1) Update **CHANGELOG.md** file - change the `# Changelog` header to the release version in the format `# X.X.X` e.g. `# 1.0.0`, and create a new `# Changelog` header at the top of the file.
-1) Announce regarding the SDK release in the **dmst-content-team** slack channel - mention the release version, paste the `CHANGELOG` contents for this release, and add a link to demisto-sdk in pypi.
+2) Set **Tag** and **Release title** to be `vX.X.X`.
+3) Select the SDK release branch as the **Target**.
+4) In the **Describe the release** text box, paste the `CHANGELOG` contents for this release.
+5) Click **Publish release**. Your release will go through a deploy build (follow it on the [CI website](https://app.circleci.com/pipelines/github/demisto/demisto-sdk). If the build is successful, your release will be public 🎉.
+6) Update [**dev-requirements-py3.txt**](https://github.com/demisto/content/blob/master/dev-requirements-py3.txt) in a new branch, using the newly-released version, e.g `demisto-sdk==x.x.x`.
+7) Wait for the build to finish, or force merge your PR to the Content repository.
+8) Update **CHANGELOG.md** file - change the `# Changelog` header to the release version in the format `# X.X.X` e.g. `# 1.0.0`, and create a new `# Changelog` header at the top of the file.
+9) Announce regarding the SDK release in the **dmst-content-team** slack channel - mention the release version, paste the `CHANGELOG` contents for this release, and add a link to demisto-sdk in pypi.
 
 Your release was completed successfully!
 

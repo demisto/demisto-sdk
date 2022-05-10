@@ -1105,7 +1105,7 @@ class IntegrationValidator(ContentEntityValidator):
 
     @error_codes('IN150')
     def is_valid_display_name_for_siem(self) -> bool:
-        is_siem = self.current_file.get('script', {}).get('isFetchEvents')
+        is_siem = self.current_file.get('script', {}).get('isfetchevents')
 
         if is_siem:
             display_name = self.current_file.get('display', '')
@@ -1578,6 +1578,17 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
+    def exclude_get_indicators_commands(self, missing_commands_from_readme):
+        """
+        Delete the get-indicators commands from the command list
+        Args:
+            missing_commands_from_readme (list): a list of all the captured missing from readme commands.
+
+        Return:
+            list: A list with the same commands as the given list except for the get-indicators commands.
+        """
+        return [missing_command for missing_command in missing_commands_from_readme if not missing_command.endswith('get-indicators')]
+
     @error_codes('RM110')
     def verify_yml_commands_match_readme(self, is_modified=False):
         """
@@ -1598,9 +1609,11 @@ class IntegrationValidator(ContentEntityValidator):
             return False
 
         readme_content = readme_path.read_text()
-        excluded_from_readme_commands = ['get-mapping-fields', 'xsoar-search-incidents', 'xsoar-get-incident', 'get-remote-data']
+        excluded_from_readme_commands = ['get-mapping-fields', 'xsoar-search-incidents', 'xsoar-get-incident',
+                                         'get-remote-data', 'update-remote-data', 'get-modified-remote-data', 'update-remote-system']
         missing_commands_from_readme = [
             command for command in yml_commands_list if command not in readme_content and command not in excluded_from_readme_commands]
+        missing_commands_from_readme = self.exclude_get_indicators_commands(missing_commands_from_readme)
         if missing_commands_from_readme:
             error_message, error_code = Errors.missing_commands_from_readme(
                 os.path.basename(self.file_path), missing_commands_from_readme)

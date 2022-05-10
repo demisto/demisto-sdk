@@ -737,11 +737,11 @@ class TestIntegrationValidator:
         validator.current_file = current
         assert validator.is_valid_display_name() is answer
 
-    V2_VALID_SIEM_1 = {"display": "PhishTank v2", "script": {"isFetchEvents": False}}
-    V2_VALID_SIEM_2 = {"display": "PhishTank v2 Event Collector", "script": {"isFetchEvents": True}}
+    V2_VALID_SIEM_1 = {"display": "PhishTank v2", "script": {"isfetchevents": False}}
+    V2_VALID_SIEM_2 = {"display": "PhishTank v2 Event Collector", "script": {"isfetchevents": True}}
     V2_VALID_SIEM_3 = {"display": "PhishTank v2 Event Collector", "script": {}}
     V2_VALID_SIEM_4 = {"display": "PhishTank v2 Event Collector"}
-    V2_INVALID_SIEM = {"display": "PhishTank v2", "script": {"isFetchEvents": True}}
+    V2_INVALID_SIEM = {"display": "PhishTank v2", "script": {"isfetchevents": True}}
 
     V2_SIEM_NAME_INPUTS = [
         (V2_VALID_SIEM_1, True),
@@ -1410,7 +1410,7 @@ class TestIsFeedParamsExist:
 
     VERIFY_YML_COMMANDS_MATCH_README_DATA = [
         (True, {'script': {'commands': [{'name': 'command_name'}]}}, "## Commands\n### command_name\n somename", True),
-        (True, {'script': {'commands': [{'name': 'get-mapping-fields'}]}}, "", True),
+        (True, {'script': {'commands': [{'name': 'get-mapping-fields'}, {'name': 'test-get-indicators'}]}}, "", True),
         (True, {'script': {'commands': [{'name': 'command_name'}]}}, "", False),
         (False, {'script': {'commands': [{'name': 'command_name'}]}}, "", True),
     ]
@@ -1422,7 +1422,7 @@ class TestIsFeedParamsExist:
         """
         Given
         - Case 1: integration with one command mentioned in both the yml and the readme files that were modified.
-        - Case 2: integration with one command that should be excluded from the readme file and mentioned in the yml
+        - Case 2: integration with two commands that should be excluded from the readme file and mentioned in the yml
          file that were modified.
         - Case 3: integration with one command mentioned only in the yml file that were modified.
         - Case 4: integration with one command mentioned only in the yml file that aren't modified.

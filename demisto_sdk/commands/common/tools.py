@@ -2859,7 +2859,7 @@ def get_alternative_id_and_name_from_id_set(item_identifier, item_type, id_set):
         alternative_id, alternative_name, or None, None if there arent any.
 
     """
-    item_info = get_item_from_id_set(item_identifier, id_set.get(FileTypeToIDSetKeys.get(item_type, [])))
+    item_info = get_item_from_id_set(item_identifier, id_set.get(FileTypeToIDSetKeys.get(item_type), []))
     return get_alternative_id_and_name_in_item_info_from_id_set(item_info)
 
 

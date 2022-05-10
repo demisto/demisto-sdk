@@ -2085,7 +2085,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def from_and_to_version_are_incorrect_format(incorrect_key):
+    def from_and_to_version_are_incorrect_format(incorrect_key: str):
         return f"The format of the {incorrect_key} is incorrect\n" \
                f"Please fix this so that it is in xx.xx.xx format and each member is a number only"
 

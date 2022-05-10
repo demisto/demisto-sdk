@@ -39,22 +39,6 @@ class TestPlaybookValidator(ContentEntityValidator):
             self.is_valid_fromversion(),
         ])
 
-    def are_fromversion_and_toversion_in_correct_format(self) -> bool:
-
-        version_structure = re.compile(FROM_TO_VERSION_REGEX)
-        if not version_structure.fullmatch(self.current_file.get('fromversion', '00.00.00')):
-            error_message, error_code = Errors.from_and_to_version_are_incorrect_format(
-                'fromversion')
-            self.handle_error(error_message, error_code, file_path=self.file_path)
-            return False
-        if not version_structure.fullmatch(self.current_file.get('toversion', '00.00.00')):
-            error_message, error_code = Errors.from_and_to_version_are_incorrect_format(
-                'tovesion')
-            self.handle_error(error_message, error_code, file_path=self.file_path)
-            return False
-
-        return True
-
     def is_valid_version(self):  # type: () -> bool
         """Check whether the test playbook version is equal to DEFAULT_VERSION (see base_validator class)
 

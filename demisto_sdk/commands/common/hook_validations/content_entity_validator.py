@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, DEFAULT_CONTENT_ITEM_FROM_VERSION,
     ENTITY_NAME_SEPARATORS, EXCLUDED_DISPLAY_NAME_WORDS, FEATURE_BRANCHES,
     GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION, OLDEST_SUPPORTED_VERSION,
-    FileType)
+    FROM_TO_VERSION_REGEX, FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -246,6 +246,30 @@ class ContentEntityValidator(BaseValidator):
         # also skip if the file in question is reputations.json
         if any((feature_branch_name in self.prev_ver or feature_branch_name in self.branch_name)
                for feature_branch_name in FEATURE_BRANCHES) or self.file_path.endswith('reputations.json'):
+            return False
+
+        return True
+
+    def are_fromversion_and_toversion_in_correct_format(self) -> bool:
+
+        if self.file_path.endswith('.json'):
+            from_version_field = 'fromVersion'
+            to_version_field = 'toVersion'
+        elif self.file_path.endswith('.yml'):
+            from_version_field = 'fromversion'
+            to_version_field = 'toversion'
+        else:
+            return True
+
+        if not FROM_TO_VERSION_REGEX.fullmatch(self.current_file.get(from_version_field, '00.00.00')):
+            error_message, error_code = Errors.from_and_to_version_are_incorrect_format(
+                'fromversion')
+            self.handle_error(error_message, error_code, file_path=self.file_path)
+            return False
+        if not FROM_TO_VERSION_REGEX.fullmatch(self.current_file.get(to_version_field, '00.00.00')):
+            error_message, error_code = Errors.from_and_to_version_are_incorrect_format(
+                'tovesion')
+            self.handle_error(error_message, error_code, file_path=self.file_path)
             return False
 
         return True

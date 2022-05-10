@@ -12,7 +12,8 @@ from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
                                                get_max_version,
                                                get_remote_file,
-                                               is_file_from_content_repo)
+                                               is_file_from_content_repo,
+                                               open_id_set_file, check_and_add_missing_alternative_fields)
 from demisto_sdk.commands.format.format_constants import (DEFAULT_VERSION,
                                                           ERROR_RETURN_CODE,
                                                           OLD_FILE_TYPES,

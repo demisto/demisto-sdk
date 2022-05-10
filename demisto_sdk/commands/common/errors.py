@@ -2330,10 +2330,10 @@ class Errors:
     @error_code_decorator
     def missing_alternative_fields_nested_items():
         return 'Alternative fields of nested items were found and are missing from this file, ' \
-               'please add them to the file.'  # TODO: improve msg
+               'please add them to the file.'
 
     @staticmethod
     @error_code_decorator
     def missing_alternative_fields_in_using_items(using_id, item_id):
         return f'Item with id {using_id} is using the item with id {item_id} and it is missing its alternative ' \
-               f'fields. Please add the missing alternative fields to the file.'  # TODO: improve msg
+               f'fields. Please add the missing alternative fields to the file.'

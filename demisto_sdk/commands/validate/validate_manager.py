@@ -2004,8 +2004,6 @@ class ValidateManager:
                     using_data = json.loads(file.read()) if path.endswith('json') else yaml.load(file)
                     file_type = find_type(path)
                     if check_and_add_missing_alternative_fields(using_data, file_type, self.id_set_file):
-                        # TODO: in the above condition function, there is duplicity with checking if the items have an
-                        #  alternative field (since we got here cause we already checked that...)
                         error_message, error_code = \
                             Errors.missing_alternative_fields_in_using_items(get_id_from_item_data(using_data), item_id)
                         self.handle_error(error_message, error_code, file_path=path,

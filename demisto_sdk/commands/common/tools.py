@@ -2741,7 +2741,7 @@ def get_missing_alternative_fields(data, field, id_set):
         # this means the field is of a script:
         field_type = FileType.SCRIPT
 
-    item_info = get_item_from_id_set(data.get(field), id_set.get(FileTypeToIDSetKeys[field_type]))
+    item_info = get_item_from_id_set(data.get(field), id_set.get(FileTypeToIDSetKeys.get(field_type)))
     item_id_x2, item_name_x2 = get_alternative_id_and_name_in_item_info_from_id_set(item_info)
     if item_info:
         # the field represented an id
@@ -2768,7 +2768,7 @@ def get_alternative_id_and_name_from_id_set(item_identifier, item_type, id_set):
         alternative_id, alternative_name, or None, None if there arent any.
 
     """
-    item_info = get_item_from_id_set(item_identifier, id_set.get(FileTypeToIDSetKeys[item_type]))
+    item_info = get_item_from_id_set(item_identifier, id_set.get(FileTypeToIDSetKeys.get(item_type)))
     return get_alternative_id_and_name_in_item_info_from_id_set(item_info)
 
 
@@ -2815,7 +2815,7 @@ def get_all_using_paths(item_id: str, item_type: FileType, id_set: dict):
     }
     using_mapping = using_key_mappings.get(item_type, {})
     for using_item_type, using_item_header in using_mapping.items():
-        id_set_section = id_set[FileTypeToIDSetKeys[using_item_type]]
+        id_set_section = id_set[FileTypeToIDSetKeys.get(using_item_type)]
         for using_item in id_set_section:
             using_item_info = list(using_item.values())[0]
             used_items = using_item_info.get(using_item_header, [])

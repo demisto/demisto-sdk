@@ -99,14 +99,12 @@ from demisto_sdk.commands.common.hook_validations.xsiam_report import \
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import \
     XSOARConfigJsonValidator
 from demisto_sdk.commands.common.tools import (
-    check_and_add_missing_alternative_fields, find_type, get_all_using_paths,
-    get_alternative_id_and_name_from_id_set, get_api_module_ids,
-    get_api_module_integrations_set, get_id_from_item_data,
-    _get_file_id, find_type, get_api_module_ids,
-    get_api_module_integrations_set, get_content_path, get_file,
-    get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
-    get_relative_path_from_packs_dir, get_yaml, open_id_set_file,
-    run_command_os)
+    _get_file_id, check_and_add_missing_alternative_fields, find_type,
+    get_all_using_paths, get_alternative_id_and_name_from_id_set,
+    get_api_module_ids, get_api_module_integrations_set, get_content_path,
+    get_file, get_id_from_item_data, get_pack_ignore_file_path, get_pack_name,
+    get_pack_names_from_files, get_relative_path_from_packs_dir, get_yaml,
+    open_id_set_file, run_command_os)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 yaml = YAML_Handler()

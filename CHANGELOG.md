@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Updated the logs shown during the docker build step.
+* Added support in ***validate*** and ***format*** for handling entities with alternative names.
 
 
 ## 1.6.6

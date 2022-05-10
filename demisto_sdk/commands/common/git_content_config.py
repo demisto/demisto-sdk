@@ -224,9 +224,10 @@ class GitContentConfig:
                 gitlab_hostname == GitContentConfig.GITHUB_USER_CONTENT or \
                 gitlab_hostname == 'github.com':
             return None
-        if (gitlab_hostname, project_id) in GitContentConfig.ALLOWED_REPOS:
+        if project_id and (gitlab_hostname, project_id) in GitContentConfig.ALLOWED_REPOS:
             return gitlab_hostname, project_id
         try:
+            res = None
             if project_id:
                 res = requests.get(f"https://{gitlab_hostname}/api/v4/projects/{project_id}",
                                    headers={'PRIVATE-TOKEN': self.credentials.gitlab_token},
@@ -249,7 +250,9 @@ class GitContentConfig:
                 if gitlab_id is None:
                     return None
                 return gitlab_hostname, gitlab_id
-            logger.debug(f'Could not access GitLab api in `_search_gitlab_repo`. status code={res.status_code}. reason={res.reason}')
+            logger.debug('Could not access GitLab api in `_search_gitlab_repo`.')
+            if res:
+                logger.debug(f'status code={res.status_code}. reason={res.reason}')
             return None
 
         except (requests.exceptions.ConnectionError, json.JSONDecodeError, AssertionError) as e:

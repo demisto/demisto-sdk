@@ -1968,6 +1968,7 @@ class ValidateManager:
             return is_valid_as_deprecated
         return None
 
+    @error_codes('AF100,AF101')
     def validate_alternative_fields(self, item_data: dict, file_type: FileType):
         r"""
             Validate the use of alternative fields related to this item. this inclueds:

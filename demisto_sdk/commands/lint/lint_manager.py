@@ -179,7 +179,7 @@ class LintManager:
         logger.debug('creating docker client from env')
         docker_client: docker.DockerClient = docker.from_env()
         try:
-            logger.debug('pinging from within docker')
+            logger.debug('pinging docker deamon')
             docker_client.ping()
         except (requests.exceptions.ConnectionError, urllib3.exceptions.ProtocolError, docker.errors.APIError) as ex:
             if os.getenv("CI") and os.getenv("CIRCLE_PROJECT_REPONAME") == "content":

@@ -287,7 +287,7 @@ def run_format_on_file(input: str, file_type: str, from_version: str, interactiv
         # adding tests is relevant only for integrations, playbooks and scripts.
         del kwargs['add_tests']
     if file_type not in (
-        FileType.INCIDENT_FIELD.value, FileType.LAYOUTS_CONTAINER.value, FileType.LAYOUT.value
+        FileType.INCIDENT_FIELD.value, FileType.LAYOUTS_CONTAINER.value, FileType.LAYOUT.value, FileType.MAPPER.value
     ) and 'id_set_path' in kwargs:
         # relevant only for incidentfield/layouts/mappers
         del kwargs['id_set_path']

@@ -60,28 +60,40 @@ class MapperJSONFormat(BaseUpdateJSON):
         if not self.data.get('mapping'):
             self.data['mapping'] = {}
 
+    def extract_content_fields(self, content_fields, built_in_fields):
+        """
+        Extract fields which only exist in the id set file.
+        """
+        def _extract_content_fields(field):
+            inc_name, inc_info = field
+            # incoming mapper
+            if self.data.get('type', {}) == "mapping-incoming":
+                if inc_name in content_fields or inc_name.lower() in built_in_fields:
+                    return True
+            # outgoing mapper
+            if self.data.get('type', {}) == "mapping-outgoing":
+                # for inc timer type: "field.StartDate, and for using filters: "simple": "".
+                if simple := inc_info.get('simple'):
+                    if '.' in simple:
+                        simple = simple.split('.')[0]
+                    if simple in content_fields or simple in built_in_fields:
+                        return True
+            return False
+
+        return _extract_content_fields
+
     def remove_inexistent_fields(self):
         """
         Remove in-existent fields from a mapper.
         """
-        content_incident_fields = get_all_incident_and_indicator_fields_from_id_set(self.id_set_file, 'mapper')
+        content_fields = get_all_incident_and_indicator_fields_from_id_set(self.id_set_file, 'mapper')
         built_in_fields = [field.lower() for field in BUILT_IN_FIELDS] + LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
 
         mapper = self.data.get('mapping', {})
-        for key, value in mapper.items():
-            incident_fields = value.get('internalMapping', {})
-            existing_incident_fields = {}
-            for inc_name, inc_info in incident_fields.items():
-                # for incoming mapper
-                if self.data.get('type', {}) == "mapping-incoming":
-                    if inc_name not in content_incident_fields and inc_name.lower() not in built_in_fields:
-                        existing_incident_fields[inc_name] = inc_info
-
-                # for outgoing mapper
-                if self.data.get('type', {}) == "mapping-outgoing":
-                    # for inc timer type: "field.StartDate, and for using filters: "simple": "".
-                    if simple := inc_info.get('simple'):
-                        if simple not in content_incident_fields and simple not in built_in_fields and \
-                                simple.split('.')[0] not in content_incident_fields:
-                            existing_incident_fields[inc_name] = inc_info
-            value['internalMapping'] = existing_incident_fields
+        for mapping_name in mapper.values():
+            mapping_name['internalMapping'] = dict(
+                filter(
+                    self.extract_content_fields(content_fields=content_fields, built_in_fields=built_in_fields),
+                    mapping_name.get('internalMapping', {}).items()
+                )
+            )

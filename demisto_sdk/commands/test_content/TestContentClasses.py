@@ -180,7 +180,6 @@ class TestPlaybook:
         self.integrations_to_lock = [
             integration for integration in self.integrations if
             integration.name not in self.build_context.conf.parallel_integrations]
-        self.error = ''
 
     def __str__(self):
         return f'"{self.configuration.playbook_id}"'
@@ -1413,7 +1412,6 @@ class TestContext:
         self.incident_id: Optional[str] = None
         self.test_docker_images: Set[str] = set()
         self.client: DefaultApi = client
-        self.error = ''
         if IS_XSIAM:
             self.tunnel_command = ''
         else:
@@ -1470,24 +1468,15 @@ class TestContext:
             if res and int(res[1]) == 200:
                 resp_json = ast.literal_eval(res[0])
                 entries = resp_json['entries']
-                full_error = ''
-                log = f'Playbook {self.playbook} has failed:'
-                self.build_context.logging_module.error(log)
-                full_error += log + '\n'
+                self.build_context.logging_module.error(f'Playbook {self.playbook} has failed:')
                 for entry in entries:
                     if entry['type'] == ENTRY_TYPE_ERROR and entry['parentContent']:
-                        log = f'- Task ID: {entry["taskId"]}'
-                        self.build_context.logging_module.error(log)
-                        full_error += log + '\n'
+                        self.build_context.logging_module.error(f'- Task ID: {entry["taskId"]}')
                         # Checks for passwords and replaces them with "******"
                         parent_content = re.sub(
                             r' (P|p)assword="[^";]*"', ' password=******', entry['parentContent'])
-                        command_log = f'  Command: {parent_content}'
-                        self.build_context.logging_module.error(command_log)
-                        body_log = f'  Body:\n{entry["contents"]}'
-                        self.build_context.logging_module.error(body_log)
-                        full_error += command_log + '\n' + body_log
-                self.error = full_error
+                        self.build_context.logging_module.error(f'  Command: {parent_content}')
+                        self.build_context.logging_module.error(f'  Body:\n{entry["contents"]}')
             else:
                 self.build_context.logging_module.error(
                     f'Failed getting entries for investigation: {self.incident_id}. Res: {res}')
@@ -1689,7 +1678,6 @@ class TestContext:
             'failed_stage': failed_stage,
             'ssh_tunnel': self.tunnel_command,
             'server_url': self.client.api_client.configuration.host,
-            'error': self.error,
         })
 
     @staticmethod

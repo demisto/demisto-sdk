@@ -2,6 +2,7 @@
 import concurrent.futures
 import logging
 import os
+import platform
 import re
 import sys
 import textwrap
@@ -12,6 +13,7 @@ import docker.errors
 import git
 import requests.exceptions
 import urllib3.exceptions
+from packaging.version import Version
 from wcmatch.pathlib import Path, PosixPath
 
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
@@ -174,8 +176,10 @@ class LintManager:
             logger.error(f"demisto-sdk-unable to get mandatory test-modules demisto-mock.py etc {e}")
             sys.exit(1)
         # Validating docker engine connection
+        logger.debug('creating docker client from env')
         docker_client: docker.DockerClient = docker.from_env()
         try:
+            logger.debug('pinging docker daemon')
             docker_client.ping()
         except (requests.exceptions.ConnectionError, urllib3.exceptions.ProtocolError, docker.errors.APIError) as ex:
             if os.getenv("CI") and os.getenv("CIRCLE_PROJECT_REPONAME") == "content":
@@ -184,7 +188,7 @@ class LintManager:
             facts["docker_engine"] = False
             print_warning("Can't communicate with Docker daemon - check your docker Engine is ON - Skipping lint, "
                           "test which require docker!")
-            logger.info("demisto-sdk-Can't communicate with Docker daemon")
+            logger.info("can not communicate with Docker daemon")
         logger.debug("Docker daemon test passed")
         return facts
 
@@ -374,8 +378,11 @@ class LintManager:
                                                    test_xml=test_xml,
                                                    no_coverage=no_coverage))
 
-                for future in concurrent.futures.as_completed(results):
+                logger.info('Waiting for futures to complete')
+                for i, future in enumerate(concurrent.futures.as_completed(results)):
+                    logger.debug(f'checking output of future {i=}')
                     pkg_status = future.result()
+                    logger.info(f'Got lint results for {pkg_status["pkg"]}')
                     pkgs_status[pkg_status["pkg"]] = pkg_status
                     if pkg_status["exit_code"]:
                         for check, code in EXIT_CODES.items():
@@ -391,20 +398,26 @@ class LintManager:
                             return_warning_code += pkg_status["warning_code"]
                     if pkg_status["pack_type"] not in pkgs_type:
                         pkgs_type.append(pkg_status["pack_type"])
+                logger.info('Finished all futures')
                 return return_exit_code, return_warning_code
         except KeyboardInterrupt:
-            print_warning("Stop demisto-sdk lint - Due to 'Ctrl C' signal")
-            try:
-                executor.shutdown(wait=False)
-            except Exception:
-                pass
+            msg = "Stop demisto-sdk lint - Due to 'Ctrl C' signal"
+            print_warning(msg)
+            logger.warning(msg)
+            executor.shutdown(wait=False)  # If keyboard interrupt no need to wait to clean resources
             return 1, 0
         except Exception as e:
-            print_warning(f"Stop demisto-sdk lint - Due to Exception {e}")
-            try:
-                executor.shutdown(wait=False)
-            except Exception:
-                pass
+            msg = f"Stop demisto-sdk lint - Due to Exception {e}"
+            print_warning(msg)
+            logger.error(msg)
+
+            if Version(platform.python_version()) > Version('3.9'):
+                executor.shutdown(wait=True, cancel_futures=True)  # type: ignore[call-arg]
+            else:
+                logger.info('Using Python under 3.8, we will cancel futures manually.')
+                executor.shutdown(wait=True)  # Note that `cancel_futures` not supported in python 3.8
+                for res in results:
+                    res.cancel()
             return 1, 0
 
     def run(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
@@ -472,24 +485,26 @@ class LintManager:
                                                no_vulture=no_vulture, no_xsoar_linter=no_xsoar_linter,
                                                no_pylint=no_pylint, no_test=no_test, no_pwsh_analyze=no_pwsh_analyze,
                                                no_pwsh_test=no_pwsh_test, docker_engine=self._facts["docker_engine"])
-        return_exit_code, return_warning_code = self.execute_all_packages(parallel=parallel,
-                                                                          no_flake8=no_flake8,
-                                                                          no_xsoar_linter=no_xsoar_linter,
-                                                                          no_bandit=no_bandit,
-                                                                          no_mypy=no_mypy,
-                                                                          no_pylint=no_pylint,
-                                                                          no_coverage=no_coverage,
-                                                                          no_vulture=no_vulture,
-                                                                          no_test=no_test,
-                                                                          no_pwsh_test=no_pwsh_test,
-                                                                          keep_container=keep_container,
-                                                                          test_xml=test_xml,
-                                                                          docker_timeout=docker_timeout,
-                                                                          no_pwsh_analyze=no_pwsh_analyze,
-                                                                          lint_status=lint_status,
-                                                                          pkgs_status=pkgs_status,
-                                                                          pkgs_type=pkgs_type,
-                                                                          )
+
+        return_exit_code, return_warning_code = self.execute_all_packages(
+            parallel=parallel,
+            no_flake8=no_flake8,
+            no_xsoar_linter=no_xsoar_linter,
+            no_bandit=no_bandit,
+            no_mypy=no_mypy,
+            no_pylint=no_pylint,
+            no_coverage=no_coverage,
+            no_vulture=no_vulture,
+            no_test=no_test,
+            no_pwsh_test=no_pwsh_test,
+            keep_container=keep_container,
+            test_xml=test_xml,
+            docker_timeout=docker_timeout,
+            no_pwsh_analyze=no_pwsh_analyze,
+            lint_status=lint_status,
+            pkgs_status=pkgs_status,
+            pkgs_type=pkgs_type,
+        )
 
         if time_measurements_dir:
             report_time_measurements(group_name='lint', time_measurements_dir=time_measurements_dir)

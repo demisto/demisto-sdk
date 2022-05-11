@@ -89,7 +89,7 @@ class TestIDSetCreator:
                          'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes', 'Layouts', 'Reports',
                          'Widgets', 'Mappers', 'Packs', 'GenericTypes', 'GenericFields', 'GenericModules',
                          'GenericDefinitions', 'Lists', 'Jobs', 'ParsingRules', 'ModelingRules',
-                         'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers'}
+                         'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'Wizards'}
 
         assert keys == expected_keys, f'missing keys: {expected_keys.difference(keys)}\n' \
                                       f' unexpected keys: {keys.difference(expected_keys)}'

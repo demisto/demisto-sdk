@@ -1693,7 +1693,8 @@ class PackDependencies:
                                      ('generic_modules', 'GenericModules'),
                                      ('generic_definitions', 'GenericDefinitions'),
                                      ('lists', 'Lists'),
-                                     ('jobs', 'Jobs')):
+                                     ('jobs', 'Jobs'),
+                                     ('wizards', 'Wizards')):
             if id_set_key not in id_set:
                 raise RuntimeError(
                     "\n".join((f"Error: the {id_set_key} content type is missing from the id_set.",
@@ -1884,7 +1885,8 @@ class PackDependencies:
                              **mappers_items_dependencies, **dashboards_items_dependencies,
                              **reports_items_dependencies,
                              **generic_types_items_dependencies, **generic_fields_items_dependencies,
-                             **generic_modules_items_dependencies, **jobs_items_dependencies}
+                             **generic_modules_items_dependencies, **jobs_items_dependencies,
+                             }
 
         return pack_dependencies, items_depenencies
 
@@ -2644,6 +2646,9 @@ def calculate_dependencies(excluded_items: dict, id_set: dict, marketplace: str)
                 if entity_dependent_on in excluded_pack_entities_set:  # check the type and name of the entity
                     dependent_items_to_exclude_from_id_set.setdefault(mandatory_pack_name, set()).update(
                         dependent_entities_list)
+
+                    # for debug purposes
+                    print(f'Removing {dependent_entities_list} due to {entity_dependent_on}')
 
     return dependent_items_to_exclude_from_id_set
 

@@ -1,7 +1,7 @@
 # Changelog
 ## Unreleased
 * Updated the logs shown during the docker build step.
-
+* Added the 'integration-get-indicators' commands to be ignored by the **verify_yml_commands_match_readme** validation, the validation will no longer fail if these 
 
 ## 1.6.6
 

@@ -2,13 +2,15 @@ from typing import Tuple
 
 import click
 
+from demisto_sdk.commands.common.constants import \
+    LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
+from demisto_sdk.commands.common.tools import \
+    get_all_incident_and_indicator_fields_from_id_set
+from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-from demisto_sdk.commands.common.tools import get_all_incident_and_indicator_fields_from_id_set
-from demisto_sdk.commands.common.constants import LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
-from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 
 
 class MapperJSONFormat(BaseUpdateJSON):

@@ -6,20 +6,17 @@ from typing import Tuple
 import click
 
 from demisto_sdk.commands.common.constants import (
-    FileType,
-    LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
-)
+    LAYOUT_AND_MAPPER_BUILT_IN_FIELDS, FileType)
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (
-    LOG_COLORS, print_color, print_error,
-    remove_copy_and_dev_suffixes_from_str,
-    get_all_incident_and_indicator_fields_from_id_set, LAYOUT_CONTAINER_FIELDS
-)
+    LAYOUT_CONTAINER_FIELDS, LOG_COLORS,
+    get_all_incident_and_indicator_fields_from_id_set, print_color,
+    print_error, remove_copy_and_dev_suffixes_from_str)
+from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_FROMVERSION,
     SKIP_RETURN_CODE, SUCCESS_RETURN_CODE, VERSION_6_0_0)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
-from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 
 yaml = YAML_Handler()
 

@@ -75,7 +75,7 @@ class BaseUpdate:
         except Exception:
             raise Exception(F'Provided file {self.source_file} is not a valid file.')
         self.from_version_key = self.set_from_version_key_name()
-        self.id_set_file, _ = get_dict_from_file(path=kwargs.get('id_set_path'))
+        self.id_set_file, _ = get_dict_from_file(path=kwargs.get('id_set_path')) # type: ignore[arg-type]
 
     def set_output_file_path(self, output_file_path) -> str:
         """Creates and format the output file name according to user input.

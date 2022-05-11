@@ -1,5 +1,6 @@
 # Changelog
 ## Unreleased
+* Added support in the **format** command to remove in-existent incident/indicator fields from *layouts/mappers*
 * Updated the logs shown during the docker build step.
 
 

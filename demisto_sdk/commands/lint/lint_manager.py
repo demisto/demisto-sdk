@@ -181,8 +181,10 @@ class LintManager:
             logger.error(f"demisto-sdk-unable to get mandatory test-modules demisto-mock.py etc {e}")
             sys.exit(1)
         # Validating docker engine connection
+        logger.debug('creating docker client from env')
         docker_client: docker.DockerClient = docker.from_env()
         try:
+            logger.debug('pinging docker daemon')
             docker_client.ping()
         except (requests.exceptions.ConnectionError, urllib3.exceptions.ProtocolError, docker.errors.APIError) as ex:
             if os.getenv("CI") and os.getenv("CIRCLE_PROJECT_REPONAME") == "content":
@@ -191,7 +193,7 @@ class LintManager:
             facts["docker_engine"] = False
             print_warning("Can't communicate with Docker daemon - check your docker Engine is ON - Skipping lint, "
                           "test which require docker!")
-            logger.info("demisto-sdk-Can't communicate with Docker daemon")
+            logger.info("can not communicate with Docker daemon")
         logger.debug("Docker daemon test passed")
         return facts
 

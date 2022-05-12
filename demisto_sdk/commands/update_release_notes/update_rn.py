@@ -578,7 +578,7 @@ class UpdateRN:
             else:
                 rn_desc += f'- {text or "%%UPDATE_RN%%"}'
 
-            if from_version and from_version != '' and _type not in SIEM_ONLY_ENTITIES:
+            if from_version and from_version != '' and _type and _type.value not in SIEM_ONLY_ENTITIES:
                 # for now, we decided not to add this description for XSIAM entities (issue 40020)
                 rn_desc += f' (Available from Cortex XSOAR {from_version}).\n'
 

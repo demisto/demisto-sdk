@@ -182,7 +182,7 @@ class GitContentConfig:
                 self.current_repository = github_repo
 
     @staticmethod
-    @lru_cache(128)
+    @lru_cache
     def _search_github_repo(github_hostname: str, repo_name: str) -> Optional[Tuple[str, str]]:
         """
         Searches the github API for the repo
@@ -196,8 +196,7 @@ class GitContentConfig:
         """
         if not github_hostname or not repo_name:
             return None
-        api_host = github_hostname if github_hostname != GitContentConfig.GITHUB_USER_CONTENT else GitContentConfig.GITHUB
-        api_host = api_host.lower()
+        api_host = GitContentConfig.USERCONTENT_TO_GITHUB.get(github_hostname, github_hostname).lower()
         github_hostname = GitContentConfig.GITHUB_TO_USERCONTENT.get(github_hostname, github_hostname)
         if (api_host, repo_name) in GitContentConfig.ALLOWED_REPOS:
             return github_hostname, repo_name
@@ -226,7 +225,7 @@ class GitContentConfig:
             return None
 
     @staticmethod
-    @lru_cache(maxsize=128)
+    @lru_cache
     def _search_gitlab_repo(gitlab_hostname: str, repo_name: Optional[str] = None,
                             project_id: Optional[int] = None) -> \
             Optional[Tuple[str, int]]:

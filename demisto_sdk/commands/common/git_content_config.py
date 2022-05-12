@@ -85,8 +85,10 @@ class GitContentConfig:
         if project_id:
             git_provider = GitProvider.GitLab
             self.project_id = int(project_id)
-        hostname = str(urlparse(repo_hostname).hostname)
-        self.repo_hostname = hostname or repo_hostname or str(os.getenv(GitContentConfig.ENV_REPO_HOSTNAME_NAME))
+        hostname = urlparse(repo_hostname).hostname
+        if hostname is not None:
+            hostname = str(hostname)
+        self.repo_hostname = hostname or repo_hostname or os.getenv(GitContentConfig.ENV_REPO_HOSTNAME_NAME)
         self.git_provider = git_provider
         if not self.repo_hostname:
             self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT if git_provider == GitProvider.GitHub else GitContentConfig.GITLAB

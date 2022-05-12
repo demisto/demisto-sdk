@@ -9,7 +9,7 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "cwd": "${env:CONTENT}", // Predefine the CONTENT variable in your environment first!
-            "env":{"PYTHONPATH": "${workspaceFolder}"},
+            "env":{"PYTHONPATH": "${workspaceFolder}${pathSeparator}${env:PYTHONPATH}"},
             "args": [
                 "validate",
                 "-i",

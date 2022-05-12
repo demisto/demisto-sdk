@@ -221,7 +221,7 @@ class GitContentConfig:
             logger.debug(
                 f'Could not access GitHub api in `_search_github_repo`. status code={r.status_code}, reason={r.reason}')
             return None
-        except requests.exceptions.ConnectionError as e:
+        except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout) as e:
             logger.debug(str(e), exc_info=True)
             return None
 
@@ -278,6 +278,6 @@ class GitContentConfig:
                 logger.debug(f'status code={res.status_code}. reason={res.reason}')
             return None
 
-        except (requests.exceptions.ConnectionError, json.JSONDecodeError, AssertionError) as e:
+        except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout, json.JSONDecodeError, AssertionError) as e:
             logger.debug(str(e), exc_info=True)
             return None

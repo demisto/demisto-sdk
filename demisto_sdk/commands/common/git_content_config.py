@@ -86,13 +86,11 @@ class GitContentConfig:
             git_provider = GitProvider.GitLab
             self.project_id = int(project_id)
         hostname = urlparse(repo_hostname).hostname
-        if hostname is not None:
-            hostname = str(hostname)  # it could be `bytes`
         self.repo_hostname = hostname or repo_hostname or os.getenv(GitContentConfig.ENV_REPO_HOSTNAME_NAME)
         self.git_provider = git_provider
         if not self.repo_hostname:
             self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT if git_provider == GitProvider.GitHub else GitContentConfig.GITLAB
-        self.repo_hostname = GitContentConfig.GITHUB_TO_USERCONTENT.get(self.repo_hostname, self.repo_hostname)
+        self.repo_hostname = GitContentConfig.GITHUB_TO_USERCONTENT.get(self.repo_hostname, self.repo_hostname)  # type: ignore[arg-type]
 
         parsed_git = GitContentConfig._get_repository_properties()
 
@@ -108,7 +106,7 @@ class GitContentConfig:
                 hostname = parsed_git.host.split('@')[1]  # to get proper hostname, without the username or tokens
         if (self.repo_hostname, self.current_repository) not in GitContentConfig.ALLOWED_REPOS or \
            (self.repo_hostname, self.project_id) not in GitContentConfig.ALLOWED_REPOS:
-            self._set_repo_config(hostname, organization, repo_name, project_id)
+            self._set_repo_config(hostname, organization, repo_name, project_id)  # type: ignore[arg-type]
 
         if self.git_provider == GitProvider.GitHub:
             # DO NOT USE os.path.join on URLs, it may cause errors

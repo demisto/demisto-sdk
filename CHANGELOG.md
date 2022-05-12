@@ -1,6 +1,7 @@
 # Changelog
 ## Unreleased
 * Updated the logs shown during the docker build step.
+* Removed duplicate identifiers for XSIAM integrations.
 
 
 ## 1.6.6

@@ -57,6 +57,7 @@ ERROR_CODE = {
     "file_cannot_be_deleted": {'code': "BA115", 'ui_applicable': False, 'related_field': ''},
     "cli_name_and_id_do_not_match": {'code': "BA116", 'ui_applicable': False, 'related_field': 'cliName'},
     "from_and_to_version_are_incorrect_format": {'code': "BA117", 'ui_applicable': False, 'related_field': ''},
+    "from_and_to_version_are_not_synchronizied": {'code': "BA118", 'ui_applicable': False, 'related_field': ''},
 
     # BC - Backward Compatible
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -2087,7 +2088,13 @@ class Errors:
     @error_code_decorator
     def from_and_to_version_are_incorrect_format(incorrect_key: str):
         return f"The format of the {incorrect_key} is incorrect\n" \
-               f"Please fix this so that it is in xx.xx.xx format and each member is a number only"
+               f"Please fix this so that it is in xx.xx.xx format and each member is a number only."
+
+    @staticmethod
+    @error_code_decorator
+    def from_and_to_version_are_not_synchronizied():
+        return 'fromversion and toversion are not synchronizied\n' \
+               'It is must be fromversion <= toversion.'
 
     @staticmethod
     @error_code_decorator

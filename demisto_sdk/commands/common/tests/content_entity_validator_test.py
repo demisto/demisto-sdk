@@ -1,7 +1,6 @@
 import os
 
 import pytest
-# from mock import patch
 
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
                                                    EXCLUDED_DISPLAY_NAME_WORDS)
@@ -14,6 +13,8 @@ from demisto_sdk.commands.common.tools import (get_not_registered_tests,
 from demisto_sdk.tests.constants_test import (
     INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK, VALID_INTEGRATION_TEST_PATH,
     VALID_TEST_PLAYBOOK_PATH)
+
+
 
 HAS_TESTS_KEY_UNPUTS = [
     (VALID_INTEGRATION_TEST_PATH, 'integration', True),

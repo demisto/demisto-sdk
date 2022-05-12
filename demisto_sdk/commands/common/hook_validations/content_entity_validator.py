@@ -8,8 +8,8 @@ from typing import Optional
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, DEFAULT_CONTENT_ITEM_FROM_VERSION,
     ENTITY_NAME_SEPARATORS, EXCLUDED_DISPLAY_NAME_WORDS, FEATURE_BRANCHES,
-    GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION, OLDEST_SUPPORTED_VERSION,
-    FROM_TO_VERSION_REGEX, FileType)
+    FROM_TO_VERSION_REGEX, GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION,
+    OLDEST_SUPPORTED_VERSION, FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -22,6 +22,8 @@ from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
                                                get_file_displayed_name,
                                                is_test_config_match,
                                                run_command)
+
+from packaging import version
 
 yaml = YAML_Handler()
 
@@ -54,6 +56,7 @@ class ContentEntityValidator(BaseValidator):
             self.is_there_spaces_in_the_end_of_name(),
             self.is_there_spaces_in_the_end_of_id(),
             self.are_fromversion_and_toversion_in_correct_format(),
+            self.are_fromversion_toversion_synchronized(),
         ]
         return all(tests)
 
@@ -274,6 +277,27 @@ class ContentEntityValidator(BaseValidator):
             self.handle_error(error_message, error_code, file_path=self.file_path)
             return False
 
+        return True
+
+    @error_codes('BA118')
+    def are_fromversion_toversion_synchronized(self) -> bool:
+        
+        if self.file_path.endswith('.json'):
+            from_version = self.current_file.get('fromVersion', '')
+            to_version = self.current_file.get('toVersion', '')
+        elif self.file_path.endswith('.yml'):
+            from_version = self.current_file.get('fromversion', '')
+            to_version = self.current_file.get('toversion', '')
+        else:
+            return True
+
+        if not from_version or not to_version:
+            return True
+
+        if version.parse(to_version) < version.parse(from_version):
+            error_message, error_code = Errors.from_and_to_version_are_not_synchronizied()
+            self.handle_error(error_message, error_code, file_path=self.file_path)
+            return False
         return True
 
     @error_codes('BA106')

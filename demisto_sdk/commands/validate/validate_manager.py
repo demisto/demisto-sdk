@@ -722,6 +722,7 @@ class ValidateManager:
 
         elif file_type == FileType.METADATA:
             return self.validte_pack_metadata(file_path, pack_error_ignore_list)
+
         else:
             return self.file_type_not_supported(file_path)
         return True

@@ -1,10 +1,10 @@
 import traceback
-from typing import Tuple
 from pathlib import Path
+from typing import Tuple
 
 import click
-from demisto_sdk.commands.common import tools
 
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -49,8 +49,8 @@ class PackMetaDataFormat(BaseUpdateJSON):
         if not marketplaces:
             if tools.does_pack_belong_siam(path_pack):
                 self.data['marketplaces'] = ['xsoar', 'marketplacev2']
+            else:
+                self.data['marketplaces'] = ['xsoar']
 
         elif 'marketplacev2' not in marketplaces and tools.does_pack_belong_siam(path_pack):
             self.data['marketplaces'] = ['xsoar', 'marketplacev2']
-        
-        

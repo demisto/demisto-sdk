@@ -400,7 +400,7 @@ class PackUniqueFilesValidator(BaseValidator):
             if missing_fields:
                 if self._add_error(Errors.missing_field_iin_pack_metadata(self.pack_meta_file, missing_fields),
                                    self.pack_meta_file):
-                    raise BlockingValidationFailureException()
+                    return False
 
             elif not self.validate_pack_name(metadata):
                 raise BlockingValidationFailureException()

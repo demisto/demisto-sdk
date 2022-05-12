@@ -38,9 +38,9 @@ from demisto_sdk.commands.format.update_job import JobJSONFormat
 from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
 from demisto_sdk.commands.format.update_lists import ListsFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
+from demisto_sdk.commands.format.update_pack_metadata import PackMetaDataFormat
 from demisto_sdk.commands.format.update_playbook import (PlaybookYMLFormat,
                                                          TestPlaybookYMLFormat)
-from demisto_sdk.commands.format.update_pack_metadata import PackMetaDataFormat
 from demisto_sdk.commands.format.update_pre_process_rules import \
     PreProcessRulesFormat
 from demisto_sdk.commands.format.update_pythonfile import PythonFileFormat
@@ -294,7 +294,7 @@ def run_format_on_file(input: str, file_type: str, from_version: str, interactiv
         update_object = PackMetaDataFormat(input=input, interactive=interactive, **kwargs)
     else:
         update_object = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path, from_version=from_version,
-                                                          interactive=interactive, **kwargs)
+                                                              interactive=interactive, **kwargs)
     format_res, validate_res = update_object.format_file()  # type: ignore
     CONTENT_ENTITY_IDS_TO_UPDATE.update(update_object.updated_ids)
     return logger(input, format_res, validate_res)

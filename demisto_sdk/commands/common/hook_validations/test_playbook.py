@@ -1,6 +1,3 @@
-import re
-
-from demisto_sdk.commands.common.constants import FROM_TO_VERSION_REGEX
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     error_codes

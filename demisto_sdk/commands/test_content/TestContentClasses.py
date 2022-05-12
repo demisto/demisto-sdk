@@ -1676,8 +1676,8 @@ class TestContext:
             'number_of_executions': self.playbook.configuration.number_of_executions,
             'number_of_successful_runs': self.playbook.configuration.number_of_successful_runs,
             'failed_stage': failed_stage,
-            'ssh_tunnel': self.tunnel_command,
-            'server_url': self.client.api_client.configuration.host,
+            'ssh_tunnel': self.tunnel_command.replace('\"', '"'),
+            'investigation_url': f'{self.client.api_client.configuration.host}/#/WorkPlan/{self.incident_id}',
         })
 
     @staticmethod

@@ -14,8 +14,6 @@ from demisto_sdk.tests.constants_test import (
     INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK, VALID_INTEGRATION_TEST_PATH,
     VALID_TEST_PLAYBOOK_PATH)
 
-
-
 HAS_TESTS_KEY_UNPUTS = [
     (VALID_INTEGRATION_TEST_PATH, 'integration', True),
     (INVALID_INTEGRATION_WITH_NO_TEST_PLAYBOOK, 'integration', False)

@@ -5,6 +5,8 @@ from abc import abstractmethod
 from distutils.version import LooseVersion
 from typing import Optional
 
+from packaging import version
+
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, DEFAULT_CONTENT_ITEM_FROM_VERSION,
     ENTITY_NAME_SEPARATORS, EXCLUDED_DISPLAY_NAME_WORDS, FEATURE_BRANCHES,
@@ -22,8 +24,6 @@ from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
                                                get_file_displayed_name,
                                                is_test_config_match,
                                                run_command)
-
-from packaging import version
 
 yaml = YAML_Handler()
 
@@ -281,7 +281,7 @@ class ContentEntityValidator(BaseValidator):
 
     @error_codes('BA118')
     def are_fromversion_toversion_synchronized(self) -> bool:
-        
+
         if self.file_path.endswith('.json'):
             from_version = self.current_file.get('fromVersion', '')
             to_version = self.current_file.get('toVersion', '')

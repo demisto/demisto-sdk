@@ -47,7 +47,7 @@ class GitContentConfig:
     CONTENT_GITHUB_UPSTREAM = r'upstream.*demisto/content'
     CONTENT_GITHUB_ORIGIN = r'origin.*demisto/content'
     GITHUB_USER_CONTENT = 'githubusercontent.com'
-    
+
     GITHUB = 'github.com'
     GITLAB = 'gitlab.com'
     CODE_PAN_RUN = 'code.pan.run'
@@ -85,8 +85,8 @@ class GitContentConfig:
         if project_id:
             git_provider = GitProvider.GitLab
             self.project_id = int(project_id)
-        hostname = urlparse(repo_hostname).hostname
-        self.repo_hostname = hostname or repo_hostname or os.getenv(GitContentConfig.ENV_REPO_HOSTNAME_NAME)
+        hostname = str(urlparse(repo_hostname).hostname)
+        self.repo_hostname = hostname or repo_hostname or str(os.getenv(GitContentConfig.ENV_REPO_HOSTNAME_NAME))
         self.git_provider = git_provider
         if not self.repo_hostname:
             self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT if git_provider == GitProvider.GitHub else GitContentConfig.GITLAB
@@ -131,7 +131,7 @@ class GitContentConfig:
             return None
         return None
 
-    def _set_repo_config(self, hostname: str, organization: str=None, repo_name: str=None, project_id: int=None):
+    def _set_repo_config(self, hostname: str, organization: str = None, repo_name: str = None, project_id: int = None):
         """
         Set repository config.
         Search the repository on gitlab or gitlab APIs to check if exists.
@@ -162,7 +162,7 @@ class GitContentConfig:
         if gitlab_id is not None:
             self.git_provider = GitProvider.GitLab
             self.project_id = gitlab_id
-            self.repo_hostname = gitlab_hostname
+            self.repo_hostname = str(gitlab_hostname)
         else:  # github
             current_repo = f'{organization}/{repo_name}' if organization and repo_name else self.current_repository
             github_hostname, github_repo = self._search_github_repo(hostname, self.current_repository) or \

@@ -87,7 +87,7 @@ class GitContentConfig:
             self.project_id = int(project_id)
         hostname = urlparse(repo_hostname).hostname
         if hostname is not None:
-            hostname = str(hostname)
+            hostname = str(hostname)  # it could be `bytes`
         self.repo_hostname = hostname or repo_hostname or os.getenv(GitContentConfig.ENV_REPO_HOSTNAME_NAME)
         self.git_provider = git_provider
         if not self.repo_hostname:

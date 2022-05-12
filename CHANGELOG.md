@@ -1,6 +1,10 @@
 # Changelog
-
 ## Unreleased
+* Updated the logs shown during the docker build step.
+
+
+## 1.6.6
+
 * Added debug print when excluding item from ID set due to missing dependency.
 * Added a validation to the **validate** command, failing when non-ignorable errors are present in .pack-ignore.
 * Fixed an issue where `mdx server` did not close when stopped in mid run.
@@ -14,7 +18,7 @@
 * Added the flag '-x', '--xsiam' to **upload** command to upload XSIAM entities to XSIAM server.
 * Fixed the integration field *isFetchEvents* to be in lowercase.
 * Fixed an issue where **validate -i** run after **format -i** on an existing file in the repo instead of **validate -g**.
-* Added the following commands: 'update-remote-data', 'get-modified-remote-data', 'update-remote-system' to be ignored by the **verify_yml_commands_match_readme** validation, the validation will no longer fail if these commands are not in the readme file.
+* Added the following commands: 'update-remote-data', 'get-modified-remote-data', 'update-remote-system' and 'integration-get-indicators' to be ignored by the **verify_yml_commands_match_readme** validation, the validation will no longer fail if these commands are not in the readme file.
 * Updated the release note template to include a uniform format for all items.
 * Added HelloWorldSlim template option for *--template* flag in **demisto-sdk init** command.
 * Fixed an issue where the HelloWorldSlim template in **demisto-sdk init** command had an integration id that was conflicting with HelloWorld integration id.
@@ -23,6 +27,7 @@
 * Set the default logger level to `warning`, to avoid unwanted debug logs.
 * The **format** command now validates that default value of checkbox parameters is a string 'true' or 'false'.
 * Fixed an issue where `FileType.PLAYBOOK` would show instead of `Playbook` in readme error messages.
+* Added a new validation to **validate** proper defaultvalue for checkbox fields.
 
 ## 1.6.5
 
@@ -71,7 +76,6 @@ the same as the last release note version.
 * Added support for running tests on XSIAM machines in the **test-content** command.
 * Fixed an issue where the **validate** command did not work properly when deleting non-content items.
 * Added the flag '-d', '--dependency' to **find-dependencies** command to get the content items that cause the dependencies between two packs.
-* Added a new validation to **validate** proper defaultvalue for checkbox fields.
 
 ## 1.6.3
 

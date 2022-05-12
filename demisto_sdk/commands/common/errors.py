@@ -2093,7 +2093,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def from_and_to_version_are_not_synchronizied():
-        return 'fromversion and toversion are not synchronizied\n' \
+        return 'The `fromversion` and `toversion` are not synchronizied\n' \
                'It is must be fromversion <= toversion.'
 
     @staticmethod

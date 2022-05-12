@@ -258,20 +258,20 @@ class ContentEntityValidator(BaseValidator):
     def are_fromversion_and_toversion_in_correct_format(self) -> bool:
 
         if self.file_path.endswith('.json'):
-            from_version_field = 'fromVersion'
-            to_version_field = 'toVersion'
+            from_version = self.current_file.get('fromVersion', '00.00.00') or '00.00.00'
+            to_version = self.current_file.get('toVersion', '00.00.00') or '00.00.00'
         elif self.file_path.endswith('.yml'):
-            from_version_field = 'fromversion'
-            to_version_field = 'toversion'
+            from_version = self.current_file.get('fromversion', '00.00.00') or '00.00.00'
+            to_version = self.current_file.get('toversion', '00.00.00') or '00.00.00'
         else:
             return True
 
-        if not FROM_TO_VERSION_REGEX.fullmatch(self.current_file.get(from_version_field, '00.00.00')):
+        if not FROM_TO_VERSION_REGEX.fullmatch(from_version):
             error_message, error_code = Errors.from_and_to_version_are_incorrect_format(
                 'fromversion')
             self.handle_error(error_message, error_code, file_path=self.file_path)
             return False
-        if not FROM_TO_VERSION_REGEX.fullmatch(self.current_file.get(to_version_field, '00.00.00')):
+        if not FROM_TO_VERSION_REGEX.fullmatch(to_version):
             error_message, error_code = Errors.from_and_to_version_are_incorrect_format(
                 'tovesion')
             self.handle_error(error_message, error_code, file_path=self.file_path)

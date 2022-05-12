@@ -245,7 +245,7 @@ class GitContentConfig:
         """
         if not gitlab_hostname or \
                 gitlab_hostname == GitContentConfig.GITHUB_USER_CONTENT or \
-                gitlab_hostname == 'github.com':
+                gitlab_hostname == GitContentConfig.GITHUB:
             return None
         if project_id and (gitlab_hostname, project_id) in GitContentConfig.ALLOWED_REPOS:
             return gitlab_hostname, project_id

@@ -336,8 +336,8 @@ def get_remote_file_from_api(
     github_token: Optional[str] = None
     gitlab_token: Optional[str] = None
     try:
-        github_token = git_content_config.credentials.github_token
-        gitlab_token = git_content_config.credentials.gitlab_token
+        github_token = git_content_config.CREDENTIALS.github_token
+        gitlab_token = git_content_config.CREDENTIALS.gitlab_token
         if git_content_config.git_provider == GitProvider.GitLab:
             res = requests.get(git_path,
                                params={'ref': tag},
@@ -370,8 +370,8 @@ def get_remote_file_from_api(
                     f'Getting file from local repository instead. \n'
                     f'If you wish to get the file from the remote repository, \n'
                     f'Please define your github or gitlab token in your environment.\n'
-                    f'`export {git_content_config.credentials.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n'
-                    f'export {git_content_config.credentials.ENV_GITLAB_TOKEN_NAME}=<TOKEN>', fg='yellow'
+                    f'`export {GitContentConfig.CREDENTIALS.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n'
+                    f'export {GitContentConfig.CREDENTIALS.ENV_GITLAB_TOKEN_NAME}=<TOKEN>', fg='yellow'
                 )
 
             click.secho(

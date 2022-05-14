@@ -2,6 +2,7 @@
 ## Unreleased
 * Updated the logs shown during the docker build step.
 * Removed a false warning about configuring the `GITLAB_TOKEN` environment variable when it's not needed.
+* Add a new validation to **validate** command, checking if the pack belongs to *xsiam* then pack has in the pack_metadata file `marketplacev2` in the `marketplaces` key
 
 
 ## 1.6.6

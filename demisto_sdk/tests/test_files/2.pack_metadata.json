@@ -25,5 +25,6 @@
             "certification": "certified",
             "author": "Cortex XSOAR"
           }
-    }
+    },
+    "marketplaces": []
 }

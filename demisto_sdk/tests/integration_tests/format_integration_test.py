@@ -28,6 +28,7 @@ from demisto_sdk.tests.constants_test import (
     SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_PLAYBOOK_COPY)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     GENERIC_DEFINITION, GENERIC_FIELD, GENERIC_MODULE, GENERIC_TYPE)
+from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from TestSuite.test_tools import ChangeCWD
 
 json = JSON_Handler()
@@ -529,7 +530,7 @@ def test_format_on_relative_path_playbook(mocker, repo, monkeypatch):
     assert 'The files are valid' in result_validate.stdout
 
 
-def test_format_integration_skipped_files(repo):
+def test_format_integration_skipped_files(mocker, repo):
     """
     Given:
         - Content pack with integration and doc files
@@ -547,15 +548,16 @@ def test_format_integration_skipped_files(repo):
     pack.create_doc_file()
 
     runner = CliRunner(mix_stderr=False)
+    mocker.patch.object(ValidateManager, 'validte_pack_metadata', return_value=True)
     format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(pack.path)], catch_exceptions=False)
 
     assert '======= Updating file' in format_result.stdout
     assert 'Success' in format_result.stdout
-    for excluded_file in excluded_files + ['pack_metadata.json']:
+    for excluded_file in excluded_files:
         assert excluded_file not in format_result.stdout
 
 
-def test_format_commonserver_skipped_files(repo):
+def test_format_commonserver_skipped_files(mocker, repo):
     """
     Given:
         - Base content pack with CommonServerPython script
@@ -571,6 +573,7 @@ def test_format_commonserver_skipped_files(repo):
     pack.create_script('CommonServerPython')
 
     runner = CliRunner(mix_stderr=False)
+    mocker.patch.object(ValidateManager, 'validte_pack_metadata', return_value=True)
     format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(pack.path), '-v'], catch_exceptions=False)
 
     assert 'Success' in format_result.stdout
@@ -755,7 +758,7 @@ def test_format_playbook_no_input_specified(mocker, repo):
     assert playbook.yml.read_dict().get('name') == playbook_name
 
 
-def test_format_incident_type_layout_id(repo):
+def test_format_incident_type_layout_id(mocker, repo):
     """
     Given:
         - Content pack with incident type and layout
@@ -799,6 +802,7 @@ def test_format_incident_type_layout_id(repo):
     )
 
     runner = CliRunner(mix_stderr=False)
+    mocker.patch.object(ValidateManager, 'validte_pack_metadata', return_value=True)
     with ChangeCWD(repo.path):
         format_result = runner.invoke(main, [FORMAT_CMD, '-i', str(pack.path), '-v', '-y'], catch_exceptions=False)
 

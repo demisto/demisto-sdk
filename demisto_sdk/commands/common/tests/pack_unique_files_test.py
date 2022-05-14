@@ -42,7 +42,8 @@ PACK_METADATA_PARTNER = {
     "keywords": [],
     "price": 2,
     "email": "some@mail.com",
-    "url": "https://www.paloaltonetworks.com/cortex"
+    "url": "https://www.paloaltonetworks.com/cortex",
+    "marketplaces": []
 }
 
 README_INPUT_RESULTS_LIST = [

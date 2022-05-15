@@ -877,10 +877,10 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_defaultvalue_for_checkbox_field(defaultvalue: bool):
-        return f"The defaultvalue={defaultvalue} for the checkbox is incorrect, " \
-               f"should be true or false.\n " \
-               f"e.g: defaultvalue: true"
+    def invalid_defaultvalue_for_checkbox_field(name: str):
+        return f"The defaultvalue checkbox of {name}'s filed is incorrect, " \
+               f"should be 'true' or 'false', a string which contains only lowercase letters.\n " \
+               f"e.g: defaultvalue: 'true'"
 
     @staticmethod
     @error_code_decorator

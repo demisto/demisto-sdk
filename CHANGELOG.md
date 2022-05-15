@@ -2,7 +2,7 @@
 ## Unreleased
 * Updated the logs shown during the docker build step.
 * Removed a false warning about configuring the `GITLAB_TOKEN` environment variable when it's not needed.
-
+* Fixed an error message in checkbox validation.
 
 ## 1.6.6
 

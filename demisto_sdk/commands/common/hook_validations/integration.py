@@ -235,7 +235,7 @@ class IntegrationValidator(ContentEntityValidator):
         for param in config:
             if param.get('type') == 8:
                 if param.get('defaultvalue') not in [None, 'true', 'false']:
-                    error_message, error_code = Errors.invalid_defaultvalue_for_checkbox_field(param.get('defaultvalue'))
+                    error_message, error_code = Errors.invalid_defaultvalue_for_checkbox_field(param.get('name'))
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         return False
         return True
@@ -1587,7 +1587,8 @@ class IntegrationValidator(ContentEntityValidator):
         Return:
             list: A list with the same commands as the given list except for the get-indicators commands.
         """
-        return [missing_command for missing_command in missing_commands_from_readme if not missing_command.endswith('get-indicators')]
+        return [missing_command for missing_command in missing_commands_from_readme if
+                not missing_command.endswith('get-indicators')]
 
     @error_codes('RM110')
     def verify_yml_commands_match_readme(self, is_modified=False):
@@ -1610,9 +1611,11 @@ class IntegrationValidator(ContentEntityValidator):
 
         readme_content = readme_path.read_text()
         excluded_from_readme_commands = ['get-mapping-fields', 'xsoar-search-incidents', 'xsoar-get-incident',
-                                         'get-remote-data', 'update-remote-data', 'get-modified-remote-data', 'update-remote-system']
+                                         'get-remote-data', 'update-remote-data', 'get-modified-remote-data',
+                                         'update-remote-system']
         missing_commands_from_readme = [
-            command for command in yml_commands_list if command not in readme_content and command not in excluded_from_readme_commands]
+            command for command in yml_commands_list if
+            command not in readme_content and command not in excluded_from_readme_commands]
         missing_commands_from_readme = self.exclude_get_indicators_commands(missing_commands_from_readme)
         if missing_commands_from_readme:
             error_message, error_code = Errors.missing_commands_from_readme(

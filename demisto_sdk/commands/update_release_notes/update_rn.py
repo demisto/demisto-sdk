@@ -11,8 +11,7 @@ from typing import Optional, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEFAULT_ID_SET_PATH,
-    IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, XSIAM_CONTENT_ITEMS_TYPES,
-    FileType)
+    IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, SIEM_ONLY_ENTITIES, FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -579,7 +578,7 @@ class UpdateRN:
             else:
                 rn_desc += f'- {text or "%%UPDATE_RN%%"}'
 
-            if from_version and from_version != '' and _type not in XSIAM_CONTENT_ITEMS_TYPES:
+            if from_version and from_version != '' and _type and _type.value not in SIEM_ONLY_ENTITIES:
                 # for now, we decided not to add this description for XSIAM entities (issue 40020)
                 rn_desc += f' (Available from Cortex XSOAR {from_version}).\n'
 

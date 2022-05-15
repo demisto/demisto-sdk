@@ -1063,12 +1063,11 @@ def does_pack_belong_siam(path: str) -> bool:
     files = get_files_in_dir(path, file_endings=['yml', 'json'])
     for file in files:
         _dict, _ = get_dict_from_file(file)
-        print(type(_dict), file)
-        script = _dict.get('script', {})
-        if script and isinstance(script, dict) and script.get('isfetchevent'):
-            return True
-        if 'marketplacev2' in _dict.get('marketplaces', []):
-            return True
+        if isinstance(_dict, dict):
+            if (script := _dict.get('script', {})) and script.get('isfetchevent'):
+                return True
+            if 'marketplacev2' in _dict.get('marketplaces', []):
+                return True
     return False
 
 

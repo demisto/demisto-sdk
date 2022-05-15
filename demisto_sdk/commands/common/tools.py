@@ -1064,7 +1064,7 @@ def does_pack_belong_siam(path: str) -> bool:
     for file in files:
         _dict, _ = get_dict_from_file(file)
         if isinstance(_dict, dict):
-            if (script := _dict.get('script', {})) and script.get('isfetchevent'):
+            if (script := _dict.get('script', {})) and isinstance(script, dict) and script.get('isfetchevent'):
                 return True
             if 'marketplacev2' in _dict.get('marketplaces', []):
                 return True

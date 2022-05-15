@@ -3,8 +3,8 @@
 * Updated the logs shown during the docker build step.
 * Removed a false warning about configuring the `GITLAB_TOKEN` environment variable when it's not needed.
 * Removed duplicate identifiers for XSIAM integrations.
-
 * Fixed the error message in checkbox validation where the defaultvalue is wrong and added the name of the variable that should be fixed.
+* Added a new validation to **validate** command in case `Breaking changes` appear in a pack release-notes, verify a suitable json is present with the same name.
 
 ## 1.6.6
 

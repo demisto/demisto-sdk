@@ -353,6 +353,7 @@ ERROR_CODE = {
     "modified_existing_release_notes": {'code': "RN109", 'ui_applicable': False, 'related_field': ''},
     "release_notes_config_file_missing_release_notes": {'code': "RN110", 'ui_applicable': False, 'related_field': ''},
     "release_notes_docker_image_not_match_yaml": {'code': "RN111", 'ui_applicable': False, 'related_field': ''},
+    "release_notes_bc_json_file_missing": {'code': "RN112", 'ui_applicable': False, 'related_field': ''},
 
     # RP - Reputations (Indicator Types)
     "wrong_version_reputations": {'code': "RP100", 'ui_applicable': False, 'related_field': 'version'},
@@ -1249,6 +1250,13 @@ class Errors:
     def release_notes_config_file_missing_release_notes(config_rn_path: str):
         return f'Release notes config file {config_rn_path} is missing corresponding release notes file.\n' \
                f'''Please add release notes file: {config_rn_path.replace('json', 'md')}'''
+
+    @staticmethod
+    @error_code_decorator
+    def release_notes_bc_json_file_missing(json_path):
+        return f"Release notes contain breaking changes without a proper json file.\n" \
+               f"Please add a proper json file to the following path: {json_path}\n",\
+               "You can refer to the documentation found here: https://xsoar.pan.dev/docs/documentation/release-notes for more information"
 
     @staticmethod
     @error_code_decorator

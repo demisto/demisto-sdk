@@ -127,12 +127,16 @@ class ReleaseNotesValidator(BaseValidator):
         is_valid = True
         if 'breaking change' in self.latest_release_notes.lower():
             json_path = self.release_notes_file_path[:-2] + 'json'
+            error_message, error_code = Errors.release_notes_bc_json_file_missing(json_path)
             try:
                 js = get_dict_from_file(path=json_path)[0]  # extract only the dictionary
+                error_message, error_code = Errors.release_notes_bc_json_file_missing(json_path)
                 if 'breakingChanges' not in js or not js.get('breakingChanges'):
-                    is_valid = False
+                    if self.handle_error(error_message, error_code, self.release_notes_file_path):
+                        is_valid = False
             except FileNotFoundError:
-                is_valid = False
+                if self.handle_error(error_message, error_code, self.release_notes_file_path):
+                    is_valid = False
         return is_valid
 
     @staticmethod

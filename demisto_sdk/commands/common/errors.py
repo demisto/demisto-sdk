@@ -10,8 +10,9 @@ from demisto_sdk.commands.common.constants import (
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
+# allowed errors to be ignored in any supported pack (XSOAR/Partner/Community) only if they appear in the .pack-ignore
 ALLOWED_IGNORE_ERRORS = [
-    'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113',
+    'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113', 'BA116',
     'DS107',
     'GF102',
     'IF100', 'IF106', 'IF115', 'IF116',
@@ -25,11 +26,13 @@ ALLOWED_IGNORE_ERRORS = [
     'IM111'
 ]
 
+# predefined errors to be ignored in partner/community supported packs even if they do not appear in .pack-ignore
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126', 'IN140'],
     'partner': ['CJ', 'IN140']
 }
 
+# predefined errors to be ignored in deprecated content entities even if they do not appear in .pack-ignore
 PRESET_ERROR_TO_CHECK = {
     "deprecated": ['ST', 'BC', 'BA', 'IN127', 'IN128', 'PB104', 'SC101'],
 }
@@ -52,6 +55,7 @@ ERROR_CODE = {
     "spaces_in_the_end_of_name": {'code': "BA113", 'ui_applicable': False, 'related_field': 'name'},
     "changed_pack_name": {'code': "BA114", 'ui_applicable': False, 'related_field': 'name'},
     "file_cannot_be_deleted": {'code': "BA115", 'ui_applicable': False, 'related_field': ''},
+    "cli_name_and_id_do_not_match": {'code': "BA116", 'ui_applicable': False, 'related_field': 'cliName'},
 
     # BC - Backward Compatible
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -226,6 +230,7 @@ ERROR_CODE = {
     'empty_outputs_common_paths': {'code': 'IN149', 'ui_applicable': False, 'related_field': 'contextOutput'},
     'invalid_siem_integration_name': {'code': 'IN150', 'ui_applicable': True, 'related_field': 'display'},
     "empty_command_arguments": {'code': 'IN151', 'ui_applicable': False, 'related_field': 'arguments'},
+    'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True, 'related_field': 'defaultvalue'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -319,6 +324,7 @@ ERROR_CODE = {
     "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
                                                          'related_field': 'fromServerVersion'},
     "invalid_incident_field_in_pre_process_rules": {'code': "PP101", 'ui_applicable': False, 'related_field': ''},
+    "unknown_fields_in_pre_process_rules": {'code': "PP102", 'ui_applicable': False, 'related_field': ''},
 
     # RM - READMEs
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
@@ -412,6 +418,38 @@ ERROR_CODE = {
         'ui_applicable': False,
         'related_field': 'name'
     },
+
+    # WZ - Wizards
+    "invalid_dependency_pack_in_wizard": {
+        'code': "WZ100",
+        'ui_applicable': False,
+        'related_field': 'dependency_packs'
+    },
+    "missing_dependency_pack_in_wizard": {
+        'code': "WZ101",
+        'ui_applicable': False,
+        'related_field': 'dependency_packs'
+    },
+    "invalid_integration_in_wizard": {
+        'code': "WZ102",
+        'ui_applicable': False,
+        'related_field': 'wizard'
+    },
+    "invalid_playbook_in_wizard": {
+        'code': "WZ103",
+        'ui_applicable': False,
+        'related_field': 'wizard'
+    },
+    "wrong_link_in_wizard": {
+        'code': "WZ104",
+        'ui_applicable': False,
+        'related_field': 'wizard'
+    },
+    "wizard_integrations_without_playbooks": {
+        'code': "WZ105",
+        'ui_applicable': False,
+        'related_field': 'wizard'
+    }
 }
 
 
@@ -471,7 +509,7 @@ class Errors:
         return "The file type is not supported in the validate command.\n" \
                "The validate command supports: Integrations, Scripts, Playbooks, " \
                "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields, Object types," \
-               " Object modules, Images, Release notes, Layouts, Jobs and Descriptions."
+               " Object modules, Images, Release notes, Layouts, Jobs, Wizards, and Descriptions."
 
     @staticmethod
     @error_code_decorator
@@ -839,6 +877,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def invalid_defaultvalue_for_checkbox_field(name: str):
+        return f"The defaultvalue checkbox of {name}'s filed is incorrect, " \
+               f"should be 'true' or 'false', a string which contains only lowercase letters.\n " \
+               f"e.g: defaultvalue: 'true'"
+
+    @staticmethod
+    @error_code_decorator
     def found_hidden_param(parameter_name):
         return f"Parameter: \"{parameter_name}\" can't be hidden. Please remove this field."
 
@@ -906,9 +951,11 @@ class Errors:
 
     @classmethod
     @error_code_decorator
-    def breaking_backwards_command_arg_changed(cls, command):
-        return "{}, You've changed the name of a command or its arg in" \
-               " the file, please undo, the command was:\n{}".format(cls.BACKWARDS, command)
+    def breaking_backwards_command_arg_changed(cls, commands_ls):
+        error_msg = "{}, Your updates to this file contains changes to a name or an argument of an existing command(s).\n" \
+            "Please undo you changes to the following command(s):\n".format(cls.BACKWARDS)
+        error_msg += '\n'.join(commands_ls)
+        return error_msg
 
     @staticmethod
     @error_code_decorator
@@ -2165,6 +2212,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def cli_name_and_id_do_not_match(cli_name_correct):
+        return f'cliName and id do not match.\n' \
+               f'Please change cliName to {cli_name_correct} (the flat-case version of id, excluding item-type prefixes)'
+
+    @staticmethod
+    @error_code_decorator
     def non_default_additional_info(params: List[str]):
         return f'The additionalinfo of params {params} is not the default value, please consider changing it.'
 
@@ -2215,8 +2268,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def missing_readme_file(location):
-        return f'{location} is missing a README file'
+    def missing_readme_file(location: FileType):
+        return f'{location.name} is missing a README file'
 
     @staticmethod
     @error_code_decorator
@@ -2233,3 +2286,38 @@ class Errors:
 
         return f"The following command outputs are missing: \n{commands_str}\n" \
                f"please type them or run demisto-sdk format -i {yaml_path}"
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_content_item_id_wizard(invalid_content_item_id):
+        return f'Failed to find {invalid_content_item_id} in content repo. Please check it\'s written correctly.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_dependency_pack_in_wizard(dep_pack):
+        return f'Dependency Pack "{dep_pack}" was not found. Please check it\'s written correctly.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_integration_in_wizard(integration: str):
+        return f'Integration "{integration}" does not exist. Please check it\'s written correctly.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_playbook_in_wizard(playbook: str):
+        return f'Playbook "{playbook}" does not exist. Please check it\'s written correctly.'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_dependency_pack_in_wizard(pack: str, content_item: str):
+        return f'Pack "{pack}" is missing from the "dependency_packs". This pack is required for {content_item}.'
+
+    @staticmethod
+    @error_code_decorator
+    def wrong_link_in_wizard(link):
+        return f'Provided integration link "{link}" was not provided in fetching_integrations. Make sure it\'s written correctly.'
+
+    @staticmethod
+    @error_code_decorator
+    def wizard_integrations_without_playbooks(integrations: set):
+        return f'The following integrations are missing a set_playbook: {integrations}'

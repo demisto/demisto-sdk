@@ -4,6 +4,8 @@ from distutils.version import LooseVersion
 from demisto_sdk.commands.common.constants import \
     DEFAULT_CONTENT_ITEM_FROM_VERSION
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 
@@ -36,6 +38,7 @@ class ReputationValidator(ContentEntityValidator):
 
         return is_reputation_valid
 
+    @error_codes('RP100')
     def is_valid_version(self):
         # type: () -> bool
         """Validate that the reputations file as version of -1."""
@@ -51,6 +54,7 @@ class ReputationValidator(ContentEntityValidator):
 
         return is_valid
 
+    @error_codes('RP101')
     def is_valid_expiration(self):
         # type: () -> bool
         """Validate that the expiration field of a 5.5 reputation file is numeric."""
@@ -64,6 +68,7 @@ class ReputationValidator(ContentEntityValidator):
 
         return True
 
+    @error_codes('RP104')
     def is_required_fields_empty(self):
         # type: () -> bool
         """Validate that id and details fields are not empty.
@@ -78,6 +83,7 @@ class ReputationValidator(ContentEntityValidator):
                 return False
         return True
 
+    @error_codes('RP102')
     def is_id_equals_details(self):
         # type: () -> bool
         """Validate that the id equal details."""
@@ -89,6 +95,7 @@ class ReputationValidator(ContentEntityValidator):
                 return False
         return True
 
+    @error_codes('RP103')
     def is_valid_indicator_type_id(self):
         # type: () -> bool
         """Validate that id field is valid.

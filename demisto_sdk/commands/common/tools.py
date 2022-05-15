@@ -71,6 +71,97 @@ class LOG_COLORS:
     WHITE = colorama.Fore.WHITE
 
 
+class TagParser:
+    def __init__(self, tag_prefix: str, tag_suffix: str, remove_tag_text: bool = True):
+        self._tag_prefix = tag_prefix
+        self._tag_suffix = tag_suffix
+        self._pattern = re.compile(fr'{tag_prefix}((.|\s)+?){tag_suffix}')
+        self._remove_tag_text = remove_tag_text
+
+    def parse(self, text: str, remove_tag: Optional[bool] = None) -> str:
+        """
+        Given a prefix and suffix of an expected tag, remove the tag and the text it's wrapping, or just the wrappers
+        Args:
+            text (str): text that may contain given tags.
+            remove_tag (bool): overrides remove_tag_text value. Determines whether to remove the tag
+
+        Returns:
+            Text with no wrapper tags.
+        """
+        if text and 0 <= text.find(self._tag_prefix) < text.find(self._tag_suffix):
+            remove_tag = remove_tag if isinstance(remove_tag, bool) else self._remove_tag_text
+            # collect {orignal_text: text_to_replace}
+            matches = re.finditer(self._pattern, text)
+            replace_map = {}
+            for match in matches:
+                replace_val = '' if remove_tag else match.group(1)
+                replace_map[re.escape(match.group())] = replace_val
+
+            # replace collected text->replacement
+            pattern = re.compile("|".join(replace_map.keys()))
+            text = pattern.sub(lambda m: replace_map[re.escape(m.group(0))], text)
+        return text
+
+
+class MarketplaceTagParser:
+    XSOAR_PREFIX = '<~XSOAR>\n'
+    XSOAR_SUFFIX = '\n</~XSOAR>\n'
+    XSOAR_INLINE_PREFIX = '<~XSOAR>'
+    XSOAR_INLINE_SUFFIX = '</~XSOAR>'
+    XSIAM_PREFIX = '<~XSIAM>\n'
+    XSIAM_SUFFIX = '\n</~XSIAM>\n'
+    XSIAM_INLINE_PREFIX = '<~XSIAM>'
+    XSIAM_INLINE_SUFFIX = '</~XSIAM>'
+
+    def __init__(self, marketplace: str = MarketplaceVersions.XSOAR.value):
+        self.marketplace = marketplace
+        self._xsoar_parser = TagParser(
+            tag_prefix=self.XSOAR_PREFIX,
+            tag_suffix=self.XSOAR_SUFFIX,
+        )
+        self._xsoar_inline_parser = TagParser(
+            tag_prefix=self.XSOAR_INLINE_PREFIX,
+            tag_suffix=self.XSOAR_INLINE_SUFFIX,
+        )
+        self._xsiam_parser = TagParser(
+            tag_prefix=self.XSIAM_PREFIX,
+            tag_suffix=self.XSIAM_SUFFIX,
+        )
+        self._xsiam_inline_parser = TagParser(
+            tag_prefix=self.XSIAM_INLINE_PREFIX,
+            tag_suffix=self.XSIAM_INLINE_SUFFIX,
+        )
+
+    @property
+    def marketplace(self):
+        return self._marketplace
+
+    @marketplace.setter
+    def marketplace(self, marketplace):
+        self._marketplace = marketplace
+        self._should_remove_xsoar_text = marketplace != MarketplaceVersions.XSOAR.value
+        self._should_remove_xsiam_text = marketplace != MarketplaceVersions.MarketplaceV2.value
+
+    def parse_text(self, text):
+        # the order of parse is important. inline should always be checked after paragraph tag
+        # xsoar->xsoar_inline->xsiam->xsiam_inline
+        return self._xsiam_inline_parser.parse(
+            remove_tag=self._should_remove_xsiam_text,
+            text=self._xsiam_parser.parse(
+                remove_tag=self._should_remove_xsiam_text,
+                text=self._xsoar_inline_parser.parse(
+                    remove_tag=self._should_remove_xsoar_text,
+                    text=self._xsoar_parser.parse(
+                        remove_tag=self._should_remove_xsoar_text,
+                        text=text,
+                    ),
+                ),
+            ),
+        )
+
+
+MARKETPLACE_TAG_PARSER = MarketplaceTagParser()
+
 LOG_VERBOSE = False
 
 LAYOUT_CONTAINER_FIELDS = {'details', 'detailsV2', 'edit', 'close', 'mobile', 'quickView', 'indicatorsQuickView',
@@ -198,11 +289,13 @@ def get_core_pack_list() -> list:
     if not is_external_repository():
         core_pack_list = get_remote_file(
             'Tests/Marketplace/core_packs_list.json',
-            git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
+            git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
+                                                git_provider=GitProvider.GitHub)
         ) or []
         core_pack_list.extend(get_remote_file(
             'Tests/Marketplace/core_packs_mpv2_list.json',
-            git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
+            git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
+                                                git_provider=GitProvider.GitHub)
         ) or [])
         core_pack_list = list(set(core_pack_list))
     else:
@@ -243,8 +336,8 @@ def get_remote_file_from_api(
     github_token: Optional[str] = None
     gitlab_token: Optional[str] = None
     try:
-        github_token = git_content_config.credentials.github_token
-        gitlab_token = git_content_config.credentials.gitlab_token
+        github_token = git_content_config.CREDENTIALS.github_token
+        gitlab_token = git_content_config.CREDENTIALS.gitlab_token
         if git_content_config.git_provider == GitProvider.GitLab:
             res = requests.get(git_path,
                                params={'ref': tag},
@@ -277,8 +370,8 @@ def get_remote_file_from_api(
                     f'Getting file from local repository instead. \n'
                     f'If you wish to get the file from the remote repository, \n'
                     f'Please define your github or gitlab token in your environment.\n'
-                    f'`export {git_content_config.credentials.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n'
-                    f'export {git_content_config.credentials.ENV_GITLAB_TOKEN_NAME}=<TOKEN>', fg='yellow'
+                    f'`export {GitContentConfig.CREDENTIALS.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n'
+                    f'export {GitContentConfig.CREDENTIALS.ENV_GITLAB_TOKEN_NAME}=<TOKEN>', fg='yellow'
                 )
 
             click.secho(
@@ -607,9 +700,11 @@ def get_from_version(file_path):
 
     if data_dictionary:
         from_version = data_dictionary.get('fromversion') if 'fromversion' in data_dictionary \
-            else data_dictionary.get('fromVersion', DEFAULT_CONTENT_ITEM_FROM_VERSION)
-        if from_version == '':
-            return DEFAULT_CONTENT_ITEM_FROM_VERSION
+            else data_dictionary.get('fromVersion', '')
+
+        if not from_version:
+            logging.warning(f'fromversion/fromVersion was not found in {data_dictionary.get("id", "")}')
+            return ''
 
         if not re.match(r'^\d{1,2}\.\d{1,2}\.\d{1,2}$', from_version):
             raise ValueError(f'{file_path} fromversion is invalid "{from_version}". '
@@ -617,7 +712,7 @@ def get_from_version(file_path):
 
         return from_version
 
-    return DEFAULT_CONTENT_ITEM_FROM_VERSION
+    return ''
 
 
 def get_to_version(file_path):
@@ -1391,6 +1486,9 @@ def find_type(
         if isinstance(_dict, dict) and {'isAllFeeds', 'selectedFeeds', 'isFeed'}.issubset(_dict.keys()):
             return FileType.JOB
 
+        if isinstance(_dict, dict) and 'wizard' in _dict:
+            return FileType.WIZARD
+
         if 'dashboards_data' in _dict:
             return FileType.XSIAM_DASHBOARD
 
@@ -1991,7 +2089,7 @@ def get_file_displayed_name(file_path):
     elif file_type in [FileType.MAPPER, FileType.CLASSIFIER, FileType.INCIDENT_FIELD, FileType.INCIDENT_TYPE,
                        FileType.INDICATOR_FIELD, FileType.LAYOUTS_CONTAINER, FileType.PRE_PROCESS_RULES,
                        FileType.DASHBOARD, FileType.WIDGET,
-                       FileType.REPORT, FileType.JOB]:
+                       FileType.REPORT, FileType.JOB, FileType.WIZARD]:
         return get_json(file_path).get('name')
     elif file_type == FileType.OLD_CLASSIFIER:
         return get_json(file_path).get('brandName')

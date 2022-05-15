@@ -1105,7 +1105,7 @@ TEST_EMPTY_SCRIPTDATA_SECTION = [
     ({'script': 'some info'}, ['']),
     ({'subtype': 'python2', 'tags': []}, ['## Script data', '---', '', '| **Name** | **Description** |', '| --- | --- |', '| Script Type | python2 |', '']),
     ({'tags': []}, ['']),
-    ({'fromversion': '6.0.0'}, ['## Script data', '---', '', '| **Name** | **Description** |', '| --- | --- |', '| Cortex XSOAR Version | 6.0.0 |', ''])
+    ({'fromversion': '0.0.0'}, ['## Script data', '---', '', '| **Name** | **Description** |', '| --- | --- |', '| Cortex XSOAR Version | 0.0.0 |', ''])
 ]
 
 
@@ -1116,7 +1116,7 @@ def test_missing_data_sections_when_generating_table_section(yml_content, expect
     - Case 1: yml with no relevant tags for 'get_script_info' function.
     - Case 2: yml with 'subtype' section filled in and empty 'tags' section.
     - Case 3: yml that contain empty 'tags' section.
-    - Case 4: yml that contain 'fromversion' section that is different from 'DEFAULT_CONTENT_ITEM_FROM_VERSION' (which is 0.0.0).
+    - Case 4: yml that contain 'fromversion' section that is different from 'DEFAULT_CONTENT_ITEM_FROM_VERSION_FOR_RN' (which is 6.0.0).
     When
     - running the get_script_info command on the inputs and then generate_table_section.
     Then

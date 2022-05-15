@@ -20,7 +20,7 @@ parameters:
     default: v3  # Change this parameter to clear cache.
   global-docker-image:
     type: string
-    default: cimg/python:3.10.2-node
+    default: cimg/python:3.10.4-node
 
 
 references:
@@ -80,6 +80,8 @@ jobs:
       parallelism: 8
       steps:
         - checkout
+        - setup_remote_docker:
+            version: 20.10.12
         - python/install-packages:
             pkg-manager: "poetry"
             cache-version: << pipeline.parameters.cache-version >>
@@ -125,6 +127,8 @@ jobs:
         - image: cimg/python:<< parameters.pythonversion >>-node
       steps:
         - checkout
+        - setup_remote_docker:
+            version: 20.10.12
         - python/install-packages:
             pkg-manager: "poetry"
             cache-version: << pipeline.parameters.cache-version >>
@@ -231,7 +235,8 @@ jobs:
         - image: devdemisto/content-build:3.0.0.27979
       steps:
         - checkout
-        - setup_remote_docker
+        - setup_remote_docker:
+            version: 20.10.12
         - attach_workspace:
             at: ~/project
         - run:

@@ -644,12 +644,13 @@ class TestValidators:
 
     def test_get_error_ignore_list(self, mocker):
         """
-            Given:
-                - A file path to pack ignore
-            When:
-                - running get_error_ignore_list from validate manager
-            Then:
-                - verify that the created ignored_errors list is correct
+        Given:
+            - A file path to pack ignore
+        When:
+            - running get_error_ignore_list from validate manager
+        Then:
+            - verify that the created ignored_errors list is being created with all of the
+            error codes that is in the .pack-ignore, also the error codes which cannot be ignored.
         """
         files_path = os.path.normpath(
             os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
@@ -660,7 +661,7 @@ class TestValidators:
 
         validate_manager = ValidateManager()
         ignore_errors_list = validate_manager.get_error_ignore_list("fake")
-        assert ignore_errors_list['file_name'] == ['BA101', 'SC101', 'BA106']
+        assert ignore_errors_list['file_name'] == ['BA101', 'SC101', 'IN117', 'BA106', 'IN100']
         assert 'SC100' not in ignore_errors_list['file_name']
 
     def test_create_ignored_errors_list(self):
@@ -677,8 +678,8 @@ class TestValidators:
                              "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC", "GF", "PP", "JB", "LI100",
                              "LI101"]
         error_list = validate_manager.create_ignored_errors_list(errors_to_exclude)
-        assert ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
-                "BA110", 'BA111', "BA112", "BA113", "BA114", "BA115", "BC101", "BC102", "BC103", "BC104"] <= error_list
+        assert {"BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
+                "BA110", 'BA111', "BA112", "BA113", "BA114", "BA115", "BC101", "BC102", "BC103", "BC104"}.issubset(error_list)
 
     def test_added_files_type_using_function(self, repo, mocker):
         """

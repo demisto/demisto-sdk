@@ -11,8 +11,7 @@ from typing import Optional, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEFAULT_ID_SET_PATH,
-    IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, XSIAM_CONTENT_ITEMS_TYPES,
-    FileType)
+    IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, SIEM_ONLY_ENTITIES, FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -362,8 +361,8 @@ class UpdateRN:
             name = file_data.get('brandName', None)
         elif 'id' in file_data:
             name = file_data.get('id', None)
-        elif 'trigger_id' in file_data:
-            name = file_data.get('trigger_id')
+        elif 'trigger_name' in file_data:
+            name = file_data.get('trigger_name')
 
         elif 'dashboards_data' in file_data and file_data.get('dashboards_data') \
                 and isinstance(file_data['dashboards_data'], list):
@@ -579,7 +578,7 @@ class UpdateRN:
             else:
                 rn_desc += f'- {text or "%%UPDATE_RN%%"}'
 
-            if from_version and from_version != '' and _type not in XSIAM_CONTENT_ITEMS_TYPES:
+            if from_version and from_version != '' and _type and _type.value not in SIEM_ONLY_ENTITIES:
                 # for now, we decided not to add this description for XSIAM entities (issue 40020)
                 rn_desc += f' (Available from Cortex XSOAR {from_version}).\n'
 
@@ -594,6 +593,9 @@ class UpdateRN:
         if _type in (FileType.GENERIC_TYPE, FileType.GENERIC_FIELD):
             definition_name = get_definition_name(path, self.pack_path)
             rn_desc = f'- **({definition_name}) - {content_name}**\n'
+
+        if _type == FileType.TRIGGER:
+            rn_desc = f'- {desc}'  # Issue - https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
 
         if docker_image:
             rn_desc += f'- Updated the Docker image to: *{docker_image}*.\n'
@@ -634,6 +636,9 @@ class UpdateRN:
             elif _type in (FileType.GENERIC_TYPE, FileType.GENERIC_FIELD):
                 definition_name = get_definition_name(path, self.pack_path)
                 rn_desc = f'\n- **({definition_name}) - {content_name}**'
+
+            elif _type == FileType.TRIGGER:
+                rn_desc = f'\n- {desc}'  # Issue https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
 
             else:
                 rn_desc = f'\n##### New: {content_name}\n- {desc}\n' if is_new_file \

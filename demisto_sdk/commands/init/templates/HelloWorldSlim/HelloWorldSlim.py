@@ -11,8 +11,6 @@ modify the alert's status.
 """
 import urllib3
 from typing import Any, Dict
-from demisto_sdk.commands.common.handlers import JSON_Handler
-json = JSON_Handler()
 
 
 import demistomock as demisto  # noqa: E402 lgtm [py/polluting-import]
@@ -21,11 +19,6 @@ from CommonServerUserPython import *  # noqa: E402 lgtm [py/polluting-import]
 
 # Disable insecure warnings
 urllib3.disable_warnings()
-
-
-DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
-MAX_INCIDENTS_TO_FETCH = 50
-HELLOWORLD_SEVERITIES = ['Low', 'Medium', 'High', 'Critical']
 
 
 class Client(BaseClient):   # type: ignore
@@ -81,14 +74,14 @@ def test_module(client: Client) -> str:
     """
     Tests API connectivity and authentication
     Args:
-        client: HelloWorld client to use
+        client: HelloWorldSlim client to use
 
     Returns:
         'ok' if test passed, anything else will fail the test.
     """
 
     try:
-        client.get_alert(get_alert=0)
+        client.get_alert(alert_id='0')
     except DemistoException as e:
         if 'Forbidden' in str(e):
             return 'Authorization Error: make sure API Key is correctly set'
@@ -99,9 +92,9 @@ def test_module(client: Client) -> str:
 
 def get_alert_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     """
-    helloworld-get-alert command: Returns a HelloWorld alert
+    helloworldslim-get-alert command: Returns a HelloWorldSlim alert
     Args:
-        client: HelloWorld client to use
+        client: HelloWorldSlim client to use
         args: all command arguments, usually passed from ``demisto.args()``.
         ``args['alert_id']`` alert ID to return
 
@@ -126,11 +119,11 @@ def get_alert_command(client: Client, args: Dict[str, Any]) -> CommandResults:
 
     # tableToMarkdown() is defined is CommonServerPython.py and is used very
     # often to convert lists and dicts into a human readable format in markdown
-    readable_output = tableToMarkdown(f'HelloWorld Alert {alert_id}', alert)
+    readable_output = tableToMarkdown(f'HelloWorldSlim Alert {alert_id}', alert)
 
     return CommandResults(
         readable_output=readable_output,
-        outputs_prefix='HelloWorld.Alert',
+        outputs_prefix='HelloWorldSlim.Alert',
         outputs_key_field='alert_id',
         outputs=alert
     )
@@ -138,10 +131,10 @@ def get_alert_command(client: Client, args: Dict[str, Any]) -> CommandResults:
 
 def update_alert_status_command(client: Client, args: Dict[str, Any]) -> CommandResults:
     """
-    helloworld-update-alert-status command: Changes the status of an alert
+    helloworldslim-update-alert-status command: Changes the status of an alert
 
     Args:
-        client: HelloWorld client to use
+        client: HelloWorldSlim client to use
         args: all command arguments, usually passed from ``demisto.args()``.
         ``args['alert_id']`` alert ID to update
         ``args['status']`` new status, either ACTIVE or CLOSED
@@ -170,11 +163,11 @@ def update_alert_status_command(client: Client, args: Dict[str, Any]) -> Command
 
     # tableToMarkdown() is defined is CommonServerPython.py and is used very
     # often to convert lists and dicts into a human readable format in markdown
-    readable_output = tableToMarkdown(f'HelloWorld Alert {alert_id}', alert)
+    readable_output = tableToMarkdown(f'HelloWorldSlim Alert {alert_id}', alert)
 
     return CommandResults(
         readable_output=readable_output,
-        outputs_prefix='HelloWorld.Alert',
+        outputs_prefix='HelloWorldSlim.Alert',
         outputs_key_field='alert_id',
         outputs=alert
     )
@@ -209,13 +202,13 @@ def main() -> None:
 
         if command == 'test-module':
             # This is the call made when pressing the integration Test button.
-            result = test_module(client, first_fetch_time)
+            result = test_module(client)
             return_results(result)
 
-        elif command == 'helloworld-get-alert':
+        elif command == 'helloworldslim-get-alert':
             return_results(get_alert_command(client, demisto.args()))
 
-        elif command == 'helloworld-update-alert-status':
+        elif command == 'helloworldslim-update-alert-status':
             return_results(update_alert_status_command(client, demisto.args()))
 
     # Log exceptions and return errors

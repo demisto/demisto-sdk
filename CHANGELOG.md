@@ -4,7 +4,7 @@
 * Removed a false warning about configuring the `GITLAB_TOKEN` environment variable when it's not needed.
 * Removed duplicate identifiers for XSIAM integrations.
 
-* Fixed an error message in checkbox validation.
+* Fixed the error message in checkbox validation where the defaultvalue is wrong and added the name of the variable that should be fixed.
 
 ## 1.6.6
 

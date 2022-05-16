@@ -2822,7 +2822,7 @@ def get_invalid_incident_fields_from_layout(layout_incident_fields: list, conten
 
     for incident_field_info in layout_incident_fields:
         inc_field_id = incident_field_info.get('fieldId', '').replace('incident_', '').replace('indicator_', '')
-        if inc_field_id.lower() not in content_fields and inc_field_id not in content_fields:
+        if inc_field_id and inc_field_id.lower() not in content_fields and inc_field_id not in content_fields:
             invalid_incident_fields.append(inc_field_id)
 
     return invalid_incident_fields

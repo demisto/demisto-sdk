@@ -10,8 +10,9 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import \
-    get_all_incident_and_indicator_fields_from_id_set
+    get_all_incident_and_indicator_fields_from_id_set, get_invalid_incident_fields_from_mapper
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
+
 
 FROM_VERSION = '6.0.0'
 VALID_TYPE_INCOMING = 'mapping-incoming'
@@ -166,10 +167,16 @@ class MapperValidator(ContentEntityValidator):
 
     @error_codes('MP106')
     def is_incident_field_exist(self, id_set_file, is_circle) -> bool:
-        """Checks if incident field is valid - exist in the content.
+        """
+        Check if the incident fields which are part of the mapper actually exist in the content items (id set).
+
+        Args:
+            id_set_file (dict): content of the id set file.
+            is_circle (bool): whether running on circle CI or not, True if yes, False if not.
 
         Returns:
-            bool. True if incident field is valid, else False.
+            bool: False if there are incident fields which are part of the mapper that do not exist in content items,
+                True if there aren't.
         """
         if not is_circle:
             return True
@@ -178,30 +185,26 @@ class MapperValidator(ContentEntityValidator):
             click.secho("Skipping mapper incident field validation. Could not read id_set.json.", fg="yellow")
             return True
 
-        built_in_fields = [field.lower() for field in BUILT_IN_FIELDS] + LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
+        content_incident_fields = get_all_incident_and_indicator_fields_from_id_set(id_set_file, 'mapper') + [
+            field.lower() for field in BUILT_IN_FIELDS
+        ] + LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
 
-        content_incident_fields = get_all_incident_and_indicator_fields_from_id_set(id_set_file, 'mapper')
+        invalid_incident_fields = []
+        mapping_type = self.current_file.get('type', {})
 
-        invalid_inc_fields_list = []
         mapper = self.current_file.get('mapping', {})
-        for key, value in mapper.items():
+        for value in mapper.values():
             incident_fields = value.get('internalMapping', {})
+            invalid_incident_fields.extend(
+                get_invalid_incident_fields_from_mapper(
+                    mapper_incident_fields=incident_fields,
+                    mapping_type=mapping_type,
+                    content_fields=content_incident_fields,
+                )
+            )
 
-            for inc_name, inc_info in incident_fields.items():
-                # for incoming mapper
-                if self.current_file.get('type', {}) == "mapping-incoming":
-                    if inc_name not in content_incident_fields and inc_name.lower() not in built_in_fields:
-                        invalid_inc_fields_list.append(inc_name)
-
-                # for outgoing mapper
-                if self.current_file.get('type', {}) == "mapping-outgoing":
-                    # for inc timer type: "field.StartDate, and for using filters: "simple": "".
-                    if inc_info['simple'] not in content_incident_fields and inc_info['simple'] not in built_in_fields \
-                            and inc_info['simple'].split('.')[0] not in content_incident_fields and inc_info['simple']:
-                        invalid_inc_fields_list.append(inc_name) if inc_info['simple'] else None
-
-        if invalid_inc_fields_list:
-            error_message, error_code = Errors.invalid_incident_field_in_mapper(invalid_inc_fields_list)
+        if invalid_incident_fields:
+            error_message, error_code = Errors.invalid_incident_field_in_mapper(invalid_incident_fields)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True

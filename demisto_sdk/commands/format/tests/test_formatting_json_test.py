@@ -67,7 +67,7 @@ json = JSON_Handler()
 @pytest.fixture()
 def id_set_file_mock(tmp_path):
     """
-    Mock the id set file
+    Mock the id set file with incident/indicator fields.
     """
     id_set_file = JSONBased(
         dir_path=tmp_path,
@@ -582,11 +582,11 @@ class TestFormattingLayoutscontainer:
         yield layoutscontainer_formatter
 
     @pytest.mark.parametrize(
-        'layout_key_field',
-        ['detailsV2', 'details', 'close']
+        'layout_key_field_1, layout_key_field_2',
+        [('detailsV2', 'details'), ('close', 'quickView')]
     )
-    def test_remove_inexistent_fields(
-        self, layout_key_field, pack, id_set_file_mock
+    def test_remove_non_existent_fields(
+        self, layout_key_field_1, layout_key_field_2, pack, id_set_file_mock
     ):
         """
         Given
@@ -598,8 +598,9 @@ class TestFormattingLayoutscontainer:
         Then
             - Ensure incident fields which are not in the id set file are removed from the container-layout.
         """
-        container_layout_content = {
-            layout_key_field: {
+        container_layout_content = {}
+        for layout_key in (layout_key_field_1, layout_key_field_2):
+            container_layout_content[layout_key] = {
                 "tabs": [
                     {
                         "sections": [
@@ -614,7 +615,6 @@ class TestFormattingLayoutscontainer:
                     }
                 ]
             }
-        }
 
         formatter = LayoutBaseFormat(
             input=pack.create_layoutcontainer(
@@ -624,11 +624,12 @@ class TestFormattingLayoutscontainer:
         )
 
         # remove the original container layout
-        container_layout_content[layout_key_field]["tabs"][0]["sections"][0]["items"] = [
-            {"fieldId": "incident-field-1"}, {"fieldId": "incident-field-2"}
-        ]
+        for layout_key in (layout_key_field_1, layout_key_field_2):
+            container_layout_content[layout_key]["tabs"][0]["sections"][0]["items"] = [
+                {"fieldId": "incident-field-1"}, {"fieldId": "incident-field-2"}
+            ]
 
-        formatter.remove_inexistent_fields_layoutscontainer()
+        formatter.remove_non_existent_fields_container_layout()
         assert formatter.data == container_layout_content
 
     @patch('builtins.input', lambda *args: 'incident')
@@ -823,7 +824,7 @@ class TestFormattingLayout:
         for field in ['fromServerVersion', 'quickView', 'sortValues', 'locked']:
             assert field not in layouts_formatter.data
 
-    def test_remove_inexistent_fields(self, pack, id_set_file_mock):
+    def test_remove_non_existent_fields(self, pack, id_set_file_mock):
         """
         Given
             - a layout json file content.
@@ -840,6 +841,7 @@ class TestFormattingLayout:
                     {
                         "fields": [
                             {"fieldId": "incident-field-4"},
+                            {"fieldId": "incident-field-2"},
                             {"fieldId": "incident-field-5"},
                         ]
                     }
@@ -849,15 +851,15 @@ class TestFormattingLayout:
 
         formatter = LayoutBaseFormat(
             input=pack.create_layout(
-                name="layout-in-existent-fields-test", content=layout_content
+                name="layout-non-existent-fields-test", content=layout_content
             ).path,
             id_set_path=id_set_file_mock.path
         )
 
         # remove the original container layout
-        layout_content["layout"]["sections"][0]["fields"] = []
+        layout_content["layout"]["sections"][0]["fields"] = [{"fieldId": "incident-field-2"}]
 
-        formatter.remove_inexistent_fields_layout()
+        formatter.remove_non_existent_fields_layout()
         assert formatter.data == layout_content
 
     def test_set_description(self, layouts_formatter):
@@ -1155,7 +1157,7 @@ class TestFormattingMapper:
         yield MapperJSONFormat(input=mapper_copy, output=DESTINATION_FORMAT_MAPPER)
 
     @pytest.mark.parametrize('mapper_type', ["mapping-outgoing", "mapping-incoming"])
-    def test_remove_inexistent_fields(self, mapper_type, id_set_file_mock, pack):
+    def test_remove_non_existent_fields(self, mapper_type, id_set_file_mock, pack):
         """
         Given
             - outgoing json file content.
@@ -1167,33 +1169,32 @@ class TestFormattingMapper:
         Then
             - Ensure incident fields which are not in the id set file are removed from the mapper.
         """
-        mapper_content = {
-            "mapping": {
-                "Test case": {
-                    "internalMapping": {
-                        "Incident-Field-1": {
-                            "simple": "incident-field-1"
-                        },
-                        "Incident-Field-2": {
-                            "simple": "incident-field-2.dueDate"
-                        },
-                        "not-existing-field": {
-                            "simple": "incident-field-3"
-                        }
+        mapper_content = {"mapping": {}, "type": mapper_type}
+        for i in range(1, 3):
+            mapper_content["mapping"][f"test-case-{i}"] = {
+                "internalMapping": {
+                    "Incident-Field-1": {
+                        "simple": "incident-field-1"
+                    },
+                    "Incident-Field-2": {
+                        "simple": "incident-field-2.dueDate"
+                    },
+                    f"not-existing-field-{i}": {
+                        "simple": "incident-field-3"
                     }
                 }
-            },
-            "type": mapper_type
-        }
+            }
 
         formatter = MapperJSONFormat(
-            input=pack.create_classifier(name=f"{mapper_type}-in-existent-fields-test", content=mapper_content).path,
+            input=pack.create_classifier(name=f"{mapper_type}-non-existent-fields-test", content=mapper_content).path,
             id_set_path=id_set_file_mock.path
         )
 
-        mapper_content["mapping"]["Test case"]["internalMapping"].pop("not-existing-field")
+        formatter.remove_non_existent_fields()
 
-        formatter.remove_inexistent_fields()
+        for i in range(1, 3):
+            mapper_content["mapping"][f"test-case-{i}"]["internalMapping"].pop(f"not-existing-field-{i}")
+
         assert formatter.data == mapper_content
 
     def test_remove_unnecessary_keys(self, mapper_formatter):

@@ -10,7 +10,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (
     LAYOUT_CONTAINER_FIELDS, LOG_COLORS,
-    get_all_incident_and_indicator_fields_from_id_set, print_color,
+    get_all_incident_and_indicator_fields_from_id_set, print_color, get_invalid_incident_fields_from_layout,
     print_error, remove_copy_and_dev_suffixes_from_str)
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 from demisto_sdk.commands.format.format_constants import (
@@ -99,7 +99,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         self.set_toVersion()
         self.layout__set_output_path()
         self.remove_copy_and_dev_suffixes_from_layout()
-        self.remove_inexistent_fields_layout()
+        self.remove_non_existent_fields_layout()
 
     def layout__set_output_path(self):
         output_basename = os.path.basename(self.output_file)
@@ -261,15 +261,14 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                         section['query'] = remove_copy_and_dev_suffixes_from_str(section.get('query'))
                         section['name'] = remove_copy_and_dev_suffixes_from_str(section.get('name'))
 
-    def remove_inexistent_fields_layoutscontainer(self):
+    def remove_non_existent_fields_container_layout(self):
         """
-        Remove in-existent incident/indicator fields from a container layout.
+        Remove non-existent fields from a container layout.
         """
         if not self.id_set_file:
             return
 
-        content_fields = get_all_incident_and_indicator_fields_from_id_set(self.id_set_file, 'layout')
-        built_in_fields = [field.lower() for field in BUILT_IN_FIELDS] + LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
+        content_fields = self.get_available_content_fields()
 
         layout_container_items = [
             layout_container_field for layout_container_field in LAYOUT_CONTAINER_FIELDS
@@ -279,60 +278,65 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         for layout_container_item in layout_container_items:
             layout = self.data.get(layout_container_item, {})
             layout_tabs = layout.get('tabs', [])
-            self.remove_inexistent_fields_from_tabs(
-                layout_tabs=layout_tabs, content_fields=content_fields, built_in_fields=built_in_fields
+            self.remove_non_existent_fields_from_tabs(
+                layout_tabs=layout_tabs, content_fields=content_fields
             )
 
-    @staticmethod
-    def extract_content_fields(content_fields, built_in_fields):
+    def remove_non_existent_fields_layout(self):
         """
-        Get only incident/indicator fields which are part of the id json file.
-        """
-        def _extract_content_fields(field):
-            """
-            Get only incident/indicator fields which are part of the id json file.
-            """
-            field = field.get('fieldId', '').replace('incident_', '').replace('indicator_', '').lower()
-            return field in built_in_fields or field in content_fields
-
-        return _extract_content_fields
-
-    def remove_inexistent_fields_from_tabs(self, layout_tabs, content_fields, built_in_fields):
-        """
-        Remove in-existent fields which are not part of the id json from tabs.
-        """
-        for tab in layout_tabs:
-            layout_sections = tab.get('sections', [])
-            for section in layout_sections:
-                items = section.get('items', [])
-                section['items'] = list(
-                    filter(
-                        self.extract_content_fields(content_fields=content_fields, built_in_fields=built_in_fields),
-                        items
-                    )
-                )
-
-    def remove_inexistent_fields_layout(self):
-        """
-        Remove in-existent fields from a layout.
+        Remove non-existent fields from a layout.
         """
         if not self.id_set_file:
             return
 
-        content_fields = get_all_incident_and_indicator_fields_from_id_set(self.id_set_file, 'layout')
-        built_in_fields = [field.lower() for field in BUILT_IN_FIELDS] + LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
+        content_fields = self.get_available_content_fields()
 
         layout = self.data.get('layout', {})
         layout_sections = layout.get('sections', [])
         for section in layout_sections:
             fields = section.get('fields', [])
-            section['fields'] = list(
-                filter(
-                    self.extract_content_fields(content_fields=content_fields, built_in_fields=built_in_fields),
-                    fields
-                )
-            )
+            section['fields'] = self.extract_content_fields(fields=fields, content_fields=content_fields)
 
-        self.remove_inexistent_fields_from_tabs(
-            layout_tabs=layout.get('tabs', []), content_fields=content_fields, built_in_fields=built_in_fields
+        self.remove_non_existent_fields_from_tabs(
+            layout_tabs=layout.get('tabs', []), content_fields=content_fields
         )
+
+    def get_available_content_fields(self):
+        """
+        Get all the available content indicator/incident fields available + all the built in fields.
+        """
+        return get_all_incident_and_indicator_fields_from_id_set(self.id_set_file, 'layout') + [
+            field.lower() for field in BUILT_IN_FIELDS
+        ] + LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
+
+    @staticmethod
+    def extract_content_fields(fields: list, content_fields: list) -> list:
+        """
+        Get only incident/indicator fields which are part of the id json file.
+
+        Args:
+            fields (list[dict]): list of fields.
+            content_fields (list[str]): all the available content fields from id json.
+
+        Returns:
+            list: fields which are part of the content items (id json).
+        """
+        return [
+            field for field in fields if
+            field.get('fieldId', '').replace('incident_', '').replace('indicator_', '').lower() not in
+            get_invalid_incident_fields_from_layout(layout_incident_fields=fields, content_fields=content_fields)
+        ]
+
+    def remove_non_existent_fields_from_tabs(self, layout_tabs: list, content_fields: list):
+        """
+        Remove non-existent fields which are not part of the id json from tabs.
+
+        Args:
+            layout_tabs (list[dict]): list of layout tabs.
+            content_fields (list[str]): all the available content fields from id json.
+        """
+        for tab in layout_tabs:
+            layout_sections = tab.get('sections', [])
+            for section in layout_sections:
+                items = section.get('items', [])
+                section['items'] = self.extract_content_fields(fields=items, content_fields=content_fields)

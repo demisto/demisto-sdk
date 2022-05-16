@@ -14,7 +14,8 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import (
-    LAYOUT_CONTAINER_FIELDS, get_all_incident_and_indicator_fields_from_id_set, get_invalid_incident_fields_from_layout)
+    LAYOUT_CONTAINER_FIELDS, get_all_incident_and_indicator_fields_from_id_set,
+    get_invalid_incident_fields_from_layout)
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 
 FROM_VERSION_LAYOUTS_CONTAINER = '6.0.0'

@@ -213,7 +213,7 @@ class TestGitContentConfig:
         requests_mock.get(url, json=gitlab_response)
         mocker.patch.object(Repo, 'remote', return_value=Urls(['https://code.pan.run/xsoar/content-internal-dist.git']))
         git_config = GitContentConfig()
-        assert git_config.gitlab_id == 3606
+        assert git_config.project_id == 3606  # this is the project id of `content-internal-dist`
         assert git_config.base_api == GitContentConfig.BASE_RAW_GITLAB_LINK.format(GITLAB_HOST=host,
                                                                                    GITLAB_ID=3606)
 
@@ -283,5 +283,5 @@ class TestGitContentConfig:
         """
         requests_mock.get("https://code.pan.run/api/v4/projects/3")
         git_config = GitContentConfig(project_id=3, git_provider=GitProvider.GitLab, repo_hostname='code.pan.run')
-        assert git_config.gitlab_id == 3
+        assert git_config.project_id == 3
         assert git_config.base_api == 'https://code.pan.run/api/v4/projects/3/repository'

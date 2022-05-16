@@ -2789,13 +2789,13 @@ def get_invalid_incident_fields_from_mapper(
     if mapping_type not in {'mapping-incoming', 'mapping-outgoing'}:
         raise ValueError(f'Invalid mapping-type value {mapping_type}, should be: mapping-incoming/mapping-outgoing')
 
-    invalid_incident_fields = []
+    non_existent_fields = []
 
     for inc_name, inc_info in mapper_incident_fields.items():
         # incoming mapper
         if mapping_type == "mapping-incoming":
             if inc_name not in content_fields and inc_name.lower() not in content_fields:
-                invalid_incident_fields.append(inc_name)
+                non_existent_fields.append(inc_name)
         # outgoing mapper
         if mapping_type == "mapping-outgoing":
             # for inc timer type: "field.StartDate, and for using filters: "simple": "".
@@ -2803,9 +2803,9 @@ def get_invalid_incident_fields_from_mapper(
                 if '.' in simple:
                     simple = simple.split('.')[0]
                 if simple not in content_fields:
-                    invalid_incident_fields.append(inc_name)
+                    non_existent_fields.append(inc_name)
 
-    return invalid_incident_fields
+    return non_existent_fields
 
 
 def get_invalid_incident_fields_from_layout(layout_incident_fields: list, content_fields: list) -> list:
@@ -2820,11 +2820,12 @@ def get_invalid_incident_fields_from_layout(layout_incident_fields: list, conten
     Returns:
         list[str]: all the invalid incident fields which are not part of the content items.
     """
-    invalid_incident_fields = []
+    non_existent_fields = []
 
-    for incident_field_info in layout_incident_fields:
-        inc_field_id = incident_field_info.get('fieldId', '').replace('incident_', '').replace('indicator_', '')
-        if inc_field_id and inc_field_id.lower() not in content_fields and inc_field_id not in content_fields:
-            invalid_incident_fields.append(inc_field_id)
+    if layout_incident_fields and content_fields:
+        for incident_field_info in layout_incident_fields:
+            inc_field_id = incident_field_info.get('fieldId', '').replace('incident_', '').replace('indicator_', '')
+            if inc_field_id and inc_field_id.lower() not in content_fields and inc_field_id not in content_fields:
+                non_existent_fields.append(inc_field_id)
 
-    return invalid_incident_fields
+    return non_existent_fields

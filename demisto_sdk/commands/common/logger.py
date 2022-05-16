@@ -72,8 +72,7 @@ def logging_setup(verbose: int, quiet: Optional[bool] = False,
     return l
 
 
-logger: logging.Logger = logging_setup(verbose=2,
-                                       quiet=False)
+logger: logging.Logger = logging_setup(verbose=1, quiet=False)
 
 
 # Python program to print

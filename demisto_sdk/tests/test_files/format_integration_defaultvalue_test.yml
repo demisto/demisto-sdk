@@ -1,0 +1,112 @@
+category: Utilities
+commonfields:
+  id: HelloWorld
+  version: -1
+configuration:
+- defaultvalue: https://soar.monstersofhack.com
+  display: Server URL (e.g. https://soar.monstersofhack.com)
+  name: url
+  required: true
+  type: 0
+- defaultvalue: False
+  display: Fetch incidents
+  name: isFetch
+  required: false
+  type: 8
+- defaultvalue: 'True'
+  display: Trust any certificate (not secure)
+  name: insecure
+  required: false
+  type: 8
+- defaultvalue: 'False'
+  display: Use system proxy settings
+  name: proxy
+  required: false
+  type: 8
+description: This is the Hello World integration for getting started.
+display: HelloWorld
+name: HelloWorld
+script:
+  commands:
+  - arguments:
+    - default: false
+      description: The name of whom you want to say hello to.
+      isArray: false
+      name: name
+      required: false
+      secret: false
+    deprecated: false
+    description: Hello command - prints hello to anyone.
+    execution: false
+    name: helloworld-say-hello
+    outputs:
+    - contextPath: hello
+      description: Should be Hello **something** here.
+      type: String
+  - arguments:
+    - default: false
+      description: Filter by alert severity. Comma-separated value (Low,Medium,High,Critical)
+      isArray: false
+      name: severity
+      required: false
+      secret: false
+    - auto: PREDEFINED
+      default: false
+      description: Filter by alert status.
+      isArray: false
+      name: status
+      predefined:
+      - ACTIVE
+      - CLOSED
+      required: false
+      secret: false
+    - default: false
+      description: Filter by alert type
+      isArray: false
+      name: alert_type
+      required: false
+      secret: false
+    - default: false
+      description: Maximum results to return.
+      isArray: false
+      name: max_results
+      required: false
+      secret: false
+    - default: false
+      description: "Filter by start time. \nExamples:\n  \"3 days ago\"\n  \"1 month\"\n  \"2019-10-10T12:22:00\"\n  \"2019-10-10\""
+      isArray: false
+      name: start_time
+      required: false
+      secret: false
+    deprecated: false
+    description: Search HelloWorld Alerts.
+    execution: false
+    name: helloworld-search-alerts
+    outputs:
+    - contextPath: HelloWorld.Alert.alert_id
+      description: Alert ID.
+      type: String
+    - contextPath: HelloWorld.Alert.alert_status
+      description: Alert status. Can be 'ACTIVE' or 'CLOSED'.
+      type: String
+    - contextPath: HelloWorld.Alert.alert_type
+      description: Alert type. For example 'Bug' or 'Vulnerability'.
+      type: String
+    - contextPath: HelloWorld.Alert.created
+      description: Alert created time. Format is ISO8601 (i.e. '2020-04-30T10:35:00.000Z').
+      type: Date
+    - contextPath: HelloWorld.Alert.name
+      description: Alert name.
+      type: String
+    - contextPath: HelloWorld.Alert.severity
+      description: Alert severity. Can be 'Low', 'Medium', 'High' or 'Critical'.
+      type: String
+  dockerimage: demisto/python3:3.9.8.24399
+  isfetch: true
+  longRunning: false
+  longRunningPort: false
+  runonce: false
+  script: '-'
+  subtype: python3
+  type: python
+fromversion: 5.0.0

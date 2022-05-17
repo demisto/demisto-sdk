@@ -294,10 +294,8 @@ class TestPackUniqueFilesValidator:
 
     @pytest.mark.parametrize('usecases, is_valid, branch_usecases', [
         ([], True, []),
-        (['Phishing', 'Malware'], True, []),
-        (['NonApprovedUsecase', 'Case Management'], False, []),
-        (['NewUseCase'], True, ['NewUseCase']),
-        (['NewUseCase1, NewUseCase2'], False, ['NewUseCase1'])
+        (['Phishing', 'Malware'], True, ['Phishing', 'Malware']),
+        (['NonApprovedUsecase', 'Case Management'], False, ['Case Management']),
     ])
     def test_is_approved_usecases(self, repo, usecases, is_valid, branch_usecases, mocker):
         """
@@ -305,9 +303,6 @@ class TestPackUniqueFilesValidator:
             - Case A: Pack without usecases
             - Case B: Pack with approved usecases (Phishing and Malware)
             - Case C: Pack with non-approved usecase (NonApprovedUsecase) and approved usecase (Case Management)
-            - Case D: Pack with approved usecase (NewUseCase) located in my branch only
-            - Case E: Pack with non-approved usecase (NewUseCase2) and approved usecase (NewUseCase1)
-            located in my branch only
 
         When:
             - Validating approved usecases
@@ -317,9 +312,6 @@ class TestPackUniqueFilesValidator:
             - Case B: Ensure validation passes as both usecases are approved
             - Case C: Ensure validation fails as it contains a non-approved usecase (NonApprovedUsecase)
                       Verify expected error is printed
-            - Case D: Ensure validation passes as usecase is approved on the same branch
-            - Case E: Ensure validation fails as it contains a non-approved usecase (NewUseCase2)
-                      Verify expected error is printed
         """
         self.restart_validator()
         pack_name = 'PackName'
@@ -327,7 +319,7 @@ class TestPackUniqueFilesValidator:
         pack.pack_metadata.write_json({
             PACK_METADATA_USE_CASES: usecases,
             PACK_METADATA_SUPPORT: XSOAR_SUPPORT,
-            PACK_METADATA_TAGS: []
+            PACK_METADATA_TAGS: [],
         })
         mocker.patch.object(tools, 'is_external_repository', return_value=False)
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': branch_usecases}, 'json'))
@@ -341,9 +333,7 @@ class TestPackUniqueFilesValidator:
     @pytest.mark.parametrize('tags, is_valid, branch_tags', [
         ([], True, []),
         (['Machine Learning', 'Spam'], True, []),
-        (['NonApprovedTag', 'GDPR'], False, []),
-        (['NewTag'], True, ['NewTag']),
-        (['NewTag1, NewTag2'], False, ['NewTag1'])
+        (['NonApprovedTag', 'GDPR'], False, ['GDPR']),
     ])
     def test_is_approved_tags(self, repo, tags, is_valid, branch_tags, mocker):
         """
@@ -351,9 +341,6 @@ class TestPackUniqueFilesValidator:
             - Case A: Pack without tags
             - Case B: Pack with approved tags (Machine Learning and Spam)
             - Case C: Pack with non-approved tags (NonApprovedTag) and approved tags (GDPR)
-            - Case D: Pack with approved tags (NewTag) located in my branch only
-            - Case E: Pack with non-approved tags (NewTag) and approved tags (NewTag)
-            located in my branch only
         When:
             - Validating approved tags
 
@@ -362,9 +349,6 @@ class TestPackUniqueFilesValidator:
             - Case B: Ensure validation passes as both tags are approved
             - Case C: Ensure validation fails as it contains a non-approved tags (NonApprovedTag)
                       Verify expected error is printed
-            - Case D: Ensure validation passes as tags is approved on the same branch
-            - Case E: Ensure validation fails as it contains a non-approved tag (NewTag2)
-                      Verify expected error is printed
         """
         self.restart_validator()
         pack_name = 'PackName'
@@ -372,7 +356,7 @@ class TestPackUniqueFilesValidator:
         pack.pack_metadata.write_json({
             PACK_METADATA_USE_CASES: [],
             PACK_METADATA_SUPPORT: XSOAR_SUPPORT,
-            PACK_METADATA_TAGS: tags
+            PACK_METADATA_TAGS: tags,
         })
         mocker.patch.object(tools, 'is_external_repository', return_value=False)
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': branch_tags}, 'json'))

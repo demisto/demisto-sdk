@@ -332,7 +332,7 @@ class TestPackUniqueFilesValidator:
 
     @pytest.mark.parametrize('tags, is_valid, branch_tags', [
         ([], True, []),
-        (['Machine Learning', 'Spam'], True, []),
+        (['Machine Learning', 'Spam'], True, ['Machine Learning', 'Spam']),
         (['NonApprovedTag', 'GDPR'], False, ['GDPR']),
     ])
     def test_is_approved_tags(self, repo, tags, is_valid, branch_tags, mocker):

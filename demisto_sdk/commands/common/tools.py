@@ -1326,6 +1326,8 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.XSIAM_REPORT
         elif TRIGGER_DIR in path.parts:
             return FileType.TRIGGER
+        elif path.name == METADATA_FILE_NAME:
+            return FileType.METADATA
 
     # integration image
     if path.name.endswith('_image.png'):
@@ -2466,8 +2468,7 @@ def get_current_repo() -> Tuple[str, str, str]:
         return "Unknown source", '', ''
 
 
-def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None,
-                          item_type: str = None) -> List:
+def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None, item_type: str = None) -> List:
     """
     Return the supporting marketplaces of the item.
 

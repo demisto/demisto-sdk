@@ -1977,7 +1977,7 @@ class ValidateManager:
             2. Check if this current item has an alternative field, and if sp check if all items that are using this
             current item have its alternative field in their file too.
         Args:
-            item_data: The extracted data of the item from yml\json.
+            item_data: The extracted data of the item from yml/json.
             file_type: The type of content item the data belongs to.
 
         Returns:

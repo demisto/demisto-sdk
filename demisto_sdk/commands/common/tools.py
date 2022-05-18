@@ -1299,14 +1299,11 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
     if path.suffix == '.md':
         if 'README' in path.name:
             return FileType.README
-
-        if RELEASE_NOTES_DIR in path.parts:
+        elif RELEASE_NOTES_DIR in path.parts:
             return FileType.RELEASE_NOTES
-
-        if 'description' in path.name:
+        elif 'description' in path.name:
             return FileType.DESCRIPTION
-
-        if 'CONTRIBUTORS' in path.name:
+        elif 'CONTRIBUTORS' in path.name:
             return FileType.CONTRIBUTORS
 
         return FileType.CHANGELOG
@@ -1328,14 +1325,14 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.TRIGGER
         elif path.name == METADATA_FILE_NAME:
             return FileType.METADATA
+        elif path.name.endswith(XSOAR_CONFIG_FILE):
+            return FileType.XSOAR_CONFIG
 
-    # integration image
     if path.name.endswith('_image.png'):
         if path.name.endswith("Author_image.png"):
             return FileType.AUTHOR_IMAGE
         return FileType.IMAGE
 
-    # doc files images
     if path.suffix == ".png" and DOC_FILES_DIR in path.parts:
         return FileType.DOC_IMAGE
 
@@ -1351,10 +1348,7 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
     if path.suffix == '.xif':
         return FileType.XIF_FILE
 
-    if path.name.endswith(XSOAR_CONFIG_FILE):
-        return FileType.XSOAR_CONFIG
-
-    if path.suffix == '.yml' and (path.parts[0] == '.circleci' or path.parts[0] == '.gitlab'):
+    if path.suffix == '.yml' and (path.parts[0] in {'.circleci', '.gitlab'}):
         return FileType.BUILD_CONFIG_FILE
 
     if path.name == FileType.PACK_IGNORE.value:
@@ -2468,7 +2462,8 @@ def get_current_repo() -> Tuple[str, str, str]:
         return "Unknown source", '', ''
 
 
-def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None, item_type: str = None) -> List:
+def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None,
+                          item_type: str = None) -> List:
     """
     Return the supporting marketplaces of the item.
 

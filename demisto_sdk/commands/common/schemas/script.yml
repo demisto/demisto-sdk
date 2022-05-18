@@ -146,8 +146,6 @@ schema;output_schema:
     description:
       type: str
       required: True
-    description_x2:
-      type: str
     type:
       type: str
 

@@ -554,7 +554,7 @@ class TestScripts:
     SCRIPT_DATA_ALTERNATIVE_TOP_LEVEL = {
         "DummyScript": {
             "name": "DummyScript",
-            "file_path": TESTS_DIR + '/test_files/alternative_meta_fields/Script-top_level_alternative_fields.yml',
+            "file_path": TESTS_DIR + '/test_files/alternative_fields/create_id_set_alternative_fields/Script-top_level_alternative_fields.yml',
             "source": ['github.com', 'demisto', 'demisto-sdk'],
             "marketplaces": ["xsoar"],
             "fromversion": "5.0.0",
@@ -571,7 +571,7 @@ class TestScripts:
     SCRIPT_DATA_ALTERNATIVE_SECOND_LEVEL = {
         "DummyScript": {
             "name": "DummyScript",
-            "file_path": TESTS_DIR + '/test_files/alternative_meta_fields/Script-second_level_alternative_fields.yml',
+            "file_path": TESTS_DIR + '/test_files/alternative_fields/create_id_set_alternative_fields/Script-second_level_alternative_fields.yml',
             "source": ['github.com', 'demisto', 'demisto-sdk'],
             "marketplaces": ["xsoar"],
             "fromversion": "5.0.0",
@@ -625,7 +625,7 @@ class TestScripts:
             - parsing all the data from file successfully
             - making sure the entry has a field called "has_alternative_meta" set to True
         """
-        file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Script-top_level_alternative_fields.yml'
+        file_path = TESTS_DIR + '/test_files/alternative_fields/create_id_set_alternative_fields/Script-top_level_alternative_fields.yml'
         data = get_script_data(file_path, packs={'DummyPack': {}})
 
         assert list(data.keys()) == list(TestScripts.SCRIPT_DATA_ALTERNATIVE_TOP_LEVEL.keys())
@@ -648,7 +648,7 @@ class TestScripts:
             - parsing all the data from file successfully
             - making sure the entry has a field called "has_alternative_meta" set to True
         """
-        file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Script-second_level_alternative_fields.yml'
+        file_path = TESTS_DIR + '/test_files/alternative_fields/create_id_set_alternative_fields/Script-second_level_alternative_fields.yml'
         data = get_script_data(file_path, packs={'DummyPack': {}})
 
         assert (list(data.keys()) == list(TestScripts.SCRIPT_DATA_ALTERNATIVE_SECOND_LEVEL.keys()))
@@ -784,7 +784,7 @@ class TestPlaybooks:
 
     PLAYBOOK_DATA_ALTERNATIVE_FIELDS_TOP_LEVEL = {
         "name": "Dummy Playbook",
-        "file_path": TESTS_DIR + "/test_files/alternative_meta_fields/Playbook-top_level_alternative_fields.yml",
+        "file_path": TESTS_DIR + "/test_files/alternative_fields/create_id_set_alternative_fields/Playbook-top_level_alternative_fields.yml",
         "source": ['github.com', 'demisto', 'demisto-sdk'],
         "fromversion": "4.5.0",
         "marketplaces": ["xsoar"],
@@ -817,7 +817,7 @@ class TestPlaybooks:
 
     PLAYBOOK_DATA_ALTERNATIVE_FIELDS_SECOND_LEVEL = {
         "name": "Dummy Playbook",
-        "file_path": TESTS_DIR + "/test_files/alternative_meta_fields/Playbook-second_level_alternative_fields.yml",
+        "file_path": TESTS_DIR + "/test_files/alternative_fields/create_id_set_alternative_fields/Playbook-second_level_alternative_fields.yml",
         "source": ['github.com', 'demisto', 'demisto-sdk'],
         "marketplaces": ["xsoar"],
         "fromversion": "4.5.0",
@@ -868,7 +868,7 @@ class TestPlaybooks:
             - parsing all the data from file successfully
             - making sure the entry has a field called "has_alternative_meta" set to True
         """
-        file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Playbook-top_level_alternative_fields.yml'
+        file_path = TESTS_DIR + '/test_files/alternative_fields/create_id_set_alternative_fields/Playbook-top_level_alternative_fields.yml'
         data = get_playbook_data(file_path, packs={'DummyPack': {}})['Dummy Playbook']
 
         assert IsEqualFunctions.is_dicts_equal(data,
@@ -888,7 +888,7 @@ class TestPlaybooks:
             - parsing all the data from file successfully
             - making sure the entry has a field called "has_alternative_meta" set to True
         """
-        file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Playbook-second_level_alternative_fields.yml'
+        file_path = TESTS_DIR + '/test_files/alternative_fields/create_id_set_alternative_fields/Playbook-second_level_alternative_fields.yml'
         data = get_playbook_data(file_path, packs={'DummyPack': {}})['Dummy Playbook']
         assert IsEqualFunctions.is_dicts_equal(data,
                                                TestPlaybooks.PLAYBOOK_DATA_ALTERNATIVE_FIELDS_SECOND_LEVEL,
@@ -1313,7 +1313,7 @@ class TestIncidentFields:
                 - parsing all the data from file successfully
                 - making sure the entry has a field called "has_alternative_meta"
         """
-        test_dir = os.path.join(git_path(), 'demisto_sdk', 'tests', 'test_files', 'alternative_meta_fields',
+        test_dir = os.path.join(git_path(), 'demisto_sdk', 'tests', 'test_files', 'alternative_fields/create_id_set_alternative_fields',
                                 'incidentfield-top_level_alternative_fields.json')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
 
@@ -1544,7 +1544,7 @@ class TestMappers:
             - parsing all the data from file successfully
             - making sure the entry has a field called "has_alternative_meta"
         """
-        test_file = os.path.join(git_path(), 'demisto_sdk', 'tests', 'test_files', 'alternative_meta_fields',
+        test_file = os.path.join(git_path(), 'demisto_sdk', 'tests', 'test_files', 'alternative_fields/create_id_set_alternative_fields',
                                  'mapper-top_level_alternative_name.json')
 
         res = get_mapper_data(test_file)

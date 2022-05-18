@@ -240,11 +240,11 @@ GENERICFIELD_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/gene
 INCIDENTFIELD_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/incidentfield.yml"
 INDICATORFIELD_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/indicatorfield.yml"
 
-ALTERNATIVE_FIELDS_ID_SET_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/id_set_alternative_fields.json'
-ALTERNATIVE_FIELDS_INVALID_INCIDENT_FIELD_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/incidentfield-alternative_fields_invalid.json'
-ALTERNATIVE_FIELDS_INVALID_PLAYBOOK_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-alternative_fields_invalid.yml'
-ALTERNATIVE_FIELDS_VALID_INCIDENT_FIELD_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/incidentfield-alternative_fields_valid.json'
-ALTERNATIVE_FIELDS_VALID_PLAYBOOK_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-alternative_fields_valid.yml'
+ALTERNATIVE_FIELDS_ID_SET_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/alternative_fields/formate_validate_alternative_fields/id_set_alternative_fields.json'
+ALTERNATIVE_FIELDS_INVALID_INCIDENT_FIELD_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/alternative_fields/formate_validate_alternative_fields/incidentfield-alternative_fields_invalid.json'
+ALTERNATIVE_FIELDS_INVALID_PLAYBOOK_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/alternative_fields/formate_validate_alternative_fields/playbook-alternative_fields_invalid.yml'
+ALTERNATIVE_FIELDS_VALID_INCIDENT_FIELD_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/alternative_fields/formate_validate_alternative_fields/incidentfield-alternative_fields_valid.json'
+ALTERNATIVE_FIELDS_VALID_PLAYBOOK_PATH = f'{GIT_ROOT}/demisto_sdk/tests/test_files/alternative_fields/formate_validate_alternative_fields/playbook-alternative_fields_valid.yml'
 
 DIR_LIST = [
     f'{PACK_TARGET}/{constants.INTEGRATIONS_DIR}',

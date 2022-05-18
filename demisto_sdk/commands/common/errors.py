@@ -2334,6 +2334,6 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def missing_alternative_fields_in_using_items(using_id, item_id):
+    def missing_alternative_fields_in_using_items(using_id: str, item_id: str):
         return f'Item with id {using_id} is using the item with id {item_id} and it is missing its alternative ' \
                f'fields. Please add the missing alternative fields to the file.'

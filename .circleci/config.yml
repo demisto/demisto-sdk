@@ -118,11 +118,11 @@ jobs:
               else
                 echo "Skipping coveralls"
               fi
-        slack/notify:
-          channel: dmst-slack-notifier-test
-          branch_pattern: test_slack_notifier_to_sdk
-          event: fail
-          template: basic_fail_1
+        - slack/notify:
+            channel: dmst-slack-notifier-test
+            branch_pattern: test_slack_notifier_to_sdk
+            event: fail
+            template: basic_fail_1
 
 
   run-integration-tests:

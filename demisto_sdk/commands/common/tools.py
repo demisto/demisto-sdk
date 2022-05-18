@@ -1328,36 +1328,36 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
         elif path.name.endswith(XSOAR_CONFIG_FILE):
             return FileType.XSOAR_CONFIG
 
-    if path.name.endswith('_image.png'):
+    elif path.name.endswith('_image.png'):
         if path.name.endswith("Author_image.png"):
             return FileType.AUTHOR_IMAGE
         return FileType.IMAGE
 
-    if path.suffix == ".png" and DOC_FILES_DIR in path.parts:
+    elif path.suffix == ".png" and DOC_FILES_DIR in path.parts:
         return FileType.DOC_IMAGE
 
-    if path.suffix == '.ps1':
+    elif path.suffix == '.ps1':
         return FileType.POWERSHELL_FILE
 
-    if path.suffix == '.py':
+    elif path.suffix == '.py':
         return FileType.PYTHON_FILE
 
-    if path.suffix == '.js':
+    elif path.suffix == '.js':
         return FileType.JAVASCRIPT_FILE
 
-    if path.suffix == '.xif':
+    elif path.suffix == '.xif':
         return FileType.XIF_FILE
 
-    if path.suffix == '.yml' and (path.parts[0] in {'.circleci', '.gitlab'}):
+    elif path.suffix == '.yml' and (path.parts[0] in {'.circleci', '.gitlab'}):
         return FileType.BUILD_CONFIG_FILE
 
-    if path.name == FileType.PACK_IGNORE.value:
+    elif path.name == FileType.PACK_IGNORE.value:
         return FileType.PACK_IGNORE
 
-    if path.name == FileType.SECRET_IGNORE.value:
+    elif path.name == FileType.SECRET_IGNORE.value:
         return FileType.SECRET_IGNORE
 
-    if path.parent.name == DOC_FILES_DIR:
+    elif path.parent.name == DOC_FILES_DIR:
         return FileType.DOC_FILE
 
     return None

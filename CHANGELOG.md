@@ -6,6 +6,7 @@
 * Removed duplicate identifiers for XSIAM integrations.
 * Updated the *tags* and *use cases* in pack metadata validation to use the local files only.
 * Fixed the error message in checkbox validation where the defaultvalue is wrong and added the name of the variable that should be fixed.
+* Added types to `find_type_by_path` under tools.py.
 
 ## 1.6.6
 

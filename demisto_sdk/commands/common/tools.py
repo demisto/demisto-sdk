@@ -2764,10 +2764,11 @@ def get_item_from_id_set(item_identifier, id_set_section):
     return None
 
 
-def check_and_add_missing_alternative_fields(item_data: dict, item_type: FileType, id_set_file: dict):
+def check_missing_alternative_fields(item_data: dict, item_type: FileType, id_set_file: dict):
     r"""
-   Checks if there are missing alternative fields in the given data, and adds the missing alternative fields to the
-   data. The id set determines whether the item has an alternative field.
+   Checks if there are missing alternative fields in the given data. If there are any,
+     adds the missing alternative fields to the data (this is relevant for when this function is called by 'format').
+     The id set determines whether the item has an alternative field.
     Args:
         item_data: The extracted data of the item from yml/json.
         item_type: The type of content item the data belongs to.

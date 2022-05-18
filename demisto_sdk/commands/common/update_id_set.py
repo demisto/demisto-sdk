@@ -675,8 +675,6 @@ def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None):
     script_data = create_common_entity_data(path=file_path, name=name, to_version=toversion, from_version=fromversion,
                                             pack=pack, marketplaces=marketplaces)
     alternative_fields = get_alternative_fields_from_data(data_dictionary)
-    if type_:
-        script_data['type'] = type_
     if deprecated:
         script_data['deprecated'] = deprecated
     if depends_on:

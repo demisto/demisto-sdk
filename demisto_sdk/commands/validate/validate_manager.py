@@ -1,4 +1,3 @@
-import json
 import os
 from concurrent.futures._base import Future, as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
@@ -27,7 +26,7 @@ from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 PRESET_ERROR_TO_IGNORE, Errors,
                                                 get_all_error_codes)
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import YAML_Handler, JSON_Handler
 from demisto_sdk.commands.common.hook_validations.author_image import \
     AuthorImageValidator
 from demisto_sdk.commands.common.hook_validations.base_validator import (
@@ -99,7 +98,7 @@ from demisto_sdk.commands.common.hook_validations.xsiam_report import \
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import \
     XSOARConfigJsonValidator
 from demisto_sdk.commands.common.tools import (
-    _get_file_id, check_and_add_missing_alternative_fields, find_type,
+    _get_file_id, check_missing_alternative_fields, find_type,
     get_all_using_paths, get_alternative_id_and_name_from_id_set,
     get_api_module_ids, get_api_module_integrations_set, get_content_path,
     get_file, get_id_from_item_data, get_pack_ignore_file_path, get_pack_name,
@@ -108,6 +107,7 @@ from demisto_sdk.commands.common.tools import (
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 yaml = YAML_Handler()
+json = JSON_Handler()
 
 
 class ValidateManager:
@@ -1971,11 +1971,11 @@ class ValidateManager:
     @error_codes('AF100,AF101')
     def validate_alternative_fields(self, item_data: dict, file_type: FileType):
         r"""
-            Validate the use of alternative fields related to this item. this inclueds:
+            Validate the use of alternative fields related to this item. This includes:
             1. Check if the given item is using any item that has alternative fields, and those are missing from
              its data, using the id set.
-            2. Check if this current item has an alternative field, and if sp check if all items that are using this
-            current item have its alternative field in their file too.
+            2. Check if this current item has an alternative field, if so check if all items that are using it
+            have its alternative field in their file too.
         Args:
             item_data: The extracted data of the item from yml/json.
             file_type: The type of content item the data belongs to.
@@ -1987,7 +1987,7 @@ class ValidateManager:
         is_valid = True
 
         # validate the use of alternative fields in current item's file
-        if check_and_add_missing_alternative_fields(item_data, file_type, self.id_set_file):
+        if check_missing_alternative_fields(item_data, file_type, self.id_set_file):
             error_message, error_code = Errors.missing_alternative_fields_nested_items()
             self.handle_error(error_message, error_code, file_path=self.file_path,
                               suggested_fix=Errors.suggest_fix(self.file_path, '-s', self.id_set_path))
@@ -2002,7 +2002,7 @@ class ValidateManager:
                 with open(path, 'r') as file:
                     using_data = json.loads(file.read()) if path.endswith('json') else yaml.load(file)
                     file_type = find_type(path)
-                    if check_and_add_missing_alternative_fields(using_data, file_type, self.id_set_file):
+                    if check_missing_alternative_fields(using_data, file_type, self.id_set_file):
                         error_message, error_code = \
                             Errors.missing_alternative_fields_in_using_items(get_id_from_item_data(using_data), item_id)
                         self.handle_error(error_message, error_code, file_path=path,

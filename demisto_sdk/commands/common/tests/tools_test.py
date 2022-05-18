@@ -10,9 +10,10 @@ import requests
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_TO_VERSION, INTEGRATIONS_DIR, LAYOUTS_DIR, PACKS_DIR,
-    PACKS_PACK_IGNORE_FILE_NAME, PLAYBOOKS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, FileType, MarketplaceVersions, DOC_FILES_DIR, METADATA_FILE_NAME)
+    DEFAULT_CONTENT_ITEM_TO_VERSION, DOC_FILES_DIR, INTEGRATIONS_DIR,
+    LAYOUTS_DIR, METADATA_FILE_NAME, PACKS_DIR, PACKS_PACK_IGNORE_FILE_NAME,
+    PLAYBOOKS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, FileType,
+    MarketplaceVersions)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
                                                             GitCredentials)
@@ -114,7 +115,7 @@ class TestGenericFunctions:
         ('Author_image.png', FileType.AUTHOR_IMAGE),
         (FileType.PACK_IGNORE.value, FileType.PACK_IGNORE),
         (FileType.SECRET_IGNORE.value, FileType.SECRET_IGNORE),
-        (Path(DOC_FILES_DIR)/'foo', FileType.DOC_FILE),
+        (Path(DOC_FILES_DIR) / 'foo', FileType.DOC_FILE),
         (METADATA_FILE_NAME, FileType.METADATA),
         ('', None),
     ]

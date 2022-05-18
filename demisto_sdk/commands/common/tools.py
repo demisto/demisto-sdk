@@ -2466,9 +2466,6 @@ def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[st
                           item_type: str = None) -> List:
     """
     Return the supporting marketplaces of the item.
-    """
-    Return the supporting marketplaces of the item.
-
     Args:
         item_path: the item path.
         item_data: the item data.

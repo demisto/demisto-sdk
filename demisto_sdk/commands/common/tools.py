@@ -2767,9 +2767,9 @@ def get_item_from_id_set(item_identifier, id_set_section):
 def check_and_add_missing_alternative_fields(item_data: dict, item_type: FileType, id_set_file: dict):
     r"""
    Checks if there are missing alternative fields in the given data, and adds the missing alternative fields to the
-   data. Determining whether the item has an alternative field is done by the id set.
+   data. The id set determines whether the item has an alternative field.
     Args:
-        item_data: The extracted data of the item from yml\json.
+        item_data: The extracted data of the item from yml/json.
         item_type: The type of content item the data belongs to.
         id_set_file: Loaded id set.
 
@@ -2786,7 +2786,7 @@ def check_and_add_missing_alternative_fields(item_data: dict, item_type: FileTyp
     was_alternated = False
     if possible_alternative_fields:
         if item_type == FileType.PLAYBOOK:
-            for task_info in list(item_data.get('tasks', {}).values()):
+            for task_info in item_data.get('tasks', {}).values():
                 # Go over all the tasks in the playbook, looking for subplaybooks or scripts
                 task_sub_info = task_info.get('task', {})
                 for field in possible_alternative_fields:

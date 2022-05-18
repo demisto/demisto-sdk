@@ -38,6 +38,10 @@ PRESET_ERROR_TO_CHECK = {
 }
 
 ERROR_CODE = {
+    # AF - alternative fields
+    "missing_alternative_fields_in_using_items": {'code': "AF100", 'ui_applicable': False, 'related_field': ''},
+    "missing_alternative_fields_nested_items": {'code': "AF101", 'ui_applicable': False, 'related_field': ''},
+
     # BA - Basic
     "wrong_version": {'code': "BA100", 'ui_applicable': False, 'related_field': 'version'},
     "id_should_equal_name": {'code': "BA101", 'ui_applicable': False, 'related_field': 'id'},
@@ -153,10 +157,6 @@ ERROR_CODE = {
                                                   'related_field': 'selectValues'},
     "invalid_marketplaces_in_alias": {'code': "IF117", 'ui_applicable': False, 'related_field': 'Aliases'},
     "aliases_with_inner_alias": {'code': "IF118", 'ui_applicable': False, 'related_field': 'Aliases'},
-
-    # AF - alternative fields
-    "missing_alternative_fields_in_using_items": {'code': "AF100", 'ui_applicable': False, 'related_field': ''},
-    "missing_alternative_fields_nested_items": {'code': "AF101", 'ui_applicable': False, 'related_field': ''},
 
     # IM - Images
     "no_image_given": {'code': "IM100", 'ui_applicable': True, 'related_field': 'image'},

@@ -66,7 +66,7 @@ class LintManager:
     """
 
     def __init__(self, input: str, git: bool, all_packs: bool, quiet: bool, verbose: int, prev_ver: str,
-                 json_file_path: str = '', id_set_path: str = None, check_dependent_api_module: bool = False):
+                 json_file_path: str = '', id_set_path: str = None, check_dependent_api_module: bool = False, py2_venv: Path = None):
 
         # Verbosity level
         self._verbose = not quiet if quiet else verbose
@@ -74,6 +74,7 @@ class LintManager:
         self._facts: dict = self._gather_facts()
         self._prev_ver = prev_ver
         self._all_packs = all_packs
+        self.py2_venv = py2_venv
         # Set 'git' to true if no packs have been specified, 'lint' should operate as 'lint -g'
         lint_no_packs_command = not git and not all_packs and not input
         git = True if lint_no_packs_command else git
@@ -101,6 +102,7 @@ class LintManager:
                 json_file_path = os.path.join(json_file_path, 'lint_outputs.json')
         self.json_file_path = json_file_path
         self.linters_error_list: list = []
+        
 
     @staticmethod
     def _gather_facts() -> Dict[str, Any]:

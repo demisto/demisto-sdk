@@ -44,7 +44,7 @@ def get_python_exec(py_num: str, is_py2: bool = False) -> str:
     return f"python{py_str}"
 
 
-def build_flake8_command(files: List[Path], py_num: str) -> str:
+def build_flake8_command(files: List[Path]) -> str:
     """ Build command for executing flake8 lint check
         https://flake8.pycqa.org/en/latest/user/invocation.html
     Args:
@@ -55,7 +55,7 @@ def build_flake8_command(files: List[Path], py_num: str) -> str:
         str: flake8 command
     """
 
-    command = f"{get_python_exec(py_num)} -m flake8"
+    command = "flake8"
     # Generating file patterns - path1,path2,path3,..
     files_list = [str(file) for file in files]
     command += ' ' + ' '.join(files_list)
@@ -72,7 +72,7 @@ def build_bandit_command(files: List[Path]) -> str:
     Returns:
         str: bandit command
     """
-    command = "python3 -m bandit"
+    command = "bandit"
     # Reporting only issues with high and medium severity level
     command += " -ll"
     # Reporting only issues of a high confidence level
@@ -96,7 +96,7 @@ def build_bandit_command(files: List[Path]) -> str:
     return command
 
 
-def build_xsoar_linter_command(files: List[Path], py_num: str, support_level: str = "base") -> str:
+def build_xsoar_linter_command(files: List[Path], support_level: str = "base", py2_venv: Path = None) -> str:
     """ Build command to execute with xsoar linter module
     Args:
         py_num(str): The python version in use
@@ -136,7 +136,7 @@ def build_xsoar_linter_command(files: List[Path], py_num: str, support_level: st
             for msg in checker_msgs_list:
                 message_enable += f"{msg},"
 
-    command = f"{get_python_exec(py_num, True)} -m pylint"
+    command = "pylint"
     # Excluded files
     command += f" --ignore={','.join(excluded_files)}"
     # Disable all errors
@@ -165,7 +165,7 @@ def build_mypy_command(files: List[Path], version: str, content_repo: Path = Non
     Returns:
         str: mypy command
     """
-    command = "python3 -m mypy"
+    command = "mypy"
     # Define python versions
     command += f" --python-version {version}"
     # This flag enable type checks the body of every function, regardless of whether it has type annotations.
@@ -193,7 +193,7 @@ def build_mypy_command(files: List[Path], version: str, content_repo: Path = Non
     return command
 
 
-def build_vulture_command(files: List[Path], pack_path: Path, py_num: str) -> str:
+def build_vulture_command(files: List[Path], pack_path: Path) -> str:
     """ Build command to execute with pylint module
         https://github.com/jendrikseipp/vulture
     Args:
@@ -204,7 +204,7 @@ def build_vulture_command(files: List[Path], pack_path: Path, py_num: str) -> st
     Returns:
        str: vulture command
     """
-    command = f"{get_python_exec(py_num)} -m vulture"
+    command = "vulture"
     # Excluded files
     command += f" --min-confidence {os.environ.get('VULTURE_MIN_CONFIDENCE_LEVEL', '100')}"
     # File to be excluded when performing lints check
@@ -227,7 +227,7 @@ def build_pylint_command(files: List[Path], docker_version: Optional[str] = None
     Returns:
        str: pylint command
     """
-    command = "python -m pylint"
+    command = "pylint"
     # Excluded files
     command += f" --ignore={','.join(excluded_files)}"
     # Prints only errors
@@ -267,7 +267,7 @@ def build_pytest_command(test_xml: str = "", json: bool = False, cov: str = "") 
     Returns:
         str: pytest command
     """
-    command = "python -m pytest -ra"
+    command = "pytest -ra"
     # Generating junit-xml report - used in circle ci
     if test_xml:
         command += " --junitxml=/devwork/report_pytest.xml"

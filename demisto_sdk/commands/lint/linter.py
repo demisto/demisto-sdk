@@ -299,10 +299,11 @@ class Linter:
 
         self._split_lint_files()
 
-        self._facts['lint_to_commands'] = {'pylint': build_pylint_command(
-            self._facts["lint_files"] + self._facts['lint_unittest_files'], docker_version=self._facts.get('python_version')),
+        self._facts['lint_to_commands'] = {
+            'pylint': build_pylint_command(self._facts["lint_files"] + self._facts['lint_unittest_files'], docker_version=self._facts.get('python_version')),
             'flake8': build_flake8_command(self._facts['lint_files']),
-            'vulture': build_vulture_command(self._facts['lint_files'], self._pack_abs_dir)}
+            'vulture': build_vulture_command(self._facts['lint_files'], self._pack_abs_dir)
+        }
 
         return False
 
@@ -702,7 +703,7 @@ class Linter:
                 name=container_name,
                 image=test_image,
                 command=[
-                    self._facts['lint_to_command'][linter]
+                    self._facts['lint_to_commands'][linter]
                 ],
                 user=f"{os.getuid()}:4000",
                 files_to_push=[(self._pack_abs_dir, '/devwork')],

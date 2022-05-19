@@ -167,14 +167,15 @@ jobs:
             name: Pre-commit
             command: |
               mkdir pre-commit-test-results
+              touch pre-commit-test-results/test
               poetry run pre-commit --version
-              poetry run pre-commit run -a >> pre-commit-test-results
+              poetry run pre-commit run -a >> pre-commit-test-results/test
         - save_cache:
             key: v1-pc-cache-{{ checksum "pre-commit-cache-key.txt" }}
             paths:
               - ~/.cache/pre-commit
         - store_test_results:
-            path: pre-commit-test-results
+            path: pre-commit-test-results/test
 
   checkout-content:
       docker:

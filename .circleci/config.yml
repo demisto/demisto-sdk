@@ -7,7 +7,6 @@ orbs:
   python: circleci/python@<< pipeline.parameters.python-orb-version >>
   node: circleci/node@<< pipeline.parameters.node-orb-version >>
   orb-tools: circleci/orb-tools@10.0
-  slack: circleci/slack@4.1
 
 parameters:
   python-orb-version:
@@ -118,11 +117,6 @@ jobs:
               else
                 echo "Skipping coveralls"
               fi
-        - slack/notify:
-            channel: dmst-slack-notifier-test
-            branch_pattern: test_slack_notifier_to_sdk
-            event: fail
-            template: basic_fail_1
 
 
   run-integration-tests:
@@ -178,6 +172,8 @@ jobs:
             key: v1-pc-cache-{{ checksum "pre-commit-cache-key.txt" }}
             paths:
               - ~/.cache/pre-commit
+        - store_test_results:
+            path: pre-commit-test-results
 
   checkout-content:
       docker:

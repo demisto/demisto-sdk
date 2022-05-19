@@ -174,7 +174,7 @@ jobs:
             key: v1-pc-cache-{{ checksum "pre-commit-cache-key.txt" }}
             paths:
               - ~/.cache/pre-commit
-        - store_test_results:
+        - store_artifacts:
             path: pre-commit-test-results/test
 
   checkout-content:

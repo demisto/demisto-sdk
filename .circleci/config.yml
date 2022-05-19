@@ -166,6 +166,7 @@ jobs:
         - run:
             name: Pre-commit
             command: |
+              mkdir pre-commit-test-results
               poetry run pre-commit --version
               poetry run pre-commit run -a
         - save_cache:

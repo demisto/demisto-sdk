@@ -996,7 +996,7 @@ class Linter:
         pack_dir = self._pack_abs_dir.parent if self._pack_abs_dir.parts[-1] == INTEGRATIONS_DIR else \
             self._pack_abs_dir.parent.parent
         pack_metadata_file = pack_dir / PACKS_PACK_META_FILE_NAME
-        with FileLock(pack_metadata_file.as_posix()):
+        with FileLock(f'{pack_metadata_file.as_posix()}.lock'):
             logger.debug(f'Lock acquired for {pack_metadata_file} to {self._pack_name}')
             with pack_metadata_file.open() as f:
                 pack_meta_content: Dict = json.load(f)

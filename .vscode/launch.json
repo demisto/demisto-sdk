@@ -2,6 +2,23 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: debug demisto-sdk",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/demisto_sdk/__main__.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd": "${env:CONTENT}", // Predefine the CONTENT variable in your environment first!
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            },
+            "args": [
+                "lint",
+                "-i",
+                "Packs/AbuseDB/Integrations/AbuseDB",
+            ]
+        },
+        {
             "name": "Python: Upload AbuseDB",
             "type": "python",
             "request": "launch",

@@ -718,9 +718,10 @@ class Linter:
             # Getting container logs
             container_log = container.logs().decode("utf-8")
             logger.info(f"{log_prompt} - exit-code: {container_exit_code}")
-            if container_exit_code in [1, 2]:
+            if container_exit_code in [1, 2, 127]:
                 # 1-fatal message issued
                 # 2-Error message issued
+                # 127-Command failure (for instance the linter is not exists)
                 exit_code = FAIL
                 output = container_log
                 logger.error(f"{log_prompt} - Finished, errors found")

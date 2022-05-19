@@ -992,6 +992,7 @@ class Linter:
         return exit_code, output
 
     def _update_support_level(self):
+        logger.debug(f'Updating support level for {self._pack_name}')
         pack_dir = self._pack_abs_dir.parent if self._pack_abs_dir.parts[-1] == INTEGRATIONS_DIR else \
             self._pack_abs_dir.parent.parent
         pack_metadata_file = pack_dir / PACKS_PACK_META_FILE_NAME

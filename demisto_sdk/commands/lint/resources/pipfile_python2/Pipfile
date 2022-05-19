@@ -6,6 +6,8 @@ verify_ssl = true
 [dev-packages]
 pylint = "*"
 pytest = "*"
+flake8 = "*"
+vulture = "*"
 pytest-mock = "*"
 requests-mock = "*"
 pytest-xdist = "*"

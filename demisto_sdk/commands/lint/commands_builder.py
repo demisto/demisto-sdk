@@ -57,7 +57,7 @@ def build_flake8_command(files: List[Path]) -> str:
 
     command = "flake8"
     # Generating file patterns - path1,path2,path3,..
-    files_list = [str(file) for file in files]
+    files_list = [file.name for file in files]
     command += ' ' + ' '.join(files_list)
 
     return command
@@ -213,7 +213,7 @@ def build_vulture_command(files: List[Path], pack_path: Path) -> str:
     whitelist = Path(pack_path) / '.vulture_whitelist.py'
     if whitelist.exists():
         command += f" {whitelist}"
-    files_list = [str(item) for item in files]
+    files_list = [file.name for file in files]
     command += " " + " ".join(files_list)
     return command
 

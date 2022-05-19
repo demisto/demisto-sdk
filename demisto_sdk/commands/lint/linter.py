@@ -997,10 +997,10 @@ class Linter:
             self._pack_abs_dir.parent.parent
         pack_metadata_file = pack_dir / PACKS_PACK_META_FILE_NAME
         with FileLock(pack_metadata_file.as_posix()):
-            logger.debug(f'Lock acquired for {pack_metadata_file}')
+            logger.debug(f'Lock acquired for {pack_metadata_file} to {self._pack_name}')
             with pack_metadata_file.open() as f:
                 pack_meta_content: Dict = json.load(f)
-        logger.debug(f'Lock released for {pack_metadata_file}')
+        logger.debug(f'Lock released for {pack_metadata_file} of {self._pack_name}')
         self._facts['support_level'] = pack_meta_content.get('support')
         if self._facts['support_level'] == 'partner' and pack_meta_content.get('Certification'):
             self._facts['support_level'] = 'certified partner'

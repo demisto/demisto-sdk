@@ -168,7 +168,7 @@ jobs:
             command: |
               mkdir pre-commit-test-results
               poetry run pre-commit --version
-              poetry run pre-commit run -a
+              poetry run pre-commit run -a >> pre-commit-test-results
         - save_cache:
             key: v1-pc-cache-{{ checksum "pre-commit-cache-key.txt" }}
             paths:

@@ -1109,7 +1109,7 @@ class TestFormatting:
         base_update_yml.update_deprecate(file_type='integration')
 
         assert base_update_yml.data['deprecated']
-        assert base_update_yml.data['tests'] == 'No test'
+        assert base_update_yml.data['tests'] == "\n- No test"
         assert base_update_yml.data['description'] == description_result
 
     @pytest.mark.parametrize('user_input, description_result',
@@ -1134,7 +1134,7 @@ class TestFormatting:
         base_update_yml.update_deprecate(file_type='script')
 
         assert base_update_yml.data['deprecated']
-        assert base_update_yml.data['tests'] == 'No test'
+        assert base_update_yml.data['tests'] == "\n- No test"
         assert base_update_yml.data['comment'] == description_result
 
     @pytest.mark.parametrize('user_input, description_result',
@@ -1159,7 +1159,7 @@ class TestFormatting:
         base_update_yml.update_deprecate(file_type='playbook')
 
         assert base_update_yml.data['deprecated']
-        assert base_update_yml.data['tests'] == 'No test'
+        assert base_update_yml.data['tests'] == "\n- No test"
         assert base_update_yml.data['description'] == description_result
 
     @pytest.mark.parametrize('name', ['MyIntegration', 'MyIntegration ', ' MyIntegration '])

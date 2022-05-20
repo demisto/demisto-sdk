@@ -242,7 +242,7 @@ class BaseUpdateYML(BaseUpdate):
         """
 
         self.data['deprecated'] = True
-        self.data['tests'] = "\n- No tests (auto formatted)"
+        self.data['tests'] = ["No tests (auto formatted)"]
 
         if file_type in [INTEGRATION, PLAYBOOK]:
 

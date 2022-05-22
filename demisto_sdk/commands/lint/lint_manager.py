@@ -102,7 +102,6 @@ class LintManager:
                 json_file_path = os.path.join(json_file_path, 'lint_outputs.json')
         self.json_file_path = json_file_path
         self.linters_error_list: list = []
-        
 
     @staticmethod
     def _gather_facts() -> Dict[str, Any]:

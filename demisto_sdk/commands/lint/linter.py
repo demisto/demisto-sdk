@@ -349,10 +349,7 @@ class Linter:
         """
         log_prompt = f'{self._pack_name} - Run Lint In Host'
         logger.info(f'{log_prompt} - Started')
-        warning = []
-        error = []
-        other = []
-        exit_code: int = 0
+        exit_code: int = SUCCESS
         for lint_check in ["XSOAR_linter", "bandit", "mypy"]:
             exit_code = SUCCESS
             output = ""
@@ -379,7 +376,7 @@ class Linter:
             self._pkg_lint_status[f"{lint_check}_warnings"] = "\n".join(warning)
         if exit_code & FAIL:
             self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
-                # if the error were extracted correctly as they start with E
+            # if the error were extracted correctly as they start with E
             if error:
                 self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(error)
                 # if there were errors but they do not start with E
@@ -509,7 +506,6 @@ class Linter:
         logger.info(f"{log_prompt} - Successfully finished")
 
         return SUCCESS, ""
-
 
     def _handle_errors(self):
         pass
@@ -692,7 +688,7 @@ class Linter:
             # see: https://github.com/docker/docker-py/issues/2696#issuecomment-721322548
             if platform.system() != 'Darwin' or 'Connection broken' not in str(err):
                 raise
-            
+
     def docker_run_linter(self, linter: str, test_image: str, keep_container: bool) -> Tuple[int, str]:
         log_prompt = f'{self._pack_name} - {linter} - Image {test_image}'
         logger.info(f"{log_prompt} - Start")

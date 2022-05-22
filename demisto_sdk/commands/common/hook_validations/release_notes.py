@@ -27,10 +27,12 @@ class ReleaseNotesValidator(BaseValidator):
         latest_release_notes (str): the text of the UNRELEASED section in the changelog file.
     """
 
-    def __init__(self, release_notes_file_path, modified_files=None, pack_name=None, added_files=None, ignored_errors=None,
+    def __init__(self, release_notes_file_path, modified_files=None, pack_name=None, added_files=None,
+                 ignored_errors=None,
                  print_as_warnings=False, suppress_print=False, json_file_path=None, specific_validations=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print, json_file_path=json_file_path, specific_validations=specific_validations)
+                         suppress_print=suppress_print, json_file_path=json_file_path,
+                         specific_validations=specific_validations)
         self.release_notes_file_path = release_notes_file_path
         self.modified_files = modified_files
         self.added_files = added_files
@@ -99,8 +101,9 @@ class ReleaseNotesValidator(BaseValidator):
         rn_file_name = self.release_notes_file_path[self.release_notes_file_path.rindex('/') + 1:]
         error_list = []
         for type, field in zip(['Integrations', 'Scripts'], ['display', 'name']):
-            if(type in release_notes_categories):
-                splited_release_notes_entities = self.get_entities_from_category(f'\n{release_notes_categories.get(type)}')
+            if (type in release_notes_categories):
+                splited_release_notes_entities = self.get_entities_from_category(
+                    f'\n{release_notes_categories.get(type)}')
                 for modified_yml_file in modified_yml_list:
                     modified_yml_dict = get_yaml(modified_yml_file) or {}
                     if modified_yml_dict.get(field) in splited_release_notes_entities:
@@ -120,6 +123,7 @@ class ReleaseNotesValidator(BaseValidator):
 
         return True
 
+    @error_codes('RN112')
     def validate_json_when_breaking_changes(self) -> bool:
         """
         In case of a breaking change in the release note, ensure the existence of a proper json file.

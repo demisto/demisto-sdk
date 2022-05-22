@@ -59,7 +59,7 @@ yaml = YAML_Handler()
 
 urllib3.disable_warnings()
 
-# inialize color palette
+# initialize color palette
 colorama.init()
 
 
@@ -1299,14 +1299,11 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
     if path.suffix == '.md':
         if 'README' in path.name:
             return FileType.README
-
-        if RELEASE_NOTES_DIR in path.parts:
+        elif RELEASE_NOTES_DIR in path.parts:
             return FileType.RELEASE_NOTES
-
-        if 'description' in path.name:
+        elif 'description' in path.name:
             return FileType.DESCRIPTION
-
-        if 'CONTRIBUTORS' in path.name:
+        elif 'CONTRIBUTORS' in path.name:
             return FileType.CONTRIBUTORS
 
         return FileType.CHANGELOG
@@ -1326,34 +1323,42 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.XSIAM_REPORT
         elif TRIGGER_DIR in path.parts:
             return FileType.TRIGGER
+        elif path.name == METADATA_FILE_NAME:
+            return FileType.METADATA
+        elif path.name.endswith(XSOAR_CONFIG_FILE):
+            return FileType.XSOAR_CONFIG
 
-    # integration image
-    if path.name.endswith('_image.png'):
+    elif path.name.endswith('_image.png'):
         if path.name.endswith("Author_image.png"):
             return FileType.AUTHOR_IMAGE
         return FileType.IMAGE
 
-    # doc files images
-    if path.suffix == ".png" and DOC_FILES_DIR in path.parts:
+    elif path.suffix == ".png" and DOC_FILES_DIR in path.parts:
         return FileType.DOC_IMAGE
 
-    if path.suffix == '.ps1':
+    elif path.suffix == '.ps1':
         return FileType.POWERSHELL_FILE
 
-    if path.suffix == '.py':
+    elif path.suffix == '.py':
         return FileType.PYTHON_FILE
 
-    if path.suffix == '.js':
+    elif path.suffix == '.js':
         return FileType.JAVASCRIPT_FILE
 
-    if path.suffix == '.xif':
+    elif path.suffix == '.xif':
         return FileType.XIF_FILE
 
-    if path.name.endswith(XSOAR_CONFIG_FILE):
-        return FileType.XSOAR_CONFIG
-
-    if path.suffix == '.yml' and (path.parts[0] == '.circleci' or path.parts[0] == '.gitlab'):
+    elif path.suffix == '.yml' and (path.parts[0] in {'.circleci', '.gitlab'}):
         return FileType.BUILD_CONFIG_FILE
+
+    elif path.name == FileType.PACK_IGNORE.value:
+        return FileType.PACK_IGNORE
+
+    elif path.name == FileType.SECRET_IGNORE.value:
+        return FileType.SECRET_IGNORE
+
+    elif path.parent.name == DOC_FILES_DIR:
+        return FileType.DOC_FILE
 
     return None
 

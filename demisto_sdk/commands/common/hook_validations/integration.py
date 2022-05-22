@@ -29,9 +29,11 @@ from demisto_sdk.commands.common.hook_validations.docker import \
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.tools import (
     _get_file_id, compare_context_path_in_yml_and_readme,
-    extract_none_deprecated_command_names_from_yml, get_core_pack_list,
-    get_file_version_suffix_if_exists, get_files_in_dir, get_item_marketplaces,
-    get_pack_name, is_iron_bank_pack, print_error, server_version_compare)
+    extract_deprecated_command_names_from_yml,
+    extract_none_deprecated_command_names_from_yml, extract_testplaybooks_list,
+    get_core_pack_list, get_file_version_suffix_if_exists, get_files_in_dir,
+    get_item_marketplaces, get_pack_name, is_iron_bank_pack, print_error,
+    server_version_compare)
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -47,10 +49,11 @@ class IntegrationValidator(ContentEntityValidator):
     ALLOWED_HIDDEN_PARAMS = {'longRunning', 'feedIncremental', 'feedReputation'}
 
     def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
-                 json_file_path=None, validate_all=False):
+                 json_file_path=None, validate_all=False, deprecation_validator=None):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          json_file_path=json_file_path, skip_docker_check=skip_docker_check)
         self.validate_all = validate_all
+        self.deprecation_validator = deprecation_validator
 
     @error_codes('BA100')
     def is_valid_version(self):
@@ -148,6 +151,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_description(beta_integration=False),
             self.is_context_correct_in_readme(),
             self.verify_yml_commands_match_readme(is_modified),
+            self.is_integration_deprecated_and_used()
         ]
 
         if check_is_unskipped:
@@ -1619,5 +1623,32 @@ class IntegrationValidator(ContentEntityValidator):
                 os.path.basename(self.file_path), missing_commands_from_readme)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = False
+
+        return is_valid
+
+    @error_codes('IN153')
+    def is_integration_deprecated_and_used(self):
+        """
+        Checks if there are commands that are deprecated and is used in other scripts / playbooks / testplaybooks.
+
+        Return:
+            bool: True if there're no deprecated commands,
+             or if there're deprecated commands but they're not used in any scripts / playbooks / testplaybooks,
+             False if there're deprecated command that are used in any scripts / playbooks / testplaybooks.
+        """
+        deprecated_commands_list = []
+        is_valid = True
+
+        if self.current_file.get("deprecated"):
+            deprecated_commands_list = [command.get('name') for command in self.current_file.get('script', {}).get('commands', [])]
+        else:
+            deprecated_commands_list = extract_deprecated_command_names_from_yml(self.current_file)
+
+        if deprecated_commands_list:
+            used_commands_dict = self.deprecation_validator.validate_integartion(deprecated_commands_list, extract_testplaybooks_list(self.current_file))
+            if used_commands_dict:
+                error_message, error_code = Errors.integration_is_deprecated_and_used(self.file_path.get("name"), used_commands_dict)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    is_valid = False
 
         return is_valid

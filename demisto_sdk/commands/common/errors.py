@@ -231,6 +231,7 @@ ERROR_CODE = {
     'invalid_siem_integration_name': {'code': 'IN150', 'ui_applicable': True, 'related_field': 'display'},
     "empty_command_arguments": {'code': 'IN151', 'ui_applicable': False, 'related_field': 'arguments'},
     'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True, 'related_field': 'defaultvalue'},
+    'integration_is_deprecated_and_used': {'code': 'IN153', 'ui_applicable': True, 'related_field': 'deprecated'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -368,6 +369,7 @@ ERROR_CODE = {
     "is_valid_script_file_path_in_folder": {'code': "SC103", 'ui_applicable': False, 'related_field': ''},
     "incident_in_script_arg": {'code': "SC105", 'ui_applicable': True, 'related_field': 'args.name'},
     "runas_is_dbotrole": {'code': "SC106", 'ui_applicable': False, 'related_field': 'runas'},
+    'script_is_deprecated_and_used': {'code': 'SC107', 'ui_applicable': True, 'related_field': 'deprecated'},
 
     # ST - Structures
     "structure_doesnt_match_scheme": {'code': "ST100", 'ui_applicable': False, 'related_field': ''},
@@ -881,6 +883,15 @@ class Errors:
         return f"The defaultvalue={defaultvalue} for the checkbox is incorrect, " \
                f"should be true or false.\n " \
                f"e.g: defaultvalue: true"
+
+    @staticmethod
+    @error_code_decorator
+    def integration_is_deprecated_and_used(integration_name: str, commands_dict: dict):
+        erorr_str = f"{integration_name} integration contain deprecated commands that are being used:\n"
+        for command_name, command_usage_list in commands_dict.items():
+            current_command = '\n'.join(command_usage_list)
+            erorr_str += f"{command_name} is being used in the following locations:\n{current_command}\n"
+        return erorr_str
 
     @staticmethod
     @error_code_decorator
@@ -2231,6 +2242,12 @@ class Errors:
     def runas_is_dbotrole():
         return 'The runas value is DBotRole, it may cause access and exposure of sensitive data. ' \
                'Please consider changing it.'
+
+    @staticmethod
+    @error_code_decorator
+    def script_is_deprecated_and_used(script_name: str, files_list: list):
+        files_list = '\n'.join(files_list)
+        return f"{script_name} script is deprecated and being used in the following files:\n{files_list}"
 
     @staticmethod
     @error_code_decorator

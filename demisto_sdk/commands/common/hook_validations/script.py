@@ -23,11 +23,12 @@ class ScriptValidator(ContentEntityValidator):
     """
 
     def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
-                 json_file_path=None, validate_all=False):
+                 json_file_path=None, validate_all=False, deprecation_validator=None):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          skip_docker_check=skip_docker_check,
                          json_file_path=json_file_path)
         self.validate_all = validate_all
+        self.deprecation_validator = deprecation_validator
 
     @error_codes('BA100')
     def is_valid_version(self) -> bool:
@@ -420,3 +421,7 @@ class ScriptValidator(ContentEntityValidator):
                 self.is_valid = False
                 return False
         return True
+
+    @error_codes('SC107')
+    def is_script_used_and_deprecated(self):
+        pass

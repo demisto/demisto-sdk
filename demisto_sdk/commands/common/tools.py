@@ -2758,9 +2758,32 @@ def extract_none_deprecated_command_names_from_yml(yml_data: dict) -> list:
     return commands_ls
 
 
+def extract_deprecated_command_names_from_yml(yml_data: dict) -> list:
+    """
+    Go over all the commands in a yml file and return their names.
+    Args:
+        yml_data (dict): the yml content as a dict
+
+    Returns:
+        list: a list of all the commands names
+    """
+    commands_ls = []
+    for command in yml_data.get('script', {}).get('commands', {}):
+        if command.get('deprecated'):
+            commands_ls.append(command.get('name'))
+    return commands_ls
+
+
 def remove_copy_and_dev_suffixes_from_str(field_name: str) -> str:
     for _ in range(field_name.count('_')):
         for suffix in SUFFIX_TO_REMOVE:
             if field_name.endswith(suffix):
                 field_name = field_name[:-len(suffix)]
     return field_name
+
+
+def extract_testplaybooks_list(yml_file):
+    if tests_section := yml_file.get("tests"):
+        if "No tests" not in tests_section[0]:
+            return tests_section
+    return []

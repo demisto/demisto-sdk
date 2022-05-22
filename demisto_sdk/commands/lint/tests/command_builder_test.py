@@ -29,7 +29,7 @@ def test_build_xsoar_linter_py3_command(files):
     output = build_xsoar_linter_command(files, "base")
     files = [str(file) for file in files]
     expected = f"pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
-               "conftest.py,venv -E --disable=all --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'" \
+               "conftest.py,.venv -E --disable=all --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'" \
                " --enable=E9002,E9003,E9004,E9005,E9006,E9007,E9010,E9011, --load-plugins " \
                f"base_checker, {' '.join(files)}"
     assert output == expected
@@ -43,7 +43,7 @@ def test_build_xsoar_linter_py2_command(files):
     output = build_xsoar_linter_command(files, "base")
     files = [str(file) for file in files]
     expected = f"pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
-               "conftest.py,venv -E --disable=all --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}' " \
+               "conftest.py,.venv -E --disable=all --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}' " \
                "--enable=E9002,E9003,E9004,E9005,E9006,E9007,E9010,E9011, --load-plugins " \
                f"base_checker, {' '.join(files)}"
     assert output == expected
@@ -57,7 +57,7 @@ def test_build_xsoar_linter_no_base_command(files):
     output = build_xsoar_linter_command(files, "unsupported")
     files = [str(file) for file in files]
     expected = "pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
-               "conftest.py,venv -E --disable=all --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}' " \
+               "conftest.py,.venv -E --disable=all --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}' " \
                f"--enable= {' '.join(files)}"
     assert output == expected
 
@@ -70,7 +70,7 @@ def test_build_bandit_command(files):
     files = [str(file) for file in files]
     expected = "bandit -ll -iii -s B301,B303,B310,B314,B318 -a file --exclude=CommonServerPython.py,demistomock.py," \
                "CommonServerUserPython.py," \
-               "conftest.py,venv -q --format custom --msg-template " \
+               "conftest.py,.venv -q --format custom --msg-template " \
                "'{abspath}:{line}: {test_id} [Severity: {severity} Confidence: {confidence}] {msg}' " \
                f"-r {','.join(files)}"
     assert expected == output
@@ -99,8 +99,8 @@ def test_build_vulture_command(files, mocker):
     commands_builder.os.environ.get.return_value = 20
     output = build_vulture_command(files, Path('~/dev/content/'))
     files = [str(item) for item in files]
-    expected = f" vulture --min-confidence 20 --exclude=CommonServerPython.py,demistomock.py," \
-               f"CommonServerUserPython.py,conftest.py,venv {' '.join(files)}"
+    expected = f"vulture --min-confidence 20 --exclude=CommonServerPython.py,demistomock.py," \
+               f"CommonServerUserPython.py,conftest.py,.venv {' '.join(files)}"
     assert expected == output
 
 
@@ -110,8 +110,8 @@ def test_build_pylint_command(files):
     from demisto_sdk.commands.lint.commands_builder import build_pylint_command
     output = build_pylint_command(files)
     files = [str(file) for file in files]
-    expected = " pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
-               "conftest.py,venv -E --disable=bad-option-value -d duplicate-string-formatting-argument " \
+    expected = "pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
+               "conftest.py,.venv -E --disable=bad-option-value -d duplicate-string-formatting-argument " \
                "--msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'" \
                f" --generated-members=requests.packages.urllib3,requests.codes.ok {' '.join(files)}"
     assert expected == output

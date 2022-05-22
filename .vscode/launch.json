@@ -15,7 +15,7 @@
             "args": [
                 "lint",
                 "-i",
-                "Packs/AbuseDB/Integrations/AbuseDB",
+                "Packs/AbnormalSecurity/Integrations/AbnormalSecurity",
             ]
         },
         {

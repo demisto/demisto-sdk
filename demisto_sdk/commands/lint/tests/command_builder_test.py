@@ -7,21 +7,17 @@ import pytest
 values = [[Path("file1.py")], [Path("file1.py"), Path("file2.py")]]
 
 
-@pytest.mark.parametrize(argnames="py_num , expected_exec", argvalues=[('3.7', 'python3'), ('2.7', 'python'),
-                                                                       ('3.10', 'python3'), ('2.3.1', 'python')])
-def test_get_python_exec(py_num, expected_exec):
-    """Get python exec"""
-    from demisto_sdk.commands.lint.commands_builder import get_python_exec
-    assert expected_exec == get_python_exec(py_num)
-
-
 @pytest.mark.parametrize(argnames="files", argvalues=values)
 def test_build_flak8_command(files):
     """Build flake8 command"""
     from demisto_sdk.commands.lint.commands_builder import build_flake8_command
-    output = build_flake8_command(files, '3.8')
-    files = [str(file) for file in files]
-    expected = f"python3 -m flake8 {' '.join(files)}"
+    output = build_flake8_command(files)
+    files = [file.name for file in files]
+    expected = f"flake8 --ignore=W605,F403,F405,W503 " \
+        "--exclude=_script_template_docker.py,./CommonServerPython.py,./demistomock.py " \
+        "--max-line-length 130 " \
+        "--per-file-ignores=nudge_external_prs.py:E231,E251,E999 " \
+        f"{' '.join(files)}"
     assert output == expected
 
 

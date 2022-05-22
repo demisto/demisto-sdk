@@ -19,29 +19,7 @@ from demisto_sdk.commands.lint.resources.pylint_plugins.xsoar_level_checker impo
 # Third party packages
 # Local imports
 
-excluded_files = ["CommonServerPython.py", "demistomock.py", "CommonServerUserPython.py", "conftest.py", "venv"]
-
-
-def get_python_exec(py_num: str, is_py2: bool = False) -> str:
-    """ Get python executable
-
-    Args:
-        py_num(str): Python version X.Y
-        is_py2(bool): for python 2 version, Set True if the returned result should have python2 or False for python.
-
-    Returns:
-        str: python executable
-    """
-    py_ver = parse(py_num).major
-    if py_ver < 3:
-        if is_py2:
-            py_str = "2"
-        else:
-            py_str = ""
-    else:
-        py_str = "3"
-
-    return f"python{py_str}"
+excluded_files = ["CommonServerPython.py", "demistomock.py", "CommonServerUserPython.py", "conftest.py", ".venv"]
 
 
 def build_flake8_command(files: List[Path]) -> str:
@@ -62,7 +40,7 @@ def build_flake8_command(files: List[Path]) -> str:
     command += '--ignore=W605,F403,F405,W503 '
     command += '--exclude=_script_template_docker.py,./CommonServerPython.py,./demistomock.py '
     command += '--max-line-length 130 '
-    command += '--per-file-ignores=nudge_external_prs.py:E231,E251,E999'
+    command += '--per-file-ignores=nudge_external_prs.py:E231,E251,E999 '
 
     # Generating file patterns - path1,path2,path3,..
     files_list = [file.name for file in files]

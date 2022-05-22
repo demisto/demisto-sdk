@@ -78,7 +78,7 @@ Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
 
 * **-x, --xsiam**
 
-    if true will upload the pack to XSIAM server. Must be used together with -z
+    uploads the pack to a XSIAM server. Must be used together with -z
 
 ### Examples
 ```

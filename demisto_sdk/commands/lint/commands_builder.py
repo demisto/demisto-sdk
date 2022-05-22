@@ -62,7 +62,7 @@ def build_flake8_command(files: List[Path]) -> str:
     command += '--ignore=W605,F403,F405,W503 '
     command += '--exclude=_script_template_docker.py,./CommonServerPython.py,./demistomock.py '
     command += '--max-line-length 130 '
-    command += '--per-file-ignores=nudge_external_prs.py:E231'
+    command += '--per-file-ignores=nudge_external_prs.py:E231,E251,E999'
 
     # Generating file patterns - path1,path2,path3,..
     files_list = [file.name for file in files]

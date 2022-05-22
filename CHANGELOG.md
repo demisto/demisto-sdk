@@ -7,7 +7,8 @@
 * Updated the *tags* and *use cases* in pack metadata validation to use the local files only.
 * Fixed the error message in checkbox validation where the defaultvalue is wrong and added the name of the variable that should be fixed.
 * Added types to `find_type_by_path` under tools.py.
-* Fixed issue when using `format --deprecate` with YAML files contained incorrect value type for `tests` key.
+* Fixed an issue where YAML files contained incorrect value type for `tests` key when running `format --deprecate`.
+* Added a deprecation message to the `tests:` section of yaml files when running `format --deprecate`.
 * Added the 'integration-get-indicators' commands to be ignored by the **verify_yml_commands_match_readme** validation, the validation will no longer fail if these commands are not in the readme file.
 
 ## 1.6.6

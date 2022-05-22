@@ -947,7 +947,8 @@ class ValidateManager:
         playbook_validator = PlaybookValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                print_as_warnings=self.print_ignored_errors,
                                                json_file_path=self.json_file_path,
-                                               validate_all=self.validate_all)
+                                               validate_all=self.validate_all,
+                                               deprecation_validator=self.deprecation_validator)
 
         deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
                                                                file_path=structure_validator.file_path,

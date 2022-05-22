@@ -9,17 +9,20 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
     error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
-from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
+from demisto_sdk.commands.common.tools import (LOG_COLORS,
+                                               extract_testplaybooks_list,
+                                               is_string_uuid)
 
 
 class PlaybookValidator(ContentEntityValidator):
     """PlaybookValidator is designed to validate the correctness of the file structure we enter to content repo."""
 
     def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, json_file_path=None,
-                 validate_all=False):
+                 validate_all=False, deprecation_validator=None):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          json_file_path=json_file_path)
         self.validate_all = validate_all
+        self.deprecation_validator = deprecation_validator
 
     def is_valid_playbook(self, validate_rn: bool = True, id_set_file=None) -> bool:
         """Check whether the playbook is valid or not.
@@ -52,6 +55,7 @@ class PlaybookValidator(ContentEntityValidator):
             self.verify_condition_tasks_has_else_path(),
             self.name_not_contain_the_type(),
             self.is_valid_with_indicators_input(),
+            self.is_playbook_deprecated_and_used(),
         ]
         answers = all(playbook_checks)
 
@@ -535,3 +539,24 @@ class PlaybookValidator(ContentEntityValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
+
+    @error_codes('PB118')
+    def is_playbook_deprecated_and_used(self):
+        """
+        Checks if the playbook is deprecated and is used in other playbooks / testplaybooks.
+
+        Return:
+            bool: True if the playbook isn't deprecated
+            or if the playbook is deprecated but isn't used in any playbooks / testplaybooks,
+            False if the playbook is deprecated and used in any playbooks / testplaybooks.
+        """
+        is_valid = True
+
+        if self.current_file.get("deprecated"):
+            used_files_list = self.deprecation_validator.validate_playbook(self.current_file.get('name'), extract_testplaybooks_list(self.current_file))
+            if used_files_list:
+                error_message, error_code = Errors.playbook_is_deprecated_and_used(self.file_path.get("name"), used_files_list)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    is_valid = False
+
+        return is_valid

@@ -55,10 +55,18 @@ def build_flake8_command(files: List[Path]) -> str:
         str: flake8 command
     """
 
-    command = "flake8"
+    command = "flake8 "
+
+    # This is the same config used in `tox.ini` file in content
+    # We will probably want to use that in the future for this and all linters
+    command += '--ignore=W605,F403,F405,W503 '
+    command += '--exclude=_script_template_docker.py,./CommonServerPython.py,./demistomock.py '
+    command += '--max-line-length 130 '
+    command += '--per-file-ignores=nudge_external_prs.py:E231'
+
     # Generating file patterns - path1,path2,path3,..
     files_list = [file.name for file in files]
-    command += ' ' + ' '.join(files_list)
+    command += ' '.join(files_list)
 
     return command
 
@@ -96,7 +104,7 @@ def build_bandit_command(files: List[Path]) -> str:
     return command
 
 
-def build_xsoar_linter_command(files: List[Path], support_level: str = "base", py2_venv: Path = None) -> str:
+def build_xsoar_linter_command(files: List[Path], support_level: str = "base") -> str:
     """ Build command to execute with xsoar linter module
     Args:
         py_num(str): The python version in use

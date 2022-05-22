@@ -367,21 +367,24 @@ class Linter:
                     exit_code, output = self._run_mypy(py_num=self._facts["python_version"],
                                                        lint_files=self._facts["lint_files"])
 
-            # check for any exit code other than 0
-            if exit_code:
-                error, warning, other = split_warnings_errors(output)
-            if exit_code and warning:
-                self._pkg_lint_status["warning_code"] |= EXIT_CODES[lint_check]
-                self._pkg_lint_status[f"{lint_check}_warnings"] = "\n".join(warning)
-            if exit_code & FAIL:
-                self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
-                # if the error were extracted correctly as they start with E
-                if error:
-                    self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(error)
-                # if there were errors but they do not start with E
-                else:
-                    self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
+            self._handle_lint_results(exit_code, lint_check, output)
         logger.info(f'{log_prompt} - Finished successfully')
+
+    def _handle_lint_results(self, exit_code, lint_check, output):
+        # check for any exit code other than 0
+        if exit_code:
+            error, warning, other = split_warnings_errors(output)
+        if exit_code and warning:
+            self._pkg_lint_status["warning_code"] |= EXIT_CODES[lint_check]
+            self._pkg_lint_status[f"{lint_check}_warnings"] = "\n".join(warning)
+        if exit_code & FAIL:
+            self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
+                # if the error were extracted correctly as they start with E
+            if error:
+                self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(error)
+                # if there were errors but they do not start with E
+            else:
+                self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
 
     @timer(group_name='lint')
     def _run_xsoar_linter(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
@@ -508,6 +511,9 @@ class Linter:
         return SUCCESS, ""
 
 
+    def _handle_errors(self):
+        pass
+
     @timer(group_name='lint')
     def _run_lint_on_docker_image(self, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                                   keep_container: bool, test_xml: str, no_coverage: bool, no_flake8: bool, no_vulture: bool):
@@ -585,8 +591,7 @@ class Linter:
                         # But it failing in second time it will count as test failure.
                         if (exit_code == RERUN and trial == 1) or exit_code == FAIL or exit_code == SUCCESS:
                             if exit_code in [RERUN, FAIL]:
-                                self._pkg_lint_status["exit_code"] |= EXIT_CODES[check]
-                                status[f"{check}_errors"] = output
+                                self._handle_lint_results(exit_code, check, output)
                             break
             else:
                 status["image_errors"] = str(errors)
@@ -702,9 +707,7 @@ class Linter:
             container: docker.models.containers.Container = Docker.create_container(
                 name=container_name,
                 image=test_image,
-                command=[
-                    self._facts['lint_to_commands'][linter]
-                ],
+                command=[self._facts['lint_to_commands'][linter]],
                 user=f"{os.getuid()}:4000",
                 files_to_push=[(self._pack_abs_dir, '/devwork')],
                 environment=self._facts["env_vars"],

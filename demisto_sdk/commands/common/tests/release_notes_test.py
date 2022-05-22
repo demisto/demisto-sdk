@@ -500,12 +500,12 @@ TEST_RELEASE_NOTES_BREAKING_CHANGE = [
 
 
 @pytest.mark.parametrize('release_notes_content, has_json, change_json, expected_result', TEST_RELEASE_NOTES_BREAKING_CHANGE)
-def test_is_breaking_change(release_notes_content, has_json, change_json, expected_result, mocker, repo):
+def test_validate_json_when_breaking_changes(release_notes_content, has_json, change_json, expected_result, mocker, repo):
     """
     Given
     - A release note.
     When
-    - Run is_breaking_change validation.
+    - Run validate_json_when_breaking_changes validation.
     Then
     - Ensure that if the release note contains 'breaking change', there is also an appropriate json file.
     """
@@ -520,4 +520,4 @@ def test_is_breaking_change(release_notes_content, has_json, change_json, expect
         update_json(path=release_note.path[:-2] + 'json', key='breakingChanges', value=False)
 
     validator.release_notes_file_path = release_note.path
-    assert validator.is_breaking_change() == expected_result
+    assert validator.validate_json_when_breaking_changes() == expected_result

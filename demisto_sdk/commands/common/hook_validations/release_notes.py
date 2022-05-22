@@ -120,7 +120,7 @@ class ReleaseNotesValidator(BaseValidator):
 
         return True
 
-    def is_breaking_change(self) -> bool:
+    def validate_json_when_breaking_changes(self) -> bool:
         """
         In case of a breaking change in the release note, ensure the existence of a proper json file.
         """
@@ -129,9 +129,8 @@ class ReleaseNotesValidator(BaseValidator):
             json_path = self.release_notes_file_path[:-2] + 'json'
             error_message, error_code = Errors.release_notes_bc_json_file_missing(json_path)
             try:
-                js = get_dict_from_file(path=json_path)[0]  # extract only the dictionary
-                error_message, error_code = Errors.release_notes_bc_json_file_missing(json_path)
-                if 'breakingChanges' not in js or not js.get('breakingChanges'):
+                json_file_content = get_dict_from_file(path=json_path)[0]  # extract only the dictionary
+                if 'breakingChanges' not in json_file_content or not json_file_content.get('breakingChanges'):
                     if self.handle_error(error_message, error_code, self.release_notes_file_path):
                         is_valid = False
             except FileNotFoundError:
@@ -194,10 +193,10 @@ class ReleaseNotesValidator(BaseValidator):
             bool. True if file's release notes are valid, False otherwise.
         """
         validations = [
-            self.is_breaking_change(),
             self.has_release_notes_been_filled_out(),
             self.are_release_notes_complete(),
-            self.is_docker_image_same_as_yml()
+            self.is_docker_image_same_as_yml(),
+            self.validate_json_when_breaking_changes()
         ]
 
         return all(validations)

@@ -1254,9 +1254,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def release_notes_bc_json_file_missing(json_path):
-        return f"Release notes contain breaking changes without a proper json file.\n" \
-               f"Please add a proper json file to the following path: {json_path}\n",\
-               "You can refer to the documentation found here: https://xsoar.pan.dev/docs/documentation/release-notes for more information"
+        return f"A new release notes file contains the phrase \"breaking changes\" without a proper JSON file.\n" \
+               f"Please add it to the following path: {json_path}\n",\
+               "For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes"
 
     @staticmethod
     @error_code_decorator

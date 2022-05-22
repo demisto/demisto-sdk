@@ -4,9 +4,11 @@ from typing import Dict, List, Optional
 import click
 
 from demisto_sdk.commands.common.constants import (ENTITY_TYPE_TO_DIR,
-                                                   INTEGRATION, PLAYBOOK,
+                                                   INTEGRATION,
+                                                   NO_TESTS_DEPRECATED,
+                                                   PLAYBOOK,
                                                    TEST_PLAYBOOKS_DIR,
-                                                   FileType, NO_TESTS_DEPRECATED)
+                                                   FileType)
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.tools import (
     _get_file_id, find_type, get_entity_id_by_entity_type,

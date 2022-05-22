@@ -1,7 +1,13 @@
 # Changelog
 ## Unreleased
+* Added the `Note: XXX` and `XXX now generally available.` release notes templates to **doc-review** command.
 * Updated the logs shown during the docker build step.
-* Added the 'integration-get-indicators' commands to be ignored by the **verify_yml_commands_match_readme** validation, the validation will no longer fail if these
+* Removed a false warning about configuring the `GITLAB_TOKEN` environment variable when it's not needed.
+* Removed duplicate identifiers for XSIAM integrations.
+* Updated the *tags* and *use cases* in pack metadata validation to use the local files only.
+* Fixed the error message in checkbox validation where the defaultvalue is wrong and added the name of the variable that should be fixed.
+* Added types to `find_type_by_path` under tools.py.
+* Added the 'integration-get-indicators' commands to be ignored by the **verify_yml_commands_match_readme** validation, the validation will no longer fail if these commands are not in the readme file.
 
 ## 1.6.6
 

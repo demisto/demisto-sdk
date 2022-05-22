@@ -58,7 +58,7 @@ class ReleaseNotesValidator(BaseValidator):
                     update_rn_util = UpdateRN(pack_path=self.pack_path, modified_files_in_pack=set(),
                                               update_type=None, added_files=set(), pack=self.pack_name)
                     file_name, file_type = update_rn_util.get_changed_file_name_and_type(file)
-                    if file_name and file_type:
+                    if file_name and file_type and file_type in RN_HEADER_BY_FILE_TYPE:
                         if (RN_HEADER_BY_FILE_TYPE[file_type] not in self.latest_release_notes) or \
                                 (file_name not in self.latest_release_notes):
                             entity_name = update_rn_util.get_display_name(file)

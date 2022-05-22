@@ -6,7 +6,7 @@ import click
 from demisto_sdk.commands.common.constants import (ENTITY_TYPE_TO_DIR,
                                                    INTEGRATION, PLAYBOOK,
                                                    TEST_PLAYBOOKS_DIR,
-                                                   FileType)
+                                                   FileType, NO_TESTS_DEPRECATED)
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.tools import (
     _get_file_id, find_type, get_entity_id_by_entity_type,
@@ -242,7 +242,7 @@ class BaseUpdateYML(BaseUpdate):
         """
 
         self.data['deprecated'] = True
-        self.data['tests'] = ["No tests (auto formatted)"]
+        self.data['tests'] = [NO_TESTS_DEPRECATED]
 
         if file_type in [INTEGRATION, PLAYBOOK]:
 

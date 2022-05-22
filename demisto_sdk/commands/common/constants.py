@@ -1545,3 +1545,6 @@ class ParameterType(Enum):
     TEXT_AREA_ENCRYPTED = 14
     SINGLE_SELECT = 15
     MULTI_SELECT = 16
+
+
+NO_TESTS_DEPRECATED = 'No tests (deprecated)'

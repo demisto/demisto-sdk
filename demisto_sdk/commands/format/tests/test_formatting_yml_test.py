@@ -12,7 +12,7 @@ from mock import Mock, patch
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS,
     GENERAL_DEFAULT_FROMVERSION, INCIDENT_FETCH_REQUIRED_PARAMS,
-    MarketplaceVersions)
+    MarketplaceVersions, NO_TESTS_DEPRECATED)
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
@@ -1109,7 +1109,7 @@ class TestFormatting:
         base_update_yml.update_deprecate(file_type='integration')
 
         assert base_update_yml.data['deprecated']
-        assert base_update_yml.data['tests'] == ["No tests (auto formatted)"]
+        assert base_update_yml.data['tests'] == [NO_TESTS_DEPRECATED]
         assert base_update_yml.data['description'] == description_result
 
     @pytest.mark.parametrize('user_input, description_result',
@@ -1134,7 +1134,7 @@ class TestFormatting:
         base_update_yml.update_deprecate(file_type='script')
 
         assert base_update_yml.data['deprecated']
-        assert base_update_yml.data['tests'] == ["No tests (auto formatted)"]
+        assert base_update_yml.data['tests'] == [NO_TESTS_DEPRECATED]
         assert base_update_yml.data['comment'] == description_result
 
     @pytest.mark.parametrize('user_input, description_result',
@@ -1159,7 +1159,7 @@ class TestFormatting:
         base_update_yml.update_deprecate(file_type='playbook')
 
         assert base_update_yml.data['deprecated']
-        assert base_update_yml.data['tests'] == ["No tests (auto formatted)"]
+        assert base_update_yml.data['tests'] == [NO_TESTS_DEPRECATED]
         assert base_update_yml.data['description'] == description_result
 
     @pytest.mark.parametrize('name', ['MyIntegration', 'MyIntegration ', ' MyIntegration '])

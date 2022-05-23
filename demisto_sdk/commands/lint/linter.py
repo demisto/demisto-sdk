@@ -555,18 +555,18 @@ class Linter:
                     for trial in range(2):
                         if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
                             if not no_flake8 and check == 'flake8' and (self._facts['lint_files'] or self._facts['lint_unittest_files']):
-                                exit_code, output = self.docker_run_linter(linter=check,
-                                                                           test_image=image_id,
-                                                                           keep_container=keep_container)
+                                exit_code, output = self._docker_run_linter(linter=check,
+                                                                            test_image=image_id,
+                                                                            keep_container=keep_container)
                             if not no_vulture and check == 'vulture' and self._facts['lint_files']:
-                                exit_code, output = self.docker_run_linter(linter=check,
-                                                                           test_image=image_id,
-                                                                           keep_container=keep_container)
+                                exit_code, output = self._docker_run_linter(linter=check,
+                                                                            test_image=image_id,
+                                                                            keep_container=keep_container)
                             # Perform pylint
                             if not no_pylint and check == "pylint" and self._facts["lint_files"]:
-                                exit_code, output = self.docker_run_linter(linter=check,
-                                                                           test_image=image_id,
-                                                                           keep_container=keep_container)
+                                exit_code, output = self._docker_run_linter(linter=check,
+                                                                            test_image=image_id,
+                                                                            keep_container=keep_container)
                             # Perform pytest
                             elif not no_test and self._facts["test"] and check == "pytest":
                                 exit_code, output, test_json = self._docker_run_pytest(test_image=image_id,
@@ -689,7 +689,7 @@ class Linter:
             if platform.system() != 'Darwin' or 'Connection broken' not in str(err):
                 raise
 
-    def docker_run_linter(self, linter: str, test_image: str, keep_container: bool) -> Tuple[int, str]:
+    def _docker_run_linter(self, linter: str, test_image: str, keep_container: bool) -> Tuple[int, str]:
         log_prompt = f'{self._pack_name} - {linter} - Image {test_image}'
         logger.info(f"{log_prompt} - Start")
         container_name = f"{self._pack_name}-{linter}"
@@ -739,7 +739,7 @@ class Linter:
             # Keeping container if needed or remove it
             if keep_container:
                 print(f"{log_prompt} - container name {container_name}")
-                container.commit(repository=container_name.lower(), tag="pylint")
+                container.commit(repository=container_name.lower(), tag=linter)
             else:
                 try:
                     container.remove(force=True)

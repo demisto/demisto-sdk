@@ -56,7 +56,7 @@ def test_build_xsoar_linter_no_base_command(files):
         build_xsoar_linter_command
     output = build_xsoar_linter_command(files, "unsupported")
     files = [str(file) for file in files]
-    expected = "pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
+    expected = "python -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
                "conftest.py,.venv -E --disable=all --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}' " \
                f"--enable= {' '.join(files)}"
     assert output == expected
@@ -68,7 +68,7 @@ def test_build_bandit_command(files):
     from demisto_sdk.commands.lint.commands_builder import build_bandit_command
     output = build_bandit_command(files)
     files = [str(file) for file in files]
-    expected = "bandit -ll -iii -s B301,B303,B310,B314,B318 -a file --exclude=CommonServerPython.py,demistomock.py," \
+    expected = "python -m bandit -ll -iii -s B301,B303,B310,B314,B318 -a file --exclude=CommonServerPython.py,demistomock.py," \
                "CommonServerUserPython.py," \
                "conftest.py,.venv -q --format custom --msg-template " \
                "'{abspath}:{line}: {test_id} [Severity: {severity} Confidence: {confidence}] {msg}' " \

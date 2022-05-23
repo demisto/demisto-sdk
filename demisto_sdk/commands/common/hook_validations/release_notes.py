@@ -10,7 +10,7 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator, error_codes)
 from demisto_sdk.commands.common.tools import (extract_docker_image_from_text,
-                                               find_type,
+                                               find_type, get_dict_from_file,
                                                get_latest_release_notes_text,
                                                get_pack_name,
                                                get_release_notes_file_path,
@@ -27,10 +27,12 @@ class ReleaseNotesValidator(BaseValidator):
         latest_release_notes (str): the text of the UNRELEASED section in the changelog file.
     """
 
-    def __init__(self, release_notes_file_path, modified_files=None, pack_name=None, added_files=None, ignored_errors=None,
+    def __init__(self, release_notes_file_path, modified_files=None, pack_name=None, added_files=None,
+                 ignored_errors=None,
                  print_as_warnings=False, suppress_print=False, json_file_path=None, specific_validations=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print, json_file_path=json_file_path, specific_validations=specific_validations)
+                         suppress_print=suppress_print, json_file_path=json_file_path,
+                         specific_validations=specific_validations)
         self.release_notes_file_path = release_notes_file_path
         self.modified_files = modified_files
         self.added_files = added_files
@@ -99,8 +101,9 @@ class ReleaseNotesValidator(BaseValidator):
         rn_file_name = self.release_notes_file_path[self.release_notes_file_path.rindex('/') + 1:]
         error_list = []
         for type, field in zip(['Integrations', 'Scripts'], ['display', 'name']):
-            if(type in release_notes_categories):
-                splited_release_notes_entities = self.get_entities_from_category(f'\n{release_notes_categories.get(type)}')
+            if (type in release_notes_categories):
+                splited_release_notes_entities = self.get_entities_from_category(
+                    f'\n{release_notes_categories.get(type)}')
                 for modified_yml_file in modified_yml_list:
                     modified_yml_dict = get_yaml(modified_yml_file) or {}
                     if modified_yml_dict.get(field) in splited_release_notes_entities:
@@ -119,6 +122,25 @@ class ReleaseNotesValidator(BaseValidator):
                 return False
 
         return True
+
+    @error_codes('RN112')
+    def validate_json_when_breaking_changes(self) -> bool:
+        """
+        In case of a breaking change in the release note, ensure the existence of a proper json file.
+        """
+        is_valid = True
+        if 'breaking change' in self.latest_release_notes.lower():
+            json_path = self.release_notes_file_path[:-2] + 'json'
+            error_message, error_code = Errors.release_notes_bc_json_file_missing(json_path)
+            try:
+                json_file_content = get_dict_from_file(path=json_path)[0]  # extract only the dictionary
+                if 'breakingChanges' not in json_file_content or not json_file_content.get('breakingChanges'):
+                    if self.handle_error(error_message, error_code, self.release_notes_file_path):
+                        is_valid = False
+            except FileNotFoundError:
+                if self.handle_error(error_message, error_code, self.release_notes_file_path):
+                    is_valid = False
+        return is_valid
 
     @staticmethod
     def get_docker_version_from_rn(section: str) -> str:
@@ -177,7 +199,8 @@ class ReleaseNotesValidator(BaseValidator):
         validations = [
             self.has_release_notes_been_filled_out(),
             self.are_release_notes_complete(),
-            self.is_docker_image_same_as_yml()
+            self.is_docker_image_same_as_yml(),
+            self.validate_json_when_breaking_changes()
         ]
 
         return all(validations)

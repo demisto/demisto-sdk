@@ -2,8 +2,8 @@ from pathlib import Path
 from typing import List
 
 import pytest
-from demisto_sdk.commands.lint.helpers import SUCCESS
 
+from demisto_sdk.commands.lint.helpers import SUCCESS
 from demisto_sdk.commands.lint.linter import Linter
 
 

@@ -10,14 +10,15 @@ class TestPylint:
         # Expected values
         exp_container_exit_code = 0
         exp_container_log = ""
-
+        linter_obj._linter_to_commands()
         # Docker client mocking
         mocker.patch('demisto_sdk.commands.lint.docker_helper.Docker.create_container')
-        linter_obj._docker_client.containers.run().wait.return_value = {"StatusCode": exp_container_exit_code}
-        linter_obj._docker_client.containers.run().logs.return_value = exp_container_log.encode('utf-8')
+
+        linter_obj._docker_client.containers.run('test-image').wait.return_value = {"StatusCode": exp_container_exit_code}
+        linter_obj._docker_client.containers.run('test-image').logs.return_value = exp_container_log.encode('utf-8')
         act_container_exit_code, act_container_log = linter_obj._docker_run_linter(linter='pylint',
-                                                                                  test_image='test-image',
-                                                                                  keep_container=False)
+                                                                                   test_image='test-image',
+                                                                                   keep_container=False)
 
         assert exp_container_exit_code == act_container_exit_code
         assert exp_container_log == act_container_log
@@ -33,11 +34,12 @@ class TestPylint:
                                     exp_exit_code: int, exp_output: str):
         # Docker client mocking
         mocker.patch('demisto_sdk.commands.lint.docker_helper.Docker.create_container')
+        linter_obj._linter_to_commands()
         linter.Docker.create_container().wait.return_value = {"StatusCode": exp_container_exit_code}
         linter.Docker.create_container().logs.return_value = exp_container_log.encode('utf-8')
         act_exit_code, act_output = linter_obj._docker_run_linter(linter='pylint',
-                                                                 test_image='test-image',
-                                                                 keep_container=False)
+                                                                  test_image='test-image',
+                                                                  keep_container=False)
 
         assert act_exit_code == exp_exit_code
         assert act_output == exp_output

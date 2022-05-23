@@ -14,7 +14,6 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.init.contribution_converter import \
     ContributionConverter
-from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from TestSuite.contribution import Contribution
 from TestSuite.repo import Repo
 
@@ -700,7 +699,7 @@ class TestReleaseNotes:
             }
         ]
 
-        mocker.patch.object(UpdateRN, 'get_display_name', return_value='CrowdStrike Malquery')
+        mocker.patch("demisto_sdk.commands.common.tools.get_display_name", return_value='CrowdStrike Malquery')
         contrib_converter.replace_RN_template_with_value(RELEASE_NOTES_COPY)
 
         assert util_open_file(RELEASE_NOTES_COPY) == util_open_file(EXPECTED_RELEASE_NOTES)
@@ -737,8 +736,7 @@ class TestReleaseNotes:
                                         '- release note entry number #1\n- release note entry number #2\n',
                                         'CrowdStrikeMalquery - Multidownload and Fetch':
                                             '- changed this playbook\n- Updated another thing\n'}
-        mocker.patch.object(
-            UpdateRN, 'get_display_name',
-            side_effect=['CrowdStrike Malquery', 'CrowdStrikeMalquery - Multidownload and Fetch'])
+        mocker.patch("demisto_sdk.commands.common.tools.get_display_name",
+                     side_effect=['CrowdStrike Malquery', 'CrowdStrikeMalquery - Multidownload and Fetch'])
         rn_per_content_item = contrib_converter.format_user_input()
         assert expected_rn_per_content_item == rn_per_content_item

@@ -2771,3 +2771,45 @@ def remove_copy_and_dev_suffixes_from_str(field_name: str) -> str:
             if field_name.endswith(suffix):
                 field_name = field_name[:-len(suffix)]
     return field_name
+
+
+def get_display_name(file_path, file_data=None) -> str:
+    """ Gets the entity display name from the file.
+
+        :param file_path: The entity file path
+        :param file_data: The entity file data
+
+        :rtype: ``str``
+        :return The display name
+    """
+    if not file_data:
+        file_data = get_file(file_path, os.path.splitext(file_path)[1])
+
+    if 'display' in file_data:
+        name = file_data.get('display', None)
+    elif 'layout' in file_data and isinstance(file_data['layout'], dict):
+        name = file_data['layout'].get('id')
+    elif 'name' in file_data:
+        name = file_data.get('name', None)
+    elif 'TypeName' in file_data:
+        name = file_data.get('TypeName', None)
+    elif 'brandName' in file_data:
+        name = file_data.get('brandName', None)
+    elif 'id' in file_data:
+        name = file_data.get('id', None)
+    elif 'trigger_name' in file_data:
+        name = file_data.get('trigger_name')
+
+    elif 'dashboards_data' in file_data and file_data.get('dashboards_data') \
+            and isinstance(file_data['dashboards_data'], list):
+        dashboard_data = file_data.get('dashboards_data', [{}])[0]
+        name = dashboard_data.get('name')
+
+    elif 'templates_data' in file_data and file_data.get('templates_data') \
+            and isinstance(file_data['templates_data'], list):
+        r_name = file_data.get('templates_data', [{}])[0]
+        name = r_name.get('report_name')
+
+    else:
+        name = os.path.basename(file_path)
+    return name

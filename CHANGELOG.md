@@ -1,5 +1,8 @@
 # Changelog
+
 ## Unreleased
+
+* Added support for linting for the [Markdown](https://pypi.org/project/Markdown/) package.
 * Added the `Note: XXX` and `XXX now generally available.` release notes templates to **doc-review** command.
 * Updated the logs shown during the docker build step.
 * Removed a false warning about configuring the `GITLAB_TOKEN` environment variable when it's not needed.

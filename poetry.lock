@@ -1868,6 +1868,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "types-markdown"
+version = "3.3.21"
+description = "Typing stubs for Markdown"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "types-paramiko"
 version = "2.10.0"
 description = "Typing stubs for paramiko"
@@ -2174,7 +2182,7 @@ build = ["gsutil"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "018317cc0c96e49c83fa8574e2f072c08d268daeb1f3178d2181b31a33777253"
+content-hash = "17c1a517d6b70c25013b08500ba772c2d0d8b2c5005aa341eb69ad50d989941c"
 
 [metadata.files]
 aiohttp = [
@@ -3614,6 +3622,10 @@ types-filelock = [
 types-ipaddress = [
     {file = "types-ipaddress-1.0.8.tar.gz", hash = "sha256:a03df3be5935e50ba03fa843daabff539a041a28e73e0fce2c5705bee54d3841"},
     {file = "types_ipaddress-1.0.8-py3-none-any.whl", hash = "sha256:4933b74da157ba877b1a705d64f6fa7742745e9ffd65e51011f370c11ebedb55"},
+]
+types-markdown = [
+    {file = "types-Markdown-3.3.21.tar.gz", hash = "sha256:6187ae73db1d914806558e69d190ee657103bf715d21222d6bf4235a2baa967e"},
+    {file = "types_Markdown-3.3.21-py3-none-any.whl", hash = "sha256:bcf3154678e53540b0aefcbf4c9e16e9f8e1b8cd8190b1f9ceb6bfb98dda1f3a"},
 ]
 types-paramiko = [
     {file = "types-paramiko-2.10.0.tar.gz", hash = "sha256:ab6893d5fce5ed06964d61939ed6a7168ab14952945a90995a628a5e82a5e161"},

@@ -1,11 +1,17 @@
 # Changelog
 ## Unreleased
+* Added support in the **format** command to remove nonexistent incident/indicator fields from *layouts/mappers*
 * Added the `Note: XXX` and `XXX now generally available.` release notes templates to **doc-review** command.
 * Updated the logs shown during the docker build step.
 * Removed a false warning about configuring the `GITLAB_TOKEN` environment variable when it's not needed.
 * Removed duplicate identifiers for XSIAM integrations.
 * Updated the *tags* and *use cases* in pack metadata validation to use the local files only.
 * Fixed the error message in checkbox validation where the defaultvalue is wrong and added the name of the variable that should be fixed.
+* Added types to `find_type_by_path` under tools.py.
+* Fixed an issue where YAML files contained incorrect value type for `tests` key when running `format --deprecate`.
+* Added a deprecation message to the `tests:` section of yaml files when running `format --deprecate`.
+* Added the 'integration-get-indicators' commands to be ignored by the **verify_yml_commands_match_readme** validation, the validation will no longer fail if these commands are not in the readme file.
+* Added a new validation to the **validate** command to verify that if the phrase "breaking changes" is present in a pack release notes, a JSON file with the same name exists and contains the relevant breaking changes information.
 
 ## 1.6.6
 
@@ -22,7 +28,7 @@
 * Added the flag '-x', '--xsiam' to **upload** command to upload XSIAM entities to XSIAM server.
 * Fixed the integration field *isFetchEvents* to be in lowercase.
 * Fixed an issue where **validate -i** run after **format -i** on an existing file in the repo instead of **validate -g**.
-* Added the following commands: 'update-remote-data', 'get-modified-remote-data', 'update-remote-system' and 'integration-get-indicators' to be ignored by the **verify_yml_commands_match_readme** validation, the validation will no longer fail if these commands are not in the readme file.
+* Added the following commands: 'update-remote-data', 'get-modified-remote-data', 'update-remote-system' to be ignored by the **verify_yml_commands_match_readme** validation, the validation will no longer fail if these commands are not in the readme file.
 * Updated the release note template to include a uniform format for all items.
 * Added HelloWorldSlim template option for *--template* flag in **demisto-sdk init** command.
 * Fixed an issue where the HelloWorldSlim template in **demisto-sdk init** command had an integration id that was conflicting with HelloWorld integration id.

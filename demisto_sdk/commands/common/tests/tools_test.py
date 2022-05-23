@@ -10,9 +10,10 @@ import requests
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_TO_VERSION, INTEGRATIONS_DIR, LAYOUTS_DIR, PACKS_DIR,
-    PACKS_PACK_IGNORE_FILE_NAME, PLAYBOOKS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, FileType, MarketplaceVersions)
+    DEFAULT_CONTENT_ITEM_TO_VERSION, DOC_FILES_DIR, INTEGRATIONS_DIR,
+    LAYOUTS_DIR, METADATA_FILE_NAME, PACKS_DIR, PACKS_PACK_IGNORE_FILE_NAME,
+    PLAYBOOKS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, FileType,
+    MarketplaceVersions)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
                                                             GitCredentials)
@@ -111,8 +112,12 @@ class TestGenericFunctions:
         (VALID_GENERIC_MODULE_PATH, FileType.GENERIC_MODULE),
         (VALID_GENERIC_DEFINITION_PATH, FileType.GENERIC_DEFINITION),
         (IGNORED_PNG, None),
-        ('', None),
         ('Author_image.png', FileType.AUTHOR_IMAGE),
+        (FileType.PACK_IGNORE.value, FileType.PACK_IGNORE),
+        (FileType.SECRET_IGNORE.value, FileType.SECRET_IGNORE),
+        (Path(DOC_FILES_DIR) / 'foo', FileType.DOC_FILE),
+        (METADATA_FILE_NAME, FileType.METADATA),
+        ('', None),
     ]
 
     @pytest.mark.parametrize('path, _type', data_test_find_type)
@@ -1567,12 +1572,13 @@ YML_DATA_CASES = [(get_yaml(VALID_INTEGRATION_TEST_PATH), FileType.INTEGRATION,
                    [{'id': 'PagerDutyGetAllSchedules'}, {'id': 'PagerDutyGetUsersOnCall'},
                     {'id': 'PagerDutyGetUsersOnCallNow'}, {'id': 'PagerDutyIncidents'}, {'id': 'PagerDutySubmitEvent'},
                     {'id': 'PagerDutyGetContactMethods'}, {'id': 'PagerDutyGetUsersNotification'}], []),
-                  (get_yaml(VALID_SCRIPT_PATH), FileType.SCRIPT, [{'id': 'send-notification'}], ['TestCreateDuplicates']),
+                  (get_yaml(VALID_SCRIPT_PATH), FileType.SCRIPT, [{'id': 'send-notification'}],
+                   ['TestCreateDuplicates']),
                   (get_yaml(TEST_PLAYBOOK), FileType.TEST_PLAYBOOK, [{'id': 'gmail-search', 'source': 'Gmail'}],
                    ['ReadFile', 'Get Original Email - Gmail']),
                   (get_yaml(VALID_PLAYBOOK_ID_PATH), FileType.PLAYBOOK, [{'id': 'setIncident', 'source': 'Builtin'},
                                                                          {'id': 'closeInvestigation',
-                                                                                'source': 'Builtin'},
+                                                                          'source': 'Builtin'},
                                                                          {'id': 'setIncident', 'source': 'Builtin'}],
                    ['Account Enrichment - Generic', 'EmailAskUser', 'ADGetUser', 'IP Enrichment - Generic',
                     'IP Enrichment - Generic', 'AssignAnalystToIncident', 'access_investigation_-_generic']),
@@ -1607,7 +1613,8 @@ class TestGetItemMarketplaces:
             'name': 'Integration',
             'marketplaces': ['xsoar', 'marketplacev2'],
         }
-        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml', item_data=item_data)
+        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml',
+                                             item_data=item_data)
 
         assert 'xsoar' in marketplaces
         assert 'marketplacev2' in marketplaces
@@ -1633,7 +1640,8 @@ class TestGetItemMarketplaces:
                 'marketplaces': ['xsoar', 'marketplacev2'],
             }
         }
-        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml', item_data=item_data, packs=packs)
+        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml',
+                                             item_data=item_data, packs=packs)
 
         assert 'xsoar' in marketplaces
         assert 'marketplacev2' in marketplaces
@@ -1658,7 +1666,8 @@ class TestGetItemMarketplaces:
                 'id': 'PackID',
             }
         }
-        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml', item_data=item_data, packs=packs)
+        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml',
+                                             item_data=item_data, packs=packs)
 
         assert len(marketplaces) == 1
         assert 'xsoar' in marketplaces

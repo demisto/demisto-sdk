@@ -88,13 +88,13 @@ class DeprecationValidator:
         """
         if test_playbooks_ls:
             for test_playbook in self.test_playbook_section:
-                for test_playbook_key in test_playbook.keys():
-                    if test_playbook_key in test_playbooks_ls:
-                        command_to_integration = test_playbook.get(test_playbook_key, {}).get("command_to_integration")
+                for test_playbook_val in test_playbook.values():
+                    if test_playbook_val.get("name", "") in test_playbooks_ls:
+                        command_to_integration = test_playbook_val.get("command_to_integration")
                         if command_to_integration:
-                            self.validate_integration_commands_not_in_playbook(usage_dict, deprecated_commands_list, command_to_integration, test_playbook)
-                        test_playbooks_ls.pop(test_playbook_key)
-                        if len(test_playbooks_ls) == 0:
+                            self.validate_integration_commands_not_in_playbook(usage_dict, deprecated_commands_list, command_to_integration, test_playbook_val)
+                        test_playbooks_ls.remove(test_playbook_val.get("name", ""))
+                        if not test_playbooks_ls:
                             return
 
     def filter_playbooks_for_integration_validation(self, deprecated_commands_list, usage_dict: Dict[str, list]):
@@ -153,7 +153,7 @@ class DeprecationValidator:
         for script in self.script_section:
             for script_val in script.values():
                 if script_val.get("deprecated"):
-                    return
+                    continue
                 depends_commads_list = script_val.get("depends_on")
                 if depends_commads_list:
                     for command in depends_commads_list:
@@ -175,7 +175,7 @@ class DeprecationValidator:
         for script in self.script_section:
             for script_val in script.values():
                 if script_val.get("deprecated"):
-                    return
+                    continue
                 depends_commads_list = script_val.get("depends_on")
                 if depends_commads_list and script_name in depends_commads_list:
                     usage_list.append(script_val.get("file_path"))
@@ -193,13 +193,13 @@ class DeprecationValidator:
         """
         if test_playbooks_ls:
             for test_playbook in self.test_playbook_section:
-                for test_playbook_key in test_playbook.keys():
-                    if test_playbook_key in test_playbooks_ls:
-                        implementing_entities = test_playbook.get(test_playbook_key, {}).get(key_to_check)
+                for test_playbook_val in test_playbook.values():
+                    if test_playbook_val.get("name", "") in test_playbooks_ls:
+                        implementing_entities = test_playbook_val.get(key_to_check)
                         if implementing_entities:
-                            self.validate_playbook_or_script_not_in_playbook(usage_list, curent_entity_name, implementing_entities, test_playbook)
-                        test_playbooks_ls.pop(test_playbook_key)
-                        if len(test_playbooks_ls) == 0:
+                            self.validate_playbook_or_script_not_in_playbook(usage_list, curent_entity_name, implementing_entities, test_playbook_val)
+                        test_playbooks_ls.remove(test_playbook_val.get("name", ""))
+                        if not test_playbooks_ls:
                             return
 
     def filter_playbooks_for_scripts_or_playbook_validation(self, curent_entity_name: str, usage_list: List[str], key_to_check: str):

@@ -86,7 +86,7 @@ class ScriptValidator(ContentEntityValidator):
             self.is_there_separators_in_names(),
             self.name_not_contain_the_type(),
             self.runas_is_not_dbtrole(),
-            self.is_script_used_and_deprecated(),
+            self.is_script_deprecated_and_used(),
         ])
         # check only on added files
         if not self.old_file:
@@ -425,7 +425,7 @@ class ScriptValidator(ContentEntityValidator):
         return True
 
     @error_codes('SC107')
-    def is_script_used_and_deprecated(self):
+    def is_script_deprecated_and_used(self):
         """
         Checks if the script is deprecated and is used in other scripts / playbooks / testplaybooks.
 
@@ -439,7 +439,7 @@ class ScriptValidator(ContentEntityValidator):
         if self.current_file.get("deprecated"):
             used_files_list = self.deprecation_validator.validate_script(self.current_file.get('name'), extract_testplaybooks_list(self.current_file))
             if used_files_list:
-                error_message, error_code = Errors.script_is_deprecated_and_used(self.file_path.get("name"), used_files_list)
+                error_message, error_code = Errors.script_is_deprecated_and_used(self.current_file.get("name"), used_files_list)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
 

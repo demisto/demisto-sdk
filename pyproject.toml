@@ -99,6 +99,7 @@ gsutil = {version = "5.8", optional = true}
 klara = "^0.6.3"
 ordered-set = "^4.1.0"
 types-filelock = "^3.2.5"
+types-Markdown = "^3.3.21"
 
 [tool.poetry.dev-dependencies]
 mitmproxy = "^8.0.0"

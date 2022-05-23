@@ -1,6 +1,7 @@
 import os
 from abc import ABC, abstractmethod
 from distutils.version import LooseVersion
+from typing import Dict, List
 
 import click
 
@@ -67,7 +68,7 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
         return True
 
     @staticmethod
-    def get_invalid_incident_fields_from_tabs(layout_tabs, content_fields):
+    def get_invalid_incident_fields_from_tabs(layout_tabs, content_fields) -> List[str]:
         """
         Get the invalid incident fields from layout tabs.
 
@@ -91,7 +92,7 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
         return non_existent_incident_fields
 
     @staticmethod
-    def get_fields_from_id_set(id_set_file: dict) -> list:
+    def get_fields_from_id_set(id_set_file: Dict[str, List]) -> List[str]:
         """
         Get all the available layout fields from the id set.
 
@@ -167,7 +168,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
         return True
 
     @error_codes('LO104')
-    def is_incident_field_exist(self, id_set_file, is_circle) -> bool:
+    def is_incident_field_exist(self, id_set_file: Dict[str, List], is_circle: bool) -> bool:
         """
         Check if the incident fields which are part of the layout actually exist in the content items (id set).
 
@@ -255,7 +256,7 @@ class LayoutValidator(LayoutBaseValidator):
         return True
 
     @error_codes('LO104')
-    def is_incident_field_exist(self, id_set_file, is_circle) -> bool:
+    def is_incident_field_exist(self, id_set_file: Dict[str, List], is_circle: bool) -> bool:
         """
         Check if the incident fields which are part of the layout actually exist in the content items (id set).
 

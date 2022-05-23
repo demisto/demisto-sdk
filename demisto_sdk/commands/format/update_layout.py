@@ -1,7 +1,7 @@
 import os
 import re
 from abc import ABC
-from typing import Tuple
+from typing import Dict, List, Tuple
 
 import click
 
@@ -11,8 +11,8 @@ from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (
     LAYOUT_CONTAINER_FIELDS, LOG_COLORS,
     get_all_incident_and_indicator_fields_from_id_set,
-    get_invalid_incident_fields_from_layout, print_color, print_error,
-    remove_copy_and_dev_suffixes_from_str)
+    get_invalid_incident_fields_from_layout, normalize_field_name, print_color,
+    print_error, remove_copy_and_dev_suffixes_from_str)
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_FROMVERSION,
@@ -311,7 +311,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         ] + LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
 
     @staticmethod
-    def extract_content_fields(fields: list, content_fields: list) -> list:
+    def extract_content_fields(fields: List[Dict], content_fields: List[str]) -> List[str]:
         """
         Get only incident/indicator fields which are part of the id json file.
 
@@ -320,15 +320,15 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             content_fields (list[str]): all the available content fields from id json.
 
         Returns:
-            list: fields which are part of the content items (id json).
+            list[str]: fields which are part of the content items (id json).
         """
         return [
-            field for field in fields if
-            field.get('fieldId', '').replace('incident_', '').replace('indicator_', '').lower() not in
+            field for field in fields  # type: ignore[misc]
+            if normalize_field_name(field=field.get('fieldId', '')).lower() not in
             get_invalid_incident_fields_from_layout(layout_incident_fields=fields, content_fields=content_fields)
         ]
 
-    def remove_non_existent_fields_from_tabs(self, layout_tabs: list, content_fields: list):
+    def remove_non_existent_fields_from_tabs(self, layout_tabs: list, content_fields: List[str]):
         """
         Remove non-existent fields which are not part of the id json from tabs.
 

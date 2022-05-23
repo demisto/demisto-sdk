@@ -1,4 +1,5 @@
 from distutils.version import LooseVersion
+from typing import Dict, List
 
 import click
 
@@ -166,7 +167,7 @@ class MapperValidator(ContentEntityValidator):
         return True
 
     @error_codes('MP106')
-    def is_incident_field_exist(self, id_set_file, is_circle) -> bool:
+    def is_incident_field_exist(self, id_set_file: Dict[str, List], is_circle: bool) -> bool:
         """
         Check if the incident fields which are part of the mapper actually exist in the content items (id set).
 

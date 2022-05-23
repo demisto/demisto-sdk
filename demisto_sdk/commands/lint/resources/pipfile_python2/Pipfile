@@ -7,7 +7,7 @@ verify_ssl = true
 pylint = "*"
 pytest = "*"
 flake8 = "*"
-vulture = "*"
+vulture = "==1.5"
 pytest-mock = "*"
 requests-mock = "*"
 pytest-xdist = "*"

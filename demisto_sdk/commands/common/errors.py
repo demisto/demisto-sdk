@@ -230,7 +230,8 @@ ERROR_CODE = {
     'empty_outputs_common_paths': {'code': 'IN149', 'ui_applicable': False, 'related_field': 'contextOutput'},
     'invalid_siem_integration_name': {'code': 'IN150', 'ui_applicable': True, 'related_field': 'display'},
     "empty_command_arguments": {'code': 'IN151', 'ui_applicable': False, 'related_field': 'arguments'},
-    'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True, 'related_field': 'defaultvalue'},
+    'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True,
+                                                'related_field': 'defaultvalue'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -954,7 +955,7 @@ class Errors:
     @error_code_decorator
     def breaking_backwards_command_arg_changed(cls, commands_ls):
         error_msg = "{}, Your updates to this file contains changes to a name or an argument of an existing command(s).\n" \
-            "Please undo you changes to the following command(s):\n".format(cls.BACKWARDS)
+                    "Please undo you changes to the following command(s):\n".format(cls.BACKWARDS)
         error_msg += '\n'.join(commands_ls)
         return error_msg
 
@@ -1253,10 +1254,9 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def release_notes_bc_json_file_missing(json_path):
+    def release_notes_bc_json_file_missing(json_path: str):
         return f'A new release notes file contains the phrase \"breaking changes\" without a proper JSON file. ' \
-               f'Please add it to the following path: \"{json_path}\"'\
-               f' or run \"demisto-sdk update-release-notes -i {json_path[:-4]}md -bc\". '\
+               f'Please run \"demisto-sdk update-release-notes -i {json_path[:-4]}md -bc\". ' \
                'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
 
     @staticmethod
@@ -2258,7 +2258,7 @@ class Errors:
     @error_code_decorator
     def pack_metadata_version_diff_from_rn(pack_path, rn_version, pack_metadata_version):
         return f'There is a difference between the version in the pack metadata' \
-               f'file and the version of the latest release note.\nexpected latest release note to be {pack_metadata_version} '\
+               f'file and the version of the latest release note.\nexpected latest release note to be {pack_metadata_version} ' \
                f'instead found {rn_version}.\nTo fix the problem, try running `demisto-sdk update-release-notes -i {pack_path}`'
 
     @staticmethod

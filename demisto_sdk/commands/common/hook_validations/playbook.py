@@ -555,7 +555,7 @@ class PlaybookValidator(ContentEntityValidator):
         if self.current_file.get("deprecated"):
             used_files_list = self.deprecation_validator.validate_playbook(self.current_file.get('name'), extract_testplaybooks_list(self.current_file))
             if used_files_list:
-                error_message, error_code = Errors.playbook_is_deprecated_and_used(self.file_path.get("name"), used_files_list)
+                error_message, error_code = Errors.playbook_is_deprecated_and_used(self.current_file.get("name"), used_files_list)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
 

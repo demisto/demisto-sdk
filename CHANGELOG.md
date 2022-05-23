@@ -8,6 +8,7 @@
 * Fixed the error message in checkbox validation where the defaultvalue is wrong and added the name of the variable that should be fixed.
 * Added types to `find_type_by_path` under tools.py.
 * Added the 'integration-get-indicators' commands to be ignored by the **verify_yml_commands_match_readme** validation, the validation will no longer fail if these commands are not in the readme file.
+* Added ***deprecation*** a validation class that lists all the file paths of files that are using a deprecated integration command / script / playbook.
 
 ## 1.6.6
 

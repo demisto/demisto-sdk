@@ -215,7 +215,7 @@ class DeprecationValidator:
             for playbook_val in playbook.values():
                 implementing_entities = playbook_val.get(key_to_check)
                 if implementing_entities:
-                    self.validate_playbook_or_script_not_in_playbook(usage_list, curent_entity_name, implementing_entities, playbook)
+                    self.validate_playbook_or_script_not_in_playbook(usage_list, curent_entity_name, implementing_entities, playbook_val)
 
     def validate_playbook_or_script_not_in_playbook(self, usage_list: List[str], curent_entity_name: str, implementing_entities: List[str], playbook: Dict):
         """

@@ -2788,6 +2788,7 @@ def remove_copy_and_dev_suffixes_from_str(field_name: str) -> str:
                 field_name = field_name[:-len(suffix)]
     return field_name
 
+
 def extract_testplaybooks_list(yml_file):
     """
     Get a yml file and extract that tests playbook section from it
@@ -2803,6 +2804,7 @@ def extract_testplaybooks_list(yml_file):
         if "No tests" not in tests_section[0]:
             return tests_section
     return []
+
 
 def get_invalid_incident_fields_from_mapper(
     mapper_incident_fields: Dict[str, Dict], mapping_type: str, content_fields: List

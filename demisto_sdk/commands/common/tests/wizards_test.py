@@ -94,6 +94,8 @@ class TestWizardValidator:
                      'fetching_integrations': [{'name': 'exists'}]}}, False),
         ({'wizard': {'set_playbook': [{'name': 'exists', 'link_to_integration': 'exists'}],
                      'fetching_integrations': [{'name': 'exists'}]}}, True),
+        ({'wizard': {'set_playbook': [{'name': 'exists', 'link_to_integration': None}],
+                     'fetching_integrations': [{'name': 'exists'}]}}, True),
     ])
     def test_do_all_fetch_integrations_have_playbook(self, current_file, answer):
         validator = get_validator(current_file)

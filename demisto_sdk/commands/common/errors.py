@@ -1253,10 +1253,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def release_notes_bc_json_file_missing(json_path):
-        return f"A new release notes file contains the phrase \"breaking changes\" without a proper JSON file.\n" \
-               f"Please add it to the following path: {json_path}\n",\
-               "For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes"
+    def release_notes_bc_json_file_missing(json_path: str):
+        return f'A new release notes file contains the phrase \"breaking changes\" ' \
+               'without a matching JSON file (with the same name as the release note file, e.g. 1_2_3.json). ' \
+               f'Please run \"demisto-sdk update-release-notes -i {json_path[:-4]}md -bc\". ' \
+               'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
 
     @staticmethod
     @error_code_decorator

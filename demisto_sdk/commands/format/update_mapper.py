@@ -1,6 +1,7 @@
 from typing import Tuple
 
 import click
+import logging
 
 from demisto_sdk.commands.common.constants import \
     LAYOUT_AND_MAPPER_BUILT_IN_FIELDS

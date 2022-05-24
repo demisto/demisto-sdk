@@ -14,6 +14,9 @@ from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
 
+logger = logging.getLogger('demisto-sdk')
+
+
 class MapperJSONFormat(BaseUpdateJSON):
     """MapperJSONFormat class is designed to update mapper JSON file according to Demisto's convention.
 
@@ -68,9 +71,8 @@ class MapperJSONFormat(BaseUpdateJSON):
         Remove non-existent fields from a mapper.
         """
         if not self.id_set_file:
-            click.secho(
-                f'Skipping formatting of non-existent-fields for {self.source_file} as id_set_path argument is missing',
-                fg='yellow'
+            logger.warning(
+                f'Skipping formatting of non-existent-fields for {self.source_file} as id_set_path argument is missing'
             )
             return
 

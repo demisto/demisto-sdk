@@ -39,6 +39,9 @@ LAYOUTS_CONTAINER_PREFIX = 'layoutscontainer-'
 LAYOUT_PREFIX = 'layout-'
 
 
+logger = logging.getLogger('demisto-sdk')
+
+
 class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
     def __init__(self,
@@ -267,9 +270,8 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         Remove non-existent fields from a container layout.
         """
         if not self.id_set_file:
-            click.secho(
-                f'Skipping formatting of non-existent-fields for {self.source_file} as id_set_path argument is missing',
-                fg='yellow'
+            logger.warning(
+                f'Skipping formatting of non-existent-fields for {self.source_file} as id_set_path argument is missing'
             )
             return
 
@@ -292,9 +294,8 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         Remove non-existent fields from a layout.
         """
         if not self.id_set_file:
-            click.secho(
-                f'Skipping formatting of non-existent-fields for {self.source_file} as id_set_path argument is missing',
-                fg='yellow'
+            logger.warning(
+                f'Skipping formatting of non-existent-fields for {self.source_file} as id_set_path argument is missing'
             )
             return
 

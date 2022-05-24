@@ -267,7 +267,10 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         Remove non-existent fields from a container layout.
         """
         if not self.id_set_file:
-            click.secho('Skipping non-existent-fields formatting as id_set_path argument is missing', fg='yellow')
+            click.secho(
+                f'Skipping formatting of non-existent-fields for {self.source_file} as id_set_path argument is missing',
+                fg='yellow'
+            )
             return
 
         content_fields = self.get_available_content_fields()
@@ -289,7 +292,10 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         Remove non-existent fields from a layout.
         """
         if not self.id_set_file:
-            click.secho('Skipping non-existent-fields formatting as id_set_path argument is missing', fg='yellow')
+            click.secho(
+                f'Skipping formatting of non-existent-fields for {self.source_file} as id_set_path argument is missing',
+                fg='yellow'
+            )
             return
 
         content_fields = self.get_available_content_fields()

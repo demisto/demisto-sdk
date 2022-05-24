@@ -9,9 +9,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import \
     error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
-from demisto_sdk.commands.common.tools import (LOG_COLORS,
-                                               extract_testplaybooks_list,
-                                               is_string_uuid)
+from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
 
 
 class PlaybookValidator(ContentEntityValidator):
@@ -543,17 +541,17 @@ class PlaybookValidator(ContentEntityValidator):
     @error_codes('PB118')
     def is_playbook_deprecated_and_used(self):
         """
-        Checks if the playbook is deprecated and is used in other playbooks / testplaybooks.
+        Checks if the playbook is deprecated and is used in other none-deprcated playbooks.
 
         Return:
             bool: True if the playbook isn't deprecated
-            or if the playbook is deprecated but isn't used in any playbooks / testplaybooks,
-            False if the playbook is deprecated and used in any playbooks / testplaybooks.
+            or if the playbook is deprecated but isn't used in any none-deprcated playbooks,
+            False if the playbook is deprecated and used in any none-deprcated playbooks.
         """
         is_valid = True
 
         if self.current_file.get("deprecated"):
-            used_files_list = self.deprecation_validator.validate_playbook(self.current_file.get('name'), extract_testplaybooks_list(self.current_file))
+            used_files_list = self.deprecation_validator.validate_playbook(self.current_file.get('name'))
             if used_files_list:
                 error_message, error_code = Errors.playbook_is_deprecated_and_used(self.current_file.get("name"), used_files_list)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):

@@ -13,9 +13,8 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.tools import (
-    extract_testplaybooks_list, get_core_pack_list,
-    get_file_version_suffix_if_exists, get_files_in_dir, get_pack_name,
-    server_version_compare)
+    get_core_pack_list, get_file_version_suffix_if_exists, get_files_in_dir,
+    get_pack_name, server_version_compare)
 
 
 class ScriptValidator(ContentEntityValidator):
@@ -427,17 +426,17 @@ class ScriptValidator(ContentEntityValidator):
     @error_codes('SC107')
     def is_script_deprecated_and_used(self):
         """
-        Checks if the script is deprecated and is used in other scripts / playbooks / testplaybooks.
+        Checks if the script is deprecated and is used in other none-deprcated scripts / playbooks.
 
         Return:
             bool: True if the script isn't deprecated
-            or if the script is deprecated but isn't used in any scripts / playbooks / testplaybooks,
-            False if the script is deprecated and used in any scripts / playbooks / testplaybooks.
+            or if the script is deprecated but isn't used in any none-deprcated scripts / playbooks,
+            False if the script is deprecated and used in any none-deprcated scripts / playbooks.
         """
         is_valid = True
 
         if self.current_file.get("deprecated"):
-            used_files_list = self.deprecation_validator.validate_script(self.current_file.get('name'), extract_testplaybooks_list(self.current_file))
+            used_files_list = self.deprecation_validator.validate_script(self.current_file.get('name'))
             if used_files_list:
                 error_message, error_code = Errors.script_is_deprecated_and_used(self.current_file.get("name"), used_files_list)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):

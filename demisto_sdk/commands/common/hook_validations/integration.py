@@ -30,10 +30,9 @@ from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.tools import (
     _get_file_id, compare_context_path_in_yml_and_readme,
     extract_deprecated_command_names_from_yml,
-    extract_none_deprecated_command_names_from_yml, extract_testplaybooks_list,
-    get_core_pack_list, get_file_version_suffix_if_exists, get_files_in_dir,
-    get_item_marketplaces, get_pack_name, is_iron_bank_pack, print_error,
-    server_version_compare)
+    extract_none_deprecated_command_names_from_yml, get_core_pack_list,
+    get_file_version_suffix_if_exists, get_files_in_dir, get_item_marketplaces,
+    get_pack_name, is_iron_bank_pack, print_error, server_version_compare)
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -1632,12 +1631,12 @@ class IntegrationValidator(ContentEntityValidator):
     @error_codes('IN153')
     def is_integration_deprecated_and_used(self):
         """
-        Checks if there are commands that are deprecated and is used in other scripts / playbooks / testplaybooks.
+        Checks if there are commands that are deprecated and is used in other none-deprcated scripts / playbooks.
 
         Return:
             bool: True if there're no deprecated commands,
-             or if there're deprecated commands but they're not used in any scripts / playbooks / testplaybooks,
-             False if there're deprecated command that are used in any scripts / playbooks / testplaybooks.
+             or if there're deprecated commands but they're not used in any none-deprcated scripts / playbooks,
+             False if there're deprecated command that are used in any none-deprcated scripts / playbooks.
         """
         deprecated_commands_list = []
         is_valid = True
@@ -1648,7 +1647,7 @@ class IntegrationValidator(ContentEntityValidator):
             deprecated_commands_list = extract_deprecated_command_names_from_yml(self.current_file)
 
         if deprecated_commands_list:
-            used_commands_dict = self.deprecation_validator.validate_integartion(deprecated_commands_list, extract_testplaybooks_list(self.current_file))
+            used_commands_dict = self.deprecation_validator.validate_integartion(deprecated_commands_list)
             if used_commands_dict:
                 error_message, error_code = Errors.integration_is_deprecated_and_used(self.current_file.get("name"), used_commands_dict)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):

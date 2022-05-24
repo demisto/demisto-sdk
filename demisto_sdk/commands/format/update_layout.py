@@ -1,6 +1,6 @@
+import logging
 import os
 import re
-import logging
 from abc import ABC
 from typing import Dict, List, Tuple
 

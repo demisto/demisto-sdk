@@ -1214,6 +1214,25 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
+    @error_codes('IN135')
+    def is_valid_parameter_url_default_value(self) -> bool:
+        """Verifies integration parameters default value is valid.
+
+        Returns:
+            bool: True if description is valid - capitalized and spaced using whitespace and not underscores,
+            False otherwise.
+        """
+        configuration = self.current_file.get('configuration', {})
+        parameters_defaultvalue = [param.get('defaultvalue') for param in configuration if param.get('defaultvalue')]
+
+        for defaultvalue in parameters_defaultvalue:
+            if defaultvalue and defaultvalue.startswith('http') and not defaultvalue.startswith('https'):
+                error_message, error_code = Errors.invalid_integration_parameter_url_defaultvalue(defaultvalue)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
+
+        return True
+
     @error_codes('IN138,IN137')
     def is_valid_integration_file_path(self) -> bool:
         absolute_file_path = self.file_path

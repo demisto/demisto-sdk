@@ -3,7 +3,7 @@
 
 """
 #### How to add a new check?
-1. Chose the lowest support level that the checker should check.
+1. Choose the lowest support level that the checker should check.
 2. Add a new checker in the `<support>_level_checker.py` file.
     1. Add a new Error/ Warning message in the message list.
     2. Add a new checker function which includes the actual logic of the check.
@@ -112,7 +112,7 @@ class CustomBaseChecker(BaseChecker):
     * leave_module will be activated at the end of the file.
     '''
 
-    def leave_module(self, node):
+    def leave_module(self, node: astroid.Module):
         self._all_commands_implemented(node)
         self._test_module_implemented(node)
 

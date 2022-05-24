@@ -1860,6 +1860,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "types-futures"
+version = "3.3.8"
+description = "Typing stubs for futures"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "types-ipaddress"
 version = "1.0.8"
 description = "Typing stubs for ipaddress"
@@ -2182,7 +2190,7 @@ build = ["gsutil"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "17c1a517d6b70c25013b08500ba772c2d0d8b2c5005aa341eb69ad50d989941c"
+content-hash = "aaa84533191a18485a310264684562fef8607007932cb32737690570b3923dc9"
 
 [metadata.files]
 aiohttp = [
@@ -3618,6 +3626,10 @@ types-emoji = [
 types-filelock = [
     {file = "types-filelock-3.2.5.tar.gz", hash = "sha256:2481d41a2916af1605bcd0305e13c0450c7afc568268bd669249e7b08cf958ac"},
     {file = "types_filelock-3.2.5-py3-none-any.whl", hash = "sha256:1021c6b8850f94a57e22f32263cd1d754326555dc2dc56e233c957262e42eb93"},
+]
+types-futures = [
+    {file = "types-futures-3.3.8.tar.gz", hash = "sha256:6fe8ccc2c2af7ef2fdd9bf73eab6d617074f09f30ad7d373510b4043d39c42de"},
+    {file = "types_futures-3.3.8-py3-none-any.whl", hash = "sha256:d6e97ec51d56b96debfbf1dea32ebec22c1687f16d2547ea0a34b48db45df205"},
 ]
 types-ipaddress = [
     {file = "types-ipaddress-1.0.8.tar.gz", hash = "sha256:a03df3be5935e50ba03fa843daabff539a041a28e73e0fce2c5705bee54d3841"},

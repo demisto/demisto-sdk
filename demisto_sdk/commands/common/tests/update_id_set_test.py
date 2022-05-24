@@ -394,6 +394,7 @@ class TestIntegrations:
     INTEGRATION_DATA = {
         "Dummy Integration": {
             "name": "Dummy Integration",
+            "display_name": "Palo Alto Networks Cortex XDR - Investigation and Response",
             "file_path": TESTS_DIR + "/test_files/DummyPack/Integrations/DummyIntegration/DummyIntegration.yml",
             "fromversion": "4.1.0",
             "source": ['github.com', 'demisto', 'demisto-sdk'],
@@ -430,6 +431,7 @@ class TestIntegrations:
     UNIFIED_INTEGRATION_DATA = {
         "Dummy Integration": {
             "name": "Dummy Integration",
+            "display_name": "Palo Alto Networks Cortex XDR - Investigation and Response",
             "file_path": TESTS_DIR + "/test_files/DummyPack/Integrations/integration-DummyIntegration.yml",
             "fromversion": "4.1.0",
             "source": ['github.com', 'demisto', 'demisto-sdk'],
@@ -539,6 +541,7 @@ class TestScripts:
     SCRIPT_DATA = {
         "DummyScript": {
             "name": "DummyScript",
+            "display_name": "DummyScript",
             "file_path": TESTS_DIR + "/test_files/DummyPack/Scripts/DummyScript2.yml",
             "source": ['github.com', 'demisto', 'demisto-sdk'],
             "marketplaces": ["xsoar"],
@@ -554,6 +557,7 @@ class TestScripts:
     SCRIPT_DATA_ALTERNATIVE_TOP_LEVEL = {
         "DummyScript": {
             "name": "DummyScript",
+            "display_name": "DummyScript",
             "file_path": TESTS_DIR + '/test_files/alternative_meta_fields/Script-top_level_alternative_fields.yml',
             "source": ['github.com', 'demisto', 'demisto-sdk'],
             "marketplaces": ["xsoar"],
@@ -570,6 +574,7 @@ class TestScripts:
     SCRIPT_DATA_ALTERNATIVE_SECOND_LEVEL = {
         "DummyScript": {
             "name": "DummyScript",
+            "display_name": "DummyScript",
             "file_path": TESTS_DIR + '/test_files/alternative_meta_fields/Script-second_level_alternative_fields.yml',
             "source": ['github.com', 'demisto', 'demisto-sdk'],
             "marketplaces": ["xsoar"],
@@ -586,6 +591,7 @@ class TestScripts:
     PACK_SCRIPT_DATA = {
         "DummyScript": {
             "name": "DummyScript",
+            "display_name": "DummyScript",
             "file_path": TESTS_DIR + "/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.yml",
             "source": ['github.com', 'demisto', 'demisto-sdk'],
             "marketplaces": ["xsoar"],
@@ -752,6 +758,7 @@ class TestScripts:
 class TestPlaybooks:
     PLAYBOOK_DATA = {
         "name": "Dummy Playbook",
+        "display_name": "Dummy Playbook",
         "file_path": TESTS_DIR + "/test_files/DummyPack/Playbooks/DummyPlaybook.yml",
         "source": ['github.com', 'demisto', 'demisto-sdk'],
         "fromversion": "4.5.0",
@@ -782,6 +789,7 @@ class TestPlaybooks:
 
     PLAYBOOK_DATA_ALTERNATIVE_FIELDS_TOP_LEVEL = {
         "name": "Dummy Playbook",
+        "display_name": "Dummy Playbook",
         "file_path": TESTS_DIR + "/test_files/alternative_meta_fields/Playbook-top_level_alternative_fields.yml",
         "source": ['github.com', 'demisto', 'demisto-sdk'],
         "fromversion": "4.5.0",
@@ -813,6 +821,7 @@ class TestPlaybooks:
 
     PLAYBOOK_DATA_ALTERNATIVE_FIELDS_SECOND_LEVEL = {
         "name": "Dummy Playbook",
+        "display_name": "Dummy Playbook",
         "file_path": TESTS_DIR + "/test_files/alternative_meta_fields/Playbook-second_level_alternative_fields.yml",
         "source": ['github.com', 'demisto', 'demisto-sdk'],
         "marketplaces": ["xsoar"],

@@ -875,7 +875,7 @@ class TestRNUpdateUnit:
                              added_files=set())
         filepath = os.path.join(TestRNUpdate.FILES_PATH, path)
         mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
-        mocker.patch("demisto_sdk.commands.common.tools.get_display_name", return_value='VulnDB')
+        mocker.patch("demisto_sdk.commands.update_release_notes.update_rn.get_display_name", return_value='VulnDB')
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.find_type', return_value=find_type_result)
         result = update_rn.get_changed_file_name_and_type(filepath)
         assert expected_result == result

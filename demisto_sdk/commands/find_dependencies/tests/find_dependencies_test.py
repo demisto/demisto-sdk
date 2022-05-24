@@ -442,6 +442,7 @@ class TestIdSetFilters:
             {
                 "PrismaCloudComputeParseAuditAlert": {
                     "name": "PrismaCloudComputeParseAuditAlert",
+                    "display_name": "PrismaCloudComputeParseAuditAlert",
                     "file_path": os.path.join(
                         module_repo.path,
                         "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseAuditAlert/PrismaCloudComputeParseAuditAlert.yml"
@@ -456,6 +457,7 @@ class TestIdSetFilters:
             {
                 "PrismaCloudComputeParseCloudDiscoveryAlert": {
                     "name": "PrismaCloudComputeParseCloudDiscoveryAlert",
+                    "display_name": "PrismaCloudComputeParseCloudDiscoveryAlert",
                     "file_path": os.path.join(
                         module_repo.path,
                         "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseCloudDiscoveryAlert/PrismaCloudComputeParseCloudDiscoveryAlert.yml"
@@ -470,6 +472,7 @@ class TestIdSetFilters:
             {
                 "PrismaCloudComputeParseComplianceAlert": {
                     "name": "PrismaCloudComputeParseComplianceAlert",
+                    "display_name": "PrismaCloudComputeParseComplianceAlert",
                     "file_path": os.path.join(
                         module_repo.path,
                         "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseComplianceAlert/PrismaCloudComputeParseComplianceAlert.yml"
@@ -484,6 +487,7 @@ class TestIdSetFilters:
             {
                 "PrismaCloudComputeParseVulnerabilityAlert": {
                     "name": "PrismaCloudComputeParseVulnerabilityAlert",
+                    "display_name": "PrismaCloudComputeParseVulnerabilityAlert",
                     "file_path": os.path.join(
                         module_repo.path,
                         "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseVulnerabilityAlert/PrismaCloudComputeParseVulnerabilityAlert.yml"
@@ -517,6 +521,7 @@ class TestIdSetFilters:
             {
                 "Expanse_Incident_Playbook": {
                     "name": "Expanse_Incident_Playbook",
+                    "display_name": "Expanse_Incident_Playbook",
                     "file_path": "Packs/Expanse/Playbooks/Expanse_Incident_Playbook.yml",
                     "fromversion": "5.0.0",
                     "implementing_scripts": [

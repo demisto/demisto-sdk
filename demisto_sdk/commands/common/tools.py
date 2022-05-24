@@ -2773,7 +2773,7 @@ def remove_copy_and_dev_suffixes_from_str(field_name: str) -> str:
     return field_name
 
 
-def get_display_name(file_path, file_data=None) -> str:
+def get_display_name(file_path, file_data={}) -> str:
     """ Gets the entity display name from the file.
 
         :param file_path: The entity file path
@@ -2783,7 +2783,9 @@ def get_display_name(file_path, file_data=None) -> str:
         :return The display name
     """
     if not file_data:
-        file_data = get_file(file_path, os.path.splitext(file_path)[1])
+        file_extension = os.path.splitext(file_path)[1]
+        if file_extension in ['.yml', '.json']:
+            file_data = get_file(file_path, file_extension)
 
     if 'display' in file_data:
         name = file_data.get('display', None)

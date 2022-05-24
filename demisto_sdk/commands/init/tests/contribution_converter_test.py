@@ -699,7 +699,7 @@ class TestReleaseNotes:
             }
         ]
 
-        mocker.patch("demisto_sdk.commands.common.tools.get_display_name", return_value='CrowdStrike Malquery')
+        mocker.patch("demisto_sdk.commands.init.contribution_converter.get_display_name", return_value='CrowdStrike Malquery')
         contrib_converter.replace_RN_template_with_value(RELEASE_NOTES_COPY)
 
         assert util_open_file(RELEASE_NOTES_COPY) == util_open_file(EXPECTED_RELEASE_NOTES)
@@ -736,7 +736,7 @@ class TestReleaseNotes:
                                         '- release note entry number #1\n- release note entry number #2\n',
                                         'CrowdStrikeMalquery - Multidownload and Fetch':
                                             '- changed this playbook\n- Updated another thing\n'}
-        mocker.patch("demisto_sdk.commands.common.tools.get_display_name",
+        mocker.patch("demisto_sdk.commands.init.contribution_converter.get_display_name",
                      side_effect=['CrowdStrike Malquery', 'CrowdStrikeMalquery - Multidownload and Fetch'])
         rn_per_content_item = contrib_converter.format_user_input()
         assert expected_rn_per_content_item == rn_per_content_item

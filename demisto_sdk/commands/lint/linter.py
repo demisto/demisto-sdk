@@ -13,6 +13,7 @@ import docker.models.containers
 import git
 import requests.exceptions
 import urllib3.exceptions
+from filelock import FileLock
 from packaging.version import parse
 from wcmatch.pathlib import NEGATE, Path
 
@@ -926,10 +927,15 @@ class Linter:
         return exit_code, output
 
     def _update_support_level(self):
+        logger.debug(f'Updating support level for {self._pack_name}')
         pack_dir = self._pack_abs_dir.parent if self._pack_abs_dir.parts[-1] == INTEGRATIONS_DIR else \
             self._pack_abs_dir.parent.parent
-        with (pack_dir / PACKS_PACK_META_FILE_NAME).open() as f:
-            pack_meta_content: Dict = json.load(f)
+        pack_metadata_file = pack_dir / PACKS_PACK_META_FILE_NAME
+        with FileLock(f'{pack_metadata_file.as_posix()}.lock'):
+            logger.debug(f'Lock acquired for {pack_metadata_file} to {self._pack_name}')
+            with pack_metadata_file.open() as f:
+                pack_meta_content: Dict = json.load(f)
+        logger.debug(f'Lock released for {pack_metadata_file} of {self._pack_name}')
         self._facts['support_level'] = pack_meta_content.get('support')
         if self._facts['support_level'] == 'partner' and pack_meta_content.get('Certification'):
             self._facts['support_level'] = 'certified partner'

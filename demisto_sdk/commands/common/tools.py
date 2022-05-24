@@ -2771,3 +2771,80 @@ def remove_copy_and_dev_suffixes_from_str(field_name: str) -> str:
             if field_name.endswith(suffix):
                 field_name = field_name[:-len(suffix)]
     return field_name
+
+
+def get_invalid_incident_fields_from_mapper(
+    mapper_incident_fields: Dict[str, Dict], mapping_type: str, content_fields: List
+) -> List[str]:
+    """
+    Get a list of incident fields which are not part of the content items (not part of id_json) from a specific
+    interalMapping attribute.
+
+    Args:
+        mapper_incident_fields (dict[str, dict]): a dict of incident fields which belongs to a specific interalMapping.
+        mapping_type (str): type of the mapper, either 'mapping-incoming' or 'mapping-outgoing'.
+        content_fields (list[str]): list of available content fields.
+
+    Returns:
+        list[str]: all the invalid incident fields which are not part of the content items.
+
+    Raises:
+        ValueError: in case the mapping type has an incorrect value provided.
+    """
+    if mapping_type not in {'mapping-incoming', 'mapping-outgoing'}:
+        raise ValueError(f'Invalid mapping-type value {mapping_type}, should be: mapping-incoming/mapping-outgoing')
+
+    non_existent_fields = []
+
+    for inc_name, inc_info in mapper_incident_fields.items():
+        # incoming mapper
+        if mapping_type == "mapping-incoming":
+            if inc_name not in content_fields and inc_name.lower() not in content_fields:
+                non_existent_fields.append(inc_name)
+        # outgoing mapper
+        if mapping_type == "mapping-outgoing":
+            # for inc timer type: "field.StartDate, and for using filters: "simple": "".
+            if simple := inc_info.get('simple'):
+                if '.' in simple:
+                    simple = simple.split('.')[0]
+                if simple not in content_fields:
+                    non_existent_fields.append(inc_name)
+
+    return non_existent_fields
+
+
+def get_invalid_incident_fields_from_layout(layout_incident_fields: List[Dict], content_fields: List[str]) -> List[str]:
+    """
+    Get a list of incident fields which are not part of the content items (not part of id_json) from a specific
+    layout item/section.
+
+    Args:
+        layout_incident_fields (list[dict]): a list of incident fields which
+            belongs to a specific section/item in the layout.
+        content_fields (list[str]): list of available content fields.
+
+    Returns:
+        list[str]: all the invalid incident fields which are not part of the content items.
+    """
+    non_existent_fields = []
+
+    if layout_incident_fields and content_fields:
+        for incident_field_info in layout_incident_fields:
+            inc_field_id = normalize_field_name(field=incident_field_info.get('fieldId', ''))
+            if inc_field_id and inc_field_id.lower() not in content_fields and inc_field_id not in content_fields:
+                non_existent_fields.append(inc_field_id)
+
+    return non_existent_fields
+
+
+def normalize_field_name(field: str) -> str:
+    """
+    Get the raw field from a layout/mapper field.
+
+    Input Example:
+        field = incident_employeenumber
+
+    Args:
+        field (str): the incident/indicator field.
+    """
+    return field.replace('incident_', '').replace('indicator_', '')

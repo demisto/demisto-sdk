@@ -15,7 +15,7 @@
 * Added use case for **validate** on *wizard* objects - set_playbook is mapped to all integrations.
 * Added the 'integration-get-indicators' commands to be ignored by the **verify_yml_commands_match_readme** validation, the validation will no longer fail if these commands are not in the readme file.
 * Added a new validation to the **validate** command to verify that if the phrase "breaking changes" is present in a pack release notes, a JSON file with the same name exists and contains the relevant breaking changes information.
-* Added a validation to the **validate** command to make sure we are using the https protocol in the defaultvalue of the url parameter.
+* Improved lo* Added a validation to the **validate** command to make sure we are using the https protocol in the defaultvalue of the url parameter.
 
 ## 1.6.6
 

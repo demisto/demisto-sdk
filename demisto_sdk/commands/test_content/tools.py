@@ -81,3 +81,16 @@ def is_redhat_instance(instance_ip: str) -> bool:
         return True
     except CalledProcessError:
         return False
+
+
+def get_server_url(client_host):
+    """
+
+    Args:
+        client_host: the client host
+
+    Returns: - xsoar server url returned as is
+        - from xsiam host we removing 'api' prefix to get the server url
+
+    """
+    return client_host.replace('api-', '')

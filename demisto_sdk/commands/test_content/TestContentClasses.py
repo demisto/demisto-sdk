@@ -1516,13 +1516,13 @@ class TestContext:
 
             if number_of_attempts % DEFAULT_INTERVAL == 0:
                 self.build_context.logging_module.info(
-                    f'loop no. {number_of_attempts / DEFAULT_INTERVAL}, playbook state is {playbook_state}')
+                    f'{self.playbook} loop no. {number_of_attempts / DEFAULT_INTERVAL}, {playbook_state=}')
             number_of_attempts = number_of_attempts + 1
         return playbook_state
 
     def _run_incident_test(self) -> str:
         """
-        Creates an incident in demisto server and return it's status
+        Creates an incident in demisto server and return its status
         Returns:
             Empty string or
         """

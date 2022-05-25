@@ -1227,7 +1227,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         for defaultvalue in parameters_defaultvalue:
             if defaultvalue and defaultvalue.startswith('http') and not defaultvalue.startswith('https'):
-                error_message, error_code = Errors.invalid_integration_parameter_url_defaultvalue(defaultvalue)
+                error_message, error_code = Errors.not_supported_integration_parameter_url_defaultvalue(defaultvalue)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 

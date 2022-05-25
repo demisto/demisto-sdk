@@ -231,7 +231,7 @@ ERROR_CODE = {
     'invalid_siem_integration_name': {'code': 'IN150', 'ui_applicable': True, 'related_field': 'display'},
     "empty_command_arguments": {'code': 'IN151', 'ui_applicable': False, 'related_field': 'arguments'},
     'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True, 'related_field': 'defaultvalue'},
-    'invalid_integration_parameter_url_defaultvalue': {'code': 'IN153', 'ui_applicable': False, 'related_field': 'defaultvalue'},
+    'not_supported_integration_parameter_url_defaultvalue': {'code': 'IN153', 'ui_applicable': False, 'related_field': 'defaultvalue'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -853,9 +853,9 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_integration_parameter_url_defaultvalue(invalid_defaultvalue):
-        return f"The integration parameter url defaultvalue: {invalid_defaultvalue} is invalid. " \
-               "Make sure to use the https method and not http."
+    def not_supported_integration_parameter_url_defaultvalue(invalid_defaultvalue):
+        return f"The integration parameter url defaultvalue: {invalid_defaultvalue} use of the http protocol is not encouraged. " \
+               "Please use the https protocol and not http."
 
     @staticmethod
     @error_code_decorator

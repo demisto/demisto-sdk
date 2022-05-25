@@ -112,7 +112,7 @@ class CustomBaseChecker(BaseChecker):
     * leave_module will be activated at the end of the file.
     '''
 
-    def leave_module(self, node: astroid.Module):
+    def leave_module(self, node):
         self._all_commands_implemented(node)
         self._test_module_implemented(node)
 

@@ -711,7 +711,7 @@ class TestRNUpdate:
     def test_update_rn_new_incident_field(repo):
         """
         Case - new incident field, XSOAR, fromversion exists, description exists
-        Expected - release note should not contain and version
+        Expected - release note should not contain new and version
         """
         pack = repo.create_pack('test_pack')
         new_incident_field = pack.create_incident_field(name='incident field',

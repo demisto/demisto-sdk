@@ -531,6 +531,7 @@ class UpdateRN:
             rn_string = self.build_rn_desc(content_name=self.pack, text=self.text)
         # changed_items.items() looks like that: [((name, type), {...}), (name, type), {...}] and we want to sort
         # them by type (x[0][1])
+
         for (content_name, _type), data in sorted(changed_items.items(),
                                                   key=lambda x: RN_HEADER_BY_FILE_TYPE[x[0][1]] if x[0] and x[0][1]
                                                   else ''):  # Sort RN by header

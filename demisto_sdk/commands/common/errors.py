@@ -887,9 +887,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def missing_reliability_parameter(command: str):
-        # @todo: need to finish the template
-        return f'Missing "Reliability" parameter for the following reputation command "{command}".' \
-               f'Please add to the YAML file . ' \
+        return f'Missing "Reliability" parameter due this following reputation command "{command}".' \
+               f'Please add it to the YAML file.' \
                f'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/integrations/dbot#reliability-level'
 
     @staticmethod

@@ -37,7 +37,7 @@ from demisto_sdk.commands.test_content.mock_server import (RESULT, MITMProxy,
 from demisto_sdk.commands.test_content.ParallelLoggingManager import \
     ParallelLoggingManager
 from demisto_sdk.commands.test_content.tools import (
-    is_redhat_instance, update_server_configuration, get_server_url)
+    get_server_url, is_redhat_instance, update_server_configuration)
 
 json = JSON_Handler()
 

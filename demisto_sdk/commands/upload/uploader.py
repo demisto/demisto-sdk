@@ -20,7 +20,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INTEGRATIONS_DIR, JOBS_DIR,
                                                    LAYOUTS_DIR, PLAYBOOKS_DIR,
                                                    REPORTS_DIR, SCRIPTS_DIR,
-                                                   TEST_PLAYBOOKS_DIR,
+                                                   LISTS_DIR, TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR, FileType)
 from demisto_sdk.commands.common.content.errors import ContentFactoryError
 from demisto_sdk.commands.common.content.objects.abstract_objects import (
@@ -81,6 +81,7 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
     CLASSIFIERS_DIR,
     WIDGETS_DIR,
     LAYOUTS_DIR,
+    LISTS_DIR,
     JOBS_DIR,
     DASHBOARDS_DIR,
     REPORTS_DIR

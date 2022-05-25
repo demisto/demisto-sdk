@@ -1228,10 +1228,11 @@ class IntegrationValidator(ContentEntityValidator):
 
         is_valid = True
         for param, defaultvalue in parameters_default_values:
-            if defaultvalue and defaultvalue.startswith('http:'):
-                error_message, error_code = Errors.not_supported_integration_parameter_url_defaultvalue(param, defaultvalue)
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    is_valid = False
+            if defaultvalue and isinstance(defaultvalue, str):
+                if defaultvalue.startswith('http:'):
+                    error_message, error_code = Errors.not_supported_integration_parameter_url_defaultvalue(param, defaultvalue)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        is_valid = False
 
         return is_valid
 

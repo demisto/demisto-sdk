@@ -231,6 +231,7 @@ ERROR_CODE = {
     'invalid_siem_integration_name': {'code': 'IN150', 'ui_applicable': True, 'related_field': 'display'},
     "empty_command_arguments": {'code': 'IN151', 'ui_applicable': False, 'related_field': 'arguments'},
     'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True, 'related_field': 'defaultvalue'},
+    'missing_reliability_parameter': {'code': 'IN153', 'ui_applicable': False, 'related_field': 'configuration'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -882,6 +883,14 @@ class Errors:
         return f"The defaultvalue checkbox of {name}'s filed is incorrect, " \
                f"should be 'true' or 'false', a string which contains only lowercase letters.\n " \
                f"e.g: defaultvalue: 'true'"
+
+    @staticmethod
+    @error_code_decorator
+    def missing_reliability_parameter(command: str):
+        # @todo: need to finish the template
+        return f'Missing "Reliability" parameter for the following reputation command "{command}".' \
+               f'Please add to the YAML file . ' \
+               f'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/integrations/dbot#reliability-level'
 
     @staticmethod
     @error_code_decorator

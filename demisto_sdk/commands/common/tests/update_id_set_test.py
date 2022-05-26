@@ -686,7 +686,7 @@ class TestScripts:
             'commonfields': {
                 'id': 'DummyScript'
             }})
-        res, _ = process_script(script.yml.path, packs={'DummyPack': {}}, marketplace=MarketplaceVersions.XSOAR.value, print_logs=False)
+        res, _ = process_script(script.path, packs={'DummyPack': {}}, marketplace=MarketplaceVersions.XSOAR.value, print_logs=False)
         data = res[0]
 
         script_executions = data.get('DummyScript', {}).get('script_executions')

@@ -306,8 +306,8 @@ class Linter:
 
     def _linter_to_commands(self):
         self._facts['lint_to_commands'] = {
-            'pylint': build_pylint_command(self._facts["lint_files"] + self._facts['lint_unittest_files'], docker_version=self._facts.get('python_version')),
-            'flake8': build_flake8_command(self._facts['lint_files']),
+            'pylint': build_pylint_command(self._facts["lint_files"], docker_version=self._facts.get('python_version')),
+            'flake8': build_flake8_command(self._facts['lint_files'] + self._facts['lint_unittest_files']),
             'vulture': build_vulture_command(self._facts['lint_files'], self._pack_abs_dir)
         }
 

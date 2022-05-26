@@ -437,16 +437,12 @@ class TestIdSetFilters:
 
     def test_search_for_specific_pack_script_item(self, module_repo):
         pack_id = "PrismaCloudCompute"
-        import os
         expected_result = [
             {
                 "PrismaCloudComputeParseAuditAlert": {
                     "name": "PrismaCloudComputeParseAuditAlert",
                     "display_name": "PrismaCloudComputeParseAuditAlert",
-                    "file_path": os.path.join(
-                        module_repo.path,
-                        "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseAuditAlert/PrismaCloudComputeParseAuditAlert.yml"
-                    ),
+                    "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseAuditAlert/PrismaCloudComputeParseAuditAlert.yml",
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "type": "python3",
@@ -458,10 +454,7 @@ class TestIdSetFilters:
                 "PrismaCloudComputeParseCloudDiscoveryAlert": {
                     "name": "PrismaCloudComputeParseCloudDiscoveryAlert",
                     "display_name": "PrismaCloudComputeParseCloudDiscoveryAlert",
-                    "file_path": os.path.join(
-                        module_repo.path,
-                        "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseCloudDiscoveryAlert/PrismaCloudComputeParseCloudDiscoveryAlert.yml"
-                    ),
+                    "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseCloudDiscoveryAlert/PrismaCloudComputeParseCloudDiscoveryAlert.yml",
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "type": "python3",
@@ -473,10 +466,7 @@ class TestIdSetFilters:
                 "PrismaCloudComputeParseComplianceAlert": {
                     "name": "PrismaCloudComputeParseComplianceAlert",
                     "display_name": "PrismaCloudComputeParseComplianceAlert",
-                    "file_path": os.path.join(
-                        module_repo.path,
-                        "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseComplianceAlert/PrismaCloudComputeParseComplianceAlert.yml"
-                    ),
+                    "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseComplianceAlert/PrismaCloudComputeParseComplianceAlert.yml",
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "type": "python3",
@@ -488,10 +478,7 @@ class TestIdSetFilters:
                 "PrismaCloudComputeParseVulnerabilityAlert": {
                     "name": "PrismaCloudComputeParseVulnerabilityAlert",
                     "display_name": "PrismaCloudComputeParseVulnerabilityAlert",
-                    "file_path": os.path.join(
-                        module_repo.path,
-                        "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseVulnerabilityAlert/PrismaCloudComputeParseVulnerabilityAlert.yml"
-                    ),
+                    "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseVulnerabilityAlert/PrismaCloudComputeParseVulnerabilityAlert.yml",
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "type": "python3",

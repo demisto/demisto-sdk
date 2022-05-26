@@ -646,6 +646,9 @@ def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None):
     pack = get_pack_name(file_path)
     marketplaces = get_item_marketplaces(file_path, item_data=data_dictionary, packs=packs)
 
+    if 'Packs' in file_path and not file_path.startswith('Packs'):
+        file_path = file_path[file_path.index('Packs'):]
+
     script_data = create_common_entity_data(path=file_path, name=name, display_name=display_name, to_version=toversion,
                                             from_version=fromversion, pack=pack, marketplaces=marketplaces)
     if type_:

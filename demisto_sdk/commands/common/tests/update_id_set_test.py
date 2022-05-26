@@ -592,7 +592,7 @@ class TestScripts:
         "DummyScript": {
             "name": "DummyScript",
             "display_name": "DummyScript",
-            "file_path": TESTS_DIR + "/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.yml",
+            "file_path": "Packs/DummyPack/Scripts/DummyScript/DummyScript.yml",
             "source": ['github.com', 'demisto', 'demisto-sdk'],
             "marketplaces": ["xsoar"],
             "docker_image": "demisto/python3:3.8.2.6981",
@@ -686,7 +686,7 @@ class TestScripts:
             'commonfields': {
                 'id': 'DummyScript'
             }})
-        res, _ = process_script(script.path, packs={'DummyPack': {}}, marketplace=MarketplaceVersions.XSOAR.value, print_logs=False)
+        res, _ = process_script(script.yml.path, packs={'DummyPack': {}}, marketplace=MarketplaceVersions.XSOAR.value, print_logs=False)
         data = res[0]
 
         script_executions = data.get('DummyScript', {}).get('script_executions')

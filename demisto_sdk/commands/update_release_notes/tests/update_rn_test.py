@@ -1526,11 +1526,11 @@ HANDLE_EXISTING_RN_WITH_DOCKER_IMAGE_INPUTS = [
     ('#### Integrations\n##### IBM QRadar v2\n- %%UPDATE_RN%%\n##### IBM QRadar v3\n- %%UPDATE_RN%%',
      'Integrations', 'demisto/python3:3.9.5.21276', 'IBM QRadar v3',
      '#### Integrations\n##### IBM QRadar v2\n- %%UPDATE_RN%%\n##### IBM QRadar v3\n- Updated the Docker image to: '
-     '*demisto/python3:3.9.5.21276*.\n'),
+     '*demisto/python3:3.9.5.21276*.\n- %%UPDATE_RN%%'),
     ('#### Integrations\n##### IBM QRadar v3\n- %%UPDATE_RN%%',
      'Integrations', 'demisto/python3:3.9.5.21276', 'IBM QRadar v3',
      '#### Integrations\n##### IBM QRadar v3\n- Updated the Docker image to: '
-     '*demisto/python3:3.9.5.21276*.\n')]
+     '*demisto/python3:3.9.5.21276*.\n- %%UPDATE_RN%%')]
 
 
 @pytest.mark.parametrize('new_rn, header_by_type, docker_image, content_name, expected',

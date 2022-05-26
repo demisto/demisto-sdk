@@ -286,8 +286,10 @@ def run_format_on_file(input: str, file_type: str, from_version: str, interactiv
     if file_type not in ('integration', 'playbook', 'script') and 'add_tests' in kwargs:
         # adding tests is relevant only for integrations, playbooks and scripts.
         del kwargs['add_tests']
-    if file_type != FileType.INCIDENT_FIELD.value and 'id_set_path' in kwargs:
-        # relevant only for incidentfield
+    if file_type not in (
+        FileType.INCIDENT_FIELD.value, FileType.LAYOUTS_CONTAINER.value, FileType.LAYOUT.value, FileType.MAPPER.value
+    ) and 'id_set_path' in kwargs:
+        # relevant only for incidentfield/layouts/mappers
         del kwargs['id_set_path']
     update_object = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path, from_version=from_version,
                                                           interactive=interactive, **kwargs)

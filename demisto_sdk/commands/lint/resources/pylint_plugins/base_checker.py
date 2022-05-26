@@ -51,6 +51,9 @@ base_msg = {
               "test-module command is not implemented in the python file, it is essential for every"
               " integration. Please add it to your code. For more information see: "
               "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"),
+    "W9012": ("Usage of the http method id found, please use the https method if possible.",
+              "http-usage",
+              "Please use the https method if possible")
 }
 
 TEST_MODULE = "test-module"
@@ -115,6 +118,7 @@ class CustomBaseChecker(BaseChecker):
     def leave_module(self, node):
         self._all_commands_implemented(node)
         self._test_module_implemented(node)
+        self._http_checker(node)
 
 # ---------------------------------------------------- Checkers  ------------------------------------------------------
     '''
@@ -214,6 +218,19 @@ class CustomBaseChecker(BaseChecker):
                     if keyword.arg == 'indicators':
                         self.add_message("commandresults-indicators-exists", node=node)
 
+        except Exception:
+            pass
+
+    def _http_checker(self, node):
+        """
+        Args: node which is a Call Node.
+        Check:
+        - if a hard codded http url exists in the current node.
+
+        Adds the relevant error message using `add_message` function if one of the above exists.
+        """
+        try:
+            pass
         except Exception:
             pass
 

@@ -83,14 +83,14 @@ def is_redhat_instance(instance_ip: str) -> bool:
         return False
 
 
-def get_server_url(client_host):
+def get_ui_url(client_host):
     """
 
     Args:
         client_host: the client host
 
-    Returns: - xsoar server url returned as is
-        - from xsiam host we removing 'api' prefix to get the server url
+    Returns: the UI URL of the server. For XSIAM we remove the 'api-' prefix to get the UI URL of the server,
+    whereas for XSOAR it will remain the same (the UI URL is the same).
 
     """
-    return client_host.replace('api-', '')
+    return client_host.replace('https://api-', 'https://')

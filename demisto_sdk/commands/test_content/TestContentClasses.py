@@ -37,7 +37,7 @@ from demisto_sdk.commands.test_content.mock_server import (RESULT, MITMProxy,
 from demisto_sdk.commands.test_content.ParallelLoggingManager import \
     ParallelLoggingManager
 from demisto_sdk.commands.test_content.tools import (
-    get_server_url, is_redhat_instance, update_server_configuration)
+    get_ui_url, is_redhat_instance, update_server_configuration)
 
 json = JSON_Handler()
 
@@ -1327,7 +1327,7 @@ class Integration:
             except ApiException:
                 self.build_context.logging_module.exception(
                     f'Failed to test integration {self} instance, error trying to communicate with demisto server: '
-                    f'{get_server_url(client.api_client.configuration.host)}')
+                    f'{get_ui_url(client.api_client.configuration.host)}')
                 return False
             except urllib3.exceptions.ReadTimeoutError:
                 self.build_context.logging_module.warning(f"Could not connect. Trying to connect for the {i + 1} time")
@@ -1335,13 +1335,13 @@ class Integration:
         if int(response_code) != 200:
             self.build_context.logging_module.error(
                 f'Integration-instance test-module failed. Bad status code: {response_code}.\n'
-                f'Sever URL: {get_server_url(client.api_client.configuration.host)}')
+                f'Sever URL: {get_ui_url(client.api_client.configuration.host)}')
             return False
 
         result_object = ast.literal_eval(response_data)
         success, failure_message = bool(result_object.get('success')), result_object.get('message')
         if not success:
-            server_url = get_server_url(client.api_client.configuration.host)
+            server_url = get_ui_url(client.api_client.configuration.host)
             test_failed_msg = f'Test integration failed - server: {server_url}.\n' \
                               f'Failure message: {failure_message}' if failure_message else ' No failure message.'
             self.build_context.logging_module.error(test_failed_msg)
@@ -1557,7 +1557,7 @@ class TestContext:
 
             self.build_context.logging_module.info(f'Found incident with incident ID: {investigation_id}.')
 
-            server_url = get_server_url(self.client.api_client.configuration.host)
+            server_url = get_ui_url(self.client.api_client.configuration.host)
             if IS_XSIAM:
                 self.build_context.logging_module.info(
                     f'Investigation URL: {self.build_context.xsiam_ui_path}incident-view/alerts_and_insights?caseId='
@@ -1646,7 +1646,7 @@ class TestContext:
     def _notify_failed_test(self):
         text = f'{self.build_context.build_name} - {self.playbook} Failed\n' \
                f'for more details run: `{self.tunnel_command}` and browse into the following link\n' \
-               f'{get_server_url(self.client.api_client.configuration.host)}'
+               f'{get_ui_url(self.client.api_client.configuration.host)}'
         text += f'/#/WorkPlan/{self.incident_id}' if self.incident_id else ''
         if self.build_context.slack_user_id:
             self.build_context.slack_client.api_call(
@@ -2174,7 +2174,7 @@ class ServerContext:
     def execute_tests(self):
 
         try:
-            self.build_context.logging_module.info(f'Starts tests with server url - {get_server_url(self.server_url)}',
+            self.build_context.logging_module.info(f'Starts tests with server url - {get_ui_url(self.server_url)}',
                                                    real_time=True)
             self._execute_mockable_tests()
             self.build_context.logging_module.info('Running mock-disabled tests', real_time=True)
@@ -2183,7 +2183,7 @@ class ServerContext:
                 self.build_context.logging_module.info('Running failed tests', real_time=True)
                 self._execute_failed_tests()
             self.build_context.logging_module.info(f'Finished tests with server url - '
-                                                   f'{get_server_url(self.server_url)}',
+                                                   f'{get_ui_url(self.server_url)}',
                                                    real_time=True)
             # no need in xsiam, no proxy
             if not IS_XSIAM:

@@ -41,6 +41,7 @@ def test_integration_create_content_artifacts_no_zip(repo):
 
 def test_integration_create_content_artifacts_zip(mock_git, repo):
     with ChangeCWD(repo.path):
+        print('testing')
         dir_path = repo.make_dir()
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [ARTIFACTS_CMD, '-a', dir_path])

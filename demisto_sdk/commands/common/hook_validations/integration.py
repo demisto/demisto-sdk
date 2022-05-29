@@ -1647,7 +1647,7 @@ class IntegrationValidator(ContentEntityValidator):
             deprecated_commands_list = extract_deprecated_command_names_from_yml(self.current_file)
 
         if deprecated_commands_list:
-            used_commands_dict = self.deprecation_validator.validate_integartion(deprecated_commands_list)
+            used_commands_dict = self.deprecation_validator.validate_integartion(deprecated_commands_list, self.current_file.get("name"))
             if used_commands_dict:
                 error_message, error_code = Errors.integration_is_deprecated_and_used(self.current_file.get("name"), used_commands_dict)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):

@@ -78,7 +78,8 @@ mocked_id_set = {"scripts": [
                 "ic5_command2": "integration_case_5",
                 "ic6_command1": "integration_case_6",
                 "ifc1_command1": "integration_format_case_1",
-                "ifc1_command3": "integration_format_case_1"
+                "ifc1_command3": "integration_format_case_1",
+                "ic7_command1": "integration_case_777"
             }}}
 ]
 }
@@ -104,7 +105,9 @@ class TestDeprecationValidator:
                                     {'name': 'ic5_command1', 'deprecated': True}, {'name': 'ic5_command2'}]}}, True, [], ["ic5_command1", "ic5_command2"]),
                                    ({'name': "integration_case_6", 'script': {'commands': [{'name': 'ic6_command1', 'deprecated': True}, {
                                     'name': 'ic6_command2', 'deprecated': True}, {'name': 'ic6_command3'}]}},
-                                    False, ["ic6_command1"], ["ic6_command3", "ic6_command2"])
+                                    False, ["ic6_command1"], ["ic6_command3", "ic6_command2"]),
+                                   ({'name': "integration_case_7", 'script': {'commands': [{'name': 'ic7_command1', 'deprecated': True}]}},
+                                    True, [], ["ic7_command1"])
                                    ]
 
     @pytest.mark.parametrize("integration_yml, expected_bool_results, expected_commands_in_errors_ls, expected_commands_not_in_errors_ls",
@@ -123,6 +126,9 @@ class TestDeprecationValidator:
                   one deprecated command is being used in deprecated entities only,
                   one deprecated command is being used in none-deprecated entities only,
                   and the none-deprecated is being used in both deprecated and none-deprecated entities.
+        - Case 7: Integration with one deprecated command which isn't being used in other entities.
+                  However, there's another command with the same name related to a different integration,
+                  that is being used in a different integration.
         When
         - Running is_integration_deprecated_and_used on the given integration.
         Then
@@ -133,6 +139,7 @@ class TestDeprecationValidator:
         - Case 4: Should return True and that no command name appears in the error massage.
         - Case 5: Should return True and that no command name appears in the error massage.
         - Case 6: Should return False and that only one command name (out of the two deprecated commands) appears in the error massage.
+        - Case 7: Should return True and that no command name appears in the error massage.
         """
         structure = mock_structure(current_file=integration_yml)
         validator = IntegrationValidator(structure)

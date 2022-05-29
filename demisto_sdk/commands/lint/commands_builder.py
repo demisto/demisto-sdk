@@ -3,8 +3,7 @@ import os
 from pathlib import Path
 from typing import List, Optional
 
-from packaging.version import parse
-
+from demisto_sdk.commands.common.handlers.version import Version
 from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import \
     base_msg
 from demisto_sdk.commands.lint.resources.pylint_plugins.certified_partner_level_checker import \
@@ -32,7 +31,7 @@ def get_python_exec(py_num: str, is_py2: bool = False) -> str:
     Returns:
         str: python executable
     """
-    py_ver = parse(py_num).major
+    py_ver = Version(py_num).major
     if py_ver < 3:
         if is_py2:
             py_str = "2"
@@ -237,7 +236,7 @@ def build_pylint_command(files: List[Path], docker_version: Optional[str] = None
     # TODO: remove when pylint will update its version to support py3.9
 
     if docker_version:
-        py_ver = parse(docker_version)
+        py_ver = Version(docker_version)
         major = py_ver.major
         minor = py_ver.minor
 

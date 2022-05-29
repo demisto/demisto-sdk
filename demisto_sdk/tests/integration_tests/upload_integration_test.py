@@ -3,9 +3,9 @@ from os.path import join
 import click
 import pytest
 from click.testing import CliRunner
-from packaging.version import parse
 
 from demisto_sdk.__main__ import main
+from demisto_sdk.commands.common.handlers.version import Version
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 UPLOAD_CMD = "upload"
@@ -18,11 +18,11 @@ def demisto_client(mocker):
         "demisto_sdk.commands.upload.uploader.demisto_client",
         return_valure="object"
     )
-    mocker.patch("demisto_sdk.commands.upload.uploader.get_demisto_version", return_value=parse('6.0.0'))
+    mocker.patch("demisto_sdk.commands.upload.uploader.get_demisto_version", return_value=Version('6.0.0'))
     mocker.patch("demisto_sdk.commands.common.content.objects.pack_objects.integration.integration.get_demisto_version",
-                 return_value=parse('6.0.0'))
+                 return_value=Version('6.0.0'))
     mocker.patch("demisto_sdk.commands.common.content.objects.pack_objects.script.script.get_demisto_version",
-                 return_value=parse('6.0.0'))
+                 return_value=Version('6.0.0'))
     mocker.patch("click.secho")
 
 

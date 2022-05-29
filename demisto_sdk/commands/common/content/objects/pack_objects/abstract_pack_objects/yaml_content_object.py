@@ -1,7 +1,6 @@
 import re
 from typing import List, Optional, Union
 
-from packaging.version import LegacyVersion, Version, parse
 from wcmatch.pathlib import EXTGLOB, Path
 
 from demisto_sdk.commands.common.constants import (
@@ -12,6 +11,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.change_log.change_
     ChangeLog
 from demisto_sdk.commands.common.content.objects.pack_objects.readme.readme import \
     Readme
+from demisto_sdk.commands.common.handlers.version import Version
 
 
 class YAMLContentObject(YAMLObject):
@@ -60,7 +60,7 @@ class YAMLContentObject(YAMLObject):
         return self._readme
 
     @property
-    def from_version(self) -> Union[Version, LegacyVersion]:
+    def from_version(self) -> Union[Version, Version]:
         """Object from_version attribute.
 
         Returns:
@@ -70,10 +70,10 @@ class YAMLContentObject(YAMLObject):
             1. Version object - https://github.com/pypa/packaging
             2. Attribute info - https://xsoar.pan.dev/docs/integrations/yaml-file#version-and-tests
         """
-        return parse(self.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION))
+        return Version(self.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION))
 
     @property
-    def to_version(self) -> Union[Version, LegacyVersion]:
+    def to_version(self) -> Union[Version, Version]:
         """Object to_version attribute.
 
         Returns:
@@ -83,7 +83,7 @@ class YAMLContentObject(YAMLObject):
             1. Version object - https://github.com/pypa/packaging
             2. Attribute info - https://xsoar.pan.dev/docs/integrations/yaml-file#version-and-tests
         """
-        return parse(self.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION))
+        return Version(self.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION))
 
     def dump(self, dest_dir: Optional[Union[str, Path]] = None, yaml: Optional[bool] = True,
              change_log: Optional[bool] = False, readme: Optional[bool] = False) -> List[Path]:

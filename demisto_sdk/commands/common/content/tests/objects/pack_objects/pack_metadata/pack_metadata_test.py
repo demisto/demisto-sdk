@@ -4,7 +4,6 @@ from datetime import datetime
 from shutil import rmtree
 
 import pytest
-from packaging.version import parse
 
 from demisto_sdk.commands.common.constants import (PACKS_DIR, XSOAR_AUTHOR,
                                                    XSOAR_SUPPORT,
@@ -14,6 +13,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import \
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
+from demisto_sdk.commands.common.handlers.version import Version
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import src_root
 from TestSuite.test_tools import ChangeCWD
@@ -43,7 +43,7 @@ def temp_dir():
 
 
 def test_objects_factory():
-    obj = path_to_pack_object(PACK_METADATA)
+    obj = path_to_pack_object(str(PACK_METADATA))
     assert isinstance(obj, PackMetaData)
 
 
@@ -220,7 +220,7 @@ def test_load_user_metadata_basic(repo):
     assert pack_1_metadata.url == 'some url'
     assert pack_1_metadata.email == 'some email'
     assert pack_1_metadata.certification == 'certified'
-    assert pack_1_metadata.current_version == parse('1.1.1')
+    assert pack_1_metadata.current_version == Version('1.1.1')
     assert pack_1_metadata.author == 'Cortex XSOAR'
     assert pack_1_metadata.tags == ['tag1']
     assert pack_1_metadata.dependencies == [{'dependency': {'dependency': '1'}}]

@@ -1,8 +1,9 @@
 import re
-from distutils.version import LooseVersion
 from enum import Enum
 from functools import reduce
 from typing import Dict, List
+
+from demisto_sdk.commands.common.handlers import Version
 
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
 NOT_TEST = '(?!Test)'
@@ -1134,7 +1135,7 @@ EXCLUDED_DISPLAY_NAME_WORDS = ['partner', 'community']
 MARKETPLACES = ['xsoar', 'marketplacev2']
 
 # From Version constants
-FILETYPE_TO_DEFAULT_FROMVERSION = {
+FILETYPE_TO_DEFAULT_FROMVERSION: Dict[FileType, str] = {
     FileType.WIZARD: '6.8.0',
     FileType.JOB: '6.8.0',
     FileType.PRE_PROCESS_RULES: '6.8.0',
@@ -1460,7 +1461,7 @@ class MarketplaceVersions(Enum):
     MarketplaceV2 = 'marketplacev2'
 
 
-INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {'html': LooseVersion('6.1.0'), 'grid': LooseVersion('5.5.0')}
+INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {'html': Version('6.1.0'), 'grid': Version('5.5.0')}
 
 
 class IdSetKeys(Enum):

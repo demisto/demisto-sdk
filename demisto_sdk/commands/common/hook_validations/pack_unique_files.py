@@ -13,7 +13,6 @@ from typing import Dict, Tuple
 import click
 from dateutil import parser
 from git import GitCommandError, Repo
-from packaging.version import parse
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
@@ -30,6 +29,7 @@ from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers.version import Version
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator, error_codes)
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
@@ -608,7 +608,7 @@ class PackUniqueFilesValidator(BaseValidator):
         if not rn_version:
             self._add_error(Errors.missing_release_notes_for_pack(self.pack), self.pack)
             return False
-        if parse(rn_version) != parse(current_version):
+        if Version(rn_version) != Version(current_version):
             self._add_error(Errors.pack_metadata_version_diff_from_rn(self.pack, rn_version, current_version), metadata_file_path)
             return False
         return True

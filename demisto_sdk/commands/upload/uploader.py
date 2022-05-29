@@ -7,7 +7,6 @@ from typing import List, Tuple, Union
 import click
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
-from packaging.version import Version
 from tabulate import tabulate
 
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
@@ -30,6 +29,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers.version import Version
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_child_directories,
                                                get_demisto_version, get_file,

@@ -11,7 +11,6 @@ from collections import OrderedDict
 from concurrent.futures import as_completed
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
-from distutils.version import LooseVersion
 from enum import Enum
 from functools import lru_cache
 from pathlib import Path, PosixPath
@@ -26,7 +25,6 @@ import git
 import giturlparse
 import requests
 import urllib3
-from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
 
@@ -50,7 +48,8 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
                                                             GitProvider)
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import (JSON_Handler, Version,
+                                                  YAML_Handler)
 
 json = JSON_Handler()
 
@@ -229,7 +228,7 @@ def src_root() -> Path:
     git_dir = git.Repo(Path.cwd(),
                        search_parent_directories=True).working_tree_dir
 
-    return Path(git_dir) / 'demisto_sdk'
+    return Path(str(git_dir)) / 'demisto_sdk'
 
 
 def print_error(error_str):
@@ -877,7 +876,7 @@ def server_version_compare(v1, v2):
     v1 = format_version(v1)
     v2 = format_version(v2)
 
-    _v1, _v2 = LooseVersion(v1), LooseVersion(v2)
+    _v1, _v2 = Version(v1), Version(v2)
     if _v1 == _v2:
         return 0
     if _v1 > _v2:
@@ -1551,7 +1550,7 @@ def is_external_repository() -> bool:
     """
     try:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
-        private_settings_path = os.path.join(git_repo.working_dir, '.private-repo-settings')
+        private_settings_path = os.path.join(str(git_repo.working_dir), '.private-repo-settings')
         return os.path.exists(private_settings_path)
     except git.InvalidGitRepositoryError:
         return True
@@ -1575,7 +1574,7 @@ def get_content_path() -> str:
 
         if not is_fork_repo and not is_external_repo:
             raise git.InvalidGitRepositoryError
-        return git_repo.working_dir
+        return str(git_repo.working_dir)
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
         print_error("Please run demisto-sdk in content repository - Aborting!")
     return ''
@@ -1649,7 +1648,7 @@ def get_last_release_version():
     """
     tags = run_command('git tag').split('\n')
     tags = [tag for tag in tags if re.match(r'\d+\.\d+\.\d+', tag) is not None]
-    tags.sort(key=LooseVersion, reverse=True)
+    tags.sort(key=Version, reverse=True)
 
     return tags[0]
 
@@ -1671,7 +1670,7 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
 
         if not is_fork_repo and not is_external_repo:
             return False, ''
-        content_path_parts = Path(git_repo.working_dir).parts
+        content_path_parts = Path(str(git_repo.working_dir)).parts
         input_path_parts = Path(file_path).parts
         input_path_parts_prefix = input_path_parts[:len(content_path_parts)]
         if content_path_parts == input_path_parts_prefix:

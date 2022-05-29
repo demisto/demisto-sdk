@@ -1,10 +1,9 @@
-from distutils.version import LooseVersion
-
 import click
 
 from demisto_sdk.commands.common.constants import \
     LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.handlers.version import Version
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
@@ -74,13 +73,13 @@ class ClassifierValidator(ContentEntityValidator):
         if from_version:
             self.from_version = from_version
             if self.new_classifier_version:
-                if LooseVersion(from_version) < LooseVersion(FROM_VERSION_FOR_NEW_CLASSIFIER):
+                if Version(from_version) < Version(FROM_VERSION_FOR_NEW_CLASSIFIER):
                     error_message, error_code = Errors.invalid_from_version_in_new_classifiers()
                     if self.handle_error(error_message, error_code, file_path=self.file_path,
                                          suggested_fix=Errors.suggest_fix(self.file_path)):
                         return False
             else:
-                if LooseVersion(from_version) >= LooseVersion(FROM_VERSION_FOR_NEW_CLASSIFIER):
+                if Version(from_version) >= Version(FROM_VERSION_FOR_NEW_CLASSIFIER):
                     error_message, error_code = Errors.invalid_from_version_in_old_classifiers()
                     if self.handle_error(error_message, error_code, file_path=self.file_path,
                                          suggested_fix=Errors.suggest_fix(self.file_path)):
@@ -104,12 +103,12 @@ class ClassifierValidator(ContentEntityValidator):
         if to_version:
             self.to_version = to_version
             if self.new_classifier_version:
-                if LooseVersion(to_version) <= LooseVersion(FROM_VERSION_FOR_NEW_CLASSIFIER):
+                if Version(to_version) <= Version(FROM_VERSION_FOR_NEW_CLASSIFIER):
                     error_message, error_code = Errors.invalid_to_version_in_new_classifiers()
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         return False
             else:
-                if LooseVersion(to_version) > LooseVersion(TO_VERSION_FOR_OLD_CLASSIFIER):
+                if Version(to_version) > Version(TO_VERSION_FOR_OLD_CLASSIFIER):
                     error_message, error_code = Errors.invalid_to_version_in_old_classifiers()
                     if self.handle_error(error_message, error_code, file_path=self.file_path,
                                          suggested_fix=Errors.suggest_fix(self.file_path)):
@@ -130,7 +129,7 @@ class ClassifierValidator(ContentEntityValidator):
             bool. True if to version field is higher than from version field, else False.
         """
         if self.to_version and self.from_version:
-            if LooseVersion(self.to_version) <= LooseVersion(self.from_version):
+            if Version(self.to_version) <= Version(self.from_version):
                 error_message, error_code = Errors.from_version_higher_to_version()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False

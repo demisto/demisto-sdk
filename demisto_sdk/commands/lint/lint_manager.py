@@ -13,13 +13,13 @@ import docker.errors
 import git
 import requests.exceptions
 import urllib3.exceptions
-from packaging.version import Version
 from wcmatch.pathlib import Path, PosixPath
 
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON,
                                                    DemistoException)
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers.version import Version
 from demisto_sdk.commands.common.logger import Colors
 from demisto_sdk.commands.common.timers import report_time_measurements
 from demisto_sdk.commands.common.tools import (find_file, find_type,

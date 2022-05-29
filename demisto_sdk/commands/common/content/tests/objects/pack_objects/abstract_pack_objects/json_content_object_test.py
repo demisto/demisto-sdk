@@ -15,10 +15,10 @@ TEST_JSON_NO_FROM_VERSION = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / CLASSIF
 
 
 def test_to_version_no_from_version(datadir):
-    from packaging.version import parse
+    from demisto_sdk.commands.common.handlers.version import Version
     obj = JSONContentObject(TEST_JSON_NO_FROM_VERSION, "classifier")
-    assert obj.from_version == parse(DEFAULT_CONTENT_ITEM_FROM_VERSION)
-    assert obj.to_version == parse("4.0.0")
+    assert obj.from_version == Version(DEFAULT_CONTENT_ITEM_FROM_VERSION)
+    assert obj.to_version == Version("4.0.0")
 
 
 TEST_LIST_JSON = TEST_CONTENT_REPO / "list_json.json"

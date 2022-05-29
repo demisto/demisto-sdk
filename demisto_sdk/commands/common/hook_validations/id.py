@@ -1,7 +1,6 @@
 import os
 import re
 from collections import OrderedDict
-from distutils.version import LooseVersion
 
 import click
 
@@ -9,6 +8,7 @@ import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import GENERIC_COMMANDS_NAMES
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.handlers.version import Version
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator, error_codes)
 from demisto_sdk.commands.common.tools import (
@@ -552,10 +552,10 @@ class IDSetValidations(BaseValidator):
                                                                             main_playbook_data=main_playbook_data)
 
                 entity_version = all_entity_fields.get("fromversion", "")
-                is_version_valid = not entity_version or LooseVersion(entity_version) <= LooseVersion(
+                is_version_valid = not entity_version or Version(entity_version) <= Version(
                     main_playbook_version)
                 skip_unavailable = all(task_data.get('skipunavailable', False) for task_data in tasks_data) \
-                    if tasks_data and LooseVersion(main_playbook_version) >= LooseVersion('6.0.0') else False
+                    if tasks_data and Version(main_playbook_version) >= Version('6.0.0') else False
 
                 # if entities with miss-matched versions were found and skipunavailable is
                 # not set or main playbook fromversion is below 6.0.0, fail the validation
@@ -608,7 +608,7 @@ class IDSetValidations(BaseValidator):
             integration_from_valid_version_found = False
             for integration in implemented_integrations_list:
                 integration_version = self.get_integration_version(integration)
-                is_version_valid = not integration_version or LooseVersion(integration_version) <= LooseVersion(
+                is_version_valid = not integration_version or Version(integration_version) <= Version(
                     playbook_version)
                 if is_version_valid:
                     integration_from_valid_version_found = True

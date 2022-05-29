@@ -3,6 +3,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_DIR, SCRIPTS_DIR)
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
     YAMLContentObject
+from demisto_sdk.commands.common.handlers.version import Version
 from demisto_sdk.commands.common.tools import src_root
 
 TEST_DATA = src_root() / 'tests' / 'test_files'
@@ -12,17 +13,15 @@ TEST_YAML_NO_TO_VERSION = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / SCRIPTS_D
 
 
 def test_from_version_no_to_version(datadir):
-    from packaging.version import parse
     obj = YAMLContentObject(TEST_YAML_NO_TO_VERSION, "script")
-    assert obj.from_version == parse("6.0.0")
-    assert obj.to_version == parse(DEFAULT_CONTENT_ITEM_TO_VERSION)
+    assert obj.from_version == Version("6.0.0")
+    assert obj.to_version == Version(DEFAULT_CONTENT_ITEM_TO_VERSION)
 
 
 def test_to_version_no_from_version(datadir):
-    from packaging.version import parse
     obj = YAMLContentObject(TEST_YAML_NO_FROM_VERSION, "script")
-    assert obj.from_version == parse(DEFAULT_CONTENT_ITEM_FROM_VERSION)
-    assert obj.to_version == parse("5.0.0")
+    assert obj.from_version == Version(DEFAULT_CONTENT_ITEM_FROM_VERSION)
+    assert obj.to_version == Version("5.0.0")
 
 
 class TestFileWithStem:

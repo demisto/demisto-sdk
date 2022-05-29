@@ -11,7 +11,6 @@ import pytest
 from click.testing import CliRunner
 from demisto_client.demisto_api import DefaultApi
 from demisto_client.demisto_api.rest import ApiException
-from packaging.version import parse
 
 from demisto_sdk.__main__ import main, upload
 from demisto_sdk.commands.common import constants
@@ -23,6 +22,7 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import (
     DELETE_VERIFY_KEY_ACTION, TURN_VERIFICATION_ERROR_MSG, Pack)
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers.version import Version
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yml_paths_in_dir, src_root
 from demisto_sdk.commands.test_content import tools
@@ -52,11 +52,11 @@ if not hasattr(inspect, '_orig_findsource'):
 
 @pytest.fixture
 def demisto_client_configure(mocker):
-    mocker.patch("demisto_sdk.commands.upload.uploader.get_demisto_version", return_value=parse('6.0.0'))
+    mocker.patch("demisto_sdk.commands.upload.uploader.get_demisto_version", return_value=Version('6.0.0'))
     mocker.patch("demisto_sdk.commands.common.content.objects.pack_objects.integration.integration.get_demisto_version",
-                 return_value=parse('6.0.0'))
+                 return_value=Version('6.0.0'))
     mocker.patch("demisto_sdk.commands.common.content.objects.pack_objects.script.script.get_demisto_version",
-                 return_value=parse('6.0.0'))
+                 return_value=Version('6.0.0'))
     mocker.patch("builtins.print")
 
 
@@ -680,7 +680,7 @@ API_CLIENT = DefaultApi()
 
 def mock_api_client(mocker):
     mocker.patch.object(demisto_client, 'configure', return_value=API_CLIENT)
-    mocker.patch.object(uploader, 'get_demisto_version', return_value=parse('6.0.0'))
+    mocker.patch.object(uploader, 'get_demisto_version', return_value=Version('6.0.0'))
 
 
 class TestZippedPackUpload:

@@ -6,9 +6,9 @@ import click
 import demisto_client
 import pytest
 from demisto_client.demisto_api import DefaultApi
-from packaging.version import parse
 
 from demisto_sdk.__main__ import zip_packs
+from demisto_sdk.commands.common.handlers.version import Version
 from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.upload import uploader
 from demisto_sdk.commands.upload.uploader import Uploader
@@ -101,7 +101,7 @@ class TestPacksZipper:
             - validate the pack.zipped_pack_uploader was called with correct path
         """
         mocker.patch.object(demisto_client, 'configure', return_value=DefaultApi())
-        mocker.patch.object(uploader, 'get_demisto_version', return_value=parse('6.0.0'))
+        mocker.patch.object(uploader, 'get_demisto_version', return_value=Version('6.0.0'))
         mocker.patch.object(Uploader, 'zipped_pack_uploader')
 
         with temp_dir() as tmp_output_dir:

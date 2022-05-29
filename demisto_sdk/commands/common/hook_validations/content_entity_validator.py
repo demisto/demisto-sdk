@@ -2,7 +2,6 @@ import json
 import os
 import re
 from abc import abstractmethod
-from distutils.version import LooseVersion
 from typing import Optional
 
 from demisto_sdk.commands.common.constants import (
@@ -14,6 +13,7 @@ from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers.version import Version
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator, error_codes)
 from demisto_sdk.commands.common.hook_validations.structure import \
@@ -265,7 +265,7 @@ class ContentEntityValidator(BaseValidator):
         else:
             return True
 
-        if LooseVersion(self.current_file.get(from_version_field, DEFAULT_CONTENT_ITEM_FROM_VERSION)) < LooseVersion(self.oldest_supported_version):
+        if Version(self.current_file.get(from_version_field, DEFAULT_CONTENT_ITEM_FROM_VERSION)) < Version(self.oldest_supported_version):
             error_message, error_code = Errors.no_minimal_fromversion_in_file(from_version_field,
                                                                               self.oldest_supported_version)
             if self.handle_error(error_message, error_code, file_path=self.file_path,
@@ -283,8 +283,8 @@ class ContentEntityValidator(BaseValidator):
         if not self.should_run_fromversion_validation():
             return True
 
-        if LooseVersion(self.current_file.get('fromVersion', DEFAULT_CONTENT_ITEM_FROM_VERSION)) < \
-                LooseVersion(GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION):
+        if Version(self.current_file.get('fromVersion', DEFAULT_CONTENT_ITEM_FROM_VERSION)) < \
+                Version(GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION):
             error_message, error_code = Errors.no_minimal_fromversion_in_file('fromVersion',
                                                                               GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION)
             if self.handle_error(error_message, error_code, file_path=self.file_path,

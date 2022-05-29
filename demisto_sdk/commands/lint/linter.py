@@ -14,13 +14,13 @@ import git
 import requests.exceptions
 import urllib3.exceptions
 from filelock import FileLock
-from packaging.version import parse
 from wcmatch.pathlib import NEGATE, Path
 
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON)
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers.version import Version
 from demisto_sdk.commands.common.timers import timer
 from demisto_sdk.commands.common.tools import (get_all_docker_images,
                                                run_command_os)
@@ -442,7 +442,7 @@ class Linter:
             if self._facts['is_long_running']:
                 myenv['LONGRUNNING'] = 'True'
 
-            py_ver = parse(py_num).major
+            py_ver = Version(py_num).major
             if py_ver < 3:
                 myenv['PY2'] = 'True'
             myenv['is_script'] = str(self._facts['is_script'])
@@ -693,7 +693,7 @@ class Linter:
         requirements = []
 
         if docker_base_image[1] != -1:
-            py_ver = parse(docker_base_image[1]).major
+            py_ver = Version(docker_base_image[1]).major
             if py_ver == 2:
                 requirements = self._req_2
             elif py_ver == 3:

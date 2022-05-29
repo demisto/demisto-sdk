@@ -20,11 +20,11 @@ import docker.errors
 import git
 import requests
 from docker.models.containers import Container
-from packaging.version import parse
 
 # Local packages
 from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
                                                    DemistoException)
+from demisto_sdk.commands.common.handlers.version import Version
 from demisto_sdk.commands.common.tools import print_warning, run_command_os
 from demisto_sdk.commands.lint.docker_helper import init_global_docker_client
 
@@ -148,6 +148,8 @@ def get_test_modules(content_repo: Optional[git.Repo], is_external_repo: bool) -
 
         for module in modules:
             try:
+                if not content_repo.working_dir:
+                    raise ValueError('Could not find a working directory of the repo')
                 module_full_path = content_repo.working_dir / module
                 logger.debug(f'read file {module_full_path}')
                 modules_content[module] = (module_full_path).read_bytes()
@@ -193,7 +195,7 @@ def add_typing_module(lint_files: List[Path], python_version: str):
     back_lint_files: List[Path] = []
     try:
         # Add typing import if needed to python version 2 packages
-        py_ver = parse(python_version).major
+        py_ver = Version(python_version).major
         if py_ver < 3:
             for lint_file in lint_files:
                 data = lint_file.read_text(encoding="utf-8")
@@ -320,7 +322,7 @@ def get_python_version_from_image(image: str, timeout: int = 60) -> str:
             # Get python version
             py_num = container_obj.logs()
             if isinstance(py_num, bytes):
-                py_num = parse(py_num.decode("utf-8")).base_version
+                py_num = Version(py_num.decode("utf-8")).base_version
                 for _ in range(2):
                     # Try to remove the container two times.
                     try:

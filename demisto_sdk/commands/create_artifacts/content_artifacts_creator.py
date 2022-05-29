@@ -9,7 +9,6 @@ from contextlib import contextmanager
 from shutil import make_archive, rmtree
 from typing import Callable, Dict, List, Optional, Union
 
-from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
 from wcmatch.pathlib import BRACE, EXTMATCH, NEGATE, NODIR, SPLIT, Path
 
@@ -30,6 +29,7 @@ from demisto_sdk.commands.common.content.objects.abstract_objects.text_object im
     TextObject
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     JSONContentObject, Script, YAMLContentObject, YAMLContentUnifiedObject)
+from demisto_sdk.commands.common.handlers.version import Version
 from demisto_sdk.commands.common.tools import (MARKETPLACE_TAG_PARSER,
                                                alternate_item_fields,
                                                arg_to_list, open_id_set_file,
@@ -41,7 +41,7 @@ from .artifacts_report import ArtifactsReport, ObjectReport
 # Global variables #
 ####################
 
-FIRST_MARKETPLACE_VERSION = parse('6.0.0')
+FIRST_MARKETPLACE_VERSION = Version('6.0.0')
 IGNORED_PACKS = ['ApiModules']
 IGNORED_TEST_PLAYBOOKS_DIR = 'Deprecated'
 
@@ -173,7 +173,7 @@ class ArtifactsManager:
 
 class ContentItemsHandler:
     def __init__(self, id_set=None, alternate_fields=False):
-        self.server_min_version = parse('1.0.0')
+        self.server_min_version = Version('1.0.0')
         self.content_items: Dict[ContentItems, List] = {
             ContentItems.SCRIPTS: [],
             ContentItems.PLAYBOOKS: [],
@@ -1133,7 +1133,7 @@ def create_dirs(artifact_manager: ArtifactsManager):
 def zip_dirs(artifact_manager: ArtifactsManager):
     """Zip artifacts directories"""
     if artifact_manager.only_content_packs:
-        make_archive(artifact_manager.content_packs_path, 'zip', artifact_manager.content_packs_path)
+        make_archive(str(artifact_manager.content_packs_path), 'zip', artifact_manager.content_packs_path)
     else:
         with ProcessPoolHandler(artifact_manager) as pool:
             for artifact_dir in [artifact_manager.content_test_path, artifact_manager.content_new_path,

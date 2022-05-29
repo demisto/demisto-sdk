@@ -3,7 +3,6 @@ import os
 from datetime import datetime
 from typing import Dict, List, Union
 
-from packaging.version import Version, parse
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
@@ -13,6 +12,7 @@ from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
 from demisto_sdk.commands.common.content.objects.abstract_objects import \
     JSONObject
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers.version import Version
 from demisto_sdk.commands.common.tools import get_core_pack_list
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
@@ -49,8 +49,8 @@ class PackMetaData(JSONObject):
         self._vendorName: str = ''
         self._hidden: bool = False
         self._previewOnly: bool = False
-        self._serverMinVersion: Version = parse('0.0.0')
-        self._currentVersion: Version = parse('0.0.0')
+        self._serverMinVersion: Version = Version('0.0.0')
+        self._currentVersion: Version = Version('0.0.0')
         self._versionInfo: int = 0
         self._tags: List[str] = []
         self._categories: List[str] = []
@@ -553,7 +553,7 @@ class PackMetaData(JSONObject):
             self.url = user_metadata.get('url', '')
             self.email = user_metadata.get('email', '')
             self.certification = user_metadata.get('certification', '')
-            self.current_version = parse(user_metadata.get('currentVersion', '0.0.0'))
+            self.current_version = Version(user_metadata.get('currentVersion', '0.0.0'))
             self.author = user_metadata.get('author', '')
             self.hidden = user_metadata.get('hidden', False)
             self.tags = user_metadata.get('tags', [])

@@ -8,7 +8,6 @@ from typing import Any, Iterable, Optional, Set, Tuple, Union
 
 import click
 import networkx as nx
-from packaging.version import Version
 from requests import RequestException
 
 from demisto_sdk.commands.common import constants
@@ -16,6 +15,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION, GENERIC_COMMANDS_NAMES,
     IGNORED_PACKS_IN_DEPENDENCY_CALC, PACKS_DIR)
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers.version import Version
 from demisto_sdk.commands.common.tools import (ProcessPoolHandler,
                                                get_content_id_set,
                                                get_content_path, get_pack_name,

@@ -2,7 +2,6 @@ import glob
 import os
 import shutil
 from distutils.dir_util import copy_tree
-from distutils.version import LooseVersion
 from typing import Dict, List
 
 import click
@@ -20,7 +19,8 @@ from demisto_sdk.commands.common.constants import (
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, WIDGETS_DIR, WIZARDS_DIR, XSOAR_AUTHOR,
     XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
 from demisto_sdk.commands.common.git_content_config import GitContentConfig
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
+from demisto_sdk.commands.common.handlers import (JSON_Handler, Version,
+                                                  YAML_Handler)
 from demisto_sdk.commands.common.tools import (LOG_COLORS,
                                                get_common_server_path,
                                                get_pack_name, print_error,
@@ -566,7 +566,7 @@ class Initiator:
         if from_version:
             yml_dict['fromversion'] = from_version
 
-        if LooseVersion(yml_dict.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION)) < LooseVersion(
+        if Version(yml_dict.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION)) < Version(
                 self.SUPPORTED_FROM_VERSION):
             yml_dict['fromversion'] = self.SUPPORTED_FROM_VERSION
 

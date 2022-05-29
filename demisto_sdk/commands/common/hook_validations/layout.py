@@ -1,6 +1,5 @@
 import os
 from abc import ABC, abstractmethod
-from distutils.version import LooseVersion
 from typing import Dict, List
 
 import click
@@ -10,6 +9,7 @@ from demisto_sdk.commands.common.constants import (
     LAYOUT_AND_MAPPER_BUILT_IN_FIELDS,
     LAYOUTS_CONTAINERS_OLDEST_SUPPORTED_VERSION)
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.handlers import Version
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
@@ -61,7 +61,7 @@ class LayoutBaseValidator(ContentEntityValidator, ABC):
             bool. True if to version field is higher than from version field, else False.
         """
         if self.to_version and self.from_version:
-            if LooseVersion(self.to_version) <= LooseVersion(self.from_version):
+            if Version(self.to_version) <= Version(self.from_version):
                 error_message, error_code = Errors.from_version_higher_to_version()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
@@ -139,7 +139,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
         Returns:
             bool. True if from version field is valid, else False.
         """
-        if LooseVersion(self.from_version) < LooseVersion(FROM_VERSION_LAYOUTS_CONTAINER):
+        if Version(self.from_version) < Version(FROM_VERSION_LAYOUTS_CONTAINER):
             error_message, error_code = Errors.invalid_version_in_layoutscontainer('fromVersion')
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
@@ -152,7 +152,7 @@ class LayoutsContainerValidator(LayoutBaseValidator):
         Returns:
             bool. True if to version field is valid, else False.
         """
-        if self.to_version and LooseVersion(self.to_version) < LooseVersion(FROM_VERSION_LAYOUTS_CONTAINER):
+        if self.to_version and Version(self.to_version) < Version(FROM_VERSION_LAYOUTS_CONTAINER):
             error_message, error_code = Errors.invalid_version_in_layoutscontainer('toVersion')
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
@@ -227,7 +227,7 @@ class LayoutValidator(LayoutBaseValidator):
             bool. True if from version field is valid, else False.
         """
         if self.from_version:
-            if LooseVersion(self.from_version) >= LooseVersion(FROM_VERSION_LAYOUTS_CONTAINER):
+            if Version(self.from_version) >= Version(FROM_VERSION_LAYOUTS_CONTAINER):
                 error_message, error_code = Errors.invalid_version_in_layout('fromVersion')
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
@@ -240,7 +240,7 @@ class LayoutValidator(LayoutBaseValidator):
         Returns:
             bool. True if to version field is valid, else False.
         """
-        if not self.to_version or LooseVersion(self.to_version) >= LooseVersion(FROM_VERSION_LAYOUTS_CONTAINER):
+        if not self.to_version or Version(self.to_version) >= Version(FROM_VERSION_LAYOUTS_CONTAINER):
             error_message, error_code = Errors.invalid_version_in_layout('toVersion')
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False

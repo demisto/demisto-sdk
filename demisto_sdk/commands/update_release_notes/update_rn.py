@@ -5,7 +5,6 @@ import copy
 import errno
 import os
 import re
-from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Optional, Tuple, Union
 
@@ -14,7 +13,7 @@ from demisto_sdk.commands.common.constants import (
     IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, Version
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
@@ -290,7 +289,7 @@ class UpdateRN:
                 return False
             new_metadata = self.get_pack_metadata()
             new_version = new_metadata.get('currentVersion', '99.99.99')
-            if LooseVersion(self.master_version) >= LooseVersion(new_version):
+            if Version(self.master_version) >= Version(new_version):
                 return True
             return False
         except RuntimeError as e:

@@ -1,4 +1,3 @@
-from distutils.version import LooseVersion
 from typing import Optional
 
 import click
@@ -6,7 +5,7 @@ import ujson
 
 from demisto_sdk.commands.common.constants import \
     DEFAULT_CONTENT_ITEM_TO_VERSION
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import Version, YAML_Handler
 from demisto_sdk.commands.common.tools import is_uuid, print_error
 from demisto_sdk.commands.format.format_constants import (
     ARGUMENTS_DEFAULT_VALUES, TO_VERSION_5_9_9)
@@ -65,7 +64,7 @@ class BaseUpdateJSON(BaseUpdate):
         Sets toVersion key in file
         Relevant for old entities such as layouts and classifiers.
         """
-        if not self.data.get('toVersion') or LooseVersion(self.data.get('toVersion', DEFAULT_CONTENT_ITEM_TO_VERSION)) >= TO_VERSION_5_9_9:
+        if not self.data.get('toVersion') or Version(self.data.get('toVersion', DEFAULT_CONTENT_ITEM_TO_VERSION)) >= TO_VERSION_5_9_9:
             if self.verbose:
                 click.echo('Setting toVersion field')
             self.data['toVersion'] = TO_VERSION_5_9_9

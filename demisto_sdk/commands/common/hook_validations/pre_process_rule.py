@@ -1,9 +1,9 @@
-from distutils.version import LooseVersion
 from typing import List
 
 import click
 
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.handlers import Version
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
@@ -57,7 +57,7 @@ class PreProcessRuleValidator(ContentEntityValidator):
             bool. True if from version field is valid, else False.
         """
         if self.from_version:
-            if LooseVersion(self.from_version) < LooseVersion(FROM_VERSION_PRE_PROCESS_RULES):
+            if Version(self.from_version) < Version(FROM_VERSION_PRE_PROCESS_RULES):
                 error_message, error_code = Errors.invalid_from_server_version_in_pre_process_rules('fromServerVersion')
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False

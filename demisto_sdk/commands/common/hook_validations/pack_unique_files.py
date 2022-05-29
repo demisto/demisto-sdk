@@ -6,7 +6,6 @@ import io
 import os
 import re
 from datetime import datetime
-from distutils.version import LooseVersion
 from pathlib import Path
 from typing import Dict, Tuple
 
@@ -28,8 +27,7 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.handlers.version import Version
+from demisto_sdk.commands.common.handlers import JSON_Handler, Version
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator, error_codes)
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
@@ -146,7 +144,7 @@ class PackUniqueFilesValidator(BaseValidator):
         list_of_release_notes = [os.path.basename(file) for file in list_of_files]
         list_of_versions = [rn[:rn.rindex('.')].replace('_', '.') for rn in list_of_release_notes]
         if list_of_versions:
-            list_of_versions.sort(key=LooseVersion)
+            list_of_versions.sort(key=Version)
             return list_of_versions[-1]
         else:
             return ''
@@ -336,7 +334,7 @@ class PackUniqueFilesValidator(BaseValidator):
         current_meta_file_content = get_json(metadata_file_path)
         old_version = old_meta_file_content.get('currentVersion', '0.0.0')
         current_version = current_meta_file_content.get('currentVersion', '0.0.0')
-        if LooseVersion(old_version) < LooseVersion(current_version):
+        if Version(old_version) < Version(current_version):
             return True
         elif self._add_error(Errors.pack_metadata_version_should_be_raised(self.pack, old_version), metadata_file_path):
             return False

@@ -30,7 +30,7 @@ class Integration(YAMLContentUnifiedObject):
     def is_feed(self) -> bool:
         return self.script.get('feed', False)
 
-    def upload(self, client: demisto_client = None):
+    def upload(self, client: demisto_client):
         """
         Upload the integration to demisto_client
         Args:
@@ -41,16 +41,16 @@ class Integration(YAMLContentUnifiedObject):
         """
         if self.is_unify():
             return client.integration_upload(file=self.path)  # type: ignore
-        else:
-            with tempfile.TemporaryDirectory() as dir:
-                unified_files = self._unify(dir)
-                for file in unified_files:
-                    if not (d_version := get_demisto_version(client)):
-                        continue
-                    if not (str(file).endswith('_45.yml') and d_version < Version('4.6.0')):
-                        continue
-                        # The above condition checks that the file ends in `_45.yml' and the version is 4.5 or less
-                        # or that the file doesn't end in `_45.yml` and the version is higher than 4.5
+        with tempfile.TemporaryDirectory() as dir:
+            unified_files = self._unify(dir)
+            for file in unified_files:
+                if not (d_version := get_demisto_version(client)):
+                    continue
+                if str(file).endswith('_45.yml') and d_version < Version('4.6.0'):
+                    client.integration_upload(file=file)
+                if d_version >= Version('4.6.0'):
+                    # The above condition checks that the file ends in `_45.yml' and the version is 4.5 or less
+                    # or that the file doesn't end in `_45.yml` and the version is higher than 4.5
                     return client.integration_upload(file=file)  # type: ignore
 
     def type(self):

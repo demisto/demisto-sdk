@@ -2,8 +2,7 @@
 
 ## Unreleased
 
-* Removed the validation of a subtype change in integration/script  in the **validate** command.
-
+* Removed the validation of a subtype change in integrations and scripts from **validate**.
 
 ## 1.6.7
 

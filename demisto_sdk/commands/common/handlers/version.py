@@ -1,3 +1,1 @@
-from packaging.version import parse
-
-Version = parse
+from packaging.version import Version  # noqa: F401

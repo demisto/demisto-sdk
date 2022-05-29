@@ -1953,6 +1953,7 @@ def get_demisto_version(client: demisto_client) -> Optional[Version]:
         about_data = json.loads(resp[0].replace("'", '"'))
         return Version(about_data.get('demistoVersion'))  # type: ignore
     except Exception:
+        logger.exception('could not find the server version. defaulting to None')
         return None
 
 

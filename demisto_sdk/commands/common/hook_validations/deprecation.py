@@ -11,14 +11,14 @@ class DeprecationValidator:
         self.script_section = id_set_file.get("scripts", [])
         self.playbook_section = id_set_file.get("playbooks", [])
 
-    def validate_integartion(self, deprecated_commands_list: List[str], integration_name: str):
+    def validate_integartion(self, deprecated_commands_list: List[str], integration_id: str):
         """
         Manages the deprecation usage for integration commands
         Checks if the given deprecated integration commands are used in a none-deprecated scripts / playbooks
 
         Args:
             deprecated_commands_list (list): A list of all the integration's deprecated commands.
-            integration_name (str): The name of the integration that is currently being tested.
+            integration_id (str): The id of the integration that is currently being tested.
 
         Return:
             dict: A dictionary where the keys are the integartion's deprecated commands that are used in none-deprecated  scripts / playbooks.
@@ -26,7 +26,7 @@ class DeprecationValidator:
         """
         usage_dict: Dict[str, list] = {}
 
-        self.filter_playbooks_for_integration_validation(deprecated_commands_list, usage_dict, integration_name)
+        self.filter_playbooks_for_integration_validation(deprecated_commands_list, usage_dict, integration_id)
         self.find_scripts_using_given_integration_commands(deprecated_commands_list, usage_dict)
 
         return usage_dict
@@ -68,7 +68,7 @@ class DeprecationValidator:
 
         return usage_list
 
-    def filter_playbooks_for_integration_validation(self, deprecated_commands_list, usage_dict: Dict[str, list], commands_integration_name: str):
+    def filter_playbooks_for_integration_validation(self, deprecated_commands_list, usage_dict: Dict[str, list], integration_id: str):
         """
         Filter the relevant playbooks for the current integration validation from the playbook_section
         and check which of the integration commands are being used in this files using the validate_integration_not_in_playbook function.
@@ -78,17 +78,17 @@ class DeprecationValidator:
             usage_dict (dict): A dictionary where the keys are the integartion's deprecated commands
             that are used in none-deprecated scripts / playbooks.
             The values are the file names where they're being used.
-            commands_integration_name (str): The name of the integration that is currently being tested.
+            integration_id (str): The id of the integration that is currently being tested.
         """
         for playbook in self.playbook_section:
             for playbook_val in playbook.values():
                 command_to_integration = playbook_val.get("command_to_integration")
                 if command_to_integration:
                     self.validate_integration_commands_not_in_playbook(usage_dict, deprecated_commands_list,
-                                                                       command_to_integration, playbook_val, commands_integration_name)
+                                                                       command_to_integration, playbook_val, integration_id)
 
     def validate_integration_commands_not_in_playbook(self, usage_dict: Dict, deprecated_commands_list: List[str],
-                                                      command_to_integration: Dict[str, list], playbook: Dict, commands_integration_name: str):
+                                                      command_to_integration: Dict[str, list], playbook: Dict, integration_id: str):
         """
         List all the integration commands of the current checked integration that are being used in the given playbook.
         and update them in the given usage_dict.
@@ -101,13 +101,13 @@ class DeprecationValidator:
             command_to_integration(dict) A dict where the keys are the integartions commands that are being used
             and the value is the integration name.
             playbook (dict): The playbook currently being checked.
-            commands_integration_name (str): The name of the integration that is currently being tested.
+            integration_id (str): The id of the integration that is currently being tested.
         """
         if playbook.get('deprecated'):
             return
         for command, integration_name in command_to_integration.items():
             if command in deprecated_commands_list:
-                if integration_name == commands_integration_name or not integration_name:
+                if integration_name == integration_id or not integration_name:
                     playbook_path: Optional[str] = playbook.get("file_path", "")
                     if command in usage_dict and playbook_path not in usage_dict.get(command, []):
                         usage_dict.get(command, []).append(playbook_path)

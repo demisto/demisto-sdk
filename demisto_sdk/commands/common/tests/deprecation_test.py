@@ -9,79 +9,86 @@ from demisto_sdk.commands.common.hook_validations.playbook import \
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.tests.integration_test import mock_structure
 
-mocked_id_set = {"scripts": [
-    {"sdca13-dasde12-ffe13-fdgs352": {
-        "name": "script_1",
-        "file_path": "script_1.yml",
-        "deprecated": True,
-        "depends_on": [
-            "ic3_command1",
-            "ic5_command1",
-            "ic6_command3",
-            "script_case_4",
-            "script_case_5",
-            "script_format_case_1"
-            "ifc1_command3",
-            "ifc1_command2"
-        ]
-    }
-    },
-    {
-        "sdca13-dasde12-ffe13-fdgs353": {
-            "name": "script_2",
-            "file_path": "script_2.yml",
-            "deprecated": False,
-            "depends_on": [
-                "ic1_command1",
-                "ic5_command2",
-                "ic6_command1",
-                "ic6_command3",
-                "script_case_3",
-                "script_format_case_1",
-                "ifc1_command3",
-                "ifc1_command2"
-            ]
-        }
-    }], "playbooks": [
-    {"sdca13-dasde12-ffe13-fdgs3541": {
-        "name": "playbook_1",
-        "file_path": "playbook_1.yml",
-        "deprecated": True,
-        "implementing_scripts": [
-            "IsIntegrationAvailable"
-        ],
-        "implementing_playbooks": [
-            "playbook_case_4",
-            "playbook_case_3"
-        ],
-        "command_to_integration": {
-            "ic3_command1": "integration_case_3",
-            "ic6_command2": "integration_case_6",
-            "ifc1_command1": "integration_format_case_1",
-            "ifc1_command3": "integration_format_case_1"
-        }}},
-        {"sdca13-dasde12-ffe13-fdgs35as": {
-            "name": "playbook_2",
-            "file_path": "playbook_2.yml",
-            "implementing_scripts": [
-                "script_case_2",
-                "script_case_5",
-                "script_format_case_1"
-            ],
-            "implementing_playbooks": [
-                "playbook_case_2",
-                "playbook_case_3",
-                "playbook_format_case_1"
-            ],
-            "command_to_integration": {
-                "ic2_command1": "integration_case_2",
-                "ic5_command2": "integration_case_5",
-                "ic6_command1": "integration_case_6",
-                "ifc1_command1": "integration_format_case_1",
-                "ifc1_command3": "integration_format_case_1",
-                "ic7_command1": "integration_case_777"
-            }}}
-]
+mocked_id_set = {
+    'scripts': [
+        {
+            'sdca13-dasde12-ffe13-fdgs352': {
+                'name': 'script_1',
+                'file_path': 'script_1.yml',
+                'deprecated': True,
+                'depends_on': [
+                    'ic3_command1',
+                    'ic5_command1',
+                    'ic6_command3',
+                    'script_case_4',
+                    'script_case_5',
+                    'script_format_case_1' 'ifc1_command3',
+                    'ifc1_command2',
+                ],
+            }
+        },
+        {
+            'sdca13-dasde12-ffe13-fdgs353': {
+                'name': 'script_2',
+                'file_path': 'script_2.yml',
+                'deprecated': False,
+                'depends_on': [
+                    'ic1_command1',
+                    'ic5_command2',
+                    'ic6_command1',
+                    'ic6_command3',
+                    'script_case_3',
+                    'script_format_case_1',
+                    'ifc1_command3',
+                    'ifc1_command2',
+                ],
+            }
+        },
+    ],
+    'playbooks': [
+        {
+            'sdca13-dasde12-ffe13-fdgs3541': {
+                'name': 'playbook_1',
+                'file_path': 'playbook_1.yml',
+                'deprecated': True,
+                'implementing_scripts': ['IsIntegrationAvailable'],
+                'implementing_playbooks': [
+                    'playbook_case_4',
+                    'playbook_case_3',
+                ],
+                'command_to_integration': {
+                    'ic3_command1': 'integration_case_3',
+                    'ic6_command2': 'integration_case_6',
+                    'ifc1_command1': 'integration_format_case_1',
+                    'ifc1_command3': 'integration_format_case_1',
+                },
+            }
+        },
+        {
+            'sdca13-dasde12-ffe13-fdgs35as': {
+                'name': 'playbook_2',
+                'file_path': 'playbook_2.yml',
+                'implementing_scripts': [
+                    'script_case_2',
+                    'script_case_5',
+                    'script_format_case_1',
+                ],
+                'implementing_playbooks': [
+                    'playbook_case_2',
+                    'playbook_case_3',
+                    'playbook_format_case_1',
+                ],
+                'command_to_integration': {
+                    'ic2_command1': 'integration_case_2',
+                    'ic5_command2': 'integration_case_5',
+                    'ic6_command1': 'integration_case_6',
+                    'ifc1_command1': 'integration_format_case_1',
+                    'ifc1_command3': 'integration_format_case_1',
+                    'ic7_command1': 'integration_case_777',
+                },
+            }
+        },
+    ],
 }
 
 
@@ -93,26 +100,104 @@ def mock_deprecation_manager():
 
 class TestDeprecationValidator:
 
-    INTEGRATIONS_VALIDATIONS_LS = [({'name': "integration_case_1", 'deprecated': True, 'script': {'commands': [{'name': 'ic1_command1'}]}},
-                                    False, ["ic1_command1"], []),
-                                   ({'name': "integration_case_2", 'script': {'commands': [
-                                    {'name': 'ic2_command1', 'deprecated': True}]}}, False, ["ic2_command1"], []),
-                                   ({'name': "integration_case_3", 'script': {'commands': [
-                                    {'name': 'ic3_command1', 'deprecated': True}]}}, True, [], ["ic3_command1"]),
-                                   ({'name': "integration_case_4", 'deprecated': False, 'script': {
-                                    'commands': [{'name': 'ic4_command1'}]}}, True, [], ["ic4_command1"]),
-                                   ({'name': "integration_case_5", 'deprecated': False, 'script': {'commands': [
-                                    {'name': 'ic5_command1', 'deprecated': True}, {'name': 'ic5_command2'}]}}, True, [], ["ic5_command1", "ic5_command2"]),
-                                   ({'name': "integration_case_6", 'script': {'commands': [{'name': 'ic6_command1', 'deprecated': True}, {
-                                    'name': 'ic6_command2', 'deprecated': True}, {'name': 'ic6_command3'}]}},
-                                    False, ["ic6_command1"], ["ic6_command3", "ic6_command2"]),
-                                   ({'name': "integration_case_7", 'script': {'commands': [{'name': 'ic7_command1', 'deprecated': True}]}},
-                                    True, [], ["ic7_command1"])
-                                   ]
+    INTEGRATIONS_VALIDATIONS_LS = [
+        (
+            {
+                'commonfields': {'id': 'integration_case_1'},
+                'deprecated': True,
+                'script': {'commands': [{'name': 'ic1_command1'}]},
+            },
+            False,
+            ['ic1_command1'],
+            [],
+        ),
+        (
+            {
+                'commonfields': {'id': 'integration_case_2'},
+                'script': {
+                    'commands': [{'name': 'ic2_command1', 'deprecated': True}]
+                },
+            },
+            False,
+            ['ic2_command1'],
+            [],
+        ),
+        (
+            {
+                'commonfields': {'id': 'integration_case_3'},
+                'script': {
+                    'commands': [{'name': 'ic3_command1', 'deprecated': True}]
+                },
+            },
+            True,
+            [],
+            ['ic3_command1'],
+        ),
+        (
+            {
+                'commonfields': {'id': 'integration_case_4'},
+                'deprecated': False,
+                'script': {'commands': [{'name': 'ic4_command1'}]},
+            },
+            True,
+            [],
+            ['ic4_command1'],
+        ),
+        (
+            {
+                'commonfields': {'id': 'integration_case_5'},
+                'deprecated': False,
+                'script': {
+                    'commands': [
+                        {'name': 'ic5_command1', 'deprecated': True},
+                        {'name': 'ic5_command2'},
+                    ]
+                },
+            },
+            True,
+            [],
+            ['ic5_command1', 'ic5_command2'],
+        ),
+        (
+            {
+                'commonfields': {'id': 'integration_case_6'},
+                'script': {
+                    'commands': [
+                        {'name': 'ic6_command1', 'deprecated': True},
+                        {'name': 'ic6_command2', 'deprecated': True},
+                        {'name': 'ic6_command3'},
+                    ]
+                },
+            },
+            False,
+            ['ic6_command1'],
+            ['ic6_command3', 'ic6_command2'],
+        ),
+        (
+            {
+                'commonfields': {'id': 'integration_case_7'},
+                'script': {
+                    'commands': [{'name': 'ic7_command1', 'deprecated': True}]
+                },
+            },
+            True,
+            [],
+            ['ic7_command1'],
+        ),
+    ]
 
-    @pytest.mark.parametrize("integration_yml, expected_bool_results, expected_commands_in_errors_ls, expected_commands_not_in_errors_ls",
-                             INTEGRATIONS_VALIDATIONS_LS)
-    def test_validate_integration(self, capsys, integration_yml, expected_bool_results, expected_commands_in_errors_ls, expected_commands_not_in_errors_ls):
+    @pytest.mark.parametrize(
+        'integration_yml, expected_bool_results, expected_commands_in_errors_ls, expected_commands_not_in_errors_ls',
+        INTEGRATIONS_VALIDATIONS_LS,
+    )
+    def test_validate_integration(
+        self,
+        capsys,
+        integration_yml,
+        expected_bool_results,
+        expected_commands_in_errors_ls,
+        expected_commands_not_in_errors_ls,
+    ):
         """
         Given
         - Case 1: integration with one deprecated command that is being used in a none-deprecated script.
@@ -152,14 +237,32 @@ class TestDeprecationValidator:
         for command in expected_commands_not_in_errors_ls:
             assert command not in stdout
 
-    INTEGRATIONS_FORMAT_VALIDATIONS = [({'name': "integration_format_case_1", 'script': {'commands': [{'name': 'ifc1_command1', 'deprecated': True}, {
-        'name': 'ifc1_command2', 'deprecated': True}, {'name': 'ifc1_command3'}]}, 'tests': ["testplaybook_1", "testplaybook_2"]},
-        "[IN153] - integration_format_case_1 integration contain deprecated commands that are being used:"
-        "\nifc1_command1 is being used in the following locations:\nplaybook_2.yml\nifc1_command2 is being used in the following"
-        " locations:\nscript_2.yml")]
+    INTEGRATIONS_FORMAT_VALIDATIONS = [
+        (
+            {
+                'name': 'integration_format_case_1',
+                'commonfields': {'id': 'integration_format_case_1'},
+                'script': {
+                    'commands': [
+                        {'name': 'ifc1_command1', 'deprecated': True},
+                        {'name': 'ifc1_command2', 'deprecated': True},
+                        {'name': 'ifc1_command3'},
+                    ]
+                },
+                'tests': ['testplaybook_1', 'testplaybook_2'],
+            },
+            '[IN153] - integration_format_case_1 integration contain deprecated commands that are being used:'
+            '\nifc1_command1 is being used in the following locations:\nplaybook_2.yml\nifc1_command2 is being used in the following'
+            ' locations:\nscript_2.yml',
+        )
+    ]
 
-    @pytest.mark.parametrize("integration_yml, expected_results", INTEGRATIONS_FORMAT_VALIDATIONS)
-    def test_validate_integration_error_format(self, capsys, integration_yml, expected_results):
+    @pytest.mark.parametrize(
+        'integration_yml, expected_results', INTEGRATIONS_FORMAT_VALIDATIONS
+    )
+    def test_validate_integration_error_format(
+        self, capsys, integration_yml, expected_results
+    ):
         """
         Given
         - Case 1: Integration with two deprecated commands, one none-deprecated command and two testplaybooks in the tests section,
@@ -180,14 +283,17 @@ class TestDeprecationValidator:
         stdout = capsys.readouterr().out
         assert expected_results in stdout
 
-    SCRIPTS_VALIDATIONS_LS = [({'name': "script_case_1", 'deprecated': True}, True),
-                              ({'name': "script_case_2", 'deprecated': True}, False),
-                              ({'name': "script_case_3", 'deprecated': True}, False),
-                              ({'name': "script_case_4", 'deprecated': True}, True),
-                              ({'name': "script_case_5", 'deprecated': False}, True)
-                              ]
+    SCRIPTS_VALIDATIONS_LS = [
+        ({'name': 'script_case_1', 'deprecated': True}, True),
+        ({'name': 'script_case_2', 'deprecated': True}, False),
+        ({'name': 'script_case_3', 'deprecated': True}, False),
+        ({'name': 'script_case_4', 'deprecated': True}, True),
+        ({'name': 'script_case_5', 'deprecated': False}, True),
+    ]
 
-    @pytest.mark.parametrize("script_yml, expected_results", SCRIPTS_VALIDATIONS_LS)
+    @pytest.mark.parametrize(
+        'script_yml, expected_results', SCRIPTS_VALIDATIONS_LS
+    )
     def test_validate_script(self, script_yml, expected_results):
         """
         Given
@@ -212,12 +318,20 @@ class TestDeprecationValidator:
         validator.deprecation_validator = mock_deprecation_manager()
         assert validator.is_script_deprecated_and_used() == expected_results
 
-    SCRIPTS_FORMAT_VALIDATIONS = [({'name': "script_format_case_1", 'deprecated': True},
-                                  "[SC107] - script_format_case_1 script is deprecated and being used in the following files:"
-                                   "\nscript_2.yml\nplaybook_2.yml")]
+    SCRIPTS_FORMAT_VALIDATIONS = [
+        (
+            {'name': 'script_format_case_1', 'deprecated': True},
+            '[SC107] - script_format_case_1 script is deprecated and being used in the following files:'
+            '\nscript_2.yml\nplaybook_2.yml',
+        )
+    ]
 
-    @pytest.mark.parametrize("script_yml, expected_results", SCRIPTS_FORMAT_VALIDATIONS)
-    def test_validate_script_error_format(self, capsys, script_yml, expected_results):
+    @pytest.mark.parametrize(
+        'script_yml, expected_results', SCRIPTS_FORMAT_VALIDATIONS
+    )
+    def test_validate_script_error_format(
+        self, capsys, script_yml, expected_results
+    ):
         """
         Given
         - Case 1: deprecated script that is used in none-deprecated playbook, and both deprecated and none-deprecated scripts.
@@ -235,13 +349,16 @@ class TestDeprecationValidator:
         stdout = capsys.readouterr().out
         assert expected_results in stdout
 
-    PLAYBOOKS_VALIDATIONS_LS = [({'name': "playbook_case_1", 'deprecated': True}, True),
-                                ({'name': "playbook_case_2", 'deprecated': True}, False),
-                                ({'name': "playbook_case_3", 'deprecated': False}, True),
-                                ({'name': "playbook_case_4", 'deprecated': True}, True),
-                                ]
+    PLAYBOOKS_VALIDATIONS_LS = [
+        ({'name': 'playbook_case_1', 'deprecated': True}, True),
+        ({'name': 'playbook_case_2', 'deprecated': True}, False),
+        ({'name': 'playbook_case_3', 'deprecated': False}, True),
+        ({'name': 'playbook_case_4', 'deprecated': True}, True),
+    ]
 
-    @pytest.mark.parametrize("playbook_yml, expected_results", PLAYBOOKS_VALIDATIONS_LS)
+    @pytest.mark.parametrize(
+        'playbook_yml, expected_results', PLAYBOOKS_VALIDATIONS_LS
+    )
     def test_validate_playbook(self, playbook_yml, expected_results):
         """
         Given
@@ -263,11 +380,19 @@ class TestDeprecationValidator:
         validator.deprecation_validator = mock_deprecation_manager()
         assert validator.is_playbook_deprecated_and_used() == expected_results
 
-    PLAYBOOKS_FORMAT_VALIDATIONS = [({'name': "playbook_format_case_1", 'deprecated': True},
-                                    "[PB118] - playbook_format_case_1 playbook is deprecated and being used in the following files:\nplaybook_2.yml")]
+    PLAYBOOKS_FORMAT_VALIDATIONS = [
+        (
+            {'name': 'playbook_format_case_1', 'deprecated': True},
+            '[PB118] - playbook_format_case_1 playbook is deprecated and being used in the following files:\nplaybook_2.yml',
+        )
+    ]
 
-    @pytest.mark.parametrize("playbook_yml, expected_results", PLAYBOOKS_FORMAT_VALIDATIONS)
-    def test_validate_playbook_error_format(self, capsys, playbook_yml, expected_results):
+    @pytest.mark.parametrize(
+        'playbook_yml, expected_results', PLAYBOOKS_FORMAT_VALIDATIONS
+    )
+    def test_validate_playbook_error_format(
+        self, capsys, playbook_yml, expected_results
+    ):
         """
         Given
         - Case 1: deprecated playbook that is used in a none-deprecated playbook.

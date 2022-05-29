@@ -107,6 +107,7 @@ class YmlSplitter:
         code_file = f"{code_file}{TYPE_TO_EXTENSION[lang_type]}"
         self.extract_image("{}/{}_image.png".format(output_path, base_name))
         self.extract_long_description("{}/{}_description.md".format(output_path, base_name))
+        self.extract_rules("{}/{}.xif".format(output_path, base_name))
         yaml_out = "{}/{}.yml".format(output_path, base_name)
         self.print_logs("Creating yml file: {} ...".format(yaml_out), log_color=LOG_COLORS.NATIVE)
         with open(self.input, 'r') as yf:
@@ -301,6 +302,21 @@ class YmlSplitter:
             self.print_logs("Extracting long description to: {} ...".format(output_path), log_color=LOG_COLORS.NATIVE)
             with open(output_path, 'w', encoding='utf-8') as desc_file:
                 desc_file.write(long_description)
+        return 0
+
+    def extract_rules(self, output_path) -> int:
+        """Extracts the parsing and modelign rules from the yml_file.
+
+        Returns:
+             int. status code for the operation.
+        """
+        if self.file_type == 'script':
+            return 0  # no long description in script type
+        rules = self.yml_data.get('rules')
+        if rules:
+            self.print_logs("Extracting rules to: {} ...".format(output_path), log_color=LOG_COLORS.NATIVE)
+            with open(output_path, 'w', encoding='utf-8') as rules_file:
+                rules_file.write(rules)
         return 0
 
     def print_logs(self, log_msg: str, log_color: str) -> None:

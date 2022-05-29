@@ -937,11 +937,13 @@ REQUIRED_YML_FILE_TYPES = [PACKS_INTEGRATION_PY_REGEX,
 TYPE_PWSH = 'powershell'
 TYPE_PYTHON = 'python'
 TYPE_JS = 'javascript'
+TYPE_XIF = 'xif'
 
 TYPE_TO_EXTENSION = {
     TYPE_PYTHON: '.py',
     TYPE_JS: '.js',
-    TYPE_PWSH: '.ps1'
+    TYPE_PWSH: '.ps1',
+    TYPE_XIF: '.xif'
 }
 
 TESTS_AND_DOC_DIRECTORIES = [

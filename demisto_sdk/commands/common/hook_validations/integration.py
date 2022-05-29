@@ -1638,7 +1638,7 @@ class IntegrationValidator(ContentEntityValidator):
              and False if there is at least one reputation command without a reliability parameter in the configuration.
         """
         if not is_modified:
-            return False
+            return True
         commands_names = [command.get('name') for command in self.current_file.get('script', {}).get('commands', [])]
         yml_config_names = ' '.join([config.get('name') for config in self.current_file.get('configuration', {})])
         for command in commands_names:

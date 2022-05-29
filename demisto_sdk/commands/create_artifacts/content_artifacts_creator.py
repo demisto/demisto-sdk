@@ -242,7 +242,7 @@ class ContentItemsHandler:
         """
         content_object_directory = content_object.path.parts[-3]
         if content_object_directory not in self.content_folder_name_to_func.keys():
-            # In the case where the content object is nested directly in the entities directory (Playbooks for example).
+            # In the case where the content object is nested directly in the entity's directory (Playbooks for example).
             content_object_directory = content_object.path.parts[-2]
 
         if content_object.to_version < FIRST_MARKETPLACE_VERSION:

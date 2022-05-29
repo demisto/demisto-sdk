@@ -2703,7 +2703,7 @@ class TestScriptDeprecatedValidation:
         - An invalid but backwards compatible Script with field toversion < OLDEST_SUPPORTED_VERSION.
 
         When
-        - Running validate on it.
+        - Running validate on it..
 
         Then
         - Ensure validate passes and identifies the file as a script.

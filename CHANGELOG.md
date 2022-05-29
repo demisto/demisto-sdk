@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+
+* Removed the validation of a subtype change in integration/script  in the **validate** command.
 * Added the `types-markdown` dependency, adding markdown capabilities to existing linters using the [Markdown](https://pypi.org/project/Markdown/) package.
 * Added support in the **format** command to remove nonexistent incident/indicator fields from *layouts/mappers*
 * Added the `Note: XXX` and `XXX now generally available.` release notes templates to **doc-review** command.

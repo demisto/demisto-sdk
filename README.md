@@ -92,7 +92,6 @@ Supported commands:
 1. [generate-yml-from-python](https://xsoar.pan.dev/docs/integrations/yml-from-python-code-gen)
 ---
 
-
 ### Customizable command configuration
 
 You can create your own configuration for the `demisto-sdk` commands by creating a file named `.demisto-sdk-conf` within the directory from which you run the commands.

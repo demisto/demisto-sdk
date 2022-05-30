@@ -23,6 +23,7 @@
 * Improved logs when running test playbooks (in a build).
 * Fixed an issue in **upload** did not include list-type content items. @nicolas-rdgs
 * Reverted release notes to old format.
+* Added the new `display_name` field to relevant entities in the **create-id-set** command.
 
 ## 1.6.6
 

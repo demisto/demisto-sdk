@@ -49,23 +49,23 @@ export DEMISTO_API_KEY = `api key`
 
 
 ```
-demisto-sdk run-playbook -p 'playbook_name'
+demisto-sdk run-playbook -p 'playbook_id'
 ```
 
-This will run the playbook `playbook_name` in Demisto instance `https://demisto.local` and will wait for the playbook to finish its run.
+This will run the playbook with `playbook_id` in Demisto instance `https://demisto.local` and will wait for the playbook to finish its run.
 If the run is taking more than 90 seconds (the default timeout), the command will stop while the playbook will keep running in Demisto.
 <br/><br/>
 
 ```
-demisto-sdk run-playbook -p 'playbook_name' -n
+demisto-sdk run-playbook -p 'playbook_id' -n
 ```
-This will run the playbook `playbook_name` in Demisto instance `https://demisto.local` and will not wait to see the response.
+This will run the playbook with `playbook_id` in Demisto instance `https://demisto.local` and will not wait to see the response.
 The playbook will keep running in Demisto.
 <br/><br/>
 
 ```
-demisto-sdk run-playbook -p 'playbook_name' -t 300
+demisto-sdk run-playbook -p 'playbook_id' -t 300
 ```
-This will run the playbook 'playbook_name' in Demisto instance `https://demisto.local` and will wait for the playbook to finish its run.
+This will run the playbook with 'playbook_id' in Demisto instance `https://demisto.local` and will wait for the playbook to finish its run.
 If the playbook is running for more than 5 minutes (300 seconds), the command will stop while the playbook will keep running in Demisto.
 If you have a long running playbook, consider increasing the timeout argument respectively.

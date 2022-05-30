@@ -1,6 +1,13 @@
 # Changelog
 
 ## Unreleased
+
+* Removed the validation of a subtype change in integrations and scripts from **validate**.
+* Added a validation to the **validate** command to make sure we are using the https protocol in the defaultvalue of the url parameter.
+* Added a check to the **lint** command for finding hard coded usage of the http protocol.
+
+## 1.6.7
+
 * Added the `types-markdown` dependency, adding markdown capabilities to existing linters using the [Markdown](https://pypi.org/project/Markdown/) package.
 * Added support in the **format** command to remove nonexistent incident/indicator fields from *layouts/mappers*
 * Added the `Note: XXX` and `XXX now generally available.` release notes templates to **doc-review** command.
@@ -15,6 +22,9 @@
 * Added use case for **validate** on *wizard* objects - set_playbook is mapped to all integrations.
 * Added the 'integration-get-indicators' commands to be ignored by the **verify_yml_commands_match_readme** validation, the validation will no longer fail if these commands are not in the readme file.
 * Added a new validation to the **validate** command to verify that if the phrase "breaking changes" is present in a pack release notes, a JSON file with the same name exists and contains the relevant breaking changes information.
+* Improved logs when running test playbooks (in a build).
+* Fixed an issue in **upload** did not include list-type content items. @nicolas-rdgs
+* Reverted release notes to old format.
 
 ## 1.6.6
 

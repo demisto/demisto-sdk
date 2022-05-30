@@ -77,7 +77,6 @@ class IntegrationValidator(ContentEntityValidator):
             self.no_removed_integration_parameters(),
             self.no_added_required_fields(),
             self.no_changed_command_name_or_arg(),
-            self.no_changed_subtype(),
             self.is_valid_display_configuration(),
             self.no_changed_removed_yml_fields(),
             # will move to is_valid_integration after https://github.com/demisto/etc/issues/17949

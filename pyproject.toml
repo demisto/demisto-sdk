@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.6.6"
+version = "1.6.7"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -35,7 +35,7 @@ vulture = "^2.3"
 flake8 = "^4.0.1"
 bs4 = "^0.0.1"
 chardet = "^4.0.0"
-click = "7.1.2"
+click = "^8.0.0"
 colorama = "^0.4.4"
 coloredlogs = "^15.0.1"
 configparser = "^5.2.0"

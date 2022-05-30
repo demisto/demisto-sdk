@@ -51,7 +51,7 @@ base_msg = {
               "test-module command is not implemented in the python file, it is essential for every"
               " integration. Please add it to your code. For more information see: "
               "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"),
-    "W9012": ("Usage of the http method id found, please use the https method if possible.",
+    "W9012": ("Usage of the http method was found, please use the https instead method if possible.",
               "http-usage",
               "Please use the https method if possible")
 }
@@ -90,6 +90,9 @@ class CustomBaseChecker(BaseChecker):
         self._exit_checker(node)
         self._commandresults_indicator_check(node)
 
+    def visit_const(self, node):
+        self._http_checker(node)
+
     def visit_importfrom(self, node):
         self._common_server_import(node)
         self._api_module_import_checker(node)
@@ -118,7 +121,6 @@ class CustomBaseChecker(BaseChecker):
     def leave_module(self, node):
         self._all_commands_implemented(node)
         self._test_module_implemented(node)
-        self._http_checker(node)
 
 # ---------------------------------------------------- Checkers  ------------------------------------------------------
     '''
@@ -223,14 +225,16 @@ class CustomBaseChecker(BaseChecker):
 
     def _http_checker(self, node):
         """
-        Args: node which is a Call Node.
+        Args: node which is a Const Node.
         Check:
         - if a hard codded http url exists in the current node.
 
         Adds the relevant error message using `add_message` function if one of the above exists.
         """
         try:
-            pass
+            if isinstance(node.value, str):
+                if node.value.startswith('http:'):
+                    self.add_message("http-usage", node=node)
         except Exception:
             pass
 

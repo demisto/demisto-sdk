@@ -915,6 +915,7 @@ class TestPlaybooks:
         result = get_playbook_data(test_dir, packs={'DummyPack': {}})
         result = result.get('Arcsight - Get events related to the Case')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'implementing_scripts' in result.keys()
         assert 'command_to_integration' in result.keys()
@@ -941,6 +942,7 @@ class TestPlaybooks:
         result = get_playbook_data(test_dir, packs={'DummyPack': {}})
         result = result.get('Arcsight - Get events related to the Case')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'implementing_scripts' in result.keys()
         assert 'command_to_integration' in result.keys()
@@ -983,6 +985,7 @@ class TestPlaybooks:
         result = get_playbook_data(test_file_path, packs={'DummyPack': {}})
         playbook_data = result.get('InvalidPlaybook-BadGraph', {})
         assert playbook_data.get('name') == 'InvalidPlaybook-BadGraph'
+        assert playbook_data.get('display_name') == 'InvalidPlaybook-BadGraph'
         assert playbook_data.get('command_to_integration', {}).get('ip') == ''
         assert playbook_data.get('command_to_integration', {}).get('domain') == ''
         assert 'domain' in playbook_data.get('skippable_tasks', [])
@@ -1005,6 +1008,7 @@ class TestPlaybooks:
         result = get_playbook_data(test_file_path, packs={'DummyPack': {}})
         playbook_data = result.get('InvalidPlaybook-BadGraph', {})
         assert playbook_data.get('name') == 'InvalidPlaybook-BadGraph'
+        assert playbook_data.get('display_name') == 'InvalidPlaybook-BadGraph'
         assert playbook_data.get('command_to_integration', {}).get('ip') == ''
         assert playbook_data.get('command_to_integration', {}).get('domain') == ''
         # domain task is marked as skippable so it will be included regardless to the graph.
@@ -1150,6 +1154,7 @@ class TestLayouts:
         result = result.get('urlRep')
         assert 'kind' in result.keys()
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'toversion' in result.keys()
         assert 'file_path' in result.keys()
@@ -1179,6 +1184,7 @@ class TestLayouts:
         result = result.get('urlRep')
         assert 'kind' in result.keys()
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'toversion' in result.keys()
         assert 'file_path' in result.keys()
@@ -1206,6 +1212,7 @@ class TestLayouts:
         result = result.get('layouts_container_test')
         assert 'detailsV2' in result.keys()
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'group' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'toversion' in result.keys()
@@ -1298,6 +1305,7 @@ class TestIncidentFields:
         result = res[0]
         result = result.get('incidentfield-test')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'toversion' in result.keys()
@@ -1327,6 +1335,7 @@ class TestIncidentFields:
         result = res[0]
         result = result.get('incidentfield_upload_id')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'incident_types' in result.keys()
@@ -1354,6 +1363,7 @@ class TestIncidentFields:
         result = res[0]
         result = result.get('incidentfield-test')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'toversion' in result.keys()
@@ -1396,6 +1406,7 @@ class TestIndicatorType:
         result = get_indicator_type_data(test_dir, [{'integration': {'commands': ['ip']}}])
         result = result.get('indicator-type-dummy')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'integrations' in result.keys()
@@ -1423,6 +1434,7 @@ class TestIndicatorType:
         result = get_indicator_type_data(test_dir, [])
         result = result.get('indicator-type-dummy')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'integrations' not in result.keys()
@@ -1447,6 +1459,7 @@ class TestIncidentTypes:
         res = get_incident_type_data(test_file)
         result = res.get('dummy incident type')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'playbooks' in result.keys()
@@ -1471,6 +1484,7 @@ class TestIncidentTypes:
         res = get_incident_type_data(test_file)
         result = res.get('dummy incident type')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'playbooks' not in result.keys()
@@ -1498,6 +1512,7 @@ class TestClassifiers:
         res = get_classifier_data(test_file)
         result = res.get('dummy classifier')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'incident_types' not in result.keys()
@@ -1523,6 +1538,7 @@ class TestMappers:
         res = get_mapper_data(test_file)
         result = res.get('dummy mapper')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'incident_types' in result.keys()
@@ -1555,6 +1571,7 @@ class TestMappers:
         res = get_mapper_data(test_file)
         result = res.get('dummy mapper')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'incident_types' in result.keys()
@@ -1588,6 +1605,7 @@ class TestMappers:
         res = get_mapper_data(test_file)
         result = res.get('dummy mapper')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'incident_types' not in result.keys()
@@ -1884,6 +1902,7 @@ class TestMappers:
         mapper = get_mapper_data('')
         mapper_data = mapper.get('ServiceNow-outgoing-mapper')
         assert mapper_data.get('name') == 'ServiceNow - Outgoing Mapper'
+        assert mapper_data.get('display_name') == 'ServiceNow - Outgoing Mapper'
         assert mapper_data.get('fromversion') == '6.0.0'
         assert mapper_data.get('incident_types') == ['ServiceNow Ticket']
         assert set(mapper_data.get('incident_fields')) == {
@@ -1935,6 +1954,7 @@ class TestWidget:
         res = get_widget_data(test_file)
         result = res.get('dummy_widget')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'scripts' in result.keys()
@@ -1958,6 +1978,7 @@ class TestWidget:
         res = get_widget_data(test_file)
         result = res.get('dummy_widget')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'scripts' not in result.keys()
@@ -2028,6 +2049,7 @@ class TestDashboard:
         res = get_dashboard_data(test_file)
         result = res.get('dummy_dashboard')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'scripts' in result.keys()
@@ -2055,6 +2077,7 @@ class TestDashboard:
         res = get_dashboard_data(test_file)
         result = res.get('dummy_dashboard')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'scripts' not in result.keys()
@@ -2130,6 +2153,7 @@ class TestReport:
         res = get_report_data(test_file)
         result = res.get('dummy_report')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'scripts' in result.keys()
@@ -2156,6 +2180,7 @@ class TestReport:
         res = get_report_data(test_file)
         result = res.get('dummy_report')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'scripts' not in result.keys()
@@ -2183,6 +2208,7 @@ class TestGenericFunctions:
         result = res[0]
         result = result.get('dummy classifier')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'incident_types' in result.keys()
@@ -2597,6 +2623,7 @@ class TestGenericFields:
         result = get_generic_field_data(test_dir, generic_types_list=generic_types_list)
         result = result.get('id')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'definitionId' in result.keys()
@@ -2627,6 +2654,7 @@ class TestGenericType:
         result = get_generic_type_data(test_dir)
         result = result.get('type-id')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'layout' in result.keys()
@@ -2656,6 +2684,7 @@ class TestGenericDefinition:
         result = get_general_data(test_dir)
         result = result.get('type-id')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'pack' in result.keys()
@@ -2702,6 +2731,7 @@ class TestGenericModule:
         result = get_generic_module_data(test_dir)
         result = result.get('id')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'definitionIds' in result.keys()
@@ -2733,6 +2763,7 @@ class TestJob:
         assert len(res) == 1
         datum = res[0][job.pure_name]
         assert datum['name'] == job.pure_name
+        assert datum['display_name'] == job.pure_name
         path = Path(datum['file_path'])
         assert path.name == f'job-{job.pure_name}.json'
         assert path.exists()
@@ -2819,6 +2850,7 @@ class TestWizard:
         assert len(res) == 1
         datum = res[0][wizard.id]
         assert datum['name'] == wizard.id
+        assert datum['display_name'] == wizard.id
         assert set(datum['dependency_packs']) == set(TestWizard.EXPECTED_DEPENDENCY_PACKS)
         path = Path(datum['file_path'])
         assert path.name == wizard.name
@@ -2855,6 +2887,7 @@ class TestParsingRules:
 
         assert len(res) == 2
         assert 'name' in parsing_rule_result.keys()
+        assert 'display_name' in parsing_rule_result.keys()
         assert 'file_path' in parsing_rule_result.keys()
         assert 'pack' in parsing_rule_result.keys()
 
@@ -2886,6 +2919,7 @@ class TestModelingRules:
 
         assert len(res) == 2
         assert 'name' in modeling_rule_result.keys()
+        assert 'display_name' in modeling_rule_result.keys()
         assert 'file_path' in modeling_rule_result.keys()
         assert 'pack' in modeling_rule_result.keys()
 
@@ -2918,6 +2952,7 @@ class TestCorrelationRules:
 
         assert len(res) == 2
         assert 'name' in correlation_rule_result.keys()
+        assert 'display_name' in correlation_rule_result.keys()
         assert 'file_path' in correlation_rule_result.keys()
         assert 'pack' in correlation_rule_result.keys()
 
@@ -2950,6 +2985,7 @@ class TestXSIAMDashboards:
 
         assert len(res) == 2
         assert 'name' in xsiam_dashboard_result.keys()
+        assert 'display_name' in xsiam_dashboard_result.keys()
         assert 'file_path' in xsiam_dashboard_result.keys()
         assert 'pack' in xsiam_dashboard_result.keys()
 
@@ -2981,6 +3017,7 @@ class TestXSIAMReports:
 
         assert len(res) == 2
         assert 'name' in xsiam_report_result.keys()
+        assert 'display_name' in xsiam_report_result.keys()
         assert 'file_path' in xsiam_report_result.keys()
         assert 'pack' in xsiam_report_result.keys()
 
@@ -3012,6 +3049,7 @@ class TestTriggers:
 
         assert len(res) == 2
         assert 'name' in trigger_result.keys()
+        assert 'display_name' in trigger_result.keys()
         assert 'file_path' in trigger_result.keys()
         assert 'pack' in trigger_result.keys()
 

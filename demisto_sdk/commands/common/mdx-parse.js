@@ -8,7 +8,7 @@ parse(process.argv)
 
 async function parseMDX(file) {
     const contents = await readFile(file, 'utf8');
-    parsed = await mdx(contents)
+    const parsed = await mdx(contents)
     console.log(`${parsed}`)
 }
 

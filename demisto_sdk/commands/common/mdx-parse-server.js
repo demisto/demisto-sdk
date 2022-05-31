@@ -2,7 +2,6 @@ import mdx from '@mdx-js/mdx';
 import { createServer } from 'http';
 
 function requestHandler(req, res) {
-    // console.log(req)
     if (req.method != 'POST') {
         res.statusCode = 405
         res.end('Only POST is supported')

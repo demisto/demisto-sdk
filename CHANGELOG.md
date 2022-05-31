@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Fixed a bug where terminating the **lint** command failed (`ctrl + c`).
 * Removed the validation of a subtype change in integrations and scripts from **validate**.
 
 ## 1.6.7

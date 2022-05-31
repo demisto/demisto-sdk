@@ -224,16 +224,17 @@ class BaseUpdate:
                 return reg
         return None
 
-    def get_answer(self, promote):
-        click.secho(promote,
-                    fg='red')
+    @staticmethod
+    def get_answer(promote):
+        click.secho(promote, fg='red')
         return input()
 
     def ask_user(self):
         user_answer = self.get_answer(
-            'Either no fromversion is specified in your file,'
-            ' or it is lower than the minimal fromversion for this content type, would you like to set it to the default? [Y/n]')
-        if user_answer and user_answer.lower() in ['y', 'yes']:
+            'Either no fromversion is specified in your file, '
+            'or it is lower than the minimal fromversion for this content type.'
+            'Would you like to set it to the default? [Y/n]')
+        if not user_answer or user_answer.lower() in ['y', 'yes']:
             return True
         else:
             click.secho('Skipping update of fromVersion', fg='yellow')

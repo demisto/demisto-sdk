@@ -123,6 +123,8 @@ class WizardValidator(ContentEntityValidator):
         all_fetch_integrations_have_playbook = True
         integrations = self._fetching_integrations.copy()
         for link in self._set_playbooks.values():
+            if not link:  # handle case that a playbook was mapped to all integration
+                return True
             if link not in integrations:
                 error_message, error_code = Errors.wrong_link_in_wizard(link)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):

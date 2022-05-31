@@ -1,5 +1,12 @@
 # Changelog
+
 ## Unreleased
+
+* Removed the validation of a subtype change in integrations and scripts from **validate**.
+
+## 1.6.7
+
+* Added the `types-markdown` dependency, adding markdown capabilities to existing linters using the [Markdown](https://pypi.org/project/Markdown/) package.
 * Added support in the **format** command to remove nonexistent incident/indicator fields from *layouts/mappers*
 * Added the `Note: XXX` and `XXX now generally available.` release notes templates to **doc-review** command.
 * Updated the logs shown during the docker build step.
@@ -10,9 +17,14 @@
 * Added types to `find_type_by_path` under tools.py.
 * Fixed an issue where YAML files contained incorrect value type for `tests` key when running `format --deprecate`.
 * Added a deprecation message to the `tests:` section of yaml files when running `format --deprecate`.
+* Added use case for **validate** on *wizard* objects - set_playbook is mapped to all integrations.
 * Added the 'integration-get-indicators' commands to be ignored by the **verify_yml_commands_match_readme** validation, the validation will no longer fail if these commands are not in the readme file.
 * Added **validate** check that list all the file paths of files that are using a deprecated integration command / script / playbook.
 * Added a new validation to the **validate** command to verify that if the phrase "breaking changes" is present in a pack release notes, a JSON file with the same name exists and contains the relevant breaking changes information.
+* Improved logs when running test playbooks (in a build).
+* Fixed an issue in **upload** did not include list-type content items. @nicolas-rdgs
+* Reverted release notes to old format.
+* Added the new `display_name` field to relevant entities in the **create-id-set** command.
 
 ## 1.6.6
 

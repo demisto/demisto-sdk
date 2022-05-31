@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Removed the validation of a subtype change in integrations and scripts from **validate**.
+* Fixed an issue where **download** did not behave as expected when prompting for a version update. @K-Yo
 
 ## 1.6.7
 

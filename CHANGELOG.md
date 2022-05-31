@@ -3,8 +3,8 @@
 ## Unreleased
 
 * Removed the validation of a subtype change in integrations and scripts from **validate**.
-* Added a **validate** check, making sure `https`-prefix values are used when setting defaultvalue, rather than the discuraged `http`.
-* Added a check to the **lint** command for finding hard coded usage of the http protocol.
+* Added a **validate** check, warning when the discouraged `http` prefixes are used when setting defaultvalue, rather than `https`.
+* Added a check to the **lint** command for finding hard-coded usage of the http protocol.
 
 ## 1.6.7
 

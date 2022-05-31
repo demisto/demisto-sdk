@@ -231,11 +231,9 @@ class CustomBaseChecker(BaseChecker):
 
         Adds the relevant error message using `add_message` function if one of the above exists.
         """
-        try:
-            if isinstance(node.value, str) and node.value.startswith('http:'):
-                self.add_message("http-usage", node=node)
-        except Exception:
-            pass
+
+        if isinstance(node.value, str) and node.value.startswith('http:'):
+            self.add_message("http-usage", node=node)
 
     # -------------------------------------------- Import From Node ---------------------------------------------
 

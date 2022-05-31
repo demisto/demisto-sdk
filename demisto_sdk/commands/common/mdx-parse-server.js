@@ -1,5 +1,5 @@
-const mdx = require('@mdx-js/mdx');
-const http = require('http')
+import mdx from '@mdx-js/mdx';
+import { createServer } from 'http';
 
 function requestHandler(req, res) {
     // console.log(req)
@@ -24,7 +24,7 @@ function requestHandler(req, res) {
     })
 }
 
-const server = http.createServer(requestHandler);
+const server = createServer(requestHandler);
 
 server.listen(6161, (err) => {
     if (err) {

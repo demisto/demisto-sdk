@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Upgraded the mdx parser to ESModule instead of CommonJS. Reported by @K-Yo
 * Removed the validation of a subtype change in integrations and scripts from **validate**.
 
 ## 1.6.7

@@ -13,6 +13,7 @@
     "type": "git",
     "url": "git+https://github.com/demisto/content.git"
   },
+  "type": "module",
   "author": "",
   "license": "ISC",
   "bugs": {

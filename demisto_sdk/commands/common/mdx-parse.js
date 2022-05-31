@@ -1,10 +1,10 @@
-const cli = require('commander');
-const {readFile} = require('fs-extra');
-const mdx = require('@mdx-js/mdx');
+import { version, requiredOption, parse, file as _file } from 'commander';
+import { readFile } from 'fs-extra';
+import mdx from '@mdx-js/mdx';
 
-cli.version('0.1.0')
-cli.requiredOption("-f --file <mdx file to parse>")
-cli.parse(process.argv)
+version('0.1.0')
+requiredOption("-f --file <mdx file to parse>")
+parse(process.argv)
 
 async function parseMDX(file) {
     const contents = await readFile(file, 'utf8');
@@ -12,7 +12,7 @@ async function parseMDX(file) {
     console.log(`${parsed}`)
 }
 
-parseMDX(cli.file).catch((reason) => {
+parseMDX(_file).catch((reason) => {
     console.error(reason)
     process.exit(1)
 })

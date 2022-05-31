@@ -1219,7 +1219,7 @@ class IntegrationValidator(ContentEntityValidator):
         """Verifies integration parameters default value is valid.
 
         Returns:
-            bool: True if description is valid - capitalized and spaced using whitespace and not underscores,
+            bool: True if the default value of the url parameter uses the https protocol,
             False otherwise.
         """
         configuration = self.current_file.get('configuration', {})

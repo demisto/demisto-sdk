@@ -51,7 +51,7 @@ base_msg = {
               "test-module command is not implemented in the python file, it is essential for every"
               " integration. Please add it to your code. For more information see: "
               "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"),
-    "W9012": ("Usage of the http method was found, please use the https instead method if possible.",
+    "W9013": ("Usage of the http method was found, please use the https instead method if possible.",
               "http-usage",
               "Please use the https method if possible")
 }
@@ -232,9 +232,8 @@ class CustomBaseChecker(BaseChecker):
         Adds the relevant error message using `add_message` function if one of the above exists.
         """
         try:
-            if isinstance(node.value, str):
-                if node.value.startswith('http:'):
-                    self.add_message("http-usage", node=node)
+            if isinstance(node.value, str) and node.value.startswith('http:'):
+                self.add_message("http-usage", node=node)
         except Exception:
             pass
 

@@ -3,7 +3,7 @@
 ## Unreleased
 
 * Removed the validation of a subtype change in integrations and scripts from **validate**.
-* Added a validation to the **validate** command to make sure we are using the https protocol in the defaultvalue of the url parameter.
+* Added a **validate** check, making sure `https`-prefix values are used when setting defaultvalue, rather than the discuraged `http`.
 * Added a check to the **lint** command for finding hard coded usage of the http protocol.
 
 ## 1.6.7

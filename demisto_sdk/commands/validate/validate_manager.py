@@ -138,6 +138,7 @@ class ValidateManager:
         self.conf_json_data = {}
         self.run_with_multiprocessing = multiprocessing
         self.is_possible_validate_readme = self.is_node_exist()
+        click.echo(f'possible readme {self.is_possible_validate_readme}')
 
         if json_file_path:
             self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \
@@ -362,21 +363,25 @@ class ValidateManager:
 
         count = 1
         # Filter non-pack files that might exist locally (e.g, .DS_STORE on MacOS)
-        all_packs = list(filter(os.path.isdir, [os.path.join(PACKS_DIR, p) for p in os.listdir(PACKS_DIR)]))
+        #all_packs = list(filter(os.path.isdir, [os.path.join(PACKS_DIR, p) for p in os.listdir(PACKS_DIR)]))
+        all_packs = list(filter(os.path.isdir, [os.path.join(PACKS_DIR, p) for p in ['AccentureCTI']]))
         num_of_packs = len(all_packs)
         all_packs.sort(key=str.lower)
 
         ReadMeValidator.add_node_env_vars()
         if self.is_possible_validate_readme:
             with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):
+                click.echo('DEBUGING: validating with readme')
                 return self.validate_packs(all_packs, all_packs_valid, count, num_of_packs)
         else:
+            click.echo('DEBUGING: validating without readme')
             return self.validate_packs(all_packs, all_packs_valid, count, num_of_packs)
 
     def validate_packs(self, all_packs: list, all_packs_valid: set,
                        count: int, num_of_packs: int) -> bool:
 
         if self.run_with_multiprocessing:
+            click.echo('DEBUGING: running with multiprocessing')
             with pebble.ProcessPool(max_workers=4) as executor:
                 futures = []
                 for pack_path in all_packs:
@@ -385,10 +390,13 @@ class ValidateManager:
                                            done_fn=lambda x, y: (all_packs_valid.add(x),  # type: ignore
                                                                  FOUND_FILES_AND_ERRORS.extend(y)))  # type: ignore
         else:
+            click.echo('DEBUGING: running without multiprocessing')
             for pack_path in all_packs:
                 self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
                 all_packs_valid.add(self.run_validations_on_pack(pack_path)[0])
                 count += 1
+
+        click.echo(f'DEBUGING: found files and errors total {FOUND_FILES_AND_ERRORS}')
         return all(all_packs_valid)
 
     def run_validations_on_pack(self, pack_path):
@@ -400,6 +408,7 @@ class ValidateManager:
         Returns:
             bool. true if all files in pack are valid, false otherwise.
         """
+        before_files_and_errors = FOUND_FILES_AND_ERRORS.copy()
         pack_entities_validation_results = set()
         pack_error_ignore_list = self.get_error_ignore_list(os.path.basename(pack_path))
 
@@ -412,6 +421,9 @@ class ValidateManager:
                                                                                              pack_error_ignore_list))
             else:
                 self.ignored_files.add(content_entity_path)
+
+        if before_files_and_errors != FOUND_FILES_AND_ERRORS:
+            click.secho(f'DEBUGING: Found new files and errors {FOUND_FILES_AND_ERRORS} while in pack {pack_path}')
 
         return all(pack_entities_validation_results), FOUND_FILES_AND_ERRORS
 

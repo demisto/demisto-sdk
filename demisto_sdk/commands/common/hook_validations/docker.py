@@ -440,16 +440,9 @@ class DockerImageValidator(BaseValidator):
             raise Exception(f'Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}')
 
     def is_docker_image_deprecated(self, docker_image_name):
-        import sys
         docker_image_deprecated_list = self.get_deprecated_dockers_list()
         for docker_image in docker_image_deprecated_list:
             if docker_image_name == docker_image.get('image_name'):
                 deprecated_reason = docker_image.get('reason')
                 return docker_image_name, deprecated_reason
         return ''
-        #         error_message, error_code = Errors.deprecated_docker_error(docker_image_name, deprecated_reason)
-        #         if self.handle_error(error_message, error_code, file_path=self.file_path):
-        #             self.is_deprecated_image = True
-        #
-        # return self.is_deprecated_image
-

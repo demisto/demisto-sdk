@@ -666,13 +666,15 @@ class Linter:
         """
         docker_user = os.getenv('DOCKERHUB_USER')
         docker_pass = os.getenv('DOCKERHUB_PASSWORD')
-        try:
-            self._docker_client.login(username=docker_user,
-                                      password=docker_pass,
-                                      registry="https://index.docker.io/v1")
-            return self._docker_client.ping()
-        except docker.errors.APIError:
-            return False
+        if docker_user and docker_pass:
+            try:
+                self._docker_client.login(username=docker_user,
+                                          password=docker_pass,
+                                          registry="https://index.docker.io/v1")
+                return self._docker_client.ping()
+            except docker.errors.APIError:
+                return False
+        return False
 
     @timer(group_name='lint')
     def _docker_image_create(self, docker_base_image: List[Any]) -> Tuple[str, str]:

@@ -60,7 +60,7 @@ class ReleaseNotesChecker:
         'Deprecated the ',
         'Note: ',
         'Started adoption process',
-        'Completed adoption process'
+        'Completed adoption process',
     }
 
     RN_FULL_LINE_TEMPLATES = {

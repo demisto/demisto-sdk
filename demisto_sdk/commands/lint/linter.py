@@ -28,7 +28,8 @@ from demisto_sdk.commands.lint.commands_builder import (
     build_bandit_command, build_flake8_command, build_mypy_command,
     build_pwsh_analyze_command, build_pwsh_test_command, build_pylint_command,
     build_pytest_command, build_vulture_command, build_xsoar_linter_command)
-from demisto_sdk.commands.lint.docker_helper import Docker
+from demisto_sdk.commands.lint.docker_helper import (Docker,
+                                                     init_global_docker_client)
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                SUCCESS, WARNING,
                                                add_tmp_lint_files,
@@ -71,7 +72,7 @@ class Linter:
         self.docker_timeout = docker_timeout
         # Docker client init
         if docker_engine:
-            self._docker_client: docker.DockerClient = docker.from_env(timeout=docker_timeout)
+            self._docker_client: docker.DockerClient = init_global_docker_client(timeout=docker_timeout, log_prompt='Linter')
             self._docker_hub_login = self._docker_login()
         # Facts gathered regarding pack lint and test
         self._facts: Dict[str, Any] = {

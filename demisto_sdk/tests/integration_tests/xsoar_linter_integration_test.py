@@ -120,13 +120,13 @@ files = [
       'Do not use demisto.results function.',
       'Initialize of params was found outside of main function. Please use demisto.params() only inside main',
       'Initialize of args was found outside of main function. Please use demisto.args() only inside main func',
-      'Usage of the http method was found, please use the https instead method if possible.'], []),
+      'Hardcoded http URL was found in the code, using https (when possible) is recommended.'], []),
     # --------------------- For Warning file with support level xsoar------------- -----------------------------------
 
     (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS}"), '3.8', 'xsoar', False, 4,
      ['Function arguments are missing type annotations. Please add type annotations',
       'It is best practice to use .get when accessing the arg/params dict object rather then direct access.',
-      'Usage of the http method was found, please use the https instead method if possible.'], []),
+      'Hardcoded http URL was found in the code, using https (when possible) is recommended.'], []),
 ]
 
 

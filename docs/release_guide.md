@@ -37,7 +37,8 @@ In order to release a new version of `demisto-sdk` to the public follow these st
 7) Wait for the build to finish, or force merge your PR to the Content repository.
 8) Update **CHANGELOG.md** file - change the `# Changelog` header to the release version in the format `# X.X.X` e.g. `# 1.0.0`, and create a new `# Changelog` header at the top of the file.
 9) Announce regarding the SDK release in the **dmst-content-team** slack channel - mention the release version, paste the `CHANGELOG` contents for this release, and add a link to demisto-sdk in pypi.
+10) The next day (or as soon as dependabot updates [demisto/xsoar-tools](https://github.com/demisto/dockerfiles/commits/master/docker/xsoar-tools) to use the newly-released SDK version), open a new content branch, run `sdk format -ud -i Packs/Base/Scripts/ValidateContent/ValidateContent.yml`, then `demisto-sdk update-release-notes -i Packs/Base -u revision`, edit the new release notes (leaving only the docker update part), commit and merge.
 
 Your release was completed successfully!
 
-**Note:** Don't forget to discard any unnecessary PR or branch you opened during the release process.
+**Note:** Don't forget to discard any unnecessary PRs or branches opened during the release process.

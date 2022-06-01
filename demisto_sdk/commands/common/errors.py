@@ -854,8 +854,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def not_supported_integration_parameter_url_defaultvalue(param, invalid_defaultvalue):
-        return f"The integration parameter {param} has defaultvalue set to {invalid_defaultvalue}, Consider replacing the http prefix with https." \
-               "Please use the https protocol and not http."
+        return f"The integration parameter {param} has defaultvalue set to {invalid_defaultvalue}. If possible, replace the http prefix with https."
 
     @staticmethod
     @error_code_decorator

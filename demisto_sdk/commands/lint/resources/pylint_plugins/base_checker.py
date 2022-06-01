@@ -51,7 +51,7 @@ base_msg = {
               "test-module command is not implemented in the python file, it is essential for every"
               " integration. Please add it to your code. For more information see: "
               "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"),
-    "W9013": ("Usage of the http method was found, please use the https instead method if possible.",
+    "W9013": ("Hardcoded http URL was found in the code, using https (when possible) is recommended.",
               "http-usage",
               "Please use the https method if possible")
 }

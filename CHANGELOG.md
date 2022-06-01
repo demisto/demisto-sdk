@@ -4,7 +4,7 @@
 
 * Removed the validation of a subtype change in integrations and scripts from **validate**.
 * Fixed an issue where **download** did not behave as expected when prompting for a version update. Reported by @K-Yo
-* Added a **validate** check, warning when the discouraged `http` prefixes are used when setting defaultvalue, rather than `https`.
+* Added a new validation to the **validate** command, to check when the discouraged `http` prefixes are used when setting defaultvalue, rather than `https`.
 * Added a check to the **lint** command for finding hard-coded usage of the http protocol.
 
 ## 1.6.7

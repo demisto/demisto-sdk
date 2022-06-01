@@ -6,6 +6,7 @@
 * Removed the validation of a subtype change in integrations and scripts from **validate**.
 * Fixed an issue where **download** did not behave as expected when prompting for a version update. Reported by @K-Yo
 * Added support for adoption release notes.
+* Fixed a bug where some mypy messages were not parsed properly in **lint**.
 
 ## 1.6.7
 

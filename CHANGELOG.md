@@ -2,7 +2,9 @@
 
 ## Unreleased
 
+* Fixed a bug where terminating the **lint** command failed (`ctrl + c`).
 * Removed the validation of a subtype change in integrations and scripts from **validate**.
+* Fixed an issue where **download** did not behave as expected when prompting for a version update. Reported by @K-Yo
 
 ## 1.6.7
 

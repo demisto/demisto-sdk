@@ -1,10 +1,6 @@
 # Changelog
 
 ## Unreleased
-* Added a new validation to the **validate** command to verify that the docker in use is not deprecated.
-
-
-## 1.6.7
 * Added the `types-markdown` dependency, adding markdown capabilities to existing linters using the [Markdown](https://pypi.org/project/Markdown/) package.
 * Added support in the **format** command to remove nonexistent incident/indicator fields from *layouts/mappers*
 * Added the `Note: XXX` and `XXX now generally available.` release notes templates to **doc-review** command.

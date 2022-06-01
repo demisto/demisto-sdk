@@ -59,8 +59,8 @@ class ReleaseNotesChecker:
         'Deprecated. ',
         'Deprecated the ',
         'Note: ',
-        'Started adoption process',
-        'Completed adoption process',
+        'Started adoption process.',
+        'Completed adoption process.',
     }
 
     RN_FULL_LINE_TEMPLATES = {

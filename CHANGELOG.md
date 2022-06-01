@@ -2,8 +2,11 @@
 
 ## Unreleased
 
+* Fixed a bug where terminating the **lint** command failed (`ctrl + c`).
 * Removed the validation of a subtype change in integrations and scripts from **validate**.
 * Fixed an issue where **download** did not behave as expected when prompting for a version update. Reported by @K-Yo
+* Added support for adoption release notes.
+* Fixed a bug where some mypy messages were not parsed properly in **lint**.
 
 ## 1.6.7
 
@@ -25,6 +28,8 @@
 * Fixed an issue in **upload** did not include list-type content items. @nicolas-rdgs
 * Reverted release notes to old format.
 * Added the new `display_name` field to relevant entities in the **create-id-set** command.
+* Added a new validation to the **validate** command to verify the existence of "Reliability" parameter if the integration have reputation command.
+
 
 ## 1.6.6
 

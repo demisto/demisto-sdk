@@ -58,7 +58,9 @@ class ReleaseNotesChecker:
         'You can now',
         'Deprecated. ',
         'Deprecated the ',
-        'Note: '
+        'Note: ',
+        'Started adoption process.',
+        'Completed adoption process.',
     }
 
     RN_FULL_LINE_TEMPLATES = {

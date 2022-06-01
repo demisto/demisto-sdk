@@ -27,6 +27,8 @@
 * Fixed an issue in **upload** did not include list-type content items. @nicolas-rdgs
 * Reverted release notes to old format.
 * Added the new `display_name` field to relevant entities in the **create-id-set** command.
+* Added a new validation to the **validate** command to verify the existence of "Reliability" parameter if the integration have reputation command.
+
 
 ## 1.6.6
 

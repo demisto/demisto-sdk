@@ -173,6 +173,7 @@ class TestDockerImage:
         docker_image_validator.docker_image_tag = '1.3-alpine'
         docker_image_validator.is_valid = True
         docker_image_validator.yml_docker_image = 'demisto/python:1.3-alpine'
+        docker_image_validator.is_deprecated_image = ''
 
         assert docker_image_validator.is_docker_image_latest_tag() is False
         assert docker_image_validator.is_latest_tag is False
@@ -198,6 +199,7 @@ class TestDockerImage:
         docker_image_validator.is_valid = True
         docker_image_validator.docker_image_tag = 'latest'
         docker_image_validator.yml_docker_image = 'demisto/python:latest'
+        docker_image_validator.is_deprecated_image = ''
 
         assert docker_image_validator.is_docker_image_latest_tag() is False
         assert docker_image_validator.is_latest_tag is False
@@ -223,6 +225,7 @@ class TestDockerImage:
         docker_image_validator.is_valid = True
         docker_image_validator.docker_image_tag = '1.0.3'
         docker_image_validator.yml_docker_image = 'demisto/python:1.0.3'
+        docker_image_validator.is_deprecated_image = ''
 
         assert docker_image_validator.is_docker_image_latest_tag() is True
         assert docker_image_validator.is_latest_tag is True
@@ -250,6 +253,7 @@ class TestDockerImage:
         docker_image_validator.is_valid = True
         docker_image_validator.yml_docker_image = 'demisto/python:1.0.2'
         docker_image_validator.is_iron_bank = False
+        docker_image_validator.is_deprecated_image = ''
         assert docker_image_validator.is_docker_image_latest_tag() is False
         assert docker_image_validator.is_latest_tag is False
         assert docker_image_validator.is_docker_image_valid() is False
@@ -274,6 +278,7 @@ class TestDockerImage:
         docker_image_validator.docker_image_tag = '1.0.2'
         docker_image_validator.is_valid = True
         docker_image_validator.yml_docker_image = 'demisto/python:1.0.2'
+        docker_image_validator.is_deprecated_image = ''
 
         assert docker_image_validator.is_docker_image_latest_tag() is False
         assert docker_image_validator.is_latest_tag is False
@@ -301,6 +306,7 @@ class TestDockerImage:
         docker_image_validator.docker_image_name = None
         docker_image_validator.docker_image_tag = None
         docker_image_validator.code_type = code_type
+        docker_image_validator.is_deprecated_image = ''
 
         assert docker_image_validator.is_docker_image_valid() is expected
 
@@ -326,6 +332,7 @@ class TestDockerImage:
         docker_image_validator.docker_image_name = 'demisto/python'
         docker_image_validator.docker_image_tag = '1.0.2'
         docker_image_validator.code_type = code_type
+        docker_image_validator.is_deprecated_image = ''
 
         assert docker_image_validator.is_docker_image_valid() is True
 
@@ -341,6 +348,14 @@ class TestDockerImage:
             }
         )
         error, code = Errors.non_existing_docker(docker_image)
+        requests_mock.get(
+            "https://raw.githubusercontent.com/demisto/dockerfiles/master/docker/deprecated_images.json",
+            json=[{
+                "image_name": "demisto/aiohttp",
+                "reason": "Use the demisto/py3-tools docker image instead.",
+                "created_time_utc": "2022-05-31T17:51:17.226278Z"
+            }]
+        )
         mocker.patch.object(DockerImageValidator, 'docker_auth', return_value='auth')
         requests_mock.get(
             "https://hub.docker.com/v2/repositories/demisto/nonexistingdocker/tags",

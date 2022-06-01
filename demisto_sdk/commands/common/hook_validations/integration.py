@@ -1625,7 +1625,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         return is_valid
 
-    @error_codes('IN153')
+    @error_codes('IN154')
     def verify_reputation_commands_has_reliability(self, is_modified: bool = False):
         """
         In case the integration has reputation command, ensure there is a reliability parameter.
@@ -1642,7 +1642,7 @@ class IntegrationValidator(ContentEntityValidator):
         yml_config_names = ' '.join([config.get('name') for config in self.current_file.get('configuration', {})])
         for command in commands_names:
             if command in REPUTATION_COMMAND_NAMES:
-                if re.search('reliability', yml_config_names.lower()):
+                if 'reliability' in yml_config_names.lower():
                     return True
                 error_message, error_code = Errors.missing_reliability_parameter(command)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):

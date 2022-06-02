@@ -300,10 +300,9 @@ def get_python_version_from_image(image: str, timeout: int = 60) -> str:
     match_group = re.match(r'[\d\w]+/python3?:(?P<python_version>[23]\.\d+)', image)
     if match_group:
         return match_group.groupdict()['python_version']
-
-    py_num = '3.8'
+    py_num = None
     # Run three times
-    log_prompt = f'Get python version from image {image} with {timeout}'
+    log_prompt = f'Get python version from image {image}'
     docker_client = init_global_docker_client(timeout=timeout, log_prompt=log_prompt)
     logger.info(f'{log_prompt} - Start')
     for attempt in range(3):
@@ -311,38 +310,23 @@ def get_python_version_from_image(image: str, timeout: int = 60) -> str:
             logger.debug(f'{log_prompt} - Starting attempt number {attempt}')
             command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
 
-            container_obj: Container = docker_client.containers.run(
+            py_num = docker_client.containers.run(
                 image=image,
                 command=shlex.split(command),
-                detach=True
+                remove=True
             )
-            stream_docker_container_output(container_obj.logs(stream=True), logging_level=logger.debug)
             # Wait for container to finish
-            container_obj.wait(condition="exited")
-            logger.debug(f'{log_prompt} - Container exited, attempt number {attempt}')
+            logger.debug(f'{log_prompt} - Container finished running, attempt number {attempt}')
 
             # Get python version
-            py_num = container_obj.logs()
-            if isinstance(py_num, bytes):
-                py_num = parse(py_num.decode("utf-8")).base_version
-                for i in range(2):
-                    # Try to remove the container two times.
-                    try:
-                        logger.debug(f'{log_prompt} - Trying to remove container, attempt number {i}')
-                        container_obj.remove(force=True)
-                        logger.debug(f'{log_prompt} - Container removed, attempt number {i}')
-                        break
-                    except docker.errors.APIError:
-                        logger.warning(f'{log_prompt} - Could not remove the image {image}')
-                return py_num
-            else:
-                raise docker.errors.ContainerError
-
+            py_num = parse(py_num.decode("utf-8")).base_version
+            
+            break
         except Exception:
             logger.exception(f'{log_prompt} - Failed detecting Python version (in attempt {attempt}) for image {image}')
             continue
     logger.info(f'{log_prompt} - End. Python version is {py_num}')
-    return py_num
+    return py_num if py_num else '3.10'
 
 
 def get_file_from_container(container_obj: Container, container_path: str, encoding: str = "") -> Union[str, bytes]:

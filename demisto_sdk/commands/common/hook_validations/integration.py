@@ -148,6 +148,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_description(beta_integration=False),
             self.is_context_correct_in_readme(),
             self.verify_yml_commands_match_readme(is_modified),
+            self.verify_reputation_commands_has_reliability(is_modified),
         ]
 
         if check_is_unskipped:
@@ -1616,7 +1617,7 @@ class IntegrationValidator(ContentEntityValidator):
         """
         Checks if there are commands that doesn't appear in the readme but appear in the .yml file
         Args:
-            is_modified (bool): Wether the given files are modified or not.
+            is_modified (bool): Whether the given files are modified or not.
 
         Return:
             bool: True if all commands are documented in the README, False if there's no README file in the expected
@@ -1645,3 +1646,27 @@ class IntegrationValidator(ContentEntityValidator):
                 is_valid = False
 
         return is_valid
+
+    @error_codes('IN154')
+    def verify_reputation_commands_has_reliability(self, is_modified: bool = False):
+        """
+        In case the integration has reputation command, ensure there is a reliability parameter.
+        Args:
+            is_modified (bool): Whether the given files are modified or not.
+
+        Return:
+            bool: True if there are no reputation commands or there is a reliability parameter
+             and False if there is at least one reputation command without a reliability parameter in the configuration.
+        """
+        if not is_modified:
+            return True
+        commands_names = [command.get('name') for command in self.current_file.get('script', {}).get('commands', [])]
+        yml_config_names = ' '.join([config.get('name') for config in self.current_file.get('configuration', {})])
+        for command in commands_names:
+            if command in REPUTATION_COMMAND_NAMES:
+                if 'reliability' in yml_config_names.lower():
+                    return True
+                error_message, error_code = Errors.missing_reliability_parameter(command)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
+        return True

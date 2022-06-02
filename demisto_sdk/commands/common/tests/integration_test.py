@@ -1148,6 +1148,30 @@ class TestIntegrationValidator:
         validator.current_file = current
         assert validator.is_unskipped_integration(conf_dict) is answer
 
+    VERIFY_REPUTATION_COMMANDS = [(["test1", "test2"], False, True),
+                                  (["test1", "url"], False, False),
+                                  (["test1", "url"], True, True),
+                                  (["domain", "url"], True, True), ]
+
+    @pytest.mark.parametrize("commands, has_reliability, result", VERIFY_REPUTATION_COMMANDS)
+    def test_verify_reputation_commands_has_reliability(self, commands, has_reliability, result):
+        """
+        Given
+            - Modified integration with reputation command.
+        When
+            - Call "verify_reputation_commands_has_reliability" method.
+        Then
+            - Ensure the command fails when there is a reputation command without reliability parameter.
+        """
+
+        current = {"script": {"commands": [{"name": command} for command in commands]}, "configuration": [
+            {"name": "integrationReliability"}]} if has_reliability else {
+            "script": {"commands": [{"name": command} for command in commands]}}
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+        assert validator.verify_reputation_commands_has_reliability(is_modified=True) is result
+
 
 class TestIsFetchParamsExist:
     def setup(self):

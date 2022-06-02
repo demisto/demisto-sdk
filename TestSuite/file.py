@@ -11,7 +11,7 @@ class File:
         self.write(txt)
 
     def write(self, txt: str):
-        self._tmp_path.write_text(txt)
+        self._tmp_path.write_text(txt, encoding='utf-8')
 
     def write_bytes(self, txt: bytes):
         self._tmp_path.write_bytes(txt)

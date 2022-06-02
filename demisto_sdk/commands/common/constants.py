@@ -145,6 +145,9 @@ class FileType(Enum):
     XSIAM_REPORT = 'xsiamreport'
     TRIGGER = 'trigger'
     WIZARD = 'wizard'
+    PACK_IGNORE = '.pack-ignore'
+    SECRET_IGNORE = '.secrets-ignore'
+    DOC_FILE = 'doc_files'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -1544,3 +1547,6 @@ class ParameterType(Enum):
     TEXT_AREA_ENCRYPTED = 14
     SINGLE_SELECT = 15
     MULTI_SELECT = 16
+
+
+NO_TESTS_DEPRECATED = 'No tests (deprecated)'

@@ -1,4 +1,5 @@
 import glob
+import json
 import os
 import shutil
 from pathlib import Path
@@ -10,9 +11,10 @@ import requests
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_TO_VERSION, INTEGRATIONS_DIR, LAYOUTS_DIR, PACKS_DIR,
-    PACKS_PACK_IGNORE_FILE_NAME, PLAYBOOKS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, FileType, MarketplaceVersions)
+    DEFAULT_CONTENT_ITEM_TO_VERSION, DOC_FILES_DIR, INTEGRATIONS_DIR,
+    LAYOUTS_DIR, METADATA_FILE_NAME, PACKS_DIR, PACKS_PACK_IGNORE_FILE_NAME,
+    PLAYBOOKS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, FileType,
+    MarketplaceVersions)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
                                                             GitCredentials)
@@ -22,10 +24,10 @@ from demisto_sdk.commands.common.tools import (
     LOG_COLORS, MarketplaceTagParser, TagParser, arg_to_list,
     compare_context_path_in_yml_and_readme, filter_files_by_type,
     filter_files_on_pack, filter_packagify_changes, find_type, get_code_lang,
-    get_current_repo, get_dict_from_file, get_entity_id_by_entity_type,
-    get_entity_name_by_entity_type, get_file_displayed_name,
-    get_file_version_suffix_if_exists, get_files_in_dir,
-    get_ignore_pack_skipped_tests, get_item_marketplaces,
+    get_current_repo, get_dict_from_file, get_display_name,
+    get_entity_id_by_entity_type, get_entity_name_by_entity_type,
+    get_file_displayed_name, get_file_version_suffix_if_exists,
+    get_files_in_dir, get_ignore_pack_skipped_tests, get_item_marketplaces,
     get_last_release_version, get_last_remote_release_version,
     get_latest_release_notes_text, get_pack_metadata,
     get_relative_path_from_packs_dir, get_release_note_entries,
@@ -53,6 +55,7 @@ from demisto_sdk.tests.constants_test import (DUMMY_SCRIPT_PATH, IGNORED_PNG,
                                               VALID_WIDGET_PATH)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT, MAPPER, OLD_CLASSIFIER, REPUTATION)
+from TestSuite.file import File
 from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
@@ -111,8 +114,12 @@ class TestGenericFunctions:
         (VALID_GENERIC_MODULE_PATH, FileType.GENERIC_MODULE),
         (VALID_GENERIC_DEFINITION_PATH, FileType.GENERIC_DEFINITION),
         (IGNORED_PNG, None),
-        ('', None),
         ('Author_image.png', FileType.AUTHOR_IMAGE),
+        (FileType.PACK_IGNORE.value, FileType.PACK_IGNORE),
+        (FileType.SECRET_IGNORE.value, FileType.SECRET_IGNORE),
+        (Path(DOC_FILES_DIR) / 'foo', FileType.DOC_FILE),
+        (METADATA_FILE_NAME, FileType.METADATA),
+        ('', None),
     ]
 
     @pytest.mark.parametrize('path, _type', data_test_find_type)
@@ -1567,12 +1574,13 @@ YML_DATA_CASES = [(get_yaml(VALID_INTEGRATION_TEST_PATH), FileType.INTEGRATION,
                    [{'id': 'PagerDutyGetAllSchedules'}, {'id': 'PagerDutyGetUsersOnCall'},
                     {'id': 'PagerDutyGetUsersOnCallNow'}, {'id': 'PagerDutyIncidents'}, {'id': 'PagerDutySubmitEvent'},
                     {'id': 'PagerDutyGetContactMethods'}, {'id': 'PagerDutyGetUsersNotification'}], []),
-                  (get_yaml(VALID_SCRIPT_PATH), FileType.SCRIPT, [{'id': 'send-notification'}], ['TestCreateDuplicates']),
+                  (get_yaml(VALID_SCRIPT_PATH), FileType.SCRIPT, [{'id': 'send-notification'}],
+                   ['TestCreateDuplicates']),
                   (get_yaml(TEST_PLAYBOOK), FileType.TEST_PLAYBOOK, [{'id': 'gmail-search', 'source': 'Gmail'}],
                    ['ReadFile', 'Get Original Email - Gmail']),
                   (get_yaml(VALID_PLAYBOOK_ID_PATH), FileType.PLAYBOOK, [{'id': 'setIncident', 'source': 'Builtin'},
                                                                          {'id': 'closeInvestigation',
-                                                                                'source': 'Builtin'},
+                                                                          'source': 'Builtin'},
                                                                          {'id': 'setIncident', 'source': 'Builtin'}],
                    ['Account Enrichment - Generic', 'EmailAskUser', 'ADGetUser', 'IP Enrichment - Generic',
                     'IP Enrichment - Generic', 'AssignAnalystToIncident', 'access_investigation_-_generic']),
@@ -1607,7 +1615,8 @@ class TestGetItemMarketplaces:
             'name': 'Integration',
             'marketplaces': ['xsoar', 'marketplacev2'],
         }
-        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml', item_data=item_data)
+        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml',
+                                             item_data=item_data)
 
         assert 'xsoar' in marketplaces
         assert 'marketplacev2' in marketplaces
@@ -1633,7 +1642,8 @@ class TestGetItemMarketplaces:
                 'marketplaces': ['xsoar', 'marketplacev2'],
             }
         }
-        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml', item_data=item_data, packs=packs)
+        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml',
+                                             item_data=item_data, packs=packs)
 
         assert 'xsoar' in marketplaces
         assert 'marketplacev2' in marketplaces
@@ -1658,7 +1668,8 @@ class TestGetItemMarketplaces:
                 'id': 'PackID',
             }
         }
-        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml', item_data=item_data, packs=packs)
+        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml',
+                                             item_data=item_data, packs=packs)
 
         assert len(marketplaces) == 1
         assert 'xsoar' in marketplaces
@@ -1792,3 +1803,23 @@ class TestMarketplaceTagParser:
         assert self.MARKETPLACE_TAG_PARSER.XSIAM_PREFIX not in actual
         assert 'XSIAM' in actual
         assert 'xsiam' in actual
+
+
+@pytest.mark.parametrize('data, answer', [({'brandName': 'TestBrand'}, 'TestBrand'), ({'id': 'TestID'}, 'TestID'),
+                                          ({'name': 'TestName'}, 'TestName'), ({'TypeName': 'TestType'}, 'TestType'),
+                                          ({'display': 'TestDisplay'}, 'TestDisplay'),
+                                          ({'trigger_name': 'T Name'}, 'T Name'),
+                                          ({'layout': {'id': 'Testlayout'}}, 'Testlayout'),
+                                          ({'dashboards_data': [{'name': 'D Name'}]}, 'D Name'),
+                                          ({'templates_data': [{'report_name': 'R Name'}]}, 'R Name')])
+def test_get_display_name(data, answer, tmpdir):
+    """
+        Given
+            - Pack to update release notes
+        When
+            - get_display_name with file path is called
+        Then
+           - Returned name determined by the key of the data loaded from the file
+        """
+    file = File(tmpdir / 'test_file.json', '', json.dumps(data))
+    assert get_display_name(file.path) == answer

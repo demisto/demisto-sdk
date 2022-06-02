@@ -97,7 +97,6 @@ schema;playbook_schema:
       required: true
     link_to_integration:
       type: str
-      required: true
 
 schema;next_schema:
   type: map

@@ -1223,7 +1223,7 @@ class IntegrationValidator(ContentEntityValidator):
             False otherwise.
         """
         configuration = self.current_file.get('configuration', {})
-        parameters_default_values = [(param, param.get('defaultvalue')) for param in configuration if param.get('defaultvalue')]
+        parameters_default_values = [(param.get('display'), param.get('defaultvalue')) for param in configuration if param.get('defaultvalue')]
 
         is_valid = True
         for param, defaultvalue in parameters_default_values:

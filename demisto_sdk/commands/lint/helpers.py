@@ -305,26 +305,24 @@ def get_python_version_from_image(image: str, timeout: int = 60) -> str:
     log_prompt = f'Get python version from image {image}'
     docker_client = init_global_docker_client(timeout=timeout, log_prompt=log_prompt)
     logger.info(f'{log_prompt} - Start')
-    for attempt in range(3):
-        try:
-            logger.debug(f'{log_prompt} - Starting attempt number {attempt}')
-            command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
+    try:
+        logger.debug(f'{log_prompt} - Running `sys.version_info` in the image')
+        command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
 
-            py_num = docker_client.containers.run(
-                image=image,
-                command=shlex.split(command),
-                remove=True
-            )
-            # Wait for container to finish
-            logger.debug(f'{log_prompt} - Container finished running, attempt number {attempt}')
+        py_num = docker_client.containers.run(
+            image=image,
+            command=shlex.split(command),
+            remove=True,
+            restart_policy={"Name": "on-failure", "MaximumRetryCount": 3}
+        )
+        # Wait for container to finish
+        logger.debug(f'{log_prompt} - Container finished running.')
 
-            # Get python version
-            py_num = parse(py_num.decode("utf-8")).base_version
-            
-            break
-        except Exception:
-            logger.exception(f'{log_prompt} - Failed detecting Python version (in attempt {attempt}) for image {image}')
-            continue
+        # Get python version
+        py_num = parse(py_num.decode("utf-8")).base_version
+        
+    except Exception:
+        logger.exception(f'{log_prompt} - Failed detecting Python version for image {image}')
     logger.info(f'{log_prompt} - End. Python version is {py_num}')
     return py_num if py_num else '3.10'
 

@@ -179,6 +179,8 @@ class StructureValidator(BaseValidator):
             if not file_id:
                 # In layout, the id is under 'layout'.
                 file_id = loaded_file_data.get('layout', {}).get('id', '')
+            if not file_id:
+                file_id = loaded_file_data.get('trigger_id')
 
             return file_id
         except AttributeError:

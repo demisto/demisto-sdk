@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Fixed an issue where running format on a pack with XSIAM entities would fail.
 * Added the new `display_name` field to relevant entities in the **create-id-set** command.
 * Added a new validation to the **validate** command to verify the existence of "Reliability" parameter if the integration have reputation command.
 * Fixed a bug where terminating the **lint** command failed (`ctrl + c`).

@@ -1798,12 +1798,11 @@ def _get_file_id(file_type: str, file_content: Dict):
     Returns:
         The file's content ID
     """
-    file_id = ''
     if file_type in ID_IN_ROOT:
-        file_id = file_content.get('id', '')
+        return file_content.get('id', '')
     elif file_type in ID_IN_COMMONFIELDS:
-        file_id = file_content.get('commonfields', {}).get('id')
-    return file_id
+        return file_content.get('commonfields', {}).get('id')
+    return file_content.get('trigger_id', '')
 
 
 def is_path_of_integration_directory(path: str) -> bool:

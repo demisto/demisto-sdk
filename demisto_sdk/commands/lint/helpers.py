@@ -308,7 +308,7 @@ def get_python_version_from_image(image: str, timeout: int = 120) -> str:
     logger.info(f'{log_prompt} - Start')
     for attempt in range(3):
         try:
-            logger.info(f'{log_prompt} - Starting attempt number {attempt}')
+            logger.debug(f'{log_prompt} - Starting attempt number {attempt}')
             command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
 
             container_obj: Container = docker_client.containers.run(
@@ -318,7 +318,7 @@ def get_python_version_from_image(image: str, timeout: int = 120) -> str:
             )
             # Wait for container to finish
             container_obj.wait(condition="exited", timeout=timeout)
-            logger.info(f'{log_prompt} - Container exited, attempt number {attempt}')
+            logger.debug(f'{log_prompt} - Container exited, attempt number {attempt}')
 
             # Get python version
             py_num = container_obj.logs()

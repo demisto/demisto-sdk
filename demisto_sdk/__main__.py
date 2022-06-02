@@ -667,7 +667,7 @@ def secrets(config, **kwargs):
     "--coverage-report", help="Specify directory for the coverage report files",
     type=PathsParamType()
 )
-@click.option("-dt", "--docker-timeout", default=120,
+@click.option("-dt", "--docker-timeout", default=60,
               help="The timeout (in seconds) for requests done by the docker client.", type=int)
 @click.option("-idp", "--id-set-path", help="Path to id_set.json, relevant for when using the "
                                             "--check-dependent-api-module flag.",

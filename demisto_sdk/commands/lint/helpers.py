@@ -11,7 +11,7 @@ import textwrap
 from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, Generator, List, Optional, Union
+from typing import Callable, Dict, Generator, List, Optional, Union
 
 # Third party packages
 import coverage
@@ -283,7 +283,7 @@ def add_tmp_lint_files(content_repo: Path, pack_path: Path, lint_files: List[Pat
 
 
 @lru_cache(maxsize=300)
-def get_python_version_from_image(image: str, timeout: int = 120) -> str:
+def get_python_version_from_image(image: str, timeout: int = 60) -> str:
     """ Get python version from docker image
 
     Args:
@@ -316,8 +316,9 @@ def get_python_version_from_image(image: str, timeout: int = 120) -> str:
                 command=shlex.split(command),
                 detach=True
             )
+            stream_docker_container_output(container_obj.logs(stream=True), logging_level=logger.debug)
             # Wait for container to finish
-            container_obj.wait(condition="exited", timeout=timeout)
+            container_obj.wait(condition="exited")
             logger.debug(f'{log_prompt} - Container exited, attempt number {attempt}')
 
             # Get python version
@@ -403,7 +404,7 @@ def copy_dir_to_container(container_obj: Container, host_path: Path, container_p
             raise docker.errors.APIError(message="unable to copy dir to container")
 
 
-def stream_docker_container_output(streamer: Generator) -> None:
+def stream_docker_container_output(streamer: Generator, logging_level: Callable = logger.info) -> None:
     """ Stream container logs
 
     Args:
@@ -414,7 +415,7 @@ def stream_docker_container_output(streamer: Generator) -> None:
                                        subsequent_indent='\t',
                                        width=150)
         for chunk in streamer:
-            logger.info(wrapper.fill(str(chunk.decode('utf-8'))))
+            logging_level(wrapper.fill(str(chunk.decode('utf-8'))))
     except Exception:
         logger.info('Failed to stream a container log.')
 

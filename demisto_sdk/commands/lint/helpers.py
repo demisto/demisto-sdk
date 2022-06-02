@@ -320,11 +320,11 @@ def get_python_version_from_image(image: str, timeout: int = 60) -> str:
 
         # Get python version
         py_num = parse(py_num.decode("utf-8")).base_version
-        
+
     except Exception:
         logger.exception(f'{log_prompt} - Failed detecting Python version for image {image}')
     logger.info(f'{log_prompt} - End. Python version is {py_num}')
-    return py_num if py_num else '3.10'
+    return py_num if py_num else '3.8'
 
 
 def get_file_from_container(container_obj: Container, container_path: str, encoding: str = "") -> Union[str, bytes]:

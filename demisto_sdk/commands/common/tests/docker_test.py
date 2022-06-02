@@ -526,17 +526,18 @@ class TestDockerImage:
                     "image_name": "demisto/aiohttp",
                     "reason": "Use the demisto/py3-tools docker image instead.",
                     "created_time_utc": "2022-05-31T17:51:17.226278Z"
-                },
-                {
-                    "image_name": "demisto/algorithmia",
-                    "reason": "Use the demisto/py3-tools docker image instead.",
-                    "created_time_utc": "2022-05-31T17:51:30.043632Z"
-                },
-                {
-                    "image_name": "demisto/archer",
-                    "reason": "Use the demisto/py3-tools docker image instead.",
-                    "created_time_utc": "2022-05-31T17:51:41.654573Z"
-                }]
+                    },
+                    {
+                        "image_name": "demisto/algorithmia",
+                        "reason": "Use the demisto/py3-tools docker image instead.",
+                        "created_time_utc": "2022-05-31T17:51:30.043632Z"
+                    },
+                    {
+                        "image_name": "demisto/archer",
+                        "reason": "Use the demisto/py3-tools docker image instead.",
+                        "created_time_utc": "2022-05-31T17:51:41.654573Z"
+                    }
+                ]
             )
 
             docker_image_validator = mock_docker_image_validator()
@@ -559,13 +560,15 @@ class TestDockerImage:
                     "image_name": "demisto/aiohttp",
                     "reason": "Use the demisto/py3-tools docker image instead.",
                     "created_time_utc": "2022-05-31T17:51:17.226278Z"
-                },
-                {
-                    "image_name": "demisto/algorithmia",
-                    "reason": "Use the demisto/py3-tools docker image instead.",
-                    "created_time_utc": "2022-05-31T17:51:30.043632Z"
-                }]
+                    },
+                    {
+                        "image_name": "demisto/algorithmia",
+                        "reason": "Use the demisto/py3-tools docker image instead.",
+                        "created_time_utc": "2022-05-31T17:51:30.043632Z"
+                    }
+                ]
             )
             docker_image_validator = mock_docker_image_validator()
             print(docker_image_validator.is_docker_image_deprecated('demisto/aiohttp'))
-            assert ('demisto/aiohttp', 'Use the demisto/py3-tools docker image instead.') == docker_image_validator.is_docker_image_deprecated('demisto/aiohttp')
+            assert ('demisto/aiohttp', 'Use the demisto/py3-tools docker image instead.') == \
+                   docker_image_validator.is_docker_image_deprecated('demisto/aiohttp')

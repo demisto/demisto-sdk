@@ -9,6 +9,7 @@
 * Fixed an issue where **download** did not behave as expected when prompting for a version update. Reported by @K-Yo
 * Added support for adoption release notes.
 * Fixed a bug where some mypy messages were not parsed properly in **lint**.
+* Fixed an issue where coverage reports used the wrong logging level, marking debug logs as errors.
 
 ## 1.6.7
 

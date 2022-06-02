@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Added the new `display_name` field to relevant entities in the **create-id-set** command.
+* Added a new validation to the **validate** command to verify the existence of "Reliability" parameter if the integration have reputation command.
 * Fixed a bug where terminating the **lint** command failed (`ctrl + c`).
 * Removed the validation of a subtype change in integrations and scripts from **validate**.
 * Fixed an issue where **download** did not behave as expected when prompting for a version update. Reported by @K-Yo
@@ -10,8 +12,6 @@
 
 ## 1.6.7
 
-* Added the new `display_name` field to relevant entities in the **create-id-set** command.
-* Added a new validation to the **validate** command to verify the existence of "Reliability" parameter if the integration have reputation command.
 * Added the `types-markdown` dependency, adding markdown capabilities to existing linters using the [Markdown](https://pypi.org/project/Markdown/) package.
 * Added support in the **format** command to remove nonexistent incident/indicator fields from *layouts/mappers*
 * Added the `Note: XXX` and `XXX now generally available.` release notes templates to **doc-review** command.

@@ -316,7 +316,7 @@ def get_python_version_from_image(image: str, timeout: int = 60) -> str:
             restart_policy={"Name": "on-failure", "MaximumRetryCount": 3}
         )
         # Wait for container to finish
-        logger.debug(f'{log_prompt} - Container finished running.')
+        logger.debug(f'{log_prompt} - Container finished running. {py_num=}')
 
         # Get python version
         py_num = parse(py_num.decode("utf-8")).base_version

@@ -36,6 +36,13 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ''):
         except Exception:
             logger.exception(f'{log_prompt} - failed to login to docker registry')
 
+    else:
+        msg = 'docker client already available, using current DOCKER_CLIENT'
+        if log_prompt:
+            logger.info(f'{log_prompt} - {msg}')
+        else:
+            logger.info(msg)
+
     return DOCKER_CLIENT
 
 

@@ -308,6 +308,7 @@ def get_python_version_from_image(image: str, timeout: int = 60) -> str:
 
     for attempt in range(3):
         try:
+            logger.info(f'{log_prompt} - Starting attempt number {attempt}')
             command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
 
             container_obj: Container = docker_client.containers.run(
@@ -316,15 +317,19 @@ def get_python_version_from_image(image: str, timeout: int = 60) -> str:
                 detach=True
             )
             # Wait for container to finish
-            container_obj.wait(condition="exited")
+            container_obj.wait(condition="exited", timeout=timeout * 3)
+            logger.info(f'{log_prompt} - Container exited, attempt number {attempt}')
+
             # Get python version
             py_num = container_obj.logs()
             if isinstance(py_num, bytes):
                 py_num = parse(py_num.decode("utf-8")).base_version
-                for _ in range(2):
+                for i in range(2):
                     # Try to remove the container two times.
                     try:
+                        logger.info(f'{log_prompt} - Trying to remove container, attempt number {i}')
                         container_obj.remove(force=True)
+                        logger.info(f'{log_prompt} - Container removed, attempt number {i}')
                         break
                     except docker.errors.APIError:
                         logger.warning(f'{log_prompt} - Could not remove the image {image}')

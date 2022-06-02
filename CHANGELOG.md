@@ -11,6 +11,7 @@
 * Fixed a bug where some mypy messages were not parsed properly in **lint**.
 * Added a validation to the **validate** command, failing when '`fromversion`' or '`toversion`' in a content entity are incorrect format.
 * Added a validation to the **validate** command, checking if `fromversion` <= `toversion`.
+* Fixed an issue where coverage reports used the wrong logging level, marking debug logs as errors.
 
 ## 1.6.7
 

@@ -522,10 +522,11 @@ class TestDockerImage:
             api_url = 'https://raw.githubusercontent.com/demisto/dockerfiles/master/docker/deprecated_images.json'
             requests_mock.get(
                 api_url,
-                json=[{
-                    "image_name": "demisto/aiohttp",
-                    "reason": "Use the demisto/py3-tools docker image instead.",
-                    "created_time_utc": "2022-05-31T17:51:17.226278Z"
+                json=[
+                    {
+                        "image_name": "demisto/aiohttp",
+                        "reason": "Use the demisto/py3-tools docker image instead.",
+                        "created_time_utc": "2022-05-31T17:51:17.226278Z"
                     },
                     {
                         "image_name": "demisto/algorithmia",
@@ -556,10 +557,11 @@ class TestDockerImage:
             api_url = 'https://raw.githubusercontent.com/demisto/dockerfiles/master/docker/deprecated_images.json'
             requests_mock.get(
                 api_url,
-                json=[{
-                    "image_name": "demisto/aiohttp",
-                    "reason": "Use the demisto/py3-tools docker image instead.",
-                    "created_time_utc": "2022-05-31T17:51:17.226278Z"
+                json=[
+                    {
+                        "image_name": "demisto/aiohttp",
+                        "reason": "Use the demisto/py3-tools docker image instead.",
+                        "created_time_utc": "2022-05-31T17:51:17.226278Z"
                     },
                     {
                         "image_name": "demisto/algorithmia",

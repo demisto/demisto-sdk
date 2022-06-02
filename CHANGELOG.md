@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Removed the validation of a subtype change in integrations and scripts from **validate**.
+* Fixed an issue where coverage reports used the wrong logging level, marking debug logs as errors.
 
 ## 1.6.7
 

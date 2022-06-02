@@ -299,7 +299,7 @@ class TestFixFilePath:
 
         assert len(caplog.records) == 2
         assert caplog.records[0].msg == 'unexpected file list in coverage report'
-        assert caplog.records[0].levelname == 'ERROR'
+        assert caplog.records[0].levelname == 'DEBUG'
         assert caplog.records[1].msg == 'removing coverage report for some_path'
         assert caplog.records[1].levelname == 'DEBUG'
         assert not os.path.exists(dot_cov_file_path)

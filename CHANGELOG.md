@@ -10,6 +10,8 @@
 
 ## 1.6.7
 
+* Added the new `display_name` field to relevant entities in the **create-id-set** command.
+* Added a new validation to the **validate** command to verify the existence of "Reliability" parameter if the integration have reputation command.
 * Added the `types-markdown` dependency, adding markdown capabilities to existing linters using the [Markdown](https://pypi.org/project/Markdown/) package.
 * Added support in the **format** command to remove nonexistent incident/indicator fields from *layouts/mappers*
 * Added the `Note: XXX` and `XXX now generally available.` release notes templates to **doc-review** command.
@@ -27,9 +29,6 @@
 * Improved logs when running test playbooks (in a build).
 * Fixed an issue in **upload** did not include list-type content items. @nicolas-rdgs
 * Reverted release notes to old format.
-* Added the new `display_name` field to relevant entities in the **create-id-set** command.
-* Added a new validation to the **validate** command to verify the existence of "Reliability" parameter if the integration have reputation command.
-
 
 ## 1.6.6
 

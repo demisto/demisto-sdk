@@ -223,7 +223,7 @@ class TestDockerTools:
         def remove(name):
             try:
                 DockerTools.remove_container(name)
-            except:     # noqa: E722
+            except Exception:
                 pass
 
         @pytest.mark.parametrize('container_name', ['test_remove_running_container'])
@@ -290,8 +290,8 @@ class TestDockerTools:
             for image_id in self.to_delete:
                 try:
                     client.images.remove(image_id)
-                except:     # noqa: E722
-                    pass
+                except Exception as exc:
+                    logger.exception(exc)
 
         @pytest.mark.parametrize('image_name', images)
         def test_remove_running_image(self, image_name):

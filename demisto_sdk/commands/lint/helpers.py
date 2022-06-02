@@ -283,7 +283,7 @@ def add_tmp_lint_files(content_repo: Path, pack_path: Path, lint_files: List[Pat
 
 
 @lru_cache(maxsize=300)
-def get_python_version_from_image(image: str, timeout: int = 60) -> str:
+def get_python_version_from_image(image: str, timeout: int = 120) -> str:
     """ Get python version from docker image
 
     Args:
@@ -303,9 +303,9 @@ def get_python_version_from_image(image: str, timeout: int = 60) -> str:
 
     py_num = '3.8'
     # Run three times
-    log_prompt = 'Get python version from image'
+    log_prompt = f'Get python version from image {image} with {timeout}'
     docker_client = init_global_docker_client(timeout=timeout, log_prompt=log_prompt)
-
+    logger.info(f'{log_prompt} - Start')
     for attempt in range(3):
         try:
             logger.info(f'{log_prompt} - Starting attempt number {attempt}')
@@ -317,7 +317,7 @@ def get_python_version_from_image(image: str, timeout: int = 60) -> str:
                 detach=True
             )
             # Wait for container to finish
-            container_obj.wait(condition="exited", timeout=timeout * 3)
+            container_obj.wait(condition="exited", timeout=timeout)
             logger.info(f'{log_prompt} - Container exited, attempt number {attempt}')
 
             # Get python version
@@ -327,9 +327,9 @@ def get_python_version_from_image(image: str, timeout: int = 60) -> str:
                 for i in range(2):
                     # Try to remove the container two times.
                     try:
-                        logger.info(f'{log_prompt} - Trying to remove container, attempt number {i}')
+                        logger.debug(f'{log_prompt} - Trying to remove container, attempt number {i}')
                         container_obj.remove(force=True)
-                        logger.info(f'{log_prompt} - Container removed, attempt number {i}')
+                        logger.debug(f'{log_prompt} - Container removed, attempt number {i}')
                         break
                     except docker.errors.APIError:
                         logger.warning(f'{log_prompt} - Could not remove the image {image}')
@@ -340,7 +340,7 @@ def get_python_version_from_image(image: str, timeout: int = 60) -> str:
         except Exception:
             logger.exception(f'{log_prompt} - Failed detecting Python version (in attempt {attempt}) for image {image}')
             continue
-
+    logger.info(f'{log_prompt} - End. Python version is {py_num}')
     return py_num
 
 

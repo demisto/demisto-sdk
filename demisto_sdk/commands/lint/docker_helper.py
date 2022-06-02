@@ -38,7 +38,7 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ''):
 
     else:
         msg = 'docker client already available, using current DOCKER_CLIENT'
-        logger.info(f'{log_prompt} - {msg}' if log_prompt else msg)
+        logger.debug(f'{log_prompt} - {msg}' if log_prompt else msg)
 
     return DOCKER_CLIENT
 

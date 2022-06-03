@@ -116,7 +116,7 @@ Simply use `poetry` to run your tests on a relevant folder. For example:
 poetry run pytest -v demisto_sdk/commands/lint/tests/test_linter/
 ```
 
-If you want to run with a specific python version (`demisto-sdk` officially supports python 3.8/3.9/3.10), use [poetry environments](https://python-poetry.org/docs/managing-environments/) to switch to a different env with a different python version.
+If you want to run with a specific python version (see the [demisto-sdk PyPi page](https://pypi.org/project/demisto-sdk/) for the current supported versions), use [poetry environments](https://python-poetry.org/docs/managing-environments/) to switch to a different env with a different python version.
 
 ---
 

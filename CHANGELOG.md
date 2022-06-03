@@ -2,6 +2,18 @@
 
 ## Unreleased
 * Fixed an issue where the pack cache in *get_marketplaces* caused the function to return invalid values.
+* Fixed an issue where running format on a pack with XSIAM entities would fail.
+* Added the new `display_name` field to relevant entities in the **create-id-set** command.
+* Added a new validation to the **validate** command to verify the existence of "Reliability" parameter if the integration have reputation command.
+* Fixed a bug where terminating the **lint** command failed (`ctrl + c`).
+* Removed the validation of a subtype change in integrations and scripts from **validate**.
+* Fixed an issue where **download** did not behave as expected when prompting for a version update. Reported by @K-Yo
+* Added support for adoption release notes.
+* Fixed a bug where some mypy messages were not parsed properly in **lint**.
+* Fixed an issue where coverage reports used the wrong logging level, marking debug logs as errors.
+
+## 1.6.7
+
 * Added the `types-markdown` dependency, adding markdown capabilities to existing linters using the [Markdown](https://pypi.org/project/Markdown/) package.
 * Added support in the **format** command to remove nonexistent incident/indicator fields from *layouts/mappers*
 * Added the `Note: XXX` and `XXX now generally available.` release notes templates to **doc-review** command.
@@ -17,6 +29,8 @@
 * Added the 'integration-get-indicators' commands to be ignored by the **verify_yml_commands_match_readme** validation, the validation will no longer fail if these commands are not in the readme file.
 * Added a new validation to the **validate** command to verify that if the phrase "breaking changes" is present in a pack release notes, a JSON file with the same name exists and contains the relevant breaking changes information.
 * Improved logs when running test playbooks (in a build).
+* Fixed an issue in **upload** did not include list-type content items. @nicolas-rdgs
+* Reverted release notes to old format.
 
 ## 1.6.6
 

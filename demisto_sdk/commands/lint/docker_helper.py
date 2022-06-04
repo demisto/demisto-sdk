@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 import tarfile
 import tempfile
 from pathlib import Path
@@ -12,8 +13,7 @@ from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
 
 DOCKER_CLIENT = None
 logger = logging.getLogger('demisto-sdk')
-PATH_OR_STR = Union[Path, str]
-FILES_SRC_TARGET = List[Tuple[PATH_OR_STR, str]]
+FILES_SRC_TARGET = List[Tuple[os.PathLike, str]]
 # this will be used to determine if the system supports mounts
 CAN_MOUNT_FILES = (not os.getenv('CIRCLECI', False)) and ((not os.getenv('DOCKER_HOST')) or os.getenv('DOCKER_HOST', "").lower().startswith("unix:"))
 
@@ -41,15 +41,6 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ''):
             except Exception:
                 logger.exception(f'{log_prompt} - failed to login to docker registry')
     return DOCKER_CLIENT
-
-
-def copy_file(cp_from: PATH_OR_STR, cp_to: PATH_OR_STR) -> Path:
-    cp_from = Path(cp_from)
-    cp_to = Path(cp_to)
-    cp_to.touch()
-    if cp_from.exists():
-        cp_to.write_bytes(cp_from.read_bytes())
-    return cp_to
 
 
 class DockerBase:
@@ -161,7 +152,7 @@ class MountableDocker(DockerBase):
         for file in files:
             if file.exists():
                 self._files_to_push_on_installation.append(
-                    (copy_file(file, self.tmp_dir / file.name), str(file))
+                    (shutil.copyfile(file, self.tmp_dir / file.name), str(file))
                 )
 
     @staticmethod

@@ -1674,6 +1674,33 @@ class TestGetItemMarketplaces:
         assert len(marketplaces) == 1
         assert 'xsoar' in marketplaces
 
+    @staticmethod
+    def test_pack_not_in_cache(mocker):
+        """
+        Given
+            - item does not declare marketplaces
+            - pack does not appear in pack cache
+        When
+            - getting the marketplaces of an item
+        Then
+            - return the marketplaces from the pack_metadata
+        """
+        item_data = {
+            'name': 'Integration',
+            'pack': 'PackID',
+        }
+        packs = {
+            'PackID2': {
+                'id': 'PackID2',
+            }
+        }
+        mocker.patch('demisto_sdk.commands.common.tools.get_mp_types_from_metadata_by_item', return_value=['marketplacev2'])
+        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml',
+                                             item_data=item_data, packs=packs)
+
+        assert len(marketplaces) == 1
+        assert 'marketplacev2' in marketplaces
+
 
 class TestTagParser:
     def test_no_text_to_remove(self):

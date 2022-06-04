@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Added support for running lint via a remote docker ssh connection. Use `DOCKER_HOST` env variable to specify a remote docker connection, such as: `DOCKER_HOST=ssh://myuser@myhost.com`.
+* Fixed an issue where the pack cache in *get_marketplaces* caused the function to return invalid values.
 * Fixed an issue where running format on a pack with XSIAM entities would fail.
 * Added the new `display_name` field to relevant entities in the **create-id-set** command.
 * Added a new validation to the **validate** command to verify the existence of "Reliability" parameter if the integration have reputation command.

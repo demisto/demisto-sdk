@@ -2491,7 +2491,7 @@ def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[st
             marketplaces = [MarketplaceVersions.XSOAR.value]
         else:
             pack_name = get_pack_name(item_path)
-            if packs:
+            if packs and packs.get(pack_name):
                 marketplaces = packs.get(pack_name, {}).get('marketplaces', [MarketplaceVersions.XSOAR.value])
             else:
                 marketplaces = get_mp_types_from_metadata_by_item(item_path)

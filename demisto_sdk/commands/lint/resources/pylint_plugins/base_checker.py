@@ -3,7 +3,7 @@
 
 """
 #### How to add a new check?
-1. Chose the lowest support level that the checker should check.
+1. Choose the lowest support level that the checker should check.
 2. Add a new checker in the `<support>_level_checker.py` file.
     1. Add a new Error/ Warning message in the message list.
     2. Add a new checker function which includes the actual logic of the check.
@@ -51,6 +51,9 @@ base_msg = {
               "test-module command is not implemented in the python file, it is essential for every"
               " integration. Please add it to your code. For more information see: "
               "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"),
+    "W9013": ("Hardcoded http URL was found in the code, using https (when possible) is recommended.",
+              "http-usage",
+              "Please use the https method if possible")
 }
 
 TEST_MODULE = "test-module"
@@ -86,6 +89,9 @@ class CustomBaseChecker(BaseChecker):
         self._quit_checker(node)
         self._exit_checker(node)
         self._commandresults_indicator_check(node)
+
+    def visit_const(self, node):
+        self._http_checker(node)
 
     def visit_importfrom(self, node):
         self._common_server_import(node)
@@ -216,6 +222,18 @@ class CustomBaseChecker(BaseChecker):
 
         except Exception:
             pass
+
+    def _http_checker(self, node):
+        """
+        Args: node which is a Const Node.
+        Check:
+        - if a hard codded http url exists in the current node.
+
+        Adds the relevant error message using `add_message` function if one of the above exists.
+        """
+
+        if isinstance(node.value, str) and node.value.startswith('http:'):
+            self.add_message("http-usage", node=node)
 
     # -------------------------------------------- Import From Node ---------------------------------------------
 

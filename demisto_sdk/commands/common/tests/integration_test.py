@@ -876,6 +876,25 @@ class TestIntegrationValidator:
 
             assert not validator.is_valid_parameters_display_name()
 
+    @pytest.mark.parametrize("yml_data, excepted_result", [({'configuration': [
+        {'defaultvalue': 'https://test.com'}]}, True), ({'configuration': [{'defaultvalue': 'http://test.com'}]}, False)])
+    def test_valid_integration_parameters_default_value(self, yml_data, excepted_result, integration: Integration):
+        """
+        Given
+            - Case 1: An integration with valid parameter default value.
+            - Case 2: An integration with invalid parameter default value.
+        When
+            - running is_valid_parameter_url_default_value.
+        Then
+            - validate the output of the validation is as expected.
+        """
+
+        integration.yml.write_dict(yml_data)
+        structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+        validator = IntegrationValidator(structure_validator)
+
+        assert validator.is_valid_parameter_url_default_value() is excepted_result
+
     @pytest.mark.parametrize('support_level, expected_result', [('XSOAR', True), ('community', False)])
     def test_fromlicense_in_integration_parameters_fields(self, pack, support_level, expected_result):
         """

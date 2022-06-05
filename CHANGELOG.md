@@ -12,6 +12,8 @@
 * Added support for adoption release notes.
 * Fixed a bug where some mypy messages were not parsed properly in **lint**.
 * Fixed an issue where coverage reports used the wrong logging level, marking debug logs as errors.
+* Added a new validation to the **validate** command, to check when the discouraged `http` prefixes are used when setting defaultvalue, rather than `https`.
+* Added a check to the **lint** command for finding hard-coded usage of the http protocol.
 
 ## 1.6.7
 

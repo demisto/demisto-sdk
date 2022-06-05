@@ -16,7 +16,7 @@ ALLOWED_IGNORE_ERRORS = [
     'DS107',
     'GF102',
     'IF100', 'IF106', 'IF115', 'IF116',
-    'IN109', 'IN110', 'IN122', 'IN124', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145', 'IN154',
+    'IN109', 'IN110', 'IN122', 'IN124', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145', 'IN153', 'IN154',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107',
@@ -232,6 +232,7 @@ ERROR_CODE = {
     'invalid_siem_integration_name': {'code': 'IN150', 'ui_applicable': True, 'related_field': 'display'},
     "empty_command_arguments": {'code': 'IN151', 'ui_applicable': False, 'related_field': 'arguments'},
     'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True, 'related_field': 'defaultvalue'},
+    'not_supported_integration_parameter_url_defaultvalue': {'code': 'IN153', 'ui_applicable': False, 'related_field': 'defaultvalue'},
     'missing_reliability_parameter': {'code': 'IN154', 'ui_applicable': False, 'related_field': 'configuration'},
 
     # IT - Incident Types
@@ -851,6 +852,11 @@ class Errors:
         return f"The integration display names: {invalid_display_names} are invalid, " \
                "Integration parameters display name should be capitalized and spaced using whitespaces " \
                "and not underscores ( _ )."
+
+    @staticmethod
+    @error_code_decorator
+    def not_supported_integration_parameter_url_defaultvalue(param, invalid_defaultvalue):
+        return f"The integration parameter {param} has defaultvalue set to {invalid_defaultvalue}. If possible, replace the http prefix with https."
 
     @staticmethod
     @error_code_decorator

@@ -475,23 +475,25 @@ class TestIntegrations:
         Then
             - integration data will be collected properly
         """
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
+        mocker.patch.object(tools, 'get_pack_name', return_value='DummyPack')
+        packs = {'DummyPack': {'marketplaces': [MarketplaceVersions.XSOAR.value]}}
+
         non_unified_file_path = os.path.join(TESTS_DIR, 'test_files',
                                              'DummyPack', 'Integrations', 'DummyIntegration')
-        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        res, _ = process_integration(non_unified_file_path, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, print_logs=True)
+        res, _ = process_integration(non_unified_file_path, packs, MarketplaceVersions.XSOAR.value, print_logs=True)
         assert len(res) == 1
         non_unified_integration_data = res[0]
 
         unified_file_path = os.path.join(TESTS_DIR, 'test_files',
                                          'DummyPack', 'Integrations', 'integration-DummyIntegration.yml')
-
-        res, _ = process_integration(unified_file_path, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, print_logs=True)
+        res, _ = process_integration(unified_file_path, packs, MarketplaceVersions.XSOAR.value, print_logs=True)
         assert len(res) == 1
         unified_integration_data = res[0]
 
         test_pairs = [
             (non_unified_integration_data, TestIntegrations.INTEGRATION_DATA),
-            (unified_integration_data, TestIntegrations.UNIFIED_INTEGRATION_DATA)
+            (unified_integration_data, TestIntegrations.UNIFIED_INTEGRATION_DATA),
         ]
 
         for returned, constant in test_pairs:
@@ -602,12 +604,14 @@ class TestScripts:
     }
 
     @staticmethod
-    def test_get_script_data():
+    def test_get_script_data(mocker):
         """
         Test for getting the script data
         """
         file_path = TESTS_DIR + '/test_files/DummyPack/Scripts/DummyScript2.yml'
-        data = get_script_data(file_path, packs={'DummyPack': {}})
+        mocker.patch.object(tools, 'get_pack_name', return_value='DummyPack')
+
+        data = get_script_data(file_path, packs={'DummyPack': {'marketplaces': [MarketplaceVersions.XSOAR.value]}})
 
         assert list(data.keys()) == list(TestScripts.SCRIPT_DATA.keys())
 
@@ -617,7 +621,7 @@ class TestScripts:
         assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
 
     @staticmethod
-    def test_get_script_data_with_alternative_fields_top_level():
+    def test_get_script_data_with_alternative_fields_top_level(mocker):
         """
         Given
             - A script file which contains alternative fields in the top level of the yml.
@@ -629,8 +633,10 @@ class TestScripts:
             - parsing all the data from file successfully
             - making sure the entry has a field called "has_alternative_meta" set to True
         """
+        mocker.patch.object(tools, 'get_pack_name', return_value='DummyPack')
+
         file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Script-top_level_alternative_fields.yml'
-        data = get_script_data(file_path, packs={'DummyPack': {}})
+        data = get_script_data(file_path, packs={'DummyPack': {'marketplaces': [MarketplaceVersions.XSOAR.value]}})
 
         assert list(data.keys()) == list(TestScripts.SCRIPT_DATA_ALTERNATIVE_TOP_LEVEL.keys())
 
@@ -640,7 +646,7 @@ class TestScripts:
         assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
 
     @staticmethod
-    def test_get_script_data_with_alternative_fields_second_level():
+    def test_get_script_data_with_alternative_fields_second_level(mocker):
         """
         Given
             - A script file which contains alternative fields in the second level of the yml.
@@ -652,8 +658,10 @@ class TestScripts:
             - parsing all the data from file successfully
             - making sure the entry has a field called "has_alternative_meta" set to True
         """
+        mocker.patch.object(tools, 'get_pack_name', return_value='DummyPack')
+
         file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Script-second_level_alternative_fields.yml'
-        data = get_script_data(file_path, packs={'DummyPack': {}})
+        data = get_script_data(file_path, packs={'DummyPack': {'marketplaces': [MarketplaceVersions.XSOAR.value]}})
 
         assert (list(data.keys()) == list(TestScripts.SCRIPT_DATA_ALTERNATIVE_SECOND_LEVEL.keys()))
 
@@ -707,7 +715,8 @@ class TestScripts:
         test_file_path = os.path.join(TESTS_DIR, 'test_files',
                                       'Packs', 'DummyPack', 'Scripts', 'DummyScript')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        res, _ = process_script(test_file_path, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, print_logs=True)
+        res, _ = process_script(test_file_path, {'DummyPack': {'marketplaces': [MarketplaceVersions.XSOAR.value]}},
+                                MarketplaceVersions.XSOAR.value, print_logs=True)
         assert len(res) == 1
         data = res[0]
 
@@ -730,10 +739,10 @@ class TestScripts:
         Then
             - return empty list
         """
-        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=True)
-        test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'integration.yml')
-        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        res, _ = process_script(test_file_path, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, print_logs=False)
+        test_file_path = os.path.join(TESTS_DIR, 'test_files',
+                                      'Packs', 'DummyPack', 'Scripts', 'DummyScript')
+        res, _ = process_script(test_file_path, {'DummyPack': {'marketplaces': [MarketplaceVersions.MarketplaceV2.value]}},
+                                MarketplaceVersions.XSOAR.value, print_logs=False)
         assert res == []
 
     @staticmethod
@@ -852,16 +861,17 @@ class TestPlaybooks:
     }
 
     @staticmethod
-    def test_get_playbook_data():
+    def test_get_playbook_data(mocker):
         """
         Test for getting the playbook data
         """
+        mocker.patch.object(tools, 'get_pack_name', return_value='DummyPack')
         file_path = TESTS_DIR + '/test_files/DummyPack/Playbooks/DummyPlaybook.yml'
-        data = get_playbook_data(file_path, packs={'DummyPack': {}})['Dummy Playbook']
+        data = get_playbook_data(file_path, packs={'DummyPack': {'marketplaces': [MarketplaceVersions.XSOAR.value]}})['Dummy Playbook']
         assert IsEqualFunctions.is_dicts_equal(data, TestPlaybooks.PLAYBOOK_DATA, lists_as_sets=True)
 
     @staticmethod
-    def test_get_playbook_data_with_alternative_fields_top_level():
+    def test_get_playbook_data_with_alternative_fields_top_level(mocker):
         """
         Given
             - A playbook file which contains alternative fields in the top level of the yml.
@@ -873,15 +883,16 @@ class TestPlaybooks:
             - parsing all the data from file successfully
             - making sure the entry has a field called "has_alternative_meta" set to True
         """
+        mocker.patch.object(tools, 'get_pack_name', return_value='DummyPack')
         file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Playbook-top_level_alternative_fields.yml'
-        data = get_playbook_data(file_path, packs={'DummyPack': {}})['Dummy Playbook']
+        data = get_playbook_data(file_path, packs={'DummyPack': {'marketplaces': [MarketplaceVersions.XSOAR.value]}})['Dummy Playbook']
 
         assert IsEqualFunctions.is_dicts_equal(data,
                                                TestPlaybooks.PLAYBOOK_DATA_ALTERNATIVE_FIELDS_TOP_LEVEL,
                                                lists_as_sets=True)
 
     @staticmethod
-    def test_get_playbook_data_with_alternative_fields_second_level():
+    def test_get_playbook_data_with_alternative_fields_second_level(mocker):
         """
         Given
             - A playbook file which contains alternative fields in the second level of the yml.
@@ -893,8 +904,9 @@ class TestPlaybooks:
             - parsing all the data from file successfully
             - making sure the entry has a field called "has_alternative_meta" set to True
         """
+        mocker.patch.object(tools, 'get_pack_name', return_value='DummyPack')
         file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Playbook-second_level_alternative_fields.yml'
-        data = get_playbook_data(file_path, packs={'DummyPack': {}})['Dummy Playbook']
+        data = get_playbook_data(file_path, packs={'DummyPack': {'marketplaces': [MarketplaceVersions.XSOAR.value]}})['Dummy Playbook']
         assert IsEqualFunctions.is_dicts_equal(data,
                                                TestPlaybooks.PLAYBOOK_DATA_ALTERNATIVE_FIELDS_SECOND_LEVEL,
                                                lists_as_sets=True)

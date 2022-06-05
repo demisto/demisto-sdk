@@ -291,8 +291,13 @@ def run_format_on_file(input: str, file_type: str, from_version: str, interactiv
     ) and 'id_set_path' in kwargs:
         # relevant only for incidentfield/layouts/mappers
         del kwargs['id_set_path']
-    update_object = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path, from_version=from_version,
-                                                          interactive=interactive, **kwargs)
+    updater_class = FILE_TYPE_AND_LINKED_CLASS.get(file_type)
+    if not updater_class:  # fail format so long as xsiam entities dont have formatters
+        print_warning(f'No  updater_class was found for file type {file_type}')
+        return logger(input, 1, VALIDATE_RES_SKIPPED_CODE)
+
+    update_object = updater_class(input=input, path=schema_path, from_version=from_version,
+                                  interactive=interactive, **kwargs)
     format_res, validate_res = update_object.format_file()  # type: ignore
     CONTENT_ENTITY_IDS_TO_UPDATE.update(update_object.updated_ids)
     return logger(input, format_res, validate_res)

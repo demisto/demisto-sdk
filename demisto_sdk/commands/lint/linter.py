@@ -783,7 +783,7 @@ class Linter:
         test_json = {}
         try:
             # Running pytest container
-            cov = '' if no_coverage else self._pack_abs_dir.stem
+            cov = self._pack_abs_dir.stem if no_coverage and Path(self._pack_abs_dir.stem) else ''
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container = Docker.create_container(

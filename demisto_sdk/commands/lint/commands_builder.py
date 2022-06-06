@@ -199,7 +199,7 @@ def build_vulture_command(files: List[Path], pack_path: Path) -> str:
     # File to be excluded when performing lints check
     command += f" --exclude={','.join(excluded_files)}"
     # Whitelist vulture
-    whitelist = Path(pack_path) / '.vulture_whitelist.py'
+    whitelist = Path('.vulture_whitelist.py')
     if whitelist.exists():
         command += f" {whitelist}"
     files_list = [file.name for file in files]

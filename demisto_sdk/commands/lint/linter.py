@@ -591,7 +591,7 @@ class Linter:
                         # But it failing in second time it will count as test failure.
                         if (exit_code == RERUN and trial == 1) or exit_code == FAIL or exit_code == SUCCESS:
                             if exit_code in [RERUN, FAIL]:
-                                if check in {'flake8', 'vulture'}:
+                                if check == 'flake8':
                                     self._handle_lint_results(exit_code, check, output)
                                 else:
                                     status[f"{check}_errors"] = output

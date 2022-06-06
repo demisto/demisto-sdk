@@ -98,7 +98,7 @@ def test_build_vulture_command(files, mocker):
     mocker.patch.object(commands_builder, 'os')
     commands_builder.os.environ.get.return_value = 20
     output = build_vulture_command(files, Path('~/dev/content/'))
-    files = [str(item) for item in files]
+    files = [item.name for item in files]
     expected = f"vulture --min-confidence 20 --exclude=CommonServerPython.py,demistomock.py," \
                f"CommonServerUserPython.py,conftest.py,.venv {' '.join(files)}"
     assert expected == output
@@ -109,7 +109,7 @@ def test_build_pylint_command(files):
     """Build Pylint command"""
     from demisto_sdk.commands.lint.commands_builder import build_pylint_command
     output = build_pylint_command(files)
-    files = [str(file) for file in files]
+    files = [file.name for file in files]
     expected = "pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
                "conftest.py,.venv -E --disable=bad-option-value -d duplicate-string-formatting-argument " \
                "--msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'" \

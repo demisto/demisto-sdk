@@ -11,7 +11,7 @@ import textwrap
 from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, Generator, List, Optional, Union
+from typing import Callable, Dict, Generator, List, Optional, Union
 
 # Third party packages
 import coverage
@@ -300,43 +300,31 @@ def get_python_version_from_image(image: str, timeout: int = 60) -> str:
     match_group = re.match(r'[\d\w]+/python3?:(?P<python_version>[23]\.\d+)', image)
     if match_group:
         return match_group.groupdict()['python_version']
-
-    py_num = '3.8'
+    py_num = None
     # Run three times
-    log_prompt = 'Get python version from image'
+    log_prompt = f'Get python version from image {image}'
     docker_client = init_global_docker_client(timeout=timeout, log_prompt=log_prompt)
+    logger.info(f'{log_prompt} - Start')
+    try:
+        logger.debug(f'{log_prompt} - Running `sys.version_info` in the image')
+        command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
 
-    for attempt in range(3):
-        try:
-            command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
+        py_num = docker_client.containers.run(
+            image=image,
+            command=shlex.split(command),
+            remove=True,
+            restart_policy={"Name": "on-failure", "MaximumRetryCount": 3}
+        )
+        # Wait for container to finish
+        logger.debug(f'{log_prompt} - Container finished running. {py_num=}')
 
-            container_obj: Container = docker_client.containers.run(
-                image=image,
-                command=shlex.split(command),
-                detach=True
-            )
-            # Wait for container to finish
-            container_obj.wait(condition="exited")
-            # Get python version
-            py_num = container_obj.logs()
-            if isinstance(py_num, bytes):
-                py_num = parse(py_num.decode("utf-8")).base_version
-                for _ in range(2):
-                    # Try to remove the container two times.
-                    try:
-                        container_obj.remove(force=True)
-                        break
-                    except docker.errors.APIError:
-                        logger.warning(f'{log_prompt} - Could not remove the image {image}')
-                return py_num
-            else:
-                raise docker.errors.ContainerError
+        # Get python version
+        py_num = parse(py_num.decode("utf-8")).base_version
 
-        except Exception:
-            logger.exception(f'{log_prompt} - Failed detecting Python version (in attempt {attempt}) for image {image}')
-            continue
-
-    return py_num
+    except Exception:
+        logger.exception(f'{log_prompt} - Failed detecting Python version for image {image}')
+    logger.info(f'{log_prompt} - End. Python version is {py_num}')
+    return py_num if py_num else '3.8'
 
 
 def get_file_from_container(container_obj: Container, container_path: str, encoding: str = "") -> Union[str, bytes]:
@@ -398,7 +386,7 @@ def copy_dir_to_container(container_obj: Container, host_path: Path, container_p
             raise docker.errors.APIError(message="unable to copy dir to container")
 
 
-def stream_docker_container_output(streamer: Generator) -> None:
+def stream_docker_container_output(streamer: Generator, logging_level: Callable = logger.info) -> None:
     """ Stream container logs
 
     Args:
@@ -409,7 +397,7 @@ def stream_docker_container_output(streamer: Generator) -> None:
                                        subsequent_indent='\t',
                                        width=150)
         for chunk in streamer:
-            logger.info(wrapper.fill(str(chunk.decode('utf-8'))))
+            logging_level(wrapper.fill(str(chunk.decode('utf-8'))))
     except Exception:
         logger.info('Failed to stream a container log.')
 

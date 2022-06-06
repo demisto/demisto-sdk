@@ -788,7 +788,7 @@ class Linter:
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container = Docker.create_container(
                 name=container_name, image=test_image, user=f"{uid}:4000",
-                command=[build_pytest_command(test_xml=test_xml, json=True, cov=cov)],
+                command=build_pytest_command(test_xml=test_xml, json=True, cov=cov),
                 environment=self._facts["env_vars"], files_to_push=[
                     (self._pack_abs_dir, '/devwork')
                 ],

@@ -662,7 +662,7 @@ def secrets(config, **kwargs):
               type=click.Path(resolve_path=True))
 @click.option("-j", "--json-file", help="The JSON file path to which to output the command results.",
               type=click.Path(resolve_path=True))
-@click.option("--no-coverage", is_flag=True, help="Do NOT run coverage report.")
+@click.option("--no-coverage", is_flag=True, help="Do NOT run coverage report.", default=True)
 @click.option(
     "--coverage-report", help="Specify directory for the coverage report files",
     type=PathsParamType()

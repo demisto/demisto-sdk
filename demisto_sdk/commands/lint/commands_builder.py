@@ -33,7 +33,7 @@ def build_flake8_command(files: List[Path]) -> str:
         str: flake8 command
     """
 
-    command = "python -m flake8"
+    command = "python -m flake8 "
 
     # This is the same config used in `tox.ini` file in content
     # We will probably want to use that in the future for this and all linters

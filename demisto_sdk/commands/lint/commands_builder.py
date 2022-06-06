@@ -33,7 +33,7 @@ def build_flake8_command(files: List[Path]) -> str:
         str: flake8 command
     """
 
-    command = "flake8 "
+    command = "python -m flake8"
 
     # This is the same config used in `tox.ini` file in content
     # We will probably want to use that in the future for this and all linters
@@ -58,7 +58,7 @@ def build_bandit_command(files: List[Path]) -> str:
     Returns:
         str: bandit command
     """
-    command = "bandit"
+    command = "python -m bandit"
     # Reporting only issues with high and medium severity level
     command += " -ll"
     # Reporting only issues of a high confidence level
@@ -122,7 +122,7 @@ def build_xsoar_linter_command(files: List[Path], support_level: str = "base") -
             for msg in checker_msgs_list:
                 message_enable += f"{msg},"
 
-    command = "pylint"
+    command = "python -m pylint"
     # Excluded files
     command += f" --ignore={','.join(excluded_files)}"
     # Disable all errors
@@ -151,7 +151,7 @@ def build_mypy_command(files: List[Path], version: str, content_repo: Path = Non
     Returns:
         str: mypy command
     """
-    command = "mypy"
+    command = "python -m mypy"
     # Define python versions
     command += f" --python-version {version}"
     # This flag enable type checks the body of every function, regardless of whether it has type annotations.
@@ -193,15 +193,15 @@ def build_vulture_command(files: List[Path], pack_path: Path) -> str:
     Returns:
        str: vulture command
     """
-    command = "vulture"
+    command = "python -m vulture"
     # Excluded files
     command += f" --min-confidence {os.environ.get('VULTURE_MIN_CONFIDENCE_LEVEL', '100')}"
     # File to be excluded when performing lints check
     command += f" --exclude={','.join(excluded_files)}"
     # Whitelist vulture
-    whitelist = Path('.vulture_whitelist.py')
+    whitelist = Path(pack_path) / '.vulture_whitelist.py'
     if whitelist.exists():
-        command += f" {whitelist}"
+        command += f" {whitelist.name}"
     files_list = [file.name for file in files]
     command += " " + " ".join(files_list)
     return command
@@ -216,7 +216,7 @@ def build_pylint_command(files: List[Path], docker_version: Optional[str] = None
     Returns:
        str: pylint command
     """
-    command = "pylint"
+    command = "python -m pylint"
     # Excluded files
     command += f" --ignore={','.join(excluded_files)}"
     # Prints only errors
@@ -256,7 +256,7 @@ def build_pytest_command(test_xml: str = "", json: bool = False, cov: str = "") 
     Returns:
         str: pytest command
     """
-    command = "pytest -ra"
+    command = "python -m pytest -ra"
     # Generating junit-xml report - used in circle ci
     if test_xml:
         command += " --junitxml=/devwork/report_pytest.xml"

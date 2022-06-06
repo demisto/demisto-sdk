@@ -374,7 +374,10 @@ class Linter:
     def _handle_lint_results(self, exit_code, lint_check, output):
         # check for any exit code other than 0
         if exit_code:
-            error, warning, other = split_warnings_errors(output)
+            if lint_check == 'vulture':
+                error, warning, other = output, None, None
+            else:
+                error, warning, other = split_warnings_errors(output)
         if exit_code and warning:
             self._pkg_lint_status["warning_code"] |= EXIT_CODES[lint_check]
             self._pkg_lint_status[f"{lint_check}_warnings"] = "\n".join(warning)
@@ -539,6 +542,9 @@ class Linter:
                 "image_errors": "",
                 "pylint_errors": "",
                 "pytest_errors": "",
+                "flake8_errors": "",
+                "flake8_warnigns": "",
+                "vulture_errors": "",
                 "pytest_json": {},
                 "pwsh_analyze_errors": "",
                 "pwsh_test_errors": ""
@@ -591,9 +597,10 @@ class Linter:
                         # But it failing in second time it will count as test failure.
                         if (exit_code == RERUN and trial == 1) or exit_code == FAIL or exit_code == SUCCESS:
                             if exit_code in [RERUN, FAIL]:
-                                if check == 'flake8':
+                                if check in {'flake8', 'vulture'}:
                                     self._handle_lint_results(exit_code, check, output)
                                 else:
+                                    self._pkg_lint_status["exit_code"] |= EXIT_CODES[check]
                                     status[f"{check}_errors"] = output
                             break
             else:

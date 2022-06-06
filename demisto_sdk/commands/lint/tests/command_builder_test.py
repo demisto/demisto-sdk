@@ -13,7 +13,7 @@ def test_build_flak8_command(files):
     from demisto_sdk.commands.lint.commands_builder import build_flake8_command
     output = build_flake8_command(files)
     files = [file.name for file in files]
-    expected = f"flake8 --ignore=W605,F403,F405,W503 " \
+    expected = f"python -m flake8--ignore=W605,F403,F405,W503 " \
         "--exclude=_script_template_docker.py,./CommonServerPython.py,./demistomock.py " \
         "--max-line-length 130 " \
         "--per-file-ignores=nudge_external_prs.py:E231,E251,E999 " \
@@ -68,7 +68,7 @@ def test_build_bandit_command(files):
     from demisto_sdk.commands.lint.commands_builder import build_bandit_command
     output = build_bandit_command(files)
     files = [str(file) for file in files]
-    expected = "bandit -ll -iii -s B301,B303,B310,B314,B318 -a file --exclude=CommonServerPython.py,demistomock.py," \
+    expected = "python -m bandit-ll -iii -s B301,B303,B310,B314,B318 -a file --exclude=CommonServerPython.py,demistomock.py," \
                "CommonServerUserPython.py," \
                "conftest.py,.venv -q --format custom --msg-template " \
                "'{abspath}:{line}: {test_id} [Severity: {severity} Confidence: {confidence}] {msg}' " \
@@ -83,7 +83,7 @@ def test_build_mypy_command(files, py_num, content_path):
     expected_cache_dir = 'test_path/.mypy_cache' if content_path else '/dev/null'
     output = build_mypy_command(files, py_num, content_path)
     files = [str(file) for file in files]
-    expected = f"mypy --python-version {py_num} --check-untyped-defs --ignore-missing-imports " \
+    expected = f"python -m mypy--python-version {py_num} --check-untyped-defs --ignore-missing-imports " \
                f"--follow-imports=silent --show-column-numbers --show-error-codes --pretty --allow-redefinition " \
                f"--show-absolute-path --cache-dir={expected_cache_dir} {' '.join(files)}"
     assert expected == output
@@ -99,7 +99,7 @@ def test_build_vulture_command(files, mocker):
     commands_builder.os.environ.get.return_value = 20
     output = build_vulture_command(files, Path('~/dev/content/'))
     files = [item.name for item in files]
-    expected = f"vulture --min-confidence 20 --exclude=CommonServerPython.py,demistomock.py," \
+    expected = f"python -m vulture--min-confidence 20 --exclude=CommonServerPython.py,demistomock.py," \
                f"CommonServerUserPython.py,conftest.py,.venv {' '.join(files)}"
     assert expected == output
 

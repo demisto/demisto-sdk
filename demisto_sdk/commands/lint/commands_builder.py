@@ -170,7 +170,7 @@ def build_mypy_command(files: List[Path], version: str, content_repo: Path = Non
     command += " --allow-redefinition"
     # Get the full path to the file.
     command += " --show-absolute-path"
-    
+
     if parse(version).major < 3:
         command += " --no-site-packages"
     # Point cache to be .mypy_cache in the content repo

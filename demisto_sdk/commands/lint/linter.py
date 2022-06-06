@@ -783,16 +783,20 @@ class Linter:
         test_json = {}
         try:
             # Running pytest container
-            cov = self._pack_abs_dir.stem if no_coverage and Path(self._pack_abs_dir.stem) else ''
+            cov_file_path = Path.joinpath(self._pack_abs_dir, '.coverage')
+
+            cov = self._pack_abs_dir.stem if not no_coverage and cov_file_path.exists() else ''
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
-            container = Docker.create_container(
-                name=container_name, image=test_image, user=f"{uid}:4000",
+            container: docker.models.containers.Container = Docker.create_container(
+                name=container_name,
+                image=test_image,
                 command=build_pytest_command(test_xml=test_xml, json=True, cov=cov),
-                environment=self._facts["env_vars"], files_to_push=[
-                    (self._pack_abs_dir, '/devwork')
-                ],
+                user=f"{uid}:4000",
+                files_to_push=[(self._pack_abs_dir, '/devwork')],
+                environment=self._facts["env_vars"],
             )
+
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # Waiting for container to be finished
@@ -815,8 +819,7 @@ class Linter:
                     with open(file=xml_apth, mode='bw') as f:
                         f.write(test_data_xml)  # type: ignore
 
-                if not no_coverage:
-                    cov_file_path = os.path.join(self._pack_abs_dir, '.coverage')
+                if cov:
                     cov_data = get_file_from_container(container_obj=container,
                                                        container_path="/devwork/.coverage")
                     cov_data = cov_data if isinstance(cov_data, bytes) else cov_data.encode()

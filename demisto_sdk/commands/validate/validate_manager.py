@@ -389,7 +389,6 @@ class ValidateManager:
                 self.completion_percentage = format((count / num_of_packs) * 100, ".2f")  # type: ignore
                 all_packs_valid.add(self.run_validations_on_pack(pack_path)[0])
                 count += 1
-
         return all(all_packs_valid)
 
     def run_validations_on_pack(self, pack_path):

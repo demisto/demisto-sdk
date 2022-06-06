@@ -1798,12 +1798,11 @@ def _get_file_id(file_type: str, file_content: Dict):
     Returns:
         The file's content ID
     """
-    file_id = ''
     if file_type in ID_IN_ROOT:
-        file_id = file_content.get('id', '')
+        return file_content.get('id', '')
     elif file_type in ID_IN_COMMONFIELDS:
-        file_id = file_content.get('commonfields', {}).get('id')
-    return file_id
+        return file_content.get('commonfields', {}).get('id')
+    return file_content.get('trigger_id', '')
 
 
 def is_path_of_integration_directory(path: str) -> bool:
@@ -2492,7 +2491,7 @@ def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[st
             marketplaces = [MarketplaceVersions.XSOAR.value]
         else:
             pack_name = get_pack_name(item_path)
-            if packs:
+            if packs and packs.get(pack_name):
                 marketplaces = packs.get(pack_name, {}).get('marketplaces', [MarketplaceVersions.XSOAR.value])
             else:
                 marketplaces = get_mp_types_from_metadata_by_item(item_path)
@@ -2771,6 +2770,50 @@ def remove_copy_and_dev_suffixes_from_str(field_name: str) -> str:
             if field_name.endswith(suffix):
                 field_name = field_name[:-len(suffix)]
     return field_name
+
+
+def get_display_name(file_path, file_data={}) -> str:
+    """ Gets the entity display name from the file.
+
+        :param file_path: The entity file path
+        :param file_data: The entity file data
+
+        :rtype: ``str``
+        :return The display name
+    """
+    if not file_data:
+        file_extension = os.path.splitext(file_path)[1]
+        if file_extension in ['.yml', '.json']:
+            file_data = get_file(file_path, file_extension)
+
+    if 'display' in file_data:
+        name = file_data.get('display', None)
+    elif 'layout' in file_data and isinstance(file_data['layout'], dict):
+        name = file_data['layout'].get('id')
+    elif 'name' in file_data:
+        name = file_data.get('name', None)
+    elif 'TypeName' in file_data:
+        name = file_data.get('TypeName', None)
+    elif 'brandName' in file_data:
+        name = file_data.get('brandName', None)
+    elif 'id' in file_data:
+        name = file_data.get('id', None)
+    elif 'trigger_name' in file_data:
+        name = file_data.get('trigger_name')
+
+    elif 'dashboards_data' in file_data and file_data.get('dashboards_data') \
+            and isinstance(file_data['dashboards_data'], list):
+        dashboard_data = file_data.get('dashboards_data', [{}])[0]
+        name = dashboard_data.get('name')
+
+    elif 'templates_data' in file_data and file_data.get('templates_data') \
+            and isinstance(file_data['templates_data'], list):
+        r_name = file_data.get('templates_data', [{}])[0]
+        name = r_name.get('report_name')
+
+    else:
+        name = os.path.basename(file_path)
+    return name
 
 
 def get_invalid_incident_fields_from_mapper(

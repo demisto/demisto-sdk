@@ -3,8 +3,8 @@ demisto-sdk/demisto_sdk/commands/validate/validate_manager.py @idovandijk
 demisto_sdk/commands/common/hook_validations/ @idovandijk
 
 # VS Code plugin
-.vscode/ @jochman
-.devcontainer/ @jochman
+.vscode/ @ilaner
+.devcontainer/ @ilaner
 
 # CircleCI
 .circleci/ @dorschw

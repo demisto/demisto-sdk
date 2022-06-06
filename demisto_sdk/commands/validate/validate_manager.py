@@ -363,8 +363,8 @@ class ValidateManager:
 
         count = 1
         # Filter non-pack files that might exist locally (e.g, .DS_STORE on MacOS)
-        #all_packs = list(filter(os.path.isdir, [os.path.join(PACKS_DIR, p) for p in os.listdir(PACKS_DIR)]))
-        all_packs = list(filter(os.path.isdir, [os.path.join(PACKS_DIR, p) for p in ['AccentureCTI']]))
+        all_packs = list(filter(os.path.isdir, [os.path.join(PACKS_DIR, p) for p in os.listdir(PACKS_DIR)]))
+        #all_packs = list(filter(os.path.isdir, [os.path.join(PACKS_DIR, p) for p in ['AccentureCTI']]))
         num_of_packs = len(all_packs)
         all_packs.sort(key=str.lower)
 

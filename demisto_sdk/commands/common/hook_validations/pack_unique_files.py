@@ -537,13 +537,14 @@ class PackUniqueFilesValidator(BaseValidator):
         Return:
              bool: True if the usecases are approved, otherwise False
         """
+        if tools.is_external_repository():
+            return True
+
         non_approved_usecases = set()
         try:
-            approved_usecases = tools.get_approved_usecases()
             pack_meta_file_content = self._read_metadata_content()
             current_usecases = tools.get_current_usecases()
-            non_approved_usecases = set(pack_meta_file_content[PACK_METADATA_USE_CASES]) - set(
-                approved_usecases + current_usecases)
+            non_approved_usecases = set(pack_meta_file_content[PACK_METADATA_USE_CASES]) - set(current_usecases)
             if non_approved_usecases:
                 if self._add_error(
                         Errors.pack_metadata_non_approved_usecases(non_approved_usecases), self.pack_meta_file):
@@ -576,12 +577,14 @@ class PackUniqueFilesValidator(BaseValidator):
         Return:
              bool: True if the tags are approved, otherwise False
         """
+        if tools.is_external_repository():
+            return True
+
         non_approved_tags = set()
         try:
-            approved_tags = tools.get_approved_tags()
             pack_meta_file_content = self._read_metadata_content()
             current_tags = tools.get_current_tags()
-            non_approved_tags = set(pack_meta_file_content[PACK_METADATA_TAGS]) - set(approved_tags + current_tags)
+            non_approved_tags = set(pack_meta_file_content[PACK_METADATA_TAGS]) - set(current_tags)
             if non_approved_tags:
                 if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
                     return False

@@ -11,17 +11,15 @@ from typing import Optional, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEFAULT_ID_SET_PATH,
-    IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, XSIAM_CONTENT_ITEMS_TYPES,
-    FileType)
+    IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_api_module_ids,
                                                get_api_module_integrations_set,
                                                get_definition_name,
+                                               get_display_name,
                                                get_from_version, get_json,
                                                get_latest_release_notes_text,
                                                get_pack_name, get_remote_file,
@@ -339,47 +337,6 @@ class UpdateRN:
         return os.path.join(self.pack_path, 'ReleaseNotes', f'{new_version}.md')
 
     @staticmethod
-    def get_display_name(file_path) -> str:
-        """ Gets the file name from the pack yml file.
-
-            :param file_path: The pack yml file path
-
-            :rtype: ``str``
-            :return
-            The display name
-        """
-        struct = StructureValidator(file_path=file_path, is_new_file=True, predefined_scheme=find_type(file_path))
-        file_data = struct.load_data_from_file()
-        if 'display' in file_data:
-            name = file_data.get('display', None)
-        elif 'layout' in file_data and isinstance(file_data['layout'], dict):
-            name = file_data['layout'].get('id')
-        elif 'name' in file_data:
-            name = file_data.get('name', None)
-        elif 'TypeName' in file_data:
-            name = file_data.get('TypeName', None)
-        elif 'brandName' in file_data:
-            name = file_data.get('brandName', None)
-        elif 'id' in file_data:
-            name = file_data.get('id', None)
-        elif 'trigger_name' in file_data:
-            name = file_data.get('trigger_name')
-
-        elif 'dashboards_data' in file_data and file_data.get('dashboards_data') \
-                and isinstance(file_data['dashboards_data'], list):
-            dashboard_data = file_data.get('dashboards_data', [{}])[0]
-            name = dashboard_data.get('name')
-
-        elif 'templates_data' in file_data and file_data.get('templates_data') \
-                and isinstance(file_data['templates_data'], list):
-            r_name = file_data.get('templates_data', [{}])[0]
-            name = r_name.get('report_name')
-
-        else:
-            name = os.path.basename(file_path)
-        return name
-
-    @staticmethod
     def find_corresponding_yml(file_path) -> str:
         """ Gets the pack's corresponding yml file from the python/yml file.
 
@@ -409,7 +366,7 @@ class UpdateRN:
 
         if self.pack + '/' in file_path and ('README' not in file_path):
             _file_path = self.find_corresponding_yml(file_path)
-            file_name = self.get_display_name(_file_path)
+            file_name = get_display_name(_file_path)
             _file_type = find_type(_file_path)
 
         return file_name, _file_type
@@ -532,6 +489,7 @@ class UpdateRN:
             rn_string = self.build_rn_desc(content_name=self.pack, text=self.text)
         # changed_items.items() looks like that: [((name, type), {...}), (name, type), {...}] and we want to sort
         # them by type (x[0][1])
+
         for (content_name, _type), data in sorted(changed_items.items(),
                                                   key=lambda x: RN_HEADER_BY_FILE_TYPE[x[0][1]] if x[0] and x[0][1]
                                                   else ''):  # Sort RN by header
@@ -571,29 +529,26 @@ class UpdateRN:
             :return
             The release notes description
         """
-        if is_new_file:
-            rn_desc = f'##### New: **{content_name}**\n'
+        if _type in (FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT,
+                     FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD):
 
-            if desc != '':
-                rn_desc += f'- {desc}'
-            else:
-                rn_desc += f'- {text or "%%UPDATE_RN%%"}'
-
-            if from_version and from_version != '' and _type not in XSIAM_CONTENT_ITEMS_TYPES:
-                # for now, we decided not to add this description for XSIAM entities (issue 40020)
-                rn_desc += f' (Available from Cortex XSOAR {from_version}).\n'
-
-        else:
             rn_desc = f'- **{content_name}**\n'
 
-            if self.update_type == 'documentation':
-                rn_desc += '- Documentation and metadata improvements.\n'
-            else:
-                rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
-
-        if _type in (FileType.GENERIC_TYPE, FileType.GENERIC_FIELD):
+        elif _type in (FileType.GENERIC_TYPE, FileType.GENERIC_FIELD):
             definition_name = get_definition_name(path, self.pack_path)
             rn_desc = f'- **({definition_name}) - {content_name}**\n'
+        else:
+            if is_new_file:
+                rn_desc = f'##### New: {content_name}\n- {desc}'
+                if from_version:
+                    rn_desc += f' (Available from Cortex XSOAR {from_version}).'
+                rn_desc += '\n'
+            else:
+                rn_desc = f'##### {content_name}\n'
+                if self.update_type == 'documentation':
+                    rn_desc += '- Documentation and metadata improvements.\n'
+                else:
+                    rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
 
         if _type == FileType.TRIGGER:
             rn_desc = f'- {desc}'  # Issue - https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
@@ -694,12 +649,8 @@ class UpdateRN:
         if len(rn_parts) > 1:
             # Splitting again by content name to append the docker image release note to corresponding
             # content entry only
-            if "**" in rn_parts[1]:
-                content_parts = rn_parts[1].split(f'**{content_name}**\n')
-            else:
-                content_parts = rn_parts[1].split(f'{content_name}\n')
-
-            new_rn = f'{rn_parts[0]}{header_by_type}{content_parts[0]}**{content_name}**\n{new_rn_part}\n' \
+            content_parts = rn_parts[1].split(f'{content_name}\n')
+            new_rn = f'{rn_parts[0]}{header_by_type}{content_parts[0]}{content_name}\n{new_rn_part}\n' \
                      f'{content_parts[1]}'
         else:
             print_warning(f'Could not parse release notes {new_rn} by header type: {header_by_type}')

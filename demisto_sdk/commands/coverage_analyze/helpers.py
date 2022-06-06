@@ -34,7 +34,7 @@ def fix_file_path(coverage_file: str, code_file_absolute_path: str):
         cursor = sql_connection.cursor()
         index = cursor.execute('SELECT count(*) FROM file').fetchall()[0][0]
         if not index == 1:
-            logger.error('unexpected file list in coverage report')
+            logger.debug('unexpected file list in coverage report')
         else:
             cursor.execute('UPDATE file SET path = ? WHERE id = ?', (code_file_absolute_path, 1))
             sql_connection.commit()

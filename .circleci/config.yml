@@ -334,12 +334,12 @@ jobs:
 
   slack-notifier:
     docker:
-      - image: cimg/python:<< parameters.pythonversion >>-node
+      - image: << pipeline.parameters.global-docker-image >>
     steps:
       - run:
           name: setup requirements
           command: |
-            pip3 install -r .demisto_sdk/utils/circle-ci/build-requirements.txt
+            pip3 install slack-sdk
       - run:
           name: run slack notifier
           command: |
@@ -385,10 +385,10 @@ workflows:
       - waiter:
           filters:
             branches:
-              only: master
+              only: slack-sdk-notifier
       - slack-notifier:
           requires:
             - waiter
           filters:
             branches:
-              only: master
+              only: slack-sdk-notifier

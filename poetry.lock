@@ -258,11 +258,14 @@ unicode_backport = ["unicodedata2"]
 
 [[package]]
 name = "click"
-version = "7.1.2"
+version = "8.1.3"
 description = "Composable command line interface toolkit"
 category = "main"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+python-versions = ">=3.7"
+
+[package.dependencies]
+colorama = {version = "*", markers = "platform_system == \"Windows\""}
 
 [[package]]
 name = "colorama"
@@ -1860,6 +1863,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "types-futures"
+version = "3.3.8"
+description = "Typing stubs for futures"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "types-ipaddress"
 version = "1.0.8"
 description = "Typing stubs for ipaddress"
@@ -2182,7 +2193,7 @@ build = ["gsutil"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "17c1a517d6b70c25013b08500ba772c2d0d8b2c5005aa341eb69ad50d989941c"
+content-hash = "77ddec0756b89587c5f8e39af0eba863a0dca500e80705d89a0a88903db06143"
 
 [metadata.files]
 aiohttp = [
@@ -2472,8 +2483,8 @@ charset-normalizer = [
     {file = "charset_normalizer-2.0.12-py3-none-any.whl", hash = "sha256:6881edbebdb17b39b4eaaa821b438bf6eddffb4468cf344f09f89def34a8b1df"},
 ]
 click = [
-    {file = "click-7.1.2-py2.py3-none-any.whl", hash = "sha256:dacca89f4bfadd5de3d7489b7c8a566eee0d3676333fbb50030263894c38c0dc"},
-    {file = "click-7.1.2.tar.gz", hash = "sha256:d2b5255c7c6349bc1bd1e59e08cd12acbbd63ce649f2588755783aa94dfb6b1a"},
+    {file = "click-8.1.3-py3-none-any.whl", hash = "sha256:bb4d8133cb15a609f44e8213d9b391b0809795062913b383c62be0ee95b1db48"},
+    {file = "click-8.1.3.tar.gz", hash = "sha256:7682dc8afb30297001674575ea00d1814d808d6a36af415a82bd481d37ba7b8e"},
 ]
 colorama = [
     {file = "colorama-0.4.4-py2.py3-none-any.whl", hash = "sha256:9f47eda37229f68eee03b24b9748937c7dc3868f906e8ba69fbcbdd3bc5dc3e2"},
@@ -3618,6 +3629,10 @@ types-emoji = [
 types-filelock = [
     {file = "types-filelock-3.2.5.tar.gz", hash = "sha256:2481d41a2916af1605bcd0305e13c0450c7afc568268bd669249e7b08cf958ac"},
     {file = "types_filelock-3.2.5-py3-none-any.whl", hash = "sha256:1021c6b8850f94a57e22f32263cd1d754326555dc2dc56e233c957262e42eb93"},
+]
+types-futures = [
+    {file = "types-futures-3.3.8.tar.gz", hash = "sha256:6fe8ccc2c2af7ef2fdd9bf73eab6d617074f09f30ad7d373510b4043d39c42de"},
+    {file = "types_futures-3.3.8-py3-none-any.whl", hash = "sha256:d6e97ec51d56b96debfbf1dea32ebec22c1687f16d2547ea0a34b48db45df205"},
 ]
 types-ipaddress = [
     {file = "types-ipaddress-1.0.8.tar.gz", hash = "sha256:a03df3be5935e50ba03fa843daabff539a041a28e73e0fce2c5705bee54d3841"},

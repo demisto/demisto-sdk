@@ -16,14 +16,15 @@ ALLOWED_IGNORE_ERRORS = [
     'DS107',
     'GF102',
     'IF100', 'IF106', 'IF115', 'IF116',
-    'IN109', 'IN110', 'IN122', 'IN124', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145',
+    'IN109', 'IN110', 'IN122', 'IN124', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145', 'IN153', 'IN154',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107',
     'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM 110',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
-    'IM111', 'RN112'
+    'IM111',
+    'RN112',
 ]
 
 # predefined errors to be ignored in partner/community supported packs even if they do not appear in .pack-ignore
@@ -231,6 +232,8 @@ ERROR_CODE = {
     'invalid_siem_integration_name': {'code': 'IN150', 'ui_applicable': True, 'related_field': 'display'},
     "empty_command_arguments": {'code': 'IN151', 'ui_applicable': False, 'related_field': 'arguments'},
     'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True, 'related_field': 'defaultvalue'},
+    'not_supported_integration_parameter_url_defaultvalue': {'code': 'IN153', 'ui_applicable': False, 'related_field': 'defaultvalue'},
+    'missing_reliability_parameter': {'code': 'IN154', 'ui_applicable': False, 'related_field': 'configuration'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -852,6 +855,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def not_supported_integration_parameter_url_defaultvalue(param, invalid_defaultvalue):
+        return f"The integration parameter {param} has defaultvalue set to {invalid_defaultvalue}. If possible, replace the http prefix with https."
+
+    @staticmethod
+    @error_code_decorator
     def is_valid_integration_file_path_in_folder(integration_file):
         return f"The integration file name: {integration_file} is invalid, " \
                f"The integration file name should be the same as the name of the folder that contains it."
@@ -882,6 +890,13 @@ class Errors:
         return f"The defaultvalue checkbox of {name}'s filed is incorrect, " \
                f"should be 'true' or 'false', a string which contains only lowercase letters.\n " \
                f"e.g: defaultvalue: 'true'"
+
+    @staticmethod
+    @error_code_decorator
+    def missing_reliability_parameter(command: str):
+        return f'Missing "Reliability" parameter in the {command} reputation command.' \
+               f'Please add it to the YAML file.' \
+               f'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/integrations/dbot#reliability-level'
 
     @staticmethod
     @error_code_decorator
@@ -1253,10 +1268,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def release_notes_bc_json_file_missing(json_path):
-        return f"A new release notes file contains the phrase \"breaking changes\" without a proper JSON file.\n" \
-               f"Please add it to the following path: {json_path}\n",\
-               "For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes"
+    def release_notes_bc_json_file_missing(json_path: str):
+        return f'A new release notes file contains the phrase \"breaking changes\" ' \
+               'without a matching JSON file (with the same name as the release note file, e.g. 1_2_3.json). ' \
+               f'Please run \"demisto-sdk update-release-notes -i {json_path[:-4]}md -bc\". ' \
+               'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
 
     @staticmethod
     @error_code_decorator

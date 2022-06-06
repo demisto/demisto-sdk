@@ -374,10 +374,7 @@ class Linter:
     def _handle_lint_results(self, exit_code, lint_check, output):
         # check for any exit code other than 0
         if exit_code:
-            if lint_check == 'vulture':
-                error, warning, other = output, None, None
-            else:
-                error, warning, other = split_warnings_errors(output)
+            error, warning, other = split_warnings_errors(output)
         if exit_code and warning:
             self._pkg_lint_status["warning_code"] |= EXIT_CODES[lint_check]
             self._pkg_lint_status[f"{lint_check}_warnings"] = "\n".join(warning)
@@ -542,9 +539,6 @@ class Linter:
                 "image_errors": "",
                 "pylint_errors": "",
                 "pytest_errors": "",
-                "flake8_errors": "",
-                "flake8_warnigns": "",
-                "vulture_errors": "",
                 "pytest_json": {},
                 "pwsh_analyze_errors": "",
                 "pwsh_test_errors": ""

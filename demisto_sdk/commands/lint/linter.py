@@ -789,7 +789,7 @@ class Linter:
             container: docker.models.containers.Container = Docker.create_container(
                 name=container_name,
                 image=test_image,
-                command=build_pytest_command(test_xml=test_xml, json=True, cov=cov),
+                command=[build_pytest_command(test_xml=test_xml, json=True, cov=cov)],
                 user=f"{uid}:4000",
                 files_to_push=[(self._pack_abs_dir, '/devwork')],
                 environment=self._facts["env_vars"],

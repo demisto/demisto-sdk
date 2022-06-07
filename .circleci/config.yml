@@ -341,6 +341,7 @@ jobs:
           name: setup requirements
           command: |
             pip3 install slack-sdk
+            pip3 install requests
       - run:
           name: run slack notifier
           command: |

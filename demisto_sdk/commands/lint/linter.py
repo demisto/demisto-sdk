@@ -511,8 +511,7 @@ class Linter:
 
         return SUCCESS, ""
 
-    def _handle_errors(self):
-        pass
+
 
     @timer(group_name='lint')
     def _run_lint_on_docker_image(self, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
@@ -784,7 +783,6 @@ class Linter:
         try:
             # Running pytest container
             cov_file_path = Path.joinpath(self._pack_abs_dir, '.coverage')
-
             cov = self._pack_abs_dir.stem if not no_coverage and cov_file_path.exists() else ''
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
@@ -796,7 +794,6 @@ class Linter:
                 files_to_push=[(self._pack_abs_dir, '/devwork')],
                 environment=self._facts["env_vars"],
             )
-
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # Waiting for container to be finished

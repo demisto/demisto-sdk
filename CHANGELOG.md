@@ -16,6 +16,7 @@
 * Added a new validation to the **validate** command, to check when the discouraged `http` prefixes are used when setting defaultvalue, rather than `https`.
 * Added a check to the **lint** command for finding hard-coded usage of the http protocol.
 * Locked the dependency on Docker.
+* Removed a traceback line from the **init** command templates: BaseIntegration, BaseScript.
 
 ## 1.6.7
 

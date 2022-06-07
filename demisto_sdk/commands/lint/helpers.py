@@ -150,7 +150,14 @@ def get_test_modules(content_repo: Optional[git.Repo], is_external_repo: bool) -
             try:
                 module_full_path = content_repo.working_dir / module
                 logger.debug(f'read file {module_full_path}')
-                modules_content[module] = (module_full_path).read_bytes()
+                if module.match('*CommonServerPython.py'):
+                    # Remove import of DemistoClassApiModule in CommonServerPython,
+                    # since tests don't use this class and the import fails the tests.
+                    modules_content[module] = (module_full_path).read_bytes().replace(
+                        b'from DemistoClassApiModule import *', b'')
+                    logger.debug(f'Changed file {module_full_path} without demisto import')
+                else:
+                    modules_content[module] = (module_full_path).read_bytes()
             except FileNotFoundError:
                 module_not_found = True
                 logger.warning(f'Module {module} was not found, possibly deleted due to being in a feature branch')

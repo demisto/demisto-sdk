@@ -14,7 +14,7 @@ def options_handler():
     parser.add_argument('-u', '--url', help='The base URL for the Circle-CI api server', default=API_BASE_URL)
     parser.add_argument('-wd', '--workflow_id', help='The workflow id triggered by the PR', required=True)
     parser.add_argument('-st', '--slack_token', help='The token for slack', required=True)
-    parser.add_argument('-ct', '--circle_token', help='The token for Circle-CI', required=True)
+    parser.add_argument('-ct', '--circle_token', help='The token for Circle-CI', default=None)
     parser.add_argument(
         '-ch', '--slack_channel',
         help='The slack channel in which to send the notification',

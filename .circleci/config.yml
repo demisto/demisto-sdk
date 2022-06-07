@@ -345,7 +345,7 @@ jobs:
       - run:
           name: run slack notifier
           command: |
-            python3 demisto_sdk/utils/circle-ci/circle_ci_slack_notifier.py -wd $CIRCLE_WORKFLOW_ID -st $SLACK_TOKEN -ct $CCI_TOKEN
+            python3 demisto_sdk/utils/circle-ci/circle_ci_slack_notifier.py -wd $CIRCLE_WORKFLOW_ID -st $SLACK_TOKEN
 
 workflows:
   version: 2.1

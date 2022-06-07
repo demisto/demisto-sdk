@@ -10,7 +10,7 @@ API_BASE_URL = "https://circleci.com/api"
 PROJECT_SLUG = "github/demisto/demisto-sdk"
 
 
-logger = logging.getLogger('circle-ci-demisto-sdk')
+logger = logging.getLogger('demisto-sdk')
 
 
 class CircleCIError(Exception):
@@ -76,7 +76,7 @@ class CircleCIClient:
             raise ValueError(
                 f'Invalid response type ({response_type}) - should be one of {"/".join(self.RESPONSE_TYPES)}'
             )
-        self.auth = HTTPBasicAuth(username=token or os.getenv("CIRCLE_TOKEN"), password='')
+        self.auth = HTTPBasicAuth(username=token or os.getenv("CCI_TOKEN"), password='')
         self.base_url = base_url or API_BASE_URL
         self.verify = verify
         self.response_type = response_type

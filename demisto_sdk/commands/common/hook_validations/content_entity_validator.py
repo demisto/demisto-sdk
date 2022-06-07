@@ -266,7 +266,7 @@ class ContentEntityValidator(BaseValidator):
             from_version = self.current_file.get('fromversion', '00.00.00') or '00.00.00'
             to_version = self.current_file.get('toversion', '00.00.00') or '00.00.00'
         else:
-            raise ValueError('File is not `json` or `yml` type')
+            raise ValueError(f'{self.file_path} is not json or yml type')
 
         for field, name in ((from_version, 'fromversion'), (to_version, 'toversion')):
             if not FROM_TO_VERSION_REGEX.fullmatch(field):
@@ -286,10 +286,10 @@ class ContentEntityValidator(BaseValidator):
             from_version = self.current_file.get('fromversion', '')
             to_version = self.current_file.get('toversion', '')
         else:
-            raise ValueError('File is not `json` or `yml` type')
+            raise ValueError(f'{self.file_path} is not json or yml type')
 
         if not from_version or not to_version:
-            logger.debug('either not from_version or not to_version, considering them synced')
+            logger.debug(f'either not from_version or not to_version in {self.file_path}, considering them synced')
             return True
 
         if version.parse(to_version) < version.parse(from_version):

@@ -335,6 +335,7 @@ jobs:
   slack-notifier:
     docker:
       - image: << pipeline.parameters.global-docker-image >>
+    working_directory: ~/project/demisto-sdk
     steps:
       - run:
           name: setup requirements

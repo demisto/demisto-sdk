@@ -1,7 +1,7 @@
 import json
+import logging
 import os
 import re
-import logging
 from abc import abstractmethod
 from distutils.version import LooseVersion
 from typing import Optional

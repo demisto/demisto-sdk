@@ -280,7 +280,7 @@ FROM_AND_TO_VERSION_FOR_TEST = [
     (
         {'toversion': 'test'},
         'test',
-        True
+        'test is not json or yml type'
     ),
     (
         {'toversion': ''},
@@ -307,4 +307,8 @@ def test_are_fromversion_and_toversion_in_correct_format(mocker, current_file, f
 
     content_entity_validator = ContentEntityValidator(structure)
     mocker.patch.object(ContentEntityValidator, 'handle_error', return_value=current_file)
-    assert content_entity_validator.are_fromversion_and_toversion_in_correct_format() == expected_result
+
+    try:
+        assert content_entity_validator.are_fromversion_and_toversion_in_correct_format() == expected_result
+    except Exception as e:
+        assert expected_result in str(e)

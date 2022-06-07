@@ -1,7 +1,10 @@
 Use the Quin-C AccessData integration to protect against and provide additional visibility into phishing and other malicious email attacks. This integration was integrated and tested with version 20190926 of Quin-C Accessdata.
 
 Documentation for the integration was provided by Quin-C.
-
+For more info check out think links-
+[Good link](htttps://www.good.co.il)
+[invalid relative 1](relative1.com)
+[invalid relative 2](www.relative2.com)
 ## AccessData Playbook
 
 For example, you can look at “Accessdata: Dump memory for malicious process” playbook to understand how to use this integration.

@@ -88,6 +88,7 @@ class ReadMeValidator(BaseValidator):
             bool: True if env configured else Fale.
         """
         return all([
+            self.check_readme_relative_url_paths(),
             self.is_image_path_valid(),
             self.verify_readme_image_paths(),
             self.is_mdx_file(),
@@ -239,6 +240,40 @@ class ReadMeValidator(BaseValidator):
                 self.check_readme_absolute_image_paths()]):
             return False
         return True
+
+    @error_codes('RM112')
+    def check_readme_relative_url_paths(self, is_pack_readme: bool = False) -> list:
+        """ Validate readme url relative paths.
+            prints an error if relative paths in README are found since they are not supported.
+
+        Arguments:
+            is_pack_readme (bool) - True if the the README file is a pack README, default: False
+
+        Returns:
+            list: List of the errors found
+        """
+        error_list = []
+        # If error was found, print it only if its not a pack readme. For pack readme, the PackUniqueFilesValidator
+        # class handles the errors and printing.
+        should_print_error = not is_pack_readme
+        relative_urls = re.findall(r'^(?![!])(\[.*?\])\(((?![http|#|mailto:]).*?)\)$', self.readme_content,
+                                     re.IGNORECASE | re.MULTILINE)
+        relative_urls += re.findall(r'(<.*?href\s*=\s*"((?![http|#|mailto:]).*?)")', self.readme_content,
+                                     re.IGNORECASE | re.MULTILINE)
+        for url in relative_urls:
+            # striping in case there are whitespaces at the beginning/ending of url.
+            error_message, error_code = Errors.invalid_readme_relative_url_error(url[1])
+            if error_code and error_message:  # error was found
+                formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                    should_print=should_print_error)
+                error_list.append(formatted_error)
+
+        if is_pack_readme:
+            return error_list
+
+        else:
+            is_valid = len(error_list) == 0
+            return is_valid
 
     def check_readme_relative_image_paths(self, is_pack_readme: bool = False) -> list:
         """ Validate readme images relative paths.

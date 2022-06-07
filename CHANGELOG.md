@@ -3,7 +3,8 @@
 ## Unreleased
 
 * Removed the validation of a subtype change in integrations and scripts from **validate**.
-
+* Added validation to **validate** command, to identify unsupported relative urls in README files.
+* 
 ## 1.6.7
 
 * Added the `types-markdown` dependency, adding markdown capabilities to existing linters using the [Markdown](https://pypi.org/project/Markdown/) package.

@@ -644,6 +644,28 @@ class TestPackUniqueFilesValidator:
         # this path is not an image path and should not be shown.
         assert 'https://github.com/demisto/content/raw/test3.png' not in errors
 
+    def test_validate_pack_readme_invalid_images(self):
+        """
+            Given
+                - A pack README file with invalid relative path in it.
+            When
+                - Run validate on pack README file
+            Then
+                - Ensure:
+                    - Validation fails
+                    - Invalid relative paths were caught correctly
+                    - Invalid absolute paths were not caught.
+        """
+        self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack2'))
+
+        result = self.validator.validate_pack_readme_relative_urls()
+        errors = self.validator.get_errors()
+        assert not result
+        assert 'Relative url is not supported within README, If this is not a relative url make sure you added https:// at the start of it:\nrelative1.com. ' in errors
+        assert 'Relative url is not supported within README, If this is not a relative url make sure you added https:// at the start of it:\nwww.relative2.com. ' in errors
+        # this path is not an image path and should not be shown.
+        assert 'htttps://www.good.co.il' not in errors
+
     @pytest.mark.parametrize('readme_content, is_valid', [
         ('Hey there, just testing', True),
         ('This is a test. All good!', False),

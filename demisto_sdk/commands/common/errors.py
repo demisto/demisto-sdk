@@ -339,6 +339,7 @@ ERROR_CODE = {
     "missing_readme_file": {'code': "RM109", 'ui_applicable': False, 'related_field': ''},
     "missing_commands_from_readme": {'code': "RM110", 'ui_applicable': False, 'related_field': ''},
     "error_uninstall_node": {'code': "RM111", 'ui_applicable': False, 'related_field': ''},
+    "invalid_readme_relative_url_error": {'code': "RM112", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -1767,6 +1768,12 @@ class Errors:
     @staticmethod
     def invalid_readme_insert_image_link_error(path):
         return f'Image link was not found, either insert it or remove it:\n{path}'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_readme_relative_url_error(path):
+        return f'Relative url is not supported within README, If this is not a relative url make sure you added ' \
+               f'https:// at the start of it:\n{path}. '
 
     @staticmethod
     @error_code_decorator

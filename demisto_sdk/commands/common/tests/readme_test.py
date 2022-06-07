@@ -74,6 +74,30 @@ def test_are_modules_installed_for_verify_false_res(tmp_path):
     assert not readme_validator.are_modules_installed_for_verify(tmp_path)
 
 
+def test_relative_url_not_valid():
+    """
+    Given
+        - A README file with 2 invalid relative urls in it.
+    When
+        - Run validate on README file
+    Then
+        - Ensure:
+            - Validation fails
+            - Both urls were caught correctly
+            - Valid url was not caught
+    """
+    captured_output = io.StringIO()
+    sys.stdout = captured_output  # redirect stdout.
+    urls = ["htttps://www.good.co.il" ,"relative1.com", "www.relative2.com"]
+    readme_validator = ReadMeValidator(INVALID_MD)
+    result = readme_validator.check_readme_relative_url_paths()
+    sys.stdout = sys.__stdout__  # reset stdout.
+    assert not result
+    assert urls[0] not in captured_output.getvalue()
+    assert urls[1] in captured_output.getvalue()
+    assert urls[2] in captured_output.getvalue()
+
+
 def test_is_image_path_valid():
     """
     Given

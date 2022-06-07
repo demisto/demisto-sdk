@@ -347,7 +347,7 @@ jobs:
           name: Run Slack Notifier
           no_output_timeout: 15m
           command: |
-            python3 demisto_sdk/utils/circle-ci/circle_ci_slack_notifier.py -wd $CIRCLE_WORKFLOW_ID -st $SLACK_TOKEN
+            poetry run demisto_sdk/utils/circle-ci/circle_ci_slack_notifier.py -wd $CIRCLE_WORKFLOW_ID -st $SLACK_TOKEN
 
 
 #    docker:

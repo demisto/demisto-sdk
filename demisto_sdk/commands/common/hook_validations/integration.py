@@ -112,6 +112,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_max_fetch_and_first_fetch(),
             self.is_valid_as_deprecated(),
             self.is_valid_parameters_display_name(),
+            self.is_valid_parameter_url_default_value(),
             self.is_mapping_fields_command_exist(),
             self.is_valid_integration_file_path(),
             self.has_no_duplicate_params(),
@@ -1213,6 +1214,27 @@ class IntegrationValidator(ContentEntityValidator):
                 return False
 
         return True
+
+    @error_codes('IN153')
+    def is_valid_parameter_url_default_value(self) -> bool:
+        """Verifies integration parameters default value is valid.
+
+        Returns:
+            bool: True if the default value of the url parameter uses the https protocol,
+            False otherwise.
+        """
+        configuration = self.current_file.get('configuration', {})
+        parameters_default_values = [(param.get('display'), param.get('defaultvalue')) for param in configuration if param.get('defaultvalue')]
+
+        is_valid = True
+        for param, defaultvalue in parameters_default_values:
+            if defaultvalue and isinstance(defaultvalue, str):
+                if defaultvalue.startswith('http:'):
+                    error_message, error_code = Errors.not_supported_integration_parameter_url_defaultvalue(param, defaultvalue)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        is_valid = False
+
+        return is_valid
 
     @error_codes('IN138,IN137')
     def is_valid_integration_file_path(self) -> bool:

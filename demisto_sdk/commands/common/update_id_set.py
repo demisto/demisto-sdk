@@ -1960,7 +1960,7 @@ class IDSet:
         if not IDSetType.has_value(object_type):
             raise ValueError(f'Invalid IDSetType {object_type}')
 
-        if obj not in self._id_set_dict.get(object_type):
+        if obj not in self._id_set_dict.get(object_type, {}):
             self._id_set_dict.setdefault(object_type, []).append(obj)
 
     def add_pack_to_id_set_packs(self, object_type: IDSetType, obj_name, obj_value):

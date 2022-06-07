@@ -184,9 +184,8 @@ def build_mypy_command(files: List[Path], version: str, content_repo: Path = Non
     command += " --allow-redefinition"
     # Get the full path to the file.
     command += " --show-absolute-path"
-    # Ignore site packages if running python2
-    if parse(version).major < 3:
-        command += " --no-site-packages"
+    # Ignore site packages because running on host
+    command += " --no-site-packages"
     # Point cache to be .mypy_cache in the content repo
     command += f" --cache-dir={content_repo/'.mypy_cache' if content_repo else '/dev/null'}"
     # Generating path patterns - file1 file2 file3,..

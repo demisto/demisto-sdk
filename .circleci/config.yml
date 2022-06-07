@@ -333,18 +333,35 @@ jobs:
       - run: echo "All required jobs have now completed"
 
   slack-notifier:
+    parameters:
+      pythonversion:
+        type: string
     docker:
-      - image: << pipeline.parameters.global-docker-image >>
+      - image: cimg/python:<< parameters.pythonversion >>-node
     steps:
       - checkout
-      - run:
-          name: Setup Requirements
-          command: |
-            pip3 install slack-sdk requests
+      - python/install-packages:
+          pkg-manager: "poetry"
+          cache-version: << pipeline.parameters.cache-version >>
       - run:
           name: Run Slack Notifier
+          no_output_timeout: 15m
           command: |
             python3 demisto_sdk/utils/circle-ci/circle_ci_slack_notifier.py -wd $CIRCLE_WORKFLOW_ID -st $SLACK_TOKEN
+
+
+#    docker:
+#      - image: << pipeline.parameters.global-docker-image >>
+#    steps:
+#      - checkout
+#      - run:
+#          name: Setup Requirements
+#          command: |
+#            pip3 install slack-sdk requests
+#      - run:
+#          name: Run Slack Notifier
+#          command: |
+#            python3 demisto_sdk/utils/circle-ci/circle_ci_slack_notifier.py -wd $CIRCLE_WORKFLOW_ID -st $SLACK_TOKEN
 
 workflows:
   version: 2.1

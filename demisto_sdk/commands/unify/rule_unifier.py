@@ -35,6 +35,7 @@ class RuleUnifier(YAMLUnifier):
         click.echo(f'Unifiying {self.package_path}...')
         self._set_dest_path()
         self._insert_rules()
+        self._insert_schema()
         self._insert_samples()
         self._output_yaml(file_path=self.dest_path, file_data=self.yml_data)
         click.secho(f'Successfully created unifyed YAML in {self.dest_path}', fg="green")
@@ -46,6 +47,13 @@ class RuleUnifier(YAMLUnifier):
         with io.open(rules_path, mode='r', encoding='utf-8') as rules_file:
             rules = rules_file.read()
             self.yml_data['rules'] = FoldedScalarString(rules)
+
+    def _insert_schema(self):
+        schema_path = Path(self.yml_path).with_suffix('.json')
+        if os.path.exists(schema_path):
+            with io.open(schema_path, mode='r', encoding='utf-8') as schema_file:
+                schema = json.loads(schema_file.read())
+                self.yml_data['schema'] = FoldedScalarString(json.dumps(schema, indent=4))
 
     def _insert_samples(self):
         samples_dir = os.path.join(os.path.dirname(self.package_path), SAMPLES_DIR)

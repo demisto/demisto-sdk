@@ -2,11 +2,21 @@
 
 ## Unreleased
 
+* Added support for running lint via a remote docker ssh connection. Use `DOCKER_HOST` env variable to specify a remote docker connection, such as: `DOCKER_HOST=ssh://myuser@myhost.com`.
+* Fixed an issue where the pack cache in *get_marketplaces* caused the function to return invalid values.
+* Fixed an issue where running format on a pack with XSIAM entities would fail.
+* Added the new `display_name` field to relevant entities in the **create-id-set** command.
+* Added a new validation to the **validate** command to verify the existence of "Reliability" parameter if the integration have reputation command.
 * Fixed a bug where terminating the **lint** command failed (`ctrl + c`).
 * Removed the validation of a subtype change in integrations and scripts from **validate**.
 * Fixed an issue where **download** did not behave as expected when prompting for a version update. Reported by @K-Yo
 * Added support for adoption release notes.
 * Fixed a bug where some mypy messages were not parsed properly in **lint**.
+* Fixed an issue where coverage reports used the wrong logging level, marking debug logs as errors.
+* Added a new validation to the **validate** command, to check when the discouraged `http` prefixes are used when setting defaultvalue, rather than `https`.
+* Added a check to the **lint** command for finding hard-coded usage of the http protocol.
+* Locked the dependency on Docker.
+* Removed a traceback line from the **init** command templates: BaseIntegration, BaseScript.
 
 ## 1.6.7
 
@@ -27,9 +37,6 @@
 * Improved logs when running test playbooks (in a build).
 * Fixed an issue in **upload** did not include list-type content items. @nicolas-rdgs
 * Reverted release notes to old format.
-* Added the new `display_name` field to relevant entities in the **create-id-set** command.
-* Added a new validation to the **validate** command to verify the existence of "Reliability" parameter if the integration have reputation command.
-
 
 ## 1.6.6
 

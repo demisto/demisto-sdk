@@ -15,12 +15,11 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_api_module_ids,
                                                get_api_module_integrations_set,
                                                get_definition_name,
+                                               get_display_name,
                                                get_from_version, get_json,
                                                get_latest_release_notes_text,
                                                get_pack_name, get_remote_file,
@@ -338,47 +337,6 @@ class UpdateRN:
         return os.path.join(self.pack_path, 'ReleaseNotes', f'{new_version}.md')
 
     @staticmethod
-    def get_display_name(file_path) -> str:
-        """ Gets the file name from the pack yml file.
-
-            :param file_path: The pack yml file path
-
-            :rtype: ``str``
-            :return
-            The display name
-        """
-        struct = StructureValidator(file_path=file_path, is_new_file=True, predefined_scheme=find_type(file_path))
-        file_data = struct.load_data_from_file()
-        if 'display' in file_data:
-            name = file_data.get('display', None)
-        elif 'layout' in file_data and isinstance(file_data['layout'], dict):
-            name = file_data['layout'].get('id')
-        elif 'name' in file_data:
-            name = file_data.get('name', None)
-        elif 'TypeName' in file_data:
-            name = file_data.get('TypeName', None)
-        elif 'brandName' in file_data:
-            name = file_data.get('brandName', None)
-        elif 'id' in file_data:
-            name = file_data.get('id', None)
-        elif 'trigger_name' in file_data:
-            name = file_data.get('trigger_name')
-
-        elif 'dashboards_data' in file_data and file_data.get('dashboards_data') \
-                and isinstance(file_data['dashboards_data'], list):
-            dashboard_data = file_data.get('dashboards_data', [{}])[0]
-            name = dashboard_data.get('name')
-
-        elif 'templates_data' in file_data and file_data.get('templates_data') \
-                and isinstance(file_data['templates_data'], list):
-            r_name = file_data.get('templates_data', [{}])[0]
-            name = r_name.get('report_name')
-
-        else:
-            name = os.path.basename(file_path)
-        return name
-
-    @staticmethod
     def find_corresponding_yml(file_path) -> str:
         """ Gets the pack's corresponding yml file from the python/yml file.
 
@@ -408,7 +366,7 @@ class UpdateRN:
 
         if self.pack + '/' in file_path and ('README' not in file_path):
             _file_path = self.find_corresponding_yml(file_path)
-            file_name = self.get_display_name(_file_path)
+            file_name = get_display_name(_file_path)
             _file_type = find_type(_file_path)
 
         return file_name, _file_type

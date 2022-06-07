@@ -1,4 +1,5 @@
 import glob
+import json
 import os
 import shutil
 from pathlib import Path
@@ -23,10 +24,10 @@ from demisto_sdk.commands.common.tools import (
     LOG_COLORS, MarketplaceTagParser, TagParser, arg_to_list,
     compare_context_path_in_yml_and_readme, filter_files_by_type,
     filter_files_on_pack, filter_packagify_changes, find_type, get_code_lang,
-    get_current_repo, get_dict_from_file, get_entity_id_by_entity_type,
-    get_entity_name_by_entity_type, get_file_displayed_name,
-    get_file_version_suffix_if_exists, get_files_in_dir,
-    get_ignore_pack_skipped_tests, get_item_marketplaces,
+    get_current_repo, get_dict_from_file, get_display_name,
+    get_entity_id_by_entity_type, get_entity_name_by_entity_type,
+    get_file_displayed_name, get_file_version_suffix_if_exists,
+    get_files_in_dir, get_ignore_pack_skipped_tests, get_item_marketplaces,
     get_last_release_version, get_last_remote_release_version,
     get_latest_release_notes_text, get_pack_metadata,
     get_relative_path_from_packs_dir, get_release_note_entries,
@@ -54,6 +55,7 @@ from demisto_sdk.tests.constants_test import (DUMMY_SCRIPT_PATH, IGNORED_PNG,
                                               VALID_WIDGET_PATH)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT, MAPPER, OLD_CLASSIFIER, REPUTATION)
+from TestSuite.file import File
 from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
@@ -1672,6 +1674,33 @@ class TestGetItemMarketplaces:
         assert len(marketplaces) == 1
         assert 'xsoar' in marketplaces
 
+    @staticmethod
+    def test_pack_not_in_cache(mocker):
+        """
+        Given
+            - item does not declare marketplaces
+            - pack does not appear in pack cache
+        When
+            - getting the marketplaces of an item
+        Then
+            - return the marketplaces from the pack_metadata
+        """
+        item_data = {
+            'name': 'Integration',
+            'pack': 'PackID',
+        }
+        packs = {
+            'PackID2': {
+                'id': 'PackID2',
+            }
+        }
+        mocker.patch('demisto_sdk.commands.common.tools.get_mp_types_from_metadata_by_item', return_value=['marketplacev2'])
+        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml',
+                                             item_data=item_data, packs=packs)
+
+        assert len(marketplaces) == 1
+        assert 'marketplacev2' in marketplaces
+
 
 class TestTagParser:
     def test_no_text_to_remove(self):
@@ -1801,3 +1830,23 @@ class TestMarketplaceTagParser:
         assert self.MARKETPLACE_TAG_PARSER.XSIAM_PREFIX not in actual
         assert 'XSIAM' in actual
         assert 'xsiam' in actual
+
+
+@pytest.mark.parametrize('data, answer', [({'brandName': 'TestBrand'}, 'TestBrand'), ({'id': 'TestID'}, 'TestID'),
+                                          ({'name': 'TestName'}, 'TestName'), ({'TypeName': 'TestType'}, 'TestType'),
+                                          ({'display': 'TestDisplay'}, 'TestDisplay'),
+                                          ({'trigger_name': 'T Name'}, 'T Name'),
+                                          ({'layout': {'id': 'Testlayout'}}, 'Testlayout'),
+                                          ({'dashboards_data': [{'name': 'D Name'}]}, 'D Name'),
+                                          ({'templates_data': [{'report_name': 'R Name'}]}, 'R Name')])
+def test_get_display_name(data, answer, tmpdir):
+    """
+        Given
+            - Pack to update release notes
+        When
+            - get_display_name with file path is called
+        Then
+           - Returned name determined by the key of the data loaded from the file
+        """
+    file = File(tmpdir / 'test_file.json', '', json.dumps(data))
+    assert get_display_name(file.path) == answer

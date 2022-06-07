@@ -63,9 +63,8 @@ class ReleaseNotesValidator(BaseValidator):
                     if file_name and file_type and file_type in RN_HEADER_BY_FILE_TYPE:
                         if (RN_HEADER_BY_FILE_TYPE[file_type] not in self.latest_release_notes) or \
                                 (file_name not in self.latest_release_notes):
-                            entity_name = update_rn_util.get_display_name(file)
                             error_message, error_code = Errors.missing_release_notes_entry(file_type, self.pack_name,
-                                                                                           entity_name)
+                                                                                           file_name)
                             if self.handle_error(error_message, error_code, self.release_notes_file_path):
                                 is_valid = False
         return is_valid

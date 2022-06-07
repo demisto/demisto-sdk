@@ -335,7 +335,7 @@ jobs:
   slack-notifier:
     docker:
       - image: << pipeline.parameters.global-docker-image >>
-    working_directory: ~/project/demisto-sdk
+    working_directory: ~/demisto-sdk
     steps:
       - run:
           name: setup requirements
@@ -344,8 +344,6 @@ jobs:
       - run:
           name: run slack notifier
           command: |
-            export A=$(ls .)
-            echo $A
             python3 demisto_sdk/utils/circle-ci/circle_ci_slack_notifier.py -wd $CIRCLE_WORKFLOW_ID -st $SLACK_TOKEN -ct $CCI_TOKEN
 
 workflows:

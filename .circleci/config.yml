@@ -340,9 +340,9 @@ jobs:
       - image: cimg/python:<< parameters.pythonversion >>-node
     steps:
       - checkout
-#      - python/install-packages:
-#          pkg-manager: "poetry"
-#          cache-version: << pipeline.parameters.cache-version >>
+      - python/install-packages:
+          pkg-manager: "poetry"
+          cache-version: << pipeline.parameters.cache-version >>
       - run:
           name: Run Slack Notifier
           command: |

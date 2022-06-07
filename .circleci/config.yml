@@ -405,6 +405,9 @@ workflows:
             branches:
               only: slack-sdk-notifier
       - slack-notifier:
+          matrix:
+            parameters:
+              pythonversion: [3.10.2]
           requires:
             - waiter
           filters:

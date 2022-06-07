@@ -321,7 +321,7 @@ jobs:
             name: Deploy Release to PyPi
             command: poetry publish -u __token__ -p ${PYPI_TOKEN}
 
-  waiter:
+  slack-notifier-waiter:
     docker:
       - image: circleci/node
     steps:
@@ -335,8 +335,8 @@ jobs:
   slack-notifier:
     docker:
       - image: << pipeline.parameters.global-docker-image >>
-    working_directory: ~/demisto-sdk
     steps:
+      - checkout
       - run:
           name: setup requirements
           command: |
@@ -383,13 +383,13 @@ workflows:
               branches:
                 ignore: /.*/
           <<: *requires_all
-      - waiter:
+      - slack-notifier-waiter:
           filters:
             branches:
               only: slack-sdk-notifier
       - slack-notifier:
           requires:
-            - waiter
+            - slack-notifier-waiter
           filters:
             branches:
               only: slack-sdk-notifier

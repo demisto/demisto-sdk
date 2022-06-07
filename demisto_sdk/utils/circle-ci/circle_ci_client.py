@@ -53,7 +53,7 @@ def parse_http_response(expected_valid_code=200, response_type=None):
                 try:
                     response_as_json = http_response.json()
                 except JSONDecodeError:
-                    raise CircleCIError(f'Error: ({http_response.content})')
+                    raise CircleCIError(f'Error: ({http_response.text})')
                 raise CircleCIError(f'Error: ({response_as_json})')
             if _response_type == 'class':
                 return http_response.json(object_hook=lambda response: CircleCIResponse(**response))
@@ -74,7 +74,7 @@ class CircleCIClient:
     def __init__(self, token=None, base_url=None, verify=True, response_type='class'):
         if response_type not in self.RESPONSE_TYPES:
             raise ValueError(
-                f'Invalid response type as {response_type} - should be one of {"/".join(self.RESPONSE_TYPES)}'
+                f'Invalid response type ({response_type}) - should be one of {"/".join(self.RESPONSE_TYPES)}'
             )
         self.auth = HTTPBasicAuth(username=token or os.getenv("CIRCLE_TOKEN"), password='')
         self.base_url = base_url or API_BASE_URL

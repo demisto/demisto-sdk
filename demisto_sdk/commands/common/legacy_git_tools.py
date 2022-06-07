@@ -1,5 +1,6 @@
 import os
 import re
+from pathlib import Path
 from typing import Callable, List
 
 import click
@@ -220,18 +221,19 @@ def filter_changed_files(files_string, tag='master', print_ignored_files=False):
         if file_status.lower().startswith('r'):
             file_status = 'r'
             file_path = file_data[2]
+        path = Path(file_path)  # added as a quick-fix, not replacing in all places even though they'd be prettier.
         try:
             file_type = find_type(file_path)
             # if the file is a code file - change path to
             # the associated yml path to trigger release notes validation.
             if file_status.lower() != 'd' and \
                     file_type in [FileType.POWERSHELL_FILE, FileType.PYTHON_FILE] and \
-                    not (file_path.endswith('_test.py') or file_path.endswith('.Tests.ps1')):
+                    not (file_path.endswith(('_test.py', '.Tests.ps1'))):
                 # naming convention - code file and yml file in packages must have same name.
                 file_path = os.path.splitext(file_path)[0] + '.yml'
 
             # ignore changes in JS files and unit test files.
-            elif file_path.endswith('.js') or file_path.endswith('.py') or file_path.endswith('.ps1'):
+            elif file_path.endswith(('.js', '.py', 'ps1')):
                 if file_path not in ignored_files:
                     ignored_files.add(file_path)
                     if print_ignored_files:
@@ -262,10 +264,10 @@ def filter_changed_files(files_string, tag='master', print_ignored_files=False):
                     ValidateManager.is_old_file_format(file_path, file_type):
                 old_format_files.add(file_path)
             # identify modified files
-            elif file_status.lower() == 'm' and file_type and not file_path.startswith('.'):
+            elif file_status.lower() == 'm' and file_type and not path.name.startswith('.'):
                 modified_files_list.add(file_path)
             # identify added files
-            elif file_status.lower() == 'a' and file_type and not file_path.startswith('.'):
+            elif file_status.lower() == 'a' and file_type and not path.name.startswith('.'):
                 added_files_list.add(file_path)
             # identify renamed files
             elif file_status.lower().startswith('r') and file_type:

@@ -4,7 +4,9 @@ from typing import Dict, List, Optional
 import click
 
 from demisto_sdk.commands.common.constants import (ENTITY_TYPE_TO_DIR,
-                                                   INTEGRATION, PLAYBOOK,
+                                                   INTEGRATION,
+                                                   NO_TESTS_DEPRECATED,
+                                                   PLAYBOOK,
                                                    TEST_PLAYBOOKS_DIR,
                                                    FileType)
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
@@ -242,7 +244,7 @@ class BaseUpdateYML(BaseUpdate):
         """
 
         self.data['deprecated'] = True
-        self.data['tests'] = 'No test'
+        self.data['tests'] = [NO_TESTS_DEPRECATED]
 
         if file_type in [INTEGRATION, PLAYBOOK]:
 

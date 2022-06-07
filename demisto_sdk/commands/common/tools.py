@@ -59,7 +59,7 @@ yaml = YAML_Handler()
 
 urllib3.disable_warnings()
 
-# inialize color palette
+# initialize color palette
 colorama.init()
 
 
@@ -1299,14 +1299,11 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
     if path.suffix == '.md':
         if 'README' in path.name:
             return FileType.README
-
-        if RELEASE_NOTES_DIR in path.parts:
+        elif RELEASE_NOTES_DIR in path.parts:
             return FileType.RELEASE_NOTES
-
-        if 'description' in path.name:
+        elif 'description' in path.name:
             return FileType.DESCRIPTION
-
-        if 'CONTRIBUTORS' in path.name:
+        elif 'CONTRIBUTORS' in path.name:
             return FileType.CONTRIBUTORS
 
         return FileType.CHANGELOG
@@ -1326,34 +1323,42 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.XSIAM_REPORT
         elif TRIGGER_DIR in path.parts:
             return FileType.TRIGGER
+        elif path.name == METADATA_FILE_NAME:
+            return FileType.METADATA
+        elif path.name.endswith(XSOAR_CONFIG_FILE):
+            return FileType.XSOAR_CONFIG
 
-    # integration image
-    if path.name.endswith('_image.png'):
+    elif path.name.endswith('_image.png'):
         if path.name.endswith("Author_image.png"):
             return FileType.AUTHOR_IMAGE
         return FileType.IMAGE
 
-    # doc files images
-    if path.suffix == ".png" and DOC_FILES_DIR in path.parts:
+    elif path.suffix == ".png" and DOC_FILES_DIR in path.parts:
         return FileType.DOC_IMAGE
 
-    if path.suffix == '.ps1':
+    elif path.suffix == '.ps1':
         return FileType.POWERSHELL_FILE
 
-    if path.suffix == '.py':
+    elif path.suffix == '.py':
         return FileType.PYTHON_FILE
 
-    if path.suffix == '.js':
+    elif path.suffix == '.js':
         return FileType.JAVASCRIPT_FILE
 
-    if path.suffix == '.xif':
+    elif path.suffix == '.xif':
         return FileType.XIF_FILE
 
-    if path.name.endswith(XSOAR_CONFIG_FILE):
-        return FileType.XSOAR_CONFIG
-
-    if path.suffix == '.yml' and (path.parts[0] == '.circleci' or path.parts[0] == '.gitlab'):
+    elif path.suffix == '.yml' and (path.parts[0] in {'.circleci', '.gitlab'}):
         return FileType.BUILD_CONFIG_FILE
+
+    elif path.name == FileType.PACK_IGNORE.value:
+        return FileType.PACK_IGNORE
+
+    elif path.name == FileType.SECRET_IGNORE.value:
+        return FileType.SECRET_IGNORE
+
+    elif path.parent.name == DOC_FILES_DIR:
+        return FileType.DOC_FILE
 
     return None
 
@@ -1793,12 +1798,11 @@ def _get_file_id(file_type: str, file_content: Dict):
     Returns:
         The file's content ID
     """
-    file_id = ''
     if file_type in ID_IN_ROOT:
-        file_id = file_content.get('id', '')
+        return file_content.get('id', '')
     elif file_type in ID_IN_COMMONFIELDS:
-        file_id = file_content.get('commonfields', {}).get('id')
-    return file_id
+        return file_content.get('commonfields', {}).get('id')
+    return file_content.get('trigger_id', '')
 
 
 def is_path_of_integration_directory(path: str) -> bool:
@@ -2487,7 +2491,7 @@ def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[st
             marketplaces = [MarketplaceVersions.XSOAR.value]
         else:
             pack_name = get_pack_name(item_path)
-            if packs:
+            if packs and packs.get(pack_name):
                 marketplaces = packs.get(pack_name, {}).get('marketplaces', [MarketplaceVersions.XSOAR.value])
             else:
                 marketplaces = get_mp_types_from_metadata_by_item(item_path)
@@ -2766,3 +2770,124 @@ def remove_copy_and_dev_suffixes_from_str(field_name: str) -> str:
             if field_name.endswith(suffix):
                 field_name = field_name[:-len(suffix)]
     return field_name
+
+
+def get_display_name(file_path, file_data={}) -> str:
+    """ Gets the entity display name from the file.
+
+        :param file_path: The entity file path
+        :param file_data: The entity file data
+
+        :rtype: ``str``
+        :return The display name
+    """
+    if not file_data:
+        file_extension = os.path.splitext(file_path)[1]
+        if file_extension in ['.yml', '.json']:
+            file_data = get_file(file_path, file_extension)
+
+    if 'display' in file_data:
+        name = file_data.get('display', None)
+    elif 'layout' in file_data and isinstance(file_data['layout'], dict):
+        name = file_data['layout'].get('id')
+    elif 'name' in file_data:
+        name = file_data.get('name', None)
+    elif 'TypeName' in file_data:
+        name = file_data.get('TypeName', None)
+    elif 'brandName' in file_data:
+        name = file_data.get('brandName', None)
+    elif 'id' in file_data:
+        name = file_data.get('id', None)
+    elif 'trigger_name' in file_data:
+        name = file_data.get('trigger_name')
+
+    elif 'dashboards_data' in file_data and file_data.get('dashboards_data') \
+            and isinstance(file_data['dashboards_data'], list):
+        dashboard_data = file_data.get('dashboards_data', [{}])[0]
+        name = dashboard_data.get('name')
+
+    elif 'templates_data' in file_data and file_data.get('templates_data') \
+            and isinstance(file_data['templates_data'], list):
+        r_name = file_data.get('templates_data', [{}])[0]
+        name = r_name.get('report_name')
+
+    else:
+        name = os.path.basename(file_path)
+    return name
+
+
+def get_invalid_incident_fields_from_mapper(
+    mapper_incident_fields: Dict[str, Dict], mapping_type: str, content_fields: List
+) -> List[str]:
+    """
+    Get a list of incident fields which are not part of the content items (not part of id_json) from a specific
+    interalMapping attribute.
+
+    Args:
+        mapper_incident_fields (dict[str, dict]): a dict of incident fields which belongs to a specific interalMapping.
+        mapping_type (str): type of the mapper, either 'mapping-incoming' or 'mapping-outgoing'.
+        content_fields (list[str]): list of available content fields.
+
+    Returns:
+        list[str]: all the invalid incident fields which are not part of the content items.
+
+    Raises:
+        ValueError: in case the mapping type has an incorrect value provided.
+    """
+    if mapping_type not in {'mapping-incoming', 'mapping-outgoing'}:
+        raise ValueError(f'Invalid mapping-type value {mapping_type}, should be: mapping-incoming/mapping-outgoing')
+
+    non_existent_fields = []
+
+    for inc_name, inc_info in mapper_incident_fields.items():
+        # incoming mapper
+        if mapping_type == "mapping-incoming":
+            if inc_name not in content_fields and inc_name.lower() not in content_fields:
+                non_existent_fields.append(inc_name)
+        # outgoing mapper
+        if mapping_type == "mapping-outgoing":
+            # for inc timer type: "field.StartDate, and for using filters: "simple": "".
+            if simple := inc_info.get('simple'):
+                if '.' in simple:
+                    simple = simple.split('.')[0]
+                if simple not in content_fields:
+                    non_existent_fields.append(inc_name)
+
+    return non_existent_fields
+
+
+def get_invalid_incident_fields_from_layout(layout_incident_fields: List[Dict], content_fields: List[str]) -> List[str]:
+    """
+    Get a list of incident fields which are not part of the content items (not part of id_json) from a specific
+    layout item/section.
+
+    Args:
+        layout_incident_fields (list[dict]): a list of incident fields which
+            belongs to a specific section/item in the layout.
+        content_fields (list[str]): list of available content fields.
+
+    Returns:
+        list[str]: all the invalid incident fields which are not part of the content items.
+    """
+    non_existent_fields = []
+
+    if layout_incident_fields and content_fields:
+        for incident_field_info in layout_incident_fields:
+            inc_field_id = normalize_field_name(field=incident_field_info.get('fieldId', ''))
+            if inc_field_id and inc_field_id.lower() not in content_fields and inc_field_id not in content_fields:
+                non_existent_fields.append(inc_field_id)
+
+    return non_existent_fields
+
+
+def normalize_field_name(field: str) -> str:
+    """
+    Get the raw field from a layout/mapper field.
+
+    Input Example:
+        field = incident_employeenumber
+
+    Args:
+        field (str): the incident/indicator field.
+    """
+    return field.replace('incident_', '').replace('indicator_', '')

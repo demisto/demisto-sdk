@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import logging
 from abc import abstractmethod
 from distutils.version import LooseVersion
 from typing import Optional
@@ -26,6 +27,7 @@ from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
                                                run_command)
 
 yaml = YAML_Handler()
+logger = logging.getLogger("demisto-sdk")
 
 
 class ContentEntityValidator(BaseValidator):
@@ -264,19 +266,14 @@ class ContentEntityValidator(BaseValidator):
             from_version = self.current_file.get('fromversion', '00.00.00') or '00.00.00'
             to_version = self.current_file.get('toversion', '00.00.00') or '00.00.00'
         else:
-            return True
+            raise ValueError('File is not `json` or `yml` type')
 
-        if not FROM_TO_VERSION_REGEX.fullmatch(from_version):
-            error_message, error_code = Errors.from_and_to_version_are_incorrect_format(
-                'fromversion')
-            self.handle_error(error_message, error_code, file_path=self.file_path)
-            return False
-        if not FROM_TO_VERSION_REGEX.fullmatch(to_version):
-            error_message, error_code = Errors.from_and_to_version_are_incorrect_format(
-                'tovesion')
-            self.handle_error(error_message, error_code, file_path=self.file_path)
-            return False
-
+        for field, name in ((from_version, 'fromversion'), (to_version, 'toversion')):
+            if not FROM_TO_VERSION_REGEX.fullmatch(field):
+                error_message, error_code = Errors.incorrect_from_to_version_format(
+                    name)
+                self.handle_error(error_message, error_code, file_path=self.file_path)
+                return False
         return True
 
     @error_codes('BA118')
@@ -289,13 +286,14 @@ class ContentEntityValidator(BaseValidator):
             from_version = self.current_file.get('fromversion', '')
             to_version = self.current_file.get('toversion', '')
         else:
-            return True
+            raise ValueError('File is not `json` or `yml` type')
 
         if not from_version or not to_version:
+            logger.debug('either not from_version or not to_version, considering them synced')
             return True
 
         if version.parse(to_version) < version.parse(from_version):
-            error_message, error_code = Errors.from_and_to_version_are_not_synchronizied()
+            error_message, error_code = Errors.mismatching_from_to_versions()
             self.handle_error(error_message, error_code, file_path=self.file_path)
             return False
         return True

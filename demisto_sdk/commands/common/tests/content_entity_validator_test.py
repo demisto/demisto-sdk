@@ -282,6 +282,11 @@ FROM_AND_TO_VERSION_FOR_TEST = [
         'test',
         True
     ),
+    (
+        {'toversion': ''},
+        'test.yml',
+        True
+    ),
 
 ]
 

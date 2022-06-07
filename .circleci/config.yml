@@ -338,12 +338,11 @@ jobs:
     steps:
       - checkout
       - run:
-          name: setup requirements
+          name: Setup Requirements
           command: |
-            pip3 install slack-sdk
-            pip3 install requests
+            pip3 install slack-sdk requests
       - run:
-          name: run slack notifier
+          name: Run Slack Notifier
           command: |
             python3 demisto_sdk/utils/circle-ci/circle_ci_slack_notifier.py -wd $CIRCLE_WORKFLOW_ID -st $SLACK_TOKEN
 

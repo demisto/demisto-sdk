@@ -62,7 +62,7 @@ class CircleCiFailedJobsParser:
                 for action in job_step.actions:
                     # if exit code is not None and > 0
                     if action.status.lower() == self.FAILED_STEP_STATUS and action.exit_code:
-                        failed_steps.append(action.name)
+                        failed_steps.append(job_step.name)
                         if job_step.name == 'Test validate files and yaml':  # if the validation step failed
                             self.validation_job_failure_details = {
                                 'job_number': job_number,
@@ -140,17 +140,6 @@ class CircleCiFailedJobsParser:
             f'{test.classname}.{test.name}' for test in response.items if test.result.lower() == self.FAILED_TEST_STATUS
         ]
 
-    def get_pipeline_url(self) -> str:
-        """
-        Get the url for the circle-CI pipeline that failed.
-
-        Returns:
-            str: url of the failed circle-CI pipeline.
-        """
-        workflow_details = self.circle_client.get_workflow_details(workflow_id=self.workflow_id)
-        pipeline_number = workflow_details.pipeline_number
-        return f'https://app.circleci.com/pipelines/{PROJECT_SLUG}/{pipeline_number}/workflows/{self.workflow_id}'
-
     def get_failed_files_on_validations(self) -> List[str]:
         """
         Get the failed files of the validation errors.
@@ -165,6 +154,17 @@ class CircleCiFailedJobsParser:
                 string=response.text
             )
         return []
+
+    def get_pipeline_url(self) -> str:
+        """
+        Get the url for the circle-CI pipeline that failed.
+
+        Returns:
+            str: url of the failed circle-CI pipeline.
+        """
+        workflow_details = self.circle_client.get_workflow_details(workflow_id=self.workflow_id)
+        pipeline_number = workflow_details.pipeline_number
+        return f'https://app.circleci.com/pipelines/{PROJECT_SLUG}/{pipeline_number}/workflows/{self.workflow_id}'
 
 
 def construct_failed_jobs_slack_message(parser: CircleCiFailedJobsParser):
@@ -236,7 +236,7 @@ def main():
     circle_ci_workflow_id = options.workflow_id
     slack_channel = options.slack_channel
 
-    circle_ci_client = CircleCIClient(token=circle_ci_token, base_url=circle_api_url, verify=False)
+    circle_ci_client = CircleCIClient(token=circle_ci_token, base_url=circle_api_url)
     circle_ci_parser = CircleCiFailedJobsParser(circle_client=circle_ci_client, workflow_id=circle_ci_workflow_id)
 
     if slack_message := construct_failed_jobs_slack_message(parser=circle_ci_parser):

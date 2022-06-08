@@ -109,7 +109,7 @@ schema;field_schema:
 schema;arg_filters_schema:
   type: seq
   sequence:
-    - include: arg_filter_schema
+  - include: arg_filter_schema
 
 schema;arg_filter_schema:
   type: map

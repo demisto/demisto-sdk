@@ -115,6 +115,7 @@ pytest-mock = "^3.7.0"
 pytest-subprocess = "^1.4.1"
 requests-mock = "^1.9.3"
 Deprecated = "^1.2.13"
+slack-sdk = "^3.17.0"
 
 [tool.poetry.extras]
 build = ["gsutil"]

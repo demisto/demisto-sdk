@@ -2255,7 +2255,7 @@ build = ["gsutil"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "b8025d9052a0986914fd5a91aa44e1876b0675f18ed644bb50bccc38b7ac23bb"
+content-hash = "809f397b082c43e45c3fc2d7244b41362e7bcc9f86ccd85e2bee943904d5101c"
 
 [metadata.files]
 aiohttp = [

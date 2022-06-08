@@ -312,7 +312,7 @@ class IntegrationScriptUnifier(YAMLUnifier):
         return yml_path, code
 
     @staticmethod
-    def check_api_module_imports(script_code: str) -> dict[str, str]:
+    def check_api_module_imports(script_code: str) -> Dict[str, str]:
         """
         Checks integration code for API module imports
         :param script_code: The integration code
@@ -327,7 +327,7 @@ class IntegrationScriptUnifier(YAMLUnifier):
         return {module_match.group(): module_match.group(1) for module_match in module_matches}
 
     @staticmethod
-    def insert_module_code(script_code: str, import_to_name: dict[str, str]) -> str:
+    def insert_module_code(script_code: str, import_to_name: Dict[str, str]) -> str:
         """
         Inserts API module in place of an import to the module according to the module name
         :param script_code: The integration code

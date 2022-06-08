@@ -1,16 +1,15 @@
 import argparse
 import re
+from typing import List, Set, Tuple, Union
 
-from circle_ci_client import CircleCIClient, PROJECT_SLUG, API_BASE_URL
+from circle_ci_client import API_BASE_URL, PROJECT_SLUG, CircleCIClient
 from slack_sdk import WebClient
-from typing import List, Tuple, Set, Union
-
 
 DEFAULT_SLACK_CHANNEL = 'dmst-slack-notifier-test'
 
 
 def options_handler():
-    parser = argparse.ArgumentParser(description='Parser for circle-ci-slack-notifier args')
+    parser = argparse.ArgumentParser(description='Parser for circle-ci_utils-slack-notifier args')
     parser.add_argument('-u', '--url', help='The base URL for the Circle-CI api server', default=API_BASE_URL)
     parser.add_argument('-wd', '--workflow_id', help='The workflow id triggered by the PR', required=True)
     parser.add_argument('-st', '--slack_token', help='The token for slack', required=True)
@@ -24,7 +23,15 @@ def options_handler():
 
 
 class CircleCiFailedJobsParser:
+    """
+    A class which queries failed jobs of circle CI and parses them.
 
+    Attributes:
+        circle_client (CircleCIClient): circle-CI client.
+        workflow_id (str): the workflow ID.
+        failed_jobs (List[dict]): failed jobs information.
+        validation_job_failure_details (dict): details about validation job failure.
+    """
     TEST_TYPES = {'unit-tests', 'integration-tests'}
     FAILED_JOB_STATUS = 'failed'
     FAILED_STEP_STATUS = 'failed'
@@ -33,8 +40,8 @@ class CircleCiFailedJobsParser:
     def __init__(self, circle_client: CircleCIClient, workflow_id: str):
         self.circle_client = circle_client
         self.workflow_id = workflow_id
-        self.failed_jobs = self.circle_client.get_workflow_jobs(workflow_id=self.workflow_id)
-        self.validation_job_failure_details = {}
+        self.failed_jobs = self.circle_client.get_workflow_jobs(self.workflow_id)
+        self.validation_job_failure_details = {}  # type: ignore[var-annotated]
 
     def get_failed_jobs(self) -> List[Tuple[int, str]]:
         """
@@ -56,7 +63,7 @@ class CircleCiFailedJobsParser:
         """
         job_names_and_steps = []
         for job_number, job_name in self.get_failed_jobs():
-            job_details = self.circle_client.get_job_details_v1(job_number=job_number)
+            job_details = self.circle_client.get_job_details_v1(job_number)
             failed_steps = []
             for job_step in job_details.steps:
                 for action in job_step.actions:
@@ -100,11 +107,11 @@ class CircleCiFailedJobsParser:
             test_type (str): either 'integration-tests' or 'unit-tests'
 
         Returns:
-            Set[str]: a set of test names that failed which belong to a speicifc test type.
+            Set[str]: a set of test names that failed which belong to a specific test type.
         """
         return {
-            f'{test}' for job_number in self.get_failed_job_numbers_by_test_type(test_type=test_type)
-            for test in self.get_all_failed_test_names_from_failed_job(failed_job_number=job_number)
+            f'{test}' for job_number in self.get_failed_job_numbers_by_test_type(test_type)
+            for test in self.get_all_failed_test_names_from_failed_job(job_number)
         }
 
     def get_failed_unit_tests_names(self) -> Set[str]:
@@ -135,7 +142,7 @@ class CircleCiFailedJobsParser:
         Returns:
             list[str]: a list of failed test names that failed.
         """
-        response = self.circle_client.get_job_test_metadata(job_number=failed_job_number)
+        response = self.circle_client.get_job_test_metadata(failed_job_number)
         return [
             f'{test.classname}.{test.name}' for test in response.items if test.result.lower() == self.FAILED_TEST_STATUS
         ]
@@ -150,7 +157,7 @@ class CircleCiFailedJobsParser:
         if self.validation_job_failure_details:
             response = self.circle_client.get_job_output_file_by_step(**self.validation_job_failure_details)
             return re.findall(
-                pattern='Packs/[/\w-]+.(?:yml|yaml|json|md|png|xif)\s-\s\[[A-Z]{2}[0-9]{3}\]',  # noqa: 605
+                pattern=r'Packs/[/\w-]+.(?:yml|yaml|json|md|png|xif)\s-\s\[[A-Z]{2}[0-9]{3}\]',  # noqa: 605
                 string=response.text
             )
         return []
@@ -162,7 +169,7 @@ class CircleCiFailedJobsParser:
         Returns:
             str: url of the failed circle-CI pipeline.
         """
-        workflow_details = self.circle_client.get_workflow_details(workflow_id=self.workflow_id)
+        workflow_details = self.circle_client.get_workflow_details(self.workflow_id)
         pipeline_number = workflow_details.pipeline_number
         return f'https://app.circleci.com/pipelines/{PROJECT_SLUG}/{pipeline_number}/workflows/{self.workflow_id}'
 

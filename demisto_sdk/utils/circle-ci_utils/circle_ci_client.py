@@ -1,10 +1,11 @@
-import requests
-import os
 import logging
+import os
 from json.decoder import JSONDecodeError
-from requests.auth import HTTPBasicAuth
 from types import SimpleNamespace
+from typing import Dict, Optional
 
+import requests
+from requests.auth import HTTPBasicAuth
 
 API_BASE_URL = "https://circleci.com/api"
 PROJECT_SLUG = "github/demisto/demisto-sdk"
@@ -42,10 +43,18 @@ class CircleCIResponse(SimpleNamespace):
         return self.ATTRIBUTES_DEFAULT_MAPPING.get(attr)
 
 
-def parse_http_response(expected_valid_code=200, response_type=None):
-    # response type will override the response of the class.
+def parse_http_response(expected_valid_code: int = 200, response_type: Optional[str] = None):
+    """
+    Parses the http response.
+
+    Args:
+        expected_valid_code (int): the expected http status code of success.
+        response_type (str): what kind of response type to parse to, either json/Response object/class attributes.
+            overrides the class attribute if provided.
+    """
     def decorator(func):
         def wrapper(self, *args, **kwargs):
+            # response type will override the response of the class.
             _response_type = response_type if response_type else self.response_type
             logger.debug(f'Sending HTTP request using function {func.__name__} with args: {args}, kwargs: {kwargs}')
             http_response = func(self, *args, **kwargs)
@@ -81,7 +90,9 @@ class CircleCIClient:
         self.verify = verify
         self.response_type = response_type
 
-    def get_resource(self, url, params=None, api_version=API_VERSION_V2, stream=None):
+    def get_resource(
+        self, url: str, params: Optional[Dict] = None, api_version: str = API_VERSION_V2, stream: bool = None
+    ):
         logger.debug(f'Sending HTTP request to {self.base_url}/{api_version}/{url} with params: {params}')
         return requests.get(
             url=f'{self.base_url}/{api_version}/{url}', verify=self.verify, auth=self.auth, params=params, stream=stream

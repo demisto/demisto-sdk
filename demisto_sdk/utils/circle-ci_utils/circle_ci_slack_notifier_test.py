@@ -1,5 +1,5 @@
 import pytest
-from circle_ci_client import API_BASE_URL, CircleCIClient, PROJECT_SLUG
+from circle_ci_client import API_BASE_URL, PROJECT_SLUG, CircleCIClient
 
 WORKFLOW_ID = '1'
 UNIT_TEST_JOB_NUMBER = 1
@@ -139,7 +139,7 @@ CIRCLE_CI_API_MOCKS = [
 ]
 
 
-@pytest.fixture()
+@pytest.fixture(autouse=True)
 def mock_circle_ci_data(requests_mock):
     for url, expected_data in CIRCLE_CI_API_MOCKS:
         if isinstance(expected_data, str):
@@ -148,24 +148,26 @@ def mock_circle_ci_data(requests_mock):
             requests_mock.get(url, json=expected_data)
 
 
-def test_slack_notifier_on_failed_circle_ci_jobs(mock_circle_ci_data):
+def test_slack_notifier_on_failed_circle_ci_jobs():
     """
     Given -
-        circle-ci api mocked responses.
+        circle-ci_utils api mocked responses.
 
     when -
-        constructing a slack message for failed circle-ci jobs.
+        constructing a slack message for failed circle-ci_utils jobs.
 
     Then -
         make sure the correct message with the correct failures is returned even if some of the jobs succeeded.
     """
-    from circle_ci_slack_notifier import CircleCIClient, CircleCiFailedJobsParser, construct_failed_jobs_slack_message
+    from circle_ci_slack_notifier import (CircleCIClient,
+                                          CircleCiFailedJobsParser,
+                                          construct_failed_jobs_slack_message)
 
     parser = CircleCiFailedJobsParser(circle_client=CircleCIClient(), workflow_id=WORKFLOW_ID)
     assert construct_failed_jobs_slack_message(parser) == [
         {
             'fallback': 'Demisto SDK Master-Failure', 'color': 'danger', 'title': 'Demisto SDK Master-Failure',
-            'title_link': f'https://app.circleci.com/pipelines/github/demisto/demisto-sdk//workflows/1',
+            'title_link': 'https://app.circleci.com/pipelines/github/demisto/demisto-sdk//workflows/1',
             'fields': [
                 {
                     'title': 'Failed Circle-CI jobs - (3)',

@@ -75,7 +75,9 @@ def parse_http_response(expected_valid_code: int = 200, response_type: Optional[
 
 
 class CircleCIClient:
-
+    # class - return a class where the attributes are the json response (including nested fields).
+    # response - return the complete response object.
+    # json - return a dict/list containing the response.
     RESPONSE_TYPES = {'class', 'response', 'json'}
     API_VERSION_V2 = "v2"
     API_VERSION_V1 = "v1.1"

@@ -5,7 +5,7 @@ import io
 import os
 import re
 import shutil
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Union
 
 import click
 from inflection import dasherize, underscore
@@ -261,7 +261,7 @@ class IntegrationScriptUnifier(YAMLUnifier):
         # Check if the script imports an API module. If it does,
         # the API module code will be pasted in place of the import.
         imports_to_names = self.check_api_module_imports(script_code)
-        script_code = self.insert_module_code(script_code,imports_to_names)
+        script_code = self.insert_module_code(script_code, imports_to_names)
 
         if script_type == '.py':
             clean_code = self.clean_python_code(script_code)

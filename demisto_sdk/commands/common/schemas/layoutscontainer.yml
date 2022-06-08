@@ -186,7 +186,7 @@ schema;arg_filter_schema:
         value:
           type: any
           required: true
-        iscontext:
+        isContext:
           type: bool
     right:
       type: map
@@ -194,5 +194,7 @@ schema;arg_filter_schema:
         value:
           type: any
           required: true
-        iscontext:
+        isContext:
           type: bool
+    type:
+      type: str

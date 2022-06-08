@@ -101,38 +101,3 @@ schema;field_schema:
         type: bool
       sortValues:
         type: str
-      filters:
-        type: seq
-        sequence:
-        - include: arg_filters_schema
-
-schema;arg_filters_schema:
-  type: seq
-  sequence:
-  - include: arg_filter_schema
-
-schema;arg_filter_schema:
-  type: map
-  mapping:
-    operator:
-      type: str
-      required: true
-    ignorecase:
-      type: bool
-    left:
-      type: map
-      required: true
-      mapping:
-        value:
-          type: any
-          required: true
-        iscontext:
-          type: bool
-    right:
-      type: map
-      mapping:
-        value:
-          type: any
-          required: true
-        iscontext:
-          type: bool

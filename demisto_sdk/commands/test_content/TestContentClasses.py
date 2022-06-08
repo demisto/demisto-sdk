@@ -687,24 +687,23 @@ class BuildContext:
             self.instances_ips
         )
 
-    def _get_all_integration_config(self, instances_ips: dict) -> Optional[list]:
+    def _get_all_integration_config(self, instances_ips: list) -> Optional[list]:
         """
         Gets all integration configuration as it exists on the demisto server
         Since in all packs are installed the data returned from this request is very heavy and we want to avoid
         running it in multiple threads.
         Args:
-            instances_ips: The mapping of the urls to the ports used to tunnel it's traffic
-
+            instances_ips: the instances urls
         Returns:
             A dict containing the configuration for the integration if found, else empty list
         """
         if not self.is_nightly:
             return []
-        url, port = list(instances_ips.items())[0]
+        url = instances_ips[0]
         if IS_XSIAM:
             server_url = url
         else:
-            server_url = f"https://localhost:{port}" if port else f"https://{url}"
+            server_url = f'https://{url}'
         return self.get_all_installed_integrations_configurations(server_url)
 
     def get_all_installed_integrations_configurations(self, server_url: str) -> list:
@@ -867,14 +866,14 @@ class BuildContext:
         tests_records = self.conf.tests
         return [test for test in tests_records if test.playbook_id]
 
-    def _get_instances_ips(self) -> Dict[str, Any]:
+    def _get_instances_ips(self) -> List[str]:
         """
         Parses the env_results.json and extracts the instance ip from each server configured in it.
         Returns:
-            A dict contains a mapping from server internal ip to the port used to tunnel it.
+            A list contains server internal ips.
         """
         if self.server:
-            return {self.server: None}
+            return self.server
         if self.is_xsiam:
             return {env.get("base_url"): None for env in self.env_json}
         instances_ips = {
@@ -1485,9 +1484,7 @@ class Integration:
         Returns:
             The integration configuration as it exists on the server after it was configured
         """
-        server_url = self.build_context.get_public_ip_from_server_url(
-            client.api_client.configuration.host
-        )
+        server_url = client.api_client.configuration.host
         self._set_integration_params(server_url, playbook_id, is_mockable)
         configuration = self._get_integration_config(
             client.api_client.configuration.host
@@ -1776,14 +1773,6 @@ class TestContext:
         self.incident_id: Optional[str] = None
         self.test_docker_images: Set[str] = set()
         self.client: DefaultApi = client
-        if IS_XSIAM:
-            self.tunnel_command = ""
-        else:
-            self.tunnel_command = (
-                f"ssh -i ~/.ssh/oregon-ci.pem -4 -o StrictHostKeyChecking=no -f -N "
-                f'"{CONTENT_BUILD_SSH_USER}@{LOAD_BALANCER_DNS}" '
-                f'-L "{self.server_context.tunnel_port}:{self.server_context.server_ip}:443"'
-            )
 
     def _get_investigation_playbook_state(self) -> str:
         """
@@ -1926,10 +1915,6 @@ class TestContext:
             Empty string or
         """
         try:
-            if not self.build_context.is_xsiam:
-                self.build_context.logging_module.info(
-                    f"ssh tunnel command:\n{self.tunnel_command}"
-                )
             instance_configuration = self.playbook.configuration.instance_configuration
 
             if not self.playbook.configure_integrations(
@@ -2077,12 +2062,10 @@ class TestContext:
         )
 
     def _notify_failed_test(self):
-        text = (
-            f"{self.build_context.build_name} - {self.playbook} Failed\n"
-            f"for more details run: `{self.tunnel_command}` and browse into the following link\n"
-            f"{get_ui_url(self.client.api_client.configuration.host)}"
-        )
-        text += f"/#/WorkPlan/{self.incident_id}" if self.incident_id else ""
+        text = f'{self.build_context.build_name} - {self.playbook} Failed\n' \
+               f'for more details browse into the following link\n' \
+               f'{get_ui_url(self.client.api_client.configuration.host)}'
+        text += f'/#/WorkPlan/{self.incident_id}' if self.incident_id else ''
         if self.build_context.slack_user_id:
             self.build_context.slack_client.api_call(
                 "chat.postMessage",
@@ -2567,26 +2550,17 @@ class TestContext:
 
 
 class ServerContext:
-    def __init__(
-        self,
-        build_context: BuildContext,
-        server_private_ip: str,
-        tunnel_port: int = None,
-        use_retries_mechanism: bool = True,
-    ):
+
+    def __init__(self, build_context: BuildContext, server_private_ip: str,
+                 use_retries_mechanism: bool = True):
         self.build_context = build_context
         self.server_ip = server_private_ip
-        self.tunnel_port = tunnel_port
         if IS_XSIAM:
             self.server_url = server_private_ip
             # we use client without demisto username
             os.environ.pop("DEMISTO_USERNAME", None)
         else:
-            self.server_url = (
-                f"https://localhost:{tunnel_port}"
-                if tunnel_port
-                else f"https://{self.server_ip}"
-            )
+            self.server_url = f'https://{self.server_ip}'
         self.client: Optional[DefaultApi] = None
         self._configure_new_client()
         # currently not supported on XSIAM (etc/#47851)

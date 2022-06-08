@@ -9,7 +9,7 @@ import requests
 from click.testing import CliRunner
 from mock import patch
 
-# from demisto_sdk.__main__ import main
+from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml

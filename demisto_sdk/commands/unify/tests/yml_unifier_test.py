@@ -86,11 +86,10 @@ TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
 
 
 def get_dummy_module(name='MicrosoftApiModule', path=None):
-    match name:
-        case 'MicrosoftApiModule':
-            class_name = 'MicrosoftClient'
-        case _:
-            class_name = 'CrowdStrikeApiClient'
+    if name == 'MicrosoftApiModule':
+        class_name = 'MicrosoftClient'
+    else:
+        class_name = 'CrowdStrikeApiClient'
     return DUMMY_MODULE.replace('CLASSNAME', class_name)
 
 

@@ -30,7 +30,6 @@ from demisto_sdk.commands.common.tools import (
 
 json = JSON_Handler()
 
-
 NO_HTML = '<!-- NOT_HTML_DOC -->'
 YES_HTML = '<!-- HTML_DOC -->'
 
@@ -73,7 +72,8 @@ class ReadMeValidator(BaseValidator):
     def __init__(self, file_path: str, ignored_errors=None, print_as_warnings=False, suppress_print=False,
                  json_file_path=None, specific_validations=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print, json_file_path=json_file_path, specific_validations=specific_validations)
+                         suppress_print=suppress_print, json_file_path=json_file_path,
+                         specific_validations=specific_validations)
         self.content_path = get_content_path()
         self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent
@@ -207,8 +207,8 @@ class ReadMeValidator(BaseValidator):
             return True
         # use some heuristics to try to figure out if this is html
         return self.readme_content.startswith('<p>') or \
-            self.readme_content.startswith('<!DOCTYPE html>') or \
-            ('<thead>' in self.readme_content and '<tbody>' in self.readme_content)
+               self.readme_content.startswith('<!DOCTYPE html>') or \
+               ('<thead>' in self.readme_content and '<tbody>' in self.readme_content)
 
     @error_codes('RM101')
     def is_image_path_valid(self) -> bool:
@@ -257,9 +257,9 @@ class ReadMeValidator(BaseValidator):
         # class handles the errors and printing.
         should_print_error = not is_pack_readme
         relative_urls = re.findall(r'^(?![!])(\[.*?\])\(((?![http|#|mailto:]).*?)\)$', self.readme_content,
-                                     re.IGNORECASE | re.MULTILINE)
+                                   re.IGNORECASE | re.MULTILINE)
         relative_urls += re.findall(r'(<.*?href\s*=\s*"((?![http|#|mailto:]).*?)")', self.readme_content,
-                                     re.IGNORECASE | re.MULTILINE)
+                                    re.IGNORECASE | re.MULTILINE)
         for url in relative_urls:
             # striping in case there are whitespaces at the beginning/ending of url.
             error_message, error_code = Errors.invalid_readme_relative_url_error(url[1])
@@ -275,7 +275,7 @@ class ReadMeValidator(BaseValidator):
             is_valid = len(error_list) == 0
             return is_valid
 
-    def check_readme_relative_image_paths(self, is_pack_readme: bool = False) -> list:
+    def check_readme_relative_image_paths(self, is_pack_readme: bool = False) -> list or bool:
         """ Validate readme images relative paths.
             (1) prints an error if relative paths in the pack README are found since they are not supported.
             (2) Checks if relative paths are valid (in other readme files).

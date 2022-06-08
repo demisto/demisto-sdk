@@ -88,7 +88,7 @@ def test_relative_url_not_valid():
     """
     captured_output = io.StringIO()
     sys.stdout = captured_output  # redirect stdout.
-    urls = ["htttps://www.good.co.il" ,"relative1.com", "www.relative2.com"]
+    urls = ["htttps://www.good.co.il", "relative1.com", "www.relative2.com"]
     readme_validator = ReadMeValidator(INVALID_MD)
     result = readme_validator.check_readme_relative_url_paths()
     sys.stdout = sys.__stdout__  # reset stdout.

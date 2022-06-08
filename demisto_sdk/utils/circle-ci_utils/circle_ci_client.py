@@ -82,7 +82,13 @@ class CircleCIClient:
     API_VERSION_V2 = "v2"
     API_VERSION_V1 = "v1.1"
 
-    def __init__(self, token=None, base_url=None, verify=True, response_type='class'):
+    def __init__(
+        self,
+        token: Optional[str] = None,
+        base_url: Optional[str] = None,
+        verify: bool = True,
+        response_type: str = 'class'
+    ):
         if response_type not in self.RESPONSE_TYPES:
             raise ValueError(
                 f'Invalid response type ({response_type}) - should be one of {"/".join(self.RESPONSE_TYPES)}'

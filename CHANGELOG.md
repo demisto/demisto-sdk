@@ -24,6 +24,7 @@
 * Removed a traceback line from the **init** command templates: BaseIntegration, BaseScript.
 * Updated the token in **_add_pr_comment** method from the content-bot token to the xsoar-bot token.
 * Added a new validation to the **validate** command to verify that the docker in use is not deprecated.
+* Added support for multiple ApiModules in the unify command
 
 ## 1.6.7
 

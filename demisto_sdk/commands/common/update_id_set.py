@@ -372,7 +372,7 @@ def get_integration_api_modules(file_path, data_dictionary, is_unified_integrati
     else:
         _, integration_script_code = unifier.get_script_or_integration_package_data()
 
-    return unifier.check_api_module_imports(integration_script_code)[1]
+    return unifier.check_api_module_imports(integration_script_code).values()
 
 
 def get_integration_data(file_path, packs: Dict[str, Dict] = None):

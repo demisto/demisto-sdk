@@ -8,7 +8,7 @@ import re
 from datetime import datetime
 from distutils.version import LooseVersion
 from pathlib import Path
-from typing import Dict, Tuple, Iterable
+from typing import Dict, Tuple
 
 import click
 from dateutil import parser

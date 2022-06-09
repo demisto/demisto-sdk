@@ -5,7 +5,7 @@ from typing import Collection, List, Set, Tuple
 from circle_ci_client import API_BASE_URL, PROJECT_SLUG, CircleCIClient
 from slack_sdk import WebClient
 
-DEFAULT_SLACK_CHANNEL = 'dmst-slack-notifier-test'
+DEFAULT_SLACK_CHANNEL = 'dmst-build'
 
 
 def options_handler():

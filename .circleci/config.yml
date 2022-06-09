@@ -390,10 +390,10 @@ workflows:
       - waiter:
           filters:
             branches:
-              only: slack-sdk-notifier
+              only: master
       - slack-notifier:
           requires:
             - waiter
           filters:
             branches:
-              only: slack-sdk-notifier  # notifies when a post-merge build fails
+              only: master  # notifies when a post-merge build fails

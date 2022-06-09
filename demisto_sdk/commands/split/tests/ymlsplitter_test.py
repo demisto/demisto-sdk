@@ -1,6 +1,7 @@
 import base64
 import os
 from pathlib import Path
+import json
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
@@ -26,6 +27,105 @@ def test_extract_long_description(tmpdir):
     extractor.extract_long_description(extractor.output)
     with open(extractor.output, 'rb') as temp_description:
         assert temp_description.read().decode('utf-8') == 'detaileddescription'
+    os.remove(extractor.output)
+
+
+def test_extract_modeling_rules(tmpdir):
+    """
+    Given:
+        - A unified YML of a Modeling Rule
+    When:
+        - run extract_rules
+    Then:
+        - Ensure that the rules were extracted
+    """
+    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/modelingrule-OktaModelingRules.yml',
+                            output=str(tmpdir.join('temp_rules.xif')), file_type='modelingrule')
+
+    extractor.extract_rules(extractor.output)
+    with open(extractor.output, 'rb') as temp_rules:
+        temp_rules = temp_rules.read()
+        assert '[MODEL: dataset=okta_okta_raw, model=Audit]' in str(temp_rules)
+    os.remove(extractor.output)
+
+
+def test_extract_modeling_rules_schema(tmpdir):
+    """
+    Given:
+        - A unified YML of a Modeling Rule
+    When:
+        - run extract_rule_schema
+    Then:
+        - Ensure that the schema was extracted
+    """
+    schema = {
+        "okta_okta_raw": {
+            "client": {
+                "type": "string",
+                "is_array": False
+            },
+            "eventType": {
+                "type": "string",
+                "is_array": False
+            }
+        }
+    }
+
+    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/modelingrule-OktaModelingRules.yml',
+                            output=str(tmpdir.join('temp_rules.json')), file_type='modelingrule')
+
+    extractor.extract_rule_schema(extractor.output)
+    with open(extractor.output, 'rb') as temp_rules:
+        temp_rules = temp_rules.read()
+        assert schema == json.loads(temp_rules)
+    os.remove(extractor.output)
+
+
+def test_extract_parsing_rules(tmpdir):
+    """
+    Given:
+        - A unified YML of a Parsing Rule
+    When:
+        - run extract_rules
+    Then:
+        - Ensure that the rules were extracted
+    """
+    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/parsingrule-MyParsingRules.yml',
+                            output=str(tmpdir.join('temp_rules.xif')), file_type='parsingrule')
+
+    extractor.extract_rules(extractor.output)
+    with open(extractor.output, 'rb') as temp_rules:
+        temp_rules = temp_rules.read()
+        assert '[RULE:extract_hipmatch_only_fields]' in str(temp_rules)
+    os.remove(extractor.output)
+
+
+def test_extract_parsing_rules_sampels(tmpdir):
+    """
+    Given:
+        - A unified YML of a Parsing Rule
+    When:
+        - run extract_rule_schema
+    Then:
+        - Ensure that the sample was extracted
+    """
+    sample = {
+        "okta_on_prem": [
+            {
+                "cefVersion": "CEF:0",
+                "cefDeviceVendor": "Zscaler",
+                "cefDeviceProduct": "NSSWeblog",
+            }
+        ]
+    }
+
+    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/parsingrule-MyParsingRules.yml',
+                            output=str(tmpdir.join('temp_rules.json')), file_type='parsingrule')
+
+    extractor.extract_rule_schema(extractor.output)
+    with open(extractor.output, 'rb') as temp_rules:
+        temp_rules = temp_rules.read()
+        assert sample == json.loads(temp_rules)
     os.remove(extractor.output)
 
 

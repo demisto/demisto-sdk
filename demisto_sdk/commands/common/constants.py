@@ -930,7 +930,6 @@ REQUIRED_YML_FILE_TYPES = [PACKS_INTEGRATION_PY_REGEX,
 TYPE_PWSH = 'powershell'
 TYPE_PYTHON = 'python'
 TYPE_JS = 'javascript'
-TYPE_XIF = 'xif'
 
 TYPE_TO_EXTENSION = {
     TYPE_PYTHON: '.py',

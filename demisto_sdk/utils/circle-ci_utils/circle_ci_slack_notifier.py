@@ -29,7 +29,7 @@ class CircleCiFailedJobsParser:
     Attributes:
         circle_client (CircleCIClient): circle-CI client.
         workflow_id (str): the workflow ID.
-        failed_jobs (List[dict]): failed jobs information.
+        all_failed_jobs (List[dict]): all failed jobs information.
         validation_job_failure_details (dict): details about validation job failure.
     """
     TEST_TYPES = {'unit-tests', 'integration-tests'}
@@ -40,7 +40,7 @@ class CircleCiFailedJobsParser:
     def __init__(self, circle_client: CircleCIClient, workflow_id: str):
         self.circle_client = circle_client
         self.workflow_id = workflow_id
-        self.failed_jobs = self.circle_client.get_workflow_jobs(self.workflow_id)
+        self.all_failed_jobs = self.circle_client.get_workflow_jobs(self.workflow_id)
         self.validation_job_failure_details = {}  # type: ignore[var-annotated]
 
     def get_failed_jobs(self) -> List[Tuple[int, str]]:
@@ -51,12 +51,17 @@ class CircleCiFailedJobsParser:
             list[tuple[int, str]]: a list of tuples of job numbers/names for each failed job.
         """
         return [
-            (job.job_number, job.name) for job in self.failed_jobs.items if job.status.lower() == self.FAILED_JOB_STATUS
+            (job.job_number, job.name) for job in self.all_failed_jobs.items
+            if job.status.lower() == self.FAILED_JOB_STATUS
         ]
 
     def get_failed_job_names_and_steps(self) -> List[str]:
         """
         Returns a list of failed job names and their failed steps.
+
+        Note:
+            In case the validation job failed, the validation_job_failure_details will be set in order to
+            retrieve later what validations failed.
 
         Returns:
             list[str]: a list of failed jobs and their steps.
@@ -94,7 +99,7 @@ class CircleCiFailedJobsParser:
             list[str]: failed unit job numbers of a specific test type.
         """
         if test_type not in self.TEST_TYPES:
-            raise ValueError(f'test-type {test_type} must be one of {",".join(self.TEST_TYPES)}')
+            raise ValueError(f'test-type {test_type} must be one of [{",".join(self.TEST_TYPES)}]')
 
         return [job_number for job_number, job_name in self.get_failed_jobs() if test_type in job_name]
 
@@ -157,7 +162,7 @@ class CircleCiFailedJobsParser:
         if self.validation_job_failure_details:
             response = self.circle_client.get_job_output_file_by_step(**self.validation_job_failure_details)
             return re.findall(
-                pattern=r'Packs/[/\w-]+.(?:yml|yaml|json|md|png|xif)\s-\s\[[A-Z]{2}[0-9]{3}\]',  # noqa: 605
+                pattern=r'Packs\/[/\w-]+\.(?:yml|yaml|json|md|png|xif)\s-\s\[[A-Z]{2}[0-9]{3}\]',
                 string=response.text
             )
         return []
@@ -179,20 +184,20 @@ def construct_failed_jobs_slack_message(parser: CircleCiFailedJobsParser):
     Build up the slack message notifier message in case circle-CI jobs have failed when merging to master.
     """
 
-    def construct_slack_section(section_title: str, failed_entities: Union[List[str], Set[str]]):
+    def construct_slack_section(_section_title: str, _failed_entities:  Union[List[str], Set[str]]):
         """
         Construct a single section in the slack body message.
 
         Args:
-            section_title (str): title of the section.
-            failed_entities (list/set[str]): failed entities such as jobs/tests/validations.
+            _section_title (str): title of the section.
+            _failed_entities (list/set[str]): failed entities such as jobs/tests/validations.
 
         Returns:
             dict: a format a single section in the slack body message.
         """
         return {
-            'title': f'{section_title} - ({len(failed_entities)})',
-            'value': '\n'.join(failed_entities),
+            'title': f'{_section_title} - ({len(_failed_entities)})',
+            'value': '\n'.join(_failed_entities),
             'short': False
         }
 
@@ -200,26 +205,24 @@ def construct_failed_jobs_slack_message(parser: CircleCiFailedJobsParser):
 
     if failed_jobs_names_and_steps := parser.get_failed_job_names_and_steps():
         slack_body_message.append(
-            construct_slack_section(section_title='Failed Circle-CI jobs', failed_entities=failed_jobs_names_and_steps)
+            construct_slack_section(
+                _section_title='Failed Circle-CI jobs', _failed_entities=failed_jobs_names_and_steps
+            )
         )
-
     else:  # if there aren't any failed jobs
         return slack_body_message
 
-    if failed_unit_tests := parser.get_failed_unit_tests_names():
-        slack_body_message.append(
-            construct_slack_section(section_title='Failed unit-tests', failed_entities=failed_unit_tests)
-        )
+    failed_entities_and_section_names = [
+        (parser.get_failed_unit_tests_names(), 'Failed unit-tests'),
+        (parser.get_failed_integration_tests(), 'Failed integration-tests'),
+        (parser.get_failed_files_on_validations(), 'Failed files on validations')
+    ]
 
-    if failed_integration_tests := parser.get_failed_integration_tests():
-        slack_body_message.append(
-            construct_slack_section(section_title='Failed integration-tests', failed_entities=failed_integration_tests)
-        )
-
-    if failed_validations := parser.get_failed_files_on_validations():
-        slack_body_message.append(
-            construct_slack_section(section_title='Failed files on validations', failed_entities=failed_validations)
-        )
+    for failed_entities, section_title in failed_entities_and_section_names:
+        if failed_entities:
+            slack_body_message.append(
+                construct_slack_section(_section_title=section_title, _failed_entities=failed_entities)
+            )
 
     title = 'Demisto SDK Master-Failure'
     pipeline_url = parser.get_pipeline_url()

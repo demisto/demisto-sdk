@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Added slack notifier to notify about any failures for any PR that is merged into the master branch.
+* Added slack notifier for build failures on the master branch.
 * Added support for running lint via a remote docker ssh connection. Use `DOCKER_HOST` env variable to specify a remote docker connection, such as: `DOCKER_HOST=ssh://myuser@myhost.com`.
 * Fixed an issue where the pack cache in *get_marketplaces* caused the function to return invalid values.
 * Fixed an issue where running format on a pack with XSIAM entities would fail.

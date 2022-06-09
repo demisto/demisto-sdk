@@ -43,19 +43,31 @@ class CircleCIResponse(SimpleNamespace):
         return self.ATTRIBUTES_DEFAULT_MAPPING.get(attr)
 
 
-def parse_http_response(expected_valid_code: int = 200, response_type: Optional[str] = None):
+def parse_http_response(expected_valid_code: int = 200, response_type: str = 'class'):
     """
     Parses the http response.
 
     Args:
         expected_valid_code (int): the expected http status code of success.
-        response_type (str): what kind of response type to parse to, either json/Response object/class attributes.
-            overrides the class attribute if provided.
+        response_type (str): what kind of response type to parse to, either json/response/class.
+
+    Raises:
+        ValueError: in case the response type is not valid.
     """
+
+    # class - return a class where the attributes are the json response (including nested fields).
+    # response - return the complete response object.
+    # json - return a dict/list containing the response.
+
+    response_types = {'class', 'response', 'json'}
+    if response_type not in response_types:
+        raise ValueError(
+            f'Invalid response type ({response_type}) - should be one of ({",".join(response_types)})'
+        )
+
     def decorator(func):
         def wrapper(self, *args, **kwargs):
             # response type will override the response of the class.
-            _response_type = response_type if response_type else self.response_type
             logger.debug(f'Sending HTTP request using function {func.__name__} with args: {args}, kwargs: {kwargs}')
             http_response = func(self, *args, **kwargs)
             if http_response.status_code != expected_valid_code:
@@ -64,9 +76,9 @@ def parse_http_response(expected_valid_code: int = 200, response_type: Optional[
                 except JSONDecodeError:
                     raise CircleCIError(f'Error: ({http_response.text})')
                 raise CircleCIError(f'Error: ({response_as_json})')
-            if _response_type == 'class':
+            if response_type == 'class':
                 return http_response.json(object_hook=lambda response: CircleCIResponse(**response))
-            elif _response_type == 'json':
+            elif response_type == 'json':
                 return http_response.json()
             else:  # in case the entire response object is needed
                 return http_response
@@ -75,28 +87,14 @@ def parse_http_response(expected_valid_code: int = 200, response_type: Optional[
 
 
 class CircleCIClient:
-    # class - return a class where the attributes are the json response (including nested fields).
-    # response - return the complete response object.
-    # json - return a dict/list containing the response.
-    RESPONSE_TYPES = {'class', 'response', 'json'}
+
     API_VERSION_V2 = "v2"
     API_VERSION_V1 = "v1.1"
 
-    def __init__(
-        self,
-        token: Optional[str] = None,
-        base_url: Optional[str] = None,
-        verify: bool = True,
-        response_type: str = 'class'
-    ):
-        if response_type not in self.RESPONSE_TYPES:
-            raise ValueError(
-                f'Invalid response type ({response_type}) - should be one of {"/".join(self.RESPONSE_TYPES)}'
-            )
+    def __init__(self, token: Optional[str] = None, base_url: Optional[str] = None, verify: bool = True,):
         self.auth = HTTPBasicAuth(username=token or os.getenv("CCI_TOKEN"), password='')
         self.base_url = base_url or API_BASE_URL
         self.verify = verify
-        self.response_type = response_type
 
     def get_resource(
         self, url: str, params: Optional[Dict] = None, api_version: str = API_VERSION_V2, stream: bool = None

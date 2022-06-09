@@ -127,7 +127,7 @@ jobs:
         pythonversion:
           type: string
       docker:
-        - image: cimg/python:<< parameters.pythonversion >>-node
+        - image: cimg/python:<< pipeline.parameters.pythonversion >>-node
       steps:
         - checkout
         - setup_remote_docker:

@@ -20,6 +20,7 @@
 * Added a check to the **lint** command for finding hard-coded usage of the http protocol.
 * Locked the dependency on Docker.
 * Removed a traceback line from the **init** command templates: BaseIntegration, BaseScript.
+* Updated the token in **_add_pr_comment** method from the content-bot token to the xsoar-bot token.
 
 ## 1.6.7
 

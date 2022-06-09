@@ -89,7 +89,8 @@ def test_relative_url_not_valid():
     """
     captured_output = io.StringIO()
     sys.stdout = captured_output  # redirect stdout.
-    absolute_urls = ["https://www.good.co.il", "https://example.com","https://github.com/demisto/content/blob/123/Packs/FeedOffice365/doc_files/test.png"]
+    absolute_urls = ["https://www.good.co.il", "https://example.com", "https://github.com/demisto/content/blob/123"
+                                                                      "/Packs/FeedOffice365/doc_files/test.png"]
     relative_urls = ["relative1.com", "www.relative2.com", "hreftesting.com"]
     readme_validator = ReadMeValidator(INVALID_MD)
     result = readme_validator.verify_readme_relative_urls()

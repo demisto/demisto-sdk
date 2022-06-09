@@ -332,7 +332,7 @@ class IntegrationScriptUnifier(YAMLUnifier):
         Inserts API module in place of an import to the module according to the module name
         :param script_code: The integration code
         :param import_to_name: A dictionary where the keys are The module import string to replace
-        :and the values are The module name:
+        and the values are The module name
         :return: The integration script with the module code appended in place of the import
         """
         for module_import, module_name in import_to_name.items():

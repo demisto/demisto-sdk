@@ -823,7 +823,7 @@ class TestValidators:
                                 'name': integration2.name,
                                 'file_path': integration2.path,
                                 'pack': pack2_name,
-                                'api_modules': api_script1.name
+                                'api_modules': [api_script1.name]
                             }
                     }
                 ]
@@ -865,7 +865,7 @@ class TestValidators:
                                 'name': integration2.name,
                                 'file_path': integration2.path,
                                 'pack': pack2_name,
-                                'api_modules': api_script1.name
+                                'api_modules': [api_script1.name]
                             }
                     }
                 ]}

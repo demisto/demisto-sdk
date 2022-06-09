@@ -362,13 +362,13 @@ workflows:
           <<: *tag_filter
           matrix:
             parameters:
-              pythonversion: [3.8.12, 3.9.10, 3.10.2]
+              pythonversion: [3.8.12, 3.9.10, 3.10.2]   
           name: run-unit-tests-<< matrix.pythonversion >>
       - run-integration-tests:
           <<: *tag_filter
           matrix:
             parameters:
-              pythonversion: [3.8.12, 3.9.10, 3.10.2]
+              pythonversion: [3.8.12, 3.9.10, 3.10.2]   
           name: run-integration-tests-<< matrix.pythonversion >>
       - validate-files:
           <<: *tag_filter

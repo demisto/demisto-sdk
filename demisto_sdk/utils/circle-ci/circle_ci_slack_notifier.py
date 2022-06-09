@@ -1,6 +1,6 @@
 import argparse
 import re
-from typing import List, Set, Tuple, Union
+from typing import Collection, List, Set, Tuple
 
 from circle_ci_client import API_BASE_URL, PROJECT_SLUG, CircleCIClient
 from slack_sdk import WebClient
@@ -184,13 +184,13 @@ def construct_failed_jobs_slack_message(parser: CircleCiFailedJobsParser):
     Build up the slack message notifier message in case circle-CI jobs have failed when merging to master.
     """
 
-    def construct_slack_section(_section_title: str, _failed_entities:  Union[List[str], Set[str]]):
+    def construct_slack_section(_section_title: str, _failed_entities: Collection[str]):
         """
         Construct a single section in the slack body message.
 
         Args:
             _section_title (str): title of the section.
-            _failed_entities (list/set[str]): failed entities such as jobs/tests/validations.
+            _failed_entities (Collection[str]): failed entities such as jobs/tests/validations.
 
         Returns:
             dict: a format a single section in the slack body message.

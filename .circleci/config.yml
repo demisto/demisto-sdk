@@ -337,9 +337,6 @@ jobs:
       - run: echo "All required jobs have now completed"
 
   slack-notifier:
-    parameters:
-      pythonversion:
-        type: string
     docker:
       - image: cimg/python:<< pipeline.parameters.pythonversion_latest >>-node
     steps:

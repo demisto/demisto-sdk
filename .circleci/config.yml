@@ -21,6 +21,9 @@ parameters:
   global-docker-image:
     type: string
     default: cimg/python:3.10.4-node
+  pythonversion_latest:
+    type: string
+    default: "3.10.2"
 
 
 references:
@@ -338,7 +341,7 @@ jobs:
       pythonversion:
         type: string
     docker:
-      - image: cimg/python:<< parameters.pythonversion >>-node
+      - image: cimg/python:<< pipeline.parameters.pythonversion_latest >>-node
     steps:
       - checkout
       - python/install-packages:
@@ -390,13 +393,10 @@ workflows:
       - waiter:
           filters:
             branches:
-              only: master
+              only: slack-sdk-notifier
       - slack-notifier:
-          matrix:
-            parameters:
-              pythonversion: [3.10.2]
           requires:
             - waiter
           filters:
             branches:
-              only: master
+              only: slack-sdk-notifier  # notifies when a post-merge build fails

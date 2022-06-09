@@ -28,6 +28,9 @@ from demisto_sdk.commands.common.tools import (
     get_url_with_retries, get_yaml, get_yml_paths_in_dir, print_warning,
     run_command_os)
 
+RELATIVE_HREF_URL_REGEX = r'(<.*?href\s*=\s*"((?!(?:https?:\/\/)|#|(?:mailto:)).*?)")'
+RELATIVE_URL_REGEX = r'^(?![!])(\[.*?\])\(((?!(?:https?:\/\/)|#|(?:mailto:)).*?)\)$'
+
 json = JSON_Handler()
 
 NO_HTML = '<!-- NOT_HTML_DOC -->'
@@ -88,7 +91,7 @@ class ReadMeValidator(BaseValidator):
             bool: True if env configured else Fale.
         """
         return all([
-            self.check_readme_relative_url_paths(),
+            self.verify_readme_relative_urls(),
             self.is_image_path_valid(),
             self.verify_readme_image_paths(),
             self.is_mdx_file(),
@@ -241,6 +244,18 @@ class ReadMeValidator(BaseValidator):
             return False
         return True
 
+    def verify_readme_relative_urls(self) -> bool:
+        """ Validate readme (not pack readme) relative urls.
+
+                Returns:
+                    bool: True If there are no invalid relative urls.
+                """
+        # If there are errors in one of the following validations return False
+        error_list = self.check_readme_relative_url_paths()
+        if len(error_list):
+            return False
+        return True
+
     @error_codes('RM112')
     def check_readme_relative_url_paths(self, is_pack_readme: bool = False) -> list:
         """ Validate readme url relative paths.
@@ -256,9 +271,9 @@ class ReadMeValidator(BaseValidator):
         # If error was found, print it only if its not a pack readme. For pack readme, the PackUniqueFilesValidator
         # class handles the errors and printing.
         should_print_error = not is_pack_readme
-        relative_urls = re.findall(r'^(?![!])(\[.*?\])\(((?![http|#|mailto:]).*?)\)$', self.readme_content,
+        relative_urls = re.findall(RELATIVE_URL_REGEX, self.readme_content,
                                    re.IGNORECASE | re.MULTILINE)
-        relative_urls += re.findall(r'(<.*?href\s*=\s*"((?![http|#|mailto:]).*?)")', self.readme_content,
+        relative_urls += re.findall(RELATIVE_HREF_URL_REGEX, self.readme_content,
                                     re.IGNORECASE | re.MULTILINE)
         for url in relative_urls:
             # striping in case there are whitespaces at the beginning/ending of url.
@@ -268,14 +283,9 @@ class ReadMeValidator(BaseValidator):
                                                     should_print=should_print_error)
                 error_list.append(formatted_error)
 
-        if is_pack_readme:
-            return error_list
+        return error_list
 
-        else:
-            is_valid = len(error_list) == 0
-            return is_valid
-
-    def check_readme_relative_image_paths(self, is_pack_readme: bool = False) -> list or bool:
+    def check_readme_relative_image_paths(self, is_pack_readme: bool = False) -> list:
         """ Validate readme images relative paths.
             (1) prints an error if relative paths in the pack README are found since they are not supported.
             (2) Checks if relative paths are valid (in other readme files).

@@ -77,7 +77,7 @@ def test_are_modules_installed_for_verify_false_res(tmp_path):
 def test_relative_url_not_valid():
     """
     Given
-        - A README file with 2 invalid relative urls in it.
+        - A README file with invalid relative urls in it.
     When
         - Run validate on README file
     Then
@@ -85,17 +85,22 @@ def test_relative_url_not_valid():
             - Validation fails
             - Both urls were caught correctly
             - Valid url was not caught
+            - Image url was not caught
     """
     captured_output = io.StringIO()
     sys.stdout = captured_output  # redirect stdout.
-    urls = ["htttps://www.good.co.il", "relative1.com", "www.relative2.com"]
+    absolute_urls = ["https://www.good.co.il", "https://example.com","https://github.com/demisto/content/blob/123/Packs/FeedOffice365/doc_files/test.png"]
+    relative_urls = ["relative1.com", "www.relative2.com", "hreftesting.com"]
     readme_validator = ReadMeValidator(INVALID_MD)
-    result = readme_validator.check_readme_relative_url_paths()
+    result = readme_validator.verify_readme_relative_urls()
     sys.stdout = sys.__stdout__  # reset stdout.
     assert not result
-    assert urls[0] not in captured_output.getvalue()
-    assert urls[1] in captured_output.getvalue()
-    assert urls[2] in captured_output.getvalue()
+    assert absolute_urls[0] not in captured_output.getvalue()
+    assert absolute_urls[1] not in captured_output.getvalue()
+    assert absolute_urls[2] not in captured_output.getvalue()
+    assert relative_urls[0] in captured_output.getvalue()
+    assert relative_urls[1] in captured_output.getvalue()
+    assert relative_urls[2] in captured_output.getvalue()
 
 
 def test_is_image_path_valid():

@@ -20,7 +20,7 @@
 * Added a check to the **lint** command for finding hard-coded usage of the http protocol.
 * Locked the dependency on Docker.
 * Removed a traceback line from the **init** command templates: BaseIntegration, BaseScript.
-* Added validation to **validate** command, to identify unsupported relative urls in README files.
+* Added validation to **validate** command to identify unsupported relative urls in README files.
 
 ## 1.6.7
 

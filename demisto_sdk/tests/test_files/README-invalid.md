@@ -2,9 +2,12 @@ Use the Quin-C AccessData integration to protect against and provide additional 
 
 Documentation for the integration was provided by Quin-C.
 For more info check out think links-
-[Good link](htttps://www.good.co.il)
+[Good link](https://www.good.co.il)
+[Good link2](https://example.com)
 [invalid relative 1](relative1.com)
 [invalid relative 2](www.relative2.com)
+<a href="hreftesting.com"> href tests </a>
+
 ## AccessData Playbook
 
 For example, you can look at “Accessdata: Dump memory for malicious process” playbook to understand how to use this integration.

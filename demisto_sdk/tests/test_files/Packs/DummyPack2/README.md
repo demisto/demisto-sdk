@@ -3,9 +3,11 @@ This integration was integrated and tested with version 1.0.1 of PhishTank.
 ## Configure PhishTankV2 on Cortex XSOAR
 
 ### Relative urls test-
-[Good link](htttps://www.good.co.il)
+[Good link](https://www.good.co.il)
+[Good link2](https://example.com)
 [invalid relative 1](relative1.com)
 [invalid relative 2](www.relative2.com)
+<a href="hreftesting.com"> href tests </a>
 
 ##### Invalid images relative paths in pack readme
 ![Identity with High Risk Score](doc_files/High_Risk_User.png)

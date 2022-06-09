@@ -78,10 +78,10 @@ class YmlSplitter:
         """Get processed output path
         """
         output_path = Path(self.output)
-        if self.autocreate_dir and output_path.name in {'Integrations', 'Scripts', 'ModelingRules'}:
+        if self.autocreate_dir and output_path.name in {'Integrations', 'Scripts', 'ModelingRules', 'ParsingRules'}:
             code_name = self.yml_data.get("name")
             if not code_name:
-                raise ValueError(f'Failed determining Integration/Script/ModelingRule name '
+                raise ValueError(f'Failed determining Integration/Script/ModelingRule/ParsingRule name '
                                  f'when trying to auto create sub dir at: {self.output}'
                                  f'\nRun with option --no-auto-create-dir to skip auto creation of target dir.')
             output_path = output_path / pascal_case(code_name)

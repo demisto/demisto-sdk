@@ -935,7 +935,7 @@ TYPE_XIF = 'xif'
 TYPE_TO_EXTENSION = {
     TYPE_PYTHON: '.py',
     TYPE_JS: '.js',
-    TYPE_PWSH: '.ps1',
+    TYPE_PWSH: '.ps1'
 }
 
 TESTS_AND_DOC_DIRECTORIES = [

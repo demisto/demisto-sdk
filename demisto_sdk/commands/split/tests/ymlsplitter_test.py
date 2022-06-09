@@ -1,7 +1,7 @@
 import base64
+import json
 import os
 from pathlib import Path
-import json
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64

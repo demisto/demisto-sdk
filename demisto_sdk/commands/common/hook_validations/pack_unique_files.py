@@ -27,6 +27,8 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME, VERSION_REGEX)
 from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.content.objects.custom_pack_objects.deprecated_pack_content_items import \
+    DeprecatedPackContentItems
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -104,7 +106,7 @@ class PackUniqueFilesValidator(BaseValidator):
         self.metadata_content: Dict = dict()
     # error handling
 
-    def _add_error(self, error: Tuple[str, str], file_path: str, warning=False):
+    def _add_error(self, error: Tuple[str, str], file_path: str, warning=False, suggested_fix=None, should_print=False):
         """Adds error entry to a list under pack's name
         Returns True if added and false otherwise"""
         error_message, error_code = error
@@ -112,8 +114,10 @@ class PackUniqueFilesValidator(BaseValidator):
         if self.pack_path not in file_path:
             file_path = os.path.join(self.pack_path, file_path)
 
-        formatted_error = self.handle_error(error_message, error_code, file_path=file_path, should_print=False,
-                                            warning=warning)
+        formatted_error = self.handle_error(
+            error_message, error_code,
+            file_path=file_path, should_print=should_print, warning=warning, suggested_fix=suggested_fix
+        )
         if formatted_error:
             self._errors.append(formatted_error)
             return True
@@ -321,6 +325,7 @@ class PackUniqueFilesValidator(BaseValidator):
             self._is_price_changed(),
             self._is_valid_support_type(),
             self.is_right_usage_of_usecase_tag(),
+            self.should_pack_not_be_hidden()
         ]):
             if self.should_version_raise:
                 return self.validate_version_bump()
@@ -796,5 +801,31 @@ class PackUniqueFilesValidator(BaseValidator):
         if found_dependencies:
             error_message, error_code = Errors.invalid_core_pack_dependencies(self.pack, str(found_dependencies))
             if self._add_error((error_message, error_code), file_path=self.pack_path):
+                return False
+        return True
+
+    @error_codes('PA132')
+    def should_pack_not_be_hidden(self):
+        """
+        Validates whether a pack should be hidden according to the following rules:
+
+        1. If the pack has integrations and all integrations are deprecated -> pack should be hidden.
+        2. if pack does not have integrations and all scripts and PBs are deprecated -> pack should be hidden.
+
+        Returns:
+            bool: True if pack should not be hidden, False it it should.
+        """
+        deprecated_pack_content_items = DeprecatedPackContentItems(self.pack_path)
+        if deprecated_pack_content_items.should_pack_be_hidden():
+            error_message, error_code = Errors.pack_should_be_hidden(
+                pack_name=self.pack,
+                deprecated_content_items=deprecated_pack_content_items.get_deprecated_content_items_report()
+            )
+            if self._add_error(
+                (error_message, error_code),
+                file_path=self.pack_meta_file,
+                should_print=True,
+                suggested_fix=Errors.suggest_fix(file_path=os.path.join(self.pack_path, self.pack_meta_file))
+            ):
                 return False
         return True

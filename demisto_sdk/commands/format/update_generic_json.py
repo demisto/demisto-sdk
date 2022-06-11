@@ -43,12 +43,12 @@ class BaseUpdateJSON(BaseUpdate):
             if self.__class__.__name__ in ARGUMENTS_DEFAULT_VALUES[field][1]:
                 self.data[field] = ARGUMENTS_DEFAULT_VALUES[field][0]
 
-    def save_json_to_destination_file(self):
+    def save_json_to_destination_file(self, encode_html_chars=True):
         """Save formatted JSON data to destination file."""
         if self.source_file != self.output_file:
             click.secho(f'Saving output JSON file to {self.output_file}', fg='white')
         with open(self.output_file, 'w') as file:
-            ujson.dump(self.data, file, indent=4, encode_html_chars=True, escape_forward_slashes=False,
+            ujson.dump(self.data, file, indent=4, encode_html_chars=encode_html_chars, escape_forward_slashes=False,
                        ensure_ascii=False)
 
     def update_json(self, default_from_version: Optional[str] = '', file_type: str = ''):

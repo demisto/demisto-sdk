@@ -27,6 +27,14 @@ class YAMLContentObject(YAMLObject):
         self._change_log: Optional[ChangeLog] = None
 
     @property
+    def name(self):
+        return self.get('name')
+
+    @property
+    def deprecated(self):
+        return self.get('deprecated', False)
+
+    @property
     def changelog(self) -> Optional[ChangeLog]:
         """YAML related ChangeLog object.
 

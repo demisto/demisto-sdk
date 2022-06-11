@@ -118,14 +118,26 @@ class Pack:
                                                           suffix="yml")
 
     @property
+    def integrations_amount(self):
+        return len([integration for integration in self.integrations])
+
+    @property
     def scripts(self) -> Iterator[Script]:
         return self._content_files_list_generator_factory(dir_name=SCRIPTS_DIR,
                                                           suffix="yml")
 
     @property
+    def scripts_amount(self):
+        return len([script for script in self.scripts])
+
+    @property
     def playbooks(self) -> Iterator[Playbook]:
         return self._content_files_list_generator_factory(dir_name=PLAYBOOKS_DIR,
                                                           suffix="yml")
+
+    @property
+    def playbooks_amount(self):
+        return len([playbook for playbook in self.playbooks])
 
     @property
     def reports(self) -> Iterator[Report]:
@@ -279,6 +291,12 @@ class Pack:
             obj = PackMetaData(file)
 
         return obj
+
+    @property
+    def pack_metadata_as_dict(self) -> Dict:
+        if pack_metadata := self.pack_metadata:
+            return pack_metadata.to_dict()
+        return {}
 
     @property
     def metadata(self) -> PackMetaData:

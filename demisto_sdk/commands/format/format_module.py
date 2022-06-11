@@ -38,6 +38,8 @@ from demisto_sdk.commands.format.update_job import JobJSONFormat
 from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
 from demisto_sdk.commands.format.update_lists import ListsFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
+from demisto_sdk.commands.format.update_pack_metadata import \
+    PackMetadataJsonFormat
 from demisto_sdk.commands.format.update_playbook import (PlaybookYMLFormat,
                                                          TestPlaybookYMLFormat)
 from demisto_sdk.commands.format.update_pre_process_rules import \
@@ -75,6 +77,7 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'generictype': GenericTypeJSONFormat,
     'genericmodule': GenericModuleJSONFormat,
     'genericdefinition': GenericDefinitionJSONFormat,
+    'metadata': PackMetadataJsonFormat,
     JOB: JobJSONFormat
 }
 
@@ -148,16 +151,14 @@ def format_manager(input: str = None,
     log_list = []
     error_list: List[Tuple[int, int]] = []
     if files:
-        format_excluded_file = excluded_files + ['pack_metadata.json']
         for file in files:
             file_path = file.replace('\\', '/')
             file_type = find_type(file_path, clear_cache=clear_cache)
 
-            current_excluded_files = format_excluded_file[:]
             dirname = os.path.dirname(file_path)
             if dirname.endswith('CommonServerPython'):
-                current_excluded_files.remove('CommonServerPython.py')
-            if os.path.basename(file_path) in current_excluded_files:
+                excluded_files.remove('CommonServerPython.py')
+            if os.path.basename(file_path) in excluded_files:
                 continue
             if any(test_dir in str(dirname) for test_dir in TESTS_AND_DOC_DIRECTORIES):
                 continue

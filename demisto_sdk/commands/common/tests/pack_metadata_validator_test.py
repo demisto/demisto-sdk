@@ -17,6 +17,28 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 class TestPackMetadataValidator:
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
 
+    @pytest.fixture()
+    def hidden_pack(self, request, pack):
+        """
+        Creates a pack containing either integrations/playbooks/scripts which can be deprecated or not.
+        In addition returns whether a pack should be hidden.
+        """
+        integrations_data, scripts_data, playbooks_data, should_pack_be_hidden = request.param
+
+        for name, should_deprecate in integrations_data:
+            integration = pack.create_integration(name=name)
+            integration.yml.update({'deprecated': should_deprecate})
+
+        for name, should_deprecate in scripts_data:
+            script = pack.create_script(name=name)
+            script.yml.update({'deprecated': should_deprecate})
+
+        for name, should_deprecate in playbooks_data:
+            playbook = pack.create_playbook(name=name)
+            playbook.yml.update({'deprecated': should_deprecate})
+
+        return pack, should_pack_be_hidden
+
     @pytest.mark.parametrize('metadata', [os.path.join(FILES_PATH, 'pack_metadata__valid.json'),
                                           os.path.join(FILES_PATH, 'pack_metadata__valid__community.json'),
                                           ])
@@ -214,3 +236,71 @@ class TestPackMetadataValidator:
         """
         validator = PackUniqueFilesValidator('fake')
         assert validator._is_version_format_valid(version) == expected
+
+    @pytest.mark.parametrize(
+        'hidden_pack',
+        [
+            (
+                [('integration-1', True), ('integration-2', True)], [], [], False
+            ),
+            (
+                [('integration-1', True), ('integration-2', False)], [], [], True
+            ),
+            (
+                [('integration-1', False), ('integration-2', True)], [('script-1', True)], [], True
+            ),
+            (
+                [], [('script-1', True), ('script-2', True)], [], False
+            ),
+            (
+                [], [('script-1', True), ('script-2', False)], [('playbook-1', True)], True
+            ),
+            (
+                [], [('script-1', True)], [('playbook-1', True), ('playbook-1', False)], True
+            ),
+            (
+                [], [], [('playbook-1', True), ('playbook-2', True)], False
+            ),
+            (
+                [], [('script-1', True), ('script-2', True)], [('playbook-1', True)], False
+            ),
+            (
+                [('integration-1', True), ('integration-2', False)],
+                [('script-1', True), ('script-2', True)],
+                [('playbook-1', True)],
+                True
+            )
+        ],
+        indirect=True
+    )
+    def test_should_pack_not_be_hidden(self, hidden_pack):
+        """
+        Given:
+            - Case 1: all integrations are deprecated and there aren't any scripts or playbooks in the pack.
+            - Case 2: not all the integrations are deprecated and there aren't any scripts or playbooks in the pack.
+            - Case 3: not all the integrations are deprecated and there are deprecated scripts and no playbooks in pack.
+            - Case 4: no integrations or playbooks, but scripts which are all deprecated in the pack.
+            - Case 5: no integrations, but scripts which are not all deprecated and a
+                    playbook which is deprecated in the pack.
+            - Case 6: no integrations, but scripts which are all deprecated and a playbook are not all deprecated.
+            - Case 6: no integrations or scripts, but playbooks which are all deprecated in the pack.
+            - Case 7: no integrations, but playbooks and scripts which are all deprecated in the pack.
+            - Case 8: integrations which are not all
+                deprecated and playbooks and scripts which are all deprecated in the pack.
+
+        When:
+            - validating whether a pack should not be hidden (True if it should not be hidden, False if it should)
+
+        Then:
+            - Case 1: pack should be hidden.
+            - Case 2: pack should not be hidden.
+            - Case 3: pack should not be hidden.
+            - Case 4: pack should be hidden.
+            - Case 5: pack should not be hidden.
+            - Case 6: pack should be hidden.
+            - Case 7: pack should be hidden.
+            - Case 8: pack should not be hidden.
+        """
+        pack, should_pack_be_hidden = hidden_pack
+        validator = PackUniqueFilesValidator(pack.path)
+        assert validator.should_pack_not_be_hidden() == should_pack_be_hidden

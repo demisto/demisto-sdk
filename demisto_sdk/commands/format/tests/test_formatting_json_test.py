@@ -29,6 +29,8 @@ from demisto_sdk.commands.format.update_indicatortype import \
 from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
 from demisto_sdk.commands.format.update_lists import ListsFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
+from demisto_sdk.commands.format.update_pack_metadata import \
+    PackMetadataJsonFormat
 from demisto_sdk.commands.format.update_pre_process_rules import \
     PreProcessRulesFormat
 from demisto_sdk.commands.format.update_report import ReportJSONFormat
@@ -1141,6 +1143,31 @@ class TestFormattingOldClassifier:
         classifier_formatter.remove_null_fields()
         for field in ['defaultIncidentType', 'sortValues', 'unclassifiedCases']:
             assert field not in classifier_formatter.data
+
+
+class TestFormattingPackMetaData:
+
+    @pytest.mark.parametrize('deprecated', [True, False])
+    def test_hide_pack(self, pack, deprecated):
+        """
+        Given
+          - Case 1: a deprecated integration.
+          - Case 2: a non-deprecated integration.
+
+        When
+          - running hide pack format.
+
+        Then
+          - Case 1: ensure the pack_metadata.json is getting updated with hidden = True
+          - Case 2: ensure the pack_metadata.json is not getting updated with hidden = True.
+        """
+        pack.create_integration(name='integration-1').yml.update({'deprecated': deprecated})
+        pack_metadata_formatter = PackMetadataJsonFormat(input=pack.pack_metadata.path)
+        pack_metadata_formatter.hide_pack()
+        if deprecated:
+            assert pack_metadata_formatter.data.get('hidden')
+        else:
+            assert not pack_metadata_formatter.data.get('hidden')
 
 
 class TestFormattingMapper:

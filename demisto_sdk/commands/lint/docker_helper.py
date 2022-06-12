@@ -15,7 +15,7 @@ DOCKER_CLIENT = None
 logger = logging.getLogger('demisto-sdk')
 FILES_SRC_TARGET = List[Tuple[os.PathLike, str]]
 # this will be used to determine if the system supports mounts
-CAN_MOUNT_FILES = os.getenv('GITLAB_CI', False) or ((not os.getenv('CIRCLECI', False)) and (
+CAN_MOUNT_FILES = bool(os.getenv('GITLAB_CI', False)) or ((not os.getenv('CIRCLECI', False)) and (
 
     (not os.getenv('DOCKER_HOST')) or
     os.getenv('DOCKER_HOST', "").lower().startswith("unix:")

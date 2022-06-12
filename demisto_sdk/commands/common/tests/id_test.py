@@ -1,4 +1,5 @@
 from demisto_sdk.commands.common.configuration import Configuration
+from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.hook_validations.id import IDSetValidations
 from TestSuite.test_tools import ChangeCWD
 
@@ -1757,3 +1758,27 @@ class TestPlaybookEntitiesVersionsValid:
             is_subplaybook_name_exist = self.validator.is_subplaybook_name_valid(
                 self.playbook_with_invalid_sub_playbook_name, pack.path)
             assert not is_subplaybook_name_exist
+
+
+def test_invalid_playbook_is_file_valid_in_id_set(mocker):
+    """
+    Given:
+    - A playbook with:
+        - invalid entities versions (i.e. subplaybooks or scripts with higher fromversion than their parent playbook)
+        - valid subplaybook name
+
+    When:
+    - Running id set validations on it
+
+    Then
+    - Assert the result is invalid.
+    """
+    import demisto_sdk.commands.common.hook_validations.id as id_set
+
+    mocker.patch.object(id_set, 'get_playbook_data', return_value={})
+    validator = IDSetValidations(is_circle=True, is_test_run=True, configuration=CONFIG)
+
+    mocker.patch.object(validator, '_are_playbook_entities_versions_valid', return_value=(False, "Some error message"))
+    mocker.patch.object(validator, 'is_subplaybook_name_valid', return_value=True)
+
+    assert not validator.is_file_valid_in_set(file_path="some_path", file_type=FileType.PLAYBOOK)

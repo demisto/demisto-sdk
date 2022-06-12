@@ -1,7 +1,7 @@
 import re
 from datetime import datetime, timedelta
 from functools import lru_cache
-from typing import Optional
+from typing import Optional, Tuple, Union
 
 import requests
 from pkg_resources import parse_version
@@ -24,7 +24,7 @@ ACCEPT_HEADER = {
 # use 60 seconds timeout for requests
 TIMEOUT = 60
 DEFAULT_REGISTRY = 'registry-1.docker.io'
-DEPRECATED_DOCKER_IMAGE_LIST = r'https://raw.githubusercontent.com/demisto/dockerfiles/master/docker/deprecated_images.json'
+DEPRECATED_DOCKER_IMAGE_LIST_URL = 'https://raw.githubusercontent.com/demisto/dockerfiles/master/docker/deprecated_images.json'
 
 
 class DockerImageValidator(BaseValidator):
@@ -421,13 +421,13 @@ class DockerImageValidator(BaseValidator):
         return last_successful_pipelines[0]['sha']
 
     @staticmethod
-    def get_deprecated_dockers_list():
+    def get_deprecated_dockers_list() -> dict:
         """
         Get the deprecated docker images from dockerfiles repo
-        returns: Dict
+        returns: Dict contains the following keys: image_name, reason and created_time_utc.
         """
         try:
-            dockers_request = requests.get(DEPRECATED_DOCKER_IMAGE_LIST, verify=False)
+            dockers_request = requests.get(DEPRECATED_DOCKER_IMAGE_LIST_URL, verify=False)
             dockers_request.raise_for_status()
             deprecated_dockers_json = dockers_request.json()
             return deprecated_dockers_json
@@ -438,7 +438,13 @@ class DockerImageValidator(BaseValidator):
                           f'This may happen if you are not connected to the internet.'
             raise Exception(f'Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}')
 
-    def is_docker_image_deprecated(self, docker_image_name):
+    def is_docker_image_deprecated(self, docker_image_name) -> Union[Tuple[str, str], str]:
+        """
+        Check if the docker image is deprecated or not.
+        args:
+            docker_image_name (str): The name of the docker image for example: demisto/python
+        Returns: Tuple with the docker image name and reason if it's deprecated.
+        """
         docker_image_deprecated_list = self.get_deprecated_dockers_list()
         for docker_image in docker_image_deprecated_list:
             if docker_image_name == docker_image.get('image_name'):

@@ -504,10 +504,10 @@ class TestDockerImage:
 
     class TestDeprecatedDockerImage:
         @pytest.mark.parametrize('image_name, yml_docker_image, is_deprecated_docker, expected', [
-            ('demisto/aiohttp', 'demisto/aiohttp:1.0.2', ('demisto/aiohttp', 'Use the demisto/py3-tools docker image instead.'), False),
-            ('demisto/python', 'demisto/python:1.0.2', '', True)
-        ])
-        def test_deprecated_docker_image(self, integration, requests_mock, image_name, yml_docker_image,
+            ('demisto/aiohttp', 'demisto/aiohttp:1.0.2',
+             ('demisto/aiohttp', 'Use the demisto/py3-tools docker image instead.'), False),
+            ('demisto/python', 'demisto/python:1.0.2', '', True)])
+        def test_deprecated_docker_image(self, requests_mock, image_name, yml_docker_image,
                                          is_deprecated_docker, expected):
             """
             Given:
@@ -554,6 +554,14 @@ class TestDockerImage:
             assert docker_image_validator.is_docker_image_valid() == expected
 
         def test_command_is_docker_image_deprecated(self, requests_mock):
+            """
+            Given:
+                - A deprecated docker image
+            When:
+                Running is_docker_image_deprecated command
+            Then:
+                - Validates that the image is deprecated and the command returns the right tuple response.
+            """
             api_url = 'https://raw.githubusercontent.com/demisto/dockerfiles/master/docker/deprecated_images.json'
             requests_mock.get(
                 api_url,

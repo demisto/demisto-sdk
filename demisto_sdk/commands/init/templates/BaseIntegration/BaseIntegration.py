@@ -14,7 +14,6 @@ https://github.com/demisto/content/blob/master/Packs/HelloWorld/Integrations/Hel
 
 """
 
-import traceback
 from typing import Any, Dict, Optional
 
 import demistomock as demisto
@@ -150,7 +149,6 @@ def main():
         return_results(result)  # Returns either str, CommandResults and a list of CommandResults
     # Log exceptions and return errors
     except Exception as e:
-        demisto.error(traceback.format_exc())  # print the traceback
         return_error(f'Failed to execute {command} command.\nError:\n{str(e)}')
 
 

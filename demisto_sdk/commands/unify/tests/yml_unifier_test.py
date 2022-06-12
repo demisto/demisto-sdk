@@ -308,6 +308,16 @@ def test_insert_image_to_yml_without_image(tmp_path):
 
 
 def test_check_api_module_imports():
+    """
+       Given:
+        - A dummy script with 2 import statements
+
+       When:
+        - calling check_api_module_imports
+
+       Then:
+        - Recieve a dict of import to name
+       """
     import_to_name = IntegrationScriptUnifier.check_api_module_imports(DUMMY_SCRIPT)
     assert import_to_name == {'from MicrosoftApiModule import *  # noqa: E402': 'MicrosoftApiModule',
                               'from CrowdStrikeApiModule import *': 'CrowdStrikeApiModule'}
@@ -318,6 +328,16 @@ def test_check_api_module_imports():
      'from CrowdStrikeApiModule import *': 'CrowdStrikeApiModule'},
     {'from MicrosoftApiModule import *': 'MicrosoftApiModule'}])
 def test_insert_module_code(mocker, import_to_module):
+    """
+       Given:
+        - Import statements and its respective module name
+
+       When:
+        - calling get_generated_module_code
+
+       Then:
+        - Ensure the code returned contains the mocked module code
+       """
     mocker.patch.object(IntegrationScriptUnifier, '_get_api_module_code', side_effect=get_dummy_module)
     expected_result = DUMMY_SCRIPT
     for import_name, module_name in import_to_module.items():

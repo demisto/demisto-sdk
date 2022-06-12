@@ -2591,24 +2591,24 @@ def get_api_module_dependencies(pkgs, id_set_path, verbose):
     """
 
     id_set = open_id_set_file(id_set_path)
-    api_modules = {pkg.name for pkg in pkgs if API_MODULES_PACK in pkg.parts}
+    changed_api_modules = {pkg.name for pkg in pkgs if API_MODULES_PACK in pkg.parts}
     scripts = id_set.get(IdSetKeys.SCRIPTS.value, [])
     integrations = id_set.get(IdSetKeys.INTEGRATIONS.value, [])
     using_scripts, using_integrations = [], []
     for script in scripts:
         script_info = list(script.values())[0]
         script_name = script_info.get('name')
-        api_module = script_info.get('api_modules', [])
-        if len(api_modules.intersection(api_module)) > 0:
+        script_api_modules = script_info.get('api_modules', [])
+        if changed_api_modules & script_api_modules:
             if verbose:
-                print(f"found script {script_name} dependent on {api_module}")
+                print(f"found script {script_name} dependent on {script_api_modules}")
             using_scripts.extend(list(script.values()))
 
     for integration in integrations:
         integration_info = list(integration.values())[0]
         integration_name = integration_info.get('name')
-        api_module = integration_info.get('api_modules', [])
-        if len(api_modules.intersection(api_module)) > 0:
+        script_api_modules = integration_info.get('api_modules', [])
+        if changed_api_modules & script_api_modules:
             if verbose:
                 print(f"found integration {integration_name} dependent on {api_module}")
             using_integrations.extend(list(integration.values()))

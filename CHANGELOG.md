@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Added a new validation that checks whether a pack should be hidden.
+* Added a new format to `pack_metadata.json` to hide a pack that should be hidden.
 * Added support for running lint via a remote docker ssh connection. Use `DOCKER_HOST` env variable to specify a remote docker connection, such as: `DOCKER_HOST=ssh://myuser@myhost.com`.
 * Fixed an issue where the pack cache in *get_marketplaces* caused the function to return invalid values.
 * Fixed an issue where running format on a pack with XSIAM entities would fail.

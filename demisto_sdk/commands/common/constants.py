@@ -428,6 +428,8 @@ DEFAULT_DBOT_IMAGE_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAEIAAABlCAYAAAD5/TVmAAAfJEl
                             '7eorX7lGdXd3V4x3MRCUMGFHgvnz5/PiSy+fCdxEJlt3fJboAxb+H6GbFBmX3jbg12MPaXyx4H0xBhRat0N3s0' \
                             'jliiBUXY1lWWs9Hs+PgZlCMAXNBIRoRFMH1JDZzgeyl5/MFthk+FY4FyyyEqEzxKbI2DQxMv7MMJnQZDvovVqz' \
                             'A1HUzK9kdzt0/2+exnQr4g2hrAAAAABJRU5ErkJggg=='
+# structure regex of the from and to version
+FROM_TO_VERSION_REGEX = re.compile(r'(?:\d{1,2}\.){2}\d{1,2}')
 # file types regexes
 PIPFILE_REGEX = r'.*/Pipfile(\.lock)?'
 TEST_DATA_REGEX = r'.*test_data.*'

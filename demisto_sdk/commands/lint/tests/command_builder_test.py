@@ -34,7 +34,7 @@ def test_build_xsoar_linter_py3_command(files):
     files = [str(file) for file in files]
     expected = f"python3 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
                "conftest.py,venv -E --disable=all --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}'" \
-               " --enable=E9002,E9003,E9004,E9005,E9006,E9007,E9010,E9011, --load-plugins " \
+               " --enable=E9002,E9003,E9004,E9005,E9006,E9007,E9010,E9011,W9013, --load-plugins " \
                f"base_checker, {' '.join(files)}"
     assert output == expected
 
@@ -48,7 +48,7 @@ def test_build_xsoar_linter_py2_command(files):
     files = [str(file) for file in files]
     expected = f"python2 -m pylint --ignore=CommonServerPython.py,demistomock.py,CommonServerUserPython.py," \
                "conftest.py,venv -E --disable=all --msg-template='{abspath}:{line}:{column}: {msg_id} {obj}: {msg}' " \
-               "--enable=E9002,E9003,E9004,E9005,E9006,E9007,E9010,E9011, --load-plugins " \
+               "--enable=E9002,E9003,E9004,E9005,E9006,E9007,E9010,E9011,W9013, --load-plugins " \
                f"base_checker, {' '.join(files)}"
     assert output == expected
 
@@ -88,8 +88,8 @@ def test_build_mypy_command(files, py_num, content_path):
     output = build_mypy_command(files, py_num, content_path)
     files = [str(file) for file in files]
     expected = f"python3 -m mypy --python-version {py_num} --check-untyped-defs --ignore-missing-imports " \
-               f"--follow-imports=silent --show-column-numbers --show-error-codes --pretty --allow-redefinition " \
-               f"--show-absolute-path --cache-dir={expected_cache_dir} {' '.join(files)}"
+        f"--follow-imports=silent --show-column-numbers --show-error-codes --pretty --allow-redefinition " \
+        f"--show-absolute-path --no-site-packages --cache-dir={expected_cache_dir} {' '.join(files)}"
     assert expected == output
 
 

@@ -44,6 +44,8 @@ TICKETS_OBJECTS = {
     }
 }
 
+SERVER_URL = 'http://test.com'
+
 
 def convert_snake_to_camel(snake_str: str) -> str:
     """Convert a specific string of snake case to camel case.

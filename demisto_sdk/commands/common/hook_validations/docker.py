@@ -33,7 +33,8 @@ class DockerImageValidator(BaseValidator):
                  suppress_print: bool = False, json_file_path: Optional[str] = None, is_iron_bank: bool = False,
                  specific_validations: list = None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print, json_file_path=json_file_path, specific_validations=specific_validations)
+                         suppress_print=suppress_print, json_file_path=json_file_path,
+                         specific_validations=specific_validations)
         self.is_valid = True
         self.is_modified_file = is_modified_file
         self.is_integration = is_integration
@@ -377,7 +378,7 @@ class DockerImageValidator(BaseValidator):
             if not manifest_file_content:
                 return ''
         except Exception as e:
-            raise(e)
+            raise (e)
 
         version_pattern = 'tags:\n- (.*)\n'
         latest_version = re.findall(version_pattern, manifest_file_content)

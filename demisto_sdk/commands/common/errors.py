@@ -57,6 +57,8 @@ ERROR_CODE = {
     "changed_pack_name": {'code': "BA114", 'ui_applicable': False, 'related_field': 'name'},
     "file_cannot_be_deleted": {'code': "BA115", 'ui_applicable': False, 'related_field': ''},
     "cli_name_and_id_do_not_match": {'code': "BA116", 'ui_applicable': False, 'related_field': 'cliName'},
+    "incorrect_from_to_version_format": {'code': "BA117", 'ui_applicable': False, 'related_field': ''},
+    "mismatching_from_to_versions": {'code': "BA118", 'ui_applicable': False, 'related_field': ''},
 
     # BC - Backward Compatible
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -2105,6 +2107,18 @@ class Errors:
     def taskid_different_from_id(task_key, id_, taskid):
         return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id_}, " \
                f"must be with equal value. "
+
+    @staticmethod
+    @error_code_decorator
+    def incorrect_from_to_version_format(incorrect_key: str):
+        return f"The format of the {incorrect_key} is incorrect\n" \
+               f"Please fix this so that it is in xx.xx.xx format and each member is a number only."
+
+    @staticmethod
+    @error_code_decorator
+    def mismatching_from_to_versions():
+        return 'The `fromversion` and `toversion` are not synchronizied\n' \
+               'It is must be fromversion <= toversion.'
 
     @staticmethod
     @error_code_decorator

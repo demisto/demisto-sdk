@@ -11,7 +11,6 @@ Linting: https://xsoar.pan.dev/docs/integrations/linting
 
 """
 
-import traceback
 from typing import Any, Dict
 
 import demistomock as demisto
@@ -66,7 +65,6 @@ def main():
         # TODO: replace the invoked command function with yours
         return_results(basescript_dummy_command(demisto.args()))
     except Exception as ex:
-        demisto.error(traceback.format_exc())  # print the traceback
         return_error(f'Failed to execute BaseScript. Error: {str(ex)}')
 
 

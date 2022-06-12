@@ -12,11 +12,15 @@
 * Removed the validation of a subtype change in integrations and scripts from **validate**.
 * Fixed an issue where **download** did not behave as expected when prompting for a version update. Reported by @K-Yo
 * Added support for adoption release notes.
+* Fixed an issue where **merge-id-sets** failed when a key was missing in one id-set.json.
 * Fixed a bug where some mypy messages were not parsed properly in **lint**.
+* Added a validation to the **validate** command, failing when '`fromversion`' or '`toversion`' in a content entity are incorrect format.
+* Added a validation to the **validate** command, checking if `fromversion` <= `toversion`.
 * Fixed an issue where coverage reports used the wrong logging level, marking debug logs as errors.
 * Added a new validation to the **validate** command, to check when the discouraged `http` prefixes are used when setting defaultvalue, rather than `https`.
 * Added a check to the **lint** command for finding hard-coded usage of the http protocol.
 * Locked the dependency on Docker.
+* Removed a traceback line from the **init** command templates: BaseIntegration, BaseScript.
 
 ## 1.6.7
 

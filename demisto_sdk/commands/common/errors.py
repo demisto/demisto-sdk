@@ -16,14 +16,15 @@ ALLOWED_IGNORE_ERRORS = [
     'DS107',
     'GF102',
     'IF100', 'IF106', 'IF115', 'IF116',
-    'IN109', 'IN110', 'IN122', 'IN124', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145',
+    'IN109', 'IN110', 'IN122', 'IN124', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145', 'IN153', 'IN154',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107',
     'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM 110',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
-    'IM111'
+    'IM111',
+    'RN112',
 ]
 
 # predefined errors to be ignored in partner/community supported packs even if they do not appear in .pack-ignore
@@ -56,6 +57,8 @@ ERROR_CODE = {
     "changed_pack_name": {'code': "BA114", 'ui_applicable': False, 'related_field': 'name'},
     "file_cannot_be_deleted": {'code': "BA115", 'ui_applicable': False, 'related_field': ''},
     "cli_name_and_id_do_not_match": {'code': "BA116", 'ui_applicable': False, 'related_field': 'cliName'},
+    "incorrect_from_to_version_format": {'code': "BA117", 'ui_applicable': False, 'related_field': ''},
+    "mismatching_from_to_versions": {'code': "BA118", 'ui_applicable': False, 'related_field': ''},
 
     # BC - Backward Compatible
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -231,6 +234,8 @@ ERROR_CODE = {
     'invalid_siem_integration_name': {'code': 'IN150', 'ui_applicable': True, 'related_field': 'display'},
     "empty_command_arguments": {'code': 'IN151', 'ui_applicable': False, 'related_field': 'arguments'},
     'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True, 'related_field': 'defaultvalue'},
+    'not_supported_integration_parameter_url_defaultvalue': {'code': 'IN153', 'ui_applicable': False, 'related_field': 'defaultvalue'},
+    'missing_reliability_parameter': {'code': 'IN154', 'ui_applicable': False, 'related_field': 'configuration'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -353,6 +358,7 @@ ERROR_CODE = {
     "modified_existing_release_notes": {'code': "RN109", 'ui_applicable': False, 'related_field': ''},
     "release_notes_config_file_missing_release_notes": {'code': "RN110", 'ui_applicable': False, 'related_field': ''},
     "release_notes_docker_image_not_match_yaml": {'code': "RN111", 'ui_applicable': False, 'related_field': ''},
+    "release_notes_bc_json_file_missing": {'code': "RN112", 'ui_applicable': False, 'related_field': ''},
 
     # RP - Reputations (Indicator Types)
     "wrong_version_reputations": {'code': "RP100", 'ui_applicable': False, 'related_field': 'version'},
@@ -851,6 +857,11 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def not_supported_integration_parameter_url_defaultvalue(param, invalid_defaultvalue):
+        return f"The integration parameter {param} has defaultvalue set to {invalid_defaultvalue}. If possible, replace the http prefix with https."
+
+    @staticmethod
+    @error_code_decorator
     def is_valid_integration_file_path_in_folder(integration_file):
         return f"The integration file name: {integration_file} is invalid, " \
                f"The integration file name should be the same as the name of the folder that contains it."
@@ -881,6 +892,13 @@ class Errors:
         return f"The defaultvalue checkbox of {name}'s filed is incorrect, " \
                f"should be 'true' or 'false', a string which contains only lowercase letters.\n " \
                f"e.g: defaultvalue: 'true'"
+
+    @staticmethod
+    @error_code_decorator
+    def missing_reliability_parameter(command: str):
+        return f'Missing "Reliability" parameter in the {command} reputation command.' \
+               f'Please add it to the YAML file.' \
+               f'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/integrations/dbot#reliability-level'
 
     @staticmethod
     @error_code_decorator
@@ -1249,6 +1267,14 @@ class Errors:
     def release_notes_config_file_missing_release_notes(config_rn_path: str):
         return f'Release notes config file {config_rn_path} is missing corresponding release notes file.\n' \
                f'''Please add release notes file: {config_rn_path.replace('json', 'md')}'''
+
+    @staticmethod
+    @error_code_decorator
+    def release_notes_bc_json_file_missing(json_path: str):
+        return f'A new release notes file contains the phrase \"breaking changes\" ' \
+               'without a matching JSON file (with the same name as the release note file, e.g. 1_2_3.json). ' \
+               f'Please run \"demisto-sdk update-release-notes -i {json_path[:-4]}md -bc\". ' \
+               'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
 
     @staticmethod
     @error_code_decorator
@@ -2081,6 +2107,18 @@ class Errors:
     def taskid_different_from_id(task_key, id_, taskid):
         return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id_}, " \
                f"must be with equal value. "
+
+    @staticmethod
+    @error_code_decorator
+    def incorrect_from_to_version_format(incorrect_key: str):
+        return f"The format of the {incorrect_key} is incorrect\n" \
+               f"Please fix this so that it is in xx.xx.xx format and each member is a number only."
+
+    @staticmethod
+    @error_code_decorator
+    def mismatching_from_to_versions():
+        return 'The `fromversion` and `toversion` are not synchronizied\n' \
+               'It is must be fromversion <= toversion.'
 
     @staticmethod
     @error_code_decorator

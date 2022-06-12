@@ -49,7 +49,6 @@ class BaseUpdate:
                  verbose: bool = False,
                  assume_yes: bool = False,
                  interactive: bool = True,
-                 deprecate: bool = False,
                  clear_cache: bool = False,
                  **kwargs):
         self.source_file = input
@@ -76,6 +75,7 @@ class BaseUpdate:
         except Exception:
             raise Exception(F'Provided file {self.source_file} is not a valid file.')
         self.from_version_key = self.set_from_version_key_name()
+        self.id_set_file, _ = get_dict_from_file(path=kwargs.get('id_set_path'))  # type: ignore[arg-type]
 
     def set_output_file_path(self, output_file_path) -> str:
         """Creates and format the output file name according to user input.
@@ -224,16 +224,17 @@ class BaseUpdate:
                 return reg
         return None
 
-    def get_answer(self, promote):
-        click.secho(promote,
-                    fg='red')
+    @staticmethod
+    def get_answer(promote):
+        click.secho(promote, fg='red')
         return input()
 
     def ask_user(self):
         user_answer = self.get_answer(
-            'Either no fromversion is specified in your file,'
-            ' or it is lower than the minimal fromversion for this content type, would you like to set it to the default? [Y/n]')
-        if user_answer and user_answer.lower() in ['y', 'yes']:
+            'Either no fromversion is specified in your file, '
+            'or it is lower than the minimal fromversion for this content type.'
+            'Would you like to set it to the default? [Y/n]')
+        if not user_answer or user_answer.lower() in ['y', 'yes']:
             return True
         else:
             click.secho('Skipping update of fromVersion', fg='yellow')

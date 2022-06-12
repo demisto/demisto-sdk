@@ -77,7 +77,6 @@ class IntegrationValidator(ContentEntityValidator):
             self.no_removed_integration_parameters(),
             self.no_added_required_fields(),
             self.no_changed_command_name_or_arg(),
-            self.no_changed_subtype(),
             self.is_valid_display_configuration(),
             self.no_changed_removed_yml_fields(),
             # will move to is_valid_integration after https://github.com/demisto/etc/issues/17949
@@ -113,6 +112,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_max_fetch_and_first_fetch(),
             self.is_valid_as_deprecated(),
             self.is_valid_parameters_display_name(),
+            self.is_valid_parameter_url_default_value(),
             self.is_mapping_fields_command_exist(),
             self.is_valid_integration_file_path(),
             self.has_no_duplicate_params(),
@@ -148,6 +148,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_description(beta_integration=False),
             self.is_context_correct_in_readme(),
             self.verify_yml_commands_match_readme(is_modified),
+            self.verify_reputation_commands_has_reliability(is_modified),
         ]
 
         if check_is_unskipped:
@@ -1214,6 +1215,27 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
+    @error_codes('IN153')
+    def is_valid_parameter_url_default_value(self) -> bool:
+        """Verifies integration parameters default value is valid.
+
+        Returns:
+            bool: True if the default value of the url parameter uses the https protocol,
+            False otherwise.
+        """
+        configuration = self.current_file.get('configuration', {})
+        parameters_default_values = [(param.get('display'), param.get('defaultvalue')) for param in configuration if param.get('defaultvalue')]
+
+        is_valid = True
+        for param, defaultvalue in parameters_default_values:
+            if defaultvalue and isinstance(defaultvalue, str):
+                if defaultvalue.startswith('http:'):
+                    error_message, error_code = Errors.not_supported_integration_parameter_url_defaultvalue(param, defaultvalue)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        is_valid = False
+
+        return is_valid
+
     @error_codes('IN138,IN137')
     def is_valid_integration_file_path(self) -> bool:
         absolute_file_path = self.file_path
@@ -1595,7 +1617,7 @@ class IntegrationValidator(ContentEntityValidator):
         """
         Checks if there are commands that doesn't appear in the readme but appear in the .yml file
         Args:
-            is_modified (bool): Wether the given files are modified or not.
+            is_modified (bool): Whether the given files are modified or not.
 
         Return:
             bool: True if all commands are documented in the README, False if there's no README file in the expected
@@ -1624,3 +1646,27 @@ class IntegrationValidator(ContentEntityValidator):
                 is_valid = False
 
         return is_valid
+
+    @error_codes('IN154')
+    def verify_reputation_commands_has_reliability(self, is_modified: bool = False):
+        """
+        In case the integration has reputation command, ensure there is a reliability parameter.
+        Args:
+            is_modified (bool): Whether the given files are modified or not.
+
+        Return:
+            bool: True if there are no reputation commands or there is a reliability parameter
+             and False if there is at least one reputation command without a reliability parameter in the configuration.
+        """
+        if not is_modified:
+            return True
+        commands_names = [command.get('name') for command in self.current_file.get('script', {}).get('commands', [])]
+        yml_config_names = ' '.join([config.get('name') for config in self.current_file.get('configuration', {})])
+        for command in commands_names:
+            if command in REPUTATION_COMMAND_NAMES:
+                if 'reliability' in yml_config_names.lower():
+                    return True
+                error_message, error_code = Errors.missing_reliability_parameter(command)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
+        return True

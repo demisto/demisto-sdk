@@ -1764,7 +1764,7 @@ def test_invalid_playbook_is_file_valid_in_id_set(mocker):
     """
     Given:
     - A playbook with:
-        - invalid entities versions
+        - invalid entities versions (i.e. subplaybooks or scripts with higher fromversion than their parent playbook)
         - valid subplaybook name
 
     When:

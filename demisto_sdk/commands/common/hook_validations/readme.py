@@ -29,7 +29,7 @@ from demisto_sdk.commands.common.tools import (
     run_command_os)
 
 RELATIVE_HREF_URL_REGEX = r'(<.*?href\s*=\s*"((?!(?:https?:\/\/)|#|(?:mailto:)).*?)")'
-RELATIVE_URL_REGEX = r'^(?![!])(\[.*?\])\(((?!(?:https?:\/\/)|#|(?:mailto:)).*?)\)$'
+RELATIVE_MARKDOWN_URL_REGEX = r'^(?![!])(\[.*?\])\(((?!(?:https?:\/\/)|#|(?:mailto:)).*?)\)$'
 
 json = JSON_Handler()
 
@@ -270,7 +270,7 @@ class ReadMeValidator(BaseValidator):
         # If error was found, print it only if its not a pack readme. For pack readme, the PackUniqueFilesValidator
         # class handles the errors and printing.
         should_print_error = not is_pack_readme
-        relative_urls = re.findall(RELATIVE_URL_REGEX, self.readme_content,
+        relative_urls = re.findall(RELATIVE_MARKDOWN_URL_REGEX, self.readme_content,
                                    re.IGNORECASE | re.MULTILINE)
         relative_urls += re.findall(RELATIVE_HREF_URL_REGEX, self.readme_content,
                                     re.IGNORECASE | re.MULTILINE)

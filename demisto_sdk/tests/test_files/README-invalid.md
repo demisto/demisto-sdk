@@ -6,7 +6,9 @@ For more info check out think links-
 [Good link2](https://example.com)
 [invalid relative 1](relative1.com)
 [invalid relative 2](www.relative2.com)
+<a href="https://hreftesting.com"> good href test </a>
 <a href="hreftesting.com"> href tests </a>
+<a href="www.hreftesting.com"> www href tests </a>
 
 ## AccessData Playbook
 

@@ -1789,8 +1789,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_readme_relative_url_error(path):
-        return f'Relative urls are not supported within README, If this is not a relative url make sure you add ' \
-               f'https:// at the start of it:\n{path}. '
+        return f'Relative urls are not supported within README. If this is not a relative url, please add ' \
+               f'an https:// prefix:\n{path}. '
 
     @staticmethod
     @error_code_decorator

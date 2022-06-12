@@ -89,19 +89,19 @@ def test_relative_url_not_valid():
     """
     captured_output = io.StringIO()
     sys.stdout = captured_output  # redirect stdout.
-    absolute_urls = ["https://www.good.co.il", "https://example.com", "https://github.com/demisto/content/blob/123"
-                                                                      "/Packs/FeedOffice365/doc_files/test.png"]
-    relative_urls = ["relative1.com", "www.relative2.com", "hreftesting.com"]
+    absolute_urls = ["https://www.good.co.il", "https://example.com", "https://github.com/demisto/content/blob/123",
+                     "/Packs/FeedOffice365/doc_files/test.png", "https://hreftesting.com"]
+    relative_urls = ["relative1.com", "www.relative2.com", "hreftesting.com", "www.hreftesting.com"]
     readme_validator = ReadMeValidator(INVALID_MD)
     result = readme_validator.verify_readme_relative_urls()
     sys.stdout = sys.__stdout__  # reset stdout.
     assert not result
-    assert absolute_urls[0] not in captured_output.getvalue()
-    assert absolute_urls[1] not in captured_output.getvalue()
-    assert absolute_urls[2] not in captured_output.getvalue()
-    assert relative_urls[0] in captured_output.getvalue()
-    assert relative_urls[1] in captured_output.getvalue()
-    assert relative_urls[2] in captured_output.getvalue()
+    output = captured_output.getvalue()
+    for url in absolute_urls:
+        assert url not in output
+
+    for url in relative_urls:
+        assert url in output
 
 
 def test_is_image_path_valid():

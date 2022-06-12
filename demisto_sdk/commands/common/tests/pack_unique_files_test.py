@@ -26,7 +26,6 @@ from TestSuite.test_tools import ChangeCWD
 
 json = JSON_Handler()
 
-
 VALIDATE_CMD = "validate"
 PACK_METADATA_PARTNER = {
     "name": "test",
@@ -271,7 +270,7 @@ class TestPackUniqueFilesValidator:
 
         assert not self.validator.validate_core_pack_dependencies(dependencies_packs)
         assert Errors.invalid_core_pack_dependencies('fake_pack', ['dependency_pack_1', 'dependency_pack_3'])[0] \
-            in self.validator.get_errors()
+               in self.validator.get_errors()
 
     def test_validate_pack_dependencies_skip_id_set_creation(self, capsys):
         """
@@ -589,7 +588,8 @@ class TestPackUniqueFilesValidator:
             ReadMeValidator
 
         self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack2'))
-        mocker.patch.object(ReadMeValidator, 'check_readme_relative_image_paths', return_value=[])  # Test only absolute paths
+        mocker.patch.object(ReadMeValidator, 'check_readme_relative_image_paths',
+                            return_value=[])  # Test only absolute paths
 
         with requests_mock.Mocker() as m:
             # Mock get requests
@@ -661,17 +661,18 @@ class TestPackUniqueFilesValidator:
 
         result = self.validator.validate_pack_readme_relative_urls()
         errors = self.validator.get_errors()
+        relative_error = 'Relative urls are not supported within README. If this is not a relative url, please add ' \
+                         'an https:// prefix:\n'
         assert not result
-        assert 'Relative urls are not supported within README, If this is not a relative url make sure you add ' \
-               'https:// at the start of it:\nrelative1.com. ' in errors
-        assert 'Relative urls are not supported within README, If this is not a relative url make sure you add ' \
-               'https:// at the start of it:\nwww.relative2.com. ' in errors
-        assert 'Relative urls are not supported within README, If this is not a relative url make sure you add ' \
-               'https:// at the start of it:\nhreftesting.com' in errors
+        assert f'{relative_error}relative1.com. ' in errors
+        assert f'{relative_error}www.relative2.com. ' in errors
+        assert f'{relative_error}hreftesting.com' in errors
+        assert f'{relative_error}www.hreftesting.com' in errors
         # this path is not an image path and should not be shown.
-        assert 'htttps://www.good.co.il' not in errors
+        assert 'https://www.good.co.il' not in errors
         assert 'https://example.com' not in errors
         assert 'doc_files/High_Risk_User.png' not in errors
+        assert 'https://hreftesting.com' not in errors
 
     @pytest.mark.parametrize('readme_content, is_valid', [
         ('Hey there, just testing', True),

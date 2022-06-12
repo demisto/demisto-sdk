@@ -623,11 +623,11 @@ def get_script_or_integration_id(file_path):
         return commonfields.get('id', ['-', ])
 
 
-def get_api_module_integrations_set(changed_api_modules: Set, integration_set):
+def get_api_module_integrations_set(changed_api_modules: Set, integration_set: Set):
     integrations_set = list()
     for integration in integration_set:
         integration_data = list(integration.values())[0]
-        if len(changed_api_modules.intersection(integration_data.get('api_modules', []))) > 0:
+        if changed_api_modules & integration_data.get('api_modules', set()):
             integrations_set.append(integration_data)
     return integrations_set
 

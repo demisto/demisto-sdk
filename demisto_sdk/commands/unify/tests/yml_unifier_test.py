@@ -86,7 +86,7 @@ TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
 
 
 def get_dummy_module(name='MicrosoftApiModule', path=None):
-    class_name = {'MicrosoftApiModule':'MicrosoftClient', 'CrowdStrikeApiModule':'CrowdStrikeApiClient'}[name]
+    class_name = {'MicrosoftApiModule': 'MicrosoftClient', 'CrowdStrikeApiModule': 'CrowdStrikeApiClient'}[name]
     return DUMMY_MODULE.replace('CLASSNAME', class_name)
 
 
@@ -212,7 +212,7 @@ def test_get_integration_doc_link_positive(tmp_path):
     unifier = IntegrationScriptUnifier(str(tmp_path))
     integration_doc_link = unifier.get_integration_doc_link({'commonfields': {'id': 'Cortex XDR - IOC'}})
     assert integration_doc_link == \
-        '[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/cortex-xdr---ioc)'
+           '[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/cortex-xdr---ioc)'
     link = re.findall(r'\(([^)]+)\)', integration_doc_link)[0]
     try:
         r = requests.get(link, verify=False, timeout=10)
@@ -226,10 +226,8 @@ def test_get_integration_doc_link_negative(tmp_path):
     Given:
         - Case A: integration which does not have README in the integration dir
         - Case B: integration with empty README in the integration dir
-
     When:
         - Getting integration doc link
-
     Then:
         - Verify an empty string is returned
     """

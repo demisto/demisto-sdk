@@ -511,8 +511,6 @@ class Linter:
 
         return SUCCESS, ""
 
-
-
     @timer(group_name='lint')
     def _run_lint_on_docker_image(self, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
                                   keep_container: bool, test_xml: str, no_coverage: bool, no_flake8: bool, no_vulture: bool):

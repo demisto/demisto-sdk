@@ -676,7 +676,7 @@ class IDSetValidations(BaseValidator):
                 is_valid = self._is_mapper_incident_types_found(mapper_data)
             elif file_type == constants.FileType.PLAYBOOK:
                 playbook_data = get_playbook_data(file_path)
-                playbook_answers = [self._are_playbook_entities_versions_valid(playbook_data, file_path),
+                playbook_answers = [self._are_playbook_entities_versions_valid(playbook_data, file_path)[0],
                                     self.is_subplaybook_name_valid(playbook_data, file_path)]
                 is_valid = all(playbook_answers)
         return is_valid

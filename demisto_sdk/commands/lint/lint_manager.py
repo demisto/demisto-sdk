@@ -31,6 +31,7 @@ from demisto_sdk.commands.common.tools import (find_file, find_type,
                                                print_error, print_v,
                                                print_warning,
                                                retrieve_file_ending)
+from demisto_sdk.commands.lint.docker_helper import init_global_docker_client
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                PY_CHCEKS,
                                                build_skipped_exit_code,
@@ -178,7 +179,7 @@ class LintManager:
             sys.exit(1)
         # Validating docker engine connection
         logger.debug('creating docker client from env')
-        docker_client: docker.DockerClient = docker.from_env()
+        docker_client: docker.DockerClient = init_global_docker_client(log_prompt='LintManager')
         try:
             logger.debug('pinging docker daemon')
             docker_client.ping()

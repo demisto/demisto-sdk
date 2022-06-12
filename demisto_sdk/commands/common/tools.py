@@ -627,7 +627,7 @@ def get_api_module_integrations_set(changed_api_modules: Set, integration_set: S
     integrations_set = list()
     for integration in integration_set:
         integration_data = list(integration.values())[0]
-        if changed_api_modules & integration_data.get('api_modules', set()):
+        if changed_api_modules & set(integration_data.get('api_modules', [])):
             integrations_set.append(integration_data)
     return integrations_set
 
@@ -2599,18 +2599,18 @@ def get_api_module_dependencies(pkgs, id_set_path, verbose):
         script_info = list(script.values())[0]
         script_name = script_info.get('name')
         script_api_modules = script_info.get('api_modules', [])
-        if changed_api_modules & script_api_modules:
+        if intersection := changed_api_modules & set(script_api_modules):
             if verbose:
-                print(f"found script {script_name} dependent on {script_api_modules}")
+                print(f"found script {script_name} dependent on {intersection}")
             using_scripts.extend(list(script.values()))
 
     for integration in integrations:
         integration_info = list(integration.values())[0]
         integration_name = integration_info.get('name')
         script_api_modules = integration_info.get('api_modules', [])
-        if changed_api_modules & script_api_modules:
+        if intersection := changed_api_modules & set(script_api_modules):
             if verbose:
-                print(f"found integration {integration_name} dependent on {api_module}")
+                print(f"found integration {integration_name} dependent on {intersection}")
             using_integrations.extend(list(integration.values()))
 
     using_scripts_pkg_paths = [Path(script.get('file_path')).parent.absolute() for

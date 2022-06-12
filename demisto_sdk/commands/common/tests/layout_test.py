@@ -108,6 +108,6 @@ class TestLayoutValidator:
             'version': -1,
             'name': 'test layout container',
         }
-        structure = mock_structure('', layout)
+        structure = mock_structure('layout.json', layout)
         validator = LayoutsContainerValidator(structure)
         assert not validator.is_valid_layout(validate_rn=False)

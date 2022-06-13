@@ -1142,7 +1142,7 @@ class TestRNUpdateUnit:
                                {'name': 'FeedTAXII_integration',
                                 'file_path': '/FeedTAXII_integration.yml',
                                 'pack': 'FeedTAXII',
-                                'api_modules': 'ApiModules_script'
+                                'api_modules': ['ApiModules_script']
                                 }
                                }
                           ]}

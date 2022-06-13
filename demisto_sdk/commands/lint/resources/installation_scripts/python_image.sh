@@ -24,4 +24,5 @@ elif [ "$ID" = "debian" ]
 then
     apt-get purge -y --auto-remove gcc python3-dev
 fi
+pip freeze
 unset REQUESTS_CA_BUNDLE

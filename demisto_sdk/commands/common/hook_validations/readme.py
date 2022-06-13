@@ -275,6 +275,9 @@ class ReadMeValidator(BaseValidator):
         relative_urls += re.findall(RELATIVE_HREF_URL_REGEX, self.readme_content,
                                     re.IGNORECASE | re.MULTILINE)
         for url in relative_urls:
+            # skip empty links
+            if not url[1]:
+                continue
             # striping in case there are whitespaces at the beginning/ending of url.
             error_message, error_code = Errors.invalid_readme_relative_url_error(url[1])
             if error_code and error_message:  # error was found

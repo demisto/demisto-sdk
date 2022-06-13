@@ -16,11 +16,11 @@ class DeprecatedPackContentItems(Pack):
 
     def get_deprecated_content_items_report(self) -> Dict:
         deprecated_content_items = {}
-        if deprecated_integrations := self.integrations:
+        if deprecated_integrations := [integration for integration in self.integrations]:
             deprecated_content_items['integrations'] = deprecated_integrations
-        if deprecated_playbooks := self.playbooks:
+        if deprecated_playbooks := [playbook for playbook in self.playbooks]:
             deprecated_content_items['playbooks'] = deprecated_playbooks
-        if deprecated_scripts := self.playbooks:
+        if deprecated_scripts := [script for script in self.scripts]:
             deprecated_content_items['scripts'] = deprecated_scripts
         return deprecated_content_items
 
@@ -81,9 +81,9 @@ class DeprecatedPackContentItems(Pack):
             return False
 
         return (
-            self.integrations_amount == self.deprecated_integrations_amount
+            self.integrations_amount and self.integrations_amount == self.deprecated_integrations_amount
         ) and (
-            self.playbooks_amount == self.deprecated_playbooks_amount
+            self.playbooks_amount and self.playbooks_amount == self.deprecated_playbooks_amount
         ) and (
-            self.scripts_amount == self.deprecated_scripts_amount
+            self.scripts_amount and self.scripts_amount == self.deprecated_scripts_amount
         )

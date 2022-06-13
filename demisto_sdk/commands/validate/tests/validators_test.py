@@ -470,7 +470,8 @@ class TestValidators:
                                                                 pack_error_ignore_list=[], is_modified=True)
 
     def test_files_validator_validate_pack_unique_files(self, mocker):
-        from demisto_sdk.commands.common.content.objects.custom_pack_objects.deprecated_pack_content_items import DeprecatedPackContentItems
+        from demisto_sdk.commands.common.content.objects.custom_pack_objects.deprecated_pack_content_items import \
+            DeprecatedPackContentItems
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         mocker.patch.object(DeprecatedPackContentItems, 'should_pack_be_hidden', return_value=False)
         # mocking should_pack_be_hidden must be done because the get_dict_from_file is being mocked.

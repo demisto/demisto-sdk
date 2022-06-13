@@ -81,9 +81,9 @@ class DeprecatedPackContentItems(Pack):
             return False
 
         return (
-                    self.integrations_amount == self.deprecated_integrations_amount
-               ) and (
-                    self.playbooks_amount == self.deprecated_playbooks_amount
-                ) and (
-                    self.scripts_amount == self.deprecated_scripts_amount
-                )
+            self.integrations_amount == self.deprecated_integrations_amount
+        ) and (
+            self.playbooks_amount == self.deprecated_playbooks_amount
+        ) and (
+            self.scripts_amount == self.deprecated_scripts_amount
+        )

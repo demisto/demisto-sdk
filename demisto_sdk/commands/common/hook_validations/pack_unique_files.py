@@ -809,8 +809,8 @@ class PackUniqueFilesValidator(BaseValidator):
         """
         Validates whether a pack should be hidden according to the following rules:
 
-        1. If the pack has integrations and all integrations are deprecated -> pack should be hidden.
-        2. if pack does not have integrations and all scripts and PBs are deprecated -> pack should be hidden.
+        1. if the pack is not already hidden.
+        2. if all the content items (playbooks/scripts/integrations) are deprecated.
 
         Returns:
             bool: True if pack should be hidden, False if it shouldn't.

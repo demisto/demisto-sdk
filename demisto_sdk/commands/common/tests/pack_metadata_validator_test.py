@@ -269,6 +269,24 @@ class TestPackMetadataValidator:
                 [('script-1', True), ('script-2', True)],
                 [('playbook-1', True)],
                 False
+            ),
+            (
+                [('integration-1', True), ('integration-2', True)],
+                [('script-1', True), ('script-2', True)],
+                [('playbook-1', True)],
+                True
+            ),
+            (
+                [('integration-1', True), ('integration-2', True)],
+                [('script-1', True), ('script-2', True)],
+                [('playbook-1', False)],
+                False
+            ),
+            (
+                [('integration-1', True), ('integration-2', True)],
+                [('script-1', False), ('script-2', True)],
+                [('playbook-1', True)],
+                False
             )
         ],
         indirect=True
@@ -282,11 +300,14 @@ class TestPackMetadataValidator:
             - Case 4: no integrations or playbooks, but scripts which are all deprecated in the pack.
             - Case 5: no integrations, but scripts which are not all deprecated and a
                     playbook which is deprecated in the pack.
-            - Case 6: no integrations, but scripts which are all deprecated and a playbook are not all deprecated.
-            - Case 6: no integrations or scripts, but playbooks which are all deprecated in the pack.
-            - Case 7: no integrations, but playbooks and scripts which are all deprecated in the pack.
-            - Case 8: integrations which are not all
+            - Case 6: no integrations, but scripts which are all deprecated and a playbook which is not deprecated.
+            - Case 7: no integrations or scripts, but playbooks which are all deprecated in the pack.
+            - Case 8: no integrations, but playbooks and scripts which are all deprecated in the pack.
+            - Case 9: integrations which are not all
                 deprecated and playbooks and scripts which are all deprecated in the pack.
+            - Case 10: all integrations, playbooks and scripts are deprecated.
+            - Case 11: all integrations and scripts are deprecated but the playbook is not deprecated.
+            - Case 12: all integrations and playbooks are deprecated but not all the scripts are deprecated.
 
         When:
             - validating whether a pack should not be hidden (True if it should not be hidden, False if it should)
@@ -297,9 +318,13 @@ class TestPackMetadataValidator:
             - Case 3: pack should not be hidden.
             - Case 4: pack should be hidden.
             - Case 5: pack should not be hidden.
-            - Case 6: pack should be hidden.
+            - Case 6: pack should not be hidden.
             - Case 7: pack should be hidden.
-            - Case 8: pack should not be hidden.
+            - Case 8: pack should be hidden.
+            - Case 9: pack should not be hidden.
+            - case 10: pack should be hidden.
+            - case 11: pack should not be hidden.
+            - case 12: pack should not be hidden.
         """
         pack, should_pack_be_hidden = hidden_pack
         validator = PackUniqueFilesValidator(pack.path)

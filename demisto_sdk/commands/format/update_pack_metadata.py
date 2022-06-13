@@ -58,8 +58,7 @@ class PackMetadataJsonFormat(BaseUpdateJSON):
         Hide the in which the pack_metadata.json is in if the following rules appear:
 
         1. if the pack is not already hidden.
-        2. If the pack has integrations and all integrations are deprecated -> pack should be hidden.
-        3. if pack does not have integrations and all scripts and PBs are deprecated -> pack should be hidden.
+        2. if all the content items (playbooks/scripts/integrations) are deprecated.
         """
         deprecated_pack_content_items = DeprecatedPackContentItems(os.path.dirname(self.source_file))
         if deprecated_pack_content_items.should_pack_be_hidden():

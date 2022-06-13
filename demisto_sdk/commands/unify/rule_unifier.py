@@ -48,13 +48,6 @@ class RuleUnifier(YAMLUnifier):
             rules = rules_file.read()
             self.yml_data['rules'] = FoldedScalarString(rules)
 
-    def _insert_schema(self):
-        schema_path = Path(self.yml_path).with_suffix('.json')
-        if os.path.exists(schema_path):
-            with io.open(schema_path, mode='r', encoding='utf-8') as schema_file:
-                schema = json.loads(schema_file.read())
-                self.yml_data['schema'] = FoldedScalarString(json.dumps(schema, indent=4))
-
     def _insert_samples(self):
         samples_dir = os.path.join(os.path.dirname(self.package_path), SAMPLES_DIR)
         if os.path.isdir(samples_dir):
@@ -69,3 +62,10 @@ class RuleUnifier(YAMLUnifier):
                 click.echo(f'Added {len(samples)} samples.')
             else:
                 click.echo('Did not find matching samples.')
+
+    def _insert_schema(self):
+        schema_path = Path(self.yml_path).with_suffix('.json')
+        if os.path.exists(schema_path):
+            with io.open(schema_path, mode='r', encoding='utf-8') as schema_file:
+                schema = json.loads(schema_file.read())
+                self.yml_data['schema'] = FoldedScalarString(json.dumps(schema, indent=4))

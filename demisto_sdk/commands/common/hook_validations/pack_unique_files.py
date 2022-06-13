@@ -325,7 +325,7 @@ class PackUniqueFilesValidator(BaseValidator):
             self._is_price_changed(),
             self._is_valid_support_type(),
             self.is_right_usage_of_usecase_tag(),
-            self.should_pack_not_be_hidden()
+            not self.should_pack_be_hidden()
         ]):
             if self.should_version_raise:
                 return self.validate_version_bump()
@@ -805,7 +805,7 @@ class PackUniqueFilesValidator(BaseValidator):
         return True
 
     @error_codes('PA132')
-    def should_pack_not_be_hidden(self):
+    def should_pack_be_hidden(self) -> bool:
         """
         Validates whether a pack should be hidden according to the following rules:
 
@@ -813,7 +813,7 @@ class PackUniqueFilesValidator(BaseValidator):
         2. if pack does not have integrations and all scripts and PBs are deprecated -> pack should be hidden.
 
         Returns:
-            bool: True if pack should not be hidden, False it it should.
+            bool: True if pack should be hidden, False if it shouldn't.
         """
         deprecated_pack_content_items = DeprecatedPackContentItems(self.pack_path)
         if deprecated_pack_content_items.should_pack_be_hidden():
@@ -827,5 +827,5 @@ class PackUniqueFilesValidator(BaseValidator):
                 should_print=True,
                 suggested_fix=Errors.suggest_fix(file_path=os.path.join(self.pack_path, self.pack_meta_file))
             ):
-                return False
-        return True
+                return True
+        return False

@@ -13,28 +13,57 @@ class DeprecatedPackContentItems(Pack):
     """
     A class which represents deprecated items of a single pack.
     """
-
     def get_deprecated_content_items_report(self) -> Dict:
         deprecated_content_items = {}
-        if deprecated_integrations := self.deprecated_integrations:
+        if deprecated_integrations := self.integrations:
             deprecated_content_items['integrations'] = deprecated_integrations
-        if deprecated_playbooks := self.deprecated_playbooks:
+        if deprecated_playbooks := self.playbooks:
             deprecated_content_items['playbooks'] = deprecated_playbooks
-        if deprecated_scripts := self.deprecated_scripts:
+        if deprecated_scripts := self.playbooks:
             deprecated_content_items['scripts'] = deprecated_scripts
         return deprecated_content_items
 
     @property
     def deprecated_playbooks(self) -> List[Playbook]:
-        return [playbook for playbook in self.playbooks if playbook.deprecated]
+        """
+        Returns all the deprecated playbooks in the pack.
+        """
+        return [playbook for playbook in self.playbooks if playbook.deprecated or playbook.hidden]
 
     @property
     def deprecated_integrations(self) -> List[Integration]:
+        """
+        Returns all the deprecated integrations in the pack.
+        """
         return [integration for integration in self.integrations if integration.deprecated]
 
     @property
     def deprecated_scripts(self) -> List[Script]:
+        """
+        Returns all the deprecated scripts in the pack.
+        """
         return [script for script in self.scripts if script.deprecated]
+
+    @property
+    def deprecated_playbooks_amount(self) -> int:
+        """
+        Amount of the deprecated playbooks in the pack.
+        """
+        return len(self.deprecated_playbooks)
+
+    @property
+    def deprecated_integrations_amount(self) -> int:
+        """
+        Amount of the deprecated integrations in the pack.
+        """
+        return len(self.deprecated_integrations)
+
+    @property
+    def deprecated_scripts_amount(self) -> int:
+        """
+        Amount of the deprecated scripts in the pack.
+        """
+        return len(self.deprecated_scripts)
 
     def should_pack_be_hidden(self) -> bool:
         """
@@ -51,23 +80,23 @@ class DeprecatedPackContentItems(Pack):
             # pack is already hidden
             return False
 
-        pack_integrations_amount = self.integrations_amount
-        if pack_integrations_amount > 0:
-            # if there integrations and all of them are deprecated
-            return pack_integrations_amount == len(self.deprecated_integrations)
+        pack_integrations_amount = super().integrations_amount
+        if pack_integrations_amount:
+            # if there are integrations and all of them are deprecated
+            return pack_integrations_amount == self.deprecated_integrations_amount
 
-        pack_scripts_amount = self.scripts_amount
-        pack_playbooks_amount = self.playbooks_amount
+        pack_scripts_amount = super().scripts_amount
+        pack_playbooks_amount = super().playbooks_amount
 
-        if pack_scripts_amount > 0 and pack_playbooks_amount > 0:
+        if pack_scripts_amount and pack_playbooks_amount:
             return (
-                pack_scripts_amount == len(self.deprecated_scripts)
+                pack_scripts_amount == self.deprecated_scripts_amount
             ) and (
-                pack_playbooks_amount == len(self.deprecated_playbooks)
+                pack_playbooks_amount == self.deprecated_playbooks_amount
             )
-        elif pack_scripts_amount > 0 and pack_playbooks_amount == 0:
-            return pack_scripts_amount == len(self.deprecated_scripts)
-        elif pack_scripts_amount == 0 and pack_playbooks_amount > 0:
-            return pack_playbooks_amount == len(self.deprecated_playbooks)
+        elif pack_scripts_amount and not pack_playbooks_amount:
+            return pack_scripts_amount == self.deprecated_scripts_amount
+        elif not pack_scripts_amount and pack_playbooks_amount:
+            return pack_playbooks_amount == self.deprecated_playbooks_amount
 
         return False

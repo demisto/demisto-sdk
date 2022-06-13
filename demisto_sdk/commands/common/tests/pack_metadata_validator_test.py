@@ -241,39 +241,39 @@ class TestPackMetadataValidator:
         'hidden_pack',
         [
             (
-                [('integration-1', True), ('integration-2', True)], [], [], False
+                [('integration-1', True), ('integration-2', True)], [], [], True
             ),
             (
-                [('integration-1', True), ('integration-2', False)], [], [], True
+                [('integration-1', True), ('integration-2', False)], [], [], False
             ),
             (
-                [('integration-1', False), ('integration-2', True)], [('script-1', True)], [], True
+                [('integration-1', False), ('integration-2', True)], [('script-1', True)], [], False
             ),
             (
-                [], [('script-1', True), ('script-2', True)], [], False
+                [], [('script-1', True), ('script-2', True)], [], True
             ),
             (
-                [], [('script-1', True), ('script-2', False)], [('playbook-1', True)], True
+                [], [('script-1', True), ('script-2', False)], [('playbook-1', True)], False
             ),
             (
-                [], [('script-1', True)], [('playbook-1', True), ('playbook-1', False)], True
+                [], [('script-1', True)], [('playbook-1', True), ('playbook-1', False)], False
             ),
             (
-                [], [], [('playbook-1', True), ('playbook-2', True)], False
+                [], [], [('playbook-1', True), ('playbook-2', True)], True
             ),
             (
-                [], [('script-1', True), ('script-2', True)], [('playbook-1', True)], False
+                [], [('script-1', True), ('script-2', True)], [('playbook-1', True)], True
             ),
             (
                 [('integration-1', True), ('integration-2', False)],
                 [('script-1', True), ('script-2', True)],
                 [('playbook-1', True)],
-                True
+                False
             )
         ],
         indirect=True
     )
-    def test_should_pack_not_be_hidden(self, hidden_pack):
+    def test_should_pack_be_hidden(self, hidden_pack):
         """
         Given:
             - Case 1: all integrations are deprecated and there aren't any scripts or playbooks in the pack.
@@ -303,4 +303,4 @@ class TestPackMetadataValidator:
         """
         pack, should_pack_be_hidden = hidden_pack
         validator = PackUniqueFilesValidator(pack.path)
-        assert validator.should_pack_not_be_hidden() == should_pack_be_hidden
+        assert validator.should_pack_be_hidden() == should_pack_be_hidden

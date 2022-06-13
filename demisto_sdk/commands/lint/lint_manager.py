@@ -144,14 +144,15 @@ class LintManager:
         # Get global requirements file
         pipfile_dir = Path(__file__).parent / 'resources'
         try:
-            for py_num in ['2', '3']:
-                pipfile_lock_path = pipfile_dir / f'pipfile_python{py_num}/Pipfile.lock'
-                with open(file=pipfile_lock_path) as f:
-                    lock_file: dict = json.load(fp=f)["develop"]
-                    facts[f"requirements_{py_num}"] = [key + value["version"] for key, value in  # type: ignore
-                                                       lock_file.items()]
-                    logger.debug(f"Test requirements successfully collected for python {py_num}:\n"
-                                 f" {facts[f'requirements_{py_num}']}")
+            pipfile_lock_path = pipfile_dir / 'pipfile_python3/Pipfile.lock'
+            with open(file=pipfile_lock_path) as f:
+                lock_file: dict = json.load(fp=f)["develop"]
+                facts["requirements_3"] = [key + value["version"] for key, value in  # type: ignore
+                                           lock_file.items()]
+                logger.debug("Test requirements successfully collected for python 3:\n"
+                             f" {facts[f'requirements_3']}")
+            python2_requirements = pipfile_dir / 'pipfile_python2/dev-requirements.txt'
+            facts["requirements_2"] = python2_requirements.read_text().strip().split('\n')  # type: ignore
         except (json.JSONDecodeError, IOError, FileNotFoundError, KeyError) as e:
             print_error("Can't parse pipfile.lock - Aborting!")
             logger.critical(f"demisto-sdk-can't parse pipfile.lock {e}")

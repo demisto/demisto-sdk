@@ -13,6 +13,7 @@ class DeprecatedPackContentItems(Pack):
     """
     A class which represents deprecated items of a single pack.
     """
+
     def get_deprecated_content_items_report(self) -> Dict:
         deprecated_content_items = {}
         if deprecated_integrations := self.integrations:

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.6.8
 
 * Fixed an issue where **validate** did not fail on invalid playbook entities' versions (i.e. subplaybooks or scripts with higher fromversion than their parent playbook).
 * Added support for running lint via a remote docker ssh connection. Use `DOCKER_HOST` env variable to specify a remote docker connection, such as: `DOCKER_HOST=ssh://myuser@myhost.com`.

@@ -287,6 +287,9 @@ class TestPackMetadataValidator:
                 [('script-1', False), ('script-2', True)],
                 [('playbook-1', True)],
                 False
+            ),
+            (
+                [], [], [], False
             )
         ],
         indirect=True
@@ -308,6 +311,7 @@ class TestPackMetadataValidator:
             - Case 10: all integrations, playbooks and scripts are deprecated.
             - Case 11: all integrations and scripts are deprecated but the playbook is not deprecated.
             - Case 12: all integrations and playbooks are deprecated but not all the scripts are deprecated.
+            - Case 13: there aren't any integrations/playbooks/scripts.
 
         When:
             - validating whether a pack should not be hidden (True if it should not be hidden, False if it should)
@@ -325,6 +329,7 @@ class TestPackMetadataValidator:
             - case 10: pack should be hidden.
             - case 11: pack should not be hidden.
             - case 12: pack should not be hidden.
+            - case 13: pack should not be hidden (as there aren't any deprecated content items)
         """
         pack, should_pack_be_hidden = hidden_pack
         validator = PackUniqueFilesValidator(pack.path)

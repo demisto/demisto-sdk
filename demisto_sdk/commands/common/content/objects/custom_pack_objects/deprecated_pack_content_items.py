@@ -80,10 +80,13 @@ class DeprecatedPackContentItems(Pack):
             # pack is already hidden
             return False
 
-        return (
-            self.integrations_amount and self.integrations_amount == self.deprecated_integrations_amount
-        ) and (
-            self.playbooks_amount and self.playbooks_amount == self.deprecated_playbooks_amount
-        ) and (
-            self.scripts_amount and self.scripts_amount == self.deprecated_scripts_amount
-        )
+        if self.integrations_amount or self.playbooks_amount or self.scripts_amount:
+            return (
+                self.integrations_amount == self.deprecated_integrations_amount
+            ) and (
+                self.playbooks_amount == self.deprecated_playbooks_amount
+            ) and (
+                self.scripts_amount == self.deprecated_scripts_amount
+            )
+        # if there aren't any playbooks/scripts/integrations -> no deprecated content -> pack shouldn't be hidden.
+        return False

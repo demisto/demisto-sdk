@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.6.7"
+version = "1.6.8"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -39,7 +39,7 @@ click = "^8.0.0"
 colorama = "^0.4.4"
 coloredlogs = "^15.0.1"
 configparser = "^5.2.0"
-coverage = "^6.3.2"
+coverage = "=6.3.2"
 decorator = "^5.1.1"
 demisto-py = "^3.1.6"
 dictor = "^0.1.9"
@@ -114,6 +114,7 @@ pytest-mock = "^3.7.0"
 pytest-subprocess = "^1.4.1"
 requests-mock = "^1.9.3"
 Deprecated = "^1.2.13"
+slack-sdk = "^3.17.0"
 
 [tool.poetry.extras]
 build = ["gsutil"]

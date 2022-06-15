@@ -12,7 +12,7 @@ json = JSON_Handler()
 
 
 MOCK_ENV_VARIABLES = {
-    'CONTENT_GITHUB_TOKEN': '123456',
+    'XSOAR_BOT_TEST_CONTENT': '123456',
     'CI_COMMIT_BRANCH': 'mock_branch',
     'CI_COMMIT_SHA': '1234567890abcdef',
     'UT_JOB_ID': '123456'

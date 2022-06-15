@@ -108,6 +108,7 @@ ERROR_CODE = {
     "docker_not_on_the_latest_tag": {'code': "DO106", 'ui_applicable': True, 'related_field': 'dockerimage'},
     "non_existing_docker": {'code': "DO107", 'ui_applicable': True, 'related_field': 'dockerimage'},
     "dockerimage_not_in_yml_file": {'code': "DO108", 'ui_applicable': True, 'related_field': 'dockerimage'},
+    "deprecated_docker_error": {'code': "DO109", 'ui_applicable': True, 'related_field': 'dockerimage'},
 
     # DS - Descriptions
     "description_missing_in_beta_integration": {'code': "DS100", 'ui_applicable': False, 'related_field': ''},
@@ -988,6 +989,11 @@ class Errors:
                f'Please create or update to an updated versioned image\n' \
                f'You can check for the most updated version of {docker_image_tag} ' \
                f'here: https://hub.docker.com/r/{docker_image_name}/tags'
+
+    @staticmethod
+    @error_code_decorator
+    def deprecated_docker_error(docker_image_name, deprecated_reason):
+        return f'The docker image {docker_image_name} is deprecated - {deprecated_reason}'
 
     @staticmethod
     @error_code_decorator

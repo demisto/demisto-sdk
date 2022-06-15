@@ -48,6 +48,10 @@ references:
           cache-version: << pipeline.parameters.cache-version >>
 
     install_demisto_sdk: &install_demisto_sdk
+      - run:
+          name: Configure to set poetry in project.
+          command: poetry config virtualenvs.in-project true --local
+
       - python/install-packages:
           pkg-manager: "poetry"
           args: "--no-dev"
@@ -207,32 +211,35 @@ jobs:
             environment:
               CI_COMMIT_BRANCH: "master"
             command: |
+              ./~/project/.venv/bin/activate
               cd content
-              poetry run demisto-sdk -v
-              poetry run demisto-sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
+              demisto-sdk -v
+              demisto-sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
         - run:
             name: Merge Id Set
             when: always
             environment:
               CI_COMMIT_BRANCH: "master"
             command: |
+              source ./.venv/bin/activate
               cd content
-              poetry run demisto-sdk -v
+              demisto-sdk -v
               export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
 
-              poetry run gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
-              poetry run demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json --fail-duplicates
+              gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
+              demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json --fail-duplicates
         - run:
             name: Test validate files and yaml
             when: always
             environment:
               CI_COMMIT_BRANCH: "master"
             command: |
+              source ./.venv/bin/activate
               cd content
-              poetry run demisto-sdk -v
+              demisto-sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
 
-              poetry run ./Tests/scripts/validate.sh
+              ./Tests/scripts/validate.sh
   test-lint:
       docker:
         - image: devdemisto/content-build:3.0.0.27979
@@ -291,11 +298,12 @@ jobs:
             name: Test Create Content Artifacts
             when: always
             command: |
+              source ./.venv/bin/activate
               cd content
-              poetry run demisto-sdk -v
+              demisto-sdk -v
               mkdir ./tmp
 
-              poetry run demisto-sdk create-content-artifacts -a ./tmp
+              demisto-sdk create-content-artifacts -a ./tmp
         - store_artifacts:
             path: content/tmp
   build:

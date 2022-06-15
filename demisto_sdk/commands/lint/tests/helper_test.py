@@ -6,7 +6,6 @@ import pytest
 from demisto_sdk.commands.lint.helpers import (generate_coverage_report,
                                                split_warnings_errors)
 
-
 EXIT_CODES = {
     "flake8": 0b1,
     "xsoar_linter": 0b1000000000,

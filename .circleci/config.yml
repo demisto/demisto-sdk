@@ -291,11 +291,12 @@ jobs:
             name: Test Create Content Artifacts
             when: always
             command: |
+              poetry shell
               cd content
-              poetry run demisto-sdk -v
+              demisto-sdk -v
               mkdir ./tmp
 
-              poetry run demisto-sdk create-content-artifacts -a ./tmp
+              demisto-sdk create-content-artifacts -a ./tmp
         - store_artifacts:
             path: content/tmp
   build:

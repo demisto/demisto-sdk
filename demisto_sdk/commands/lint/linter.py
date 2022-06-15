@@ -783,7 +783,7 @@ class Linter:
         try:
             # Running pytest container
             cov_file_path = Path.joinpath(self._pack_abs_dir, '.coverage')
-            cov = '' if not no_coverage else self._pack_abs_dir.stem
+            cov = '' if no_coverage else self._pack_abs_dir.stem
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container: docker.models.containers.Container = Docker.create_container(

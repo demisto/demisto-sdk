@@ -55,9 +55,7 @@ references:
           pre-install-steps:
             - run:
                 name: export demisto-sdk to path
-                command: |
-                  echo 'export PYTHONPATH="${PYTHONPATH}:${HOME}/project"' >> $BASH_ENV
-                  poetry config virtualenvs.in-project true --local
+                command: echo 'export PYTHONPATH="${PYTHONPATH}:${HOME}/project"' >> $BASH_ENV
       - <<: *install_node_ci
 
     install_build_dependencies: &install_build_dependencies
@@ -209,7 +207,7 @@ jobs:
             environment:
               CI_COMMIT_BRANCH: "master"
             command: |
-              ./~/project/.venv/bin/activate
+              poetry shell
               cd content
               demisto-sdk -v
               demisto-sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
@@ -219,7 +217,7 @@ jobs:
             environment:
               CI_COMMIT_BRANCH: "master"
             command: |
-              source ./.venv/bin/activate
+              poetry shell
               cd content
               demisto-sdk -v
               export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
@@ -232,7 +230,7 @@ jobs:
             environment:
               CI_COMMIT_BRANCH: "master"
             command: |
-              source ./.venv/bin/activate
+              poetry shell
               cd content
               demisto-sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
@@ -296,7 +294,7 @@ jobs:
             name: Test Create Content Artifacts
             when: always
             command: |
-              source ./.venv/bin/activate
+              poetry shell
               cd content
               demisto-sdk -v
               mkdir ./tmp

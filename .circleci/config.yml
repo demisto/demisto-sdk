@@ -56,7 +56,6 @@ references:
             - run:
                 name: export demisto-sdk to path
                 command: echo 'export PYTHONPATH="${PYTHONPATH}:${HOME}/project"' >> $BASH_ENV
-      - run: poetry shell
       - <<: *install_node_ci
 
     install_build_dependencies: &install_build_dependencies
@@ -89,6 +88,7 @@ jobs:
         - python/install-packages:
             pkg-manager: "poetry"
             cache-version: << pipeline.parameters.cache-version >>
+        - run: "poetry shell"
         - <<: *install_node_ci
         - run:
             name: pytest
@@ -136,6 +136,7 @@ jobs:
         - python/install-packages:
             pkg-manager: "poetry"
             cache-version: << pipeline.parameters.cache-version >>
+        - run: poetry shell
         - <<: *install_node_ci
         - run:
             name: pytest
@@ -288,6 +289,7 @@ jobs:
         - attach_workspace:
             at: ~/project
         - <<: *install_demisto_sdk
+        - run: poetry shell
         - run:
             name: Test Create Content Artifacts
             when: always
@@ -345,7 +347,6 @@ jobs:
       - python/install-packages:
           pkg-manager: "poetry"
           cache-version: << pipeline.parameters.cache-version >>
-      - run: poetry shell
       - run:
           name: Run Slack Notifier
           command: |

@@ -216,6 +216,7 @@ class Linter:
         except (FileNotFoundError, IOError, KeyError):
             self._pkg_lint_status["errors"].append('Unable to parse package yml')
             return True
+        
         # return no check needed if not python pack
         if self._pkg_lint_status["pack_type"] not in (TYPE_PYTHON, TYPE_PWSH):
             logger.info(f"{log_prompt} - Skipping due to not Python, Powershell package - Pack is"

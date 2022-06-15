@@ -88,7 +88,6 @@ jobs:
         - python/install-packages:
             pkg-manager: "poetry"
             cache-version: << pipeline.parameters.cache-version >>
-        - run: "poetry shell"
         - <<: *install_node_ci
         - run:
             name: pytest
@@ -107,7 +106,7 @@ jobs:
               TEST_FILES=$(echo "$TEST_FILES" | circleci tests split --split-by=timings)
 
               mkdir test-results
-              pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml $TEST_FILES
+              poetry run pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml $TEST_FILES
         - store_test_results:
             path: test-results
         - store_artifacts:
@@ -136,7 +135,6 @@ jobs:
         - python/install-packages:
             pkg-manager: "poetry"
             cache-version: << pipeline.parameters.cache-version >>
-        - run: poetry shell
         - <<: *install_node_ci
         - run:
             name: pytest
@@ -146,7 +144,7 @@ jobs:
               TEST_FILES=$(circleci tests glob "demisto_sdk/tests/integration_tests/**/*_test.py")
 
               mkdir integration-test-results
-              pytest -v --junitxml=integration-test-results/junit.xml $TEST_FILES
+              poetry run pytest -v --junitxml=integration-test-results/junit.xml $TEST_FILES
         - store_test_results:
             path: integration-test-results
 
@@ -163,7 +161,7 @@ jobs:
             name: create cache key for pre-commit
             command: |
               cp .pre-commit-config.yaml pre-commit-cache-key.txt
-              python --version --version >> pre-commit-cache-key.txt
+              poetry run python --version --version >> pre-commit-cache-key.txt
               cat poetry.lock >> pre-commit-cache-key.txt
         - restore_cache:
             keys:
@@ -171,8 +169,8 @@ jobs:
         - run:
             name: Pre-commit
             command: |
-              pre-commit --version
-              pre-commit run -a
+              poetry run pre-commit --version
+              poetry run pre-commit run -a
         - save_cache:
             key: v1-pc-cache-{{ checksum "pre-commit-cache-key.txt" }}
             paths:
@@ -210,8 +208,8 @@ jobs:
               CI_COMMIT_BRANCH: "master"
             command: |
               cd content
-              demisto-sdk -v
-              demisto-sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
+              poetry run demisto-sdk -v
+              poetry run demisto-sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
         - run:
             name: Merge Id Set
             when: always
@@ -219,11 +217,11 @@ jobs:
               CI_COMMIT_BRANCH: "master"
             command: |
               cd content
-              demisto-sdk -v
+              poetry run demisto-sdk -v
               export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
 
-              gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
-              demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json --fail-duplicates
+              poetry run gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
+              poetry run demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json --fail-duplicates
         - run:
             name: Test validate files and yaml
             when: always
@@ -231,10 +229,10 @@ jobs:
               CI_COMMIT_BRANCH: "master"
             command: |
               cd content
-              demisto-sdk -v
+              poetry run demisto-sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
 
-              ./Tests/scripts/validate.sh
+              poetry run ./Tests/scripts/validate.sh
   test-lint:
       docker:
         - image: devdemisto/content-build:3.0.0.27979
@@ -289,16 +287,15 @@ jobs:
         - attach_workspace:
             at: ~/project
         - <<: *install_demisto_sdk
-        - run: poetry shell
         - run:
             name: Test Create Content Artifacts
             when: always
             command: |
               cd content
-              demisto-sdk -v
+              poetry run demisto-sdk -v
               mkdir ./tmp
 
-              demisto-sdk create-content-artifacts -a ./tmp
+              poetry run demisto-sdk create-content-artifacts -a ./tmp
         - store_artifacts:
             path: content/tmp
   build:
@@ -350,7 +347,7 @@ jobs:
       - run:
           name: Run Slack Notifier
           command: |
-            python3 demisto_sdk/utils/circle-ci/circle_ci_slack_notifier.py -wd $CIRCLE_WORKFLOW_ID -st $SLACK_TOKEN
+            poetry run python3 demisto_sdk/utils/circle-ci/circle_ci_slack_notifier.py -wd $CIRCLE_WORKFLOW_ID -st $SLACK_TOKEN
 
 
 workflows:

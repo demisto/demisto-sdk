@@ -815,7 +815,7 @@ class PackUniqueFilesValidator(BaseValidator):
             bool: True if pack should be hidden, False if it shouldn't.
         """
         pack = Pack(self.pack_path)
-        if pack.should_pack_be_hidden() is True:
+        if pack.should_pack_be_hidden():
             error_message, error_code = Errors.pack_should_be_hidden(self.pack)
             return self._add_error(
                 (error_message, error_code),

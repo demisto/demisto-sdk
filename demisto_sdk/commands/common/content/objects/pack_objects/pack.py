@@ -385,7 +385,7 @@ class Pack:
         except Exception as error:
             logger.error(f'Error while trying to sign pack {self.path.name}.\n {error}')
 
-    def _are_integrations_or_scripts_or_playbooks_exist(self):
+    def _are_integrations_or_scripts_or_playbooks_exist(self) -> int:
         """
         Checks whether an integration/script/playbook exist in the pack.
 

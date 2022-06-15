@@ -27,7 +27,7 @@ class YAMLContentObject(YAMLObject):
         self._change_log: Optional[ChangeLog] = None
 
     @property
-    def deprecated(self):
+    def is_deprecated(self):
         return self.get('deprecated', False)
 
     @property

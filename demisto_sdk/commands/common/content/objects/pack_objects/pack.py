@@ -406,7 +406,7 @@ class Pack:
                 None in case the pack is already hidden.
         """
         def _get_deprecated_content_entities_count(content_entities) -> int:
-            return len([entity for entity in content_entities if entity.deprecated])
+            return len([entity for entity in content_entities if entity.is_deprecated])
 
         if self.pack_metadata_as_dict().get('hidden', False):
             # pack is already hidden

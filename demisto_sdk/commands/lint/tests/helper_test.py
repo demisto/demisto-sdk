@@ -7,15 +7,6 @@ from demisto_sdk.commands.lint.helpers import (generate_coverage_report,
                                                split_warnings_errors)
 
 
-def test_validate_env(mocker) -> None:
-    from demisto_sdk.commands.lint import helpers
-    mocker.patch.object(helpers, 'run_command_os')
-    helpers.run_command_os.side_effect = [('python2', '', ''), ('flake8, mypy, vultue', '', '')]
-    helpers.validate_env()
-
-    assert helpers.run_command_os.call_count == 2
-
-
 EXIT_CODES = {
     "flake8": 0b1,
     "xsoar_linter": 0b1000000000,

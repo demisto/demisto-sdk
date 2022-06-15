@@ -414,12 +414,12 @@ class Pack:
 
         if self._are_integrations_or_scripts_or_playbooks_exist():
             return (
-                        self.integrations_count == _get_deprecated_content_entities_count(self.integrations)
-                   ) and (
-                        self.playbooks_count == _get_deprecated_content_entities_count(self.playbooks)
-                   ) and (
-                        self.scripts_count == _get_deprecated_content_entities_count(self.scripts)
-                   )
+                self.integrations_count == _get_deprecated_content_entities_count(self.integrations)
+            ) and (
+                self.playbooks_count == _get_deprecated_content_entities_count(self.playbooks)
+            ) and (
+                self.scripts_count == _get_deprecated_content_entities_count(self.scripts)
+            )
         # if there aren't any playbooks/scripts/integrations -> no deprecated content -> pack shouldn't be hidden.
         return False
 

@@ -207,37 +207,41 @@ jobs:
             environment:
               CI_COMMIT_BRANCH: "master"
             command: |
+              source $(poetry env info --path)/bin/activate
               cd content
-              poetry run demisto-sdk -v
-              poetry run demisto-sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
+              demisto-sdk -v
+              demisto-sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
         - run:
             name: Merge Id Set
             when: always
             environment:
               CI_COMMIT_BRANCH: "master"
             command: |
+              source $(poetry env info --path)/bin/activate
               cd content
-              poetry run demisto-sdk -v
+              demisto-sdk -v
               export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"
 
-              poetry run gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
-              poetry run demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json --fail-duplicates
+              gsutil cp gs://marketplace-dist/content/private_id_set.json $CIRCLE_ARTIFACTS/unified_id_set.json
+              demisto-sdk merge-id-sets -i1 ./Tests/id_set.json -i2 $CIRCLE_ARTIFACTS/unified_id_set.json -o $CIRCLE_ARTIFACTS/unified_id_set.json --fail-duplicates
         - run:
             name: Test validate files and yaml
             when: always
             environment:
               CI_COMMIT_BRANCH: "master"
             command: |
+              source $(poetry env info --path)/bin/activate
               cd content
-              poetry run demisto-sdk -v
+              demisto-sdk -v
               export ARTIFACTS_FOLDER="/home/circleci/project/artifacts"
 
-              poetry run ./Tests/scripts/validate.sh
+              ./Tests/scripts/validate.sh
   test-lint:
       docker:
-        - image: devdemisto/content-build:3.0.0.27979
+        - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
+        - <<: *install_demisto_sdk
         - setup_remote_docker:
             version: 20.10.12
         - attach_workspace:
@@ -247,8 +251,9 @@ jobs:
             when: always
             no_output_timeout: 20m
             command: |
-              pip3 uninstall virtualenv -y && pip3 install virtualenv==16.7.7
-              cd ~/project
+
+              source $(poetry env info --path)/bin/activate
+
               export SDK_LINT_FILES_CHANGED=$(git diff master... --name-only -- demisto_sdk/commands/lint)
 
               if [[ -z "${SDK_LINT_FILES_CHANGED}" ]]; then
@@ -256,20 +261,7 @@ jobs:
                   exit 0
               fi
               cd content
-              echo "installing venv"
-              NO_HOOKS=1 SETUP_PY2=yes .hooks/bootstrap >> /tmp/lint_env_installation.log
-              echo "finished script installation"
-              source ./venv/bin/activate
-              pip3 install -r .circleci/build-requirements.txt >> /tmp/lint_env_installation.log
-              
-              # installing local sdk inside venv
-              
-              # uninstall demisto-sdk that installed from content (could be dependency conflict between them)
-              pip3 uninstall -y demisto-sdk
-              pip3 install ~/project >> /tmp/lint_env_installation.log
-              demisto-sdk -v
-              echo ""
-              echo "lint files changed running lint"
+              echo "lint files changed. running lint"
               # python file (CommonServerPython lint is running over python 3 and 2)
               # we use `demisto-sdk` because we're inside content local env and not on poetry local env
               demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPython
@@ -291,11 +283,12 @@ jobs:
             name: Test Create Content Artifacts
             when: always
             command: |
+              source $(poetry env info --path)/bin/activate
               cd content
-              poetry run demisto-sdk -v
+              demisto-sdk -v
               mkdir ./tmp
 
-              poetry run demisto-sdk create-content-artifacts -a ./tmp
+              demisto-sdk create-content-artifacts -a ./tmp
         - store_artifacts:
             path: content/tmp
   build:

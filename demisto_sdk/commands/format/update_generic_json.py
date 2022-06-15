@@ -2,17 +2,17 @@ from distutils.version import LooseVersion
 from typing import Optional
 
 import click
-import ujson
 
 from demisto_sdk.commands.common.constants import \
     DEFAULT_CONTENT_ITEM_TO_VERSION
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import YAML_Handler, JSON_Handler
 from demisto_sdk.commands.common.tools import is_uuid, print_error
 from demisto_sdk.commands.format.format_constants import (
     ARGUMENTS_DEFAULT_VALUES, TO_VERSION_5_9_9)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
 yaml = YAML_Handler()
+json = JSON_Handler()
 
 
 class BaseUpdateJSON(BaseUpdate):
@@ -43,13 +43,25 @@ class BaseUpdateJSON(BaseUpdate):
             if self.__class__.__name__ in ARGUMENTS_DEFAULT_VALUES[field][1]:
                 self.data[field] = ARGUMENTS_DEFAULT_VALUES[field][0]
 
-    def save_json_to_destination_file(self, encode_html_chars=True):
+    def save_json_to_destination_file(
+        self,
+        encode_html_chars: bool = True,
+        escape_forward_slashes: bool = False,
+        ensure_ascii: bool = False,
+        indent: int = 4
+    ):
         """Save formatted JSON data to destination file."""
         if self.source_file != self.output_file:
             click.secho(f'Saving output JSON file to {self.output_file}', fg='white')
         with open(self.output_file, 'w') as file:
-            ujson.dump(self.data, file, indent=4, encode_html_chars=encode_html_chars, escape_forward_slashes=False,
-                       ensure_ascii=False)
+            json.dump(
+                self.data,
+                file,
+                indent=indent,
+                encode_html_chars=encode_html_chars,
+                escape_forward_slashes=escape_forward_slashes,
+                ensure_ascii=ensure_ascii
+            )
 
     def update_json(self, default_from_version: Optional[str] = '', file_type: str = ''):
         """Manager function for the generic JSON updates."""

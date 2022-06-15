@@ -3,8 +3,7 @@ import os
 
 import click
 
-from demisto_sdk.commands.common.content.objects.custom_pack_objects.deprecated_pack_content_items import \
-    DeprecatedPackContentItems
+from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
@@ -55,11 +54,8 @@ class PackMetadataJsonFormat(BaseUpdateJSON):
 
     def hide_pack(self):
         """
-        Hide the in which the pack_metadata.json is in if the following rules appear:
-
-        1. if the pack is not already hidden.
-        2. if all the content items (playbooks/scripts/integrations) are deprecated.
+        Hide the pack if all the content items (playbooks/scripts/integrations) are deprecated
         """
-        deprecated_pack_content_items = DeprecatedPackContentItems(os.path.dirname(self.source_file))
+        deprecated_pack_content_items = Pack(os.path.dirname(self.source_file))
         if deprecated_pack_content_items.should_pack_be_hidden():
             self.data['hidden'] = True

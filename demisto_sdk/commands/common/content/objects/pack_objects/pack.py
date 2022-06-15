@@ -118,8 +118,8 @@ class Pack:
                                                           suffix="yml")
 
     @property
-    def integrations_amount(self):
-        return len([integration for integration in self.integrations])
+    def integrations_count(self) -> int:
+        return len(tuple(self.integrations))
 
     @property
     def scripts(self) -> Iterator[Script]:
@@ -127,8 +127,8 @@ class Pack:
                                                           suffix="yml")
 
     @property
-    def scripts_amount(self):
-        return len([script for script in self.scripts])
+    def scripts_count(self) -> int:
+        return len(tuple(self.scripts))
 
     @property
     def playbooks(self) -> Iterator[Playbook]:
@@ -136,8 +136,8 @@ class Pack:
                                                           suffix="yml")
 
     @property
-    def playbooks_amount(self):
-        return len([playbook for playbook in self.playbooks])
+    def playbooks_count(self) -> int:
+        return len(tuple(self.playbooks))
 
     @property
     def reports(self) -> Iterator[Report]:
@@ -293,12 +293,6 @@ class Pack:
         return obj
 
     @property
-    def pack_metadata_as_dict(self) -> Dict:
-        if pack_metadata := self.pack_metadata:
-            return pack_metadata.to_dict()
-        return {}
-
-    @property
     def metadata(self) -> PackMetaData:
         return self._metadata
 
@@ -390,6 +384,52 @@ class Pack:
             logger.info(f'Signed {self.path.name} pack successfully')
         except Exception as error:
             logger.error(f'Error while trying to sign pack {self.path.name}.\n {error}')
+
+    def _are_integrations_or_scripts_or_playbooks_exist(self):
+        """
+        Checks whether an integration/script/playbook exist in the pack.
+
+        Returns:
+            bool: True if there is at least one integration/script/playbook in the pack, False if not.
+        """
+        return self.integrations_count or self.scripts_count or self.playbooks_count
+
+    def should_pack_be_hidden(self) -> Optional[bool]:
+        """
+        Determines if a pack should be hidden according to the following rules:
+
+        1. if the pack is not already hidden.
+        2. if all the content items (playbooks/scripts/integrations) are deprecated.
+
+        Returns:
+            Optional[bool]: True if pack should be hidden according to the above, False if not,
+                None in case the pack is already hidden.
+        """
+        def _get_deprecated_content_entities_count(content_entities) -> int:
+            return len([entity for entity in content_entities if entity.deprecated])
+
+        if self.pack_metadata_as_dict().get('hidden', False):
+            # pack is already hidden
+            return None
+
+        if self._are_integrations_or_scripts_or_playbooks_exist():
+            return (
+                        self.integrations_count == _get_deprecated_content_entities_count(self.integrations)
+                   ) and (
+                        self.playbooks_count == _get_deprecated_content_entities_count(self.playbooks)
+                   ) and (
+                        self.scripts_count == _get_deprecated_content_entities_count(self.scripts)
+                   )
+        # if there aren't any playbooks/scripts/integrations -> no deprecated content -> pack shouldn't be hidden.
+        return False
+
+    def pack_metadata_as_dict(self) -> Dict:
+        """
+        Get content of the pack metadata.
+        """
+        if pack_metadata := self.pack_metadata:
+            return pack_metadata.to_dict()
+        return {}
 
     def is_server_version_ge(self, client, server_version_to_check):
         server_version = get_demisto_version(client)

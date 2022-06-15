@@ -314,7 +314,7 @@ class TestPackMetadataValidator:
             - Case 13: there aren't any integrations/playbooks/scripts.
 
         When:
-            - validating whether a pack should not be hidden (True if it should not be hidden, False if it should)
+            - validating whether a pack should be hidden (True if it should be hidden, False if not)
 
         Then:
             - Case 1: pack should be hidden.

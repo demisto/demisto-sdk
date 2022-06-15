@@ -471,9 +471,9 @@ class TestValidators:
 
     def test_files_validator_validate_pack_unique_files(self, mocker):
         from demisto_sdk.commands.common.content.objects.custom_pack_objects.deprecated_pack_content_items import \
-            DeprecatedPackContentItems
+            DeprecatedPackItemInformationProvider
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
-        mocker.patch.object(DeprecatedPackContentItems, 'should_pack_be_hidden', return_value=False)
+        mocker.patch.object(DeprecatedPackItemInformationProvider, 'should_pack_be_hidden', return_value=False)
         # mocking should_pack_be_hidden must be done because the get_dict_from_file is being mocked.
         # should_pack_be_hidden relies on finding the correct file content from get_dict_from_file function.
         validate_manager = ValidateManager(skip_conf_json=True)
@@ -512,12 +512,12 @@ class TestValidators:
                 - return a True validation response
         """
         from demisto_sdk.commands.common.content.objects.custom_pack_objects.deprecated_pack_content_items import \
-            DeprecatedPackContentItems
+            DeprecatedPackItemInformationProvider
         id_set_path = os.path.normpath(
             os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
 
-        mocker.patch.object(DeprecatedPackContentItems, 'should_pack_be_hidden', return_value=False)
+        mocker.patch.object(DeprecatedPackItemInformationProvider, 'should_pack_be_hidden', return_value=False)
         # mocking should_pack_be_hidden must be done because the get_dict_from_file is being mocked.
         # should_pack_be_hidden relies on finding the correct file type from get_dict_from_file function.
 

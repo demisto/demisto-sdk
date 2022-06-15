@@ -27,8 +27,7 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME, VERSION_REGEX)
 from demisto_sdk.commands.common.content import Content
-from demisto_sdk.commands.common.content.objects.custom_pack_objects.deprecated_pack_content_items import \
-    DeprecatedPackContentItems
+from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -815,17 +814,13 @@ class PackUniqueFilesValidator(BaseValidator):
         Returns:
             bool: True if pack should be hidden, False if it shouldn't.
         """
-        deprecated_pack_content_items = DeprecatedPackContentItems(self.pack_path)
-        if deprecated_pack_content_items.should_pack_be_hidden():
-            error_message, error_code = Errors.pack_should_be_hidden(
-                pack_name=self.pack,
-                deprecated_content_items=deprecated_pack_content_items.get_deprecated_content_items_report()
-            )
-            if self._add_error(
+        pack = Pack(self.pack_path)
+        if pack.should_pack_be_hidden() is True:
+            error_message, error_code = Errors.pack_should_be_hidden(self.pack)
+            return self._add_error(
                 (error_message, error_code),
                 file_path=self.pack_meta_file,
                 should_print=True,
                 suggested_fix=Errors.suggest_fix(file_path=os.path.join(self.pack_path, self.pack_meta_file))
-            ):
-                return True
+            )
         return False

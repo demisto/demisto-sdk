@@ -151,12 +151,11 @@ def format_manager(input: str = None,
     log_list = []
     error_list: List[Tuple[int, int]] = []
     if files:
-        format_excluded_file = excluded_files
         for file in files:
             file_path = file.replace('\\', '/')
             file_type = find_type(file_path, clear_cache=clear_cache)
 
-            current_excluded_files = format_excluded_file[:]
+            current_excluded_files = excluded_files[:]
             dirname = os.path.dirname(file_path)
             if dirname.endswith('CommonServerPython'):
                 current_excluded_files.remove('CommonServerPython.py')

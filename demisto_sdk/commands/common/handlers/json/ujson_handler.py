@@ -31,14 +31,16 @@ class UJSON_Handler(XSOAR_Handler):
         except ValueError as e:
             raise JSONDecodeError(e)
 
-    def dump(self, obj: Any, fp: IO[str], indent=0, sort_keys=False):
+    def dump(self, obj: Any, fp: IO[str], indent=0, sort_keys=False, **kwargs):
+        escape_forward_slashes = kwargs.pop('escape_forward_slashes', False)
         try:
             ujson.dump(
                 obj,
                 fp,
                 indent=indent,
                 sort_keys=sort_keys,
-                escape_forward_slashes=False
+                escape_forward_slashes=escape_forward_slashes,
+                **kwargs
             )
         except ValueError as e:
             raise JSONDecodeError(e)

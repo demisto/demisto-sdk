@@ -2369,7 +2369,5 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def pack_should_be_hidden(pack_name: str, deprecated_content_items: dict):
-        deprecated_items = ' and '.join([f'{key}: {val}' for key, val in deprecated_content_items.items()])
-        return f'Pack {pack_name} should be hidden, the following {deprecated_items} are deprecated.\n' \
-               f'Pack must be hidden if all of its integrations, playbooks and scripts are deprecated.'
+    def pack_should_be_hidden(pack_name: str):
+        return f'Pack {pack_name} should be hidden, as all its integrations, playbooks and scripts are deprecated.'

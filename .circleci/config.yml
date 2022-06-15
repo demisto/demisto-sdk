@@ -56,6 +56,7 @@ references:
             - run:
                 name: export demisto-sdk to path
                 command: echo 'export PYTHONPATH="${PYTHONPATH}:${HOME}/project"' >> $BASH_ENV
+      - poetry shell
       - <<: *install_node_ci
 
     install_build_dependencies: &install_build_dependencies
@@ -106,7 +107,7 @@ jobs:
               TEST_FILES=$(echo "$TEST_FILES" | circleci tests split --split-by=timings)
 
               mkdir test-results
-              poetry run pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml $TEST_FILES
+              pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml $TEST_FILES
         - store_test_results:
             path: test-results
         - store_artifacts:
@@ -144,7 +145,7 @@ jobs:
               TEST_FILES=$(circleci tests glob "demisto_sdk/tests/integration_tests/**/*_test.py")
 
               mkdir integration-test-results
-              poetry run pytest -v --junitxml=integration-test-results/junit.xml $TEST_FILES
+              pytest -v --junitxml=integration-test-results/junit.xml $TEST_FILES
         - store_test_results:
             path: integration-test-results
 
@@ -161,7 +162,7 @@ jobs:
             name: create cache key for pre-commit
             command: |
               cp .pre-commit-config.yaml pre-commit-cache-key.txt
-              poetry run python --version --version >> pre-commit-cache-key.txt
+              python --version --version >> pre-commit-cache-key.txt
               cat poetry.lock >> pre-commit-cache-key.txt
         - restore_cache:
             keys:
@@ -169,8 +170,8 @@ jobs:
         - run:
             name: Pre-commit
             command: |
-              poetry run pre-commit --version
-              poetry run pre-commit run -a
+              pre-commit --version
+              pre-commit run -a
         - save_cache:
             key: v1-pc-cache-{{ checksum "pre-commit-cache-key.txt" }}
             paths:
@@ -344,10 +345,11 @@ jobs:
       - python/install-packages:
           pkg-manager: "poetry"
           cache-version: << pipeline.parameters.cache-version >>
+      - poetry shell
       - run:
           name: Run Slack Notifier
           command: |
-            poetry run python3 demisto_sdk/utils/circle-ci/circle_ci_slack_notifier.py -wd $CIRCLE_WORKFLOW_ID -st $SLACK_TOKEN
+            python3 demisto_sdk/utils/circle-ci/circle_ci_slack_notifier.py -wd $CIRCLE_WORKFLOW_ID -st $SLACK_TOKEN
 
 
 workflows:

@@ -48,10 +48,6 @@ references:
           cache-version: << pipeline.parameters.cache-version >>
 
     install_demisto_sdk: &install_demisto_sdk
-      - run:
-          name: Configure to set poetry in project.
-          command: poetry config virtualenvs.in-project true --local
-
       - python/install-packages:
           pkg-manager: "poetry"
           args: "--no-dev"
@@ -59,7 +55,9 @@ references:
           pre-install-steps:
             - run:
                 name: export demisto-sdk to path
-                command: echo 'export PYTHONPATH="${PYTHONPATH}:${HOME}/project"' >> $BASH_ENV
+                command: |
+                  echo 'export PYTHONPATH="${PYTHONPATH}:${HOME}/project"' >> $BASH_ENV
+                  poetry config virtualenvs.in-project true --local
       - <<: *install_node_ci
 
     install_build_dependencies: &install_build_dependencies

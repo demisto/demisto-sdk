@@ -394,7 +394,7 @@ class Pack:
         """
         return self.integrations_count or self.scripts_count or self.playbooks_count
 
-    def should_pack_be_hidden(self) -> Optional[bool]:
+    def should_be_hidden(self) -> Optional[bool]:
         """
         Determines if a pack should be hidden according to the following rules:
 

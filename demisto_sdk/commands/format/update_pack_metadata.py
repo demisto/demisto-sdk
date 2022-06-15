@@ -56,6 +56,6 @@ class PackMetadataJsonFormat(BaseUpdateJSON):
         """
         Hide the pack if all the content items (playbooks/scripts/integrations) are deprecated
         """
-        deprecated_pack_content_items = Pack(os.path.dirname(self.source_file))
-        if deprecated_pack_content_items.should_pack_be_hidden():
+        pack = Pack(os.path.dirname(self.source_file))
+        if pack.should_be_hidden():
             self.data['hidden'] = True

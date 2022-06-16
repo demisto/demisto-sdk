@@ -36,7 +36,7 @@ from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                PY_CHCEKS,
                                                build_skipped_exit_code,
                                                generate_coverage_report,
-                                               get_test_modules, validate_env)
+                                               get_test_modules)
 from demisto_sdk.commands.lint.linter import Linter
 
 json = JSON_Handler()
@@ -122,8 +122,6 @@ class LintManager:
             "test_modules": None,
             "docker_engine": True
         }
-        # Check env requirements satisfied - bootstrap in use
-        validate_env()
         # Get content repo object
         is_external_repo = False
         try:

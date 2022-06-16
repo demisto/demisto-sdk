@@ -204,7 +204,6 @@ class Linter:
         logger.info(f"{log_prompt} - Using yaml file {self._yml_file}")
         # Parsing pack yaml - in order to verify if check needed
         try:
-
             script_obj: Dict = {}
             yml_obj: Dict = YAML_Handler().load(self._yml_file)
             if isinstance(yml_obj, dict):

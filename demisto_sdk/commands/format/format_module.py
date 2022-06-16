@@ -43,6 +43,7 @@ from demisto_sdk.commands.format.update_playbook import (PlaybookYMLFormat,
 from demisto_sdk.commands.format.update_pre_process_rules import \
     PreProcessRulesFormat
 from demisto_sdk.commands.format.update_pythonfile import PythonFileFormat
+from demisto_sdk.commands.format.update_readme import ReadmeFormat
 from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
@@ -75,11 +76,11 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'generictype': GenericTypeJSONFormat,
     'genericmodule': GenericModuleJSONFormat,
     'genericdefinition': GenericDefinitionJSONFormat,
-    JOB: JobJSONFormat
+    JOB: JobJSONFormat,
+    'readme': ReadmeFormat
 }
 
-UNFORMATTED_FILES = ['readme',
-                     'releasenotes',
+UNFORMATTED_FILES = ['releasenotes',
                      'changelog',
                      'image',
                      'javascriptfile',

@@ -390,7 +390,7 @@ class Pack:
         Checks whether an integration/script/playbook exist in the pack.
 
         Returns:
-            bool: True if there is at least one integration/script/playbook in the pack, False if not.
+            int: number > 0 if there is at least one integration/script/playbook in the pack, 0 if not.
         """
         return self.integrations_count or self.scripts_count or self.playbooks_count
 

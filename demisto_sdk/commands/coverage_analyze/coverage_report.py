@@ -83,7 +83,8 @@ class CoverageReport:
 
     def coverage_report(self):
         if not os.path.exists(self.cov.config.data_file):
-            logger.debug(f'skipping coverage report {self.cov.config.data_file} file not found.')
+            logger.warning(f'skipping coverage report {self.cov.config.data_file} file not found. '
+                           f'Should not expect this if code files were changed or when linting all with pytest.')
             return
 
         logger.info(f'\n{self.report_str}')

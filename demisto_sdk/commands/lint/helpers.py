@@ -487,8 +487,8 @@ def generate_coverage_report(html=False, xml=False, report=True, cov_dir='covera
     cov = coverage.Coverage(data_file=cov_file)
     cov.combine(coverage_files())
     if not os.path.exists(cov_file):
-        logger.warning(f'skipping coverage report {self.cov.config.data_file} file not found. '
-                        f'Should not expect this if code files were changed or when linting all with pytest.')
+        logger.warning(f'skipping coverage report {cov_file} file not found. '
+                       f'Should not expect this if code files were changed or when linting all with pytest.')
         return
 
     export_msg = 'exporting {0} coverage report to {1}'

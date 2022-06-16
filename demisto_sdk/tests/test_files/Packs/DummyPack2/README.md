@@ -7,6 +7,7 @@ This integration was integrated and tested with version 1.0.1 of PhishTank.
 [Good link2](https://example.com)
 [invalid relative 1](relative1.com)
 [invalid relative 2](www.relative2.com)
+[empty link]()
 <a href="https://hreftesting.com"> good href test </a>
 <a href="hreftesting.com"> href tests </a>
 <a href="www.hreftesting.com"> www href tests </a>

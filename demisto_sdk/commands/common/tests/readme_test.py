@@ -103,6 +103,11 @@ def test_relative_url_not_valid():
     for url in relative_urls:
         assert url in output
 
+    # no empty links found
+    assert '[ERROR]: /Users/ostolero/dev/demisto/demisto-sdk/demisto_sdk/tests/test_files/README-invalid.md: [RM112] ' \
+           '- Relative urls are not supported within README. If this is not a relative url, please add an https:// ' \
+           'prefix:\n. ' not in output
+
 
 def test_is_image_path_valid():
     """

@@ -674,6 +674,11 @@ class TestPackUniqueFilesValidator:
         assert 'doc_files/High_Risk_User.png' not in errors
         assert 'https://hreftesting.com' not in errors
 
+        # no empty links found
+        assert '[ERROR]: /Users/ostolero/dev/demisto/demisto-sdk/demisto_sdk/tests/test_files/Packs/DummyPack2/README' \
+               '.md: [RM112] - Relative urls are not supported within README. If this is not a relative url, ' \
+               'please add an https:// prefix:\n. ' not in errors
+
     @pytest.mark.parametrize('readme_content, is_valid', [
         ('Hey there, just testing', True),
         ('This is a test. All good!', False),

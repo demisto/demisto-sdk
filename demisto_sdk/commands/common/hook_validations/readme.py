@@ -16,6 +16,8 @@ from requests.adapters import HTTPAdapter
 from requests.exceptions import HTTPError
 from urllib3.util import Retry
 
+from demisto_sdk.commands.common.constants import (RELATIVE_HREF_URL_REGEX,
+                                                   RELATIVE_MARKDOWN_URL_REGEX)
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 Errors)
@@ -27,9 +29,6 @@ from demisto_sdk.commands.common.tools import (
     compare_context_path_in_yml_and_readme, get_content_path,
     get_url_with_retries, get_yaml, get_yml_paths_in_dir, print_warning,
     run_command_os)
-
-RELATIVE_HREF_URL_REGEX = r'(<.*?href\s*=\s*"((?!(?:https?:\/\/)|#|(?:mailto:)).*?)")'
-RELATIVE_MARKDOWN_URL_REGEX = r'^(?![!])(\[.*?\])\(((?!(?:https?:\/\/)|#|(?:mailto:)).*?)\)$'
 
 json = JSON_Handler()
 

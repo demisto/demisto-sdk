@@ -1415,33 +1415,6 @@ class TestPlaybookEntitiesVersionsValid:
     id_set = {
         'playbooks': [
             {
-                'playbook_dup': {
-                    'name': 'test',
-                    'fromversion': "5.0.0",
-                    'toversion': "5.9.9",
-                    "file_path": playbook_path,
-                    "command_to_integration": {
-                        "test-command": [
-                            "Integration_version_4",
-                            "Integration_version_5"
-                        ]
-                    }
-                }
-            },
-            {
-                'playbook_dup': {
-                    'name': 'test',
-                    'fromversion': "6.0.0",
-                    "file_path": playbook_path,
-                    "command_to_integration": {
-                        "test-command": [
-                            "Integration_version_4",
-                            "Integration_version_5"
-                        ]
-                    }
-                }
-            },
-            {
                 'SubPlaybook_version_5': {
                     'name': 'SubPlaybook_version_5',
                     'fromversion': "5.0.0",
@@ -1481,7 +1454,47 @@ class TestPlaybookEntitiesVersionsValid:
                         ]
                     }
                 }
-            }
+            },
+            {
+                'playbook_dup': {
+                    'name': 'test',
+                    'fromversion': "6.5.0",
+                    "file_path": playbook_path,
+                    "command_to_integration": {
+                        "test-command": [
+                            "Integration_version_4",
+                            "Integration_version_5"
+                        ]
+                    }
+                }
+            },
+            {
+                'playbook_dup': {
+                    'name': 'test',
+                    'fromversion': "5.0.0",
+                    'toversion': "5.9.9",
+                    "file_path": playbook_path,
+                    "command_to_integration": {
+                        "test-command": [
+                            "Integration_version_4",
+                            "Integration_version_5"
+                        ]
+                    }
+                }
+            },
+            {
+                'playbook_dup': {
+                    'name': 'test',
+                    'fromversion': "6.0.0",
+                    "file_path": playbook_path,
+                    "command_to_integration": {
+                        "test-command": [
+                            "Integration_version_4",
+                            "Integration_version_5"
+                        ]
+                    }
+                }
+            },
         ],
         'integrations': [
             {
@@ -1514,7 +1527,7 @@ class TestPlaybookEntitiesVersionsValid:
         ],
     }
 
-    def test_are_playbook_entities_versions_valid_scripts_and_subplaybooks(self, repo, mocker):
+    def test_are_playbook_entities_versions_valid_scripts_and_subplaybooks(self, repo):
         """
 
         Given
@@ -1559,7 +1572,7 @@ class TestPlaybookEntitiesVersionsValid:
                 self.playbook_with_invalid_sub_playbook_version_from_version_5_0_0, playbook.yml.path)
             assert not is_sub_playbook_version_invalid
 
-    def test_are_playbook_entities_versions_valid_skip_unavailable(self, repo, mocker):
+    def test_are_playbook_entities_versions_valid_skip_unavailable(self, repo):
         """
         Given
             - an id_set file

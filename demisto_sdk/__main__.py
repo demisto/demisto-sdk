@@ -14,7 +14,7 @@ from pkg_resources import DistributionNotFound, get_distribution
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, MODELING_RULES_DIR, PARSING_RULES_DIR,
-    FileType, MarketplaceVersions)
+    FileType, MarketplaceVersions, DEMISTO_SDK_MARKETPLACE)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
@@ -311,7 +311,8 @@ def unify(**kwargs):
     kwargs['input'] = str(kwargs['input'])
     file_type = find_type(kwargs['input'])
     custom = kwargs.pop('custom')
-
+    if marketplace := kwargs.get('marketplace'):
+        os.putenv(DEMISTO_SDK_MARKETPLACE, marketplace.lower())
     if file_type == FileType.GENERIC_MODULE:
         from demisto_sdk.commands.unify.generic_module_unifier import \
             GenericModuleUnifier
@@ -574,6 +575,8 @@ def create_content_artifacts(**kwargs) -> int:
         ArtifactsManager
     logging_setup(3)
     check_configuration_file('create-content-artifacts', kwargs)
+    if marketplace := kwargs.get('marketplace'):
+        os.putenv(DEMISTO_SDK_MARKETPLACE, marketplace.lower())
     artifacts_conf = ArtifactsManager(**kwargs)
     return artifacts_conf.create_content_artifacts()
 

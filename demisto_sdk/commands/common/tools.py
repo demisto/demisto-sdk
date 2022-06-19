@@ -46,7 +46,7 @@ from demisto_sdk.commands.common.constants import (
     SCRIPTS_DIR, SIEM_ONLY_ENTITIES, TEST_PLAYBOOKS_DIR, TRIGGER_DIR,
     TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR, XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys,
-    IdSetKeys, MarketplaceVersions, urljoin)
+    IdSetKeys, MarketplaceVersions, urljoin, DEMISTO_SDK_MARKETPLACE)
 from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
                                                             GitProvider)
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -160,7 +160,7 @@ class MarketplaceTagParser:
         )
 
 
-MARKETPLACE_TAG_PARSER = MarketplaceTagParser()
+MARKETPLACE_TAG_PARSER = None
 
 LOG_VERBOSE = False
 
@@ -178,6 +178,13 @@ def set_log_verbose(verbose: bool):
 
 def get_log_verbose() -> bool:
     return LOG_VERBOSE
+
+
+def get_mp_tag_parser():
+    global MARKETPLACE_TAG_PARSER
+    if MARKETPLACE_TAG_PARSER is None:
+        MARKETPLACE_TAG_PARSER = MarketplaceTagParser(os.getenv(DEMISTO_SDK_MARKETPLACE) or MarketplaceVersions.XSOAR.value)
+    return MARKETPLACE_TAG_PARSER
 
 
 def get_yml_paths_in_dir(project_dir: str, error_msg: str = '') -> Tuple[list, str]:

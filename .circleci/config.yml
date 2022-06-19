@@ -263,9 +263,15 @@ jobs:
               cd content
               echo "lint files changed. running lint"
               # python file (CommonServerPython lint is running over python 3 and 2)
-              # we use `demisto-sdk` because we're inside content local env and not on poetry local env
-              demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPython
-             
+
+              demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPython --coverage-report ~/project/coverage-report
+              if [[ -f ~/project/coverage-report/.coverage && -f ~/project/coverage-report/.coverage.json && ~/project/coverage-report/html/coverage_html.js  ]]
+                then
+                  echo "coverage files found."
+                else
+                  echo "coverage files not found."
+                  exit 1
+              fi
               # ps file
               demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPowerShell
               

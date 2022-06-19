@@ -4,6 +4,7 @@
 * Added a new validation to the **validate** command to verify that the docker in use is not deprecated.
 * Added support for multiple ApiModules in the **unify** command
 * Added slack notifier for build failures on the master branch.
+* Added a validation that classifier's id and name are matching. Updated the format of classifier to include update_id too.
 
 ## 1.6.8
 

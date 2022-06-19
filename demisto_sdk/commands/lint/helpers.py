@@ -25,7 +25,6 @@ from packaging.version import parse
 # Local packages
 from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
                                                    DemistoException)
-from demisto_sdk.commands.common.tools import print_warning, run_command_os
 from demisto_sdk.commands.lint.docker_helper import init_global_docker_client
 
 # Python2 requirements
@@ -59,23 +58,6 @@ PY_CHCEKS = ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture", "pytest", "p
 RL = '\n'
 
 logger = logging.getLogger('demisto-sdk')
-
-
-def validate_env() -> None:
-    """Packs which use python2 will need to be run inside virtual environment including python2 as main
-    and the specified req
-    """
-    wrn_msg = 'demisto-sdk lint not in virtual environment, Python2 lints will fail, use "source .hooks/bootstrap"' \
-              ' to create the virtual environment'
-    command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
-    stdout, stderr, exit_code = run_command_os(command, cwd=Path().cwd())
-    if "2" not in stdout:
-        print_warning(wrn_msg)
-    else:
-        stdout, stderr, exit_code = run_command_os("pip3 freeze", cwd=Path().cwd())
-        for req in PYTHON2_REQ:
-            if req not in stdout:
-                print_warning(wrn_msg)
 
 
 def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,

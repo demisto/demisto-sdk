@@ -90,7 +90,7 @@ def test_relative_url_not_valid():
     captured_output = io.StringIO()
     sys.stdout = captured_output  # redirect stdout.
     absolute_urls = ["https://www.good.co.il", "https://example.com", "https://github.com/demisto/content/blob/123",
-                     "/Packs/FeedOffice365/doc_files/test.png", "https://hreftesting.com"]
+                     "github.com/demisto/content/blob/123/Packs/FeedOffice365/doc_files/test.png", "https://hreftesting.com"]
     relative_urls = ["relative1.com", "www.relative2.com", "hreftesting.com", "www.hreftesting.com"]
     readme_validator = ReadMeValidator(INVALID_MD)
     result = readme_validator.verify_readme_relative_urls()
@@ -104,9 +104,8 @@ def test_relative_url_not_valid():
         assert url in output
 
     # no empty links found
-    assert '[ERROR]: /Users/ostolero/dev/demisto/demisto-sdk/demisto_sdk/tests/test_files/README-invalid.md: [RM112] ' \
-           '- Relative urls are not supported within README. If this is not a relative url, please add an https:// ' \
-           'prefix:\n. ' not in output
+    assert '[RM112] - Relative urls are not supported within README. If this is not a relative url, please add an ' \
+           'https:// prefix:\n. ' not in output
 
 
 def test_is_image_path_valid():

@@ -54,6 +54,38 @@ PACKS_TO_IGNORE = ['HelloWorld', 'HelloWorldPremium']
 DEFAULT_SENTENCES = ['getting started and learn how to build an integration']
 
 
+class UrlLink:
+    def __init__(self, link_description: str, url: str, is_html: bool):
+        self.link_description = link_description
+        self.url = url
+        self.is_html = is_html
+
+
+def get_relative_urls(content: str) -> list[UrlLink]:
+    """
+          Find all relative urls (md link and href links_ in README.
+          Returns: a regex list of urls.
+          """
+    relative_urls = re.findall(RELATIVE_MARKDOWN_URL_REGEX, content,
+                               re.IGNORECASE | re.MULTILINE)
+    relative_html_urls = re.findall(RELATIVE_HREF_URL_REGEX, content,
+                                    re.IGNORECASE | re.MULTILINE)
+    links_list = []
+    for url in relative_urls:
+        # if url is empty, ignore it
+        if not url[1]:
+            continue
+        links_list.append(UrlLink(url[0], url[1], False))
+
+    for url in relative_html_urls:
+        # if url is empty, ignore it
+        if not url[1]:
+            continue
+        links_list.append(UrlLink(url[0], url[1], True))
+
+    return links_list
+
+
 class ReadMeValidator(BaseValidator):
     """ReadMeValidator is a validator for readme.md files
         In order to run the validator correctly please make sure:
@@ -209,7 +241,7 @@ class ReadMeValidator(BaseValidator):
             return True
         # use some heuristics to try to figure out if this is html
         return self.readme_content.startswith('<p>') or self.readme_content.startswith('<!DOCTYPE html>') or \
-            ('<thead>' in self.readme_content and '<tbody>' in self.readme_content)
+               ('<thead>' in self.readme_content and '<tbody>' in self.readme_content)
 
     @error_codes('RM101')
     def is_image_path_valid(self) -> bool:
@@ -250,7 +282,7 @@ class ReadMeValidator(BaseValidator):
                 """
         # If there are errors in one of the following validations return False
         error_list = self.check_readme_relative_url_paths()
-        if len(error_list):
+        if error_list:
             return False
         return True
 
@@ -269,16 +301,10 @@ class ReadMeValidator(BaseValidator):
         # If error was found, print it only if its not a pack readme. For pack readme, the PackUniqueFilesValidator
         # class handles the errors and printing.
         should_print_error = not is_pack_readme
-        relative_urls = re.findall(RELATIVE_MARKDOWN_URL_REGEX, self.readme_content,
-                                   re.IGNORECASE | re.MULTILINE)
-        relative_urls += re.findall(RELATIVE_HREF_URL_REGEX, self.readme_content,
-                                    re.IGNORECASE | re.MULTILINE)
-        for url in relative_urls:
-            # skip empty links
-            if not url[1]:
-                continue
+        relative_urls = get_relative_urls(self.readme_content)
+        for url_link in relative_urls:
             # striping in case there are whitespaces at the beginning/ending of url.
-            error_message, error_code = Errors.invalid_readme_relative_url_error(url[1])
+            error_message, error_code = Errors.invalid_readme_relative_url_error(url_link.url)
             if error_code and error_message:  # error was found
                 formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path,
                                                     should_print=should_print_error)

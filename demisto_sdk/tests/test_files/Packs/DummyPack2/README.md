@@ -5,8 +5,8 @@ This integration was integrated and tested with version 1.0.1 of PhishTank.
 ### Relative urls test-
 [Good link](https://www.good.co.il)
 [Good link2](https://example.com)
-[invalid relative 1](relative1.com)
-[invalid relative 2](www.relative2.com)
+test link- [invalid relative 1](relative1.com)
+[invalid relative 2](www.relative2.com) another test
 [empty link]()
 <a href="https://hreftesting.com"> good href test </a>
 <a href="hreftesting.com"> href tests </a>

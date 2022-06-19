@@ -363,6 +363,9 @@ def zip_packs(**kwargs) -> int:
     should_upload = kwargs.pop('upload', False)
     zip_all = kwargs.pop('zip_all', False) or should_upload
 
+    if marketplace := kwargs.get('marketplace'):
+        os.putenv(DEMISTO_SDK_MARKETPLACE, marketplace.lower())
+
     packs_zipper = PacksZipper(zip_all=zip_all, pack_paths=kwargs.pop('input'), quiet_mode=zip_all, **kwargs)
     zip_path, unified_pack_names = packs_zipper.zip_packs()
 
@@ -944,6 +947,7 @@ def upload(**kwargs):
             marketplace = MarketplaceVersions.MarketplaceV2.value
         else:
             marketplace = MarketplaceVersions.XSOAR.value
+        os.putenv(DEMISTO_SDK_MARKETPLACE, marketplace.lower())
 
         output_zip_path = kwargs.pop('keep_zip') or tempfile.gettempdir()
         packs_unifier = PacksZipper(pack_paths=pack_path, output=output_zip_path,
@@ -1043,6 +1047,8 @@ def xsoar_config_file_update(**kwargs):
     """
     from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import \
         XSOARConfigFileUpdater
+    if marketplace := kwargs.get('marketplace'):
+        os.putenv(DEMISTO_SDK_MARKETPLACE, marketplace.lower())
     file_updater: XSOARConfigFileUpdater = XSOARConfigFileUpdater(**kwargs)
     return file_updater.update()
 

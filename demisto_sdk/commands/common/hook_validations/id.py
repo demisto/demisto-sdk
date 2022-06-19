@@ -538,9 +538,6 @@ class IDSetValidations(BaseValidator):
         implemented_entities = implemented_entity_list_from_playbook.copy()
         is_valid = True, None
         for entity_data_dict in entity_set_from_id_set:
-            if not implemented_entities:
-                break
-
             entity_id = list(entity_data_dict.keys())[0]
             all_entity_fields = entity_data_dict[entity_id]
             entity_name = entity_id if entity_id in implemented_entity_list_from_playbook else all_entity_fields.get(

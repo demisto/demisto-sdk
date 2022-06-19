@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where **validate** command failed when trying to validate whether a version of a content item used in a playbook is valid.
 * Added a new validation to the **validate** command to verify that the docker in use is not deprecated.
 * Added support for multiple ApiModules in the **unify** command
 * Added slack notifier for build failures on the master branch.

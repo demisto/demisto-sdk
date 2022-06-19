@@ -16,9 +16,8 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_IMAGE_PREFIX, INTEGRATIONS_DIR, SCRIPTS_DIR, TYPE_TO_EXTENSION,
     FileType)
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS,
-                                               get_mp_tag_parser,
-                                               arg_to_list, find_type,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
+                                               find_type, get_mp_tag_parser,
                                                get_pack_name, get_yaml,
                                                get_yml_paths_in_dir,
                                                print_color, print_warning,

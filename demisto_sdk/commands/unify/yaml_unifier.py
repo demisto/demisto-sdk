@@ -9,8 +9,7 @@ from demisto_sdk.commands.common.constants import (DIR_TO_PREFIX,
                                                    SCRIPTS_DIR)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.tools import (get_yml_paths_in_dir,
-                                               print_error)
+from demisto_sdk.commands.common.tools import get_yml_paths_in_dir, print_error
 
 UNSUPPORTED_INPUT_ERR_MSG = '''Unsupported input. Please provide either:
 1. Path to directory of an integration or a script.

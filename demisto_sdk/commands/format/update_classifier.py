@@ -52,6 +52,7 @@ class OldClassifierJSONFormat(BaseClassifierJSONFormat):
             super().run_format()
             self.set_toVersion()
             self.save_json_to_destination_file()
+            self.update_id()
             return SUCCESS_RETURN_CODE
 
         except Exception as err:

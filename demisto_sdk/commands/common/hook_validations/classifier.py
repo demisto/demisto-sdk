@@ -43,7 +43,8 @@ class ClassifierValidator(ContentEntityValidator):
                 self.is_valid_to_version(),
                 self.is_to_version_higher_from_version(),
                 self.is_valid_type(),
-                self.is_incident_field_exist(id_set_file, is_circle)
+                self.is_incident_field_exist(id_set_file, is_circle),
+                self.is_id_equals_name()
             ])
 
         return all([
@@ -52,8 +53,17 @@ class ClassifierValidator(ContentEntityValidator):
             self.is_valid_from_version(),
             self.is_valid_to_version(),
             self.is_to_version_higher_from_version(),
-            self.is_valid_type()
+            self.is_valid_type(),
+            self.is_id_equals_name()
         ])
+
+    def is_id_equals_name(self):
+        """Check whether the classifier's ID is equal to its name
+
+        Returns:
+            bool. True if valid, and False otherwise.
+        """
+        return super(ClassifierValidator, self)._is_id_equals_name('classifier')
 
     def is_valid_version(self):
         """Checks if version field is valid. uses default method.

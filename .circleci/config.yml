@@ -262,8 +262,8 @@ jobs:
               fi
               cd content
               echo "lint files changed. running lint"
+              
               # python file (CommonServerPython lint is running over python 3 and 2)
-
               demisto-sdk lint -i ./Packs/Base/Scripts/CommonServerPython --coverage-report ~/project/coverage-report
               if [[ -f ~/project/coverage-report/html/index.html && -f ~/project/coverage-report/coverage.xml ]]
                 then

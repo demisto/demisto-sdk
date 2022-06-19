@@ -1559,7 +1559,7 @@ class TestPlaybookEntitiesVersionsValid:
             # all playbook's entities has valid versions
             is_playbook_version_valid, error = self.validator._are_playbook_entities_versions_valid(
                 self.playbook_with_valid_versions, playbook.yml.path)
-            assert is_playbook_version_valid
+            assert is_playbook_version_valid, error
             assert error is None
 
             # playbook uses scripts with invalid versions

@@ -58,7 +58,6 @@ class TestReadmeFormat:
             - Ensure the url changes to the expected output.
         """
         readme_formatter = ReadmeFormat(INVALID_MD)
-        readme_url = ReadmeUrl
         readme_formatter.replace_url_in_content(regex_relative_url, new_url)
         assert expected_link in readme_formatter.readme_content
 

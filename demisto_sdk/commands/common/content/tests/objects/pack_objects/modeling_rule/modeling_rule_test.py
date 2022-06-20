@@ -2,6 +2,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import \
     ModelingRule
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
+from demisto_sdk.commands.common.tools import get_yaml
 
 
 def get_modeling_rule(pack, name):
@@ -33,3 +34,10 @@ class TestModelingRule:
         modeling_rule = get_modeling_rule(pack, 'modeling_rule_name')
         obj = ModelingRule(modeling_rule._tmpdir_rule_path)
         assert not obj.is_unify()
+
+    def test_unify_schema(self, pack):
+        modeling_rule = get_modeling_rule(pack, 'modeling_rule_name')
+        obj = ModelingRule(modeling_rule._tmpdir_rule_path)
+        unify_obj = get_yaml(obj._unify(modeling_rule._tmpdir_rule_path)[0])
+        assert unify_obj['schema'] == '{\n    "test_audit_raw": {\n        "name": {\n            "type": "string",\n' \
+                                      '            "is_array": false\n        }\n    }\n}'

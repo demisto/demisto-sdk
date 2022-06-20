@@ -33,7 +33,7 @@ OLD_CLASSIFIER = {
 
 NEW_CLASSIFIER = {
     "defaultIncidentType": "test",
-    "id": "testing",
+    "id": "test Classifier",
     "type": "classification",
     "name": "test Classifier",
     "description": "Classifies test.",

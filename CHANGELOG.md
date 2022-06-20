@@ -5,6 +5,7 @@
 * Added support for multiple ApiModules in the **unify** command
 * Added slack notifier for build failures on the master branch.
 * Added support for modeling and parsing rules in the **split** command.
+* Added a **validate** check, making sure classifier id and name values match. Updated the classifier **format** to update the id accordingly.
 
 ## 1.6.8
 

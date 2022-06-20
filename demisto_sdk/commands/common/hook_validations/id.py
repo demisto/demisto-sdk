@@ -554,8 +554,8 @@ class IDSetValidations(BaseValidator):
 
         implemented_entity_list_from_playbook = set(implemented_entity_list_from_playbook)
         implemented_ids_in_id_set = set()
-
-        entity_names_and_data: Dict[str, list] = {}
+        
+        implemented_entity_name_to_entities: Dict[str, list] = {}
         for entity in entity_set_from_id_set:
             entity_id = list(entity.keys())[0]
             entity_data = entity.get(entity_id)
@@ -563,13 +563,13 @@ class IDSetValidations(BaseValidator):
             if entity_name in implemented_entity_list_from_playbook:
                 # ignore entities which do not have fromversion.
                 if entity_data.get('fromversion'):
-                    if entity_name not in entity_names_and_data:
-                        entity_names_and_data[entity_name] = []
-                    entity_names_and_data[entity_name].append(entity_data)
+                    if entity_name not in implemented_entity_name_to_entities:
+                        implemented_entity_name_to_entities[entity_name] = []
+                    implemented_entity_name_to_entities[entity_name].append(entity_data)
                 implemented_ids_in_id_set.add(entity_name)
 
         invalid_entries_path_to_version = {}
-        for entity_name, entities in entity_names_and_data.items():
+        for entity_name, entities in implemented_entity_name_to_entities.items():
             # get entity with the minimum version
             min_version_entity = min(entities, key=lambda _entity: LooseVersion(_entity.get('fromversion')))
             if not (is_minimum_version_valid(min_version_entity) or get_skip_unavailable(entity_name)):

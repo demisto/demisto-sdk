@@ -1,14 +1,14 @@
-import re
-from typing import List, Optional, Tuple
+from typing import Optional, Tuple
 
 import click
 
+from demisto_sdk.commands.common.hook_validations.readme import (
+    ReadmeUrl, get_relative_urls)
 from demisto_sdk.commands.common.tools import print_error
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
-from demisto_sdk.commands.common.hook_validations.readme import ReadmeUrl, get_relative_urls
 
 
 class ReadmeFormat(BaseUpdate):
@@ -36,7 +36,7 @@ class ReadmeFormat(BaseUpdate):
         """Replace the relative url link with the new url in README."""
 
         # md link
-        if not relative_url.is_html:
+        if relative_url.is_markdown:
             old_link = f'{relative_url.description}({relative_url.url})'
             new_link = f'{relative_url.description}({new_url})'
         # href link
@@ -44,7 +44,7 @@ class ReadmeFormat(BaseUpdate):
             old_link = relative_url.description
             new_link = str.replace(relative_url.description, relative_url.url, new_url)
 
-        self.readme_content = str.replace(self.readme_content, old_link, new_link, 1)
+        self.readme_content = str.replace(self.readme_content, old_link, new_link)
         click.secho(f'Replaced {relative_url.url} with {new_url}')
 
     def get_new_url_from_user(self, readme_url: ReadmeUrl) -> Optional[str]:

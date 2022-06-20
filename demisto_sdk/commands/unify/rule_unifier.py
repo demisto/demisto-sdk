@@ -69,3 +69,5 @@ class RuleUnifier(YAMLUnifier):
             with io.open(schema_path, mode='r', encoding='utf-8') as schema_file:
                 schema = json.loads(schema_file.read())
                 self.yml_data['schema'] = FoldedScalarString(json.dumps(schema, indent=4))
+        else:
+            click.echo('No schema file was found.')

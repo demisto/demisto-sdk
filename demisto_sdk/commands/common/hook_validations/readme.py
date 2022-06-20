@@ -3,10 +3,11 @@ import re
 import subprocess
 import tempfile
 from contextlib import contextmanager
+from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from threading import Lock
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Set
 from urllib.parse import urlparse
 
 import click
@@ -54,14 +55,14 @@ PACKS_TO_IGNORE = ['HelloWorld', 'HelloWorldPremium']
 DEFAULT_SENTENCES = ['getting started and learn how to build an integration']
 
 
+@dataclass(frozen=True)
 class ReadmeUrl:
-    def __init__(self, description: str, url: str, is_html: bool):
-        self.description = description
-        self.url = url
-        self.is_html = is_html
+    description: str
+    url: str
+    is_markdown: bool
 
 
-def get_relative_urls(content: str) -> List[ReadmeUrl]:
+def get_relative_urls(content: str) -> Set[ReadmeUrl]:
     """
           Find all relative urls (md link and href links_ in README.
           Returns: a set of ReadmeUrls objects.
@@ -75,15 +76,16 @@ def get_relative_urls(content: str) -> List[ReadmeUrl]:
         # if url is empty, ignore it
         if not url[1]:
             continue
-        links_list.append(ReadmeUrl(url[0], url[1], False))
+        links_list.append(ReadmeUrl(url[0], url[1], True))
 
     for url in relative_html_urls:
         # if url is empty, ignore it
         if not url[1]:
             continue
-        links_list.append(ReadmeUrl(url[0], url[1], True))
+        links_list.append(ReadmeUrl(url[0], url[1], False))
+    links_set = set(links_list)
 
-    return links_list
+    return links_set
 
 
 class ReadMeValidator(BaseValidator):

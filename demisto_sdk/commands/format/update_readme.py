@@ -3,16 +3,16 @@ from typing import List, Optional, Tuple
 
 import click
 
-from demisto_sdk.commands.common.constants import (RELATIVE_HREF_URL_REGEX,
-                                                   RELATIVE_MARKDOWN_URL_REGEX)
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
+from demisto_sdk.commands.common.hook_validations.readme import UrlLink, get_relative_urls
 
 
 class ReadmeFormat(BaseUpdate):
-    """ReadmeFormat class is designed to update integration and pack README file according to Demisto's convention.
+    """ReadmeFormat class is designed to update README files according to Demisto's convention.
+       This is relevant for pack, Integrations, scripts and playbooks README files.
 
         Attributes:
             input (str): the path to the file we are updating at the moment.
@@ -46,20 +46,20 @@ class ReadmeFormat(BaseUpdate):
         self.readme_content = str.replace(self.readme_content, old_link, new_link, 1)
         click.secho(f'Replaced {relative_url[1]} with {new_url}')
 
-    def get_relative_urls(self) -> List[list]:
-        """
-        Find all relative urls (md link and href links_ in README.
-        Returns: a regex list of urls.
+    # def get_relative_urls(self) -> List[list]:
+    #     """
+    #     Find all relative urls (md link and href links_ in README.
+    #     Returns: a regex list of urls.
+    #
+    #     """
+    #     relative_urls = re.findall(RELATIVE_MARKDOWN_URL_REGEX, self.readme_content,
+    #                                re.IGNORECASE | re.MULTILINE)
+    #     relative_urls += re.findall(RELATIVE_HREF_URL_REGEX, self.readme_content,
+    #                                 re.IGNORECASE | re.MULTILINE)
+    #     relative_urls = [url for url in relative_urls if url[1]]
+    #     return relative_urls
 
-        """
-        relative_urls = re.findall(RELATIVE_MARKDOWN_URL_REGEX, self.readme_content,
-                                   re.IGNORECASE | re.MULTILINE)
-        relative_urls += re.findall(RELATIVE_HREF_URL_REGEX, self.readme_content,
-                                    re.IGNORECASE | re.MULTILINE)
-        relative_urls = [url for url in relative_urls if url[1]]
-        return relative_urls
-
-    def get_new_url_from_user(self, url: list) -> Optional[str]:
+    def get_new_url_from_user(self, url_link: UrlLink) -> Optional[str]:
         """ Given we found a relative url, the user has the following options-
         1. Add https:// prefix.
         2. Enter a new absolute address to replace the current.
@@ -71,17 +71,17 @@ class ReadmeFormat(BaseUpdate):
         Returns: new url or None if we leave as is
 
         """
-        old_url = str.strip(url[1])
+        old_url = str.strip(url_link.url)
         new_address = None
         if self.assume_yes:
-            new_address = 'https://' + old_url
+            new_address = f'https://{old_url}'
         else:
             click.secho(f'Relative urls are not supported within README, Should https:// be added to the '
-                        f'following address? [Y/n]\n {url[1]}',
+                        f'following address? [Y/n]\n {url_link.url}',
                         fg='red')
             user_answer = input()
             if user_answer in ['y', 'Y', 'yes', 'Yes']:
-                new_address = 'https://' + old_url
+                new_address = f'https://{old_url}'
             else:
                 click.secho('Would you like to change the relative address to something else?\n'
                             ' Enter the new address or leave empty to skip:',
@@ -99,7 +99,7 @@ class ReadmeFormat(BaseUpdate):
         3. Leave as is
         """
 
-        relative_urls = self.get_relative_urls()
+        relative_urls = get_relative_urls(self.readme_content)
 
         for url in relative_urls:
             new_address = self.get_new_url_from_user(url)

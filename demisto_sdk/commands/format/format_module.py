@@ -77,7 +77,7 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'genericmodule': GenericModuleJSONFormat,
     'genericdefinition': GenericDefinitionJSONFormat,
     JOB: JobJSONFormat,
-    'readme': ReadmeFormat
+    'readme': ReadmeFormat,
 }
 
 UNFORMATTED_FILES = ['releasenotes',

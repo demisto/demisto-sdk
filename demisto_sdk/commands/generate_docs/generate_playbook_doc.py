@@ -238,7 +238,6 @@ def generate_image_link(playbook_name, custom_image_link):
     if custom_image_link:
         playbook_image_path = custom_image_link
     else:
-        playbook_image_path = playbook_name.replace(' ', '_')
-        playbook_image_path = './../doc_files/' + playbook_image_path + '.png'
+        playbook_image_path = './../doc_files/' + playbook_name.replace(' ', '_') + '.png'
 
     return f'![{playbook_name}]({playbook_image_path})'

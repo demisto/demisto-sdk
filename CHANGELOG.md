@@ -4,6 +4,8 @@
 * Added a new validation to the **validate** command to verify that the docker in use is not deprecated.
 * Added support for multiple ApiModules in the **unify** command
 * Added slack notifier for build failures on the master branch.
+* Added an auto-generated image link to a playbook README to the **generate-docs** command.
+* Added a new flag to **generate-docs** command, allowing to add a custom image link to a playbook README.
 
 ## 1.6.8
 

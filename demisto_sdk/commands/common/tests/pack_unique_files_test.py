@@ -270,7 +270,7 @@ class TestPackUniqueFilesValidator:
 
         assert not self.validator.validate_core_pack_dependencies(dependencies_packs)
         assert Errors.invalid_core_pack_dependencies('fake_pack', ['dependency_pack_1', 'dependency_pack_3'])[0] \
-            in self.validator.get_errors()
+               in self.validator.get_errors()
 
     def test_validate_pack_dependencies_skip_id_set_creation(self, capsys):
         """
@@ -661,18 +661,18 @@ class TestPackUniqueFilesValidator:
 
         result = self.validator.validate_pack_readme_relative_urls()
         errors = self.validator.get_errors()
+        relative_urls = ["relative1.com", "www.relative2.com", "hreftesting.com", "www.hreftesting.com"]
+        absolute_urls = ["https://www.good.co.il", "https://example.com", "doc_files/High_Risk_User.png",
+                         "https://hreftesting.com"]
         relative_error = 'Relative urls are not supported within README. If this is not a relative url, please add ' \
                          'an https:// prefix:\n'
         assert not result
-        assert f'{relative_error}relative1.com. ' in errors
-        assert f'{relative_error}www.relative2.com. ' in errors
-        assert f'{relative_error}hreftesting.com' in errors
-        assert f'{relative_error}www.hreftesting.com' in errors
-        # this path is not an image path and should not be shown.
-        assert 'https://www.good.co.il' not in errors
-        assert 'https://example.com' not in errors
-        assert 'doc_files/High_Risk_User.png' not in errors
-        assert 'https://hreftesting.com' not in errors
+
+        for url in relative_urls:
+            assert f'{relative_error}{url}' in errors
+
+        for url in absolute_urls:
+            assert url not in errors
 
         # no empty links found
         assert '[RM112] - Relative urls are not supported within README. If this is not a relative url, ' \

@@ -4,6 +4,7 @@ import pytest
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.format.update_readme import ReadmeFormat
+from demisto_sdk.commands.common.hook_validations.readme import ReadmeUrl
 
 INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
 INVALID_MD_IN_PACK = f'{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack2'
@@ -57,6 +58,7 @@ class TestReadmeFormat:
             - Ensure the url changes to the expected output.
         """
         readme_formatter = ReadmeFormat(INVALID_MD)
+        readme_url = ReadmeUrl
         readme_formatter.replace_url_in_content(regex_relative_url, new_url)
         assert expected_link in readme_formatter.readme_content
 

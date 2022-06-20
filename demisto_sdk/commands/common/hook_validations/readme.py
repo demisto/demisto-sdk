@@ -64,7 +64,7 @@ class ReadmeUrl:
 def get_relative_urls(content: str) -> List[ReadmeUrl]:
     """
           Find all relative urls (md link and href links_ in README.
-          Returns: a regex list of urls.
+          Returns: a set of ReadmeUrls objects.
           """
     relative_urls = re.findall(RELATIVE_MARKDOWN_URL_REGEX, content,
                                re.IGNORECASE | re.MULTILINE)

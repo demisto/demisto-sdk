@@ -3,11 +3,12 @@ from typing import List, Optional, Tuple
 
 import click
 
+from demisto_sdk.commands.common.tools import print_error
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
-from demisto_sdk.commands.common.hook_validations.readme import UrlLink, get_relative_urls
+from demisto_sdk.commands.common.hook_validations.readme import ReadmeUrl, get_relative_urls
 
 
 class ReadmeFormat(BaseUpdate):
@@ -31,56 +32,43 @@ class ReadmeFormat(BaseUpdate):
         with open(self.source_file, 'r') as f:
             self.readme_content = f.read()
 
-    def replace_url_in_content(self, relative_url: list, new_url: str):
+    def replace_url_in_content(self, relative_url: ReadmeUrl, new_url: str):
         """Replace the relative url link with the new url in README."""
 
         # md link
-        if '[' in relative_url[0]:
-            old_link = relative_url[0] + '(' + relative_url[1] + ')'
-            new_link = relative_url[0] + '(' + new_url + ')'
+        if not relative_url.is_html:
+            old_link = f'{relative_url.description}({relative_url.url})'
+            new_link = f'{relative_url.description}({new_url})'
         # href link
         else:
-            old_link = relative_url[0]
-            new_link = str.replace(relative_url[0], relative_url[1], new_url, 1)
+            old_link = relative_url.description
+            new_link = str.replace(relative_url.description, relative_url.url, new_url)
 
         self.readme_content = str.replace(self.readme_content, old_link, new_link, 1)
-        click.secho(f'Replaced {relative_url[1]} with {new_url}')
+        click.secho(f'Replaced {relative_url.url} with {new_url}')
 
-    # def get_relative_urls(self) -> List[list]:
-    #     """
-    #     Find all relative urls (md link and href links_ in README.
-    #     Returns: a regex list of urls.
-    #
-    #     """
-    #     relative_urls = re.findall(RELATIVE_MARKDOWN_URL_REGEX, self.readme_content,
-    #                                re.IGNORECASE | re.MULTILINE)
-    #     relative_urls += re.findall(RELATIVE_HREF_URL_REGEX, self.readme_content,
-    #                                 re.IGNORECASE | re.MULTILINE)
-    #     relative_urls = [url for url in relative_urls if url[1]]
-    #     return relative_urls
-
-    def get_new_url_from_user(self, url_link: UrlLink) -> Optional[str]:
+    def get_new_url_from_user(self, readme_url: ReadmeUrl) -> Optional[str]:
         """ Given we found a relative url, the user has the following options-
         1. Add https:// prefix.
         2. Enter a new absolute address to replace the current.
         3. Leave as is
 
         Args:
-            url: relative url found in README
+            readme_url: relative url found in README
 
         Returns: new url or None if we leave as is
 
         """
-        old_url = str.strip(url_link.url)
+        old_url = str.strip(readme_url.url)
         new_address = None
         if self.assume_yes:
             new_address = f'https://{old_url}'
         else:
             click.secho(f'Relative urls are not supported within README, Should https:// be added to the '
-                        f'following address? [Y/n]\n {url_link.url}',
+                        f'following address? [Y/n]\n {readme_url.url}',
                         fg='red')
             user_answer = input()
-            if user_answer in ['y', 'Y', 'yes', 'Yes']:
+            if user_answer.lower()[0] == 'y':
                 new_address = f'https://{old_url}'
             else:
                 click.secho('Would you like to change the relative address to something else?\n'
@@ -122,7 +110,7 @@ class ReadmeFormat(BaseUpdate):
             return SUCCESS_RETURN_CODE
         except Exception as err:
             if self.verbose:
-                click.secho(f'\nFailed to update file {self.source_file}. Error: {err}', fg='red')
+                print_error(f'\nFailed to update file {self.source_file}. Error: {err}')
             return ERROR_RETURN_CODE
 
     def format_file(self) -> Tuple[int, int]:

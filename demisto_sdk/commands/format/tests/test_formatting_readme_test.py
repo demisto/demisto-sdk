@@ -86,8 +86,8 @@ class TestReadmeFormat:
             (D) - None is returned.
         """
         stripped_url = str.strip(relative_url[1])
-        assert get_new_url_from_user_assume_yes(relative_url) == 'https://' + stripped_url
-        assert get_new_url_from_user_add_prefix(mocker, relative_url) == 'https://' + stripped_url
+        assert get_new_url_from_user_assume_yes(relative_url) == f'https://{stripped_url}'
+        assert get_new_url_from_user_add_prefix(mocker, relative_url) == f'https://{stripped_url}'
         assert get_new_url_from_user_change_url(mocker, relative_url) == 'https://goodurl.com'
         assert get_new_url_from_user_skip(mocker, relative_url) is None
 

@@ -5,6 +5,7 @@
 * Added support for multiple ApiModules in the **unify** command
 * Added slack notifier for build failures on the master branch.
 * Added validation to **validate** command to identify unsupported relative urls in README files.
+* Added support for README files in **format** command.
 
 ## 1.6.8
 

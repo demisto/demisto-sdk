@@ -46,7 +46,7 @@ class YmlSplitter:
         no_readme (bool): whether to extract readme
         no_pipenv (boo): whether to create pipenv
         basic_fmt (bool): whether to perform basic formatting on the code, i.e. autopep8 and isort
-        file_type (str): yml file type (integration/script/modeling rule)
+        file_type (str): yml file type (integration/script/modeling or parsing rule)
         configuration (Configuration): Configuration object
         lines_inserted_at_code_start (int): the amount of lines inserted at the beginning of the code file
     """
@@ -106,8 +106,6 @@ class YmlSplitter:
         self.extract_code(code_file)
         script = self.yml_data.get('script', {})
         lang_type: str = script.get('type', '') if self.file_type == 'integration' else self.yml_data.get('type')
-        if lang_type:
-            code_file = f"{code_file}{TYPE_TO_EXTENSION[lang_type]}"
         self.extract_image("{}/{}_image.png".format(output_path, base_name))
         self.extract_long_description("{}/{}_description.md".format(output_path, base_name))
         yaml_out = "{}/{}.yml".format(output_path, base_name)
@@ -116,11 +114,12 @@ class YmlSplitter:
             yaml_obj = yaml.load(yf)
         script_obj = yaml_obj
 
-        if self.file_type == 'modelingrule' or self.file_type == 'parsingrule':
-            self.extract_rules("{}/{}.xif".format(output_path, base_name))
-            self.extract_rule_schema("{}/{}.json".format(output_path, base_name))
+        if self.file_type in ('modelingrule', 'parsingrule'):
+            self.extract_rules(f'{output_path}/{base_name}.xif')
+            self.extract_rule_schema_and_samples(f'{output_path}/{base_name}.json')
             yaml_obj['fromversion'] = "6.8.0"
-            del yaml_obj['rules']
+            if 'rules' in yaml_obj:
+                del yaml_obj['rules']
             if 'schema' in yaml_obj:
                 del yaml_obj['schema']
             if 'samples' in yaml_obj:
@@ -128,6 +127,7 @@ class YmlSplitter:
             with open(yaml_out, 'w') as yf:
                 yaml.dump(yaml_obj, yf)
         else:
+            code_file = f"{code_file}{TYPE_TO_EXTENSION[lang_type]}"
             if self.file_type == 'integration':
                 script_obj = yaml_obj['script']
                 if 'image' in yaml_obj:
@@ -245,15 +245,11 @@ class YmlSplitter:
         common_server = self.common_server
         if common_server:
             common_server = "CommonServerPython" not in str(self.input) and 'CommonServerPowerShell' not in str(self.input)
-        try:
-            script = self.yml_data['script']
-        except Exception:
-            self.print_logs(f'The following file "{self.input}" is a modeling rule, '
-                            f'therefore it does not have the script object.', log_color=LOG_COLORS.NATIVE)
         if self.file_type == 'modelingrule' or self.file_type == 'parsingrule':
             # no need to extract code
             return 0
 
+        script = self.yml_data['script']
         if self.file_type == 'integration':  # in integration the script is stored at a second level
             lang_type = script['type']
             script = script['script']
@@ -338,7 +334,7 @@ class YmlSplitter:
                 rules_file.write(rules)
         return 0
 
-    def extract_rule_schema(self, output_path) -> int:
+    def extract_rule_schema_and_samples(self, output_path) -> int:
         """
         Extracts the schema of the modeling rules from the yml_file.
         Extracts the samples of the parsing rules from the yml_file.

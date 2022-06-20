@@ -74,7 +74,7 @@ def test_extract_modeling_rules_schema(tmpdir):
     extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/modelingrule-OktaModelingRules.yml',
                             output=str(tmpdir.join('temp_rules.json')), file_type='modelingrule')
 
-    extractor.extract_rule_schema(extractor.output)
+    extractor.extract_rule_schema_and_samples(extractor.output)
     with open(extractor.output, 'rb') as temp_rules:
         temp_rules = temp_rules.read()
         assert schema == json.loads(temp_rules)
@@ -122,11 +122,86 @@ def test_extract_parsing_rules_sampels(tmpdir):
     extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/parsingrule-MyParsingRules.yml',
                             output=str(tmpdir.join('temp_rules.json')), file_type='parsingrule')
 
-    extractor.extract_rule_schema(extractor.output)
+    extractor.extract_rule_schema_and_samples(extractor.output)
     with open(extractor.output, 'rb') as temp_rules:
         temp_rules = temp_rules.read()
         assert sample == json.loads(temp_rules)
     os.remove(extractor.output)
+
+
+def test_extract_to_package_format_modeling_rule(tmpdir):
+    """
+    Given:
+        - A unified YML of a Modeling Rule
+    When:
+        - run extract_to_package_format
+    Then:
+        - Ensure that all files has been created successfully
+    """
+    out = tmpdir.join('ModelingRules')
+    schema = {
+        "okta_okta_raw": {
+            "client": {
+                "type": "string",
+                "is_array": False
+            },
+            "eventType": {
+                "type": "string",
+                "is_array": False
+            }
+        }
+    }
+    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/modelingrule-OktaModelingRules.yml',
+                            output=str(out), file_type='modelingrule')
+    assert extractor.extract_to_package_format() == 0
+    # check code
+    with open(out.join('OktaModelingRule').join('OktaModelingRule.xif'), 'r', encoding='utf-8') as f:
+        file_data = f.read()
+        assert '[MODEL: dataset=okta_okta_raw, model=Audit]' in file_data
+
+    with open(out.join('OktaModelingRule').join('OktaModelingRule.json'), 'r', encoding='utf-8') as f:
+        file_data = f.read()
+        assert schema == json.loads(file_data)
+
+    with open(out.join('OktaModelingRule').join('OktaModelingRule.yml'), 'r') as f:
+        yaml_obj = yaml.load(f)
+        assert yaml_obj['fromversion'] == '6.8.0'
+
+
+def test_extract_to_package_format_parsing_rule(tmpdir):
+    """
+    Given:
+        - A unified YML of a Parsing Rule
+    When:
+        - run extract_to_package_format
+    Then:
+        - Ensure that all files has been created successfully
+    """
+    out = tmpdir.join('ModelingRules')
+    sample = {
+        "okta_on_prem": [
+            {
+                "cefVersion": "CEF:0",
+                "cefDeviceVendor": "Zscaler",
+                "cefDeviceProduct": "NSSWeblog",
+            }
+        ]
+    }
+    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/parsingrule-MyParsingRules.yml',
+                            output=str(out), file_type='parsingrule')
+    assert extractor.extract_to_package_format() == 0
+    # check code
+    with open(out.join('MyRule').join('MyRule.xif'), 'r', encoding='utf-8') as f:
+        file_data = f.read()
+        assert '[RULE:extract_hipmatch_only_fields]' in file_data
+
+    with open(out.join('MyRule').join('MyRule.json'), 'r', encoding='utf-8') as f:
+        file_data = f.read()
+        assert sample == json.loads(file_data)
+
+    with open(out.join('MyRule').join('MyRule.yml'), 'r') as f:
+        yaml_obj = yaml.load(f)
+        assert yaml_obj['fromversion'] == '6.8.0'
 
 
 def test_extract_image(tmpdir):

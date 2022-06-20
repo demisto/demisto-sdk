@@ -2,7 +2,8 @@ import os
 import re
 from collections import OrderedDict
 from distutils.version import LooseVersion
-from typing import Tuple, Optional
+from typing import Dict, Optional, Tuple
+
 import click
 
 import demisto_sdk.commands.common.constants as constants
@@ -505,9 +506,16 @@ class IDSetValidations(BaseValidator):
         return commands_to_integration
 
     @error_codes('PB110,PB117')
-    def is_entity_version_match_playbook_version(self, implemented_entity_list_from_playbook,
-                                                 main_playbook_version, entity_set_from_id_set,
-                                                 playbook_name, file_path, main_playbook_data, content_sub_type) -> Tuple[bool, Optional[str]]:
+    def is_entity_version_match_playbook_version(
+        self,
+        implemented_entity_list_from_playbook,
+        main_playbook_version,
+        entity_set_from_id_set,
+        playbook_name,
+        file_path,
+        main_playbook_data,
+        content_sub_type
+    ) -> Tuple[bool, Optional[str]]:
         """Check if the playbook's version match playbook's entities (script or sub-playbook)
         Goes over the relevant entity set from id_set and check if the version of this entity match is equal or lower
         to the main playbook's version.
@@ -527,7 +535,7 @@ class IDSetValidations(BaseValidator):
             content_sub_type (str): content sub type, whether its entity list are sub-playbooks or scripts.
 
         Returns:
-            bool. Whether the playbook's version match playbook's entities.
+            Tuple[bool, Optional[str]]. Whether the playbook's version match playbook's entities and error message.
         """
         def get_skip_unavailable(_entity_name) -> bool:
             tasks_data = get_script_or_sub_playbook_tasks_from_playbook(
@@ -547,7 +555,7 @@ class IDSetValidations(BaseValidator):
         implemented_entity_list_from_playbook = set(implemented_entity_list_from_playbook)
         implemented_ids_in_id_set = set()
 
-        entity_names_and_data = {}
+        entity_names_and_data: Dict[str, list] = {}
         for entity in entity_set_from_id_set:
             entity_id = list(entity.keys())[0]
             entity_data = entity.get(entity_id)

@@ -54,14 +54,14 @@ PACKS_TO_IGNORE = ['HelloWorld', 'HelloWorldPremium']
 DEFAULT_SENTENCES = ['getting started and learn how to build an integration']
 
 
-class UrlLink:
+class ReadmeUrl:
     def __init__(self, link_description: str, url: str, is_html: bool):
         self.link_description = link_description
         self.url = url
         self.is_html = is_html
 
 
-def get_relative_urls(content: str) -> List[UrlLink]:
+def get_relative_urls(content: str) -> List[ReadmeUrl]:
     """
           Find all relative urls (md link and href links_ in README.
           Returns: a regex list of urls.
@@ -75,13 +75,13 @@ def get_relative_urls(content: str) -> List[UrlLink]:
         # if url is empty, ignore it
         if not url[1]:
             continue
-        links_list.append(UrlLink(url[0], url[1], False))
+        links_list.append(ReadmeUrl(url[0], url[1], False))
 
     for url in relative_html_urls:
         # if url is empty, ignore it
         if not url[1]:
             continue
-        links_list.append(UrlLink(url[0], url[1], True))
+        links_list.append(ReadmeUrl(url[0], url[1], True))
 
     return links_list
 

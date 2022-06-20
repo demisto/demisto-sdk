@@ -554,7 +554,7 @@ class IDSetValidations(BaseValidator):
 
         implemented_entity_list_from_playbook = set(implemented_entity_list_from_playbook)
         implemented_ids_in_id_set = set()
-        
+
         implemented_entity_name_to_entities: Dict[str, list] = {}
         for entity in entity_set_from_id_set:
             entity_id = list(entity.keys())[0]

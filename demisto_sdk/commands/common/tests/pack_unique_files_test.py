@@ -270,7 +270,7 @@ class TestPackUniqueFilesValidator:
 
         assert not self.validator.validate_core_pack_dependencies(dependencies_packs)
         assert Errors.invalid_core_pack_dependencies('fake_pack', ['dependency_pack_1', 'dependency_pack_3'])[0] \
-               in self.validator.get_errors()
+            in self.validator.get_errors()
 
     def test_validate_pack_dependencies_skip_id_set_creation(self, capsys):
         """

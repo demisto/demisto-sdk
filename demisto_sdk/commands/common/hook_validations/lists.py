@@ -26,6 +26,8 @@ class ListsValidator(ContentEntityValidator):
             bool. Whether the list is valid or not
         """
         validations: List = [
+            self.are_fromversion_and_toversion_in_correct_format(),
+            self.are_fromversion_toversion_synchronized(),
             self._is_valid_version(),
             self.is_valid_from_server_version(),
         ]

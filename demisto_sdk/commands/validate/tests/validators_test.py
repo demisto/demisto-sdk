@@ -823,7 +823,7 @@ class TestValidators:
                                 'name': integration2.name,
                                 'file_path': integration2.path,
                                 'pack': pack2_name,
-                                'api_modules': api_script1.name
+                                'api_modules': [api_script1.name]
                             }
                     }
                 ]
@@ -865,7 +865,7 @@ class TestValidators:
                                 'name': integration2.name,
                                 'file_path': integration2.path,
                                 'pack': pack2_name,
-                                'api_modules': api_script1.name
+                                'api_modules': [api_script1.name]
                             }
                     }
                 ]}
@@ -1680,7 +1680,7 @@ def test_job_sanity(repo, is_feed: bool):
 
 
 @pytest.mark.parametrize('is_feed', (True, False))
-@pytest.mark.parametrize('version', ('6.4.9', None, ''))
+@pytest.mark.parametrize('version', ('6.4.9', ''))
 def test_job_from_version(repo, capsys, is_feed: bool, version: Optional[str]):
     """
     Given

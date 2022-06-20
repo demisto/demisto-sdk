@@ -229,3 +229,86 @@ def test_validate_readme_exists_not_checking_on_api_modules(repo):
     structue_validator = StructureValidator(api_modules.yml.path)
     content_entity_validator = ContentEntityValidator(structue_validator)
     assert content_entity_validator.validate_readme_exists()
+
+
+FROM_AND_TO_VERSION_FOR_TEST = [
+    (
+        {},
+        'test.json',
+        True
+    ),
+    (
+        {'fromVersion': '0.0.0'},
+        'test.json',
+        True
+    ),
+    (
+        {'fromVersion': '1.32.45'},
+        'test.json',
+        True
+    ),
+    (
+        {'toVersion': '21.32.44'},
+        'test.json',
+        True
+    ),
+    (
+        {'toversion': '1.5'},
+        'test.yml',
+        False
+    ),
+    (
+        {'toversion': '0.0.0', 'fromversion': '1.32.45'},
+        'test.yml',
+        True
+    ),
+    (
+        {'toversion': '0.0.0', 'fromversion': '1.3_45'},
+        'test.yml',
+        False
+    ),
+    (
+        {'toversion': '0.0.', 'fromversion': '1.32.45'},
+        'test.yml',
+        False
+    ),
+    (
+        {'toversion': '0.f.0'},
+        'test.yml',
+        False
+    ),
+    (
+        {'toversion': 'test'},
+        'test',
+        'test is not json or yml type'
+    ),
+    (
+        {'toversion': ''},
+        'test.yml',
+        True
+    ),
+
+]
+
+
+@pytest.mark.parametrize('current_file, file_path, expected_result', FROM_AND_TO_VERSION_FOR_TEST)
+def test_are_fromversion_and_toversion_in_correct_format(mocker, current_file, file_path, expected_result):
+
+    mocker.patch.object(StructureValidator, '__init__', lambda a, b: None)
+    structure = StructureValidator(file_path)
+    structure.is_valid = True
+    structure.scheme_name = 'playbook'
+    structure.file_path = file_path
+    structure.current_file = current_file
+    structure.old_file = None
+    structure.prev_ver = 'master'
+    structure.branch_name = ''
+    structure.specific_validations = None
+
+    content_entity_validator = ContentEntityValidator(structure)
+    mocker.patch.object(ContentEntityValidator, 'handle_error', return_value=current_file)
+
+    try:
+        assert content_entity_validator.are_fromversion_and_toversion_in_correct_format() == expected_result
+    except Exception as e:
+        assert expected_result in str(e)

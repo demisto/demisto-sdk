@@ -50,9 +50,9 @@ class OldClassifierJSONFormat(BaseClassifierJSONFormat):
             click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             self.old_classifier_type = True
             super().run_format()
+            self.update_id()
             self.set_toVersion()
             self.save_json_to_destination_file()
-            self.update_id()
             return SUCCESS_RETURN_CODE
 
         except Exception as err:
@@ -73,6 +73,7 @@ class ClassifierJSONFormat(BaseClassifierJSONFormat):
         try:
             click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             super().run_format()
+            self.update_id()
             self.set_description()
             self.set_keyTypeMap()
             self.set_transformer()

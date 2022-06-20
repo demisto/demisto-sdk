@@ -580,52 +580,6 @@ class IDSetValidations(BaseValidator):
 
         return is_valid
 
-        # entity_status: dict = {}
-        # invalid_entities_path_and_version: dict = {}
-        # implemented_entities = implemented_entity_list_from_playbook.copy()
-        # is_valid = True, None
-        # for entities in entity_set_from_id_set:
-        #     entity_id = list(entities.keys())[0]
-        #     all_entity_fields = entities[entity_id]
-        #     entity_name = entity_id if entity_id in implemented_entity_list_from_playbook else all_entity_fields.get(
-        #         "name")
-        #     is_entity_used_in_playbook = entity_name in implemented_entity_list_from_playbook
-        #
-        #     if is_entity_used_in_playbook:
-        #         tasks_data = get_script_or_sub_playbook_tasks_from_playbook(searched_entity_name=entity_name,
-        #                                                                     main_playbook_data=main_playbook_data)
-        #
-        #         entity_version = all_entity_fields.get("fromversion", "")
-        #         is_version_valid = not entity_version or LooseVersion(entity_version) <= LooseVersion(
-        #             main_playbook_version)
-        #         skip_unavailable = all(task_data.get('skipunavailable', False) for task_data in tasks_data) \
-        #             if tasks_data and LooseVersion(main_playbook_version) >= LooseVersion('6.0.0') else False
-        #
-        #         # if entities with miss-matched versions were found and skipunavailable is
-        #         # not set or main playbook fromversion is below 6.0.0, fail the validation
-        #         sub_entity_file_path = all_entity_fields.get('file_path') or ''
-        #         if is_version_valid or skip_unavailable:
-        #             entity_status[entity_id] = True
-        #         else:
-        #             status = entity_status.setdefault(entity_id, False)
-        #             if not status:
-        #                 invalid_entities_path_and_version[sub_entity_file_path] = entity_version
-        #         if entity_name in implemented_entities:
-        #             implemented_entities.remove(entity_name)
-        # invalid_version_entities = [entity_name for entity_name, status in entity_status.items() if not status]
-        #
-        # if invalid_version_entities:
-        #     invalid_entities_error_msg = ', '.join(
-        #         [
-        #             f'{file_path}: {entity_version}'
-        #             for file_path, entity_version in invalid_entities_path_and_version.items()
-        #         ]
-        #     )
-        #     error_message, error_code = Errors.content_entity_version_not_match_playbook_version(
-        #         playbook_name, invalid_entities_error_msg, main_playbook_version, content_sub_type)
-        #     if self.handle_error(error_message, error_code, file_path):
-        #         is_valid = False, error_message
-
     @error_codes('PB111')
     def is_playbook_integration_version_valid(self, playbook_integration_commands, playbook_version, playbook_name,
                                               file_path):

@@ -5,6 +5,7 @@
 * Added support for multiple ApiModules in the **unify** command
 * Added validation to **validate** command to identify unsupported relative urls in README files.
 * Added slack notifier for build failures on the master branch.
+* Added a **validate** check, making sure classifier id and name values match. Updated the classifier **format** to update the id accordingly.
 
 ## 1.6.8
 

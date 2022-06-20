@@ -3,7 +3,7 @@
 ## Unreleased
 * Added a new validation to the **validate** command to verify that the docker in use is not deprecated.
 * Added support for multiple ApiModules in the **unify** command
-* Added enviornment variable **DEMISTO_SDK_MARKETPLACE**.
+* Added environment variable **DEMISTO_SDK_MARKETPLACE** expected to affect *MarketplaceTagParser* *marketplace* value. The value will be automatically set when passing *marketplace* arg to the commands **unify**, **zip-packs**, **create-content-artifacts** and **upload**.
 * Added slack notifier for build failures on the master branch.
 
 ## 1.6.8

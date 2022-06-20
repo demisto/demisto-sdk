@@ -183,7 +183,8 @@ def get_log_verbose() -> bool:
 def get_mp_tag_parser():
     global MARKETPLACE_TAG_PARSER
     if MARKETPLACE_TAG_PARSER is None:
-        MARKETPLACE_TAG_PARSER = MarketplaceTagParser(os.getenv(DEMISTO_SDK_MARKETPLACE) or MarketplaceVersions.XSOAR.value)
+        MARKETPLACE_TAG_PARSER = MarketplaceTagParser(
+            os.getenv(DEMISTO_SDK_MARKETPLACE) or MarketplaceVersions.XSOAR.value)
     return MARKETPLACE_TAG_PARSER
 
 
@@ -2824,7 +2825,7 @@ def get_display_name(file_path, file_data={}) -> str:
 
 
 def get_invalid_incident_fields_from_mapper(
-    mapper_incident_fields: Dict[str, Dict], mapping_type: str, content_fields: List
+        mapper_incident_fields: Dict[str, Dict], mapping_type: str, content_fields: List
 ) -> List[str]:
     """
     Get a list of incident fields which are not part of the content items (not part of id_json) from a specific

@@ -1047,8 +1047,6 @@ def xsoar_config_file_update(**kwargs):
     """
     from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import \
         XSOARConfigFileUpdater
-    if marketplace := kwargs.get('marketplace'):
-        os.putenv(DEMISTO_SDK_MARKETPLACE, marketplace.lower())
     file_updater: XSOARConfigFileUpdater = XSOARConfigFileUpdater(**kwargs)
     return file_updater.update()
 

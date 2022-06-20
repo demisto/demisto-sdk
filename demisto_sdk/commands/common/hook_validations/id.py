@@ -558,15 +558,15 @@ class IDSetValidations(BaseValidator):
 
                 # if entities with miss-matched versions were found and skipunavailable is
                 # not set or main playbook fromversion is below 6.0.0, fail the validation
-                file_path = all_entity_fields.get('file_path') or ''
+                sub_entity_file_path = all_entity_fields.get('file_path') or ''
                 if is_version_valid or skip_unavailable:
                     entity_status[entity_id] = True
                     if file_path in invalid_entities_path_and_version:
-                        invalid_entities_path_and_version.pop(file_path)
+                        invalid_entities_path_and_version.pop(sub_entity_file_path)
                 else:
-                    entity_status.setdefault(entity_id, False)
-                    if not entity_status.get(entity_id, False):
-                        invalid_entities_path_and_version[file_path] = entity_version
+                    status = entity_status.setdefault(entity_id, False)
+                    if not status:
+                        invalid_entities_path_and_version[sub_entity_file_path] = entity_version
                 if entity_name in implemented_entities:
                     implemented_entities.remove(entity_name)
         invalid_version_entities = [entity_name for entity_name, status in entity_status.items() if not status]

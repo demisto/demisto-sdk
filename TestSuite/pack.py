@@ -598,7 +598,7 @@ class Pack:
         name: Optional[str] = None,
         yml: Optional[dict] = None,
         rules: Optional[str] = None,
-        schema: Optional[str] = None,
+        schema: Optional[dict] = None,
     ) -> Rule:
         if not name:
             name = f'modelingrule_{len(self.modeling_rules)}'

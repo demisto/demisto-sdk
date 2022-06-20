@@ -2,7 +2,7 @@ import os
 import re
 from collections import OrderedDict
 from distutils.version import LooseVersion
-
+from typing import Tuple, Optional
 import click
 
 import demisto_sdk.commands.common.constants as constants
@@ -507,7 +507,7 @@ class IDSetValidations(BaseValidator):
     @error_codes('PB110,PB117')
     def is_entity_version_match_playbook_version(self, implemented_entity_list_from_playbook,
                                                  main_playbook_version, entity_set_from_id_set,
-                                                 playbook_name, file_path, main_playbook_data, content_sub_type):
+                                                 playbook_name, file_path, main_playbook_data, content_sub_type) -> Tuple[bool, Optional[str]]:
         """Check if the playbook's version match playbook's entities (script or sub-playbook)
         Goes over the relevant entity set from id_set and check if the version of this entity match is equal or lower
         to the main playbook's version.
@@ -529,56 +529,68 @@ class IDSetValidations(BaseValidator):
         Returns:
             bool. Whether the playbook's version match playbook's entities.
         """
-        implemented_entity_list_from_playbook_copy = set(implemented_entity_list_from_playbook.copy())
-
-        entity_ids_to_id_set = {}
-        for entity in entity_set_from_id_set:
-            entity_id = list(entity.keys())[0]
-            if entity_id in implemented_entity_list_from_playbook_copy:
-                if entity.get(entity_id).get('fromversion'):
-                    if entity_id not in entity_ids_to_id_set:
-                        entity_ids_to_id_set[entity_id] = []
-                    entity_ids_to_id_set[entity_id].append(entity.get(entity_id))
-                # ignore entities which do not have fromversion.
-                if entity_id in implemented_entity_list_from_playbook:
-                    implemented_entity_list_from_playbook.remove(entity_id)
-
-        invalid_sub_entities = {}
-        for _id, entities in entity_ids_to_id_set.items():
-            # get entity with the minimum version
-            min_version_entity = min(entities, key=lambda _entity: LooseVersion(_entity.get('fromversion')))
-            min_version = min_version_entity.get('fromversion')
-            is_version_valid = LooseVersion(min_version) <= LooseVersion(main_playbook_version)
+        def get_skip_unavailable(_entity_name) -> bool:
             tasks_data = get_script_or_sub_playbook_tasks_from_playbook(
-                searched_entity_name=_id,
+                searched_entity_name=_entity_name,
                 main_playbook_data=main_playbook_data
             )
-            skip_unavailable = all(task_data.get('skipunavailable', False) for task_data in tasks_data) \
+            return all(task_data.get('skipunavailable', False) for task_data in tasks_data) \
                 if tasks_data and LooseVersion(main_playbook_version) >= LooseVersion('6.0.0') else False
-            if not (is_version_valid or skip_unavailable):
-                sub_entity_file_path = min_version_entity.get('file_path') or ''
-                invalid_sub_entities[sub_entity_file_path] = min_version_entity
 
-        is_valid = True, None
-        if invalid_sub_entities:
+        def is_minimum_version_valid(_min_version_entity) -> bool:
+            """
+            In case we have more than one entity with the same ID,
+            verify that the one with the minimum version is valid.
+            """
+            return LooseVersion(min_version_entity.get('fromversion')) <= LooseVersion(main_playbook_version)
+
+        implemented_entity_list_from_playbook = set(implemented_entity_list_from_playbook)
+        implemented_ids_in_id_set = set()
+
+        entity_names_and_data = {}
+        for entity in entity_set_from_id_set:
+            entity_id = list(entity.keys())[0]
+            entity_data = entity.get(entity_id)
+            entity_name = entity_id if entity_id in implemented_entity_list_from_playbook else entity_data.get('name')
+            if entity_name in implemented_entity_list_from_playbook:
+                # ignore entities which do not have fromversion.
+                if entity_data.get('fromversion'):
+                    if entity_name not in entity_names_and_data:
+                        entity_names_and_data[entity_name] = []
+                    entity_names_and_data[entity_name].append(entity_data)
+                implemented_ids_in_id_set.add(entity_name)
+
+        invalid_entries_path_to_version = {}
+        for entity_name, entities in entity_names_and_data.items():
+            # get entity with the minimum version
+            min_version_entity = min(entities, key=lambda _entity: LooseVersion(_entity.get('fromversion')))
+            if not (is_minimum_version_valid(min_version_entity) or get_skip_unavailable(entity_name)):
+                sub_entity_file_path = min_version_entity.get('file_path') or ''
+                invalid_entries_path_to_version[sub_entity_file_path] = min_version_entity
+
+        if invalid_entries_path_to_version:
             invalid_entities_error_msg = ', '.join(
                 [
                     f'{file_path}: {entity_version}'
-                    for file_path, entity_version in invalid_sub_entities.items()
+                    for file_path, entity_version in invalid_entries_path_to_version.items()
                 ]
             )
             error_message, error_code = Errors.content_entity_version_not_match_playbook_version(
                 playbook_name, invalid_entities_error_msg, main_playbook_version, content_sub_type)
             if self.handle_error(error_message, error_code, file_path):
-                is_valid = False, error_message
+                return False, error_message
 
-        if implemented_entity_list_from_playbook:
+        entities_not_exist_in_id_set = [
+            entity for entity in implemented_entity_list_from_playbook if entity not in implemented_ids_in_id_set
+        ]
+
+        if entities_not_exist_in_id_set:
             error_message, error_code = Errors.content_entity_is_not_in_id_set(
-                playbook_name, implemented_entity_list_from_playbook)
+                playbook_name, entities_not_exist_in_id_set)
             if self.handle_error(error_message, error_code, file_path):
-                is_valid = False, error_message
+                return False, error_message
 
-        return is_valid
+        return True, None
 
     @error_codes('PB111')
     def is_playbook_integration_version_valid(self, playbook_integration_commands, playbook_version, playbook_name,

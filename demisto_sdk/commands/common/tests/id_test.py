@@ -1728,7 +1728,7 @@ class TestPlaybookEntitiesVersionsValid:
                 playbook_with_valid_integration_version, playbook.yml.path)
             assert is_integration_version_invalid
 
-    def test_playbook_sub_playbook_exist(self, repo, mocker):
+    def test_playbook_sub_playbook_exist(self, repo):
         """
 
         Given
@@ -1750,7 +1750,7 @@ class TestPlaybookEntitiesVersionsValid:
                 self.playbook_with_valid_sub_playbook_name, pack.path)
             assert is_subplaybook_name_exist
 
-    def test_playbook_sub_playbook_not_exist(self, repo, mocker):
+    def test_playbook_sub_playbook_not_exist(self, repo):
         """
 
         Given

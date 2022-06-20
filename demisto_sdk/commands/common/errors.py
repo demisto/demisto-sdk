@@ -1357,7 +1357,7 @@ class Errors:
         main_playbook: str, entities_names_and_version: str, main_playbook_version: str, content_sub_type: str
     ):
         return f"Playbook {main_playbook} with 'fromversion' {main_playbook_version} uses the following" \
-               f" {content_sub_type} along with their invalid 'fromversion': [{entities_names_and_version}]. " \
+               f" {content_sub_type} with an invalid 'fromversion': [{entities_names_and_version}]. " \
                f"The 'fromversion' of the {content_sub_type} should be {main_playbook_version} or lower."
 
     @staticmethod

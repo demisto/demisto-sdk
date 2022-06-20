@@ -1,8 +1,13 @@
 # Changelog
 
 ## Unreleased
-
+* Added a new validation to the **validate** command to verify that the docker in use is not deprecated.
+* Added support for multiple ApiModules in the **unify** command
 * Added slack notifier for build failures on the master branch.
+* Added support in the **unify** command to unify a schema into its Modeling Rule.
+
+## 1.6.8
+
 * Fixed an issue where **validate** did not fail on invalid playbook entities' versions (i.e. subplaybooks or scripts with higher fromversion than their parent playbook).
 * Added support for running lint via a remote docker ssh connection. Use `DOCKER_HOST` env variable to specify a remote docker connection, such as: `DOCKER_HOST=ssh://myuser@myhost.com`.
 * Fixed an issue where the pack cache in *get_marketplaces* caused the function to return invalid values.
@@ -24,7 +29,6 @@
 * Removed a traceback line from the **init** command templates: BaseIntegration, BaseScript.
 * Updated the token in **_add_pr_comment** method from the content-bot token to the xsoar-bot token.
 * Added a new validation to the **validate** command to verify that the docker in use is not deprecated.
-* Added support in the **unify** command to unify the schema into the Modeling Rule.
 
 ## 1.6.7
 

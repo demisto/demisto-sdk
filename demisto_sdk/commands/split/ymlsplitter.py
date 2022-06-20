@@ -117,7 +117,6 @@ class YmlSplitter:
         if self.file_type in ('modelingrule', 'parsingrule'):
             self.extract_rules(f'{output_path}/{base_name}.xif')
             self.extract_rule_schema_and_samples(f'{output_path}/{base_name}.json')
-            yaml_obj['fromversion'] = "6.8.0"
             if 'rules' in yaml_obj:
                 del yaml_obj['rules']
             if 'schema' in yaml_obj:

@@ -55,8 +55,8 @@ DEFAULT_SENTENCES = ['getting started and learn how to build an integration']
 
 
 class ReadmeUrl:
-    def __init__(self, link_description: str, url: str, is_html: bool):
-        self.link_description = link_description
+    def __init__(self, description: str, url: str, is_html: bool):
+        self.description = description
         self.url = url
         self.is_html = is_html
 

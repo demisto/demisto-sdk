@@ -440,12 +440,12 @@ class IDSetValidations(BaseValidator):
 
         result, error = self.is_entity_version_match_playbook_version(sub_playbooks_list, playbook_version,
                                                                       self.playbook_set, playbook_name, file_path,
-                                                                      main_playbook_data)
+                                                                      main_playbook_data, 'sub-playbooks')
         if not result:
             return False, error
         result, error = self.is_entity_version_match_playbook_version(playbook_scripts_list, playbook_version,
                                                                       self.script_set, playbook_name, file_path,
-                                                                      main_playbook_data)
+                                                                      main_playbook_data, 'scripts')
         if not result:
             return False, error
 
@@ -507,7 +507,7 @@ class IDSetValidations(BaseValidator):
     @error_codes('PB110,PB117')
     def is_entity_version_match_playbook_version(self, implemented_entity_list_from_playbook,
                                                  main_playbook_version, entity_set_from_id_set,
-                                                 playbook_name, file_path, main_playbook_data):
+                                                 playbook_name, file_path, main_playbook_data, content_sub_type):
         """Check if the playbook's version match playbook's entities (script or sub-playbook)
         Goes over the relevant entity set from id_set and check if the version of this entity match is equal or lower
         to the main playbook's version.
@@ -517,13 +517,14 @@ class IDSetValidations(BaseValidator):
         script1 version <= "5.0.0." (main playbook version), otherwise returns False. Does the same for "script2".
 
         Args:
-            implemented_entity_list_from_playbook (list): List of relevant entities yo check from playbook. For example,
+            implemented_entity_list_from_playbook (list): List of relevant entities to check from playbook. For example,
             list of implementing_scripts or list of implementing_playbooks.
             main_playbook_version (str): Playbook's from version.
             entity_set_from_id_set (dict) : Entity's data set (scripts or playbooks) from id_set file.
             playbook_name (str) : Playbook's name.
             file_path (string): Path to the file (current playbook).
             main_playbook_data (dict): Data of the main playbook.
+            content_sub_type (str): content sub type, whether its entity list are sub-playbooks or scripts.
 
         Returns:
             bool. Whether the playbook's version match playbook's entities.
@@ -535,9 +536,12 @@ class IDSetValidations(BaseValidator):
         # id_set = [{'name': 'pb1', 'fromversion': '5.0.0', 'toversion': '5.4.9'}, {'name': 'pb1' - 'fromversion': '5.5.0'}]
         # entity_status will look like that: { 'pb1': True}
         entity_status: dict = {}
+        invalid_entities_path_and_version: dict = {}
         implemented_entities = implemented_entity_list_from_playbook.copy()
         is_valid = True, None
         for entity_data_dict in entity_set_from_id_set:
+            if not implemented_entities:
+                break
             entity_id = list(entity_data_dict.keys())[0]
             all_entity_fields = entity_data_dict[entity_id]
             entity_name = entity_id if entity_id in implemented_entity_list_from_playbook else all_entity_fields.get(
@@ -556,17 +560,28 @@ class IDSetValidations(BaseValidator):
 
                 # if entities with miss-matched versions were found and skipunavailable is
                 # not set or main playbook fromversion is below 6.0.0, fail the validation
+                file_path = all_entity_fields.get('file_path') or ''
                 if is_version_valid or skip_unavailable:
                     entity_status[entity_id] = True
+                    if file_path in invalid_entities_path_and_version:
+                        invalid_entities_path_and_version.pop(file_path)
                 else:
                     entity_status.setdefault(entity_id, False)
+                    if not entity_status.get(entity_id, False):
+                        invalid_entities_path_and_version[file_path] = entity_version
                 if entity_name in implemented_entities:
                     implemented_entities.remove(entity_name)
-        invalid_version_entities = [entity_name for entity_name, status in entity_status.items() if status is False]
+        invalid_version_entities = [entity_name for entity_name, status in entity_status.items() if not status]
 
         if invalid_version_entities:
+            invalid_entities_error_msg = ', '.join(
+                [
+                    f'{file_path}: {entity_version}'
+                    for file_path, entity_version in invalid_entities_path_and_version.items()
+                ]
+            )
             error_message, error_code = Errors.content_entity_version_not_match_playbook_version(
-                playbook_name, invalid_version_entities, main_playbook_version)
+                playbook_name, invalid_entities_error_msg, main_playbook_version, content_sub_type)
             if self.handle_error(error_message, error_code, file_path):
                 is_valid = False, error_message
 

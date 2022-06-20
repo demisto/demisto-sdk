@@ -43,7 +43,7 @@ class PackMetadataJsonFormat(BaseUpdateJSON):
     def run_format(self) -> int:
         try:
             click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
-            self.hide_pack()
+            self.deprecate_pack()
             self.save_json_to_destination_file(encode_html_chars=False)
             return SUCCESS_RETURN_CODE
 
@@ -52,10 +52,12 @@ class PackMetadataJsonFormat(BaseUpdateJSON):
                 click.secho(f'\nFailed to update file {self.source_file}. Error: {err}', fg='red')
             return ERROR_RETURN_CODE
 
-    def hide_pack(self):
+    def deprecate_pack(self):
         """
-        Hide the pack if all the content items (playbooks/scripts/integrations) are deprecated
+        Deprecate the pack if all the content items (playbooks/scripts/integrations) are deprecated.
         """
         pack = Pack(os.path.dirname(self.source_file))
-        if pack.should_be_hidden():
-            self.data['hidden'] = True
+        if pack.should_be_deprecated():
+            name = self.data.get('name') or ''
+            self.data['name'] = f'{name} (Deprecated)'
+            self.data['description'] = f'Deprecated. No available replacement.'

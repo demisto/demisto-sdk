@@ -324,7 +324,7 @@ class PackUniqueFilesValidator(BaseValidator):
             self._is_price_changed(),
             self._is_valid_support_type(),
             self.is_right_usage_of_usecase_tag(),
-            not self.should_pack_be_hidden()
+            not self.should_pack_be_deprecated()
         ]):
             if self.should_version_raise:
                 return self.validate_version_bump()
@@ -804,19 +804,17 @@ class PackUniqueFilesValidator(BaseValidator):
         return True
 
     @error_codes('PA132')
-    def should_pack_be_hidden(self) -> bool:
+    def should_pack_be_deprecated(self) -> bool:
         """
-        Validates whether a pack should be hidden according to the following rules:
-
-        1. if the pack is not already hidden.
-        2. if all the content items (playbooks/scripts/integrations) are deprecated.
+        Validates whether a pack should be deprecated
+        if all its content items (playbooks/scripts/integrations) are deprecated.
 
         Returns:
-            bool: True if pack should be hidden, False if it shouldn't.
+            bool: True if pack should be deprecated, False if it shouldn't.
         """
         pack = Pack(self.pack_path)
-        if pack.should_be_hidden():
-            error_message, error_code = Errors.pack_should_be_hidden(self.pack)
+        if pack.should_be_deprecated():
+            error_message, error_code = Errors.pack_should_be_deprecated(self.pack)
             return self._add_error(
                 (error_message, error_code),
                 file_path=self.pack_meta_file,

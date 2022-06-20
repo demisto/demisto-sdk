@@ -4,6 +4,7 @@ from distutils.version import LooseVersion
 from typing import Any, Dict, Iterator, Optional, Union
 
 import demisto_client
+import regex
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
@@ -32,7 +33,11 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    TOOLS_DIR, TRIGGER_DIR,
                                                    WIDGETS_DIR, WIZARDS_DIR,
                                                    XSIAM_DASHBOARDS_DIR,
-                                                   XSIAM_REPORTS_DIR, FileType)
+                                                   XSIAM_REPORTS_DIR,
+                                                   FileType,
+                                                   PACK_NAME_DEPRECATED_REGEX,
+                                                   DEPRECATED_NO_REPLACE_DESC_REGEX,
+                                                   DEPRECATED_DESC_REGEX)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, Classifier, ClassifierMapper, Connection,
     Contributors, CorrelationRule, Dashboard, DocFile, GenericDefinition,
@@ -394,22 +399,32 @@ class Pack:
         """
         return self.integrations_count or self.scripts_count or self.playbooks_count
 
-    def should_be_hidden(self) -> Optional[bool]:
+    def is_pack_deprecated(self) -> bool:
         """
-        Determines if a pack should be hidden according to the following rules:
+        Returns whether a pack is deprecated.
+        """
+        pack_metadata = self.pack_metadata_as_dict()
+        pack_name, pack_desc = pack_metadata.get('name', ''), pack_metadata.get('description', '')
 
-        1. if the pack is not already hidden.
-        2. if all the content items (playbooks/scripts/integrations) are deprecated.
+        return regex.match(
+            PACK_NAME_DEPRECATED_REGEX, pack_name
+        ) and (
+            regex.match(DEPRECATED_NO_REPLACE_DESC_REGEX, pack_desc) or regex.match(DEPRECATED_DESC_REGEX, pack_desc)
+        )
+
+    def should_be_deprecated(self) -> Optional[bool]:
+        """
+        Determines if a pack should be deprecated if all
+        its content items (playbooks/scripts/integrations) are deprecated.
 
         Returns:
-            Optional[bool]: True if pack should be hidden according to the above, False if not,
-                None in case the pack is already hidden.
+            Optional[bool]: True if pack should be deprecated according to the above, False if not,
+                None in case the pack is already deprecated.
         """
         def _get_deprecated_content_entities_count(content_entities) -> int:
             return len([entity for entity in content_entities if entity.is_deprecated])
 
-        if self.pack_metadata_as_dict().get('hidden', False):
-            # pack is already hidden
+        if self.is_pack_deprecated():
             return None
 
         if self._are_integrations_or_scripts_or_playbooks_exist():
@@ -420,7 +435,7 @@ class Pack:
             ) and (
                 self.scripts_count == _get_deprecated_content_entities_count(self.scripts)
             )
-        # if there aren't any playbooks/scripts/integrations -> no deprecated content -> pack shouldn't be hidden.
+        # if there aren't any playbooks/scripts/integrations -> no deprecated content -> pack shouldn't be deprecated.
         return False
 
     def pack_metadata_as_dict(self) -> Dict:

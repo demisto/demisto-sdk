@@ -303,7 +303,7 @@ ERROR_CODE = {
     "pack_metadata_missing_categories": {'code': "PA129", 'ui_applicable': False, 'related_field': ''},
     "wrong_version_format": {'code': "PA130", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_version_diff_from_rn": {'code': "PA131", 'ui_applicable': False, 'related_field': ''},
-    "pack_should_be_hidden": {'code': "PA132", 'ui_applicable': False, 'related_field': ''},
+    "pack_should_be_deprecated": {'code': "PA132", 'ui_applicable': False, 'related_field': ''},
 
     # PB - Playbooks
     "playbook_cant_have_rolename": {'code': "PB100", 'ui_applicable': True, 'related_field': 'rolename'},
@@ -2369,5 +2369,5 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def pack_should_be_hidden(pack_name: str):
-        return f'Pack {pack_name} should be hidden, as all its integrations, playbooks and scripts are deprecated.'
+    def pack_should_be_deprecated(pack_name: str):
+        return f'Pack {pack_name} should be deprecated, as all its integrations, playbooks and scripts are deprecated.'

@@ -1147,8 +1147,8 @@ class TestFormattingOldClassifier:
 
 class TestFormattingPackMetaData:
 
-    @pytest.mark.parametrize('deprecated', [True, False])
-    def test_hide_pack(self, pack, deprecated):
+    @pytest.mark.parametrize('deprecated_integration', [True, False])
+    def test_deprecate_pack(self, pack, deprecated_integration):
         """
         Given
           - Case 1: a deprecated integration.
@@ -1161,13 +1161,16 @@ class TestFormattingPackMetaData:
           - Case 1: ensure the pack_metadata.json is getting updated with hidden = True
           - Case 2: ensure the pack_metadata.json is not getting updated with hidden = True.
         """
-        pack.create_integration(name='integration-1').yml.update({'deprecated': deprecated})
+        pack.create_integration(name='integration-1').yml.update({'deprecated': deprecated_integration})
+        pack.pack_metadata.update({'name': 'pack-name', 'description': 'just a description'})
         pack_metadata_formatter = PackMetadataJsonFormat(input=pack.pack_metadata.path)
-        pack_metadata_formatter.hide_pack()
-        if deprecated:
-            assert pack_metadata_formatter.data.get('hidden')
+        pack_metadata_formatter.deprecate_pack()
+        if deprecated_integration:
+            assert pack_metadata_formatter.data['name'] == 'pack-name (Deprecated)'
+            assert pack_metadata_formatter.data['description'] == 'Deprecated. No available replacement.'
         else:
-            assert not pack_metadata_formatter.data.get('hidden')
+            assert pack_metadata_formatter.data['name'] == 'pack-name'
+            assert pack_metadata_formatter.data['description'] == 'just a description'
 
 
 class TestFormattingMapper:

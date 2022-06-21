@@ -342,14 +342,14 @@ def test_get_input_data_complex():
     assert _value == 'File.Name'
 
 
-@pytest.mark.parametrize('playbook_name, custom_image_link, expected_result',
+@pytest.mark.parametrize('playbook_name, custom_image_path, expected_result',
                          [('playbook name', '', '![playbook name](./../doc_files/playbook_name.png)'),
-                          ('playbook name', 'custom_link', '![playbook name](custom_link)')])
-def test_generate_image_link(playbook_name, custom_image_link, expected_result):
+                          ('playbook name', 'custom_path', '![playbook name](custom_path)')])
+def test_generate_image_link(playbook_name, custom_image_path, expected_result):
     from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
-        generate_image_link
+        generate_image_path
 
-    output = generate_image_link(playbook_name, custom_image_link)
+    output = generate_image_path(playbook_name, custom_image_path)
 
     assert output == expected_result
 

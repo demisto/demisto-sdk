@@ -3,7 +3,7 @@
 ## Unreleased
 * Added a new validation to the **validate** command to verify that the docker in use is not deprecated.
 * Added support for multiple ApiModules in the **unify** command
-* Added validation to **validate** command to identify unsupported relative urls in README files.
+* Added a check to **validate** command, preventing use of relative urls in README files.
 * Added slack notifier for build failures on the master branch.
 * Added support for README files in **format** command.
 * Added a **validate** check, making sure classifier id and name values match. Updated the classifier **format** to update the id accordingly.

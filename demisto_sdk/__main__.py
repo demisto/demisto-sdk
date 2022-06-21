@@ -13,8 +13,8 @@ from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, MODELING_RULES_DIR, PARSING_RULES_DIR,
-    FileType, MarketplaceVersions)
+    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, ENV_DEMISTO_SDK_MARKETPLACE,
+    MODELING_RULES_DIR, PARSING_RULES_DIR, FileType, MarketplaceVersions)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
@@ -312,7 +312,8 @@ def unify(**kwargs):
     kwargs['input'] = str(kwargs['input'])
     file_type = find_type(kwargs['input'])
     custom = kwargs.pop('custom')
-
+    if marketplace := kwargs.get('marketplace'):
+        os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
     if file_type == FileType.GENERIC_MODULE:
         from demisto_sdk.commands.unify.generic_module_unifier import \
             GenericModuleUnifier
@@ -362,6 +363,9 @@ def zip_packs(**kwargs) -> int:
     # if upload is true - all zip packs will be compressed to one zip file
     should_upload = kwargs.pop('upload', False)
     zip_all = kwargs.pop('zip_all', False) or should_upload
+
+    if marketplace := kwargs.get('marketplace'):
+        os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
 
     packs_zipper = PacksZipper(zip_all=zip_all, pack_paths=kwargs.pop('input'), quiet_mode=zip_all, **kwargs)
     zip_path, unified_pack_names = packs_zipper.zip_packs()
@@ -575,6 +579,8 @@ def create_content_artifacts(**kwargs) -> int:
         ArtifactsManager
     logging_setup(3)
     check_configuration_file('create-content-artifacts', kwargs)
+    if marketplace := kwargs.get('marketplace'):
+        os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
     artifacts_conf = ArtifactsManager(**kwargs)
     return artifacts_conf.create_content_artifacts()
 
@@ -942,6 +948,7 @@ def upload(**kwargs):
             marketplace = MarketplaceVersions.MarketplaceV2.value
         else:
             marketplace = MarketplaceVersions.XSOAR.value
+        os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
 
         output_zip_path = kwargs.pop('keep_zip') or tempfile.gettempdir()
         packs_unifier = PacksZipper(pack_paths=pack_path, output=output_zip_path,

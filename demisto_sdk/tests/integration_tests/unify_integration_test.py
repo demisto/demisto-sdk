@@ -4,7 +4,6 @@ import pytest
 from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
-from demisto_sdk.commands.common.constants import ENV_DEMISTO_SDK_MARKETPLACE
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     DASHBOARD, GENERIC_MODULE, UNIFIED_GENERIC_MODULE)
@@ -25,12 +24,10 @@ class TestGenericModuleUnifier:
 
         When
         - Running unify on it.
-        - Passing mp flag with marketplacev2
 
         Then
         - Ensure the module was unified successfully (i.e contains the dashboard's content) and saved successfully
          in the output path.
-        - Ensure env was modified to use marketplacev2
         """
         pack = repo.create_pack('PackName')
         pack.create_generic_module("generic-module", GENERIC_MODULE)
@@ -42,9 +39,8 @@ class TestGenericModuleUnifier:
                                    f'{pack.generic_modules[0].name.rstrip(".json")}_unified.json')
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [UNIFY_CMD, '-i', generic_module_path, '-mp', 'marketplacev2'], catch_exceptions=False)
+            result = runner.invoke(main, [UNIFY_CMD, '-i', generic_module_path], catch_exceptions=False)
         assert result.exit_code == 0
-        assert os.getenv(ENV_DEMISTO_SDK_MARKETPLACE) == 'marketplacev2'
         assert os.path.isfile(saving_path)
         with open(saving_path) as f:
             saved_generic_module = json.load(f)

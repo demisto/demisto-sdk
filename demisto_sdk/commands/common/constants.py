@@ -90,10 +90,6 @@ WIZARD = 'wizard'
 
 MARKETPLACE_KEY_PACK_METADATA = 'marketplaces'
 
-# ENV VARIABLES
-
-ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
-
 
 class FileType(Enum):
     INTEGRATION = 'integration'

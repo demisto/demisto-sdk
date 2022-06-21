@@ -6,7 +6,7 @@ from wcmatch.pathlib import Path
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.content.objects.abstract_objects import \
     TextObject
-from demisto_sdk.commands.common.tools import get_mp_tag_parser
+from demisto_sdk.commands.common.tools import MARKETPLACE_TAG_PARSER
 
 
 class Readme(TextObject):
@@ -34,7 +34,7 @@ class Readme(TextObject):
         try:
             with open(self._path, 'r+') as f:
                 text = f.read()
-                parsed_text = get_mp_tag_parser().parse_text(text)
+                parsed_text = MARKETPLACE_TAG_PARSER.parse_text(text)
                 if len(text) != len(parsed_text):
                     f.seek(0)
                     f.write(parsed_text)

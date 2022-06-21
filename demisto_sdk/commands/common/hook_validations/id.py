@@ -545,42 +545,46 @@ class IDSetValidations(BaseValidator):
             return all(task_data.get('skipunavailable', False) for task_data in tasks_data) \
                 if tasks_data and LooseVersion(main_playbook_version) >= LooseVersion('6.0.0') else False
 
-        def is_minimum_version_valid(_min_version_entity) -> bool:
+        def is_minimum_version_valid(_min_version) -> bool:
             """
             In case we have more than one entity with the same ID,
             verify that the one with the minimum version is valid.
             """
-            return LooseVersion(min_version_entity.get('fromversion')) <= LooseVersion(main_playbook_version)
+            return LooseVersion(_min_version) <= LooseVersion(main_playbook_version)
 
         implemented_entity_list_from_playbook = set(implemented_entity_list_from_playbook)
         implemented_ids_in_id_set = set()
 
-        implemented_entity_name_to_entities: Dict[str, list] = {}
+        entity_ids_with_min_version: Dict[str, tuple] = {}
         for entity in entity_set_from_id_set:
             entity_id = list(entity.keys())[0]
             entity_data = entity.get(entity_id)
             entity_name = entity_id if entity_id in implemented_entity_list_from_playbook else entity_data.get('name')
             if entity_name in implemented_entity_list_from_playbook:
-                # ignore entities which do not have fromversion.
-                if entity_data.get('fromversion'):
-                    if entity_name not in implemented_entity_name_to_entities:
-                        implemented_entity_name_to_entities[entity_name] = []
-                    implemented_entity_name_to_entities[entity_name].append(entity_data)
+                # ignore entities which do not have fromversion and extract minimum version in case
+                # there are multiple playbooks / scripts with the same ID.
+                if from_version := entity_data.get('fromversion'):
+                    if entity_name not in entity_ids_with_min_version:
+                        entity_ids_with_min_version[entity_name] = (from_version, entity_data.get('file_path'))
+                    else:
+                        if min_version_to_path := entity_ids_with_min_version.get(entity_name):
+                            min_version, _ = min_version_to_path
+                            if LooseVersion(from_version) < LooseVersion(min_version):
+                                entity_ids_with_min_version[entity_name] = (
+                                    from_version, entity_data.get('file_path')
+                                )
                 implemented_ids_in_id_set.add(entity_name)
 
-        invalid_entries_path_to_version = {}
-        for entity_name, entities in implemented_entity_name_to_entities.items():
-            # get entity with the minimum version
-            min_version_entity = min(entities, key=lambda _entity: LooseVersion(_entity.get('fromversion')))
-            if not (is_minimum_version_valid(min_version_entity) or get_skip_unavailable(entity_name)):
-                sub_entity_file_path = min_version_entity.get('file_path') or ''
-                invalid_entries_path_to_version[sub_entity_file_path] = min_version_entity
+        invalid_entries_path_to_version = [
+            min_version_to_path for entity_name, min_version_to_path in entity_ids_with_min_version.items()
+            if not (is_minimum_version_valid(min_version_to_path[0]) or get_skip_unavailable(entity_name))
+        ]
 
         if invalid_entries_path_to_version:
             invalid_entities_error_msg = ', '.join(
                 [
                     f'{file_path}: {entity_version}'
-                    for file_path, entity_version in invalid_entries_path_to_version.items()
+                    for file_path, entity_version in invalid_entries_path_to_version
                 ]
             )
             error_message, error_code = Errors.content_entity_version_not_match_playbook_version(
@@ -588,13 +592,13 @@ class IDSetValidations(BaseValidator):
             if self.handle_error(error_message, error_code, file_path):
                 return False, error_message
 
-        entities_not_exist_in_id_set = [
+        entity_ids_not_exist_in_id_set = [
             entity for entity in implemented_entity_list_from_playbook if entity not in implemented_ids_in_id_set
         ]
 
-        if entities_not_exist_in_id_set:
+        if entity_ids_not_exist_in_id_set:
             error_message, error_code = Errors.content_entity_is_not_in_id_set(
-                playbook_name, entities_not_exist_in_id_set)
+                playbook_name, entity_ids_not_exist_in_id_set)
             if self.handle_error(error_message, error_code, file_path):
                 return False, error_message
 

@@ -5,6 +5,7 @@ from distutils.version import LooseVersion
 from typing import Dict, Optional, Tuple
 
 import click
+from packaging.version import Version
 
 import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.configuration import Configuration
@@ -543,14 +544,14 @@ class IDSetValidations(BaseValidator):
                 main_playbook_data=main_playbook_data
             )
             return all(task_data.get('skipunavailable', False) for task_data in tasks_data) \
-                if tasks_data and LooseVersion(main_playbook_version) >= LooseVersion('6.0.0') else False
+                if tasks_data and Version(main_playbook_version) >= Version('6.0.0') else False
 
         def is_minimum_version_valid(_min_version) -> bool:
             """
             In case we have more than one entity with the same ID,
             verify that the one with the minimum version is valid.
             """
-            return LooseVersion(_min_version) <= LooseVersion(main_playbook_version)
+            return Version(_min_version) <= Version(main_playbook_version)
 
         implemented_entity_list_from_playbook = set(implemented_entity_list_from_playbook)
         implemented_ids_in_id_set = set()
@@ -569,7 +570,7 @@ class IDSetValidations(BaseValidator):
                     else:
                         if min_version_to_path := entity_ids_with_min_version.get(entity_name):
                             min_version, _ = min_version_to_path
-                            if LooseVersion(from_version) < LooseVersion(min_version):
+                            if Version(from_version) < Version(min_version):
                                 entity_ids_with_min_version[entity_name] = (
                                     from_version, entity_data.get('file_path')
                                 )

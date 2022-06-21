@@ -4,7 +4,9 @@
 * Added a new validation to the **validate** command to verify that the docker in use is not deprecated.
 * Added support for multiple ApiModules in the **unify** command
 * Added a check to **validate** command, preventing use of relative urls in README files.
+* Added environment variable **DEMISTO_SDK_MARKETPLACE** expected to affect *MarketplaceTagParser* *marketplace* value. The value will be automatically set when passing *marketplace* arg to the commands **unify**, **zip-packs**, **create-content-artifacts** and **upload**.
 * Added slack notifier for build failures on the master branch.
+* Added support for modeling and parsing rules in the **split** command.
 * Added a **validate** check, making sure classifier id and name values match. Updated the classifier **format** to update the id accordingly.
 
 ## 1.6.8

@@ -34,9 +34,9 @@ from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
     DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
-    DOC_FILES_DIR, ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR,
-    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
-    INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
+    DOC_FILES_DIR, ENV_DEMISTO_SDK_MARKETPLACE, ID_IN_COMMONFIELDS, ID_IN_ROOT,
+    INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+    INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
     MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME, MODELING_RULES_DIR,
     OFFICIAL_CONTENT_ID_SET_PATH, PACK_METADATA_IRON_BANK_TAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
@@ -160,7 +160,7 @@ class MarketplaceTagParser:
         )
 
 
-MARKETPLACE_TAG_PARSER = MarketplaceTagParser()
+MARKETPLACE_TAG_PARSER = None
 
 LOG_VERBOSE = False
 
@@ -178,6 +178,14 @@ def set_log_verbose(verbose: bool):
 
 def get_log_verbose() -> bool:
     return LOG_VERBOSE
+
+
+def get_mp_tag_parser():
+    global MARKETPLACE_TAG_PARSER
+    if MARKETPLACE_TAG_PARSER is None:
+        MARKETPLACE_TAG_PARSER = MarketplaceTagParser(
+            os.getenv(ENV_DEMISTO_SDK_MARKETPLACE, MarketplaceVersions.XSOAR.value))
+    return MARKETPLACE_TAG_PARSER
 
 
 def get_yml_paths_in_dir(project_dir: str, error_msg: str = '') -> Tuple[list, str]:
@@ -2461,7 +2469,8 @@ def get_current_repo() -> Tuple[str, str, str]:
         return "Unknown source", '', ''
 
 
-def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None, item_type: str = None) -> List:
+def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None,
+                          item_type: str = None) -> List:
     """
     Return the supporting marketplaces of the item.
 
@@ -2817,7 +2826,7 @@ def get_display_name(file_path, file_data={}) -> str:
 
 
 def get_invalid_incident_fields_from_mapper(
-    mapper_incident_fields: Dict[str, Dict], mapping_type: str, content_fields: List
+        mapper_incident_fields: Dict[str, Dict], mapping_type: str, content_fields: List
 ) -> List[str]:
     """
     Get a list of incident fields which are not part of the content items (not part of id_json) from a specific

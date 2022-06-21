@@ -343,7 +343,7 @@ def test_get_input_data_complex():
 
 
 @pytest.mark.parametrize('playbook_name, custom_image_path, expected_result',
-                         [('playbook name', '', '![playbook name](./../doc_files/playbook_name.png)'),
+                         [('playbook name', '', '![playbook name](../doc_files/playbook_name.png)'),
                           ('playbook name', 'custom_path', '![playbook name](custom_path)')])
 def test_generate_image_link(playbook_name, custom_image_path, expected_result):
     """

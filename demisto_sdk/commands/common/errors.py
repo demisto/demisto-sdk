@@ -865,7 +865,8 @@ class Errors:
     @error_code_decorator
     def is_valid_integration_file_path_in_folder(integration_file):
         return f"The integration file name: {integration_file} is invalid, " \
-               f"The integration file name should be the same as the name of the folder that contains it."
+               f"The integration file name and all the other files in the folder, should be the same as " \
+               f"the name of the folder that contains it."
 
     @staticmethod
     @error_code_decorator

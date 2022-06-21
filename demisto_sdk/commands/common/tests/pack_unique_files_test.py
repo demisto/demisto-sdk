@@ -26,6 +26,7 @@ from TestSuite.test_tools import ChangeCWD
 
 json = JSON_Handler()
 
+
 VALIDATE_CMD = "validate"
 PACK_METADATA_PARTNER = {
     "name": "test",

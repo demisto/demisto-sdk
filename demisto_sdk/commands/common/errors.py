@@ -2370,4 +2370,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_should_be_deprecated(pack_name: str):
-        return f'Pack {pack_name} should be deprecated, as all its integrations, playbooks and scripts are deprecated.'
+        return f'Pack {pack_name} should be deprecated, as all its integrations, playbooks and scripts are' \
+               f' deprecated.\nThe name of the pack in the pack_metadata.json should end with (Deprecated)\n' \
+               f'The description of the pack in the pack_metadata.json should be one of the following formats:\n' \
+               f'1. "Deprecated. Use <PACK_NAME> instead."\n' \
+               f'2. "Deprecated. <REASON> No available replacement."'

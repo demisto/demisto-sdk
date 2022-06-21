@@ -346,6 +346,16 @@ def test_get_input_data_complex():
                          [('playbook name', '', '![playbook name](./../doc_files/playbook_name.png)'),
                           ('playbook name', 'custom_path', '![playbook name](custom_path)')])
 def test_generate_image_link(playbook_name, custom_image_path, expected_result):
+    """
+    Given
+    - playbook name
+    - custom image path
+    - expected result
+    When
+    - running the generate_image_path command.
+    Then
+    - Validate that the output of the command matches the expected result.
+    """
     from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
         generate_image_path
 

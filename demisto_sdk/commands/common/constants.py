@@ -617,6 +617,7 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'lists',
     JOB,
     WIZARD,
+    'classifier'
 ]
 
 INTEGRATION_PREFIX = 'integration'

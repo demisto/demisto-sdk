@@ -211,11 +211,12 @@ def split(config, **kwargs):
 
     check_configuration_file('split', kwargs)
     file_type: FileType = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
-    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.GENERIC_MODULE]:
-        print_error('File is not an Integration, Script or Generic Module.')
+    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.GENERIC_MODULE, FileType.MODELING_RULE,
+                         FileType.PARSING_RULE]:
+        print_error('File is not an Integration, Script, Generic Module, Modeling Rule or Parsing Rule.')
         return 1
 
-    if file_type in [FileType.INTEGRATION, FileType.SCRIPT]:
+    if file_type in [FileType.INTEGRATION, FileType.SCRIPT, FileType.MODELING_RULE, FileType.PARSING_RULE]:
         yml_splitter = YmlSplitter(configuration=config.configuration, file_type=file_type.value, **kwargs)
         return yml_splitter.extract_to_package_format()
 

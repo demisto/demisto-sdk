@@ -109,8 +109,7 @@ class ReadmeFormat(BaseUpdate):
             self.save_md_to_destination_file()
             return SUCCESS_RETURN_CODE
         except Exception as err:
-            if self.verbose:
-                print_error(f'\nFailed to update file {self.source_file}. Error: {err}')
+            print_error(f'\nFailed to update file {self.source_file}. Error: {err}')
             return ERROR_RETURN_CODE
 
     def format_file(self) -> Tuple[int, int]:

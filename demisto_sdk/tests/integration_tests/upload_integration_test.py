@@ -1,3 +1,4 @@
+import os
 from os.path import join
 
 import click
@@ -6,6 +7,8 @@ from click.testing import CliRunner
 from packaging.version import parse
 
 from demisto_sdk.__main__ import main
+from demisto_sdk.commands.common.constants import (ENV_DEMISTO_SDK_MARKETPLACE,
+                                                   MarketplaceVersions)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 UPLOAD_CMD = "upload"
@@ -43,7 +46,8 @@ def test_integration_upload_pack_positive(demisto_client):
         DEMISTO_SDK_PATH, "tests/test_files/content_repo_example/Packs/FeedAzure"
     )
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(main, [UPLOAD_CMD, "-i", pack_path, "--insecure"])
+    os.unsetenv(ENV_DEMISTO_SDK_MARKETPLACE)
+    result = runner.invoke(main, [UPLOAD_CMD, "-i", pack_path, "--insecure", '-x'])
     assert result.exit_code == 0
     assert '\nSUCCESSFUL UPLOADS:' in click.secho.call_args_list[3][0][0]
     assert "│ FeedAzure.yml                              │ integration   │" in click.secho.call_args_list[4][0][0]
@@ -53,6 +57,7 @@ def test_integration_upload_pack_positive(demisto_client):
     assert "│ script-prefixed_automation.yml             │ testscript    │" in click.secho.call_args_list[4][0][0]
     assert "│ FeedAzure_test.yml                         │ testplaybook  │" in click.secho.call_args_list[4][0][0]
     assert "│ incidentfield-city.json                    │ incidentfield │" in click.secho.call_args_list[4][0][0]
+    assert os.getenv(ENV_DEMISTO_SDK_MARKETPLACE) == MarketplaceVersions.MarketplaceV2.value
 
     assert not result.stderr
 

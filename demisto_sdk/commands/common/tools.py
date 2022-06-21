@@ -34,7 +34,7 @@ from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
     DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
-    DEMISTO_SDK_MARKETPLACE, DOC_FILES_DIR, ID_IN_COMMONFIELDS, ID_IN_ROOT,
+    DOC_FILES_DIR, ENV_DEMISTO_SDK_MARKETPLACE, ID_IN_COMMONFIELDS, ID_IN_ROOT,
     INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
     INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
     MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME, MODELING_RULES_DIR,
@@ -184,7 +184,7 @@ def get_mp_tag_parser():
     global MARKETPLACE_TAG_PARSER
     if MARKETPLACE_TAG_PARSER is None:
         MARKETPLACE_TAG_PARSER = MarketplaceTagParser(
-            os.getenv(DEMISTO_SDK_MARKETPLACE) or MarketplaceVersions.XSOAR.value)
+            os.getenv(ENV_DEMISTO_SDK_MARKETPLACE, MarketplaceVersions.XSOAR.value))
     return MARKETPLACE_TAG_PARSER
 
 
@@ -2469,7 +2469,8 @@ def get_current_repo() -> Tuple[str, str, str]:
         return "Unknown source", '', ''
 
 
-def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None, item_type: str = None) -> List:
+def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None,
+                          item_type: str = None) -> List:
     """
     Return the supporting marketplaces of the item.
 

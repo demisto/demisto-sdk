@@ -5,7 +5,6 @@ from click.testing import CliRunner
 from wcmatch.pathlib import Path
 
 from demisto_sdk.__main__ import main
-from demisto_sdk.commands.common.constants import ENV_DEMISTO_SDK_MARKETPLACE
 from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.create_artifacts.tests.content_artifacts_creator_test import (
     destroy_by_ext, duplicate_file, same_folders, temp_dir)
@@ -34,11 +33,10 @@ def test_integration_create_content_artifacts_no_zip(repo):
     with ChangeCWD(repo.path):
         dir_path = repo.make_dir()
         runner = CliRunner()
-        result = runner.invoke(main, [ARTIFACTS_CMD, '-a', dir_path, '--no-zip', '-mp', 'marketplacev2'])
+        result = runner.invoke(main, [ARTIFACTS_CMD, '-a', dir_path, '--no-zip'])
         os.rmdir(dir_path + '/content_packs')
         assert same_folders(dir_path, expected_artifacts_path)
         assert result.exit_code == 0
-        assert os.getenv(ENV_DEMISTO_SDK_MARKETPLACE) == 'marketplacev2'
 
 
 def test_integration_create_content_artifacts_zip(mock_git, repo):

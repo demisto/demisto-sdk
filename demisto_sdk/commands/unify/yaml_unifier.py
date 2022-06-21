@@ -9,7 +9,9 @@ from demisto_sdk.commands.common.constants import (DIR_TO_PREFIX,
                                                    SCRIPTS_DIR)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.tools import get_yml_paths_in_dir, print_error
+from demisto_sdk.commands.common.tools import (MARKETPLACE_TAG_PARSER,
+                                               get_yml_paths_in_dir,
+                                               print_error)
 
 UNSUPPORTED_INPUT_ERR_MSG = '''Unsupported input. Please provide either:
 1. Path to directory of an integration or a script.
@@ -55,6 +57,9 @@ class YAMLUnifier(ABC):
         self.dest_path = output
         self.dir_name = ''
         self.marketplace = marketplace
+        if marketplace:
+            MARKETPLACE_TAG_PARSER.marketplace = marketplace
+
         yml_paths, self.yml_path = get_yml_paths_in_dir(self.package_path, Errors.no_yml_file(self.package_path))
         for path in yml_paths:
             # The plugin creates a unified YML file for the package.

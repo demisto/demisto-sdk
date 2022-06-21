@@ -1354,10 +1354,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def content_entity_version_not_match_playbook_version(main_playbook, entities_names, main_playbook_version):
-        return f"Playbook {main_playbook} with version {main_playbook_version} uses {entities_names} " \
-               f"with a version that does not match the main playbook version. The from version of" \
-               f" {entities_names} should be {main_playbook_version} or lower."
+    def content_entity_version_not_match_playbook_version(
+        main_playbook: str, entities_names_and_version: str, main_playbook_version: str, content_sub_type: str
+    ):
+        return f"Playbook {main_playbook} with 'fromversion' {main_playbook_version} uses the following" \
+               f" {content_sub_type} with an invalid 'fromversion': [{entities_names_and_version}]. " \
+               f"The 'fromversion' of the {content_sub_type} should be {main_playbook_version} or lower."
 
     @staticmethod
     @error_code_decorator

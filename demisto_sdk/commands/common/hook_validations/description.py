@@ -142,7 +142,7 @@ class DescriptionValidator(BaseValidator):
             integrations_folder = os.path.basename(os.path.dirname(path))
 
             # drop file extension
-            description_file_base_name, _ = description_file.split('_')
+            description_file_base_name = description_file.split('_')[0]
 
         # checking if there are any .md files only for description with a wrong name
         for path in md_paths:

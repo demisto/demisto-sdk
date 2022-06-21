@@ -60,4 +60,4 @@ class PackMetadataJsonFormat(BaseUpdateJSON):
         if pack.should_be_deprecated():
             name = self.data.get('name') or ''
             self.data['name'] = f'{name} (Deprecated)'
-            self.data['description'] = f'Deprecated. No available replacement.'
+            self.data['description'] = 'Deprecated. No available replacement.'

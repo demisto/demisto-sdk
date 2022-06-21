@@ -584,7 +584,7 @@ class IDSetValidations(BaseValidator):
             invalid_entities_error_msg = ', '.join(
                 [
                     f'{file_path}: {entity_version}'
-                    for file_path, entity_version in invalid_entries_path_to_version
+                    for entity_version, file_path in invalid_entries_path_to_version
                 ]
             )
             error_message, error_code = Errors.content_entity_version_not_match_playbook_version(

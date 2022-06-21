@@ -1379,7 +1379,7 @@ def init(**kwargs):
 @click.option(
     "--skip-breaking-changes", is_flag=True, help="Skip generating of breaking changes section.")
 @click.option(
-    "--custom-image-link", help="A custom link to a playbook image. If not stated, a default link will be added to the file.")
+    "--custom-image-path", help="A custom path to a playbook image. If not stated, a default link will be added to the file.")
 def generate_docs(**kwargs):
     """Generate documentation for integration, playbook or script from yaml file."""
     from demisto_sdk.commands.generate_docs.generate_integration_doc import \
@@ -1399,7 +1399,7 @@ def generate_docs(**kwargs):
     verbose: bool = kwargs.get('verbose', False)
     old_version: str = kwargs.get('old_version', '')
     skip_breaking_changes: bool = kwargs.get('skip_breaking_changes', False)
-    custom_image_link: str = kwargs.get('custom_image_link', '')
+    custom_image_path: str = kwargs.get('custom_image_path', '')
 
     # validate inputs
     if input_path and not os.path.isfile(input_path):
@@ -1450,7 +1450,7 @@ def generate_docs(**kwargs):
                                    limitations=limitations, insecure=insecure, verbose=verbose)
     elif file_type == FileType.PLAYBOOK:
         return generate_playbook_doc(input_path=input_path, output=output_path, permissions=permissions,
-                                     limitations=limitations, verbose=verbose, custom_image_link=custom_image_link)
+                                     limitations=limitations, verbose=verbose, custom_image_path=custom_image_path)
     else:
         print_error(f'File type {file_type.value} is not supported.')
         return 1

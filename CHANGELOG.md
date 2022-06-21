@@ -1,8 +1,8 @@
 # Changelog
 
 ## Unreleased
-* Added a new validation that checks whether a pack should be hidden.
-* Added a new format to `pack_metadata.json` to hide a pack that should be hidden.
+* Added a new validation that checks whether a pack should be deprecated.
+* Added a new ability to the **format** command to deprecate a pack.
 * Added a new validation to the **validate** command to verify that the docker in use is not deprecated.
 * Added support for multiple ApiModules in the **unify** command
 * Added slack notifier for build failures on the master branch.

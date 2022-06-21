@@ -1132,8 +1132,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_image_name():
-        return "The image's file name is invalid - " \
-               "make sure the name looks like the following: <integration_name>_image.png"
+        return "The image's file name is invalid - make sure the name looks like the " \
+               "following: <integration_name>_image.png and that the integration_name is the same as the folder name."
 
     @staticmethod
     @error_code_decorator
@@ -1405,7 +1405,8 @@ class Errors:
     @error_code_decorator
     def invalid_description_name():
         return "The description's file name is invalid - " \
-               "make sure the name looks like the following: <integration_name>_description.md"
+               "make sure the name looks like the following: <integration_name>_description.md " \
+               "and that the integration_name is the same as the folder name."
 
     @staticmethod
     @error_code_decorator

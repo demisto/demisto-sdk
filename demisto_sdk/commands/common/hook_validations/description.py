@@ -133,15 +133,23 @@ class DescriptionValidator(BaseValidator):
     @error_codes('DS106')
     def is_valid_description_name(self):
         """Check if the description name is valid"""
+        integrations_folder = ''
+        description_file_base_name = ''
         description_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))
         md_paths = glob.glob(os.path.join(os.path.dirname(self.file_path), '*.md'))
+        for path in description_path:
+            description_file = os.path.basename(path)
+            integrations_folder = os.path.basename(os.path.dirname(path))
+
+            # drop file extension
+            description_file_base_name, _ = description_file.split('_')
 
         # checking if there are any .md files only for description with a wrong name
         for path in md_paths:
             if path.endswith("README.md") or path.endswith("CHANGELOG.md"):
                 md_paths.remove(path)
 
-        if not description_path and md_paths:
+        if not description_path and md_paths or integrations_folder != description_file_base_name:
             error_message, error_code = Errors.invalid_description_name()
 
             if self.handle_error(error_message, error_code, file_path=self.file_path):

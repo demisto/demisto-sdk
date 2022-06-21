@@ -106,10 +106,12 @@ def test_is_valid_description_name(repo):
     assert description_validator.is_valid_description_name()
 
 
-def test_is_invalid_description_name(repo):
+@pytest.mark.parametrize('file_name', ['IntName_desc.md', 'IntNameTest_description.md'])
+def test_is_invalid_description_name(repo, file_name):
     """
         Given
-            - An integration description with a invalid name
+            - An integration description with invalid name
+            - An integration description with invalid integration name
 
         When
             - Validating the integration description name
@@ -123,7 +125,7 @@ def test_is_invalid_description_name(repo):
     integration = pack.create_integration('IntName')
 
     description_path = glob.glob(os.path.join(os.path.dirname(integration.yml.path), '*_description.md'))
-    new_name = f'{description_path[0].rsplit("/", 1)[0]}/IntName_desc.md'
+    new_name = f'{description_path[0].rsplit("/", 1)[0]}/{file_name}'
 
     os.rename(description_path[0], new_name)
     with ChangeCWD(repo.path):

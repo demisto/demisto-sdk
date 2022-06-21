@@ -8,6 +8,7 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tests.integration_test import mock_structure
 from TestSuite.file import File
 from TestSuite.test_tools import ChangeCWD
+import pytest
 
 json = JSON_Handler()
 
@@ -173,7 +174,8 @@ def test_is_valid_image_name_with_valid_name(repo):
     assert image_validator.is_valid_image_name()
 
 
-def test_is_valid_image_name_with_invalid_name(repo):
+@pytest.mark.parametrize('file_name', ['IntName_img.png', 'IntNameTest_image.png'])
+def test_is_valid_image_name_with_invalid_name(repo, file_name):
     """
         Given
             - An integration image with a invalid name
@@ -194,7 +196,7 @@ def test_is_valid_image_name_with_invalid_name(repo):
         os.remove(integration.image.path)
         integration.image = None
 
-    integration.image = File(integration._tmpdir_integration_path / f'{integration.name}_img.png',
+    integration.image = File(integration._tmpdir_integration_path / f'{file_name}',
                              integration._repo.path)
 
     with ChangeCWD(repo.path):

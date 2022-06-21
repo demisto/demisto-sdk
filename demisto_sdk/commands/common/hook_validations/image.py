@@ -199,8 +199,13 @@ class ImageValidator(BaseValidator):
     def is_valid_image_name(self):
         """Check if the image name is valid"""
         image_path = self.file_path
+        integrations_folder = os.path.basename(os.path.dirname(image_path))
+        image_file = os.path.basename(image_path)
 
-        if not image_path.endswith("_image.png"):
+        # drop file extension
+        image_file_base_name, _ = image_file.split('_')
+
+        if not image_path.endswith("_image.png") or integrations_folder != image_file_base_name:
             error_message, error_code = Errors.invalid_image_name()
 
             if self.handle_error(error_message, error_code, file_path=image_path):

@@ -890,9 +890,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_defaultvalue_for_checkbox_field(name: str):
-        return f"The defaultvalue checkbox of {name}'s filed is incorrect, " \
-               f"should be 'true' or 'false', a string which contains only lowercase letters.\n " \
-               f"e.g: defaultvalue: 'true'"
+        return f"The defaultvalue checkbox of the {name} field is invalid. " \
+               f"Use a lowercase string, e.g: defaultvalue: 'true'"
 
     @staticmethod
     @error_code_decorator

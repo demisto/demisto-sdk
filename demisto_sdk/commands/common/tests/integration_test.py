@@ -1,10 +1,11 @@
 import os
-import sys
 from copy import deepcopy
 from typing import Dict, List, Optional
 
 import pytest
 from mock import mock_open, patch
+from TestSuite.integration import Integration
+from TestSuite.test_tools import ChangeCWD
 
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS, FIRST_FETCH_PARAM,
@@ -16,9 +17,6 @@ from demisto_sdk.commands.common.hook_validations.integration import \
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from TestSuite.integration import Integration
-from TestSuite.file import File
-from TestSuite.test_tools import ChangeCWD
 
 default_additional_info = load_default_additional_info_dict()
 

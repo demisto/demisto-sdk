@@ -7,6 +7,8 @@ from typing import Any, List, Optional, Type, Union
 
 import pytest
 from mock import patch
+from TestSuite.pack import Pack
+from TestSuite.test_tools import ChangeCWD
 
 import demisto_sdk.commands.validate.validate_manager
 from demisto_sdk.commands.common import tools
@@ -22,7 +24,8 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
     DashboardValidator
-from demisto_sdk.commands.common.hook_validations.description import DescriptionValidator
+from demisto_sdk.commands.common.hook_validations.description import \
+    DescriptionValidator
 from demisto_sdk.commands.common.hook_validations.generic_field import \
     GenericFieldValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
@@ -78,8 +81,6 @@ from demisto_sdk.tests.constants_test import (
     WIDGET_TARGET)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
-from TestSuite.pack import Pack
-from TestSuite.test_tools import ChangeCWD
 
 json = JSON_Handler()
 

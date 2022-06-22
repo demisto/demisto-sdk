@@ -58,6 +58,14 @@ class PackMetadataJsonFormat(BaseUpdateJSON):
         """
         pack = Pack(os.path.dirname(self.source_file))
         if pack.should_be_deprecated():
-            name = self.data.get('name') or ''
-            self.data['name'] = f'{name} (Deprecated)'
-            self.data['description'] = 'Deprecated. No available replacement.'
+            new_pack_name_to_use = self.get_answer(
+                f'Please provide the pack name to use instead of {os.path.dirname(self.source_file)} '
+                f'if not provided, the "Deprecated. No available replacement." will be generated automatically'
+            )
+            if not new_pack_name_to_use or new_pack_name_to_use.isspace():
+                description = 'Deprecated. No available replacement.'
+            else:
+                description = f'Deprecated. Use {new_pack_name_to_use.strip()} instead.'
+            current_pack_name = self.data.get('name') or ''
+            self.data['name'] = f'{current_pack_name.strip()} (Deprecated)'
+            self.data['description'] = description

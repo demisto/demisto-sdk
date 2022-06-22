@@ -891,16 +891,15 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_defaultvalue_for_checkbox_field(name: str):
-        return f"The defaultvalue checkbox of {name}'s filed is incorrect, " \
-               f"should be 'true' or 'false', a string which contains only lowercase letters.\n " \
-               f"e.g: defaultvalue: 'true'"
+        return f"The defaultvalue checkbox of the {name} field is invalid. " \
+               f"Use a boolean represented as a lowercase string, e.g defaultvalue: 'true'"
 
     @staticmethod
     @error_code_decorator
     def missing_reliability_parameter(command: str):
         return f'Missing "Reliability" parameter in the {command} reputation command.' \
                f'Please add it to the YAML file.' \
-               f'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/integrations/dbot#reliability-level'
+               f'For more information, refer to https://xsoar.pan.dev/docs/integrations/dbot#reliability-level'
 
     @staticmethod
     @error_code_decorator

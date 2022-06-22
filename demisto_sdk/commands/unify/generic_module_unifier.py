@@ -6,8 +6,7 @@ import click
 
 from demisto_sdk.commands.common.constants import PACKS_DIR, FileType
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (MARKETPLACE_TAG_PARSER,
-                                               find_type, get_pack_name)
+from demisto_sdk.commands.common.tools import find_type, get_pack_name
 
 json = JSON_Handler()
 
@@ -33,8 +32,6 @@ class GenericModuleUnifier:
         self.input_file_name = os.path.basename(self.input_path).rstrip('.json')
         self.use_force = force
         self.marketplace = marketplace
-        if marketplace:
-            MARKETPLACE_TAG_PARSER.marketplace = marketplace
 
         if output:
             if not os.path.isdir(output):

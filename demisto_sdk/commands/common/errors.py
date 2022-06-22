@@ -898,7 +898,7 @@ class Errors:
     def missing_reliability_parameter(command: str):
         return f'Missing "Reliability" parameter in the {command} reputation command.' \
                f'Please add it to the YAML file.' \
-               f'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/integrations/dbot#reliability-level'
+               f'For more information, refer to https://xsoar.pan.dev/docs/integrations/dbot#reliability-level'
 
     @staticmethod
     @error_code_decorator

@@ -891,7 +891,7 @@ class Errors:
     @error_code_decorator
     def invalid_defaultvalue_for_checkbox_field(name: str):
         return f"The defaultvalue checkbox of the {name} field is invalid. " \
-               f"Use boolean represented by a lowercase string, e.g defaultvalue: 'true'"
+               f"Use a boolean represented as a lowercase string, e.g defaultvalue: 'true'"
 
     @staticmethod
     @error_code_decorator

@@ -865,7 +865,8 @@ class Errors:
     @error_code_decorator
     def is_valid_integration_file_path_in_folder(integration_file):
         return f"The integration file name: {integration_file} is invalid, " \
-               f"The integration file name should be the same as the name of the folder that contains it."
+               f"The integration file name and all the other files in the folder, should be the same as " \
+               f"the name of the folder that contains it."
 
     @staticmethod
     @error_code_decorator
@@ -890,16 +891,15 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_defaultvalue_for_checkbox_field(name: str):
-        return f"The defaultvalue checkbox of {name}'s filed is incorrect, " \
-               f"should be 'true' or 'false', a string which contains only lowercase letters.\n " \
-               f"e.g: defaultvalue: 'true'"
+        return f"The defaultvalue checkbox of the {name} field is invalid. " \
+               f"Use a boolean represented as a lowercase string, e.g defaultvalue: 'true'"
 
     @staticmethod
     @error_code_decorator
     def missing_reliability_parameter(command: str):
         return f'Missing "Reliability" parameter in the {command} reputation command.' \
                f'Please add it to the YAML file.' \
-               f'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/integrations/dbot#reliability-level'
+               f'For more information, refer to https://xsoar.pan.dev/docs/integrations/dbot#reliability-level'
 
     @staticmethod
     @error_code_decorator
@@ -1353,10 +1353,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def content_entity_version_not_match_playbook_version(main_playbook, entities_names, main_playbook_version):
-        return f"Playbook {main_playbook} with version {main_playbook_version} uses {entities_names} " \
-               f"with a version that does not match the main playbook version. The from version of" \
-               f" {entities_names} should be {main_playbook_version} or lower."
+    def content_entity_version_not_match_playbook_version(
+        main_playbook: str, entities_names_and_version: str, main_playbook_version: str, content_sub_type: str
+    ):
+        return f"Playbook {main_playbook} with 'fromversion' {main_playbook_version} uses the following" \
+               f" {content_sub_type} with an invalid 'fromversion': [{entities_names_and_version}]. " \
+               f"The 'fromversion' of the {content_sub_type} should be {main_playbook_version} or lower."
 
     @staticmethod
     @error_code_decorator

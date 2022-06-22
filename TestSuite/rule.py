@@ -34,7 +34,7 @@ class Rule:
         self.path = str(self._tmpdir_rule_path)
         self.yml = YAML(self._tmpdir_rule_path / f'{self.name}.yml', self._repo.path)
         self.rules = File(self._tmpdir_rule_path / f'{self.name}.xif', self._repo.path)
-        self.schema = JSONBased(self._tmpdir_rule_path, f'{self.name}', '')
+        self.schema = JSONBased(self._tmpdir_rule_path, f'{self.name}_schema', '')
 
         self.samples: list[JSONBased] = []
         self.samples_dir_path = tmpdir / SAMPLES_DIR

@@ -64,7 +64,7 @@ class RuleUnifier(YAMLUnifier):
                 click.echo('Did not find matching samples.')
 
     def _insert_schema(self):
-        schema_path = Path(self.yml_path).with_suffix('.json')
+        schema_path = self.yml_path.replace('.yml', '_schema.json')
         if os.path.exists(schema_path):
             with io.open(schema_path, mode='r', encoding='utf-8') as schema_file:
                 schema = json.loads(schema_file.read())

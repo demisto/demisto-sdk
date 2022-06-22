@@ -36,6 +36,18 @@ class TestModelingRule:
         assert not obj.is_unify()
 
     def test_unify_schema(self, pack):
+        """
+        Given:
+        modeling rule:
+        - yml file
+        - the rule xif file
+        - the schema json file
+        When:
+         - we want to unify all files to one unified yml file.
+
+         Then:
+         - Ensure the schema was unified successfully.
+        """
         modeling_rule = get_modeling_rule(pack, 'modeling_rule_name')
         obj = ModelingRule(modeling_rule._tmpdir_rule_path)
         unify_obj = get_yaml(obj._unify(modeling_rule._tmpdir_rule_path)[0])

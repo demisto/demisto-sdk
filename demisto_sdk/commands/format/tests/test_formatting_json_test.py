@@ -1181,8 +1181,10 @@ class TestFormattingPackMetaData:
         """
         pack.create_integration(name='integration-1').yml.update({'deprecated': deprecated_integration})
         pack.pack_metadata.update({'name': pack_name, 'description': pack_description})
+
         pack_metadata_formatter = PackMetadataJsonFormat(input=pack.pack_metadata.path)
         mocker.patch.object(pack_metadata_formatter, 'get_answer', return_value=new_pack_name_to_use)
+
         pack_metadata_formatter.deprecate_pack()
         if deprecated_integration:
             expected_pack_name = 'pack name (Deprecated)'

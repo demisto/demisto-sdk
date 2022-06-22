@@ -65,7 +65,9 @@ class Pack:
             # but are needed in the pack's zip.
             if self._filter_items_by_id_set and content_object.type().value not in [FileType.RELEASE_NOTES.value,
                                                                                     FileType.RELEASE_NOTES_CONFIG.value,
-                                                                                    FileType.TEST_PLAYBOOK.value]:
+                                                                                    FileType.TEST_PLAYBOOK.value,
+                                                                                    FileType.TEST_SCRIPT.value,
+                                                                                    ]:
 
                 object_id = content_object.get_id()
                 if is_object_in_id_set(object_id, self._pack_info_from_id_set):

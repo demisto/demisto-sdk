@@ -35,17 +35,10 @@ class ReadmeFormat(BaseUpdate):
     def replace_url_in_content(self, relative_url: ReadmeUrl, new_url: str):
         """Replace the relative url link with the new url in README."""
 
-        # md link
-        if relative_url.is_markdown:
-            old_link = f'{relative_url.description}({relative_url.url})'
-            new_link = f'{relative_url.description}({new_url})'
-        # href link
-        else:
-            old_link = relative_url.description
-            new_link = str.replace(relative_url.description, relative_url.url, new_url)
-
+        old_link = relative_url.get_full_link()
+        new_link = relative_url.get_new_link(new_url)
         self.readme_content = str.replace(self.readme_content, old_link, new_link)
-        click.secho(f'Replaced {relative_url.url} with {new_url}')
+        click.secho(f'Replaced {relative_url.get_url()} with {new_url}')
 
     def get_new_url_from_user(self, readme_url: ReadmeUrl) -> Optional[str]:
         """ Given we found a relative url, the user has the following options-
@@ -59,13 +52,12 @@ class ReadmeFormat(BaseUpdate):
         Returns: new url or None if we leave as is
 
         """
-        old_url = str.strip(readme_url.url)
+        old_url = str.strip(readme_url.get_url())
         new_address = None
         if self.assume_yes:
-            new_address = f'https://{old_url}'
+            return f'https://{old_url}'
         else:
-            click.secho(f'Relative urls are not supported within README, Should https:// be added to the '
-                        f'following address? [Y/n]\n {readme_url.url}',
+            click.secho(f'Should https:// be added to the following address? [Y/n]\n {readme_url.get_url()}',
                         fg='red')
             user_answer = input()
             if user_answer.lower()[0] == 'y':
@@ -75,7 +67,7 @@ class ReadmeFormat(BaseUpdate):
                             ' Enter the new address or leave empty to skip:',
                             fg='red')
                 user_answer = input()
-                if user_answer and user_answer not in ['n', 'N', 'No', 'no']:
+                if user_answer and user_answer.lower() not in ['n', 'no']:
                     new_address = user_answer
         return new_address
 
@@ -89,6 +81,8 @@ class ReadmeFormat(BaseUpdate):
 
         relative_urls = get_relative_urls(self.readme_content)
 
+        if relative_urls:
+            click.secho("Relative urls were found and are not supported within README.", fg='red')
         for url in relative_urls:
             new_address = self.get_new_url_from_user(url)
             if new_address:

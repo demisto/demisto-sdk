@@ -57,9 +57,36 @@ DEFAULT_SENTENCES = ['getting started and learn how to build an integration']
 
 @dataclass(frozen=True)
 class ReadmeUrl:
-    description: str
+    """Url links found in README files.
+    can be of type markdown form - [this is a link](https://link.com)
+    or be of html form - <a href="https://link.com">this is a link</a>
+
+    link_prefix : The start of the link, for markdown will contain the description,
+     for href will contain the link until the url, including the url itself.
+
+    url : the url from our link
+
+    is_markdown: if our link is markdown or html
+    """
+    link_prefix: str
     url: str
     is_markdown: bool
+
+    def get_full_link(self) -> str:
+        if self.is_markdown:
+            return f'{self.link_prefix}({self.url})'
+        else:
+            return self.link_prefix
+
+    def get_new_link(self, new_url: str) -> str:
+        """Get a new link string where url is replaced with new_url"""
+        if self.is_markdown:
+            return f'{self.link_prefix}({new_url})'
+        else:
+            return str.replace(self.link_prefix, self.url, new_url)
+
+    def get_url(self):
+        return self.url
 
 
 def get_relative_urls(content: str) -> Set[ReadmeUrl]:
@@ -71,21 +98,11 @@ def get_relative_urls(content: str) -> Set[ReadmeUrl]:
                                re.IGNORECASE | re.MULTILINE)
     relative_html_urls = re.findall(RELATIVE_HREF_URL_REGEX, content,
                                     re.IGNORECASE | re.MULTILINE)
-    links_list = []
-    for url in relative_urls:
-        # if url is empty, ignore it
-        if not url[1]:
-            continue
-        links_list.append(ReadmeUrl(url[0], url[1], True))
 
-    for url in relative_html_urls:
-        # if url is empty, ignore it
-        if not url[1]:
-            continue
-        links_list.append(ReadmeUrl(url[0], url[1], False))
-    links_set = set(links_list)
+    def get_not_empty_urls(urls, is_markdown):
+        return {ReadmeUrl(url[0], url[1], is_markdown) for url in urls if url[1]}
 
-    return links_set
+    return get_not_empty_urls(relative_urls, True) | get_not_empty_urls(relative_html_urls, False)
 
 
 class ReadMeValidator(BaseValidator):
@@ -121,7 +138,7 @@ class ReadMeValidator(BaseValidator):
     def is_valid_file(self) -> bool:
         """Check whether the readme file is valid or not
         Returns:
-            bool: True if env configured else Fale.
+            bool: True if env configured else False.
         """
         return all([
             self.verify_readme_relative_urls(),
@@ -283,10 +300,7 @@ class ReadMeValidator(BaseValidator):
                     bool: True If there are no invalid relative urls.
                 """
         # If there are errors in one of the following validations return False
-        error_list = self.check_readme_relative_url_paths()
-        if error_list:
-            return False
-        return True
+        return not self.check_readme_relative_url_paths()
 
     @error_codes('RM112')
     def check_readme_relative_url_paths(self, is_pack_readme: bool = False) -> list:
@@ -306,11 +320,13 @@ class ReadMeValidator(BaseValidator):
         relative_urls = get_relative_urls(self.readme_content)
         for url_link in relative_urls:
             # striping in case there are whitespaces at the beginning/ending of url.
-            error_message, error_code = Errors.invalid_readme_relative_url_error(url_link.url)
+            error_message, error_code = Errors.invalid_readme_relative_url_error(url_link.get_url())
             if error_code and error_message:  # error was found
                 formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path,
                                                     should_print=should_print_error)
-                error_list.append(formatted_error)
+                # if error is None it should be ignored
+                if formatted_error:
+                    error_list.append(formatted_error)
 
         return error_list
 
@@ -395,25 +411,22 @@ class ReadMeValidator(BaseValidator):
                 url_path_elem_list = urlparse(img_url).path.split('/')[1:]
                 if len(url_path_elem_list) >= 3 and \
                         (url_path_elem_list[2] == working_branch_name and working_branch_name != 'master'):
-                    error_message, error_code = \
-                        Errors.invalid_readme_image_error(prefix + f'({img_url})',
-                                                          error_type='branch_name_readme_absolute_error')
+                    error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({img_url})',
+                                                                                  error_type='branch_name_readme_absolute_error')
                 else:
                     try:
                         get_url_with_retries(img_url, retries=5, backoff_factor=1, timeout=10)
                     except HTTPError as error:
-                        error_message, error_code = \
-                            Errors.invalid_readme_image_error(prefix + f'({img_url})',
-                                                              error_type='general_readme_absolute_error',
-                                                              response=error.response)
+                        error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({img_url})',
+                                                                                      error_type='general_readme_absolute_error',
+                                                                                      response=error.response)
             except Exception as ex:
                 click.secho(f"Could not validate the image link: {img_url}\n {ex}", fg='yellow')
                 continue
 
             if error_message and error_code:
-                formatted_error = \
-                    self.handle_error(error_message, error_code, file_path=self.file_path,
-                                      should_print=should_print_error)
+                formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                    should_print=should_print_error)
                 if formatted_error:
                     error_list.append(formatted_error)
 

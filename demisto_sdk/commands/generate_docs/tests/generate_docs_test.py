@@ -11,13 +11,13 @@ from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     append_or_replace_command_in_docs, disable_md_autolinks,
     generate_commands_section, generate_integration_doc,
     generate_setup_section, generate_single_command_section,
-    get_command_examples)
+    get_command_examples, generate_mirroring_section)
 from demisto_sdk.commands.generate_docs.generate_script_doc import \
     generate_script_doc
 from TestSuite.pack import Pack
+from pathlib import Path
 
 json = JSON_Handler()
-
 
 FILES_PATH = os.path.normpath(os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files'))
 FAKE_ID_SET = get_json(os.path.join(FILES_PATH, 'fake_id_set.json'))
@@ -144,7 +144,8 @@ def test_generate_list_with_text_section():
 
 
 TEST_TABLE_SECTION_EMPTY = [
-    ([], 'Script Data', 'No data found.', 'This is the metadata of the script.', ['## Script Data', '---', 'No data found.', '']),
+    ([], 'Script Data', 'No data found.', 'This is the metadata of the script.',
+     ['## Script Data', '---', 'No data found.', '']),
     ([], 'Script Data', '', '', ['']),
     ([], 'Script Data', '', 'This is the metadata of the script.', [''])
 ]
@@ -363,6 +364,7 @@ def test_generate_image_link(playbook_name, custom_image_path, expected_result):
 
     assert output == expected_result
 
+
 # script tests
 
 
@@ -437,6 +439,34 @@ def test_generate_commands_section():
                         '', 'There is no context output for this command.']
 
     assert '\n'.join(section) == '\n'.join(expected_section)
+
+
+MIRRORING_TEST = [({'display': 'CrowdStrike Falcon',
+                    'configuration': [
+                        {'display': 'Incidents fetch query'},
+                        {'display': 'Mirroring tag'},
+                        {'display': 'Mirroring Direction',
+                         'options': ['None', 'Incoming', 'Outgoing', 'Incoming And Outgoing']},
+                        {'display': 'Close Mirrored XSOAR Incident'},
+                        {'display': 'Close Mirrored CrowdStrike Falcon Incident or Detection'}]},
+                   'mirroring_test_markdow'),
+                  ({'display': 'CrowdStrike Falcon',
+                    'configuration': [
+                        {'display': 'Mirroring tag'},
+                        {'display': 'Mirroring Direction',
+                         'options': ['None', 'Incoming']},
+                        {'display': 'Close Mirrored XSOAR Incident'}]},
+                   'mirroring_test_markdow_missing')
+                  ]
+
+@pytest.mark.parametrize('yml_content, path_to_result', MIRRORING_TEST)
+def test_incident_mirroring_section(yml_content, path_to_result):
+    test_files_path = Path(__file__, git_path(), 'demisto_sdk', 'commands', 'generate_docs', 'tests',
+                           'test_files', path_to_result)
+    section = generate_mirroring_section(yml_content)
+    with open(test_files_path) as f:
+        res = f.read()
+    assert '\n'.join(section) == res
 
 
 def test_generate_command_section_with_empty_cotext_example():
@@ -827,12 +857,12 @@ yml_data_cases = [
         {'defaultvalue': '', 'display': 'test1', 'name': 'test1', 'required': True, 'type': 8},
         {'defaultvalue': '', 'display': 'test2', 'name': 'test2', 'required': True, 'type': 8}
     ]},  # case no param with additional info field
-         ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
-          '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
-          '', '    | **Parameter** | **Required** |', '    | --- | --- |', '    | test1 | True |',
-          '    | test2 | True |',
-          '', '4. Click **Test** to validate the URLs, token, and connection.']  # expected
-    ),
+     ['1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
+      '2. Search for test.', '3. Click **Add instance** to create and configure a new integration instance.',
+      '', '    | **Parameter** | **Required** |', '    | --- | --- |', '    | test1 | True |',
+      '    | test2 | True |',
+      '', '4. Click **Test** to validate the URLs, token, and connection.']  # expected
+     ),
     (
         {'name': 'test', 'display': 'test', 'configuration': [
             {'display': 'test1', 'name': 'test1', 'additionalinfo': 'More info', 'required': True, 'type': 8},
@@ -1124,9 +1154,11 @@ def test_disable_md_autolinks():
 
 TEST_EMPTY_SCRIPTDATA_SECTION = [
     ({'script': 'some info'}, ['']),
-    ({'subtype': 'python2', 'tags': []}, ['## Script data', '---', '', '| **Name** | **Description** |', '| --- | --- |', '| Script Type | python2 |', '']),
+    ({'subtype': 'python2', 'tags': []},
+     ['## Script data', '---', '', '| **Name** | **Description** |', '| --- | --- |', '| Script Type | python2 |', '']),
     ({'tags': []}, ['']),
-    ({'fromversion': '0.0.0'}, ['## Script data', '---', '', '| **Name** | **Description** |', '| --- | --- |', '| Cortex XSOAR Version | 0.0.0 |', ''])
+    ({'fromversion': '0.0.0'}, ['## Script data', '---', '', '| **Name** | **Description** |', '| --- | --- |',
+                                '| Cortex XSOAR Version | 0.0.0 |', ''])
 ]
 
 

@@ -15,7 +15,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
                                                print_warning)
 from demisto_sdk.commands.generate_docs.common import (
     add_lines, build_example_dict, generate_numbered_section, generate_section,
-    generate_table_section, save_output, string_escape_md)
+    generate_table_section, save_output, string_escape_md, generate_list_section)
 from demisto_sdk.commands.integration_diff.integration_diff_detector import \
     IntegrationDiffDetector
 
@@ -87,7 +87,6 @@ def generate_integration_doc(
     """
     try:
         yml_data = get_yaml(input_path)
-
         if not output:  # default output dir will be the dir of the input file
             output = os.path.dirname(os.path.realpath(input_path))
         errors: list = []
@@ -153,6 +152,8 @@ def generate_integration_doc(
             command_section, command_errors = generate_commands_section(yml_data, example_dict,
                                                                         command_permissions_dict, command=command)
             docs.extend(command_section)
+            #Mirroring Incident
+            docs.extend(generate_mirroring_section(yml_data))
             # breaking changes
             if integration_version and not skip_breaking_changes:
                 docs.extend(generate_versions_differences_section(input_path, old_version,
@@ -186,7 +187,6 @@ with (Path(__file__).parent / 'default_additional_information.json').open() as f
     # Case insensitive to catch both `API key` and `API Key`, giving both the same value.
     default_additional_information: CaseInsensitiveDict = CaseInsensitiveDict(json.load(f))
 
-
 def generate_setup_section(yaml_data: dict):
     default_additional_info: CaseInsensitiveDict = load_default_additional_info_dict()
 
@@ -218,6 +218,92 @@ def generate_setup_section(yaml_data: dict):
     section.append('4. Click **Test** to validate the URLs, token, and connection.')
 
     return section
+
+# Incident Mirroring
+
+def is_configuration_exists(yml_data: dict, display: str):
+    """
+    Args:
+        yml_data: yml data of the integration
+        display: configuration to search
+
+    Returns:
+        the cong if display exists in the yml_data, else none.
+
+    """
+    for conf in yml_data.get('configuration'):
+        if conf.get('display') == display:
+            return conf
+    return None
+
+
+def generate_mirroring_section(yaml_data: dict):
+    """
+
+    Args:
+        yaml_data: dict representing the yml file of the integration.
+
+    Returns: markdown section of Incident Mirroring.
+
+    """
+    integration_name = format(yaml_data['display'])
+    directions = {
+        'None': 'Turns off incident mirroring.',
+        'Incoming': 'Any changes in CrowdStrike Falcon incidents (state, status, tactics, techniques, objectives, tags, hosts.hostname) will be reflected in XSOAR incidents.',
+        'Outgoing': 'Any changes in XSOAR incidents will be reflected in CrowdStrike Falcon incidents (tags, status).',
+        'Incoming And Outgoing': 'Changes in XSOAR incidents and CrowdStrike Falcon incidents will be reflected in both directions.'
+    }
+
+    section = [
+        '## Incident Mirroring',
+        '',
+        f'You can enable incident mirroring between Cortex XSOAR incidents and {integration_name} incidents (available from Cortex XSOAR version 6.0.0).',
+        'To setup the mirroring follow these instructions:',
+        '1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
+        f'2. Search for {integration_name} and select your integration instance.',
+        '3. Enable Fetches incidents.'
+    ]
+
+    index = 4
+    if is_configuration_exists(yaml_data, 'Incidents fetch query'):
+        section.append(f'{index}. Optional: You can go to the Incidents fetch query parameter and select the query to fetch the incidents from {integration_name}.')
+        index = index + 1
+    if is_configuration_exists(yaml_data, 'Mirroring tag'):
+        section.append(f'{index}. Optional: You can go to the Mirroring tag parameter and select the tags used to mark incident entries to be mirrored.')
+        index = index + 1
+
+    # Mirroring direction
+
+    direction_conf = is_configuration_exists(yaml_data, 'Mirroring Direction')
+    if direction_conf:
+        options = []
+        for option in direction_conf.get('options', []):
+            options.append({'Option': option, 'Description': directions.get(option, '')})
+        dir_text = f'{index}. In the Mirroring Direction integration parameter, select in which direction the incidents should be mirrored:'
+        index = index + 1
+        section.append(dir_text)
+        section.extend(generate_table_section(title=None, data=options, horizontal_rule=False, numbered_section=True))
+
+    # Close Mirrored XSOAR Incident param
+
+    if is_configuration_exists(yaml_data, 'Close Mirrored XSOAR Incident'):
+        section.append(f'{index}. Optional: Check the Close Mirrored XSOAR Incident integration parameter to close the Cortex'
+                       f' XSOAR incident when the corresponding incident is closed in {integration_name}.')
+        index = index + 1
+    if is_configuration_exists(yaml_data, f'Close Mirrored {integration_name} Incident or Detection'):
+        section.append(f'{index}. Optional: Check the Close Mirrored {integration_name} Incident or Detection integration'
+                       f' parameter to close the {integration_name} incident when the corresponding Cortex XSOAR'
+                       f' incident is closed.')
+
+
+    section.extend(['',
+                    'Newly fetched incidents will be mirrored in the chosen direction.'
+                    ' However, this selection does not affect existing incidents.',
+                   f'**Important Note:** To ensure the mirroring works as expected, mappers are required,'
+                   f' both for incoming and outgoing, to map the expected fields in XSOAR and {integration_name}.'])
+
+    return section
+
 
 
 # Commands

@@ -2068,6 +2068,8 @@ class ServerContext:
         self.executed_in_current_round: Set[str] = set()
         self.prev_system_conf: dict = {}
         self.use_retries_mechanism: bool = use_retries_mechanism
+        if IS_XSIAM:
+            self.check_if_can_create_manual_alerts(self.client)
 
     def _execute_unmockable_tests(self):
         """
@@ -2199,6 +2201,17 @@ class ServerContext:
             raise
         finally:
             self.build_context.logging_module.execute_logs()
+
+    def check_if_can_create_manual_alerts(self, client):
+        body = {
+            'query': 'id:"Manual"'
+        }
+        try:
+            res_raw = demisto_client.generic_request_func(self=client, path='/settings/integration/search',
+                                                          method='POST', body=body)
+        except ApiException:
+            # todo: add reason
+            self.build_context.logging_module.exception(f'failed to get integration Manual configuration')
 
 
 def replace_external_playbook_configuration(client: DefaultApi, external_playbook_configuration: dict,

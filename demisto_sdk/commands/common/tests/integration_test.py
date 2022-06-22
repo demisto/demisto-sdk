@@ -973,6 +973,14 @@ class TestIntegrationValidator:
 
     @pytest.mark.parametrize('file_name', ['IntNameTest.py', 'IntNameTest_test.py'])
     def test_invalid_py_file_names(self, repo, file_name):
+        """
+        Given
+            - An integration with invalid python file path.
+        When
+            - running is_valid_py_file_names.
+        Then
+            - an integration with an invalid file path is invalid.
+        """
 
         pack = repo.create_pack('PackName')
 

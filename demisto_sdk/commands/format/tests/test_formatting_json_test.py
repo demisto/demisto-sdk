@@ -1147,30 +1147,54 @@ class TestFormattingOldClassifier:
 
 class TestFormattingPackMetaData:
 
-    @pytest.mark.parametrize('deprecated_integration', [True, False])
-    def test_deprecate_pack(self, pack, deprecated_integration):
+    @pytest.mark.parametrize(
+        'deprecated_integration, pack_name, pack_description, new_pack_name_to_use',
+        [
+            (True, 'pack name', 'pack description', 'pack v2'),
+            (True, 'pack name (Deprecated)', 'Deprecated. Use pack v2 instead.', 'pack v2'),
+            (True, 'pack name', 'pack description', ''),
+            (False, 'pack name', 'pack description', ''),
+        ]
+    )
+    def test_deprecate_pack(
+        self, mocker, pack, deprecated_integration, pack_name, pack_description, new_pack_name_to_use
+    ):
         """
         Given
-          - Case 1: a deprecated integration.
-          - Case 2: a non-deprecated integration.
+          - Case 1: a deprecated integration and a pack that its description/name doesn't state its deprecated.
+          - Case 2: a deprecated integration and a pack that its description/name states its deprecated.
+          - Case 3: a deprecated integration and a pack that its description/name doesn't state its deprecated.
+          - Case 4: a non-deprecated integration and a pack that its description/name doesn't state its deprecated.
 
         When
-          - running hide pack format.
+          - running trying to run the deprecate pack format.
 
         Then
-          - Case 1: ensure the pack_metadata.json is getting updated with hidden = True
-          - Case 2: ensure the pack_metadata.json is not getting updated with hidden = True.
+          - Case 1: pack name should be: pack name (Deprecated),
+                    pack description should be: Deprecated. Use pack v2 instead.
+          - Case 2: pack name should be: pack name (Deprecated),
+                    pack description should be: Deprecated. Use pack v2 instead.
+                    (nothing should change as pack is already deprecated).
+          - Case 3: pack name should be: pack name (Deprecated),
+                    pack description should be: Deprecated. no available replacement.
+          - Case 4: pack name should be: pack name, pack description should be: pack description.
         """
         pack.create_integration(name='integration-1').yml.update({'deprecated': deprecated_integration})
-        pack.pack_metadata.update({'name': 'pack-name', 'description': 'just a description'})
+        pack.pack_metadata.update({'name': pack_name, 'description': pack_description})
         pack_metadata_formatter = PackMetadataJsonFormat(input=pack.pack_metadata.path)
+        mocker.patch.object(pack_metadata_formatter, 'get_answer', return_value=new_pack_name_to_use)
         pack_metadata_formatter.deprecate_pack()
         if deprecated_integration:
-            assert pack_metadata_formatter.data['name'] == 'pack-name (Deprecated)'
-            assert pack_metadata_formatter.data['description'] == 'Deprecated. No available replacement.'
+            expected_pack_name = 'pack name (Deprecated)'
+            if new_pack_name_to_use:
+                expected_pack_description = f'Deprecated. Use {new_pack_name_to_use} instead.'
+            else:
+                expected_pack_description = 'Deprecated. No available replacement.'
         else:
-            assert pack_metadata_formatter.data['name'] == 'pack-name'
-            assert pack_metadata_formatter.data['description'] == 'just a description'
+            expected_pack_name = 'pack name'
+            expected_pack_description = 'pack description'
+        assert pack_metadata_formatter.data['name'] == expected_pack_name
+        assert pack_metadata_formatter.data['description'] == expected_pack_description
 
 
 class TestFormattingMapper:

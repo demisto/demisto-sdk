@@ -204,7 +204,6 @@ class Linter:
         logger.info(f"{log_prompt} - Using yaml file {self._yml_file}")
         # Parsing pack yaml - in order to verify if check needed
         try:
-
             script_obj: Dict = {}
             yml_obj: Dict = YAML_Handler().load(self._yml_file)
             if isinstance(yml_obj, dict):
@@ -784,7 +783,7 @@ class Linter:
         try:
             # Running pytest container
             cov_file_path = Path.joinpath(self._pack_abs_dir, '.coverage')
-            cov = self._pack_abs_dir.stem if not no_coverage and cov_file_path.exists() else ''
+            cov = self._pack_abs_dir.stem if not no_coverage else ''
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
             container: docker.models.containers.Container = Docker.create_container(

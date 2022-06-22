@@ -865,7 +865,8 @@ class Errors:
     @error_code_decorator
     def is_valid_integration_file_path_in_folder(integration_file):
         return f"The integration file name: {integration_file} is invalid, " \
-               f"The integration file name should be the same as the name of the folder that contains it."
+               f"The integration file name and all the other files in the folder, should be the same as " \
+               f"the name of the folder that contains it."
 
     @staticmethod
     @error_code_decorator
@@ -1352,10 +1353,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def content_entity_version_not_match_playbook_version(main_playbook, entities_names, main_playbook_version):
-        return f"Playbook {main_playbook} with version {main_playbook_version} uses {entities_names} " \
-               f"with a version that does not match the main playbook version. The from version of" \
-               f" {entities_names} should be {main_playbook_version} or lower."
+    def content_entity_version_not_match_playbook_version(
+        main_playbook: str, entities_names_and_version: str, main_playbook_version: str, content_sub_type: str
+    ):
+        return f"Playbook {main_playbook} with 'fromversion' {main_playbook_version} uses the following" \
+               f" {content_sub_type} with an invalid 'fromversion': [{entities_names_and_version}]. " \
+               f"The 'fromversion' of the {content_sub_type} should be {main_playbook_version} or lower."
 
     @staticmethod
     @error_code_decorator

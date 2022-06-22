@@ -25,7 +25,6 @@ from packaging.version import parse
 # Local packages
 from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
                                                    DemistoException)
-from demisto_sdk.commands.common.tools import print_warning, run_command_os
 from demisto_sdk.commands.lint.docker_helper import init_global_docker_client
 
 # Python2 requirements
@@ -59,23 +58,6 @@ PY_CHCEKS = ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture", "pytest", "p
 RL = '\n'
 
 logger = logging.getLogger('demisto-sdk')
-
-
-def validate_env() -> None:
-    """Packs which use python2 will need to be run inside virtual environment including python2 as main
-    and the specified req
-    """
-    wrn_msg = 'demisto-sdk lint not in virtual environment, Python2 lints will fail, use "source .hooks/bootstrap"' \
-              ' to create the virtual environment'
-    command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
-    stdout, stderr, exit_code = run_command_os(command, cwd=Path().cwd())
-    if "2" not in stdout:
-        print_warning(wrn_msg)
-    else:
-        stdout, stderr, exit_code = run_command_os("pip3 freeze", cwd=Path().cwd())
-        for req in PYTHON2_REQ:
-            if req not in stdout:
-                print_warning(wrn_msg)
 
 
 def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
@@ -150,7 +132,14 @@ def get_test_modules(content_repo: Optional[git.Repo], is_external_repo: bool) -
             try:
                 module_full_path = content_repo.working_dir / module
                 logger.debug(f'read file {module_full_path}')
-                modules_content[module] = (module_full_path).read_bytes()
+                if module.match('*CommonServerPython.py'):
+                    # Remove import of DemistoClassApiModule in CommonServerPython,
+                    # since tests don't use this class and the import fails the tests.
+                    modules_content[module] = (module_full_path).read_bytes().replace(
+                        b'from DemistoClassApiModule import *', b'')
+                    logger.debug(f'Changed file {module_full_path} without demisto import')
+                else:
+                    modules_content[module] = (module_full_path).read_bytes()
             except FileNotFoundError:
                 module_not_found = True
                 logger.warning(f'Module {module} was not found, possibly deleted due to being in a feature branch')
@@ -505,7 +494,8 @@ def generate_coverage_report(html=False, xml=False, report=True, cov_dir='covera
     cov = coverage.Coverage(data_file=cov_file)
     cov.combine(coverage_files())
     if not os.path.exists(cov_file):
-        logger.debug(f'skipping coverage report {cov_file} file not found.')
+        logger.warning(f'skipping coverage report {cov_file} file not found. '
+                       f'Should not expect this if code files were changed or when linting all with pytest.')
         return
 
     export_msg = 'exporting {0} coverage report to {1}'

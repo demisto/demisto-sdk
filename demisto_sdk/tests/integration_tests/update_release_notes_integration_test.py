@@ -333,7 +333,7 @@ def test_update_release_notes_modified_apimodule(demisto_client, repo, mocker):
                     "name": "FeedTAXII_integration",
                     "file_path": taxii_feed_integration_path,
                     "pack": "FeedTAXII",
-                    "api_modules": "ApiModules_script"
+                    "api_modules": ["ApiModules_script"]
                 }
             }
         ]

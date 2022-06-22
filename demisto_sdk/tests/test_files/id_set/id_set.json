@@ -16243,7 +16243,7 @@
                     "sslbl-get-indicators"
                 ],
                 "pack": "Feedsslabusech",
-                "api_modules": "CSVFeedApiModule"
+                "api_modules": ["CSVFeedApiModule"]
             }
         },
         {
@@ -16493,7 +16493,7 @@
                     "AlienVaultReputationFeed_Test"
                 ],
                 "pack": "FeedAlienVault",
-                "api_modules": "CSVFeedApiModule"
+                "api_modules": ["CSVFeedApiModule"]
             }
         },
         {
@@ -17386,7 +17386,7 @@
                     "aws-get-indicators"
                 ],
                 "pack": "FeedAWS",
-                "api_modules": "JSONFeedApiModule",
+                "api_modules": ["JSONFeedApiModule"],
                 "classifiers": "AWS Feed",
                 "mappers": [
                     "AWS Feed-mapper"
@@ -17464,7 +17464,7 @@
                     "Azure Compute - Test"
                 ],
                 "pack": "AzureCompute",
-                "api_modules": "MicrosoftApiModule"
+                "api_modules": ["MicrosoftApiModule"]
             }
         },
         {
@@ -17540,7 +17540,7 @@
                     "No test - manual test playbook-TestAzureSentinelPlaybook is available in NonCircleTests folder"
                 ],
                 "pack": "AzureSentinel",
-                "api_modules": "MicrosoftApiModule"
+                "api_modules": ["MicrosoftApiModule"]
             }
         },
         {
@@ -17569,7 +17569,7 @@
                     "BambenekConsultingFeed_Test"
                 ],
                 "pack": "FeedBambenekConsulting",
-                "api_modules": "CSVFeedApiModule"
+                "api_modules": ["CSVFeedApiModule"]
             }
         },
         {
@@ -17663,7 +17663,7 @@
                     "Blocklist_de - Test"
                 ],
                 "pack": "FeedBlocklist_de",
-                "api_modules": "HTTPFeedApiModule"
+                "api_modules": ["HTTPFeedApiModule"]
             }
         },
         {
@@ -17747,7 +17747,7 @@
                     "bruteforceblocker-get-indicators"
                 ],
                 "pack": "FeedBruteForceBlocker",
-                "api_modules": "HTTPFeedApiModule"
+                "api_modules": ["HTTPFeedApiModule"]
             }
         },
         {
@@ -18479,7 +18479,7 @@
                     "cloudflare-get-indicators"
                 ],
                 "pack": "FeedCloudflare",
-                "api_modules": "HTTPFeedApiModule"
+                "api_modules": ["HTTPFeedApiModule"]
             }
         },
         {
@@ -18761,7 +18761,7 @@
                     "CSV_Feed_Test"
                 ],
                 "pack": "FeedCSV",
-                "api_modules": "CSVFeedApiModule"
+                "api_modules": ["CSVFeedApiModule"]
             }
         },
         {
@@ -19325,7 +19325,7 @@
                     "dshield-get-indicators"
                 ],
                 "pack": "FeedDShield",
-                "api_modules": "HTTPFeedApiModule"
+                "api_modules": ["HTTPFeedApiModule"]
             }
         },
         {
@@ -19609,7 +19609,7 @@
                     "EWS search-mailbox test"
                 ],
                 "pack": "EWS",
-                "api_modules": "MicrosoftApiModule"
+                "api_modules": ["MicrosoftApiModule"]
             }
         },
         {
@@ -19856,7 +19856,7 @@
                     "fastly-get-indicators"
                 ],
                 "pack": "FeedFastly",
-                "api_modules": "JSONFeedApiModule"
+                "api_modules": ["JSONFeedApiModule"]
             }
         },
         {
@@ -19868,7 +19868,7 @@
                     "feodotracker-hashes-get-indicators"
                 ],
                 "pack": "FeedFeodoTracker",
-                "api_modules": "HTTPFeedApiModule"
+                "api_modules": ["HTTPFeedApiModule"]
             }
         },
         {
@@ -19880,7 +19880,7 @@
                     "feodotracker-ipblocklist-get-indicators"
                 ],
                 "pack": "FeedFeodoTracker",
-                "api_modules": "HTTPFeedApiModule"
+                "api_modules": ["HTTPFeedApiModule"]
             }
         },
         {
@@ -21539,7 +21539,7 @@
                     "JSON_Feed_Test"
                 ],
                 "pack": "FeedJSON",
-                "api_modules": "JSONFeedApiModule"
+                "api_modules": ["JSONFeedApiModule"]
             }
         },
         {
@@ -21981,7 +21981,7 @@
                     "malwaredomainlist-get-indicators"
                 ],
                 "pack": "FeedMalwareDomainList",
-                "api_modules": "HTTPFeedApiModule"
+                "api_modules": ["HTTPFeedApiModule"]
             }
         },
         {
@@ -22246,7 +22246,7 @@
                     "microsoft-atp-add-remove-machine-tag"
                 ],
                 "pack": "MicrosoftDefenderAdvancedThreatProtection",
-                "api_modules": "MicrosoftApiModule"
+                "api_modules": ["MicrosoftApiModule"]
             }
         },
         {
@@ -22264,7 +22264,7 @@
                     "Microsoft Graph Test"
                 ],
                 "pack": "MicrosoftGraphSecurity",
-                "api_modules": "MicrosoftApiModule"
+                "api_modules": ["MicrosoftApiModule"]
             }
         },
         {
@@ -22284,7 +22284,7 @@
                     "Microsoft Graph Calendar - Test"
                 ],
                 "pack": "MicrosoftGraphCalendar",
-                "api_modules": "MicrosoftApiModule"
+                "api_modules": ["MicrosoftApiModule"]
             }
         },
         {
@@ -22318,7 +22318,7 @@
                     "MSGraph_DeviceManagement_Test"
                 ],
                 "pack": "MicrosoftGraphDeviceManagement",
-                "api_modules": "MicrosoftApiModule"
+                "api_modules": ["MicrosoftApiModule"]
             }
         },
         {
@@ -22338,7 +22338,7 @@
                     "Microsoft Graph Groups - Test"
                 ],
                 "pack": "MicrosoftGraphGroups",
-                "api_modules": "MicrosoftApiModule"
+                "api_modules": ["MicrosoftApiModule"]
             }
         },
         {
@@ -22356,7 +22356,7 @@
                     "No test - manual test playbook-Microsoft_Graph_Mail_Sender_test is available in NonCircleTests folder"
                 ],
                 "pack": "MicrosoftGraphListener",
-                "api_modules": "MicrosoftApiModule",
+                "api_modules": ["MicrosoftApiModule"],
                 "classifiers": "Microsoft Graph Mail Single User",
                 "mappers": [
                     "Microsoft Graph Mail Single User-mapper"
@@ -22385,7 +22385,7 @@
                     "msgraph-user-get-delta"
                 ],
                 "pack": "MicrosoftGraphUser",
-                "api_modules": "MicrosoftApiModule"
+                "api_modules": ["MicrosoftApiModule"]
             }
         },
         {
@@ -22460,7 +22460,7 @@
                     "test_MsGraphFiles"
                 ],
                 "pack": "MicrosoftGraphFiles",
-                "api_modules": "MicrosoftApiModule"
+                "api_modules": ["MicrosoftApiModule"]
             }
         },
         {
@@ -22489,7 +22489,7 @@
                     "MicrosoftGraphMail-Test"
                 ],
                 "pack": "MicrosoftGraphMail",
-                "api_modules": "MicrosoftApiModule"
+                "api_modules": ["MicrosoftApiModule"]
             }
         },
         {
@@ -23552,7 +23552,7 @@
                     "PlainText Feed - Test"
                 ],
                 "pack": "FeedPlainText",
-                "api_modules": "HTTPFeedApiModule"
+                "api_modules": ["HTTPFeedApiModule"]
             }
         },
         {
@@ -25262,7 +25262,7 @@
                     "spamhaus-get-indicators"
                 ],
                 "pack": "FeedSpamhaus",
-                "api_modules": "HTTPFeedApiModule"
+                "api_modules": ["HTTPFeedApiModule"]
             }
         },
         {

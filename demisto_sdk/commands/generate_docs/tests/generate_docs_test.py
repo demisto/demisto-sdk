@@ -443,19 +443,19 @@ def test_generate_commands_section():
 
 MIRRORING_TEST = [({'display': 'CrowdStrike Falcon',
                     'configuration': [
-                        {'display': 'Incidents fetch query'},
-                        {'display': 'Mirroring tag'},
-                        {'display': 'Mirroring Direction',
+                        {'name': 'incidents_fetch_query'},
+                        {'name': 'comment_tag'},
+                        {'name': 'mirror_direction',
                          'options': ['None', 'Incoming', 'Outgoing', 'Incoming And Outgoing']},
-                        {'display': 'Close Mirrored XSOAR Incident'},
-                        {'display': 'Close Mirrored CrowdStrike Falcon Incident or Detection'}]},
+                        {'name': 'close_incident'},
+                        {'name': 'close_out'}]},
                    'mirroring_test_markdow'),
                   ({'display': 'CrowdStrike Falcon',
                     'configuration': [
-                        {'display': 'Mirroring tag'},
-                        {'display': 'Mirroring Direction',
+                        {'name': 'work_notes_tag'},
+                        {'name': 'mirror_direction',
                          'options': ['None', 'Incoming']},
-                        {'display': 'Close Mirrored XSOAR Incident'}]},
+                        {'name': 'close_incident'}]},
                    'mirroring_test_markdow_missing')
                   ]
 

@@ -310,7 +310,7 @@ def generate_mirroring_section(yaml_data: dict):
     if is_configuration_exists(yaml_data, ['close_incident']):
         section.append(
             f'{index}. Optional: Check the Close Mirrored XSOAR Incident integration parameter to close the Cortex'
-            f' XSOAR incident when the corresponding incident is closed in {integration_name}.')
+            f' XSOAR incident when the corresponding %%incident type%% is closed in {integration_name}.')
         index = index + 1
     if is_configuration_exists(yaml_data, ['close_out']):
         section.append(

@@ -232,10 +232,10 @@ def is_configuration_exists(yml_data: dict, display: str):
         the cong if display exists in the yml_data, else none.
 
     """
-    if yml_data:
-        for conf in yml_data.get('configuration'):
-            if conf.get('display') == display:
-                return conf
+
+    for conf in yml_data.get('configuration', []):
+        if conf.get('display') == display:
+            return conf
     return None
 
 

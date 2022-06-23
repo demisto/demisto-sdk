@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.mardown_lint import run_markdown_lint
 
 @pytest.mark.parametrize('file_content, expected_error', [
     ('##Hello', 'no-missing-space-atx No space after hash on atx style heading'), (
-        """
+            """
 ##Unreleased
    * Feature1
 * feature2""", 'Unordered list indentation '
@@ -56,3 +56,14 @@ def test_markdown_fixes(file_content, expected_output):
         temp.flush()
         run_markdown_lint(temp.name, True)
         assert functools.reduce(lambda a, b: a + b, open(temp.name).readlines()) == expected_output
+
+
+def test_no_line_after_header_not_invalid():
+    with tempfile.NamedTemporaryFile() as temp:
+        temp.write(
+            """## Header
+No extra line
+""".encode())
+        temp.flush()
+        ran, has_error = run_markdown_lint(temp.name)
+        assert ran and not has_error

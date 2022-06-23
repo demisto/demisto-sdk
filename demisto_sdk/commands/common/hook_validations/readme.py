@@ -260,7 +260,7 @@ class ReadMeValidator(BaseValidator):
             return True
         # use some heuristics to try to figure out if this is html
         return self.readme_content.startswith('<p>') or self.readme_content.startswith('<!DOCTYPE html>') or \
-            ('<thead>' in self.readme_content and '<tbody>' in self.readme_content)
+               ('<thead>' in self.readme_content and '<tbody>' in self.readme_content)
 
     @error_codes('RM101')
     def is_image_path_valid(self) -> bool:

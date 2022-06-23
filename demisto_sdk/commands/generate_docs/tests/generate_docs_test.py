@@ -459,6 +459,7 @@ MIRRORING_TEST = [({'display': 'CrowdStrike Falcon',
                    'mirroring_test_markdow_missing')
                   ]
 
+
 @pytest.mark.parametrize('yml_content, path_to_result', MIRRORING_TEST)
 def test_incident_mirroring_section(yml_content, path_to_result):
     """

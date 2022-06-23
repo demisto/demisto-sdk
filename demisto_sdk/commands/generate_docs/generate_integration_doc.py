@@ -15,7 +15,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_yaml,
                                                print_warning)
 from demisto_sdk.commands.generate_docs.common import (
     add_lines, build_example_dict, generate_numbered_section, generate_section,
-    generate_table_section, save_output, string_escape_md, generate_list_section)
+    generate_table_section, save_output, string_escape_md)
 from demisto_sdk.commands.integration_diff.integration_diff_detector import \
     IntegrationDiffDetector
 
@@ -232,9 +232,10 @@ def is_configuration_exists(yml_data: dict, display: str):
         the cong if display exists in the yml_data, else none.
 
     """
-    for conf in yml_data.get('configuration'):
-        if conf.get('display') == display:
-            return conf
+    if yml_data:
+        for conf in yml_data.get('configuration'):
+            if conf.get('display') == display:
+                return conf
     return None
 
 
@@ -250,7 +251,8 @@ def generate_mirroring_section(yaml_data: dict):
     integration_name = format(yaml_data['display'])
     directions = {
         'None': 'Turns off incident mirroring.',
-        'Incoming': 'Any changes in CrowdStrike Falcon incidents (state, status, tactics, techniques, objectives, tags, hosts.hostname) will be reflected in XSOAR incidents.',
+        'Incoming': 'Any changes in CrowdStrike Falcon incidents (state, status, tactics, techniques, objectives, '
+                    'tags, hosts.hostname) will be reflected in XSOAR incidents.',
         'Outgoing': 'Any changes in XSOAR incidents will be reflected in CrowdStrike Falcon incidents (tags, status).',
         'Incoming And Outgoing': 'Changes in XSOAR incidents and CrowdStrike Falcon incidents will be reflected in both directions.'
     }
@@ -285,7 +287,7 @@ def generate_mirroring_section(yaml_data: dict):
         dir_text = f'{index}. In the Mirroring Direction integration parameter, select in which direction the incidents should be mirrored:'
         index = index + 1
         section.append(dir_text)
-        section.extend(generate_table_section(title=None, data=options, horizontal_rule=False, numbered_section=True))
+        section.extend(generate_table_section(title='', data=options, horizontal_rule=False, numbered_section=True))
 
     # Close Mirrored XSOAR Incident param
 

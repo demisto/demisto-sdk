@@ -284,7 +284,7 @@ def generate_mirroring_section(yaml_data: dict):
     ]
 
     index = 4
-    if is_configuration_exists(yaml_data, 'incidents_fetch_query'):
+    if is_configuration_exists(yaml_data, ['incidents_fetch_query']):
         section.append(
             f'{index}. Optional: You can go to the Incidents fetch query parameter and select the query to fetch the incidents from {integration_name}.')
         index = index + 1
@@ -295,7 +295,7 @@ def generate_mirroring_section(yaml_data: dict):
 
     # Mirroring direction
 
-    direction_conf = is_configuration_exists(yaml_data, 'mirror_direction')
+    direction_conf = is_configuration_exists(yaml_data, ['mirror_direction'])
     if direction_conf:
         options = []
         for option in direction_conf.get('options', []):
@@ -307,12 +307,12 @@ def generate_mirroring_section(yaml_data: dict):
 
     # Close Mirrored XSOAR Incident param
 
-    if is_configuration_exists(yaml_data, 'close_incident'):
+    if is_configuration_exists(yaml_data, ['close_incident']):
         section.append(
             f'{index}. Optional: Check the Close Mirrored XSOAR Incident integration parameter to close the Cortex'
             f' XSOAR incident when the corresponding incident is closed in {integration_name}.')
         index = index + 1
-    if is_configuration_exists(yaml_data, 'close_out'):
+    if is_configuration_exists(yaml_data, ['close_out']):
         section.append(
             f'{index}. Optional: Check the Close Mirrored {integration_name} %%incident type%% integration'
             f' parameter to close the {integration_name} %%incident type%% when the corresponding Cortex XSOAR'

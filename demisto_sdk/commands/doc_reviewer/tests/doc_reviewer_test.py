@@ -14,6 +14,11 @@ from TestSuite.json_based import JSONBased
 from TestSuite.test_tools import ChangeCWD
 
 
+@pytest.fixture(autouse=True)
+def mock_run_markdown_lint(mocker):
+    mocker.patch('demisto_sdk.commands.doc_reviewer.doc_reviewer.run_markdown_lint', return_value=(False, None))
+
+
 class TestDocReviewFilesAreFound:
     """
     Tests scenarios in which files are found before performing doc-review.
@@ -79,7 +84,8 @@ class TestDocReviewFilesAreFound:
             Ensure the files that git reports are the same found that are meant to be doc-reviewed.
         """
         changed_files_mock = [
-            valid_spelled_content_pack.integrations[0].yml.path, valid_spelled_content_pack.scripts[0].yml.path
+            valid_spelled_content_pack.integrations[0].yml.path,
+            valid_spelled_content_pack.scripts[0].yml.path
         ] + [rn.path for rn in valid_spelled_content_pack.release_notes]
 
         mocker.patch.object(
@@ -169,7 +175,7 @@ class TestDocReviewOnReleaseNotesOnly:
         assert set(doc_reviewer.files) == {rn.path for rn in valid_spelled_content_pack.release_notes}
 
     def test_get_invalid_files_from_git_with_release_notes(
-        self, mocker, malformed_integration_yml, malformed_incident_field
+            self, mocker, malformed_integration_yml, malformed_incident_field
     ):
         """
         Given -
@@ -542,7 +548,8 @@ def test_having_two_known_words_files(repo, file_content, unknown_words, known_w
 
 @pytest.mark.parametrize('file_content, unknown_words, known_words_files_contents, packs_known_words_content, '
                          'review_success',
-                         [("Added the nomnomone, nomnomtwo.", set(), [["nomnomone"]], ["[known_words]", "nomnomtwo"], True),
+                         [("Added the nomnomone, nomnomtwo.", set(), [["nomnomone"]], ["[known_words]", "nomnomtwo"],
+                           True),
                           ("Added the nomnomone, nomnomtwo.", {"nomnomone"}, [], ["[known_words]", "nomnomtwo"], False),
                           ("Added the nomnomone, nomnomtwo, nomnomthree.", {"nomnomthree"}, [["nomnomone"]],
                            ["[known_words]", "nomnomtwo"], False),

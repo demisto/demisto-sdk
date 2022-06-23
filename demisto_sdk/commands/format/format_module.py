@@ -78,10 +78,10 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'genericdefinition': GenericDefinitionJSONFormat,
     JOB: JobJSONFormat,
     'readme': ReadmeFormat,
+    'releasenotes': ReadmeFormat,
 }
 
-UNFORMATTED_FILES = ['releasenotes',
-                     'changelog',
+UNFORMATTED_FILES = ['changelog',
                      'image',
                      'javascriptfile',
                      'powershellfile',

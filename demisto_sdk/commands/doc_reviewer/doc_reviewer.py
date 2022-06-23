@@ -22,6 +22,7 @@ from demisto_sdk.commands.common.content.objects.abstract_objects import \
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
     YAMLContentObject
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.mardown_lint import run_markdown_lint
 from demisto_sdk.commands.common.tools import (add_default_pack_known_words,
                                                find_type)
 from demisto_sdk.commands.doc_reviewer.known_words import KNOWN_WORDS
@@ -30,6 +31,7 @@ from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
 
 class DocReviewer:
     """Perform a spell check on the given .yml or .md file.
+    Also Performs a lint check on .md files
     """
 
     SUPPORTED_FILE_TYPES = [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK, FileType.README,
@@ -69,7 +71,7 @@ class DocReviewer:
         self.known_pack_words_file_path = ''
 
         self.current_pack = None
-        self.files: list = []
+        self. files: list = []
         self.spellchecker = SpellChecker()
         self.unknown_words = {}  # type:Dict
         self.no_camel_case = no_camel_case
@@ -225,6 +227,7 @@ class DocReviewer:
             return True
 
         self.add_known_words()
+        failed_lint = False
 
         for file in self.files:
             click.echo(f'\nChecking file {file}')
@@ -234,6 +237,10 @@ class DocReviewer:
             self.unknown_words = {}
             if file.endswith('.md'):
                 self.check_md_file(file)
+                has_run, has_error = run_markdown_lint(file)
+                if has_run and has_error:
+                    click.secho(f'Failed markdown linting for file {file}.', fg='bright_red')
+                    failed_lint = True
 
             elif file.endswith('.yml'):
                 self.check_yaml(file)
@@ -250,7 +257,7 @@ class DocReviewer:
                 self.files_without_misspells.add(file)
 
         self.print_file_report()
-        if (self.found_misspelled or self.malformed_rn_files) and not self.no_failure:
+        if (self.found_misspelled or self.malformed_rn_files or failed_lint) and not self.no_failure:
             return False
 
         return True

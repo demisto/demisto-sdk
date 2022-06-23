@@ -152,7 +152,8 @@ def generate_integration_doc(
                                                                         command_permissions_dict, command=command)
             docs.extend(command_section)
             # Mirroring Incident
-            docs.extend(generate_mirroring_section(yml_data))
+            if is_configuration_exists(yml_data, 'Mirroring Direction'):
+                docs.extend(generate_mirroring_section(yml_data))
             # breaking changes
             if integration_version and not skip_breaking_changes:
                 docs.extend(generate_versions_differences_section(input_path, old_version,

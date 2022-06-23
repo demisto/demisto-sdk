@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from typing import Dict, List
 
 import pytest
@@ -10,12 +11,11 @@ from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.generate_docs.generate_integration_doc import (
     append_or_replace_command_in_docs, disable_md_autolinks,
     generate_commands_section, generate_integration_doc,
-    generate_setup_section, generate_single_command_section,
-    get_command_examples, generate_mirroring_section)
+    generate_mirroring_section, generate_setup_section,
+    generate_single_command_section, get_command_examples)
 from demisto_sdk.commands.generate_docs.generate_script_doc import \
     generate_script_doc
 from TestSuite.pack import Pack
-from pathlib import Path
 
 json = JSON_Handler()
 

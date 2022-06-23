@@ -37,12 +37,12 @@ Skip generating of breaking changes section.
 * If no `output` given, the README.md file will be generated in the `input` file repository.
 * If no `additionalinfo` is provided for a commonly-used parameter (for example, `API Key`), a matching default value
   will be used, see the parameters and defaults in `default_additional_information.json`.
-* If an **incident mirroring** is implemented in an integration make sure that the *isremotesyncin* and *isremotesyncout* params set to true in the yml, and the following configuration params (if in use) are named as stated in order for the **incident mirroring** section to be generated:
+* In order to generate an **incident mirroring** section, make sure that the *isremotesyncin* and/or *isremotesyncout* parameters are set to true in the YML file. In addition, the following configuration parameters (if used) should be named as stated:
   * incidents_fetch_query
-  * Mirroring tag
+  * Mirroring tags - the available names are 'comment_tag', 'work_notes_tag' and 'file_tag'
   * mirror_direction
   * close_incident
-  * close_out - (oposite to close_incident)
+  * close_out - (opposite to close_incident)
 ### Examples
 ```
 demisto-sdk generate-docs -i Packs/MyPack/Integrations/MyInt/MyInt.yml -e Packs/MyPack/Integrations/MyInt/command_exmaple.txt

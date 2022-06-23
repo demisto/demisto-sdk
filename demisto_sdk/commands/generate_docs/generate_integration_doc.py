@@ -236,7 +236,7 @@ def trigger_generate_mirroring_section(yml_data: dict):
     script_data = yml_data.get('script', {})
     sync_in = script_data.get('isremotesyncout', False)
     sync_out = script_data.get('isremotesyncin', False)
-    return sync_out and sync_in
+    return sync_out or sync_in
 
 
 def is_configuration_exists(yml_data: dict, names: list):
@@ -268,9 +268,9 @@ def generate_mirroring_section(yaml_data: dict):
     integration_name = format(yaml_data['display'])
     directions = {
         'None': 'Turns off incident mirroring.',
-        'Incoming': f'Any changes in {integration_name} incidents (%%mirroring incoming fields%%) will be reflected in XSOAR incidents.',
-        'Outgoing': f'Any changes in XSOAR incidents will be reflected in {integration_name} incidents (%%mirroring outgoing fields%%).',
-        'Incoming And Outgoing': f'Changes in XSOAR incidents and {integration_name} incidents will be reflected in both directions.'
+        'Incoming': f'Any changes in {integration_name} %%incident type%%% (%%mirroring incoming fields%%) will be reflected in XSOAR incidents.',
+        'Outgoing': f'Any changes in XSOAR incidents will be reflected in {integration_name} %%incident type%%% (%%mirroring outgoing fields%%).',
+        'Incoming And Outgoing': f'Changes in XSOAR incidents and {integration_name} %%incident type%%% will be reflected in both directions.'
     }
 
     section = [

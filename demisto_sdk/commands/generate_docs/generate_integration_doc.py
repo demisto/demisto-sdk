@@ -21,7 +21,6 @@ from demisto_sdk.commands.integration_diff.integration_diff_detector import \
 
 json = JSON_Handler()
 
-
 CREDENTIALS = 9
 
 
@@ -152,7 +151,7 @@ def generate_integration_doc(
             command_section, command_errors = generate_commands_section(yml_data, example_dict,
                                                                         command_permissions_dict, command=command)
             docs.extend(command_section)
-            #Mirroring Incident
+            # Mirroring Incident
             docs.extend(generate_mirroring_section(yml_data))
             # breaking changes
             if integration_version and not skip_breaking_changes:
@@ -187,6 +186,7 @@ with (Path(__file__).parent / 'default_additional_information.json').open() as f
     # Case insensitive to catch both `API key` and `API Key`, giving both the same value.
     default_additional_information: CaseInsensitiveDict = CaseInsensitiveDict(json.load(f))
 
+
 def generate_setup_section(yaml_data: dict):
     default_additional_info: CaseInsensitiveDict = load_default_additional_info_dict()
 
@@ -218,6 +218,7 @@ def generate_setup_section(yaml_data: dict):
     section.append('4. Click **Test** to validate the URLs, token, and connection.')
 
     return section
+
 
 # Incident Mirroring
 
@@ -266,10 +267,12 @@ def generate_mirroring_section(yaml_data: dict):
 
     index = 4
     if is_configuration_exists(yaml_data, 'Incidents fetch query'):
-        section.append(f'{index}. Optional: You can go to the Incidents fetch query parameter and select the query to fetch the incidents from {integration_name}.')
+        section.append(
+            f'{index}. Optional: You can go to the Incidents fetch query parameter and select the query to fetch the incidents from {integration_name}.')
         index = index + 1
     if is_configuration_exists(yaml_data, 'Mirroring tag'):
-        section.append(f'{index}. Optional: You can go to the Mirroring tag parameter and select the tags used to mark incident entries to be mirrored.')
+        section.append(f'{index}. Optional: You can go to the Mirroring tag parameter and select the tags used to '
+                       f'mark incident entries to be mirrored.')
         index = index + 1
 
     # Mirroring direction
@@ -287,23 +290,23 @@ def generate_mirroring_section(yaml_data: dict):
     # Close Mirrored XSOAR Incident param
 
     if is_configuration_exists(yaml_data, 'Close Mirrored XSOAR Incident'):
-        section.append(f'{index}. Optional: Check the Close Mirrored XSOAR Incident integration parameter to close the Cortex'
-                       f' XSOAR incident when the corresponding incident is closed in {integration_name}.')
+        section.append(
+            f'{index}. Optional: Check the Close Mirrored XSOAR Incident integration parameter to close the Cortex'
+            f' XSOAR incident when the corresponding incident is closed in {integration_name}.')
         index = index + 1
     if is_configuration_exists(yaml_data, f'Close Mirrored {integration_name} Incident or Detection'):
-        section.append(f'{index}. Optional: Check the Close Mirrored {integration_name} Incident or Detection integration'
-                       f' parameter to close the {integration_name} incident when the corresponding Cortex XSOAR'
-                       f' incident is closed.')
-
+        section.append(
+            f'{index}. Optional: Check the Close Mirrored {integration_name} Incident or Detection integration'
+            f' parameter to close the {integration_name} incident when the corresponding Cortex XSOAR'
+            f' incident is closed.')
 
     section.extend(['',
                     'Newly fetched incidents will be mirrored in the chosen direction.'
                     ' However, this selection does not affect existing incidents.',
-                   f'**Important Note:** To ensure the mirroring works as expected, mappers are required,'
-                   f' both for incoming and outgoing, to map the expected fields in XSOAR and {integration_name}.'])
+                    f'**Important Note:** To ensure the mirroring works as expected, mappers are required,'
+                    f' both for incoming and outgoing, to map the expected fields in XSOAR and {integration_name}.'])
 
     return section
-
 
 
 # Commands
@@ -454,7 +457,8 @@ def generate_versions_differences_section(input_path, old_version, display_name)
     ]
 
     if not old_version:
-        user_response = str(input('Enter the path of the previous integration version file if any. Press Enter to skip.\n'))
+        user_response = str(
+            input('Enter the path of the previous integration version file if any. Press Enter to skip.\n'))
 
         if user_response:
             old_version = user_response
@@ -544,7 +548,8 @@ def disable_md_autolinks(markdown: str) -> str:
     """
     if not markdown:
         return markdown
-    return re.sub(r'\b(?<!\)\[)(https?)://([\w\d]+?\.[\w\d]+?)\b', r'\1:<span>//</span>\2', markdown, flags=re.IGNORECASE)
+    return re.sub(r'\b(?<!\)\[)(https?)://([\w\d]+?\.[\w\d]+?)\b', r'\1:<span>//</span>\2', markdown,
+                  flags=re.IGNORECASE)
 
 
 def generate_command_example(cmd_from_yaml, cmd_example=None):

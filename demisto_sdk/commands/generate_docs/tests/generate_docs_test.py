@@ -461,6 +461,16 @@ MIRRORING_TEST = [({'display': 'CrowdStrike Falcon',
 
 @pytest.mark.parametrize('yml_content, path_to_result', MIRRORING_TEST)
 def test_incident_mirroring_section(yml_content, path_to_result):
+    """
+    Given
+    - An integration that implements incident mirroring.
+
+    When
+    - Generating docs for an integration.
+
+    Then
+    -  Ensure that the mirroring section being generated as expected.
+    """
     test_files_path = Path(__file__, git_path(), 'demisto_sdk', 'commands', 'generate_docs', 'tests',
                            'test_files', path_to_result)
     section = generate_mirroring_section(yml_content)

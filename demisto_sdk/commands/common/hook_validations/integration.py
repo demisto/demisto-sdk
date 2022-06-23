@@ -1267,7 +1267,8 @@ class IntegrationValidator(ContentEntityValidator):
     @error_codes('IN137')
     def is_valid_py_file_names(self):
         # Gets the all integration .py files that may have the integration name as base name
-        excluded_files = ['demistomock.py', 'conftest.py', 'CommonServerPython.py', 'CommonServerUserPython.py']
+        excluded_files = ['demistomock.py', 'conftest.py', 'CommonServerPython.py', 'CommonServerUserPython.py',
+                          '.vulture_whitelist.py']
         files_to_check = get_files_in_dir(os.path.dirname(self.file_path), ['py'], False)
         invalid_files = []
         integrations_folder = os.path.basename(os.path.dirname(self.file_path))

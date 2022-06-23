@@ -4,35 +4,20 @@ from distutils.version import LooseVersion
 from typing import Any, Dict, Iterator, Optional, Union
 
 import demisto_client
+import regex
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
-                                                   CONNECTIONS_DIR,
-                                                   CORRELATION_RULES_DIR,
-                                                   DASHBOARDS_DIR,
-                                                   DOC_FILES_DIR,
-                                                   GENERIC_DEFINITIONS_DIR,
-                                                   GENERIC_FIELDS_DIR,
-                                                   GENERIC_MODULES_DIR,
-                                                   GENERIC_TYPES_DIR,
-                                                   INCIDENT_FIELDS_DIR,
-                                                   INCIDENT_TYPES_DIR,
-                                                   INDICATOR_FIELDS_DIR,
-                                                   INDICATOR_TYPES_DIR,
-                                                   INTEGRATIONS_DIR, JOBS_DIR,
-                                                   LAYOUTS_DIR, LISTS_DIR,
-                                                   MODELING_RULES_DIR,
-                                                   PACK_VERIFY_KEY,
-                                                   PARSING_RULES_DIR,
-                                                   PLAYBOOKS_DIR,
-                                                   PRE_PROCESS_RULES_DIR,
-                                                   RELEASE_NOTES_DIR,
-                                                   REPORTS_DIR, SCRIPTS_DIR,
-                                                   TEST_PLAYBOOKS_DIR,
-                                                   TOOLS_DIR, TRIGGER_DIR,
-                                                   WIDGETS_DIR, WIZARDS_DIR,
-                                                   XSIAM_DASHBOARDS_DIR,
-                                                   XSIAM_REPORTS_DIR, FileType)
+from demisto_sdk.commands.common.constants import (
+    CLASSIFIERS_DIR, CONNECTIONS_DIR, CORRELATION_RULES_DIR, DASHBOARDS_DIR,
+    DEPRECATED_DESC_REGEX, DEPRECATED_NO_REPLACE_DESC_REGEX, DOC_FILES_DIR,
+    GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR,
+    GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
+    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR,
+    LAYOUTS_DIR, LISTS_DIR, MODELING_RULES_DIR, PACK_NAME_DEPRECATED_REGEX,
+    PACK_VERIFY_KEY, PARSING_RULES_DIR, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
+    RELEASE_NOTES_DIR, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR,
+    TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR, XSIAM_DASHBOARDS_DIR,
+    XSIAM_REPORTS_DIR, FileType)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, Classifier, ClassifierMapper, Connection,
     Contributors, CorrelationRule, Dashboard, DocFile, GenericDefinition,
@@ -80,7 +65,9 @@ class Pack:
             # but are needed in the pack's zip.
             if self._filter_items_by_id_set and content_object.type().value not in [FileType.RELEASE_NOTES.value,
                                                                                     FileType.RELEASE_NOTES_CONFIG.value,
-                                                                                    FileType.TEST_PLAYBOOK.value]:
+                                                                                    FileType.TEST_PLAYBOOK.value,
+                                                                                    FileType.TEST_SCRIPT.value,
+                                                                                    ]:
 
                 object_id = content_object.get_id()
                 if is_object_in_id_set(object_id, self._pack_info_from_id_set):
@@ -118,14 +105,26 @@ class Pack:
                                                           suffix="yml")
 
     @property
+    def integrations_count(self) -> int:
+        return len(tuple(self.integrations))
+
+    @property
     def scripts(self) -> Iterator[Script]:
         return self._content_files_list_generator_factory(dir_name=SCRIPTS_DIR,
                                                           suffix="yml")
 
     @property
+    def scripts_count(self) -> int:
+        return len(tuple(self.scripts))
+
+    @property
     def playbooks(self) -> Iterator[Playbook]:
         return self._content_files_list_generator_factory(dir_name=PLAYBOOKS_DIR,
                                                           suffix="yml")
+
+    @property
+    def playbooks_count(self) -> int:
+        return len(tuple(self.playbooks))
 
     @property
     def reports(self) -> Iterator[Report]:
@@ -372,6 +371,62 @@ class Pack:
             logger.info(f'Signed {self.path.name} pack successfully')
         except Exception as error:
             logger.error(f'Error while trying to sign pack {self.path.name}.\n {error}')
+
+    def _are_integrations_or_scripts_or_playbooks_exist(self) -> int:
+        """
+        Checks whether an integration/script/playbook exist in the pack.
+
+        Returns:
+            int: number > 0 if there is at least one integration/script/playbook in the pack, 0 if not.
+        """
+        return self.integrations_count or self.scripts_count or self.playbooks_count
+
+    def is_deprecated(self) -> bool:
+        """
+        Returns whether a pack is deprecated.
+        """
+        pack_metadata = self.pack_metadata_as_dict()
+        pack_name, pack_desc = pack_metadata.get('name', ''), pack_metadata.get('description', '')
+
+        return regex.match(
+            PACK_NAME_DEPRECATED_REGEX, pack_name
+        ) and (
+            regex.match(DEPRECATED_NO_REPLACE_DESC_REGEX, pack_desc) or regex.match(DEPRECATED_DESC_REGEX, pack_desc)
+        )
+
+    def should_be_deprecated(self) -> Optional[bool]:
+        """
+        Determines if a pack should be deprecated if all
+        its content items (playbooks/scripts/integrations) are deprecated.
+
+        Returns:
+            Optional[bool]: True if pack should be deprecated according to the above, False if not,
+                None in case the pack is already deprecated.
+        """
+        def _get_deprecated_content_entities_count(content_entities) -> int:
+            return len([entity for entity in content_entities if entity.is_deprecated])
+
+        if self.is_deprecated():
+            return None
+
+        if self._are_integrations_or_scripts_or_playbooks_exist():
+            return (
+                self.integrations_count == _get_deprecated_content_entities_count(self.integrations)
+            ) and (
+                self.playbooks_count == _get_deprecated_content_entities_count(self.playbooks)
+            ) and (
+                self.scripts_count == _get_deprecated_content_entities_count(self.scripts)
+            )
+        # if there aren't any playbooks/scripts/integrations -> no deprecated content -> pack shouldn't be deprecated.
+        return False
+
+    def pack_metadata_as_dict(self) -> Dict:
+        """
+        Get content of the pack metadata.
+        """
+        if pack_metadata := self.pack_metadata:
+            return pack_metadata.to_dict()
+        return {}
 
     def is_server_version_ge(self, client, server_version_to_check):
         server_version = get_demisto_version(client)

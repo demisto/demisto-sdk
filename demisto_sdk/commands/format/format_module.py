@@ -38,6 +38,8 @@ from demisto_sdk.commands.format.update_job import JobJSONFormat
 from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
 from demisto_sdk.commands.format.update_lists import ListsFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
+from demisto_sdk.commands.format.update_pack_metadata import \
+    PackMetadataJsonFormat
 from demisto_sdk.commands.format.update_playbook import (PlaybookYMLFormat,
                                                          TestPlaybookYMLFormat)
 from demisto_sdk.commands.format.update_pre_process_rules import \
@@ -78,6 +80,7 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'genericdefinition': GenericDefinitionJSONFormat,
     JOB: JobJSONFormat,
     'readme': ReadmeFormat,
+    'metadata': PackMetadataJsonFormat,
 }
 
 UNFORMATTED_FILES = ['releasenotes',
@@ -149,12 +152,11 @@ def format_manager(input: str = None,
     log_list = []
     error_list: List[Tuple[int, int]] = []
     if files:
-        format_excluded_file = excluded_files + ['pack_metadata.json']
         for file in files:
             file_path = file.replace('\\', '/')
             file_type = find_type(file_path, clear_cache=clear_cache)
 
-            current_excluded_files = format_excluded_file[:]
+            current_excluded_files = excluded_files[:]
             dirname = os.path.dirname(file_path)
             if dirname.endswith('CommonServerPython'):
                 current_excluded_files.remove('CommonServerPython.py')

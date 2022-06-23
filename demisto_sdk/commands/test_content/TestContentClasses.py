@@ -2204,16 +2204,16 @@ class ServerContext:
 
     def check_if_can_create_manual_alerts(self, client):
         """
-        In XSIAM we can't create new incident/alert using API call.
+        In XSIAM we can't create a new incident/alert using API call.
         We need a correlation rule in order to create an alert.
-        We want to create alert manually, when we send an API call to XSIAM server to create new alert.
+        We want to create an alert manually, when we send an API call to XSIAM server to create a new alert.
         Server check which integration sent a new alert, if the request was sent manually and not from integration it
-        sets "sourceBrand" header to be "Manual". XSIAM Server looks for correlation rule for such sourceBrand,
-        and if there is no such correlation rule, no alert will be crated.
-        If there is correlation rule for "Manual" integration the allert will be created.
+        sets "sourceBrand" header to be "Manual". XSIAM Server looks for a correlation rule for such sourceBrand,
+        and if there is no such correlation rule, no alert will be created.
+        If there is a correlation rule for "Manual" integration the allert will be created.
 
         If this step fails please create an integration with id and name "Manual", set isFetch: true for such
-        integration and make sure that corresponding correlation rule created.
+        integration and make sure that the corresponding correlation rule is created.
         """
         body = {
             'query': 'id:"Manual"'

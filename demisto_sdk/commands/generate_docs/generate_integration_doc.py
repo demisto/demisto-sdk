@@ -152,7 +152,7 @@ def generate_integration_doc(
                                                                         command_permissions_dict, command=command)
             docs.extend(command_section)
             # Mirroring Incident
-            if generate_mirroring_section(yml_data):
+            if trigger_generate_mirroring_section(yml_data):
                 docs.extend(generate_mirroring_section(yml_data))
             # breaking changes
             if integration_version and not skip_breaking_changes:
@@ -223,7 +223,7 @@ def generate_setup_section(yaml_data: dict):
 
 # Incident Mirroring
 
-def generate_mirroring_section(yml_data: dict):
+def trigger_generate_mirroring_section(yml_data: dict):
     """
 
     Args:
@@ -276,7 +276,8 @@ def generate_mirroring_section(yaml_data: dict):
     section = [
         '## Incident Mirroring',
         '',
-        f'You can enable incident mirroring between Cortex XSOAR incidents and {integration_name} %%incident type%% (available from Cortex XSOAR version 6.0.0).',
+        f'You can enable incident mirroring between Cortex XSOAR incidents and {integration_name} %%incident type%% ('
+        f'available from Cortex XSOAR version 6.0.0).',
         'To setup the mirroring follow these instructions:',
         '1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
         f'2. Search for {integration_name} and select your integration instance.',

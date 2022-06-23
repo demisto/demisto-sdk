@@ -2233,6 +2233,7 @@ class ServerContext:
         all_configurations = res['configurations']
         for instance in all_configurations:
             if instance.get('id') == "Manual":
+                self.build_context.logging_module.info('"Manual" integration found in XSIAM instance.')
                 return
 
         self.build_context.logging_module.error('No "Manual" integration found in XSIAM instance. '

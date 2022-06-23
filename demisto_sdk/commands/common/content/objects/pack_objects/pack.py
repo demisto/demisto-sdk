@@ -381,7 +381,7 @@ class Pack:
         """
         return self.integrations_count or self.scripts_count or self.playbooks_count
 
-    def is_pack_deprecated(self) -> bool:
+    def is_deprecated(self) -> bool:
         """
         Returns whether a pack is deprecated.
         """
@@ -406,7 +406,7 @@ class Pack:
         def _get_deprecated_content_entities_count(content_entities) -> int:
             return len([entity for entity in content_entities if entity.is_deprecated])
 
-        if self.is_pack_deprecated():
+        if self.is_deprecated():
             return None
 
         if self._are_integrations_or_scripts_or_playbooks_exist():

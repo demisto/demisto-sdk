@@ -303,8 +303,8 @@ def generate_mirroring_section(yaml_data: dict):
             f' incident is closed.')
 
     section.extend(['',
-                    'Newly fetched incidents will be mirrored in the chosen direction.'
-                    ' However, this selection does not affect existing incidents.',
+                    'Newly fetched incidents will be mirrored in the chosen direction. However, this selection does '
+                    'not affect existing incidents.',
                     f'**Important Note:** To ensure the mirroring works as expected, mappers are required,'
                     f' both for incoming and outgoing, to map the expected fields in XSOAR and {integration_name}.'])
 

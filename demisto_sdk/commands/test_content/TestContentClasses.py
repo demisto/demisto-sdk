@@ -2203,15 +2203,40 @@ class ServerContext:
             self.build_context.logging_module.execute_logs()
 
     def check_if_can_create_manual_alerts(self, client):
+        """
+        In XSIAM we can't create new incident/alert using API call.
+        We need a correlation rule in order to create an alert.
+        We want to create alert manually, when we send an API call to XSIAM server to create new alert.
+        Server check which integration sent a new alert, if the request was sent manually and not from integration it
+        sets "sourceBrand" header to be "Manual". XSIAM Server looks for correlation rule for such sourceBrand,
+        and if there is no such correlation rule, no alert will be crated.
+        If there is correlation rule for "Manual" integration the allert will be created.
+
+        If this step fails please create an integration with id and name "Manual", set isFetch: true for such
+        integration and make sure that corresponding correlation rule created.
+        """
         body = {
             'query': 'id:"Manual"'
         }
         try:
-            res_raw = demisto_client.generic_request_func(self=client, path='/settings/integration/search',
-                                                          method='POST', body=body)
+            res_raw = demisto_client.generic_request_func(self=client, method='POST',
+                                                          path='/settings/integration/search',
+                                                          body=body)
+            res = ast.literal_eval(res_raw[0])
         except ApiException:
-            # todo: add reason
-            self.build_context.logging_module.exception(f'failed to get integration Manual configuration')
+            self.build_context.logging_module.exception('Failed to get integrations configuration.')
+        if int(res_raw[1]) != 200:
+            self.build_context.logging_module.error(
+                f'Failed to get integrations configuration with status code: {res_raw[1]}')
+            return
+
+        all_configurations = res['configurations']
+        for instance in all_configurations:
+            if instance.get('id') == "Manual":
+                return
+
+        self.build_context.logging_module.error('No "Manual" integration found in XSIAM instance. '
+                                                'Please add it in order to create Manual Correlation Rule.')
 
 
 def replace_external_playbook_configuration(client: DefaultApi, external_playbook_configuration: dict,

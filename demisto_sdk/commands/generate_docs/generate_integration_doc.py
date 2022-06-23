@@ -246,14 +246,14 @@ def is_configuration_exists(yml_data: dict, names: list):
         names: list of configuration params to search for
 
     Returns:
-        the first cong if name exists in the yml_data, else none.
+        list of all configurations found.
 
     """
-
+    confs = []
     for conf in yml_data.get('configuration', []):
         if conf.get('name', '') in names:
-            return conf
-    return None
+            confs.append(conf)
+    return confs
 
 
 def generate_mirroring_section(yaml_data: dict):
@@ -289,9 +289,10 @@ def generate_mirroring_section(yaml_data: dict):
         section.append(
             f'{index}. Optional: You can go to the Incidents fetch query parameter and select the query to fetch the incidents from {integration_name}.')
         index = index + 1
-    if is_configuration_exists(yaml_data, ['comment_tag', 'work_notes_tag', 'file_tag']):
-        section.append(f'{index}. Optional: You can go to the Mirroring tag parameter and select the tags used to '
-                       f'mark incident entries to be mirrored.')
+    tags = is_configuration_exists(yaml_data, ['comment_tag', 'work_notes_tag', 'file_tag'])
+    if tags:
+        section.append(f'{index}. Optional: You can go to the Mirroring tags parameter and select the tags used to '
+                       f'mark incident entries to be mirrored. Available tags are {tags}')
         index = index + 1
 
     # Mirroring direction

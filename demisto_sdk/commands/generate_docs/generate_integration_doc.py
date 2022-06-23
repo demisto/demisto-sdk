@@ -152,7 +152,7 @@ def generate_integration_doc(
                                                                         command_permissions_dict, command=command)
             docs.extend(command_section)
             # Mirroring Incident
-            if is_configuration_exists(yml_data, 'Mirroring Direction'):
+            if generate_mirroring_section(yml_data):
                 docs.extend(generate_mirroring_section(yml_data))
             # breaking changes
             if integration_version and not skip_breaking_changes:
@@ -223,19 +223,35 @@ def generate_setup_section(yaml_data: dict):
 
 # Incident Mirroring
 
-def is_configuration_exists(yml_data: dict, display: str):
+def generate_mirroring_section(yml_data: dict):
+    """
+
+    Args:
+        yml_data: yml data of the integration.
+
+    Returns:
+        true if mirroring section should be generated.
+
+    """
+    script_data = yml_data.get('script', {})
+    sync_in = script_data.get('isremotesyncout', False)
+    sync_out = script_data.get('isremotesyncin', False)
+    return sync_out and sync_in
+
+
+def is_configuration_exists(yml_data: dict, names: list):
     """
     Args:
         yml_data: yml data of the integration
-        display: configuration to search
+        names: list of configuration params to search for
 
     Returns:
-        the cong if display exists in the yml_data, else none.
+        the first cong if name exists in the yml_data, else none.
 
     """
 
     for conf in yml_data.get('configuration', []):
-        if conf.get('display') == display:
+        if conf.get('name', '') in names:
             return conf
     return None
 
@@ -252,10 +268,9 @@ def generate_mirroring_section(yaml_data: dict):
     integration_name = format(yaml_data['display'])
     directions = {
         'None': 'Turns off incident mirroring.',
-        'Incoming': 'Any changes in CrowdStrike Falcon incidents (state, status, tactics, techniques, objectives, '
-                    'tags, hosts.hostname) will be reflected in XSOAR incidents.',
-        'Outgoing': 'Any changes in XSOAR incidents will be reflected in CrowdStrike Falcon incidents (tags, status).',
-        'Incoming And Outgoing': 'Changes in XSOAR incidents and CrowdStrike Falcon incidents will be reflected in both directions.'
+        'Incoming': f'Any changes in {integration_name} incidents (%%mirroring incoming fields%%) will be reflected in XSOAR incidents.',
+        'Outgoing': f'Any changes in XSOAR incidents will be reflected in {integration_name} incidents (%%mirroring outgoing fields%%).',
+        'Incoming And Outgoing': f'Changes in XSOAR incidents and {integration_name} incidents will be reflected in both directions.'
     }
 
     section = [
@@ -269,18 +284,18 @@ def generate_mirroring_section(yaml_data: dict):
     ]
 
     index = 4
-    if is_configuration_exists(yaml_data, 'Incidents fetch query'):
+    if is_configuration_exists(yaml_data, 'incidents_fetch_query'):
         section.append(
             f'{index}. Optional: You can go to the Incidents fetch query parameter and select the query to fetch the incidents from {integration_name}.')
         index = index + 1
-    if is_configuration_exists(yaml_data, 'Mirroring tag'):
+    if is_configuration_exists(yaml_data, ['comment_tag', 'work_notes_tag', 'file_tag']):
         section.append(f'{index}. Optional: You can go to the Mirroring tag parameter and select the tags used to '
                        f'mark incident entries to be mirrored.')
         index = index + 1
 
     # Mirroring direction
 
-    direction_conf = is_configuration_exists(yaml_data, 'Mirroring Direction')
+    direction_conf = is_configuration_exists(yaml_data, 'mirror_direction')
     if direction_conf:
         options = []
         for option in direction_conf.get('options', []):
@@ -292,12 +307,12 @@ def generate_mirroring_section(yaml_data: dict):
 
     # Close Mirrored XSOAR Incident param
 
-    if is_configuration_exists(yaml_data, 'Close Mirrored XSOAR Incident'):
+    if is_configuration_exists(yaml_data, 'close_incident'):
         section.append(
             f'{index}. Optional: Check the Close Mirrored XSOAR Incident integration parameter to close the Cortex'
             f' XSOAR incident when the corresponding incident is closed in {integration_name}.')
         index = index + 1
-    if is_configuration_exists(yaml_data, f'Close Mirrored {integration_name} Incident'):
+    if is_configuration_exists(yaml_data, 'close_out'):
         section.append(
             f'{index}. Optional: Check the Close Mirrored {integration_name} %%incident type%% integration'
             f' parameter to close the {integration_name} %%incident type%% when the corresponding Cortex XSOAR'

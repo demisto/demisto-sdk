@@ -261,7 +261,7 @@ def generate_mirroring_section(yaml_data: dict):
     section = [
         '## Incident Mirroring',
         '',
-        f'You can enable incident mirroring between Cortex XSOAR incidents and {integration_name} incidents (available from Cortex XSOAR version 6.0.0).',
+        f'You can enable incident mirroring between Cortex XSOAR incidents and {integration_name} %%incident type%% (available from Cortex XSOAR version 6.0.0).',
         'To setup the mirroring follow these instructions:',
         '1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
         f'2. Search for {integration_name} and select your integration instance.',
@@ -297,10 +297,10 @@ def generate_mirroring_section(yaml_data: dict):
             f'{index}. Optional: Check the Close Mirrored XSOAR Incident integration parameter to close the Cortex'
             f' XSOAR incident when the corresponding incident is closed in {integration_name}.')
         index = index + 1
-    if is_configuration_exists(yaml_data, f'Close Mirrored {integration_name} Incident or Detection'):
+    if is_configuration_exists(yaml_data, f'Close Mirrored {integration_name} Incident'):
         section.append(
-            f'{index}. Optional: Check the Close Mirrored {integration_name} Incident or Detection integration'
-            f' parameter to close the {integration_name} incident when the corresponding Cortex XSOAR'
+            f'{index}. Optional: Check the Close Mirrored {integration_name} %%incident type%% integration'
+            f' parameter to close the {integration_name} %%incident type%% when the corresponding Cortex XSOAR'
             f' incident is closed.')
 
     section.extend(['',

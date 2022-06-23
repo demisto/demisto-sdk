@@ -42,7 +42,7 @@ Skip generating of breaking changes section.
   * Mirroring tag
   * Mirroring Direction
   * Close Mirrored XSOAR Incident
-  * Close Mirrored *Integration Display Name* Incident or Detection
+  * Close Mirrored *Integration Display Name* Incident
 ### Examples
 ```
 demisto-sdk generate-docs -i Packs/MyPack/Integrations/MyInt/MyInt.yml -e Packs/MyPack/Integrations/MyInt/command_exmaple.txt

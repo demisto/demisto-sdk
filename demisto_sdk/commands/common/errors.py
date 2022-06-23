@@ -303,6 +303,7 @@ ERROR_CODE = {
     "pack_metadata_missing_categories": {'code': "PA129", 'ui_applicable': False, 'related_field': ''},
     "wrong_version_format": {'code': "PA130", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_version_diff_from_rn": {'code': "PA131", 'ui_applicable': False, 'related_field': ''},
+    "pack_should_be_deprecated": {'code': "PA132", 'ui_applicable': False, 'related_field': ''},
 
     # PB - Playbooks
     "playbook_cant_have_rolename": {'code': "PB100", 'ui_applicable': True, 'related_field': 'rolename'},
@@ -2367,3 +2368,12 @@ class Errors:
     @error_code_decorator
     def wizard_integrations_without_playbooks(integrations: set):
         return f'The following integrations are missing a set_playbook: {integrations}'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_should_be_deprecated(pack_name: str):
+        return f'Pack {pack_name} should be deprecated, as all its integrations, playbooks and scripts are' \
+               f' deprecated.\nThe name of the pack in the pack_metadata.json should end with (Deprecated)\n' \
+               f'The description of the pack in the pack_metadata.json should be one of the following formats:\n' \
+               f'1. "Deprecated. Use <PACK_NAME> instead."\n' \
+               f'2. "Deprecated. <REASON> No available replacement."'

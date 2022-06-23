@@ -567,10 +567,12 @@ INDICATOR_TYPES_REPUTATIONS_REGEX = r'{}{}.reputations\.json$'.format(CAN_START_
 # deprecated regex
 DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
 DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement\.*?)"
+PACK_NAME_DEPRECATED_REGEX = r".* \(Deprecated\)"
 
 DEPRECATED_REGEXES: List[str] = [
     DEPRECATED_DESC_REGEX,
-    DEPRECATED_NO_REPLACE_DESC_REGEX
+    DEPRECATED_NO_REPLACE_DESC_REGEX,
+    PACK_NAME_DEPRECATED_REGEX
 ]
 
 PACK_METADATA_NAME = 'name'

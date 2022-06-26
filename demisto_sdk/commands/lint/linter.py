@@ -937,8 +937,10 @@ class Linter:
         pack_dir = self._pack_abs_dir.parent if self._pack_abs_dir.parts[-1] == INTEGRATIONS_DIR else \
             self._pack_abs_dir.parent.parent
         pack_metadata_file = pack_dir / PACKS_PACK_META_FILE_NAME
+        logger.debug(f'Before reading content of {pack_metadata_file}')
         with pack_metadata_file.open() as f:
             pack_meta_content: Dict = json.load(f)
+        logger.debug(f'Before reading content of {pack_metadata_file}')
         self._facts['support_level'] = pack_meta_content.get('support')
         if self._facts['support_level'] == 'partner' and pack_meta_content.get('Certification'):
             self._facts['support_level'] = 'certified partner'

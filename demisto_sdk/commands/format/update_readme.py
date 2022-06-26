@@ -4,6 +4,7 @@ import click
 
 from demisto_sdk.commands.common.hook_validations.readme import (
     ReadmeUrl, get_relative_urls)
+from demisto_sdk.commands.common.mardown_lint import run_markdown_lint
 from demisto_sdk.commands.common.tools import print_error
 from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
@@ -101,6 +102,7 @@ class ReadmeFormat(BaseUpdate):
             click.secho(f'\n================= Updating file {self.source_file} ================= ', fg='bright_blue')
             self.relative_url_format()
             self.save_md_to_destination_file()
+            run_markdown_lint(self.output_file, True)
             return SUCCESS_RETURN_CODE
         except Exception as err:
             print_error(f'\nFailed to update file {self.source_file}. Error: {err}')

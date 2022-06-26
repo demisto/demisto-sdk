@@ -57,6 +57,7 @@ class BaseUpdateJSON(BaseUpdate):
         self.remove_null_fields()
         self.remove_unnecessary_keys()
         self.remove_spaces_end_of_id_and_name()
+        self.check_server_version()
         self.set_fromVersion(default_from_version=default_from_version, file_type=file_type)
         self.sync_data_to_master()
 

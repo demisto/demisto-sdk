@@ -71,7 +71,7 @@ class DocReviewer:
         self.known_pack_words_file_path = ''
 
         self.current_pack = None
-        self. files: list = []
+        self.files: list = []
         self.spellchecker = SpellChecker()
         self.unknown_words = {}  # type:Dict
         self.no_camel_case = no_camel_case

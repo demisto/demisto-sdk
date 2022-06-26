@@ -290,6 +290,7 @@ def generate_mirroring_section(yaml_data: dict):
             f'{index}. Optional: You can go to the Incidents fetch query parameter and select the query to fetch the incidents from {integration_name}.')
         index = index + 1
     tags = is_configuration_exists(yaml_data, ['comment_tag', 'work_notes_tag', 'file_tag'])
+    tags = [tag.get('display', '') for tag in tags]
     if tags:
         section.append(f'{index}. Optional: You can go to the mirroring tags parameter and select the tags used to '
                        f'mark incident entries to be mirrored. Available tags are {str(tags)[1:-1]}.')
@@ -297,7 +298,7 @@ def generate_mirroring_section(yaml_data: dict):
 
     # Mirroring direction
 
-    direction_conf = is_configuration_exists(yaml_data, ['mirror_direction'])
+    direction_conf = is_configuration_exists(yaml_data, ['mirror_direction'])[0]
     if direction_conf:
         options = []
         for option in direction_conf.get('options', []):

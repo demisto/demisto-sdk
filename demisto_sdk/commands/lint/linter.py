@@ -13,7 +13,6 @@ import docker.models.containers
 import git
 import requests.exceptions
 import urllib3.exceptions
-from filelock import FileLock
 from packaging.version import parse
 from wcmatch.pathlib import NEGATE, Path
 

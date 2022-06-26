@@ -4,7 +4,7 @@ import pytest
 
 from demisto_sdk.commands.common.hook_validations.readme import ReadmeUrl
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.format.update_readme import ReadmeFormat
+from demisto_sdk.commands.format.update_readme import MarkdownFormat
 
 INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
 INVALID_MD_IN_PACK = f'{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack2'
@@ -12,7 +12,7 @@ INVALID_MD_IN_PACK = f'{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack
 
 def get_new_url_from_user_assume_yes(relative_url: list) -> Optional[str]:
     """Check if new url is as expected when using assume_yes flag"""
-    readme_formatter = ReadmeFormat(INVALID_MD, assume_yes=True)
+    readme_formatter = MarkdownFormat(INVALID_MD, assume_yes=True)
     return readme_formatter.get_new_url_from_user(relative_url)
 
 
@@ -20,7 +20,7 @@ def get_new_url_from_user_add_prefix(mocker, relative_url: list) -> Optional[str
     """Check if new url is as expected when user selects adding https:// prefix"""
     mocker.patch('builtins.input', side_effect=['y'])
 
-    readme_formatter = ReadmeFormat(INVALID_MD)
+    readme_formatter = MarkdownFormat(INVALID_MD)
     return readme_formatter.get_new_url_from_user(relative_url)
 
 
@@ -28,7 +28,7 @@ def get_new_url_from_user_change_url(mocker, relative_url: list) -> Optional[str
     """Check if new url is as expected when user inserts new url"""
     mocker.patch('builtins.input', side_effect=['n', 'https://goodurl.com'])
 
-    readme_formatter = ReadmeFormat(INVALID_MD)
+    readme_formatter = MarkdownFormat(INVALID_MD)
     return readme_formatter.get_new_url_from_user(relative_url)
 
 
@@ -36,7 +36,7 @@ def get_new_url_from_user_skip(mocker, relative_url: list) -> Optional[str]:
     """Check if new url is as expected when user asks to skip"""
     mocker.patch('builtins.input', side_effect=['n', ''])
 
-    readme_formatter = ReadmeFormat(INVALID_MD)
+    readme_formatter = MarkdownFormat(INVALID_MD)
     return readme_formatter.get_new_url_from_user(relative_url)
 
 
@@ -57,7 +57,7 @@ class TestReadmeFormat:
         Then
             - Ensure the url changes to the expected output.
         """
-        readme_formatter = ReadmeFormat(INVALID_MD)
+        readme_formatter = MarkdownFormat(INVALID_MD)
         readme_url = ReadmeUrl(regex_relative_url[0], regex_relative_url[1], regex_relative_url[2])
         readme_formatter.replace_url_in_content(readme_url, new_url)
         assert expected_link in readme_formatter.readme_content

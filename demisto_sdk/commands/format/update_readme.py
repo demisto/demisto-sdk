@@ -12,7 +12,7 @@ from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
 
-class ReadmeFormat(BaseUpdate):
+class MarkdownFormat(BaseUpdate):
     """ReadmeFormat class is designed to update README files according to Demisto's convention.
        This is relevant for pack, Integrations, scripts and playbooks README files.
 

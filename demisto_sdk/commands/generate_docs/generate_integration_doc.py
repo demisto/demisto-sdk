@@ -291,8 +291,8 @@ def generate_mirroring_section(yaml_data: dict):
         index = index + 1
     tags = is_configuration_exists(yaml_data, ['comment_tag', 'work_notes_tag', 'file_tag'])
     if tags:
-        section.append(f'{index}. Optional: You can go to the Mirroring tags parameter and select the tags used to '
-                       f'mark incident entries to be mirrored. Available tags are {tags}')
+        section.append(f'{index}. Optional: You can go to the mirroring tags parameter and select the tags used to '
+                       f'mark incident entries to be mirrored. Available tags are {str(tags)[1:-1]}.')
         index = index + 1
 
     # Mirroring direction

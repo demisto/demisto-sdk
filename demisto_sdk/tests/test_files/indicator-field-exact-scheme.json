@@ -38,6 +38,6 @@
   "sla": 0,
   "fromVersion": "5.0.0",
   "itemVersion": "",
-  "fromServerVersion": "",
+  "toServerVersion": "",
   "propagationLabels": []
 }

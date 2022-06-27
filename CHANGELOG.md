@@ -14,6 +14,7 @@
 * Added a **validate** check, making sure classifier id and name values match. Updated the classifier **format** to update the id accordingly.
 * The **generate-docs** command will now auto-generate the playbook image link as default. Added the `--custom-image-link' argument to override.
 * Added a new flag to **generate-docs** command, allowing to add a custom image link to a playbook README.
+* Removed support for the 'fromServerVersion' field in the **format** command.
 
 ## 1.6.8
 

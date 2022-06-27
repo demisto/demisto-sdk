@@ -104,7 +104,12 @@ jobs:
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/init\/templates\S*\.py//g')
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/tests\/integration_tests\S*\.py//g')
               TEST_FILES=$(echo "$TEST_FILES" | circleci tests split --split-by=timings )
-
+              
+              echo "last results"
+              cat "${CIRCLE_INTERNAL_TASK_DATA}/circle-test-results/results.json" | jq .
+              echo "Testfiles"
+              echo ${TESTFILES}
+              
               mkdir test-results
               sudo npm install -g markdownlint-cli
               poetry run pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml $TEST_FILES

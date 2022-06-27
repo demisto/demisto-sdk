@@ -518,7 +518,7 @@ class Errors:
         return "The file type is not supported in the validate command.\n" \
                "The validate command supports: Integrations, Scripts, Playbooks, " \
                "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields, Object types," \
-               " Object modules, Images, Release notes, Layouts, Jobs, Wizards, and Descriptions."
+               " Object modules, Images, Release notes, Layouts, Jobs, Wizards, Descriptions And Modeling Rules."
 
     @staticmethod
     @error_code_decorator

@@ -114,6 +114,7 @@ class BaseUpdateYML(BaseUpdate):
     def update_yml(self, default_from_version: Optional[str] = '', file_type: str = '') -> None:
         """Manager function for the generic YML updates."""
 
+        self.check_server_version()
         self.set_fromVersion(default_from_version=default_from_version, file_type=file_type)
         self.remove_copy_and_dev_suffixes_from_name()
         self.remove_unnecessary_keys()

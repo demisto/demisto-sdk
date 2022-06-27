@@ -75,7 +75,7 @@ class BaseUpdate:
         except Exception:
             raise Exception(F'Provided file {self.source_file} is not a valid file.')
         self.from_version_key = self.set_from_version_key_name()
-        self.from_server_version_key = self.set_from_server_version_key_name
+        self.from_server_version_key = self.set_from_server_version_key_name()
         self.id_set_file, _ = get_dict_from_file(path=kwargs.get('id_set_path'))  # type: ignore[arg-type]
 
     def set_output_file_path(self, output_file_path) -> str:
@@ -297,9 +297,9 @@ class BaseUpdate:
         return None
 
     def set_from_server_version_key_name(self) -> Union[str, None]:
-        """fromversion key is different between yml and json , in yml file : fromversion, in json files : fromVersion"""
+        """fromversion key is different between yml and json , in yml file : fromserverversion, in json files : fromServerVersion"""
         if self.file_type == "yml":
-            return 'fromvserverersion'
+            return 'fromserverversion'
         elif self.file_type == "json":
             return 'fromServerVersion'
         return None
@@ -360,24 +360,24 @@ class BaseUpdate:
     def check_server_version(self):
         """Checks for fromServerVersion entry in the file, and changeing it accordingly.
         """
-        current_from_server_version = self.data[self.from_server_version_key]
-        current_from_version = self.data[self.from_version_key]
-        old_from_server_version = self.old_file[self.from_server_version_key]
+        current_from_server_version = self.data.get(self.from_server_version_key)
+        current_from_version = self.data.get(self.from_version_key)
+        old_from_server_version = self.old_file.get(self.from_server_version_key)
 
         if old_from_server_version and not current_from_server_version and not current_from_version:
             self.data[self.from_version_key] = old_from_server_version
         elif current_from_server_version and not current_from_version:
             self.data[self.from_version_key] = current_from_server_version
-            del self.data[self.from_server_version_key]
+            self.data.pop(self.from_server_version_key)
         elif current_from_server_version and current_from_version:
             if current_from_server_version == current_from_version:
-                del self.data[self.from_server_version_key]
+                self.data.pop(self.from_server_version_key)
             else:
                 preserve_from_version = click.confirm(f'Both "{self.from_version_key}" and "{self.from_server_version_key}" '
                                                       'entries were found with different values. '
                                                       f'Would you like to preserve the value of the "{self.from_version_key}" entry?')
                 if preserve_from_version:
-                    del self.data[self.from_server_version_key]
+                    self.data.pop(self.from_server_version_key)
                 else:
                     self.data[self.from_version_key] = current_from_server_version
-                    del self.data[self.from_server_version_key]
+                    self.data.pop(self.from_server_version_key)

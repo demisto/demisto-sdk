@@ -29,15 +29,15 @@ class RUAMEL_Handler(XSOAR_Handler):
     def load(self, stream):
         return self.yaml.load(stream)
 
-    def dump(self, data, stream, **kwargs):
-        if kwargs.get('sort_keys', False):
+    def dump(self, data, stream, indent=0, sort_keys=False, **kwargs):
+        if sort_keys:
             data = order_dict(data)
         yaml = self.yaml
-        if indent := kwargs.get('indent', 0):
+        if indent:
             yaml.indent(sequence=indent)
         yaml.dump(data, stream)
 
-    def dumps(self, data, **kwargs):
+    def dumps(self, data, indent=0, sort_keys=False, **kwargs):
         """
 
         This function is not recommended and not efficient!
@@ -46,7 +46,6 @@ class RUAMEL_Handler(XSOAR_Handler):
         Used for BC to PyYAML to support dumping to string.
         to print a YAML, it is better to use `yaml.dump(data, sys.stdout)`
         """
-        sort_keys, indent = kwargs.get('sort_keys', False), kwargs.get('indent')
         string_stream = StringIO()
         self.dump(data, string_stream, sort_keys=sort_keys, indent=indent)
         output_str = string_stream.getvalue()

@@ -179,13 +179,14 @@ def test_is_valid_image_name_with_valid_name(repo):
 def test_is_valid_image_name_with_invalid_name(repo, file_name):
     """
         Given
-            - An integration image with a invalid name
+            - An integration image with invalid name (different from the folder name containing it)
+            - An integration image with invalid name - invalid suffix (_img instead of _image)
 
         When
             - Validating the integration image name
 
         Then
-            - Ensure that image validator for integration failed.
+            - Ensure that image validator for the integration failed in both cases.
     """
 
     pack = repo.create_pack('PackName')

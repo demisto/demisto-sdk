@@ -202,7 +202,7 @@ class ImageValidator(BaseValidator):
         integrations_folder = os.path.basename(os.path.dirname(image_path))
         image_file = os.path.basename(image_path)
 
-        # drop file extension
+        # drop '_image' suffix and file extension
         image_file_base_name = image_file.rsplit('_', 1)[0]
 
         if not image_path.endswith("_image.png") or integrations_folder != image_file_base_name:

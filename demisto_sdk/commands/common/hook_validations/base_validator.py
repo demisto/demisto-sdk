@@ -1,5 +1,4 @@
 import io
-import json
 import os
 from typing import Optional
 
@@ -9,64 +8,154 @@ from demisto_sdk.commands.common.constants import (PACK_METADATA_SUPPORT,
                                                    PACKS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    FileType)
-from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
+from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
+                                                FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
                                                 PRESET_ERROR_TO_IGNORE,
                                                 get_all_error_codes,
                                                 get_error_object)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (
     find_type, get_file_displayed_name, get_json, get_pack_name,
     get_relative_path_from_packs_dir, get_yaml)
+
+json = JSON_Handler()
+
+
+def error_codes(error_codes_str: str):
+
+    def error_codes_decorator(func):
+
+        def wrapper(self, *args, **kwargs):
+            if self.specific_validations:
+                error_codes = error_codes_str.split(',')
+                for error_code in error_codes:
+                    if self.should_run_validation(error_code):
+                        return func(self, *args, **kwargs)
+            else:
+                return func(self, *args, **kwargs)
+
+            return True
+
+        return wrapper
+
+    return error_codes_decorator
 
 
 class BaseValidator:
 
     def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False,
-                 json_file_path: Optional[str] = None):
-        self.ignored_errors = ignored_errors if ignored_errors else {}
+                 json_file_path: Optional[str] = None, specific_validations: Optional[list] = None):
+        # these are the ignored errors from the .pack-ignore including un-allowed error codes
+        self.ignored_errors = ignored_errors or {}
+        # these are the predefined ignored errors from packs which are partner/community support based.
+        # represented by PRESET_ERROR_TO_IGNORE
+        self.predefined_by_support_ignored_errors = {}  # type: ignore[var-annotated]
+        # these are the predefined ignored errors from packs which are deprecated.
+        # represented by PRESET_ERROR_TO_CHECK
+        self.predefined_deprecated_ignored_errors = {}  # type: ignore[var-annotated]
         self.print_as_warnings = print_as_warnings
         self.checked_files = set()  # type: ignore
         self.suppress_print = suppress_print
         self.json_file_path = json_file_path
+        self.specific_validations = specific_validations
 
     @staticmethod
-    def should_ignore_error(error_code, ignored_errors):
-        """Return True is code should be ignored and False otherwise"""
-        if ignored_errors is None:
-            return False
+    def should_ignore_error(
+        error_code,
+        ignored_errors_pack_ignore,
+        predefined_deprecated_ignored_errors,
+        predefined_by_support_ignored_errors
+    ):
+        """
+        Determine if an error should be ignored or not. That includes all types of ignored errors,
+        errors which come from .pack-ignore, pre-defined errors of partner/community packs and pre-defined errors
+        of deprecated packs.
 
-        # check if specific codes are ignored
-        if error_code in ignored_errors:
+        Args:
+            error_code (str): the error code of the validation.
+            ignored_errors_pack_ignore (list[str]): a list of ignored errors which is
+                part of the .pack-ignore that belongs to a specific file.
+            predefined_deprecated_ignored_errors (list[str]): a list of ignored errors which are part of a deprecated
+                content entity.
+            predefined_by_support_ignored_errors (list[str)): a list of ignored errors which are part of the support
+                level of a pack.
+
+        Returns:
+            True if error should be ignored, False if not.
+        """
+        error_type = error_code[:2]
+
+        if error_code in predefined_deprecated_ignored_errors or error_type in predefined_deprecated_ignored_errors:
             return True
 
-        # in case a whole section of codes are selected
-        code_type = error_code[:2]
-        if code_type in ignored_errors:
+        if error_code in predefined_by_support_ignored_errors or error_type in predefined_by_support_ignored_errors:
             return True
 
-        return False
+        return (
+            error_code in ignored_errors_pack_ignore or error_type in ignored_errors_pack_ignore
+        ) and (
+            error_code in ALLOWED_IGNORE_ERRORS
+        )
+
+    @staticmethod
+    def is_error_not_allowed_in_pack_ignore(error_code, ignored_errors_pack_ignore):
+        """
+        Determine whether an error code that is in the .pack-ignore should not be ignored.
+
+         Args:
+            error_code (str): the error code of the validation.
+            ignored_errors_pack_ignore (list[str]): a list of ignored errors which
+                should be ignored in the file (a single row).
+
+        Returns:
+            True if error code can not be ignored, False otherwise.
+        """
+        error_type = error_code[:2]
+        return (
+            error_code in ignored_errors_pack_ignore or error_type in ignored_errors_pack_ignore
+        ) and (
+            error_code not in ALLOWED_IGNORE_ERRORS
+        )
+
+    def should_run_validation(self, error_code: str):
+        if not self.specific_validations:
+            return True
+        return error_code in self.specific_validations or error_code[:2] in self.specific_validations
 
     def handle_error(self, error_message, error_code, file_path, should_print=True, suggested_fix=None, warning=False,
                      drop_line=False):
-        """Handle an error that occurred during validation
+        """
+        Handle an error that occurred during validation.
 
         Args:
             drop_line (bool): Whether to drop a line at the beginning of the error message
             warning (bool): Print the error as a warning
-            suggested_fix(str): A suggested fix
-            error_message(str): The error message
-            file_path(str): The file from which the error occurred
-            error_code(str): The error code
-            should_print(bool): whether the command should be printed
+            suggested_fix (str): A suggested fix
+            error_message (str): The error message
+            file_path (str): The file from which the error occurred
+            error_code (str): The error code
+            should_print (bool): whether the command should be printed
 
         Returns:
-            str. Will return the formatted error message if it is not ignored, an None if it is ignored
+            str: formatted error message, None in case validation should be skipped or can be ignored.
         """
+        if self.specific_validations:
+            if not self.should_run_validation(error_code):
+                # if the error code is not specified in the
+                # specific_validations list, we exit the function and return None
+                return None
+
         def formatted_error_str(error_type):
             if error_type not in {'ERROR', 'WARNING'}:
                 raise ValueError("Error type is not valid. Should be in {'ERROR', 'WARNING'}")
-            formatted = f"[{error_type}]: {file_path}: [{error_code}] - {error_message}".rstrip("\n") + "\n"
+
+            formatted_error_message_prefix = f"[{error_type}]: {file_path}: [{error_code}]"
+            if is_error_not_allowed_in_pack_ignore:
+                formatted = f"{formatted_error_message_prefix} can not be ignored in .pack-ignore\n"
+            else:
+                formatted = f"{formatted_error_message_prefix} - {error_message}".rstrip("\n") + "\n"
             if drop_line:
                 formatted = '\n' + formatted
             return formatted
@@ -84,9 +173,19 @@ class BaseValidator:
             file_name = 'No-Name'
             rel_file_path = 'No-Name'
 
-        ignored_errors = self.ignored_errors.get(file_name) or self.ignored_errors.get(rel_file_path)
+        ignored_errors_pack_ignore = self.ignored_errors.get(file_name) or self.ignored_errors.get(rel_file_path) or []
+        predefined_deprecated_ignored_errors = self.predefined_deprecated_ignored_errors.get(file_name) or self.predefined_deprecated_ignored_errors.get(rel_file_path) or []  # noqa: E501
+        predefined_by_support_ignored_errors = self.predefined_by_support_ignored_errors.get(file_path) or self.predefined_by_support_ignored_errors.get(rel_file_path) or []  # noqa: E501
 
-        if self.should_ignore_error(error_code, ignored_errors) or warning:
+        is_error_not_allowed_in_pack_ignore = self.is_error_not_allowed_in_pack_ignore(
+            error_code=error_code, ignored_errors_pack_ignore=ignored_errors_pack_ignore
+        )
+
+        if self.should_ignore_error(
+            error_code, ignored_errors_pack_ignore,
+            predefined_deprecated_ignored_errors,
+            predefined_by_support_ignored_errors
+        ) or warning:
             if self.print_as_warnings or warning:
                 click.secho(formatted_error_str('WARNING'), fg="yellow")
                 self.json_output(file_path, error_code, error_message, warning)
@@ -95,7 +194,7 @@ class BaseValidator:
 
         formatted_error = formatted_error_str('ERROR')
         if should_print and not self.suppress_print:
-            if suggested_fix:
+            if suggested_fix and not is_error_not_allowed_in_pack_ignore:
                 click.secho(formatted_error[:-1], fg="bright_red")
                 if error_code == 'ST109':
                     click.secho("Please add to the root of the yml.\n", fg="bright_red")
@@ -158,19 +257,18 @@ class BaseValidator:
         return ignored_error_list
 
     def add_flag_to_ignore_list(self, file_path, flag):
-        additional_ignored_errors = []
         if flag in PRESET_ERROR_TO_IGNORE:
-            additional_ignored_errors = PRESET_ERROR_TO_IGNORE[flag]
+            for predefined_error_code in PRESET_ERROR_TO_IGNORE[flag]:
+                if file_path not in self.predefined_by_support_ignored_errors:
+                    self.predefined_by_support_ignored_errors[file_path] = []
+                self.predefined_by_support_ignored_errors[file_path].append(predefined_error_code)
 
         elif flag in PRESET_ERROR_TO_CHECK:
-            additional_ignored_errors = self.create_reverse_ignored_errors_list(PRESET_ERROR_TO_CHECK[flag])
-
-        file_name = os.path.basename(file_path)
-        if file_name in self.ignored_errors:
-            self.ignored_errors[file_name].extend(additional_ignored_errors)
-
-        else:
-            self.ignored_errors[file_name] = additional_ignored_errors
+            deprecated_ignored_errors = self.create_reverse_ignored_errors_list(PRESET_ERROR_TO_CHECK[flag])
+            for ignored_error in deprecated_ignored_errors:
+                if file_path not in self.predefined_deprecated_ignored_errors:
+                    self.predefined_deprecated_ignored_errors[file_path] = []
+                self.predefined_deprecated_ignored_errors[file_path].append(ignored_error)
 
     @staticmethod
     def add_to_report_error_list(error_code, file_path, error_list) -> bool:

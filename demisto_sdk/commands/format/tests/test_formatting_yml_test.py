@@ -11,7 +11,8 @@ from mock import Mock, patch
 
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS,
-    INCIDENT_FETCH_REQUIRED_PARAMS, INTEGRATION, MarketplaceVersions)
+    GENERAL_DEFAULT_FROMVERSION, INCIDENT_FETCH_REQUIRED_PARAMS,
+    NO_TESTS_DEPRECATED, MarketplaceVersions)
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
@@ -33,10 +34,10 @@ from demisto_sdk.tests.constants_test import (
     FEED_INTEGRATION_EMPTY_VALID, FEED_INTEGRATION_INVALID,
     FEED_INTEGRATION_VALID, GIT_ROOT, INTEGRATION_PATH, PLAYBOOK_PATH,
     PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS, SOURCE_BETA_INTEGRATION_FILE,
-    SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_INTEGRATION_INVALID,
-    SOURCE_FORMAT_INTEGRATION_VALID, SOURCE_FORMAT_PLAYBOOK,
-    SOURCE_FORMAT_PLAYBOOK_COPY, SOURCE_FORMAT_SCRIPT_COPY,
-    SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
+    SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_INTEGRATION_DEFAULT_VALUE,
+    SOURCE_FORMAT_INTEGRATION_INVALID, SOURCE_FORMAT_INTEGRATION_VALID,
+    SOURCE_FORMAT_PLAYBOOK, SOURCE_FORMAT_PLAYBOOK_COPY,
+    SOURCE_FORMAT_SCRIPT_COPY, SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
 from TestSuite.test_tools import ChangeCWD
 
 yaml = YAML_Handler()
@@ -72,10 +73,13 @@ class TestFormatting:
         assert '# comment' in stdout
 
     @pytest.mark.parametrize('source_path, destination_path, formatter, yml_title, file_type', BASIC_YML_TEST_PACKS)
-    def test_basic_yml_updates(self, source_path, destination_path, formatter, yml_title, file_type):
+    def test_basic_yml_updates(self, mocker, source_path, destination_path, formatter, yml_title, file_type):
         schema_path = os.path.normpath(
             os.path.join(__file__, "..", "..", "..", "common", "schemas", '{}.yml'.format(file_type)))
+        from demisto_sdk.commands.format import update_generic
+        mocker.patch.object(update_generic, 'get_remote_file', return_value={})
         base_yml = formatter(source_path, path=schema_path)
+        base_yml.assume_yes = True
         base_yml.update_yml(file_type=file_type)
         assert yml_title not in str(base_yml.data)
         assert -1 == base_yml.id_and_version_location['version']
@@ -232,6 +236,8 @@ class TestFormatting:
         base_yml = PlaybookYMLFormat(source_path, path=schema_path, verbose=True)
         base_yml.add_description()
         base_yml.update_playbook_task_name()
+
+        assert base_yml.data['tasks']['29']['task']['name'] == 'File Enrichment - Virus Total Private API_dev_copy'
         base_yml.remove_copy_and_dev_suffixes_from_subplaybook()
 
         assert 'description' in base_yml.data['tasks']['7']['task']
@@ -526,7 +532,7 @@ class TestFormatting:
             'builtins.input',
             lambda _: 'N'
         )
-        res = format_manager(input=target, verbose=True)
+        res = format_manager(input=target, verbose=True, assume_yes=True)
         with open(target, 'r') as f:
             yaml_content = yaml.load(f)
             params = yaml_content['configuration']
@@ -564,7 +570,7 @@ class TestFormatting:
 
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
-        res = format_manager(input=target, verbose=True, clear_cache=True)
+        res = format_manager(input=target, verbose=True, clear_cache=True, assume_yes=True)
         with open(target, 'r') as f:
             yaml_content = yaml.load(f)
             params = yaml_content['configuration']
@@ -647,10 +653,15 @@ class TestFormatting:
 
         assert base_yml.data['tasks']['29']['task']['playbookName'] == \
             'File Enrichment - Virus Total Private API_dev_copy'
+        assert base_yml.data['tasks']['30']['task']['scriptName'] == 'AssignAnalystToIncident_copy'
+        assert base_yml.data['tasks']['31']['task']['scriptName'] == 'AssignAnalystToIncident_dev'
         base_yml.remove_copy_and_dev_suffixes_from_subplaybook()
+        base_yml.remove_copy_and_dev_suffixes_from_subscripts()
 
         assert base_yml.data['tasks']['29']['task']['name'] == 'Fake name'
         assert base_yml.data['tasks']['29']['task']['playbookName'] == 'File Enrichment - Virus Total Private API'
+        assert base_yml.data['tasks']['30']['task']['scriptName'] == 'AssignAnalystToIncident'
+        assert base_yml.data['tasks']['31']['task']['scriptName'] == 'AssignAnalystToIncident'
 
     @patch('builtins.input', lambda *args: 'no')
     def test_run_format_on_tpb(self):
@@ -661,13 +672,14 @@ class TestFormatting:
             - Run format on TPB file
         Then
             - Ensure run_format return value is 0
-            - Ensure `fromversion` field set to 5.5.0
+            - Ensure `fromversion` field set to GENERAL_DEFAULT_FROMVERSION
         """
         os.makedirs(TEST_PLAYBOOK_PATH, exist_ok=True)
         formatter = TestPlaybookYMLFormat(input=SOURCE_FORMAT_TEST_PLAYBOOK, output=DESTINATION_FORMAT_TEST_PLAYBOOK)
+        formatter.assume_yes = True
         res = formatter.run_format()
         assert res == 0
-        assert formatter.data.get('fromversion') == '5.5.0'
+        assert formatter.data.get('fromversion') == GENERAL_DEFAULT_FROMVERSION
         os.remove(DESTINATION_FORMAT_TEST_PLAYBOOK)
         os.rmdir(TEST_PLAYBOOK_PATH)
 
@@ -704,6 +716,27 @@ class TestFormatting:
         formatter.update_beta_integration()
         assert '(Beta)' in formatter.data['display']
         assert formatter.data['beta'] is True
+
+    def test_format_boolean_default_value(self):
+        """
+        Given
+            - Field with defaultvalue False (boolean)
+            - Field with defaultvalue 'True' (str)
+            - Field with defaultvalue 'False' (str)
+        When
+            - Run set_default_value_for_checkbox function
+        Then
+            - Check the field has changed to 'false'
+            - Check the field has changed to 'true'
+            - Check the field has changed to 'false'
+
+        """
+
+        formatter = IntegrationYMLFormat(input=SOURCE_FORMAT_INTEGRATION_DEFAULT_VALUE)
+        formatter.set_default_value_for_checkbox()
+        assert 'false' == formatter.data['configuration'][1]['defaultvalue']
+        assert 'true' == formatter.data['configuration'][2]['defaultvalue']
+        assert 'false' == formatter.data['configuration'][3]['defaultvalue']
 
     @patch('builtins.input', lambda *args: 'no')
     def test_update_tests_on_playbook_with_test_playbook(self):
@@ -760,12 +793,12 @@ class TestFormatting:
         assert not data.get(
             'dockerimage45')  # make sure for the test that dockerimage45 is not set (so we can verify that we set it in format)
         format_obj = ScriptYMLFormat(src_file, output=dest, path=f'{schema_dir}/script.yml', no_validate=True,
-                                     update_docker=True)
+                                     update_docker=True, assume_yes=True)
         monkeypatch.setattr(
             'builtins.input',
             lambda _: 'N'
         )
-
+        mocker.patch.object(BaseUpdate, 'set_fromVersion', return_value=None)
         assert format_obj.run_format() == 0
         with open(dest) as f:
             data = yaml.load(f)
@@ -796,7 +829,7 @@ class TestFormatting:
 
         auth_token = 'token'
         mocker.patch.object(DockerImageValidator, 'docker_auth', return_value=auth_token)
-
+        mocker.patch.object(BaseUpdateYML, 'is_old_file', return_value=False)
         requests_mock.get('https://hub.docker.com/v2/repositories/error/tags', json={"detail": "Object not found"},
                           status_code=404)
         requests_mock.get('https://registry-1.docker.io/v2/error/tags/list', json={'error': 'not found'},
@@ -806,6 +839,7 @@ class TestFormatting:
                                                                                              "previous": 'null',
                                                                                              "results": []},
                           status_code=200)
+        requests_mock.get('https://api.github.com/repos/demisto/demisto-sdk')
         integration_yml_file_1 = tmp_path / 'Integration1.yml'
         integration_obj = {'dockerimage': docker_image,
                            'fromversion': '5.0.0'}
@@ -887,14 +921,13 @@ class TestFormatting:
         Given
             - A YML object formatter
         When
-            - Run run_format command and and exception is raised.
+            - Run run_format command and exception is raised.
         Then
             - Ensure the error is printed.
         """
         formatter = format_object(verbose=True, input="my_file_path")
         mocker.patch.object(BaseUpdateYML, 'update_yml', side_effect=self.exception_raise)
         mocker.patch.object(PlaybookYMLFormat, 'update_tests', side_effect=self.exception_raise)
-        mocker.patch.object(TestPlaybookYMLFormat, 'update_fromversion_by_user', side_effect=self.exception_raise)
 
         formatter.run_format()
         stdout, _ = capsys.readouterr()
@@ -1011,8 +1044,8 @@ class TestFormatting:
         test_playbook.create_default_test_playbook('SamplePlaybookTest')
         test_playbook.yml.update({'id': 'other_id'})
         playbook_yml = TestPlaybookYMLFormat(test_playbook.yml.path, path=test_playbook.yml.path, assume_yes=True)
-
-        playbook_yml.run_format()
+        with ChangeCWD(repo.path):
+            playbook_yml.run_format()
         assert test_playbook.yml.read_dict().get('id') == 'SamplePlaybookTest'
 
     def test_set_fromversion_six_new_contributor_pack_no_fromversion(self, pack):
@@ -1022,13 +1055,16 @@ class TestFormatting:
         When
             - Run format command
         Then
-            - Ensure that the integration fromversion is set to 6.0.0
+            - Ensure that the integration fromversion is set to GENERAL_DEFAULT_FROMVERSION
         """
+        from demisto_sdk.commands.common.constants import \
+            GENERAL_DEFAULT_FROMVERSION
+
         pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
         integration = pack.create_integration()
-        bs = BaseUpdate(input=integration.yml.path)
+        bs = BaseUpdate(input=integration.yml.path, assume_yes=True)
         bs.set_fromVersion()
-        assert bs.data['fromversion'] == '6.0.0'
+        assert bs.data['fromversion'] == GENERAL_DEFAULT_FROMVERSION
 
     def test_set_fromversion_six_new_contributor_pack(self, pack):
         """
@@ -1037,55 +1073,19 @@ class TestFormatting:
         When
             - Run format command
         Then
-            - Ensure that the integration fromversion is set to 6.0.0
+            - Ensure that the integration fromversion is set to GENERAL_DEFAULT_FROMVERSION
         """
+        from demisto_sdk.commands.common.constants import \
+            GENERAL_DEFAULT_FROMVERSION
+
         pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
-        script = pack.create_script(yml={'fromversion': '5.0.0'})
-        playbook = pack.create_playbook(yml={'fromversion': '5.0.0'})
-        integration = pack.create_integration(yml={'fromversion': '5.0.0'})
+        script = pack.create_script()
+        playbook = pack.create_playbook()
+        integration = pack.create_integration()
         for path in [script.yml.path, playbook.yml.path, integration.yml.path]:
-            bs = BaseUpdate(input=path)
+            bs = BaseUpdate(input=path, assume_yes=True)
             bs.set_fromVersion()
-            assert bs.data['fromversion'] == '6.0.0', path
-
-    def test_set_fromversion_not_changed_new_contributor_pack(self, pack):
-        """
-        Given
-            - An integration from new contributed pack with fromversion key at yml,
-        When
-            - Run format command
-        Then
-            - Ensure that the integration fromversion is not set to 6.0.0
-            if it is new contributed pack, this is integration, and its version is 5.5.0 do not change it
-        """
-        pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
-        integration = pack.create_integration(yml={'fromversion': '5.5.0'})
-        bs = BaseUpdate(input=integration.yml.path)
-        bs.set_fromVersion(file_type=INTEGRATION)
-        assert bs.data['fromversion'] == '5.5.0', integration.yml.path
-
-    @pytest.mark.parametrize('user_input,result_fromversion', [('Y', '5.5.0'), ('N', '5.0.0')])
-    def test_set_fromversion_new_pack(self, monkeypatch, pack, user_input, result_fromversion):
-        """
-        Args: monkeypatch (MagicMock): Patch of the user input
-
-        Given
-            - An integration from new pack with fromversion: 5.0.0 at yml,
-            - User answer - update fromversion or not
-        When
-            - Run format command
-        Then
-            - Ensure that the integration fromversion is set to 5.5.0 if user answers Y,
-            and the integration fromversion is reminds 5.0.0 if user answers N
-        """
-        monkeypatch.setattr(
-            'builtins.input',
-            lambda _: user_input
-        )
-        integration = pack.create_integration(yml={'fromversion': '5.0.0'})
-        bs = BaseUpdate(input=integration.yml.path)
-        bs.set_fromVersion(file_type=INTEGRATION)
-        assert bs.data['fromversion'] == result_fromversion
+            assert bs.data['fromversion'] == GENERAL_DEFAULT_FROMVERSION, path
 
     @pytest.mark.parametrize('user_input, description_result',
                              [('', 'Deprecated. No available replacement.'),
@@ -1109,7 +1109,7 @@ class TestFormatting:
         base_update_yml.update_deprecate(file_type='integration')
 
         assert base_update_yml.data['deprecated']
-        assert base_update_yml.data['tests'] == 'No test'
+        assert base_update_yml.data['tests'] == [NO_TESTS_DEPRECATED]
         assert base_update_yml.data['description'] == description_result
 
     @pytest.mark.parametrize('user_input, description_result',
@@ -1134,7 +1134,7 @@ class TestFormatting:
         base_update_yml.update_deprecate(file_type='script')
 
         assert base_update_yml.data['deprecated']
-        assert base_update_yml.data['tests'] == 'No test'
+        assert base_update_yml.data['tests'] == [NO_TESTS_DEPRECATED]
         assert base_update_yml.data['comment'] == description_result
 
     @pytest.mark.parametrize('user_input, description_result',
@@ -1159,7 +1159,7 @@ class TestFormatting:
         base_update_yml.update_deprecate(file_type='playbook')
 
         assert base_update_yml.data['deprecated']
-        assert base_update_yml.data['tests'] == 'No test'
+        assert base_update_yml.data['tests'] == [NO_TESTS_DEPRECATED]
         assert base_update_yml.data['description'] == description_result
 
     @pytest.mark.parametrize('name', ['MyIntegration', 'MyIntegration ', ' MyIntegration '])

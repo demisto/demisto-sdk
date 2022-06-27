@@ -1,5 +1,4 @@
 import ast
-import json
 import logging
 import os
 import re
@@ -10,6 +9,7 @@ import urllib.parse
 import uuid
 from copy import deepcopy
 from distutils.version import LooseVersion
+from math import ceil
 from pprint import pformat
 from queue import Empty, Queue
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
@@ -25,6 +25,7 @@ from slack import WebClient as SlackClient
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
     FILTER_CONF, PB_Status)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import get_demisto_version
 from demisto_sdk.commands.test_content.constants import (
     CONTENT_BUILD_SSH_USER, LOAD_BALANCER_DNS)
@@ -36,14 +37,23 @@ from demisto_sdk.commands.test_content.mock_server import (RESULT, MITMProxy,
 from demisto_sdk.commands.test_content.ParallelLoggingManager import \
     ParallelLoggingManager
 from demisto_sdk.commands.test_content.tools import (
-    is_redhat_instance, update_server_configuration)
+    get_ui_url, is_redhat_instance, update_server_configuration)
+
+json = JSON_Handler()
+
 
 ENV_RESULTS_PATH = './artifacts/env_results.json'
 FAILED_MATCH_INSTANCE_MSG = "{} Failed to run.\n There are {} instances of {}, please select one of them by using " \
                             "the instance_name argument in conf.json. The options are:\n{}"
 ENTRY_TYPE_ERROR = 4
 DEFAULT_INTERVAL = 4
+MAX_RETRIES = 3
+RETRIES_THRESHOLD = ceil(MAX_RETRIES / 2)
+
 SLACK_MEM_CHANNEL_ID = 'CM55V7J8K'
+XSIAM_SERVER_TYPE = 'XSIAM'
+# For now we run all xsiam tests
+IS_XSIAM = False
 
 __all__ = ['BuildContext',
            'Conf',
@@ -110,6 +120,9 @@ class TestConfiguration:
         self.test_instance_names: List[str] = self._parse_instance_names_conf(test_configuration)
         self.instance_configuration: dict = test_configuration.get('instance_configuration', {})
         self.external_playbook_config: dict = test_configuration.get('external_playbook_config', {})
+        self.is_first_playback_failed: bool = False
+        self.number_of_executions: int = 0
+        self.number_of_successful_runs: int = 0
 
     @staticmethod
     def _parse_integrations_conf(test_configuration):
@@ -294,7 +307,9 @@ class TestPlaybook:
         """
         for integration in self.integrations:
             integration.disable_integration_instance(client)
-        updated_keys = self._set_prev_server_keys(client, server_context)
+        updated_keys = False
+        if not IS_XSIAM:
+            updated_keys = self._set_prev_server_keys(client, server_context)
         if updated_keys:
             server_context._reset_containers()
 
@@ -347,7 +362,7 @@ class TestPlaybook:
             - The created incident or None
         """
         # Preparing the incident request
-        incident_name = f'inc-{self.configuration.playbook_id}'
+        incident_name = f'inc-{self.configuration.playbook_id}--{uuid.uuid4()}'
         create_incident_request = demisto_client.demisto_api.CreateIncidentRequest()
         create_incident_request.create_investigation = True
         create_incident_request.playbook_id = self.configuration.playbook_id
@@ -375,6 +390,9 @@ class TestPlaybook:
         search_filter = demisto_client.demisto_api.SearchIncidentsData()
         inc_filter = demisto_client.demisto_api.IncidentFilter()
         inc_filter.query = f'id: {inc_id}'
+        if IS_XSIAM:
+            # in xsiam `create_incident` response don`t return created incident id.
+            inc_filter.query = f'name:"{incident_name}"'
         # inc_filter.query
         search_filter.filter = inc_filter
 
@@ -389,9 +407,16 @@ class TestPlaybook:
                 found_incidents = incidents.total
                 incident_search_responses.append(incidents)
             except ApiException:
-                self.build_context.logging_module.exception(f'Searching incident with id {inc_id} failed')
+                if IS_XSIAM:
+                    self.build_context.logging_module.exception(f'Searching incident with name {incident_name} failed')
+                else:
+                    self.build_context.logging_module.exception(f'Searching incident with id {inc_id} failed')
             if time.time() > timeout:
-                self.build_context.logging_module.error(f'Got timeout for searching incident with id {inc_id}')
+                if IS_XSIAM:
+                    self.build_context.logging_module.error(f'Got timeout for searching incident with id {inc_id}')
+                else:
+                    self.build_context.logging_module.error(f'Got timeout for searching incident name {incident_name}')
+
                 self.build_context.logging_module.error(f'Incident search responses: {incident_search_responses}')
                 return None
 
@@ -429,6 +454,36 @@ class TestPlaybook:
 
         return True
 
+    def close_incident(self, client: DefaultApi, incident_id: str) -> bool:
+        """
+        Closes a Demisto incident
+        Args:
+            client: demisto_client instance to use
+            incident_id: Incident to close
+
+        Returns:
+            True if incident was closed else False
+        """
+        try:
+            body = {
+                'id': incident_id,
+                'CustomFields': {}
+            }
+            res = demisto_client.generic_request_func(self=client, method='POST',
+                                                      path='/incident/close', body=body)
+            self.build_context.logging_module.info(f'Closed incident: {incident_id}.')
+        except ApiException:
+            self.build_context.logging_module.warning(
+                'Failed to close incident, error trying to communicate with demisto server.')
+            return False
+
+        if int(res[1]) != 200:
+            self.build_context.logging_module.warning(f'Close incident failed with Status code {res[1]}')
+            self.build_context.logging_module.warning(pformat(res))
+            return False
+
+        return True
+
     def print_context_to_log(self, client: DefaultApi, incident_id: str) -> None:
         try:
             body = {
@@ -451,17 +506,32 @@ class TestPlaybook:
 
 class BuildContext:
     def __init__(self, kwargs: dict, logging_module: ParallelLoggingManager):
+        global IS_XSIAM
+        self.is_xsiam = True if kwargs['server_type'] == XSIAM_SERVER_TYPE else False
+        IS_XSIAM = self.is_xsiam
         self.logging_module: ParallelLoggingManager = logging_module
-        self.api_key = kwargs['api_key']
         self.server = kwargs['server']
+        self.xsiam_machine = kwargs.get('xsiam_machine')
+        self.xsiam_servers_path = kwargs.get('xsiam_servers_path')
         self.conf, self.secret_conf = self._load_conf_files(kwargs['conf'], kwargs['secret'])
-        self.env_json = self._load_env_results_json()
+        if self.is_xsiam:
+            self.xsiam_conf = self._load_xsiam_file(self.xsiam_servers_path)
+            self.env_json = [self.xsiam_conf.get(self.xsiam_machine, {})]
+            self.api_key = self.env_json[0].get('api_key')
+            self.auth_id = self.env_json[0].get('x-xdr-auth-id')
+            self.xsiam_ui_path = self.env_json[0].get('ui_url')
+        else:
+            self.api_key = kwargs['api_key']
+            self.env_json = self._load_env_results_json()
+            self.xsiam_conf = None
+            self.auth_id = None
+            self.xsiam_ui_path = None
         self.is_nightly = kwargs['nightly']
         self.slack_client = SlackClient(kwargs['slack'])
         self.circleci_token = kwargs['circleci']
         self.build_number = kwargs['build_number']
         self.build_name = kwargs['branch_name']
-        self.isAMI = kwargs['is_ami']
+        self.isAMI = kwargs['is_ami'] if not self.is_xsiam else False
         self.memCheck = kwargs['mem_check']
         self.server_version = kwargs['server_version']  # AMI Role
         self.is_local_run = (self.server is not None)
@@ -472,6 +542,7 @@ class BuildContext:
         self.conf_unmockable_tests = self._get_unmockable_tests_from_conf()
         self.unmockable_test_ids: Set[str] = set()
         self.mockable_tests_to_run, self.unmockable_tests_to_run = self._get_tests_to_run()
+        self.test_retries_queue: Queue = Queue()
         self.slack_user_id = self._retrieve_slack_user_id()
         self.all_integrations_configurations = self._get_all_integration_config(self.instances_ips)
 
@@ -489,7 +560,10 @@ class BuildContext:
         if not self.is_nightly:
             return []
         url, port = list(instances_ips.items())[0]
-        server_url = f'https://localhost:{port}' if port else f'https://{url}'
+        if IS_XSIAM:
+            server_url = url
+        else:
+            server_url = f'https://localhost:{port}' if port else f'https://{url}'
         return self.get_all_installed_integrations_configurations(server_url)
 
     def get_all_installed_integrations_configurations(self, server_url: str) -> list:
@@ -501,7 +575,11 @@ class BuildContext:
         Returns:
             A dict containing the configuration for the integration if found else empty list
         """
+        if IS_XSIAM:
+            # in xsiam we dont use demisto username
+            os.environ.pop('DEMISTO_USERNAME', None)
         tmp_client = demisto_client.configure(base_url=server_url,
+                                              auth_id=self.auth_id,
                                               api_key=self.api_key,
                                               verify_ssl=False)
         self.logging_module.debug('Getting all integrations instances')
@@ -548,7 +626,8 @@ class BuildContext:
         """
         unmockable_tests = []
         all_tests = self._get_all_tests()
-        if self.server or not self.isAMI:
+        # for xsiam, set all tests to unmockable.
+        if self.server or not self.isAMI or self.is_xsiam:
             unmockable_tests = all_tests
             self.unmockable_test_ids = {test.playbook_id for test in all_tests}
         elif self.isAMI:
@@ -629,6 +708,8 @@ class BuildContext:
         """
         if self.server:
             return {self.server: None}
+        if self.is_xsiam:
+            return {env.get('base_url'): None for env in self.env_json}
         instances_ips = {env.get('InstanceDNS'): env.get('TunnelPort') for env in self.env_json if env.get('Role') == self.server_version}
         return instances_ips
 
@@ -647,7 +728,7 @@ class BuildContext:
         if port_match:
             port = int(port_match[0])
         else:
-            # If the server URL has no port in the end - it means it's a local build and we can return the
+            # If the server URL has no port in the end - it means it's a local build or XSIAM, and we can return the
             # server URL as is.
             return server_url
         for server_private_ip, tunnel_port in self.instances_ips.items():
@@ -699,10 +780,20 @@ class BuildContext:
             'Server 6.1': '6.1.0',
             'Server 6.2': '6.2.0',
             'Server Master': default_version,
+            'XSIAM Master': default_version
         }
         server_numeric_version = server_version_mapping.get(self.server_version, default_version)
         self.logging_module.info(f'Server version: {server_numeric_version}', real_time=True)
         return server_numeric_version
+
+    @staticmethod
+    def _load_xsiam_file(xsiam_servers_path):
+        conf = None
+        if xsiam_servers_path:
+            with open(xsiam_servers_path) as data_file:
+                conf = json.load(data_file)
+
+        return conf
 
     @staticmethod
     def _load_conf_files(conf_path, secret_conf_path):
@@ -760,6 +851,7 @@ class TestResults:
     def __init__(self, unmockable_integrations):
         self.succeeded_playbooks = []
         self.failed_playbooks = set()
+        self.playbook_report = dict()
         self.skipped_tests = dict()
         self.skipped_integrations = dict()
         self.rerecorded_tests = []
@@ -783,6 +875,8 @@ class TestResults:
             skipped_tests_file.write('\n'.join(self.skipped_tests))
         with open('./Tests/skipped_integrations.txt', "w") as skipped_integrations_file:
             skipped_integrations_file.write('\n'.join(self.skipped_integrations))
+        with open('./Tests/test_playbooks_report.json', "w") as test_playbooks_report_file:
+            json.dump(self.playbook_report, test_playbooks_report_file, indent=4)
 
     def print_test_summary(self,
                            is_ami: bool = True,
@@ -941,6 +1035,10 @@ class Integration:
                 self.configuration = integration_params[0]
 
         elif self.name == 'Demisto REST API':
+            if IS_XSIAM:
+                self.build_context.logging_module.warning('Trying to configure "Demisto REST API" for XSIAM server, '
+                                                          'this integration will not work on XSIAM, '
+                                                          'consider using CoreRestAPI.')
             self.configuration.params = {  # type: ignore
                 'url': 'https://localhost',
                 'apikey': self.build_context.api_key,
@@ -1124,7 +1222,8 @@ class Integration:
         module_instance = self.create_module(instance_name, configuration, instance_configuration)
 
         # set server keys
-        self._set_server_keys(client, server_context)
+        if not IS_XSIAM:
+            self._set_server_keys(client, server_context)
 
         # set module params
         for param_conf in module_configuration:
@@ -1228,7 +1327,7 @@ class Integration:
             except ApiException:
                 self.build_context.logging_module.exception(
                     f'Failed to test integration {self} instance, error trying to communicate with demisto server: '
-                    f'{client.api_client.configuration.host}')
+                    f'{get_ui_url(client.api_client.configuration.host)}')
                 return False
             except urllib3.exceptions.ReadTimeoutError:
                 self.build_context.logging_module.warning(f"Could not connect. Trying to connect for the {i + 1} time")
@@ -1236,13 +1335,13 @@ class Integration:
         if int(response_code) != 200:
             self.build_context.logging_module.error(
                 f'Integration-instance test-module failed. Bad status code: {response_code}.\n'
-                f'Sever URL: {client.api_client.configuration.host}')
+                f'Sever URL: {get_ui_url(client.api_client.configuration.host)}')
             return False
 
         result_object = ast.literal_eval(response_data)
         success, failure_message = bool(result_object.get('success')), result_object.get('message')
         if not success:
-            server_url = client.api_client.configuration.host
+            server_url = get_ui_url(client.api_client.configuration.host)
             test_failed_msg = f'Test integration failed - server: {server_url}.\n' \
                               f'Failure message: {failure_message}' if failure_message else ' No failure message.'
             self.build_context.logging_module.error(test_failed_msg)
@@ -1313,9 +1412,13 @@ class TestContext:
         self.incident_id: Optional[str] = None
         self.test_docker_images: Set[str] = set()
         self.client: DefaultApi = client
-        self.tunnel_command = \
-            f'ssh -i ~/.ssh/oregon-ci.pem -4 -o StrictHostKeyChecking=no -f -N "{CONTENT_BUILD_SSH_USER}@{LOAD_BALANCER_DNS}" ' \
-            f'-L "{self.server_context.tunnel_port}:{self.server_context.server_ip}:443"'
+        if IS_XSIAM:
+            self.tunnel_command = ''
+        else:
+            self.tunnel_command = \
+                f'ssh -i ~/.ssh/oregon-ci.pem -4 -o StrictHostKeyChecking=no -f -N ' \
+                f'"{CONTENT_BUILD_SSH_USER}@{LOAD_BALANCER_DNS}" ' \
+                f'-L "{self.server_context.tunnel_port}:{self.server_context.server_ip}:443"'
 
     def _get_investigation_playbook_state(self) -> str:
         """
@@ -1339,6 +1442,10 @@ class TestContext:
             state = investigation_playbook['state']
             return state
         except Exception:  # noqa: E722
+            # setting state to `in progress` in XSIAM build,
+            # Because `investigation_playbook` returned empty if xsiam investigation is still in progress.
+            if IS_XSIAM:
+                return PB_Status.IN_PROGRESS
             return PB_Status.NOT_SUPPORTED_VERSION
 
     def _collect_docker_images(self) -> None:
@@ -1409,22 +1516,23 @@ class TestContext:
 
             if number_of_attempts % DEFAULT_INTERVAL == 0:
                 self.build_context.logging_module.info(
-                    f'loop no. {number_of_attempts / DEFAULT_INTERVAL}, playbook state is {playbook_state}')
+                    f'{self.playbook} loop no. {number_of_attempts / DEFAULT_INTERVAL}, {playbook_state=}')
             number_of_attempts = number_of_attempts + 1
         return playbook_state
 
     def _run_incident_test(self) -> str:
         """
-        Creates an incident in demisto server and return it's status
+        Creates an incident in demisto server and return its status
         Returns:
             Empty string or
         """
         try:
-            self.build_context.logging_module.info(f'ssh tunnel command:\n{self.tunnel_command}')
+            if not self.build_context.is_xsiam:
+                self.build_context.logging_module.info(f'ssh tunnel command:\n{self.tunnel_command}')
             instance_configuration = self.playbook.configuration.instance_configuration
 
             if not self.playbook.configure_integrations(self.client, self.server_context, instance_configuration):
-                return PB_Status.FAILED
+                return PB_Status.CONFIGURATION_FAILED
 
             test_module_result = self.playbook.run_test_module_on_integrations(self.client)
             if not test_module_result:
@@ -1441,16 +1549,23 @@ class TestContext:
             if not incident:
                 return ''
 
-            self.incident_id = incident.investigation_id
+            self.incident_id = incident.id if IS_XSIAM else incident.investigation_id
             investigation_id = self.incident_id
             if investigation_id is None:
                 self.build_context.logging_module.error(f'Failed to get investigation id of incident: {incident}')
                 return ''
 
-            server_url = self.client.api_client.configuration.host
-            self.build_context.logging_module.info(f'Investigation URL: {server_url}/#/WorkPlan/{investigation_id}')
-            playbook_state = self._poll_for_playbook_state()
+            self.build_context.logging_module.info(f'Found incident with incident ID: {investigation_id}.')
 
+            server_url = get_ui_url(self.client.api_client.configuration.host)
+            if IS_XSIAM:
+                self.build_context.logging_module.info(
+                    f'Investigation URL: {self.build_context.xsiam_ui_path}incident-view/alerts_and_insights?caseId='
+                    f'{investigation_id}&action:openAlertDetails={investigation_id}-work_plan')
+            else:
+                self.build_context.logging_module.info(f'Investigation URL: {server_url}/#/WorkPlan/{investigation_id}')
+            playbook_state = self._poll_for_playbook_state()
+            self.build_context.logging_module.info(f'Got incident: {investigation_id} status: {playbook_state}.')
             if self.playbook.configuration.context_print_dt:
                 self.playbook.print_context_to_log(self.client, investigation_id)
 
@@ -1473,7 +1588,12 @@ class TestContext:
             playbook_state: The state of the playbook with which we can check if the test was successful
         """
         test_passed = playbook_state in (PB_Status.COMPLETED, PB_Status.NOT_SUPPORTED_VERSION)
-        if self.incident_id and test_passed:
+        # batchDelete is not supported in XSIAM, only close.
+        # in XSAIAM we are closing both successful and failed incidents
+        if IS_XSIAM and self.incident_id:
+            self.playbook.close_incident(self.client, self.incident_id)
+            self.playbook.delete_integration_instances(self.client)
+        elif self.incident_id and test_passed:
             self.playbook.delete_incident(self.client, self.incident_id)
             self.playbook.delete_integration_instances(self.client)
 
@@ -1526,7 +1646,7 @@ class TestContext:
     def _notify_failed_test(self):
         text = f'{self.build_context.build_name} - {self.playbook} Failed\n' \
                f'for more details run: `{self.tunnel_command}` and browse into the following link\n' \
-               f'{self.client.api_client.configuration.host}'
+               f'{get_ui_url(self.client.api_client.configuration.host)}'
         text += f'/#/WorkPlan/{self.incident_id}' if self.incident_id else ''
         if self.build_context.slack_user_id:
             self.build_context.slack_client.api_call(
@@ -1545,13 +1665,45 @@ class TestContext:
         """
         self.build_context.tests_data_keeper.succeeded_playbooks.append(self.playbook.configuration.playbook_id)
 
-    def _add_to_failed_playbooks(self, is_second_playback_run: bool = False) -> None:
+    def _add_details_to_failed_tests_report(self, playbook_name: str, failed_stage: str) -> None:
         """
-        Adds the playbook to the succeeded playbooks list
+        Adds the relevant details to the failed tests report.
+
+        Args:
+            playbook_name: The test's name.
+            failed_stage: The stage where the test failed.
+        """
+        self.build_context.tests_data_keeper.playbook_report.setdefault(playbook_name, []).append({
+            'number_of_executions': self.playbook.configuration.number_of_executions,
+            'number_of_successful_runs': self.playbook.configuration.number_of_successful_runs,
+            'failed_stage': failed_stage,
+        })
+
+    @staticmethod
+    def _get_failed_stage(status: Optional[str], is_second_playback_run: bool = False) -> str:
+        """
+        Gets the test failed stage.
+
+        Args:
+            status: what is the test status.
+            is_second_playback_run: Is The playbook run on a second playback after a freshly created record.
+        """
+        if is_second_playback_run:
+            return 'Second playback'
+        if status == PB_Status.FAILED_DOCKER_TEST:
+            return 'Docker test'
+        if status == PB_Status.CONFIGURATION_FAILED:
+            return 'Configuration'
+        return 'Execution'
+
+    def _add_to_failed_playbooks(self, is_second_playback_run: bool = False, status: Optional[str] = None) -> None:
+        """
+        Adds the playbook to the failed playbooks list
 
         Args:
             is_second_playback_run: Is The playbook run on a second playback after a freshly created record
         """
+        failed_stage = self._get_failed_stage(status, is_second_playback_run)
         playbook_name_to_add = self.playbook.configuration.playbook_id
         if not self.playbook.is_mockable:
             playbook_name_to_add += " (Mock Disabled)"
@@ -1560,6 +1712,8 @@ class TestContext:
                 'Playback on newly created record has failed, see the following confluence page for help:\n'
                 'https://confluence.paloaltonetworks.com/display/DemistoContent/Debug+Proxy-Related+Test+Failures')
             playbook_name_to_add += ' (Second Playback)'
+
+        self._add_details_to_failed_tests_report(self.playbook.configuration.playbook_id, failed_stage)
         self.build_context.logging_module.error(f'Test failed: {self}')
         self.build_context.tests_data_keeper.failed_playbooks.add(playbook_name_to_add)
 
@@ -1606,10 +1760,12 @@ class TestContext:
         # We don't want to run docker tests on redhat instance because it does not use docker and it does not support
         # the threshold configurations.
         if playbook_state == PB_Status.COMPLETED and self.server_context.is_instance_using_docker:
-            docker_test_results = self._run_docker_threshold_test()
-            if not docker_test_results:
-                playbook_state = PB_Status.FAILED_DOCKER_TEST
-            self._clean_incident_if_successful(playbook_state)
+            #  currently not supported on XSIAM (etc/#47908)
+            if not IS_XSIAM:
+                docker_test_results = self._run_docker_threshold_test()
+                if not docker_test_results:
+                    playbook_state = PB_Status.FAILED_DOCKER_TEST
+                self._clean_incident_if_successful(playbook_state)
         return playbook_state
 
     def _execute_unmockable_test(self) -> bool:
@@ -1624,44 +1780,161 @@ class TestContext:
         with acquire_test_lock(self.playbook) as lock:
             if lock:
                 status = self._incident_and_docker_test()
-                self._handle_status(status)
+                self.playbook.configuration.number_of_executions += 1
+                self._update_playbook_status(status)
             else:
                 return False
         return True
 
-    def _handle_status(self, status: str,
-                       is_first_playback_run: bool = False,
-                       is_second_playback_run: bool = False,
-                       is_record_run: bool = False) -> None:
+    def _update_complete_status(self, is_first_execution: bool, is_record_run: bool, is_first_playback_run: bool,
+                                is_second_playback_run: bool, use_retries_mechanism: bool,
+                                number_of_executions: int):
         """
-        Handles the playbook execution run
+        Updates (if necessary) the playbook status in case the original status is complete.
+        Args:
+            is_first_execution: whether it is the first execution or not.
+            is_record_run: whether it is a record execution or not.
+            is_first_playback_run: whether it is the first playback execution or not.
+            is_second_playback_run: whether it is the second playback execution or not.
+            use_retries_mechanism: whether to use the retries mechanism or not.
+            number_of_executions: the number of times the test was executed.
+        Returns:
+            PB_Status.COMPLETED if the Test-Playbook passed successfully and was added to succeeded playbooks.
+            PB_Status.FAILED if the Test-Playbook failed and was added to failed playbooks.
+            PB_Status.SECOND_PLAYBACK_REQUIRED if second playback is needed.
+            PB_Status.IN_PROGRESS if more executions are needed in order to determine whether the playbook is successful or not.
+        """
+
+        self.build_context.logging_module.success(f'PASS: {self} succeed')
+
+        # count successful run only when recording mockable or executing unmockable test.
+        if not is_first_playback_run and not is_second_playback_run:
+            self.playbook.configuration.number_of_successful_runs += 1
+
+        # mockable test, first record passed, still need to check second playback.
+        if is_first_execution and is_record_run:
+            return PB_Status.SECOND_PLAYBACK_REQUIRED
+
+        # first/last playback passed (mockable tests) or first execution passed (unmockable tests). adding to succeeded
+        # playbooks, no more executions are needed.
+        if is_first_execution or is_first_playback_run or is_second_playback_run:
+            return PB_Status.COMPLETED
+
+        if use_retries_mechanism:
+            return self._update_status_based_on_retries_mechanism(number_of_executions, is_record_run)
+
+        return PB_Status.COMPLETED
+
+    def _update_failed_status(self, is_record_run: bool, is_first_playback_run: bool, is_second_playback_run: bool,
+                              use_retries_mechanism: bool, number_of_executions: int):
+        """
+        Handles the playbook failed status
         - Logs according to the results
-        - Adds the test to the test results
+        Args:
+            is_record_run: whether it is a record execution.
+            is_first_playback_run: whether it is the first playback execution.
+            is_second_playback_run: whether it is the second playback execution.
+            use_retries_mechanism: whether to use the retries mechanism.
+            number_of_executions: how many times the test was executed.
+        Returns:
+            PB_Status.COMPLETED if the Test-Playbook passed successfully and was added to succeeded playbooks.
+            PB_Status.FAILED if the Test-Playbook failed and was added to failed playbooks.
+            PB_Status.SECOND_PLAYBACK_REQUIRED if second playback is needed.
+            PB_Status.IN_PROGRESS if more executions are needed in order to determine whether the playbook is successful or not.
+        """
+        # in case the first playback run fails, the code should continue to record the playback.
+        if is_first_playback_run:
+            return PB_Status.IN_PROGRESS
+
+        # in case the second playback run fails, test-playbook is considered a failure.
+        if is_second_playback_run:
+            return PB_Status.FAILED
+
+        # in case of using the retries mechanism, the function should determine whether the test-playbook is considered
+        # a failure or give it another try.
+        if use_retries_mechanism:
+            return self._update_status_based_on_retries_mechanism(number_of_executions, is_record_run)
+
+        # the test-playbook is considered a failed playbook.
+        return PB_Status.FAILED
+
+    def _update_status_based_on_retries_mechanism(self, number_of_executions, is_record_run):
+        """
+        Updates the status of a test-playbook when using the retries mechanism.
+        Args:
+            number_of_executions: how many times the test was executed.
+            is_record_run: whether it is a record execution.
+        Returns:
+            PB_Status.COMPLETED if the Test-Playbook passed successfully and was added to succeeded playbooks.
+            PB_Status.FAILED if the Test-Playbook failed and was added to failed playbooks.
+            PB_Status.SECOND_PLAYBACK_REQUIRED if second playback is needed.
+            PB_Status.IN_PROGRESS if more executions are needed in order to determine whether the playbook is successful or not.
+        """
+        if number_of_executions < MAX_RETRIES:
+            self.build_context.logging_module.info(
+                f'Using the retries mechanism for test {self}.\n'
+                f'Test-Playbook was executed {number_of_executions} times, more executions are needed.')
+            self.build_context.test_retries_queue.put(self.playbook)
+            return PB_Status.IN_PROGRESS
+
+        else:  # number_of_executions == MAX_RETRIES:
+            # check if in most executions, the test passed.
+            if self.playbook.configuration.number_of_successful_runs >= RETRIES_THRESHOLD:
+                # It's not enough that the record run will pass to declare the test as successful,
+                # we need the second playback to pass as well.
+                if is_record_run:
+                    self.build_context.logging_module.info(
+                        f'Test-Playbook recording was executed {MAX_RETRIES} times, and passed {self.playbook.configuration.number_of_successful_runs} times.'
+                        f' Running second playback.')
+                    return PB_Status.SECOND_PLAYBACK_REQUIRED
+                self.build_context.logging_module.info(
+                    f'Test-Playbook was executed {MAX_RETRIES} times, and passed {self.playbook.configuration.number_of_successful_runs} times.'
+                    f' Adding to succeeded playbooks.')
+                return PB_Status.COMPLETED
+            else:
+                self.build_context.logging_module.info(
+                    f'Test-Playbook was executed {MAX_RETRIES} times, and passed only {self.playbook.configuration.number_of_successful_runs} times.'
+                    f' Adding to failed playbooks.')
+                return PB_Status.FAILED
+
+    def _update_playbook_status(self, status: str,
+                                is_first_playback_run: bool = False,
+                                is_second_playback_run: bool = False,
+                                is_record_run: bool = False) -> str:
+        """
+        Updates the playbook status if necessary and adds the test to the right set (succeeded/failed) if test is done.
         Args:
             status: The string representation of the playbook execution
             is_first_playback_run: Is the playbook runs in playback mode
             is_second_playback_run: Is The playbook run on a second playback after a freshly created record
+        Returns:
+            PB_Status.COMPLETED if the Test-Playbook passed successfully and was added to succeeded playbooks.
+            PB_Status.FAILED if the Test-Playbook failed and was added to failed playbooks.
+            PB_Status.SECOND_PLAYBACK_REQUIRED if second playback is needed.
+            PB_Status.IN_PROGRESS if more executions are needed in order to determine whether the playbook is successful or not.
         """
+        use_retries_mechanism = self.server_context.use_retries_mechanism
+        number_of_executions = self.playbook.configuration.number_of_executions
+        is_first_execution = number_of_executions == 1
+
         if status == PB_Status.COMPLETED:
-            self.build_context.logging_module.success(f'PASS: {self} succeed')
-            # It's not enough that the record run will pass to declare the test as successful,
-            # we need the second playback to pass as well.
-            if is_record_run:
-                return
+            updated_status = self._update_complete_status(is_first_execution, is_record_run, is_first_playback_run,
+                                                          is_second_playback_run, use_retries_mechanism, number_of_executions)
+
+        elif status in (PB_Status.FAILED_DOCKER_TEST, PB_Status.CONFIGURATION_FAILED):
+            self._add_to_failed_playbooks(status=status)
+            return status
+
+        else:  # test-playbook failed
+            updated_status = self._update_failed_status(is_record_run, is_first_playback_run, is_second_playback_run,
+                                                        use_retries_mechanism, number_of_executions)
+
+        if updated_status == PB_Status.COMPLETED:
             self._add_to_succeeded_playbooks()
-
-        elif status == PB_Status.FAILED_DOCKER_TEST:
-            self._add_to_failed_playbooks()
-
-        else:
-            if is_first_playback_run:
-                return
-            if is_second_playback_run:
-                self._add_to_failed_playbooks(is_second_playback_run=True)
-                return
-            self._add_to_failed_playbooks()
-            if not self.build_context.is_local_run:
-                self._notify_failed_test()
+        elif updated_status == PB_Status.FAILED:
+            self._notify_failed_test()
+            self._add_to_failed_playbooks(is_second_playback_run=is_second_playback_run)
+        return updated_status
 
     def _execute_mockable_test(self, proxy: MITMProxy):
         """
@@ -1671,17 +1944,20 @@ class TestContext:
         Returns:
             True if test has finished it's execution else False
         """
-        if proxy.has_mock_file(self.playbook.configuration.playbook_id):
-            # Running first playback run on mock file
-            self.build_context.logging_module.info(f'------ Test {self} start ------ (Mock: Playback)')
-            with run_with_mock(proxy, self.playbook.configuration.playbook_id) as result_holder:
-                status = self._incident_and_docker_test()
-                result_holder[RESULT] = status == PB_Status.COMPLETED
-            self._handle_status(status, is_first_playback_run=True)
-            if status in (PB_Status.COMPLETED, PB_Status.FAILED_DOCKER_TEST):
-                return True
-            self.build_context.logging_module.warning(
-                "Test failed with mock, recording new mock file. (Mock: Recording)")
+        # we want to test first playback only once (we want to skip it when using retries mechanism)
+        if not self.playbook.configuration.is_first_playback_failed:
+            if proxy.has_mock_file(self.playbook.configuration.playbook_id):
+                # Running first playback run on mock file
+                self.build_context.logging_module.info(f'------ Test {self} start ------ (Mock: Playback)')
+                with run_with_mock(proxy, self.playbook.configuration.playbook_id) as result_holder:
+                    status = self._incident_and_docker_test()
+                    status = self._update_playbook_status(status, is_first_playback_run=True)
+                    result_holder[RESULT] = status == PB_Status.COMPLETED
+                if status in (PB_Status.COMPLETED, PB_Status.FAILED_DOCKER_TEST):
+                    return True
+                self.build_context.logging_module.warning(
+                    "Test failed with mock, recording new mock file. (Mock: Recording)")
+                self.playbook.configuration.is_first_playback_failed = True
 
         # Running on record mode since playback has failed or mock file was not found
         self.build_context.logging_module.info(f'------ Test {self} start ------ (Mock: Recording)')
@@ -1689,21 +1965,21 @@ class TestContext:
             if lock:
                 with run_with_mock(proxy, self.playbook.configuration.playbook_id, record=True) as result_holder:
                     status = self._incident_and_docker_test()
-                    self._handle_status(status, is_record_run=True)
-                    completed = status == PB_Status.COMPLETED
-                    result_holder[RESULT] = completed
+                    self.playbook.configuration.number_of_executions += 1
+                    status = self._update_playbook_status(status, is_record_run=True)
+                    result_holder[RESULT] = status == PB_Status.SECOND_PLAYBACK_REQUIRED
             else:
                 # If the integrations were not locked - the test has not finished it's execution
                 return False
 
         # Running playback after successful record to verify the record is valid for future runs
-        if completed:
+        if status == PB_Status.SECOND_PLAYBACK_REQUIRED:
             self.build_context.logging_module.info(
                 f'------ Test {self} start ------ (Mock: Second playback)')
             with run_with_mock(proxy, self.playbook.configuration.playbook_id) as result_holder:
                 status = self._run_incident_test()
+                self._update_playbook_status(status, is_second_playback_run=True)
                 result_holder[RESULT] = status == PB_Status.COMPLETED
-            self._handle_status(status, is_second_playback_run=True)
         return True
 
     def _is_runnable_on_current_server_instance(self) -> bool:
@@ -1766,21 +2042,32 @@ class TestContext:
 
 class ServerContext:
 
-    def __init__(self, build_context: BuildContext, server_private_ip: str, tunnel_port: int = None):
+    def __init__(self, build_context: BuildContext, server_private_ip: str, tunnel_port: int = None,
+                 use_retries_mechanism: bool = True):
         self.build_context = build_context
         self.server_ip = server_private_ip
         self.tunnel_port = tunnel_port
-        self.server_url = f'https://localhost:{tunnel_port}' if tunnel_port else f'https://{self.server_ip}'
+        if IS_XSIAM:
+            self.server_url = server_private_ip
+            # we use client without demisto username
+            os.environ.pop('DEMISTO_USERNAME', None)
+        else:
+            self.server_url = f'https://localhost:{tunnel_port}' if tunnel_port else f'https://{self.server_ip}'
         self.client: Optional[DefaultApi] = None
         self._configure_new_client()
-        self.proxy = MITMProxy(server_private_ip,
-                               self.build_context.logging_module,
-                               build_number=self.build_context.build_number,
-                               branch_name=self.build_context.build_name)
+        # currently not supported on XSIAM (etc/#47851)
+        if IS_XSIAM:
+            self.proxy = None
+        else:
+            self.proxy = MITMProxy(server_private_ip,
+                                   self.build_context.logging_module,
+                                   build_number=self.build_context.build_number,
+                                   branch_name=self.build_context.build_name)
         self.is_instance_using_docker = not is_redhat_instance(self.server_ip)
         self.executed_tests: Set[str] = set()
         self.executed_in_current_round: Set[str] = set()
         self.prev_system_conf: dict = {}
+        self.use_retries_mechanism: bool = use_retries_mechanism
 
     def _execute_unmockable_tests(self):
         """
@@ -1821,15 +2108,22 @@ class ServerContext:
         """
         Iterates the mockable tests queue and executes them as long as there are tests to execute
         """
-        self.proxy.configure_proxy_in_demisto(proxy=self.proxy.ami.internal_ip + ':' + self.proxy.PROXY_PORT,
-                                              username=self.build_context.secret_conf.server_username,
-                                              password=self.build_context.secret_conf.server_password,
-                                              server=self.server_url)
+        # we running XSIAM without proxy. This code wont be executed on xsiam servers
+        if not IS_XSIAM:
+            self.proxy.configure_proxy_in_demisto(  # type: ignore[union-attr]
+                proxy=self.proxy.ami.internal_ip + ':' + self.proxy.PROXY_PORT,  # type: ignore[union-attr]
+                username=self.build_context.secret_conf.server_username,
+                password=self.build_context.secret_conf.server_password,
+                server=self.server_url)
         self._execute_tests(self.build_context.mockable_tests_to_run)
-        self.proxy.configure_proxy_in_demisto(proxy='',
-                                              username=self.build_context.secret_conf.server_username,
-                                              password=self.build_context.secret_conf.server_password,
-                                              server=self.server_url)
+        if not IS_XSIAM:
+            self.proxy.configure_proxy_in_demisto(proxy='',  # type: ignore[union-attr]
+                                                  username=self.build_context.secret_conf.server_username,
+                                                  password=self.build_context.secret_conf.server_password,
+                                                  server=self.server_url)
+
+    def _execute_failed_tests(self):
+        self._execute_tests(self.build_context.test_retries_queue)
 
     def _reset_tests_round_if_necessary(self, test_playbook: TestPlaybook, queue_: Queue) -> None:
         """
@@ -1863,6 +2157,7 @@ class ServerContext:
             del self.client
         self.client = demisto_client.configure(base_url=self.server_url,
                                                api_key=self.build_context.api_key,
+                                               auth_id=self.build_context.auth_id,
                                                verify_ssl=False)
 
     def _reset_containers(self):
@@ -1879,17 +2174,24 @@ class ServerContext:
     def execute_tests(self):
 
         try:
-            self.build_context.logging_module.info(f'Starts tests with server url - {self.server_url}', real_time=True)
+            self.build_context.logging_module.info(f'Starts tests with server url - {get_ui_url(self.server_url)}',
+                                                   real_time=True)
             self._execute_mockable_tests()
             self.build_context.logging_module.info('Running mock-disabled tests', real_time=True)
             self._execute_unmockable_tests()
-            self.build_context.logging_module.info(f'Finished tests with server url - {self.server_url}',
+            if self.use_retries_mechanism:
+                self.build_context.logging_module.info('Running failed tests', real_time=True)
+                self._execute_failed_tests()
+            self.build_context.logging_module.info(f'Finished tests with server url - '
+                                                   f'{get_ui_url(self.server_url)}',
                                                    real_time=True)
-            self.build_context.tests_data_keeper.add_proxy_related_test_data(self.proxy)
+            # no need in xsiam, no proxy
+            if not IS_XSIAM:
+                self.build_context.tests_data_keeper.add_proxy_related_test_data(self.proxy)
 
-            if self.build_context.isAMI:
-                if self.proxy.should_update_mock_repo:
-                    self.proxy.push_mock_files()
+            if self.build_context.isAMI and not IS_XSIAM:
+                if self.proxy.should_update_mock_repo:  # type: ignore[union-attr]
+                    self.proxy.push_mock_files()    # type: ignore[union-attr]
             self.build_context.logging_module.debug(f'Tests executed on server {self.server_ip}:\n'
                                                     f'{pformat(self.executed_tests)}')
         except Exception:
@@ -1901,66 +2203,81 @@ class ServerContext:
 
 def replace_external_playbook_configuration(client: DefaultApi, external_playbook_configuration: dict,
                                             logger_module: logging.Logger = logging.getLogger('demisto-sdk')):
-    """ Takes external configuration of shape {"playbookID": "Isolate Endpoint - Generic V2",
-                                               "input_parameters":{"Endpoint_hostname": ["simple", "test"]}
+    """ takes external configuration of shape {"playbookID": "Isolate Endpoint - Generic V2",
+                                               "input_parameters":{"Endpoint_hostname": {"simple", "test"}}}
         and changes the specified playbook configuration to the mentioned one.
         If playbook's inputs had changed, revert will be needed.
         Returns (Whether the Playbook changed, The values to restore, the path to use when restoring)
         Only to be used with server version 6.2 and above. """
+
+    # Checking configuration
     if not external_playbook_configuration:
         logger_module.info("External Playbook Configuration not provided, skipping re-configuration.")
         return False, {}, ''
+
+    # Checking server version
     server_version = get_demisto_version(client)
 
     if LooseVersion(server_version.base_version) < LooseVersion('6.2.0'):  # type: ignore
         logger_module.info("External Playbook not supported in versions previous to 6.2.0, skipping re-configuration.")
         return False, {}, ''
 
-    # if external_playbook_configuration:
     logger_module.info("External Playbook in use, starting re-configuration.")
-    restore_needed = False
 
+    # Getting current configuration
     external_playbook_id = external_playbook_configuration['playbookID']
     external_playbook_path = f'/playbook/{external_playbook_id}'
     res, _, _ = demisto_client.generic_request_func(client, method='GET',
                                                     path=external_playbook_path, response_type='object')
-    # Save Default Configuration.
+
     inputs = res.get('inputs', [])
     if not inputs:
         raise Exception("External Playbook was not found or has no inputs.")
 
+    # Save current for default Configuration.
     inputs_default = deepcopy(inputs)
     logger_module.info("Saved current configuration.")
-    """ takes external configuration of shape {"playbookID": "Isolate Endpoint - Generic V2",
-                                               "input_parameters":{"Endpoint_hostname": {"simple", "test"}}}"""
+
     changed_keys = []
     failed_keys = []
+
     # Change Configuration for external pb.
     for input_ in external_playbook_configuration["input_parameters"]:
         matching_record = list(filter(lambda x: x.get('key') == input_, inputs))
         if matching_record:
             existing_val = matching_record[0]
-            existing_val['value']["simple"] = external_playbook_configuration["input_parameters"][input_].get("simple")
-            existing_val['value']["complex"] = external_playbook_configuration["input_parameters"][input_].get("complex")
+            simple = external_playbook_configuration["input_parameters"][input_].get("simple")
+            complex = external_playbook_configuration["input_parameters"][input_].get("complex")
+
+            # If no value (simple or complex) was found, It is a typo
+            if complex is None and simple is None:
+                raise Exception(f'Could not found neither a `simple` nor `complex` value for field: {input_}. '
+                                'A valid configuration should be of the followng format: '
+                                '{<param name>: {"simple", <required value>}}')
+
+            existing_val['value']["simple"] = simple
+            existing_val['value']["complex"] = complex
             changed_keys.append(input_)
 
         else:
             failed_keys.append(input_)
+
     if failed_keys:
         raise Exception(f'Some input keys was not found in playbook: {",".join(failed_keys)}.')
-    logger_module.info(f"Changing keys: {changed_keys}.")
 
+    logger_module.info(f"Changing keys: {changed_keys}.")
     saving_inputs_path = f'/playbook/inputs/{external_playbook_id}'
+
     try:
         if changed_keys:
             demisto_client.generic_request_func(client, method='POST', path=saving_inputs_path, body=inputs)
-            restore_needed = True
+
     except Exception as e:
         raise Exception(f"Could not change inputs in playbook configuration. Error: {e}")
 
     logger_module.info(f"Re-configured {external_playbook_id} successfully with {len(changed_keys)} new values.")
 
-    return restore_needed, inputs_default, saving_inputs_path
+    return True, inputs_default, saving_inputs_path
 
 
 def restore_external_playbook_configuration(client: DefaultApi, restore_path: str, restore_values: dict,

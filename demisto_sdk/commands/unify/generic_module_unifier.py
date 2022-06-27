@@ -1,4 +1,3 @@
-import json
 import os
 import sys
 from typing import Dict, Optional
@@ -6,7 +5,10 @@ from typing import Dict, Optional
 import click
 
 from demisto_sdk.commands.common.constants import PACKS_DIR, FileType
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import find_type, get_pack_name
+
+json = JSON_Handler()
 
 
 class GenericModuleUnifier:
@@ -14,7 +16,7 @@ class GenericModuleUnifier:
     Unifies a GenericModule object with it's Dashboards
     """
 
-    def __init__(self, input: str, output: str = '', force: bool = False):
+    def __init__(self, input: str, output: str = '', force: bool = False, marketplace: Optional[str] = None):
         """
         Init a GenericModuleUnifier
         Args:
@@ -29,6 +31,7 @@ class GenericModuleUnifier:
 
         self.input_file_name = os.path.basename(self.input_path).rstrip('.json')
         self.use_force = force
+        self.marketplace = marketplace
 
         if output:
             if not os.path.isdir(output):

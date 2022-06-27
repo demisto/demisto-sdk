@@ -1,3 +1,4 @@
+import logging
 from typing import List, Optional, Union
 
 from wcmatch.pathlib import Path
@@ -5,6 +6,7 @@ from wcmatch.pathlib import Path
 from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.content.objects.abstract_objects import \
     TextObject
+from demisto_sdk.commands.common.tools import get_mp_tag_parser
 
 
 class Readme(TextObject):
@@ -27,6 +29,20 @@ class Readme(TextObject):
         except Exception as e:
             print(e)
 
+    def handle_marketplace_tags(self):
+        """Remove marketplace tags depending on marketplace version"""
+        try:
+            with open(self._path, 'r+') as f:
+                text = f.read()
+                parsed_text = get_mp_tag_parser().parse_text(text)
+                if len(text) != len(parsed_text):
+                    f.seek(0)
+                    f.write(parsed_text)
+                    f.truncate()
+        except Exception as e:
+            logging.error(e)
+
     def dump(self, dest_dir: Optional[Union[Path, str]] = None) -> List[Path]:
         self.mention_contributors_in_readme()
+        self.handle_marketplace_tags()
         return super().dump(dest_dir)

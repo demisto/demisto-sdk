@@ -1,4 +1,5 @@
 import glob
+import json
 import os
 import shutil
 from pathlib import Path
@@ -10,16 +11,20 @@ import requests
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_TO_VERSION, INTEGRATIONS_DIR, LAYOUTS_DIR, PACKS_DIR,
-    PACKS_PACK_IGNORE_FILE_NAME, PLAYBOOKS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR, FileType)
+    DEFAULT_CONTENT_ITEM_TO_VERSION, DOC_FILES_DIR, INTEGRATIONS_DIR,
+    LAYOUTS_DIR, METADATA_FILE_NAME, PACKS_DIR, PACKS_PACK_IGNORE_FILE_NAME,
+    PLAYBOOKS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, FileType,
+    MarketplaceVersions)
 from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
+                                                            GitCredentials)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
-    LOG_COLORS, arg_to_list, compare_context_path_in_yml_and_readme,
-    filter_files_by_type, filter_files_on_pack, filter_packagify_changes,
-    find_type, get_code_lang, get_current_repo, get_dict_from_file,
+    LOG_COLORS, MarketplaceTagParser, TagParser, arg_to_list,
+    compare_context_path_in_yml_and_readme, filter_files_by_type,
+    filter_files_on_pack, filter_packagify_changes, find_type, get_code_lang,
+    get_current_repo, get_dict_from_file, get_display_name,
     get_entity_id_by_entity_type, get_entity_name_by_entity_type,
     get_file_displayed_name, get_file_version_suffix_if_exists,
     get_files_in_dir, get_ignore_pack_skipped_tests, get_item_marketplaces,
@@ -50,10 +55,13 @@ from demisto_sdk.tests.constants_test import (DUMMY_SCRIPT_PATH, IGNORED_PNG,
                                               VALID_WIDGET_PATH)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT, MAPPER, OLD_CLASSIFIER, REPUTATION)
+from TestSuite.file import File
 from TestSuite.pack import Pack
 from TestSuite.playbook import Playbook
 from TestSuite.repo import Repo
 from TestSuite.test_tools import ChangeCWD
+
+GIT_ROOT = git_path()
 
 
 class TestGenericFunctions:
@@ -106,8 +114,12 @@ class TestGenericFunctions:
         (VALID_GENERIC_MODULE_PATH, FileType.GENERIC_MODULE),
         (VALID_GENERIC_DEFINITION_PATH, FileType.GENERIC_DEFINITION),
         (IGNORED_PNG, None),
-        ('', None),
         ('Author_image.png', FileType.AUTHOR_IMAGE),
+        (FileType.PACK_IGNORE.value, FileType.PACK_IGNORE),
+        (FileType.SECRET_IGNORE.value, FileType.SECRET_IGNORE),
+        (Path(DOC_FILES_DIR) / 'foo', FileType.DOC_FILE),
+        (METADATA_FILE_NAME, FileType.METADATA),
+        ('', None),
     ]
 
     @pytest.mark.parametrize('path, _type', data_test_find_type)
@@ -246,7 +258,7 @@ class TestGetRemoteFile:
     def test_get_remote_file_sanity(self):
         hello_world_yml = tools.get_remote_file(
             'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml',
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert hello_world_yml
         assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
@@ -255,7 +267,7 @@ class TestGetRemoteFile:
         hello_world_py = tools.get_remote_file(
             'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
             return_content=True,
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert hello_world_py
 
@@ -263,7 +275,7 @@ class TestGetRemoteFile:
         hello_world_py = tools.get_remote_file(
             'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py',
             return_content=True,
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         hello_world_text = hello_world_py.decode()
         assert isinstance(hello_world_py, bytes)
@@ -275,7 +287,7 @@ class TestGetRemoteFile:
         hello_world_yml = tools.get_remote_file(
             'Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.yml',
             'master',
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert hello_world_yml
         assert hello_world_yml['commonfields']['id'] == 'HelloWorld'
@@ -284,7 +296,7 @@ class TestGetRemoteFile:
         gmail_yml = tools.get_remote_file(
             'Integrations/Gmail/Gmail.yml',
             '19.10.0',
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert gmail_yml
         assert gmail_yml['commonfields']['id'] == 'Gmail'
@@ -293,7 +305,7 @@ class TestGetRemoteFile:
         gmail_yml = tools.get_remote_file(
             'Integrations/Gmail/Gmail.yml',
             'origin/19.10.0',
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert gmail_yml
         assert gmail_yml['commonfields']['id'] == 'Gmail'
@@ -302,7 +314,7 @@ class TestGetRemoteFile:
         invalid_yml = tools.get_remote_file(
             'Integrations/File/File.yml',
             '19.10.0',
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert not invalid_yml
 
@@ -310,7 +322,7 @@ class TestGetRemoteFile:
         invalid_yml = tools.get_remote_file(
             'Integrations/Gmail/Gmail.yml',
             'NoSuchBranch',
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert not invalid_yml
 
@@ -318,7 +330,7 @@ class TestGetRemoteFile:
         invalid_yml = tools.get_remote_file(
             'Integrations/Gmail/Gmail.yml',
             'origin/NoSuchBranch',
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert not invalid_yml
 
@@ -326,7 +338,7 @@ class TestGetRemoteFile:
         hello_world_readme = tools.get_remote_file(
             'Packs/HelloWorld/README.md',
             'master',
-            github_repo=self.content_repo
+            git_content_config=GitContentConfig(repo_name=self.content_repo)
         )
         assert hello_world_readme == {}
 
@@ -390,9 +402,10 @@ class TestGetRemoteFileLocally:
             ok = False
 
         mocker.patch.object(requests, 'get', return_value=Response)
-        mocker.patch.object(os, 'getenv', return_value=False)
-        some_file_json = tools.get_remote_file(os.path.join(self.REPO_NAME, self.FILE_NAME),
-                                               github_repo=self.REPO_NAME)
+        mocker.patch.dict(os.environ, {GitCredentials.ENV_GITHUB_TOKEN_NAME: '',
+                                       GitCredentials.ENV_GITLAB_TOKEN_NAME: ''})
+        with ChangeCWD(self.REPO_NAME):
+            some_file_json = tools.get_remote_file(self.FILE_NAME)
         assert some_file_json
         assert some_file_json['id'] == 'some_file'
 
@@ -1139,7 +1152,7 @@ def test_get_relative_path_from_packs_dir():
     ('1.3.8', ['* Updated the **secrets** command to work on forked branches.']),
     ('1.3', [])
 ])
-def test_get_release_note_entries(version, expected_result):
+def test_get_release_note_entries(requests_mock, version, expected_result):
     """
     Given:
         - Version of the demisto-sdk.
@@ -1150,6 +1163,11 @@ def test_get_release_note_entries(version, expected_result):
     Then:
         - Ensure that the result as expected.
     """
+    requests_mock.get('https://api.github.com/repos/demisto/demisto-sdk')
+    #
+    with open(f'{GIT_ROOT}/demisto_sdk/commands/common/tests/test_files/test_changelog.md', 'rb') as f:
+        changelog = f.read()
+    requests_mock.get('https://raw.githubusercontent.com/demisto/demisto-sdk/master/CHANGELOG.md', content=changelog)
 
     assert get_release_note_entries(version) == expected_result
 
@@ -1556,12 +1574,13 @@ YML_DATA_CASES = [(get_yaml(VALID_INTEGRATION_TEST_PATH), FileType.INTEGRATION,
                    [{'id': 'PagerDutyGetAllSchedules'}, {'id': 'PagerDutyGetUsersOnCall'},
                     {'id': 'PagerDutyGetUsersOnCallNow'}, {'id': 'PagerDutyIncidents'}, {'id': 'PagerDutySubmitEvent'},
                     {'id': 'PagerDutyGetContactMethods'}, {'id': 'PagerDutyGetUsersNotification'}], []),
-                  (get_yaml(VALID_SCRIPT_PATH), FileType.SCRIPT, [{'id': 'send-notification'}], ['TestCreateDuplicates']),
+                  (get_yaml(VALID_SCRIPT_PATH), FileType.SCRIPT, [{'id': 'send-notification'}],
+                   ['TestCreateDuplicates']),
                   (get_yaml(TEST_PLAYBOOK), FileType.TEST_PLAYBOOK, [{'id': 'gmail-search', 'source': 'Gmail'}],
                    ['ReadFile', 'Get Original Email - Gmail']),
                   (get_yaml(VALID_PLAYBOOK_ID_PATH), FileType.PLAYBOOK, [{'id': 'setIncident', 'source': 'Builtin'},
                                                                          {'id': 'closeInvestigation',
-                                                                                'source': 'Builtin'},
+                                                                          'source': 'Builtin'},
                                                                          {'id': 'setIncident', 'source': 'Builtin'}],
                    ['Account Enrichment - Generic', 'EmailAskUser', 'ADGetUser', 'IP Enrichment - Generic',
                     'IP Enrichment - Generic', 'AssignAnalystToIncident', 'access_investigation_-_generic']),
@@ -1596,7 +1615,8 @@ class TestGetItemMarketplaces:
             'name': 'Integration',
             'marketplaces': ['xsoar', 'marketplacev2'],
         }
-        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml', item_data=item_data)
+        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml',
+                                             item_data=item_data)
 
         assert 'xsoar' in marketplaces
         assert 'marketplacev2' in marketplaces
@@ -1622,7 +1642,8 @@ class TestGetItemMarketplaces:
                 'marketplaces': ['xsoar', 'marketplacev2'],
             }
         }
-        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml', item_data=item_data, packs=packs)
+        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml',
+                                             item_data=item_data, packs=packs)
 
         assert 'xsoar' in marketplaces
         assert 'marketplacev2' in marketplaces
@@ -1647,7 +1668,185 @@ class TestGetItemMarketplaces:
                 'id': 'PackID',
             }
         }
-        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml', item_data=item_data, packs=packs)
+        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml',
+                                             item_data=item_data, packs=packs)
 
         assert len(marketplaces) == 1
         assert 'xsoar' in marketplaces
+
+    @staticmethod
+    def test_pack_not_in_cache(mocker):
+        """
+        Given
+            - item does not declare marketplaces
+            - pack does not appear in pack cache
+        When
+            - getting the marketplaces of an item
+        Then
+            - return the marketplaces from the pack_metadata
+        """
+        item_data = {
+            'name': 'Integration',
+            'pack': 'PackID',
+        }
+        packs = {
+            'PackID2': {
+                'id': 'PackID2',
+            }
+        }
+        mocker.patch('demisto_sdk.commands.common.tools.get_mp_types_from_metadata_by_item', return_value=['marketplacev2'])
+        marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml',
+                                             item_data=item_data, packs=packs)
+
+        assert len(marketplaces) == 1
+        assert 'marketplacev2' in marketplaces
+
+
+class TestTagParser:
+    def test_no_text_to_remove(self):
+        """
+        Given:
+            - prefix <>
+            - suffix </>
+            - text with no prefix / suffix
+        When:
+            - Calling TagParser.parse()
+        Then:
+            - Text shouldn't change
+        """
+        prefix = '<>'
+        suffix = '</>'
+        text = 'some text'
+        tag_parser = TagParser(prefix, suffix, remove_tag_text=False)
+        for tag in (prefix, suffix):
+            assert tag_parser.parse(text + tag) == text + tag
+
+    def test_remove_text(self):
+        """
+        Given:
+            - prefix <>
+            - suffix </>
+            - text with prefix + suffix
+        When:
+            - Calling TagParser.parse() with text removal
+        Then:
+            - Text shouldn't have tags or their text
+        """
+        prefix = '<>'
+        suffix = '</>'
+        text = 'some text<>more text</>'
+        expected_text = 'some text'
+        tag_parser = TagParser(prefix, suffix, remove_tag_text=True)
+        assert tag_parser.parse(text) == expected_text
+
+    def test_remove_tags_only(self):
+        """
+        Given:
+            - prefix <>
+            - suffix </>
+            - text with prefix + suffix
+        When:
+            - Calling TagParser.parse() without text removal
+        Then:
+            - Text shouldn't have tags, but keep the text
+        """
+        prefix = '<>'
+        suffix = '</>'
+        text = 'some text <>tag text</>'
+        expected_text = 'some text tag text'
+        tag_parser = TagParser(prefix, suffix, remove_tag_text=False)
+        assert tag_parser.parse(text) == expected_text
+
+
+class TestMarketplaceTagParser:
+    MARKETPLACE_TAG_PARSER = MarketplaceTagParser()
+    TEXT_WITH_TAGS = f'''
+### Sections:
+{MARKETPLACE_TAG_PARSER.XSOAR_PREFIX} - XSOAR PARAGRAPH{MARKETPLACE_TAG_PARSER.XSOAR_SUFFIX}
+{MARKETPLACE_TAG_PARSER.XSIAM_PREFIX} - XSIAM PARAGRAPH{MARKETPLACE_TAG_PARSER.XSIAM_SUFFIX}
+### Inline:
+{MARKETPLACE_TAG_PARSER.XSOAR_INLINE_PREFIX}xsoar inline text{MARKETPLACE_TAG_PARSER.XSOAR_INLINE_SUFFIX}
+{MARKETPLACE_TAG_PARSER.XSIAM_INLINE_PREFIX}xsiam inline text{MARKETPLACE_TAG_PARSER.XSIAM_INLINE_SUFFIX}'''
+
+    def test_invalid_marketplace_version(self):
+        """
+        Given:
+            - Invalid marketplace version
+            - Text with XSOAR tags and XSIAM tags
+        When:
+            - Calling MarketplaceTagParser.parse_text()
+        Then:
+            - Remove all tags and their text
+        """
+        self.MARKETPLACE_TAG_PARSER.marketplace = 'invalid'
+        actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
+        assert '### Sections:' in actual
+        assert '### Inline:' in actual
+        assert self.MARKETPLACE_TAG_PARSER.XSOAR_PREFIX not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XSIAM_PREFIX not in actual
+        assert 'XSOAR' not in actual
+        assert 'xsoar' not in actual
+        assert 'XSIAM' not in actual
+        assert 'xsiam' not in actual
+
+    def test_xsoar_marketplace_version(self):
+        """
+        Given:
+            - xsoar marketplace version
+            - Text with XSOAR tags and XSIAM tags
+        When:
+            - Calling MarketplaceTagParser.parse_text()
+        Then:
+            - Remove all XSIAM tags and their text, and keep XSOAR text with tags
+        """
+        self.MARKETPLACE_TAG_PARSER.marketplace = MarketplaceVersions.XSOAR.value
+        actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
+        assert '### Sections:' in actual
+        assert '### Inline:' in actual
+        assert 'XSOAR' in actual
+        assert 'xsoar' in actual
+        assert self.MARKETPLACE_TAG_PARSER.XSOAR_PREFIX not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XSIAM_PREFIX not in actual
+        assert 'XSIAM' not in actual
+        assert 'xsiam' not in actual
+
+    def test_xsiam_marketplace_version(self):
+        """
+        Given:
+            - xsiam marketplace version
+            - Text with XSOAR tags and XSIAM tags
+        When:
+            - Calling MarketplaceTagParser.parse_text()
+        Then:
+            - Remove all XSOAR tags and their text, and keep XSIAM text with tags
+        """
+        self.MARKETPLACE_TAG_PARSER.marketplace = MarketplaceVersions.MarketplaceV2.value
+        actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
+        assert '### Sections:' in actual
+        assert '### Inline:' in actual
+        assert 'XSOAR' not in actual
+        assert 'xsoar' not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XSOAR_PREFIX not in actual
+        assert self.MARKETPLACE_TAG_PARSER.XSIAM_PREFIX not in actual
+        assert 'XSIAM' in actual
+        assert 'xsiam' in actual
+
+
+@pytest.mark.parametrize('data, answer', [({'brandName': 'TestBrand'}, 'TestBrand'), ({'id': 'TestID'}, 'TestID'),
+                                          ({'name': 'TestName'}, 'TestName'), ({'TypeName': 'TestType'}, 'TestType'),
+                                          ({'display': 'TestDisplay'}, 'TestDisplay'),
+                                          ({'trigger_name': 'T Name'}, 'T Name'),
+                                          ({'layout': {'id': 'Testlayout'}}, 'Testlayout'),
+                                          ({'dashboards_data': [{'name': 'D Name'}]}, 'D Name'),
+                                          ({'templates_data': [{'report_name': 'R Name'}]}, 'R Name')])
+def test_get_display_name(data, answer, tmpdir):
+    """
+        Given
+            - Pack to update release notes
+        When
+            - get_display_name with file path is called
+        Then
+           - Returned name determined by the key of the data loaded from the file
+        """
+    file = File(tmpdir / 'test_file.json', '', json.dumps(data))
+    assert get_display_name(file.path) == answer

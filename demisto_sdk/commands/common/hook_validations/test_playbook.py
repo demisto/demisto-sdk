@@ -1,4 +1,6 @@
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import is_string_uuid
@@ -31,6 +33,8 @@ class TestPlaybookValidator(ContentEntityValidator):
 
         return all([
             self.is_valid_fromversion(),
+            self.are_fromversion_and_toversion_in_correct_format(),
+            self.are_fromversion_toversion_synchronized(),
         ])
 
     def is_valid_version(self):  # type: () -> bool
@@ -41,6 +45,7 @@ class TestPlaybookValidator(ContentEntityValidator):
         """
         return self._is_valid_version()
 
+    @error_codes('PB108')
     def _is_id_uuid(self):
         """
         Check that the taskid field and the id field under the task field are both on from uuid format
@@ -61,6 +66,7 @@ class TestPlaybookValidator(ContentEntityValidator):
 
         return is_valid
 
+    @error_codes('PB109')
     def _is_taskid_equals_id(self):
         """
         Check that taskid field and id field under task field contains equal values

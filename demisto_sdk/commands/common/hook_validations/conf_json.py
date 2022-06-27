@@ -1,12 +1,14 @@
-import json
 from pathlib import Path
 
 from demisto_sdk.commands.common.constants import (API_MODULES_PACK, CONF_PATH,
                                                    FileType)
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator, error_codes)
 from demisto_sdk.commands.common.tools import _get_file_id, get_pack_name
+
+json = JSON_Handler()
 
 
 class ConfJsonValidator(BaseValidator):
@@ -19,9 +21,9 @@ class ConfJsonValidator(BaseValidator):
     CONF_PATH = "./Tests/conf.json"
     DYNAMIC_SECTION_TAG = 'dynamic-section'
 
-    def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print=False, json_file_path=None):
+    def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print=False, json_file_path=None, specific_validations=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print, json_file_path=json_file_path)
+                         suppress_print=suppress_print, json_file_path=json_file_path, specific_validations=specific_validations)
         self._is_valid = True
         self.conf_data = self.load_conf_file()
 
@@ -42,6 +44,7 @@ class ConfJsonValidator(BaseValidator):
 
         return self._is_valid
 
+    @error_codes('CJ100')
     def is_valid_description_in_conf_dict(self, checked_dict):
         """Validate that the checked_dict has description for all it's fields.
 
@@ -60,6 +63,7 @@ class ConfJsonValidator(BaseValidator):
 
         return self._is_valid
 
+    @error_codes('CJ101')
     def is_test_in_conf_json(self, file_id):
         """Check if the file_id(We get this ID only if it is a test) is located in the tests section in conf.json file.
 
@@ -91,6 +95,7 @@ class ConfJsonValidator(BaseValidator):
                                                     file_path=file_path)
         return True
 
+    @error_codes('CJ105')
     def has_unskipped_test_playbook(self, current_file, entity_id, file_path, test_playbook_ids=None):
         """Check if the content entity has at least one unskipped test playbook.
 

@@ -1,4 +1,6 @@
-import json
+from demisto_sdk.commands.common.handlers import JSON_Handler
+json = JSON_Handler()
+
 import time
 from typing import Any, Callable, Dict, Optional, Tuple, Union
 
@@ -41,6 +43,8 @@ TICKETS_OBJECTS = {
         'Waiting on Third Party': 8
     }
 }
+
+SERVER_URL = 'http://test.com'
 
 
 def convert_snake_to_camel(snake_str: str) -> str:

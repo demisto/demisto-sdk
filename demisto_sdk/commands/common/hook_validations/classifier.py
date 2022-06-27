@@ -5,6 +5,8 @@ import click
 from demisto_sdk.commands.common.constants import \
     LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import \
@@ -41,7 +43,7 @@ class ClassifierValidator(ContentEntityValidator):
                 self.is_valid_to_version(),
                 self.is_to_version_higher_from_version(),
                 self.is_valid_type(),
-                self.is_incident_field_exist(id_set_file, is_circle)
+                self.is_incident_field_exist(id_set_file, is_circle),
             ])
 
         return all([
@@ -50,8 +52,17 @@ class ClassifierValidator(ContentEntityValidator):
             self.is_valid_from_version(),
             self.is_valid_to_version(),
             self.is_to_version_higher_from_version(),
-            self.is_valid_type()
+            self.is_valid_type(),
+            self.is_id_equals_name(),
         ])
+
+    def is_id_equals_name(self):
+        """Check whether the classifier's ID is equal to its name
+
+        Returns:
+            bool. True if valid, and False otherwise.
+        """
+        return super(ClassifierValidator, self)._is_id_equals_name('classifier')
 
     def is_valid_version(self):
         """Checks if version field is valid. uses default method.
@@ -61,6 +72,7 @@ class ClassifierValidator(ContentEntityValidator):
         """
         return self._is_valid_version()
 
+    @error_codes('CL102,CL103,CL104')
     def is_valid_from_version(self):
         """Checks if from version field is valid.
 
@@ -90,6 +102,7 @@ class ClassifierValidator(ContentEntityValidator):
                 return False
         return True
 
+    @error_codes('CL100,CL101,CL105')
     def is_valid_to_version(self):
         """Checks if to version field is valid.
 
@@ -118,6 +131,7 @@ class ClassifierValidator(ContentEntityValidator):
                 return False
         return True
 
+    @error_codes('CL106')
     def is_to_version_higher_from_version(self):
         """Checks if to version field is higher than from version field.
 
@@ -131,6 +145,7 @@ class ClassifierValidator(ContentEntityValidator):
                     return False
         return True
 
+    @error_codes('CL107')
     def is_valid_type(self):
         """Checks if type field is valid.
 
@@ -143,6 +158,7 @@ class ClassifierValidator(ContentEntityValidator):
                 return False
         return True
 
+    @error_codes('MP106')
     def is_incident_field_exist(self, id_set_file, is_circle) -> bool:
         """Checks if classifier incident fields is exist in content repo, this validation is only for old classifiers.
 

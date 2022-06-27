@@ -1,5 +1,4 @@
 import glob
-import json
 import os
 import sys
 from copy import deepcopy
@@ -16,6 +15,7 @@ from demisto_sdk.commands.common import constants
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION, GENERIC_COMMANDS_NAMES,
     IGNORED_PACKS_IN_DEPENDENCY_CALC, PACKS_DIR)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (ProcessPoolHandler,
                                                get_content_id_set,
                                                get_content_path, get_pack_name,
@@ -27,6 +27,9 @@ from demisto_sdk.commands.common.update_id_set import (
     merge_id_sets, update_excluded_items_dict)
 from demisto_sdk.commands.create_id_set.create_id_set import (IDSetCreator,
                                                               get_id_set)
+
+json = JSON_Handler()
+
 
 MINIMUM_DEPENDENCY_VERSION = Version('6.0.0')
 COMMON_TYPES_PACK = 'CommonTypes'
@@ -1690,7 +1693,8 @@ class PackDependencies:
                                      ('generic_modules', 'GenericModules'),
                                      ('generic_definitions', 'GenericDefinitions'),
                                      ('lists', 'Lists'),
-                                     ('jobs', 'Jobs')):
+                                     ('jobs', 'Jobs'),
+                                     ('wizards', 'Wizards')):
             if id_set_key not in id_set:
                 raise RuntimeError(
                     "\n".join((f"Error: the {id_set_key} content type is missing from the id_set.",
@@ -1881,7 +1885,8 @@ class PackDependencies:
                              **mappers_items_dependencies, **dashboards_items_dependencies,
                              **reports_items_dependencies,
                              **generic_types_items_dependencies, **generic_fields_items_dependencies,
-                             **generic_modules_items_dependencies, **jobs_items_dependencies}
+                             **generic_modules_items_dependencies, **jobs_items_dependencies,
+                             }
 
         return pack_dependencies, items_depenencies
 
@@ -2090,6 +2095,7 @@ class PackDependencies:
             input_paths: Tuple = None,
             all_packs_dependencies: bool = False,
             get_dependent_on: bool = False,
+            dependency: str = '',
             output_path: str = None,
     ) -> None:
         """
@@ -2103,6 +2109,7 @@ class PackDependencies:
             all_packs_dependencies: Whether to calculate dependencies for all content packs.
             get_dependent_on: Whether to get the packs dependent on the given packs.
             output_path: The destination path for the packs dependencies json file.
+            dependency: The pack to search the dependency for.
 
         """
 
@@ -2115,6 +2122,20 @@ class PackDependencies:
             print_success("Found the following dependent packs:")
             dependent_packs = json.dumps(dependent_packs, indent=4)
             click.echo(click.style(dependent_packs, bold=True))
+
+        elif dependency:
+            input_pack_name = ''
+            if input_paths:
+                input_pack_name = get_pack_name(input_paths[0])
+            dependency_pack_name = get_pack_name(dependency)
+            dependencies = find_dependencies_between_two_packs(input_paths, output_path, dependency, id_set_path,
+                                                               verbose)
+            if dependencies:
+                print_success(f"The pack \"{input_pack_name}\" depends on \"{dependency_pack_name}\" "
+                              f"with the following items:")
+                click.echo(click.style(dependencies, bold=True))
+            else:
+                print_warning(f"Could not find dependencies between the two packs: {input_pack_name} and {dependency}")
 
         elif all_packs_dependencies:
             calculate_all_packs_dependencies(id_set_path, output_path, verbose)  # type: ignore[arg-type]
@@ -2471,6 +2492,31 @@ def get_packs_dependent_on_given_packs(packs: list,
     return dependent_on_results, set(dependent_packs_list)
 
 
+def find_dependencies_between_two_packs(input_paths: Tuple = None, output_path: str = None, dependency: str = '',
+                                        id_set_path: str = '', verbose: bool = False):
+    """
+    Returns the content items that cause the dependencies between two packs
+    args:
+        input_paths: Packs paths to find dependencies.
+        id_set_path: Path to id_set.json file.
+        output_path: The path for the outputs json.
+        verbose: Whether to print the log to the console.
+        dependency: The pack to search the dependency for.
+    """
+    dependent_packs, _ = get_packs_dependent_on_given_packs([dependency], id_set_path,  # type: ignore[arg-type]
+                                                            output_path, verbose=True)
+    input_pack_name = ''
+    if input_paths:
+        input_pack_name = get_pack_name(input_paths[0])
+    dependency_pack_name = get_pack_name(dependency)
+    dependent_items = dependent_packs[dependency_pack_name].get('packsDependentOnThisPackMandatorily')
+    if input_pack_name in dependent_items:
+        packs_dependencies = dependent_items.get(input_pack_name)
+        dependencies = json.dumps(packs_dependencies, indent=4)
+
+        return dependencies
+
+
 def update_items_dependencies(pack_dependencies_data, items_dependencies, current_entity_type, current_entity_id,
                               packs_and_items_dict) -> None:
     """
@@ -2600,6 +2646,9 @@ def calculate_dependencies(excluded_items: dict, id_set: dict, marketplace: str)
                 if entity_dependent_on in excluded_pack_entities_set:  # check the type and name of the entity
                     dependent_items_to_exclude_from_id_set.setdefault(mandatory_pack_name, set()).update(
                         dependent_entities_list)
+
+                    # for debug purposes
+                    print(f'Removing {dependent_entities_list} due to {entity_dependent_on}')
 
     return dependent_items_to_exclude_from_id_set
 

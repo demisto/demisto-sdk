@@ -31,7 +31,7 @@ class TestTryExceptMainChecker(pylint.testutils.CheckerTestCase):
             def main():
                 try:
                     return True
-                except:
+                except Exception:
                     return False
                     return_error('error')
         """)
@@ -56,7 +56,7 @@ class TestTryExceptMainChecker(pylint.testutils.CheckerTestCase):
             def main():
                 try:
                     return True
-                except:
+                except Exception:
                     return False
                     return_error('error')
                 finally:
@@ -86,7 +86,7 @@ class TestTryExceptMainChecker(pylint.testutils.CheckerTestCase):
         """)
         assert node_b is not None
         with self.assertAddsMessages(
-                pylint.testutils.Message(
+                pylint.testutils.MessageTest(
                     msg_id='try-except-main-doesnt-exists',
                     node=node_b,
                 ),
@@ -117,7 +117,7 @@ class TestReturnErrorInMainChecker(pylint.testutils.CheckerTestCase):
             def main():
                 try:
                     return True
-                except:
+                except Exception:
                     return_error('not ok')
 
         """)
@@ -141,13 +141,13 @@ class TestReturnErrorInMainChecker(pylint.testutils.CheckerTestCase):
             def main():
                 try:
                     return True
-                except:
+                except Exception:
                     return False
 
         """)
         assert node_b is not None
         with self.assertAddsMessages(
-                pylint.testutils.Message(
+                pylint.testutils.MessageTest(
                     msg_id='return-error-does-not-exist-in-main',
                     node=node_b,
                 ),
@@ -170,13 +170,13 @@ class TestReturnErrorInMainChecker(pylint.testutils.CheckerTestCase):
             def main():
                 try:
                     return True
-                except:
+                except Exception:
                     return False
 
         """)
         assert node_b is not None
         with self.assertAddsMessages(
-                pylint.testutils.Message(
+                pylint.testutils.MessageTest(
                     msg_id='return-error-does-not-exist-in-main',
                     node=node_b,
                 ),
@@ -207,7 +207,7 @@ class TestReturnErrorCountChecker(pylint.testutils.CheckerTestCase):
             def main():
                 try:
                     return True
-                except:
+                except Exception:
                     return_error('not ok')
 
         """)
@@ -232,13 +232,13 @@ class TestReturnErrorCountChecker(pylint.testutils.CheckerTestCase):
             def main():
                 try:
                     return True
-                except:
+                except Exception:
                     return_error('not ok') #@
 
         """)
         assert node_b is not None
         with self.assertAddsMessages(
-                pylint.testutils.Message(
+                pylint.testutils.MessageTest(
                     msg_id='too-many-return-error',
                     node=node_b,
                 ),

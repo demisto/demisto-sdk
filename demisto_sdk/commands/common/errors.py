@@ -4,35 +4,36 @@ from typing import Any, Dict, List, Optional
 import decorator
 from requests import Response
 
-from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
-                                                   CONF_PATH,
-                                                   DEFAULT_JOB_FROM_VERSION,
-                                                   INTEGRATION_CATEGORIES,
-                                                   PACK_METADATA_DESC,
-                                                   PACK_METADATA_NAME)
+from demisto_sdk.commands.common.constants import (
+    BETA_INTEGRATION_DISCLAIMER, CONF_PATH, FILETYPE_TO_DEFAULT_FROMVERSION,
+    INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME, FileType)
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
+# allowed errors to be ignored in any supported pack (XSOAR/Partner/Community) only if they appear in the .pack-ignore
 ALLOWED_IGNORE_ERRORS = [
-    'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113',
+    'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113', 'BA116',
     'DS107',
     'GF102',
     'IF100', 'IF106', 'IF115', 'IF116',
-    'IN109', 'IN110', 'IN122', 'IN124', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145',
+    'IN109', 'IN110', 'IN122', 'IN124', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145', 'IN153', 'IN154',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107',
-    'RM100', 'RM102', 'RM104', 'RM106', 'RM108',
+    'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM 110', 'RM112',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
-    'IM111'
+    'IM111',
+    'RN112',
 ]
 
+# predefined errors to be ignored in partner/community supported packs even if they do not appear in .pack-ignore
 PRESET_ERROR_TO_IGNORE = {
     'community': ['BC', 'CJ', 'DS100', 'DS101', 'DS102', 'DS103', 'DS104', 'IN125', 'IN126', 'IN140'],
     'partner': ['CJ', 'IN140']
 }
 
+# predefined errors to be ignored in deprecated content entities even if they do not appear in .pack-ignore
 PRESET_ERROR_TO_CHECK = {
     "deprecated": ['ST', 'BC', 'BA', 'IN127', 'IN128', 'PB104', 'SC101'],
 }
@@ -54,6 +55,10 @@ ERROR_CODE = {
     "spaces_in_the_end_of_id": {'code': "BA112", 'ui_applicable': False, 'related_field': 'id'},
     "spaces_in_the_end_of_name": {'code': "BA113", 'ui_applicable': False, 'related_field': 'name'},
     "changed_pack_name": {'code': "BA114", 'ui_applicable': False, 'related_field': 'name'},
+    "file_cannot_be_deleted": {'code': "BA115", 'ui_applicable': False, 'related_field': ''},
+    "cli_name_and_id_do_not_match": {'code': "BA116", 'ui_applicable': False, 'related_field': 'cliName'},
+    "incorrect_from_to_version_format": {'code': "BA117", 'ui_applicable': False, 'related_field': ''},
+    "mismatching_from_to_versions": {'code': "BA118", 'ui_applicable': False, 'related_field': ''},
 
     # BC - Backward Compatible
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -103,6 +108,7 @@ ERROR_CODE = {
     "docker_not_on_the_latest_tag": {'code': "DO106", 'ui_applicable': True, 'related_field': 'dockerimage'},
     "non_existing_docker": {'code': "DO107", 'ui_applicable': True, 'related_field': 'dockerimage'},
     "dockerimage_not_in_yml_file": {'code': "DO108", 'ui_applicable': True, 'related_field': 'dockerimage'},
+    "deprecated_docker_error": {'code': "DO109", 'ui_applicable': True, 'related_field': 'dockerimage'},
 
     # DS - Descriptions
     "description_missing_in_beta_integration": {'code': "DS100", 'ui_applicable': False, 'related_field': ''},
@@ -226,6 +232,11 @@ ERROR_CODE = {
     "changed_integration_yml_fields": {'code': "IN147", "ui_applicable": False, 'related_field': 'script'},
     "parameter_is_malformed": {'code': "IN148", 'ui_applicable': False, 'related_field': 'configuration'},
     'empty_outputs_common_paths': {'code': 'IN149', 'ui_applicable': False, 'related_field': 'contextOutput'},
+    'invalid_siem_integration_name': {'code': 'IN150', 'ui_applicable': True, 'related_field': 'display'},
+    "empty_command_arguments": {'code': 'IN151', 'ui_applicable': False, 'related_field': 'arguments'},
+    'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True, 'related_field': 'defaultvalue'},
+    'not_supported_integration_parameter_url_defaultvalue': {'code': 'IN153', 'ui_applicable': False, 'related_field': 'defaultvalue'},
+    'missing_reliability_parameter': {'code': 'IN154', 'ui_applicable': False, 'related_field': 'configuration'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -291,6 +302,8 @@ ERROR_CODE = {
     "required_pack_file_does_not_exist": {'code': "PA128", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_missing_categories": {'code': "PA129", 'ui_applicable': False, 'related_field': ''},
     "wrong_version_format": {'code': "PA130", 'ui_applicable': False, 'related_field': ''},
+    "pack_metadata_version_diff_from_rn": {'code': "PA131", 'ui_applicable': False, 'related_field': ''},
+    "pack_should_be_deprecated": {'code': "PA132", 'ui_applicable': False, 'related_field': ''},
 
     # PB - Playbooks
     "playbook_cant_have_rolename": {'code': "PB100", 'ui_applicable': True, 'related_field': 'rolename'},
@@ -318,6 +331,7 @@ ERROR_CODE = {
     "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
                                                          'related_field': 'fromServerVersion'},
     "invalid_incident_field_in_pre_process_rules": {'code': "PP101", 'ui_applicable': False, 'related_field': ''},
+    "unknown_fields_in_pre_process_rules": {'code': "PP102", 'ui_applicable': False, 'related_field': ''},
 
     # RM - READMEs
     "readme_error": {'code': "RM100", 'ui_applicable': False, 'related_field': ''},
@@ -330,6 +344,9 @@ ERROR_CODE = {
     "template_sentence_in_readme": {'code': "RM107", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_image_error": {'code': "RM108", 'ui_applicable': False, 'related_field': ''},
     "missing_readme_file": {'code': "RM109", 'ui_applicable': False, 'related_field': ''},
+    "missing_commands_from_readme": {'code': "RM110", 'ui_applicable': False, 'related_field': ''},
+    "error_uninstall_node": {'code': "RM111", 'ui_applicable': False, 'related_field': ''},
+    "invalid_readme_relative_url_error": {'code': "RM112", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -344,6 +361,7 @@ ERROR_CODE = {
     "modified_existing_release_notes": {'code': "RN109", 'ui_applicable': False, 'related_field': ''},
     "release_notes_config_file_missing_release_notes": {'code': "RN110", 'ui_applicable': False, 'related_field': ''},
     "release_notes_docker_image_not_match_yaml": {'code': "RN111", 'ui_applicable': False, 'related_field': ''},
+    "release_notes_bc_json_file_missing": {'code': "RN112", 'ui_applicable': False, 'related_field': ''},
 
     # RP - Reputations (Indicator Types)
     "wrong_version_reputations": {'code': "RP100", 'ui_applicable': False, 'related_field': 'version'},
@@ -357,7 +375,6 @@ ERROR_CODE = {
     "invalid_deprecated_script": {'code': "SC101", 'ui_applicable': False, 'related_field': 'comment'},
     "invalid_command_name_in_script": {'code': "SC102", 'ui_applicable': False, 'related_field': ''},
     "is_valid_script_file_path_in_folder": {'code': "SC103", 'ui_applicable': False, 'related_field': ''},
-    "is_valid_script_file_path_in_scripts_folder": {'code': "SC104", 'ui_applicable': False, 'related_field': ''},
     "incident_in_script_arg": {'code': "SC105", 'ui_applicable': True, 'related_field': 'args.name'},
     "runas_is_dbotrole": {'code': "SC106", 'ui_applicable': False, 'related_field': 'runas'},
 
@@ -410,6 +427,38 @@ ERROR_CODE = {
         'ui_applicable': False,
         'related_field': 'name'
     },
+
+    # WZ - Wizards
+    "invalid_dependency_pack_in_wizard": {
+        'code': "WZ100",
+        'ui_applicable': False,
+        'related_field': 'dependency_packs'
+    },
+    "missing_dependency_pack_in_wizard": {
+        'code': "WZ101",
+        'ui_applicable': False,
+        'related_field': 'dependency_packs'
+    },
+    "invalid_integration_in_wizard": {
+        'code': "WZ102",
+        'ui_applicable': False,
+        'related_field': 'wizard'
+    },
+    "invalid_playbook_in_wizard": {
+        'code': "WZ103",
+        'ui_applicable': False,
+        'related_field': 'wizard'
+    },
+    "wrong_link_in_wizard": {
+        'code': "WZ104",
+        'ui_applicable': False,
+        'related_field': 'wizard'
+    },
+    "wizard_integrations_without_playbooks": {
+        'code': "WZ105",
+        'ui_applicable': False,
+        'related_field': 'wizard'
+    }
 }
 
 
@@ -437,8 +486,19 @@ class Errors:
     BACKWARDS = "Possible backwards compatibility break"
 
     @staticmethod
+    @error_code_decorator
+    def file_cannot_be_deleted(file_path: str):
+        return f"The file {file_path} cannot be deleted. Please restore the file."
+
+    @staticmethod
     def suggest_fix(file_path: str, *args: Any, cmd: str = 'format') -> str:
         return f'To fix the problem, try running `demisto-sdk {cmd} -i {file_path} {" ".join(args)}`'
+
+    @staticmethod
+    @error_code_decorator
+    def empty_command_arguments(command_name):
+        return f"The arguments of the integration command `{command_name}` can not be None. If the command has no arguments, " \
+               f"use `arguments: []` or remove the `arguments` field."
 
     @staticmethod
     @error_code_decorator
@@ -458,7 +518,7 @@ class Errors:
         return "The file type is not supported in the validate command.\n" \
                "The validate command supports: Integrations, Scripts, Playbooks, " \
                "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields, Object types," \
-               " Object modules, Images, Release notes, Layouts, Jobs and Descriptions."
+               " Object modules, Images, Release notes, Layouts, Jobs, Wizards, and Descriptions."
 
     @staticmethod
     @error_code_decorator
@@ -764,6 +824,14 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def error_uninstall_node():
+        return 'The `node` runtime is not installed on the machine,\n' \
+               'while it is required for the validation process.\n' \
+               'Please download and install `node` to proceed\n' \
+               'See https://nodejs.org for installation instructions.'
+
+    @staticmethod
+    @error_code_decorator
     def missing_output_context(command, context_paths):
         return f'The Following context paths for command {command} are found in the README file ' \
                f'but are missing from the YML file: {context_paths}'
@@ -792,9 +860,15 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def not_supported_integration_parameter_url_defaultvalue(param, invalid_defaultvalue):
+        return f"The integration parameter {param} has defaultvalue set to {invalid_defaultvalue}. If possible, replace the http prefix with https."
+
+    @staticmethod
+    @error_code_decorator
     def is_valid_integration_file_path_in_folder(integration_file):
         return f"The integration file name: {integration_file} is invalid, " \
-               f"The integration file name should be the same as the name of the folder that contains it."
+               f"The integration file name and all the other files in the folder, should be the same as " \
+               f"the name of the folder that contains it."
 
     @staticmethod
     @error_code_decorator
@@ -808,6 +882,26 @@ class Errors:
         return f"The display name of this v{version_number} integration is incorrect , " \
                f"should be **name** v{version_number}.\n" \
                f"e.g: Kenna v{version_number}, Jira v{version_number}"
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_siem_integration_name(display_name: str):
+        return f"The display name of this siem integration is incorrect , " \
+               f"should end with \"Event Collector\".\n" \
+               f"e.g: {display_name} Event Collector"
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_defaultvalue_for_checkbox_field(name: str):
+        return f"The defaultvalue checkbox of the {name} field is invalid. " \
+               f"Use a boolean represented as a lowercase string, e.g defaultvalue: 'true'"
+
+    @staticmethod
+    @error_code_decorator
+    def missing_reliability_parameter(command: str):
+        return f'Missing "Reliability" parameter in the {command} reputation command.' \
+               f'Please add it to the YAML file.' \
+               f'For more information, refer to https://xsoar.pan.dev/docs/integrations/dbot#reliability-level'
 
     @staticmethod
     @error_code_decorator
@@ -878,9 +972,11 @@ class Errors:
 
     @classmethod
     @error_code_decorator
-    def breaking_backwards_command_arg_changed(cls, command):
-        return "{}, You've changed the name of a command or its arg in" \
-               " the file, please undo, the command was:\n{}".format(cls.BACKWARDS, command)
+    def breaking_backwards_command_arg_changed(cls, commands_ls):
+        error_msg = "{}, Your updates to this file contains changes to a name or an argument of an existing " \
+                    "command(s).\nPlease undo you changes to the following command(s):\n".format(cls.BACKWARDS)
+        error_msg += '\n'.join(commands_ls)
+        return error_msg
 
     @staticmethod
     @error_code_decorator
@@ -895,6 +991,11 @@ class Errors:
                f'Please create or update to an updated versioned image\n' \
                f'You can check for the most updated version of {docker_image_tag} ' \
                f'here: https://hub.docker.com/r/{docker_image_name}/tags'
+
+    @staticmethod
+    @error_code_decorator
+    def deprecated_docker_error(docker_image_name, deprecated_reason):
+        return f'The docker image {docker_image_name} is deprecated - {deprecated_reason}'
 
     @staticmethod
     @error_code_decorator
@@ -1128,9 +1229,9 @@ class Errors:
     @error_code_decorator
     def release_notes_file_empty():
         return "Your release notes file is empty, please complete it\nHaving empty release notes " \
-               "looks bad in the product UI.\nIf the change you made was minor, please use " \
-               "\"Maintenance and stability enhancements.\" for general changes, or use " \
-               "\"Documentation and metadata improvements.\" for changes to documentation."
+               "looks bad in the product UI.\nMake sure the release notes explicitly describe what changes were made, even if they are minor.\n" \
+               "For changes to documentation you can use " \
+               "\"Documentation and metadata improvements.\" "
 
     @staticmethod
     @error_code_decorator
@@ -1174,6 +1275,14 @@ class Errors:
     def release_notes_config_file_missing_release_notes(config_rn_path: str):
         return f'Release notes config file {config_rn_path} is missing corresponding release notes file.\n' \
                f'''Please add release notes file: {config_rn_path.replace('json', 'md')}'''
+
+    @staticmethod
+    @error_code_decorator
+    def release_notes_bc_json_file_missing(json_path: str):
+        return f'A new release notes file contains the phrase \"breaking changes\" ' \
+               'without a matching JSON file (with the same name as the release note file, e.g. 1_2_3.json). ' \
+               f'Please run \"demisto-sdk update-release-notes -i {json_path[:-4]}md -bc\". ' \
+               'For more information, refer to the following documentation: https://xsoar.pan.dev/docs/documentation/release-notes'
 
     @staticmethod
     @error_code_decorator
@@ -1246,10 +1355,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def content_entity_version_not_match_playbook_version(main_playbook, entities_names, main_playbook_version):
-        return f"Playbook {main_playbook} with version {main_playbook_version} uses {entities_names} " \
-               f"with a version that does not match the main playbook version. The from version of" \
-               f" {entities_names} should be {main_playbook_version} or lower."
+    def content_entity_version_not_match_playbook_version(
+        main_playbook: str, entities_names_and_version: str, main_playbook_version: str, content_sub_type: str
+    ):
+        return f"Playbook {main_playbook} with 'fromversion' {main_playbook_version} uses the following" \
+               f" {content_sub_type} with an invalid 'fromversion': [{entities_names_and_version}]. " \
+               f"The 'fromversion' of the {content_sub_type} should be {main_playbook_version} or lower."
 
     @staticmethod
     @error_code_decorator
@@ -1272,13 +1383,7 @@ class Errors:
     @error_code_decorator
     def is_valid_script_file_path_in_folder(script_file):
         return f"The script file name: {script_file} is invalid, " \
-               f"The script file name should be the same as the name of the folder that contains it."
-
-    @staticmethod
-    @error_code_decorator
-    def is_valid_script_file_path_in_scripts_folder(script_file):
-        return f"The script file name: {script_file} is invalid, " \
-               f"The script file name should start with 'script-'."
+               f"The script file name should be the same as the name of the folder that contains it, e.g. `Packs/MyPack/Scripts/MyScript/MyScript.yml`."
 
     @staticmethod
     @error_code_decorator
@@ -1692,6 +1797,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def invalid_readme_relative_url_error(path):
+        return f'Relative urls are not supported within README. If this is not a relative url, please add ' \
+               f'an https:// prefix:\n{path}. '
+
+    @staticmethod
+    @error_code_decorator
     def invalid_readme_image_error(path: str, error_type: str, response: Optional[Response] = None):
         error = 'Error in readme image: '
         if response is not None:
@@ -1835,7 +1946,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_fromversion_in_job(version):
-        return f'fromVersion field in Job needs to be at least {DEFAULT_JOB_FROM_VERSION} (found {version})'
+        return f'fromVersion field in Job needs to be at least {FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)} (found {version})'
 
     @staticmethod
     @error_code_decorator
@@ -2015,6 +2126,18 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def incorrect_from_to_version_format(incorrect_key: str):
+        return f"The format of the {incorrect_key} is incorrect\n" \
+               f"Please fix this so that it is in xx.xx.xx format and each member is a number only."
+
+    @staticmethod
+    @error_code_decorator
+    def mismatching_from_to_versions():
+        return 'The `fromversion` and `toversion` are not synchronizied\n' \
+               'It is must be fromversion <= toversion.'
+
+    @staticmethod
+    @error_code_decorator
     def integration_is_skipped(integration_id, skip_comment: Optional[str] = None):
         message = f"The integration {integration_id} is currently in skipped. Please add working tests and unskip."
         if skip_comment:
@@ -2143,6 +2266,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def cli_name_and_id_do_not_match(cli_name_correct):
+        return f'cliName and id do not match.\n' \
+               f'Please change cliName to {cli_name_correct} (the flat-case version of id, excluding item-type prefixes)'
+
+    @staticmethod
+    @error_code_decorator
     def non_default_additional_info(params: List[str]):
         return f'The additionalinfo of params {params} is not the default value, please consider changing it.'
 
@@ -2172,6 +2301,13 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def pack_metadata_version_diff_from_rn(pack_path, rn_version, pack_metadata_version):
+        return f'There is a difference between the version in the pack metadata' \
+               f'file and the version of the latest release note.\nexpected latest release note to be {pack_metadata_version} ' \
+               f'instead found {rn_version}.\nTo fix the problem, try running `demisto-sdk update-release-notes -i {pack_path}`'
+
+    @staticmethod
+    @error_code_decorator
     def invalid_marketplaces_in_alias(invalid_aliases: List[str]):
         return 'The following fields exist as aliases and have invalid "marketplaces" key value:' \
                f'\n{invalid_aliases}\n' \
@@ -2186,8 +2322,16 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def missing_readme_file(location):
-        return f'{location} is missing a README file'
+    def missing_readme_file(location: FileType):
+        return f'{location.name} is missing a README file'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_commands_from_readme(yml_name, missing_commands_from_readme):
+        error_msg = f'The following commands appear in {yml_name} but not in the README file:\n'
+        for command in missing_commands_from_readme:
+            error_msg += f'{command}\n'
+        return error_msg
 
     @staticmethod
     @error_code_decorator
@@ -2196,3 +2340,47 @@ class Errors:
 
         return f"The following command outputs are missing: \n{commands_str}\n" \
                f"please type them or run demisto-sdk format -i {yaml_path}"
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_content_item_id_wizard(invalid_content_item_id):
+        return f'Failed to find {invalid_content_item_id} in content repo. Please check it\'s written correctly.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_dependency_pack_in_wizard(dep_pack):
+        return f'Dependency Pack "{dep_pack}" was not found. Please check it\'s written correctly.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_integration_in_wizard(integration: str):
+        return f'Integration "{integration}" does not exist. Please check it\'s written correctly.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_playbook_in_wizard(playbook: str):
+        return f'Playbook "{playbook}" does not exist. Please check it\'s written correctly.'
+
+    @staticmethod
+    @error_code_decorator
+    def missing_dependency_pack_in_wizard(pack: str, content_item: str):
+        return f'Pack "{pack}" is missing from the "dependency_packs". This pack is required for {content_item}.'
+
+    @staticmethod
+    @error_code_decorator
+    def wrong_link_in_wizard(link):
+        return f'Provided integration link "{link}" was not provided in fetching_integrations. Make sure it\'s written correctly.'
+
+    @staticmethod
+    @error_code_decorator
+    def wizard_integrations_without_playbooks(integrations: set):
+        return f'The following integrations are missing a set_playbook: {integrations}'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_should_be_deprecated(pack_name: str):
+        return f'Pack {pack_name} should be deprecated, as all its integrations, playbooks and scripts are' \
+               f' deprecated.\nThe name of the pack in the pack_metadata.json should end with (Deprecated)\n' \
+               f'The description of the pack in the pack_metadata.json should be one of the following formats:\n' \
+               f'1. "Deprecated. Use <PACK_NAME> instead."\n' \
+               f'2. "Deprecated. <REASON> No available replacement."'

@@ -1,4 +1,3 @@
-import json
 import os
 from os.path import isfile
 from shutil import copyfile
@@ -18,7 +17,7 @@ from demisto_sdk.commands.common.constants import (
     PACKS_SCRIPT_TEST_PY_REGEX, PACKS_SCRIPT_YML_REGEX,
     PACKS_WIDGET_JSON_REGEX, PLAYBOOK_README_REGEX, PLAYBOOK_YML_REGEX,
     TEST_PLAYBOOK_YML_REGEX)
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.structure import (
@@ -42,6 +41,7 @@ from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
 
+json = JSON_Handler()
 yaml = YAML_Handler()
 
 
@@ -129,16 +129,16 @@ class TestStructureValidator:
             assert validator.is_valid_fromversion_on_modified() is answer
 
     INPUTS_IS_ID_MODIFIED = [
-        (INVALID_PLAYBOOK_PATH, VALID_PLAYBOOK_ID_PATH, True, "Didn't find the id as updated in file"),
-        (VALID_PLAYBOOK_ID_PATH, VALID_PLAYBOOK_ID_PATH, False, "Found the ID as changed although it is not")
+        (INVALID_PLAYBOOK_PATH, VALID_PLAYBOOK_ID_PATH, False, "Didn't find the id as updated in file"),
+        (VALID_PLAYBOOK_ID_PATH, VALID_PLAYBOOK_ID_PATH, True, "Found the ID as changed although it is not")
     ]
 
     @pytest.mark.parametrize("current_file, old_file, answer, error", INPUTS_IS_ID_MODIFIED)
-    def test_is_id_modified(self, current_file, old_file, answer, error):
+    def test_is_id_not_modified(self, current_file, old_file, answer, error):
         validator = StructureValidator(file_path=current_file)
         with open(old_file) as f:
             validator.old_file = yaml.load(f)
-            assert validator.is_id_modified() is answer, error
+            assert validator.is_id_not_modified() is answer, error
 
     POSITIVE_ERROR = "Didn't find a slash in the ID even though it contains a slash."
     NEGATIVE_ERROR = "found a slash in the ID even though it not contains a slash."
@@ -313,6 +313,27 @@ class TestStructureValidator:
         job.remove(missing_field)
 
         validator = StructureValidator(job.path, is_new_file=True)
+        with ChangeCWD(repo.path):
+            assert not validator.is_valid_file()
+        captured = capsys.readouterr().out
+        assert f'Missing the field "{missing_field}" in root' in captured
+
+    @pytest.mark.parametrize('missing_field',
+                             ('dependency_packs', 'wizard', 'name', 'id', 'fromVersion'))
+    def test_wizard_missing_field(self, repo, capsys, missing_field: str):
+        """
+        Given
+                A Job object in a repo, with one of the required fields missing
+        When
+                Validating the file
+        Then
+                Ensure the structure validator raises a suitable error
+        """
+        pack = repo.create_pack()
+        wizard = pack.create_wizard(name='wizard_name')
+        wizard.remove(missing_field)
+
+        validator = StructureValidator(wizard.path, is_new_file=True)
         with ChangeCWD(repo.path):
             assert not validator.is_valid_file()
         captured = capsys.readouterr().out

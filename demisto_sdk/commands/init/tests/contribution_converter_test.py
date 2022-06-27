@@ -1,4 +1,3 @@
-import json
 import os
 import re
 import shutil
@@ -12,11 +11,14 @@ from mock import patch
 
 from demisto_sdk.commands.common.constants import LAYOUT, LAYOUTS_CONTAINER
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.init.contribution_converter import \
     ContributionConverter
-from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
 from TestSuite.contribution import Contribution
 from TestSuite.repo import Repo
+
+json = JSON_Handler()
+
 
 RELEASE_NOTES_COPY = "demisto_sdk/commands/init/tests/RN/1_0_1-formatted.md"
 SOURCE_RELEASE_NOTES_FILE = "demisto_sdk/commands/init/tests/RN/1_0_1.md"
@@ -697,7 +699,7 @@ class TestReleaseNotes:
             }
         ]
 
-        mocker.patch.object(UpdateRN, 'get_display_name', return_value='CrowdStrike Malquery')
+        mocker.patch("demisto_sdk.commands.init.contribution_converter.get_display_name", return_value='CrowdStrike Malquery')
         contrib_converter.replace_RN_template_with_value(RELEASE_NOTES_COPY)
 
         assert util_open_file(RELEASE_NOTES_COPY) == util_open_file(EXPECTED_RELEASE_NOTES)
@@ -734,8 +736,7 @@ class TestReleaseNotes:
                                         '- release note entry number #1\n- release note entry number #2\n',
                                         'CrowdStrikeMalquery - Multidownload and Fetch':
                                             '- changed this playbook\n- Updated another thing\n'}
-        mocker.patch.object(
-            UpdateRN, 'get_display_name',
-            side_effect=['CrowdStrike Malquery', 'CrowdStrikeMalquery - Multidownload and Fetch'])
+        mocker.patch("demisto_sdk.commands.init.contribution_converter.get_display_name",
+                     side_effect=['CrowdStrike Malquery', 'CrowdStrikeMalquery - Multidownload and Fetch'])
         rn_per_content_item = contrib_converter.format_user_input()
         assert expected_rn_per_content_item == rn_per_content_item

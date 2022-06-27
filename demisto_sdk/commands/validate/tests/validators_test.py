@@ -1,7 +1,7 @@
-import json
 import os
 import sys
 from io import StringIO
+from pathlib import Path
 from shutil import copyfile
 from typing import Any, List, Optional, Type, Union
 
@@ -10,12 +10,12 @@ from mock import patch
 
 import demisto_sdk.commands.validate.validate_manager
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (CONF_PATH,
-                                                   DEFAULT_JOB_FROM_VERSION,
-                                                   PACKS_PACK_META_FILE_NAME,
-                                                   TEST_PLAYBOOK, FileType)
+from demisto_sdk.commands.common.constants import (
+    CONF_PATH, FILETYPE_TO_DEFAULT_FROMVERSION, PACKS_PACK_META_FILE_NAME,
+    TEST_PLAYBOOK, FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import \
     BaseValidator
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
@@ -46,7 +46,8 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.unify.yml_unifier import YmlUnifier
+from demisto_sdk.commands.unify.integration_script_unifier import \
+    IntegrationScriptUnifier
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 from demisto_sdk.tests.constants_test import (
     CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DIR_LIST, IGNORED_PNG,
@@ -78,6 +79,8 @@ from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
+
+json = JSON_Handler()
 
 
 class TestValidators:
@@ -467,7 +470,12 @@ class TestValidators:
                                                                 pack_error_ignore_list=[], is_modified=True)
 
     def test_files_validator_validate_pack_unique_files(self, mocker):
+        from demisto_sdk.commands.common.content.objects.pack_objects.pack import \
+            Pack
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        mocker.patch.object(Pack, 'should_be_deprecated', return_value=False)
+        # mocking should_be_deprecated must be done because the get_dict_from_file is being mocked.
+        # should_be_deprecated relies on finding the correct file content from get_dict_from_file function.
         validate_manager = ValidateManager(skip_conf_json=True)
         result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={})
         assert result
@@ -503,9 +511,16 @@ class TestValidators:
             Then:
                 - return a True validation response
         """
+        from demisto_sdk.commands.common.content.objects.pack_objects.pack import \
+            Pack
         id_set_path = os.path.normpath(
             os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+
+        mocker.patch.object(Pack, 'should_be_deprecated', return_value=False)
+        # mocking should_be_deprecated must be done because the get_dict_from_file is being mocked.
+        # should_be_deprecated relies on finding the correct file type from get_dict_from_file function.
+
         validate_manager = ValidateManager(skip_conf_json=True, id_set_path=id_set_path)
         result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={})
         assert result
@@ -533,9 +548,9 @@ class TestValidators:
         def get_script_or_integration_package_data_mock(*args, **kwargs):
             return VALID_SCRIPT_PATH, ''
 
-        with patch.object(YmlUnifier, '__init__', lambda a, b: None):
-            YmlUnifier.get_script_or_integration_package_data = get_script_or_integration_package_data_mock
-            return YmlUnifier('')
+        with patch.object(IntegrationScriptUnifier, '__init__', lambda a, b: None):
+            IntegrationScriptUnifier.get_script_or_integration_package_data = get_script_or_integration_package_data_mock
+            return IntegrationScriptUnifier('')
 
     def test_script_valid_rn(self, mocker):
         """
@@ -641,12 +656,13 @@ class TestValidators:
 
     def test_get_error_ignore_list(self, mocker):
         """
-            Given:
-                - A file path to pack ignore
-            When:
-                - running get_error_ignore_list from validate manager
-            Then:
-                - verify that the created ignored_errors list is correct
+        Given:
+            - A file path to pack ignore
+        When:
+            - running get_error_ignore_list from validate manager
+        Then:
+            - verify that the created ignored_errors list is being created with all of the
+            error codes that is in the .pack-ignore, also the error codes which cannot be ignored.
         """
         files_path = os.path.normpath(
             os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
@@ -657,17 +673,25 @@ class TestValidators:
 
         validate_manager = ValidateManager()
         ignore_errors_list = validate_manager.get_error_ignore_list("fake")
-        assert ignore_errors_list['file_name'] == ['BA101', 'SC101', 'BA106']
+        assert ignore_errors_list['file_name'] == ['BA101', 'SC101', 'IN117', 'BA106', 'IN100']
         assert 'SC100' not in ignore_errors_list['file_name']
 
     def test_create_ignored_errors_list(self):
+        """
+            Given:
+                - A list of errors we want to exclude from the all errors list.
+            When:
+                - Running create_ignored_errors_list from validate manager.
+            Then:
+                - verify that the error list that comes out has a correct sublist.
+        """
         validate_manager = ValidateManager()
-        errors_to_check = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
-                           "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC", "GF", "PP", "JB", "LI100",
-                           "LI101"]
-        ignored_list = validate_manager.create_ignored_errors_list(errors_to_check)
-        assert ignored_list == ["BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
-                                "BA110", 'BA111', "BA112", "BA113", "BA114", "BC101", "BC102", "BC103", "BC104"]
+        errors_to_exclude = ["IN", "SC", "CJ", "DA", "DB", "DO", "ID", "DS", "IM", "IF", "IT", "RN", "RM", "PA", "PB",
+                             "WD", "RP", "BA100", "BC100", "ST", "CL", "MP", "LO", "XC", "GF", "PP", "JB", "LI100",
+                             "LI101"]
+        error_list = validate_manager.create_ignored_errors_list(errors_to_exclude)
+        assert {"BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
+                "BA110", 'BA111', "BA112", "BA113", "BA114", "BA115", "BC101", "BC102", "BC103", "BC104"}.issubset(error_list)
 
     def test_added_files_type_using_function(self, repo, mocker):
         """
@@ -811,7 +835,7 @@ class TestValidators:
                                 'name': integration2.name,
                                 'file_path': integration2.path,
                                 'pack': pack2_name,
-                                'api_modules': api_script1.name
+                                'api_modules': [api_script1.name]
                             }
                     }
                 ]
@@ -853,7 +877,7 @@ class TestValidators:
                                 'name': integration2.name,
                                 'file_path': integration2.path,
                                 'pack': pack2_name,
-                                'api_modules': api_script1.name
+                                'api_modules': [api_script1.name]
                             }
                     }
                 ]}
@@ -1315,7 +1339,25 @@ def test_should_raise_pack_version(pack_name, expected):
     assert res == expected
 
 
-def test_run_validation_using_git_on_only_metadata_changed(mocker):
+pack_metadata = {
+    "name": "ForTesting",
+    "description": "A descriptive description.",
+    "support": "xsoar",
+    "currentVersion": "1.0.0",
+    "author": "Cortex XSOAR",
+    "url": "https://www.paloaltonetworks.com/cortex",
+    "email": "",
+    "categories": [
+        "Data Enrichment & Threat Intelligence"
+    ],
+    "tags": [],
+    "useCases": [],
+    "keywords": []
+}
+
+
+@pytest.mark.parametrize('pack_metadata', [(pack_metadata)])
+def test_run_validation_using_git_on_only_metadata_changed(mocker, pack: Pack, pack_metadata):
     """
     Given
         - metadata file that was changed.
@@ -1324,13 +1366,15 @@ def test_run_validation_using_git_on_only_metadata_changed(mocker):
     Then
         - validate That no error returns.
     """
-    mocker.patch.object(ValidateManager, 'setup_git_params')
+    pack.pack_metadata.write_json(pack_metadata)
+    mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
     mocker.patch.object(ValidateManager, 'get_changed_files_from_git',
-                        return_value=(set(), set(), {'/Packs/ForTesting/pack_metadata.json'}, set(), True))
+                        return_value=(set(), set(), {pack.pack_metadata.path}, set(), True))
     mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
-
+    mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
-    res = validate_manager.run_validation_using_git()
+    with ChangeCWD(pack.repo_path):
+        res = validate_manager.run_validation_using_git()
     assert res
 
 
@@ -1436,7 +1480,7 @@ def test_get_packs_that_should_have_version_raised(repo):
         assert 'NewPack' not in packs_that_should_have_version_raised
 
 
-def test_quite_bc_flag(repo):
+def test_quiet_bc_flag(repo):
     existing_pack1 = repo.create_pack('PackWithModifiedIntegration')
     moodified_integration = existing_pack1.create_integration('MyIn')
     moodified_integration.create_default_integration()
@@ -1563,7 +1607,8 @@ def test_check_file_relevance_and_format_path_ignore_test_file(mocker, input_fil
 @pytest.mark.parametrize('input_file_path, file_type',
                          [('Packs/some_file.py', FileType.PYTHON_FILE),
                           ('Packs/some_file.ps1', FileType.POWERSHELL_FILE),
-                          ('Packs/some_file.js', FileType.JAVASCRIPT_FILE)]
+                          ('Packs/some_file.js', FileType.JAVASCRIPT_FILE),
+                          ('Packs/some_file.xif', FileType.XIF_FILE)]
                          )
 def test_check_file_relevance_and_format_path_file_to_format(mocker, input_file_path, file_type):
     """
@@ -1647,7 +1692,7 @@ def test_job_sanity(repo, is_feed: bool):
 
 
 @pytest.mark.parametrize('is_feed', (True, False))
-@pytest.mark.parametrize('version', ('6.4.9', None, ''))
+@pytest.mark.parametrize('version', ('6.4.9', ''))
 def test_job_from_version(repo, capsys, is_feed: bool, version: Optional[str]):
     """
     Given
@@ -1666,7 +1711,7 @@ def test_job_from_version(repo, capsys, is_feed: bool, version: Optional[str]):
         assert not validate_manager.validate_job(StructureValidator(job.path, is_new_file=True),
                                                  pack_error_ignore_list=list())
     stdout = capsys.readouterr().out
-    assert f"fromVersion field in Job needs to be at least {DEFAULT_JOB_FROM_VERSION} (found {version})" in stdout
+    assert f"fromVersion field in Job needs to be at least {FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.JOB)} (found {version})" in stdout
 
 
 def test_job_non_feed_with_selected_feeds(repo, capsys):
@@ -1789,6 +1834,35 @@ def test_job_unexpected_field_values_in_non_feed_job(repo, capsys,
     stdout = capsys.readouterr().out
     assert "Job must either have non-empty selectedFeeds OR have isAllFields set to true when isFeed is set to true" \
            in stdout
+
+
+@pytest.mark.parametrize('file_set,expected_output,expected_result,added_files',
+                         (({'Packs/Integration/mock_file_description.md'}, "[BA115]", False, set()),
+                          (set(), "", True, set()),
+                          ({'Packs/Integration/doc_files/image.png'}, "", True, set()),
+                          ({'Packs/Integration/Playbooks/mock_playbook.yml'}, "", True, {'renamed_mock_playbook.yml'}),
+                          ({Path('Packs/Integration/Playbooks/mock_playbook.yml')}, "", True, {Path('renamed_mock_playbook.yml')}),
+                          (({'non_content_item.txt'}, "[BA115]", False, set()))))
+def test_validate_deleted_files(capsys, file_set, expected_output, expected_result, added_files, mocker):
+    """
+    Given
+            A file_path set to validate.
+    When
+            Validating the files.
+    Then
+            Assert the expected result (True or False) and the expected output (if there is an expected output).
+    """
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
+    if added_files:
+        mocker.patch('demisto_sdk.commands.validate.validate_manager._get_file_id', return_value='playbook')
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.get_file', return_value={'id': 'id'})
+
+    result = validate_manager.validate_deleted_files(file_set, added_files)
+
+    stdout = capsys.readouterr().out
+
+    assert expected_output in stdout
+    assert expected_result is result
 
 
 def test_validate_contributors_file(repo):

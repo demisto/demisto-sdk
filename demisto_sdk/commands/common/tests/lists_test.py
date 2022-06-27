@@ -1,13 +1,15 @@
-import json
-
 import pytest
 from mock import patch
 
 from demisto_sdk.commands.common.constants import LISTS_DIR, PACKS_DIR
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.lists import ListsValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import src_root
+
+json = JSON_Handler()
+
 
 TEST_DATA = src_root() / 'tests' / 'test_files'
 TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
@@ -29,7 +31,8 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
         structure.old_file = old_file
         structure.prev_ver = 'master'
         structure.branch_name = ''
-        structure.quite_bc = False
+        structure.quiet_bc = False
+        structure.specific_validations = None
         return structure
 
 

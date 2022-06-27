@@ -33,17 +33,15 @@ This will be used as your testing environment, you do not need to update it agai
 
 1. Make sure you have python3 installed.
 
-2. Make sure you have pipenv installed.
+2. Make sure you have [Poetry](https://python-poetry.org/) installed.
 
-3. run `pipenv install --dev`
+3. run `poetry install``
 
-4. To install local version of demisto-sdk, run `pipenv install --keep-outdated -e <path to your demisto-sdk repo>`
-
-5. For further reading about pipenv, you can refer to [pipenv documentation](https://pipenv.pypa.io/en/latest/).
+4. For further reading about Poetry, you can refer to [Poetry documentation](https://python-poetry.org/).
 
 You have now setup the your `demisto-sdk` dev environment!
 
-To activate it simply run: `pipenv shell`.
+To activate it simply run: `poetry shell`.
    * Check that the demisto-sdk installed is your local version by running `demisto-sdk -v` - you will should see something similar to `demisto-sdk 1.X.X.dev`.
 
 To deactivate the virtual environment and return simply run: `exit`.
@@ -109,17 +107,16 @@ For more information read the following [guide](demisto_sdk/commands/common/cont
 
 ---
 
-### 6. Running unit-tests using tox
+### 6. Running unit-tests using Pytest
 
-[Tox](https://tox.readthedocs.io/en/latest/index.html) aims to automate and standardize testing in Python. It is part of a larger vision of easing the packaging, testing and release process of Python software, we use it in order to check unit-tests on Python versions 3.7 and 3.8.
+We use [pytest](https://github.com/pytest-dev/pytest) to run unit tests.
 
-> If you have one interpreter in your local environment it will skip the missing interpreter and not failed - the 2 versions test will be performed in the CircleCI build.
+Simply use `poetry` to run your tests on a relevant folder. For example:
+```
+poetry run pytest -v demisto_sdk/commands/lint/tests/test_linter/
+```
 
-1. To run all our unit tests we use: `tox` on all envs, optional args:
-   * For additional verbosity use: `tox -vv`
-   * Run `tox` without verbosity run: `tox -q`
-   * Run on a specific environment, you can use: `tox -q -e py37`
-2. To run a specific test using pytest run: `pytest -vv tests/{test_file}.py::{TestClass}::{test_function}`
+If you want to run with a specific python version (see the [demisto-sdk PyPi page](https://pypi.org/project/demisto-sdk/) for the current supported versions), use [poetry environments](https://python-poetry.org/docs/managing-environments/) to switch to a different env with a different python version.
 
 ---
 

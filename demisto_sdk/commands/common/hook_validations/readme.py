@@ -1,13 +1,13 @@
-import json
 import os
 import re
 import subprocess
 import tempfile
 from contextlib import contextmanager
+from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from threading import Lock
-from typing import Callable, List, Optional
+from typing import Callable, List, Optional, Set
 from urllib.parse import urlparse
 
 import click
@@ -17,16 +17,21 @@ from requests.adapters import HTTPAdapter
 from requests.exceptions import HTTPError
 from urllib3.util import Retry
 
+from demisto_sdk.commands.common.constants import (RELATIVE_HREF_URL_REGEX,
+                                                   RELATIVE_MARKDOWN_URL_REGEX)
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 Errors)
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator, error_codes)
 from demisto_sdk.commands.common.tools import (
     compare_context_path_in_yml_and_readme, get_content_path,
     get_url_with_retries, get_yaml, get_yml_paths_in_dir, print_warning,
     run_command_os)
+
+json = JSON_Handler()
 
 NO_HTML = '<!-- NOT_HTML_DOC -->'
 YES_HTML = '<!-- HTML_DOC -->'
@@ -50,6 +55,56 @@ PACKS_TO_IGNORE = ['HelloWorld', 'HelloWorldPremium']
 DEFAULT_SENTENCES = ['getting started and learn how to build an integration']
 
 
+@dataclass(frozen=True)
+class ReadmeUrl:
+    """Url links found in README files.
+    can be of type markdown form - [this is a link](https://link.com)
+    or be of html form - <a href="https://link.com">this is a link</a>
+
+    link_prefix : The start of the link, for markdown will contain the description,
+     for href will contain the link until the url, including the url itself.
+
+    url : the url from our link
+
+    is_markdown: if our link is markdown or html
+    """
+    link_prefix: str
+    url: str
+    is_markdown: bool
+
+    def get_full_link(self) -> str:
+        if self.is_markdown:
+            return f'{self.link_prefix}({self.url})'
+        else:
+            return self.link_prefix
+
+    def get_new_link(self, new_url: str) -> str:
+        """Get a new link string where url is replaced with new_url"""
+        if self.is_markdown:
+            return f'{self.link_prefix}({new_url})'
+        else:
+            return str.replace(self.link_prefix, self.url, new_url)
+
+    def get_url(self):
+        return self.url
+
+
+def get_relative_urls(content: str) -> Set[ReadmeUrl]:
+    """
+          Find all relative urls (md link and href links_ in README.
+          Returns: a set of ReadmeUrls objects.
+          """
+    relative_urls = re.findall(RELATIVE_MARKDOWN_URL_REGEX, content,
+                               re.IGNORECASE | re.MULTILINE)
+    relative_html_urls = re.findall(RELATIVE_HREF_URL_REGEX, content,
+                                    re.IGNORECASE | re.MULTILINE)
+
+    def get_not_empty_urls(urls, is_markdown):
+        return {ReadmeUrl(url[0], url[1], is_markdown) for url in urls if url[1]}
+
+    return get_not_empty_urls(relative_urls, True) | get_not_empty_urls(relative_html_urls, False)
+
+
 class ReadMeValidator(BaseValidator):
     """ReadMeValidator is a validator for readme.md files
         In order to run the validator correctly please make sure:
@@ -68,9 +123,10 @@ class ReadMeValidator(BaseValidator):
     MINIMUM_README_LENGTH = 30
 
     def __init__(self, file_path: str, ignored_errors=None, print_as_warnings=False, suppress_print=False,
-                 json_file_path=None):
+                 json_file_path=None, specific_validations=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print, json_file_path=json_file_path)
+                         suppress_print=suppress_print, json_file_path=json_file_path,
+                         specific_validations=specific_validations)
         self.content_path = get_content_path()
         self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent
@@ -82,9 +138,10 @@ class ReadMeValidator(BaseValidator):
     def is_valid_file(self) -> bool:
         """Check whether the readme file is valid or not
         Returns:
-            bool: True if env configured else Fale.
+            bool: True if env configured else False.
         """
         return all([
+            self.verify_readme_relative_urls(),
             self.is_image_path_valid(),
             self.verify_readme_image_paths(),
             self.is_mdx_file(),
@@ -202,10 +259,10 @@ class ReadMeValidator(BaseValidator):
         if self.readme_content.startswith(YES_HTML):
             return True
         # use some heuristics to try to figure out if this is html
-        return self.readme_content.startswith('<p>') or \
-            self.readme_content.startswith('<!DOCTYPE html>') or \
+        return self.readme_content.startswith('<p>') or self.readme_content.startswith('<!DOCTYPE html>') or \
             ('<thead>' in self.readme_content and '<tbody>' in self.readme_content)
 
+    @error_codes('RM101')
     def is_image_path_valid(self) -> bool:
         """ Validate images absolute paths, and prints the suggested path if its not valid.
 
@@ -235,6 +292,43 @@ class ReadMeValidator(BaseValidator):
                 self.check_readme_absolute_image_paths()]):
             return False
         return True
+
+    def verify_readme_relative_urls(self) -> bool:
+        """ Validate readme (not pack readme) relative urls.
+
+                Returns:
+                    bool: True If there are no invalid relative urls.
+                """
+        # If there are errors in one of the following validations return False
+        return not self.check_readme_relative_url_paths()
+
+    @error_codes('RM112')
+    def check_readme_relative_url_paths(self, is_pack_readme: bool = False) -> list:
+        """ Validate readme url relative paths.
+            prints an error if relative paths in README are found since they are not supported.
+
+        Arguments:
+            is_pack_readme (bool) - True if the the README file is a pack README, default: False
+
+        Returns:
+            list: List of the errors found
+        """
+        error_list = []
+        # If error was found, print it only if its not a pack readme. For pack readme, the PackUniqueFilesValidator
+        # class handles the errors and printing.
+        should_print_error = not is_pack_readme
+        relative_urls = get_relative_urls(self.readme_content)
+        for url_link in relative_urls:
+            # striping in case there are whitespaces at the beginning/ending of url.
+            error_message, error_code = Errors.invalid_readme_relative_url_error(url_link.get_url())
+            if error_code and error_message:  # error was found
+                formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                    should_print=should_print_error)
+                # if error is None it should be ignored
+                if formatted_error:
+                    error_list.append(formatted_error)
+
+        return error_list
 
     def check_readme_relative_image_paths(self, is_pack_readme: bool = False) -> list:
         """ Validate readme images relative paths.
@@ -317,30 +411,28 @@ class ReadMeValidator(BaseValidator):
                 url_path_elem_list = urlparse(img_url).path.split('/')[1:]
                 if len(url_path_elem_list) >= 3 and \
                         (url_path_elem_list[2] == working_branch_name and working_branch_name != 'master'):
-                    error_message, error_code = \
-                        Errors.invalid_readme_image_error(prefix + f'({img_url})',
-                                                          error_type='branch_name_readme_absolute_error')
+                    error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({img_url})',
+                                                                                  error_type='branch_name_readme_absolute_error')
                 else:
                     try:
                         get_url_with_retries(img_url, retries=5, backoff_factor=1, timeout=10)
                     except HTTPError as error:
-                        error_message, error_code = \
-                            Errors.invalid_readme_image_error(prefix + f'({img_url})',
-                                                              error_type='general_readme_absolute_error',
-                                                              response=error.response)
+                        error_message, error_code = Errors.invalid_readme_image_error(prefix + f'({img_url})',
+                                                                                      error_type='general_readme_absolute_error',
+                                                                                      response=error.response)
             except Exception as ex:
                 click.secho(f"Could not validate the image link: {img_url}\n {ex}", fg='yellow')
                 continue
 
             if error_message and error_code:
-                formatted_error = \
-                    self.handle_error(error_message, error_code, file_path=self.file_path,
-                                      should_print=should_print_error)
+                formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                    should_print=should_print_error)
                 if formatted_error:
                     error_list.append(formatted_error)
 
         return error_list
 
+    @error_codes('RM100')
     def verify_no_empty_sections(self) -> bool:
         """ Check that if the following headlines exists, they are not empty:
             1. Troubleshooting
@@ -391,6 +483,7 @@ class ReadMeValidator(BaseValidator):
                 errors += f'Replace "{section}" with a suitable info.\n'
         return errors
 
+    @error_codes('RM100')
     def verify_no_default_sections_left(self) -> bool:
         """ Check that there are no default leftovers such as:
             1. 'FILL IN REQUIRED PERMISSIONS HERE'.
@@ -410,6 +503,7 @@ class ReadMeValidator(BaseValidator):
 
         return is_valid
 
+    @error_codes('RM100')
     def verify_readme_is_not_too_short(self):
         is_valid = True
         readme_size = len(self.readme_content)
@@ -423,6 +517,7 @@ class ReadMeValidator(BaseValidator):
             is_valid = False
         return is_valid
 
+    @error_codes('RM102,IN136')
     def is_context_different_in_yml(self) -> bool:
         """
         Checks if there has been a corresponding change to the integration's README
@@ -487,6 +582,7 @@ class ReadMeValidator(BaseValidator):
 
         return valid
 
+    @error_codes('RM106')
     def verify_demisto_in_readme_content(self):
         """
         Checks if there are the word 'Demisto' in the README content.
@@ -513,6 +609,7 @@ class ReadMeValidator(BaseValidator):
 
         return is_valid
 
+    @error_codes('RM107')
     def verify_template_not_in_readme(self):
         """
         Checks if there are the generic sentence '%%FILL HERE%%' in the README content.
@@ -552,8 +649,10 @@ class ReadMeValidator(BaseValidator):
 
                     else:
                         raise Exception(error_message)
-        yield True
-        ReadMeValidator.stop_mdx_server()
+        try:
+            yield True
+        finally:
+            ReadMeValidator.stop_mdx_server()
 
     @staticmethod
     def add_node_env_vars():

@@ -1,19 +1,28 @@
+import logging
 import os
 import re
 from abc import ABC
-from typing import Tuple
+from typing import Dict, List, Tuple
 
 import click
 
+from demisto_sdk.commands.common.constants import (
+    LAYOUT_AND_MAPPER_BUILT_IN_FIELDS, FileType)
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
-                                               print_error)
+from demisto_sdk.commands.common.tools import (
+    LAYOUT_CONTAINER_FIELDS, LOG_COLORS,
+    get_all_incident_and_indicator_fields_from_id_set,
+    get_invalid_incident_fields_from_layout, normalize_field_name, print_color,
+    print_error, remove_copy_and_dev_suffixes_from_str)
+from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 from demisto_sdk.commands.format.format_constants import (
     DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_FROMVERSION,
     SKIP_RETURN_CODE, SUCCESS_RETURN_CODE, VERSION_6_0_0)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
 yaml = YAML_Handler()
+
+SCRIPT_QUERY_TYPE = 'script'
 
 LAYOUTS_CONTAINER_KINDS = ['edit',
                            'indicatorsDetails',
@@ -23,9 +32,15 @@ LAYOUTS_CONTAINER_KINDS = ['edit',
                            'details',
                            'detailsV2',
                            'mobile']
+
+LAYOUTS_CONTAINER_CHECK_SCRIPTS = ('indicatorsDetails', 'detailsV2')
+
 LAYOUT_KIND = 'layout'
 LAYOUTS_CONTAINER_PREFIX = 'layoutscontainer-'
 LAYOUT_PREFIX = 'layout-'
+
+
+logger = logging.getLogger('demisto-sdk')
 
 
 class LayoutBaseFormat(BaseUpdateJSON, ABC):
@@ -60,7 +75,6 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 self.layoutscontainer__run_format()
             else:
                 self.layout__run_format()
-            self.update_json()
             self.set_description()
             self.save_json_to_destination_file()
             return SUCCESS_RETURN_CODE
@@ -83,11 +97,14 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
     def layout__run_format(self):
         """toVersion 5.9.9 layout format"""
+        self.update_json(file_type=FileType.LAYOUT.value)
         self.set_layout_key()
         # version is both in layout key and in base dict
         self.set_version_to_default(self.data['layout'])
         self.set_toVersion()
         self.layout__set_output_path()
+        self.remove_copy_and_dev_suffixes_from_layout()
+        self.remove_non_existent_fields_layout()
 
     def layout__set_output_path(self):
         output_basename = os.path.basename(self.output_file)
@@ -104,10 +121,12 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
     def layoutscontainer__run_format(self) -> None:
         """fromVersion 6.0.0 layout (container) format"""
-        self.set_fromVersion(from_version=VERSION_6_0_0)
+        super().update_json(default_from_version=VERSION_6_0_0)
         self.set_group_field()
         self.layoutscontainer__set_output_path()
         self.update_id(field='name')
+        self.remove_copy_and_dev_suffixes_from_layoutscontainer()
+        self.remove_non_existent_fields_container_layout()
 
     def layoutscontainer__set_output_path(self):
         output_basename = os.path.basename(self.output_file)
@@ -210,3 +229,125 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 second_level_args[kind] = set(self.data[kind].keys()) - set(kind_schema)
 
         return first_level_args, second_level_args
+
+    def remove_copy_and_dev_suffixes_from_layoutscontainer(self):
+        if name := self.data.get('name'):
+            self.data['name'] = remove_copy_and_dev_suffixes_from_str(name)
+
+        container = None
+        for kind in LAYOUTS_CONTAINER_CHECK_SCRIPTS:
+            if self.data.get(kind):
+                container = self.data.get(kind)
+                break
+        if container:
+            for tab in container.get('tabs', ()):
+                for section in tab.get('sections', ()):
+                    if section.get('queryType') == SCRIPT_QUERY_TYPE:
+                        section['query'] = remove_copy_and_dev_suffixes_from_str(section.get('query'))
+                        section['name'] = remove_copy_and_dev_suffixes_from_str(section.get('name'))
+
+    def remove_copy_and_dev_suffixes_from_layout(self):
+        if typename := self.data.get('TypeName'):
+            self.data['TypeName'] = remove_copy_and_dev_suffixes_from_str(typename)
+        if type_id := self.data.get('typeId'):
+            self.data['typeId'] = remove_copy_and_dev_suffixes_from_str(type_id)
+
+        if layout_data := self.data.get('layout'):
+            if layout_tabs := layout_data.get('tabs', ()):
+                for tab in layout_tabs:
+                    for section in tab.get('sections', ()):
+                        if section.get('queryType') == SCRIPT_QUERY_TYPE:
+                            section['query'] = remove_copy_and_dev_suffixes_from_str(section.get('query'))
+                            section['name'] = remove_copy_and_dev_suffixes_from_str(section.get('name'))
+
+            elif layout_sections := layout_data.get('sections'):
+                for section in layout_sections:
+                    if section.get('queryType') == SCRIPT_QUERY_TYPE:
+                        section['query'] = remove_copy_and_dev_suffixes_from_str(section.get('query'))
+                        section['name'] = remove_copy_and_dev_suffixes_from_str(section.get('name'))
+
+    def remove_non_existent_fields_container_layout(self):
+        """
+        Remove non-existent fields from a container layout.
+        """
+        if not self.id_set_file:
+            logger.warning(
+                f'Skipping formatting of non-existent-fields for {self.source_file} as id_set_path argument is missing'
+            )
+            return
+
+        content_fields = self.get_available_content_fields()
+
+        layout_container_items = [
+            layout_container_field for layout_container_field in LAYOUT_CONTAINER_FIELDS
+            if self.data.get(layout_container_field)
+        ]
+
+        for layout_container_item in layout_container_items:
+            layout = self.data.get(layout_container_item, {})
+            layout_tabs = layout.get('tabs', [])
+            self.remove_non_existent_fields_from_tabs(
+                layout_tabs=layout_tabs, content_fields=content_fields
+            )
+
+    def remove_non_existent_fields_layout(self):
+        """
+        Remove non-existent fields from a layout.
+        """
+        if not self.id_set_file:
+            logger.warning(
+                f'Skipping formatting of non-existent-fields for {self.source_file} as id_set_path argument is missing'
+            )
+            return
+
+        content_fields = self.get_available_content_fields()
+
+        layout = self.data.get('layout', {})
+        layout_sections = layout.get('sections', [])
+        for section in layout_sections:
+            fields = section.get('fields', [])
+            section['fields'] = self.extract_content_fields(fields=fields, content_fields=content_fields)
+
+        self.remove_non_existent_fields_from_tabs(
+            layout_tabs=layout.get('tabs', []), content_fields=content_fields
+        )
+
+    def get_available_content_fields(self):
+        """
+        Get all the available content indicator/incident fields available + all the built in fields.
+        """
+        return get_all_incident_and_indicator_fields_from_id_set(self.id_set_file, 'layout') + [
+            field.lower() for field in BUILT_IN_FIELDS
+        ] + LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
+
+    @staticmethod
+    def extract_content_fields(fields: List[Dict], content_fields: List[str]) -> List[str]:
+        """
+        Get only incident/indicator fields which are part of the id json file.
+
+        Args:
+            fields (list[dict]): list of fields.
+            content_fields (list[str]): all the available content fields from id json.
+
+        Returns:
+            list[str]: fields which are part of the content items (id json).
+        """
+        return [
+            field for field in fields  # type: ignore[misc]
+            if normalize_field_name(field=field.get('fieldId', '')).lower() not in
+            get_invalid_incident_fields_from_layout(layout_incident_fields=fields, content_fields=content_fields)
+        ]
+
+    def remove_non_existent_fields_from_tabs(self, layout_tabs: list, content_fields: List[str]):
+        """
+        Remove non-existent fields which are not part of the id json from tabs.
+
+        Args:
+            layout_tabs (list[dict]): list of layout tabs.
+            content_fields (list[str]): all the available content fields from id json.
+        """
+        for tab in layout_tabs:
+            layout_sections = tab.get('sections', [])
+            for section in layout_sections:
+                items = section.get('items', [])
+                section['items'] = self.extract_content_fields(fields=items, content_fields=content_fields)

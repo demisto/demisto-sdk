@@ -5,8 +5,8 @@
 [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/ppwwyyxx/OpenPano.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/demisto/demisto-sdk/context:python)
 [![Coverage Status](https://coveralls.io/repos/github/demisto/demisto-sdk/badge.svg?branch=master)](https://coveralls.io/github/demisto/demisto-sdk?branch=master)
 
-The Demisto SDK library can be used to manage your Demisto content with ease and efficiency.
-The library uses python 3.7+.
+The Demisto SDK library can be used to manage your Cortex XSOAR content with ease and efficiency.
+The library uses python 3.8+.
 
 ## Usage
 
@@ -14,21 +14,29 @@ The library uses python 3.7+.
 
 1. **Install** - `pip3 install demisto-sdk`
 1. **Upgrade** - `pip3 install --upgrade demisto-sdk`
-1. **Demisto server demisto-sdk integration** - In order that demisto-sdk and Cortex XSOAR (Demisto) server communicate, perfrom the following steps:
+1. **Connect demisto-sdk with Cortex XSOAR server** - In order that demisto-sdk and Cortex XSOAR server communicate, perfrom the following steps:
 
-   1. Get an API key for Demisto-server - `Settings` -> `Integrations` -> `API keys` -> `Get your Key` (copy it, you will be to copy it once)
+   1. Get an API key for Cortex XSOAR/XSIAM-server - `Settings` -> `Integrations` -> `API keys` -> `Get your Key` (copy it)
    1. Add the following parameters to your environment. You can also use a [.env file](https://pypi.org/project/python-dotenv/), the demisto-sdk will automatically load that file.:
 
       ```bash
       export DEMISTO_BASE_URL=<http or https>://<demisto-server url or ip>:<port>
       export DEMISTO_API_KEY=<API key>
       ```
+      To use on Cortex XSIAM the `XSIAM_AUTH_ID` environment variable should also be set.
+      ```bash
+      export XSIAM_AUTH_ID=<auth id>
+      ```
 
       for example:
-
       ```bash
       export DEMISTO_BASE_URL=http://127.0.0.1:8080
       export DEMISTO_API_KEY=XXXXXXXXXXXXXXXXXXXXXX
+      ```
+      As long as `XSIAM_AUTH_ID` environment variable is set, SDK commands will be configured to work with an XSIAM instance.
+      In order to set Demisto SDK to work with Cortex XSOAR instance, you need to delete the XSIAM_AUTH_ID parameter from your environment.
+      ```bash
+      unset XSIAM_AUTH_ID
       ```
 
       >For more configurations, check the [demisto-py](https://github.com/demisto/demisto-py) repository (which is used by the demisto-sdk to communicate with Cortex XSOAR).
@@ -81,7 +89,7 @@ Supported commands:
 1. [openapi-codegen](https://xsoar.pan.dev/docs/integrations/openapi-codegen)
 1. [postman-codegen](https://xsoar.pan.dev/docs/integrations/postman-codegen)
 1. [generate-integration](https://xsoar.pan.dev/docs/integrations/code-generator)
-
+1. [generate-yml-from-python](https://xsoar.pan.dev/docs/integrations/yml-from-python-code-gen)
 ---
 
 ### Customizable command configuration
@@ -122,16 +130,6 @@ update_type=minor
 
 ---
 
-### How to setup development environment?
-
-Follow the guide found [here](CONTRIBUTION.md#2-install-demisto-sdk-dev-environment) to setup your `demisto-sdk-dev` virtual environment.
-The development environment is connected to the branch you are currently using in the SDK repository.
-
-Simply activate it by running `workon demisto-sdk-dev`.
-The virtual environment can be deactivated at all times by running `deactivate`.
-
----
-
 ### Autocomplete
 
 Our CLI supports autocomplete for Linux/MacOS machines, you can turn this feature on by running one of the following:
@@ -152,6 +150,13 @@ eval "$(_DEMISTO_SDK_COMPLETE=source demisto-sdk)"
 ## License
 
 MIT - See [LICENSE](LICENSE) for more information.
+
+---
+
+## How to setup development environment?
+
+Follow the guide found [here](CONTRIBUTION.md#2-install-demisto-sdk-dev-environment) to setup your `demisto-sdk` dev environment.
+The development environment is connected to the branch you are currently using in the SDK repository.
 
 ---
 

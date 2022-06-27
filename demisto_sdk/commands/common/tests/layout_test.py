@@ -17,6 +17,7 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
         structure.old_file = old_file
         structure.prev_ver = 'master'
         structure.branch_name = ''
+        structure.specific_validations = None
         return structure
 
 
@@ -107,6 +108,6 @@ class TestLayoutValidator:
             'version': -1,
             'name': 'test layout container',
         }
-        structure = mock_structure('', layout)
+        structure = mock_structure('layout.json', layout)
         validator = LayoutsContainerValidator(structure)
         assert not validator.is_valid_layout(validate_rn=False)

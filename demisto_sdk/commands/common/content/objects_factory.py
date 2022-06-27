@@ -7,12 +7,13 @@ from demisto_sdk.commands.common.content.objects.abstract_objects.general_object
     GeneralObject
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     AgentTool, AuthorImage, ChangeLog, Classifier, ClassifierMapper,
-    Connection, Contributors, Dashboard, DocFile, GenericDefinition,
-    GenericField, GenericModule, GenericType, IncidentField, IncidentType,
-    IndicatorField, IndicatorType, Integration, Job, Layout, LayoutsContainer,
-    Lists, OldClassifier, OldIndicatorType, PackIgnore, PackMetaData, Playbook,
-    PreProcessRule, Readme, ReleaseNote, ReleaseNoteConfig, Report, Script,
-    SecretIgnore, Widget)
+    Connection, Contributors, CorrelationRule, Dashboard, DocFile,
+    GenericDefinition, GenericField, GenericModule, GenericType, IncidentField,
+    IncidentType, IndicatorField, IndicatorType, Integration, Job, Layout,
+    LayoutsContainer, Lists, ModelingRule, OldClassifier, OldIndicatorType,
+    PackIgnore, PackMetaData, ParsingRule, Playbook, PreProcessRule, Readme,
+    ReleaseNote, ReleaseNoteConfig, Report, Script, SecretIgnore, Trigger,
+    Widget, Wizard, XSIAMDashboard, XSIAMReport)
 from demisto_sdk.commands.common.content.objects.root_objects import \
     Documentation
 from demisto_sdk.commands.common.tools import find_type
@@ -55,7 +56,14 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.GENERIC_FIELD: GenericField,
     FileType.GENERIC_MODULE: GenericModule,
     FileType.GENERIC_DEFINITION: GenericDefinition,
-    FileType.JOB: Job
+    FileType.JOB: Job,
+    FileType.PARSING_RULE: ParsingRule,
+    FileType.MODELING_RULE: ModelingRule,
+    FileType.CORRELATION_RULE: CorrelationRule,
+    FileType.XSIAM_DASHBOARD: XSIAMDashboard,
+    FileType.XSIAM_REPORT: XSIAMReport,
+    FileType.TRIGGER: Trigger,
+    FileType.WIZARD: Wizard,
 }
 
 TYPE_CONVERSION_BY_FILE_NAME = {

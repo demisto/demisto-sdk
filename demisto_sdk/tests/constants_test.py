@@ -1,11 +1,7 @@
-import json
-
-import pytest
-
 import demisto_sdk.commands.common.constants as constants
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 
-GIT_ROOT = "{}".format(git_path())
+GIT_ROOT = git_path()
 INVALID_PLAYBOOK_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/Playbooks.playbook-invalid.yml"
 VALID_TEST_PLAYBOOK_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/Playbooks.playbook-test.yml"
 VALID_BETA_PLAYBOOK_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/beta-playbook-valid.yml"
@@ -98,6 +94,8 @@ SCRIPT_TARGET = f"{PACK_TARGET}/Scripts/script-test.yml"
 SCRIPT_RELEASE_NOTES_TARGET = f"{PACK_TARGET}/Scripts/script-test_CHANGELOG.md"
 INTEGRATION_RELEASE_NOTES_TARGET = f"{PACK_TARGET}/Integrations/integration-test_CHANGELOG.md"
 SOURCE_FORMAT_INTEGRATION_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_New_Integration_copy.yml"
+SOURCE_FORMAT_INTEGRATION_DEFAULT_VALUE = f"{GIT_ROOT}/demisto_sdk/tests/test_files" \
+                                          f"/format_integration_defaultvalue_test.yml"
 SOURCE_BETA_INTEGRATION_FILE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/source_beta_integration.yml"
 DESTINATION_FORMAT_INTEGRATION_COPY = "new_format_New_Integration_copy.yml"
 SOURCE_FORMAT_SCRIPT_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_New_script_copy.yml"
@@ -148,7 +146,7 @@ SOURCE_FORMAT_INDICATORTYPE_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/for
 DESTINATION_FORMAT_INDICATORTYPE_COPY = "Packs/Base/Misc/reputation-copy.json"
 INDICATORTYPE_PATH = "Packs/Base/Misc"
 
-SOURCE_FORMAT_LAYOUT_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_layout-copy.json"
+SOURCE_FORMAT_LAYOUT_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_layout-dev.json"
 DESTINATION_FORMAT_LAYOUT_COPY = "Layouts/layout-copy.json"
 DESTINATION_FORMAT_LAYOUT_INVALID_NAME_COPY = "Layouts/layoutt-copy.json"
 LAYOUT_PATH = "Layouts"
@@ -237,7 +235,6 @@ VALID_GENERIC_FIELD_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/generic-fie
 VALID_GENERIC_MODULE_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/generic-module-valid.json"
 VALID_GENERIC_DEFINITION_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/generic-definitions-valid.json"
 
-VALID_GITLAB_RESPONSE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/valid_gitlab_search_response.json"
 
 GENERICFIELD_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/genericfield.yml"
 INCIDENTFIELD_SCHEMA_PATH = f"{GIT_ROOT}/demisto_sdk/commands/common/schemas/incidentfield.yml"
@@ -259,108 +256,3 @@ DIR_LIST = [
     f'{PACK_TARGET}/{constants.INDICATOR_FIELDS_DIR}',
     constants.TESTS_DIR
 ]
-
-
-class TestGitContentConfig:
-    @pytest.mark.parametrize(
-        'url, host, repo_name',
-        [
-            ('ssh://git@github.com/demisto/content-dist.git', 'github.com', 'demisto/content-dist'),
-            ('git@github.com:demisto/content-dist.git', 'github.com', 'demisto/content-dist'),
-            # clone using github ssh example
-            ('https://github.com/demisto/content-dist.git', 'github.com', 'demisto/content-dist'),
-            # clone using github https example
-            ('https://github.com/demisto/content-dist', 'github.com', 'demisto/content-dist'),
-            ('https://code.pan.run/xsoar/content-dist', 'code.pan.run', 'content-dist'),  # gitlab
-            ('https://code.pan.run/xsoar/content-dist.git', 'code.pan.run', 'content-dist'),
-            ('https://gitlab-ci-token:token@code.pan.run/xsoar/content-dist.git', 'code.pan.run', 'content-dist')
-        ]
-    )
-    def test_get_properties(self, mocker, url: str, host: str, repo_name):
-        """
-        Given:
-            No repository (not running in git)
-        When:
-            A known output of git.Repo().remotes().url
-        Then:
-            Validate the correct repo got back (demisto/content)
-        """
-        mocker.patch.object(constants.GitContentConfig,
-                            '_search_gitlab_id',
-                            return_value=0)
-        git_config = constants.GitContentConfig()
-        parsed_git = git_config._get_repository_properties([url])
-        assert host in parsed_git.host  # it parse the domain with user and password
-        git_config._set_repo_config(parsed_git)
-        assert git_config.CURRENT_REPOSITORY == repo_name
-        if 'code.pan.run' in url:
-            assert git_config.GITLAB_HOST == 'code.pan.run'
-
-    def test_get_repo_name_gitlab_invalid(self, mocker):
-        """
-        Given:
-            No repository (not running in git)
-        When:
-            A known output of git.Repo().remotes().url, but this url not found in GitLab API
-        Then:
-            Ignore gitlab and get back to content (demisto/content)
-        """
-        url = 'https://code.pan.run/xsoar/very-private-repo'
-        git_config = constants.GitContentConfig()
-        mocker.patch.object(constants.GitContentConfig,
-                            '_search_gitlab_id',
-                            return_value=None)
-        # for invalid response should return the official content repo
-        parsed_git = git_config._get_repository_properties([url])
-        git_config._set_repo_config(parsed_git)
-        assert git_config.CURRENT_REPOSITORY == constants.GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
-
-    def test_get_repo_name_empty_case(self):
-        """
-        Given:
-            No repository (not running in git)
-        When:
-            Searching for repository name
-        Then:
-            Validate the correct repo got back - demisto/content
-        """
-        git_config = constants.GitContentConfig()
-        parsed_git = git_config._get_repository_properties([])
-        git_config._set_repo_config(parsed_git)
-        assert git_config.CURRENT_REPOSITORY == constants.GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
-
-    def test_search_gitlab_id_valid(self, requests_mock):
-        """
-        Given:
-            A valid repo name
-        When:
-            Searching for the id of the repo
-        Then:
-            The id of the repo should be returned
-        """
-
-        with open(VALID_GITLAB_RESPONSE) as f:
-            gitlab_response = json.load(f)
-        repo = 'content-internal-dist'
-        host = 'code.pan.run'
-        url = f'https://{host}/api/v4/projects?search={repo}'
-        requests_mock.get(url, json=gitlab_response)
-        git_config = constants.GitContentConfig()
-        assert git_config._search_gitlab_id(host, repo) == 3606
-
-    def test_search_gitlab_id_invalid(self, requests_mock):
-        """
-        Given:
-            An invalid repo name
-        When:
-            Searching for the id of the repo
-        Then:
-            None should be returned
-        """
-
-        repo = "no-real-repo"
-        host = 'code.pan.run'
-        url = f'https://code.pan.run/api/v4/projects?search={repo}'
-        requests_mock.get(url, json=[])
-        git_config = constants.GitContentConfig()
-        assert git_config._search_gitlab_id(host, repo) is None

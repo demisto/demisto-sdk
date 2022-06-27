@@ -18,7 +18,8 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
         structure.old_file = old_file
         structure.prev_ver = 'master'
         structure.branch_name = ''
-        structure.quite_bc = False
+        structure.quiet_bc = False
+        structure.specific_validations = None
         return structure
 
 
@@ -81,5 +82,26 @@ class TestClassifierValidator:
 
         assert validator.is_field_mapping_removed() == answer
         assert validator.is_valid != answer
-        structure.quite_bc = True
+        structure.quiet_bc = True
         assert validator.is_field_mapping_removed() is False
+
+    IS_MATCHING_NAME_ID_INPUT = [
+        ({"id": "name", "name": "name"}, True),
+        ({"id": "id_field", "name": "name_field"}, False)
+    ]
+
+    @pytest.mark.parametrize("mapper, result", IS_MATCHING_NAME_ID_INPUT)
+    def test_is_name_id_equal(self, repo, mapper, result):
+        """
+        Given
+        - A mapper with name and id
+        When
+        - validating mapper
+        Then
+        - validating that the mapper name and id are equal.
+        """
+
+        structure = mock_structure("", mapper)
+        validator = ClassifierValidator(structure)
+
+        assert validator.is_id_equals_name() == result

@@ -7,6 +7,7 @@ import autopep8
 import click
 from klara.contract import solver
 from klara.contract.solver import MANAGER, ContractSolver, nodes
+
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import Colors
 from demisto_sdk.commands.common.tools import print_error, print_success

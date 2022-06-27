@@ -15,7 +15,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator, error_codes)
 from demisto_sdk.commands.common.hook_validations.structure import \
@@ -24,8 +24,6 @@ from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
                                                get_file_displayed_name,
                                                is_test_config_match,
                                                run_command)
-from demisto_sdk.commands.common.handlers import JSON_Handler
-
 
 json = JSON_Handler()
 yaml = YAML_Handler()

@@ -2,15 +2,16 @@ import ast as ast_mod
 import logging
 from pathlib import Path
 from typing import Dict, List, Union
-from demisto_sdk.commands.common.handlers import JSON_Handler
 
 from ordered_set import OrderedSet
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.generate_unit_tests.common import (
     ast_name, extract_outputs_from_command_run)
 
 logger = logging.getLogger('demisto-sdk')
 json = JSON_Handler()
+
 
 class ArgsBuilder:
     def __init__(self, command_name: str, directory_path: str, args_list: List[str] = [],

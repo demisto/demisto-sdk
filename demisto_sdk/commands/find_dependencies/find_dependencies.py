@@ -2700,7 +2700,7 @@ def remove_items_from_packs_section(id_set: dict, excluded_items_by_pack: dict) 
         for item_type, item_name in pack_items:
             item_type = item_type_to_content_items_header(item_type)
             try:
-                pack_content_items.get(f'{item_type}s', []).remove(item_name)
+                pack_content_items.get(item_type, []).remove(item_name)
             except ValueError:  # This content item has already been excluded from the id_set
                 pass
 

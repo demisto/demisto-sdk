@@ -29,15 +29,15 @@ class RUAMEL_Handler(XSOAR_Handler):
     def load(self, stream):
         return self.yaml.load(stream)
 
-    def dump(self, data, stream, sort_keys=False, indent=0, **kwargs):
+    def dump(self, data, stream, sort_keys=False, indent=0):
         if sort_keys:
             data = order_dict(data)
         yaml = self.yaml
         if indent:
             yaml.indent(sequence=indent)
-        yaml.dump(data, stream, **kwargs)
+        yaml.dump(data, stream)
 
-    def dumps(self, data, sort_keys=False, indent=None, **kwargs):
+    def dumps(self, data, sort_keys=False, indent=None):
         """
 
         This function is not recommended and not efficient!
@@ -47,7 +47,7 @@ class RUAMEL_Handler(XSOAR_Handler):
         to print a YAML, it is better to use `yaml.dump(data, sys.stdout)`
         """
         string_stream = StringIO()
-        self.dump(data, string_stream, sort_keys=sort_keys, indent=indent, **kwargs)
+        self.dump(data, string_stream, sort_keys=sort_keys, indent=indent)
         output_str = string_stream.getvalue()
         string_stream.close()
         return output_str

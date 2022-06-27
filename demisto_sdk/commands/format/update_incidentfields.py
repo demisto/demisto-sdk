@@ -1,7 +1,6 @@
 from typing import List, Tuple
 
 import click
-import ujson
 
 from demisto_sdk.commands.common.tools import (get_dict_from_file,
                                                get_item_marketplaces,

@@ -27,7 +27,41 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                print_color, print_error,
                                                print_warning, run_command)
 
+from demisto_sdk.commands.common.content.objects.pack_objects import \
+    Integration, Script, Playbook
+
 json = JSON_Handler()
+
+CLASS_BY_FILE_TYPE = {FileType.INTEGRATION: Integration, FileType.SCRIPT: Script, FileType.PLAYBOOK: Playbook}
+
+
+def commands_to_deprecate_dict(commands: dict):
+    res_dict = {}
+    for command in commands:
+        res_dict[command.get('name')] = command.get('deprecated')
+
+    return res_dict
+
+
+def get_deprecated_custom_rn(path: str, file_type):
+    old_yml = get_remote_file(path)
+    new_yml_obj = CLASS_BY_FILE_TYPE[file_type](path)
+
+    if not old_yml.get('deprecated') and new_yml_obj.is_deprecated:
+        return '- Deprecated. Use %%% instead.\n'
+
+    if file_type != FileType.INTEGRATION:
+        return ''
+
+    # look for deprecated commands
+    rn = ''
+    old_commands = commands_to_deprecate_dict(old_yml.get('script', {}).get('commands'))
+    new_commands = commands_to_deprecate_dict(new_yml_obj.script.get('commands'))
+
+    for command_name, is_deprecated in new_commands.items():
+        if is_deprecated and not old_commands[command_name]:
+            rn += f'- Command ***{command_name}*** is deprecated. Use %%% instead.\n'
+    return rn
 
 
 class UpdateRN:
@@ -548,7 +582,13 @@ class UpdateRN:
                 if self.update_type == 'documentation':
                     rn_desc += '- Documentation and metadata improvements.\n'
                 else:
-                    rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
+                    deprecate_rn = ''
+                    if _type in (FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK):
+                        deprecate_rn = get_deprecated_custom_rn(path, _type)
+                    if deprecate_rn:
+                        rn_desc += deprecate_rn
+                    else:
+                        rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
 
         if _type == FileType.TRIGGER:
             rn_desc = f'- {desc}'  # Issue - https://github.com/demisto/etc/issues/48153#issuecomment-1111988526

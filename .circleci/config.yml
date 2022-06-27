@@ -108,7 +108,8 @@ jobs:
               echo "last results"
               cat "${CIRCLE_INTERNAL_TASK_DATA}/circle-test-results/results.json" | jq .
               echo "Testfiles"
-              echo ${TESTFILES}
+              echo ${TEST_FILES}
+              echo "done Testfiles"
               
               mkdir test-results
               sudo npm install -g markdownlint-cli

@@ -201,6 +201,7 @@ class Pack:
                 'name': name,
                 'display': name,
                 'description': f'this is an integration {name}',
+                'category': 'category',
                 'script': {
                     'type': 'python',
                     'subtype': 'python3',

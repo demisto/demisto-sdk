@@ -29,6 +29,8 @@ from demisto_sdk.commands.format.update_indicatortype import \
 from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
 from demisto_sdk.commands.format.update_lists import ListsFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
+from demisto_sdk.commands.format.update_pack_metadata import \
+    PackMetadataJsonFormat
 from demisto_sdk.commands.format.update_pre_process_rules import \
     PreProcessRulesFormat
 from demisto_sdk.commands.format.update_report import ReportJSONFormat
@@ -1141,6 +1143,60 @@ class TestFormattingOldClassifier:
         classifier_formatter.remove_null_fields()
         for field in ['defaultIncidentType', 'sortValues', 'unclassifiedCases']:
             assert field not in classifier_formatter.data
+
+
+class TestFormattingPackMetaData:
+
+    @pytest.mark.parametrize(
+        'deprecated_integration, pack_name, pack_description, new_pack_name_to_use',
+        [
+            (True, 'pack name', 'pack description', 'pack v2'),
+            (True, 'pack name (Deprecated)', 'Deprecated. Use pack v2 instead.', 'pack v2'),
+            (True, 'pack name', 'pack description', ''),
+            (False, 'pack name', 'pack description', ''),
+        ]
+    )
+    def test_deprecate_pack(
+        self, mocker, pack, deprecated_integration, pack_name, pack_description, new_pack_name_to_use
+    ):
+        """
+        Given
+          - Case 1: a deprecated integration and a pack that its description/name doesn't state its deprecated.
+          - Case 2: a deprecated integration and a pack that its description/name states its deprecated.
+          - Case 3: a deprecated integration and a pack that its description/name doesn't state its deprecated.
+          - Case 4: a non-deprecated integration and a pack that its description/name doesn't state its deprecated.
+
+        When
+          - running trying to run the deprecate pack format.
+
+        Then
+          - Case 1: pack name should be: pack name (Deprecated),
+                    pack description should be: Deprecated. Use pack v2 instead.
+          - Case 2: pack name should be: pack name (Deprecated),
+                    pack description should be: Deprecated. Use pack v2 instead.
+                    (nothing should change as pack is already deprecated).
+          - Case 3: pack name should be: pack name (Deprecated),
+                    pack description should be: Deprecated. no available replacement.
+          - Case 4: pack name should be: pack name, pack description should be: pack description.
+        """
+        pack.create_integration(name='integration-1').yml.update({'deprecated': deprecated_integration})
+        pack.pack_metadata.update({'name': pack_name, 'description': pack_description})
+
+        pack_metadata_formatter = PackMetadataJsonFormat(input=pack.pack_metadata.path)
+        mocker.patch.object(pack_metadata_formatter, 'get_answer', return_value=new_pack_name_to_use)
+
+        pack_metadata_formatter.deprecate_pack()
+        if deprecated_integration:
+            expected_pack_name = 'pack name (Deprecated)'
+            if new_pack_name_to_use:
+                expected_pack_description = f'Deprecated. Use {new_pack_name_to_use} instead.'
+            else:
+                expected_pack_description = 'Deprecated. No available replacement.'
+        else:
+            expected_pack_name = 'pack name'
+            expected_pack_description = 'pack description'
+        assert pack_metadata_formatter.data['name'] == expected_pack_name
+        assert pack_metadata_formatter.data['description'] == expected_pack_description
 
 
 class TestFormattingMapper:

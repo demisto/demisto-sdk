@@ -101,11 +101,20 @@ jobs:
               # remove the integration tests (integration tests as opposed to unit tests) from the list because those
               # tests shouldn't be parallelized.
               TEST_FILES=$(circleci tests glob "**/*_test.py")
+              echo "test_files raw"
+              echo ${TEST_FILES}
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/init\/templates\S*\.py//g')
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/tests\/integration_tests\S*\.py//g')
-              TEST_FILES=$(echo "$TEST_FILES" | circleci tests split --split-by=timings)
-
+              TEST_FILES=$(echo "$TEST_FILES" | circleci tests split --split-by=timings )
+              
+              echo "last results"
+              cat "${CIRCLE_INTERNAL_TASK_DATA}/circle-test-results/results.json" | jq .
+              echo "Testfiles"
+              echo ${TEST_FILES}
+              echo "done Testfiles"
+              
               mkdir test-results
+              sudo npm install -g markdownlint-cli
               poetry run pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml $TEST_FILES
         - store_test_results:
             path: test-results

@@ -969,6 +969,32 @@ class TestIntegrationValidator:
 
         assert not validator.is_valid_integration_file_path()
 
+    @pytest.mark.parametrize('file_name', ['IntNameTest.py', 'IntNameTest_test.py'])
+    def test_invalid_py_file_names(self, repo, file_name):
+        """
+        Given
+            - An integration with invalid python file path.
+            - A Unittest with invalid python file path.
+        When
+            - running is_valid_py_file_names.
+        Then
+            - The files are invalid (the integration name is incorrect).
+        """
+
+        pack = repo.create_pack('PackName')
+
+        integration = pack.create_integration('IntName')
+        integration.create_default_integration()
+        structure_validator = StructureValidator(integration.path, predefined_scheme='integration')
+
+        python_path = integration.code.path
+        new_name = f'{python_path.rsplit("/", 1)[0]}/{file_name}'
+        os.rename(python_path, new_name)
+        with ChangeCWD(repo.path):
+            validator = IntegrationValidator(structure_validator)
+            validator.file_path = new_name
+            assert not validator.is_valid_py_file_names()
+
     def test_folder_name_without_separators(self, pack):
         """
         Given

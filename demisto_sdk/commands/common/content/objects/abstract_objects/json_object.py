@@ -3,10 +3,9 @@ from typing import Optional, Union
 from wcmatch.pathlib import Path
 
 import demisto_sdk.commands.common.content.errors as exc
-
-from .dictionary_based_object import DictionaryBasedObject
 from demisto_sdk.commands.common.handlers import JSON_Handler
 
+from .dictionary_based_object import DictionaryBasedObject
 
 json = JSON_Handler()
 

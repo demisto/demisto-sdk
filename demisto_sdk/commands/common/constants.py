@@ -528,6 +528,9 @@ JOB_JSON_REGEX = fr'{JOBS_DIR_REGEX}\/job-([^/]+)\.json'
 WIZARD_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{WIZARDS_DIR}'
 WIZARD_JSON_REGEX = fr'{WIZARD_DIR_REGEX}\/wizard-([^/]+)\.json'
 
+RELATIVE_HREF_URL_REGEX = r'(<.*?href\s*=\s*"((?!(?:https?:\/\/)|#|(?:mailto:)).*?)")'
+RELATIVE_MARKDOWN_URL_REGEX = r'(?<![!])(\[.*?\])\(((?!(?:https?:\/\/)|#|(?:mailto:)).*?)\)'
+
 # old classifier structure
 _PACKS_CLASSIFIER_BASE_5_9_9_REGEX = fr'{PACKS_CLASSIFIERS_DIR_REGEX}\/*classifier-(?!mapper).*_5_9_9'
 PACKS_CLASSIFIER_JSON_5_9_9_REGEX = fr'{_PACKS_CLASSIFIER_BASE_5_9_9_REGEX}\.json'
@@ -567,10 +570,12 @@ INDICATOR_TYPES_REPUTATIONS_REGEX = r'{}{}.reputations\.json$'.format(CAN_START_
 # deprecated regex
 DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
 DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement\.*?)"
+PACK_NAME_DEPRECATED_REGEX = r".* \(Deprecated\)"
 
 DEPRECATED_REGEXES: List[str] = [
     DEPRECATED_DESC_REGEX,
-    DEPRECATED_NO_REPLACE_DESC_REGEX
+    DEPRECATED_NO_REPLACE_DESC_REGEX,
+    PACK_NAME_DEPRECATED_REGEX
 ]
 
 PACK_METADATA_NAME = 'name'

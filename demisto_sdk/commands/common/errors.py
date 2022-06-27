@@ -20,7 +20,7 @@ ALLOWED_IGNORE_ERRORS = [
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107',
-    'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM 110',
+    'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM 110', 'RM112',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
     'IM111',
@@ -303,6 +303,7 @@ ERROR_CODE = {
     "pack_metadata_missing_categories": {'code': "PA129", 'ui_applicable': False, 'related_field': ''},
     "wrong_version_format": {'code': "PA130", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_version_diff_from_rn": {'code': "PA131", 'ui_applicable': False, 'related_field': ''},
+    "pack_should_be_deprecated": {'code': "PA132", 'ui_applicable': False, 'related_field': ''},
 
     # PB - Playbooks
     "playbook_cant_have_rolename": {'code': "PB100", 'ui_applicable': True, 'related_field': 'rolename'},
@@ -345,6 +346,7 @@ ERROR_CODE = {
     "missing_readme_file": {'code': "RM109", 'ui_applicable': False, 'related_field': ''},
     "missing_commands_from_readme": {'code': "RM110", 'ui_applicable': False, 'related_field': ''},
     "error_uninstall_node": {'code': "RM111", 'ui_applicable': False, 'related_field': ''},
+    "invalid_readme_relative_url_error": {'code': "RM112", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -971,8 +973,8 @@ class Errors:
     @classmethod
     @error_code_decorator
     def breaking_backwards_command_arg_changed(cls, commands_ls):
-        error_msg = "{}, Your updates to this file contains changes to a name or an argument of an existing command(s).\n" \
-            "Please undo you changes to the following command(s):\n".format(cls.BACKWARDS)
+        error_msg = "{}, Your updates to this file contains changes to a name or an argument of an existing " \
+                    "command(s).\nPlease undo you changes to the following command(s):\n".format(cls.BACKWARDS)
         error_msg += '\n'.join(commands_ls)
         return error_msg
 
@@ -1795,6 +1797,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def invalid_readme_relative_url_error(path):
+        return f'Relative urls are not supported within README. If this is not a relative url, please add ' \
+               f'an https:// prefix:\n{path}. '
+
+    @staticmethod
+    @error_code_decorator
     def invalid_readme_image_error(path: str, error_type: str, response: Optional[Response] = None):
         error = 'Error in readme image: '
         if response is not None:
@@ -2295,7 +2303,7 @@ class Errors:
     @error_code_decorator
     def pack_metadata_version_diff_from_rn(pack_path, rn_version, pack_metadata_version):
         return f'There is a difference between the version in the pack metadata' \
-               f'file and the version of the latest release note.\nexpected latest release note to be {pack_metadata_version} '\
+               f'file and the version of the latest release note.\nexpected latest release note to be {pack_metadata_version} ' \
                f'instead found {rn_version}.\nTo fix the problem, try running `demisto-sdk update-release-notes -i {pack_path}`'
 
     @staticmethod
@@ -2367,3 +2375,12 @@ class Errors:
     @error_code_decorator
     def wizard_integrations_without_playbooks(integrations: set):
         return f'The following integrations are missing a set_playbook: {integrations}'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_should_be_deprecated(pack_name: str):
+        return f'Pack {pack_name} should be deprecated, as all its integrations, playbooks and scripts are' \
+               f' deprecated.\nThe name of the pack in the pack_metadata.json should end with (Deprecated)\n' \
+               f'The description of the pack in the pack_metadata.json should be one of the following formats:\n' \
+               f'1. "Deprecated. Use <PACK_NAME> instead."\n' \
+               f'2. "Deprecated. <REASON> No available replacement."'

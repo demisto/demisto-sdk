@@ -586,7 +586,7 @@ class UpdateRN:
                     if _type in (FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK):
                         deprecate_rn = get_deprecated_custom_rn(path, _type)
                     if deprecate_rn:
-                        rn_desc += deprecate_rn
+                        rn_desc += text + deprecate_rn
                     else:
                         rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
 

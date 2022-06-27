@@ -969,15 +969,14 @@ class TestIntegrationValidator:
 
         assert not validator.is_valid_integration_file_path()
 
-    @pytest.mark.parametrize('file_name', ['IntNameTest.py', 'IntNameTest_test.py'])
-    def test_invalid_py_file_names(self, repo, file_name):
+    def test_invalid_integration_py_file_name(self, repo):
         """
         Given
-            - An integration with invalid python file path.
+            - An integration with invalid integration python file path.
         When
             - running is_valid_py_file_names.
         Then
-            - an integration with an invalid file path is invalid.
+            - The integration file path is invalid.
         """
 
         pack = repo.create_pack('PackName')
@@ -987,7 +986,31 @@ class TestIntegrationValidator:
         structure_validator = StructureValidator(integration.path, predefined_scheme='integration')
 
         python_path = integration.code.path
-        new_name = f'{python_path.rsplit("/", 1)[0]}/{file_name}'
+        new_name = f'{python_path.rsplit("/", 1)[0]}/IntNameTest.py'
+        os.rename(python_path, new_name)
+        with ChangeCWD(repo.path):
+            validator = IntegrationValidator(structure_validator)
+            validator.file_path = new_name
+            assert not validator.is_valid_py_file_names()
+
+    def test_invalid_unittest_py_file_name(self, repo):
+        """
+        Given
+            - An integration with invalid unittest python file path.
+        When
+            - running is_valid_py_file_names.
+        Then
+            - an integration with an invalid unittest file path is indeed invalid.
+        """
+
+        pack = repo.create_pack('PackName')
+
+        integration = pack.create_integration('IntName')
+        integration.create_default_integration()
+        structure_validator = StructureValidator(integration.path, predefined_scheme='integration')
+
+        python_path = integration.code.path
+        new_name = f'{python_path.rsplit("/", 1)[0]}/IntNameTest_test.py'
         os.rename(python_path, new_name)
         with ChangeCWD(repo.path):
             validator = IntegrationValidator(structure_validator)

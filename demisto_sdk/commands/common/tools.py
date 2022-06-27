@@ -2046,7 +2046,7 @@ def is_object_in_id_set(object_id, item_type, pack_info_from_id_set):
     """
     content_items = pack_info_from_id_set.get('ContentItems', {})
     items_ids = content_items.get(item_type_to_content_items_header(item_type), [])
-    # logging.warning(f'checking {object_id} as {item_type} (known as {item_type_to_content_items_header(item_type)}) in {items_ids}')
+
     return object_id in items_ids
 
 

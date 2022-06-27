@@ -1,4 +1,3 @@
-import json
 import logging
 from pathlib import Path
 from typing import List
@@ -8,7 +7,7 @@ import autopep8
 import click
 from klara.contract import solver
 from klara.contract.solver import MANAGER, ContractSolver, nodes
-
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import Colors
 from demisto_sdk.commands.common.tools import print_error, print_success
 from demisto_sdk.commands.generate_docs.common import execute_command
@@ -20,6 +19,7 @@ from demisto_sdk.commands.generate_unit_tests.test_module_builder import \
     TestModule
 
 logger = logging.getLogger('demisto-sdk')
+json = JSON_Handler()
 
 
 class UnitTestsGenerator:

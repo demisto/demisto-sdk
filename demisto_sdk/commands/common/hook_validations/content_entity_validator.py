@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import re
@@ -25,7 +24,10 @@ from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
                                                get_file_displayed_name,
                                                is_test_config_match,
                                                run_command)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 
+
+json = JSON_Handler()
 yaml = YAML_Handler()
 logger = logging.getLogger("demisto-sdk")
 

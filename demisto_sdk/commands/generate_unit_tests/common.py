@@ -1,6 +1,9 @@
 import ast as ast_mod
-import json
 from typing import Union
+from demisto_sdk.commands.common.handlers import JSON_Handler
+
+
+json = JSON_Handler()
 
 
 def ast_name(id: str, ctx: Union[ast_mod.Load, ast_mod.Store, ast_mod.Del] = ast_mod.Load()):

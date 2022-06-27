@@ -101,7 +101,7 @@ def test_is_valid_description_name(repo):
     integration = pack.create_integration('IntName')
     integration.create_default_integration()
 
-    description_validator = DescriptionValidator(integration.yml.path)
+    description_validator = DescriptionValidator(integration.description.path)
 
     assert description_validator.is_valid_description_name()
 

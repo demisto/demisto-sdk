@@ -37,7 +37,7 @@ class DescriptionValidator(BaseValidator):
         self.verify_demisto_in_description_content()
 
         # make sure the description is a seperate file
-        if not self.data_dictionary.get('detaileddescription'):
+        if not self.data_dictionary.get('detaileddescription') and '.md' in self.file_path:
             self.is_valid_description_name()
             self.contains_contrib_details()
 

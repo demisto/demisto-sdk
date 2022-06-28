@@ -11,7 +11,7 @@ class DeprecationValidator:
         self.script_section = id_set_file.get("scripts", [])
         self.playbook_section = id_set_file.get("playbooks", [])
 
-    def validate_integartion(self, deprecated_commands_list: List[str], integration_id: str):
+    def validate_integartion_commands_deprecation(self, deprecated_commands_list: List[str], integration_id: str):
         """
         Manages the deprecation usage for integration commands
         Checks if the given deprecated integration commands are used in a none-deprecated scripts / playbooks
@@ -26,12 +26,12 @@ class DeprecationValidator:
         """
         usage_dict: Dict[str, list] = {}
 
-        self.filter_playbooks_for_integration_validation(deprecated_commands_list, usage_dict, integration_id)
-        self.find_scripts_using_given_integration_commands(deprecated_commands_list, usage_dict)
+        usage_dict = self.collect_non_deprecated_playbooks_implementing_the_acommand_list(deprecated_commands_list, usage_dict, integration_id)
+        usage_dict = self.find_scripts_using_given_integration_commands(deprecated_commands_list, usage_dict)
 
         return usage_dict
 
-    def validate_playbook(self, playbook_name: str):
+    def validate_playbook_deprecation(self, playbook_name: str):
         """
         Manages the deprecation usage validation for playbooks.
         Checks if the given deprecated playbook is used in a none-deprecated playbooks.
@@ -45,7 +45,7 @@ class DeprecationValidator:
         usage_list: List[str] = []
         key_to_check = "implementing_playbooks"
 
-        self.filter_playbooks_for_scripts_or_playbook_validation(playbook_name, usage_list, key_to_check)
+        usage_list = self.collect_non_deprecated_playbooks_that_use_a_given_playbook_or_script(playbook_name, usage_list, key_to_check)
 
         return usage_list
 
@@ -63,12 +63,12 @@ class DeprecationValidator:
         usage_list: List[str] = []
         key_to_check = "implementing_scripts"
 
-        self.find_scripts_using_given_script(script_name, usage_list)
-        self.filter_playbooks_for_scripts_or_playbook_validation(script_name, usage_list, key_to_check)
+        usage_list = self.collect_non_deprecated_scripts_implemeting_another_script(script_name, usage_list)
+        usage_list = self.collect_non_deprecated_playbooks_that_use_a_given_playbook_or_script(script_name, usage_list, key_to_check)
 
         return usage_list
 
-    def filter_playbooks_for_integration_validation(self, deprecated_commands_list, usage_dict: Dict[str, list], integration_id: str):
+    def collect_non_deprecated_playbooks_implementing_the_acommand_list(self, deprecated_commands_list, usage_dict: Dict[str, list], integration_id: str):
         """
         Filter the relevant playbooks for the current integration validation from the playbook_section
         and check which of the integration commands are being used in this files using the validate_integration_not_in_playbook function.
@@ -82,10 +82,13 @@ class DeprecationValidator:
         """
         for playbook in self.playbook_section:
             for playbook_val in playbook.values():
+                if playbook_val.get('deprecated'):
+                    continue
                 command_to_integration = playbook_val.get("command_to_integration")
                 if command_to_integration:
-                    self.validate_integration_commands_not_in_playbook(usage_dict, deprecated_commands_list,
+                    usage_dict = self.validate_integration_commands_not_in_playbook(usage_dict, deprecated_commands_list,
                                                                        command_to_integration, playbook_val, integration_id)
+        return usage_dict
 
     def validate_integration_commands_not_in_playbook(self, usage_dict: Dict, deprecated_commands_list: List[str],
                                                       command_to_integration: Dict[str, list], playbook: Dict, integration_id: str):
@@ -103,8 +106,6 @@ class DeprecationValidator:
             playbook (dict): The playbook currently being checked.
             integration_id (str): The id of the integration that is currently being tested.
         """
-        if playbook.get('deprecated'):
-            return
         for command, integration_name in command_to_integration.items():
             if command in deprecated_commands_list:
                 if integration_name == integration_id or not integration_name:
@@ -113,6 +114,7 @@ class DeprecationValidator:
                         usage_dict.get(command, []).append(playbook_path)
                     if command not in usage_dict:
                         usage_dict[command] = [playbook_path]
+        return usage_dict
 
     def find_scripts_using_given_integration_commands(self, deprecated_commands_list: List[str], usage_dict: Dict):
         """
@@ -138,10 +140,11 @@ class DeprecationValidator:
                                 usage_dict.get(command, []).append(script_path)
                             elif command not in usage_dict:
                                 usage_dict[command] = [script_path]
+        return usage_dict
 
-    def find_scripts_using_given_script(self, script_name: str, usage_list: List[str]):
+    def collect_non_deprecated_scripts_implemeting_another_script(self, script_name: str, usage_list: List[str]):
         """
-        List all the pathes of scripts that are using the given script.
+        List all the paths of scripts that are using the given script and are non-deprecated.
 
         Args:
             script_name (str): The name of the script that is currently being checked.
@@ -154,10 +157,11 @@ class DeprecationValidator:
                 depends_commads_list = script_val.get("depends_on")
                 if depends_commads_list and script_name in depends_commads_list:
                     usage_list.append(script_val.get("file_path"))
+        return usage_list
 
-    def filter_playbooks_for_scripts_or_playbook_validation(self, curent_entity_name: str, usage_list: List[str], key_to_check: str):
+    def collect_non_deprecated_playbooks_that_use_a_given_playbook_or_script(self, curent_entity_name: str, usage_list: List[str], key_to_check: str):
         """
-        Filter the relevant playbooks for the current script / playbook validation from the playbook_section.
+        Collect from id_set all the playbooks that are non-deprecated and are implementing the given entity (script/playbook).
 
         Args:
             curent_entity_name (str): The name of the script / playbook currently being checked.
@@ -166,9 +170,12 @@ class DeprecationValidator:
         """
         for playbook in self.playbook_section:
             for playbook_val in playbook.values():
+                if playbook_val.get('deprecated'):
+                    continue
                 implementing_entities = playbook_val.get(key_to_check)
                 if implementing_entities:
-                    self.validate_playbook_or_script_not_in_playbook(usage_list, curent_entity_name, implementing_entities, playbook_val)
+                    usage_list = self.validate_playbook_or_script_not_in_playbook(usage_list, curent_entity_name, implementing_entities, playbook_val)
+        return usage_list
 
     def validate_playbook_or_script_not_in_playbook(self, usage_list: List[str], curent_entity_name: str, implementing_entities: List[str], playbook: Dict):
         """
@@ -180,8 +187,7 @@ class DeprecationValidator:
             implementing_entities(dict) A list of all the entites that this currently checked playbook is using.
             playbook (dict): The playbook currently being checked.
         """
-        if playbook.get('deprecated'):
-            return
         for implementing_entity in implementing_entities:
             if implementing_entity == curent_entity_name:
                 usage_list.append(playbook.get("file_path", ""))
+        return usage_list

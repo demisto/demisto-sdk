@@ -1708,9 +1708,8 @@ class IntegrationValidator(ContentEntityValidator):
         Checks if there are commands that are deprecated and is used in other none-deprcated scripts / playbooks.
 
         Return:
-            bool: True if there're no deprecated commands,
-             or if there're deprecated commands but they're not used in any none-deprcated scripts / playbooks,
-             False if there're deprecated command that are used in any none-deprcated scripts / playbooks.
+            bool: False if there are deprecated commands that are used in any none-deprcated scripts / playbooks.
+            True otherwise.
         """
         deprecated_commands_list = []
         is_valid = True

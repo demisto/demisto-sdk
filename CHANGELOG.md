@@ -54,7 +54,7 @@
 * Added a deprecation message to the `tests:` section of yaml files when running `format --deprecate`.
 * Added use case for **validate** on *wizard* objects - set_playbook is mapped to all integrations.
 * Added the 'integration-get-indicators' commands to be ignored by the **verify_yml_commands_match_readme** validation, the validation will no longer fail if these commands are not in the readme file.
-* Added **validate** check that list all the file paths of files that are using a deprecated integration command / script / playbook.
+* Added new validation to the **validate** command to fail and list all the file paths of files that are using a deprecated integration command / script / playbook.
 * Added a new validation to the **validate** command to verify that if the phrase "breaking changes" is present in a pack release notes, a JSON file with the same name exists and contains the relevant breaking changes information.
 * Improved logs when running test playbooks (in a build).
 * Fixed an issue in **upload** did not include list-type content items. @nicolas-rdgs

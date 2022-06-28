@@ -103,7 +103,7 @@ jobs:
               TEST_FILES=$(circleci tests glob "**/*_test.py")
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/init\/templates\S*\.py//g')
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/tests\/integration_tests\S*\.py//g')
-              TEST_FILES=$(echo "$TEST_FILES" | circleci tests split --split-by=timings )
+              TEST_FILES=$(echo "$TEST_FILES" | circleci tests split --split-by=timings)
 
               mkdir test-results
               sudo npm install -g markdownlint-cli

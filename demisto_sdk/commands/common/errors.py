@@ -12,7 +12,7 @@ FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 # allowed errors to be ignored in any supported pack (XSOAR/Partner/Community) only if they appear in the .pack-ignore
 ALLOWED_IGNORE_ERRORS = [
-    'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113', 'BA116',
+    'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113', 'BA116', 'BA119'
     'DS107',
     'GF102',
     'IF100', 'IF106', 'IF115', 'IF116',
@@ -20,7 +20,7 @@ ALLOWED_IGNORE_ERRORS = [
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107',
-    'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM 110', 'RM112',
+    'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM 110', 'RM112', 'RM113'
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
     'IM111',
@@ -347,6 +347,7 @@ ERROR_CODE = {
     "missing_commands_from_readme": {'code': "RM110", 'ui_applicable': False, 'related_field': ''},
     "error_uninstall_node": {'code': "RM111", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_relative_url_error": {'code': "RM112", 'ui_applicable': False, 'related_field': ''},
+    "copyright_section_in_readme_error": {'code': "RM113", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -1766,6 +1767,12 @@ class Errors:
     @error_code_decorator
     def template_sentence_in_readme(line_nums):
         return f"Please update the integration version differences section in lines: {line_nums}."
+
+    @staticmethod
+    @error_code_decorator
+    def copyright_section_in_readme_error(line_nums):
+        return f"Please note that keywords related to Copyright section (BSD, MIT, Copyright, proprietary) were found " \
+               f"in lines: {line_nums}. Copyright section cannot be part of Pack ReadMe."
 
     @staticmethod
     @error_code_decorator

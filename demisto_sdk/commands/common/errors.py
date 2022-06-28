@@ -20,7 +20,7 @@ ALLOWED_IGNORE_ERRORS = [
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107',
-    'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM 110',
+    'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM 110', 'RM112',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
     'IM111',
@@ -346,6 +346,7 @@ ERROR_CODE = {
     "missing_readme_file": {'code': "RM109", 'ui_applicable': False, 'related_field': ''},
     "missing_commands_from_readme": {'code': "RM110", 'ui_applicable': False, 'related_field': ''},
     "error_uninstall_node": {'code': "RM111", 'ui_applicable': False, 'related_field': ''},
+    "invalid_readme_relative_url_error": {'code': "RM112", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -972,8 +973,8 @@ class Errors:
     @classmethod
     @error_code_decorator
     def breaking_backwards_command_arg_changed(cls, commands_ls):
-        error_msg = "{}, Your updates to this file contains changes to a name or an argument of an existing command(s).\n" \
-            "Please undo you changes to the following command(s):\n".format(cls.BACKWARDS)
+        error_msg = "{}, Your updates to this file contains changes to a name or an argument of an existing " \
+                    "command(s).\nPlease undo you changes to the following command(s):\n".format(cls.BACKWARDS)
         error_msg += '\n'.join(commands_ls)
         return error_msg
 
@@ -1132,8 +1133,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_image_name():
-        return "The image's file name is invalid - " \
-               "make sure the name looks like the following: <integration_name>_image.png"
+        return "The image's file name is invalid - make sure the name looks like the " \
+               "following: <integration_name>_image.png and that the integration_name is the same as the folder " \
+               "containing it."
 
     @staticmethod
     @error_code_decorator
@@ -1407,7 +1409,8 @@ class Errors:
     @error_code_decorator
     def invalid_description_name():
         return "The description's file name is invalid - " \
-               "make sure the name looks like the following: <integration_name>_description.md"
+               "make sure the name looks like the following: <integration_name>_description.md " \
+               "and that the integration_name is the same as the folder containing it."
 
     @staticmethod
     @error_code_decorator
@@ -1793,6 +1796,12 @@ class Errors:
     @staticmethod
     def invalid_readme_insert_image_link_error(path):
         return f'Image link was not found, either insert it or remove it:\n{path}'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_readme_relative_url_error(path):
+        return f'Relative urls are not supported within README. If this is not a relative url, please add ' \
+               f'an https:// prefix:\n{path}. '
 
     @staticmethod
     @error_code_decorator
@@ -2296,7 +2305,7 @@ class Errors:
     @error_code_decorator
     def pack_metadata_version_diff_from_rn(pack_path, rn_version, pack_metadata_version):
         return f'There is a difference between the version in the pack metadata' \
-               f'file and the version of the latest release note.\nexpected latest release note to be {pack_metadata_version} '\
+               f'file and the version of the latest release note.\nexpected latest release note to be {pack_metadata_version} ' \
                f'instead found {rn_version}.\nTo fix the problem, try running `demisto-sdk update-release-notes -i {pack_path}`'
 
     @staticmethod

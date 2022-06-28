@@ -245,6 +245,16 @@ class PackUniqueFilesValidator(BaseValidator):
             return False
         return True
 
+    @error_codes('RM112')
+    def validate_pack_readme_relative_urls(self):
+        readme_file_path = os.path.join(self.pack_path, self.readme_file)
+        readme_validator = ReadMeValidator(readme_file_path, ignored_errors=self.ignored_errors, specific_validations=self.specific_validations)
+        errors = readme_validator.check_readme_relative_url_paths(is_pack_readme=True)
+        if errors:
+            self._errors.extend(errors)
+            return False
+        return True
+
     @error_codes('IM109')
     def validate_author_image_exists(self):
         if self.metadata_content.get(PACK_METADATA_SUPPORT) == 'partner':
@@ -715,6 +725,7 @@ class PackUniqueFilesValidator(BaseValidator):
             self.validate_pack_readme_and_pack_description()
             self.validate_pack_readme_images()
             self.validate_author_image_exists()
+            self.validate_pack_readme_relative_urls()
 
             # We only check pack dependencies for -g flag
             if self.validate_dependencies:

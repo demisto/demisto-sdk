@@ -37,7 +37,7 @@ class DescriptionValidator(BaseValidator):
         self.verify_demisto_in_description_content()
 
         # make sure the description is a seperate file
-        if not self.data_dictionary.get('detaileddescription'):
+        if not self.data_dictionary.get('detaileddescription') and '.md' in self.file_path:
             self.is_valid_description_name()
             self.contains_contrib_details()
 
@@ -136,12 +136,19 @@ class DescriptionValidator(BaseValidator):
         description_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))
         md_paths = glob.glob(os.path.join(os.path.dirname(self.file_path), '*.md'))
 
+        description_file_path = self.file_path
+        integrations_folder = os.path.basename(os.path.dirname(description_file_path))
+        description_file = os.path.basename(description_file_path)
+
+        # drop file extension
+        description_file_base_name = description_file.rsplit('_', 1)[0]
+
         # checking if there are any .md files only for description with a wrong name
         for path in md_paths:
             if path.endswith("README.md") or path.endswith("CHANGELOG.md"):
                 md_paths.remove(path)
 
-        if not description_path and md_paths:
+        if not description_path and md_paths or integrations_folder != description_file_base_name:
             error_message, error_code = Errors.invalid_description_name()
 
             if self.handle_error(error_message, error_code, file_path=self.file_path):

@@ -27,7 +27,7 @@ class DeprecationValidator:
         usage_dict: Dict[str, list] = {}
 
         usage_dict = self.collect_non_deprecated_playbooks_implementing_the_acommand_list(deprecated_commands_list, usage_dict, integration_id)
-        usage_dict = self.find_scripts_using_given_integration_commands(deprecated_commands_list, usage_dict)
+        usage_dict = self.collect_non_deprecated_scripts_implemeting_integration_commands(deprecated_commands_list, usage_dict)
 
         return usage_dict
 
@@ -87,7 +87,7 @@ class DeprecationValidator:
                 command_to_integration = playbook_val.get("command_to_integration")
                 if command_to_integration:
                     usage_dict = self.validate_integration_commands_not_in_playbook(usage_dict, deprecated_commands_list,
-                                                                       command_to_integration, playbook_val, integration_id)
+                                                                                    command_to_integration, playbook_val, integration_id)
         return usage_dict
 
     def validate_integration_commands_not_in_playbook(self, usage_dict: Dict, deprecated_commands_list: List[str],
@@ -116,7 +116,7 @@ class DeprecationValidator:
                         usage_dict[command] = [playbook_path]
         return usage_dict
 
-    def find_scripts_using_given_integration_commands(self, deprecated_commands_list: List[str], usage_dict: Dict):
+    def collect_non_deprecated_scripts_implemeting_integration_commands(self, deprecated_commands_list: List[str], usage_dict: Dict):
         """
         List all the integration commands of the current checked integration that are being used in the none-deprecated scripts
         and update them in the given usage_dict.

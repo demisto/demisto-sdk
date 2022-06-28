@@ -66,7 +66,6 @@ def test_create_failed_unit_tests_report_with_failed_tests():
     from demisto_sdk.commands.lint import lint_manager
     lint_status = {
         "fail_packs_flake8": [],
-        "fail_packs_bandit": [],
         "fail_xsoar_linter": [],
         "fail_packs_mypy": ['Infoblox'],
         "fail_packs_vulture": [],
@@ -103,7 +102,6 @@ def test_create_failed_unit_tests_report_no_failed_tests():
     from demisto_sdk.commands.lint import lint_manager
     lint_status = {
         "fail_packs_flake8": [],
-        "fail_packs_bandit": [],
         "fail_xsoar_linter": [],
         "fail_packs_mypy": [],
         "fail_packs_vulture": [],
@@ -131,10 +129,10 @@ def test_report_warning_lint_checks_not_packages_tests(capsys, mocker):
         - Ensure that the correct warnings printed to stdout.
     """
     lint_status = {'fail_packs_flake8': ['Maltiverse'], 'fail_packs_XSOAR_linter': ['Maltiverse'],
-                   'fail_packs_bandit': [], 'fail_packs_mypy': ['Maltiverse'], 'fail_packs_vulture': [],
+                   'fail_packs_mypy': ['Maltiverse'], 'fail_packs_vulture': [],
                    'fail_packs_pylint': ['Maltiverse'], 'fail_packs_pytest': ['Maltiverse'],
                    'fail_packs_pwsh_analyze': [], 'fail_packs_pwsh_test': [], 'fail_packs_image': [],
-                   'warning_packs_flake8': [], 'warning_packs_XSOAR_linter': ['Maltiverse'], 'warning_packs_bandit': [],
+                   'warning_packs_flake8': [], 'warning_packs_XSOAR_linter': ['Maltiverse'],
                    'warning_packs_mypy': [], 'warning_packs_vulture': [], 'warning_packs_pylint': [],
                    'warning_packs_pytest': [], 'warning_packs_pwsh_analyze': [], 'warning_packs_pwsh_test': [],
                    'warning_packs_image': []}
@@ -191,7 +189,6 @@ def test_report_warning_lint_checks_not_packages_tests(capsys, mocker):
                                         "function definition, found 1\n",
                        'XSOAR_linter_errors': 'Maltiverse.py:513:4: E9002: Print is found, Please remove all prints '
                                               'from the code. (print-exists)',
-                       'bandit_errors': None,
                        'mypy_errors': "Maltiverse.py:521:1: error: Name 'z' is not defined  [name-defined]\n    z\n   "
                                       " ^\nFound 1 error in 1 file (checked 1 source file)\n",
                        'vulture_errors': None, 'flake8_warnings': None,
@@ -200,7 +197,7 @@ def test_report_warning_lint_checks_not_packages_tests(capsys, mocker):
                                                 'try-except-main-doesnt-exists)\nMaltiverse.py:511:0: W9012: '
                                                 'return_error should be used in main function. Please add it. ('
                                                 'return-error-does-not-exist-in-main)',
-                       'bandit_warnings': None, 'mypy_warnings': None, 'vulture_warnings': None, 'exit_code': 565,
+                       'mypy_warnings': None, 'vulture_warnings': None, 'exit_code': 565,
                        'warning_code': 512}}
 
     mock_lint_manager(mocker).report_warning_lint_checks(lint_status=lint_status, return_warning_code=512,
@@ -226,10 +223,10 @@ def test_report_warning_lint_checks_all_packages_tests(capsys, mocker):
         - Ensure that there are no warnings printed to stdout.
     """
     lint_status = {'fail_packs_flake8': ['Maltiverse'], 'fail_packs_XSOAR_linter': ['Maltiverse'],
-                   'fail_packs_bandit': [], 'fail_packs_mypy': ['Maltiverse'], 'fail_packs_vulture': [],
+                   'fail_packs_mypy': ['Maltiverse'], 'fail_packs_vulture': [],
                    'fail_packs_pylint': ['Maltiverse'], 'fail_packs_pytest': ['Maltiverse'],
                    'fail_packs_pwsh_analyze': [], 'fail_packs_pwsh_test': [], 'fail_packs_image': [],
-                   'warning_packs_flake8': [], 'warning_packs_XSOAR_linter': ['Maltiverse'], 'warning_packs_bandit': [],
+                   'warning_packs_flake8': [], 'warning_packs_XSOAR_linter': ['Maltiverse'],
                    'warning_packs_mypy': [], 'warning_packs_vulture': [], 'warning_packs_pylint': [],
                    'warning_packs_pytest': [], 'warning_packs_pwsh_analyze': [], 'warning_packs_pwsh_test': [],
                    'warning_packs_image': []}
@@ -286,7 +283,6 @@ def test_report_warning_lint_checks_all_packages_tests(capsys, mocker):
                                         "function definition, found 1\n",
                        'XSOAR_linter_errors': 'Maltiverse.py:513:4: E9002: Print is found, Please remove all prints '
                                               'from the code. (print-exists)',
-                       'bandit_errors': None,
                        'mypy_errors': "Maltiverse.py:521:1: error: Name 'z' is not defined  [name-defined]\n    z\n   "
                                       " ^\nFound 1 error in 1 file (checked 1 source file)\n",
                        'vulture_errors': None, 'flake8_warnings': None,
@@ -295,7 +291,7 @@ def test_report_warning_lint_checks_all_packages_tests(capsys, mocker):
                                                 'try-except-main-doesnt-exists)\nMaltiverse.py:511:0: W9012: '
                                                 'return_error should be used in main function. Please add it. ('
                                                 'return-error-does-not-exist-in-main)',
-                       'bandit_warnings': None, 'mypy_warnings': None, 'vulture_warnings': None, 'exit_code': 565,
+                       'mypy_warnings': None, 'vulture_warnings': None, 'exit_code': 565,
                        'warning_code': 512}}
 
     mock_lint_manager(mocker).report_warning_lint_checks(lint_status=lint_status, return_warning_code=512,
@@ -317,10 +313,10 @@ def test_report_summary_with_warnings(capsys):
     """
     from demisto_sdk.commands.lint import lint_manager
     lint_status = {'fail_packs_flake8': ['Maltiverse'], 'fail_packs_XSOAR_linter': ['Maltiverse'],
-                   'fail_packs_bandit': [], 'fail_packs_mypy': ['Maltiverse'], 'fail_packs_vulture': [],
+                   'fail_packs_mypy': ['Maltiverse'], 'fail_packs_vulture': [],
                    'fail_packs_pylint': ['Maltiverse'], 'fail_packs_pytest': ['Maltiverse'],
                    'fail_packs_pwsh_analyze': [], 'fail_packs_pwsh_test': [], 'fail_packs_image': [],
-                   'warning_packs_flake8': [], 'warning_packs_XSOAR_linter': ['Maltiverse'], 'warning_packs_bandit': [],
+                   'warning_packs_flake8': [], 'warning_packs_XSOAR_linter': ['Maltiverse'],
                    'warning_packs_mypy': [], 'warning_packs_vulture': [], 'warning_packs_pylint': [],
                    'warning_packs_pytest': [], 'warning_packs_pwsh_analyze': [], 'warning_packs_pwsh_test': [],
                    'warning_packs_image': []}
@@ -346,10 +342,10 @@ def test_report_summary_no_warnings(capsys):
     """
     from demisto_sdk.commands.lint import lint_manager
     lint_status = {'fail_packs_flake8': [], 'fail_packs_XSOAR_linter': [],
-                   'fail_packs_bandit': [], 'fail_packs_mypy': [], 'fail_packs_vulture': [],
+                   'fail_packs_mypy': [], 'fail_packs_vulture': [],
                    'fail_packs_pylint': [], 'fail_packs_pytest': [],
                    'fail_packs_pwsh_analyze': [], 'fail_packs_pwsh_test': [], 'fail_packs_image': [],
-                   'warning_packs_flake8': [], 'warning_packs_XSOAR_linter': [], 'warning_packs_bandit': [],
+                   'warning_packs_flake8': [], 'warning_packs_XSOAR_linter': [],
                    'warning_packs_mypy': [], 'warning_packs_vulture': [], 'warning_packs_pylint': [],
                    'warning_packs_pytest': [], 'warning_packs_pwsh_analyze': [], 'warning_packs_pwsh_test': [],
                    'warning_packs_image': []}
@@ -497,48 +493,6 @@ def test_create_json_output_mypy(repo, mocker):
                         '                                        ^',
             'row': '284',
             'col': '37'
-        }
-    ]
-    assert json_contents == expected_format
-
-
-def test_create_json_output_bandit(repo, mocker):
-    """
-    Given:
-        - bandit error entries.
-
-    When:
-        - Running bandit_error_formatter.
-
-    Then:
-        - Ensure that the JSON error entries are entered as expected.
-    """
-    mocked_lint_manager = mock_lint_manager(mocker)
-    from demisto_sdk.commands.lint import lint_manager
-    mocker.patch.object(lint_manager, 'find_type', return_value=FileType.INTEGRATION)
-    mocker.patch.object(lint_manager, 'get_file_displayed_name', return_value='Display')
-    check = {
-        'linter': 'flake8',
-        'pack': 'myPack',
-        'type': 'error',
-        'messages': 'Packs/myPack/Integrations/INT1/INT1.py:117: '
-                    'B110 [Severity: LOW Confidence: HIGH] Try, Except, Pass detected.'
-
-    }
-    json_contents = []
-    mocked_lint_manager.bandit_error_formatter(check, json_contents)
-    expected_format = [
-        {
-            'filePath': 'Packs/myPack/Integrations/INT1/INT1.py',
-            'fileType': 'py',
-            'errorType': 'Code',
-            'name': 'Display',
-            'entityType': 'integration',
-            'linter': 'bandit',
-            'severity': 'error',
-            'errorCode': 'B110',
-            'message': 'Severity: LOW Confidence: HIGH - Try, Except, Pass detected.',
-            'row': '117'
         }
     ]
     assert json_contents == expected_format

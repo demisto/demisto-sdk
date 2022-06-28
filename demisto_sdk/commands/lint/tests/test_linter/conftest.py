@@ -47,7 +47,7 @@ def demisto_content() -> Callable:
 @pytest.fixture
 def create_integration(mocker) -> Callable:
     def _create_integration(content_path: Path, path: str = 'Integrations', no_lint_file: bool = False,
-                            flake8: bool = False, bandit: bool = False, mypy: bool = False, vulture: bool = False,
+                            flake8: bool = False, mypy: bool = False, vulture: bool = False,
                             pylint: bool = False, test: bool = False, no_tests: bool = False, yml: bool = False,
                             js_type: bool = False, type_script_key: bool = False, image: bool = False,
                             image_py_num: str = '3.7', test_reqs: bool = False) -> Path:
@@ -58,7 +58,6 @@ def create_integration(mocker) -> Callable:
             path(str): Path to create integration.
             no_lint_file(bool): True for not creating pack.py file.
             flake8(bool): True for creating flake8 error.
-            bandit(bool): True for creating bandit error.
             mypy(bool): True for creating mypy error.
             vulture(bool): True for creating vulture error.
             pylint(bool): True for creating pylint error.
@@ -87,8 +86,6 @@ def create_integration(mocker) -> Callable:
             (integration_path / 'test-requirements.txt').write_text('\nmock\npre-commit\npytest')
         if flake8:
             (integration_path / f'{integration_name}.py').write_text('\nfrom typing import *')
-        if bandit:
-            (integration_path / f'{integration_name}.py').write_text('\nimport os\n  os.chmod(\'/etc/hosts\', 0o777)')
         if mypy:
             (integration_path / f'{integration_name}.py').write_text('\nx: int = "hello"')
         if vulture:

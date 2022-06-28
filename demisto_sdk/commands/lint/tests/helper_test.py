@@ -9,7 +9,6 @@ from demisto_sdk.commands.lint.helpers import (generate_coverage_report,
 EXIT_CODES = {
     "flake8": 0b1,
     "xsoar_linter": 0b1000000000,
-    "bandit": 0b10,
     "mypy": 0b100,
     "vulture": 0b1000,
     "pytest": 0b10000,
@@ -21,12 +20,12 @@ EXIT_CODES = {
 
 
 @pytest.mark.parametrize(
-    argnames="no_flake8, no_xsoar_linter, no_bandit, no_mypy, no_pylint, no_vulture, no_test, no_pwsh_analyze, "
+    argnames="no_flake8, no_xsoar_linter, no_mypy, no_pylint, no_vulture, no_test, no_pwsh_analyze, "
              "no_pwsh_test, docker_engine, expected_value",
-    argvalues=[(True, False, True, True, True, True, True, True, True, True, 0b11111111),
-               (True, False, False, True, True, True, True, True, True, True, 0b11111101),
-               (True, False, False, True, True, True, True, False, True, True, 0b10111101)])
-def test_build_skipped_exit_code(no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
+    argvalues=[(True, False, True, True, True, True, True, True, True, 0b11111111),
+               (True, False, True, True, True, True, True, True, True, 0b11111101),
+               (True, False, True, True, True, True, False, True, True, 0b10111101)])
+def test_build_skipped_exit_code(no_flake8: bool, no_xsoar_linter: bool, no_mypy: bool,
                                  no_pylint: bool, no_vulture: bool,
                                  no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, docker_engine: bool,
                                  expected_value: int):
@@ -34,12 +33,12 @@ def test_build_skipped_exit_code(no_flake8: bool, no_xsoar_linter: bool, no_band
     env_var = os.environ.get('CI')
     # On you local env
     if not env_var:
-        assert expected_value == build_skipped_exit_code(no_flake8, no_bandit, no_mypy, no_pylint, no_vulture,
+        assert expected_value == build_skipped_exit_code(no_flake8, no_mypy, no_pylint, no_vulture,
                                                          no_xsoar_linter, no_test,
                                                          no_pwsh_analyze, no_pwsh_test, docker_engine)
     # On circle runs
     else:
-        assert 0 == build_skipped_exit_code(no_flake8, no_bandit, no_mypy, no_pylint, no_vulture, no_xsoar_linter,
+        assert 0 == build_skipped_exit_code(no_flake8, no_mypy, no_pylint, no_vulture, no_xsoar_linter,
                                             no_test,
                                             no_pwsh_analyze, no_pwsh_test, docker_engine)
 

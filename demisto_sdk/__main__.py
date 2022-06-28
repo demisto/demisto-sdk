@@ -652,7 +652,6 @@ def secrets(config, **kwargs):
 @click.option("-p", "--parallel", default=1, help="Run tests in parallel", type=click.IntRange(0, 15, clamp=True),
               show_default=True)
 @click.option("--no-flake8", is_flag=True, help="Do NOT run flake8 linter")
-@click.option("--no-bandit", is_flag=True, help="Do NOT run bandit linter")
 @click.option("--no-xsoar-linter", is_flag=True, help="Do NOT run XSOAR linter")
 @click.option("--no-mypy", is_flag=True, help="Do NOT run mypy static type checking")
 @click.option("--no-vulture", is_flag=True, help="Do NOT run vulture linter")
@@ -687,7 +686,7 @@ def secrets(config, **kwargs):
               type=PathsParamType())
 def lint(**kwargs):
     """Lint command will perform:
-        1. Package in host checks - flake8, bandit, mypy, vulture.
+        1. Package in host checks - flake8, mypy, vulture.
         2. Package in docker image checks -  pylint, pytest, powershell - test, powershell - analyze.
         Meant to be used with integrations/scripts that use the folder (package) structure.
         Will lookup up what docker image to use and will setup the dev dependencies and file in the target folder.
@@ -714,7 +713,6 @@ def lint(**kwargs):
     return lint_manager.run(
         parallel=kwargs.get('parallel'),  # type: ignore[arg-type]
         no_flake8=kwargs.get('no_flake8'),  # type: ignore[arg-type]
-        no_bandit=kwargs.get('no_bandit'),  # type: ignore[arg-type]
         no_mypy=kwargs.get('no_mypy'),  # type: ignore[arg-type]
         no_vulture=kwargs.get('no_vulture'),  # type: ignore[arg-type]
         no_xsoar_linter=kwargs.get('no_xsoar_linter'),  # type: ignore[arg-type]

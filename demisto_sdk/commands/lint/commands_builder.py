@@ -49,39 +49,6 @@ def build_flake8_command(files: List[Path]) -> str:
     return command
 
 
-def build_bandit_command(files: List[Path]) -> str:
-    """ Build command for executing bandit lint check
-        https://github.com/PyCQA/bandit
-    Args:
-        files(List(Path)):  files to execute lint
-
-    Returns:
-        str: bandit command
-    """
-    command = "bandit"
-    # Reporting only issues with high and medium severity level
-    command += " -ll"
-    # Reporting only issues of a high confidence level
-    command += " -iii"
-    # Skip the following tests: Pickle usage, Use of insecure hash func, Audit url open,
-    # Using xml.etree.ElementTree.fromstring,  Using xml.dom.minidom.parseString
-    command += " -s B301,B303,B310,B314,B318"
-    # Aggregate output by filename
-    command += " -a file"
-    # File to be excluded when performing lints check
-    command += f" --exclude={','.join(excluded_files)}"
-    # Only show output in the case of an error
-    command += " -q"
-    # Setting error format
-    command += " --format custom --msg-template '{abspath}:{line}: {test_id} " \
-               "[Severity: {severity} Confidence: {confidence}] {msg}'"
-    # Generating path patterns - path1,path2,path3,..
-    files_list = [str(item) for item in files]
-    command += f" -r {','.join(files_list)}"
-
-    return command
-
-
 def build_xsoar_linter_command(files: List[Path], support_level: str = "base") -> str:
     """ Build command to execute with xsoar linter module
     Args:

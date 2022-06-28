@@ -62,20 +62,6 @@ def test_build_xsoar_linter_no_base_command(files):
     assert output == expected
 
 
-@pytest.mark.parametrize(argnames="files", argvalues=values)
-def test_build_bandit_command(files):
-    """Build bandit command"""
-    from demisto_sdk.commands.lint.commands_builder import build_bandit_command
-    output = build_bandit_command(files)
-    files = [str(file) for file in files]
-    expected = "bandit -ll -iii -s B301,B303,B310,B314,B318 -a file --exclude=CommonServerPython.py,demistomock.py," \
-               "CommonServerUserPython.py," \
-               "conftest.py,.venv -q --format custom --msg-template " \
-               "'{abspath}:{line}: {test_id} [Severity: {severity} Confidence: {confidence}] {msg}' " \
-               f"-r {','.join(files)}"
-    assert expected == output
-
-
 @pytest.mark.parametrize(argnames="files, py_num, content_path", argvalues=[(values[0], "2.7", None), (values[1], "3.7", Path('test_path'))])
 def test_build_mypy_command(files, py_num, content_path):
     """Build Mypy command"""
@@ -91,7 +77,7 @@ def test_build_mypy_command(files, py_num, content_path):
 
 @pytest.mark.parametrize(argnames="files", argvalues=values)
 def test_build_vulture_command(files, mocker):
-    """Build bandit command"""
+    """Build vulture command"""
     from demisto_sdk.commands.lint import commands_builder
     from demisto_sdk.commands.lint.commands_builder import \
         build_vulture_command

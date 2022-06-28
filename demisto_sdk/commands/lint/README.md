@@ -2,7 +2,7 @@
 
   Lint command will perform:
 
-  1. Package in host checks - flake8, bandit, mypy, vulture.
+  1. Package in host checks - flake8, mypy, vulture.
 
   2. Package in docker image checks -  pylint, pytest, powershell - test, powershell -
   analyze.
@@ -26,8 +26,6 @@ Options:
     Run tests in parallel  [default: 1]
 *  **--no-flake8**
     Do NOT run flake8 linter
-*  **--no-bandit**
-    Do NOT run bandit linter
 *  **--no-xsoar-linter**
     Do NOT run XSOAR linter
 *  **--no-mypy**

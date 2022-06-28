@@ -310,7 +310,6 @@ class LintManager:
                              parallel: int,
                              no_flake8: bool,
                              no_xsoar_linter: bool,
-                             no_bandit: bool,
                              no_mypy: bool,
                              no_pylint: bool,
                              no_coverage: bool,
@@ -331,7 +330,6 @@ class LintManager:
             parallel(int): Whether to run command on multiple threads
             no_flake8(bool): Whether to skip flake8
             no_xsoar_linter(bool): Whether to skip xsoar linter
-            no_bandit(bool): Whether to skip bandit
             no_mypy(bool): Whether to skip mypy
             no_vulture(bool): Whether to skip vulture
             no_pylint(bool): Whether to skip pylint
@@ -365,7 +363,6 @@ class LintManager:
                                             docker_timeout=docker_timeout)
                     results.append(executor.submit(linter.run_pack,
                                                    no_flake8=no_flake8,
-                                                   no_bandit=no_bandit,
                                                    no_mypy=no_mypy,
                                                    no_vulture=no_vulture,
                                                    no_xsoar_linter=no_xsoar_linter,
@@ -420,7 +417,7 @@ class LintManager:
                     res.cancel()
             return 1, 0
 
-    def run(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_bandit: bool, no_mypy: bool,
+    def run(self, parallel: int, no_flake8: bool, no_xsoar_linter: bool, no_mypy: bool,
             no_pylint: bool, no_coverage: bool, coverage_report: str,
             no_vulture: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
             keep_container: bool,
@@ -432,7 +429,6 @@ class LintManager:
             parallel(int): Whether to run command on multiple threads
             no_flake8(bool): Whether to skip flake8
             no_xsoar_linter(bool): Whether to skip xsoar linter
-            no_bandit(bool): Whether to skip bandit
             no_mypy(bool): Whether to skip mypy
             no_vulture(bool): Whether to skip vulture
             no_pylint(bool): Whether to skip pylint
@@ -454,7 +450,6 @@ class LintManager:
         lint_status: Dict = {
             "fail_packs_flake8": [],
             "fail_packs_XSOAR_linter": [],
-            "fail_packs_bandit": [],
             "fail_packs_mypy": [],
             "fail_packs_vulture": [],
             "fail_packs_pylint": [],
@@ -464,7 +459,6 @@ class LintManager:
             "fail_packs_image": [],
             "warning_packs_flake8": [],
             "warning_packs_XSOAR_linter": [],
-            "warning_packs_bandit": [],
             "warning_packs_mypy": [],
             "warning_packs_vulture": [],
             "warning_packs_pylint": [],
@@ -481,7 +475,7 @@ class LintManager:
         pkgs_status: dict = {}
 
         # Skiped lint and test codes
-        skipped_code = build_skipped_exit_code(no_flake8=no_flake8, no_bandit=no_bandit, no_mypy=no_mypy,
+        skipped_code = build_skipped_exit_code(no_flake8=no_flake8, no_mypy=no_mypy,
                                                no_vulture=no_vulture, no_xsoar_linter=no_xsoar_linter,
                                                no_pylint=no_pylint, no_test=no_test, no_pwsh_analyze=no_pwsh_analyze,
                                                no_pwsh_test=no_pwsh_test, docker_engine=self._facts["docker_engine"])
@@ -490,7 +484,6 @@ class LintManager:
             parallel=parallel,
             no_flake8=no_flake8,
             no_xsoar_linter=no_xsoar_linter,
-            no_bandit=no_bandit,
             no_mypy=no_mypy,
             no_pylint=no_pylint,
             no_coverage=no_coverage,
@@ -601,7 +594,7 @@ class LintManager:
             pkgs_status(dict): All pkgs status dict
             return_exit_code(int): exit code will indicate which lint or test failed
         """
-        for check in ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture"]:
+        for check in ["flake8", "XSOAR_linter", "mypy", "vulture"]:
             if EXIT_CODES[check] & return_exit_code:
                 sentence = f" {check.capitalize()} errors "
                 print(f"\n{Colors.Fg.red}{'#' * len(sentence)}{Colors.reset}")
@@ -640,7 +633,7 @@ class LintManager:
             all_packs(bool) if all packs runs then no need for warnings messages.
         """
         if not all_packs:
-            for check in ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture"]:
+            for check in ["flake8", "XSOAR_linter", "mypy", "vulture"]:
                 if EXIT_CODES[check] & return_warning_code:
                     sentence = f" {check.capitalize()} warnings "
                     print(f"\n{Colors.Fg.orange}{'#' * len(sentence)}{Colors.reset}")
@@ -847,7 +840,6 @@ class LintManager:
             Dictionary containing type of failures and corresponding failing tests. Looks like this:
              lint_status = {
             "fail_packs_flake8": [],
-            "fail_packs_bandit": [],
             "fail_packs_mypy": [],
             "fail_packs_vulture": [],
             "fail_packs_pylint": [],
@@ -886,8 +878,6 @@ class LintManager:
                 self.flake8_error_formatter(check, json_contents)
             elif check.get('linter') == 'mypy':
                 self.mypy_error_formatter(check, json_contents)
-            elif check.get('linter') == 'bandit':
-                self.bandit_error_formatter(check, json_contents)
             elif check.get('linter') == 'vulture':
                 self.vulture_error_formatter(check, json_contents)
             elif check.get('linter') == 'XSOAR_linter':
@@ -971,27 +961,6 @@ class LintManager:
                     'message': output_message,
                     'row': line_number,
                     'col': column_number
-                }
-                self.add_to_json_outputs(output, file_path, json_contents)
-
-    def bandit_error_formatter(self, errors: Dict, json_contents: List) -> None:
-        """Format bandit error strings to JSON format and add them the json_contents
-
-        Args:
-            errors (Dict): A dictionary containing bandit error strings
-            json_contents (List): The JSON file outputs
-        """
-        error_messages = errors.get('messages', '')
-        error_messages = error_messages.split('\n') if error_messages else []
-        for message in error_messages:
-            if message:
-                file_path, line_number, _ = message.split(':', 2)
-                output = {
-                    'linter': 'bandit',
-                    'severity': errors.get('type'),
-                    'errorCode': message.split(' ')[1],
-                    'message': message.split('[')[1].replace(']', ' -'),
-                    'row': line_number,
                 }
                 self.add_to_json_outputs(output, file_path, json_contents)
 

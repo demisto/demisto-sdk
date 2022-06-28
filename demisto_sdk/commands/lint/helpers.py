@@ -34,7 +34,6 @@ PYTHON2_REQ = ["flake8", "vulture"]
 EXIT_CODES = {
     "flake8": 0b1,
     "XSOAR_linter": 0b1000000000,
-    "bandit": 0b10,
     "mypy": 0b100,
     "vulture": 0b1000,
     "pytest": 0b10000,
@@ -52,7 +51,7 @@ WARNING = 0b100
 
 # Power shell checks
 PWSH_CHECKS = ["pwsh_analyze", "pwsh_test"]
-PY_CHCEKS = ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture", "pytest", "pylint"]
+PY_CHCEKS = ["flake8", "XSOAR_linter", "mypy", "vulture", "pytest", "pylint"]
 
 # Line break
 RL = '\n'
@@ -60,13 +59,12 @@ RL = '\n'
 logger = logging.getLogger('demisto-sdk')
 
 
-def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
+def build_skipped_exit_code(no_flake8: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
                             no_xsoar_linter: bool,
                             no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, docker_engine: bool) -> float:
     """
     no_flake8(bool): Whether to skip flake8.
     no_xsoar_linter(bool): Whether to skip xsoar linter.
-    no_bandit(bool): Whether to skip bandit.
     no_mypy(bool): Whether to skip mypy.
     no_vulture(bool): Whether to skip vulture
     no_pylint(bool): Whether to skip pylint.
@@ -81,8 +79,6 @@ def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_
             skipped_code |= EXIT_CODES["flake8"]
         if no_xsoar_linter:
             skipped_code |= EXIT_CODES["XSOAR_linter"]
-        if no_bandit:
-            skipped_code |= EXIT_CODES["bandit"]
         if no_mypy:
             skipped_code |= EXIT_CODES["mypy"]
         if no_vulture:

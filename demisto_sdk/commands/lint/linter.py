@@ -25,7 +25,7 @@ from demisto_sdk.commands.common.timers import timer
 from demisto_sdk.commands.common.tools import (get_all_docker_images,
                                                run_command_os)
 from demisto_sdk.commands.lint.commands_builder import (
-    build_bandit_command, build_flake8_command, build_mypy_command,
+    build_flake8_command, build_mypy_command,
     build_pwsh_analyze_command, build_pwsh_test_command, build_pylint_command,
     build_pytest_command, build_vulture_command, build_xsoar_linter_command)
 from demisto_sdk.commands.lint.docker_helper import (Docker,
@@ -98,12 +98,10 @@ class Linter:
             "images": [],
             "flake8_errors": None,
             "XSOAR_linter_errors": None,
-            "bandit_errors": None,
             "mypy_errors": None,
             "vulture_errors": None,
             "flake8_warnings": None,
             "XSOAR_linter_warnings": None,
-            "bandit_warnings": None,
             "mypy_warnings": None,
             "vulture_warnings": None,
             "exit_code": SUCCESS,
@@ -123,18 +121,17 @@ class Linter:
                 self._pkg_lint_status["errors"].append('Unable to find yml file in package')
 
     @timer(group_name='lint')
-    def run_pack(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
+    def run_pack(self, no_flake8: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
                  no_xsoar_linter: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, no_test: bool, modules: dict,
                  keep_container: bool, test_xml: str, no_coverage: bool) -> dict:
         """ Run lint and tests on single package
         Performing the follow:
-            1. Run the lint on OS - flake8, bandit, mypy.
+            1. Run the lint on OS - flake8, mypy.
             2. Run in package docker - pylint, pytest.
 
         Args:
             no_xsoar_linter(bool): Whether to skip xsoar-linter
             no_flake8(bool): Whether to skip flake8
-            no_bandit(bool): Whether to skip bandit
             no_mypy(bool): Whether to skip mypy
             no_vulture(bool): Whether to skip vulture
             no_pylint(bool): Whether to skip pylint
@@ -163,10 +160,9 @@ class Linter:
                                     lint_files=self._facts["lint_files"],
                                     modules=modules,
                                     pack_type=self._pkg_lint_status["pack_type"]):
-                # Run lint check on host - flake8, bandit, mypy
+                # Run lint check on host - flake8, mypy
                 if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
-                    self._run_lint_in_host(no_bandit=no_bandit,
-                                           no_mypy=no_mypy,
+                    self._run_lint_in_host(no_mypy=no_mypy,
                                            no_xsoar_linter=no_xsoar_linter,)
 
                 # Run lint and test check on pack docker image
@@ -341,28 +337,25 @@ class Linter:
                 self._facts["lint_files"].remove(lint_file)
 
     @timer(group_name='lint')
-    def _run_lint_in_host(self, no_bandit: bool, no_mypy: bool,
+    def _run_lint_in_host(self, no_mypy: bool,
                           no_xsoar_linter: bool):
         """ Run lint check on host
 
         Args:
             no_flake8(bool): Whether to skip flake8.
-            no_bandit(bool): Whether to skip bandit.
             no_mypy(bool): Whether to skip mypy.
             no_vulture(bool): Whether to skip Vulture.
         """
         log_prompt = f'{self._pack_name} - Run Lint In Host'
         logger.info(f'{log_prompt} - Started')
         exit_code: int = SUCCESS
-        for lint_check in ["XSOAR_linter", "bandit", "mypy"]:
+        for lint_check in ["XSOAR_linter", "mypy"]:
             exit_code = SUCCESS
             output = ""
             if self._facts["lint_files"]:
                 if lint_check == "XSOAR_linter" and not no_xsoar_linter:
                     exit_code, output = self._run_xsoar_linter(py_num=self._facts["python_version"],
                                                                lint_files=self._facts["lint_files"])
-                elif lint_check == "bandit" and not no_bandit:
-                    exit_code, output = self._run_bandit(lint_files=self._facts["lint_files"])
 
                 elif lint_check == "mypy" and not no_mypy:
                     exit_code, output = self._run_mypy(py_num=self._facts["python_version"],
@@ -452,35 +445,6 @@ class Linter:
         return status, stdout
 
     @timer(group_name='lint')
-    def _run_bandit(self, lint_files: List[Path]) -> Tuple[int, str]:
-        """ Run bandit in pack dir
-
-        Args:
-            lint_files(List[Path]): file to perform lint
-
-        Returns:
-           int:  0 on successful else 1, errors
-           str: Bandit errors
-        """
-        log_prompt = f"{self._pack_name} - Bandit"
-        logger.info(f"{log_prompt} - Start")
-        stdout, stderr, exit_code = run_command_os(command=build_bandit_command(lint_files),
-                                                   cwd=self._pack_abs_dir)
-        logger.debug(f"{log_prompt} - Finished, exit-code: {exit_code}")
-        logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
-        logger.debug(f"{log_prompt} - Finished, stderr: {RL if stderr else ''}{stderr}")
-        if stderr or exit_code:
-            logger.error(f"{log_prompt} - Finished, errors found")
-            if stderr:
-                return FAIL, stderr
-            else:
-                return FAIL, stdout
-
-        logger.info(f"{log_prompt} - Successfully finished")
-
-        return SUCCESS, ""
-
-    @timer(group_name='lint')
     def _run_mypy(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
         """ Run mypy in pack dir
 
@@ -490,7 +454,7 @@ class Linter:
 
         Returns:
            int:  0 on successful else 1, errors
-           str: Bandit errors
+           str: Mypy errors
         """
         log_prompt = f"{self._pack_name} - Mypy"
         logger.info(f"{log_prompt} - Start")

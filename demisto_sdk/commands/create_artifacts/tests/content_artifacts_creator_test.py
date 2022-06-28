@@ -9,8 +9,7 @@ import pytest
 from demisto_sdk.commands.common.constants import PACKS_DIR, TEST_PLAYBOOKS_DIR
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.logger import logging_setup
-from demisto_sdk.commands.common.tools import (is_object_in_id_set,
-                                               open_id_set_file, src_root)
+from demisto_sdk.commands.common.tools import src_root
 from TestSuite.test_tools import ChangeCWD
 
 json = JSON_Handler()
@@ -352,24 +351,6 @@ def test_sign_packs_failure(repo, capsys, key, tool):
     captured = capsys.readouterr()
     assert 'Failed to sign packs. In order to do so, you need to provide both signature_key and ' \
            'sign_directory arguments.' in captured.out
-
-
-def test_is_object_in_id_set():
-    """
-    Given:
-        - Pack object.
-        - filtered id set.
-    When:
-        - filter-by-id-set flag is on and we are checking if the pack's items exsit in the id set.
-    Then:
-        - Return if the item is in the id set or not.
-
-    """
-    id_set = open_id_set_file(PARTIAL_ID_SET_PATH)
-    packs_section = id_set.get('Packs')
-    pack_name = 'Sample1'
-    assert not is_object_in_id_set('indicator', packs_section[pack_name])
-    assert is_object_in_id_set('scripts-sample_packs', packs_section[pack_name])
 
 
 @pytest.fixture()

@@ -589,7 +589,8 @@ class TestPackUniqueFilesValidator:
             ReadMeValidator
 
         self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack2'))
-        mocker.patch.object(ReadMeValidator, 'check_readme_relative_image_paths', return_value=[])  # Test only absolute paths
+        mocker.patch.object(ReadMeValidator, 'check_readme_relative_image_paths',
+                            return_value=[])  # Test only absolute paths
 
         with requests_mock.Mocker() as m:
             # Mock get requests
@@ -643,6 +644,40 @@ class TestPackUniqueFilesValidator:
         assert 'please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/test1.jpg)' in errors
         # this path is not an image path and should not be shown.
         assert 'https://github.com/demisto/content/raw/test3.png' not in errors
+
+    def test_validate_pack_readme_relative_url(self):
+        """
+            Given
+                - A pack README file with invalid relative path in it.
+            When
+                - Run validate on pack README file
+            Then
+                - Ensure:
+                    - Validation fails
+                    - Invalid relative paths were caught correctly
+                    - Invalid absolute paths were not caught.
+                    - Image paths were not caught
+        """
+        self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack2'))
+
+        result = self.validator.validate_pack_readme_relative_urls()
+        errors = self.validator.get_errors()
+        relative_urls = ["relative1.com", "www.relative2.com", "hreftesting.com", "www.hreftesting.com"]
+        absolute_urls = ["https://www.good.co.il", "https://example.com", "doc_files/High_Risk_User.png",
+                         "https://hreftesting.com"]
+        relative_error = 'Relative urls are not supported within README. If this is not a relative url, please add ' \
+                         'an https:// prefix:\n'
+        assert not result
+
+        for url in relative_urls:
+            assert f'{relative_error}{url}' in errors
+
+        for url in absolute_urls:
+            assert url not in errors
+
+        # no empty links found
+        assert '[RM112] - Relative urls are not supported within README. If this is not a relative url, ' \
+               'please add an https:// prefix:\n. ' not in errors
 
     @pytest.mark.parametrize('readme_content, is_valid', [
         ('Hey there, just testing', True),

@@ -34,9 +34,9 @@ from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
     DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
-    DOC_FILES_DIR, ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR,
-    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
-    INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
+    DOC_FILES_DIR, ENV_DEMISTO_SDK_MARKETPLACE, ID_IN_COMMONFIELDS, ID_IN_ROOT,
+    INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+    INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
     MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME, MODELING_RULES_DIR,
     OFFICIAL_CONTENT_ID_SET_PATH, PACK_METADATA_IRON_BANK_TAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
@@ -160,7 +160,7 @@ class MarketplaceTagParser:
         )
 
 
-MARKETPLACE_TAG_PARSER = MarketplaceTagParser()
+MARKETPLACE_TAG_PARSER = None
 
 LOG_VERBOSE = False
 
@@ -178,6 +178,14 @@ def set_log_verbose(verbose: bool):
 
 def get_log_verbose() -> bool:
     return LOG_VERBOSE
+
+
+def get_mp_tag_parser():
+    global MARKETPLACE_TAG_PARSER
+    if MARKETPLACE_TAG_PARSER is None:
+        MARKETPLACE_TAG_PARSER = MarketplaceTagParser(
+            os.getenv(ENV_DEMISTO_SDK_MARKETPLACE, MarketplaceVersions.XSOAR.value))
+    return MARKETPLACE_TAG_PARSER
 
 
 def get_yml_paths_in_dir(project_dir: str, error_msg: str = '') -> Tuple[list, str]:
@@ -623,16 +631,16 @@ def get_script_or_integration_id(file_path):
         return commonfields.get('id', ['-', ])
 
 
-def get_api_module_integrations_set(changed_api_modules, integration_set):
+def get_api_module_integrations_set(changed_api_modules: Set, integration_set: Set):
     integrations_set = list()
     for integration in integration_set:
         integration_data = list(integration.values())[0]
-        if integration_data.get('api_modules', '') in changed_api_modules:
+        if changed_api_modules & set(integration_data.get('api_modules', [])):
             integrations_set.append(integration_data)
     return integrations_set
 
 
-def get_api_module_ids(file_list):
+def get_api_module_ids(file_list) -> Set:
     """Extracts APIModule IDs from the file list"""
     api_module_set = set()
     if file_list:
@@ -1798,12 +1806,11 @@ def _get_file_id(file_type: str, file_content: Dict):
     Returns:
         The file's content ID
     """
-    file_id = ''
     if file_type in ID_IN_ROOT:
-        file_id = file_content.get('id', '')
+        return file_content.get('id', '')
     elif file_type in ID_IN_COMMONFIELDS:
-        file_id = file_content.get('commonfields', {}).get('id')
-    return file_id
+        return file_content.get('commonfields', {}).get('id')
+    return file_content.get('trigger_id', '')
 
 
 def is_path_of_integration_directory(path: str) -> bool:
@@ -2492,7 +2499,7 @@ def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[st
             marketplaces = [MarketplaceVersions.XSOAR.value]
         else:
             pack_name = get_pack_name(item_path)
-            if packs:
+            if packs and packs.get(pack_name):
                 marketplaces = packs.get(pack_name, {}).get('marketplaces', [MarketplaceVersions.XSOAR.value])
             else:
                 marketplaces = get_mp_types_from_metadata_by_item(item_path)
@@ -2592,26 +2599,26 @@ def get_api_module_dependencies(pkgs, id_set_path, verbose):
     """
 
     id_set = open_id_set_file(id_set_path)
-    api_modules = [pkg.name for pkg in pkgs if API_MODULES_PACK in pkg.parts]
+    changed_api_modules = {pkg.name for pkg in pkgs if API_MODULES_PACK in pkg.parts}
     scripts = id_set.get(IdSetKeys.SCRIPTS.value, [])
     integrations = id_set.get(IdSetKeys.INTEGRATIONS.value, [])
     using_scripts, using_integrations = [], []
     for script in scripts:
         script_info = list(script.values())[0]
         script_name = script_info.get('name')
-        api_module = script_info.get('api_modules', [])
-        if api_module in api_modules:
+        script_api_modules = script_info.get('api_modules', [])
+        if intersection := changed_api_modules & set(script_api_modules):
             if verbose:
-                print(f"found script {script_name} dependent on {api_module}")
+                print(f"found script {script_name} dependent on {intersection}")
             using_scripts.extend(list(script.values()))
 
     for integration in integrations:
         integration_info = list(integration.values())[0]
         integration_name = integration_info.get('name')
-        api_module = integration_info.get('api_modules', [])
-        if api_module in api_modules:
+        script_api_modules = integration_info.get('api_modules', [])
+        if intersection := changed_api_modules & set(script_api_modules):
             if verbose:
-                print(f"found integration {integration_name} dependent on {api_module}")
+                print(f"found integration {integration_name} dependent on {intersection}")
             using_integrations.extend(list(integration.values()))
 
     using_scripts_pkg_paths = [Path(script.get('file_path')).parent.absolute() for

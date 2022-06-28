@@ -1,8 +1,43 @@
 # Changelog
 
 ## Unreleased
+* Added a new validation that checks whether a pack should be deprecated.
+* Added a new ability to the **format** command to deprecate a pack.
+* Fixed an issue where the **validate** command sometimes returned a false negative in cases where there are several sub-playbooks with the same ID.
+* Added a new validation to the **validate** command to verify that the docker in use is not deprecated.
+* Added support for multiple ApiModules in the **unify** command
+* Added a check to **validate** command, preventing use of relative urls in README files.
+* Added environment variable **DEMISTO_SDK_MARKETPLACE** expected to affect *MarketplaceTagParser* *marketplace* value. The value will be automatically set when passing *marketplace* arg to the commands **unify**, **zip-packs**, **create-content-artifacts** and **upload**.
+* Added slack notifier for build failures on the master branch.
+* Added support for modeling and parsing rules in the **split** command.
+* Added support for README files in **format** command.
+* Added a **validate** check, making sure classifier id and name values match. Updated the classifier **format** to update the id accordingly.
+* The **generate-docs** command will now auto-generate the playbook image link as default. Added the `--custom-image-link' argument to override.
+* Added a new flag to **generate-docs** command, allowing to add a custom image link to a playbook README.
+* Added a new validation to the **validate** command to verify that the package directory name is the same as the files contained in the that package.
 
+## 1.6.8
+
+* Fixed an issue where **validate** did not fail on invalid playbook entities' versions (i.e. subplaybooks or scripts with higher fromversion than their parent playbook).
+* Added support for running lint via a remote docker ssh connection. Use `DOCKER_HOST` env variable to specify a remote docker connection, such as: `DOCKER_HOST=ssh://myuser@myhost.com`.
+* Fixed an issue where the pack cache in *get_marketplaces* caused the function to return invalid values.
+* Fixed an issue where running format on a pack with XSIAM entities would fail.
+* Added the new `display_name` field to relevant entities in the **create-id-set** command.
+* Added a new validation to the **validate** command to verify the existence of "Reliability" parameter if the integration have reputation command.
+* Fixed a bug where terminating the **lint** command failed (`ctrl + c`).
 * Removed the validation of a subtype change in integrations and scripts from **validate**.
+* Fixed an issue where **download** did not behave as expected when prompting for a version update. Reported by @K-Yo
+* Added support for adoption release notes.
+* Fixed an issue where **merge-id-sets** failed when a key was missing in one id-set.json.
+* Fixed a bug where some mypy messages were not parsed properly in **lint**.
+* Added a validation to the **validate** command, failing when '`fromversion`' or '`toversion`' in a content entity are incorrect format.
+* Added a validation to the **validate** command, checking if `fromversion` <= `toversion`.
+* Fixed an issue where coverage reports used the wrong logging level, marking debug logs as errors.
+* Added a new validation to the **validate** command, to check when the discouraged `http` prefixes are used when setting defaultvalue, rather than `https`.
+* Added a check to the **lint** command for finding hard-coded usage of the http protocol.
+* Locked the dependency on Docker.
+* Removed a traceback line from the **init** command templates: BaseIntegration, BaseScript.
+* Updated the token in **_add_pr_comment** method from the content-bot token to the xsoar-bot token.
 
 ## 1.6.7
 
@@ -24,7 +59,6 @@
 * Improved logs when running test playbooks (in a build).
 * Fixed an issue in **upload** did not include list-type content items. @nicolas-rdgs
 * Reverted release notes to old format.
-* Added the new `display_name` field to relevant entities in the **create-id-set** command.
 
 ## 1.6.6
 

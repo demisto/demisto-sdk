@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.6.7"
+version = "1.6.8"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -39,11 +39,11 @@ click = "^8.0.0"
 colorama = "^0.4.4"
 coloredlogs = "^15.0.1"
 configparser = "^5.2.0"
-coverage = "^6.3.2"
+coverage = "=6.3.2"
 decorator = "^5.1.1"
 demisto-py = "^3.1.6"
 dictor = "^0.1.9"
-docker = "*"
+docker = "^5.0.3"
 flatten-dict = "^0.4.2"
 gitdb = "^4.0.9"
 google-cloud-storage = "^2.2.1"
@@ -101,6 +101,7 @@ ordered-set = "^4.1.0"
 types-filelock = "^3.2.5"
 types-Markdown = "^3.3.21"
 types-futures = "^3.3.8"
+paramiko = "^2.11.0"
 
 [tool.poetry.dev-dependencies]
 mitmproxy = "^8.0.0"
@@ -113,6 +114,7 @@ pytest-mock = "^3.7.0"
 pytest-subprocess = "^1.4.1"
 requests-mock = "^1.9.3"
 Deprecated = "^1.2.13"
+slack-sdk = "^3.17.0"
 
 [tool.poetry.extras]
 build = ["gsutil"]

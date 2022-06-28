@@ -9,7 +9,7 @@ from demisto_sdk.commands.generate_docs.common import (
 
 
 def generate_playbook_doc(input_path: str, output: str = None, permissions: str = None, limitations: str = None,
-                          verbose: bool = False):
+                          verbose: bool = False, custom_image_path: str = ''):
     try:
         playbook = get_yaml(input_path)
         if not output:  # default output dir will be the dir of the input file
@@ -55,7 +55,7 @@ def generate_playbook_doc(input_path: str, output: str = None, permissions: str 
             doc.extend(generate_numbered_section('Known Limitations', limitations))
 
         doc.append('## Playbook Image\n---')
-        doc.append(f'![{_name}](Insert the link to your image here)')
+        doc.append(generate_image_path(_name, custom_image_path))
 
         doc_text = '\n'.join(doc)
 
@@ -229,3 +229,20 @@ def get_input_data(input_section: Dict) -> str:
         return default_value.get('simple')
 
     return ''
+
+
+def generate_image_path(playbook_name: str, custom_image_path: str):
+    """Adding an image path to the playbook README.
+    Args:
+        playbook_name (str): playbook name.
+        custom_image_path (str): a custom image path for the playbook's README. If not stated, a default path will be added instead.
+
+    Returns:
+        (str): an image path for the playbook's README.
+    """
+    if custom_image_path:
+        playbook_image_path = custom_image_path
+    else:
+        playbook_image_path = '../doc_files/' + playbook_name.replace(' ', '_') + '.png'
+
+    return f'![{playbook_name}]({playbook_image_path})'

@@ -19,7 +19,7 @@ You can execute these commands from the Cortex XSOAR CLI, as part of an automati
 After you successfully execute a command, a DBot message appears in the War Room with the command details.
 1. [Search vulnerabilities: kenna-search-vulnerabilities](#1-search-vulnerabilities)
 2. [Run a connector: kenna-run-connector](#2-search-vulnerabilities)
-3. [Search fixes: kenna-search-fixes](31-search-fixes)
+3. [Search fixes: kenna-search-fixes](#31-search-fixes)
 4. [Update an asset: kenna-update-asset](#4-update-an-asset)
 5. [Update a vulnerability: kenna-update-vulnerability](#5-update-a-vulnerability)
 6. [Get a list of all connectors: kenna-get-connectors](#6-get-a-list-of-all-connectors)

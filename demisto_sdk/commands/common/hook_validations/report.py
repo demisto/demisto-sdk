@@ -11,7 +11,9 @@ class ReportValidator(ContentEntityValidator):
         """
 
         return all([
-            self.is_valid_fromversion()
+            self.is_valid_fromversion(),
+            self.are_fromversion_and_toversion_in_correct_format(),
+            self.are_fromversion_toversion_synchronized(),
         ])
 
     def is_valid_version(self):

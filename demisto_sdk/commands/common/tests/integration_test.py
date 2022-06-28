@@ -876,6 +876,25 @@ class TestIntegrationValidator:
 
             assert not validator.is_valid_parameters_display_name()
 
+    @pytest.mark.parametrize("yml_data, excepted_result", [({'configuration': [
+        {'defaultvalue': 'https://test.com'}]}, True), ({'configuration': [{'defaultvalue': 'http://test.com'}]}, False)])
+    def test_valid_integration_parameters_default_value(self, yml_data, excepted_result, integration: Integration):
+        """
+        Given
+            - Case 1: An integration with valid parameter default value.
+            - Case 2: An integration with invalid parameter default value.
+        When
+            - running is_valid_parameter_url_default_value.
+        Then
+            - validate the output of the validation is as expected.
+        """
+
+        integration.yml.write_dict(yml_data)
+        structure_validator = StructureValidator(integration.yml.path, predefined_scheme='integration')
+        validator = IntegrationValidator(structure_validator)
+
+        assert validator.is_valid_parameter_url_default_value() is excepted_result
+
     @pytest.mark.parametrize('support_level, expected_result', [('XSOAR', True), ('community', False)])
     def test_fromlicense_in_integration_parameters_fields(self, pack, support_level, expected_result):
         """
@@ -949,6 +968,32 @@ class TestIntegrationValidator:
         mocker.patch.object(validator, "handle_error", return_value=True)
 
         assert not validator.is_valid_integration_file_path()
+
+    @pytest.mark.parametrize('file_name', ['IntNameTest.py', 'IntNameTest_test.py'])
+    def test_invalid_py_file_names(self, repo, file_name):
+        """
+        Given
+            - An integration with invalid python file path.
+            - A Unittest with invalid python file path.
+        When
+            - running is_valid_py_file_names.
+        Then
+            - The files are invalid (the integration name is incorrect).
+        """
+
+        pack = repo.create_pack('PackName')
+
+        integration = pack.create_integration('IntName')
+        integration.create_default_integration()
+        structure_validator = StructureValidator(integration.path, predefined_scheme='integration')
+
+        python_path = integration.code.path
+        new_name = f'{python_path.rsplit("/", 1)[0]}/{file_name}'
+        os.rename(python_path, new_name)
+        with ChangeCWD(repo.path):
+            validator = IntegrationValidator(structure_validator)
+            validator.file_path = new_name
+            assert not validator.is_valid_py_file_names()
 
     def test_folder_name_without_separators(self, pack):
         """
@@ -1128,6 +1173,30 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.is_unskipped_integration(conf_dict) is answer
+
+    VERIFY_REPUTATION_COMMANDS = [(["test1", "test2"], False, True),
+                                  (["test1", "url"], False, False),
+                                  (["test1", "url"], True, True),
+                                  (["domain", "url"], True, True), ]
+
+    @pytest.mark.parametrize("commands, has_reliability, result", VERIFY_REPUTATION_COMMANDS)
+    def test_verify_reputation_commands_has_reliability(self, commands, has_reliability, result):
+        """
+        Given
+            - Modified integration with reputation command.
+        When
+            - Call "verify_reputation_commands_has_reliability" method.
+        Then
+            - Ensure the command fails when there is a reputation command without reliability parameter.
+        """
+
+        current = {"script": {"commands": [{"name": command} for command in commands]}, "configuration": [
+            {"name": "integrationReliability"}]} if has_reliability else {
+            "script": {"commands": [{"name": command} for command in commands]}}
+        structure = mock_structure("", current)
+        validator = IntegrationValidator(structure)
+        validator.current_file = current
+        assert validator.verify_reputation_commands_has_reliability(is_modified=True) is result
 
 
 class TestIsFetchParamsExist:

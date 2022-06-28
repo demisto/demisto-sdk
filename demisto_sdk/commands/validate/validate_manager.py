@@ -1022,6 +1022,9 @@ class ValidateManager:
         return integration_validator.is_valid_beta_integration()
 
     def validate_image(self, file_path, pack_error_ignore_list):
+        pack_name = get_pack_name(file_path)
+        if pack_name == 'NonSupported':
+            return True
         image_validator = ImageValidator(file_path, ignored_errors=pack_error_ignore_list,
                                          print_as_warnings=self.print_ignored_errors,
                                          json_file_path=self.json_file_path, specific_validations=self.specific_validations)

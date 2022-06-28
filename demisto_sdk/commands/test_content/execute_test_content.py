@@ -22,7 +22,7 @@ def _handle_github_response(response, logging_module) -> dict:
 
 
 def _add_pr_comment(comment, logging_module):
-    token = os.environ['CONTENT_GITHUB_TOKEN']
+    token = os.environ['XSOAR_BOT_TEST_CONTENT']
     branch_name = os.environ['CI_COMMIT_BRANCH']
     sha1 = os.environ['CI_COMMIT_SHA']
 

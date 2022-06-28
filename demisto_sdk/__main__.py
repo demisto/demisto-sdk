@@ -1925,15 +1925,15 @@ def openapi_codegen(**kwargs):
     '-ci', '--container-image', help='The ansible-runner container image to use for working with Ansible. \
         If not specified the latest demisto/ansible-runner is used', required=False)
 @click.option(
-    '-cf', '--config_file', help='The integration configuration YAML file. It is created in the first run of the command, and used in the second run.',
+    '-cf', '--config-file', help='The integration configuration YAML file. It is created in the first run of the command, and used in the second run.',
     required=False)
 @click.option(
-    '-n', '--base_name', help='The base filename to use for the generated files', required=False, default='GeneratedAnsibleIntegration')
+    '-n', '--base-name', help='The base filename to use for the generated files', required=False, default='GeneratedAnsibleIntegration')
 @click.option(
-    '-o', '--output_dir', help='Directory to store the output in (default is current working directory)',
+    '-o', '--output-dir', help='Directory to store the output in (default is current working directory)',
     required=False)
 @click.option(
-    '-f', '--fix_code', is_flag=True, help='Fix the python code using autopep8', default=False)
+    '-f', '--fix-code', is_flag=True, help='Fix the python code using autopep8', default=False)
 @click.option(
     '-v', '--verbose', is_flag=True, help='Be verbose with the log output', default=False)
 def ansible_codegen(**kwargs):

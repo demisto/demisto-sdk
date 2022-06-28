@@ -115,6 +115,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_parameter_url_default_value(),
             self.is_mapping_fields_command_exist(),
             self.is_valid_integration_file_path(),
+            self.is_valid_py_file_names(),
             self.has_no_duplicate_params(),
             self.has_no_duplicate_args(),
             self.is_there_separators_in_names(),
@@ -1260,6 +1261,33 @@ class IntegrationValidator(ContentEntityValidator):
                 error_message, error_code = Errors.is_valid_integration_file_path_in_folder(integration_file)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
+
+        return True
+
+    @error_codes('IN137')
+    def is_valid_py_file_names(self):
+        # Gets the all integration .py files from the integration folder.
+        excluded_files = ['demistomock.py', 'conftest.py', 'CommonServerPython.py', 'CommonServerUserPython.py',
+                          '.vulture_whitelist.py']
+        files_to_check = get_files_in_dir(os.path.dirname(self.file_path), ['py'], False)
+        invalid_files = []
+        integrations_folder = os.path.basename(os.path.dirname(self.file_path))
+
+        for file_path in files_to_check:
+            file_name = os.path.basename(file_path)
+            if file_name not in excluded_files:
+                # The unittest has _test.py suffix whereas the integration only has the .py suffix
+                splitter = '_' if file_name.endswith('_test.py') else '.'
+                base_name = file_name.rsplit(splitter, 1)[0]
+
+                if integrations_folder != base_name:
+                    invalid_files.append(file_name)
+
+        if invalid_files:
+            error_message, error_code = Errors.is_valid_integration_file_path_in_folder(invalid_files)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
 
         return True
 

@@ -15,6 +15,7 @@
 * The **generate-docs** command will now auto-generate the playbook image link by default. 
 * Added the `--custom-image-link` argument to override.
 * Added a new flag to **generate-docs** command, allowing to add a custom image link to a playbook README.
+* Added a new validation to the **validate** command to verify that the package directory name is the same as the files contained in the that package.
 * Added support in the **unify** command to unify a schema into its Modeling Rule.
 
 ## 1.6.8

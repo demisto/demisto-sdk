@@ -49,7 +49,7 @@ class DeprecationValidator:
 
         return usage_list
 
-    def validate_script(self, script_name: str):
+    def validate_script_deprecation(self, script_name: str):
         """
         Manages the deprecation usage validation for scripts.
         Checks if the given deprecated script is used in a none-deprecated playbooks / scripts.

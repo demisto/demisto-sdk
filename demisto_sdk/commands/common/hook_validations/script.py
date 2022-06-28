@@ -436,7 +436,7 @@ class ScriptValidator(ContentEntityValidator):
         is_valid = True
 
         if self.current_file.get("deprecated"):
-            used_files_list = self.deprecation_validator.validate_script(self.current_file.get('name'))
+            used_files_list = self.deprecation_validator.validate_script_deprecation(self.current_file.get('name'))
             if used_files_list:
                 error_message, error_code = Errors.script_is_deprecated_and_used(self.current_file.get("name"), used_files_list)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):

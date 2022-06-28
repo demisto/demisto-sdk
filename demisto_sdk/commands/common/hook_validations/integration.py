@@ -1721,7 +1721,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         if deprecated_commands_list:
             integration_id = self.current_file.get("commonfields", {}).get("id", "")
-            used_commands_dict = self.deprecation_validator.validate_integartion(deprecated_commands_list, integration_id)
+            used_commands_dict = self.deprecation_validator.validate_integartion_commands_deprecation(deprecated_commands_list, integration_id)
             if used_commands_dict:
                 error_message, error_code = Errors.integration_is_deprecated_and_used(self.current_file.get("name"), used_commands_dict)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):

@@ -101,7 +101,7 @@ def test_is_valid_description_name(repo):
     integration = pack.create_integration('IntName')
     integration.create_default_integration()
 
-    description_validator = DescriptionValidator(integration.yml.path)
+    description_validator = DescriptionValidator(integration.description.path)
 
     assert description_validator.is_valid_description_name()
 
@@ -109,11 +109,9 @@ def test_is_valid_description_name(repo):
 def test_is_invalid_description_name(repo):
     """
         Given
-            - An integration description with a invalid name
-
+            - An integration description with invalid name
         When
             - Validating the integration description name
-
         Then
             - Ensure that description validator for integration failed.
     """
@@ -127,7 +125,29 @@ def test_is_invalid_description_name(repo):
 
     os.rename(description_path[0], new_name)
     with ChangeCWD(repo.path):
-        description_validator = DescriptionValidator(integration.yml.path)
+        description_validator = DescriptionValidator(integration.description.path)
+
+        assert not description_validator.is_valid_description_name()
+
+
+def test_is_invalid_description_integration_name(repo):
+    """
+        Given
+            - An integration description with invalid integration name
+        When
+            - Validating the integration description name
+        Then
+            - Ensure that description validator for integration failed.
+    """
+
+    pack = repo.create_pack('PackName')
+
+    integration = pack.create_integration('IntName')
+    new_name = f'{integration.description.path.rsplit("/", 1)[0]}/IntNameTest_description.md'
+
+    os.rename(integration.description.path, new_name)
+    with ChangeCWD(repo.path):
+        description_validator = DescriptionValidator(new_name)
 
         assert not description_validator.is_valid_description_name()
 

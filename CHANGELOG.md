@@ -12,7 +12,7 @@
 * Added support for modeling and parsing rules in the **split** command.
 * Added support for README files in **format** command.
 * Added a **validate** check, making sure classifier id and name values match. Updated the classifier **format** to update the id accordingly.
-* The **generate-docs** command will now auto-generate the playbook image link by default. 
+* The **generate-docs** command will now auto-generate the playbook image link by default.
 * Added the `--custom-image-link` argument to override.
 * Added a new flag to **generate-docs** command, allowing to add a custom image link to a playbook README.
 * Added a new validation to the **validate** command to verify that the package directory name is the same as the files contained in the that package.

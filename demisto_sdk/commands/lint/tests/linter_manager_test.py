@@ -29,7 +29,7 @@ def mock_lint_manager(mocker):
 def test_report_pass_lint_checks(mocker, return_exit_code: int, skipped_code: int, pkgs_type: list):
     from demisto_sdk.commands.lint import lint_manager
     lint_manager.LintManager.report_pass_lint_checks(return_exit_code, skipped_code, pkgs_type)
-    assert mocker.call_count == 9
+    assert mocker.call_count == 8
 
 
 def test_report_failed_image_creation():

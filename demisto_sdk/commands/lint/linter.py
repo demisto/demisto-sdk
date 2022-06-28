@@ -25,9 +25,9 @@ from demisto_sdk.commands.common.timers import timer
 from demisto_sdk.commands.common.tools import (get_all_docker_images,
                                                run_command_os)
 from demisto_sdk.commands.lint.commands_builder import (
-    build_flake8_command, build_mypy_command,
-    build_pwsh_analyze_command, build_pwsh_test_command, build_pylint_command,
-    build_pytest_command, build_vulture_command, build_xsoar_linter_command)
+    build_flake8_command, build_mypy_command, build_pwsh_analyze_command,
+    build_pwsh_test_command, build_pylint_command, build_pytest_command,
+    build_vulture_command, build_xsoar_linter_command)
 from demisto_sdk.commands.lint.docker_helper import (Docker,
                                                      init_global_docker_client)
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,

@@ -940,7 +940,7 @@ class Linter:
         logger.debug(f'Before reading content of {pack_metadata_file}')
         with pack_metadata_file.open() as f:
             pack_meta_content: Dict = json.load(f)
-        logger.debug(f'Before reading content of {pack_metadata_file}')
+        logger.debug(f'After reading content of {pack_metadata_file}')
         self._facts['support_level'] = pack_meta_content.get('support')
         if self._facts['support_level'] == 'partner' and pack_meta_content.get('Certification'):
             self._facts['support_level'] = 'certified partner'

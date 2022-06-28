@@ -458,7 +458,10 @@ ERROR_CODE = {
         'code': "WZ105",
         'ui_applicable': False,
         'related_field': 'wizard'
-    }
+    },
+
+    # MR - Modeling Rules
+    "modeling_rule_missing_schema_file": {'code': "MR100", 'ui_applicable': False, 'related_field': ''},
 }
 
 
@@ -2384,3 +2387,8 @@ class Errors:
                f'The description of the pack in the pack_metadata.json should be one of the following formats:\n' \
                f'1. "Deprecated. Use <PACK_NAME> instead."\n' \
                f'2. "Deprecated. <REASON> No available replacement."'
+
+    @staticmethod
+    @error_code_decorator
+    def modeling_rule_missing_schema_file(file_path: str):
+        return f'The modeling rule {file_path} is missing a schema file.'

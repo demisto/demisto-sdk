@@ -1367,10 +1367,6 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
 
     elif path.parent.name == DOC_FILES_DIR:
         return FileType.DOC_FILE
-
-    elif path.name == FileType.MODELING_RULE.value:
-        return FileType.MODELING_RULE
-
     return None
 
 
@@ -1406,8 +1402,6 @@ def find_type(
     try:
         if not _dict and not file_type:
             _dict, file_type = get_dict_from_file(path, clear_cache=clear_cache)
-        print('here')
-        print(_dict)
 
     except FileNotFoundError:
         # unable to find the file - hence can't identify it

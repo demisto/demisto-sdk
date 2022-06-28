@@ -530,7 +530,6 @@ class ValidateManager:
         if not self.is_valid_pack_name(file_path, old_file_path):
             return False
         file_type = find_type(file_path)
-        print(file_type)
 
         is_added_file = file_path in added_files if added_files else False
 

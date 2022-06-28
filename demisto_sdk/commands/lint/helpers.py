@@ -11,7 +11,7 @@ import textwrap
 from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, Generator, List, Optional, Union
+from typing import Callable, Dict, Generator, List, Optional, Union
 
 # Third party packages
 import coverage
@@ -25,7 +25,6 @@ from packaging.version import parse
 # Local packages
 from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
                                                    DemistoException)
-from demisto_sdk.commands.common.tools import print_warning, run_command_os
 from demisto_sdk.commands.lint.docker_helper import init_global_docker_client
 
 # Python2 requirements
@@ -59,23 +58,6 @@ PY_CHCEKS = ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture", "pytest", "p
 RL = '\n'
 
 logger = logging.getLogger('demisto-sdk')
-
-
-def validate_env() -> None:
-    """Packs which use python2 will need to be run inside virtual environment including python2 as main
-    and the specified req
-    """
-    wrn_msg = 'demisto-sdk lint not in virtual environment, Python2 lints will fail, use "source .hooks/bootstrap"' \
-              ' to create the virtual environment'
-    command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
-    stdout, stderr, exit_code = run_command_os(command, cwd=Path().cwd())
-    if "2" not in stdout:
-        print_warning(wrn_msg)
-    else:
-        stdout, stderr, exit_code = run_command_os("pip3 freeze", cwd=Path().cwd())
-        for req in PYTHON2_REQ:
-            if req not in stdout:
-                print_warning(wrn_msg)
 
 
 def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
@@ -150,7 +132,14 @@ def get_test_modules(content_repo: Optional[git.Repo], is_external_repo: bool) -
             try:
                 module_full_path = content_repo.working_dir / module
                 logger.debug(f'read file {module_full_path}')
-                modules_content[module] = (module_full_path).read_bytes()
+                if module.match('*CommonServerPython.py'):
+                    # Remove import of DemistoClassApiModule in CommonServerPython,
+                    # since tests don't use this class and the import fails the tests.
+                    modules_content[module] = (module_full_path).read_bytes().replace(
+                        b'from DemistoClassApiModule import *', b'')
+                    logger.debug(f'Changed file {module_full_path} without demisto import')
+                else:
+                    modules_content[module] = (module_full_path).read_bytes()
             except FileNotFoundError:
                 module_not_found = True
                 logger.warning(f'Module {module} was not found, possibly deleted due to being in a feature branch')
@@ -300,43 +289,31 @@ def get_python_version_from_image(image: str, timeout: int = 60) -> str:
     match_group = re.match(r'[\d\w]+/python3?:(?P<python_version>[23]\.\d+)', image)
     if match_group:
         return match_group.groupdict()['python_version']
-
-    py_num = '3.8'
+    py_num = None
     # Run three times
-    log_prompt = 'Get python version from image'
+    log_prompt = f'Get python version from image {image}'
     docker_client = init_global_docker_client(timeout=timeout, log_prompt=log_prompt)
+    logger.info(f'{log_prompt} - Start')
+    try:
+        logger.debug(f'{log_prompt} - Running `sys.version_info` in the image')
+        command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
 
-    for attempt in range(3):
-        try:
-            command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
+        py_num = docker_client.containers.run(
+            image=image,
+            command=shlex.split(command),
+            remove=True,
+            restart_policy={"Name": "on-failure", "MaximumRetryCount": 3}
+        )
+        # Wait for container to finish
+        logger.debug(f'{log_prompt} - Container finished running. {py_num=}')
 
-            container_obj: Container = docker_client.containers.run(
-                image=image,
-                command=shlex.split(command),
-                detach=True
-            )
-            # Wait for container to finish
-            container_obj.wait(condition="exited")
-            # Get python version
-            py_num = container_obj.logs()
-            if isinstance(py_num, bytes):
-                py_num = parse(py_num.decode("utf-8")).base_version
-                for _ in range(2):
-                    # Try to remove the container two times.
-                    try:
-                        container_obj.remove(force=True)
-                        break
-                    except docker.errors.APIError:
-                        logger.warning(f'{log_prompt} - Could not remove the image {image}')
-                return py_num
-            else:
-                raise docker.errors.ContainerError
+        # Get python version
+        py_num = parse(py_num.decode("utf-8")).base_version
 
-        except Exception:
-            logger.exception(f'{log_prompt} - Failed detecting Python version (in attempt {attempt}) for image {image}')
-            continue
-
-    return py_num
+    except Exception:
+        logger.exception(f'{log_prompt} - Failed detecting Python version for image {image}')
+    logger.info(f'{log_prompt} - End. Python version is {py_num}')
+    return py_num if py_num else '3.8'
 
 
 def get_file_from_container(container_obj: Container, container_path: str, encoding: str = "") -> Union[str, bytes]:
@@ -398,7 +375,7 @@ def copy_dir_to_container(container_obj: Container, host_path: Path, container_p
             raise docker.errors.APIError(message="unable to copy dir to container")
 
 
-def stream_docker_container_output(streamer: Generator) -> None:
+def stream_docker_container_output(streamer: Generator, logging_level: Callable = logger.info) -> None:
     """ Stream container logs
 
     Args:
@@ -409,7 +386,7 @@ def stream_docker_container_output(streamer: Generator) -> None:
                                        subsequent_indent='\t',
                                        width=150)
         for chunk in streamer:
-            logger.info(wrapper.fill(str(chunk.decode('utf-8'))))
+            logging_level(wrapper.fill(str(chunk.decode('utf-8'))))
     except Exception:
         logger.info('Failed to stream a container log.')
 
@@ -488,7 +465,7 @@ def coverage_report_editor(coverage_file, code_file_absolute_path):
         cursor = sql_connection.cursor()
         index = cursor.execute('SELECT count(*) FROM file').fetchall()[0][0]
         if not index == 1:
-            logger.error('unexpected file list in coverage report')
+            logger.debug('unexpected file list in coverage report')
         else:
             cursor.execute('UPDATE file SET path = ? WHERE id = ?', (code_file_absolute_path, 1))
             sql_connection.commit()
@@ -517,7 +494,8 @@ def generate_coverage_report(html=False, xml=False, report=True, cov_dir='covera
     cov = coverage.Coverage(data_file=cov_file)
     cov.combine(coverage_files())
     if not os.path.exists(cov_file):
-        logger.debug(f'skipping coverage report {cov_file} file not found.')
+        logger.warning(f'skipping coverage report {cov_file} file not found. '
+                       f'Should not expect this if code files were changed or when linting all with pytest.')
         return
 
     export_msg = 'exporting {0} coverage report to {1}'

@@ -32,25 +32,25 @@ class TestRNUpdate:
                 - return a markdown string
         """
         expected_result = \
-            "\n#### Classifiers\n- **Hello World Classifier**\n- %%UPDATE_RN%%\n" \
-            "\n#### Connections\n- **Hello World Connection**\n- %%UPDATE_RN%%\n" \
-            "\n#### Dashboards\n- **Hello World Dashboard**\n- %%UPDATE_RN%%\n" \
-            "\n#### Incident Fields\n- **Hello World IncidentField**\n- %%UPDATE_RN%%\n" \
-            "\n#### Incident Types\n- **Hello World Incident Type**\n- %%UPDATE_RN%%\n" \
-            "\n#### Indicator Fields\n- **Hello World Indicator Field**\n- %%UPDATE_RN%%\n" \
-            "\n#### Indicator Types\n- **Hello World Indicator Type**\n- %%UPDATE_RN%%\n" \
-            "\n#### Integrations\n- **Hello World Integration**\n- %%UPDATE_RN%%\n" \
-            "\n#### Jobs\n- **Hello World Job #1**\n- %%UPDATE_RN%%\n" \
-            "- **Hello World Job #2**\n- %%UPDATE_RN%%\n" \
-            "\n#### Layouts\n- **Hello World Layout**\n- %%UPDATE_RN%%\n" \
-            "- **Second Hello World Layout**\n- %%UPDATE_RN%%\n" \
-            "\n#### Modules\n- **Hello World Generic Module**\n- %%UPDATE_RN%%\n" \
-            "\n#### Objects\n- **Hello World Generic Definition**\n- %%UPDATE_RN%%\n" \
-            "\n#### Playbooks\n- **Hello World Playbook**\n- %%UPDATE_RN%%\n" \
-            "\n#### Reports\n- **Hello World Report**\n- %%UPDATE_RN%%\n" \
-            "\n#### Scripts\n- **Hello World Script**\n- %%UPDATE_RN%%\n" \
-            "\n#### Widgets\n- **Hello World Widget**\n- %%UPDATE_RN%%\n" \
-            "\n#### Wizards\n- **Hello World Wizard**\n- %%UPDATE_RN%%\n"
+            "\n#### Classifiers\n##### Hello World Classifier\n- %%UPDATE_RN%%\n" \
+            "\n#### Connections\n- **Hello World Connection**\n" \
+            "\n#### Dashboards\n##### Hello World Dashboard\n- %%UPDATE_RN%%\n" \
+            "\n#### Incident Fields\n- **Hello World IncidentField**\n" \
+            "\n#### Incident Types\n- **Hello World Incident Type**\n" \
+            "\n#### Indicator Fields\n- **Hello World Indicator Field**\n" \
+            "\n#### Indicator Types\n- **Hello World Indicator Type**\n" \
+            "\n#### Integrations\n##### Hello World Integration\n- %%UPDATE_RN%%\n" \
+            "\n#### Jobs\n##### Hello World Job #1\n- %%UPDATE_RN%%\n" \
+            "##### Hello World Job #2\n- %%UPDATE_RN%%\n" \
+            "\n#### Layouts\n- **Hello World Layout**\n" \
+            "- **Second Hello World Layout**\n" \
+            "\n#### Modules\n##### Hello World Generic Module\n- %%UPDATE_RN%%\n" \
+            "\n#### Objects\n##### Hello World Generic Definition\n- %%UPDATE_RN%%\n" \
+            "\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%\n" \
+            "\n#### Reports\n##### Hello World Report\n- %%UPDATE_RN%%\n" \
+            "\n#### Scripts\n##### Hello World Script\n- %%UPDATE_RN%%\n" \
+            "\n#### Widgets\n##### Hello World Widget\n- %%UPDATE_RN%%\n" \
+            "\n#### Wizards\n##### Hello World Wizard\n- %%UPDATE_RN%%\n"
 
         mock_master.return_value = '1.0.0'
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
@@ -119,7 +119,7 @@ class TestRNUpdate:
             Then:
                 - return a markdown string
         """
-        expected_result = "\n#### Playbooks\n##### New: **Hello World Playbook**\n- Hello World Playbook description"
+        expected_result = "\n#### Playbooks\n##### New: Hello World Playbook\n- Hello World Playbook description\n"
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
         mock_master.return_value = '1.0.0'
@@ -142,7 +142,7 @@ class TestRNUpdate:
             Then:
                 - return a markdown string
         """
-        expected_result = "\n#### Playbooks\n- **Hello World Playbook**\n- %%UPDATE_RN%%\n"
+        expected_result = '\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%\n'
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
         mock_master.return_value = '1.0.0'
@@ -166,7 +166,7 @@ class TestRNUpdate:
             Then:
                 - return a markdown string
         """
-        expected_result = "\n#### Incident Fields\n- **Hello World IncidentField**\n- %%UPDATE_RN%%\n"
+        expected_result = '\n#### Incident Fields\n- **Hello World IncidentField**\n'
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
         mock_master.return_value = '1.0.0'
@@ -189,7 +189,7 @@ class TestRNUpdate:
             Then:
                 - return a markdown string
         """
-        expected_result = "\n#### Integrations\n- **Hello World Integration**\n" \
+        expected_result = "\n#### Integrations\n##### Hello World Integration\n" \
                           "- Documentation and metadata improvements.\n"
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
@@ -692,7 +692,7 @@ class TestRNUpdate:
     def test_update_rn_new_mapper(repo):
         """
         Case - new mapper, XSOAR, fromversion exists, description exists
-        Expected - release note should contain New but should not contain description version
+        Expected - release note should contain New but should not contain description and version
         """
         pack = repo.create_pack('test_pack')
         new_mapper = pack.create_mapper(name='mapper', content={'description': ''})
@@ -711,12 +711,11 @@ class TestRNUpdate:
     def test_update_rn_new_incident_field(repo):
         """
         Case - new incident field, XSOAR, fromversion exists, description exists
-        Expected - release note should contain New, description and version
+        Expected - release note should not contain new and version
         """
         pack = repo.create_pack('test_pack')
         new_incident_field = pack.create_incident_field(name='incident field',
-                                                        content={'description': 'description for testing',
-                                                                 'fromversion': '6.5.0'})
+                                                        content={'fromversion': '6.5.0'})
         update_rn = UpdateRN(pack_path=pack.path, update_type='minor', added_files=new_incident_field.path,
                              modified_files_in_pack=set())
 
@@ -724,9 +723,9 @@ class TestRNUpdate:
                                           desc=new_incident_field.read_json_as_dict().get('description'),
                                           from_version=new_incident_field.read_json_as_dict().get('fromversion'))
 
-        assert '##### New:' in rn_desc  # check if release note contains New - when new file
-        assert 'description for testing' in rn_desc  # check if release note contains description when description not empty
-        assert '(Available from Cortex XSOAR 6.5.0).' in rn_desc  # check if release note contains fromversion when exists
+        assert '##### New:' not in rn_desc
+        assert 'test_pack' in rn_desc
+        assert '(Available from Cortex XSOAR 6.5.0).' not in rn_desc
 
     @staticmethod
     def test_update_rn_new_trigger(repo):
@@ -875,7 +874,7 @@ class TestRNUpdateUnit:
                              added_files=set())
         filepath = os.path.join(TestRNUpdate.FILES_PATH, path)
         mocker.patch.object(UpdateRN, 'find_corresponding_yml', return_value='Integrations/VulnDB/VulnDB.yml')
-        mocker.patch.object(UpdateRN, 'get_display_name', return_value='VulnDB')
+        mocker.patch("demisto_sdk.commands.update_release_notes.update_rn.get_display_name", return_value='VulnDB')
         mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.find_type', return_value=find_type_result)
         result = update_rn.get_changed_file_name_and_type(filepath)
         assert expected_result == result
@@ -1143,7 +1142,7 @@ class TestRNUpdateUnit:
                                {'name': 'FeedTAXII_integration',
                                 'file_path': '/FeedTAXII_integration.yml',
                                 'pack': 'FeedTAXII',
-                                'api_modules': 'ApiModules_script'
+                                'api_modules': ['ApiModules_script']
                                 }
                                }
                           ]}
@@ -1281,7 +1280,7 @@ class TestRNUpdateUnit:
                      return_value='+  dockerimage:python/test:1243')
         mocker.patch.object(UpdateRN, 'is_bump_required', return_value=False)
         mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value=pack_data)
-        mocker.patch.object(UpdateRN, 'get_display_name', return_value='Test')
+        mocker.patch("demisto_sdk.commands.common.tools.get_display_name", return_value='Test')
         mocker.patch.object(UpdateRN, 'build_rn_template', return_value='##### Test\n')
         mocker.patch.object(UpdateRN, 'get_release_notes_path',
                             return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes'
@@ -1320,7 +1319,7 @@ class TestRNUpdateUnit:
                      return_value='+  type:True')
         mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
         mocker.patch.object(UpdateRN, 'get_pack_metadata', return_value=pack_data)
-        mocker.patch.object(UpdateRN, 'get_display_name', return_value='Test')
+        mocker.patch("demisto_sdk.commands.common.tools.get_display_name", return_value='Test')
         mocker.patch.object(UpdateRN, 'build_rn_template', return_value='##### Test\n')
         mocker.patch.object(UpdateRN, 'get_release_notes_path', return_value='demisto_sdk/commands'
                                                                              '/update_release_notes/tests_data'
@@ -1453,31 +1452,6 @@ def test_get_from_version_at_update_rn(integration):
     assert fromversion is None
 
 
-@pytest.mark.parametrize('data, answer', [({'brandName': 'TestBrand'}, 'TestBrand'), ({'id': 'TestID'}, 'TestID'),
-                                          ({'name': 'TestName'}, 'TestName'), ({'TypeName': 'TestType'}, 'TestType'),
-                                          ({'display': 'TestDisplay'}, 'TestDisplay'),
-                                          ({'trigger_name': 'T Name'}, 'T Name'),
-                                          ({'layout': {'id': 'Testlayout'}}, 'Testlayout'),
-                                          ({'dashboards_data': [{'name': 'D Name'}]}, 'D Name'),
-                                          ({'templates_data': [{'report_name': 'R Name'}]}, 'R Name')])
-def test_get_display_name(data, answer, mocker):
-    """
-        Given
-            - Pack to update release notes
-        When
-            - get_display_name with file path is called
-        Then
-           - Returned name determined by the key of the data loaded from the file
-        """
-    from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
-    mock_object = mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.StructureValidator')
-    mock_structure_validator = mock_object.return_value
-    mock_structure_validator.load_data_from_file.return_value = data
-    client = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={
-        'Packs/Test/Integrations/Test.yml'}, added_files=set('Packs/Test/some_added_file.py'))
-    assert client.get_display_name('Packs/Test/test.yml') == answer
-
-
 def test_docker_image_is_added_for_every_integration(mocker, repo):
     """
     Given:
@@ -1524,13 +1498,13 @@ def test_docker_image_is_added_for_every_integration(mocker, repo):
 
 
 HANDLE_EXISTING_RN_WITH_DOCKER_IMAGE_INPUTS = [
-    ('#### Integrations\n- **IBM QRadar v2**\n- %%UPDATE_RN%%\n- **IBM QRadar v3**\n- %%UPDATE_RN%%',
+    ('#### Integrations\n##### IBM QRadar v2\n- %%UPDATE_RN%%\n##### IBM QRadar v3\n- %%UPDATE_RN%%',
      'Integrations', 'demisto/python3:3.9.5.21276', 'IBM QRadar v3',
-     '#### Integrations\n- **IBM QRadar v2**\n- %%UPDATE_RN%%\n- **IBM QRadar v3**\n- Updated the Docker image to: '
+     '#### Integrations\n##### IBM QRadar v2\n- %%UPDATE_RN%%\n##### IBM QRadar v3\n- Updated the Docker image to: '
      '*demisto/python3:3.9.5.21276*.\n- %%UPDATE_RN%%'),
-    ('#### Integrations\n- **IBM QRadar v3**\n- %%UPDATE_RN%%',
+    ('#### Integrations\n##### IBM QRadar v3\n- %%UPDATE_RN%%',
      'Integrations', 'demisto/python3:3.9.5.21276', 'IBM QRadar v3',
-     '#### Integrations\n- **IBM QRadar v3**\n- Updated the Docker image to: '
+     '#### Integrations\n##### IBM QRadar v3\n- Updated the Docker image to: '
      '*demisto/python3:3.9.5.21276*.\n- %%UPDATE_RN%%')]
 
 
@@ -1561,7 +1535,7 @@ def test_handle_existing_rn_with_docker_image(new_rn: str, header_by_type: str, 
 
 
 @pytest.mark.parametrize('text, expected_rn_string',
-                         [('Testing the upload', '- **PackName**\n- Testing the upload\n')])
+                         [('Testing the upload', '##### PackName\n- Testing the upload\n')])
 def test_force_and_text_update_rn(repo, text, expected_rn_string):
     """
     Given:

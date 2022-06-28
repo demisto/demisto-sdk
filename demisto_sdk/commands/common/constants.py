@@ -90,6 +90,10 @@ WIZARD = 'wizard'
 
 MARKETPLACE_KEY_PACK_METADATA = 'marketplaces'
 
+# ENV VARIABLES
+
+ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
+
 
 class FileType(Enum):
     INTEGRATION = 'integration'
@@ -145,17 +149,10 @@ class FileType(Enum):
     XSIAM_REPORT = 'xsiamreport'
     TRIGGER = 'trigger'
     WIZARD = 'wizard'
+    PACK_IGNORE = '.pack-ignore'
+    SECRET_IGNORE = '.secrets-ignore'
+    DOC_FILE = 'doc_files'
 
-
-XSIAM_CONTENT_ITEMS_TYPES = [
-    FileType.PARSING_RULE,
-    FileType.MODELING_RULE,
-    FileType.CORRELATION_RULE,
-    FileType.XSIAM_DASHBOARD,
-    FileType.XSIAM_REPORT,
-    FileType.TRIGGER,
-
-]
 
 RN_HEADER_BY_FILE_TYPE = {
     FileType.PLAYBOOK: 'Playbooks',
@@ -435,6 +432,8 @@ DEFAULT_DBOT_IMAGE_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAEIAAABlCAYAAAD5/TVmAAAfJEl
                             '7eorX7lGdXd3V4x3MRCUMGFHgvnz5/PiSy+fCdxEJlt3fJboAxb+H6GbFBmX3jbg12MPaXyx4H0xBhRat0N3s0' \
                             'jliiBUXY1lWWs9Hs+PgZlCMAXNBIRoRFMH1JDZzgeyl5/MFthk+FY4FyyyEqEzxKbI2DQxMv7MMJnQZDvovVqz' \
                             'A1HUzK9kdzt0/2+exnQr4g2hrAAAAABJRU5ErkJggg=='
+# structure regex of the from and to version
+FROM_TO_VERSION_REGEX = re.compile(r'(?:\d{1,2}\.){2}\d{1,2}')
 # file types regexes
 PIPFILE_REGEX = r'.*/Pipfile(\.lock)?'
 TEST_DATA_REGEX = r'.*test_data.*'
@@ -529,6 +528,9 @@ JOB_JSON_REGEX = fr'{JOBS_DIR_REGEX}\/job-([^/]+)\.json'
 WIZARD_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{WIZARDS_DIR}'
 WIZARD_JSON_REGEX = fr'{WIZARD_DIR_REGEX}\/wizard-([^/]+)\.json'
 
+RELATIVE_HREF_URL_REGEX = r'(<.*?href\s*=\s*"((?!(?:https?:\/\/)|#|(?:mailto:)).*?)")'
+RELATIVE_MARKDOWN_URL_REGEX = r'(?<![!])(\[.*?\])\(((?!(?:https?:\/\/)|#|(?:mailto:)).*?)\)'
+
 # old classifier structure
 _PACKS_CLASSIFIER_BASE_5_9_9_REGEX = fr'{PACKS_CLASSIFIERS_DIR_REGEX}\/*classifier-(?!mapper).*_5_9_9'
 PACKS_CLASSIFIER_JSON_5_9_9_REGEX = fr'{_PACKS_CLASSIFIER_BASE_5_9_9_REGEX}\.json'
@@ -568,10 +570,12 @@ INDICATOR_TYPES_REPUTATIONS_REGEX = r'{}{}.reputations\.json$'.format(CAN_START_
 # deprecated regex
 DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
 DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement\.*?)"
+PACK_NAME_DEPRECATED_REGEX = r".* \(Deprecated\)"
 
 DEPRECATED_REGEXES: List[str] = [
     DEPRECATED_DESC_REGEX,
-    DEPRECATED_NO_REPLACE_DESC_REGEX
+    DEPRECATED_NO_REPLACE_DESC_REGEX,
+    PACK_NAME_DEPRECATED_REGEX
 ]
 
 PACK_METADATA_NAME = 'name'
@@ -620,6 +624,7 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'lists',
     JOB,
     WIZARD,
+    'classifier'
 ]
 
 INTEGRATION_PREFIX = 'integration'
@@ -1552,3 +1557,6 @@ class ParameterType(Enum):
     TEXT_AREA_ENCRYPTED = 14
     SINGLE_SELECT = 15
     MULTI_SELECT = 16
+
+
+NO_TESTS_DEPRECATED = 'No tests (deprecated)'

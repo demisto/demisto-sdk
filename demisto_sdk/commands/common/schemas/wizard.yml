@@ -87,7 +87,8 @@ schema;integrations_schema:
           type: str
     priority:
       type: int
-      required: false
+    incident_type:
+      type: str
 
 schema;playbook_schema:
   type: map
@@ -97,7 +98,6 @@ schema;playbook_schema:
       required: true
     link_to_integration:
       type: str
-      required: true
 
 schema;next_schema:
   type: map

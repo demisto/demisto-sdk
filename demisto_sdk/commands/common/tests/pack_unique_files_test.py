@@ -294,10 +294,8 @@ class TestPackUniqueFilesValidator:
 
     @pytest.mark.parametrize('usecases, is_valid, branch_usecases', [
         ([], True, []),
-        (['Phishing', 'Malware'], True, []),
-        (['NonApprovedUsecase', 'Case Management'], False, []),
-        (['NewUseCase'], True, ['NewUseCase']),
-        (['NewUseCase1, NewUseCase2'], False, ['NewUseCase1'])
+        (['Phishing', 'Malware'], True, ['Phishing', 'Malware']),
+        (['NonApprovedUsecase', 'Case Management'], False, ['Case Management']),
     ])
     def test_is_approved_usecases(self, repo, usecases, is_valid, branch_usecases, mocker):
         """
@@ -305,9 +303,6 @@ class TestPackUniqueFilesValidator:
             - Case A: Pack without usecases
             - Case B: Pack with approved usecases (Phishing and Malware)
             - Case C: Pack with non-approved usecase (NonApprovedUsecase) and approved usecase (Case Management)
-            - Case D: Pack with approved usecase (NewUseCase) located in my branch only
-            - Case E: Pack with non-approved usecase (NewUseCase2) and approved usecase (NewUseCase1)
-            located in my branch only
 
         When:
             - Validating approved usecases
@@ -317,9 +312,6 @@ class TestPackUniqueFilesValidator:
             - Case B: Ensure validation passes as both usecases are approved
             - Case C: Ensure validation fails as it contains a non-approved usecase (NonApprovedUsecase)
                       Verify expected error is printed
-            - Case D: Ensure validation passes as usecase is approved on the same branch
-            - Case E: Ensure validation fails as it contains a non-approved usecase (NewUseCase2)
-                      Verify expected error is printed
         """
         self.restart_validator()
         pack_name = 'PackName'
@@ -327,7 +319,7 @@ class TestPackUniqueFilesValidator:
         pack.pack_metadata.write_json({
             PACK_METADATA_USE_CASES: usecases,
             PACK_METADATA_SUPPORT: XSOAR_SUPPORT,
-            PACK_METADATA_TAGS: []
+            PACK_METADATA_TAGS: [],
         })
         mocker.patch.object(tools, 'is_external_repository', return_value=False)
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': branch_usecases}, 'json'))
@@ -340,10 +332,8 @@ class TestPackUniqueFilesValidator:
 
     @pytest.mark.parametrize('tags, is_valid, branch_tags', [
         ([], True, []),
-        (['Machine Learning', 'Spam'], True, []),
-        (['NonApprovedTag', 'GDPR'], False, []),
-        (['NewTag'], True, ['NewTag']),
-        (['NewTag1, NewTag2'], False, ['NewTag1'])
+        (['Machine Learning', 'Spam'], True, ['Machine Learning', 'Spam']),
+        (['NonApprovedTag', 'GDPR'], False, ['GDPR']),
     ])
     def test_is_approved_tags(self, repo, tags, is_valid, branch_tags, mocker):
         """
@@ -351,9 +341,6 @@ class TestPackUniqueFilesValidator:
             - Case A: Pack without tags
             - Case B: Pack with approved tags (Machine Learning and Spam)
             - Case C: Pack with non-approved tags (NonApprovedTag) and approved tags (GDPR)
-            - Case D: Pack with approved tags (NewTag) located in my branch only
-            - Case E: Pack with non-approved tags (NewTag) and approved tags (NewTag)
-            located in my branch only
         When:
             - Validating approved tags
 
@@ -362,9 +349,6 @@ class TestPackUniqueFilesValidator:
             - Case B: Ensure validation passes as both tags are approved
             - Case C: Ensure validation fails as it contains a non-approved tags (NonApprovedTag)
                       Verify expected error is printed
-            - Case D: Ensure validation passes as tags is approved on the same branch
-            - Case E: Ensure validation fails as it contains a non-approved tag (NewTag2)
-                      Verify expected error is printed
         """
         self.restart_validator()
         pack_name = 'PackName'
@@ -372,7 +356,7 @@ class TestPackUniqueFilesValidator:
         pack.pack_metadata.write_json({
             PACK_METADATA_USE_CASES: [],
             PACK_METADATA_SUPPORT: XSOAR_SUPPORT,
-            PACK_METADATA_TAGS: tags
+            PACK_METADATA_TAGS: tags,
         })
         mocker.patch.object(tools, 'is_external_repository', return_value=False)
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': branch_tags}, 'json'))
@@ -605,7 +589,8 @@ class TestPackUniqueFilesValidator:
             ReadMeValidator
 
         self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack2'))
-        mocker.patch.object(ReadMeValidator, 'check_readme_relative_image_paths', return_value=[])  # Test only absolute paths
+        mocker.patch.object(ReadMeValidator, 'check_readme_relative_image_paths',
+                            return_value=[])  # Test only absolute paths
 
         with requests_mock.Mocker() as m:
             # Mock get requests
@@ -659,6 +644,40 @@ class TestPackUniqueFilesValidator:
         assert 'please repair it:\n(https://raw.githubusercontent.com/demisto/content/raw/test1.jpg)' in errors
         # this path is not an image path and should not be shown.
         assert 'https://github.com/demisto/content/raw/test3.png' not in errors
+
+    def test_validate_pack_readme_relative_url(self):
+        """
+            Given
+                - A pack README file with invalid relative path in it.
+            When
+                - Run validate on pack README file
+            Then
+                - Ensure:
+                    - Validation fails
+                    - Invalid relative paths were caught correctly
+                    - Invalid absolute paths were not caught.
+                    - Image paths were not caught
+        """
+        self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack2'))
+
+        result = self.validator.validate_pack_readme_relative_urls()
+        errors = self.validator.get_errors()
+        relative_urls = ["relative1.com", "www.relative2.com", "hreftesting.com", "www.hreftesting.com"]
+        absolute_urls = ["https://www.good.co.il", "https://example.com", "doc_files/High_Risk_User.png",
+                         "https://hreftesting.com"]
+        relative_error = 'Relative urls are not supported within README. If this is not a relative url, please add ' \
+                         'an https:// prefix:\n'
+        assert not result
+
+        for url in relative_urls:
+            assert f'{relative_error}{url}' in errors
+
+        for url in absolute_urls:
+            assert url not in errors
+
+        # no empty links found
+        assert '[RM112] - Relative urls are not supported within README. If this is not a relative url, ' \
+               'please add an https:// prefix:\n. ' not in errors
 
     @pytest.mark.parametrize('readme_content, is_valid', [
         ('Hey there, just testing', True),

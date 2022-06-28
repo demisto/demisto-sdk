@@ -1,5 +1,7 @@
 import os
 
+import pytest
+
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations import image
 from demisto_sdk.commands.common.hook_validations.integration import \
@@ -173,16 +175,18 @@ def test_is_valid_image_name_with_valid_name(repo):
     assert image_validator.is_valid_image_name()
 
 
-def test_is_valid_image_name_with_invalid_name(repo):
+@pytest.mark.parametrize('file_name', ['IntName_img.png', 'IntNameTest_image.png'])
+def test_is_valid_image_name_with_invalid_name(repo, file_name):
     """
         Given
-            - An integration image with a invalid name
+            - An integration image with invalid name (different from the folder name containing it)
+            - An integration image with invalid name - invalid suffix (_img instead of _image)
 
         When
             - Validating the integration image name
 
         Then
-            - Ensure that image validator for integration failed.
+            - Ensure that image validator for the integration failed in both cases.
     """
 
     pack = repo.create_pack('PackName')
@@ -194,7 +198,7 @@ def test_is_valid_image_name_with_invalid_name(repo):
         os.remove(integration.image.path)
         integration.image = None
 
-    integration.image = File(integration._tmpdir_integration_path / f'{integration.name}_img.png',
+    integration.image = File(integration._tmpdir_integration_path / f'{file_name}',
                              integration._repo.path)
 
     with ChangeCWD(repo.path):

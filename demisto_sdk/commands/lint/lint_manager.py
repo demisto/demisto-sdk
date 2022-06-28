@@ -31,11 +31,12 @@ from demisto_sdk.commands.common.tools import (find_file, find_type,
                                                print_error, print_v,
                                                print_warning,
                                                retrieve_file_ending)
+from demisto_sdk.commands.lint.docker_helper import init_global_docker_client
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                PY_CHCEKS,
                                                build_skipped_exit_code,
                                                generate_coverage_report,
-                                               get_test_modules, validate_env)
+                                               get_test_modules)
 from demisto_sdk.commands.lint.linter import Linter
 
 json = JSON_Handler()
@@ -121,8 +122,6 @@ class LintManager:
             "test_modules": None,
             "docker_engine": True
         }
-        # Check env requirements satisfied - bootstrap in use
-        validate_env()
         # Get content repo object
         is_external_repo = False
         try:
@@ -143,14 +142,15 @@ class LintManager:
         # Get global requirements file
         pipfile_dir = Path(__file__).parent / 'resources'
         try:
-            for py_num in ['2', '3']:
-                pipfile_lock_path = pipfile_dir / f'pipfile_python{py_num}/Pipfile.lock'
-                with open(file=pipfile_lock_path) as f:
-                    lock_file: dict = json.load(fp=f)["develop"]
-                    facts[f"requirements_{py_num}"] = [key + value["version"] for key, value in  # type: ignore
-                                                       lock_file.items()]
-                    logger.debug(f"Test requirements successfully collected for python {py_num}:\n"
-                                 f" {facts[f'requirements_{py_num}']}")
+            pipfile_lock_path = pipfile_dir / 'pipfile_python3/Pipfile.lock'
+            with open(file=pipfile_lock_path) as f:
+                lock_file: dict = json.load(fp=f)["develop"]
+                facts["requirements_3"] = [key + value["version"] for key, value in  # type: ignore
+                                           lock_file.items()]
+                logger.debug("Test requirements successfully collected for python 3:\n"
+                             f" {facts[f'requirements_3']}")
+            python2_requirements = pipfile_dir / 'pipfile_python2/dev-requirements.txt'
+            facts["requirements_2"] = python2_requirements.read_text().strip().split('\n')  # type: ignore
         except (json.JSONDecodeError, IOError, FileNotFoundError, KeyError) as e:
             print_error("Can't parse pipfile.lock - Aborting!")
             logger.critical(f"demisto-sdk-can't parse pipfile.lock {e}")
@@ -176,8 +176,10 @@ class LintManager:
             logger.error(f"demisto-sdk-unable to get mandatory test-modules demisto-mock.py etc {e}")
             sys.exit(1)
         # Validating docker engine connection
-        docker_client: docker.DockerClient = docker.from_env()
+        logger.debug('creating docker client from env')
+        docker_client: docker.DockerClient = init_global_docker_client(log_prompt='LintManager')
         try:
+            logger.debug('pinging docker daemon')
             docker_client.ping()
         except (requests.exceptions.ConnectionError, urllib3.exceptions.ProtocolError, docker.errors.APIError) as ex:
             if os.getenv("CI") and os.getenv("CIRCLE_PROJECT_REPONAME") == "content":
@@ -186,7 +188,7 @@ class LintManager:
             facts["docker_engine"] = False
             print_warning("Can't communicate with Docker daemon - check your docker Engine is ON - Skipping lint, "
                           "test which require docker!")
-            logger.info("demisto-sdk-Can't communicate with Docker daemon")
+            logger.info("can not communicate with Docker daemon")
         logger.debug("Docker daemon test passed")
         return facts
 
@@ -958,8 +960,11 @@ class LintManager:
         for message in mypy_errors:
             if message:
                 file_path, line_number, column_number, _ = message.split(':', 3)
-                output_message = message.split('error:')[1].lstrip() if 'error' in message \
-                    else message.split('note:')[1].lstrip()
+                output_message = message  # default
+                for prefix in ('error:', 'note:'):
+                    if prefix in message:
+                        output_message = message.split(prefix)[1].lstrip()
+                        break
                 output = {
                     'linter': 'mypy',
                     'severity': errors.get('type'),

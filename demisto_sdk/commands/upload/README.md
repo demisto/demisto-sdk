@@ -76,6 +76,10 @@ Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up.
 
     if true will skip all upload packs validations, use just when migrate existing custom content entities to custom content packs to override all the entities with the packs.
 
+* **-x, --xsiam**
+
+    uploads the pack to a XSIAM server. Must be used together with -z
+
 ### Examples
 ```
 demisto-sdk upload -i Packs/HelloWorld/Integrations/HelloWorld/
@@ -133,4 +137,10 @@ demisto-sdk upload -i Packs/HelloWorld -z --skip-validation
 ```
 This will zip the pack `HelloWorld` and will upload without any validation the zip file `uploadable_packs.zip` as a pack to the designated Cortex XSOAR Marketplace.
 This `skip validation` parameter is for migration from custom content entities to custom content packs.
+<br/><br/>
+
+```
+demisto-sdk upload -i Packs/HelloWorld -z --xsiam
+```
+This will zip the pack `HelloWorld` and will upload it to the XSIAM server Marketplace page.
 <br/><br/>

@@ -38,11 +38,14 @@ from demisto_sdk.commands.format.update_job import JobJSONFormat
 from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
 from demisto_sdk.commands.format.update_lists import ListsFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
+from demisto_sdk.commands.format.update_pack_metadata import \
+    PackMetadataJsonFormat
 from demisto_sdk.commands.format.update_playbook import (PlaybookYMLFormat,
                                                          TestPlaybookYMLFormat)
 from demisto_sdk.commands.format.update_pre_process_rules import \
     PreProcessRulesFormat
 from demisto_sdk.commands.format.update_pythonfile import PythonFileFormat
+from demisto_sdk.commands.format.update_readme import ReadmeFormat
 from demisto_sdk.commands.format.update_report import ReportJSONFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
 from demisto_sdk.commands.format.update_widget import WidgetJSONFormat
@@ -75,11 +78,12 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'generictype': GenericTypeJSONFormat,
     'genericmodule': GenericModuleJSONFormat,
     'genericdefinition': GenericDefinitionJSONFormat,
-    JOB: JobJSONFormat
+    JOB: JobJSONFormat,
+    'readme': ReadmeFormat,
+    'metadata': PackMetadataJsonFormat,
 }
 
-UNFORMATTED_FILES = ['readme',
-                     'releasenotes',
+UNFORMATTED_FILES = ['releasenotes',
                      'changelog',
                      'image',
                      'javascriptfile',
@@ -148,12 +152,11 @@ def format_manager(input: str = None,
     log_list = []
     error_list: List[Tuple[int, int]] = []
     if files:
-        format_excluded_file = excluded_files + ['pack_metadata.json']
         for file in files:
             file_path = file.replace('\\', '/')
             file_type = find_type(file_path, clear_cache=clear_cache)
 
-            current_excluded_files = format_excluded_file[:]
+            current_excluded_files = excluded_files[:]
             dirname = os.path.dirname(file_path)
             if dirname.endswith('CommonServerPython'):
                 current_excluded_files.remove('CommonServerPython.py')
@@ -286,11 +289,18 @@ def run_format_on_file(input: str, file_type: str, from_version: str, interactiv
     if file_type not in ('integration', 'playbook', 'script') and 'add_tests' in kwargs:
         # adding tests is relevant only for integrations, playbooks and scripts.
         del kwargs['add_tests']
-    if file_type != FileType.INCIDENT_FIELD.value and 'id_set_path' in kwargs:
-        # relevant only for incidentfield
+    if file_type not in (
+        FileType.INCIDENT_FIELD.value, FileType.LAYOUTS_CONTAINER.value, FileType.LAYOUT.value, FileType.MAPPER.value
+    ) and 'id_set_path' in kwargs:
+        # relevant only for incidentfield/layouts/mappers
         del kwargs['id_set_path']
-    update_object = FILE_TYPE_AND_LINKED_CLASS[file_type](input=input, path=schema_path, from_version=from_version,
-                                                          interactive=interactive, **kwargs)
+    updater_class = FILE_TYPE_AND_LINKED_CLASS.get(file_type)
+    if not updater_class:  # fail format so long as xsiam entities dont have formatters
+        print_warning(f'No  updater_class was found for file type {file_type}')
+        return logger(input, 1, VALIDATE_RES_SKIPPED_CODE)
+
+    update_object = updater_class(input=input, path=schema_path, from_version=from_version,
+                                  interactive=interactive, **kwargs)
     format_res, validate_res = update_object.format_file()  # type: ignore
     CONTENT_ENTITY_IDS_TO_UPDATE.update(update_object.updated_ids)
     return logger(input, format_res, validate_res)

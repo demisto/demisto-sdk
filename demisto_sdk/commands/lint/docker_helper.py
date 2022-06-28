@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 import tarfile
 import tempfile
 from pathlib import Path
@@ -12,40 +13,42 @@ from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
 
 DOCKER_CLIENT = None
 logger = logging.getLogger('demisto-sdk')
-PATH_OR_STR = Union[Path, str]
-FILES_SRC_TARGET = List[Tuple[PATH_OR_STR, str]]
+FILES_SRC_TARGET = List[Tuple[os.PathLike, str]]
 # this will be used to determine if the system supports mounts
-CAN_MOUNT_FILES = not os.getenv('CIRCLECI', False)
+CAN_MOUNT_FILES = bool(os.getenv('GITLAB_CI', False)) or ((not os.getenv('CIRCLECI', False)) and (
+
+    (not os.getenv('DOCKER_HOST')) or
+    os.getenv('DOCKER_HOST', "").lower().startswith("unix:")
+)
+)
 
 
 def init_global_docker_client(timeout: int = 60, log_prompt: str = ''):
 
     global DOCKER_CLIENT
     if DOCKER_CLIENT is None:
-        try:
-            if log_prompt:
-                logger.info(f'{log_prompt} - init and login the docker client')
-            else:
-                logger.info('init and login the docker client')
-            DOCKER_CLIENT = docker.from_env(timeout=timeout)
-            docker_user = os.getenv('DOCKERHUB_USER')
-            docker_pass = os.getenv('DOCKERHUB_PASSWORD')
-            DOCKER_CLIENT.login(username=docker_user,
-                                password=docker_pass,
-                                registry="https://index.docker.io/v1")
-        except Exception:
-            logger.exception(f'{log_prompt} - failed to login to docker registry')
-
+        if log_prompt:
+            logger.info(f'{log_prompt} - init and login the docker client')
+        else:
+            logger.info('init and login the docker client')
+        ssh_client = os.getenv('DOCKER_SSH_CLIENT') is not None
+        if ssh_client:
+            logger.debug(f'{log_prompt} - Using ssh client setting: {ssh_client}')
+        logger.debug(f'{log_prompt} - Using docker mounting: {CAN_MOUNT_FILES}')
+        DOCKER_CLIENT = docker.from_env(timeout=timeout, use_ssh_client=ssh_client)
+        docker_user = os.getenv('DOCKERHUB_USER')
+        docker_pass = os.getenv('DOCKERHUB_PASSWORD')
+        if docker_user and docker_pass:
+            try:
+                DOCKER_CLIENT.login(username=docker_user,
+                                    password=docker_pass,
+                                    registry="https://index.docker.io/v1")
+            except Exception:
+                logger.exception(f'{log_prompt} - failed to login to docker registry')
+    else:
+        msg = 'docker client already available, using current DOCKER_CLIENT'
+        logger.debug(f'{log_prompt} - {msg}' if log_prompt else msg)
     return DOCKER_CLIENT
-
-
-def copy_file(cp_from: PATH_OR_STR, cp_to: PATH_OR_STR) -> Path:
-    cp_from = Path(cp_from)
-    cp_to = Path(cp_to)
-    cp_to.touch()
-    if cp_from.exists():
-        cp_to.write_bytes(cp_from.read_bytes())
-    return cp_to
 
 
 class DockerBase:
@@ -80,7 +83,7 @@ class DockerBase:
         """
         Pulling an image if it dosnt exist localy.
         """
-        docker_client = init_global_docker_client()
+        docker_client = init_global_docker_client(log_prompt='pull_image')
         try:
             return docker_client.images.get(image)
         except docker.errors.ImageNotFound:
@@ -157,7 +160,7 @@ class MountableDocker(DockerBase):
         for file in files:
             if file.exists():
                 self._files_to_push_on_installation.append(
-                    (copy_file(file, self.tmp_dir / file.name), str(file))
+                    (shutil.copyfile(file, self.tmp_dir / file.name), str(file))
                 )
 
     @staticmethod

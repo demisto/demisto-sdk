@@ -77,7 +77,6 @@ class IntegrationValidator(ContentEntityValidator):
             self.no_removed_integration_parameters(),
             self.no_added_required_fields(),
             self.no_changed_command_name_or_arg(),
-            self.no_changed_subtype(),
             self.is_valid_display_configuration(),
             self.no_changed_removed_yml_fields(),
             # will move to is_valid_integration after https://github.com/demisto/etc/issues/17949
@@ -113,8 +112,10 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_max_fetch_and_first_fetch(),
             self.is_valid_as_deprecated(),
             self.is_valid_parameters_display_name(),
+            self.is_valid_parameter_url_default_value(),
             self.is_mapping_fields_command_exist(),
             self.is_valid_integration_file_path(),
+            self.is_valid_py_file_names(),
             self.has_no_duplicate_params(),
             self.has_no_duplicate_args(),
             self.is_there_separators_in_names(),
@@ -148,6 +149,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_description(beta_integration=False),
             self.is_context_correct_in_readme(),
             self.verify_yml_commands_match_readme(is_modified),
+            self.verify_reputation_commands_has_reliability(is_modified),
         ]
 
         if check_is_unskipped:
@@ -235,7 +237,7 @@ class IntegrationValidator(ContentEntityValidator):
         for param in config:
             if param.get('type') == 8:
                 if param.get('defaultvalue') not in [None, 'true', 'false']:
-                    error_message, error_code = Errors.invalid_defaultvalue_for_checkbox_field(param.get('defaultvalue'))
+                    error_message, error_code = Errors.invalid_defaultvalue_for_checkbox_field(param.get('name'))
                     if self.handle_error(error_message, error_code, file_path=self.file_path):
                         return False
         return True
@@ -1214,6 +1216,27 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
+    @error_codes('IN153')
+    def is_valid_parameter_url_default_value(self) -> bool:
+        """Verifies integration parameters default value is valid.
+
+        Returns:
+            bool: True if the default value of the url parameter uses the https protocol,
+            False otherwise.
+        """
+        configuration = self.current_file.get('configuration', {})
+        parameters_default_values = [(param.get('display'), param.get('defaultvalue')) for param in configuration if param.get('defaultvalue')]
+
+        is_valid = True
+        for param, defaultvalue in parameters_default_values:
+            if defaultvalue and isinstance(defaultvalue, str):
+                if defaultvalue.startswith('http:'):
+                    error_message, error_code = Errors.not_supported_integration_parameter_url_defaultvalue(param, defaultvalue)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        is_valid = False
+
+        return is_valid
+
     @error_codes('IN138,IN137')
     def is_valid_integration_file_path(self) -> bool:
         absolute_file_path = self.file_path
@@ -1238,6 +1261,33 @@ class IntegrationValidator(ContentEntityValidator):
                 error_message, error_code = Errors.is_valid_integration_file_path_in_folder(integration_file)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
+
+        return True
+
+    @error_codes('IN137')
+    def is_valid_py_file_names(self):
+        # Gets the all integration .py files from the integration folder.
+        excluded_files = ['demistomock.py', 'conftest.py', 'CommonServerPython.py', 'CommonServerUserPython.py',
+                          '.vulture_whitelist.py']
+        files_to_check = get_files_in_dir(os.path.dirname(self.file_path), ['py'], False)
+        invalid_files = []
+        integrations_folder = os.path.basename(os.path.dirname(self.file_path))
+
+        for file_path in files_to_check:
+            file_name = os.path.basename(file_path)
+            if file_name not in excluded_files:
+                # The unittest has _test.py suffix whereas the integration only has the .py suffix
+                splitter = '_' if file_name.endswith('_test.py') else '.'
+                base_name = file_name.rsplit(splitter, 1)[0]
+
+                if integrations_folder != base_name:
+                    invalid_files.append(file_name)
+
+        if invalid_files:
+            error_message, error_code = Errors.is_valid_integration_file_path_in_folder(invalid_files)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
 
         return True
 
@@ -1587,14 +1637,15 @@ class IntegrationValidator(ContentEntityValidator):
         Return:
             list: A list with the same commands as the given list except for the get-indicators commands.
         """
-        return [missing_command for missing_command in missing_commands_from_readme if not missing_command.endswith('get-indicators')]
+        return [missing_command for missing_command in missing_commands_from_readme if
+                not missing_command.endswith('get-indicators')]
 
     @error_codes('RM110')
     def verify_yml_commands_match_readme(self, is_modified=False):
         """
         Checks if there are commands that doesn't appear in the readme but appear in the .yml file
         Args:
-            is_modified (bool): Wether the given files are modified or not.
+            is_modified (bool): Whether the given files are modified or not.
 
         Return:
             bool: True if all commands are documented in the README, False if there's no README file in the expected
@@ -1610,9 +1661,11 @@ class IntegrationValidator(ContentEntityValidator):
 
         readme_content = readme_path.read_text()
         excluded_from_readme_commands = ['get-mapping-fields', 'xsoar-search-incidents', 'xsoar-get-incident',
-                                         'get-remote-data', 'update-remote-data', 'get-modified-remote-data', 'update-remote-system']
+                                         'get-remote-data', 'update-remote-data', 'get-modified-remote-data',
+                                         'update-remote-system']
         missing_commands_from_readme = [
-            command for command in yml_commands_list if command not in readme_content and command not in excluded_from_readme_commands]
+            command for command in yml_commands_list if
+            command not in readme_content and command not in excluded_from_readme_commands]
         missing_commands_from_readme = self.exclude_get_indicators_commands(missing_commands_from_readme)
         if missing_commands_from_readme:
             error_message, error_code = Errors.missing_commands_from_readme(
@@ -1621,3 +1674,27 @@ class IntegrationValidator(ContentEntityValidator):
                 is_valid = False
 
         return is_valid
+
+    @error_codes('IN154')
+    def verify_reputation_commands_has_reliability(self, is_modified: bool = False):
+        """
+        In case the integration has reputation command, ensure there is a reliability parameter.
+        Args:
+            is_modified (bool): Whether the given files are modified or not.
+
+        Return:
+            bool: True if there are no reputation commands or there is a reliability parameter
+             and False if there is at least one reputation command without a reliability parameter in the configuration.
+        """
+        if not is_modified:
+            return True
+        commands_names = [command.get('name') for command in self.current_file.get('script', {}).get('commands', [])]
+        yml_config_names = ' '.join([config.get('name') for config in self.current_file.get('configuration', {})])
+        for command in commands_names:
+            if command in REPUTATION_COMMAND_NAMES:
+                if 'reliability' in yml_config_names.lower():
+                    return True
+                error_message, error_code = Errors.missing_reliability_parameter(command)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    return False
+        return True

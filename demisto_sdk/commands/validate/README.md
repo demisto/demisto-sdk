@@ -68,7 +68,7 @@ Whether to skip the file schema check.
 Whether to print debug logs for git statuses.
 * **--print-pykwalify**
 Whether to print the pykwalify log errors.
-* **--quite-bc-validation**
+* **--quiet-bc-validation**
 Set backwards compatibility validation's errors as warnings.
 * **--allow-skipped**
 Don't fail on skipped integrations or when all test playbooks are skipped.

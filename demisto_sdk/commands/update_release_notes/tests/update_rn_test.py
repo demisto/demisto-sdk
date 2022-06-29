@@ -1,7 +1,9 @@
 import glob
 import os
+import pathlib
 import shutil
 from collections import Counter
+from copy import deepcopy
 from typing import Dict, Optional
 
 import mock
@@ -13,16 +15,22 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.common.update_id_set import DEFAULT_ID_SET_PATH
-from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
+from demisto_sdk.commands.update_release_notes.update_rn import (
+    CLASS_BY_FILE_TYPE, UpdateRN, commands_to_deprecate_set, get_deprecated_rn)
 
 json = JSON_Handler()
 
 
 class TestRNUpdate:
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+    NOT_DEP_INTEGRATION_PATH = pathlib.Path(FILES_PATH, 'deprecated_rn_test', 'not_deprecated_integration.yml')
+    DEP_INTEGRATION_PATH = pathlib.Path(FILES_PATH, 'deprecated_rn_test', 'deprecated_integration.yml')
+    NOT_DEP_PLAYBOOK_PATH = pathlib.Path(FILES_PATH, 'deprecated_rn_test', 'not_deprecated_playbook.yml')
+    DEP_PLAYBOOK_PATH = pathlib.Path(FILES_PATH, 'deprecated_rn_test', 'deprecated_playbook.yml')
+    NOT_DEP_SCRIPT_PATH = pathlib.Path(FILES_PATH, 'deprecated_rn_test', 'not_deprecated_script.yml')
+    DEP_SCRIPT_PATH = pathlib.Path(FILES_PATH, 'deprecated_rn_test', 'deprecated_script.yml')
 
-    @mock.patch.object(UpdateRN, 'get_master_version')
-    def test_build_rn_template_integration(self, mock_master):
+    def test_build_rn_template_integration(self, mocker):
         """
             Given:
                 - a dict of changed items
@@ -51,8 +59,8 @@ class TestRNUpdate:
             "\n#### Scripts\n##### Hello World Script\n- %%UPDATE_RN%%\n" \
             "\n#### Widgets\n##### Hello World Widget\n- %%UPDATE_RN%%\n" \
             "\n#### Wizards\n##### Hello World Wizard\n- %%UPDATE_RN%%\n"
-
-        mock_master.return_value = '1.0.0'
+        mocker.patch.object(UpdateRN, 'get_master_version', return_value='1.0.0')
+        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.get_deprecated_rn', return_value='')
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         changed_items = {
@@ -132,8 +140,7 @@ class TestRNUpdate:
         release_notes = update_rn.build_rn_template(changed_items)
         assert expected_result == release_notes
 
-    @mock.patch.object(UpdateRN, 'get_master_version')
-    def test_build_rn_template_playbook_modified_file(self, mock_master):
+    def test_build_rn_template_playbook_modified_file(self, mocker):
         """
             Given:
                 - a dict of changed items
@@ -145,7 +152,8 @@ class TestRNUpdate:
         expected_result = '\n#### Playbooks\n##### Hello World Playbook\n- %%UPDATE_RN%%\n'
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
-        mock_master.return_value = '1.0.0'
+        mocker.patch.object(UpdateRN, 'get_master_version', return_value='1.0.0')
+        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.get_deprecated_rn', return_value='')
         update_rn = UpdateRN(pack_path="Packs/HelloWorld", update_type='minor', modified_files_in_pack={'HelloWorld'},
                              added_files=set())
         changed_items = {
@@ -749,6 +757,74 @@ class TestRNUpdate:
         assert 'description for testing' in rn_desc  # check if release note contains description when description not empty
         assert '(Available from Cortex XSOAR 6.5.0).' not in rn_desc  # check if release note contains fromversion when exists
 
+    def test_deprecated_rn_integration_command(self, mocker):
+        """
+            Given:
+                - Path to a Integration
+            When:
+                - Calling get_deprecated_rn function
+            Then:
+                Ensure the function returns a valid rn when the command is deprecated compared to last yml
+        """
+        FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+        NOT_DEP_INTEGRATION_PATH = pathlib.Path(FILES_PATH, 'deprecated_rn_test', 'not_deprecated_integration.yml')
+
+        old_yml_obj, new_yml_obj = get_mock_yml_obj(NOT_DEP_INTEGRATION_PATH, FileType.INTEGRATION, False)
+        new_yml_obj.script['commands'][0]['deprecated'] = True
+
+        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.get_yml_objects',
+                     return_value=(old_yml_obj, new_yml_obj))
+        # When command is newly deprecated
+        res = get_deprecated_rn(NOT_DEP_INTEGRATION_PATH, FileType.INTEGRATION)
+        assert res == "- Command ***xdr-get-incidents*** is deprecated. Use %%% instead.\n"
+
+        # When the command is already deprecated
+        old_yml_obj['script']['commands'][0]['deprecated'] = True
+        res = get_deprecated_rn(NOT_DEP_INTEGRATION_PATH, FileType.INTEGRATION)
+        assert res == ""
+
+    @pytest.mark.parametrize('path, file_type, deprecated, expected_res',
+                             [(NOT_DEP_INTEGRATION_PATH, FileType.INTEGRATION, True, ""),
+                              (NOT_DEP_INTEGRATION_PATH, FileType.INTEGRATION, False, ""),
+                              (DEP_INTEGRATION_PATH, FileType.INTEGRATION, False, "- Deprecated. Use %%% instead.\n"),
+                              (DEP_INTEGRATION_PATH, FileType.INTEGRATION, True, ""),
+                              (NOT_DEP_PLAYBOOK_PATH, FileType.PLAYBOOK, True, ""),
+                              (NOT_DEP_PLAYBOOK_PATH, FileType.PLAYBOOK, False, ""),
+                              (DEP_PLAYBOOK_PATH, FileType.PLAYBOOK, False, "- Deprecated. Use %%% instead.\n"),
+                              (DEP_PLAYBOOK_PATH, FileType.PLAYBOOK, True, ""),
+                              (NOT_DEP_SCRIPT_PATH, FileType.SCRIPT, True, ""),
+                              (NOT_DEP_SCRIPT_PATH, FileType.SCRIPT, False, ""),
+                              (DEP_SCRIPT_PATH, FileType.SCRIPT, False, "- Deprecated. Use %%% instead.\n"),
+                              (DEP_SCRIPT_PATH, FileType.SCRIPT, True, ""),
+                              ])
+    def test_deprecated_rn_yml(self, mocker, path, file_type, deprecated, expected_res):
+        """
+            Given:
+                - Path to a yml Object, and if the last yml was deprecated
+                (1) - (4)- Integration
+                (5) - (8) - Playbook
+                (9) - (12)- Script
+            When:
+                - Calling get_deprecated_rn function
+            Then:
+                Ensure the function returns a valid rn when the yml is deprecated.
+        """
+        old_yml_obj, new_yml_obj = get_mock_yml_obj(path, file_type, deprecated)
+        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.get_yml_objects',
+                     return_value=(old_yml_obj, new_yml_obj))
+        res = get_deprecated_rn(path, file_type)
+        assert res == expected_res
+
+
+def get_mock_yml_obj(path, file_type, deprecated) -> dict:
+    new_yml_obj = CLASS_BY_FILE_TYPE[file_type](path)
+    if file_type == FileType.INTEGRATION:
+        old_yml_dict = {"script": {"commands": deepcopy(new_yml_obj.script.get('commands'))}, "deprecated": deprecated}
+    else:
+        old_yml_dict = {"deprecated": deprecated}
+
+    return old_yml_dict, new_yml_obj
+
 
 class TestRNUpdateUnit:
     META_BACKUP = ""
@@ -1250,6 +1326,7 @@ class TestRNUpdateUnit:
                             return_value='demisto_sdk/commands/update_release_notes/tests_data/Packs/release_notes'
                                          '/1_1_0.md')
         mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
+        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.get_deprecated_rn', return_value='')
 
         client = UpdateRN(pack_path="demisto_sdk/commands/update_release_notes/tests_data/Packs/Test",
                           update_type='minor', modified_files_in_pack={'Packs/Test/Integrations/Test.yml'},
@@ -1471,6 +1548,7 @@ def test_docker_image_is_added_for_every_integration(mocker, repo):
     pack = repo.create_pack('PackName')
     mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.check_docker_image_changed',
                  return_value='demisto/python3:3.9.5.124')
+    mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.get_deprecated_rn', return_value='')
     integration = pack.create_integration('integration', 'bla', yml_mock)
     integration.create_default_integration()
     integration.yml.update({'display': 'Sample1'})
@@ -1574,6 +1652,7 @@ def test_create_md_if_currentversion_is_higher(mocker, first_expected_results, s
     pack = repo.create_pack('PackName')
     mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.check_docker_image_changed',
                  return_value='demisto/python3:3.9.5.124')
+    mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.get_deprecated_rn', return_value='')
     integration = pack.create_integration('integration', 'bla', yml_mock)
     integration.create_default_integration()
     integration.yml.update({'display': 'Sample1'})
@@ -1589,3 +1668,18 @@ def test_create_md_if_currentversion_is_higher(mocker, first_expected_results, s
     updated_rn_folder = glob.glob(pack.path + '/ReleaseNotes/*')
     updated_versions_list = [rn[rn.rindex('/') + 1:-3] for rn in updated_rn_folder]
     assert Counter(second_expected_results) == Counter(updated_versions_list)
+
+
+def test_commands_to_deprecate_set():
+    """
+        Given:
+            - List of commands
+        When:
+            - Calling commands_to_deprecate_set function
+        Then:
+            Ensure the function return a set of the deprecated commands only.
+
+    """
+    commands = [{"name": "command_1", "deprecated": True}, {"name": "command_2", "deprecated": False}]
+    res = commands_to_deprecate_set(commands)
+    assert res == {"command_1"}

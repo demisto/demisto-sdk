@@ -7,12 +7,14 @@ import os
 import re
 from distutils.version import LooseVersion
 from pathlib import Path
-from typing import Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEFAULT_ID_SET_PATH,
     IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, FileType)
 from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.content.objects.pack_objects import (
+    Integration, Playbook, Script)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
@@ -27,27 +29,42 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                print_color, print_error,
                                                print_warning, run_command)
 
-from demisto_sdk.commands.common.content.objects.pack_objects import \
-    Integration, Script, Playbook
-
 json = JSON_Handler()
 
 CLASS_BY_FILE_TYPE = {FileType.INTEGRATION: Integration, FileType.SCRIPT: Script, FileType.PLAYBOOK: Playbook}
 
 
-def commands_to_deprecate_dict(commands: dict):
-    res_dict = {}
+def commands_to_deprecate_set(commands: list) -> set:
+    """return a set of the deprecated commands only"""
+    res_set = set()
     for command in commands:
-        res_dict[command.get('name')] = command.get('deprecated')
+        if command.get('deprecated'):
+            res_set.add(command.get('name'))
 
-    return res_dict
+    return res_set
 
 
-def get_deprecated_custom_rn(path: str, file_type):
-    old_yml = get_remote_file(path)
+def get_yml_objects(path: str, file_type) -> tuple[Any, Union[Integration, Script, Playbook]]:
+    """
+    Generate yml files from master and from the current branch
+    Args:
+        path: The requested file path
+        file_type: the file type
+
+    Returns:
+        Two YML objects, the first of the yml at master (old yml) and the second from the current branch (new yml)
+    """
+    old_yml_obj = get_remote_file(path)
     new_yml_obj = CLASS_BY_FILE_TYPE[file_type](path)
 
-    if not old_yml.get('deprecated') and new_yml_obj.is_deprecated:
+    return old_yml_obj, new_yml_obj
+
+
+def get_deprecated_rn(path: str, file_type):
+    """Generate rn for deprecated items"""
+    old_yml, new_yml = get_yml_objects(path, file_type)
+
+    if not old_yml.get('deprecated') and new_yml.is_deprecated:
         return '- Deprecated. Use %%% instead.\n'
 
     if file_type != FileType.INTEGRATION:
@@ -55,11 +72,12 @@ def get_deprecated_custom_rn(path: str, file_type):
 
     # look for deprecated commands
     rn = ''
-    old_commands = commands_to_deprecate_dict(old_yml.get('script', {}).get('commands'))
-    new_commands = commands_to_deprecate_dict(new_yml_obj.script.get('commands'))
+    old_commands = commands_to_deprecate_set(old_yml.get('script', {}).get('commands'))
+    new_commands = commands_to_deprecate_set(new_yml.script.get('commands'))
 
-    for command_name, is_deprecated in new_commands.items():
-        if is_deprecated and not old_commands[command_name]:
+    for command_name in new_commands:
+        # if command is deprecated in new yml, and not in old yml
+        if command_name not in old_commands:
             rn += f'- Command ***{command_name}*** is deprecated. Use %%% instead.\n'
     return rn
 
@@ -584,7 +602,7 @@ class UpdateRN:
                 else:
                     deprecate_rn = ''
                     if _type in (FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK):
-                        deprecate_rn = get_deprecated_custom_rn(path, _type)
+                        deprecate_rn = get_deprecated_rn(path, _type)
                     if deprecate_rn:
                         rn_desc += text + deprecate_rn
                     else:

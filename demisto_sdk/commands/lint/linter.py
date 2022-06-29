@@ -13,7 +13,6 @@ import docker.models.containers
 import git
 import requests.exceptions
 import urllib3.exceptions
-from filelock import FileLock
 from packaging.version import parse
 from wcmatch.pathlib import NEGATE, Path
 
@@ -221,6 +220,8 @@ class Linter:
         if self._facts["docker_engine"]:
             logger.info(f'{log_prompt} - Collecting all docker images to pull')
             self._facts["images"] = [[image, -1] for image in get_all_docker_images(script_obj=script_obj)]
+            if os.getenv('GITLAB_CI', False):
+                self._facts["images"] = [f'docker-io.art.code.pan.run/{image}' for image in self._facts["images"]]
             # Gather environment variables for docker execution
             self._facts["env_vars"] = {
                 "CI": os.getenv("CI", False),
@@ -618,7 +619,7 @@ class Linter:
         # Trying to pull image based on dockerfile hash, will check if something changed
         errors = ""
         identifier = hashlib.md5("\n".join(sorted(pip_requirements)).encode("utf-8")).hexdigest()
-        test_image_name = f'devtest{docker_base_image[0]}-{identifier}'
+        test_image_name = f'{docker_base_image[0].replace("demisto", "devtestdemisto")}-{identifier}'
         test_image = None
         try:
             logger.info(f"{log_prompt} - Trying to pull existing image {test_image_name}")
@@ -637,8 +638,9 @@ class Linter:
                 if self._docker_hub_login:
                     for _ in range(2):
                         try:
-                            self._docker_client.images.push(test_image_name)
-                            logger.info(f"{log_prompt} - Image {test_image_name} pushed to repository")
+                            test_image_name_to_push = test_image_name.replace('docker-io.art.code.pan.run/', '')
+                            self._docker_client.images.push(test_image_name_to_push)
+                            logger.info(f"{log_prompt} - Image {test_image_name_to_push} pushed to repository")
                             break
                         except (requests.exceptions.ConnectionError, urllib3.exceptions.ReadTimeoutError,
                                 requests.exceptions.ReadTimeout):
@@ -899,11 +901,10 @@ class Linter:
         pack_dir = self._pack_abs_dir.parent if self._pack_abs_dir.parts[-1] == INTEGRATIONS_DIR else \
             self._pack_abs_dir.parent.parent
         pack_metadata_file = pack_dir / PACKS_PACK_META_FILE_NAME
-        with FileLock(f'{pack_metadata_file.as_posix()}.lock'):
-            logger.debug(f'Lock acquired for {pack_metadata_file} to {self._pack_name}')
-            with pack_metadata_file.open() as f:
-                pack_meta_content: Dict = json.load(f)
-        logger.debug(f'Lock released for {pack_metadata_file} of {self._pack_name}')
+        logger.debug(f'Before reading content of {pack_metadata_file}')
+        with pack_metadata_file.open() as f:
+            pack_meta_content: Dict = json.load(f)
+        logger.debug(f'After reading content of {pack_metadata_file}')
         self._facts['support_level'] = pack_meta_content.get('support')
         if self._facts['support_level'] == 'partner' and pack_meta_content.get('Certification'):
             self._facts['support_level'] = 'certified partner'

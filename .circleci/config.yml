@@ -45,7 +45,7 @@ references:
 
     install_node_ci: &install_node_ci
       - node/install-packages:
-          override-ci-command: npm install -g
+          override-ci-command: sudo npm install -g
           cache-version: << pipeline.parameters.cache-version >>
 
     install_demisto_sdk: &install_demisto_sdk

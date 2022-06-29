@@ -53,5 +53,3 @@ class Readme(TextObject):
         self.handle_marketplace_tags()
         return super().dump(dest_dir)
 
-'#### This pack was co-authored by:\n - Contributor1\n - Contributor2\n\nThank you for contributing to Cortex XSOAR.\n\nIf you are interested in contributing, visit our contribution process [here](https://xsoar.pan.dev/docs/contributing/contributing).'
-'#### This pack was co-authored by:\n- Contributor1\n- Contributor2\n\nThank you for contributing to Cortex XSOAR.\n\nIf you are interested in contributing, visit our contribution process [here](https://xsoar.pan.dev/docs/contributing/contributing).'

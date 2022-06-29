@@ -82,11 +82,11 @@ class TestErrors(unittest.TestCase):
         When: Returning an error message
         Then: Return error message with the input value as a tuple containing error and error code.
         """
-        expected_result = ("The File's name, which is: 'FileName', should be equal to its ID, which "
-                           "is: 'FileID'. please update the file.", "BA101")
+        expected_result = ('The name attribute of myIntegration.yml (currently FileName) '
+                           'should be identical to its `id` attribute (FileID)', 'BA101')
         name = "FileName"
         file_id = "FileID"
-        result = Errors.id_should_equal_name(name, file_id)
+        result = Errors.id_should_equal_name(name, file_id, 'packs/myPack/integrations/myIntegration/myIntegration.yml')
         assert result == expected_result
 
     def test_file_type_not_supported(self):

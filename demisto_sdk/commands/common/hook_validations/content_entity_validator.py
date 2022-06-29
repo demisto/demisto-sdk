@@ -151,12 +151,12 @@ class ContentEntityValidator(BaseValidator):
 
     @error_codes('BA101')
     def _is_id_equals_name(self, file_type):
-        """Validate that the id of the file equals to the name.
+        """Validates that the id of a content item matches its name attribute.
          Args:
-            file_type (str): the file type. can be 'integration', 'script', 'playbook', 'dashboard', 'id'
+            file_type (str): the file type. can be 'integration', 'script', 'playbook', 'dashboard'
 
         Returns:
-            bool. Whether the file's id is equal to its name
+            bool. Whether the id attribute is equal to the name attribute.
         """
 
         id_ = _get_file_id(file_type, self.current_file)

@@ -45,6 +45,7 @@ references:
 
     install_node_ci: &install_node_ci
       - node/install-packages:
+          override-ci-command: npm install -g
           cache-version: << pipeline.parameters.cache-version >>
 
     install_demisto_sdk: &install_demisto_sdk
@@ -106,7 +107,6 @@ jobs:
               TEST_FILES=$(echo "$TEST_FILES" | circleci tests split --split-by=timings)
 
               mkdir test-results
-              sudo npm install -g markdownlint-cli
               poetry run pytest -v --cov=demisto_sdk --cov-report=html --junitxml=test-results/junit.xml $TEST_FILES
         - store_test_results:
             path: test-results

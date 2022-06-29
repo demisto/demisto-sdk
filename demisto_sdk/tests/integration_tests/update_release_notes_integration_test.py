@@ -101,7 +101,7 @@ def test_update_release_notes_modified_integration(demisto_client, mocker):
 
     runner = CliRunner(mix_stderr=False)
     mocker.patch('demisto_sdk.commands.common.tools.get_pack_name', return_value='FeedAzureValid')
-
+    mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.get_deprecated_rn', return_value='')
     mocker.patch.object(UpdateRN, 'is_bump_required', return_value=True)
     mocker.patch.object(ValidateManager, 'setup_git_params', return_value='')
     mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git', return_value=(modified_files, set(),

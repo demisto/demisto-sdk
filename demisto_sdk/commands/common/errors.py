@@ -1,4 +1,5 @@
 from distutils.version import LooseVersion
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import decorator
@@ -234,8 +235,10 @@ ERROR_CODE = {
     'empty_outputs_common_paths': {'code': 'IN149', 'ui_applicable': False, 'related_field': 'contextOutput'},
     'invalid_siem_integration_name': {'code': 'IN150', 'ui_applicable': True, 'related_field': 'display'},
     "empty_command_arguments": {'code': 'IN151', 'ui_applicable': False, 'related_field': 'arguments'},
-    'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True, 'related_field': 'defaultvalue'},
-    'not_supported_integration_parameter_url_defaultvalue': {'code': 'IN153', 'ui_applicable': False, 'related_field': 'defaultvalue'},
+    'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True,
+                                                'related_field': 'defaultvalue'},
+    'not_supported_integration_parameter_url_defaultvalue': {'code': 'IN153', 'ui_applicable': False,
+                                                             'related_field': 'defaultvalue'},
     'missing_reliability_parameter': {'code': 'IN154', 'ui_applicable': False, 'related_field': 'configuration'},
 
     # IT - Incident Types
@@ -508,9 +511,9 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def id_should_equal_name(name, file_id):
-        return "The File's name, which is: '{}', should be equal to its ID, which is: '{}'." \
-               " please update the file.".format(name, file_id)
+    def id_should_equal_name(name: str, id_: str, file_path: str):
+        file_name = Path(file_path).name
+        return f"The name attribute of {file_name} (currently {name}) should be identical to its `id` attribute ({id_})"
 
     @staticmethod
     @error_code_decorator
@@ -1357,7 +1360,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def content_entity_version_not_match_playbook_version(
-        main_playbook: str, entities_names_and_version: str, main_playbook_version: str, content_sub_type: str
+            main_playbook: str, entities_names_and_version: str, main_playbook_version: str, content_sub_type: str
     ):
         return f"Playbook {main_playbook} with 'fromversion' {main_playbook_version} uses the following" \
                f" {content_sub_type} with an invalid 'fromversion': [{entities_names_and_version}]. " \

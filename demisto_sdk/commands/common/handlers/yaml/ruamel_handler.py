@@ -22,7 +22,7 @@ class RUAMEL_Handler(XSOAR_Handler):
         """Creating an instance of ruamel for each command. Best practice by ruamel"""
         yaml = YAML()
         yaml.allow_duplicate_keys = self._allow_duplicate_keys
-        yaml.preserve_quotes = self._allow_duplicate_keys
+        yaml.preserve_quotes = self._preserve_quotes
         yaml.width = self._width
         return yaml
 

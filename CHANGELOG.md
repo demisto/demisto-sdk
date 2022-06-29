@@ -2,6 +2,7 @@
 
 ## Unreleased
 * Fixed an issue where an incorrect error was shown when the `id` of a content item differed from its `name` attribute.
+* Fixed an issue where the ruamel_handler mishandled the `preserve_quotes` argument @icholy
 
 ## 1.6.9
 * Added a new validation that checks whether a pack should be deprecated.

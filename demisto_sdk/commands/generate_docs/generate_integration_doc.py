@@ -279,21 +279,15 @@ def generate_mirroring_section(yaml_data: dict):
         f'You can enable incident mirroring between Cortex XSOAR incidents and {integration_name} %%incident type%% ('
         f'available from Cortex XSOAR version 6.0.0).',
         'To setup the mirroring follow these instructions:',
-        '1. Navigate to **Settings** > **Integrations** > **Servers & Services**.',
-        f'2. Search for {integration_name} and select your integration instance.',
-        '3. Enable Fetches incidents.'
+        '1. Enable Fetching incidents in your instance configuration.',
     ]
 
-    index = 4
+    index = 2
+
+    #fetch query
     if is_configuration_exists(yaml_data, ['incidents_fetch_query']):
         section.append(
             f'{index}. Optional: You can go to the Incidents fetch query parameter and select the query to fetch the incidents from {integration_name}.')
-        index = index + 1
-    tags = is_configuration_exists(yaml_data, ['comment_tag', 'work_notes_tag', 'file_tag'])
-    tags = [tag.get('display', '') for tag in tags]
-    if tags:
-        section.append(f'{index}. Optional: You can go to the mirroring tags parameter and select the tags used to '
-                       f'mark incident entries to be mirrored. Available tags are {str(tags)[1:-1]}.')
         index = index + 1
 
     # Mirroring direction
@@ -307,6 +301,15 @@ def generate_mirroring_section(yaml_data: dict):
         index = index + 1
         section.append(dir_text)
         section.extend(generate_table_section(title='', data=options, horizontal_rule=False, numbered_section=True))
+
+    # mirroring tags
+
+    tags = is_configuration_exists(yaml_data, ['comment_tag', 'work_notes_tag', 'file_tag'])
+    tags = [tag.get('display', '') for tag in tags]
+    if tags:
+        section.append(f'{index}. Optional: You can go to the mirroring tags parameter and select the tags used to '
+                       f'mark incident entries to be mirrored. Available tags are {str(tags)[1:-1]}.')
+        index = index + 1
 
     # Close Mirrored XSOAR Incident param
 
@@ -325,7 +328,8 @@ def generate_mirroring_section(yaml_data: dict):
                     'Newly fetched incidents will be mirrored in the chosen direction. However, this selection does '
                     'not affect existing incidents.',
                     f'**Important Note:** To ensure the mirroring works as expected, mappers are required,'
-                    f' both for incoming and outgoing, to map the expected fields in XSOAR and {integration_name}.'])
+                    f' both for incoming and outgoing, to map the expected fields in XSOAR and {integration_name}.',
+                    ''])
 
     return section
 

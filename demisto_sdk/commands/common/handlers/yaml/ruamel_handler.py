@@ -29,7 +29,7 @@ class RUAMEL_Handler(XSOAR_Handler):
     def load(self, stream):
         return self.yaml.load(stream)
 
-    def dump(self, data, stream, sort_keys=False, indent=0):
+    def dump(self, data, stream, indent=0, sort_keys=False, **kwargs):
         if sort_keys:
             data = order_dict(data)
         yaml = self.yaml
@@ -37,7 +37,7 @@ class RUAMEL_Handler(XSOAR_Handler):
             yaml.indent(sequence=indent)
         yaml.dump(data, stream)
 
-    def dumps(self, data, sort_keys=False, indent=None):
+    def dumps(self, data, indent=0, sort_keys=False, **kwargs):
         """
 
         This function is not recommended and not efficient!

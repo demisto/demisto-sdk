@@ -445,6 +445,7 @@ MIRRORING_TEST = [({'display': 'CrowdStrike Falcon',
                     'configuration': [
                         {'name': 'incidents_fetch_query'},
                         {'name': 'comment_tag', 'display': 'test comment tag'},
+                        {'name': 'work_notes_tag', 'display': 'test work notes tag'},
                         {'name': 'mirror_direction',
                          'options': ['None', 'Incoming', 'Outgoing', 'Incoming And Outgoing']},
                         {'name': 'close_incident'},

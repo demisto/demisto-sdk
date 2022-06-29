@@ -268,16 +268,16 @@ def generate_mirroring_section(yaml_data: dict) -> List[str]:
     integration_name = format(yaml_data['display'])
     directions = {
         'None': 'Turns off incident mirroring.',
-        'Incoming': f'Any changes in {integration_name} %%incident type%%% (%%mirroring incoming fields%%) will be reflected in XSOAR incidents.',
-        'Outgoing': f'Any changes in XSOAR incidents will be reflected in {integration_name} %%incident type%%% (%%mirroring outgoing fields%%).',
-        'Incoming And Outgoing': f'Changes in XSOAR incidents and {integration_name} %%incident type%%% will be reflected in both directions.'
+        'Incoming': f'Any changes in {integration_name} events (mirroring incoming fields) will be reflected in XSOAR incidents.',
+        'Outgoing': f'Any changes in XSOAR incidents will be reflected in {integration_name} events (outgoing mirrored fields).',
+        'Incoming And Outgoing': f'Changes in XSOAR incidents and {integration_name} events will be reflected in both directions.'
     }
 
     section = [
         '## Incident Mirroring',
         '',
-        f'You can enable incident mirroring between Cortex XSOAR incidents and {integration_name} %%incident type%% ('
-        f'available from Cortex XSOAR version 6.0.0).',
+        f'You can enable incident mirroring between Cortex XSOAR incidents and {integration_name} corresponding '
+        f'events (available from Cortex XSOAR version 6.0.0).',
         'To setup the mirroring follow these instructions:',
         '1. Enable Fetching incidents in your instance configuration.',
     ]
@@ -291,7 +291,8 @@ def generate_mirroring_section(yaml_data: dict) -> List[str]:
         options = []
         for option in direction_conf[0].get('options', []):
             options.append({'Option': option, 'Description': directions.get(option, '')})
-        dir_text = f'{index}. In the Mirroring Direction integration parameter, select in which direction the incidents should be mirrored:'
+        dir_text = f'{index}. In the Mirroring Direction integration parameter, select in which direction the ' \
+                   f'incidents should be mirrored:'
         index = index + 1
         section.append(dir_text)
         section.extend(generate_table_section(title='', data=options, horizontal_rule=False, numbered_section=True))
@@ -302,7 +303,7 @@ def generate_mirroring_section(yaml_data: dict) -> List[str]:
     tags = [tag.get('display', '') for tag in tags]
     if tags:
         section.append(f'{index}. Optional: You can go to the mirroring tags parameter and select the tags used to '
-                       f'mark incident entries to be mirrored. Available tags are {str(tags)[1:-1]}.')
+                       f'mark incident entries to be mirrored. Available tags are: {", ".join(tags)}.')
         index = index + 1
 
     # Close Mirrored XSOAR Incident param
@@ -310,13 +311,12 @@ def generate_mirroring_section(yaml_data: dict) -> List[str]:
     if is_configuration_exists(yaml_data, ['close_incident']):
         section.append(
             f'{index}. Optional: Check the Close Mirrored XSOAR Incident integration parameter to close the Cortex'
-            f' XSOAR incident when the corresponding %%incident type%% is closed in {integration_name}.')
+            f' XSOAR incident when the corresponding event is closed in {integration_name}.')
         index = index + 1
     if is_configuration_exists(yaml_data, ['close_out']):
         section.append(
-            f'{index}. Optional: Check the Close Mirrored {integration_name} %%incident type%% integration'
-            f' parameter to close the {integration_name} %%incident type%% when the corresponding Cortex XSOAR'
-            f' incident is closed.')
+            f'{index}. Optional: Check the Close Mirrored {integration_name} event integration'
+            f' parameter to close them when the corresponding Cortex XSOAR incident is closed.')
 
     section.extend(['',
                     'Newly fetched incidents will be mirrored in the chosen direction. However, this selection does '

@@ -201,6 +201,7 @@ class Pack:
                 'name': name,
                 'display': name,
                 'description': f'this is an integration {name}',
+                'category': 'category',
                 'script': {
                     'type': 'python',
                     'subtype': 'python3',
@@ -598,6 +599,7 @@ class Pack:
         name: Optional[str] = None,
         yml: Optional[dict] = None,
         rules: Optional[str] = None,
+        schema: Optional[dict] = None,
     ) -> Rule:
         if not name:
             name = f'modelingrule_{len(self.modeling_rules)}'
@@ -612,6 +614,9 @@ class Pack:
         if not rules:
             rules = '[MODEL: dataset="dataset", model="Model", version=0.1]'
 
+        if not schema:
+            schema = {"test_audit_raw": {"name": {"type": "string", "is_array": False}}}
+
         rule = Rule(
             tmpdir=self._modeling_rules_path,
             name=name,
@@ -620,6 +625,7 @@ class Pack:
         rule.build(
             yml=yml,
             rules=rules,
+            schema=schema
         )
         self.modeling_rules.append(rule)
         return rule

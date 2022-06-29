@@ -118,9 +118,9 @@ class YmlSplitter:
             self.extract_rules(f'{output_path}/{base_name}.xif')
             self.extract_rule_schema_and_samples(f'{output_path}/{base_name}.json')
             if 'rules' in yaml_obj:
-                del yaml_obj['rules']
+                yaml_obj['rules'] = ''
             if 'schema' in yaml_obj:
-                del yaml_obj['schema']
+                yaml_obj['schema'] = ''
             if 'samples' in yaml_obj:
                 del yaml_obj['samples']
             with open(yaml_out, 'w') as yf:

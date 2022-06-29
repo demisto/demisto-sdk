@@ -22,6 +22,8 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
     DashboardValidator
+from demisto_sdk.commands.common.hook_validations.description import \
+    DescriptionValidator
 from demisto_sdk.commands.common.hook_validations.generic_field import \
     GenericFieldValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
@@ -396,10 +398,12 @@ class TestValidators:
         mocker.patch.object(ScriptValidator, 'is_there_separators_in_names', return_value=True)
         mocker.patch.object(ScriptValidator, 'is_docker_image_valid', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_valid_integration_file_path', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_py_file_names', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_there_separators_in_names', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_docker_image_valid', return_value=True)
         mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
                             return_value=True)
+        mocker.patch.object(DescriptionValidator, 'is_valid_description_name', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
@@ -470,7 +474,12 @@ class TestValidators:
                                                                 pack_error_ignore_list=[], is_modified=True)
 
     def test_files_validator_validate_pack_unique_files(self, mocker):
+        from demisto_sdk.commands.common.content.objects.pack_objects.pack import \
+            Pack
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        mocker.patch.object(Pack, 'should_be_deprecated', return_value=False)
+        # mocking should_be_deprecated must be done because the get_dict_from_file is being mocked.
+        # should_be_deprecated relies on finding the correct file content from get_dict_from_file function.
         validate_manager = ValidateManager(skip_conf_json=True)
         result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={})
         assert result
@@ -506,9 +515,16 @@ class TestValidators:
             Then:
                 - return a True validation response
         """
+        from demisto_sdk.commands.common.content.objects.pack_objects.pack import \
+            Pack
         id_set_path = os.path.normpath(
             os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+
+        mocker.patch.object(Pack, 'should_be_deprecated', return_value=False)
+        # mocking should_be_deprecated must be done because the get_dict_from_file is being mocked.
+        # should_be_deprecated relies on finding the correct file type from get_dict_from_file function.
+
         validate_manager = ValidateManager(skip_conf_json=True, id_set_path=id_set_path)
         result = validate_manager.validate_pack_unique_files(VALID_PACK, pack_error_ignore_list={})
         assert result

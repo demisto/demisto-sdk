@@ -1,9 +1,10 @@
 import logging
+import json
 from typing import List, Optional, Union
 
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.constants import FileType, CONTRIBUTORS_README_TEMPLATE
 from demisto_sdk.commands.common.content.objects.abstract_objects import \
     TextObject
 from demisto_sdk.commands.common.tools import get_mp_tag_parser
@@ -18,14 +19,19 @@ class Readme(TextObject):
     def type(self):
         return FileType.README
 
+    def prepare_contributors_text(self, contrib_list):
+        fixed_contributor_names = [f' - {contrib_name}\n' for contrib_name in contrib_list]
+        return CONTRIBUTORS_README_TEMPLATE.format(contributors_names=''.join(fixed_contributor_names))
+
     def mention_contributors_in_readme(self):
         """Mention contributors in pack readme"""
         try:
             if self.contributors:
                 with open(self.contributors.path, 'r') as contributors_file:
-                    contributor_data = contributors_file.read()
+                    contributor_list = json.load(contributors_file)
+                contribution_data = self.prepare_contributors_text(contributor_list)
                 with open(self._path, 'a+') as readme_file:
-                    readme_file.write(contributor_data)
+                    readme_file.write(contribution_data)
         except Exception as e:
             print(e)
 
@@ -46,3 +52,6 @@ class Readme(TextObject):
         self.mention_contributors_in_readme()
         self.handle_marketplace_tags()
         return super().dump(dest_dir)
+
+'#### This pack was co-authored by:\n - Contributor1\n - Contributor2\n\nThank you for contributing to Cortex XSOAR.\n\nIf you are interested in contributing, visit our contribution process [here](https://xsoar.pan.dev/docs/contributing/contributing).'
+'#### This pack was co-authored by:\n- Contributor1\n- Contributor2\n\nThank you for contributing to Cortex XSOAR.\n\nIf you are interested in contributing, visit our contribution process [here](https://xsoar.pan.dev/docs/contributing/contributing).'

@@ -235,10 +235,8 @@ ERROR_CODE = {
     'empty_outputs_common_paths': {'code': 'IN149', 'ui_applicable': False, 'related_field': 'contextOutput'},
     'invalid_siem_integration_name': {'code': 'IN150', 'ui_applicable': True, 'related_field': 'display'},
     "empty_command_arguments": {'code': 'IN151', 'ui_applicable': False, 'related_field': 'arguments'},
-    'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True,
-                                                'related_field': 'defaultvalue'},
-    'not_supported_integration_parameter_url_defaultvalue': {'code': 'IN153', 'ui_applicable': False,
-                                                             'related_field': 'defaultvalue'},
+    'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True, 'related_field': 'defaultvalue'},
+    'not_supported_integration_parameter_url_defaultvalue': {'code': 'IN153', 'ui_applicable': False, 'related_field': 'defaultvalue'},
     'missing_reliability_parameter': {'code': 'IN154', 'ui_applicable': False, 'related_field': 'configuration'},
 
     # IT - Incident Types
@@ -1360,7 +1358,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def content_entity_version_not_match_playbook_version(
-            main_playbook: str, entities_names_and_version: str, main_playbook_version: str, content_sub_type: str
+        main_playbook: str, entities_names_and_version: str, main_playbook_version: str, content_sub_type: str
     ):
         return f"Playbook {main_playbook} with 'fromversion' {main_playbook_version} uses the following" \
                f" {content_sub_type} with an invalid 'fromversion': [{entities_names_and_version}]. " \

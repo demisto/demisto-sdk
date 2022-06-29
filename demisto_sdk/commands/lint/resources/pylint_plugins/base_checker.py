@@ -53,7 +53,10 @@ base_msg = {
               "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"),
     "W9013": ("Hardcoded http URL was found in the code, using https (when possible) is recommended.",
               "http-usage",
-              "Please use the https method if possible")
+              "Please use the https method if possible"),
+    "E9012": ("demisto.log() is found, Please use demisto.info() or demisto.debug() instead.",
+              "demisto.log-exist",
+              "Please don't use demisto.log() as it might cause errors, and use demisto.info() or demisto.debug() instead.")
 }
 
 TEST_MODULE = "test-module"
@@ -89,6 +92,7 @@ class CustomBaseChecker(BaseChecker):
         self._quit_checker(node)
         self._exit_checker(node)
         self._commandresults_indicator_check(node)
+        self._demisto_log(node)
 
     def visit_const(self, node):
         self._http_checker(node)
@@ -234,6 +238,18 @@ class CustomBaseChecker(BaseChecker):
 
         if isinstance(node.value, str) and node.value.startswith('http:'):
             self.add_message("http-usage", node=node)
+
+    def _demisto_log(self, node):
+        """
+        Args: node which is a Const Node.
+        Check:
+        - if demisto.log() statement exists in the current node.
+
+        Adds the relevant error message using `add_message` function if one of the above exists.
+        """
+        if isinstance(node.func, astroid.Attribute) and isinstance(node.func.expr, astroid.Name):
+            if node.func.expr.name == 'demisto' and node.func.attrname == 'log':
+                self.add_message("demisto.log-exist", node=node)
 
     # -------------------------------------------- Import From Node ---------------------------------------------
 

@@ -286,34 +286,6 @@ def modify_entity(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     content_repo.run_validations()
 
 
-def all_files_renamed(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
-    """
-    Given: HelloWorld Integration
-
-    When: Renaming the all files to a new name
-
-    Then: Validate lint, secrets and validate exit code is 0
-    """
-    monkeypatch.chdir(content_git_repo.content)  # type: ignore
-    path_to_hello_world_pack = Path("Packs") / "HelloWorld" / "Integrations" / "HelloWorld"
-    hello_world_path = content_repo.content / path_to_hello_world_pack
-    # rename all files in dir
-    for file in list_files(hello_world_path):
-        new_file = file.replace('HelloWorld', 'helloworld')
-        if not file == new_file:
-            content_repo.run_command(
-                f"git mv {path_to_hello_world_pack / file} {path_to_hello_world_pack / new_file}"
-            )
-    runner = CliRunner(mix_stderr=False)
-    res = runner.invoke(main, "update-release-notes -i Packs/HelloWorld -u revision")
-    assert res.exit_code == 0, f"stdout = {res.stdout}\nstderr = {res.stderr}"
-    try:
-        content_repo.update_rn()
-    except IndexError as exception:
-        raise TestError(f"stdout = {res.stdout}\nstderr = {res.stderr}") from exception
-    content_repo.run_validations()
-
-
 def rename_incident_field(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch):
     """
     Given: Incident field in HelloWorld pack.
@@ -344,7 +316,6 @@ def rename_incident_field(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch
     init_pack,
     init_integration,
     modify_entity,
-    all_files_renamed,
     rename_incident_field
 ])
 def test_workflow_by_sequence(function: Callable, monkeypatch: MonkeyPatch):

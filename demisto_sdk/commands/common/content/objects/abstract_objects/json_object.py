@@ -1,11 +1,13 @@
 from typing import Optional, Union
 
-import ujson
 from wcmatch.pathlib import Path
 
 import demisto_sdk.commands.common.content.errors as exc
+from demisto_sdk.commands.common.handlers import JSON_Handler
 
 from .dictionary_based_object import DictionaryBasedObject
+
+json = JSON_Handler()
 
 
 class JSONObject(DictionaryBasedObject):
@@ -43,7 +45,7 @@ class JSONObject(DictionaryBasedObject):
     def _unserialize(self) -> None:
         """Load json to dictionary"""
         try:
-            self._as_dict = ujson.load(self._path.open())
+            self._as_dict = json.load(self._path.open())
         except ValueError as e:
             raise exc.ContentSerializeError(self, self.path, str(e))
 
@@ -53,7 +55,7 @@ class JSONObject(DictionaryBasedObject):
         """
         dest_file = self._create_target_dump_dir(dest_dir) / self.normalize_file_name()
         with open(dest_file, 'w') as file:
-            ujson.dump(self.to_dict(), file)
+            json.dump(self.to_dict(), file)
         return [dest_file]
 
     def dump(self, dest_dir: Optional[Union[Path, str]] = None):

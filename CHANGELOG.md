@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where an incorrect error was shown when the `id` of a content item differed from its `name` attribute.
+* Added support for automatically generated rn for deprecated items in **update-release-notes** command.
+
+## 1.6.9
 * Added a new validation that checks whether a pack should be deprecated.
 * Added a new ability to the **format** command to deprecate a pack.
 * Fixed an issue where the **validate** command sometimes returned a false negative in cases where there are several sub-playbooks with the same ID.
@@ -12,9 +16,12 @@
 * Added support for modeling and parsing rules in the **split** command.
 * Added support for README files in **format** command.
 * Added a **validate** check, making sure classifier id and name values match. Updated the classifier **format** to update the id accordingly.
-* The **generate-docs** command will now auto-generate the playbook image link as default. Added the `--custom-image-link' argument to override.
+* The **generate-docs** command will now auto-generate the playbook image link by default.
+* Added the `--custom-image-link` argument to override.
 * Added a new flag to **generate-docs** command, allowing to add a custom image link to a playbook README.
-* Added support for automatically generated rn for deprecated items in **update-release-notes** command.
+* Added a new validation to the **validate** command to verify that the package directory name is the same as the files contained in the that package.
+* Added support in the **unify** command to unify a schema into its Modeling Rule.
+
 ## 1.6.8
 
 * Fixed an issue where **validate** did not fail on invalid playbook entities' versions (i.e. subplaybooks or scripts with higher fromversion than their parent playbook).

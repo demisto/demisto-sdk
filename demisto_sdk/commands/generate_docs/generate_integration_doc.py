@@ -284,18 +284,12 @@ def generate_mirroring_section(yaml_data: dict) -> List[str]:
 
     index = 2
 
-    #fetch query
-    if is_configuration_exists(yaml_data, ['incidents_fetch_query']):
-        section.append(
-            f'{index}. Optional: You can go to the Incidents fetch query parameter and select the query to fetch the incidents from {integration_name}.')
-        index = index + 1
-
     # Mirroring direction
 
-    direction_conf = is_configuration_exists(yaml_data, ['mirror_direction'])[0]
+    direction_conf = is_configuration_exists(yaml_data, ['mirror_direction'])
     if direction_conf:
         options = []
-        for option in direction_conf.get('options', []):
+        for option in direction_conf[0].get('options', []):
             options.append({'Option': option, 'Description': directions.get(option, '')})
         dir_text = f'{index}. In the Mirroring Direction integration parameter, select in which direction the incidents should be mirrored:'
         index = index + 1

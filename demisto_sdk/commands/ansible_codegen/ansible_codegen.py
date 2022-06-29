@@ -33,8 +33,20 @@ ANSIBLE_ONLINE_DOCS_URL_BASE = 'https://docs.ansible.com/ansible/latest/collecti
 
 
 class AnsibleIntegration:
+    """
+    Create a XSOAR Integration based on Ansible modules
+    """
+
     def __init__(self, base_name: str, verbose: bool = False, config_file_path: str = None,
                  container_image: str = None, output_dir: str = ".", fix_code: bool = False):
+        """
+        base_name:         The name to use for the Integration files.
+        verbose:           Increase logging detail
+        config_file_path:  Location of the ansible_codegen yaml config. The details of the integration to be generated are stored here.
+        container_image:   The container image to run the integration. This image should have ansible-runner and ansible installed as a bare minimum.
+        output_dir:        Directory to output the generated integration
+        fix_code:          To autopep8 or not the generated code
+        """
         self.config_file_path = config_file_path
         self.base_path = output_dir
         self.base_name = base_name
@@ -88,12 +100,12 @@ class AnsibleIntegration:
                     self.display = str(codegen_configuration.get('display'))
                     self.category = str(codegen_configuration.get('category'))
                     self.description = str(codegen_configuration.get('description'))
-                    self.test_command = codegen_configuration.get('test_command', None)
-                    self.command_prefix = codegen_configuration.get('command_prefix', None)
+                    self.test_command = codegen_configuration.get('test_command')
+                    self.command_prefix = codegen_configuration.get('command_prefix')
                     self.ansible_modules = list(codegen_configuration.get('ansible_modules', []))
-                    self.ignored_args = codegen_configuration.get('ignored_args', None)
+                    self.ignored_args = codegen_configuration.get('ignored_args')
                     self.parameters = codegen_configuration.get('parameters', [])
-                    self.creds_mapping = codegen_configuration.get('creds_mapping', None)
+                    self.creds_mapping = codegen_configuration.get('creds_mapping')
             except Exception as e:
                 print_error(f'Failed to load configuration file: {e}')
 
@@ -111,7 +123,7 @@ class AnsibleIntegration:
             self.parameters.append(concurrency_factor)
 
         # Set a command_prefix if not already provided
-        if self.command_prefix is None and self.name is not None:
+        if self.command_prefix is None and self.name:
             # If the config `name` is a single word then trust the caps
             self.command_prefix = self.name.lower() if len(self.name.split(' ')) == 1 else to_kebab_case(self.name)
 
@@ -176,7 +188,7 @@ class AnsibleIntegration:
             validation_message += f"\n  * Invalid option for host_type: {self.host_type}"
 
         # Check if XSOAR config parameters provided are valid
-        if self.parameters is not None:
+        if self.parameters:
 
             self.print_with_verbose('Creating partial integration yaml file for config validation...')
             yaml_file = self.save_yaml(self.base_path, skip_commands=True)
@@ -186,14 +198,14 @@ class AnsibleIntegration:
 
             # Schema Validation
             schema_check = structure_validator.is_valid_scheme()
-            if schema_check is False:
+            if not schema_check:
                 validation = False
                 validation_message += "\n  * Failed Schema validation"
 
             # Validation tests
             param_valid = integration_validator.is_valid_ansible_integration()
 
-            if param_valid is not True:
+            if not param_valid:
                 validation = False
                 validation_message += "\n  * Failed core integration validation"
 
@@ -209,7 +221,7 @@ class AnsibleIntegration:
 
         code = integration_code_header.format(host_type=self.host_type, creds_mapping=self.creds_mapping)
 
-        if self.test_command is not None:
+        if self.test_command:
             code += test_command_code.format(self.name.lower(), self.test_command)
         else:
             code += no_test_command_code
@@ -356,7 +368,7 @@ class AnsibleIntegration:
 
         module_examples = self.ansible_docs.get(module, {}).get("examples").strip()  # Pull up the examples section
         if module_examples is None:
-            self.print_with_verbose(f"{module} has no examples")
+            self.print_with_verbose(f"Module {module} has no examples")
             return []
 
         # If there are multiple just use the first, it's normally the most straight forward
@@ -366,7 +378,7 @@ class AnsibleIntegration:
         example_command = f"!{command_name} "  # Start of command
         if self.host_type in REMOTE_HOST_TYPES:  # Add a example host target
             example_command += "host=\"123.123.123.123\" "
-        if module_example is not None:
+        if module_example:
             module_example_lines = module_example.split("\n")
             for line in module_example_lines[2:]:  # Quick yaml to list skipping the first task "- name" line
                 split_line = line.split(": ")
@@ -432,8 +444,10 @@ class AnsibleIntegration:
             print(text)
 
     def remove_ansible_markup(self, text: str):
-        # Removes Ansible documentation link markup as per
-        # https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#linking-within-module-documentation
+        """
+        Removes Ansible documentation link markup as per
+        https://docs.ansible.com/ansible/latest/dev_guide/developing_modules_documenting.html#linking-within-module-documentation
+        """
         return re.sub('[ILUCMB]\\((.+?)\\)', '`\\g<1>`', text).strip()
 
     def get_command_name(self, module: str) -> str:
@@ -455,6 +469,9 @@ class AnsibleIntegration:
         return command_name
 
     def get_host_based_static_args(self) -> List[XSOARIntegration.Script.Command.Argument]:
+        """
+        Returns a XSOAR Command Argument list that would be used for modules that run on a remote host.
+        """
         # These are args that are added to all commands that interact with a remote host
         static_args = []
 
@@ -470,6 +487,10 @@ factor for high performance."
         return static_args
 
     def get_yaml_args(self, module) -> list:
+        """
+        For a given Ansible module parse it's yaml based documentation and return a list of corresponding XSOAR command arguments.
+        Must first have the module documentation loaded via self.fetch_ansible_docs()
+        """
         args = []
         command_options = self.ansible_docs.get(module, {}).get("doc").get("options")
 
@@ -505,7 +526,7 @@ factor for high performance."
 
             # Ansible docs have a empty list/dict as defaults....
             defaultValue = ""
-            if option.get('default') is not None and option.get('default') not in ['[]', '{}']:
+            if option.get('default') and option.get('default') not in ['[]', '{}']:
                 # The default True/False str cast of bool can be confusing. Using Yes/No instead.
                 if type(option.get('default')) is bool:
                     defaultValue = "Yes" if option.get('default') else "No"
@@ -514,7 +535,7 @@ factor for high performance."
 
             predefined = None
             auto = None
-            if option.get('choices') is not None:
+            if option.get('choices'):
                 predefined = list(option.get('choices'))
                 auto = "PREDEFINED"
             else:
@@ -536,14 +557,18 @@ factor for high performance."
         return args
 
     def get_yaml_outputs(self, module) -> list:
+        """
+        For a given Ansible module parse it's yaml based documentation and return a list of corresponding XSOAR command outputs.
+        Must first have the module documentation loaded via self.fetch_ansible_docs()
+        """
         command_doc = self.ansible_docs.get(module, {}).get("doc")
         command_returns = self.ansible_docs.get(module, {}).get("return")
         command_module = command_doc.get("module")
         outputs = []
-        if command_returns is not None:  # Some older ansible modules have no documented output
+        if command_returns:  # Some older ansible modules have no documented output
             for output, details in command_returns.items():
                 output_to_add = {}
-                if details is not None:
+                if details:
                     output_to_add['contextPath'] = str("%s.%s.%s" %
                                                        (self.name, to_pascal_case(command_module), output))
                     if type(details.get('description')) == list:

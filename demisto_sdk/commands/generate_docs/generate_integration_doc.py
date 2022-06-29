@@ -223,7 +223,7 @@ def generate_setup_section(yaml_data: dict):
 
 # Incident Mirroring
 
-def trigger_generate_mirroring_section(yml_data: dict):
+def trigger_generate_mirroring_section(yml_data: dict) -> bool:
     """
 
     Args:
@@ -256,7 +256,7 @@ def is_configuration_exists(yml_data: dict, names: list):
     return confs
 
 
-def generate_mirroring_section(yaml_data: dict):
+def generate_mirroring_section(yaml_data: dict) -> List[str]:
     """
 
     Args:

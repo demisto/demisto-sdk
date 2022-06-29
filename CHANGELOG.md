@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-* Fixed an issue where ignoring RM110 error code wasn't working. 
+* Fixed an issue where ignoring RM110 error code wasn't working.
 * Added a new validation that checks whether a pack should be deprecated.
 * Added a new ability to the **format** command to deprecate a pack.
 * Fixed an issue where the **validate** command sometimes returned a false negative in cases where there are several sub-playbooks with the same ID.

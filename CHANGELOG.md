@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where an incorrect error was shown when the `id` of a content item differed from its `name` attribute.
 
 ## 1.6.9
 * Added a new validation that checks whether a pack should be deprecated.

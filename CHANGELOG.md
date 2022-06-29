@@ -2,6 +2,7 @@
 
 ## Unreleased
 * Fixed an issue where an incorrect error was shown when the `id` of a content item differed from its `name` attribute.
+* Fixed an issue where the `preserve_quotes` in ruamel_handler received an incorrect value @icholy
 * Added support for automatically generated rn for deprecated items in **update-release-notes** command.
 
 ## 1.6.9

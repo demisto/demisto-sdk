@@ -1,6 +1,9 @@
+import re
 import unittest
 
 from demisto_sdk.commands.common.errors import Errors
+
+ERROR_CODE_REGEX = re.compile(r'[A-Z]{2}\d{3}')
 
 
 class TestErrors(unittest.TestCase):
@@ -166,3 +169,13 @@ class TestErrors(unittest.TestCase):
 
         result = Errors.integration_is_skipped(integration_id, skip_comment)
         assert result[0] == expected
+
+    def test_allowed_ignore_errors_format(self):
+        from demisto_sdk.commands.common.errors import ALLOWED_IGNORE_ERRORS
+        for error in ALLOWED_IGNORE_ERRORS:
+            assert ERROR_CODE_REGEX.fullmatch(error), f'{error} does not match an error code format'
+
+    def test_error_code_format(self):
+        from demisto_sdk.commands.common.errors import ERROR_CODE
+        for error in ERROR_CODE.values():
+            assert ERROR_CODE_REGEX.fullmatch(error['code']), f'{error} does not match an error code format'

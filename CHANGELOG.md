@@ -17,7 +17,7 @@
 * Added a new flag to **generate-docs** command, allowing to add a custom image link to a playbook README.
 * Added a new validation to the **validate** command to verify that the package directory name is the same as the files contained in the that package.
 * Added support in the **unify** command to unify a schema into its Modeling Rule.
-* Fixed an issue where the wrong error text was shown when the `id` of a content item differed from its `name` attribute.
+* Fixed an issue where an incorrect error was shown when the `id` of a content item differed from its `name` attribute.
 
 ## 1.6.8
 

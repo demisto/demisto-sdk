@@ -44,7 +44,7 @@ def commands_to_deprecate_set(commands: list) -> set:
     return res_set
 
 
-def get_yml_objects(path: str, file_type) -> tuple[Any, Union[Integration, Script, Playbook]]:
+def get_yml_objects(path: str, file_type) -> Tuple[Any, Union[Integration, Script, Playbook]]:
     """
     Generate yml files from master and from the current branch
     Args:

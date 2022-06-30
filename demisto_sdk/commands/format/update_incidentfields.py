@@ -1,8 +1,8 @@
 from typing import List, Tuple
 
 import click
-import ujson
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (get_dict_from_file,
                                                get_item_marketplaces,
                                                open_id_set_file)
@@ -10,6 +10,8 @@ from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
                                                           SKIP_RETURN_CODE,
                                                           SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
+
+json = JSON_Handler()
 
 
 class IncidentFieldJSONFormat(BaseUpdateJSON):
@@ -87,11 +89,25 @@ class IncidentFieldJSONFormat(BaseUpdateJSON):
 
                 yield aliased_field, alias_file_path
 
-    def _save_alias_field_file(self, dest_file_path, field_data):
+    def _save_alias_field_file(
+        self,
+        dest_file_path: str,
+        field_data: str,
+        indent: int = 4,
+        encode_html_chars: bool = True,
+        escape_forward_slashes: bool = False,
+        ensure_ascii: bool = False
+    ):
         """Save formatted JSON data to destination file."""
         with open(dest_file_path, 'w') as file:
-            ujson.dump(field_data, file, indent=4, encode_html_chars=True, escape_forward_slashes=False,
-                       ensure_ascii=False)
+            json.dump(
+                field_data,
+                file,
+                indent=indent,
+                encode_html_chars=encode_html_chars,
+                escape_forward_slashes=escape_forward_slashes,
+                ensure_ascii=ensure_ascii
+            )
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the incident fields JSON updater."""

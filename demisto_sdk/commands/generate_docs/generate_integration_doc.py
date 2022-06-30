@@ -268,9 +268,9 @@ def generate_mirroring_section(yaml_data: dict) -> List[str]:
     integration_name = format(yaml_data['display'])
     directions = {
         'None': 'Turns off incident mirroring.',
-        'Incoming': f'Any changes in {integration_name} events (mirroring incoming fields) will be reflected in XSOAR incidents.',
-        'Outgoing': f'Any changes in XSOAR incidents will be reflected in {integration_name} events (outgoing mirrored fields).',
-        'Incoming And Outgoing': f'Changes in XSOAR incidents and {integration_name} events will be reflected in both directions.'
+        'Incoming': f'Any changes in {integration_name} events (mirroring incoming fields) will be reflected in Cortex XSOAR incidents.',
+        'Outgoing': f'Any changes in Cortex XSOAR incidents will be reflected in {integration_name} events (outgoing mirrored fields).',
+        'Incoming And Outgoing': f'Changes in Cortex XSOAR incidents and {integration_name} events will be reflected in both directions.'
     }
 
     section = [
@@ -278,8 +278,8 @@ def generate_mirroring_section(yaml_data: dict) -> List[str]:
         '',
         f'You can enable incident mirroring between Cortex XSOAR incidents and {integration_name} corresponding '
         f'events (available from Cortex XSOAR version 6.0.0).',
-        'To setup the mirroring follow these instructions:',
-        '1. Enable Fetching incidents in your instance configuration.',
+        'To set up the mirroring:',
+        '1. Enable *Fetching incidents* in your instance configuration.',
     ]
 
     index = 2
@@ -291,7 +291,7 @@ def generate_mirroring_section(yaml_data: dict) -> List[str]:
         options = []
         for option in direction_conf[0].get('options', []):
             options.append({'Option': option, 'Description': directions.get(option, '')})
-        dir_text = f'{index}. In the Mirroring Direction integration parameter, select in which direction the ' \
+        dir_text = f'{index}. In the *Mirroring Direction* integration parameter, select in which direction the ' \
                    f'incidents should be mirrored:'
         index = index + 1
         section.append(dir_text)
@@ -310,19 +310,19 @@ def generate_mirroring_section(yaml_data: dict) -> List[str]:
 
     if is_configuration_exists(yaml_data, ['close_incident']):
         section.append(
-            f'{index}. Optional: Check the Close Mirrored XSOAR Incident integration parameter to close the Cortex'
+            f'{index}. Optional: Check the *Close Mirrored XSOAR Incident* integration parameter to close the Cortex'
             f' XSOAR incident when the corresponding event is closed in {integration_name}.')
         index = index + 1
     if is_configuration_exists(yaml_data, ['close_out']):
         section.append(
-            f'{index}. Optional: Check the Close Mirrored {integration_name} event integration'
+            f'{index}. Optional: Check the *Close Mirrored {integration_name} event* integration'
             f' parameter to close them when the corresponding Cortex XSOAR incident is closed.')
 
     section.extend(['',
                     'Newly fetched incidents will be mirrored in the chosen direction. However, this selection does '
                     'not affect existing incidents.',
                     f'**Important Note:** To ensure the mirroring works as expected, mappers are required,'
-                    f' both for incoming and outgoing, to map the expected fields in XSOAR and {integration_name}.',
+                    f' both for incoming and outgoing, to map the expected fields in Cortex XSOAR and {integration_name}.',
                     ''])
 
     return section

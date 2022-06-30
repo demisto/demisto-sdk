@@ -1,10 +1,11 @@
-import logging
 import json
+import logging
 from typing import List, Optional, Union
 
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.constants import FileType, CONTRIBUTORS_README_TEMPLATE
+from demisto_sdk.commands.common.constants import (
+    CONTRIBUTORS_README_TEMPLATE, FileType)
 from demisto_sdk.commands.common.content.objects.abstract_objects import \
     TextObject
 from demisto_sdk.commands.common.tools import get_mp_tag_parser
@@ -52,4 +53,3 @@ class Readme(TextObject):
         self.mention_contributors_in_readme()
         self.handle_marketplace_tags()
         return super().dump(dest_dir)
-

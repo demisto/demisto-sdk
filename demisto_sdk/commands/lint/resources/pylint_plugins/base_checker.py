@@ -51,7 +51,7 @@ base_msg = {
               "test-module command is not implemented in the python file, it is essential for every"
               " integration. Please add it to your code. For more information see: "
               "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"),
-    "E9012": ("Demisto.log is found, Please remove all demisto.log usage and exchange it with demisto.info/demisto.debug",
+    "E9012": ("Demisto.log is found, Please replace all demisto.log usage with demisto.info or demisto.debug",
               "demisto-log-exists",
               "Please remove all demisto.log usage and exchange it with demisto.info/demisto.debug"),
     "W9013": ("Hardcoded http URL was found in the code, using https (when possible) is recommended.",

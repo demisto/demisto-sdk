@@ -754,8 +754,39 @@ class TestRNUpdate:
                                           from_version=new_trigger.read_json_as_dict().get('fromversion'))
 
         assert '##### New:' not in rn_desc  # https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
-        assert 'description for testing' in rn_desc  # check if release note contains description when description not empty
-        assert '(Available from Cortex XSOAR 6.5.0).' not in rn_desc  # check if release note contains fromversion when exists
+        assert 'description for testing' in rn_desc  # check if release note contains description when description
+        # not empty
+        assert '(Available from Cortex XSOAR 6.5.0).' not in rn_desc  # check if release note contains fromversion
+        # when exists
+
+    def test_update_rn_with_deprecated_and_text(self, mocker):
+        """
+            Given:
+                - Path to a Integration
+            When:
+                - Calling build_rn_desc function
+            Then:
+                Ensure the function returns a valid rn when the command is deprecated compared to last yml and the text is added
+        """
+        from demisto_sdk.commands.update_release_notes.update_rn import \
+            UpdateRN
+        FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
+        NOT_DEP_INTEGRATION_PATH = pathlib.Path(FILES_PATH, 'deprecated_rn_test', 'not_deprecated_integration.yml')
+
+        update_rn = UpdateRN(pack_path="Packs/Test", update_type='minor', modified_files_in_pack={'Integration'},
+                             added_files=set())
+        old_yml_obj, new_yml_obj = get_mock_yml_obj(NOT_DEP_INTEGRATION_PATH, FileType.INTEGRATION, False)
+        new_yml_obj.script['commands'][0]['deprecated'] = True
+
+        mocker.patch('demisto_sdk.commands.update_release_notes.update_rn.get_yml_objects',
+                     return_value=(old_yml_obj, new_yml_obj))
+
+        desc = update_rn.build_rn_desc(_type=FileType.INTEGRATION, content_name='Integration test',
+                                       desc='Test description', text='text for test', from_version='5.5.0',
+                                       docker_image=None, path=NOT_DEP_INTEGRATION_PATH)
+
+        assert desc == "##### Integration test\n- text for test\n- Command ***xdr-get-incidents*** is deprecated. Use " \
+                       "%%% instead.\n"
 
     def test_deprecated_rn_integration_command(self, mocker):
         """

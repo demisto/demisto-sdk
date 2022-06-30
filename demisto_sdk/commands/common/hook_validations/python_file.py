@@ -1,8 +1,8 @@
 from pathlib import Path
 
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    error_codes, BaseValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator, error_codes)
 
 
 class PythonFileValidator(BaseValidator):

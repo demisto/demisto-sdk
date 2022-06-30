@@ -73,8 +73,9 @@ from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.pre_process_rule import \
     PreProcessRuleValidator
+from demisto_sdk.commands.common.hook_validations.python_file import \
+    PythonFileValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.hook_validations.python_file import PythonFileValidator
 from demisto_sdk.commands.common.hook_validations.release_notes import \
     ReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.release_notes_config import \

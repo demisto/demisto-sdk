@@ -1,6 +1,7 @@
 import pytest
 
-from demisto_sdk.commands.common.hook_validations.python_file import PythonFileValidator
+from demisto_sdk.commands.common.hook_validations.python_file import \
+    PythonFileValidator
 
 
 @pytest.mark.parametrize("file_input",

@@ -35,6 +35,7 @@ class RuleUnifier(YAMLUnifier):
         click.echo(f'Unifiying {self.package_path}...')
         self._set_dest_path()
         self._insert_rules()
+        self._insert_schema()
         self._insert_samples()
         self._output_yaml(file_path=self.dest_path, file_data=self.yml_data)
         click.secho(f'Successfully created unifyed YAML in {self.dest_path}', fg="green")
@@ -61,3 +62,12 @@ class RuleUnifier(YAMLUnifier):
                 click.echo(f'Added {len(samples)} samples.')
             else:
                 click.echo('Did not find matching samples.')
+
+    def _insert_schema(self):
+        schema_path = self.yml_path.replace('.yml', '_schema.json')
+        if os.path.exists(schema_path):
+            with io.open(schema_path, mode='r', encoding='utf-8') as schema_file:
+                schema = json.loads(schema_file.read())
+                self.yml_data['schema'] = FoldedScalarString(json.dumps(schema, indent=4))
+        else:
+            click.echo('No schema file was found.')

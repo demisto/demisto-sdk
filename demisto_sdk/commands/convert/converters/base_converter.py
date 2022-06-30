@@ -63,4 +63,4 @@ class BaseConverter:
             (None): Creates a new file.
         """
         with open(new_entity_path, 'w') as jf:
-            json.dump(obj=new_entity_dict, fp=jf, indent=2)
+            json.dump(data=new_entity_dict, fp=jf, indent=2)

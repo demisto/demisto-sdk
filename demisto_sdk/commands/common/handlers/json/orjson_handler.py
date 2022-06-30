@@ -15,14 +15,17 @@ class OrJSON_Handler(XSOAR_Handler):
         data = fp.read()
         return orjson.loads(data)
 
-    def dump(self, data, fp: IO[str], indent=None, sort_keys=False):
-        data = self.dumps(data, sort_keys=sort_keys, indent=indent)
+    def dump(self, data, fp: IO[str], indent=None, sort_keys=False, **kwargs):
+        data = self.dumps(data, sort_keys=sort_keys, indent=indent, **kwargs)
         fp.write(data)
 
-    def dumps(self, data, indent=None, sort_keys=False):
+    def dumps(self, data, indent=None, sort_keys=False, **kwargs):
         return orjson.dumps(
             data,
-            option=self._indent_level(indent) | self._sort_keys(sort_keys))
+            option=self._indent_level(indent) | self._sort_keys(sort_keys),
+            **kwargs  # if JSON_Handler will be replaced to OrJson, make sure to extract kwargs to prevent from
+            # unwanted variables to be passed. See ujson dump implementation for example.
+        )
 
     @staticmethod
     def _indent_level(indent: Optional[int] = None):

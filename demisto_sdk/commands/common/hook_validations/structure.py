@@ -55,7 +55,7 @@ class StructureValidator(BaseValidator):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path, specific_validations=specific_validations)
         self.is_valid = True
-        self.valid_extensions = ['.yml', '.json', '.md', '.png']
+        self.valid_extensions = ['.yml', '.json', '.md', '.png', '.py']
         self.file_path = file_path.replace('\\', '/')
         self.skip_schema_check = skip_schema_check
         self.pykwalify_logs = pykwalify_logs
@@ -130,7 +130,7 @@ class StructureValidator(BaseValidator):
         """
         # ignore schema checks for unsupported file types, reputations.json or is skip-schema-check is set.
         if self.scheme_name in [None, FileType.IMAGE, FileType.README, FileType.RELEASE_NOTES, FileType.TEST_PLAYBOOK,
-                                FileType.AUTHOR_IMAGE] \
+                                FileType.AUTHOR_IMAGE, FileType.PYTHON_FILE] \
                 or self.skip_schema_check or (self.scheme_name == FileType.REPUTATION and
                                               os.path.basename(self.file_path) == OLD_REPUTATION):
             return True

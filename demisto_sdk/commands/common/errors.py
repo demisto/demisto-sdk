@@ -59,6 +59,7 @@ ERROR_CODE = {
     "cli_name_and_id_do_not_match": {'code': "BA116", 'ui_applicable': False, 'related_field': 'cliName'},
     "incorrect_from_to_version_format": {'code': "BA117", 'ui_applicable': False, 'related_field': ''},
     "mismatching_from_to_versions": {'code': "BA118", 'ui_applicable': False, 'related_field': ''},
+    "copyright_section_in_python_error": {'code': "BA119", 'ui_applicable': False, 'related_field': ''},
 
     # BC - Backward Compatible
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -1775,6 +1776,12 @@ class Errors:
     def copyright_section_in_readme_error(line_nums):
         return f"Please note that keywords related to Copyright section (BSD, MIT, Copyright, proprietary) were found " \
                f"in lines: {line_nums}. Copyright section cannot be part of Pack ReadMe."
+
+    @staticmethod
+    @error_code_decorator
+    def copyright_section_in_python_error(line_nums):
+        return f"Please note that keywords related to Copyright section (BSD, MIT, Copyright, proprietary) were found " \
+               f"in lines: {line_nums}. Copyright section cannot be part of script."
 
     @staticmethod
     @error_code_decorator

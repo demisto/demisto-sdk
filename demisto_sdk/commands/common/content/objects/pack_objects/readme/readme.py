@@ -20,7 +20,8 @@ class Readme(TextObject):
     def type(self):
         return FileType.README
 
-    def prepare_contributors_text(self, contrib_list):
+    @staticmethod
+    def prepare_contributors_text(contrib_list):
         fixed_contributor_names = [f' - {contrib_name}\n' for contrib_name in contrib_list]
         return CONTRIBUTORS_README_TEMPLATE.format(contributors_names=''.join(fixed_contributor_names))
 

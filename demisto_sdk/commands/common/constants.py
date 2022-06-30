@@ -1023,9 +1023,9 @@ CONTENT_RELEASE_TAG_REGEX = r'^\d{2}\.\d{1,2}\.\d'
 RELEASE_NOTES_REGEX = re.escape(UNRELEASE_HEADER) + r'([\s\S]+?)## \[\d{2}\.\d{1,2}\.\d\] - \d{4}-\d{2}-\d{2}'
 
 # pack contributors template
-CONTRIBUTORS_README_TEMPLATE = '\n#### This pack was co-authored by:\n{contributors_names}\nThank you for ' \
-                               'contributing to Cortex XSOAR.\n\nIf you are interested in contributing, visit our ' \
-                               'contribution process [here](https://xsoar.pan.dev/docs/contributing/contributing).'
+CONTRIBUTORS_README_TEMPLATE = '\n### Pack Contributors:\n\n---\n{contributors_names}\nContributions are welcome and ' \
+                               'appreciated. For more info, visit our [Contribution Guide](https://xsoar.pan.dev/docs' \
+                               '/contributing/contributing).'
 
 # Beta integration disclaimer
 BETA_INTEGRATION_DISCLAIMER = 'Note: This is a beta Integration,' \

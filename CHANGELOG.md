@@ -2,7 +2,8 @@
 
 ## Unreleased
 * Fixed an issue where an incorrect error was shown when the `id` of a content item differed from its `name` attribute.
-* Fixed an issue where ignoring RM110 error code wasn't working.
+* Fixed an issue where the `preserve_quotes` in ruamel_handler received an incorrect value @icholy
+* Fixed an issue where ignoring RM110 error code wasn't working and added a validation to **ALLOWED_IGNORE_ERRORS** to validate that all error codes are inserted in the right format.
 
 ## 1.6.9
 * Added a new validation that checks whether a pack should be deprecated.

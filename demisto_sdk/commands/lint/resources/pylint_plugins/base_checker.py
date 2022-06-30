@@ -53,11 +53,7 @@ base_msg = {
               "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"),
     "W9013": ("Hardcoded http URL was found in the code, using https (when possible) is recommended.",
               "http-usage",
-              "Please use the https method if possible"),
-    "W9015": ("Keywords related to Copyright section (BSD, MIT, Copyright, proprietary) were found. Copyright section "
-              "is cannot be part of integration, tests or script code.",
-              "copyright-section",
-              "Please remove Copyright section if exist.")
+              "Please use the https method if possible")
 }
 
 TEST_MODULE = "test-module"
@@ -96,7 +92,6 @@ class CustomBaseChecker(BaseChecker):
 
     def visit_const(self, node):
         self._http_checker(node)
-        self._copyright_checker(node)
 
     def visit_importfrom(self, node):
         self._common_server_import(node)
@@ -239,19 +234,6 @@ class CustomBaseChecker(BaseChecker):
 
         if isinstance(node.value, str) and node.value.startswith('http:'):
             self.add_message("http-usage", node=node)
-
-    def _copyright_checker(self, node):
-        """
-        Args: node which is a Const Node.
-        Check:
-        - if copyright section related words exists in the current node.
-
-        Adds the relevant error message using `add_message` function if one of the above exists.
-
-        """
-        copyright_related_words = ['BSD', 'MIT', 'Copyright', 'proprietary']
-        if isinstance(node.value, str) and node.value in copyright_related_words:
-            self.add_message("copyright-section", node=node)
 
     # -------------------------------------------- Import From Node ---------------------------------------------
 

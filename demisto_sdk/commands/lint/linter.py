@@ -225,7 +225,7 @@ class Linter:
             logger.info(f'{log_prompt} - Collecting all docker images to pull')
             self._facts["images"] = [[image, -1] for image in get_all_docker_images(script_obj=script_obj)]
             if os.getenv('GITLAB_CI', False):
-                self._facts["images"] = [f'docker-io.art.code.pan.run/{image}' for image in self._facts["images"]]
+                self._facts["images"] = [[f'docker-io.art.code.pan.run/{image[0]}', -1] for image in self._facts["images"]]
             # Gather environment variables for docker execution
             self._facts["env_vars"] = {
                 "CI": os.getenv("CI", False),

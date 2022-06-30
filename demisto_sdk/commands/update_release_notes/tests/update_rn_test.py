@@ -16,7 +16,7 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.common.update_id_set import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.update_release_notes.update_rn import (
-    CLASS_BY_FILE_TYPE, UpdateRN, commands_to_deprecate_set, get_deprecated_rn)
+    CLASS_BY_FILE_TYPE, UpdateRN, deprecated_commands, get_deprecated_rn)
 
 json = JSON_Handler()
 
@@ -25,10 +25,13 @@ class TestRNUpdate:
     FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files'))
     NOT_DEP_INTEGRATION_PATH = pathlib.Path(FILES_PATH, 'deprecated_rn_test', 'not_deprecated_integration.yml')
     DEP_INTEGRATION_PATH = pathlib.Path(FILES_PATH, 'deprecated_rn_test', 'deprecated_integration.yml')
+    DEP_DESC_INTEGRATION_PATH = pathlib.Path(FILES_PATH, 'deprecated_rn_test', 'deprecated_desc_integration.yml')
     NOT_DEP_PLAYBOOK_PATH = pathlib.Path(FILES_PATH, 'deprecated_rn_test', 'not_deprecated_playbook.yml')
     DEP_PLAYBOOK_PATH = pathlib.Path(FILES_PATH, 'deprecated_rn_test', 'deprecated_playbook.yml')
+    DEP_DESC_PLAYBOOK_PATH = pathlib.Path(FILES_PATH, 'deprecated_rn_test', 'deprecated_desc_playbook.yml')
     NOT_DEP_SCRIPT_PATH = pathlib.Path(FILES_PATH, 'deprecated_rn_test', 'not_deprecated_script.yml')
     DEP_SCRIPT_PATH = pathlib.Path(FILES_PATH, 'deprecated_rn_test', 'deprecated_script.yml')
+    DEP_DESC_SCRIPT_PATH = pathlib.Path(FILES_PATH, 'deprecated_rn_test', 'deprecated_desc_script.yml')
 
     def test_build_rn_template_integration(self, mocker):
         """
@@ -766,7 +769,8 @@ class TestRNUpdate:
             When:
                 - Calling build_rn_desc function
             Then:
-                Ensure the function returns a valid rn when the command is deprecated compared to last yml and the text is added
+                Ensure the function returns a valid rn when the command is deprecated compared to last yml and the
+                 text is added
         """
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
@@ -818,14 +822,20 @@ class TestRNUpdate:
                              [(NOT_DEP_INTEGRATION_PATH, FileType.INTEGRATION, True, ""),
                               (NOT_DEP_INTEGRATION_PATH, FileType.INTEGRATION, False, ""),
                               (DEP_INTEGRATION_PATH, FileType.INTEGRATION, False, "- Deprecated. Use %%% instead.\n"),
+                              (DEP_DESC_INTEGRATION_PATH, FileType.INTEGRATION, False,
+                               "- Deprecated. Use Other Integration instead.\n"),
                               (DEP_INTEGRATION_PATH, FileType.INTEGRATION, True, ""),
                               (NOT_DEP_PLAYBOOK_PATH, FileType.PLAYBOOK, True, ""),
                               (NOT_DEP_PLAYBOOK_PATH, FileType.PLAYBOOK, False, ""),
                               (DEP_PLAYBOOK_PATH, FileType.PLAYBOOK, False, "- Deprecated. Use %%% instead.\n"),
+                              (DEP_DESC_PLAYBOOK_PATH, FileType.PLAYBOOK, False,
+                               "- Deprecated. Use another playbook instead.\n"),
                               (DEP_PLAYBOOK_PATH, FileType.PLAYBOOK, True, ""),
                               (NOT_DEP_SCRIPT_PATH, FileType.SCRIPT, True, ""),
                               (NOT_DEP_SCRIPT_PATH, FileType.SCRIPT, False, ""),
                               (DEP_SCRIPT_PATH, FileType.SCRIPT, False, "- Deprecated. Use %%% instead.\n"),
+                              (DEP_DESC_SCRIPT_PATH, FileType.SCRIPT, False,
+                               "- Deprecated. No available replacement.\n"),
                               (DEP_SCRIPT_PATH, FileType.SCRIPT, True, ""),
                               ])
     def test_deprecated_rn_yml(self, mocker, path, file_type, deprecated, expected_res):
@@ -1701,16 +1711,16 @@ def test_create_md_if_currentversion_is_higher(mocker, first_expected_results, s
     assert Counter(second_expected_results) == Counter(updated_versions_list)
 
 
-def test_commands_to_deprecate_set():
+def test_deprecated_commands():
     """
         Given:
             - List of commands
         When:
-            - Calling commands_to_deprecate_set function
+            - Calling deprecated_commands function
         Then:
             Ensure the function return a set of the deprecated commands only.
 
     """
     commands = [{"name": "command_1", "deprecated": True}, {"name": "command_2", "deprecated": False}]
-    res = commands_to_deprecate_set(commands)
+    res = deprecated_commands(commands)
     assert res == {"command_1"}

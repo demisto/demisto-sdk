@@ -3,8 +3,7 @@
 ## Unreleased
 * Fixed an issue where an incorrect error was shown when the `id` of a content item differed from its `name` attribute.
 * Fixed an issue where the `preserve_quotes` in ruamel_handler received an incorrect value @icholy
-* Added support for automatically generated rn for deprecated items in **update-release-notes** command.
-
+* Added support to automatically generate release notes for deprecated items in the **update-release-notes** command.
 ## 1.6.9
 * Added a new validation that checks whether a pack should be deprecated.
 * Added a new ability to the **format** command to deprecate a pack.

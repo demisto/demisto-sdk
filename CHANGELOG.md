@@ -5,7 +5,7 @@
 * Fixed an issue where the `preserve_quotes` in ruamel_handler received an incorrect value @icholy
 * Fixed an issue where the contribution credit text was not added correctly to the pack README.
 * Changed the contribution file implementation from markdown to a list of contributor names. The **create-content-artifact** will ue this list to prepare the needed credit message.
-
+f
 ## 1.6.9
 * Added a new validation that checks whether a pack should be deprecated.
 * Added a new ability to the **format** command to deprecate a pack.

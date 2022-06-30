@@ -15,6 +15,7 @@
 * The **generate-docs** command will now auto-generate the playbook image link as default. Added the `--custom-image-link' argument to override.
 * Added a new flag to **generate-docs** command, allowing to add a custom image link to a playbook README.
 * Added a new validation to the **validate** command to verify that the package directory name is the same as the files contained in the that package.
+* Added a new validation to the **validate** command to verify that md and python files do not contain words related to copyright sction.
 
 ## 1.6.8
 

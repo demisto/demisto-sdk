@@ -29,7 +29,7 @@ class ListsValidator(ContentEntityValidator):
             self.are_fromversion_and_toversion_in_correct_format(),
             self.are_fromversion_toversion_synchronized(),
             self._is_valid_version(),
-            self.is_valid_server_version(),
+            self.is_valid_from_version(),
         ]
 
         return all(validations)
@@ -43,7 +43,7 @@ class ListsValidator(ContentEntityValidator):
         return self._is_valid_version()
 
     @error_codes('LI100,LI101')
-    def is_valid_server_version(self) -> bool:
+    def is_valid_from_version(self) -> bool:
         """Checks if from version field is valid.
 
         Returns:

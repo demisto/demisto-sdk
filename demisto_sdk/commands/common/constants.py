@@ -528,6 +528,13 @@ JOB_JSON_REGEX = fr'{JOBS_DIR_REGEX}\/job-([^/]+)\.json'
 WIZARD_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{WIZARDS_DIR}'
 WIZARD_JSON_REGEX = fr'{WIZARD_DIR_REGEX}\/wizard-([^/]+)\.json'
 
+# Modeling Rules
+MODELING_RULE_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{MODELING_RULES_DIR}'
+MODELING_RULE_PACKAGE_REGEX = fr'{MODELING_RULE_DIR_REGEX}\/([^\\/]+)'
+MODELING_RULE_YML_REGEX = fr'{MODELING_RULE_PACKAGE_REGEX}\.yml'
+MODELING_RULE_RULES_REGEX = fr'{MODELING_RULE_PACKAGE_REGEX}\.xif'
+MODELING_RULE_SCHEMA_REGEX = fr'{MODELING_RULE_PACKAGE_REGEX}\.json'
+
 RELATIVE_HREF_URL_REGEX = r'(<.*?href\s*=\s*"((?!(?:https?:\/\/)|#|(?:mailto:)).*?)")'
 RELATIVE_MARKDOWN_URL_REGEX = r'(?<![!])(\[.*?\])\(((?!(?:https?:\/\/)|#|(?:mailto:)).*?)\)'
 
@@ -1062,6 +1069,7 @@ SCHEMA_TO_REGEX = {
                ],
 
     'report': [PACKS_REPORT_JSON_REGEX],
+    'modelingrule': [MODELING_RULE_YML_REGEX],
     'release-notes': [PACKS_RELEASE_NOTES_REGEX],
     'genericfield': JSON_ALL_GENERIC_FIELDS_REGEXES,
     'generictype': JSON_ALL_GENERIC_TYPES_REGEXES,

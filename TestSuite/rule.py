@@ -36,16 +36,26 @@ class Rule:
         self.rules = File(self._tmpdir_rule_path / f'{self.name}.xif', self._repo.path)
         self.samples: list[JSONBased] = []
         self.samples_dir_path = tmpdir / SAMPLES_DIR
+        self.schema = File(self._tmpdir_rule_path / f'{self.name}.json', self._repo.path)
 
     def build(
             self,
             yml: dict,
             rules: str | None = None,
             samples: list[dict] | None = None,
+            schema: dict | None = None,
     ):
         self.yml.write_dict(yml)
         if rules:
             self.rules.write(rules)
+        if schema:
+            schema_file = JSONBased(
+                dir_path=self._tmpdir_rule_path,
+                name=f'{self.name}.json',
+                prefix=''
+            )
+            schema_file.write_json(schema)
+
         if samples:
             self.samples_dir_path.mkdir()
             for sample in samples:

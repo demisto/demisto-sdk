@@ -16,7 +16,8 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.common.update_id_set import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.update_release_notes.update_rn import (
-    CLASS_BY_FILE_TYPE, UpdateRN, deprecated_commands, get_deprecated_rn)
+    CLASS_BY_FILE_TYPE, UpdateRN, deprecated_commands,
+    get_deprecated_comment_from_desc, get_deprecated_rn)
 
 json = JSON_Handler()
 
@@ -1719,8 +1720,26 @@ def test_deprecated_commands():
             - Calling deprecated_commands function
         Then:
             Ensure the function return a set of the deprecated commands only.
-
     """
     commands = [{"name": "command_1", "deprecated": True}, {"name": "command_2", "deprecated": False}]
     res = deprecated_commands(commands)
     assert res == {"command_1"}
+
+
+def test_get_deprecated_comment_from_desc():
+    """
+        Given:
+            - Description of  yml as string
+        When:
+            - Calling get_deprecated_comment_from_desc function
+        Then:
+            Ensure the function returns a deprecated comment from the string, if found.
+    """
+    original_desc = "Cortex XDR is the world's first detection and response app that natively\n integrates network, " \
+                    "endpoint and cloud data to stop sophisticated attacks. "
+    deprecate_with_replacement = "Deprecated. Use Cortex XDR v2 instead." + original_desc
+    deprecate_without_replacement = "Deprecated. No available replacement." + original_desc
+
+    assert get_deprecated_comment_from_desc(original_desc) == ''
+    assert get_deprecated_comment_from_desc(deprecate_with_replacement) == "Use Cortex XDR v2 instead"
+    assert get_deprecated_comment_from_desc(deprecate_without_replacement) == "No available replacement"

@@ -1872,7 +1872,7 @@ def test_validate_deleted_files(capsys, file_set, expected_output, expected_resu
 def test_validate_contributors_file(repo):
     """
     Given:
-        A simple CONTRIBUTORS.md file (see this https://xsoar.pan.dev/docs/packs/packs-format#contributorsmd)
+        A simple CONTRIBUTORS.js file (see this https://xsoar.pan.dev/docs/packs/packs-format#contributors)
     When:
         Running validation on the new file
     Then:
@@ -1880,9 +1880,7 @@ def test_validate_contributors_file(repo):
     """
 
     pack = repo.create_pack()
-    contributors_file_content = """### Pack Contributors:\n\n---\n- Test UserName\n\n Contributions are welcome and
-    appreciated. For more info, visit our [Contribution Guide](https://xsoar.pan.dev/docs/contributing/contributing)."""
-    contributors_file = pack.create_contributors_file(contributors_file_content)
+    contributors_file = pack.create_contributors_file('["- Test UserName"]')
 
     validate_manager = ValidateManager(check_is_unskipped=False, file_path=contributors_file.path, skip_conf_json=True)
     assert validate_manager.run_validation_on_specific_files()

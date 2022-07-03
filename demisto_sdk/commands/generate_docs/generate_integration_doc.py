@@ -21,7 +21,6 @@ from demisto_sdk.commands.integration_diff.integration_diff_detector import \
 
 json = JSON_Handler()
 
-
 CREDENTIALS = 9
 
 
@@ -87,7 +86,6 @@ def generate_integration_doc(
     """
     try:
         yml_data = get_yaml(input_path)
-
         if not output:  # default output dir will be the dir of the input file
             output = os.path.dirname(os.path.realpath(input_path))
         errors: list = []
@@ -153,6 +151,9 @@ def generate_integration_doc(
             command_section, command_errors = generate_commands_section(yml_data, example_dict,
                                                                         command_permissions_dict, command=command)
             docs.extend(command_section)
+            # Mirroring Incident
+            if trigger_generate_mirroring_section(yml_data):
+                docs.extend(generate_mirroring_section(yml_data))
             # breaking changes
             if integration_version and not skip_breaking_changes:
                 docs.extend(generate_versions_differences_section(input_path, old_version,
@@ -216,6 +217,113 @@ def generate_setup_section(yaml_data: dict):
 
     section.extend(generate_table_section(access_data, '', horizontal_rule=False, numbered_section=True))
     section.append('4. Click **Test** to validate the URLs, token, and connection.')
+
+    return section
+
+
+# Incident Mirroring
+
+def trigger_generate_mirroring_section(yml_data: dict) -> bool:
+    """
+
+    Args:
+        yml_data: yml data of the integration.
+
+    Returns:
+        true if mirroring section should be generated.
+
+    """
+    script_data = yml_data.get('script', {})
+    sync_in = script_data.get('isremotesyncout', False)
+    sync_out = script_data.get('isremotesyncin', False)
+    return sync_out or sync_in
+
+
+def is_configuration_exists(yml_data: dict, names: list):
+    """
+    Args:
+        yml_data: yml data of the integration
+        names: list of configuration params to search for
+
+    Returns:
+        list of all configurations found.
+
+    """
+    confs = []
+    for conf in yml_data.get('configuration', []):
+        if conf.get('name', '') in names:
+            confs.append(conf)
+    return confs
+
+
+def generate_mirroring_section(yaml_data: dict) -> List[str]:
+    """
+
+    Args:
+        yaml_data: dict representing the yml file of the integration.
+
+    Returns: markdown section of Incident Mirroring.
+
+    """
+    integration_name = format(yaml_data['display'])
+    directions = {
+        'None': 'Turns off incident mirroring.',
+        'Incoming': f'Any changes in {integration_name} events (mirroring incoming fields) will be reflected in Cortex XSOAR incidents.',
+        'Outgoing': f'Any changes in Cortex XSOAR incidents will be reflected in {integration_name} events (outgoing mirrored fields).',
+        'Incoming And Outgoing': f'Changes in Cortex XSOAR incidents and {integration_name} events will be reflected in both directions.'
+    }
+
+    section = [
+        '## Incident Mirroring',
+        '',
+        f'You can enable incident mirroring between Cortex XSOAR incidents and {integration_name} corresponding '
+        f'events (available from Cortex XSOAR version 6.0.0).',
+        'To set up the mirroring:',
+        '1. Enable *Fetching incidents* in your instance configuration.',
+    ]
+
+    index = 2
+
+    # Mirroring direction
+
+    direction_conf = is_configuration_exists(yaml_data, ['mirror_direction'])
+    if direction_conf:
+        options = []
+        for option in direction_conf[0].get('options', []):
+            options.append({'Option': option, 'Description': directions.get(option, '')})
+        dir_text = f'{index}. In the *Mirroring Direction* integration parameter, select in which direction the ' \
+                   f'incidents should be mirrored:'
+        index = index + 1
+        section.append(dir_text)
+        section.extend(generate_table_section(title='', data=options, horizontal_rule=False, numbered_section=True))
+
+    # mirroring tags
+
+    tags = is_configuration_exists(yaml_data, ['comment_tag', 'work_notes_tag', 'file_tag'])
+    tags = [tag.get('display', '') for tag in tags]
+    if tags:
+        section.append(f'{index}. Optional: You can go to the mirroring tags parameter and select the tags used to '
+                       f'mark incident entries to be mirrored. Available tags are: {", ".join(tags)}.')
+        index = index + 1
+
+    # Close Mirrored XSOAR Incident param
+
+    if is_configuration_exists(yaml_data, ['close_incident']):
+        section.append(
+            f'{index}. Optional: Check the *Close Mirrored XSOAR Incident* integration parameter to close the Cortex'
+            f' XSOAR incident when the corresponding event is closed in {integration_name}.')
+        index = index + 1
+    if is_configuration_exists(yaml_data, ['close_out']):
+        section.append(
+            f'{index}. Optional: Check the *Close Mirrored {integration_name} event* integration'
+            f' parameter to close them when the corresponding Cortex XSOAR incident is closed.')
+
+    section.extend(['',
+                    'Newly fetched incidents will be mirrored in the chosen direction. However, this selection does '
+                    'not affect existing incidents.',
+                    f'**Important Note:** To ensure the mirroring works as expected, mappers are required,'
+                    f' both for incoming and outgoing, to map the expected fields in Cortex XSOAR and {integration_name}.',
+                    ''])
 
     return section
 
@@ -368,7 +476,8 @@ def generate_versions_differences_section(input_path, old_version, display_name)
     ]
 
     if not old_version:
-        user_response = str(input('Enter the path of the previous integration version file if any. Press Enter to skip.\n'))
+        user_response = str(
+            input('Enter the path of the previous integration version file if any. Press Enter to skip.\n'))
 
         if user_response:
             old_version = user_response
@@ -458,7 +567,8 @@ def disable_md_autolinks(markdown: str) -> str:
     """
     if not markdown:
         return markdown
-    return re.sub(r'\b(?<!\)\[)(https?)://([\w\d]+?\.[\w\d]+?)\b', r'\1:<span>//</span>\2', markdown, flags=re.IGNORECASE)
+    return re.sub(r'\b(?<!\)\[)(https?)://([\w\d]+?\.[\w\d]+?)\b', r'\1:<span>//</span>\2', markdown,
+                  flags=re.IGNORECASE)
 
 
 def generate_command_example(cmd_from_yaml, cmd_example=None):

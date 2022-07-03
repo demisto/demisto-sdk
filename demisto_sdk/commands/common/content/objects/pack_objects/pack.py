@@ -70,7 +70,7 @@ class Pack:
                                                                                     ]:
 
                 object_id = content_object.get_id()
-                if is_object_in_id_set(object_id, self._pack_info_from_id_set):
+                if is_object_in_id_set(object_id, content_object.type().value, self._pack_info_from_id_set):
                     yield content_object
                 else:
                     logging.warning(f'Skipping object {object_path} with id "{object_id}" since it\'s missing from '
@@ -326,7 +326,7 @@ class Pack:
     @property
     def contributors(self) -> Optional[Contributors]:
         obj = None
-        file = self._path / "CONTRIBUTORS.md"
+        file = self._path / "CONTRIBUTORS.json"
         if file.exists():
             obj = Contributors(path=file)
 

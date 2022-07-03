@@ -1311,8 +1311,6 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.RELEASE_NOTES
         elif 'description' in path.name:
             return FileType.DESCRIPTION
-        elif 'CONTRIBUTORS' in path.name:
-            return FileType.CONTRIBUTORS
 
         return FileType.CHANGELOG
 
@@ -1335,6 +1333,8 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.METADATA
         elif path.name.endswith(XSOAR_CONFIG_FILE):
             return FileType.XSOAR_CONFIG
+        elif 'CONTRIBUTORS' in path.name:
+            return FileType.CONTRIBUTORS
 
     elif path.name.endswith('_image.png'):
         if path.name.endswith("Author_image.png"):
@@ -2019,24 +2019,35 @@ def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
     return fields_list
 
 
-def is_object_in_id_set(object_id, pack_info_from_id_set):
+def item_type_to_content_items_header(item_type):
+    converter = {
+        "incidenttype": "incidentType",
+        "indicatortype": "indicatorType",
+        "indicatorfield": "indicatorField",
+        "incidentfield": "incidentField",
+        "layoutscontainer": "layout",
+    }
+
+    return f'{converter.get(item_type, item_type)}s'
+
+
+def is_object_in_id_set(object_id, item_type, pack_info_from_id_set):
     """
         Check if the given object is part of the packs items that are present in the Packs section in the id set.
         This is assuming that the id set is based on the version that has, under each pack, the items it contains.
 
     Args:
         object_name: name of object of interest.
-        pack: the pack this object should belong to.
-        packs_section_from_id_set: the section under the key Packs in the previously given id set.
+        object_type: type of object of interest.
+        packs_section_from_id_set: the pack object under the key Packs in the previously given id set.
 
     Returns:
 
     """
     content_items = pack_info_from_id_set.get('ContentItems', {})
-    for items_type, items_ids in content_items.items():
-        if object_id in items_ids:
-            return True
-    return False
+    items_ids = content_items.get(item_type_to_content_items_header(item_type), [])
+
+    return object_id in items_ids
 
 
 def is_string_uuid(string_to_check: str):

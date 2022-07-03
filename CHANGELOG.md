@@ -1,6 +1,14 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where an incorrect error was shown when the `id` of a content item differed from its `name` attribute.
+* Fixed an issue where the `preserve_quotes` in ruamel_handler received an incorrect value @icholy
+* Fixed an issue where ignoring RM110 error code wasn't working and added a validation to **ALLOWED_IGNORE_ERRORS** to validate that all error codes are inserted in the right format.
+* Fixed an issue where the contribution credit text was not added correctly to the pack README.
+* Changed the contribution file implementation from markdown to a list of contributor names. The **create-content-artifact** will use this list to prepare the needed credit message.
+* The **generate-docs** command will now auto-generate the Incident Mirroring section when implemented in an integration.
+* Added support to automatically generate release notes for deprecated items in the **update-release-notes** command.
+## 1.6.9
 * Added a new validation that checks whether a pack should be deprecated.
 * Added a new ability to the **format** command to deprecate a pack.
 * Fixed an issue where the **validate** command sometimes returned a false negative in cases where there are several sub-playbooks with the same ID.
@@ -12,8 +20,11 @@
 * Added support for modeling and parsing rules in the **split** command.
 * Added support for README files in **format** command.
 * Added a **validate** check, making sure classifier id and name values match. Updated the classifier **format** to update the id accordingly.
-* The **generate-docs** command will now auto-generate the playbook image link as default. Added the `--custom-image-link' argument to override.
+* The **generate-docs** command will now auto-generate the playbook image link by default.
+* Added the `--custom-image-link` argument to override.
 * Added a new flag to **generate-docs** command, allowing to add a custom image link to a playbook README.
+* Added a new validation to the **validate** command to verify that the package directory name is the same as the files contained in the that package.
+* Added support in the **unify** command to unify a schema into its Modeling Rule.
 * The **format** command will now replace the *fromServerVersion* field with *fromVersion*.
 
 ## 1.6.8

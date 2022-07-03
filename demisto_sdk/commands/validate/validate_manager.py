@@ -1015,6 +1015,9 @@ class ValidateManager:
         return integration_validator.is_valid_beta_integration()
 
     def validate_image(self, file_path, pack_error_ignore_list):
+        pack_name = get_pack_name(file_path)
+        if pack_name == 'NonSupported':
+            return True
         image_validator = ImageValidator(file_path, ignored_errors=pack_error_ignore_list,
                                          print_as_warnings=self.print_ignored_errors,
                                          json_file_path=self.json_file_path, specific_validations=self.specific_validations)
@@ -1702,7 +1705,7 @@ class ValidateManager:
             - true if the file type is supported, false otherwise
         """
         irrelevant_file_output = '', '', True
-        if file_path.split(os.path.sep)[0] in ('.gitlab', '.circleci', '.github'):
+        if file_path.split(os.path.sep)[0] in ('.gitlab', '.circleci', '.github', '.devcontainer'):
             return irrelevant_file_output
 
         file_type = find_type(file_path)

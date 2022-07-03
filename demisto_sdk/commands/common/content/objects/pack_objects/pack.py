@@ -326,7 +326,7 @@ class Pack:
     @property
     def contributors(self) -> Optional[Contributors]:
         obj = None
-        file = self._path / "CONTRIBUTORS.md"
+        file = self._path / "CONTRIBUTORS.json"
         if file.exists():
             obj = Contributors(path=file)
 

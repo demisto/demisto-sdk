@@ -60,6 +60,7 @@ ERROR_CODE = {
     "cli_name_and_id_do_not_match": {'code': "BA116", 'ui_applicable': False, 'related_field': 'cliName'},
     "incorrect_from_to_version_format": {'code': "BA117", 'ui_applicable': False, 'related_field': ''},
     "mismatching_from_to_versions": {'code': "BA118", 'ui_applicable': False, 'related_field': ''},
+    "copyright_section_in_python_error": {'code': "BA119", 'ui_applicable': False, 'related_field': ''},
 
     # BC - Backward Compatible
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -348,6 +349,7 @@ ERROR_CODE = {
     "missing_commands_from_readme": {'code': "RM110", 'ui_applicable': False, 'related_field': ''},
     "error_uninstall_node": {'code': "RM111", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_relative_url_error": {'code': "RM112", 'ui_applicable': False, 'related_field': ''},
+    "copyright_section_in_readme_error": {'code': "RM113", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},

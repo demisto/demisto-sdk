@@ -3,7 +3,6 @@
 ## Unreleased
 * Fixed an issue where an incorrect error was shown when the `id` of a content item differed from its `name` attribute.
 * Fixed an issue where the `preserve_quotes` in ruamel_handler received an incorrect value @icholy
-* Added new validation to the `XSOAR-linter` in the **lint** command that demisto.log will not be used in code.
 * Fixed an issue where the contribution credit text was not added correctly to the pack README.
 * Changed the contribution file implementation from markdown to a list of contributor names. The **create-content-artifact** will use this list to prepare the needed credit message.
 * Added a new validation to the `XSOAR-linter` in the **lint** command for verifying that demisto.log is not used in the code.

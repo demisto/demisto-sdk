@@ -3,6 +3,8 @@
 ## Unreleased
 * Fixed an issue where an incorrect error was shown when the `id` of a content item differed from its `name` attribute.
 * Fixed an issue where the `preserve_quotes` in ruamel_handler received an incorrect value @icholy
+* Fixed an issue where the contribution credit text was not added correctly to the pack README.
+* Changed the contribution file implementation from markdown to a list of contributor names. The **create-content-artifact** will use this list to prepare the needed credit message.
 * The **generate-docs** command will now auto-generate the Incident Mirroring section when implemented in an integration.
 
 ## 1.6.9
@@ -22,7 +24,6 @@
 * Added a new flag to **generate-docs** command, allowing to add a custom image link to a playbook README.
 * Added a new validation to the **validate** command to verify that the package directory name is the same as the files contained in the that package.
 * Added support in the **unify** command to unify a schema into its Modeling Rule.
-
 
 ## 1.6.8
 

@@ -6,6 +6,7 @@
 * Fixed an issue where the contribution credit text was not added correctly to the pack README.
 * Changed the contribution file implementation from markdown to a list of contributor names. The **create-content-artifact** will use this list to prepare the needed credit message.
 * Added a new validation to the `XSOAR-linter` in the **lint** command for verifying that demisto.log is not used in the code.
+* The **generate-docs** command will now auto-generate the Incident Mirroring section when implemented in an integration.
 
 ## 1.6.9
 * Added a new validation that checks whether a pack should be deprecated.

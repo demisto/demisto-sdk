@@ -21,7 +21,7 @@ ALLOWED_IGNORE_ERRORS = [
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107',
-    'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM 110', 'RM112', 'RM113'
+    'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM110', 'RM112', 'RM113',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
     'IM111',
@@ -60,7 +60,6 @@ ERROR_CODE = {
     "cli_name_and_id_do_not_match": {'code': "BA116", 'ui_applicable': False, 'related_field': 'cliName'},
     "incorrect_from_to_version_format": {'code': "BA117", 'ui_applicable': False, 'related_field': ''},
     "mismatching_from_to_versions": {'code': "BA118", 'ui_applicable': False, 'related_field': ''},
-    "copyright_section_in_python_error": {'code': "BA119", 'ui_applicable': False, 'related_field': ''},
 
     # BC - Backward Compatible
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -349,7 +348,6 @@ ERROR_CODE = {
     "missing_commands_from_readme": {'code': "RM110", 'ui_applicable': False, 'related_field': ''},
     "error_uninstall_node": {'code': "RM111", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_relative_url_error": {'code': "RM112", 'ui_applicable': False, 'related_field': ''},
-    "copyright_section_in_readme_error": {'code': "RM113", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -1774,6 +1772,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def image_path_error(path, alternative_path):
+        return f'Detected following image url:\n{path}\n' \
+               f'Which is not the raw link. You probably want to use the following raw image url:\n{alternative_path}'
+
+    @staticmethod
+    @error_code_decorator
     def copyright_section_in_readme_error(line_nums):
         return f"Please note that keywords related to Copyright section (BSD, MIT, Copyright, proprietary) were found " \
                f"in lines: {line_nums}. Copyright section cannot be part of Pack ReadMe."
@@ -1783,12 +1787,6 @@ class Errors:
     def copyright_section_in_python_error(line_nums):
         return f"Please note that keywords related to Copyright section (BSD, MIT, Copyright, proprietary) were found " \
                f"in lines: {line_nums}. Copyright section cannot be part of script."
-
-    @staticmethod
-    @error_code_decorator
-    def image_path_error(path, alternative_path):
-        return f'Detected following image url:\n{path}\n' \
-               f'Which is not the raw link. You probably want to use the following raw image url:\n{alternative_path}'
 
     @staticmethod
     def pack_readme_image_relative_path_error(path):

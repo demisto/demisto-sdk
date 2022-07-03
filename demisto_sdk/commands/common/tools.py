@@ -1311,8 +1311,6 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.RELEASE_NOTES
         elif 'description' in path.name:
             return FileType.DESCRIPTION
-        elif 'CONTRIBUTORS' in path.name:
-            return FileType.CONTRIBUTORS
 
         return FileType.CHANGELOG
 
@@ -1335,6 +1333,8 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.METADATA
         elif path.name.endswith(XSOAR_CONFIG_FILE):
             return FileType.XSOAR_CONFIG
+        elif 'CONTRIBUTORS' in path.name:
+            return FileType.CONTRIBUTORS
 
     elif path.name.endswith('_image.png'):
         if path.name.endswith("Author_image.png"):

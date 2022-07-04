@@ -146,8 +146,8 @@ class TestFormattingFromVersionKey:
     DATA = [{'fromVersion': '6.0.0'}, {'fromServerVersion': '6.0.0'}, {'fromVersion': '6.0.0', 'fromServerVersion': '6.0.0'},
             {'fromVersion': '6.0.0', 'fromServerVersion': '5.0.0'}, {'fromVersion': '5.5.0', 'fromServerVersion': '6.0.0'}, {}]
 
-    @pytest.mark.parametrize("old_file, data, click_result", [(OLD_FILE[0], DATA[0], False), (OLD_FILE[1], DATA[1], False), (OLD_FILE[2], DATA[2], False),
-                                                              (OLD_FILE[3], DATA[3], True), (OLD_FILE[4], DATA[4], False), (OLD_FILE[5], DATA[5], False)])
+    @pytest.mark.parametrize("old_file, data, assume_yes", [(OLD_FILE[0], DATA[0], False), (OLD_FILE[1], DATA[1], False), (OLD_FILE[2], DATA[2], False),
+                                                            (OLD_FILE[3], DATA[3], True), (OLD_FILE[4], DATA[4], False), (OLD_FILE[5], DATA[5], False)])
     def test_check_server_version(self, mocker, old_file, data, assume_yes):
         """
         Given
@@ -156,9 +156,9 @@ class TestFormattingFromVersionKey:
             Case 2: no old file, current file holds fromServerVersion key only.
             Case 3: no old file, current file holds both fromServerVersion and fromVersion keys with the same value.
             Case 4: no old file, current file holds both fromServerVersion and fromVersion keys with different value,
-                    click result is True.
+                    assume_yes is True.
             Case 5: no old file, current file holds both fromServerVersion and fromVersion keys with different value,
-                    click result is False.
+                    assume_yes is False.
             Case 6: old file holds fromServerVersion key, no current file.
 
         When

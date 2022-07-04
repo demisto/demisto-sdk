@@ -51,7 +51,7 @@ class Rule:
         if schema:
             schema_file = JSONBased(
                 dir_path=self._tmpdir_rule_path,
-                name=f'{self.name}.json',
+                name=f'{self.name}',
                 prefix=''
             )
             schema_file.write_json(schema)

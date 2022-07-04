@@ -1,4 +1,3 @@
-import click
 import pytest
 
 from demisto_sdk.commands.common.constants import (
@@ -149,7 +148,7 @@ class TestFormattingFromVersionKey:
 
     @pytest.mark.parametrize("old_file, data, click_result", [(OLD_FILE[0], DATA[0], False), (OLD_FILE[1], DATA[1], False), (OLD_FILE[2], DATA[2], False),
                                                               (OLD_FILE[3], DATA[3], True), (OLD_FILE[4], DATA[4], False), (OLD_FILE[5], DATA[5], False)])
-    def test_check_server_version(self, mocker, old_file, data, click_result):
+    def test_check_server_version(self, mocker, old_file, data, assume_yes):
         """
         Given
             - An old file, data from current file, and a click.confirm result.
@@ -168,11 +167,12 @@ class TestFormattingFromVersionKey:
             - Ensure that the data holds the correct fromVersion value.
         """
         mocker.patch.object(BaseUpdate, '__init__', return_value=None)
-        mocker.patch.object(click, 'confirm', return_value=click_result)
+        mocker.patch.object(BaseUpdate, 'ask_user', return_value=assume_yes)
         base_update = BaseUpdate()
         base_update.old_file = old_file
+        base_update.assume_yes = assume_yes
         base_update.data = data
-        base_update.from_server_version_key = 'fromServerVersion'
+        base_update.json_from_server_version_key = 'fromServerVersion'
         base_update.from_version_key = 'fromVersion'
 
         base_update.check_server_version()

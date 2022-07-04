@@ -1,8 +1,10 @@
 import os
 
+from demisto_sdk.commands.common.hook_validations.modeling_rule import \
+    ModelingRuleValidator
+from demisto_sdk.commands.common.hook_validations.structure import \
+    StructureValidator
 from TestSuite.test_tools import ChangeCWD
-from demisto_sdk.commands.common.hook_validations.modeling_rule import ModelingRuleValidator
-from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 
 
 def test_is_valid_modeling_rule(repo):
@@ -25,4 +27,3 @@ def test_is_invalid_modeling_rule(repo):
     with ChangeCWD(repo.path):
         modeling_rule_validator = ModelingRuleValidator(structure_validator)
         assert not modeling_rule_validator.is_schema_file_exists()
-

@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -557,7 +556,7 @@ class Pack:
         return File(doc_file_dir / f'{name}.png', self._repo.path)
 
     def create_contributors_file(self, content) -> TextBased:
-        contributors = self._create_text_based('CONTRIBUTORS.md', content)
+        contributors = self._create_text_based('CONTRIBUTORS.json', content)
         self.contributors = contributors
         return contributors
 
@@ -608,21 +607,15 @@ class Pack:
             yml = {
                 'id': 'modeling-rule',
                 'name': 'Modeling Rule',
-                'fromversion': 6.8,
+                'fromversion': 3.3,
                 'tags': 'tag',
                 'rules': '',
-                'schema': {},
             }
         if not rules:
             rules = '[MODEL: dataset="dataset", model="Model", version=0.1]'
+
         if not schema:
-            schema = {
-               "vendor_product_raw": {
-                   "client": {
-                       "type": "string",
-                       "is_array": False},
-                }
-            }
+            schema = {"test_audit_raw": {"name": {"type": "string", "is_array": False}}}
 
         rule = Rule(
             tmpdir=self._modeling_rules_path,
@@ -632,7 +625,7 @@ class Pack:
         rule.build(
             yml=yml,
             rules=rules,
-            schema=schema,
+            schema=schema
         )
         self.modeling_rules.append(rule)
         return rule

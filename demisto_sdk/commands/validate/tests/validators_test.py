@@ -22,6 +22,8 @@ from demisto_sdk.commands.common.hook_validations.content_entity_validator impor
     ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
     DashboardValidator
+from demisto_sdk.commands.common.hook_validations.description import \
+    DescriptionValidator
 from demisto_sdk.commands.common.hook_validations.generic_field import \
     GenericFieldValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
@@ -396,10 +398,12 @@ class TestValidators:
         mocker.patch.object(ScriptValidator, 'is_there_separators_in_names', return_value=True)
         mocker.patch.object(ScriptValidator, 'is_docker_image_valid', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_valid_integration_file_path', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_py_file_names', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_there_separators_in_names', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_docker_image_valid', return_value=True)
         mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
                             return_value=True)
+        mocker.patch.object(DescriptionValidator, 'is_valid_description_name', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert validate_manager.run_validation_on_specific_files()
@@ -1868,7 +1872,7 @@ def test_validate_deleted_files(capsys, file_set, expected_output, expected_resu
 def test_validate_contributors_file(repo):
     """
     Given:
-        A simple CONTRIBUTORS.md file (see this https://xsoar.pan.dev/docs/packs/packs-format#contributorsmd)
+        A simple CONTRIBUTORS.js file (see this https://xsoar.pan.dev/docs/packs/packs-format#contributors)
     When:
         Running validation on the new file
     Then:
@@ -1876,9 +1880,7 @@ def test_validate_contributors_file(repo):
     """
 
     pack = repo.create_pack()
-    contributors_file_content = """### Pack Contributors:\n\n---\n- Test UserName\n\n Contributions are welcome and
-    appreciated. For more info, visit our [Contribution Guide](https://xsoar.pan.dev/docs/contributing/contributing)."""
-    contributors_file = pack.create_contributors_file(contributors_file_content)
+    contributors_file = pack.create_contributors_file('["- Test UserName"]')
 
     validate_manager = ValidateManager(check_is_unskipped=False, file_path=contributors_file.path, skip_conf_json=True)
     assert validate_manager.run_validation_on_specific_files()

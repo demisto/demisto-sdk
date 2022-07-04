@@ -645,7 +645,7 @@ PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
 PACKS_PACK_IGNORE_FILE_NAME = '.pack-ignore'
 PACKS_PACK_META_FILE_NAME = 'pack_metadata.json'
 PACKS_README_FILE_NAME = 'README.md'
-PACKS_CONTRIBUTORS_FILE_NAME = 'CONTRIBUTORS.md'
+PACKS_CONTRIBUTORS_FILE_NAME = 'CONTRIBUTORS.json'
 AUTHOR_IMAGE_FILE_NAME = 'Author_image.png'
 
 PYTHON_TEST_REGEXES = [
@@ -1034,6 +1034,11 @@ class PB_Status:
 UNRELEASE_HEADER = '## [Unreleased]\n'  # lgtm[py/regex/duplicate-in-character-class]
 CONTENT_RELEASE_TAG_REGEX = r'^\d{2}\.\d{1,2}\.\d'
 RELEASE_NOTES_REGEX = re.escape(UNRELEASE_HEADER) + r'([\s\S]+?)## \[\d{2}\.\d{1,2}\.\d\] - \d{4}-\d{2}-\d{2}'
+
+# pack contributors template
+CONTRIBUTORS_README_TEMPLATE = '\n### Pack Contributors:\n\n---\n{contributors_names}\nContributions are welcome and ' \
+                               'appreciated. For more info, visit our [Contribution Guide](https://xsoar.pan.dev/docs' \
+                               '/contributing/contributing).'
 
 # Beta integration disclaimer
 BETA_INTEGRATION_DISCLAIMER = 'Note: This is a beta Integration,' \

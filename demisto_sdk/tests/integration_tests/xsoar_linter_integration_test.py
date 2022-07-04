@@ -31,6 +31,7 @@ files = [
     # -------------------- For Invalid file with support level base and long running True -----------------------
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), '3.8', 'base', True, 1, [
         'Print is found, Please remove all prints from the code.',
+        'Demisto.log is found, Please replace all demisto.log usage with demisto.info or demisto.debug',
         "test-module command is not implemented in the python file, it is essential for every"
         " integration. Please add it to your code. For more information see: "
         "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
@@ -39,6 +40,7 @@ files = [
     # -------------------- For Invalid file with support level base and long running False -----------------------
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), '3.8', 'base', False, 1, [
         'Print is found, Please remove all prints from the code.',
+        'Demisto.log is found, Please replace all demisto.log usage with demisto.info or demisto.debug',
         'Sleep is found, Please remove all sleep statements from the code.',
         'Invalid CommonServerPython import was found. Please change the import to: from CommonServerPython import *',
         'Invalid usage of indicators key in CommandResults was found, Please use indicator key instead.',
@@ -52,6 +54,7 @@ files = [
     # ------------- For Invalid file with support level certified partner and long running False ------------------
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), '3.8', 'certified partner', False, 1,
      ['Sys.exit use is found, Please use return instead.',
+      'Demisto.log is found, Please replace all demisto.log usage with demisto.info or demisto.debug',
       'Sleep is found, Please remove all sleep statements from the code.',
       "test-module command is not implemented in the python file, it is essential for every"
       " integration. Please add it to your code. For more information see: "
@@ -61,6 +64,7 @@ files = [
     # ------------- For Invalid file with support level certified partner and long running True ---------------------
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), '3.8', 'certified partner', True, 1,
      ['Sys.exit use is found, Please use return instead.',
+      'Demisto.log is found, Please replace all demisto.log usage with demisto.info or demisto.debug',
       "test-module command is not implemented in the python file, it is essential for every"
       " integration. Please add it to your code. For more information see: "
       "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
@@ -69,6 +73,7 @@ files = [
     # ------------- For Invalid file with support level community and long running False ------------------
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), '3.8', 'community', False, 1,
      ['Print is found, Please remove all prints from the code.',
+      'Demisto.log is found, Please replace all demisto.log usage with demisto.info or demisto.debug',
       "test-module command is not implemented in the python file, it is essential for every"
       " integration. Please add it to your code. For more information see: "
       "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
@@ -77,6 +82,7 @@ files = [
     # ------------- For Invalid file with default support level and long running False ------------------
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), '3.8', '', False, 1,
      ['exit is found, Please remove all exit()', 'quit is found, Please remove all quit()',
+      'Demisto.log is found, Please replace all demisto.log usage with demisto.info or demisto.debug',
       "test-module command is not implemented in the python file, it is essential for every"
       " integration. Please add it to your code. For more information see: "
       "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
@@ -85,6 +91,7 @@ files = [
     # ------------- For Invalid file with xsoar support level and long running False ------------------
     (Path(f"{XSOAR_LINTER_PY3_INVALID}"), '3.8', 'xsoar', False, 1,
      ['exit is found, Please remove all exit()', 'quit is found, Please remove all quit()',
+      'Demisto.log is found, Please replace all demisto.log usage with demisto.info or demisto.debug',
       "test-module command is not implemented in the python file, it is essential for every"
       " integration. Please add it to your code. For more information see: "
       "https://xsoar.pan.dev/docs/integrations/code-conventions#test-module"
@@ -114,8 +121,7 @@ files = [
 
     # --------------------- For Warning file with support level certified partner -----------------------------------
     (Path(f"{XSOAR_LINTER_PY3_INVALID_WARNINGS}"), '3.8', 'certified partner', False, 4,
-     ['Demisto.log is found, Please remove all demisto.log usage and exchange it with',
-      'Main function wasnt found in the file, Please add main()',
+     ['Main function wasnt found in the file, Please add main()',
       'Do not use return_outputs function. Please return CommandResults object instead.',
       'Do not use demisto.results function.',
       'Initialize of params was found outside of main function. Please use demisto.params() only inside main',

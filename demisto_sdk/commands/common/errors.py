@@ -1,4 +1,5 @@
 from distutils.version import LooseVersion
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import decorator
@@ -20,7 +21,7 @@ ALLOWED_IGNORE_ERRORS = [
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107',
-    'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM 110', 'RM112',
+    'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM110', 'RM112',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
     'IM111',
@@ -511,9 +512,9 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def id_should_equal_name(name, file_id):
-        return "The File's name, which is: '{}', should be equal to its ID, which is: '{}'." \
-               " please update the file.".format(name, file_id)
+    def id_should_equal_name(name: str, id_: str, file_path: str):
+        file_name = Path(file_path).name
+        return f"The name attribute of {file_name} (currently {name}) should be identical to its `id` attribute ({id_})"
 
     @staticmethod
     @error_code_decorator
@@ -1136,8 +1137,9 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def invalid_image_name():
-        return "The image's file name is invalid - " \
-               "make sure the name looks like the following: <integration_name>_image.png"
+        return "The image's file name is invalid - make sure the name looks like the " \
+               "following: <integration_name>_image.png and that the integration_name is the same as the folder " \
+               "containing it."
 
     @staticmethod
     @error_code_decorator
@@ -1411,7 +1413,8 @@ class Errors:
     @error_code_decorator
     def invalid_description_name():
         return "The description's file name is invalid - " \
-               "make sure the name looks like the following: <integration_name>_description.md"
+               "make sure the name looks like the following: <integration_name>_description.md " \
+               "and that the integration_name is the same as the folder containing it."
 
     @staticmethod
     @error_code_decorator

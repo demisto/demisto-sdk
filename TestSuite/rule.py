@@ -34,9 +34,10 @@ class Rule:
         self.path = str(self._tmpdir_rule_path)
         self.yml = YAML(self._tmpdir_rule_path / f'{self.name}.yml', self._repo.path)
         self.rules = File(self._tmpdir_rule_path / f'{self.name}.xif', self._repo.path)
+        self.schema = JSONBased(self._tmpdir_rule_path, f'{self.name}_schema', '')
+
         self.samples: list[JSONBased] = []
         self.samples_dir_path = tmpdir / SAMPLES_DIR
-        self.schema = File(self._tmpdir_rule_path / f'{self.name}.json', self._repo.path)
 
     def build(
             self,
@@ -49,13 +50,7 @@ class Rule:
         if rules:
             self.rules.write(rules)
         if schema:
-            schema_file = JSONBased(
-                dir_path=self._tmpdir_rule_path,
-                name=f'{self.name}',
-                prefix=''
-            )
-            schema_file.write_json(schema)
-
+            self.schema.write_json(schema)
         if samples:
             self.samples_dir_path.mkdir()
             for sample in samples:

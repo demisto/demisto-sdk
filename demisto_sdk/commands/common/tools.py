@@ -1367,6 +1367,7 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
 
     elif path.parent.name == DOC_FILES_DIR:
         return FileType.DOC_FILE
+
     return None
 
 

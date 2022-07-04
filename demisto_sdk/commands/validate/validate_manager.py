@@ -1725,7 +1725,7 @@ class ValidateManager:
             - true if the file type is supported, false otherwise
         """
         irrelevant_file_output = '', '', True
-        if file_path.split(os.path.sep)[0] in ('.gitlab', '.circleci', '.github'):
+        if file_path.split(os.path.sep)[0] in ('.gitlab', '.circleci', '.github', '.devcontainer'):
             return irrelevant_file_output
 
         file_type = find_type(file_path)

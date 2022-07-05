@@ -11,7 +11,6 @@ import click
 import giturlparse
 # dirs
 import requests
-from git import InvalidGitRepositoryError
 
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -128,9 +127,10 @@ class GitContentConfig:
                 parsed_git = giturlparse.parse(url)
                 if parsed_git and parsed_git.host and parsed_git.repo:
                     return parsed_git
-        except (InvalidGitRepositoryError, AttributeError):
             return None
-        return None
+        except Exception as e:
+            logger.warn(f'Could not get repository properties: {e}, using provided configs, or default.')
+            return None
 
     def _set_repo_config(self, hostname: str, organization: str = None, repo_name: str = None, project_id: int = None):
         """

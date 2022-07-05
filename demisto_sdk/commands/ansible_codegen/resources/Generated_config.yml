@@ -9,14 +9,14 @@ parameters:  # List of integration configuration parameters. See https://xsoar.p
     hiddenusername: true
     name: creds
     required: true
-    type: 9
+    type_: 9
   - additionalinfo: Allows connection when SSL certificates are not valid. Set to `false`
       when certificates are not trusted.
     defaultvalue: 'False'
     display: Validate Certs
     name: validate_certs
     required: true
-    type: 15
+    type_: 15
     options:
     - "False"
     - "True"

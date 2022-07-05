@@ -1,18 +1,22 @@
 import json
 import os
+import platform
 import re
 import shutil
 import sys
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 import autopep8
-import yaml
+import docker
+import docker.errors
+import docker.models.containers
+import requests
+from ruamel.yaml import YAML
 
 from demisto_sdk.commands.ansible_codegen.resources.integration_template_code import (
     command_code, integration_code_footer, integration_code_header,
     no_test_command_code, test_command_code)
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.docker_util import ContainerRunner
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
@@ -21,6 +25,8 @@ from demisto_sdk.commands.common.tools import (print_error, print_warning,
                                                to_kebab_case, to_pascal_case)
 from demisto_sdk.commands.generate_integration.XSOARIntegration import \
     XSOARIntegration
+from demisto_sdk.commands.lint.docker_helper import (DockerBase,
+                                                     init_global_docker_client)
 
 ILLEGAL_CODE_NAMES = ['type', 'from', 'id', 'filter', 'list']
 NAME_FIX = '_'
@@ -30,6 +36,8 @@ HOST_TYPES = ['ssh', 'winrm', 'nxos', 'ios', 'local']
 REMOTE_HOST_TYPES = ['ssh', 'winrm', 'nxos', 'ios']
 # The URL of the online module documentation
 ANSIBLE_ONLINE_DOCS_URL_BASE = 'https://docs.ansible.com/ansible/latest/collections/'
+# Container name to use for ansibl-doc lookups
+CONTAINER_NAME = 'demisto-sdk-ansiblecodegen-lookup'
 
 
 class AnsibleIntegration:
@@ -67,16 +75,18 @@ class AnsibleIntegration:
         self.verbose = verbose
         self.container_image = container_image
         self.fix_code = fix_code
+        # Docker client init
+        self._docker_client: docker.DockerClient = init_global_docker_client(log_prompt='Ansible-codegen')
+        self._docker_hub_login = self._docker_login()
 
     def load_config(self):
         """
         Loads the ansible codgen config
         """
-
         if self.config_file_path:
             try:
-                with open(self.config_file_path, 'r') as config_file:
-                    codegen_configuration = yaml.load(config_file, Loader=yaml.Loader)
+                with open(self.config_file_path, 'rb') as config_file:
+                    codegen_configuration = YAML().load(config_file)
 
                     if codegen_configuration is None:
                         print_error('Configuration file is empty')
@@ -104,8 +114,10 @@ class AnsibleIntegration:
                     self.command_prefix = codegen_configuration.get('command_prefix')
                     self.ansible_modules = list(codegen_configuration.get('ansible_modules', []))
                     self.ignored_args = codegen_configuration.get('ignored_args')
-                    self.parameters = codegen_configuration.get('parameters', [])
                     self.creds_mapping = codegen_configuration.get('creds_mapping')
+                    for parm in codegen_configuration.get('parameters', []):
+                        self.parameters.append(XSOARIntegration.Configuration(**parm))
+
             except Exception as e:
                 print_error(f'Failed to load configuration file: {e}')
 
@@ -127,6 +139,65 @@ class AnsibleIntegration:
             # If the config `name` is a single word then trust the caps
             self.command_prefix = self.name.lower() if len(self.name.split(' ')) == 1 else to_kebab_case(self.name)
 
+    def _docker_login(self) -> bool:
+        """ Login to docker-hub using environment variables:
+                1. DOCKERHUB_USER - User for docker hub.
+                2. DOCKERHUB_PASSWORD - Password for docker-hub.
+            Used in Circle-CI for pushing into repo devtestdemisto
+
+        Returns:
+            bool: True if logged in successfully.
+        """
+        docker_user = os.getenv('DOCKERHUB_USER')
+        docker_pass = os.getenv('DOCKERHUB_PASSWORD')
+        if docker_user and docker_pass:
+            try:
+                self._docker_client.login(username=docker_user,
+                                          password=docker_pass,
+                                          registry="https://index.docker.io/v1")
+                return self._docker_client.ping()
+            except docker.errors.APIError:
+                return False
+        return False
+
+    def _docker_remove_container(self, container_name: str):
+        try:
+            container = self._docker_client.containers.get(container_name)
+            container.remove(force=True)
+        except docker.errors.NotFound:
+            pass
+        except requests.exceptions.ChunkedEncodingError as err:
+            # see: https://github.com/docker/docker-py/issues/2696#issuecomment-721322548
+            if platform.system() != 'Darwin' or 'Connection broken' not in str(err):
+                raise
+
+    def _docker_exec_container(self, container_name: str, container_image: str, command: Union[str, List[str]]) -> Dict[str, Union[bytes, Dict, int]]:
+        """
+        Args:
+            container_name: the name of the container
+            container_image: the image to use for the container
+            command: the command to run inside the docker container
+
+        Returns:
+            a dict contains 3 elements:
+                1. (Outputs) the container stdout
+                2. (StatusCode) the command exit code
+                3. (Error) the container stderr
+        """
+        # Check if previous run left container a live. if it do, we remove it
+        self._docker_remove_container(container_name)
+        Docker = DockerBase()
+        container: docker.models.containers.Container = Docker.create_container(
+            name=container_name,
+            image=container_image,
+            command=command
+        )
+        try:
+            container.start()
+        except Exception as error:
+            print_error(f"Error exucting command in container {container_name}. Error: {error}")
+        return {**container.wait(), 'Outputs': container.logs()}
+
     def fetch_ansible_docs(self):
         """
         Fetches the ansible documentation for the modules specified from the container image.
@@ -137,12 +208,10 @@ class AnsibleIntegration:
 
         # Lookup ansible module docs from container
         self.print_with_verbose('Creating container for module documentation lookup...')
-        lookup_container = ContainerRunner(
-            image=self.container_image,
-            container_name="demisto-sdk-ansiblecodegen-lookup")
 
         # Make sure ansible-docs is present in container
-        ansibledoc_version = str(lookup_container.exec(command="ansible-doc --version").get("Outputs"))
+        ansibledoc_version = str(self._docker_exec_container(container_name=CONTAINER_NAME,
+                                 container_image=self.container_image, command="ansible-doc --version").get("Outputs"))
         if "ansible-doc 2." not in ansibledoc_version:    # Tested with ansible-doc 2.12.1
             print_error(
                 f'ansible-doc 2.x not found in container or not compatible version. Is Ansible installed in container image?\n\
@@ -150,7 +219,8 @@ class AnsibleIntegration:
             sys.exit(1)
 
         for module in self.ansible_modules:
-            ansibledoc_lookup = lookup_container.exec(command=f"ansible-doc -t module -j \"{module}\"").get("Outputs")
+            ansibledoc_lookup = self._docker_exec_container(
+                container_name=CONTAINER_NAME, container_image=self.container_image, command=f"ansible-doc -t module -j \"{module}\"").get("Outputs")
             # Unfortunately we can't rely on the status code and need to parse the text output :(
 
             # Check for ansible-doc error text
@@ -165,7 +235,7 @@ class AnsibleIntegration:
                 sys.exit(1)
 
         self.print_with_verbose('Removing container used for module documentation lookup...')
-        lookup_container.remove_container
+        self._docker_remove_container(CONTAINER_NAME)
 
     def validate(self) -> tuple:
         """
@@ -308,8 +378,8 @@ class AnsibleIntegration:
         self.print_with_verbose('Creating yaml file...')
         yaml_file = os.path.join(directory, f'{self.base_name}.yml')
         try:
-            with open(yaml_file, 'w') as fp:
-                fp.write(yaml.dump(self.generate_yaml(skip_commands=skip_commands).to_dict()))
+            with open(yaml_file, 'wb') as fp:
+                YAML().dump(self.generate_yaml(skip_commands=skip_commands).to_dict(), fp)
             return yaml_file
         except Exception as err:
             print_error(f'Error writing {yaml_file} - {err}')

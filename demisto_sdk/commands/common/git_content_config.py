@@ -11,6 +11,7 @@ import click
 import giturlparse
 # dirs
 import requests
+
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.logger import logger

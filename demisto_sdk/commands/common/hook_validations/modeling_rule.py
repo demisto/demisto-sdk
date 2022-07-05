@@ -31,6 +31,7 @@ class ModelingRuleValidator(ContentEntityValidator):
 
         self.is_schema_file_exists()
         self.are_keys_empty_in_yml()
+        self.is_valid_rule_names()
 
         return self._is_valid
 
@@ -73,6 +74,28 @@ class ModelingRuleValidator(ContentEntityValidator):
         if self.handle_error(error_message, error_code, file_path=self.file_path):
             self._is_valid = False
             return False
+        return True
+
+    def is_valid_rule_names(self):
+        """Check if the rule file names is valid"""
+        # Gets all the files in the modeling rule folder
+        files_to_check = get_files_in_dir(os.path.dirname(self.file_path), ['json', 'xif', 'yml'], False)
+        integrations_folder = os.path.basename(os.path.dirname(self.file_path))
+        invalid_files = []
+
+        for file_path in files_to_check:
+            file_name = os.path.basename(file_path)
+            base_name = file_name.rsplit('.', 1)[0]
+
+            if integrations_folder != base_name:
+                invalid_files.append(file_name)
+
+        if invalid_files:
+            error_message, error_code = Errors.invalid_rule_name(invalid_files)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+
         return True
 
 

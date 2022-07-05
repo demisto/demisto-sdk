@@ -465,6 +465,7 @@ ERROR_CODE = {
     "modeling_rule_missing_schema_file": {'code': "MR100", 'ui_applicable': False, 'related_field': ''},
     "modeling_rule_keys_not_empty": {'code': "MR101", 'ui_applicable': False, 'related_field': ''},
     "modeling_rule_keys_are_missing": {'code': "MR102", 'ui_applicable': False, 'related_field': ''},
+    "invalid_rule_name": {'code': "MR103", 'ui_applicable': False, 'related_field': ''},
 }
 
 
@@ -2408,3 +2409,9 @@ class Errors:
     def modeling_rule_keys_are_missing():
         return 'The rules key or the schema key is missing from the modeling rule yml file. ' \
                'Please add them with an empty value.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_rule_name(invalid_files):
+        return f"The following rule file name is invalid {invalid_files} - make sure that the rule name is " \
+               f"the same as the folder containing it."

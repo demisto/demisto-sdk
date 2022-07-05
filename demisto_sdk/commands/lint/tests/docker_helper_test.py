@@ -1,7 +1,7 @@
 import os
 from unittest import mock
 
-import demisto_sdk.commands.lint.docker_helper as dhelper
+import demisto_sdk.commands.common.docker_helper as dhelper
 
 
 def test_init_global_docker_client():

@@ -20,6 +20,8 @@ from wcmatch.pathlib import NEGATE, Path
 from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON)
+from demisto_sdk.commands.common.docker_helper import (
+    Docker, init_global_docker_client)
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.timers import timer
 from demisto_sdk.commands.common.tools import (get_all_docker_images,
@@ -28,8 +30,6 @@ from demisto_sdk.commands.lint.commands_builder import (
     build_bandit_command, build_flake8_command, build_mypy_command,
     build_pwsh_analyze_command, build_pwsh_test_command, build_pylint_command,
     build_pytest_command, build_vulture_command, build_xsoar_linter_command)
-from demisto_sdk.commands.lint.docker_helper import (Docker,
-                                                     init_global_docker_client)
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                SUCCESS, WARNING,
                                                add_tmp_lint_files,

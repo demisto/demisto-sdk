@@ -17,6 +17,8 @@ from demisto_sdk.commands.ansible_codegen.resources.integration_template_code im
     command_code, integration_code_footer, integration_code_header,
     no_test_command_code, test_command_code)
 from demisto_sdk.commands.common.constants import FileType
+from demisto_sdk.commands.common.docker_helper import (
+    DockerBase, init_global_docker_client)
 from demisto_sdk.commands.common.hook_validations.integration import \
     IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
@@ -25,8 +27,6 @@ from demisto_sdk.commands.common.tools import (print_error, print_warning,
                                                to_kebab_case, to_pascal_case)
 from demisto_sdk.commands.generate_integration.XSOARIntegration import \
     XSOARIntegration
-from demisto_sdk.commands.lint.docker_helper import (DockerBase,
-                                                     init_global_docker_client)
 
 ILLEGAL_CODE_NAMES = ['type', 'from', 'id', 'filter', 'list']
 NAME_FIX = '_'
@@ -75,9 +75,7 @@ class AnsibleIntegration:
         self.verbose = verbose
         self.container_image = container_image
         self.fix_code = fix_code
-        # Docker client init
         self._docker_client: docker.DockerClient = init_global_docker_client(log_prompt='Ansible-codegen')
-        self._docker_hub_login = self._docker_login()
 
     def load_config(self):
         """
@@ -138,27 +136,6 @@ class AnsibleIntegration:
         if self.command_prefix is None and self.name:
             # If the config `name` is a single word then trust the caps
             self.command_prefix = self.name.lower() if len(self.name.split(' ')) == 1 else to_kebab_case(self.name)
-
-    def _docker_login(self) -> bool:
-        """ Login to docker-hub using environment variables:
-                1. DOCKERHUB_USER - User for docker hub.
-                2. DOCKERHUB_PASSWORD - Password for docker-hub.
-            Used in Circle-CI for pushing into repo devtestdemisto
-
-        Returns:
-            bool: True if logged in successfully.
-        """
-        docker_user = os.getenv('DOCKERHUB_USER')
-        docker_pass = os.getenv('DOCKERHUB_PASSWORD')
-        if docker_user and docker_pass:
-            try:
-                self._docker_client.login(username=docker_user,
-                                          password=docker_pass,
-                                          registry="https://index.docker.io/v1")
-                return self._docker_client.ping()
-            except docker.errors.APIError:
-                return False
-        return False
 
     def _docker_remove_container(self, container_name: str):
         try:

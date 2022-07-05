@@ -463,6 +463,8 @@ ERROR_CODE = {
 
     # MR - Modeling Rules
     "modeling_rule_missing_schema_file": {'code': "MR100", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rule_keys_not_empty": {'code': "MR101", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rule_keys_are_missing": {'code': "MR102", 'ui_applicable': False, 'related_field': ''},
 }
 
 
@@ -2395,3 +2397,14 @@ class Errors:
     @error_code_decorator
     def modeling_rule_missing_schema_file(file_path: str):
         return f'The modeling rule {file_path} is missing a schema file.'
+
+    @staticmethod
+    @error_code_decorator
+    def modeling_rule_keys_not_empty():
+        return 'Please make sure that the rules key and the schema key are empty (should be an empty string).'
+
+    @staticmethod
+    @error_code_decorator
+    def modeling_rule_keys_are_missing():
+        return 'The rules key or the schema key is missing from the modeling rule yml file. ' \
+               'Please add them with an empty value.'

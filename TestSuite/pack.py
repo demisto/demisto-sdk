@@ -610,6 +610,7 @@ class Pack:
                 'fromversion': 3.3,
                 'tags': 'tag',
                 'rules': '',
+                'schema': '',
             }
         if not rules:
             rules = '[MODEL: dataset="dataset", model="Model", version=0.1]'

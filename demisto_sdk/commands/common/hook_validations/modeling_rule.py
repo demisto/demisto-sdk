@@ -7,6 +7,9 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import get_files_in_dir
+from demisto_sdk.commands.common.handlers import YAML_Handler
+
+yaml = YAML_Handler()
 
 
 class ModelingRuleValidator(ContentEntityValidator):
@@ -27,6 +30,7 @@ class ModelingRuleValidator(ContentEntityValidator):
         """
 
         self.is_schema_file_exists()
+        self.are_keys_empty_in_yml()
 
         return self._is_valid
 
@@ -45,3 +49,34 @@ class ModelingRuleValidator(ContentEntityValidator):
                 self._is_valid = False
                 return False
         return True
+
+    def are_keys_empty_in_yml(self):
+        """
+        Check that the schema and rules keys are empty.
+        """
+        with open(self.file_path, 'r') as yf:
+            yaml_obj = yaml.load(yf)
+
+        # Check that the keys exists in yml
+        if 'rules' in yaml_obj and 'schema' in yaml_obj:
+            # Check that the following keys in the yml are empty
+            if not yaml_obj['rules'] and not yaml_obj['schema']:
+                return True
+            else:
+                error_message, error_code = Errors.modeling_rule_keys_not_empty()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self._is_valid = False
+                    return False
+
+        # Case that we are missing those keys from the yml file
+        error_message, error_code = Errors.modeling_rule_keys_are_missing()
+        if self.handle_error(error_message, error_code, file_path=self.file_path):
+            self._is_valid = False
+            return False
+        return True
+
+
+
+
+
+

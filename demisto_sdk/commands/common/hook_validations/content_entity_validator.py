@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import re
@@ -16,7 +15,7 @@ from demisto_sdk.commands.common.constants import (
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator, error_codes)
 from demisto_sdk.commands.common.hook_validations.structure import \
@@ -26,6 +25,7 @@ from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
                                                is_test_config_match,
                                                run_command)
 
+json = JSON_Handler()
 yaml = YAML_Handler()
 logger = logging.getLogger("demisto-sdk")
 
@@ -151,18 +151,18 @@ class ContentEntityValidator(BaseValidator):
 
     @error_codes('BA101')
     def _is_id_equals_name(self, file_type):
-        """Validate that the id of the file equals to the name.
+        """Validates that the id of a content item matches its name attribute.
          Args:
-            file_type (str): the file type. can be 'integration', 'script', 'playbook', 'dashboard', 'id'
+            file_type (str): the file type. can be 'integration', 'script', 'playbook', 'dashboard'
 
         Returns:
-            bool. Whether the file's id is equal to to its name
+            bool. Whether the id attribute is equal to the name attribute.
         """
 
-        file_id = _get_file_id(file_type, self.current_file)
+        id_ = _get_file_id(file_type, self.current_file)
         name = self.current_file.get('name', '')
-        if file_id != name:
-            error_message, error_code = Errors.id_should_equal_name(name, file_id)
+        if id_ != name:
+            error_message, error_code = Errors.id_should_equal_name(name, id_, self.file_path)
             if self.handle_error(error_message, error_code, file_path=self.file_path,
                                  suggested_fix=Errors.suggest_fix(self.file_path)):
                 return False

@@ -9,6 +9,7 @@
 * Added a new validation to the `XSOAR-linter` in the **lint** command for verifying that demisto.log is not used in the code.
 * The **generate-docs** command will now auto-generate the Incident Mirroring section when implemented in an integration.
 * Added support to automatically generate release notes for deprecated items in the **update-release-notes** command.
+* Fixed an issue where `demisto-sdk` crashes when it's unable to find local repository properties.
 ## 1.6.9
 * Added a new validation that checks whether a pack should be deprecated.
 * Added a new ability to the **format** command to deprecate a pack.

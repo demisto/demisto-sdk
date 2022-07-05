@@ -4,10 +4,10 @@ This module is designed to validate the correctness of generic definition entiti
 import os
 
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import get_files_in_dir
-from demisto_sdk.commands.common.handlers import YAML_Handler
 
 yaml = YAML_Handler()
 
@@ -97,9 +97,3 @@ class ModelingRuleValidator(ContentEntityValidator):
                 return False
 
         return True
-
-
-
-
-
-

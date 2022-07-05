@@ -1,13 +1,11 @@
 import os
-import pytest
 
-from TestSuite.file import File
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.modeling_rule import \
     ModelingRuleValidator
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from TestSuite.test_tools import ChangeCWD
-from demisto_sdk.commands.common.handlers import YAML_Handler
 
 yaml = YAML_Handler()
 
@@ -132,5 +130,3 @@ def test_is_invalid_rule_file_name(repo):
     with ChangeCWD(repo.path):
         modeling_rule_validator = ModelingRuleValidator(structure_validator)
         assert not modeling_rule_validator.is_valid_rule_names()
-
-

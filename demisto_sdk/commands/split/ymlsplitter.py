@@ -7,7 +7,8 @@ import tempfile
 from io import open
 from pathlib import Path
 
-from ruamel.yaml.scalarstring import SingleQuotedScalarString, PlainScalarString
+from ruamel.yaml.scalarstring import (PlainScalarString,
+                                      SingleQuotedScalarString)
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,

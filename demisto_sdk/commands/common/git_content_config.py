@@ -128,7 +128,8 @@ class GitContentConfig:
                 parsed_git = giturlparse.parse(url)
                 if parsed_git and parsed_git.host and parsed_git.repo:
                     return parsed_git
-        except (InvalidGitRepositoryError, AttributeError):
+        except Exception as e:
+            logger.debug(f'Could not get repository properties: {e}')
             return None
         return None
 

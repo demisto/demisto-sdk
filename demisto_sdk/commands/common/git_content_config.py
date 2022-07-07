@@ -180,7 +180,6 @@ class GitContentConfig:
     def _print_private_repo_warning_if_needed():
         """
         Checks the class variable, prints if necessary, and sets the class variable to avoid multiple prints
-        :return:
         """
         if not GitContentConfig.NOTIFIED_PRIVATE_REPO:
             click.secho('Could not find the repository name on gitlab - defaulting to demisto/content',

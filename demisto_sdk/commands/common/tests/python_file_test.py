@@ -14,7 +14,7 @@ def test_copyright_sections(integration, file_input):
     Given
         - Valid sections in different forms from SECTIONS
     When
-        - Run validate on README file
+        - Run validate on a python file
     Then
         - Ensure no empty sections from the SECTIONS list
     """

@@ -1781,13 +1781,13 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def copyright_section_in_readme_error(line_nums):
-        return f"Please note that keywords related to Copyright section (BSD, MIT, Copyright, proprietary) were found " \
-               f"in lines: {line_nums}. Copyright section cannot be part of Pack ReadMe."
+        return f"Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found " \
+               f"in lines: {line_nums}. Copyright section cannot be part of pack readme."
 
     @staticmethod
     @error_code_decorator
     def copyright_section_in_python_error(line_nums):
-        return f"Please note that keywords related to Copyright section (BSD, MIT, Copyright, proprietary) were found " \
+        return f"Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found " \
                f"in lines: {line_nums}. Copyright section cannot be part of script."
 
     @staticmethod

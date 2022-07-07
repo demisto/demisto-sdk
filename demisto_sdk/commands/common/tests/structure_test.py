@@ -243,7 +243,7 @@ class TestStructureValidator:
         yml_file = "yml_file.yml"
         json_file = "json_file.json"
         md_file = "md_file.md"
-        python_file = "not_valid.py"
+        python_file = "py_file.py"
         no_extension = "no_ext"
 
         structure = StructureValidator(file_path=image)

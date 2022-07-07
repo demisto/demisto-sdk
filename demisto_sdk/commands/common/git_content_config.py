@@ -65,6 +65,7 @@ class GitContentConfig:
     }
 
     CREDENTIALS = GitCredentials()
+    NOTIFIED_PRIVATE_REPO = False  # to avoid multiple prints
 
     def __init__(
             self,
@@ -129,7 +130,7 @@ class GitContentConfig:
                     return parsed_git
             return None
         except Exception as e:
-            logger.warn(f'Could not get repository properties: {e}, using provided configs, or default.')
+            logger.warning(f'Could not get repository properties: {e}, using provided configs, or default.')
             return None
 
     def _set_repo_config(self, hostname: str, organization: str = None, repo_name: str = None, project_id: int = None):
@@ -151,10 +152,14 @@ class GitContentConfig:
                                      (None, None)
 
         if self.git_provider == GitProvider.GitLab and gitlab_id is None:
-            click.secho(f'If your repo is in private gitlab repo, '
-                        f'configure `{GitCredentials.ENV_GITLAB_TOKEN_NAME}` environment variable '
-                        f'or configure `{GitContentConfig.ENV_REPO_HOSTNAME_NAME}` environment variable', fg='yellow')
-            click.secho('Could not find the repository name on gitlab - defaulting to demisto/content', fg='yellow')
+            if not GitContentConfig.NOTIFIED_PRIVATE_REPO:
+                click.secho('Could not find the repository name on gitlab - defaulting to demisto/content', fg='yellow')
+                click.secho(f'If you are using a private gitlab repo, '
+                            f'configure one of the following environment variables: '
+                            f'`{GitCredentials.ENV_GITLAB_TOKEN_NAME}`,`{GitContentConfig.ENV_REPO_HOSTNAME_NAME}`',
+                            fg='yellow')
+                GitContentConfig.NOTIFIED_PRIVATE_REPO = True
+
             self.git_provider = GitProvider.GitHub
             self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
             self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT

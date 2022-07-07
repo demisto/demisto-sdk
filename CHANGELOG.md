@@ -10,7 +10,7 @@
 * The **generate-docs** command will now auto-generate the Incident Mirroring section when implemented in an integration.
 * Added support to automatically generate release notes for deprecated items in the **update-release-notes** command.
 * Fixed an issue causing any command to crash when unable to detect local repository properties.
-* Added a new validation to the **validate** command to verify that md and python files do not contain words related to copyright sction.
+* Added a new validation to the **validate** command to verify that markdown and python files do not contain words related to copyright section.
 
 ## 1.6.9
 * Added a new validation that checks whether a pack should be deprecated.

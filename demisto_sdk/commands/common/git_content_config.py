@@ -65,7 +65,7 @@ class GitContentConfig:
     }
 
     CREDENTIALS = GitCredentials()
-    NOTIFIED_PRIVATE_REPO = False  # to avoid multiple prints
+    NOTIFIED_PRIVATE_REPO = False  # to avoid multiple prints, it's set to True when printing.
 
     def __init__(
             self,
@@ -152,14 +152,7 @@ class GitContentConfig:
                                      (None, None)
 
         if self.git_provider == GitProvider.GitLab and gitlab_id is None:
-            if not GitContentConfig.NOTIFIED_PRIVATE_REPO:
-                click.secho('Could not find the repository name on gitlab - defaulting to demisto/content', fg='yellow')
-                click.secho(f'If you are using a private gitlab repo, '
-                            f'configure one of the following environment variables: '
-                            f'`{GitCredentials.ENV_GITLAB_TOKEN_NAME}`,`{GitContentConfig.ENV_REPO_HOSTNAME_NAME}`',
-                            fg='yellow')
-                GitContentConfig.NOTIFIED_PRIVATE_REPO = True
-
+            self._print_private_repo_warning_if_needed()
             self.git_provider = GitProvider.GitHub
             self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
             self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT
@@ -176,20 +169,27 @@ class GitContentConfig:
                 or (None, None)
             self.git_provider = GitProvider.GitHub
             if not github_hostname or not github_repo:  # github was not found.
-                if not GitContentConfig.NOTIFIED_PRIVATE_REPO:
-                    click.secho('Could not find the repository name on gitlab - defaulting to demisto/content',
-                                fg='yellow')
-                    click.secho(f'If you are using a private gitlab repo, '
-                                f'configure one of the following environment variables: '
-                                f'`{GitCredentials.ENV_GITLAB_TOKEN_NAME}`,`{GitContentConfig.ENV_REPO_HOSTNAME_NAME}`',
-                                fg='yellow')
-                    GitContentConfig.NOTIFIED_PRIVATE_REPO = True
-
+                self._print_private_repo_warning_if_needed()
                 self.current_repository = GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
                 self.repo_hostname = GitContentConfig.GITHUB_USER_CONTENT
             else:
                 self.repo_hostname = github_hostname
                 self.current_repository = github_repo
+
+    @staticmethod
+    def _print_private_repo_warning_if_needed():
+        """
+        Checks the class variable, prints if necessary, and sets the class variable to avoid multiple prints
+        :return:
+        """
+        if not GitContentConfig.NOTIFIED_PRIVATE_REPO:
+            click.secho('Could not find the repository name on gitlab - defaulting to demisto/content',
+                        fg='yellow')
+            click.secho(f'If you are using a private gitlab repo, '
+                        f'configure one of the following environment variables: '
+                        f'`{GitCredentials.ENV_GITLAB_TOKEN_NAME}`,`{GitContentConfig.ENV_REPO_HOSTNAME_NAME}`',
+                        fg='yellow')
+            GitContentConfig.NOTIFIED_PRIVATE_REPO = True
 
     @staticmethod
     @lru_cache

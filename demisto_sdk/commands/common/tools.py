@@ -2026,6 +2026,17 @@ def item_type_to_content_items_header(item_type):
         "indicatorfield": "indicatorField",
         "incidentfield": "incidentField",
         "layoutscontainer": "layout",
+
+        # GOM
+        "genericdefinition": "genericDefinition",
+        "genericfield": "genericField",
+        "genericmodule": "genericModule",
+        "generictype": "genericType",
+
+        # SIEM content
+        "correlationrule": "correlationRule",
+        "modelingrule": "modelingRule",
+        "parsingrule": "parsingRule",
     }
 
     return f'{converter.get(item_type, item_type)}s'

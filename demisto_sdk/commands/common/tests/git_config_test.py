@@ -158,7 +158,7 @@ class TestGitContentConfig:
         assert git_config.git_provider == GitProvider.GitHub
         assert git_config.current_repository == GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
         assert git_config.base_api == DEFAULT_GITHUB_BASE_API
-        message = click_mock.call_args_list[0][0][0]
+        message = click_mock.call_args_list[1][0][0]
         assert GitContentConfig.ENV_REPO_HOSTNAME_NAME in message
         assert GitCredentials.ENV_GITLAB_TOKEN_NAME in message
 

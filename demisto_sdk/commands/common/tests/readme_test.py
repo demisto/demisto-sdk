@@ -221,6 +221,29 @@ def test_valid_sections(integration, file_input):
     assert result
 
 
+@pytest.mark.parametrize("file_input",
+                         ["## Copyright\ninput",
+                          "## BSD\n\n---\ninput",
+                          "## MIT\n\n----------\ninput",
+                          "## proprietary\n\ninput"])
+def test_copyright_sections(integration, file_input):
+    """
+    Given
+        - Valid sections in different forms from SECTIONS
+    When
+        - Run validate on README file
+    Then
+        - Ensure no empty sections from the SECTIONS list
+    """
+
+    integration.readme.write(file_input)
+    readme_path = integration.readme.path
+    readme_validator = ReadMeValidator(readme_path)
+    result = readme_validator.verify_copyright_section_in_readme_content()
+
+    assert not result
+
+
 @pytest.mark.parametrize("file_input, section",
                          [("##### Required Permissions\n**FILL IN REQUIRED PERMISSIONS HERE**\n##### Base Command",
                            'FILL IN REQUIRED PERMISSIONS HERE'),

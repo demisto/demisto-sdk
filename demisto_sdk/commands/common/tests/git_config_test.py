@@ -161,6 +161,8 @@ class TestGitContentConfig:
         message = click_mock.call_args_list[1][0][0]
         assert GitContentConfig.ENV_REPO_HOSTNAME_NAME in message
         assert GitCredentials.ENV_GITLAB_TOKEN_NAME in message
+        assert GitContentConfig.NOTIFIED_PRIVATE_REPO
+        GitContentConfig.NOTIFIED_PRIVATE_REPO = False  # reverting to keep tests clean
 
     def test_get_repo_name_gitlab_invalid(self, mocker):
         """

@@ -13,11 +13,9 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
                                                get_max_version,
                                                get_remote_file,
                                                is_file_from_content_repo)
-from demisto_sdk.commands.format.format_constants import (DEFAULT_VERSION,
-                                                          ERROR_RETURN_CODE,
-                                                          OLD_FILE_TYPES,
-                                                          SKIP_RETURN_CODE,
-                                                          SUCCESS_RETURN_CODE)
+from demisto_sdk.commands.format.format_constants import (
+    DEFAULT_VERSION, ERROR_RETURN_CODE, JSON_FROM_SERVER_VERSION_KEY,
+    OLD_FILE_TYPES, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 yaml = YAML_Handler(allow_duplicate_keys=True)
@@ -75,7 +73,7 @@ class BaseUpdate:
         except Exception:
             raise Exception(F'Provided file {self.source_file} is not a valid file.')
         self.from_version_key = self.set_from_version_key_name()
-        self.json_from_server_version_key = "fromServerVersion"
+        self.json_from_server_version_key = JSON_FROM_SERVER_VERSION_KEY
         self.id_set_file, _ = get_dict_from_file(path=kwargs.get('id_set_path'))  # type: ignore[arg-type]
 
     def set_output_file_path(self, output_file_path) -> str:

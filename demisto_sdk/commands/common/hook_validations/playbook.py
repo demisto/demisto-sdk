@@ -139,8 +139,7 @@ class PlaybookValidator(ContentEntityValidator):
             playbook_test = f.read()
         for input in inputs:
             input_key = input.get('key', '')
-            input_to_search = f'inputs.{input_key}'
-            if input_key and input_to_search not in playbook_test:
+            if input_key and f'inputs.{input_key}' not in playbook_test:
                 inputs_not_in_use.append(input_key)
         if inputs_not_in_use:
             playbook_name = self.current_file.get('name', '')

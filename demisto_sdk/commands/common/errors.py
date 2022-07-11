@@ -2407,8 +2407,8 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def modeling_rule_keys_are_missing():
-        return 'The rules key or the schema key is missing from the modeling rule yml file. ' \
-               'Please add them with an empty value.'
+        return 'The 'rules' key or the 'schema' key is missing from the modeling rule yml file. ' \
+               'Make sure to add them to your yml file with an empty string as value.'
 
     @staticmethod
     @error_code_decorator

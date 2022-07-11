@@ -422,7 +422,7 @@ class TestPlaybookValidator:
 
                                 }, True)]
 
-    @pytest.mark.parametrize("playbook_json, expected_result", IS_SCRIPT_ID_VALID)
+    @pytest.mark.parametrize("playbook_json, expected_result", INPUTS_NOT_IN_USE_TEST)
     def test_playbook_inputs_in_use(self, mocker, playbook, playbook_json, expected_result):
         """
 

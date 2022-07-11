@@ -2274,8 +2274,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def input_key_not_in_tasks(main_playbook, inputs):
-        return f"Playbook {main_playbook} contains inputs that are not in use in any of the tasks." \
+    def input_key_not_in_tasks(playbook_name: str, inputs: str):
+        return f"Playbook {playbook_name} contains inputs that are not in use in any of the tasks." \
                f" Those inputs are: {inputs}"
 
     @staticmethod

@@ -12,7 +12,7 @@ tasks:
     - - operator: isEqualString
         left:
           value:
-            simple: inputs.TestInputElse
+            simple: inputs.TestInput
           iscontext: true
         right:
           value:

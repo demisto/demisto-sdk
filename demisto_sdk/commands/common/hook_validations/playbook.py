@@ -53,6 +53,7 @@ class PlaybookValidator(ContentEntityValidator):
             self.name_not_contain_the_type(),
             self.is_valid_with_indicators_input(),
             self.are_all_inputs_in_use(),
+            self.are_all_used_inputs_in_inputs_section(),
         ]
         answers = all(playbook_checks)
 
@@ -85,6 +86,87 @@ class PlaybookValidator(ContentEntityValidator):
             bool. whether the version is valid or not
         """
         return self._is_valid_version()
+
+    def collect_all_inputs_in_use(self):
+        """
+
+        Returns: list of all inputs used in playbook.
+
+        """
+        with open(self.file_path, 'r') as f:
+            playbook_text = f.read()
+        all_inputs_occurrences = re.findall(r"inputs\.[\S]*", playbook_text)
+        return [input.split('.')[1] for input in all_inputs_occurrences]
+
+    def collect_all_inputs_from_inputs_section(self):
+        """
+
+        Returns: list of all inputs from 'inputs' section of playbook.
+
+        """
+        inputs: Dict = self.current_file.get('inputs', {})
+        inputs_keys = []
+        for input in inputs:
+            key = input.get('key', '')
+            if key:
+                inputs_keys.append(key)
+        return inputs_keys
+
+    @staticmethod
+    def find_missing_inputs(list_to_search_for, list_to_search_in):
+        """
+
+        Args:
+            list_to_search_for: list of values to search for.
+            list_to_search_in: list of values to search in.
+
+        Returns: all values from list_to_search_for that does not appear in list_to_search_in.
+
+        """
+        result = []
+        for input in list_to_search_for:
+            if input not in list_to_search_in:
+                result.append(input)
+        return result
+
+    @error_codes('PB118')
+    def are_all_inputs_in_use(self):  # type: () -> bool
+        """Check whether the playbook inputs are in use in any of the tasks
+
+        Return:
+            bool. if the Playbook inputs are in use.
+        """
+        all_inputs_occurrences = self.collect_all_inputs_in_use()
+        inputs_list = self.collect_all_inputs_from_inputs_section()
+        inputs_not_in_use = self.find_missing_inputs(inputs_list, all_inputs_occurrences)
+
+        if inputs_not_in_use:
+            playbook_name = self.current_file.get('name', '')
+            error_message, error_code = Errors.input_key_not_in_tasks(playbook_name, ', '.join(inputs_not_in_use))
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+        return True
+
+    @error_codes('PB119')
+    def are_all_used_inputs_in_inputs_section(self):  # type: () -> bool
+        """Check whether the playbook inputs that in use appear in the input section.
+
+        Return:
+            bool. if the Playbook inputs appear in inputs section.
+        """
+        all_inputs_occurrences = self.collect_all_inputs_in_use()
+        inputs_list = self.collect_all_inputs_from_inputs_section()
+        inputs_not_in_section = self.find_missing_inputs(all_inputs_occurrences, inputs_list)
+
+        if inputs_not_in_section:
+            playbook_name = self.current_file.get('name', '')
+            error_message, error_code = Errors.input_used_not_in_input_section(playbook_name,
+                                                                               ', '.join(inputs_not_in_section))
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+        return True
 
     @error_codes('PB100')
     def is_no_rolename(self):  # type: () -> bool
@@ -125,29 +207,6 @@ class PlaybookValidator(ContentEntityValidator):
                     is_all_condition_branches_handled = self.is_script_condition_branches_handled(
                         task) and is_all_condition_branches_handled
         return is_all_condition_branches_handled
-
-    @error_codes('PB118')
-    def are_all_inputs_in_use(self):  # type: () -> bool
-        """Check whether the playbook inputs are in use in any of the tasks
-
-        Return:
-            bool. if the Playbook inputs are in use.
-        """
-        inputs: Dict = self.current_file.get('inputs', {})
-        inputs_not_in_use = []
-        with open(self.file_path, 'r') as f:
-            playbook_test = f.read()
-        for input in inputs:
-            input_key = input.get('key', '')
-            if input_key and f'inputs.{input_key}' not in playbook_test:
-                inputs_not_in_use.append(input_key)
-        if inputs_not_in_use:
-            playbook_name = self.current_file.get('name', '')
-            error_message, error_code = Errors.input_key_not_in_tasks(playbook_name, ', '.join(inputs_not_in_use))
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self.is_valid = False
-                return False
-        return True
 
     @error_codes('PB101,PB102')
     def is_builtin_condition_task_branches_handled(self, task: Dict) -> bool:

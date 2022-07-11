@@ -10,7 +10,9 @@ from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.tests.constants_test import (
     CONTENT_REPO_EXAMPLE_ROOT, INVALID_PLAYBOOK_UNHANDLED_CONDITION,
-    INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION)
+    INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION,
+    INVALID_PLAYBOOK_INPUTS_USE,
+    VALID_PLAYBOOK_INPUTS_USE)
 from TestSuite.test_tools import ChangeCWD
 
 
@@ -392,38 +394,11 @@ class TestPlaybookValidator:
     IS_ELSE_IN_CONDITION_TASK = [(CONDITIONAL_SCRPT_WITH_NO_DFLT_NXT_TASK.get('tasks').get('1'), False),
                                  (CONDITIONAL_SCRPT_WITH_DFLT_NXT_TASK.get('tasks').get('1'), True)]
 
-    INPUTS_NOT_IN_USE_TEST = [({"id": "Inputs test playbook",
-                                "name": "Inputs test playbook",
-                                "tasks":
-                                    {'1': {'type': 'condition',
-                                           'scriptName': 'testScript',
-                                           'nexttasks': {'#default#': []}}},
-                                "inputs":
-                                    {'key': 'test_inputs'}
+    INPUTS_NOT_IN_USE_TEST = [(INVALID_PLAYBOOK_INPUTS_USE, False),
+                              (VALID_PLAYBOOK_INPUTS_USE, True)]
 
-                                }, False),
-                              ({"id": "Inputs test playbook",
-                                "name": "Inputs test playbook",
-                                "tasks":
-                                    {'1': {'type': 'condition',
-                                           'scriptName': 'testScript',
-                                           'nexttasks': {'#default#': []},
-                                           'condition': {'operator': 'isEqualString',
-                                                         'left': {
-                                                             'value': {
-                                                                 'simple': 'inputs.CheckMicrosoftHeaders'},
-                                                             'iscontext': 'true'
-                                                         },
-                                                         'right': {
-                                                             'value': {
-                                                                 'simple': 'True'}}}}},
-                                "inputs":
-                                    {'key': 'test_inputs'}
-
-                                }, True)]
-
-    @pytest.mark.parametrize("playbook_json, expected_result", INPUTS_NOT_IN_USE_TEST)
-    def test_playbook_inputs_in_use(self, mocker, playbook, playbook_json, expected_result):
+    @pytest.mark.parametrize("playbook_path, expected_result", INPUTS_NOT_IN_USE_TEST)
+    def test_playbook_inputs_in_use(self, mocker, playbook, playbook_path, expected_result):
         """
 
         Given
@@ -435,8 +410,7 @@ class TestPlaybookValidator:
         Then
         - In case inputs are not in use return False, else True.
         """
-        playbook.yml.write_dict(playbook_json)
-        structure = mock_structure("", playbook_json)
+        structure = StructureValidator(file_path=playbook_path)
         validator = PlaybookValidator(structure)
         assert validator.are_all_inputs_in_use() == expected_result
 

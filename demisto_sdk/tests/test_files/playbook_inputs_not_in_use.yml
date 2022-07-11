@@ -1,0 +1,30 @@
+id: Inputs Test
+version: -1
+contentitemexportablefields:
+  contentitemfields: {}
+name: Inputs Test
+starttaskid: '0'
+tasks:
+  '0':
+    id: '0'
+    task:
+    conditions:
+      - label: Yes
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+
+inputs:
+- key: TestInput
+  value:
+    simple: Administrator
+  required: true
+  description: ''
+  playbookInputQuery:
+outputs: []
+tests: []
+fromversion: 6.1.0

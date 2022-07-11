@@ -12,6 +12,7 @@
 * Fixed an issue causing any command to crash when unable to detect local repository properties.
 * Fixed an issue where running in a private gitlab repo caused a warning message to be shown multiple times.
 * Added a new validation to the **validate** command to verify that markdown and python files do not contain words related to copyright section.
+* Fixed an issue causing lint command to crash when sending a file path instead of a directory path.  
 
 ## 1.6.9
 * Added a new validation that checks whether a pack should be deprecated.

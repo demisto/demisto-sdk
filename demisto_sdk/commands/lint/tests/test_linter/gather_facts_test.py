@@ -4,6 +4,8 @@ from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.lint import linter
 
+import pytest
+
 
 def initiate_linter(demisto_content, integration_path, docker_engine=False):
     return linter.Linter(content_repo=demisto_content,
@@ -190,6 +192,7 @@ def test_remove_gitignore_files(mocker, demisto_content):
     - Remove the ignored files from self._facts['lint_files'].
 
     """
+
     class GitMock:
         def ignored(self, files):
             return files[-1:]
@@ -200,3 +203,24 @@ def test_remove_gitignore_files(mocker, demisto_content):
     assert files_paths[-1] in runner._facts['lint_files']
     runner._remove_gitignore_files("prompt")
     assert files_paths[-1] not in runner._facts['lint_files']
+
+
+dir_path = "/Users/rshunim/dev/demisto/demisto-sdk/demisto_sdk/commands/lint/tests/test_linter"
+python_path = "/Users/rshunim/dev/demisto/demisto-sdk/demisto_sdk/commands/lint/tests/test_linter/__init__.py"
+
+path_list = [dir_path, python_path]
+
+
+@pytest.mark.parametrize('path_input', path_list)
+def test_linter_pack_abs_dir(path_input: str):
+    from demisto_sdk.commands.lint.linter import Linter
+
+    linter_instance: Linter = Linter(pack_dir=Path(path_input),
+                                     content_repo=Path(path_input),
+                                     req_3=[],
+                                     req_2=[],
+                                     docker_engine=False,
+                                     docker_timeout=30
+                                     )
+
+    assert linter_instance._pack_abs_dir == Path(dir_path)

@@ -1,10 +1,9 @@
 from typing import Callable
 
+import pytest
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.lint import linter
-
-import pytest
 
 
 def initiate_linter(demisto_content, integration_path, docker_engine=False):

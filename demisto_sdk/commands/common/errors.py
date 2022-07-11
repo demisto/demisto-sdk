@@ -2402,7 +2402,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def modeling_rule_keys_not_empty():
-        return 'Please make sure that the rules key and the schema key are empty (should be an empty string).'
+        return 'Either the 'rules' key or the 'schema' key are not empty, make sure to set the value of these keys to an empty string.'
 
     @staticmethod
     @error_code_decorator

@@ -9,7 +9,7 @@ For Valid file use: XSOAR_LINTER_PY3_VALID
 For a new checker, add the invalid statement in the relevant file and add it to the relevant test.
 """
 
-from pathlib import Path
+from wcmatch.pathlib import Path
 
 import pytest
 

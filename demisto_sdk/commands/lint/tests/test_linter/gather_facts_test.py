@@ -2,7 +2,6 @@ import shutil
 import tempfile
 from typing import Callable
 
-import pytest
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.lint import linter

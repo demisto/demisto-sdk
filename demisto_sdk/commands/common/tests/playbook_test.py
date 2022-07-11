@@ -378,9 +378,9 @@ class TestPlaybookValidator:
 
     CONDITIONAL_SCRPT_WITH_NO_DFLT_NXT_TASK = {"id": "Intezer - scan host", "version": -1,
                                                "tasks":
-                                               {'1': {'type': 'condition',
-                                                      'scriptName': 'testScript',
-                                                      'nexttasks': {'1': []}}}}
+                                                   {'1': {'type': 'condition',
+                                                          'scriptName': 'testScript',
+                                                          'nexttasks': {'1': []}}}}
 
     CONDITION_TASK_WITH_ELSE = {'1': {'type': 'condition',
                                       'scriptName': 'testScript',
@@ -388,9 +388,57 @@ class TestPlaybookValidator:
 
     CONDITION_TASK_WITHOUT_ELSE = {'1': {'type': 'condition',
                                          'scriptName': 'testScript',
-                                                       'nexttasks': {'1': []}}}
+                                         'nexttasks': {'1': []}}}
     IS_ELSE_IN_CONDITION_TASK = [(CONDITIONAL_SCRPT_WITH_NO_DFLT_NXT_TASK.get('tasks').get('1'), False),
                                  (CONDITIONAL_SCRPT_WITH_DFLT_NXT_TASK.get('tasks').get('1'), True)]
+
+    INPUTS_NOT_IN_USE_TEST = [({"id": "Inputs test playbook",
+                                "name": "Inputs test playbook",
+                                "tasks":
+                                    {'1': {'type': 'condition',
+                                           'scriptName': 'testScript',
+                                           'nexttasks': {'#default#': []}}},
+                                "inputs":
+                                    {'key': 'test_inputs'}
+
+                                }, False),
+                              ({"id": "Inputs test playbook",
+                                "name": "Inputs test playbook",
+                                "tasks":
+                                    {'1': {'type': 'condition',
+                                           'scriptName': 'testScript',
+                                           'nexttasks': {'#default#': []},
+                                           'condition': {'operator': 'isEqualString',
+                                                         'left': {
+                                                             'value': {
+                                                                 'simple': 'inputs.CheckMicrosoftHeaders'},
+                                                             'iscontext': 'true'
+                                                         },
+                                                         'right': {
+                                                             'value': {
+                                                                 'simple': 'True'}}}}},
+                                "inputs":
+                                    {'key': 'test_inputs'}
+
+                                }, True)]
+
+    @pytest.mark.parametrize("playbook_json, expected_result", IS_SCRIPT_ID_VALID)
+    def test_playbook_inputs_in_use(self, mocker, playbook, playbook_json, expected_result):
+        """
+
+        Given
+        - A playbook with inputs and tasks.
+
+        When
+        - validating playbook.
+
+        Then
+        - In case inputs are not in use return False, else True.
+        """
+        playbook.yml.write_dict(playbook_json)
+        structure = mock_structure("", playbook_json)
+        validator = PlaybookValidator(structure)
+        assert validator.are_all_inputs_in_use() == expected_result
 
     @pytest.mark.parametrize("playbook_json, id_set_json, expected_result", IS_SCRIPT_ID_VALID)
     def test_playbook_script_id(self, mocker, playbook, repo, playbook_json, id_set_json, expected_result):

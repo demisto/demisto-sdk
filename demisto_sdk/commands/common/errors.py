@@ -327,6 +327,7 @@ ERROR_CODE = {
     "playbook_tasks_not_quiet_mode": {'code': "PB115", 'ui_applicable': False, 'related_field': 'tasks'},
     "playbook_tasks_continue_on_error": {'code': "PB116", 'ui_applicable': False, 'related_field': 'tasks'},
     "content_entity_is_not_in_id_set": {'code': "PB117", 'ui_applicable': False, 'related_field': ''},
+    "input_key_not_in_tasks": {'code': "PB118", 'ui_applicable': False, 'related_field': ''},
 
     # PP - Pre-Process Rules
     "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
@@ -2256,6 +2257,12 @@ class Errors:
         return f"Playbook {main_playbook} uses {entities_names}, which do not exist in the id_set.\n" \
                f"Possible reason for such an error, would be that the name of the entity in the yml file of " \
                f"{main_playbook} is not identical to its name in its own yml file. Or the id_set is not up to date"
+
+    @staticmethod
+    @error_code_decorator
+    def input_key_not_in_tasks(main_playbook, inputs):
+        return f"Playbook {main_playbook} contains inputs that are not in use in any of the tasks." \
+               f" Those inputs are: {inputs}"
 
     @staticmethod
     @error_code_decorator

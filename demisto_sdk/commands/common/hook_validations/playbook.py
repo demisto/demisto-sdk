@@ -52,6 +52,7 @@ class PlaybookValidator(ContentEntityValidator):
             self.verify_condition_tasks_has_else_path(),
             self.name_not_contain_the_type(),
             self.is_valid_with_indicators_input(),
+            self.are_all_inputs_in_use(),
         ]
         answers = all(playbook_checks)
 
@@ -124,6 +125,30 @@ class PlaybookValidator(ContentEntityValidator):
                     is_all_condition_branches_handled = self.is_script_condition_branches_handled(
                         task) and is_all_condition_branches_handled
         return is_all_condition_branches_handled
+
+    @error_codes('PB118')
+    def are_all_inputs_in_use(self):  # type: () -> bool
+        """Check whether the playbook inputs are in use in any of the tasks
+
+        Return:
+            bool. if the Playbook inputs are in use.
+        """
+        inputs: Dict = self.current_file.get('inputs', {})
+        inputs_not_in_use = []
+        with open(self.file_path, 'r') as f:
+            playbook_test = f.read()
+        for input in inputs:
+            input_key = input.get('key', '')
+            input_to_search = f'inputs.{input_key}'
+            if input_key and input_to_search not in playbook_test:
+                inputs_not_in_use.append(input_key)
+        if inputs_not_in_use:
+            playbook_name = self.current_file.get('name', '')
+            error_message, error_code = Errors.input_key_not_in_tasks(playbook_name, ', '.join(inputs_not_in_use))
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+        return True
 
     @error_codes('PB101,PB102')
     def is_builtin_condition_task_branches_handled(self, task: Dict) -> bool:

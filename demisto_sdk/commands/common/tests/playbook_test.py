@@ -9,10 +9,9 @@ from demisto_sdk.commands.common.hook_validations.playbook import \
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.tests.constants_test import (
-    CONTENT_REPO_EXAMPLE_ROOT, INVALID_PLAYBOOK_UNHANDLED_CONDITION,
-    INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION,
-    INVALID_PLAYBOOK_INPUTS_USE,
-    VALID_PLAYBOOK_INPUTS_USE)
+    CONTENT_REPO_EXAMPLE_ROOT, INVALID_PLAYBOOK_INPUTS_USE,
+    INVALID_PLAYBOOK_UNHANDLED_CONDITION,
+    INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION, VALID_PLAYBOOK_INPUTS_USE)
 from TestSuite.test_tools import ChangeCWD
 
 

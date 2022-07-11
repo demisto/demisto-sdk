@@ -2416,12 +2416,13 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def modeling_rule_keys_not_empty():
-        return 'Either the 'rules' key or the 'schema' key are not empty, make sure to set the value of these keys to an empty string.'
+        return "Either the 'rules' key or the 'schema' key are not empty, make sure to set the value of these" \
+               " keys to an empty string."
 
     @staticmethod
     @error_code_decorator
     def modeling_rule_keys_are_missing():
-        return 'The 'rules' key or the 'schema' key is missing from the modeling rule yml file. ' \
+        return "The 'rules' key or the 'schema' key is missing from the modeling rule yml file. " \
                'Make sure to add them to your yml file with an empty string as value.'
 
     @staticmethod

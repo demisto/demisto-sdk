@@ -10,7 +10,10 @@
 * The **generate-docs** command will now auto-generate the Incident Mirroring section when implemented in an integration.
 * Added support to automatically generate release notes for deprecated items in the **update-release-notes** command.
 * Fixed an issue causing any command to crash when unable to detect local repository properties.
+* Fixed an issue where running in a private gitlab repo caused a warning message to be shown multiple times.
+* Added a new validation to the **validate** command to verify that markdown and python files do not contain words related to copyright section.
 * Added  a new validation to the **validate** command to validate all inputs are in use a given playbook
+
 ## 1.6.9
 * Added a new validation that checks whether a pack should be deprecated.
 * Added a new ability to the **format** command to deprecate a pack.

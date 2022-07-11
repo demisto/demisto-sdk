@@ -73,6 +73,8 @@ from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.pre_process_rule import \
     PreProcessRuleValidator
+from demisto_sdk.commands.common.hook_validations.python_file import \
+    PythonFileValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.hook_validations.release_notes import \
     ReleaseNotesValidator
@@ -104,6 +106,8 @@ from demisto_sdk.commands.common.tools import (
     run_command_os)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
+SKIPPED_FILES = ['CommonServerPython.py', 'CommonServerUserPython.py', 'demistomock.py']
+
 
 class ValidateManager:
     def __init__(
@@ -112,7 +116,8 @@ class ValidateManager:
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
             create_id_set=False, json_file_path=None, skip_schema_check=False, debug_git=False, include_untracked=False,
-            pykwalify_logs=False, check_is_unskipped=True, quiet_bc=False, multiprocessing=True, specific_validations=None,
+            pykwalify_logs=False, check_is_unskipped=True, quiet_bc=False, multiprocessing=True,
+            specific_validations=None,
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -452,7 +457,8 @@ class ValidateManager:
 
         for file_name in os.listdir(package_path):
             file_path = os.path.join(package_path, file_name)
-            if file_path.endswith('.yml') or file_path.endswith('.md'):
+            should_validate_py_file = file_path.endswith('.py') and file_name not in SKIPPED_FILES
+            if file_path.endswith('.yml') or file_path.endswith('.md') or should_validate_py_file:
                 package_entities_validation_results.add(self.run_validations_on_file(file_path, pack_error_ignore_list))
 
             else:
@@ -632,6 +638,8 @@ class ValidateManager:
         elif file_type == FileType.SCRIPT:
             return all([self.validate_script(structure_validator, pack_error_ignore_list, is_modified,
                                              file_type), valid_in_conf])
+        elif file_type == FileType.PYTHON_FILE:
+            return self.validate_python_file(file_path, pack_error_ignore_list)
 
         elif file_type == FileType.BETA_INTEGRATION:
             return self.validate_beta_integration(structure_validator, pack_error_ignore_list)
@@ -883,6 +891,13 @@ class ValidateManager:
                                            specific_validations=self.specific_validations)
         return readme_validator.is_valid_file()
 
+    def validate_python_file(self, file_path, pack_error_ignore_list):
+        python_file_validator = PythonFileValidator(file_path, ignored_errors=pack_error_ignore_list,
+                                                    print_as_warnings=self.print_ignored_errors,
+                                                    json_file_path=self.json_file_path,
+                                                    specific_validations=self.specific_validations)
+        return python_file_validator.is_valid_file()
+
     def validate_test_playbook(self, structure_validator, pack_error_ignore_list):
         test_playbook_validator = TestPlaybookValidator(structure_validator=structure_validator,
                                                         ignored_errors=pack_error_ignore_list,
@@ -976,7 +991,8 @@ class ValidateManager:
         if is_modified and self.is_backward_check:
             return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json,
                                                             check_is_unskipped=self.check_is_unskipped,
-                                                            conf_json_data=self.conf_json_data, is_modified=is_modified),
+                                                            conf_json_data=self.conf_json_data,
+                                                            is_modified=is_modified),
                         integration_validator.is_backward_compatible()])
         else:
             return integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json,
@@ -1020,7 +1036,8 @@ class ValidateManager:
             return True
         image_validator = ImageValidator(file_path, ignored_errors=pack_error_ignore_list,
                                          print_as_warnings=self.print_ignored_errors,
-                                         json_file_path=self.json_file_path, specific_validations=self.specific_validations)
+                                         json_file_path=self.json_file_path,
+                                         specific_validations=self.specific_validations)
         return image_validator.is_valid()
 
     def validate_author_image(self, file_path, pack_error_ignore_list):
@@ -1501,7 +1518,8 @@ class ValidateManager:
                     error_message, error_code = Errors.missing_release_notes_for_pack(pack)
                 if not BaseValidator(ignored_errors=ignored_errors_list,
                                      print_as_warnings=self.print_ignored_errors,
-                                     json_file_path=self.json_file_path, specific_validations=self.specific_validations).handle_error(
+                                     json_file_path=self.json_file_path,
+                                     specific_validations=self.specific_validations).handle_error(
                     error_message, error_code,
                     file_path=os.path.join(os.getcwd(), PACKS_DIR, pack, PACKS_PACK_META_FILE_NAME)
                 ):
@@ -1679,7 +1697,9 @@ class ValidateManager:
                 file_path = str(path)
 
             try:
-                formatted_path, old_path, valid_file_extension = self.check_file_relevance_and_format_path(file_path, old_path, old_format_files)
+                formatted_path, old_path, valid_file_extension = self.check_file_relevance_and_format_path(file_path,
+                                                                                                           old_path,
+                                                                                                           old_format_files)
                 valid_types.add(valid_file_extension)
                 if formatted_path:
                     if old_path:
@@ -1724,7 +1744,8 @@ class ValidateManager:
         if file_type in [FileType.PYTHON_FILE, FileType.POWERSHELL_FILE, FileType.JAVASCRIPT_FILE, FileType.XIF_FILE]:
             if not (str(file_path).endswith('_test.py') or str(file_path).endswith('.Tests.ps1') or
                     str(file_path).endswith('_test.js')):
-                file_path = file_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml').replace('.xif', '.yml')
+                file_path = file_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml').replace(
+                    '.xif', '.yml')
 
                 if old_path:
                     old_path = old_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml')

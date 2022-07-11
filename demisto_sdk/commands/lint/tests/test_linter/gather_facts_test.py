@@ -1,3 +1,5 @@
+import shutil
+import tempfile
 from typing import Callable
 
 import pytest
@@ -204,10 +206,10 @@ def test_remove_gitignore_files(mocker, demisto_content):
     assert files_paths[-1] not in runner._facts['lint_files']
 
 
-dir_path = "/Users/rshunim/dev/demisto/demisto-sdk/demisto_sdk/commands/lint/tests/test_linter"
-python_path = "/Users/rshunim/dev/demisto/demisto-sdk/demisto_sdk/commands/lint/tests/test_linter/__init__.py"
-
-path_list = [dir_path, python_path]
+dir_path = tempfile.mkdtemp()
+python_path = f'{dir_path}/__init__.py'
+expected_path = dir_path
+path_list = [python_path, dir_path]
 
 
 @pytest.mark.parametrize('path_input', path_list)
@@ -222,4 +224,8 @@ def test_linter_pack_abs_dir(path_input: str):
                                      docker_timeout=30
                                      )
 
-    assert linter_instance._pack_abs_dir == Path(dir_path)
+    assert linter_instance._pack_abs_dir == Path(expected_path)
+
+    # Delete the temporary directory we created
+    if Path(path_input).is_dir():
+        shutil.rmtree(Path(path_input))

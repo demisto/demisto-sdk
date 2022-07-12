@@ -110,23 +110,6 @@ class PlaybookValidator(ContentEntityValidator):
             inputs_keys.append(input['key'])
         return set(inputs_keys)
 
-    @staticmethod
-    def find_missing_inputs(list_to_search_for, list_to_search_in):
-        """
-
-        Args:
-            list_to_search_for: list of values to search for.
-            list_to_search_in: list of values to search in.
-
-        Returns: all values from list_to_search_for that does not appear in list_to_search_in.
-
-        """
-        result = []
-        for input in list_to_search_for:
-            if input not in list_to_search_in:
-                result.append(input)
-        return result
-
     @error_codes('PB118')
     def are_all_inputs_in_use(self):  # type: () -> bool
         """Check whether the playbook inputs are in use in any of the tasks
@@ -134,9 +117,9 @@ class PlaybookValidator(ContentEntityValidator):
         Return:
             bool. if the Playbook inputs are in use.
         """
-        all_inputs_occurrences = self.collect_all_inputs_in_use()
-        inputs_list = self.collect_all_inputs_from_inputs_section()
-        inputs_not_in_use = self.find_missing_inputs(inputs_list, all_inputs_occurrences)
+        all_inputs_occurrences: set = self.collect_all_inputs_in_use()
+        inputs_list: set = self.collect_all_inputs_from_inputs_section()
+        inputs_not_in_use = inputs_list.difference(all_inputs_occurrences)
 
         if inputs_not_in_use:
             playbook_name = self.current_file.get('name', '')
@@ -153,9 +136,9 @@ class PlaybookValidator(ContentEntityValidator):
         Return:
             bool. if the Playbook inputs appear in inputs section.
         """
-        all_inputs_occurrences = self.collect_all_inputs_in_use()
-        inputs_list = self.collect_all_inputs_from_inputs_section()
-        inputs_not_in_section = self.find_missing_inputs(all_inputs_occurrences, inputs_list)
+        all_inputs_occurrences: set = self.collect_all_inputs_in_use()
+        inputs_list: set = self.collect_all_inputs_from_inputs_section()
+        inputs_not_in_section = all_inputs_occurrences.difference(inputs_list)
 
         if inputs_not_in_section:
             playbook_name = self.current_file.get('name', '')

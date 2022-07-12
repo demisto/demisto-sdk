@@ -397,7 +397,7 @@ class TestPlaybookValidator:
                       (VALID_PLAYBOOK_INPUTS_USE, True, True)]
 
     @pytest.mark.parametrize("playbook_path, expected_use_in_tasks, expected_use_in_section", INVALID_INPUTS)
-    def test_playbook_inputs(self, playbook_path, expected_use_in_tasks, expected_use_in_section):
+    def test_playbook_inputs(self, playbook_path: str, expected_use_in_tasks: bool, expected_use_in_section: bool):
         """
 
         Given

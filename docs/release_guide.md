@@ -7,7 +7,7 @@ Throughout the guide, `X.X.X` will mark the upcoming version.
 1) Branch out from the latest SDK PR used for a nightly test, name the branch `X.X.X`. 
 2) Make sure the **CHANGELOG.md** file is in order. Add a subtitle `## X.X.X` under the `## Unreleased`, leaving the unreleased list empty.
 3) Run `poetry update` (in the SDK folder).
-5) Run `poetry version <new version number>`.
+5) Run `poetry version X.X.X`.
 6) Make sure that all the following passed:
   - [content nightly](https://code.pan.run/xsoar/content/-/pipeline_schedules)
   - [SDK nightly](https://code.pan.run/xsoar/content/-/pipeline_schedules)

@@ -20,6 +20,8 @@ class PlaybookValidator(ContentEntityValidator):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          json_file_path=json_file_path)
         self.validate_all = validate_all
+        self.inputs_in_input_section: set = self.collect_all_inputs_from_inputs_section()
+        self.inputs_in_use: set = self.collect_all_inputs_in_use()
 
     def is_valid_playbook(self, validate_rn: bool = True, id_set_file=None) -> bool:
         """Check whether the playbook is valid or not.
@@ -117,9 +119,8 @@ class PlaybookValidator(ContentEntityValidator):
         Return:
             bool. if the Playbook inputs are in use.
         """
-        all_inputs_occurrences: set = self.collect_all_inputs_in_use()
-        inputs_list: set = self.collect_all_inputs_from_inputs_section()
-        inputs_not_in_use = inputs_list.difference(all_inputs_occurrences)
+
+        inputs_not_in_use = self.inputs_in_input_section.difference(self.inputs_in_use)
 
         if inputs_not_in_use:
             playbook_name = self.current_file.get('name', '')
@@ -136,9 +137,8 @@ class PlaybookValidator(ContentEntityValidator):
         Return:
             bool. if the Playbook inputs appear in inputs section.
         """
-        all_inputs_occurrences: set = self.collect_all_inputs_in_use()
-        inputs_list: set = self.collect_all_inputs_from_inputs_section()
-        inputs_not_in_section = all_inputs_occurrences.difference(inputs_list)
+
+        inputs_not_in_section = self.inputs_in_use.difference(self.inputs_in_input_section)
 
         if inputs_not_in_section:
             playbook_name = self.current_file.get('name', '')

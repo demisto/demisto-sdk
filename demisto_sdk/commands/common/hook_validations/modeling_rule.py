@@ -85,7 +85,9 @@ class ModelingRuleValidator(ContentEntityValidator):
 
         for file_path in files_to_check:
             file_name = os.path.basename(file_path)
-            base_name = file_name.rsplit('.', 1)[0]
+            # The schema has _schema.json suffix whereas the integration only has the .suffix
+            splitter = '_' if file_name.endswith('_schema.json') else '.'
+            base_name = file_name.rsplit(splitter, 1)[0]
 
             if integrations_folder != base_name:
                 invalid_files.append(file_name)

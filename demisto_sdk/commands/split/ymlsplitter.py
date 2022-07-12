@@ -117,7 +117,7 @@ class YmlSplitter:
 
         if self.file_type in ('modelingrule', 'parsingrule'):
             self.extract_rules(f'{output_path}/{base_name}.xif')
-            self.extract_rule_schema_and_samples(f'{output_path}/{base_name}.json')
+            self.extract_rule_schema_and_samples(f'{output_path}/{base_name}_schema.json')
             if 'rules' in yaml_obj:
                 yaml_obj['rules'] = PlainScalarString('')
             if 'schema' in yaml_obj:

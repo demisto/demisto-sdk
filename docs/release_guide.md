@@ -10,7 +10,7 @@ Throughout the guide, `X.X.X` will mark the upcoming version.
 5) Run `poetry version <new version number>`.
 6) Make sure that all the following passed:
   - [content nightly](https://code.pan.run/xsoar/content/-/pipeline_schedules)
-  - [SDK nightly]([url](https://code.pan.run/xsoar/content/-/pipeline_schedules))
+  - [SDK nightly](https://code.pan.run/xsoar/content/-/pipeline_schedules)
   - [SDK master](https://github.com/demisto/demisto-sdk) (last post-merge build passed)
   - [content-gold](https://code.pan.run/xsoar/content-internal-dist/-/pipeline_schedules) 
   - [content-private](https://github.com/demisto/content-private/actions).

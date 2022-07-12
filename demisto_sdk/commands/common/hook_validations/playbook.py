@@ -96,7 +96,7 @@ class PlaybookValidator(ContentEntityValidator):
         with open(self.file_path, 'r') as f:
             playbook_text = f.read()
         all_inputs_occurrences = re.findall(r"inputs\.[-\w]+", playbook_text)
-        return [input.split('.')[1] for input in all_inputs_occurrences]
+        return set([input.split('.')[1] for input in all_inputs_occurrences])
 
     def collect_all_inputs_from_inputs_section(self):
         """
@@ -107,10 +107,8 @@ class PlaybookValidator(ContentEntityValidator):
         inputs: Dict = self.current_file.get('inputs', {})
         inputs_keys = []
         for input in inputs:
-            key = input.get('key', '')
-            if key:
-                inputs_keys.append(key)
-        return inputs_keys
+            inputs_keys.append(input['key'])
+        return set(inputs_keys)
 
     @staticmethod
     def find_missing_inputs(list_to_search_for, list_to_search_in):

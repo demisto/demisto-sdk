@@ -2276,14 +2276,12 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def input_key_not_in_tasks(playbook_name: str, inputs: str):
-        return f"Playbook {playbook_name} contains inputs that are not in use in any of the tasks." \
-               f" Those inputs are: {inputs}"
+        return f"Playbook {playbook_name} contains inputs that are not used in any of its tasks: {inputs}"
 
     @staticmethod
     @error_code_decorator
     def input_used_not_in_input_section(playbook_name: str, inputs: str):
-        return f"Playbook {playbook_name} uses inputs that do not appear in the inputs section." \
-               f" Those inputs are: {inputs}"
+        return f"Playbook {playbook_name} uses inputs that do not appear in the inputs section: {inputs}"
 
     @staticmethod
     @error_code_decorator

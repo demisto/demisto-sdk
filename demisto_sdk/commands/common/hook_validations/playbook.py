@@ -109,14 +109,14 @@ class PlaybookValidator(ContentEntityValidator):
             inputs_keys.append(input['key'])
         return set(inputs_keys)
 
-    def inputs_in_use_check(self):
+    def inputs_in_use_check(self) -> bool:
         inputs_in_use = self.collect_all_inputs_in_use()
         inputs_in_section = self.collect_all_inputs_from_inputs_section()
         return self.are_all_inputs_in_use(inputs_in_use, inputs_in_section) and \
-               self.are_all_used_inputs_in_inputs_section(inputs_in_use, inputs_in_section)
+            self.are_all_used_inputs_in_inputs_section(inputs_in_use, inputs_in_section)
 
     @error_codes('PB118')
-    def are_all_inputs_in_use(self, inputs_in_use, inputs_in_section):  # type: () -> bool
+    def are_all_inputs_in_use(self, inputs_in_use: set, inputs_in_section: set) -> bool:
         """Check whether the playbook inputs are in use in any of the tasks
 
         Return:
@@ -134,7 +134,7 @@ class PlaybookValidator(ContentEntityValidator):
         return True
 
     @error_codes('PB119')
-    def are_all_used_inputs_in_inputs_section(self, inputs_in_use, inputs_in_section):  # type: () -> bool
+    def are_all_used_inputs_in_inputs_section(self, inputs_in_use: set, inputs_in_section: set) -> bool:
         """Check whether the playbook inputs that in use appear in the input section.
 
         Return:

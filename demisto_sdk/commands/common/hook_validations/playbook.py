@@ -95,7 +95,7 @@ class PlaybookValidator(ContentEntityValidator):
         """
         with open(self.file_path, 'r') as f:
             playbook_text = f.read()
-        all_inputs_occurrences = re.findall(r"inputs\.[\S]*", playbook_text)
+        all_inputs_occurrences = re.findall(r"inputs\.[-\w]+", playbook_text)
         return [input.split('.')[1] for input in all_inputs_occurrences]
 
     def collect_all_inputs_from_inputs_section(self):

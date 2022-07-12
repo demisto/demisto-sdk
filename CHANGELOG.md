@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+
+## 1.7.0
+* Allowed JSON Handlers to accept kwargs, for custoimzing behavior.
 * Fixed an issue where an incorrect error was shown when the `id` of a content item differed from its `name` attribute.
 * Fixed an issue where the `preserve_quotes` in ruamel_handler received an incorrect value @icholy
 * Fixed an issue where ignoring RM110 error code wasn't working and added a validation to **ALLOWED_IGNORE_ERRORS** to validate that all error codes are inserted in the right format.
@@ -13,6 +16,7 @@
 * Fixed an issue causing any command to crash when unable to detect local repository properties.
 * Fixed an issue where running in a private gitlab repo caused a warning message to be shown multiple times.
 * Added a new validation to the **validate** command to verify that markdown and python files do not contain words related to copyright section.
+* Fixed an issue where **lint** crashd when provided an input file path (expecting a directory).
 
 ## 1.6.9
 * Added a new validation that checks whether a pack should be deprecated.

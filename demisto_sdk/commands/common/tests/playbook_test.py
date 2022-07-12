@@ -2,7 +2,7 @@ import os.path
 from typing import Optional
 
 import pytest
-from mock import patch
+# from mock import patch
 
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
@@ -393,11 +393,11 @@ class TestPlaybookValidator:
     IS_ELSE_IN_CONDITION_TASK = [(CONDITIONAL_SCRPT_WITH_NO_DFLT_NXT_TASK.get('tasks').get('1'), False),
                                  (CONDITIONAL_SCRPT_WITH_DFLT_NXT_TASK.get('tasks').get('1'), True)]
 
-    INVALID_INPUTS = [(INVALID_PLAYBOOK_INPUTS_USE, False, False),
-                      (VALID_PLAYBOOK_INPUTS_USE, True, True)]
+    INVALID_INPUTS = [(INVALID_PLAYBOOK_INPUTS_USE, False),
+                      (VALID_PLAYBOOK_INPUTS_USE, True)]
 
-    @pytest.mark.parametrize("playbook_path, expected_use_in_tasks, expected_use_in_section", INVALID_INPUTS)
-    def test_playbook_inputs(self, playbook_path: str, expected_use_in_tasks: bool, expected_use_in_section: bool):
+    @pytest.mark.parametrize("playbook_path, expected_result", INVALID_INPUTS)
+    def test_playbook_inputs(self, playbook_path: str, expected_result: bool):
         """
 
         Given
@@ -411,8 +411,7 @@ class TestPlaybookValidator:
         """
         structure = StructureValidator(file_path=playbook_path)
         validator = PlaybookValidator(structure)
-        assert validator.are_all_inputs_in_use() == expected_use_in_tasks
-        assert validator.are_all_used_inputs_in_inputs_section() == expected_use_in_section
+        assert validator.inputs_in_use_check() == expected_result
 
     @pytest.mark.parametrize("playbook_json, id_set_json, expected_result", IS_SCRIPT_ID_VALID)
     def test_playbook_script_id(self, mocker, playbook, repo, playbook_json, id_set_json, expected_result):

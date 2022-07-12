@@ -20,8 +20,6 @@ class PlaybookValidator(ContentEntityValidator):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          json_file_path=json_file_path)
         self.validate_all = validate_all
-        self.inputs_in_input_section: set = self.collect_all_inputs_from_inputs_section()
-        self.inputs_in_use: set = self.collect_all_inputs_in_use()
 
     def is_valid_playbook(self, validate_rn: bool = True, id_set_file=None) -> bool:
         """Check whether the playbook is valid or not.
@@ -54,8 +52,7 @@ class PlaybookValidator(ContentEntityValidator):
             self.verify_condition_tasks_has_else_path(),
             self.name_not_contain_the_type(),
             self.is_valid_with_indicators_input(),
-            self.are_all_inputs_in_use(),
-            self.are_all_used_inputs_in_inputs_section(),
+            self.inputs_in_use_check()
         ]
         answers = all(playbook_checks)
 
@@ -98,7 +95,7 @@ class PlaybookValidator(ContentEntityValidator):
         with open(self.file_path, 'r') as f:
             playbook_text = f.read()
         all_inputs_occurrences = re.findall(r"inputs\.[-\w]+", playbook_text)
-        return set([input.split('.')[1] for input in all_inputs_occurrences])
+        return {input.split('.')[1] for input in all_inputs_occurrences}
 
     def collect_all_inputs_from_inputs_section(self):
         """
@@ -112,15 +109,21 @@ class PlaybookValidator(ContentEntityValidator):
             inputs_keys.append(input['key'])
         return set(inputs_keys)
 
+    def inputs_in_use_check(self):
+        inputs_in_use = self.collect_all_inputs_in_use()
+        inputs_in_section = self.collect_all_inputs_from_inputs_section()
+        return self.are_all_inputs_in_use(inputs_in_use, inputs_in_section) and \
+               self.are_all_used_inputs_in_inputs_section(inputs_in_use, inputs_in_section)
+
     @error_codes('PB118')
-    def are_all_inputs_in_use(self):  # type: () -> bool
+    def are_all_inputs_in_use(self, inputs_in_use, inputs_in_section):  # type: () -> bool
         """Check whether the playbook inputs are in use in any of the tasks
 
         Return:
             bool. if the Playbook inputs are in use.
         """
 
-        inputs_not_in_use = self.inputs_in_input_section.difference(self.inputs_in_use)
+        inputs_not_in_use = inputs_in_section.difference(inputs_in_use)
 
         if inputs_not_in_use:
             playbook_name = self.current_file.get('name', '')
@@ -131,14 +134,14 @@ class PlaybookValidator(ContentEntityValidator):
         return True
 
     @error_codes('PB119')
-    def are_all_used_inputs_in_inputs_section(self):  # type: () -> bool
+    def are_all_used_inputs_in_inputs_section(self, inputs_in_use, inputs_in_section):  # type: () -> bool
         """Check whether the playbook inputs that in use appear in the input section.
 
         Return:
             bool. if the Playbook inputs appear in inputs section.
         """
 
-        inputs_not_in_section = self.inputs_in_use.difference(self.inputs_in_input_section)
+        inputs_not_in_section = inputs_in_use.difference(inputs_in_section)
 
         if inputs_not_in_section:
             playbook_name = self.current_file.get('name', '')

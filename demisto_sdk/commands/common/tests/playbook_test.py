@@ -2,7 +2,7 @@ import os.path
 from typing import Optional
 
 import pytest
-from mock import patch
+# from mock import patch
 
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator

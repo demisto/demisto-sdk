@@ -92,10 +92,16 @@ class PlaybookValidator(ContentEntityValidator):
         Returns: list of all inputs used in playbook.
 
         """
+        result: set = set()
         with open(self.file_path, 'r') as f:
             playbook_text = f.read()
-        all_inputs_occurrences = re.findall(r"inputs\.[-\w]+", playbook_text)
-        return {input.split('.')[1] for input in all_inputs_occurrences}
+        all_inputs_occurrences = re.findall(r"inputs\.[-\w ]+", playbook_text)
+        for input in all_inputs_occurrences:
+            input = input.strip()
+            splitted = input.split('.')
+            if len(splitted) > 1:
+                result.add(splitted[1])
+        return result
 
     def collect_all_inputs_from_inputs_section(self):
         """
@@ -110,8 +116,8 @@ class PlaybookValidator(ContentEntityValidator):
         return set(inputs_keys)
 
     def inputs_in_use_check(self) -> bool:
-        inputs_in_use = self.collect_all_inputs_in_use()
-        inputs_in_section = self.collect_all_inputs_from_inputs_section()
+        inputs_in_use: set = self.collect_all_inputs_in_use()
+        inputs_in_section: set = self.collect_all_inputs_from_inputs_section()
         return self.are_all_inputs_in_use(inputs_in_use, inputs_in_section) and \
             self.are_all_used_inputs_in_inputs_section(inputs_in_use, inputs_in_section)
 

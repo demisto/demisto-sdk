@@ -21,12 +21,13 @@ class PlaybookValidator(ContentEntityValidator):
                          json_file_path=json_file_path)
         self.validate_all = validate_all
 
-    def is_valid_playbook(self, validate_rn: bool = True, id_set_file=None) -> bool:
+    def is_valid_playbook(self, validate_rn: bool = True, id_set_file=None, is_modified: bool = False) -> bool:
         """Check whether the playbook is valid or not.
 
          Args:
             this will also determine whether a new id_set can be created by validate.
             validate_rn (bool):  whether we need to validate release notes or not
+            is_modified (bool): Wether the given files are modified or not.
             id_set_file (dict): id_set.json file if exists, None otherwise
 
         Returns:
@@ -52,7 +53,7 @@ class PlaybookValidator(ContentEntityValidator):
             self.verify_condition_tasks_has_else_path(),
             self.name_not_contain_the_type(),
             self.is_valid_with_indicators_input(),
-            self.inputs_in_use_check()
+            self.inputs_in_use_check(is_modified),
         ]
         answers = all(playbook_checks)
 
@@ -115,7 +116,18 @@ class PlaybookValidator(ContentEntityValidator):
             inputs_keys.append(input['key'])
         return set(inputs_keys)
 
-    def inputs_in_use_check(self) -> bool:
+    def inputs_in_use_check(self, is_modified: bool) -> bool:
+        """
+
+        Args:
+            is_modified: Wether the given files are modified or not.
+
+        Returns:
+            True if both directions for input use in playbook passes.
+
+        """
+        if not is_modified:
+            return True
         inputs_in_use: set = self.collect_all_inputs_in_use()
         inputs_in_section: set = self.collect_all_inputs_from_inputs_section()
         return self.are_all_inputs_in_use(inputs_in_use, inputs_in_section) and \

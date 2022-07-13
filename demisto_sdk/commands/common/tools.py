@@ -613,17 +613,17 @@ def get_file(file_path: Union[str, Path], type_of_file, clear_cache=False):
     return {}
 
 
-def get_yaml(file_path, cache_clear=False):
+def get_yaml(file_path: Union[str, Path], cache_clear=False):
     return get_file(file_path, 'yml', clear_cache=cache_clear)
 
 
-def get_json(file_path, cache_clear=False):
+def get_json(file_path: Union[str, Path], cache_clear=False):
     if cache_clear:
         get_file.cache_clear()
     return get_file(file_path, 'json', clear_cache=cache_clear)
 
 
-def get_script_or_integration_id(file_path):
+def get_script_or_integration_id(file_path: Union[str, Path]):
     data_dictionary = get_yaml(file_path)
 
     if data_dictionary:
@@ -1262,30 +1262,32 @@ def get_dev_requirements(py_version, envs_dirs_base):
     return requirements
 
 
-def get_dict_from_file(path: str,
-                       raises_error: bool = True, clear_cache: bool = False) -> Tuple[Dict, Union[str, None]]:
+def get_dict_from_file(path: Union[Path, str], raise_error: bool = True, clear_cache: bool = False) \
+        -> Tuple[Dict, Union[str, None]]:
     """
     Get a dict representing the file
 
     Arguments:
         path - a path to the file
-        raises_error - Whether to raise a FileNotFound error if `path` is not a valid file.
+        raise_error - Whether to raise a FileNotFound error if `path` is not a valid file.
 
     Returns:
         dict representation of the file, and the file_type, either .yml or .json
     """
+    path = Path(path)  # in case a string is passed in
     try:
         if path:
-            if path.endswith('.yml'):
+            suffix = path.suffix.lower()
+            if suffix == '.yml':
                 return get_yaml(path, cache_clear=clear_cache), 'yml'
-            elif path.endswith('.json'):
+            elif suffix == '.json':
                 return get_json(path, cache_clear=clear_cache), 'json'
-            elif path.endswith('.py'):
+            elif suffix == '.py':
                 return {}, 'py'
-            elif path.endswith('.xif'):
+            elif suffix == '.xif':
                 return {}, 'xif'
-    except FileNotFoundError as e:
-        if raises_error:
+    except FileNotFoundError:
+        if raise_error:
             raise
 
     return {}, None
@@ -1386,7 +1388,7 @@ def find_type(
     returns the content file type
 
     Arguments:
-         path (str): a path to the file.
+         path (Union[str, Path]): a path to the file.
         _dict (dict): file dict representation if exists.
         file_type (str): a string representation of the file type.
         ignore_sub_categories (bool): ignore the sub categories, True to ignore, False otherwise.
@@ -2490,7 +2492,8 @@ def get_current_repo() -> Tuple[str, str, str]:
         return "Unknown source", '', ''
 
 
-def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None, item_type: str = None) -> List:
+def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None,
+                          item_type: str = None) -> List:
     """
     Return the supporting marketplaces of the item.
 
@@ -2846,7 +2849,7 @@ def get_display_name(file_path, file_data={}) -> str:
 
 
 def get_invalid_incident_fields_from_mapper(
-    mapper_incident_fields: Dict[str, Dict], mapping_type: str, content_fields: List
+        mapper_incident_fields: Dict[str, Dict], mapping_type: str, content_fields: List
 ) -> List[str]:
     """
     Get a list of incident fields which are not part of the content items (not part of id_json) from a specific

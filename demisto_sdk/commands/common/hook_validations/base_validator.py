@@ -293,7 +293,7 @@ class BaseValidator:
             return True
         return False
 
-    def json_output(self, file_path: Union[str,Path], error_code: str, error_message: str, warning: bool) -> None:
+    def json_output(self, file_path: Union[str, Path], error_code: str, error_message: str, warning: bool) -> None:
         """Adds an error's info to the output JSON file
 
         Args:

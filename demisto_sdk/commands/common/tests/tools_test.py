@@ -96,7 +96,7 @@ class TestGenericFunctions:
 
     @pytest.mark.parametrize('path, raises_error, _type', data_test_get_dict_from_file)
     def test_get_dict_from_file(self, path, raises_error, _type):
-        output = get_dict_from_file(str(path), raises_error=raises_error)[1]
+        output = get_dict_from_file(str(path), raise_error=raises_error)[1]
         assert output == _type, f'get_dict_from_file({path}) returns: {output} instead {_type}'
 
     data_test_find_type = [

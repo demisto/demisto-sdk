@@ -179,7 +179,7 @@ class BaseValidator:
             else:
                 formatted = f"{formatted_error_message_prefix} - {error_message}".rstrip("\n") + "\n"
             if drop_line:
-                formatted = f'\nformatted'
+                formatted = f'\n{formatted}'
             return formatted
 
         ignored_errors_pack_ignore = self.ignored_errors.get(file_name) or self.ignored_errors.get(rel_file_path) or []

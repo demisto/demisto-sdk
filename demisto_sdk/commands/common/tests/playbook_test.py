@@ -394,11 +394,11 @@ class TestPlaybookValidator:
                                  (CONDITIONAL_SCRPT_WITH_DFLT_NXT_TASK.get('tasks').get('1'), True)]
 
     INVALID_INPUTS = [(INVALID_PLAYBOOK_INPUTS_USE, True, False),
-                      (VALID_PLAYBOOK_INPUTS_USE,True, True),
+                      (VALID_PLAYBOOK_INPUTS_USE, True, True),
                       (INVALID_PLAYBOOK_INPUTS_USE, False, True)]
 
     @pytest.mark.parametrize("playbook_path, is_modified, expected_result", INVALID_INPUTS)
-    def test_playbook_inputs(self, playbook_path: str, is_modified:bool, expected_result: bool):
+    def test_playbook_inputs(self, playbook_path: str, is_modified: bool, expected_result: bool):
         """
 
         Given

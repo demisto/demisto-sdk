@@ -3,6 +3,7 @@
 ## Unreleased
 * Updated the default general `fromVersion` value on **format** to `6.5.0`
 * Fixed an issue where the **validate** command did not fail when the integration yml file name was not the same as the folder containing it.
+* Allowed generate-docs command to get a whole pack and not just a single yml file.
 
 ## 1.7.0
 * Allowed JSON Handlers to accept kwargs, for custoimzing behavior.

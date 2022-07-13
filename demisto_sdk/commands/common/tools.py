@@ -587,7 +587,7 @@ def get_last_remote_release_version():
 
 
 @lru_cache()
-def get_file(file_path, type_of_file, clear_cache=False):
+def get_file(file_path: Union[str, Path], type_of_file, clear_cache=False):
     if clear_cache:
         get_file.cache_clear()
     file_path = Path(file_path)
@@ -1375,7 +1375,7 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
 
 
 def find_type(
-        path: str = '',
+        path: Union[str, Path] = '',
         _dict=None,
         file_type: Optional[str] = None,
         ignore_sub_categories: bool = False,
@@ -1397,11 +1397,10 @@ def find_type(
     Returns:
         FileType: string representing of the content file type, None otherwise.
     """
-    type_by_path = find_type_by_path(path)
-    if type_by_path:
+    if type_by_path := find_type_by_path(path):
         return type_by_path
     try:
-        if not _dict and not file_type:
+        if not any((_dict, file_type)):
             _dict, file_type = get_dict_from_file(path, clear_cache=clear_cache)
 
     except FileNotFoundError:

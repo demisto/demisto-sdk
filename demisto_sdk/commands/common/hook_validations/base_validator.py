@@ -25,7 +25,6 @@ json = JSON_Handler()
 
 
 def error_codes(error_codes_str: str):
-
     def error_codes_decorator(func):
 
         def wrapper(self, *args, **kwargs):
@@ -64,10 +63,10 @@ class BaseValidator:
 
     @staticmethod
     def should_ignore_error(
-        error_code,
-        ignored_errors_pack_ignore,
-        predefined_deprecated_ignored_errors,
-        predefined_by_support_ignored_errors
+            error_code,
+            ignored_errors_pack_ignore,
+            predefined_deprecated_ignored_errors,
+            predefined_by_support_ignored_errors
     ):
         """
         Determine if an error should be ignored or not. That includes all types of ignored errors,
@@ -204,7 +203,7 @@ class BaseValidator:
         ) or warning:
             if self.print_as_warnings or warning:
                 click.secho(formatted_error_str('WARNING'), fg="yellow")
-                self.json_output(file_path, error_code, error_message, warning)
+                self.json_output(str(file_path), error_code, error_message, warning)
                 self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_IGNORED_ERRORS)
             return None
 
@@ -225,7 +224,7 @@ class BaseValidator:
             else:
                 click.secho(formatted_error, fg="bright_red")
 
-        self.json_output(file_path, error_code, error_message, warning)
+        self.json_output(str(file_path), error_code, error_message, warning)
         self.add_to_report_error_list(error_code, file_path, FOUND_FILES_AND_ERRORS)
         return formatted_error
 
@@ -294,17 +293,18 @@ class BaseValidator:
             return True
         return False
 
-    def json_output(self, file_path: str, error_code: str, error_message: str, warning: bool) -> None:
+    def json_output(self, file_path: Union[str,Path], error_code: str, error_message: str, warning: bool) -> None:
         """Adds an error's info to the output JSON file
 
         Args:
-            file_path (str): The file path where the error ocurred.
+            file_path (Union[str,Path]): The file path where the error occurred.
             error_code (str): The error code
             error_message (str): The error message
             warning (bool): Whether the error is defined as a warning
         """
         if not self.json_file_path:
             return
+        file_path = Path(file_path)
 
         error_data = get_error_object(error_code)
 
@@ -319,9 +319,9 @@ class BaseValidator:
 
         json_contents = []
         existing_json = ''
-        if os.path.exists(self.json_file_path):
+        if (path := Path(self.json_file_path)).exists():
             try:
-                existing_json = get_json(self.json_file_path)
+                existing_json = get_json(path)
             except ValueError:
                 pass
             if isinstance(existing_json, list):

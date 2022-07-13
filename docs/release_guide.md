@@ -14,6 +14,8 @@ Throughout the guide, `X.X.X` will mark the upcoming version.
   - [SDK master](https://github.com/demisto/demisto-sdk) (last post-merge build passed)
   - [content-gold](https://code.pan.run/xsoar/content-internal-dist/-/pipeline_schedules)
   - [content-private](https://github.com/demisto/content-private/actions).
+  
+  If any failed, consult with the SDK owner, and see [Triggering nightlies manually](#triggering-nightlies-manually)
 
 ### Release process
 

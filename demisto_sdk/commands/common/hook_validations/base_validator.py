@@ -1,6 +1,7 @@
 import io
 import os
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Union
 
 import click
 
@@ -124,8 +125,16 @@ class BaseValidator:
             return True
         return error_code in self.specific_validations or error_code[:2] in self.specific_validations
 
-    def handle_error(self, error_message, error_code, file_path, should_print=True, suggested_fix=None, warning=False,
-                     drop_line=False):
+    def handle_error(
+            self,
+            error_message: str,
+            error_code: str,
+            file_path: Union[str, Path],
+            should_print=True,
+            suggested_fix=None,
+            warning=False,
+            drop_line=False,
+    ):
         """
         Handle an error that occurred during validation.
 
@@ -134,7 +143,7 @@ class BaseValidator:
             warning (bool): Print the error as a warning
             suggested_fix (str): A suggested fix
             error_message (str): The error message
-            file_path (str): The file from which the error occurred
+            file_path (str|Path): The file from which the error occurred
             error_code (str): The error code
             should_print (bool): whether the command should be printed
 
@@ -146,19 +155,6 @@ class BaseValidator:
                 # if the error code is not specified in the
                 # specific_validations list, we exit the function and return None
                 return None
-
-        def formatted_error_str(error_type):
-            if error_type not in {'ERROR', 'WARNING'}:
-                raise ValueError("Error type is not valid. Should be in {'ERROR', 'WARNING'}")
-
-            formatted_error_message_prefix = f"[{error_type}]: {file_path}: [{error_code}]"
-            if is_error_not_allowed_in_pack_ignore:
-                formatted = f"{formatted_error_message_prefix} can not be ignored in .pack-ignore\n"
-            else:
-                formatted = f"{formatted_error_message_prefix} - {error_message}".rstrip("\n") + "\n"
-            if drop_line:
-                formatted = '\n' + formatted
-            return formatted
 
         if file_path:
             if not isinstance(file_path, str):
@@ -173,9 +169,29 @@ class BaseValidator:
             file_name = 'No-Name'
             rel_file_path = 'No-Name'
 
+        def formatted_error_str(error_type):
+            if error_type not in {'ERROR', 'WARNING'}:
+                raise ValueError("Error type is not valid. Should be in {'ERROR', 'WARNING'}")
+
+            formatted_error_message_prefix = f"[{error_type}]: {file_path}: [{error_code}]"
+            if is_error_not_allowed_in_pack_ignore:
+                formatted = f"{formatted_error_message_prefix} can not be ignored in .pack-ignore\n"
+            else:
+                formatted = f"{formatted_error_message_prefix} - {error_message}".rstrip("\n") + "\n"
+            if drop_line:
+                formatted = f'\nformatted'
+            return formatted
+
         ignored_errors_pack_ignore = self.ignored_errors.get(file_name) or self.ignored_errors.get(rel_file_path) or []
-        predefined_deprecated_ignored_errors = self.predefined_deprecated_ignored_errors.get(file_name) or self.predefined_deprecated_ignored_errors.get(rel_file_path) or []  # noqa: E501
-        predefined_by_support_ignored_errors = self.predefined_by_support_ignored_errors.get(file_path) or self.predefined_by_support_ignored_errors.get(rel_file_path) or []  # noqa: E501
+        predefined_deprecated_ignored_errors = \
+            self.predefined_deprecated_ignored_errors.get(file_name) \
+            or self.predefined_deprecated_ignored_errors.get(rel_file_path) \
+            or []  # noqa: E501
+
+        predefined_by_support_ignored_errors = \
+            self.predefined_by_support_ignored_errors.get(file_path) \
+            or self.predefined_by_support_ignored_errors.get(rel_file_path) \
+            or []  # noqa: E501
 
         is_error_not_allowed_in_pack_ignore = self.is_error_not_allowed_in_pack_ignore(
             error_code=error_code, ignored_errors_pack_ignore=ignored_errors_pack_ignore

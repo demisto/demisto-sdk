@@ -278,7 +278,7 @@ class ReadMeValidator(BaseValidator):
                 path = path[2]
                 alternative_path = path.replace('blob', 'raw')
                 error_message, error_code = Errors.image_path_error(path, alternative_path)
-                self.handle_error(error_message, error_code, file_path=self.file_path)
+                self.handle_error(error_message, error_code, file_path=str(self.file_path))
             return False
         return True
 

@@ -3,9 +3,10 @@
 ## Unreleased
 * Updated the default general `fromVersion` value on **format** to `6.5.0`
 * Fixed an issue where the **validate** command did not fail when the integration yml file name was not the same as the folder containing it.
+* Added type hints to BaseValidator/handle_error.
 
 ## 1.7.0
-* Allowed JSON Handlers to accept kwargs, for custoimzing behavior.
+* Allowed JSON Handlers to accept kwargs, for customizing behavior.
 * Fixed an issue where an incorrect error was shown when the `id` of a content item differed from its `name` attribute.
 * Fixed an issue where the `preserve_quotes` in ruamel_handler received an incorrect value @icholy
 * Fixed an issue where ignoring RM110 error code wasn't working and added a validation to **ALLOWED_IGNORE_ERRORS** to validate that all error codes are inserted in the right format.

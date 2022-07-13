@@ -24,7 +24,7 @@ Throughout the guide, `X.X.X` will mark the upcoming version.
 5) Click **Publish release**. Your release will go through a deploy build (follow it on the [CI website](https://app.circleci.com/pipelines/github/demisto/demisto-sdk).
 6) If the build is successful, and `vX.X.X` shows in [PyPi](https://pypi.org/project/demisto-sdk/), your release is public! 🎉
 7) Under the **Content** repo, run `poetry update`, make sure the SDK version is updated.  **NOTE**: it may take up to an hour for our PyPi mirror to sync with the real PyPi version, so the build may fail.
-8) Wait for the build to finish.
+8) Wait for the build to finish, and merge into master.
 9) Announce regarding the SDK release in the **dmst-content-team** slack channel - mention the release version, paste the `CHANGELOG` contents for this release, and add a link to demisto-sdk in pypi.
 
 

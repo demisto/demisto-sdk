@@ -1412,20 +1412,20 @@ def generate_docs(**kwargs):
         print_error(F'Output directory {output_path} was not found.')
         return 1
 
-    # Add support for input which is a pack and not a single yml file
-    if input_path and os.path.isdir(input_path) and os.path.basename(os.path.dirname(input_path)) == 'Packs':
+    # Add support for input which is a Playbooks directory and not a single yml file
+    if input_path and os.path.isdir(input_path) and os.path.basename(os.path.basename(input_path)) == 'Playbooks':
         for root, subdirs, files in os.walk(input_path):
             for file in files:
-                # Pack can contain non-yml files, so continue - this is not an error
+                # Playbooks directory can contain non-yml files, so continue - this is not an error
                 if not file.lower().endswith('.yml'):
                     continue
                 new_kwargs = copy.deepcopy(kwargs)
                 new_kwargs['input'] = f'{root}/{file}'
-                generate_docs_helper(new_kwargs, True)
+                generate_docs_helper(new_kwargs)
 
     # A single yml file
     elif input_path and os.path.isfile(input_path):
-        generate_docs_helper(kwargs, False)
+        generate_docs_helper(kwargs)
 
     else:
         print_error(F'Input {input_path} is not a valid yml file or a valid pack.')
@@ -1434,8 +1434,8 @@ def generate_docs(**kwargs):
     return 0
 
 
-def generate_docs_helper(kwargs, is_pack: bool):
-    """Helper function for supporting pack as an input and not only a single yml file."""
+def generate_docs_helper(kwargs):
+    """Helper function for supporting Playbooks directory as an input and not only a single yml file."""
 
     from demisto_sdk.commands.generate_docs.generate_integration_doc import \
         generate_integration_doc
@@ -1465,7 +1465,7 @@ def generate_docs_helper(kwargs, is_pack: bool):
             return 1
 
     file_type = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
-    if not is_pack and file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK]:
+    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK]:
         print_error('File is not an Integration, Script or a Playbook.')
         return 1
 
@@ -1496,8 +1496,6 @@ def generate_docs_helper(kwargs, is_pack: bool):
         print(f'Start generating {file_type.value} documentation...')
         return generate_playbook_doc(input_path=input_path, output=output_path, permissions=permissions,
                                      limitations=limitations, verbose=verbose, custom_image_path=custom_image_path)
-    elif is_pack:  # Pack may contain yml files of other types
-        return 0
     else:
         print_error(f'File type {file_type.value} is not supported.')
         return 1

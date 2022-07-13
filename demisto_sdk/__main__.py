@@ -1,4 +1,5 @@
 # Site packages
+import copy
 import logging
 import os
 import sys
@@ -25,6 +26,7 @@ from demisto_sdk.commands.common.tools import (find_type,
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
 json = JSON_Handler()
+
 
 # Third party packages
 
@@ -140,7 +142,8 @@ def main(config, version, release_notes):
             __version__ = get_distribution('demisto-sdk').version
         except DistributionNotFound:
             __version__ = 'dev'
-            print_warning('Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.')
+            print_warning(
+                'Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.')
         else:
             last_release = get_last_remote_release_version()
             print_warning(f'You are using demisto-sdk {__version__}.')
@@ -275,7 +278,8 @@ def extract_code(config, **kwargs):
     '-h', '--help'
 )
 @click.option(
-    "-i", "--input", help="The directory path to the files or path to the file to unify", required=True, type=click.Path(dir_okay=True)
+    "-i", "--input", help="The directory path to the files or path to the file to unify", required=True,
+    type=click.Path(dir_okay=True)
 )
 @click.option(
     "-o", "--output", help="The output dir to write the unified yml to", required=False
@@ -560,12 +564,14 @@ def validate(config, **kwargs):
 @click.option('-mp', '--marketplace', help='The marketplace the artifacts are created for, that '
                                            'determines which artifacts are created for each pack. '
                                            'Default is the XSOAR marketplace, that has all of the packs '
-                                           'artifacts.', default='xsoar', type=click.Choice(['xsoar', 'marketplacev2', 'v2']))
+                                           'artifacts.', default='xsoar',
+              type=click.Choice(['xsoar', 'marketplacev2', 'v2']))
 @click.option('-fbi', '--filter-by-id-set', is_flag=True,
               help='Whether to use the id set as content items guide, meaning only include in the packs the '
                    'content items that appear in the id set.', default=False, hidden=True)
 @click.option('-af', '--alternate-fields', is_flag=True,
-              help='Use the alternative fields if such are present in the yml or json of the content item.', default=False, hidden=True)
+              help='Use the alternative fields if such are present in the yml or json of the content item.',
+              default=False, hidden=True)
 def create_content_artifacts(**kwargs) -> int:
     """Generating the following artifacts:
        1. content_new - Contains all content objects of type json,yaml (from_version < 6.0.0)
@@ -680,9 +686,10 @@ def secrets(config, **kwargs):
                                             "--check-dependent-api-module flag.",
               type=click.Path(resolve_path=True),
               default='Tests/id_set.json')
-@click.option("-cdam", "--check-dependent-api-module", is_flag=True, help="Run unit tests and lint on all packages that "
-              "are dependent on the found "
-              "modified api modules.", default=False)
+@click.option("-cdam", "--check-dependent-api-module", is_flag=True,
+              help="Run unit tests and lint on all packages that "
+                   "are dependent on the found "
+                   "modified api modules.", default=False)
 @click.option("--time-measurements-dir", help="Specify directory for the time measurements report file",
               type=PathsParamType())
 def lint(**kwargs):
@@ -1387,16 +1394,57 @@ def init(**kwargs):
 @click.option(
     "--skip-breaking-changes", is_flag=True, help="Skip generating of breaking changes section.")
 @click.option(
-    "--custom-image-path", help="A custom path to a playbook image. If not stated, a default link will be added to the file.")
+    "--custom-image-path",
+    help="A custom path to a playbook image. If not stated, a default link will be added to the file.")
 def generate_docs(**kwargs):
     """Generate documentation for integration, playbook or script from yaml file."""
+
+    check_configuration_file('generate-docs', kwargs)
+    input_path: str = kwargs.get('input', '')
+    output_path = kwargs.get('output')
+
+    # validate inputs
+    if input_path and os.path.isfile(input_path) and not input_path.lower().endswith('.yml'):
+        print_error(F'Input {input_path} is not a valid yml file.')
+        return 1
+
+    if output_path and not os.path.isdir(output_path):
+        print_error(F'Output directory {output_path} was not found.')
+        return 1
+
+    # Add support for input which is a pack and not a single yml file
+    if input_path and os.path.isdir(input_path) and os.path.basename(os.path.dirname(input_path)) == 'Packs':
+        for root, subdirs, files in os.walk(input_path):
+            for file in files:
+                # Pack can contain non-yml files, so continue - this is not an error
+                if not file.lower().endswith('.yml'):
+                    continue
+                new_kwargs = copy.deepcopy(kwargs)
+                new_kwargs['input'] = f'{root}/{file}'
+                generate_docs_helper(new_kwargs, True)
+
+    # A single yml file
+    elif input_path and os.path.isfile(input_path):
+        generate_docs_helper(kwargs, False)
+
+    else:
+        print_error(F'Input {input_path} is not a valid yml file or a valid pack.')
+        return 1
+
+    return 0
+
+
+def generate_docs_helper(kwargs, is_pack: bool):
+    """Helper function for supporting pack as an input and not only a single yml file."""
+
     from demisto_sdk.commands.generate_docs.generate_integration_doc import \
         generate_integration_doc
     from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
         generate_playbook_doc
     from demisto_sdk.commands.generate_docs.generate_script_doc import \
         generate_script_doc
-    check_configuration_file('generate-docs', kwargs)
+
+    # Extract all the necessary arguments
     input_path: str = kwargs.get('input', '')
     output_path = kwargs.get('output')
     command = kwargs.get('command')
@@ -1409,19 +1457,6 @@ def generate_docs(**kwargs):
     skip_breaking_changes: bool = kwargs.get('skip_breaking_changes', False)
     custom_image_path: str = kwargs.get('custom_image_path', '')
 
-    # validate inputs
-    if input_path and not os.path.isfile(input_path):
-        print_error(F'Input file {input_path} was not found.')
-        return 1
-
-    if not input_path.lower().endswith('.yml'):
-        print_error(F'Input {input_path} is not a valid yml file.')
-        return 1
-
-    if output_path and not os.path.isdir(output_path):
-        print_error(F'Output directory {output_path} was not found.')
-        return 1
-
     if command:
         if output_path and (not os.path.isfile(os.path.join(output_path, "README.md"))) \
                 or (not output_path) \
@@ -1430,7 +1465,7 @@ def generate_docs(**kwargs):
             return 1
 
     file_type = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
-    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK]:
+    if not is_pack and file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK]:
         print_error('File is not an Integration, Script or a Playbook.')
         return 1
 
@@ -1442,8 +1477,8 @@ def generate_docs(**kwargs):
         print_error(F'Input old version {old_version} is not a valid yml file.')
         return 1
 
-    print(f'Start generating {file_type.value} documentation...')
     if file_type == FileType.INTEGRATION:
+        print(f'Start generating {file_type.value} documentation...')
         use_cases = kwargs.get('use_cases')
         command_permissions = kwargs.get('command_permissions')
         return generate_integration_doc(input_path=input_path, output=output_path, use_cases=use_cases,
@@ -1453,12 +1488,16 @@ def generate_docs(**kwargs):
                                         old_version=old_version,
                                         skip_breaking_changes=skip_breaking_changes)
     elif file_type == FileType.SCRIPT:
+        print(f'Start generating {file_type.value} documentation...')
         return generate_script_doc(input_path=input_path, output=output_path, examples=examples,
                                    permissions=permissions,
                                    limitations=limitations, insecure=insecure, verbose=verbose)
     elif file_type == FileType.PLAYBOOK:
+        print(f'Start generating {file_type.value} documentation...')
         return generate_playbook_doc(input_path=input_path, output=output_path, permissions=permissions,
                                      limitations=limitations, verbose=verbose, custom_image_path=custom_image_path)
+    elif is_pack:  # Pack may contain yml files of other types
+        return 0
     else:
         print_error(f'File type {file_type.value} is not supported.')
         return 1

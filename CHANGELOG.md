@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Updated the default general `fromVersion` value on **format** to `6.5.0`
 
 ## 1.7.0
 * Allowed JSON Handlers to accept kwargs, for custoimzing behavior.

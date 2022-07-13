@@ -6,7 +6,7 @@ import sys
 import tempfile
 from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
-from typing import IO
+from typing import IO, Any
 
 import click
 import git
@@ -1400,41 +1400,36 @@ def generate_docs(**kwargs):
     """Generate documentation for integration, playbook or script from yaml file."""
 
     check_configuration_file('generate-docs', kwargs)
-    input_path: str = kwargs.get('input', '')
-    output_path = kwargs.get('output')
-
-    # validate inputs
-    if input_path and os.path.isfile(input_path) and not input_path.lower().endswith('.yml'):
-        print_error(F'Input {input_path} is not a valid yml file.')
+    input_path_str: str = kwargs.get('input')
+    if not (input_path := Path(input_path_str)).exists():
+        print_error(f'input {input_path_str} does not exist')
         return 1
 
-    if output_path and not os.path.isdir(output_path):
-        print_error(F'Output directory {output_path} was not found.')
+    if (output_path := kwargs.get('output')) and not Path(output_path).is_dir():
+        print_error(f'Output directory {output_path} is not a directory.')
         return 1
+
+    if input_path.is_file():
+        if input_path.suffix.lower() != '.yml':
+            print_error(f'input {input_path} is not a valid yml file.')
+            return 1
+        _generate_docs_for_file(kwargs)
 
     # Add support for input which is a Playbooks directory and not a single yml file
-    if input_path and os.path.isdir(input_path) and os.path.basename(os.path.basename(input_path)) == 'Playbooks':
-        for root, subdirs, files in os.walk(input_path):
-            for file in files:
-                # Playbooks directory can contain non-yml files, so continue - this is not an error
-                if not file.lower().endswith('.yml'):
-                    continue
-                new_kwargs = copy.deepcopy(kwargs)
-                new_kwargs['input'] = f'{root}/{file}'
-                generate_docs_helper(new_kwargs)
-
-    # A single yml file
-    elif input_path and os.path.isfile(input_path):
-        generate_docs_helper(kwargs)
+    elif input_path.is_dir() and input_path.name == 'Playbooks':
+        for yml in input_path.glob('*.yml'):
+            file_kwargs = copy.deepcopy(kwargs)
+            file_kwargs['input'] = str(yml)
+            _generate_docs_for_file(file_kwargs)
 
     else:
-        print_error(F'Input {input_path} is not a valid yml file or a valid pack.')
+        print_error(F'Input {input_path} is neither a valid yml file, nor a folder named Playbooks.')
         return 1
 
     return 0
 
 
-def generate_docs_helper(kwargs):
+def _generate_docs_for_file(kwargs: dict[str, Any]):
     """Helper function for supporting Playbooks directory as an input and not only a single yml file."""
 
     from demisto_sdk.commands.generate_docs.generate_integration_doc import \

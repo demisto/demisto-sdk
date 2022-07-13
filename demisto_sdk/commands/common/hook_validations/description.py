@@ -1,4 +1,5 @@
 import glob
+from pathlib import Path
 from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
@@ -25,7 +26,8 @@ class DescriptionValidator(BaseValidator):
     def __init__(self, file_path: str, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False,
                  json_file_path: Optional[str] = None, specific_validations: Optional[List[str]] = None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print, json_file_path=json_file_path, specific_validations=specific_validations)
+                         suppress_print=suppress_print, json_file_path=json_file_path,
+                         specific_validations=specific_validations)
         self._is_valid = True
         # Handling a case where the init function initiated with file path instead of structure validator
         self.file_path = file_path.file_path if isinstance(file_path, StructureValidator) else file_path
@@ -96,16 +98,13 @@ class DescriptionValidator(BaseValidator):
         """Check if the integration has a non-duplicate description ."""
         is_description_in_yml = False
         is_description_in_package = False
-        package_path = None
         md_file_path = None
 
+        path = Path(self.file_path)
         if not re.match(PACKS_INTEGRATION_YML_REGEX, self.file_path, re.IGNORECASE):
-            package_path = os.path.dirname(self.file_path)
             try:
-                base_name_without_extension: str = os.path.basename(os.path.splitext(self.file_path)[0].replace(
-                    '_description', ''))
-                dir_name: str = os.path.dirname(self.file_path)
-                expected_description_name: str = os.path.join(dir_name, f'{base_name_without_extension}_description.md')
+                base_name_without_extension = path.stem.replace('_description', '')
+                expected_description_name = str(path.parent / f'{base_name_without_extension}_description.md')
                 md_file_path = glob.glob(expected_description_name)[0]
             except IndexError:
                 is_unified_integration = self.data_dictionary.get('script', {}).get('script', '') not in {'-', ''}
@@ -124,7 +123,7 @@ class DescriptionValidator(BaseValidator):
 
         if is_description_in_package and is_description_in_yml:
             error_message, error_code = Errors.description_in_package_and_yml()
-            if self.handle_error(error_message, error_code, file_path=package_path):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
                 return False
 

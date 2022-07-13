@@ -1543,7 +1543,7 @@ class IntegrationValidator(ContentEntityValidator):
 
         if params_missing_defaults:
             missing_error_message, missing_error_code = Errors.missing_default_additional_info(params_missing_defaults)
-            self.handle_error(missing_error_message, missing_error_code, self.current_file,
+            self.handle_error(missing_error_message, missing_error_code, self.file_path,
                               suggested_fix=Errors.suggest_fix(self.file_path))
             return False
         return True

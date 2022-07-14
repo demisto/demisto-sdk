@@ -937,14 +937,8 @@ def run_random_methods(repo, current_pack, current_methods_pool, number_of_metho
     return all_dependencies
 
 
-def run_find_dependencies(mocker, repo_path, pack_name):
+def run_find_dependencies(repo_path, pack_name):
     with ChangeCWD(repo_path):
-        # Circle froze on 3.7 dut to high usage of processing power.
-        # pool = Pool(processes=cpu_count() * 2) is the line that in charge of the multiprocessing initiation,
-        # so changing `cpu_count` return value to 1 still gives you multiprocessing but with only 2 processors,
-        # and not the maximum amount.
-        import demisto_sdk.commands.common.update_id_set as uis
-        mocker.patch.object(uis, 'cpu_count', return_value=1)
         PackDependencies.find_dependencies(pack_name, silent_mode=True, update_pack_metadata=True)
 
 

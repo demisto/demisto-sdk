@@ -80,7 +80,7 @@ jobs:
           type: string
       docker:
         - image: cimg/python:<< parameters.pythonversion >>-node
-      parallelism: 8
+      parallelism: 16
       steps:
         - checkout
         - setup_remote_docker:

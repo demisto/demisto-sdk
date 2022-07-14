@@ -1478,7 +1478,7 @@ def generate_docs_helper(kwargs):
         return 1
 
     if file_type == FileType.INTEGRATION:
-        print(f'Start generating {file_type.value} documentation...')
+        print(f'Generating {file_type.value.lower()} documentation')
         use_cases = kwargs.get('use_cases')
         command_permissions = kwargs.get('command_permissions')
         return generate_integration_doc(input_path=input_path, output=output_path, use_cases=use_cases,

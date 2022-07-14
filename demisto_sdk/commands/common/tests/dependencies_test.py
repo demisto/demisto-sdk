@@ -967,7 +967,7 @@ def test_dependencies(mocker, repo, test_number):
     number_of_methods_to_choose = random.choice(range(1, len(METHODS_POOL)))
     dependencies = run_random_methods(repo, pack_to_verify, METHODS_POOL.copy(), number_of_methods_to_choose)
 
-    run_find_dependencies(mocker, repo.path, f'pack_{pack_to_verify}')
+    run_find_dependencies(repo.path, f'pack_{pack_to_verify}')
 
     dependencies_from_pack_metadata = repo.packs[pack_to_verify].pack_metadata.read_json_as_dict().get(
         'dependencies').keys()

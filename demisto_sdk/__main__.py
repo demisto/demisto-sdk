@@ -1488,7 +1488,7 @@ def generate_docs_helper(kwargs):
                                         old_version=old_version,
                                         skip_breaking_changes=skip_breaking_changes)
     elif file_type == FileType.SCRIPT:
-        print(f'Start generating {file_type.value} documentation...')
+        print(f'Generating {file_type.value.lower()} documentation')
         return generate_script_doc(input_path=input_path, output=output_path, examples=examples,
                                    permissions=permissions,
                                    limitations=limitations, insecure=insecure, verbose=verbose)

@@ -1004,7 +1004,7 @@ def test_specific_entity(mocker, repo, entity_class):
 
     dependencies = run_random_methods(repo, 0, methods_pool, len(methods_pool))
 
-    run_find_dependencies(mocker, repo.path, 'pack_0')
+    run_find_dependencies(repo.path, 'pack_0')
 
     dependencies_from_pack_metadata = repo.packs[0].pack_metadata.read_json_as_dict().get('dependencies').keys()
 
@@ -1079,7 +1079,7 @@ def test_dependencies_case_1(mocker, repo):
         incident_field_email
     )
 
-    run_find_dependencies(mocker, repo.path, 'foo')
+    run_find_dependencies(repo.path, 'foo')
 
     expected_dependencies = {'bar', 'CommonTypes'}
     dependencies_from_pack_metadata = pack_foo.pack_metadata.read_json_as_dict().get('dependencies').keys()
@@ -1136,7 +1136,7 @@ def test_dependencies_case_2(mocker, repo):
         mapper_in_bar
     )
 
-    run_find_dependencies(mocker, repo.path, 'foo')
+    run_find_dependencies(repo.path, 'foo')
 
     expected_dependencies = {'bar', 'CommonTypes'}
     dependencies_from_pack_metadata = repo.packs[0].pack_metadata.read_json_as_dict().get('dependencies').keys()

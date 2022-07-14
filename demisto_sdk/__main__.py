@@ -6,7 +6,7 @@ import sys
 import tempfile
 from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
-from typing import IO, Any
+from typing import IO, Any, Dict
 
 import click
 import git
@@ -1393,7 +1393,7 @@ def generate_docs(**kwargs):
     """Generate documentation for integration, playbook or script from yaml file."""
 
     check_configuration_file('generate-docs', kwargs)
-    input_path_str: str = kwargs.get('input')
+    input_path_str: str = kwargs.get('input', '')
     if not (input_path := Path(input_path_str)).exists():
         print_error(f'input {input_path_str} does not exist')
         return 1
@@ -1422,7 +1422,7 @@ def generate_docs(**kwargs):
     return 0
 
 
-def _generate_docs_for_file(kwargs: dict[str, Any]):
+def _generate_docs_for_file(kwargs: Dict[str, Any]):
     """Helper function for supporting Playbooks directory as an input and not only a single yml file."""
 
     from demisto_sdk.commands.generate_docs.generate_integration_doc import \

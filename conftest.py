@@ -121,8 +121,8 @@ def are_mock_calls_supported_in_python_version():
 @pytest.fixture(scope='session', autouse=True)
 def mock_update_id_set_cpu_count() -> Generator:
     """
-    Since Circle build has an issue in it's virtualization where it has only 3 vCPUs but the 'cpu_count' method returns
+    Since Circle build has an issue in it's virtualization where it has only 2 vcpu's but the 'cpu_count' method returns
     all physical cpu's (36) it uses too many processes in the process pools.
     """
-    with mock.patch('demisto_sdk.commands.common.update_id_set.cpu_count', return_value=3) as _fixture:
+    with mock.patch('demisto_sdk.commands.common.update_id_set.cpu_count', return_value=2) as _fixture:
         yield _fixture

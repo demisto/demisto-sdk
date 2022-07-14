@@ -32,7 +32,7 @@ Throughout the guide, `X.Y.Z` will mark the upcoming version.
   a) Mention the release version,
   b) Paste the `CHANGELOG` contents for this release
   c) Add a link to demisto-sdk in pypi
-  d) Remind everyone to pull master (on both content & SDK) and `poetry update` content.
+  d) Remind everyone to pull master (on both content & SDK) and `poetry install` content.
 
 
 ## Triggering nightlies manually

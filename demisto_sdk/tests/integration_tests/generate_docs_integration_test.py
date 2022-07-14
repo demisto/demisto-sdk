@@ -144,7 +144,7 @@ class TestPlaybooks:
         readme_path = join(tmpdir, 'Cortex_XDR_Incident_Handling_README.md')
 
         assert result.exit_code == 0
-        assert 'Start generating playbook documentation...' in result.stdout
+        assert 'Generating playbook documentation' in result.stdout
         assert not result.stderr
         assert not result.exception
         assert Path(readme_path).exists()

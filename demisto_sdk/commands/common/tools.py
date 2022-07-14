@@ -2022,7 +2022,6 @@ def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
 def item_type_to_content_items_header(item_type):
     converter = {
         "incidenttype": "incidentType",
-        "indicatortype": "indicatorType",
         "reputation": "indicatorType",
         "indicatorfield": "indicatorField",
         "incidentfield": "incidentField",

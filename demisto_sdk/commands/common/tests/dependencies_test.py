@@ -937,8 +937,14 @@ def run_random_methods(repo, current_pack, current_methods_pool, number_of_metho
     return all_dependencies
 
 
-def run_find_dependencies(repo_path, pack_name):
+def run_find_dependencies(mocker, repo_path, pack_name):
     with ChangeCWD(repo_path):
+        # Circle froze on 3.7 dut to high usage of processing power.
+        # pool = Pool(processes=cpu_count() * 2) is the line that in charge of the multiprocessing initiation,
+        # so changing `cpu_count` return value to 1 still gives you multiprocessing but with only 2 processors,
+        # and not the maximum amount.
+        import demisto_sdk.commands.common.update_id_set as uis
+        mocker.patch.object(uis, 'cpu_count', return_value=1)
         PackDependencies.find_dependencies(pack_name, silent_mode=True, update_pack_metadata=True)
 
 
@@ -967,7 +973,7 @@ def test_dependencies(mocker, repo, test_number):
     number_of_methods_to_choose = random.choice(range(1, len(METHODS_POOL)))
     dependencies = run_random_methods(repo, pack_to_verify, METHODS_POOL.copy(), number_of_methods_to_choose)
 
-    run_find_dependencies(repo.path, f'pack_{pack_to_verify}')
+    run_find_dependencies(mocker, repo.path, f'pack_{pack_to_verify}')
 
     dependencies_from_pack_metadata = repo.packs[pack_to_verify].pack_metadata.read_json_as_dict().get(
         'dependencies').keys()
@@ -1004,7 +1010,7 @@ def test_specific_entity(mocker, repo, entity_class):
 
     dependencies = run_random_methods(repo, 0, methods_pool, len(methods_pool))
 
-    run_find_dependencies(repo.path, 'pack_0')
+    run_find_dependencies(mocker, repo.path, 'pack_0')
 
     dependencies_from_pack_metadata = repo.packs[0].pack_metadata.read_json_as_dict().get('dependencies').keys()
 
@@ -1079,7 +1085,7 @@ def test_dependencies_case_1(mocker, repo):
         incident_field_email
     )
 
-    run_find_dependencies(repo.path, 'foo')
+    run_find_dependencies(mocker, repo.path, 'foo')
 
     expected_dependencies = {'bar', 'CommonTypes'}
     dependencies_from_pack_metadata = pack_foo.pack_metadata.read_json_as_dict().get('dependencies').keys()
@@ -1136,7 +1142,7 @@ def test_dependencies_case_2(mocker, repo):
         mapper_in_bar
     )
 
-    run_find_dependencies(repo.path, 'foo')
+    run_find_dependencies(mocker, repo.path, 'foo')
 
     expected_dependencies = {'bar', 'CommonTypes'}
     dependencies_from_pack_metadata = repo.packs[0].pack_metadata.read_json_as_dict().get('dependencies').keys()

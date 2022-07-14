@@ -2667,6 +2667,7 @@ def convert_entity_types_to_id_set_headers(excluded_items_by_type: dict):
         "incidenttype": "IncidentTypes",
         "indicatorfield": "IndicatorFields",
         "indicatortype": "IndicatorTypes",
+        "reputation": "IndicatorTypes",
         "mapper": "Mappers",
         "dashboard": "Dashboards",
         "widget": "Widgets",

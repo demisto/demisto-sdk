@@ -26,10 +26,10 @@ Throughout the guide, `X.Y.Z` will mark the upcoming version.
 5) Click **Publish release**. Your release will go through a deploy build (follow it on the [CI website](https://app.circleci.com/pipelines/github/demisto/demisto-sdk).
 6) If the build is successful, and `vX.Y.Z` shows in [PyPi](https://pypi.org/project/demisto-sdk/), your release is public! 🎉
 7) Under the **Content** repo, run `poetry add demisto-sdk==X.Y.Z && poetry update`.
-  **NOTE**: it may take up to an hour for the Gitlab's PyPi mirror to sync with PyPi ang have X.Y.Z available, so the build _may_ fail. Should this happen, wait ~1h and retry. 
+  **NOTE**: it may take up to an hour for the Gitlab's PyPi mirror to sync with PyPi ang have X.Y.Z available, so the build _may_ fail. Should this happen, wait ~1h and retry.
 9) Wait for the build to finish, and merge it.
 10) Announce regarding the SDK release [here](https://panw-global.slack.com/archives/G011E63JXPB):
-  a) Mention the release version, 
+  a) Mention the release version,
   b) Paste the `CHANGELOG` contents for this release
   c) Add a link to demisto-sdk in pypi
   d) Remind everyone to pull master (on both content & SDK) and `poetry update` content.

@@ -39,7 +39,7 @@ class TestPlaybooks:
         readme_path = join(tmpdir, 'playbook-Test_playbook_README.md')
 
         assert result.exit_code == 0
-        assert 'Start generating playbook documentation...' in result.stdout
+        assert 'Generating playbook documentation' in result.stdout
         assert not result.stderr
         assert not result.exception
         assert Path(readme_path).exists()
@@ -74,7 +74,7 @@ class TestPlaybooks:
         result = runner.invoke(main, arguments)
         readme_path = join(tmpdir, 'Playbooks.playbook-test_README.md')
         assert result.exit_code == 0
-        assert 'Start generating playbook documentation...' in result.stdout
+        assert 'Generating playbook documentation' in result.stdout
         assert not result.stderr
         assert not result.exception
         assert Path(readme_path).exists()
@@ -109,7 +109,7 @@ class TestPlaybooks:
         readme_path = join(tmpdir, 'DummyPlaybook_README.md')
 
         assert result.exit_code == 0
-        assert 'Start generating playbook documentation...' in result.stdout
+        assert 'Generating playbook documentation' in result.stdout
         assert not result.stderr
         assert not result.exception
         assert Path(readme_path).exists()
@@ -144,7 +144,7 @@ class TestPlaybooks:
         readme_path = join(tmpdir, 'Cortex_XDR_Incident_Handling_README.md')
 
         assert result.exit_code == 0
-        assert 'Start generating playbook documentation...' in result.stdout
+        assert 'Generating playbook documentation' in result.stdout
         assert not result.stderr
         assert not result.exception
         assert Path(readme_path).exists()
@@ -183,7 +183,7 @@ class TestPlaybooks:
         readme_path_2 = join(tmpdir, 'Playbooks.playbook-test_README.md')
 
         assert result.exit_code == 0
-        assert 'Start generating playbook documentation...' in result.stdout
+        assert 'Generating playbook documentation' in result.stdout
         assert not result.stderr
         assert not result.exception
         assert Path(readme_path_1).exists()

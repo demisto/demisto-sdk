@@ -1473,7 +1473,7 @@ def _generate_docs_for_file(kwargs: dict[str, Any]):
         return 1
 
     if file_type == FileType.INTEGRATION:
-        print(f'Start generating {file_type.value} documentation...')
+        print(f'Generating {file_type.value.lower()} documentation')
         use_cases = kwargs.get('use_cases')
         command_permissions = kwargs.get('command_permissions')
         return generate_integration_doc(input_path=input_path, output=output_path, use_cases=use_cases,
@@ -1483,12 +1483,12 @@ def _generate_docs_for_file(kwargs: dict[str, Any]):
                                         old_version=old_version,
                                         skip_breaking_changes=skip_breaking_changes)
     elif file_type == FileType.SCRIPT:
-        print(f'Start generating {file_type.value} documentation...')
+        print(f'Generating {file_type.value.lower()} documentation')
         return generate_script_doc(input_path=input_path, output=output_path, examples=examples,
                                    permissions=permissions,
                                    limitations=limitations, insecure=insecure, verbose=verbose)
     elif file_type == FileType.PLAYBOOK:
-        print(f'Start generating {file_type.value} documentation...')
+        print(f'Generating {file_type.value.lower()} documentation')
         return generate_playbook_doc(input_path=input_path, output=output_path, permissions=permissions,
                                      limitations=limitations, verbose=verbose, custom_image_path=custom_image_path)
     else:

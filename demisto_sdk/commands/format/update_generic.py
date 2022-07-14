@@ -55,8 +55,7 @@ class BaseUpdate:
         self.output_file = self.set_output_file_path(output)
         self.verbose = verbose
         _, self.relative_content_path = is_file_from_content_repo(self.output_file)
-        self.old_file = self.is_old_file(self.relative_content_path if self.relative_content_path
-                                         else self.output_file, self.verbose)
+        self.old_file = self.is_old_file(self.relative_content_path or self.output_file, self.verbose)
         self.schema_path = path
         self.from_version = from_version
         self.no_validate = no_validate

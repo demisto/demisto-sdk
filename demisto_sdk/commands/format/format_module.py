@@ -138,6 +138,7 @@ def format_manager(input: str = None,
     prev_ver = prev_ver if prev_ver else 'demisto/master'
     supported_file_types = ['json', 'yml', 'py', 'md']
     use_git = use_git or not input
+    files = []
 
     if input:
         files = get_files_in_dir(input, supported_file_types)
@@ -166,19 +167,20 @@ def format_manager(input: str = None,
                 continue
 
             if file_type and file_type.value not in UNFORMATTED_FILES:
-                file_type = file_type.value
-                info_res, err_res, skip_res = run_format_on_file(input=file_path,
-                                                                 file_type=file_type,
-                                                                 from_version=from_version,
-                                                                 interactive=interactive,
-                                                                 output=output,
-                                                                 no_validate=no_validate,
-                                                                 verbose=verbose,
-                                                                 update_docker=update_docker,
-                                                                 assume_yes=assume_yes,
-                                                                 deprecate=deprecate,
-                                                                 add_tests=add_tests,
-                                                                 id_set_path=id_set_path)
+                info_res, err_res, skip_res = run_format_on_file(
+                    input=file_path,
+                    file_type=file_type.value,
+                    from_version=from_version,
+                    interactive=interactive,
+                    output=output,
+                    no_validate=no_validate,
+                    verbose=verbose,
+                    update_docker=update_docker,
+                    assume_yes=assume_yes,
+                    deprecate=deprecate,
+                    add_tests=add_tests,
+                    id_set_path=id_set_path,
+                )
                 if err_res:
                     log_list.extend([(err_res, print_error)])
                 if info_res:
@@ -290,7 +292,8 @@ def run_format_on_file(input: str, file_type: str, from_version: str, interactiv
         # adding tests is relevant only for integrations, playbooks and scripts.
         del kwargs['add_tests']
     if file_type not in (
-        FileType.INCIDENT_FIELD.value, FileType.LAYOUTS_CONTAINER.value, FileType.LAYOUT.value, FileType.MAPPER.value
+            FileType.INCIDENT_FIELD.value, FileType.LAYOUTS_CONTAINER.value, FileType.LAYOUT.value,
+            FileType.MAPPER.value
     ) and 'id_set_path' in kwargs:
         # relevant only for incidentfield/layouts/mappers
         del kwargs['id_set_path']

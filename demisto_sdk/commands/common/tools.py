@@ -592,7 +592,7 @@ def get_file(file_path: Union[str, Path], type_of_file, clear_cache=False):
         get_file.cache_clear()
     file_path = Path(file_path)
     data_dictionary = None
-    with open(file_path.expanduser(), mode="r", encoding="utf8") as f:
+    with open(file_path, mode="r", encoding="utf8") as f:
         if type_of_file in file_path.suffix:
             read_file = f.read()
             replaced = read_file.replace("simple: =", "simple: '='")
@@ -1383,7 +1383,7 @@ def find_type(
         ignore_sub_categories: bool = False,
         ignore_invalid_schema_file: bool = False,
         clear_cache: bool = False
-):
+) -> Optional[FileType]:
     """
     returns the content file type
 

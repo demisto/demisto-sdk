@@ -1277,7 +1277,7 @@ def get_dict_from_file(path: Union[Path, str], raise_error: bool = True, clear_c
     if not path:
         return {}, None
 
-    path = Path(path)  # in case a string is passed in
+    path = Path(path)
     try:
         if path:
             suffix = path.suffix.lower()

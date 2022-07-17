@@ -1621,6 +1621,9 @@ class TestIsObjectInIDSet:
                 "Script1",
                 "Script2",
             ],
+            "indicatorTypes": [
+                "JARM"
+            ]
         }
     }
 
@@ -1666,6 +1669,19 @@ class TestIsObjectInIDSet:
         """
         assert is_object_in_id_set('Phishing layout', FileType.LAYOUTS_CONTAINER.value, self.PACK_INFO)
         assert not is_object_in_id_set('Phishing', FileType.LAYOUTS_CONTAINER.value, self.PACK_INFO)
+
+    def test_reputation_converted_to_indicator_type(self):
+        """
+        Given:
+            - Pack object with indicatorType(s)
+
+        When:
+            - Searching for an IndicatorType in a pack.
+
+        Then:
+            - make sure the indicator type is found.
+        """
+        assert is_object_in_id_set('JARM', FileType.REPUTATION.value, self.PACK_INFO)
 
 
 class TestGetItemMarketplaces:

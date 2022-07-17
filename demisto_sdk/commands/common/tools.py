@@ -1274,6 +1274,9 @@ def get_dict_from_file(path: Union[Path, str], raise_error: bool = True, clear_c
     Returns:
         dict representation of the file, and the file_type, either .yml or .json
     """
+    if not path:
+        return {}, None
+
     path = Path(path)  # in case a string is passed in
     try:
         if path:

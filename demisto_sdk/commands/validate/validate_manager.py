@@ -859,9 +859,9 @@ class ValidateManager:
 
         validation_results.add(self.validate_modified_files(modified_files))
         validation_results.add(self.validate_added_files(added_files, modified_files))
-        validation_results.add(self.validate_deleted_files(deleted_files, added_files))
         validation_results.add(self.validate_changed_packs_unique_files(modified_files, added_files, old_format_files,
                                                                         changed_meta_files))
+        validation_results.add(self.validate_deleted_files(deleted_files, added_files))
 
         if old_format_files:
             click.secho(f'\n================= Running validation on old format files =================',

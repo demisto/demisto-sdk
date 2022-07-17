@@ -917,6 +917,7 @@ def main():
         else:
             raise NotImplementedError(f'{command} is not an existing QuestKace command')
     except Exception as e:
+        demisto.log("test log")
         return_error(f'Error from QuestKace Integration.\n'
                      f'Failed to execute {demisto.command()} command.\n\n Error: {str(e)}')
 

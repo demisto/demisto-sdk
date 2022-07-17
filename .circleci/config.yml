@@ -111,6 +111,8 @@ jobs:
             path: test-results
         - store_artifacts:
             path: coverage_html_report
+        - store_artifacts:
+            path: test-results/junit.xml
         - run:
             name: Coveralls upload
             command: |

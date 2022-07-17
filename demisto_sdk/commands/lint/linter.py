@@ -66,7 +66,10 @@ class Linter:
         self._req_3 = req_3
         self._req_2 = req_2
         self._content_repo = content_repo
-        self._pack_abs_dir = Path(pack_dir)
+
+        # For covering the case when a path file is sent instead of a directory
+        self._pack_abs_dir = pack_dir if pack_dir.is_dir() else pack_dir.parent
+
         self._pack_name = None
         self.docker_timeout = docker_timeout
         # Docker client init

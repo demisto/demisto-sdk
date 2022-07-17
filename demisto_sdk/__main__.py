@@ -1,11 +1,12 @@
 # Site packages
+import copy
 import logging
 import os
 import sys
 import tempfile
 from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
-from typing import IO
+from typing import IO, Any, Dict
 
 import click
 import git
@@ -1390,13 +1391,48 @@ def init(**kwargs):
     "--custom-image-path", help="A custom path to a playbook image. If not stated, a default link will be added to the file.")
 def generate_docs(**kwargs):
     """Generate documentation for integration, playbook or script from yaml file."""
+
+    check_configuration_file('generate-docs', kwargs)
+    input_path_str: str = kwargs.get('input', '')
+    if not (input_path := Path(input_path_str)).exists():
+        print_error(f'input {input_path_str} does not exist')
+        return 1
+
+    if (output_path := kwargs.get('output')) and not Path(output_path).is_dir():
+        print_error(f'Output directory {output_path} is not a directory.')
+        return 1
+
+    if input_path.is_file():
+        if input_path.suffix.lower() != '.yml':
+            print_error(f'input {input_path} is not a valid yml file.')
+            return 1
+        _generate_docs_for_file(kwargs)
+
+    # Add support for input which is a Playbooks directory and not a single yml file
+    elif input_path.is_dir() and input_path.name == 'Playbooks':
+        for yml in input_path.glob('*.yml'):
+            file_kwargs = copy.deepcopy(kwargs)
+            file_kwargs['input'] = str(yml)
+            _generate_docs_for_file(file_kwargs)
+
+    else:
+        print_error(F'Input {input_path} is neither a valid yml file, nor a folder named Playbooks.')
+        return 1
+
+    return 0
+
+
+def _generate_docs_for_file(kwargs: Dict[str, Any]):
+    """Helper function for supporting Playbooks directory as an input and not only a single yml file."""
+
     from demisto_sdk.commands.generate_docs.generate_integration_doc import \
         generate_integration_doc
     from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
         generate_playbook_doc
     from demisto_sdk.commands.generate_docs.generate_script_doc import \
         generate_script_doc
-    check_configuration_file('generate-docs', kwargs)
+
+    # Extract all the necessary arguments
     input_path: str = kwargs.get('input', '')
     output_path = kwargs.get('output')
     command = kwargs.get('command')
@@ -1408,19 +1444,6 @@ def generate_docs(**kwargs):
     old_version: str = kwargs.get('old_version', '')
     skip_breaking_changes: bool = kwargs.get('skip_breaking_changes', False)
     custom_image_path: str = kwargs.get('custom_image_path', '')
-
-    # validate inputs
-    if input_path and not os.path.isfile(input_path):
-        print_error(F'Input file {input_path} was not found.')
-        return 1
-
-    if not input_path.lower().endswith('.yml'):
-        print_error(F'Input {input_path} is not a valid yml file.')
-        return 1
-
-    if output_path and not os.path.isdir(output_path):
-        print_error(F'Output directory {output_path} was not found.')
-        return 1
 
     if command:
         if output_path and (not os.path.isfile(os.path.join(output_path, "README.md"))) \
@@ -1442,8 +1465,8 @@ def generate_docs(**kwargs):
         print_error(F'Input old version {old_version} is not a valid yml file.')
         return 1
 
-    print(f'Start generating {file_type.value} documentation...')
     if file_type == FileType.INTEGRATION:
+        print(f'Generating {file_type.value.lower()} documentation')
         use_cases = kwargs.get('use_cases')
         command_permissions = kwargs.get('command_permissions')
         return generate_integration_doc(input_path=input_path, output=output_path, use_cases=use_cases,
@@ -1453,10 +1476,12 @@ def generate_docs(**kwargs):
                                         old_version=old_version,
                                         skip_breaking_changes=skip_breaking_changes)
     elif file_type == FileType.SCRIPT:
+        print(f'Generating {file_type.value.lower()} documentation')
         return generate_script_doc(input_path=input_path, output=output_path, examples=examples,
                                    permissions=permissions,
                                    limitations=limitations, insecure=insecure, verbose=verbose)
     elif file_type == FileType.PLAYBOOK:
+        print(f'Generating {file_type.value.lower()} documentation')
         return generate_playbook_doc(input_path=input_path, output=output_path, permissions=permissions,
                                      limitations=limitations, verbose=verbose, custom_image_path=custom_image_path)
     else:

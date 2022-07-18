@@ -25,6 +25,12 @@ inputs:
   required: true
   description: ''
   playbookInputQuery:
+- key: SecondTestInput
+  value:
+    simple: Administrator
+  required: true
+  description: ''
+  playbookInputQuery:
 outputs: []
 tests: []
 fromversion: 6.1.0

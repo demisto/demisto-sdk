@@ -1,5 +1,5 @@
 import re
-from typing import Dict
+from typing import Dict, Set
 
 import click
 
@@ -87,10 +87,10 @@ class PlaybookValidator(ContentEntityValidator):
         """
         return self._is_valid_version()
 
-    def collect_all_inputs_in_use(self):
+    def collect_all_inputs_in_use(self) -> Set[str]:
         """
 
-        Returns: list of all inputs used in playbook.
+        Returns: Set of all inputs used in playbook.
 
         """
         result: set = set()
@@ -104,10 +104,10 @@ class PlaybookValidator(ContentEntityValidator):
                 result.add(splitted[1])
         return result
 
-    def collect_all_inputs_from_inputs_section(self):
+    def collect_all_inputs_from_inputs_section(self) -> Set[str]:
         """
 
-        Returns: list of all inputs from 'inputs' section of playbook.
+        Returns: A set of all inputs defined in the 'inputs' section of playbook.
 
         """
         inputs: Dict = self.current_file.get('inputs', {})
@@ -145,7 +145,7 @@ class PlaybookValidator(ContentEntityValidator):
 
         if inputs_not_in_use:
             playbook_name = self.current_file.get('name', '')
-            error_message, error_code = Errors.input_key_not_in_tasks(playbook_name, ', '.join(inputs_not_in_use))
+            error_message, error_code = Errors.input_key_not_in_tasks(playbook_name, sorted(inputs_not_in_use))
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
@@ -164,7 +164,7 @@ class PlaybookValidator(ContentEntityValidator):
         if inputs_not_in_section:
             playbook_name = self.current_file.get('name', '')
             error_message, error_code = Errors.input_used_not_in_input_section(playbook_name,
-                                                                               ', '.join(inputs_not_in_section))
+                                                                               sorted(inputs_not_in_section))
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False

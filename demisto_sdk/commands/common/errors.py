@@ -328,6 +328,8 @@ ERROR_CODE = {
     "playbook_tasks_not_quiet_mode": {'code': "PB115", 'ui_applicable': False, 'related_field': 'tasks'},
     "playbook_tasks_continue_on_error": {'code': "PB116", 'ui_applicable': False, 'related_field': 'tasks'},
     "content_entity_is_not_in_id_set": {'code': "PB117", 'ui_applicable': False, 'related_field': ''},
+    "input_key_not_in_tasks": {'code': "PB118", 'ui_applicable': False, 'related_field': ''},
+    "input_used_not_in_input_section": {'code': "PB119", 'ui_applicable': False, 'related_field': ''},
 
     # PP - Pre-Process Rules
     "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
@@ -2270,6 +2272,16 @@ class Errors:
         return f"Playbook {main_playbook} uses {entities_names}, which do not exist in the id_set.\n" \
                f"Possible reason for such an error, would be that the name of the entity in the yml file of " \
                f"{main_playbook} is not identical to its name in its own yml file. Or the id_set is not up to date"
+
+    @staticmethod
+    @error_code_decorator
+    def input_key_not_in_tasks(playbook_name: str, inputs: str):
+        return f"Playbook {playbook_name} contains inputs that are not used in any of its tasks: {', '.join(inputs)}"
+
+    @staticmethod
+    @error_code_decorator
+    def input_used_not_in_input_section(playbook_name: str, inputs: str):
+        return f"Playbook {playbook_name} uses inputs that do not appear in the inputs section: {', '.join(inputs)}"
 
     @staticmethod
     @error_code_decorator

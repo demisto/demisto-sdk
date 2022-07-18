@@ -250,7 +250,7 @@ ERROR_CODE = {
     "incident_type_non_existent_playbook_id": {'code': "IT104", 'ui_applicable': False, 'related_field': ''},
 
     # LI - Lists
-    "invalid_from_server_version_in_lists": {'code': "LI100", 'ui_applicable': False, 'related_field': 'fromVersion'},
+    "invalid_from_version_in_lists": {'code': "LI100", 'ui_applicable': False, 'related_field': 'fromVersion'},
     "missing_from_version_in_list": {'code': "LI101", 'ui_applicable': False, 'related_field': 'fromVersion'},
 
     # LO - Layouts
@@ -334,8 +334,8 @@ ERROR_CODE = {
     "playbook_is_deprecated_and_used": {'code': 'PB120', 'ui_applicable': False, 'related_field': 'deprecated'},
 
     # PP - Pre-Process Rules
-    "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
-                                                         'related_field': 'fromServerVersion'},
+    "invalid_from_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
+                                                  'related_field': 'fromVersion'},
     "invalid_incident_field_in_pre_process_rules": {'code': "PP101", 'ui_applicable': False, 'related_field': ''},
     "unknown_fields_in_pre_process_rules": {'code': "PP102", 'ui_applicable': False, 'related_field': ''},
 
@@ -2007,8 +2007,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_from_server_version_in_pre_process_rules(version_field):
-        return f'{version_field} field in Pre Process Rule needs to be at least 6.5.0'
+    def invalid_from_version_in_pre_process_rules():
+        return 'fromVersion field in Pre Process Rule needs to be at least 6.5.0'
 
     @staticmethod
     @error_code_decorator
@@ -2017,8 +2017,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_from_server_version_in_lists(version_field):
-        return f'{version_field} field in a list item needs to be at least 6.5.0'
+    def invalid_from_version_in_lists():
+        return 'fromVersion field in a list item needs to be at least 6.5.0'
 
     @staticmethod
     @error_code_decorator

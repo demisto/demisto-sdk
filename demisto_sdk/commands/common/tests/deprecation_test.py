@@ -382,7 +382,7 @@ class TestDeprecationValidator:
     PLAYBOOKS_FORMAT_VALIDATIONS = [
         (
             {'name': 'playbook_format_case_1', 'deprecated': True},
-            '[PB118] - playbook_format_case_1 playbook is deprecated and being used by the following entites:\nplaybook_2.yml\n\n',
+            '[PB120] - playbook_format_case_1 playbook is deprecated and being used by the following entites:\nplaybook_2.yml\n\n',
         )
     ]
 

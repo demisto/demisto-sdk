@@ -2004,7 +2004,6 @@ class TestDashboard:
                 "widget": {
                     "category": "",
                     "dataType": "scripts",
-                    "fromServerVersion": "",
                     "id": "dummy_widget",
                     "name": "dummy_dashboard",
                     "query": "dummy_script",
@@ -2029,7 +2028,6 @@ class TestDashboard:
                     "id": "dummy_widget",
                     "name": "dummy_dashboard",
                     "packID": "",
-                    "toServerVersion": "",
                     "widgetType": "table"
                 },
             }

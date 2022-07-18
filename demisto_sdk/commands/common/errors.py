@@ -2301,7 +2301,6 @@ class Errors:
         files_list_str = '\n'.join(files_list)
         return f"{playbook_name} playbook is deprecated and being used by the following entites:\n{files_list_str}"
 
-
     @staticmethod
     @error_code_decorator
     def spaces_in_the_end_of_id(item_id: str):

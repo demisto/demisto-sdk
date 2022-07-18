@@ -1,5 +1,5 @@
 import re
-from typing import Dict
+from typing import Dict, Set
 
 import click
 
@@ -22,12 +22,13 @@ class PlaybookValidator(ContentEntityValidator):
         self.validate_all = validate_all
         self.deprecation_validator = deprecation_validator
 
-    def is_valid_playbook(self, validate_rn: bool = True, id_set_file=None) -> bool:
+    def is_valid_playbook(self, validate_rn: bool = True, id_set_file=None, is_modified: bool = False) -> bool:
         """Check whether the playbook is valid or not.
 
          Args:
             this will also determine whether a new id_set can be created by validate.
             validate_rn (bool):  whether we need to validate release notes or not
+            is_modified (bool): Wether the given files are modified or not.
             id_set_file (dict): id_set.json file if exists, None otherwise
 
         Returns:
@@ -53,6 +54,7 @@ class PlaybookValidator(ContentEntityValidator):
             self.verify_condition_tasks_has_else_path(),
             self.name_not_contain_the_type(),
             self.is_valid_with_indicators_input(),
+            self.inputs_in_use_check(is_modified),
             self.is_playbook_deprecated_and_used(),
         ]
         answers = all(playbook_checks)
@@ -86,6 +88,89 @@ class PlaybookValidator(ContentEntityValidator):
             bool. whether the version is valid or not
         """
         return self._is_valid_version()
+
+    def collect_all_inputs_in_use(self) -> Set[str]:
+        """
+
+        Returns: Set of all inputs used in playbook.
+
+        """
+        result: set = set()
+        with open(self.file_path, 'r') as f:
+            playbook_text = f.read()
+        all_inputs_occurrences = re.findall(r"inputs\.[-\w ]+", playbook_text)
+        for input in all_inputs_occurrences:
+            input = input.strip()
+            splitted = input.split('.')
+            if len(splitted) > 1:
+                result.add(splitted[1])
+        return result
+
+    def collect_all_inputs_from_inputs_section(self) -> Set[str]:
+        """
+
+        Returns: A set of all inputs defined in the 'inputs' section of playbook.
+
+        """
+        inputs: Dict = self.current_file.get('inputs', {})
+        inputs_keys = []
+        for input in inputs:
+            inputs_keys.append(input['key'])
+        return set(inputs_keys)
+
+    def inputs_in_use_check(self, is_modified: bool) -> bool:
+        """
+
+        Args:
+            is_modified: Wether the given files are modified or not.
+
+        Returns:
+            True if both directions for input use in playbook passes.
+
+        """
+        if not is_modified:
+            return True
+        inputs_in_use: set = self.collect_all_inputs_in_use()
+        inputs_in_section: set = self.collect_all_inputs_from_inputs_section()
+        return self.are_all_inputs_in_use(inputs_in_use, inputs_in_section) and \
+            self.are_all_used_inputs_in_inputs_section(inputs_in_use, inputs_in_section)
+
+    @error_codes('PB118')
+    def are_all_inputs_in_use(self, inputs_in_use: set, inputs_in_section: set) -> bool:
+        """Check whether the playbook inputs are in use in any of the tasks
+
+        Return:
+            bool. if the Playbook inputs are in use.
+        """
+
+        inputs_not_in_use = inputs_in_section.difference(inputs_in_use)
+
+        if inputs_not_in_use:
+            playbook_name = self.current_file.get('name', '')
+            error_message, error_code = Errors.input_key_not_in_tasks(playbook_name, sorted(inputs_not_in_use))
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+        return True
+
+    @error_codes('PB119')
+    def are_all_used_inputs_in_inputs_section(self, inputs_in_use: set, inputs_in_section: set) -> bool:
+        """Check whether the playbook inputs that in use appear in the input section.
+
+        Return:
+            bool. if the Playbook inputs appear in inputs section.
+        """
+
+        inputs_not_in_section = inputs_in_use.difference(inputs_in_section)
+
+        if inputs_not_in_section:
+            playbook_name = self.current_file.get('name', '')
+            error_message, error_code = Errors.input_used_not_in_input_section(playbook_name,
+                                                                               sorted(inputs_not_in_section))
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+        return True
 
     @error_codes('PB100')
     def is_no_rolename(self):  # type: () -> bool
@@ -538,7 +623,7 @@ class PlaybookValidator(ContentEntityValidator):
                 return False
         return True
 
-    @error_codes('PB118')
+    @error_codes('PB120')
     def is_playbook_deprecated_and_used(self):
         """
         Checks if the playbook is deprecated and is used in other none-deprcated playbooks.

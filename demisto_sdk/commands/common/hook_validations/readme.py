@@ -150,7 +150,8 @@ class ReadMeValidator(BaseValidator):
             self.verify_readme_is_not_too_short(),
             self.is_context_different_in_yml(),
             self.verify_demisto_in_readme_content(),
-            self.verify_template_not_in_readme()
+            self.verify_template_not_in_readme(),
+            self.verify_copyright_section_in_readme_content()
         ])
 
     def mdx_verify(self) -> bool:
@@ -582,6 +583,30 @@ class ReadMeValidator(BaseValidator):
 
         return valid
 
+    def check_readme_content_contain_text(self, text_list: list, is_lower: bool = False, to_split: bool = False):
+        """
+        Args:
+            text_list: list of words/sentences to search in line content.
+            is_lower: True to check when line is lower cased.
+            to_split: True to split the line in order to search specific word
+
+        Returns:
+            list of lines which contains the given text.
+
+        """
+        invalid_lines = []
+
+        for line_num, line in enumerate(self.readme_content.split('\n')):
+            if is_lower:
+                line = line.lower()
+            if to_split:
+                line = line.split()  # type: ignore
+            for text in text_list:
+                if text in line:
+                    invalid_lines.append(line_num + 1)
+
+        return invalid_lines
+
     @error_codes('RM106')
     def verify_demisto_in_readme_content(self):
         """
@@ -596,11 +621,7 @@ class ReadMeValidator(BaseValidator):
             return True
 
         is_valid = True
-        invalid_lines = []
-
-        for line_num, line in enumerate(self.readme_content.split('\n')):
-            if 'demisto ' in line.lower() or ' demisto' in line.lower():
-                invalid_lines.append(line_num + 1)
+        invalid_lines = self.check_readme_content_contain_text(text_list=['demisto ', ' demisto'], is_lower=True)
 
         if invalid_lines:
             error_message, error_code = Errors.readme_contains_demisto_word(invalid_lines)
@@ -618,14 +639,28 @@ class ReadMeValidator(BaseValidator):
             True if '%%FILL HERE%%' does not exist in the README content, and False if it does.
         """
         is_valid = True
-        invalid_lines = []
-
-        for line_num, line in enumerate(self.readme_content.split('\n')):
-            if '%%FILL HERE%%' in line:
-                invalid_lines.append(line_num + 1)
+        invalid_lines = self.check_readme_content_contain_text(text_list=['%%FILL HERE%%'])
 
         if invalid_lines:
             error_message, error_code = Errors.template_sentence_in_readme(invalid_lines)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                is_valid = False
+
+        return is_valid
+
+    @error_codes('RM113')
+    def verify_copyright_section_in_readme_content(self):
+        """
+        Checks if there are words related to copyright section in the README content.
+
+        Returns:
+            True if related words does not exist in the README content, and False if it does.
+        """
+        is_valid = True
+        invalid_lines = self.check_readme_content_contain_text(text_list=['BSD', 'MIT', 'Copyright', 'proprietary'], to_split=True)
+
+        if invalid_lines:
+            error_message, error_code = Errors.copyright_section_in_readme_error(invalid_lines)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = False
 

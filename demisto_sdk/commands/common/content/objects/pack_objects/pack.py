@@ -73,8 +73,10 @@ class Pack:
                 if is_object_in_id_set(object_id, content_object.type().value, self._pack_info_from_id_set):
                     yield content_object
                 else:
-                    logging.warning(f'Skipping object {object_path} with id "{object_id}" since it\'s missing from '
-                                    f'the given id set')
+                    logging.warning(
+                        f'Skipping object {object_path} with id "{object_id}" since it is missing from '
+                        f'the given id set. Items may be missing when their from/to version values are incompatible'
+                        f' with the current settings.')
             else:
                 yield content_object
 

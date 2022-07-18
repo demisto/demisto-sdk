@@ -13,7 +13,7 @@ FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 # allowed errors to be ignored in any supported pack (XSOAR/Partner/Community) only if they appear in the .pack-ignore
 ALLOWED_IGNORE_ERRORS = [
-    'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113', 'BA116',
+    'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113', 'BA116', 'BA119',
     'DS107',
     'GF102',
     'IF100', 'IF106', 'IF115', 'IF116',
@@ -21,7 +21,7 @@ ALLOWED_IGNORE_ERRORS = [
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
     'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107',
-    'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM110', 'RM112',
+    'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM110', 'RM112', 'RM113',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
     'IM111',
@@ -60,6 +60,7 @@ ERROR_CODE = {
     "cli_name_and_id_do_not_match": {'code': "BA116", 'ui_applicable': False, 'related_field': 'cliName'},
     "incorrect_from_to_version_format": {'code': "BA117", 'ui_applicable': False, 'related_field': ''},
     "mismatching_from_to_versions": {'code': "BA118", 'ui_applicable': False, 'related_field': ''},
+    "copyright_section_in_python_error": {'code': "BA119", 'ui_applicable': False, 'related_field': ''},
 
     # BC - Backward Compatible
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -328,7 +329,9 @@ ERROR_CODE = {
     "playbook_tasks_not_quiet_mode": {'code': "PB115", 'ui_applicable': False, 'related_field': 'tasks'},
     "playbook_tasks_continue_on_error": {'code': "PB116", 'ui_applicable': False, 'related_field': 'tasks'},
     "content_entity_is_not_in_id_set": {'code': "PB117", 'ui_applicable': False, 'related_field': ''},
-    'playbook_is_deprecated_and_used': {'code': 'PB118', 'ui_applicable': False, 'related_field': 'deprecated'},
+    "input_key_not_in_tasks": {'code': "PB118", 'ui_applicable': False, 'related_field': ''},
+    "input_used_not_in_input_section": {'code': "PB119", 'ui_applicable': False, 'related_field': ''},
+    "playbook_is_deprecated_and_used": {'code': 'PB120', 'ui_applicable': False, 'related_field': 'deprecated'},
 
     # PP - Pre-Process Rules
     "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
@@ -350,6 +353,7 @@ ERROR_CODE = {
     "missing_commands_from_readme": {'code': "RM110", 'ui_applicable': False, 'related_field': ''},
     "error_uninstall_node": {'code': "RM111", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_relative_url_error": {'code': "RM112", 'ui_applicable': False, 'related_field': ''},
+    "copyright_section_in_readme_error": {'code': "RM113", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -1789,6 +1793,18 @@ class Errors:
                f'Which is not the raw link. You probably want to use the following raw image url:\n{alternative_path}'
 
     @staticmethod
+    @error_code_decorator
+    def copyright_section_in_readme_error(line_nums):
+        return f"Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found " \
+               f"in lines: {line_nums}. Copyright section cannot be part of pack readme."
+
+    @staticmethod
+    @error_code_decorator
+    def copyright_section_in_python_error(line_nums):
+        return f"Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found " \
+               f"in lines: {line_nums}. Copyright section cannot be part of script."
+
+    @staticmethod
     def pack_readme_image_relative_path_error(path):
         return f'Detected the following image relative path: {path}.\nRelative paths are not supported in pack README files. See ' \
                f'https://xsoar.pan.dev/docs/integrations/integration-docs#images for further info on how to ' \
@@ -2271,9 +2287,20 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def input_key_not_in_tasks(playbook_name: str, inputs: str):
+        return f"Playbook {playbook_name} contains inputs that are not used in any of its tasks: {', '.join(inputs)}"
+
+    @staticmethod
+    @error_code_decorator
+    def input_used_not_in_input_section(playbook_name: str, inputs: str):
+        return f"Playbook {playbook_name} uses inputs that do not appear in the inputs section: {', '.join(inputs)}"
+
+    @staticmethod
+    @error_code_decorator
     def playbook_is_deprecated_and_used(playbook_name: str, files_list: list):
         files_list_str = '\n'.join(files_list)
         return f"{playbook_name} playbook is deprecated and being used by the following entites:\n{files_list_str}"
+
 
     @staticmethod
     @error_code_decorator

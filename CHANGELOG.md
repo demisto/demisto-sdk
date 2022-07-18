@@ -1,6 +1,13 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where *indicatorTypes* were not found in the id_set.
+* Updated the default general `fromVersion` value on **format** to `6.5.0`
+* Fixed an issue where the **validate** command did not fail when the integration yml file name was not the same as the folder containing it.
+* Added an option to have **generate-docs** take a Playbooks folder path as input, and generate docs for all playbooks in it.
+
+## 1.7.0
+* Allowed JSON Handlers to accept kwargs, for custoimzing behavior.
 * Fixed an issue where an incorrect error was shown when the `id` of a content item differed from its `name` attribute.
 * Fixed an issue where the `preserve_quotes` in ruamel_handler received an incorrect value @icholy
 * Fixed an issue where ignoring RM110 error code wasn't working and added a validation to **ALLOWED_IGNORE_ERRORS** to validate that all error codes are inserted in the right format.
@@ -10,6 +17,11 @@
 * The **generate-docs** command will now auto-generate the Incident Mirroring section when implemented in an integration.
 * Added support to automatically generate release notes for deprecated items in the **update-release-notes** command.
 * Fixed an issue causing any command to crash when unable to detect local repository properties.
+* Fixed an issue where running in a private gitlab repo caused a warning message to be shown multiple times.
+* Added a new validation to the **validate** command to verify that markdown and python files do not contain words related to copyright section.
+* Fixed an issue where **lint** crashd when provided an input file path (expecting a directory).
+* Added a new validation to **validate**, making sure all inputs of a playbook are used.
+* Added a new validation to **validate**, making sure all inputs used in a playbook declared in the input section.
 
 ## 1.6.9
 * Added a new validation that checks whether a pack should be deprecated.

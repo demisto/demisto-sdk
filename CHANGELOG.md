@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-* Fixed an issue where *indicatorTypes* and *betaIntegrations˚* were not found in the id_set.
+* Fixed an issue where *indicatorTypes* and *betaIntegrations* were not found in the id_set.
 * Updated the default general `fromVersion` value on **format** to `6.5.0`
 * Fixed an issue where the **validate** command did not fail when the integration yml file name was not the same as the folder containing it.
 * Added an option to have **generate-docs** take a Playbooks folder path as input, and generate docs for all playbooks in it.

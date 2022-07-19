@@ -70,6 +70,9 @@ class Pack:
                                                                                     ]:
 
                 object_id = content_object.get_id()
+                if object_id == 'Proofpoint Threat Response':
+                    aa = 3
+
                 if is_object_in_id_set(object_id, content_object.type().value, self._pack_info_from_id_set):
                     yield content_object
                 else:

@@ -1623,6 +1623,9 @@ class TestIsObjectInIDSet:
             ],
             "indicatorTypes": [
                 "JARM"
+            ],
+            "integrations": [
+                "Proofpoint Threat Response"
             ]
         }
     }
@@ -1670,18 +1673,25 @@ class TestIsObjectInIDSet:
         assert is_object_in_id_set('Phishing layout', FileType.LAYOUTS_CONTAINER.value, self.PACK_INFO)
         assert not is_object_in_id_set('Phishing', FileType.LAYOUTS_CONTAINER.value, self.PACK_INFO)
 
-    def test_reputation_converted_to_indicator_type(self):
+    @pytest.mark.parametrize('entity_id, entity_type', [
+        ('JARM', FileType.REPUTATION.value),
+        ('Proofpoint Threat Response', FileType.BETA_INTEGRATION.value)
+    ])
+    def test_convertion_to_id_set_name(self, entity_id, entity_type):
         """
         Given:
             - Pack object with indicatorType(s)
+            - Pack object with beta integration
 
         When:
-            - Searching for an IndicatorType in a pack.
+            - Searching for an IndicatorType in the id_set.
+            - Searching for an beta integration in the id_set.
 
         Then:
             - make sure the indicator type is found.
+            - make sure the beta integration is found.
         """
-        assert is_object_in_id_set('JARM', FileType.REPUTATION.value, self.PACK_INFO)
+        assert is_object_in_id_set(entity_id, entity_type, self.PACK_INFO)
 
 
 class TestGetItemMarketplaces:

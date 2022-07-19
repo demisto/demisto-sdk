@@ -893,6 +893,7 @@ class LintManager:
             elif check.get('linter') == 'XSOAR_linter':
                 self.xsoar_linter_error_formatter(check, json_contents)
         with open(self.json_file_path, 'w+') as f:
+            print("open output file with w+ flag was executed")
             json.dump(json_contents, f, indent=4)
 
         logger.info(f'Logs saved to {self.json_file_path}')

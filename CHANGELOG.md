@@ -1,8 +1,10 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where *indicatorTypes* were not found in the id_set.
 * Updated the default general `fromVersion` value on **format** to `6.5.0`
 * Fixed an issue where the **validate** command did not fail when the integration yml file name was not the same as the folder containing it.
+* Added an option to have **generate-docs** take a Playbooks folder path as input, and generate docs for all playbooks in it.
 
 ## 1.7.0
 * Allowed JSON Handlers to accept kwargs, for custoimzing behavior.
@@ -18,6 +20,8 @@
 * Fixed an issue where running in a private gitlab repo caused a warning message to be shown multiple times.
 * Added a new validation to the **validate** command to verify that markdown and python files do not contain words related to copyright section.
 * Fixed an issue where **lint** crashd when provided an input file path (expecting a directory).
+* Added a new validation to **validate**, making sure all inputs of a playbook are used.
+* Added a new validation to **validate**, making sure all inputs used in a playbook declared in the input section.
 
 ## 1.6.9
 * Added a new validation that checks whether a pack should be deprecated.
@@ -36,6 +40,7 @@
 * Added a new flag to **generate-docs** command, allowing to add a custom image link to a playbook README.
 * Added a new validation to the **validate** command to verify that the package directory name is the same as the files contained in the that package.
 * Added support in the **unify** command to unify a schema into its Modeling Rule.
+* The **format** command will now replace the *fromServerVersion* field with *fromVersion*.
 
 ## 1.6.8
 

@@ -2026,6 +2026,7 @@ def item_type_to_content_items_header(item_type):
         "indicatorfield": "indicatorField",
         "incidentfield": "incidentField",
         "layoutscontainer": "layout",
+        "betaintegration": "integration",
 
         # GOM
         "genericdefinition": "genericDefinition",

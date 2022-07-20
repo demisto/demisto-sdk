@@ -5,6 +5,7 @@
 * Updated the default general `fromVersion` value on **format** to `6.5.0`
 * Fixed an issue where the **validate** command did not fail when the integration yml file name was not the same as the folder containing it.
 * Added an option to have **generate-docs** take a Playbooks folder path as input, and generate docs for all playbooks in it.
+* Added new validation to the **validate** command to fail and list all the file paths of files that are using a deprecated integration command / script / playbook.
 
 ## 1.7.0
 * Allowed JSON Handlers to accept kwargs, for custoimzing behavior.
@@ -80,7 +81,6 @@
 * Added a deprecation message to the `tests:` section of yaml files when running `format --deprecate`.
 * Added use case for **validate** on *wizard* objects - set_playbook is mapped to all integrations.
 * Added the 'integration-get-indicators' commands to be ignored by the **verify_yml_commands_match_readme** validation, the validation will no longer fail if these commands are not in the readme file.
-* Added new validation to the **validate** command to fail and list all the file paths of files that are using a deprecated integration command / script / playbook.
 * Added a new validation to the **validate** command to verify that if the phrase "breaking changes" is present in a pack release notes, a JSON file with the same name exists and contains the relevant breaking changes information.
 * Improved logs when running test playbooks (in a build).
 * Fixed an issue in **upload** did not include list-type content items. @nicolas-rdgs

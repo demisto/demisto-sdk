@@ -543,7 +543,7 @@ class IDSetValidations(BaseValidator):
                 searched_entity_name=_entity_name,
                 main_playbook_data=main_playbook_data
             )
-            # In case all the tasks (in the main_playbook) related to the sub_playbook are skipped,
+            # In case all the tasks (in the main_playbook) calling the sub_playbook are skipped,
             # we will allow it to be a higher version than the main_playbook
             return all(task_data.get('skipunavailable', False) for task_data in tasks_data) if tasks_data else False
 

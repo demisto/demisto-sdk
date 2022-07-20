@@ -1577,7 +1577,6 @@ class TestPlaybookEntitiesVersionsValid:
         Given
             - an id_set file
             - a Playbook that is implemented by sub-playbooks with mismatched fromversions:
-                - once with skipunavailable, and from version 5.0.0 - shouldn't fail
                 - once with skipunavailable, and from version 6.0.0 - shouldn't fail
                 - once without skipunavailable - should fail
 
@@ -1588,6 +1587,7 @@ class TestPlaybookEntitiesVersionsValid:
             - Validates that validation fails when skipunavailable is not set and passes otherwise
         """
         pack = repo.create_pack("Pack1")
+
         playbook1 = pack.create_playbook('MyPlay1')
         playbook1.create_default_playbook()
         playbook1_data = playbook1.yml.read_dict()
@@ -1596,34 +1596,14 @@ class TestPlaybookEntitiesVersionsValid:
         playbook2.create_default_playbook()
         playbook2_data = playbook2.yml.read_dict()
 
-        playbook3 = pack.create_playbook('MyPlay3')
-        playbook3.create_default_playbook()
-        playbook3_data = playbook3.yml.read_dict()
-
         self.validator.playbook_set = self.id_set["playbooks"]
         self.validator.integration_set = self.id_set["integrations"]
         self.validator.script_set = self.id_set["scripts"]
 
         with ChangeCWD(repo.path):
-            # playbook uses sub playbooks with invalid versions, skipunavailable is set but
-            # mainplaybook fromversion is 5.0.0 - shouldn't fail
-            playbook1_data['tasks'] = {
-                '0': {
-                    'id': '0',
-                    'task': {
-                        'playbookName': 'SubPlaybook_version_5_5'
-                    },
-                    'skipunavailable': True
-                }
-            }
-            playbook1.yml.write_dict(playbook1_data)
-            is_sub_playbook_version_invalid, error = self.validator._are_playbook_entities_versions_valid(
-                self.playbook_with_invalid_sub_playbook_version_from_version_5_0_0, playbook1.yml.path)
-            assert is_sub_playbook_version_invalid
-
             # playbook uses sub playbooks with invalid versions, skipunavailable is set and
             # mainplaybook fromversion is 6.0.0 - shouldn't fail
-            playbook2_data['tasks'] = {
+            playbook1_data['tasks'] = {
                 '0': {
                     'id': '0',
                     'task': {
@@ -1632,13 +1612,13 @@ class TestPlaybookEntitiesVersionsValid:
                     'skipunavailable': True
                 }
             }
-            playbook2.yml.write_dict(playbook2_data)
+            playbook1.yml.write_dict(playbook1_data)
             is_sub_playbook_version_invalid, error = self.validator._are_playbook_entities_versions_valid(
-                self.playbook_with_invalid_sub_playbook_version_from_version_6_0_0, playbook2.yml.path)
+                self.playbook_with_invalid_sub_playbook_version_from_version_6_0_0, playbook1.yml.path)
             assert is_sub_playbook_version_invalid
 
             # playbook uses sub playbooks with invalid versions but no skipunavailable
-            playbook3_data['tasks'] = {
+            playbook2_data['tasks'] = {
                 '0': {
                     'id': '0',
                     'task': {
@@ -1647,9 +1627,9 @@ class TestPlaybookEntitiesVersionsValid:
                     'skipunavailable': False
                 }
             }
-            playbook3.yml.write_dict(playbook3_data)
+            playbook2.yml.write_dict(playbook2_data)
             is_sub_playbook_version_invalid, error = self.validator._are_playbook_entities_versions_valid(
-                self.playbook_with_invalid_sub_playbook_version_from_version_5_0_0, playbook3.yml.path)
+                self.playbook_with_invalid_sub_playbook_version_from_version_5_0_0, playbook2.yml.path)
             assert not is_sub_playbook_version_invalid
 
     def test_are_playbook_entities_versions_valid_integration_commands(self, repo, mocker):

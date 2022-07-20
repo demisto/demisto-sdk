@@ -5,6 +5,7 @@
 * Updated the default general `fromVersion` value on **format** to `6.5.0`
 * Fixed an issue where the **validate** command did not fail when the integration yml file name was not the same as the folder containing it.
 * Added an option to have **generate-docs** take a Playbooks folder path as input, and generate docs for all playbooks in it.
+* Fixed an issue where the suggestion in case of `IF113` included uppercase letters for the `cliName` parameter.
 * Fixed an issue where the **validate** command failed when a playbook contains sub playbooks with higher version, although they are skipunavailable.
 
 ## 1.7.0

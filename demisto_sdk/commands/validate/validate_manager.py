@@ -1346,7 +1346,7 @@ class ValidateManager:
 
         """
         file_path = str(file_path)
-        file_dict = get_remote_file(file_path)
+        file_dict = get_remote_file(file_path, tag='master')
         file_type = find_type(file_path, file_dict)
         return file_type in FileType_ALLOWED_TO_DELETE or not file_type
 

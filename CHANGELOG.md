@@ -5,6 +5,7 @@
 * Updated the default general `fromVersion` value on **format** to `6.5.0`
 * Fixed an issue where the **validate** command did not fail when the integration yml file name was not the same as the folder containing it.
 * Added an option to have **generate-docs** take a Playbooks folder path as input, and generate docs for all playbooks in it.
+* Fixed an issue where **validate** did not properly detect deleted files.
 
 ## 1.7.0
 * Allowed JSON Handlers to accept kwargs, for custoimzing behavior.
@@ -64,7 +65,6 @@
 * Locked the dependency on Docker.
 * Removed a traceback line from the **init** command templates: BaseIntegration, BaseScript.
 * Updated the token in **_add_pr_comment** method from the content-bot token to the xsoar-bot token.
-* Fixed an issue in the **validate** command when validating deleted files.
 
 ## 1.6.7
 

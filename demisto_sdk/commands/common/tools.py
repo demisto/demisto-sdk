@@ -2022,10 +2022,22 @@ def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
 def item_type_to_content_items_header(item_type):
     converter = {
         "incidenttype": "incidentType",
-        "indicatortype": "indicatorType",
+        "reputation": "indicatorType",
         "indicatorfield": "indicatorField",
         "incidentfield": "incidentField",
         "layoutscontainer": "layout",
+        "betaintegration": "integration",
+
+        # GOM
+        "genericdefinition": "genericDefinition",
+        "genericfield": "genericField",
+        "genericmodule": "genericModule",
+        "generictype": "genericType",
+
+        # SIEM content
+        "correlationrule": "correlationRule",
+        "modelingrule": "modelingRule",
+        "parsingrule": "parsingRule",
     }
 
     return f'{converter.get(item_type, item_type)}s'
@@ -2779,6 +2791,22 @@ def extract_none_deprecated_command_names_from_yml(yml_data: dict) -> list:
     commands_ls = []
     for command in yml_data.get('script', {}).get('commands', {}):
         if command.get('name') and not command.get('deprecated'):
+            commands_ls.append(command.get('name'))
+    return commands_ls
+
+
+def extract_deprecated_command_names_from_yml(yml_data: dict) -> list:
+    """
+    Go over all the commands in a yml file and return their names.
+    Args:
+        yml_data (dict): the yml content as a dict
+
+    Returns:
+        list: a list of all the commands names
+    """
+    commands_ls = []
+    for command in yml_data.get('script', {}).get('commands', {}):
+        if command.get('deprecated'):
             commands_ls.append(command.get('name'))
     return commands_ls
 

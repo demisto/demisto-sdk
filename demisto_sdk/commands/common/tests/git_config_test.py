@@ -23,6 +23,11 @@ class Urls(NamedTuple):
 
 
 class TestGitContentConfig:
+    @staticmethod
+    def teardown_method():
+        # runs after each method, making sure tests do not interfere
+        GitContentConfig.NOTIFIED_PRIVATE_REPO = False
+
     @pytest.mark.parametrize(
         'url, repo_name',
         [
@@ -158,9 +163,10 @@ class TestGitContentConfig:
         assert git_config.git_provider == GitProvider.GitHub
         assert git_config.current_repository == GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
         assert git_config.base_api == DEFAULT_GITHUB_BASE_API
-        message = click_mock.call_args_list[0][0][0]
+        message = click_mock.call_args_list[1][0][0]
         assert GitContentConfig.ENV_REPO_HOSTNAME_NAME in message
         assert GitCredentials.ENV_GITLAB_TOKEN_NAME in message
+        assert GitContentConfig.NOTIFIED_PRIVATE_REPO
 
     def test_get_repo_name_gitlab_invalid(self, mocker):
         """

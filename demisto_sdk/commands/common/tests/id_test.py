@@ -1577,7 +1577,7 @@ class TestPlaybookEntitiesVersionsValid:
         Given
             - an id_set file
             - a Playbook that is implemented by sub-playbooks with mismatched fromversions:
-                - once with skipunavailable, and from version 5.0.0 - should fail
+                - once with skipunavailable, and from version 5.0.0 - shouldn't fail
                 - once with skipunavailable, and from version 6.0.0 - shouldn't fail
                 - once without skipunavailable - should fail
 
@@ -1606,7 +1606,7 @@ class TestPlaybookEntitiesVersionsValid:
 
         with ChangeCWD(repo.path):
             # playbook uses sub playbooks with invalid versions, skipunavailable is set but
-            # mainplaybook fromversion is 5.0.0 - should fail
+            # mainplaybook fromversion is 5.0.0 - shouldn't fail
             playbook1_data['tasks'] = {
                 '0': {
                     'id': '0',
@@ -1619,7 +1619,7 @@ class TestPlaybookEntitiesVersionsValid:
             playbook1.yml.write_dict(playbook1_data)
             is_sub_playbook_version_invalid, error = self.validator._are_playbook_entities_versions_valid(
                 self.playbook_with_invalid_sub_playbook_version_from_version_5_0_0, playbook1.yml.path)
-            assert not is_sub_playbook_version_invalid
+            assert is_sub_playbook_version_invalid
 
             # playbook uses sub playbooks with invalid versions, skipunavailable is set and
             # mainplaybook fromversion is 6.0.0 - shouldn't fail

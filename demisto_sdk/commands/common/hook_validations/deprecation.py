@@ -174,10 +174,10 @@ class DeprecationValidator:
                     continue
                 implementing_entities = playbook_val.get(key_to_check)
                 if implementing_entities:
-                    usage_list = self.validate_playbook_or_script_not_in_playbook(usage_list, curent_entity_name, implementing_entities, playbook_val)
+                    usage_list = self.find_implementing_playbooks_and_scripts(usage_list, curent_entity_name, implementing_entities, playbook_val)
         return usage_list
 
-    def validate_playbook_or_script_not_in_playbook(self, usage_list: List[str], curent_entity_name: str, implementing_entities: List[str], playbook: Dict):
+    def find_implementing_playbooks_and_scripts(self, usage_list: List[str], curent_entity_name: str, implementing_entities: List[str], playbook: Dict):
         """
         List all the playbooks paths of playbooks that are using the current checked playbook / script.
 

@@ -7,6 +7,7 @@
 * Added an option to have **generate-docs** take a Playbooks folder path as input, and generate docs for all playbooks in it.
 * Fixed an issue where the suggestion in case of `IF113` included uppercase letters for the `cliName` parameter.
 * Added new validation to the **validate** command to fail and list all the file paths of files that are using a deprecated integration command / script / playbook.
+* **validate** will no longer fail on playbooks calling subplaybooks that have a higher `fromVersion` value, if  calling the subplaybook has `skipifunavailable=True`.
 
 ## 1.7.0
 * Allowed JSON Handlers to accept kwargs, for custoimzing behavior.

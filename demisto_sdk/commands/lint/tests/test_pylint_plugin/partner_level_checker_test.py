@@ -31,7 +31,7 @@ class TestTryExceptMainChecker(pylint.testutils.CheckerTestCase):
             def main():
                 try:
                     return True
-                except:
+                except Exception:
                     return False
                     return_error('error')
         """)
@@ -56,7 +56,7 @@ class TestTryExceptMainChecker(pylint.testutils.CheckerTestCase):
             def main():
                 try:
                     return True
-                except:
+                except Exception:
                     return False
                     return_error('error')
                 finally:
@@ -117,7 +117,7 @@ class TestReturnErrorInMainChecker(pylint.testutils.CheckerTestCase):
             def main():
                 try:
                     return True
-                except:
+                except Exception:
                     return_error('not ok')
 
         """)
@@ -141,7 +141,7 @@ class TestReturnErrorInMainChecker(pylint.testutils.CheckerTestCase):
             def main():
                 try:
                     return True
-                except:
+                except Exception:
                     return False
 
         """)
@@ -170,7 +170,7 @@ class TestReturnErrorInMainChecker(pylint.testutils.CheckerTestCase):
             def main():
                 try:
                     return True
-                except:
+                except Exception:
                     return False
 
         """)
@@ -207,7 +207,7 @@ class TestReturnErrorCountChecker(pylint.testutils.CheckerTestCase):
             def main():
                 try:
                     return True
-                except:
+                except Exception:
                     return_error('not ok')
 
         """)
@@ -232,7 +232,7 @@ class TestReturnErrorCountChecker(pylint.testutils.CheckerTestCase):
             def main():
                 try:
                     return True
-                except:
+                except Exception:
                     return_error('not ok') #@
 
         """)

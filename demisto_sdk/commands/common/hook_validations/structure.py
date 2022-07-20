@@ -17,8 +17,8 @@ from demisto_sdk.commands.common.constants import (
     FILE_TYPES_PATHS_TO_VALIDATE, OLD_REPUTATION, SCHEMA_TO_REGEX, FileType)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator, error_codes)
 from demisto_sdk.commands.common.tools import (get_remote_file,
                                                is_file_path_in_pack)
 from demisto_sdk.commands.format.format_constants import \
@@ -51,11 +51,11 @@ class StructureValidator(BaseValidator):
     def __init__(self, file_path, is_new_file=False, old_file_path=None, predefined_scheme=None, fromversion=False,
                  configuration=Configuration(), ignored_errors=None, print_as_warnings=False, tag='master',
                  suppress_print: bool = False, branch_name='', json_file_path=None, skip_schema_check=False,
-                 pykwalify_logs=False, quiet_bc=False):
+                 pykwalify_logs=False, quiet_bc=False, specific_validations=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print, json_file_path=json_file_path)
+                         suppress_print=suppress_print, json_file_path=json_file_path, specific_validations=specific_validations)
         self.is_valid = True
-        self.valid_extensions = ['.yml', '.json', '.md', '.png']
+        self.valid_extensions = ['.yml', '.json', '.md', '.png', '.py']
         self.file_path = file_path.replace('\\', '/')
         self.skip_schema_check = skip_schema_check
         self.pykwalify_logs = pykwalify_logs
@@ -94,7 +94,7 @@ class StructureValidator(BaseValidator):
 
             if self.old_file:  # In case the file is modified
                 click.secho(f'Validating backwards compatibility for {self.file_path}')
-                answers.append(not self.is_id_modified())
+                answers.append(self.is_id_not_modified())
                 answers.append(self.is_valid_fromversion_on_modified())
 
             return all(answers)
@@ -120,6 +120,7 @@ class StructureValidator(BaseValidator):
 
         return None
 
+    @error_codes('ST110')
     def is_valid_scheme(self):
         # type: () -> bool
         """Validate the file scheme according to the scheme we have saved in SCHEMAS_PATH.
@@ -129,7 +130,7 @@ class StructureValidator(BaseValidator):
         """
         # ignore schema checks for unsupported file types, reputations.json or is skip-schema-check is set.
         if self.scheme_name in [None, FileType.IMAGE, FileType.README, FileType.RELEASE_NOTES, FileType.TEST_PLAYBOOK,
-                                FileType.AUTHOR_IMAGE] \
+                                FileType.AUTHOR_IMAGE, FileType.PYTHON_FILE] \
                 or self.skip_schema_check or (self.scheme_name == FileType.REPUTATION and
                                               os.path.basename(self.file_path) == OLD_REPUTATION):
             return True
@@ -178,11 +179,14 @@ class StructureValidator(BaseValidator):
             if not file_id:
                 # In layout, the id is under 'layout'.
                 file_id = loaded_file_data.get('layout', {}).get('id', '')
+            if not file_id:
+                file_id = loaded_file_data.get('trigger_id')
 
             return file_id
         except AttributeError:
             return None
 
+    @error_codes('ST101')
     def is_file_id_without_slashes(self):
         # type: () -> bool
         """Check if the ID of the file contains any slashes ('/').
@@ -199,7 +203,8 @@ class StructureValidator(BaseValidator):
 
         return True
 
-    def is_id_modified(self):
+    @error_codes('ST102')
+    def is_id_not_modified(self):
         # type: () -> bool
         """Check if the ID of the file has been changed.
 
@@ -208,18 +213,19 @@ class StructureValidator(BaseValidator):
             (bool): Whether the file's ID has been modified or not.
         """
         if not self.old_file:
-            return False
+            return True
 
         old_version_id = self.get_file_id_from_loaded_file_data(self.old_file)
         new_file_id = self.get_file_id_from_loaded_file_data(self.current_file)
         if not (new_file_id == old_version_id):
             error_message, error_code = Errors.file_id_changed(old_version_id, new_file_id)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
-                return True
+                return False
 
-        # False - the id has not changed.
-        return False
+        # True - the id has not changed.
+        return True
 
+    @error_codes('ST103')
     def is_valid_fromversion_on_modified(self):
         # type: () -> bool
         """Check that the fromversion property was not changed on existing Content files.
@@ -245,6 +251,7 @@ class StructureValidator(BaseValidator):
 
         return True
 
+    @error_codes('ST104')
     def is_valid_file_extension(self):
         file_extension = os.path.splitext(self.file_path)[1]
         if file_extension not in self.valid_extensions:
@@ -293,6 +300,7 @@ class StructureValidator(BaseValidator):
                     return file_type
         return None
 
+    @error_codes('ST105')
     def is_valid_file_path(self):
         """Returns is valid filepath exists.
 
@@ -395,6 +403,7 @@ class StructureValidator(BaseValidator):
 
         return clean_path
 
+    @error_codes('ST107,ST109')
     def parse_missing_key_line(self, error_path: List[str], error_msg: str) -> Tuple[str, str, bool]:
         """Parse a missing key pykwalify error.
 
@@ -417,6 +426,7 @@ class StructureValidator(BaseValidator):
             error_message, error_code = Errors.pykwalify_missing_in_root(str(error_key))
             return error_message, error_code, True
 
+    @error_codes('ST111,ST108')
     def parse_undefined_key_line(self, error_path: List[str], error_msg: str) -> Tuple[str, str, bool]:
         """Parse a undefined key pykwalify error.
 
@@ -438,6 +448,7 @@ class StructureValidator(BaseValidator):
             error_message, error_code = Errors.pykwalify_field_undefined(str(error_key))
             return error_message, error_code, True
 
+    @error_codes('ST112')
     def parse_enum_error_line(self, error_path: List[str], error_msg: str) -> Tuple[str, str, bool]:
         """Parse a wrong enum value pykwalify error.
 
@@ -487,6 +498,7 @@ class StructureValidator(BaseValidator):
 
         return str(key_list).strip('[]').replace(',', '->')
 
+    @error_codes('BA103')
     def check_for_spaces_in_file_name(self):
         file_name = os.path.basename(self.file_path)
         if file_name.count(' ') > 0:

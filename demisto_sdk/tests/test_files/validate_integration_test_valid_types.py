@@ -33,7 +33,7 @@ OLD_CLASSIFIER = {
 
 NEW_CLASSIFIER = {
     "defaultIncidentType": "test",
-    "id": "testing",
+    "id": "test Classifier",
     "type": "classification",
     "name": "test Classifier",
     "description": "Classifies test.",
@@ -156,7 +156,7 @@ INDICATOR_FIELD = {
     "ownerOnly": False,
     "placeholder": "",
     "description": "",
-    "cliName": "indicator",
+    "cliName": "indicatorfield",
     "type": "singleSelect",
     "closeForm": False,
     "editForm": True,

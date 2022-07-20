@@ -1,15 +1,15 @@
 import re
 from datetime import datetime, timedelta
 from functools import lru_cache
-from typing import Optional
+from typing import Optional, Tuple, Union
 
 import requests
 from pkg_resources import parse_version
 
 from demisto_sdk.commands.common.constants import IronBankDockers
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator, error_codes)
 from demisto_sdk.commands.common.tools import get_yaml
 
 # disable insecure warnings
@@ -24,14 +24,17 @@ ACCEPT_HEADER = {
 # use 60 seconds timeout for requests
 TIMEOUT = 60
 DEFAULT_REGISTRY = 'registry-1.docker.io'
+DEPRECATED_DOCKER_IMAGE_LIST_URL = 'https://raw.githubusercontent.com/demisto/dockerfiles/master/docker/deprecated_images.json'
 
 
 class DockerImageValidator(BaseValidator):
 
     def __init__(self, yml_file_path, is_modified_file, is_integration, ignored_errors=None, print_as_warnings=False,
-                 suppress_print: bool = False, json_file_path: Optional[str] = None, is_iron_bank: bool = False):
+                 suppress_print: bool = False, json_file_path: Optional[str] = None, is_iron_bank: bool = False,
+                 specific_validations: list = None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print, json_file_path=json_file_path)
+                         suppress_print=suppress_print, json_file_path=json_file_path,
+                         specific_validations=specific_validations)
         self.is_valid = True
         self.is_modified_file = is_modified_file
         self.is_integration = is_integration
@@ -44,9 +47,12 @@ class DockerImageValidator(BaseValidator):
         self.docker_image_name, self.docker_image_tag = self.parse_docker_image(self.yml_docker_image)
         self.is_latest_tag = True
         self.is_iron_bank = is_iron_bank
+        self.is_deprecated_image = self.is_docker_image_deprecated(self.docker_image_name)
+
         self.docker_image_latest_tag = self.get_docker_image_latest_tag(self.docker_image_name, self.yml_docker_image,
                                                                         self.is_iron_bank)
 
+    @error_codes('DO108,DO107,DO109')
     def is_docker_image_valid(self):
         # javascript code should not check docker
         if self.code_type == 'javascript':
@@ -54,6 +60,12 @@ class DockerImageValidator(BaseValidator):
 
         if not self.yml_docker_image:
             error_message, error_code = Errors.dockerimage_not_in_yml_file(self.file_path)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+
+        if self.is_deprecated_image:
+            deprecated_reason = self.is_deprecated_image[1]
+            error_message, error_code = Errors.deprecated_docker_error(self.docker_image_name, deprecated_reason)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
 
@@ -67,6 +79,7 @@ class DockerImageValidator(BaseValidator):
 
         return self.is_valid
 
+    @error_codes('DO100,DO106,DO101')
     def is_docker_image_latest_tag(self):
         if 'demisto/python:1.3-alpine' == f'{self.docker_image_name}:{self.docker_image_tag}':
             # the docker image is the default one
@@ -365,7 +378,7 @@ class DockerImageValidator(BaseValidator):
             if not manifest_file_content:
                 return ''
         except Exception as e:
-            raise(e)
+            raise (e)
 
         version_pattern = 'tags:\n- (.*)\n'
         latest_version = re.findall(version_pattern, manifest_file_content)
@@ -407,3 +420,35 @@ class DockerImageValidator(BaseValidator):
                             'Please use only images that are already in Iron Bank, or upload your image to it.')
 
         return last_successful_pipelines[0]['sha']
+
+    @staticmethod
+    def get_deprecated_dockers_list() -> dict:
+        """
+        Get the deprecated docker images from dockerfiles repo
+        returns: Dict contains the following keys: image_name, reason and created_time_utc.
+        """
+        try:
+            dockers_request = requests.get(DEPRECATED_DOCKER_IMAGE_LIST_URL, verify=False)
+            dockers_request.raise_for_status()
+            deprecated_dockers_json = dockers_request.json()
+            return deprecated_dockers_json
+        except Exception as exc:
+            exc_msg = str(exc)
+            if isinstance(exc, requests.exceptions.ConnectionError):
+                exc_msg = f'{exc_msg[exc_msg.find(">") + 3:-3]}.\n' \
+                          f'This may happen if you are not connected to the internet.'
+            raise Exception(f'Could not get latest demisto-sdk version.\nEncountered error: {exc_msg}')
+
+    def is_docker_image_deprecated(self, docker_image_name) -> Union[Tuple[str, str], str]:
+        """
+        Check if the docker image is deprecated or not.
+        args:
+            docker_image_name (str): The name of the docker image for example: demisto/python
+        Returns: Tuple with the docker image name and reason if it's deprecated.
+        """
+        docker_image_deprecated_list = self.get_deprecated_dockers_list()
+        for docker_image in docker_image_deprecated_list:
+            if docker_image_name == docker_image.get('image_name'):
+                deprecated_reason = docker_image.get('reason')
+                return docker_image_name, deprecated_reason
+        return ''

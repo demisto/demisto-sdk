@@ -8,12 +8,11 @@ pylint = "*"
 pytest = "*"
 pytest-mock = "*"
 requests-mock = "*"
-pytest-xdist = "*"
-pytest-json = "*"
-pytest-cov = "*"
+pytest-asyncio = "*"
 
 [packages]
-freezegun = "*"
+pytest = "*"
+requests = "*"
 
 [requires]
-python_version = "2.7"
+python_version = "3.9"

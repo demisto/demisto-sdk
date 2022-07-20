@@ -18,8 +18,9 @@ from demisto_sdk.commands.common.constants import (CLASSIFIERS_DIR,
                                                    INDICATOR_FIELDS_DIR,
                                                    INDICATOR_TYPES_DIR,
                                                    INTEGRATIONS_DIR, JOBS_DIR,
-                                                   LAYOUTS_DIR, PLAYBOOKS_DIR,
-                                                   REPORTS_DIR, SCRIPTS_DIR,
+                                                   LAYOUTS_DIR, LISTS_DIR,
+                                                   PLAYBOOKS_DIR, REPORTS_DIR,
+                                                   SCRIPTS_DIR,
                                                    TEST_PLAYBOOKS_DIR,
                                                    WIDGETS_DIR, FileType)
 from demisto_sdk.commands.common.content.errors import ContentFactoryError
@@ -81,6 +82,7 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
     CLASSIFIERS_DIR,
     WIDGETS_DIR,
     LAYOUTS_DIR,
+    LISTS_DIR,
     JOBS_DIR,
     DASHBOARDS_DIR,
     REPORTS_DIR
@@ -206,7 +208,10 @@ class Uploader:
                 try:
                     result = upload_object.upload(self.client)  # type: ignore
                     if self.log_verbose:
-                        print_v(f'Result:\n{result.to_str()}', self.log_verbose)
+                        if hasattr(result, 'to_str'):
+                            print_v(f'Result:\n{result.to_str()}', self.log_verbose)
+                        else:
+                            print_v(f'Result:\n{result}', self.log_verbose)
                         click.secho(f'Uploaded {entity_type} - \'{os.path.basename(path)}\': successfully', fg='green')
                     self.successfully_uploaded_files.append((file_name, entity_type.value))
                     return SUCCESS_RETURN_CODE

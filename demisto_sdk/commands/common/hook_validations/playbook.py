@@ -1,10 +1,12 @@
 import re
-from typing import Dict
+from typing import Dict, Set
 
 import click
 
 from demisto_sdk.commands.common.constants import DEPRECATED_REGEXES
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
@@ -14,17 +16,19 @@ class PlaybookValidator(ContentEntityValidator):
     """PlaybookValidator is designed to validate the correctness of the file structure we enter to content repo."""
 
     def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, json_file_path=None,
-                 validate_all=False):
+                 validate_all=False, deprecation_validator=None):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          json_file_path=json_file_path)
         self.validate_all = validate_all
+        self.deprecation_validator = deprecation_validator
 
-    def is_valid_playbook(self, validate_rn: bool = True, id_set_file=None) -> bool:
+    def is_valid_playbook(self, validate_rn: bool = True, id_set_file=None, is_modified: bool = False) -> bool:
         """Check whether the playbook is valid or not.
 
          Args:
             this will also determine whether a new id_set can be created by validate.
             validate_rn (bool):  whether we need to validate release notes or not
+            is_modified (bool): Wether the given files are modified or not.
             id_set_file (dict): id_set.json file if exists, None otherwise
 
         Returns:
@@ -50,6 +54,8 @@ class PlaybookValidator(ContentEntityValidator):
             self.verify_condition_tasks_has_else_path(),
             self.name_not_contain_the_type(),
             self.is_valid_with_indicators_input(),
+            self.inputs_in_use_check(is_modified),
+            self.is_playbook_deprecated_and_used(),
         ]
         answers = all(playbook_checks)
 
@@ -83,6 +89,90 @@ class PlaybookValidator(ContentEntityValidator):
         """
         return self._is_valid_version()
 
+    def collect_all_inputs_in_use(self) -> Set[str]:
+        """
+
+        Returns: Set of all inputs used in playbook.
+
+        """
+        result: set = set()
+        with open(self.file_path, 'r') as f:
+            playbook_text = f.read()
+        all_inputs_occurrences = re.findall(r"inputs\.[-\w ]+", playbook_text)
+        for input in all_inputs_occurrences:
+            input = input.strip()
+            splitted = input.split('.')
+            if len(splitted) > 1:
+                result.add(splitted[1])
+        return result
+
+    def collect_all_inputs_from_inputs_section(self) -> Set[str]:
+        """
+
+        Returns: A set of all inputs defined in the 'inputs' section of playbook.
+
+        """
+        inputs: Dict = self.current_file.get('inputs', {})
+        inputs_keys = []
+        for input in inputs:
+            inputs_keys.append(input['key'])
+        return set(inputs_keys)
+
+    def inputs_in_use_check(self, is_modified: bool) -> bool:
+        """
+
+        Args:
+            is_modified: Wether the given files are modified or not.
+
+        Returns:
+            True if both directions for input use in playbook passes.
+
+        """
+        if not is_modified:
+            return True
+        inputs_in_use: set = self.collect_all_inputs_in_use()
+        inputs_in_section: set = self.collect_all_inputs_from_inputs_section()
+        return self.are_all_inputs_in_use(inputs_in_use, inputs_in_section) and \
+            self.are_all_used_inputs_in_inputs_section(inputs_in_use, inputs_in_section)
+
+    @error_codes('PB118')
+    def are_all_inputs_in_use(self, inputs_in_use: set, inputs_in_section: set) -> bool:
+        """Check whether the playbook inputs are in use in any of the tasks
+
+        Return:
+            bool. if the Playbook inputs are in use.
+        """
+
+        inputs_not_in_use = inputs_in_section.difference(inputs_in_use)
+
+        if inputs_not_in_use:
+            playbook_name = self.current_file.get('name', '')
+            error_message, error_code = Errors.input_key_not_in_tasks(playbook_name, sorted(inputs_not_in_use))
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+        return True
+
+    @error_codes('PB119')
+    def are_all_used_inputs_in_inputs_section(self, inputs_in_use: set, inputs_in_section: set) -> bool:
+        """Check whether the playbook inputs that in use appear in the input section.
+
+        Return:
+            bool. if the Playbook inputs appear in inputs section.
+        """
+
+        inputs_not_in_section = inputs_in_use.difference(inputs_in_section)
+
+        if inputs_not_in_section:
+            playbook_name = self.current_file.get('name', '')
+            error_message, error_code = Errors.input_used_not_in_input_section(playbook_name,
+                                                                               sorted(inputs_not_in_section))
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+        return True
+
+    @error_codes('PB100')
     def is_no_rolename(self):  # type: () -> bool
         """Check whether the playbook has a rolename
 
@@ -122,6 +212,7 @@ class PlaybookValidator(ContentEntityValidator):
                         task) and is_all_condition_branches_handled
         return is_all_condition_branches_handled
 
+    @error_codes('PB101,PB102')
     def is_builtin_condition_task_branches_handled(self, task: Dict) -> bool:
         """Checks whether a builtin conditional task branches are handled properly
         NOTE: The function uses str.upper() on branches to be case insensitive
@@ -165,6 +256,7 @@ class PlaybookValidator(ContentEntityValidator):
 
         return is_all_condition_branches_handled
 
+    @error_codes('PB101,PB102')
     def is_ask_condition_branches_handled(self, task: Dict) -> bool:
         """Checks whether a builtin conditional task branches are handled properly
         NOTE: The function uses str.upper() on branches to be case insensitive
@@ -207,6 +299,7 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_valid = is_all_condition_branches_handled = False
         return is_all_condition_branches_handled
 
+    @error_codes('PB102')
     def is_script_condition_branches_handled(self, task: Dict) -> bool:
         """Checks whether a script conditional task branches are handled properly
 
@@ -231,6 +324,7 @@ class PlaybookValidator(ContentEntityValidator):
 
         return is_all_condition_branches_handled
 
+    @error_codes('PB103')
     def is_root_connected_to_all_tasks(self):  # type: () -> bool
         """Check whether the playbook root is connected to all tasks
 
@@ -256,6 +350,7 @@ class PlaybookValidator(ContentEntityValidator):
 
         return tasks_bucket.issubset(next_tasks_bucket)
 
+    @error_codes('PB104')
     def is_valid_as_deprecated(self) -> bool:
         is_valid = True
         is_deprecated = self.current_file.get('deprecated', False)
@@ -271,6 +366,7 @@ class PlaybookValidator(ContentEntityValidator):
                     is_valid = False
         return is_valid
 
+    @error_codes('PB105')
     def is_delete_context_all_in_playbook(self) -> bool:
         """
         Check if delete context all=yes exist in playbook.
@@ -289,6 +385,7 @@ class PlaybookValidator(ContentEntityValidator):
                     return False
         return True
 
+    @error_codes('PB106')
     def is_using_instance(self) -> bool:
         """
         Check if there is an existing task that uses specific instance.
@@ -305,6 +402,7 @@ class PlaybookValidator(ContentEntityValidator):
                     return False
         return True
 
+    @error_codes('PB107')
     def is_script_id_valid(self, id_set_file):
         """Checks whether a script id is valid (i.e id exists in set_id)
         Args:
@@ -398,6 +496,7 @@ class PlaybookValidator(ContentEntityValidator):
         next_tasks: Dict = task.get('nexttasks', {})
         return '#default#' in next_tasks
 
+    @error_codes('PB112')
     def verify_condition_tasks_has_else_path(self):  # type: () -> bool
         """Check whether the playbook conditional tasks has else path
 
@@ -419,6 +518,7 @@ class PlaybookValidator(ContentEntityValidator):
 
         return all_conditions_has_else_path
 
+    @error_codes('PB108')
     def _is_id_uuid(self):
         """
         Check that the taskid field and the id field under the task field are both on from uuid format
@@ -439,6 +539,7 @@ class PlaybookValidator(ContentEntityValidator):
 
         return is_valid
 
+    @error_codes('PB109')
     def _is_taskid_equals_id(self):
         """
         Check that taskid field and id field under task field contains equal values
@@ -460,6 +561,7 @@ class PlaybookValidator(ContentEntityValidator):
 
         return is_valid
 
+    @error_codes('BA110')
     def name_not_contain_the_type(self):
         """
         Check that the entity name does not contain the entity type
@@ -487,6 +589,7 @@ class PlaybookValidator(ContentEntityValidator):
                 return all(answer)
         return True
 
+    @error_codes('PB114')
     def is_playbook_quiet_mode(self):
         if not self.current_file.get('quiet', False):
             error_message, error_code = Errors.playbook_not_quiet_mode()
@@ -494,6 +597,7 @@ class PlaybookValidator(ContentEntityValidator):
                 return False
         return True
 
+    @error_codes('PB115')
     def is_tasks_quiet_mode(self):
         not_quiet = []
         tasks: dict = self.current_file.get('tasks', {})
@@ -506,6 +610,7 @@ class PlaybookValidator(ContentEntityValidator):
                 return False
         return True
 
+    @error_codes('PB116')
     def is_stopping_on_error(self):
         continue_tasks = []
         tasks: dict = self.current_file.get('tasks', {})
@@ -517,3 +622,24 @@ class PlaybookValidator(ContentEntityValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
+
+    @error_codes('PB120')
+    def is_playbook_deprecated_and_used(self):
+        """
+        Checks if the playbook is deprecated and is used in other none-deprcated playbooks.
+
+        Return:
+            bool: True if the playbook isn't deprecated
+            or if the playbook is deprecated but isn't used in any non-deprecated playbooks.
+            False if the playbook is deprecated and used in a non-deprecated playbook.
+        """
+        is_valid = True
+
+        if self.current_file.get("deprecated"):
+            used_files_list = self.deprecation_validator.validate_playbook_deprecation(self.current_file.get('name'))
+            if used_files_list:
+                error_message, error_code = Errors.playbook_is_deprecated_and_used(self.current_file.get("name"), used_files_list)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    is_valid = False
+
+        return is_valid

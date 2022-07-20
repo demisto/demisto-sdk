@@ -16,7 +16,7 @@ class GenericModuleUnifier:
     Unifies a GenericModule object with it's Dashboards
     """
 
-    def __init__(self, input: str, output: str = '', force: bool = False):
+    def __init__(self, input: str, output: str = '', force: bool = False, marketplace: Optional[str] = None):
         """
         Init a GenericModuleUnifier
         Args:
@@ -31,6 +31,7 @@ class GenericModuleUnifier:
 
         self.input_file_name = os.path.basename(self.input_path).rstrip('.json')
         self.use_force = force
+        self.marketplace = marketplace
 
         if output:
             if not os.path.isdir(output):

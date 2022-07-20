@@ -5,7 +5,7 @@ import io
 import os
 import re
 import shutil
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Optional, Union
 
 import click
 from inflection import dasherize, underscore
@@ -17,14 +17,14 @@ from demisto_sdk.commands.common.constants import (
     FileType)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
-                                               find_type, get_pack_name,
-                                               get_yaml, get_yml_paths_in_dir,
+                                               find_type, get_mp_tag_parser,
+                                               get_pack_name, get_yaml,
+                                               get_yml_paths_in_dir,
                                                print_color, print_warning,
                                                server_version_compare)
 from demisto_sdk.commands.unify.yaml_unifier import YAMLUnifier
 
 json = JSON_Handler()
-
 
 PACK_METADATA_PATH = 'pack_metadata.json'
 CONTRIBUTOR_DISPLAY_NAME = ' ({} Contribution)'
@@ -48,7 +48,8 @@ INTEGRATIONS_DOCS_REFERENCE = 'https://xsoar.pan.dev/docs/reference/integrations
 class IntegrationScriptUnifier(YAMLUnifier):
 
     def __init__(self, input: str, dir_name=INTEGRATIONS_DIR, output: str = '',
-                 image_prefix=DEFAULT_IMAGE_PREFIX, force: bool = False, yml_modified_data=None, custom: str = ''):
+                 image_prefix=DEFAULT_IMAGE_PREFIX, force: bool = False, yml_modified_data=None, custom: str = '',
+                 marketplace: Optional[str] = None):
 
         self.image_prefix = image_prefix
         self.custom = custom
@@ -59,6 +60,7 @@ class IntegrationScriptUnifier(YAMLUnifier):
             input=input,
             output=output,
             force=force,
+            marketplace=marketplace,
         )
 
         # script key for scripts is a string.
@@ -200,7 +202,7 @@ class IntegrationScriptUnifier(YAMLUnifier):
 
         detailed_description = ''
         if desc_data:
-            detailed_description = FoldedScalarString(desc_data.decode('utf-8'))
+            detailed_description = get_mp_tag_parser().parse_text(FoldedScalarString(desc_data.decode('utf-8')))
 
         integration_doc_link = ''
         if '[View Integration Documentation]' not in detailed_description:
@@ -257,9 +259,8 @@ class IntegrationScriptUnifier(YAMLUnifier):
 
         # Check if the script imports an API module. If it does,
         # the API module code will be pasted in place of the import.
-        module_import, module_name = self.check_api_module_imports(script_code)
-        if module_import:
-            script_code = self.insert_module_code(script_code, module_import, module_name)
+        imports_to_names = self.check_api_module_imports(script_code)
+        script_code = self.insert_module_code(script_code, imports_to_names)
 
         if script_type == '.py':
             clean_code = self.clean_python_code(script_code)
@@ -310,7 +311,7 @@ class IntegrationScriptUnifier(YAMLUnifier):
         return yml_path, code
 
     @staticmethod
-    def check_api_module_imports(script_code: str) -> Tuple[str, str]:
+    def check_api_module_imports(script_code: str) -> Dict[str, str]:
         """
         Checks integration code for API module imports
         :param script_code: The integration code
@@ -320,35 +321,35 @@ class IntegrationScriptUnifier(YAMLUnifier):
         # General regex to find API module imports, for example: "from MicrosoftApiModule import *  # noqa: E402"
         module_regex = r'from ([\w\d]+ApiModule) import \*(?:  # noqa: E402)?'
 
-        module_match = re.search(module_regex, script_code)
-        if module_match:
-            return module_match.group(), module_match.group(1)
+        module_matches = re.finditer(module_regex, script_code)
 
-        return '', ''
+        return {module_match.group(): module_match.group(1) for module_match in module_matches}
 
     @staticmethod
-    def insert_module_code(script_code: str, module_import: str, module_name: str) -> str:
+    def insert_module_code(script_code: str, import_to_name: Dict[str, str]) -> str:
         """
         Inserts API module in place of an import to the module according to the module name
         :param script_code: The integration code
-        :param module_import: The module import string to replace
-        :param module_name: The module name
+        :param import_to_name: A dictionary where the keys are The module import string to replace
+        and the values are The module name
         :return: The integration script with the module code appended in place of the import
         """
+        for module_import, module_name in import_to_name.items():
 
-        module_path = os.path.join('./Packs', 'ApiModules', 'Scripts', module_name, module_name + '.py')
-        module_code = IntegrationScriptUnifier._get_api_module_code(module_name, module_path)
+            module_path = os.path.join('./Packs', 'ApiModules', 'Scripts', module_name, module_name + '.py')
+            module_code = IntegrationScriptUnifier._get_api_module_code(module_name, module_path)
 
-        # the wrapper numbers represents the number of generated lines added
-        # before (negative) or after (positive) the registration line
-        module_code = f'\n### GENERATED CODE ###: {module_import}\n' \
-                      f'# This code was inserted in place of an API module.\n' \
-                      f"register_module_line('{module_name}', 'start', __line__(), wrapper=-3)\n" \
-                      f'{module_code}\n' \
-                      f"register_module_line('{module_name}', 'end', __line__(), wrapper=1)\n" \
-                      f'### END GENERATED CODE ###'
+            # the wrapper numbers represents the number of generated lines added
+            # before (negative) or after (positive) the registration line
+            module_code = f'\n### GENERATED CODE ###: {module_import}\n' \
+                          f'# This code was inserted in place of an API module.\n' \
+                          f"register_module_line('{module_name}', 'start', __line__(), wrapper=-3)\n" \
+                          f'{module_code}\n' \
+                          f"register_module_line('{module_name}', 'end', __line__(), wrapper=1)\n" \
+                          f'### END GENERATED CODE ###'
 
-        return script_code.replace(module_import, module_code)
+            script_code = script_code.replace(module_import, module_code)
+        return script_code
 
     @staticmethod
     def _get_api_module_code(module_name, module_path):

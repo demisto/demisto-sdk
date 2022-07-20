@@ -299,7 +299,7 @@ class TestFixFilePath:
 
         assert len(caplog.records) == 2
         assert caplog.records[0].msg == 'unexpected file list in coverage report'
-        assert caplog.records[0].levelname == 'ERROR'
+        assert caplog.records[0].levelname == 'DEBUG'
         assert caplog.records[1].msg == 'removing coverage report for some_path'
         assert caplog.records[1].levelname == 'DEBUG'
         assert not os.path.exists(dot_cov_file_path)
@@ -350,3 +350,14 @@ class TestGetCoverageObj:
         assert data[0] == (1, '/Users/username/dev/demisto/content/Packs/HealthCheck/Scripts/'
                            'HealthCheckAnalyzeLargeInvestigations/HealthCheckAnalyzeLargeInvestigations.py')
         assert data[1] == (2, '/Users/username/dev/demisto/content/Packs/VirusTotal/Integrations/VirusTotalV3/VirusTotalV3.py')
+
+
+@pytest.mark.parametrize('verbose, logging_level', [
+    (0, logging.INFO),
+    (1, logging.WARNING),
+    (2, logging.DEBUG),
+    (10, logging.DEBUG)
+])
+def test_verbose(verbose: int, logging_level: int):
+    logger = logging_setup(verbose=verbose)
+    assert logger.level == logging_level

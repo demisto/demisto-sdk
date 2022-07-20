@@ -16,13 +16,10 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_TO_VERSION, GENERIC_COMMANDS_NAMES,
     IGNORED_PACKS_IN_DEPENDENCY_CALC, PACKS_DIR)
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (ProcessPoolHandler,
-                                               get_content_id_set,
-                                               get_content_path, get_pack_name,
-                                               is_external_repository,
-                                               print_error, print_success,
-                                               print_warning,
-                                               wait_futures_complete)
+from demisto_sdk.commands.common.tools import (
+    ProcessPoolHandler, get_content_id_set, get_content_path, get_pack_name,
+    is_external_repository, item_type_to_content_items_header, print_error,
+    print_success, print_warning, wait_futures_complete)
 from demisto_sdk.commands.common.update_id_set import (
     merge_id_sets, update_excluded_items_dict)
 from demisto_sdk.commands.create_id_set.create_id_set import (IDSetCreator,
@@ -1693,7 +1690,8 @@ class PackDependencies:
                                      ('generic_modules', 'GenericModules'),
                                      ('generic_definitions', 'GenericDefinitions'),
                                      ('lists', 'Lists'),
-                                     ('jobs', 'Jobs')):
+                                     ('jobs', 'Jobs'),
+                                     ('wizards', 'Wizards')):
             if id_set_key not in id_set:
                 raise RuntimeError(
                     "\n".join((f"Error: the {id_set_key} content type is missing from the id_set.",
@@ -1884,7 +1882,8 @@ class PackDependencies:
                              **mappers_items_dependencies, **dashboards_items_dependencies,
                              **reports_items_dependencies,
                              **generic_types_items_dependencies, **generic_fields_items_dependencies,
-                             **generic_modules_items_dependencies, **jobs_items_dependencies}
+                             **generic_modules_items_dependencies, **jobs_items_dependencies,
+                             }
 
         return pack_dependencies, items_depenencies
 
@@ -2645,6 +2644,9 @@ def calculate_dependencies(excluded_items: dict, id_set: dict, marketplace: str)
                     dependent_items_to_exclude_from_id_set.setdefault(mandatory_pack_name, set()).update(
                         dependent_entities_list)
 
+                    # for debug purposes
+                    print(f'Removing {dependent_entities_list} due to {entity_dependent_on}')
+
     return dependent_items_to_exclude_from_id_set
 
 
@@ -2664,7 +2666,7 @@ def convert_entity_types_to_id_set_headers(excluded_items_by_type: dict):
         "incidentfield": "IncidentFields",
         "incidenttype": "IncidentTypes",
         "indicatorfield": "IndicatorFields",
-        "indicatortype": "IndicatorTypes",
+        "reputation": "IndicatorTypes",
         "mapper": "Mappers",
         "dashboard": "Dashboards",
         "widget": "Widgets",
@@ -2698,24 +2700,13 @@ def remove_items_from_packs_section(id_set: dict, excluded_items_by_pack: dict) 
         for item_type, item_name in pack_items:
             item_type = item_type_to_content_items_header(item_type)
             try:
-                pack_content_items.get(f'{item_type}s', []).remove(item_name)
+                pack_content_items.get(item_type, []).remove(item_name)
             except ValueError:  # This content item has already been excluded from the id_set
                 pass
 
         # if no content items left, remove the pack from the id_set
         if pack not in constants.ALLOWED_EMPTY_PACKS and not sum(pack_content_items.values(), []):
             packs_section_from_id_set.pop(pack)
-
-
-def item_type_to_content_items_header(item_type):
-    converter = {
-        "incidenttype": "incidentType",
-        "indicatortype": "indicatorType",
-        "indicatorfield": "indicatorField",
-        "incidentfield": "incidentField"
-    }
-
-    return converter.get(item_type, item_type)
 
 
 def remove_items_from_content_entities_sections(id_set: dict, excluded_items_by_type: dict):

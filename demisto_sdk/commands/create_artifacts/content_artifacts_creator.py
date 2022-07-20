@@ -22,7 +22,8 @@ from demisto_sdk.commands.common.constants import (
     LAYOUTS_DIR, LISTS_DIR, MODELING_RULES_DIR, PACKS_DIR, PARSING_RULES_DIR,
     PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, REPORTS_DIR,
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR, TRIGGER_DIR, WIDGETS_DIR,
-    XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, ContentItems, MarketplaceVersions)
+    WIZARDS_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, ContentItems,
+    MarketplaceVersions)
 from demisto_sdk.commands.common.content import (Content, ContentError,
                                                  ContentFactoryError, Pack)
 from demisto_sdk.commands.common.content.objects.abstract_objects.text_object import \
@@ -56,9 +57,9 @@ EX_FAIL = 1
 
 class ArtifactsManager:
     def __init__(self, artifacts_path: str, zip: bool, packs: bool, content_version: str, suffix: str,
-                 cpus: int, marketplace: str = 'xsoar', id_set_path: str = '', pack_names: str = 'all', signature_key: str = '',
-                 sign_directory: Path = None, remove_test_playbooks: bool = True,
-                 filter_by_id_set: bool = False, alternate_fields: bool = False):
+                 cpus: int, marketplace: str = MarketplaceVersions.XSOAR.value, id_set_path: str = '',
+                 pack_names: str = 'all', signature_key: str = '', sign_directory: Path = None,
+                 remove_test_playbooks: bool = True, filter_by_id_set: bool = False, alternate_fields: bool = False):
         """ Content artifacts configuration
 
         Args:
@@ -196,7 +197,8 @@ class ContentItemsHandler:
             ContentItems.CORRELATION_RULES: [],
             ContentItems.XSIAM_DASHBOARDS: [],
             ContentItems.XSIAM_REPORTS: [],
-            ContentItems.TRIGGERS: []
+            ContentItems.TRIGGERS: [],
+            ContentItems.WIZARDS: [],
         }
         self.content_folder_name_to_func: Dict[str, Callable] = {
             SCRIPTS_DIR: self.add_script_as_content_item,
@@ -223,7 +225,8 @@ class ContentItemsHandler:
             CORRELATION_RULES_DIR: self.add_correlation_rule_as_content_item,
             XSIAM_DASHBOARDS_DIR: self.add_xsiam_dashboard_as_content_item,
             XSIAM_REPORTS_DIR: self.add_xsiam_report_as_content_item,
-            TRIGGER_DIR: self.add_trigger_as_content_item
+            TRIGGER_DIR: self.add_trigger_as_content_item,
+            WIZARDS_DIR: self.add_wizards_as_content_item,
         }
         self.id_set = id_set
         self.alternate_fields = alternate_fields
@@ -424,6 +427,12 @@ class ContentItemsHandler:
         self.content_items[ContentItems.TRIGGERS].append({
             'name': content_object.get('name', ''),
             'description': content_object.get('description', '')
+        })
+
+    def add_wizards_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.WIZARDS].append({
+            'name': content_object.get('name', ''),
+            'description': content_object.get('description', ''),
         })
 
 
@@ -757,6 +766,9 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     for release_note_config in pack.release_notes_config:
         pack_report += ObjectReport(release_note_config, content_packs=True)
         release_note_config.dump(artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR)
+    for wizard in pack.wizards:
+        content_items_handler.handle_content_item(wizard)
+        pack_report += dump_pack_conditionally(artifact_manager, wizard)
 
     if artifact_manager.marketplace == MarketplaceVersions.XSOAR.value:
         for dashboard in pack.dashboards:

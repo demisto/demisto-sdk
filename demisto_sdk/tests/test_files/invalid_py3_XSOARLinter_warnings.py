@@ -44,6 +44,8 @@ TICKETS_OBJECTS = {
     }
 }
 
+SERVER_URL = 'http://test.com'
+
 
 def convert_snake_to_camel(snake_str: str) -> str:
     """Convert a specific string of snake case to camel case.
@@ -127,7 +129,6 @@ def parse_response(lst: list):
     for dic in lst:
         context_dict = convert_dict_snake_to_camel(dic)
         list_res.append(context_dict)
-    demisto.log('log test')
     return list_res
 
 

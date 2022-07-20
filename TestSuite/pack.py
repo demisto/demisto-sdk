@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import (CORRELATION_RULES_DIR,
                                                    DEFAULT_IMAGE_BASE64,
@@ -20,6 +20,7 @@ from TestSuite.secrets import Secrets
 from TestSuite.test_tools import suite_join_path
 from TestSuite.text_based import TextBased
 from TestSuite.trigger import Trigger
+from TestSuite.wizard import Wizard
 from TestSuite.xsiam_dashboard import XSIAMDashboard
 from TestSuite.xsiam_report import XSIAMReport
 from TestSuite.yml import YAML
@@ -77,6 +78,7 @@ class Pack:
         self.xsiam_dashboards: List[JSONBased] = list()
         self.xsiam_reports: List[JSONBased] = list()
         self.triggers: List[JSONBased] = list()
+        self.wizards: List[Wizard] = list()
 
         # Create base pack
         self._pack_path = packs_dir / self.name
@@ -137,6 +139,9 @@ class Pack:
         self._widget_path = self._pack_path / 'Widgets'
         self._widget_path.mkdir()
 
+        self._wizard_path = self._pack_path / 'Wizards'
+        self._wizard_path.mkdir()
+
         self._release_notes = self._pack_path / 'ReleaseNotes'
         self._release_notes.mkdir()
 
@@ -196,6 +201,7 @@ class Pack:
                 'name': name,
                 'display': name,
                 'description': f'this is an integration {name}',
+                'category': 'category',
                 'script': {
                     'type': 'python',
                     'subtype': 'python3',
@@ -461,6 +467,26 @@ class Pack:
         self.widgets.append(widget)
         return widget
 
+    def create_wizard(
+            self,
+            name,
+            categories_to_packs: Optional[Dict[str, List[dict]]] = None,
+            fetching_integrations: Optional[List[str]] = None,
+            set_playbooks: Optional[List[dict]] = None,
+            supporting_integrations: Optional[List[str]] = None,
+    ) -> Wizard:
+        wizard = Wizard(name=name,
+                        wizards_dir_path=self._wizard_path,
+                        categories_to_packs=categories_to_packs,
+                        fetching_integrations=fetching_integrations,
+                        set_playbooks=set_playbooks,
+                        supporting_integrations=supporting_integrations)
+        if not all([categories_to_packs, fetching_integrations, set_playbooks, supporting_integrations]):
+            wizard.set_default_wizard_values()
+        wizard.create_wizard()
+        self.wizards.append(wizard)
+        return wizard
+
     def create_list(
             self,
             name,
@@ -530,7 +556,7 @@ class Pack:
         return File(doc_file_dir / f'{name}.png', self._repo.path)
 
     def create_contributors_file(self, content) -> TextBased:
-        contributors = self._create_text_based('CONTRIBUTORS.md', content)
+        contributors = self._create_text_based('CONTRIBUTORS.json', content)
         self.contributors = contributors
         return contributors
 
@@ -573,6 +599,7 @@ class Pack:
         name: Optional[str] = None,
         yml: Optional[dict] = None,
         rules: Optional[str] = None,
+        schema: Optional[dict] = None,
     ) -> Rule:
         if not name:
             name = f'modelingrule_{len(self.modeling_rules)}'
@@ -587,6 +614,9 @@ class Pack:
         if not rules:
             rules = '[MODEL: dataset="dataset", model="Model", version=0.1]'
 
+        if not schema:
+            schema = {"test_audit_raw": {"name": {"type": "string", "is_array": False}}}
+
         rule = Rule(
             tmpdir=self._modeling_rules_path,
             name=name,
@@ -595,6 +625,7 @@ class Pack:
         rule.build(
             yml=yml,
             rules=rules,
+            schema=schema
         )
         self.modeling_rules.append(rule)
         return rule

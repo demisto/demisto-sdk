@@ -74,6 +74,40 @@ def test_are_modules_installed_for_verify_false_res(tmp_path):
     assert not readme_validator.are_modules_installed_for_verify(tmp_path)
 
 
+def test_relative_url_not_valid():
+    """
+    Given
+        - A README file with invalid relative urls in it.
+    When
+        - Run validate on README file
+    Then
+        - Ensure:
+            - Validation fails
+            - Both urls were caught correctly
+            - Valid url was not caught
+            - Image url was not caught
+    """
+    captured_output = io.StringIO()
+    sys.stdout = captured_output  # redirect stdout.
+    absolute_urls = ["https://www.good.co.il", "https://example.com", "https://github.com/demisto/content/blob/123",
+                     "github.com/demisto/content/blob/123/Packs/FeedOffice365/doc_files/test.png", "https://hreftesting.com"]
+    relative_urls = ["relative1.com", "www.relative2.com", "hreftesting.com", "www.hreftesting.com"]
+    readme_validator = ReadMeValidator(INVALID_MD)
+    result = readme_validator.verify_readme_relative_urls()
+    sys.stdout = sys.__stdout__  # reset stdout.
+    assert not result
+    output = captured_output.getvalue()
+    for url in absolute_urls:
+        assert url not in output
+
+    for url in relative_urls:
+        assert url in output
+
+    # no empty links found
+    assert '[RM112] - Relative urls are not supported within README. If this is not a relative url, please add an ' \
+           'https:// prefix:\n. ' not in output
+
+
 def test_is_image_path_valid():
     """
     Given
@@ -185,6 +219,29 @@ def test_valid_sections(integration, file_input):
     result = readme_validator.verify_no_empty_sections()
 
     assert result
+
+
+@pytest.mark.parametrize("file_input",
+                         ["## Copyright\ninput",
+                          "## BSD\n\n---\ninput",
+                          "## MIT\n\n----------\ninput",
+                          "## proprietary\n\ninput"])
+def test_copyright_sections(integration, file_input):
+    """
+    Given
+        - Valid sections in different forms from SECTIONS
+    When
+        - Run validate on README file
+    Then
+        - Ensure no empty sections from the SECTIONS list
+    """
+
+    integration.readme.write(file_input)
+    readme_path = integration.readme.path
+    readme_validator = ReadMeValidator(readme_path)
+    result = readme_validator.verify_copyright_section_in_readme_content()
+
+    assert not result
 
 
 @pytest.mark.parametrize("file_input, section",
@@ -351,6 +408,7 @@ def test_demisto_in_integration_readme(repo):
 def init_readmeValidator(readme_validator, repo, readme_path):
     readme_validator.content_path = str(repo.path)
     readme_validator.file_path = readme_path
+    readme_validator.specific_validations = None
 
 
 def test_demisto_in_repo_readme(mocker, repo):

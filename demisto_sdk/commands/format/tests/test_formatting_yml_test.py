@@ -12,7 +12,7 @@ from mock import Mock, patch
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS,
     GENERAL_DEFAULT_FROMVERSION, INCIDENT_FETCH_REQUIRED_PARAMS,
-    MarketplaceVersions)
+    NO_TESTS_DEPRECATED, MarketplaceVersions)
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
@@ -34,10 +34,10 @@ from demisto_sdk.tests.constants_test import (
     FEED_INTEGRATION_EMPTY_VALID, FEED_INTEGRATION_INVALID,
     FEED_INTEGRATION_VALID, GIT_ROOT, INTEGRATION_PATH, PLAYBOOK_PATH,
     PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS, SOURCE_BETA_INTEGRATION_FILE,
-    SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_INTEGRATION_INVALID,
-    SOURCE_FORMAT_INTEGRATION_VALID, SOURCE_FORMAT_PLAYBOOK,
-    SOURCE_FORMAT_PLAYBOOK_COPY, SOURCE_FORMAT_SCRIPT_COPY,
-    SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
+    SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_INTEGRATION_DEFAULT_VALUE,
+    SOURCE_FORMAT_INTEGRATION_INVALID, SOURCE_FORMAT_INTEGRATION_VALID,
+    SOURCE_FORMAT_PLAYBOOK, SOURCE_FORMAT_PLAYBOOK_COPY,
+    SOURCE_FORMAT_SCRIPT_COPY, SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
 from TestSuite.test_tools import ChangeCWD
 
 yaml = YAML_Handler()
@@ -717,6 +717,27 @@ class TestFormatting:
         assert '(Beta)' in formatter.data['display']
         assert formatter.data['beta'] is True
 
+    def test_format_boolean_default_value(self):
+        """
+        Given
+            - Field with defaultvalue False (boolean)
+            - Field with defaultvalue 'True' (str)
+            - Field with defaultvalue 'False' (str)
+        When
+            - Run set_default_value_for_checkbox function
+        Then
+            - Check the field has changed to 'false'
+            - Check the field has changed to 'true'
+            - Check the field has changed to 'false'
+
+        """
+
+        formatter = IntegrationYMLFormat(input=SOURCE_FORMAT_INTEGRATION_DEFAULT_VALUE)
+        formatter.set_default_value_for_checkbox()
+        assert 'false' == formatter.data['configuration'][1]['defaultvalue']
+        assert 'true' == formatter.data['configuration'][2]['defaultvalue']
+        assert 'false' == formatter.data['configuration'][3]['defaultvalue']
+
     @patch('builtins.input', lambda *args: 'no')
     def test_update_tests_on_playbook_with_test_playbook(self):
         """
@@ -1088,7 +1109,7 @@ class TestFormatting:
         base_update_yml.update_deprecate(file_type='integration')
 
         assert base_update_yml.data['deprecated']
-        assert base_update_yml.data['tests'] == 'No test'
+        assert base_update_yml.data['tests'] == [NO_TESTS_DEPRECATED]
         assert base_update_yml.data['description'] == description_result
 
     @pytest.mark.parametrize('user_input, description_result',
@@ -1113,7 +1134,7 @@ class TestFormatting:
         base_update_yml.update_deprecate(file_type='script')
 
         assert base_update_yml.data['deprecated']
-        assert base_update_yml.data['tests'] == 'No test'
+        assert base_update_yml.data['tests'] == [NO_TESTS_DEPRECATED]
         assert base_update_yml.data['comment'] == description_result
 
     @pytest.mark.parametrize('user_input, description_result',
@@ -1138,7 +1159,7 @@ class TestFormatting:
         base_update_yml.update_deprecate(file_type='playbook')
 
         assert base_update_yml.data['deprecated']
-        assert base_update_yml.data['tests'] == 'No test'
+        assert base_update_yml.data['tests'] == [NO_TESTS_DEPRECATED]
         assert base_update_yml.data['description'] == description_result
 
     @pytest.mark.parametrize('name', ['MyIntegration', 'MyIntegration ', ' MyIntegration '])

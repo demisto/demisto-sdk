@@ -94,6 +94,8 @@ SCRIPT_TARGET = f"{PACK_TARGET}/Scripts/script-test.yml"
 SCRIPT_RELEASE_NOTES_TARGET = f"{PACK_TARGET}/Scripts/script-test_CHANGELOG.md"
 INTEGRATION_RELEASE_NOTES_TARGET = f"{PACK_TARGET}/Integrations/integration-test_CHANGELOG.md"
 SOURCE_FORMAT_INTEGRATION_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_New_Integration_copy.yml"
+SOURCE_FORMAT_INTEGRATION_DEFAULT_VALUE = f"{GIT_ROOT}/demisto_sdk/tests/test_files" \
+                                          f"/format_integration_defaultvalue_test.yml"
 SOURCE_BETA_INTEGRATION_FILE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/source_beta_integration.yml"
 DESTINATION_FORMAT_INTEGRATION_COPY = "new_format_New_Integration_copy.yml"
 SOURCE_FORMAT_SCRIPT_COPY = f"{GIT_ROOT}/demisto_sdk/tests/test_files/format_New_script_copy.yml"
@@ -104,6 +106,9 @@ INTEGRATION_WITH_TEST_PLAYBOOKS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/form
 PLAYBOOK_WITH_TEST_PLAYBOOKS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/format_playbook_with_test_playbooks.yml'
 PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-with-incidnet-" \
                                            f"indicator-fields.yml"
+INVALID_PLAYBOOK_INPUTS_USE = f'{GIT_ROOT}/demisto_sdk/tests/test_files/playbook_inputs_not_in_use.yml'
+VALID_PLAYBOOK_INPUTS_USE = f'{GIT_ROOT}/demisto_sdk/tests/test_files/playbook_valid_inputs.yml'
+
 SCRIPT_WITH_TEST_PLAYBOOKS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/format_script_with_test_playbooks.yml'
 INDICATORFIELD_EXTRA_FIELDS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/indicatorfield-extra-fields.json"
 INDICATORFIELD_EXACT_SCHEME = f"{GIT_ROOT}/demisto_sdk/tests/test_files/indicator-field-exact-scheme.json"

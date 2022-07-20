@@ -33,6 +33,7 @@ class YAMLUnifier(ABC):
         input: str,
         output: Optional[str] = None,
         force: bool = False,
+        marketplace: Optional[str] = None,
     ):
         directory_name = ''
         # Changing relative path to current abspath fixed problem with default output file name.
@@ -53,7 +54,7 @@ class YAMLUnifier(ABC):
         self.use_force = force
         self.dest_path = output
         self.dir_name = ''
-
+        self.marketplace = marketplace
         yml_paths, self.yml_path = get_yml_paths_in_dir(self.package_path, Errors.no_yml_file(self.package_path))
         for path in yml_paths:
             # The plugin creates a unified YML file for the package.

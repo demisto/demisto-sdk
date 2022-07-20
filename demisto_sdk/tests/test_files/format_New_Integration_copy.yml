@@ -8,7 +8,6 @@ image: data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAF8El
 configuration:
 - display: ''
   name: test_param
-  defaultvalue: ''
   type: 8
   required: false
 - display: ''

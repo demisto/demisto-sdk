@@ -1,4 +1,4 @@
-from typing import Callable, List, Optional
+from typing import Callable, List
 
 import pytest
 from wcmatch.pathlib import Path
@@ -12,7 +12,7 @@ yaml = YAML_Handler()
 
 @pytest.fixture
 def linter_obj(mocker) -> Linter:
-    mocker.patch.object(linter, 'docker')
+    mocker.patch.object(linter, 'init_global_docker_client')
     return Linter(pack_dir=Path(__file__).parent / 'content' / 'Integrations' / 'Sample_integration',
                   content_repo=Path(__file__).parent / 'data',
                   req_3=["pytest==3.0"],
@@ -120,13 +120,3 @@ def create_integration(mocker) -> Callable:
         return integration_path
 
     return _create_integration
-
-
-@pytest.fixture
-def docker_mock(mocker):
-    def _docker_mock(BuildException: Optional[Exception] = None, image_id: str = "image-id"):
-        import docker
-
-        from demisto_sdk.commands.lint import linter
-        mocker.patch.object(docker, 'from_env')
-        mocker.patch.object(linter, '')

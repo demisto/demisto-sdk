@@ -44,6 +44,7 @@ CORRELATION_RULES_DIR = 'CorrelationRules'
 XSIAM_DASHBOARDS_DIR = 'XSIAMDashboards'
 XSIAM_REPORTS_DIR = 'XSIAMReports'
 TRIGGER_DIR = 'Triggers'
+WIZARDS_DIR = 'Wizards'
 
 # NAMES OF ENTITIES
 
@@ -85,8 +86,13 @@ CORRELATION_RULE = 'correlationrule'
 XSIAM_DASHBOARD = 'xsiamdashboard'
 XSIAM_REPORT = 'xsiamreport'
 TRIGGER = 'trigger'
+WIZARD = 'wizard'
 
 MARKETPLACE_KEY_PACK_METADATA = 'marketplaces'
+
+# ENV VARIABLES
+
+ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
 
 
 class FileType(Enum):
@@ -142,6 +148,10 @@ class FileType(Enum):
     XSIAM_DASHBOARD = 'xsiamdashboard'
     XSIAM_REPORT = 'xsiamreport'
     TRIGGER = 'trigger'
+    WIZARD = 'wizard'
+    PACK_IGNORE = '.pack-ignore'
+    SECRET_IGNORE = '.secrets-ignore'
+    DOC_FILE = 'doc_files'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -174,7 +184,8 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.CORRELATION_RULE: 'Correlation Rules',
     FileType.XSIAM_DASHBOARD: 'XSIAM Dashboards',
     FileType.XSIAM_REPORT: 'XSIAM Reports',
-    FileType.TRIGGER: 'Triggers',
+    FileType.TRIGGER: 'Triggers Recommendations',  # https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
+    FileType.WIZARD: 'Wizards',
 }
 
 ENTITY_TYPE_TO_DIR = {
@@ -204,6 +215,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.JOB.value: JOBS_DIR,
     FileType.PARSING_RULE.value: PARSING_RULES_DIR,
     FileType.MODELING_RULE.value: MODELING_RULES_DIR,
+    FileType.WIZARD.value: WIZARDS_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -244,7 +256,8 @@ CONTENT_ENTITIES_DIRS = [
     GENERIC_DEFINITIONS_DIR,
     PRE_PROCESS_RULES_DIR,
     LISTS_DIR,
-    JOBS_DIR
+    JOBS_DIR,
+    WIZARDS_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -262,7 +275,8 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
     DASHBOARDS_DIR,
     PRE_PROCESS_RULES_DIR,
     LISTS_DIR,
-    JOBS_DIR
+    JOBS_DIR,
+    WIZARDS_DIR,
 ]
 
 DEFAULT_IMAGE_PREFIX = 'data:image/png;base64,'
@@ -418,6 +432,8 @@ DEFAULT_DBOT_IMAGE_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAEIAAABlCAYAAAD5/TVmAAAfJEl
                             '7eorX7lGdXd3V4x3MRCUMGFHgvnz5/PiSy+fCdxEJlt3fJboAxb+H6GbFBmX3jbg12MPaXyx4H0xBhRat0N3s0' \
                             'jliiBUXY1lWWs9Hs+PgZlCMAXNBIRoRFMH1JDZzgeyl5/MFthk+FY4FyyyEqEzxKbI2DQxMv7MMJnQZDvovVqz' \
                             'A1HUzK9kdzt0/2+exnQr4g2hrAAAAABJRU5ErkJggg=='
+# structure regex of the from and to version
+FROM_TO_VERSION_REGEX = re.compile(r'(?:\d{1,2}\.){2}\d{1,2}')
 # file types regexes
 PIPFILE_REGEX = r'.*/Pipfile(\.lock)?'
 TEST_DATA_REGEX = r'.*test_data.*'
@@ -509,6 +525,12 @@ PACKS_CLASSIFIER_JSON_REGEX = fr'{_PACKS_CLASSIFIER_BASE_REGEX}\.json'
 JOBS_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{JOBS_DIR}'
 JOB_JSON_REGEX = fr'{JOBS_DIR_REGEX}\/job-([^/]+)\.json'
 
+WIZARD_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{WIZARDS_DIR}'
+WIZARD_JSON_REGEX = fr'{WIZARD_DIR_REGEX}\/wizard-([^/]+)\.json'
+
+RELATIVE_HREF_URL_REGEX = r'(<.*?href\s*=\s*"((?!(?:https?:\/\/)|#|(?:mailto:)).*?)")'
+RELATIVE_MARKDOWN_URL_REGEX = r'(?<![!])(\[.*?\])\(((?!(?:https?:\/\/)|#|(?:mailto:)).*?)\)'
+
 # old classifier structure
 _PACKS_CLASSIFIER_BASE_5_9_9_REGEX = fr'{PACKS_CLASSIFIERS_DIR_REGEX}\/*classifier-(?!mapper).*_5_9_9'
 PACKS_CLASSIFIER_JSON_5_9_9_REGEX = fr'{_PACKS_CLASSIFIER_BASE_5_9_9_REGEX}\.json'
@@ -548,10 +570,12 @@ INDICATOR_TYPES_REPUTATIONS_REGEX = r'{}{}.reputations\.json$'.format(CAN_START_
 # deprecated regex
 DEPRECATED_DESC_REGEX = r"Deprecated\.\s*(.*?Use .*? instead\.*?)"
 DEPRECATED_NO_REPLACE_DESC_REGEX = r"Deprecated\.\s*(.*?No available replacement\.*?)"
+PACK_NAME_DEPRECATED_REGEX = r".* \(Deprecated\)"
 
 DEPRECATED_REGEXES: List[str] = [
     DEPRECATED_DESC_REGEX,
-    DEPRECATED_NO_REPLACE_DESC_REGEX
+    DEPRECATED_NO_REPLACE_DESC_REGEX,
+    PACK_NAME_DEPRECATED_REGEX
 ]
 
 PACK_METADATA_NAME = 'name'
@@ -598,7 +622,9 @@ ID_IN_ROOT = [  # entities in which 'id' key is in the root
     'mapper',
     'pre_process_rule',
     'lists',
-    JOB
+    JOB,
+    WIZARD,
+    'classifier'
 ]
 
 INTEGRATION_PREFIX = 'integration'
@@ -611,7 +637,7 @@ PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
 PACKS_PACK_IGNORE_FILE_NAME = '.pack-ignore'
 PACKS_PACK_META_FILE_NAME = 'pack_metadata.json'
 PACKS_README_FILE_NAME = 'README.md'
-PACKS_CONTRIBUTORS_FILE_NAME = 'CONTRIBUTORS.md'
+PACKS_CONTRIBUTORS_FILE_NAME = 'CONTRIBUTORS.json'
 AUTHOR_IMAGE_FILE_NAME = 'Author_image.png'
 
 PYTHON_TEST_REGEXES = [
@@ -776,6 +802,10 @@ JSON_ALL_JOB_REGEXES = [
     JOB_JSON_REGEX
 ]
 
+JSON_ALL_WIZARD_REGEXES = [
+    WIZARD_JSON_REGEX,
+]
+
 CHECKED_TYPES_REGEXES = [
     # Playbooks
     PLAYBOOK_YML_REGEX,
@@ -816,6 +846,7 @@ CHECKED_TYPES_REGEXES = [
     PACKS_TOOLS_REGEX,
     CONNECTIONS_REGEX,
     JOB_JSON_REGEX,
+    WIZARD_JSON_REGEX,
 
     # ReleaseNotes
     PACKS_RELEASE_NOTES_REGEX
@@ -862,7 +893,8 @@ DIR_LIST_FOR_REGULAR_ENTETIES = [
     CONNECTIONS_DIR,
     INDICATOR_FIELDS_DIR,
     LISTS_DIR,
-    JOBS_DIR
+    JOBS_DIR,
+    WIZARDS_DIR,
 ]
 PACKS_DIRECTORIES = [
     SCRIPTS_DIR,
@@ -876,7 +908,8 @@ PACKS_DIRECTORIES = [
     REPORTS_DIR,
     CONNECTIONS_DIR,
     PLAYBOOKS_DIR,
-    JOBS_DIR
+    JOBS_DIR,
+    WIZARDS_DIR,
 ]
 SPELLCHECK_FILE_TYPES = [
     PACKS_INTEGRATION_YML_REGEX,
@@ -989,6 +1022,11 @@ UNRELEASE_HEADER = '## [Unreleased]\n'  # lgtm[py/regex/duplicate-in-character-c
 CONTENT_RELEASE_TAG_REGEX = r'^\d{2}\.\d{1,2}\.\d'
 RELEASE_NOTES_REGEX = re.escape(UNRELEASE_HEADER) + r'([\s\S]+?)## \[\d{2}\.\d{1,2}\.\d\] - \d{4}-\d{2}-\d{2}'
 
+# pack contributors template
+CONTRIBUTORS_README_TEMPLATE = '\n### Pack Contributors:\n\n---\n{contributors_names}\nContributions are welcome and ' \
+                               'appreciated. For more info, visit our [Contribution Guide](https://xsoar.pan.dev/docs' \
+                               '/contributing/contributing).'
+
 # Beta integration disclaimer
 BETA_INTEGRATION_DISCLAIMER = 'Note: This is a beta Integration,' \
                               ' which lets you implement and test pre-release software. ' \
@@ -1034,7 +1072,8 @@ SCHEMA_TO_REGEX = {
     'generictype': JSON_ALL_GENERIC_TYPES_REGEXES,
     'genericmodule': JSON_ALL_GENERIC_MODULES_REGEXES,
     'genericdefinition': JSON_ALL_GENERIC_DEFINITIONS_REGEXES,
-    JOB: JSON_ALL_JOB_REGEXES
+    JOB: JSON_ALL_JOB_REGEXES,
+    WIZARD: JSON_ALL_WIZARD_REGEXES,
 }
 
 EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
@@ -1113,16 +1152,17 @@ MARKETPLACES = ['xsoar', 'marketplacev2']
 
 # From Version constants
 FILETYPE_TO_DEFAULT_FROMVERSION = {
-    FileType.JOB: '7.0.0',
+    FileType.WIZARD: '6.8.0',
+    FileType.JOB: '6.8.0',
+    FileType.PRE_PROCESS_RULES: '6.8.0',
     FileType.LISTS: '6.5.0',
-    FileType.PRE_PROCESS_RULES: '7.0.0',
     FileType.GENERIC_TYPE: '6.5.0',
     FileType.GENERIC_FIELD: '6.5.0',
     FileType.GENERIC_MODULE: '6.5.0',
     FileType.GENERIC_DEFINITION: '6.5.0',
 }
 # This constant below should always be two versions before the latest server version
-GENERAL_DEFAULT_FROMVERSION = '6.2.0'
+GENERAL_DEFAULT_FROMVERSION = '6.5.0'
 VERSION_5_5_0 = '5.5.0'
 DEFAULT_CONTENT_ITEM_FROM_VERSION = '0.0.0'
 DEFAULT_CONTENT_ITEM_TO_VERSION = '99.99.99'
@@ -1317,7 +1357,8 @@ VALIDATED_PACK_ITEM_TYPES = [
     'Layouts',
     'PreProcessRules',
     'Lists',
-    'Jobs'
+    'Jobs',
+    'Wizards',
 ]
 
 FIRST_FETCH = 'first_fetch'
@@ -1331,8 +1372,6 @@ SKIP_RELEASE_NOTES_FOR_TYPES = (FileType.RELEASE_NOTES, FileType.README, FileTyp
 LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggregatedreliability', 'detectedips',
                                      'detectedhosts', 'modified', 'expiration', 'timestamp', 'shortdesc',
                                      'short_description', 'description', 'Tags', 'blocked']
-
-UUID_REGEX = r'[0-9a-f]{8}\b-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-\b[0-9a-f]{12}'
 
 DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
 MP_V2_ID_SET_PATH = "./Tests/id_set_mp_v2.json"
@@ -1384,7 +1423,8 @@ class ContentItems(Enum):
     CORRELATION_RULES = 'correlationrule'
     XSIAM_DASHBOARDS = 'xsiamdashboard'
     XSIAM_REPORTS = 'xsiamreport'
-    TRIGGERS = 'trigger'
+    TRIGGERS = 'trigger',
+    WIZARDS = 'wizard',
 
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {
@@ -1408,7 +1448,8 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     CORRELATION_RULES_DIR,
     XSIAM_DASHBOARDS_DIR,
     XSIAM_REPORTS_DIR,
-    TRIGGER_DIR
+    TRIGGER_DIR,
+    WIZARDS_DIR,
 }
 
 
@@ -1521,3 +1562,6 @@ class ParameterType(Enum):
     TEXT_AREA_ENCRYPTED = 14
     SINGLE_SELECT = 15
     MULTI_SELECT = 16
+
+
+NO_TESTS_DEPRECATED = 'No tests (deprecated)'

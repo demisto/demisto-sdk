@@ -1,12 +1,12 @@
 import glob
-from typing import Optional
+from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import (BETA_INTEGRATION_DISCLAIMER,
                                                    PACKS_INTEGRATION_YML_REGEX,
                                                    FileType)
 from demisto_sdk.commands.common.errors import FOUND_FILES_AND_ERRORS, Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator, error_codes)
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.commands.common.tools import find_type, get_yaml, os, re
@@ -23,9 +23,9 @@ class DescriptionValidator(BaseValidator):
     """
 
     def __init__(self, file_path: str, ignored_errors=None, print_as_warnings=False, suppress_print: bool = False,
-                 json_file_path: Optional[str] = None):
+                 json_file_path: Optional[str] = None, specific_validations: Optional[List[str]] = None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print, json_file_path=json_file_path)
+                         suppress_print=suppress_print, json_file_path=json_file_path, specific_validations=specific_validations)
         self._is_valid = True
         # Handling a case where the init function initiated with file path instead of structure validator
         self.file_path = file_path.file_path if isinstance(file_path, StructureValidator) else file_path
@@ -37,12 +37,13 @@ class DescriptionValidator(BaseValidator):
         self.verify_demisto_in_description_content()
 
         # make sure the description is a seperate file
-        if not self.data_dictionary.get('detaileddescription'):
+        if not self.data_dictionary.get('detaileddescription') and '.md' in self.file_path:
             self.is_valid_description_name()
             self.contains_contrib_details()
 
         return self._is_valid
 
+    @error_codes('DS105')
     def contains_contrib_details(self):
         """check if DESCRIPTION file contains contribution details"""
         with open(self.file_path) as f:
@@ -56,6 +57,7 @@ class DescriptionValidator(BaseValidator):
                 return False
         return True
 
+    @error_codes('DS100,DS101,DS102')
     def is_valid_beta_description(self):
         """Check if beta disclaimer exists in detailed description"""
         description_in_yml = self.data_dictionary.get('detaileddescription', '') if self.data_dictionary else ''
@@ -89,6 +91,7 @@ class DescriptionValidator(BaseValidator):
 
         return True
 
+    @error_codes('DS104,DS103')
     def is_duplicate_description(self):
         """Check if the integration has a non-duplicate description ."""
         is_description_in_yml = False
@@ -127,17 +130,25 @@ class DescriptionValidator(BaseValidator):
 
         return True
 
+    @error_codes('DS106')
     def is_valid_description_name(self):
         """Check if the description name is valid"""
         description_path = glob.glob(os.path.join(os.path.dirname(self.file_path), '*_description.md'))
         md_paths = glob.glob(os.path.join(os.path.dirname(self.file_path), '*.md'))
+
+        description_file_path = self.file_path
+        integrations_folder = os.path.basename(os.path.dirname(description_file_path))
+        description_file = os.path.basename(description_file_path)
+
+        # drop file extension
+        description_file_base_name = description_file.rsplit('_', 1)[0]
 
         # checking if there are any .md files only for description with a wrong name
         for path in md_paths:
             if path.endswith("README.md") or path.endswith("CHANGELOG.md"):
                 md_paths.remove(path)
 
-        if not description_path and md_paths:
+        if not description_path and md_paths or integrations_folder != description_file_base_name:
             error_message, error_code = Errors.invalid_description_name()
 
             if self.handle_error(error_message, error_code, file_path=self.file_path):
@@ -146,6 +157,7 @@ class DescriptionValidator(BaseValidator):
 
         return True
 
+    @error_codes('DS104,DS107')
     def verify_demisto_in_description_content(self):
         """
         Checks if there are the word 'Demisto' in the description content.

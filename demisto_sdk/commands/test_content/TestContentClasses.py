@@ -37,10 +37,9 @@ from demisto_sdk.commands.test_content.mock_server import (RESULT, MITMProxy,
 from demisto_sdk.commands.test_content.ParallelLoggingManager import \
     ParallelLoggingManager
 from demisto_sdk.commands.test_content.tools import (
-    is_redhat_instance, update_server_configuration)
+    get_ui_url, is_redhat_instance, update_server_configuration)
 
 json = JSON_Handler()
-
 
 ENV_RESULTS_PATH = './artifacts/env_results.json'
 FAILED_MATCH_INSTANCE_MSG = "{} Failed to run.\n There are {} instances of {}, please select one of them by using " \
@@ -710,7 +709,8 @@ class BuildContext:
             return {self.server: None}
         if self.is_xsiam:
             return {env.get('base_url'): None for env in self.env_json}
-        instances_ips = {env.get('InstanceDNS'): env.get('TunnelPort') for env in self.env_json if env.get('Role') == self.server_version}
+        instances_ips = {env.get('InstanceDNS'): env.get('TunnelPort') for env in self.env_json if
+                         env.get('Role') == self.server_version}
         return instances_ips
 
     def get_public_ip_from_server_url(self, server_url: str) -> str:
@@ -1327,7 +1327,7 @@ class Integration:
             except ApiException:
                 self.build_context.logging_module.exception(
                     f'Failed to test integration {self} instance, error trying to communicate with demisto server: '
-                    f'{client.api_client.configuration.host}')
+                    f'{get_ui_url(client.api_client.configuration.host)}')
                 return False
             except urllib3.exceptions.ReadTimeoutError:
                 self.build_context.logging_module.warning(f"Could not connect. Trying to connect for the {i + 1} time")
@@ -1335,13 +1335,13 @@ class Integration:
         if int(response_code) != 200:
             self.build_context.logging_module.error(
                 f'Integration-instance test-module failed. Bad status code: {response_code}.\n'
-                f'Sever URL: {client.api_client.configuration.host}')
+                f'Sever URL: {get_ui_url(client.api_client.configuration.host)}')
             return False
 
         result_object = ast.literal_eval(response_data)
         success, failure_message = bool(result_object.get('success')), result_object.get('message')
         if not success:
-            server_url = client.api_client.configuration.host
+            server_url = get_ui_url(client.api_client.configuration.host)
             test_failed_msg = f'Test integration failed - server: {server_url}.\n' \
                               f'Failure message: {failure_message}' if failure_message else ' No failure message.'
             self.build_context.logging_module.error(test_failed_msg)
@@ -1516,13 +1516,13 @@ class TestContext:
 
             if number_of_attempts % DEFAULT_INTERVAL == 0:
                 self.build_context.logging_module.info(
-                    f'loop no. {number_of_attempts / DEFAULT_INTERVAL}, playbook state is {playbook_state}')
+                    f'{self.playbook} loop no. {number_of_attempts / DEFAULT_INTERVAL}, {playbook_state=}')
             number_of_attempts = number_of_attempts + 1
         return playbook_state
 
     def _run_incident_test(self) -> str:
         """
-        Creates an incident in demisto server and return it's status
+        Creates an incident in demisto server and return its status
         Returns:
             Empty string or
         """
@@ -1557,7 +1557,7 @@ class TestContext:
 
             self.build_context.logging_module.info(f'Found incident with incident ID: {investigation_id}.')
 
-            server_url = self.client.api_client.configuration.host
+            server_url = get_ui_url(self.client.api_client.configuration.host)
             if IS_XSIAM:
                 self.build_context.logging_module.info(
                     f'Investigation URL: {self.build_context.xsiam_ui_path}incident-view/alerts_and_insights?caseId='
@@ -1646,7 +1646,7 @@ class TestContext:
     def _notify_failed_test(self):
         text = f'{self.build_context.build_name} - {self.playbook} Failed\n' \
                f'for more details run: `{self.tunnel_command}` and browse into the following link\n' \
-               f'{self.client.api_client.configuration.host}'
+               f'{get_ui_url(self.client.api_client.configuration.host)}'
         text += f'/#/WorkPlan/{self.incident_id}' if self.incident_id else ''
         if self.build_context.slack_user_id:
             self.build_context.slack_client.api_call(
@@ -1919,7 +1919,8 @@ class TestContext:
 
         if status == PB_Status.COMPLETED:
             updated_status = self._update_complete_status(is_first_execution, is_record_run, is_first_playback_run,
-                                                          is_second_playback_run, use_retries_mechanism, number_of_executions)
+                                                          is_second_playback_run, use_retries_mechanism,
+                                                          number_of_executions)
 
         elif status in (PB_Status.FAILED_DOCKER_TEST, PB_Status.CONFIGURATION_FAILED):
             self._add_to_failed_playbooks(status=status)
@@ -2068,6 +2069,8 @@ class ServerContext:
         self.executed_in_current_round: Set[str] = set()
         self.prev_system_conf: dict = {}
         self.use_retries_mechanism: bool = use_retries_mechanism
+        if IS_XSIAM:
+            self.check_if_can_create_manual_alerts()
 
     def _execute_unmockable_tests(self):
         """
@@ -2174,14 +2177,16 @@ class ServerContext:
     def execute_tests(self):
 
         try:
-            self.build_context.logging_module.info(f'Starts tests with server url - {self.server_url}', real_time=True)
+            self.build_context.logging_module.info(f'Starts tests with server url - {get_ui_url(self.server_url)}',
+                                                   real_time=True)
             self._execute_mockable_tests()
             self.build_context.logging_module.info('Running mock-disabled tests', real_time=True)
             self._execute_unmockable_tests()
             if self.use_retries_mechanism:
                 self.build_context.logging_module.info('Running failed tests', real_time=True)
                 self._execute_failed_tests()
-            self.build_context.logging_module.info(f'Finished tests with server url - {self.server_url}',
+            self.build_context.logging_module.info(f'Finished tests with server url - '
+                                                   f'{get_ui_url(self.server_url)}',
                                                    real_time=True)
             # no need in xsiam, no proxy
             if not IS_XSIAM:
@@ -2189,7 +2194,7 @@ class ServerContext:
 
             if self.build_context.isAMI and not IS_XSIAM:
                 if self.proxy.should_update_mock_repo:  # type: ignore[union-attr]
-                    self.proxy.push_mock_files()    # type: ignore[union-attr]
+                    self.proxy.push_mock_files()  # type: ignore[union-attr]
             self.build_context.logging_module.debug(f'Tests executed on server {self.server_ip}:\n'
                                                     f'{pformat(self.executed_tests)}')
         except Exception:
@@ -2197,6 +2202,73 @@ class ServerContext:
             raise
         finally:
             self.build_context.logging_module.execute_logs()
+
+    def check_if_can_create_manual_alerts(self):
+        """
+        In XSIAM we can't create a new incident/alert using API call.
+        We need a correlation rule in order to create an alert.
+        We want to create an alert manually, when we send an API call to XSIAM server to create a new alert.
+        Server check which integration sent a new alert, if the request was sent manually and not from integration it
+        sets "sourceBrand" header to be "Manual". XSIAM Server looks for a correlation rule for such sourceBrand,
+        and if there is no such correlation rule, no alert will be created.
+        If there is a correlation rule for "Manual" integration the allert will be created.
+
+        If this step fails please create an integration with id and name "Manual", set isFetch: true for such
+        integration and make sure that the corresponding correlation rule is created.
+        """
+        body = {
+            'query': 'id:"Manual"'
+        }
+        try:
+            res_raw = demisto_client.generic_request_func(self=self.client, method='POST',
+                                                          path='/settings/integration/search',
+                                                          body=body)
+            res = ast.literal_eval(res_raw[0])
+        except ApiException:
+            self.build_context.logging_module.exception('Failed to get integrations configuration.')
+        if int(res_raw[1]) != 200:
+            self.build_context.logging_module.error(
+                f'Failed to get integrations configuration with status code: {res_raw[1]}')
+            return
+
+        all_configurations = res['configurations']
+        for instance in all_configurations:
+            if instance.get('id') == "Manual":
+                self.build_context.logging_module.info('Server is able to create manual alerts '
+                                                       '("Manual" integration exists).')
+                return
+
+        self.build_context.logging_module.warning('No "Manual" integration found in XSIAM instance. '
+                                                  'Adding it in order to create Manual Correlation Rule.')
+        self.create_manual_integration()
+
+    def create_manual_integration(self):
+        manual_integration = {
+            "name": "Manual",
+            "version": 1,
+            "display": "Manual",
+            "category": "Utilities",
+            "description": "This integration creates Manual Correlation Rule.",
+            "configuration": [],
+            "integrationScript": {
+                "script": "",
+                "commands": [],
+                "type": "python",
+                "isFetch": True,
+                "subtype": "python3"
+            }
+        }
+
+        try:
+            res_raw_integration = demisto_client.generic_request_func(self=self.client, method='PUT',
+                                                                      path='/settings/integration-conf',
+                                                                      body=manual_integration)
+        except ApiException:
+            self.build_context.logging_module.exception('No "Manual" integration found in XSIAM instance. '
+                                                        'Please add it in order to create Manual Correlation Rule.')
+        if int(res_raw_integration[1]) != 200:
+            self.build_context.logging_module.error(
+                f'Failed to get integrations configuration with status code: {res_raw_integration[1]}')
 
 
 def replace_external_playbook_configuration(client: DefaultApi, external_playbook_configuration: dict,

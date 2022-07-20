@@ -23,6 +23,11 @@ class Urls(NamedTuple):
 
 
 class TestGitContentConfig:
+    @staticmethod
+    def teardown_method():
+        # runs after each method, making sure tests do not interfere
+        GitContentConfig.NOTIFIED_PRIVATE_REPO = False
+
     @pytest.mark.parametrize(
         'url, repo_name',
         [
@@ -158,9 +163,10 @@ class TestGitContentConfig:
         assert git_config.git_provider == GitProvider.GitHub
         assert git_config.current_repository == GitContentConfig.OFFICIAL_CONTENT_REPO_NAME
         assert git_config.base_api == DEFAULT_GITHUB_BASE_API
-        message = click_mock.call_args_list[0][0][0]
+        message = click_mock.call_args_list[1][0][0]
         assert GitContentConfig.ENV_REPO_HOSTNAME_NAME in message
         assert GitCredentials.ENV_GITLAB_TOKEN_NAME in message
+        assert GitContentConfig.NOTIFIED_PRIVATE_REPO
 
     def test_get_repo_name_gitlab_invalid(self, mocker):
         """
@@ -213,7 +219,7 @@ class TestGitContentConfig:
         requests_mock.get(url, json=gitlab_response)
         mocker.patch.object(Repo, 'remote', return_value=Urls(['https://code.pan.run/xsoar/content-internal-dist.git']))
         git_config = GitContentConfig()
-        assert git_config.gitlab_id == 3606
+        assert git_config.project_id == 3606  # this is the project id of `content-internal-dist`
         assert git_config.base_api == GitContentConfig.BASE_RAW_GITLAB_LINK.format(GITLAB_HOST=host,
                                                                                    GITLAB_ID=3606)
 
@@ -283,5 +289,5 @@ class TestGitContentConfig:
         """
         requests_mock.get("https://code.pan.run/api/v4/projects/3")
         git_config = GitContentConfig(project_id=3, git_provider=GitProvider.GitLab, repo_hostname='code.pan.run')
-        assert git_config.gitlab_id == 3
+        assert git_config.project_id == 3
         assert git_config.base_api == 'https://code.pan.run/api/v4/projects/3/repository'

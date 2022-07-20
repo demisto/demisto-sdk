@@ -1,0 +1,116 @@
+type: map
+mapping:
+  id:
+    type: str
+    required: true
+  version:
+    type: int
+  name:
+    type: str
+    required: true
+  modified:
+    type: str
+  description:
+    type: str
+  system:
+    type: bool
+  deprecated:
+    type: bool
+  fromVersion:
+    type: str
+    required: true
+  toVersion:
+    type: str
+  dependency_packs:
+    type: seq
+    required: true
+    sequence:
+      - type: map
+        required: true
+        mapping:
+          name:
+            type: str
+            required: true
+          min_required:
+            type: int
+            required: true
+          packs:
+            type: seq
+            required: true
+            sequence:
+            - type: map
+              mapping:
+                name:
+                  type: str
+                display_name:
+                  type: str
+  wizard:
+    type: map
+    required: true
+    mapping:
+      fetching_integrations:
+        type: seq
+        required: true
+        sequence:
+          - include: integrations_schema
+      supporting_integrations:
+        type: seq
+        required: true
+        sequence:
+          - include: integrations_schema
+      set_playbook:
+        type: seq
+        required: true
+        sequence:
+          - include: playbook_schema
+      next:
+        type: seq
+        sequence:
+          - include: next_schema
+
+schema;integrations_schema:
+  type: map
+  mapping:
+    name:
+      type: str
+      required: true
+    description:
+      type: str
+      required: true
+    action:
+      type: map
+      required: true
+      mapping:
+        existing:
+          type: str
+        new:
+          type: str
+    priority:
+      type: int
+    incident_type:
+      type: str
+
+schema;playbook_schema:
+  type: map
+  mapping:
+    name:
+      type: str
+      required: true
+    link_to_integration:
+      type: str
+
+schema;next_schema:
+  type: map
+  required: true
+  mapping:
+    name:
+      type: str
+      required: true
+    action:
+      type: map
+      required: true
+      mapping:
+        existing:
+          type: str
+        new:
+          type: str

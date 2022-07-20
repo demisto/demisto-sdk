@@ -24,11 +24,12 @@ from demisto_sdk.commands.common.constants import (
     INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, JOBS_DIR,
     LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR, MODELING_RULES_DIR, MP_V2_ID_SET_PATH,
     PARSING_RULES_DIR, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
-    TRIGGER_DIR, WIDGETS_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR,
-    FileType, MarketplaceVersions)
+    TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR, XSIAM_DASHBOARDS_DIR,
+    XSIAM_REPORTS_DIR, FileType, MarketplaceVersions)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
-                                               get_current_repo, get_file,
+                                               get_current_repo,
+                                               get_display_name, get_file,
                                                get_item_marketplaces, get_json,
                                                get_pack_name, get_yaml,
                                                print_color, print_error,
@@ -42,13 +43,13 @@ json = JSON_Handler()
 CONTENT_ENTITIES = ['Packs', 'Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                     'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                     'Layouts', 'Reports', 'Widgets', 'Mappers', 'GenericTypes',
-                    'GenericFields', 'GenericModules', 'GenericDefinitions', 'Lists', 'Jobs']
+                    'GenericFields', 'GenericModules', 'GenericDefinitions', 'Lists', 'Jobs', 'Wizards']
 
 ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'GenericTypes', 'GenericFields', 'GenericModules',
                    'GenericDefinitions', 'Lists', 'Jobs', 'ParsingRules', 'ModelingRules',
-                   'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers']
+                   'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'Wizards']
 
 CONTENT_MP_V2_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                           'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
@@ -371,7 +372,7 @@ def get_integration_api_modules(file_path, data_dictionary, is_unified_integrati
     else:
         _, integration_script_code = unifier.get_script_or_integration_package_data()
 
-    return unifier.check_api_module_imports(integration_script_code)[1]
+    return list(unifier.check_api_module_imports(integration_script_code).values())
 
 
 def get_integration_data(file_path, packs: Dict[str, Dict] = None):
@@ -381,6 +382,7 @@ def get_integration_data(file_path, packs: Dict[str, Dict] = None):
 
     id_ = data_dictionary.get('commonfields', {}).get('id', '-')
     name = data_dictionary.get('name', '-')
+    display_name = get_display_name(file_path, data_dictionary)
     script = data_dictionary.get('script', {})
 
     type_ = script.get('type', '')
@@ -412,6 +414,7 @@ def get_integration_data(file_path, packs: Dict[str, Dict] = None):
             mappers.add(data_dictionary.get(mapper))
     integration_data = create_common_entity_data(path=file_path,
                                                  name=name,
+                                                 display_name=display_name,
                                                  to_version=toversion,
                                                  from_version=fromversion,
                                                  pack=pack,
@@ -567,6 +570,7 @@ def get_playbook_data(file_path: str, packs: Dict[str, Dict] = None) -> dict:
 
     id_ = data_dictionary.get('id', '-')
     name = data_dictionary.get('name', '-')
+    display_name = get_display_name(file_path, data_dictionary)
     deprecated = data_dictionary.get('hidden', False)
     tests = data_dictionary.get('tests')
     toversion = data_dictionary.get('toversion')
@@ -588,7 +592,7 @@ def get_playbook_data(file_path: str, packs: Dict[str, Dict] = None) -> dict:
     pack = get_pack_name(file_path)
     dependent_incident_fields, dependent_indicator_fields = get_dependent_incident_and_indicator_fields(data_dictionary)
 
-    playbook_data = create_common_entity_data(path=file_path, name=name, to_version=toversion,
+    playbook_data = create_common_entity_data(path=file_path, name=name, display_name=display_name, to_version=toversion,
                                               from_version=fromversion, pack=pack, marketplaces=marketplaces)
 
     transformers, filters = get_filters_and_transformers_from_playbook(data_dictionary)
@@ -628,7 +632,7 @@ def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None):
         script_code = data_dictionary.get('script', '')
 
     name = data_dictionary.get('name', '-')
-
+    display_name = get_display_name(file_path, data_dictionary)
     type_ = data_dictionary.get('type', '')
     if type_ == 'python':
         type_ = data_dictionary.get('subtype', type_)
@@ -642,8 +646,11 @@ def get_script_data(file_path, script_code=None, packs: Dict[str, Dict] = None):
     pack = get_pack_name(file_path)
     marketplaces = get_item_marketplaces(file_path, item_data=data_dictionary, packs=packs)
 
-    script_data = create_common_entity_data(path=file_path, name=name, to_version=toversion, from_version=fromversion,
-                                            pack=pack, marketplaces=marketplaces)
+    if 'Packs' in file_path and not file_path.startswith('Packs'):
+        file_path = file_path[file_path.index('Packs'):]
+
+    script_data = create_common_entity_data(path=file_path, name=name, display_name=display_name, to_version=toversion,
+                                            from_version=fromversion, pack=pack, marketplaces=marketplaces)
     if type_:
         script_data['type'] = type_
     if deprecated:
@@ -728,6 +735,7 @@ def get_layout_data(path: str, packs: Dict[str, Dict] = None):
 
     layout = json_data.get('layout', {})
     name = layout.get('name', '-')
+    display_name = get_display_name(path, json_data)
     id_ = json_data.get('id', layout.get('id', '-'))
     type_ = json_data.get('typeId')
     type_name = json_data.get('TypeName')
@@ -742,7 +750,8 @@ def get_layout_data(path: str, packs: Dict[str, Dict] = None):
     tabs = layout.get('tabs', [])
     scripts = get_layouts_scripts_ids(tabs)
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
+    data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
+                                     from_version=fromversion, pack=pack, marketplaces=marketplaces)
     if type_:
         data['typeID'] = type_
     if type_name:
@@ -803,6 +812,7 @@ def get_layoutscontainer_data(path: str, packs: Dict[str, Dict] = None):
     pack = get_pack_name(path)
     marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
     data = create_common_entity_data(path=path, name=json_data.get('name'),
+                                     display_name=get_display_name(path, json_data),
                                      to_version=json_data.get('toVersion'),
                                      from_version=json_data.get('fromVersion'),
                                      pack=pack,
@@ -830,6 +840,7 @@ def get_incident_field_data(path: str, incident_types: List, packs: Dict[str, Di
 
     id_ = json_data.get('id')
     name = json_data.get('name', '')
+    display_name = get_display_name(path, json_data)
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
@@ -860,7 +871,8 @@ def get_incident_field_data(path: str, incident_types: List, packs: Dict[str, Di
     aliases: List[str] = sum(([field['cliName'], field['name']] for field in json_data.get('Aliases', [])), [])
     cli_name = json_data.get('cliName')
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
+    data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
+                                     from_version=fromversion, pack=pack, marketplaces=marketplaces)
 
     if all_associated_types:
         data['incident_types'] = list(all_associated_types)
@@ -881,6 +893,7 @@ def get_indicator_type_data(path: str, all_integrations: List, packs: Dict[str, 
 
     id_ = json_data.get('id')
     name = json_data.get('details', '')
+    display_name = get_display_name(path, json_data)
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     reputation_command = json_data.get('reputationCommand')
@@ -904,7 +917,8 @@ def get_indicator_type_data(path: str, all_integrations: List, packs: Dict[str, 
         if integration_commands and reputation_command in integration_commands:
             associated_integrations.add(integration_name)
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
+    data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
+                                     from_version=fromversion, pack=pack, marketplaces=marketplaces)
     if associated_integrations:
         data['integrations'] = list(associated_integrations)
     if all_scripts:
@@ -918,6 +932,7 @@ def get_incident_type_data(path: str, packs: Dict[str, Dict] = None):
 
     id_ = json_data.get('id')
     name = json_data.get('name', '')
+    display_name = get_display_name(path, json_data)
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     playbook_id = json_data.get('playbookId')
@@ -925,7 +940,8 @@ def get_incident_type_data(path: str, packs: Dict[str, Dict] = None):
     pack = get_pack_name(path)
     marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
+    data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
+                                     from_version=fromversion, pack=pack, marketplaces=marketplaces)
     if playbook_id and playbook_id != '':
         data['playbooks'] = playbook_id
     if pre_processing_script and pre_processing_script != '':
@@ -939,6 +955,7 @@ def get_classifier_data(path: str, packs: Dict[str, Dict] = None):
 
     id_ = json_data.get('id')
     name = json_data.get('name', '')
+    display_name = get_display_name(path, json_data)
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
@@ -961,7 +978,8 @@ def get_classifier_data(path: str, packs: Dict[str, Dict] = None):
         if complex_value:
             transformers, filters = get_filters_and_transformers_from_complex_value(complex_value)
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
+    data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
+                                     from_version=fromversion, pack=pack, marketplaces=marketplaces)
     if incidents_types:
         data['incident_types'] = list(incidents_types)
     if filters:
@@ -974,10 +992,12 @@ def get_classifier_data(path: str, packs: Dict[str, Dict] = None):
     return {id_: data}
 
 
-def create_common_entity_data(path, name, to_version, from_version, pack, marketplaces):
+def create_common_entity_data(path, name, display_name, to_version, from_version, pack, marketplaces):
     data = OrderedDict()
     if name:
         data['name'] = name
+    if display_name:
+        data['display_name'] = display_name
     data['file_path'] = path
     data['source'] = list(get_current_repo())
     if to_version:
@@ -1025,6 +1045,7 @@ def get_mapper_data(path: str, packs: Dict[str, Dict] = None):
 
     id_ = json_data.get('id')
     name = json_data.get('name', '')
+    display_name = get_display_name(path, json_data)
     type_ = json_data.get('type', '')  # can be 'mapping-outgoing' or 'mapping-incoming'
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
@@ -1070,7 +1091,8 @@ def get_mapper_data(path: str, packs: Dict[str, Dict] = None):
                 all_filters.update(filters)
 
     incidents_fields = {incident_field for incident_field in incidents_fields if incident_field not in BUILT_IN_FIELDS}
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
+    data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
+                                     from_version=fromversion, pack=pack, marketplaces=marketplaces)
     if incidents_types:
         data['incident_types'] = list(incidents_types)
     if incidents_fields:
@@ -1092,6 +1114,7 @@ def get_widget_data(path: str, packs: Dict[str, Dict] = None):
 
     id_ = json_data.get('id')
     name = json_data.get('name', '')
+    display_name = get_display_name(path, json_data)
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
@@ -1102,7 +1125,8 @@ def get_widget_data(path: str, packs: Dict[str, Dict] = None):
     if json_data.get('dataType') == 'scripts':
         scripts = json_data.get('query')
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
+    data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
+                                     from_version=fromversion, pack=pack, marketplaces=marketplaces)
     if scripts:
         data['scripts'] = [scripts]
 
@@ -1124,6 +1148,7 @@ def get_report_data(path: str, packs: Dict[str, Dict] = None):
 def parse_dashboard_or_report_data(path: str, data_file_json: Dict, all_layouts: List, packs: Dict[str, Dict] = None):
     id_ = data_file_json.get('id')
     name = data_file_json.get('name', '')
+    display_name = get_display_name(path, data_file_json)
     fromversion = data_file_json.get('fromVersion')
     toversion = data_file_json.get('toVersion')
     pack = get_pack_name(path)
@@ -1136,7 +1161,8 @@ def parse_dashboard_or_report_data(path: str, data_file_json: Dict, all_layouts:
             if widget_data.get('dataType') == 'scripts':
                 scripts.add(widget_data.get('query'))
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
+    data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
+                                     from_version=fromversion, pack=pack, marketplaces=marketplaces)
     if scripts:
         data['scripts'] = list(scripts)
 
@@ -1146,6 +1172,7 @@ def parse_dashboard_or_report_data(path: str, data_file_json: Dict, all_layouts:
 def get_general_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
     id_ = json_data.get('id')
+    display_name = get_display_name(path, json_data)
 
     if find_type(path) in [FileType.XSIAM_DASHBOARD, FileType.XSIAM_REPORT]:
         json_data = json_data.get('dashboards_data', [{}])[0] if 'dashboards_data' in json_data else json_data.get('templates_data', [{}])[0]
@@ -1158,7 +1185,8 @@ def get_general_data(path: str, packs: Dict[str, Dict] = None):
     pack = get_pack_name(path)
     marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
+    data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
+                                     from_version=fromversion, pack=pack, marketplaces=marketplaces)
     if brandname:  # for classifiers
         data['name'] = brandname
     return {id_: data}
@@ -1169,12 +1197,14 @@ def get_xsiam_dashboard_data(path: str, packs: Dict[str, Dict] = None):
 
     id_ = json_data.get('global_id')
     name = json_data.get('name')
+    display_name = get_display_name(path, json_data)
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
     marketplaces = [MarketplaceVersions.MarketplaceV2.value]
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
+    data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
+                                     from_version=fromversion, pack=pack, marketplaces=marketplaces)
 
     return {id_: data}
 
@@ -1184,12 +1214,14 @@ def get_xsiam_report_data(path: str, packs: Dict[str, Dict] = None):
 
     id_ = json_data.get('global_id')
     name = json_data.get('report_name')
+    display_name = get_display_name(path, json_data)
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
     marketplaces = [MarketplaceVersions.MarketplaceV2.value]
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
+    data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
+                                     from_version=fromversion, pack=pack, marketplaces=marketplaces)
 
     return {id_: data}
 
@@ -1199,12 +1231,14 @@ def get_trigger_data(path: str, packs: Dict[str, Dict] = None):
 
     id_ = json_data.get('trigger_id')
     name = json_data.get('trigger_name')
+    display_name = get_display_name(path, json_data)
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
     marketplaces = [MarketplaceVersions.MarketplaceV2.value]
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
+    data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
+                                     from_version=fromversion, pack=pack, marketplaces=marketplaces)
 
     return {id_: data}
 
@@ -1214,6 +1248,7 @@ def get_parsing_rule_data(path: str, packs: Dict[str, Dict] = None):
 
     id_ = yaml_data.get('id')  # TODO: Need to change to the correct id field
     name = yaml_data.get('name')
+    display_name = get_display_name(path, yaml_data)
     fromversion = yaml_data.get('fromversion')
     toversion = yaml_data.get('toversion')
     pack = get_pack_name(path)
@@ -1222,7 +1257,8 @@ def get_parsing_rule_data(path: str, packs: Dict[str, Dict] = None):
     if not id_ and 'marketplacev2' in marketplaces:  # TODO: Should be removed after we have an agreed id field for parsing rule
         id_ = f"{pack}-{os.path.basename(path).split('.')[0]}"
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
+    data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
+                                     from_version=fromversion, pack=pack, marketplaces=marketplaces)
     return {id_: data}
 
 
@@ -1231,6 +1267,7 @@ def get_modeling_rule_data(path: str, packs: Dict[str, Dict] = None):
 
     id_ = yaml_data.get('id')  # TODO: Need to change to the correct id field
     name = yaml_data.get('name')
+    display_name = get_display_name(path, yaml_data)
     fromversion = yaml_data.get('fromversion')
     toversion = yaml_data.get('toversion')
     pack = get_pack_name(path)
@@ -1239,7 +1276,8 @@ def get_modeling_rule_data(path: str, packs: Dict[str, Dict] = None):
     if not id_ and 'marketplacev2' in marketplaces:  # TODO: Should be removed after we have an agreed id field for modeling rule
         id_ = f"{pack}-{os.path.basename(path).split('.')[0]}"
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
+    data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
+                                     from_version=fromversion, pack=pack, marketplaces=marketplaces)
     return {id_: data}
 
 
@@ -1248,12 +1286,14 @@ def get_correlation_rule_data(path: str, packs: Dict[str, Dict] = None):
 
     id_ = yaml_data.get('global_rule_id')
     name = yaml_data.get('name')
+    display_name = get_display_name(path, yaml_data)
     fromversion = yaml_data.get('fromversion')
     toversion = yaml_data.get('toversion')
     pack = get_pack_name(path)
     marketplaces = [MarketplaceVersions.MarketplaceV2.value]
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
+    data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
+                                     from_version=fromversion, pack=pack, marketplaces=marketplaces)
     return {id_: data}
 
 
@@ -1452,7 +1492,7 @@ def process_jobs(file_path: str, packs: Dict[str, Dict], marketplace: str, print
     Args:
         file_path: The file path from object field folder.
         packs: The pack mapping from the ID set.
-        marketplace: The marketplace this id set is designated for.
+        marketplace: The marketplace that this ID set is designated for.
         print_logs: Whether to print logs to stdout.
 
     Returns:
@@ -1468,6 +1508,32 @@ def process_jobs(file_path: str, packs: Dict[str, Dict], marketplace: str, print
             result.append(get_job_data(file_path, packs=packs))
     except Exception as exp:  # noqa
         print_error(f'failed to process job {file_path}, Error: {str(exp)}')
+        raise
+    return result
+
+
+def process_wizards(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool) -> list:
+    """
+    Process a JSON file representing a Wizard object.
+    Args:
+        file_path: The file path from object field folder.
+        packs: The pack mapping from the ID set.
+        marketplace: The marketplace that this ID set is designated for.
+        print_logs: Whether to print logs to stdout.
+
+    Returns:
+        a list of Wizard data.
+    """
+    result: List = []
+    try:
+        if should_skip_item_by_mp(file_path, marketplace, {}, packs=packs, print_logs=print_logs):
+            return []
+        if find_type(file_path) == FileType.WIZARD:
+            if print_logs:
+                print(f'adding {file_path} to id_set')
+            result.append(get_wizard_data(file_path, packs=packs))
+    except Exception as exp:  # noqa
+        print_error(f'failed to process wizard {file_path}, Error: {str(exp)}')
         raise
     return result
 
@@ -1701,6 +1767,7 @@ def get_generic_type_data(path, packs: Dict[str, Dict] = None):
 
     id_ = json_data.get('id')
     name = json_data.get('name', '')
+    display_name = get_display_name(path, json_data)
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     playbook_id = json_data.get('playbookId')
@@ -1709,7 +1776,8 @@ def get_generic_type_data(path, packs: Dict[str, Dict] = None):
     definitionId = json_data.get('definitionId')
     layout = json_data.get('layout')
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
+    data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
+                                     from_version=fromversion, pack=pack, marketplaces=marketplaces)
     if playbook_id and playbook_id != '':
         data['playbooks'] = playbook_id
     if definitionId:
@@ -1731,6 +1799,7 @@ def get_generic_field_data(path, generic_types_list, packs: Dict[str, Dict] = No
 
     id_ = json_data.get('id')
     name = json_data.get('name', '')
+    display_name = get_display_name(path, json_data)
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
@@ -1758,7 +1827,8 @@ def get_generic_field_data(path, generic_types_list, packs: Dict[str, Dict] = No
     if field_calculations_scripts:
         all_scripts = all_scripts.union({field_calculations_scripts})
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
+    data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
+                                     from_version=fromversion, pack=pack, marketplaces=marketplaces)
 
     if all_associated_types:
         data['generic_types'] = list(all_associated_types)
@@ -1776,6 +1846,7 @@ def get_job_data(path: str, packs: Dict[str, Dict] = None):
 
     data = create_common_entity_data(path=path,
                                      name=json_data.get('name'),
+                                     display_name=get_display_name(path, json_data),
                                      to_version=json_data.get('toVersion'),
                                      from_version=json_data.get('fromVersion'),
                                      pack=get_pack_name(path),
@@ -1792,6 +1863,7 @@ def get_generic_module_data(path, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
     id_ = json_data.get('id')
     name = json_data.get('name', '')
+    display_name = get_display_name(path, json_data)
     pack = get_pack_name(path)
     marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
     fromversion = json_data.get('fromVersion')
@@ -1802,7 +1874,8 @@ def get_generic_module_data(path, packs: Dict[str, Dict] = None):
         'title': view.get('title'),
         'dashboards': [tab.get('dashboard', {}).get('id') for tab in view.get('tabs', [])]} for view in views}
 
-    data = create_common_entity_data(path=path, name=name, to_version=toversion, from_version=fromversion, pack=pack, marketplaces=marketplaces)
+    data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
+                                     from_version=fromversion, pack=pack, marketplaces=marketplaces)
     if definitionIds:
         data['definitionIds'] = definitionIds
     if views:
@@ -1816,12 +1889,31 @@ def get_list_data(path: str, packs: Dict[str, Dict] = None):
     marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
     data = create_common_entity_data(path=path,
                                      name=json_data.get('name'),
+                                     display_name=get_display_name(path, json_data),
                                      to_version=json_data.get('toVersion'),
                                      from_version=json_data.get('fromVersion'),
                                      pack=get_pack_name(path),
                                      marketplaces=marketplaces,
                                      )
 
+    return {json_data.get('id'): data}
+
+
+def get_wizard_data(path: str, packs: Dict[str, Dict] = None):
+    json_data = get_json(path)
+    marketplaces = get_item_marketplaces(path, item_data=json_data, packs=packs)
+    data = create_common_entity_data(path=path,
+                                     name=json_data.get('name'),
+                                     display_name=get_display_name(path, json_data),
+                                     to_version=json_data.get('toVersion'),
+                                     from_version=json_data.get('fromVersion'),
+                                     pack=get_pack_name(path),
+                                     marketplaces=marketplaces,
+                                     )
+    dependency_packs: List[str] = []
+    for dep_packs in json_data.get('dependency_packs', []):
+        dependency_packs.extend({pack['name'] for pack in dep_packs['packs']})
+    data['dependency_packs'] = dependency_packs
     return {json_data.get('id'): data}
 
 
@@ -1847,6 +1939,7 @@ class IDSetType(Enum):
     GENERIC_DEFINITION = 'GenericDefinitions'
     JOBS = 'Jobs'
     LISTS = 'Lists'
+    WIZARDS = 'Wizards'
 
     @classmethod
     def has_value(cls, value):
@@ -1867,7 +1960,8 @@ class IDSet:
         if not IDSetType.has_value(object_type):
             raise ValueError(f'Invalid IDSetType {object_type}')
 
-        self._id_set_dict.setdefault(object_type, []).append(obj) if obj not in self._id_set_dict[object_type] else None
+        if obj not in self._id_set_dict.get(object_type, {}):
+            self._id_set_dict.setdefault(object_type, []).append(obj)
 
     def add_pack_to_id_set_packs(self, object_type: IDSetType, obj_name, obj_value):
         self._id_set_dict.setdefault(object_type, {}).update({obj_name: obj_value})
@@ -2019,6 +2113,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     xsiam_dashboards_list = []
     xsiam_reports_list = []
     triggers_list = []
+    wizards_list = []
     packs_dict: Dict[str, Dict] = {}
     excluded_items_by_pack: Dict[str, set] = {}
     excluded_items_by_type: Dict[str, set] = {}
@@ -2572,6 +2667,21 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
 
         progress_bar.update(1)
 
+        if 'Wizards' in objects_to_create:
+            print_color("\nStarting iteration over Wizards", LOG_COLORS.GREEN)
+            for arr in pool.map(partial(process_wizards,
+                                        packs=packs_dict,
+                                        marketplace=marketplace,
+                                        print_logs=print_logs,
+                                        ),
+                                get_general_paths(WIZARDS_DIR, pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('wizards', []).append(_id)
+                wizards_list.extend(arr)
+
+        progress_bar.update(1)
+
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something
     # it shouldn't take too much time
@@ -2594,6 +2704,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['XSIAMDashboards'] = sort(xsiam_dashboards_list)
     new_ids_dict['XSIAMReports'] = sort(xsiam_reports_list)
     new_ids_dict['Triggers'] = sort(triggers_list)
+    new_ids_dict['Wizards'] = sort(wizards_list)
     new_ids_dict['Packs'] = packs_dict
 
     if marketplace != MarketplaceVersions.MarketplaceV2.value:

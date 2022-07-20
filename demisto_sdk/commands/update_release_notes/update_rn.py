@@ -7,20 +7,23 @@ import os
 import re
 from distutils.version import LooseVersion
 from pathlib import Path
-from typing import Optional, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEFAULT_ID_SET_PATH,
-    IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, FileType)
+    DEPRECATED_REGEXES, IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, FileType)
 from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.content.objects.pack_objects import (
+    Integration, Playbook, Script)
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
+    YAMLContentObject
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_api_module_ids,
                                                get_api_module_integrations_set,
                                                get_definition_name,
+                                               get_display_name,
                                                get_from_version, get_json,
                                                get_latest_release_notes_text,
                                                get_pack_name, get_remote_file,
@@ -29,6 +32,69 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                print_warning, run_command)
 
 json = JSON_Handler()
+
+CLASS_BY_FILE_TYPE = {FileType.INTEGRATION: Integration, FileType.SCRIPT: Script, FileType.PLAYBOOK: Playbook}
+
+
+def get_deprecated_comment_from_desc(description: str) -> str:
+    """
+    find deprecated comment from description
+    Args:
+        description: The yml description
+
+    Returns:
+        If a deprecated description is found return it for rn.
+    """
+    deprecate_line_with_replacement = re.findall(DEPRECATED_REGEXES[0], description)
+    deprecate_line_no_replacement = re.findall(DEPRECATED_REGEXES[1], description)
+
+    deprecate_line = deprecate_line_with_replacement + deprecate_line_no_replacement
+    return deprecate_line[0] if deprecate_line else ''
+
+
+def deprecated_commands(commands: list) -> set:
+    """return a set of the deprecated commands only"""
+    return {command.get('name') for command in commands if command.get('deprecated')}
+
+
+def get_yml_objects(path: str, file_type) -> Tuple[Any, YAMLContentObject]:
+    """
+    Generate yml files from master and from the current branch
+    Args:
+        path: The requested file path
+        file_type: the file type
+
+    Returns:
+        Two YML objects, the first of the yml at master (old yml) and the second from the current branch (new yml)
+    """
+    old_yml_obj = get_remote_file(path)
+    new_yml_obj = CLASS_BY_FILE_TYPE[file_type](path)
+
+    return old_yml_obj, new_yml_obj
+
+
+def get_deprecated_rn(path: str, file_type):
+    """Generate rn for deprecated items"""
+    old_yml, new_yml = get_yml_objects(path, file_type)
+
+    if not old_yml.get('deprecated') and new_yml.is_deprecated:
+        description = new_yml.get('comment') if file_type == file_type.SCRIPT else new_yml.get('description')
+        rn_from_description = get_deprecated_comment_from_desc(description)
+        return f'- Deprecated. {rn_from_description or "Use %%% instead"}.\n'
+
+    if file_type != FileType.INTEGRATION:
+        return ''
+
+    # look for deprecated commands
+    rn = ''
+    old_commands = deprecated_commands(old_yml.get('script', {}).get('commands'))
+    new_commands = deprecated_commands(new_yml.script.get('commands'))
+
+    for command_name in new_commands:
+        # if command is deprecated in new yml, and not in old yml
+        if command_name not in old_commands:
+            rn += f'- Command ***{command_name}*** is deprecated. Use %%% instead.\n'
+    return rn
 
 
 class UpdateRN:
@@ -73,6 +139,7 @@ class UpdateRN:
             :return
                 The new file path if was changed
         """
+
         def validate_new_path(expected_path: str):
             if not Path(expected_path).exists():
                 print_warning(f"file {file_path} implies the existence of {str(expected_path)}, which is missing. "
@@ -337,47 +404,6 @@ class UpdateRN:
         return os.path.join(self.pack_path, 'ReleaseNotes', f'{new_version}.md')
 
     @staticmethod
-    def get_display_name(file_path) -> str:
-        """ Gets the file name from the pack yml file.
-
-            :param file_path: The pack yml file path
-
-            :rtype: ``str``
-            :return
-            The display name
-        """
-        struct = StructureValidator(file_path=file_path, is_new_file=True, predefined_scheme=find_type(file_path))
-        file_data = struct.load_data_from_file()
-        if 'display' in file_data:
-            name = file_data.get('display', None)
-        elif 'layout' in file_data and isinstance(file_data['layout'], dict):
-            name = file_data['layout'].get('id')
-        elif 'name' in file_data:
-            name = file_data.get('name', None)
-        elif 'TypeName' in file_data:
-            name = file_data.get('TypeName', None)
-        elif 'brandName' in file_data:
-            name = file_data.get('brandName', None)
-        elif 'id' in file_data:
-            name = file_data.get('id', None)
-        elif 'trigger_id' in file_data:
-            name = file_data.get('trigger_id')
-
-        elif 'dashboards_data' in file_data and file_data.get('dashboards_data') \
-                and isinstance(file_data['dashboards_data'], list):
-            dashboard_data = file_data.get('dashboards_data', [{}])[0]
-            name = dashboard_data.get('name')
-
-        elif 'templates_data' in file_data and file_data.get('templates_data') \
-                and isinstance(file_data['templates_data'], list):
-            r_name = file_data.get('templates_data', [{}])[0]
-            name = r_name.get('report_name')
-
-        else:
-            name = os.path.basename(file_path)
-        return name
-
-    @staticmethod
     def find_corresponding_yml(file_path) -> str:
         """ Gets the pack's corresponding yml file from the python/yml file.
 
@@ -407,7 +433,7 @@ class UpdateRN:
 
         if self.pack + '/' in file_path and ('README' not in file_path):
             _file_path = self.find_corresponding_yml(file_path)
-            file_name = self.get_display_name(_file_path)
+            file_name = get_display_name(_file_path)
             _file_type = find_type(_file_path)
 
         return file_name, _file_type
@@ -530,6 +556,7 @@ class UpdateRN:
             rn_string = self.build_rn_desc(content_name=self.pack, text=self.text)
         # changed_items.items() looks like that: [((name, type), {...}), (name, type), {...}] and we want to sort
         # them by type (x[0][1])
+
         for (content_name, _type), data in sorted(changed_items.items(),
                                                   key=lambda x: RN_HEADER_BY_FILE_TYPE[x[0][1]] if x[0] and x[0][1]
                                                   else ''):  # Sort RN by header
@@ -571,6 +598,7 @@ class UpdateRN:
         """
         if _type in (FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT,
                      FileType.INCIDENT_FIELD, FileType.INDICATOR_FIELD):
+
             rn_desc = f'- **{content_name}**\n'
 
         elif _type in (FileType.GENERIC_TYPE, FileType.GENERIC_FIELD):
@@ -587,7 +615,19 @@ class UpdateRN:
                 if self.update_type == 'documentation':
                     rn_desc += '- Documentation and metadata improvements.\n'
                 else:
-                    rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
+                    deprecate_rn = ''
+                    if _type in (FileType.INTEGRATION, FileType.SCRIPT, FileType.PLAYBOOK):
+                        deprecate_rn = get_deprecated_rn(path, _type)
+                    if deprecate_rn:
+                        if text:
+                            rn_desc += f'- {text}\n'
+                        rn_desc += deprecate_rn
+                    else:
+                        rn_desc += f'- {text or "%%UPDATE_RN%%"}\n'
+
+        if _type == FileType.TRIGGER:
+            rn_desc = f'- {desc}'  # Issue - https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
+
         if docker_image:
             rn_desc += f'- Updated the Docker image to: *{docker_image}*.\n'
         return rn_desc
@@ -621,12 +661,15 @@ class UpdateRN:
 
             _header_by_type = RN_HEADER_BY_FILE_TYPE.get(_type)
             if _type in (FileType.CONNECTION, FileType.INCIDENT_TYPE, FileType.REPUTATION, FileType.LAYOUT,
-                         FileType.INCIDENT_FIELD, FileType.JOB):
+                         FileType.INCIDENT_FIELD, FileType.JOB, FileType.WIZARD):
                 rn_desc = f'\n- **{content_name}**'
 
             elif _type in (FileType.GENERIC_TYPE, FileType.GENERIC_FIELD):
                 definition_name = get_definition_name(path, self.pack_path)
                 rn_desc = f'\n- **({definition_name}) - {content_name}**'
+
+            elif _type == FileType.TRIGGER:
+                rn_desc = f'\n- {desc}'  # Issue https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
 
             else:
                 rn_desc = f'\n##### New: {content_name}\n- {desc}\n' if is_new_file \
@@ -766,7 +809,7 @@ def get_file_description(path, file_type) -> str:
         return yml_file.get('comment', '')
 
     elif file_type in (FileType.CLASSIFIER, FileType.REPORT, FileType.WIDGET, FileType.DASHBOARD, FileType.JOB,
-                       FileType.TRIGGER):
+                       FileType.TRIGGER, FileType.WIZARD):
         json_file = get_json(path)
         return json_file.get('description', '')
 

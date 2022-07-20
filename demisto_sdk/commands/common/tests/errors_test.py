@@ -1,6 +1,9 @@
+import re
 import unittest
 
 from demisto_sdk.commands.common.errors import Errors
+
+ERROR_CODE_REGEX = re.compile(r'[A-Z]{2}\d{3}')
 
 
 class TestErrors(unittest.TestCase):
@@ -82,11 +85,11 @@ class TestErrors(unittest.TestCase):
         When: Returning an error message
         Then: Return error message with the input value as a tuple containing error and error code.
         """
-        expected_result = ("The File's name, which is: 'FileName', should be equal to its ID, which "
-                           "is: 'FileID'. please update the file.", "BA101")
+        expected_result = ('The name attribute of myIntegration.yml (currently FileName) '
+                           'should be identical to its `id` attribute (FileID)', 'BA101')
         name = "FileName"
         file_id = "FileID"
-        result = Errors.id_should_equal_name(name, file_id)
+        result = Errors.id_should_equal_name(name, file_id, 'packs/myPack/integrations/myIntegration/myIntegration.yml')
         assert result == expected_result
 
     def test_file_type_not_supported(self):
@@ -98,7 +101,7 @@ class TestErrors(unittest.TestCase):
         error_statement = "The file type is not supported in the validate command.\n" \
                           "The validate command supports: Integrations, Scripts, Playbooks, " \
                           "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields," \
-                          " Object types, Object modules, Images, Release notes, Layouts, Jobs and Descriptions."
+                          " Object types, Object modules, Images, Release notes, Layouts, Jobs, Wizards, and Descriptions."
         expected_result = (error_statement, "BA102")
         result = Errors.file_type_not_supported()
         assert result == expected_result
@@ -166,3 +169,13 @@ class TestErrors(unittest.TestCase):
 
         result = Errors.integration_is_skipped(integration_id, skip_comment)
         assert result[0] == expected
+
+    def test_allowed_ignore_errors_format(self):
+        from demisto_sdk.commands.common.errors import ALLOWED_IGNORE_ERRORS
+        for error in ALLOWED_IGNORE_ERRORS:
+            assert ERROR_CODE_REGEX.fullmatch(error), f'{error} does not match an error code format'
+
+    def test_error_code_format(self):
+        from demisto_sdk.commands.common.errors import ERROR_CODE
+        for error in ERROR_CODE.values():
+            assert ERROR_CODE_REGEX.fullmatch(error['code']), f'{error} does not match an error code format'

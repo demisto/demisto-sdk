@@ -34,9 +34,9 @@ from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
     DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
-    DOC_FILES_DIR, ID_IN_COMMONFIELDS, ID_IN_ROOT, INCIDENT_FIELDS_DIR,
-    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
-    INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
+    DOC_FILES_DIR, ENV_DEMISTO_SDK_MARKETPLACE, ID_IN_COMMONFIELDS, ID_IN_ROOT,
+    INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
+    INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
     MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME, MODELING_RULES_DIR,
     OFFICIAL_CONTENT_ID_SET_PATH, PACK_METADATA_IRON_BANK_TAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
@@ -59,7 +59,7 @@ yaml = YAML_Handler()
 
 urllib3.disable_warnings()
 
-# inialize color palette
+# initialize color palette
 colorama.init()
 
 
@@ -70,6 +70,97 @@ class LOG_COLORS:
     YELLOW = colorama.Fore.YELLOW
     WHITE = colorama.Fore.WHITE
 
+
+class TagParser:
+    def __init__(self, tag_prefix: str, tag_suffix: str, remove_tag_text: bool = True):
+        self._tag_prefix = tag_prefix
+        self._tag_suffix = tag_suffix
+        self._pattern = re.compile(fr'{tag_prefix}((.|\s)+?){tag_suffix}')
+        self._remove_tag_text = remove_tag_text
+
+    def parse(self, text: str, remove_tag: Optional[bool] = None) -> str:
+        """
+        Given a prefix and suffix of an expected tag, remove the tag and the text it's wrapping, or just the wrappers
+        Args:
+            text (str): text that may contain given tags.
+            remove_tag (bool): overrides remove_tag_text value. Determines whether to remove the tag
+
+        Returns:
+            Text with no wrapper tags.
+        """
+        if text and 0 <= text.find(self._tag_prefix) < text.find(self._tag_suffix):
+            remove_tag = remove_tag if isinstance(remove_tag, bool) else self._remove_tag_text
+            # collect {orignal_text: text_to_replace}
+            matches = re.finditer(self._pattern, text)
+            replace_map = {}
+            for match in matches:
+                replace_val = '' if remove_tag else match.group(1)
+                replace_map[re.escape(match.group())] = replace_val
+
+            # replace collected text->replacement
+            pattern = re.compile("|".join(replace_map.keys()))
+            text = pattern.sub(lambda m: replace_map[re.escape(m.group(0))], text)
+        return text
+
+
+class MarketplaceTagParser:
+    XSOAR_PREFIX = '<~XSOAR>\n'
+    XSOAR_SUFFIX = '\n</~XSOAR>\n'
+    XSOAR_INLINE_PREFIX = '<~XSOAR>'
+    XSOAR_INLINE_SUFFIX = '</~XSOAR>'
+    XSIAM_PREFIX = '<~XSIAM>\n'
+    XSIAM_SUFFIX = '\n</~XSIAM>\n'
+    XSIAM_INLINE_PREFIX = '<~XSIAM>'
+    XSIAM_INLINE_SUFFIX = '</~XSIAM>'
+
+    def __init__(self, marketplace: str = MarketplaceVersions.XSOAR.value):
+        self.marketplace = marketplace
+        self._xsoar_parser = TagParser(
+            tag_prefix=self.XSOAR_PREFIX,
+            tag_suffix=self.XSOAR_SUFFIX,
+        )
+        self._xsoar_inline_parser = TagParser(
+            tag_prefix=self.XSOAR_INLINE_PREFIX,
+            tag_suffix=self.XSOAR_INLINE_SUFFIX,
+        )
+        self._xsiam_parser = TagParser(
+            tag_prefix=self.XSIAM_PREFIX,
+            tag_suffix=self.XSIAM_SUFFIX,
+        )
+        self._xsiam_inline_parser = TagParser(
+            tag_prefix=self.XSIAM_INLINE_PREFIX,
+            tag_suffix=self.XSIAM_INLINE_SUFFIX,
+        )
+
+    @property
+    def marketplace(self):
+        return self._marketplace
+
+    @marketplace.setter
+    def marketplace(self, marketplace):
+        self._marketplace = marketplace
+        self._should_remove_xsoar_text = marketplace != MarketplaceVersions.XSOAR.value
+        self._should_remove_xsiam_text = marketplace != MarketplaceVersions.MarketplaceV2.value
+
+    def parse_text(self, text):
+        # the order of parse is important. inline should always be checked after paragraph tag
+        # xsoar->xsoar_inline->xsiam->xsiam_inline
+        return self._xsiam_inline_parser.parse(
+            remove_tag=self._should_remove_xsiam_text,
+            text=self._xsiam_parser.parse(
+                remove_tag=self._should_remove_xsiam_text,
+                text=self._xsoar_inline_parser.parse(
+                    remove_tag=self._should_remove_xsoar_text,
+                    text=self._xsoar_parser.parse(
+                        remove_tag=self._should_remove_xsoar_text,
+                        text=text,
+                    ),
+                ),
+            ),
+        )
+
+
+MARKETPLACE_TAG_PARSER = None
 
 LOG_VERBOSE = False
 
@@ -87,6 +178,14 @@ def set_log_verbose(verbose: bool):
 
 def get_log_verbose() -> bool:
     return LOG_VERBOSE
+
+
+def get_mp_tag_parser():
+    global MARKETPLACE_TAG_PARSER
+    if MARKETPLACE_TAG_PARSER is None:
+        MARKETPLACE_TAG_PARSER = MarketplaceTagParser(
+            os.getenv(ENV_DEMISTO_SDK_MARKETPLACE, MarketplaceVersions.XSOAR.value))
+    return MARKETPLACE_TAG_PARSER
 
 
 def get_yml_paths_in_dir(project_dir: str, error_msg: str = '') -> Tuple[list, str]:
@@ -198,11 +297,13 @@ def get_core_pack_list() -> list:
     if not is_external_repository():
         core_pack_list = get_remote_file(
             'Tests/Marketplace/core_packs_list.json',
-            git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
+            git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
+                                                git_provider=GitProvider.GitHub)
         ) or []
         core_pack_list.extend(get_remote_file(
             'Tests/Marketplace/core_packs_mpv2_list.json',
-            git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
+            git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME,
+                                                git_provider=GitProvider.GitHub)
         ) or [])
         core_pack_list = list(set(core_pack_list))
     else:
@@ -243,8 +344,8 @@ def get_remote_file_from_api(
     github_token: Optional[str] = None
     gitlab_token: Optional[str] = None
     try:
-        github_token = git_content_config.credentials.github_token
-        gitlab_token = git_content_config.credentials.gitlab_token
+        github_token = git_content_config.CREDENTIALS.github_token
+        gitlab_token = git_content_config.CREDENTIALS.gitlab_token
         if git_content_config.git_provider == GitProvider.GitLab:
             res = requests.get(git_path,
                                params={'ref': tag},
@@ -277,8 +378,8 @@ def get_remote_file_from_api(
                     f'Getting file from local repository instead. \n'
                     f'If you wish to get the file from the remote repository, \n'
                     f'Please define your github or gitlab token in your environment.\n'
-                    f'`export {git_content_config.credentials.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n'
-                    f'export {git_content_config.credentials.ENV_GITLAB_TOKEN_NAME}=<TOKEN>', fg='yellow'
+                    f'`export {GitContentConfig.CREDENTIALS.ENV_GITHUB_TOKEN_NAME}=<TOKEN> or`\n'
+                    f'export {GitContentConfig.CREDENTIALS.ENV_GITLAB_TOKEN_NAME}=<TOKEN>', fg='yellow'
                 )
 
             click.secho(
@@ -530,16 +631,16 @@ def get_script_or_integration_id(file_path):
         return commonfields.get('id', ['-', ])
 
 
-def get_api_module_integrations_set(changed_api_modules, integration_set):
+def get_api_module_integrations_set(changed_api_modules: Set, integration_set: Set):
     integrations_set = list()
     for integration in integration_set:
         integration_data = list(integration.values())[0]
-        if integration_data.get('api_modules', '') in changed_api_modules:
+        if changed_api_modules & set(integration_data.get('api_modules', [])):
             integrations_set.append(integration_data)
     return integrations_set
 
 
-def get_api_module_ids(file_list):
+def get_api_module_ids(file_list) -> Set:
     """Extracts APIModule IDs from the file list"""
     api_module_set = set()
     if file_list:
@@ -607,9 +708,11 @@ def get_from_version(file_path):
 
     if data_dictionary:
         from_version = data_dictionary.get('fromversion') if 'fromversion' in data_dictionary \
-            else data_dictionary.get('fromVersion', DEFAULT_CONTENT_ITEM_FROM_VERSION)
-        if from_version == '':
-            return DEFAULT_CONTENT_ITEM_FROM_VERSION
+            else data_dictionary.get('fromVersion', '')
+
+        if not from_version:
+            logging.warning(f'fromversion/fromVersion was not found in {data_dictionary.get("id", "")}')
+            return ''
 
         if not re.match(r'^\d{1,2}\.\d{1,2}\.\d{1,2}$', from_version):
             raise ValueError(f'{file_path} fromversion is invalid "{from_version}". '
@@ -617,7 +720,7 @@ def get_from_version(file_path):
 
         return from_version
 
-    return DEFAULT_CONTENT_ITEM_FROM_VERSION
+    return ''
 
 
 def get_to_version(file_path):
@@ -1204,15 +1307,10 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
     if path.suffix == '.md':
         if 'README' in path.name:
             return FileType.README
-
-        if RELEASE_NOTES_DIR in path.parts:
+        elif RELEASE_NOTES_DIR in path.parts:
             return FileType.RELEASE_NOTES
-
-        if 'description' in path.name:
+        elif 'description' in path.name:
             return FileType.DESCRIPTION
-
-        if 'CONTRIBUTORS' in path.name:
-            return FileType.CONTRIBUTORS
 
         return FileType.CHANGELOG
 
@@ -1231,34 +1329,44 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.XSIAM_REPORT
         elif TRIGGER_DIR in path.parts:
             return FileType.TRIGGER
+        elif path.name == METADATA_FILE_NAME:
+            return FileType.METADATA
+        elif path.name.endswith(XSOAR_CONFIG_FILE):
+            return FileType.XSOAR_CONFIG
+        elif 'CONTRIBUTORS' in path.name:
+            return FileType.CONTRIBUTORS
 
-    # integration image
-    if path.name.endswith('_image.png'):
+    elif path.name.endswith('_image.png'):
         if path.name.endswith("Author_image.png"):
             return FileType.AUTHOR_IMAGE
         return FileType.IMAGE
 
-    # doc files images
-    if path.suffix == ".png" and DOC_FILES_DIR in path.parts:
+    elif path.suffix == ".png" and DOC_FILES_DIR in path.parts:
         return FileType.DOC_IMAGE
 
-    if path.suffix == '.ps1':
+    elif path.suffix == '.ps1':
         return FileType.POWERSHELL_FILE
 
-    if path.suffix == '.py':
+    elif path.suffix == '.py':
         return FileType.PYTHON_FILE
 
-    if path.suffix == '.js':
+    elif path.suffix == '.js':
         return FileType.JAVASCRIPT_FILE
 
-    if path.suffix == '.xif':
+    elif path.suffix == '.xif':
         return FileType.XIF_FILE
 
-    if path.name.endswith(XSOAR_CONFIG_FILE):
-        return FileType.XSOAR_CONFIG
-
-    if path.suffix == '.yml' and (path.parts[0] == '.circleci' or path.parts[0] == '.gitlab'):
+    elif path.suffix == '.yml' and (path.parts[0] in {'.circleci', '.gitlab'}):
         return FileType.BUILD_CONFIG_FILE
+
+    elif path.name == FileType.PACK_IGNORE.value:
+        return FileType.PACK_IGNORE
+
+    elif path.name == FileType.SECRET_IGNORE.value:
+        return FileType.SECRET_IGNORE
+
+    elif path.parent.name == DOC_FILES_DIR:
+        return FileType.DOC_FILE
 
     return None
 
@@ -1390,6 +1498,9 @@ def find_type(
 
         if isinstance(_dict, dict) and {'isAllFeeds', 'selectedFeeds', 'isFeed'}.issubset(_dict.keys()):
             return FileType.JOB
+
+        if isinstance(_dict, dict) and 'wizard' in _dict:
+            return FileType.WIZARD
 
         if 'dashboards_data' in _dict:
             return FileType.XSIAM_DASHBOARD
@@ -1695,12 +1806,11 @@ def _get_file_id(file_type: str, file_content: Dict):
     Returns:
         The file's content ID
     """
-    file_id = ''
     if file_type in ID_IN_ROOT:
-        file_id = file_content.get('id', '')
+        return file_content.get('id', '')
     elif file_type in ID_IN_COMMONFIELDS:
-        file_id = file_content.get('commonfields', {}).get('id')
-    return file_id
+        return file_content.get('commonfields', {}).get('id')
+    return file_content.get('trigger_id', '')
 
 
 def is_path_of_integration_directory(path: str) -> bool:
@@ -1909,24 +2019,47 @@ def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
     return fields_list
 
 
-def is_object_in_id_set(object_id, pack_info_from_id_set):
+def item_type_to_content_items_header(item_type):
+    converter = {
+        "incidenttype": "incidentType",
+        "reputation": "indicatorType",
+        "indicatorfield": "indicatorField",
+        "incidentfield": "incidentField",
+        "layoutscontainer": "layout",
+        "betaintegration": "integration",
+
+        # GOM
+        "genericdefinition": "genericDefinition",
+        "genericfield": "genericField",
+        "genericmodule": "genericModule",
+        "generictype": "genericType",
+
+        # SIEM content
+        "correlationrule": "correlationRule",
+        "modelingrule": "modelingRule",
+        "parsingrule": "parsingRule",
+    }
+
+    return f'{converter.get(item_type, item_type)}s'
+
+
+def is_object_in_id_set(object_id, item_type, pack_info_from_id_set):
     """
         Check if the given object is part of the packs items that are present in the Packs section in the id set.
         This is assuming that the id set is based on the version that has, under each pack, the items it contains.
 
     Args:
         object_name: name of object of interest.
-        pack: the pack this object should belong to.
-        packs_section_from_id_set: the section under the key Packs in the previously given id set.
+        object_type: type of object of interest.
+        packs_section_from_id_set: the pack object under the key Packs in the previously given id set.
 
     Returns:
 
     """
     content_items = pack_info_from_id_set.get('ContentItems', {})
-    for items_type, items_ids in content_items.items():
-        if object_id in items_ids:
-            return True
-    return False
+    items_ids = content_items.get(item_type_to_content_items_header(item_type), [])
+
+    return object_id in items_ids
 
 
 def is_string_uuid(string_to_check: str):
@@ -1991,7 +2124,7 @@ def get_file_displayed_name(file_path):
     elif file_type in [FileType.MAPPER, FileType.CLASSIFIER, FileType.INCIDENT_FIELD, FileType.INCIDENT_TYPE,
                        FileType.INDICATOR_FIELD, FileType.LAYOUTS_CONTAINER, FileType.PRE_PROCESS_RULES,
                        FileType.DASHBOARD, FileType.WIDGET,
-                       FileType.REPORT, FileType.JOB]:
+                       FileType.REPORT, FileType.JOB, FileType.WIZARD]:
         return get_json(file_path).get('name')
     elif file_type == FileType.OLD_CLASSIFIER:
         return get_json(file_path).get('brandName')
@@ -2390,7 +2523,7 @@ def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[st
             marketplaces = [MarketplaceVersions.XSOAR.value]
         else:
             pack_name = get_pack_name(item_path)
-            if packs:
+            if packs and packs.get(pack_name):
                 marketplaces = packs.get(pack_name, {}).get('marketplaces', [MarketplaceVersions.XSOAR.value])
             else:
                 marketplaces = get_mp_types_from_metadata_by_item(item_path)
@@ -2490,26 +2623,26 @@ def get_api_module_dependencies(pkgs, id_set_path, verbose):
     """
 
     id_set = open_id_set_file(id_set_path)
-    api_modules = [pkg.name for pkg in pkgs if API_MODULES_PACK in pkg.parts]
+    changed_api_modules = {pkg.name for pkg in pkgs if API_MODULES_PACK in pkg.parts}
     scripts = id_set.get(IdSetKeys.SCRIPTS.value, [])
     integrations = id_set.get(IdSetKeys.INTEGRATIONS.value, [])
     using_scripts, using_integrations = [], []
     for script in scripts:
         script_info = list(script.values())[0]
         script_name = script_info.get('name')
-        api_module = script_info.get('api_modules', [])
-        if api_module in api_modules:
+        script_api_modules = script_info.get('api_modules', [])
+        if intersection := changed_api_modules & set(script_api_modules):
             if verbose:
-                print(f"found script {script_name} dependent on {api_module}")
+                print(f"found script {script_name} dependent on {intersection}")
             using_scripts.extend(list(script.values()))
 
     for integration in integrations:
         integration_info = list(integration.values())[0]
         integration_name = integration_info.get('name')
-        api_module = integration_info.get('api_modules', [])
-        if api_module in api_modules:
+        script_api_modules = integration_info.get('api_modules', [])
+        if intersection := changed_api_modules & set(script_api_modules):
             if verbose:
-                print(f"found integration {integration_name} dependent on {api_module}")
+                print(f"found integration {integration_name} dependent on {intersection}")
             using_integrations.extend(list(integration.values()))
 
     using_scripts_pkg_paths = [Path(script.get('file_path')).parent.absolute() for
@@ -2663,9 +2796,146 @@ def extract_none_deprecated_command_names_from_yml(yml_data: dict) -> list:
     return commands_ls
 
 
+def extract_deprecated_command_names_from_yml(yml_data: dict) -> list:
+    """
+    Go over all the commands in a yml file and return their names.
+    Args:
+        yml_data (dict): the yml content as a dict
+
+    Returns:
+        list: a list of all the commands names
+    """
+    commands_ls = []
+    for command in yml_data.get('script', {}).get('commands', {}):
+        if command.get('deprecated'):
+            commands_ls.append(command.get('name'))
+    return commands_ls
+
+
 def remove_copy_and_dev_suffixes_from_str(field_name: str) -> str:
     for _ in range(field_name.count('_')):
         for suffix in SUFFIX_TO_REMOVE:
             if field_name.endswith(suffix):
                 field_name = field_name[:-len(suffix)]
     return field_name
+
+
+def get_display_name(file_path, file_data={}) -> str:
+    """ Gets the entity display name from the file.
+
+        :param file_path: The entity file path
+        :param file_data: The entity file data
+
+        :rtype: ``str``
+        :return The display name
+    """
+    if not file_data:
+        file_extension = os.path.splitext(file_path)[1]
+        if file_extension in ['.yml', '.json']:
+            file_data = get_file(file_path, file_extension)
+
+    if 'display' in file_data:
+        name = file_data.get('display', None)
+    elif 'layout' in file_data and isinstance(file_data['layout'], dict):
+        name = file_data['layout'].get('id')
+    elif 'name' in file_data:
+        name = file_data.get('name', None)
+    elif 'TypeName' in file_data:
+        name = file_data.get('TypeName', None)
+    elif 'brandName' in file_data:
+        name = file_data.get('brandName', None)
+    elif 'id' in file_data:
+        name = file_data.get('id', None)
+    elif 'trigger_name' in file_data:
+        name = file_data.get('trigger_name')
+
+    elif 'dashboards_data' in file_data and file_data.get('dashboards_data') \
+            and isinstance(file_data['dashboards_data'], list):
+        dashboard_data = file_data.get('dashboards_data', [{}])[0]
+        name = dashboard_data.get('name')
+
+    elif 'templates_data' in file_data and file_data.get('templates_data') \
+            and isinstance(file_data['templates_data'], list):
+        r_name = file_data.get('templates_data', [{}])[0]
+        name = r_name.get('report_name')
+
+    else:
+        name = os.path.basename(file_path)
+    return name
+
+
+def get_invalid_incident_fields_from_mapper(
+    mapper_incident_fields: Dict[str, Dict], mapping_type: str, content_fields: List
+) -> List[str]:
+    """
+    Get a list of incident fields which are not part of the content items (not part of id_json) from a specific
+    interalMapping attribute.
+
+    Args:
+        mapper_incident_fields (dict[str, dict]): a dict of incident fields which belongs to a specific interalMapping.
+        mapping_type (str): type of the mapper, either 'mapping-incoming' or 'mapping-outgoing'.
+        content_fields (list[str]): list of available content fields.
+
+    Returns:
+        list[str]: all the invalid incident fields which are not part of the content items.
+
+    Raises:
+        ValueError: in case the mapping type has an incorrect value provided.
+    """
+    if mapping_type not in {'mapping-incoming', 'mapping-outgoing'}:
+        raise ValueError(f'Invalid mapping-type value {mapping_type}, should be: mapping-incoming/mapping-outgoing')
+
+    non_existent_fields = []
+
+    for inc_name, inc_info in mapper_incident_fields.items():
+        # incoming mapper
+        if mapping_type == "mapping-incoming":
+            if inc_name not in content_fields and inc_name.lower() not in content_fields:
+                non_existent_fields.append(inc_name)
+        # outgoing mapper
+        if mapping_type == "mapping-outgoing":
+            # for inc timer type: "field.StartDate, and for using filters: "simple": "".
+            if simple := inc_info.get('simple'):
+                if '.' in simple:
+                    simple = simple.split('.')[0]
+                if simple not in content_fields:
+                    non_existent_fields.append(inc_name)
+
+    return non_existent_fields
+
+
+def get_invalid_incident_fields_from_layout(layout_incident_fields: List[Dict], content_fields: List[str]) -> List[str]:
+    """
+    Get a list of incident fields which are not part of the content items (not part of id_json) from a specific
+    layout item/section.
+
+    Args:
+        layout_incident_fields (list[dict]): a list of incident fields which
+            belongs to a specific section/item in the layout.
+        content_fields (list[str]): list of available content fields.
+
+    Returns:
+        list[str]: all the invalid incident fields which are not part of the content items.
+    """
+    non_existent_fields = []
+
+    if layout_incident_fields and content_fields:
+        for incident_field_info in layout_incident_fields:
+            inc_field_id = normalize_field_name(field=incident_field_info.get('fieldId', ''))
+            if inc_field_id and inc_field_id.lower() not in content_fields and inc_field_id not in content_fields:
+                non_existent_fields.append(inc_field_id)
+
+    return non_existent_fields
+
+
+def normalize_field_name(field: str) -> str:
+    """
+    Get the raw field from a layout/mapper field.
+
+    Input Example:
+        field = incident_employeenumber
+
+    Args:
+        field (str): the incident/indicator field.
+    """
+    return field.replace('incident_', '').replace('indicator_', '')

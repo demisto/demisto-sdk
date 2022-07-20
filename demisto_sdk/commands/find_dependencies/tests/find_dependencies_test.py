@@ -437,15 +437,12 @@ class TestIdSetFilters:
 
     def test_search_for_specific_pack_script_item(self, module_repo):
         pack_id = "PrismaCloudCompute"
-        import os
         expected_result = [
             {
                 "PrismaCloudComputeParseAuditAlert": {
                     "name": "PrismaCloudComputeParseAuditAlert",
-                    "file_path": os.path.join(
-                        module_repo.path,
-                        "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseAuditAlert/PrismaCloudComputeParseAuditAlert.yml"
-                    ),
+                    "display_name": "PrismaCloudComputeParseAuditAlert",
+                    "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseAuditAlert/PrismaCloudComputeParseAuditAlert.yml",
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "type": "python3",
@@ -456,10 +453,8 @@ class TestIdSetFilters:
             {
                 "PrismaCloudComputeParseCloudDiscoveryAlert": {
                     "name": "PrismaCloudComputeParseCloudDiscoveryAlert",
-                    "file_path": os.path.join(
-                        module_repo.path,
-                        "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseCloudDiscoveryAlert/PrismaCloudComputeParseCloudDiscoveryAlert.yml"
-                    ),
+                    "display_name": "PrismaCloudComputeParseCloudDiscoveryAlert",
+                    "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseCloudDiscoveryAlert/PrismaCloudComputeParseCloudDiscoveryAlert.yml",
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "type": "python3",
@@ -470,10 +465,8 @@ class TestIdSetFilters:
             {
                 "PrismaCloudComputeParseComplianceAlert": {
                     "name": "PrismaCloudComputeParseComplianceAlert",
-                    "file_path": os.path.join(
-                        module_repo.path,
-                        "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseComplianceAlert/PrismaCloudComputeParseComplianceAlert.yml"
-                    ),
+                    "display_name": "PrismaCloudComputeParseComplianceAlert",
+                    "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseComplianceAlert/PrismaCloudComputeParseComplianceAlert.yml",
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "type": "python3",
@@ -484,10 +477,8 @@ class TestIdSetFilters:
             {
                 "PrismaCloudComputeParseVulnerabilityAlert": {
                     "name": "PrismaCloudComputeParseVulnerabilityAlert",
-                    "file_path": os.path.join(
-                        module_repo.path,
-                        "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseVulnerabilityAlert/PrismaCloudComputeParseVulnerabilityAlert.yml"
-                    ),
+                    "display_name": "PrismaCloudComputeParseVulnerabilityAlert",
+                    "file_path": "Packs/PrismaCloudCompute/Scripts/PrismaCloudComputeParseVulnerabilityAlert/PrismaCloudComputeParseVulnerabilityAlert.yml",
                     "fromversion": '5.0.0',
                     "docker_image": "demisto/python3:3.8.3.8715",
                     "type": "python3",
@@ -517,6 +508,7 @@ class TestIdSetFilters:
             {
                 "Expanse_Incident_Playbook": {
                     "name": "Expanse_Incident_Playbook",
+                    "display_name": "Expanse_Incident_Playbook",
                     "file_path": "Packs/Expanse/Playbooks/Expanse_Incident_Playbook.yml",
                     "fromversion": "5.0.0",
                     "implementing_scripts": [
@@ -3271,7 +3263,7 @@ def test_remove_items_from_content_entities_sections():
         "incidentfield": {'field1'},
         "incidenttype": {'type1'},
         "indicatorfield": {'field1'},
-        "indicatortype": {'type1'},
+        "reputation": {'type1'},
         "mapper": {'mapper1'},
         "dashboard": {'dashboard1'},
         "widget": {'widget1'},

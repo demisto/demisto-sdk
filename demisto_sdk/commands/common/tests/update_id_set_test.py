@@ -10,7 +10,8 @@ import pytest
 import demisto_sdk.commands.common.tools as tools
 import demisto_sdk.commands.common.update_id_set as uis
 from demisto_sdk.commands.common.constants import (
-    FILETYPE_TO_DEFAULT_FROMVERSION, JOBS_DIR, FileType, MarketplaceVersions)
+    FILETYPE_TO_DEFAULT_FROMVERSION, JOBS_DIR, WIZARDS_DIR, FileType,
+    MarketplaceVersions)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
@@ -27,8 +28,8 @@ from demisto_sdk.commands.common.update_id_set import (
     get_values_for_keys_recursively, get_widget_data, get_xsiam_dashboard_data,
     get_xsiam_report_data, has_duplicate, merge_id_sets, process_general_items,
     process_incident_fields, process_integration, process_jobs,
-    process_layoutscontainers, process_script, re_create_id_set,
-    should_skip_item_by_mp)
+    process_layoutscontainers, process_script, process_wizards,
+    re_create_id_set, should_skip_item_by_mp)
 from TestSuite.utils import IsEqualFunctions
 
 json = JSON_Handler()
@@ -393,6 +394,7 @@ class TestIntegrations:
     INTEGRATION_DATA = {
         "Dummy Integration": {
             "name": "Dummy Integration",
+            "display_name": "Palo Alto Networks Cortex XDR - Investigation and Response",
             "file_path": TESTS_DIR + "/test_files/DummyPack/Integrations/DummyIntegration/DummyIntegration.yml",
             "fromversion": "4.1.0",
             "source": ['github.com', 'demisto', 'demisto-sdk'],
@@ -413,7 +415,7 @@ class TestIntegrations:
                          'xdr-get-create-distribution-status',
                          'xdr-get-audit-management-logs',
                          'xdr-get-audit-agent-reports'],
-            "api_modules": "HTTPFeedApiModule",
+            "api_modules": ["HTTPFeedApiModule"],
             "classifiers": "dummy-classifier",
             "incident_types": "dummy-incident-type",
             "indicator_fields": "CommonTypes",
@@ -429,6 +431,7 @@ class TestIntegrations:
     UNIFIED_INTEGRATION_DATA = {
         "Dummy Integration": {
             "name": "Dummy Integration",
+            "display_name": "Palo Alto Networks Cortex XDR - Investigation and Response",
             "file_path": TESTS_DIR + "/test_files/DummyPack/Integrations/integration-DummyIntegration.yml",
             "fromversion": "4.1.0",
             "source": ['github.com', 'demisto', 'demisto-sdk'],
@@ -448,7 +451,7 @@ class TestIntegrations:
                          'xdr-get-create-distribution-status',
                          'xdr-get-audit-management-logs',
                          'xdr-get-audit-agent-reports'],
-            "api_modules": "HTTPFeedApiModule",
+            "api_modules": ["HTTPFeedApiModule"],
             "classifiers": "dummy-classifier",
             "incident_types": "dummy-incident-type",
             "indicator_fields": "CommonTypes",
@@ -472,23 +475,25 @@ class TestIntegrations:
         Then
             - integration data will be collected properly
         """
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
+        mocker.patch.object(tools, 'get_pack_name', return_value='DummyPack')
+        packs = {'DummyPack': {'marketplaces': [MarketplaceVersions.XSOAR.value]}}
+
         non_unified_file_path = os.path.join(TESTS_DIR, 'test_files',
                                              'DummyPack', 'Integrations', 'DummyIntegration')
-        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        res, _ = process_integration(non_unified_file_path, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, print_logs=True)
+        res, _ = process_integration(non_unified_file_path, packs, MarketplaceVersions.XSOAR.value, print_logs=True)
         assert len(res) == 1
         non_unified_integration_data = res[0]
 
         unified_file_path = os.path.join(TESTS_DIR, 'test_files',
                                          'DummyPack', 'Integrations', 'integration-DummyIntegration.yml')
-
-        res, _ = process_integration(unified_file_path, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, print_logs=True)
+        res, _ = process_integration(unified_file_path, packs, MarketplaceVersions.XSOAR.value, print_logs=True)
         assert len(res) == 1
         unified_integration_data = res[0]
 
         test_pairs = [
             (non_unified_integration_data, TestIntegrations.INTEGRATION_DATA),
-            (unified_integration_data, TestIntegrations.UNIFIED_INTEGRATION_DATA)
+            (unified_integration_data, TestIntegrations.UNIFIED_INTEGRATION_DATA),
         ]
 
         for returned, constant in test_pairs:
@@ -538,6 +543,7 @@ class TestScripts:
     SCRIPT_DATA = {
         "DummyScript": {
             "name": "DummyScript",
+            "display_name": "DummyScript",
             "file_path": TESTS_DIR + "/test_files/DummyPack/Scripts/DummyScript2.yml",
             "source": ['github.com', 'demisto', 'demisto-sdk'],
             "marketplaces": ["xsoar"],
@@ -553,6 +559,7 @@ class TestScripts:
     SCRIPT_DATA_ALTERNATIVE_TOP_LEVEL = {
         "DummyScript": {
             "name": "DummyScript",
+            "display_name": "DummyScript",
             "file_path": TESTS_DIR + '/test_files/alternative_meta_fields/Script-top_level_alternative_fields.yml',
             "source": ['github.com', 'demisto', 'demisto-sdk'],
             "marketplaces": ["xsoar"],
@@ -569,6 +576,7 @@ class TestScripts:
     SCRIPT_DATA_ALTERNATIVE_SECOND_LEVEL = {
         "DummyScript": {
             "name": "DummyScript",
+            "display_name": "DummyScript",
             "file_path": TESTS_DIR + '/test_files/alternative_meta_fields/Script-second_level_alternative_fields.yml',
             "source": ['github.com', 'demisto', 'demisto-sdk'],
             "marketplaces": ["xsoar"],
@@ -585,7 +593,8 @@ class TestScripts:
     PACK_SCRIPT_DATA = {
         "DummyScript": {
             "name": "DummyScript",
-            "file_path": TESTS_DIR + "/test_files/Packs/DummyPack/Scripts/DummyScript/DummyScript.yml",
+            "display_name": "DummyScript",
+            "file_path": "Packs/DummyPack/Scripts/DummyScript/DummyScript.yml",
             "source": ['github.com', 'demisto', 'demisto-sdk'],
             "marketplaces": ["xsoar"],
             "docker_image": "demisto/python3:3.8.2.6981",
@@ -595,12 +604,14 @@ class TestScripts:
     }
 
     @staticmethod
-    def test_get_script_data():
+    def test_get_script_data(mocker):
         """
         Test for getting the script data
         """
         file_path = TESTS_DIR + '/test_files/DummyPack/Scripts/DummyScript2.yml'
-        data = get_script_data(file_path, packs={'DummyPack': {}})
+        mocker.patch.object(tools, 'get_pack_name', return_value='DummyPack')
+
+        data = get_script_data(file_path, packs={'DummyPack': {'marketplaces': [MarketplaceVersions.XSOAR.value]}})
 
         assert list(data.keys()) == list(TestScripts.SCRIPT_DATA.keys())
 
@@ -610,7 +621,7 @@ class TestScripts:
         assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
 
     @staticmethod
-    def test_get_script_data_with_alternative_fields_top_level():
+    def test_get_script_data_with_alternative_fields_top_level(mocker):
         """
         Given
             - A script file which contains alternative fields in the top level of the yml.
@@ -622,8 +633,10 @@ class TestScripts:
             - parsing all the data from file successfully
             - making sure the entry has a field called "has_alternative_meta" set to True
         """
+        mocker.patch.object(tools, 'get_pack_name', return_value='DummyPack')
+
         file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Script-top_level_alternative_fields.yml'
-        data = get_script_data(file_path, packs={'DummyPack': {}})
+        data = get_script_data(file_path, packs={'DummyPack': {'marketplaces': [MarketplaceVersions.XSOAR.value]}})
 
         assert list(data.keys()) == list(TestScripts.SCRIPT_DATA_ALTERNATIVE_TOP_LEVEL.keys())
 
@@ -633,7 +646,7 @@ class TestScripts:
         assert IsEqualFunctions.is_dicts_equal(returned_data, const_data)
 
     @staticmethod
-    def test_get_script_data_with_alternative_fields_second_level():
+    def test_get_script_data_with_alternative_fields_second_level(mocker):
         """
         Given
             - A script file which contains alternative fields in the second level of the yml.
@@ -645,8 +658,10 @@ class TestScripts:
             - parsing all the data from file successfully
             - making sure the entry has a field called "has_alternative_meta" set to True
         """
+        mocker.patch.object(tools, 'get_pack_name', return_value='DummyPack')
+
         file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Script-second_level_alternative_fields.yml'
-        data = get_script_data(file_path, packs={'DummyPack': {}})
+        data = get_script_data(file_path, packs={'DummyPack': {'marketplaces': [MarketplaceVersions.XSOAR.value]}})
 
         assert (list(data.keys()) == list(TestScripts.SCRIPT_DATA_ALTERNATIVE_SECOND_LEVEL.keys()))
 
@@ -700,7 +715,8 @@ class TestScripts:
         test_file_path = os.path.join(TESTS_DIR, 'test_files',
                                       'Packs', 'DummyPack', 'Scripts', 'DummyScript')
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        res, _ = process_script(test_file_path, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, print_logs=True)
+        res, _ = process_script(test_file_path, {'DummyPack': {'marketplaces': [MarketplaceVersions.XSOAR.value]}},
+                                MarketplaceVersions.XSOAR.value, print_logs=True)
         assert len(res) == 1
         data = res[0]
 
@@ -723,10 +739,10 @@ class TestScripts:
         Then
             - return empty list
         """
-        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=True)
-        test_file_path = os.path.join(TESTS_DIR, 'test_files', 'invalid_file_structures', 'integration.yml')
-        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        res, _ = process_script(test_file_path, {'DummyPack': {}}, MarketplaceVersions.XSOAR.value, print_logs=False)
+        test_file_path = os.path.join(TESTS_DIR, 'test_files',
+                                      'Packs', 'DummyPack', 'Scripts', 'DummyScript')
+        res, _ = process_script(test_file_path, {'DummyPack': {'marketplaces': [MarketplaceVersions.MarketplaceV2.value]}},
+                                MarketplaceVersions.XSOAR.value, print_logs=False)
         assert res == []
 
     @staticmethod
@@ -751,6 +767,7 @@ class TestScripts:
 class TestPlaybooks:
     PLAYBOOK_DATA = {
         "name": "Dummy Playbook",
+        "display_name": "Dummy Playbook",
         "file_path": TESTS_DIR + "/test_files/DummyPack/Playbooks/DummyPlaybook.yml",
         "source": ['github.com', 'demisto', 'demisto-sdk'],
         "fromversion": "4.5.0",
@@ -781,6 +798,7 @@ class TestPlaybooks:
 
     PLAYBOOK_DATA_ALTERNATIVE_FIELDS_TOP_LEVEL = {
         "name": "Dummy Playbook",
+        "display_name": "Dummy Playbook",
         "file_path": TESTS_DIR + "/test_files/alternative_meta_fields/Playbook-top_level_alternative_fields.yml",
         "source": ['github.com', 'demisto', 'demisto-sdk'],
         "fromversion": "4.5.0",
@@ -812,6 +830,7 @@ class TestPlaybooks:
 
     PLAYBOOK_DATA_ALTERNATIVE_FIELDS_SECOND_LEVEL = {
         "name": "Dummy Playbook",
+        "display_name": "Dummy Playbook",
         "file_path": TESTS_DIR + "/test_files/alternative_meta_fields/Playbook-second_level_alternative_fields.yml",
         "source": ['github.com', 'demisto', 'demisto-sdk'],
         "marketplaces": ["xsoar"],
@@ -842,16 +861,17 @@ class TestPlaybooks:
     }
 
     @staticmethod
-    def test_get_playbook_data():
+    def test_get_playbook_data(mocker):
         """
         Test for getting the playbook data
         """
+        mocker.patch.object(tools, 'get_pack_name', return_value='DummyPack')
         file_path = TESTS_DIR + '/test_files/DummyPack/Playbooks/DummyPlaybook.yml'
-        data = get_playbook_data(file_path, packs={'DummyPack': {}})['Dummy Playbook']
+        data = get_playbook_data(file_path, packs={'DummyPack': {'marketplaces': [MarketplaceVersions.XSOAR.value]}})['Dummy Playbook']
         assert IsEqualFunctions.is_dicts_equal(data, TestPlaybooks.PLAYBOOK_DATA, lists_as_sets=True)
 
     @staticmethod
-    def test_get_playbook_data_with_alternative_fields_top_level():
+    def test_get_playbook_data_with_alternative_fields_top_level(mocker):
         """
         Given
             - A playbook file which contains alternative fields in the top level of the yml.
@@ -863,15 +883,16 @@ class TestPlaybooks:
             - parsing all the data from file successfully
             - making sure the entry has a field called "has_alternative_meta" set to True
         """
+        mocker.patch.object(tools, 'get_pack_name', return_value='DummyPack')
         file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Playbook-top_level_alternative_fields.yml'
-        data = get_playbook_data(file_path, packs={'DummyPack': {}})['Dummy Playbook']
+        data = get_playbook_data(file_path, packs={'DummyPack': {'marketplaces': [MarketplaceVersions.XSOAR.value]}})['Dummy Playbook']
 
         assert IsEqualFunctions.is_dicts_equal(data,
                                                TestPlaybooks.PLAYBOOK_DATA_ALTERNATIVE_FIELDS_TOP_LEVEL,
                                                lists_as_sets=True)
 
     @staticmethod
-    def test_get_playbook_data_with_alternative_fields_second_level():
+    def test_get_playbook_data_with_alternative_fields_second_level(mocker):
         """
         Given
             - A playbook file which contains alternative fields in the second level of the yml.
@@ -883,8 +904,9 @@ class TestPlaybooks:
             - parsing all the data from file successfully
             - making sure the entry has a field called "has_alternative_meta" set to True
         """
+        mocker.patch.object(tools, 'get_pack_name', return_value='DummyPack')
         file_path = TESTS_DIR + '/test_files/alternative_meta_fields/Playbook-second_level_alternative_fields.yml'
-        data = get_playbook_data(file_path, packs={'DummyPack': {}})['Dummy Playbook']
+        data = get_playbook_data(file_path, packs={'DummyPack': {'marketplaces': [MarketplaceVersions.XSOAR.value]}})['Dummy Playbook']
         assert IsEqualFunctions.is_dicts_equal(data,
                                                TestPlaybooks.PLAYBOOK_DATA_ALTERNATIVE_FIELDS_SECOND_LEVEL,
                                                lists_as_sets=True)
@@ -905,6 +927,7 @@ class TestPlaybooks:
         result = get_playbook_data(test_dir, packs={'DummyPack': {}})
         result = result.get('Arcsight - Get events related to the Case')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'implementing_scripts' in result.keys()
         assert 'command_to_integration' in result.keys()
@@ -931,6 +954,7 @@ class TestPlaybooks:
         result = get_playbook_data(test_dir, packs={'DummyPack': {}})
         result = result.get('Arcsight - Get events related to the Case')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'implementing_scripts' in result.keys()
         assert 'command_to_integration' in result.keys()
@@ -973,6 +997,7 @@ class TestPlaybooks:
         result = get_playbook_data(test_file_path, packs={'DummyPack': {}})
         playbook_data = result.get('InvalidPlaybook-BadGraph', {})
         assert playbook_data.get('name') == 'InvalidPlaybook-BadGraph'
+        assert playbook_data.get('display_name') == 'InvalidPlaybook-BadGraph'
         assert playbook_data.get('command_to_integration', {}).get('ip') == ''
         assert playbook_data.get('command_to_integration', {}).get('domain') == ''
         assert 'domain' in playbook_data.get('skippable_tasks', [])
@@ -995,6 +1020,7 @@ class TestPlaybooks:
         result = get_playbook_data(test_file_path, packs={'DummyPack': {}})
         playbook_data = result.get('InvalidPlaybook-BadGraph', {})
         assert playbook_data.get('name') == 'InvalidPlaybook-BadGraph'
+        assert playbook_data.get('display_name') == 'InvalidPlaybook-BadGraph'
         assert playbook_data.get('command_to_integration', {}).get('ip') == ''
         assert playbook_data.get('command_to_integration', {}).get('domain') == ''
         # domain task is marked as skippable so it will be included regardless to the graph.
@@ -1140,6 +1166,7 @@ class TestLayouts:
         result = result.get('urlRep')
         assert 'kind' in result.keys()
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'toversion' in result.keys()
         assert 'file_path' in result.keys()
@@ -1169,6 +1196,7 @@ class TestLayouts:
         result = result.get('urlRep')
         assert 'kind' in result.keys()
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'toversion' in result.keys()
         assert 'file_path' in result.keys()
@@ -1196,6 +1224,7 @@ class TestLayouts:
         result = result.get('layouts_container_test')
         assert 'detailsV2' in result.keys()
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'group' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'toversion' in result.keys()
@@ -1288,6 +1317,7 @@ class TestIncidentFields:
         result = res[0]
         result = result.get('incidentfield-test')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'toversion' in result.keys()
@@ -1317,6 +1347,7 @@ class TestIncidentFields:
         result = res[0]
         result = result.get('incidentfield_upload_id')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'incident_types' in result.keys()
@@ -1344,6 +1375,7 @@ class TestIncidentFields:
         result = res[0]
         result = result.get('incidentfield-test')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'toversion' in result.keys()
@@ -1386,6 +1418,7 @@ class TestIndicatorType:
         result = get_indicator_type_data(test_dir, [{'integration': {'commands': ['ip']}}])
         result = result.get('indicator-type-dummy')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'integrations' in result.keys()
@@ -1413,6 +1446,7 @@ class TestIndicatorType:
         result = get_indicator_type_data(test_dir, [])
         result = result.get('indicator-type-dummy')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'integrations' not in result.keys()
@@ -1437,6 +1471,7 @@ class TestIncidentTypes:
         res = get_incident_type_data(test_file)
         result = res.get('dummy incident type')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'playbooks' in result.keys()
@@ -1461,6 +1496,7 @@ class TestIncidentTypes:
         res = get_incident_type_data(test_file)
         result = res.get('dummy incident type')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'playbooks' not in result.keys()
@@ -1488,6 +1524,7 @@ class TestClassifiers:
         res = get_classifier_data(test_file)
         result = res.get('dummy classifier')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'incident_types' not in result.keys()
@@ -1513,6 +1550,7 @@ class TestMappers:
         res = get_mapper_data(test_file)
         result = res.get('dummy mapper')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'incident_types' in result.keys()
@@ -1545,6 +1583,7 @@ class TestMappers:
         res = get_mapper_data(test_file)
         result = res.get('dummy mapper')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'incident_types' in result.keys()
@@ -1578,6 +1617,7 @@ class TestMappers:
         res = get_mapper_data(test_file)
         result = res.get('dummy mapper')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'incident_types' not in result.keys()
@@ -1874,6 +1914,7 @@ class TestMappers:
         mapper = get_mapper_data('')
         mapper_data = mapper.get('ServiceNow-outgoing-mapper')
         assert mapper_data.get('name') == 'ServiceNow - Outgoing Mapper'
+        assert mapper_data.get('display_name') == 'ServiceNow - Outgoing Mapper'
         assert mapper_data.get('fromversion') == '6.0.0'
         assert mapper_data.get('incident_types') == ['ServiceNow Ticket']
         assert set(mapper_data.get('incident_fields')) == {
@@ -1925,6 +1966,7 @@ class TestWidget:
         res = get_widget_data(test_file)
         result = res.get('dummy_widget')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'scripts' in result.keys()
@@ -1948,6 +1990,7 @@ class TestWidget:
         res = get_widget_data(test_file)
         result = res.get('dummy_widget')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'scripts' not in result.keys()
@@ -1961,7 +2004,6 @@ class TestDashboard:
                 "widget": {
                     "category": "",
                     "dataType": "scripts",
-                    "fromServerVersion": "",
                     "id": "dummy_widget",
                     "name": "dummy_dashboard",
                     "query": "dummy_script",
@@ -1986,7 +2028,6 @@ class TestDashboard:
                     "id": "dummy_widget",
                     "name": "dummy_dashboard",
                     "packID": "",
-                    "toServerVersion": "",
                     "widgetType": "table"
                 },
             }
@@ -2018,6 +2059,7 @@ class TestDashboard:
         res = get_dashboard_data(test_file)
         result = res.get('dummy_dashboard')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'scripts' in result.keys()
@@ -2045,6 +2087,7 @@ class TestDashboard:
         res = get_dashboard_data(test_file)
         result = res.get('dummy_dashboard')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'scripts' not in result.keys()
@@ -2120,6 +2163,7 @@ class TestReport:
         res = get_report_data(test_file)
         result = res.get('dummy_report')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'scripts' in result.keys()
@@ -2146,6 +2190,7 @@ class TestReport:
         res = get_report_data(test_file)
         result = res.get('dummy_report')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'scripts' not in result.keys()
@@ -2173,6 +2218,7 @@ class TestGenericFunctions:
         result = res[0]
         result = result.get('dummy classifier')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'incident_types' in result.keys()
@@ -2587,6 +2633,7 @@ class TestGenericFields:
         result = get_generic_field_data(test_dir, generic_types_list=generic_types_list)
         result = result.get('id')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'definitionId' in result.keys()
@@ -2617,6 +2664,7 @@ class TestGenericType:
         result = get_generic_type_data(test_dir)
         result = result.get('type-id')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'layout' in result.keys()
@@ -2646,6 +2694,7 @@ class TestGenericDefinition:
         result = get_general_data(test_dir)
         result = result.get('type-id')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'pack' in result.keys()
@@ -2692,6 +2741,7 @@ class TestGenericModule:
         result = get_generic_module_data(test_dir)
         result = result.get('id')
         assert 'name' in result.keys()
+        assert 'display_name' in result.keys()
         assert 'file_path' in result.keys()
         assert 'fromversion' in result.keys()
         assert 'definitionIds' in result.keys()
@@ -2723,6 +2773,7 @@ class TestJob:
         assert len(res) == 1
         datum = res[0][job.pure_name]
         assert datum['name'] == job.pure_name
+        assert datum['display_name'] == job.pure_name
         path = Path(datum['file_path'])
         assert path.name == f'job-{job.pure_name}.json'
         assert path.exists()
@@ -2785,6 +2836,46 @@ class TestJob:
         assert f"failed to process job {job_json_path}" in capsys.readouterr().out
 
 
+class TestWizard:
+    EXPECTED_DEPENDENCY_PACKS = ['CrowdStrikeFalcon', 'MicrosoftDefenderAdvancedThreatProtection']
+
+    @staticmethod
+    @pytest.mark.parametrize('print_logs', (True, False))
+    def test_process_wizards(capsys, repo, print_logs: bool, mocker):
+        """
+        Given
+            - A repo with a wizard object.
+            - Whether to print logs.
+        When
+            - Parsing wizard files.
+        Then
+            - Verify output to logs.
+        """
+        pack = repo.create_pack()
+        mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
+        wizard = pack.create_wizard('wizard')
+        res = process_wizards(wizard.path, {pack.name: {}}, MarketplaceVersions.XSOAR.value, print_logs)
+
+        captured = capsys.readouterr()
+        assert len(res) == 1
+        datum = res[0][wizard.id]
+        assert datum['name'] == wizard.id
+        assert datum['display_name'] == wizard.id
+        assert set(datum['dependency_packs']) == set(TestWizard.EXPECTED_DEPENDENCY_PACKS)
+        path = Path(datum['file_path'])
+        assert path.name == wizard.name
+        assert path.exists()
+        assert path.is_file()
+        assert path.suffix == '.json'
+        assert path.parts[-2] == WIZARDS_DIR
+        assert path.parts[-3] == pack.name
+
+        assert datum['fromversion'] == FILETYPE_TO_DEFAULT_FROMVERSION.get(FileType.WIZARD)
+        assert datum['pack'] == pack.name
+
+        assert (f'adding {wizard.path} to id_set' in captured.out) == print_logs
+
+
 class TestParsingRules:
     @staticmethod
     def test_process_parsing_rules(mocker, capsys, pack):
@@ -2806,6 +2897,7 @@ class TestParsingRules:
 
         assert len(res) == 2
         assert 'name' in parsing_rule_result.keys()
+        assert 'display_name' in parsing_rule_result.keys()
         assert 'file_path' in parsing_rule_result.keys()
         assert 'pack' in parsing_rule_result.keys()
 
@@ -2837,6 +2929,7 @@ class TestModelingRules:
 
         assert len(res) == 2
         assert 'name' in modeling_rule_result.keys()
+        assert 'display_name' in modeling_rule_result.keys()
         assert 'file_path' in modeling_rule_result.keys()
         assert 'pack' in modeling_rule_result.keys()
 
@@ -2869,6 +2962,7 @@ class TestCorrelationRules:
 
         assert len(res) == 2
         assert 'name' in correlation_rule_result.keys()
+        assert 'display_name' in correlation_rule_result.keys()
         assert 'file_path' in correlation_rule_result.keys()
         assert 'pack' in correlation_rule_result.keys()
 
@@ -2901,6 +2995,7 @@ class TestXSIAMDashboards:
 
         assert len(res) == 2
         assert 'name' in xsiam_dashboard_result.keys()
+        assert 'display_name' in xsiam_dashboard_result.keys()
         assert 'file_path' in xsiam_dashboard_result.keys()
         assert 'pack' in xsiam_dashboard_result.keys()
 
@@ -2932,6 +3027,7 @@ class TestXSIAMReports:
 
         assert len(res) == 2
         assert 'name' in xsiam_report_result.keys()
+        assert 'display_name' in xsiam_report_result.keys()
         assert 'file_path' in xsiam_report_result.keys()
         assert 'pack' in xsiam_report_result.keys()
 
@@ -2963,6 +3059,7 @@ class TestTriggers:
 
         assert len(res) == 2
         assert 'name' in trigger_result.keys()
+        assert 'display_name' in trigger_result.keys()
         assert 'file_path' in trigger_result.keys()
         assert 'pack' in trigger_result.keys()
 

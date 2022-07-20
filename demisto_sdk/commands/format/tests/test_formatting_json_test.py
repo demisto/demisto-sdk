@@ -29,6 +29,8 @@ from demisto_sdk.commands.format.update_indicatortype import \
 from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
 from demisto_sdk.commands.format.update_lists import ListsFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
+from demisto_sdk.commands.format.update_pack_metadata import \
+    PackMetadataJsonFormat
 from demisto_sdk.commands.format.update_pre_process_rules import \
     PreProcessRulesFormat
 from demisto_sdk.commands.format.update_report import ReportJSONFormat
@@ -59,8 +61,34 @@ from demisto_sdk.tests.constants_test import (
     SOURCE_FORMAT_LAYOUTS_CONTAINER_COPY, SOURCE_FORMAT_LISTS_COPY,
     SOURCE_FORMAT_MAPPER, SOURCE_FORMAT_PRE_PROCESS_RULES_COPY,
     SOURCE_FORMAT_REPORT, SOURCE_FORMAT_WIDGET, WIDGET_PATH)
+from TestSuite.json_based import JSONBased
 
 json = JSON_Handler()
+
+
+@pytest.fixture()
+def id_set_file_mock(tmp_path):
+    """
+    Mock the id set file with incident/indicator fields.
+    """
+    id_set_file = JSONBased(
+        dir_path=tmp_path,
+        name="id_set_file",
+        prefix=''
+    )
+    id_set_file.write_json(
+        {
+            "IncidentFields": [
+                {"incident_incident-field-1": {"name": "Incident-Field-1"}},
+                {'incident_incident-field-2': {"name": "Incident-Field-2"}}
+            ],
+            "IndicatorFields": [
+                {"indicator_indicator-field-1": {"name": "Indicator Field"}},
+                {"indicator_indicator-field-2": {"name": "Indicator Field"}}
+            ]
+        }
+    )
+    return id_set_file
 
 
 class TestFormattingJson:
@@ -540,7 +568,7 @@ def test_set_marketplaces_xsoar_only_for_aliased_fields(mocker, pack, marketplac
 
 class TestFormattingLayoutscontainer:
 
-    @pytest.fixture(autouse=True)
+    @pytest.fixture()
     def layoutscontainer_copy(self):
         os.makedirs(LAYOUTS_CONTAINER_PATH, exist_ok=True)
         yield shutil.copyfile(SOURCE_FORMAT_LAYOUTS_CONTAINER, DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY)
@@ -548,12 +576,63 @@ class TestFormattingLayoutscontainer:
             os.remove(DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY)
         shutil.rmtree(LAYOUTS_CONTAINER_PATH, ignore_errors=True)
 
-    @pytest.fixture(autouse=True)
+    @pytest.fixture()
     def layoutscontainer_formatter(self, layoutscontainer_copy):
         layoutscontainer_formatter = LayoutBaseFormat(
             input=layoutscontainer_copy, output=DESTINATION_FORMAT_LAYOUTS_CONTAINER_COPY, clear_cache=True)
         layoutscontainer_formatter.schema_path = LAYOUTS_CONTAINER_SCHEMA_PATH
         yield layoutscontainer_formatter
+
+    @pytest.mark.parametrize(
+        'layout_key_field_1, layout_key_field_2',
+        [('detailsV2', 'details'), ('close', 'quickView')]
+    )
+    def test_remove_non_existent_fields(
+        self, layout_key_field_1, layout_key_field_2, pack, id_set_file_mock
+    ):
+        """
+        Given
+            - a layout container json file content
+
+        When
+            - removing in-existent fields from the container-layout.
+
+        Then
+            - Ensure incident fields which are not in the id set file are removed from the container-layout.
+        """
+        container_layout_content = {}
+        for layout_key in (layout_key_field_1, layout_key_field_2):
+            container_layout_content[layout_key] = {
+                "tabs": [
+                    {
+                        "sections": [
+                            {
+                                "items": [
+                                    {"fieldId": "incident-field-1"},
+                                    {"fieldId": "incident-field-3"},
+                                    {"fieldId": "incident-field-2"}
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+
+        formatter = LayoutBaseFormat(
+            input=pack.create_layoutcontainer(
+                name="layoutscontainer-in-existent-fields-test", content=container_layout_content
+            ).path,
+            id_set_path=id_set_file_mock.path
+        )
+
+        # remove the original container layout
+        for layout_key in (layout_key_field_1, layout_key_field_2):
+            container_layout_content[layout_key]["tabs"][0]["sections"][0]["items"] = [
+                {"fieldId": "incident-field-1"}, {"fieldId": "incident-field-2"}
+            ]
+
+        formatter.remove_non_existent_fields_container_layout()
+        assert formatter.data == container_layout_content
 
     @patch('builtins.input', lambda *args: 'incident')
     def test_set_group_field(self, layoutscontainer_formatter):
@@ -718,18 +797,18 @@ class TestFormattingLayoutscontainer:
 
 class TestFormattingLayout:
 
-    @pytest.fixture(autouse=True)
+    @pytest.fixture()
     def layouts_copy(self):
         os.makedirs(LAYOUT_PATH, exist_ok=True)
         yield shutil.copyfile(SOURCE_FORMAT_LAYOUT_COPY, DESTINATION_FORMAT_LAYOUT_COPY)
         os.remove(DESTINATION_FORMAT_LAYOUT_COPY)
         os.rmdir(LAYOUT_PATH)
 
-    @pytest.fixture(autouse=True)
+    @pytest.fixture()
     def layouts_formatter(self, layouts_copy):
         yield LayoutBaseFormat(input=layouts_copy, output=DESTINATION_FORMAT_LAYOUT_COPY)
 
-    @pytest.fixture(autouse=True)
+    @pytest.fixture()
     def invalid_path_layouts_formatter(self, layouts_copy):
         yield LayoutBaseFormat(input=layouts_copy, output=DESTINATION_FORMAT_LAYOUT_INVALID_NAME_COPY)
 
@@ -746,6 +825,44 @@ class TestFormattingLayout:
         layouts_formatter.remove_unnecessary_keys()
         for field in ['fromServerVersion', 'quickView', 'sortValues', 'locked']:
             assert field not in layouts_formatter.data
+
+    def test_remove_non_existent_fields(self, pack, id_set_file_mock):
+        """
+        Given
+            - a layout json file content.
+
+        When
+            - removing in-existent fields from the layout.
+
+        Then
+            - Ensure incident fields which are not in the id set file are removed from the layout.
+        """
+        layout_content = {
+            "layout": {
+                "sections": [
+                    {
+                        "fields": [
+                            {"fieldId": "incident-field-4"},
+                            {"fieldId": "incident-field-2"},
+                            {"fieldId": "incident-field-5"},
+                        ]
+                    }
+                ]
+            }
+        }
+
+        formatter = LayoutBaseFormat(
+            input=pack.create_layout(
+                name="layout-non-existent-fields-test", content=layout_content
+            ).path,
+            id_set_path=id_set_file_mock.path
+        )
+
+        # remove the original container layout
+        layout_content["layout"]["sections"][0]["fields"] = [{"fieldId": "incident-field-2"}]
+
+        formatter.remove_non_existent_fields_layout()
+        assert formatter.data == layout_content
 
     def test_set_description(self, layouts_formatter):
         """
@@ -1028,18 +1145,113 @@ class TestFormattingOldClassifier:
             assert field not in classifier_formatter.data
 
 
+class TestFormattingPackMetaData:
+
+    @pytest.mark.parametrize(
+        'deprecated_integration, pack_name, pack_description, new_pack_name_to_use',
+        [
+            (True, 'pack name', 'pack description', 'pack v2'),
+            (True, 'pack name (Deprecated)', 'Deprecated. Use pack v2 instead.', 'pack v2'),
+            (True, 'pack name', 'pack description', ''),
+            (False, 'pack name', 'pack description', ''),
+        ]
+    )
+    def test_deprecate_pack(
+        self, mocker, pack, deprecated_integration, pack_name, pack_description, new_pack_name_to_use
+    ):
+        """
+        Given
+          - Case 1: a deprecated integration and a pack that its description/name doesn't state its deprecated.
+          - Case 2: a deprecated integration and a pack that its description/name states its deprecated.
+          - Case 3: a deprecated integration and a pack that its description/name doesn't state its deprecated.
+          - Case 4: a non-deprecated integration and a pack that its description/name doesn't state its deprecated.
+
+        When
+          - running trying to run the deprecate pack format.
+
+        Then
+          - Case 1: pack name should be: pack name (Deprecated),
+                    pack description should be: Deprecated. Use pack v2 instead.
+          - Case 2: pack name should be: pack name (Deprecated),
+                    pack description should be: Deprecated. Use pack v2 instead.
+                    (nothing should change as pack is already deprecated).
+          - Case 3: pack name should be: pack name (Deprecated),
+                    pack description should be: Deprecated. no available replacement.
+          - Case 4: pack name should be: pack name, pack description should be: pack description.
+        """
+        pack.create_integration(name='integration-1').yml.update({'deprecated': deprecated_integration})
+        pack.pack_metadata.update({'name': pack_name, 'description': pack_description})
+
+        pack_metadata_formatter = PackMetadataJsonFormat(input=pack.pack_metadata.path)
+        mocker.patch.object(pack_metadata_formatter, 'get_answer', return_value=new_pack_name_to_use)
+
+        pack_metadata_formatter.deprecate_pack()
+        if deprecated_integration:
+            expected_pack_name = 'pack name (Deprecated)'
+            if new_pack_name_to_use:
+                expected_pack_description = f'Deprecated. Use {new_pack_name_to_use} instead.'
+            else:
+                expected_pack_description = 'Deprecated. No available replacement.'
+        else:
+            expected_pack_name = 'pack name'
+            expected_pack_description = 'pack description'
+        assert pack_metadata_formatter.data['name'] == expected_pack_name
+        assert pack_metadata_formatter.data['description'] == expected_pack_description
+
+
 class TestFormattingMapper:
 
-    @pytest.fixture(autouse=True)
+    @pytest.fixture()
     def mapper_copy(self):
         os.makedirs(MAPPER_PATH, exist_ok=True)
         yield shutil.copyfile(SOURCE_FORMAT_MAPPER, DESTINATION_FORMAT_MAPPER)
         os.remove(DESTINATION_FORMAT_MAPPER)
         os.rmdir(MAPPER_PATH)
 
-    @pytest.fixture(autouse=True)
+    @pytest.fixture()
     def mapper_formatter(self, mapper_copy):
         yield MapperJSONFormat(input=mapper_copy, output=DESTINATION_FORMAT_MAPPER)
+
+    @pytest.mark.parametrize('mapper_type', ["mapping-outgoing", "mapping-incoming"])
+    def test_remove_non_existent_fields(self, mapper_type, id_set_file_mock, pack):
+        """
+        Given
+            - outgoing json file content.
+            - incoming json file content.
+
+        When
+            - removing in-existent fields from the mapper.
+
+        Then
+            - Ensure incident fields which are not in the id set file are removed from the mapper.
+        """
+        mapper_content = {"mapping": {}, "type": mapper_type}
+        for i in range(1, 3):
+            mapper_content["mapping"][f"test-case-{i}"] = {
+                "internalMapping": {
+                    "Incident-Field-1": {
+                        "simple": "incident-field-1"
+                    },
+                    "Incident-Field-2": {
+                        "simple": "incident-field-2.dueDate"
+                    },
+                    f"not-existing-field-{i}": {
+                        "simple": "incident-field-3"
+                    }
+                }
+            }
+
+        formatter = MapperJSONFormat(
+            input=pack.create_classifier(name=f"{mapper_type}-non-existent-fields-test", content=mapper_content).path,
+            id_set_path=id_set_file_mock.path
+        )
+
+        formatter.remove_non_existent_fields()
+
+        for i in range(1, 3):
+            mapper_content["mapping"][f"test-case-{i}"]["internalMapping"].pop(f"not-existing-field-{i}")
+
+        assert formatter.data == mapper_content
 
     def test_remove_unnecessary_keys(self, mapper_formatter):
         """

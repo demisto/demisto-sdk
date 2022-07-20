@@ -1,11 +1,12 @@
 # Site packages
+import copy
 import logging
 import os
 import sys
 import tempfile
 from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
-from typing import IO
+from typing import IO, Any, Dict
 
 import click
 import git
@@ -13,8 +14,8 @@ from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, MODELING_RULES_DIR, PARSING_RULES_DIR,
-    FileType)
+    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, ENV_DEMISTO_SDK_MARKETPLACE,
+    MODELING_RULES_DIR, PARSING_RULES_DIR, FileType, MarketplaceVersions)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
@@ -211,11 +212,12 @@ def split(config, **kwargs):
 
     check_configuration_file('split', kwargs)
     file_type: FileType = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
-    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.GENERIC_MODULE]:
-        print_error('File is not an Integration, Script or Generic Module.')
+    if file_type not in [FileType.INTEGRATION, FileType.SCRIPT, FileType.GENERIC_MODULE, FileType.MODELING_RULE,
+                         FileType.PARSING_RULE]:
+        print_error('File is not an Integration, Script, Generic Module, Modeling Rule or Parsing Rule.')
         return 1
 
-    if file_type in [FileType.INTEGRATION, FileType.SCRIPT]:
+    if file_type in [FileType.INTEGRATION, FileType.SCRIPT, FileType.MODELING_RULE, FileType.PARSING_RULE]:
         yml_splitter = YmlSplitter(configuration=config.configuration, file_type=file_type.value, **kwargs)
         return yml_splitter.extract_to_package_format()
 
@@ -287,6 +289,10 @@ def extract_code(config, **kwargs):
     is_flag=True,
     show_default=False
 )
+@click.option('-mp', '--marketplace',
+              help='The marketplace the content items are created for, that determines usage of marketplace '
+                   'unique text. Default is the XSOAR marketplace.',
+              default='xsoar', type=click.Choice(['xsoar', 'marketplacev2', 'v2']))
 def unify(**kwargs):
     """
     This command has three main functions:
@@ -307,7 +313,8 @@ def unify(**kwargs):
     kwargs['input'] = str(kwargs['input'])
     file_type = find_type(kwargs['input'])
     custom = kwargs.pop('custom')
-
+    if marketplace := kwargs.get('marketplace'):
+        os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
     if file_type == FileType.GENERIC_MODULE:
         from demisto_sdk.commands.unify.generic_module_unifier import \
             GenericModuleUnifier
@@ -357,6 +364,9 @@ def zip_packs(**kwargs) -> int:
     # if upload is true - all zip packs will be compressed to one zip file
     should_upload = kwargs.pop('upload', False)
     zip_all = kwargs.pop('zip_all', False) or should_upload
+
+    if marketplace := kwargs.get('marketplace'):
+        os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
 
     packs_zipper = PacksZipper(zip_all=zip_all, pack_paths=kwargs.pop('input'), quiet_mode=zip_all, **kwargs)
     zip_path, unified_pack_names = packs_zipper.zip_packs()
@@ -464,6 +474,10 @@ def zip_packs(**kwargs) -> int:
     "--no-multiprocessing",
     help="run validate all without multiprocessing, for debugging purposes.",
     is_flag=True, default=False)
+@click.option(
+    '-sv', '--run-specific-validations',
+    help="Run specific validations by stating the error codes.",
+    is_flag=False)
 @pass_config
 def validate(config, **kwargs):
     """Validate your content files. If no additional flags are given, will validated only committed files."""
@@ -507,6 +521,7 @@ def validate(config, **kwargs):
             quiet_bc=kwargs.get('quiet_bc_validation'),
             multiprocessing=run_with_mp,
             check_is_unskipped=not kwargs.get('allow_skipped', False),
+            specific_validations=kwargs.get('run_specific_validations'),
         )
         return validator.run_validation()
     except (git.InvalidGitRepositoryError, git.NoSuchPathError, FileNotFoundError) as e:
@@ -565,6 +580,8 @@ def create_content_artifacts(**kwargs) -> int:
         ArtifactsManager
     logging_setup(3)
     check_configuration_file('create-content-artifacts', kwargs)
+    if marketplace := kwargs.get('marketplace'):
+        os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
     artifacts_conf = ArtifactsManager(**kwargs)
     return artifacts_conf.create_content_artifacts()
 
@@ -882,6 +899,10 @@ def format(
     help="Compress the pack to zip before upload, this flag is relevant only for packs.", is_flag=True
 )
 @click.option(
+    "-x", "--xsiam",
+    help="Upload the pack to XSIAM server. Must be used together with -z", is_flag=True
+)
+@click.option(
     "--keep-zip", help="Directory where to store the zip after creation, this argument is relevant only for packs "
                        "and in case the --zip flag is used.", required=False, type=click.Path(exists=True))
 @click.option(
@@ -924,10 +945,15 @@ def upload(**kwargs):
             pack_path = config_file_to_parse.parse_file()
             kwargs['detached_files'] = True
             kwargs.pop('input_config_file')
+        if kwargs.pop('xsiam', False):
+            marketplace = MarketplaceVersions.MarketplaceV2.value
+        else:
+            marketplace = MarketplaceVersions.XSOAR.value
+        os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
 
         output_zip_path = kwargs.pop('keep_zip') or tempfile.gettempdir()
         packs_unifier = PacksZipper(pack_paths=pack_path, output=output_zip_path,
-                                    content_version='0.0.0', zip_all=True, quiet_mode=True)
+                                    content_version='0.0.0', zip_all=True, quiet_mode=True, marketplace=marketplace)
         packs_zip_path, pack_names = packs_unifier.zip_packs()
         if packs_zip_path is None and not kwargs.get('detached_files'):
             return EX_FAIL
@@ -938,6 +964,7 @@ def upload(**kwargs):
         kwargs.pop('zip')
         kwargs.pop('keep_zip')
         kwargs.pop('input_config_file')
+        kwargs.pop('xsiam', None)
 
     check_configuration_file('upload', kwargs)
     return Uploader(**kwargs).upload()
@@ -1360,15 +1387,52 @@ def init(**kwargs):
     "--old-version", help="Path of the old integration version yml file.")
 @click.option(
     "--skip-breaking-changes", is_flag=True, help="Skip generating of breaking changes section.")
+@click.option(
+    "--custom-image-path", help="A custom path to a playbook image. If not stated, a default link will be added to the file.")
 def generate_docs(**kwargs):
     """Generate documentation for integration, playbook or script from yaml file."""
+
+    check_configuration_file('generate-docs', kwargs)
+    input_path_str: str = kwargs.get('input', '')
+    if not (input_path := Path(input_path_str)).exists():
+        print_error(f'input {input_path_str} does not exist')
+        return 1
+
+    if (output_path := kwargs.get('output')) and not Path(output_path).is_dir():
+        print_error(f'Output directory {output_path} is not a directory.')
+        return 1
+
+    if input_path.is_file():
+        if input_path.suffix.lower() != '.yml':
+            print_error(f'input {input_path} is not a valid yml file.')
+            return 1
+        _generate_docs_for_file(kwargs)
+
+    # Add support for input which is a Playbooks directory and not a single yml file
+    elif input_path.is_dir() and input_path.name == 'Playbooks':
+        for yml in input_path.glob('*.yml'):
+            file_kwargs = copy.deepcopy(kwargs)
+            file_kwargs['input'] = str(yml)
+            _generate_docs_for_file(file_kwargs)
+
+    else:
+        print_error(F'Input {input_path} is neither a valid yml file, nor a folder named Playbooks.')
+        return 1
+
+    return 0
+
+
+def _generate_docs_for_file(kwargs: Dict[str, Any]):
+    """Helper function for supporting Playbooks directory as an input and not only a single yml file."""
+
     from demisto_sdk.commands.generate_docs.generate_integration_doc import \
         generate_integration_doc
     from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
         generate_playbook_doc
     from demisto_sdk.commands.generate_docs.generate_script_doc import \
         generate_script_doc
-    check_configuration_file('generate-docs', kwargs)
+
+    # Extract all the necessary arguments
     input_path: str = kwargs.get('input', '')
     output_path = kwargs.get('output')
     command = kwargs.get('command')
@@ -1379,19 +1443,7 @@ def generate_docs(**kwargs):
     verbose: bool = kwargs.get('verbose', False)
     old_version: str = kwargs.get('old_version', '')
     skip_breaking_changes: bool = kwargs.get('skip_breaking_changes', False)
-
-    # validate inputs
-    if input_path and not os.path.isfile(input_path):
-        print_error(F'Input file {input_path} was not found.')
-        return 1
-
-    if not input_path.lower().endswith('.yml'):
-        print_error(F'Input {input_path} is not a valid yml file.')
-        return 1
-
-    if output_path and not os.path.isdir(output_path):
-        print_error(F'Output directory {output_path} was not found.')
-        return 1
+    custom_image_path: str = kwargs.get('custom_image_path', '')
 
     if command:
         if output_path and (not os.path.isfile(os.path.join(output_path, "README.md"))) \
@@ -1413,8 +1465,8 @@ def generate_docs(**kwargs):
         print_error(F'Input old version {old_version} is not a valid yml file.')
         return 1
 
-    print(f'Start generating {file_type.value} documentation...')
     if file_type == FileType.INTEGRATION:
+        print(f'Generating {file_type.value.lower()} documentation')
         use_cases = kwargs.get('use_cases')
         command_permissions = kwargs.get('command_permissions')
         return generate_integration_doc(input_path=input_path, output=output_path, use_cases=use_cases,
@@ -1424,12 +1476,14 @@ def generate_docs(**kwargs):
                                         old_version=old_version,
                                         skip_breaking_changes=skip_breaking_changes)
     elif file_type == FileType.SCRIPT:
+        print(f'Generating {file_type.value.lower()} documentation')
         return generate_script_doc(input_path=input_path, output=output_path, examples=examples,
                                    permissions=permissions,
                                    limitations=limitations, insecure=insecure, verbose=verbose)
     elif file_type == FileType.PLAYBOOK:
+        print(f'Generating {file_type.value.lower()} documentation')
         return generate_playbook_doc(input_path=input_path, output=output_path, permissions=permissions,
-                                     limitations=limitations, verbose=verbose)
+                                     limitations=limitations, verbose=verbose, custom_image_path=custom_image_path)
     else:
         print_error(f'File type {file_type.value} is not supported.')
         return 1
@@ -2205,7 +2259,7 @@ def error_code(config, **kwargs):
     sys.exit(result)
 
 
-@main.resultcallback()
+@main.result_callback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)
 

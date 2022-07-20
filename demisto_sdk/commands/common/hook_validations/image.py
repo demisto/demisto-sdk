@@ -7,8 +7,8 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_DBOT_IMAGE_BASE64, DEFAULT_IMAGE_BASE64, IMAGE_REGEX,
     PACKS_INTEGRATION_NON_SPLIT_YML_REGEX)
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import (
+    BaseValidator, error_codes)
 from demisto_sdk.commands.common.tools import get_yaml, os, re
 
 
@@ -24,9 +24,9 @@ class ImageValidator(BaseValidator):
     IMAGE_HEIGHT = 50
 
     def __init__(self, file_path, ignored_errors=None, print_as_warnings=False, suppress_print=False,
-                 json_file_path=None):
+                 json_file_path=None, specific_validations=None):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print, json_file_path=json_file_path)
+                         suppress_print=suppress_print, json_file_path=json_file_path, specific_validations=specific_validations)
         self._is_valid = True
         self.file_path = ''
         if file_path.endswith('.png'):
@@ -66,6 +66,7 @@ class ImageValidator(BaseValidator):
 
         return self._is_valid
 
+    @error_codes('IM101,IM111,IM108')
     def validate_size(self,
                       allow_empty_image_file: bool,
                       maximum_size: int = IMAGE_MAX_SIZE,
@@ -112,6 +113,7 @@ class ImageValidator(BaseValidator):
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self._is_valid = False
 
+    @error_codes('IM102,IM100')
     def is_existing_image(self):
         """Check if the integration has an image."""
         is_image_in_yml = False
@@ -143,6 +145,7 @@ class ImageValidator(BaseValidator):
 
         return True
 
+    @error_codes('IM103,IM104,IM105')
     def load_image_from_yml(self):
         data_dictionary = get_yaml(self.file_path)
 
@@ -180,6 +183,7 @@ class ImageValidator(BaseValidator):
 
         return image
 
+    @error_codes('IM106')
     def is_not_default_image(self):
         """Check if the image is the default one"""
         image = self.load_image()
@@ -191,11 +195,17 @@ class ImageValidator(BaseValidator):
                 return False
         return True
 
+    @error_codes('IM107')
     def is_valid_image_name(self):
         """Check if the image name is valid"""
         image_path = self.file_path
+        integrations_folder = os.path.basename(os.path.dirname(image_path))
+        image_file = os.path.basename(image_path)
 
-        if not image_path.endswith("_image.png"):
+        # drop '_image' suffix and file extension
+        image_file_base_name = image_file.rsplit('_', 1)[0]
+
+        if not image_path.endswith("_image.png") or integrations_folder != image_file_base_name:
             error_message, error_code = Errors.invalid_image_name()
 
             if self.handle_error(error_message, error_code, file_path=image_path):

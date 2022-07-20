@@ -12,6 +12,7 @@ SKIP_RETURN_CODE = 2
 SKIP_VALIDATE_PY_RETURN_CODE = 3
 GENERIC_FIELD_DEFAULT_GROUP = 4
 GENERIC_FIELD_DEFAULT_ID_PREFIX = 'generic_'
+JSON_FROM_SERVER_VERSION_KEY = 'fromServerVersion'
 
 ARGUMENTS_DEFAULT_VALUES = {
     'content': (True, ['IncidentFieldJSONFormat', 'IndicatorFieldJSONFormat', 'GenericFieldJSONFormat']),

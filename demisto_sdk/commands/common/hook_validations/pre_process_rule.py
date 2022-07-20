@@ -17,8 +17,8 @@ class PreProcessRuleValidator(ContentEntityValidator):
                  json_file_path=None, **kwargs):
         super().__init__(structure_validator, ignored_errors, print_as_warnings,
                          json_file_path=json_file_path, **kwargs)
-        self.from_version = self.current_file.get('fromServerVersion')
-        self.to_version = self.current_file.get('toServerVersion')
+        self.from_version = self.current_file.get('fromVersion')
+        self.to_version = self.current_file.get('toVersion')
 
     def is_valid_pre_process_rule(self, validate_rn=True, id_set_file=None, is_ci=False) -> bool:
         """Check whether the pre_process_rules is valid or not.
@@ -26,10 +26,9 @@ class PreProcessRuleValidator(ContentEntityValidator):
         Returns:
             bool. Whether the pre_process_rules is valid or not
         """
-        # PreProcessRules files have fromServerVersion instead of fromVersion
         validations: List = [
             self.is_valid_version(),
-            self.is_valid_from_server_version(),
+            self.is_valid_from_version(),
         ]
         if id_set_file:
             validations.extend([
@@ -50,7 +49,7 @@ class PreProcessRuleValidator(ContentEntityValidator):
         return self._is_valid_version()
 
     @error_codes('PP100')
-    def is_valid_from_server_version(self) -> bool:
+    def is_valid_from_version(self) -> bool:
         """Checks if from version field is valid.
 
         Returns:
@@ -58,7 +57,7 @@ class PreProcessRuleValidator(ContentEntityValidator):
         """
         if self.from_version:
             if LooseVersion(self.from_version) < LooseVersion(FROM_VERSION_PRE_PROCESS_RULES):
-                error_message, error_code = Errors.invalid_from_server_version_in_pre_process_rules('fromServerVersion')
+                error_message, error_code = Errors.invalid_from_version_in_pre_process_rules()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
         return True

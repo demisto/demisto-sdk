@@ -825,7 +825,8 @@ class Errors:
     @error_code_decorator
     def error_starting_mdx_server(line):
         return f'Failed starting mdx server. stdout: {line}.\n' \
-               f'Try running the following command: `npm install`'
+               f'Running `npm install` may solve the issue. ' \
+               f'(note: installation happens in the folder level, and may be required for each repo/folder)'
 
     @staticmethod
     @error_code_decorator

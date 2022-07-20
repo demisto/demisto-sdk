@@ -98,6 +98,7 @@ class YmlSplitter:
         except ValueError as ex:
             print_error(str(ex))
             return 1
+        self.print_logs("Using my custom sdk version", log_color=LOG_COLORS.NATIVE)
         self.print_logs("Starting migration of: {} to dir: {}".format(self.input, output_path),
                         log_color=LOG_COLORS.NATIVE)
         output_path.mkdir(parents=True, exist_ok=True)

@@ -1692,12 +1692,14 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_metadata_non_approved_usecases(non_approved_usecases: set) -> str:
-        return f'The pack metadata contains non approved usecases: {", ".join(non_approved_usecases)}'
+        return f'The pack metadata contains non approved usecases: {", ".join(non_approved_usecases)}' \
+               f'The list of approved use cases can be found in https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories'
 
     @staticmethod
     @error_code_decorator
     def pack_metadata_non_approved_tags(non_approved_tags: set) -> str:
-        return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}'
+        return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}' \
+               f'The list of approved tags can be found in https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories'
 
     @staticmethod
     @error_code_decorator

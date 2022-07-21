@@ -22,7 +22,7 @@ from demisto_sdk.commands.common.tools import (find_type,
                                                get_release_note_entries,
                                                is_external_repository,
                                                print_error, print_success,
-                                               print_warning)
+                                               print_warning, get_content_path)
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
 json = JSON_Handler()
@@ -135,7 +135,7 @@ def check_configuration_file(command, args):
 def main(config, version, release_notes):
     config.configuration = Configuration()
     import dotenv
-    dotenv.load_dotenv(Path(os.getcwd()) / '.env', override=True)  # Load a .env file from the cwd.
+    dotenv.load_dotenv(Path(get_content_path()) / '.env', override=True)  # Load a .env file from the cwd.
     if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
         try:
             __version__ = get_distribution('demisto-sdk').version

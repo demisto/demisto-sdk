@@ -8,6 +8,7 @@
 * Fixed an issue where the suggestion in case of `IF113` included uppercase letters for the `cliName` parameter.
 * Added new validation to the **validate** command to fail and list all the file paths of files that are using a deprecated integration command / script / playbook.
 * **validate** will no longer fail on playbooks calling subplaybooks that have a higher `fromVersion` value, if  calling the subplaybook has `skipifunavailable=True`.
+* Fixed an issue where relative paths were not accessed correctly.
 
 ## 1.7.0
 * Allowed JSON Handlers to accept kwargs, for custoimzing behavior.
@@ -22,7 +23,7 @@
 * Fixed an issue causing any command to crash when unable to detect local repository properties.
 * Fixed an issue where running in a private gitlab repo caused a warning message to be shown multiple times.
 * Added a new validation to the **validate** command to verify that markdown and python files do not contain words related to copyright section.
-* Fixed an issue where **lint** crashd when provided an input file path (expecting a directory).
+* Fixed an issue where **lint** crashed when provided an input file path (expecting a directory).
 * Added a new validation to **validate**, making sure all inputs of a playbook are used.
 * Added a new validation to **validate**, making sure all inputs used in a playbook declared in the input section.
 

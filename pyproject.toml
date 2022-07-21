@@ -102,6 +102,7 @@ types-filelock = "^3.2.5"
 types-Markdown = "^3.3.21"
 types-futures = "^3.3.8"
 paramiko = "^2.11.0"
+neomodel = "^4.0.8"
 
 [tool.poetry.dev-dependencies]
 mitmproxy = "^8.0.0"

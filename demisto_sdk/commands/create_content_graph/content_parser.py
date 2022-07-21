@@ -70,7 +70,7 @@ class PackParser(BaseContentParser):
 
     def parse_pack(self) -> None:
         for folder in self.path.iterdir():
-            if folder.is_dir() and PackFolder.has_value(folder.parts[-1]):
+            if folder.is_dir() and PackFolder.has_value(folder.parts[-1]) and not folder.name.startswith('.'):
                 self.parse_pack_folder(folder)
 
     def parse_pack_folder(self, folder_path: Path) -> None:
@@ -110,7 +110,7 @@ class ContentItemParser(BaseContentParser):
 
     @staticmethod
     def is_content_item_package(path: Path) -> bool:
-        return path.is_dir()
+        return path.is_dir() and not path.name.startswith('.')
     
     @staticmethod
     def is_unified_content_item(path: Path) -> bool:
@@ -215,13 +215,13 @@ class IntegrationParser(IntegrationScriptParser):
 
     def get_integration_api_module(self) -> Optional[str]:
         integration_code = self.yml_data.get('script', {}).get('script', '')
-        if not integration_code:
+        if not integration_code or integration_code == '-':
             if self.unifier:
                 _, integration_code = self.unifier.get_script_or_integration_package_data()
             else:
                 return None  # todo: raise exception?
-
-        return IntegrationScriptUnifier.check_api_module_imports(integration_code)[1]
+        api_module = IntegrationScriptUnifier.check_api_module_imports(integration_code)
+        return list(api_module.values())[0] if api_module else None
 
 
 class ScriptParser(IntegrationScriptParser):
@@ -284,7 +284,7 @@ class RepositoryParser:
         self.parse_repository()
     
     def parse_repository(self) -> None:
-        packs_directories = [p for p in self.packs_path.iterdir() if p.is_dir()]
+        packs_directories = [p for p in self.packs_path.iterdir() if p.is_dir() and not p.name.startswith('.')]
         with Manager() as manager:
             pool = manager.Pool(processes=PROCESSES_COUNT)
             for pack in pool.map(PackParser, packs_directories):

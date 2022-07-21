@@ -1,21 +1,21 @@
-import nodes
-from constants import PackFolder, PACKS_FOLDER, PACK, COMMAND
+from constants import PACK_METADATA_FILENAME, ContentTypes, Rel
 
 from demisto_sdk.commands.unify.integration_script_unifier import \
     IntegrationScriptUnifier
 from demisto_sdk.commands.common.tools import get_json, get_yaml, get_yml_paths_in_dir
 
 import re
+import sys
 import traceback
+
 from pathlib import Path
-from typing import Dict, List, Type, Union, Optional, Any
+from typing import Dict, List, Union, Optional, Any, Tuple, Type
 
-from multiprocessing import cpu_count, Manager
+UNIFIED_FILES_SUFFIXES = ['.yml']
+EXECUTE_CMD_PATTERN = re.compile(r"execute_?command\(['\"](\w+)['\"].*")
 
-PROCESSES_COUNT = cpu_count() - 1
 
-
-def get_yaml_in_folder(folder_path: Path, is_unified_file: bool) -> Dict[str, Union[str, List[str]]]:
+def get_yaml_from_path(folder_path: Path, is_unified_file: bool) -> Dict[str, Union[str, List[str]]]:
     try:
         if is_unified_file:
             return get_yaml(folder_path)
@@ -27,37 +27,62 @@ def get_yaml_in_folder(folder_path: Path, is_unified_file: bool) -> Dict[str, Un
 
 
 class BaseContentParser:
-    def __init__(self, id_: str) -> None:
-        print(f'Parsing {id_}')
-        self.id_: str = id_
-    
+    def __init__(self, id_: str, content_type: ContentTypes) -> None:
+        self.node_id: str = f'{content_type.value}:{id_}'
+        self.content_type: ContentTypes = content_type
+        print(f'Parsing {self.node_id}')
+
     def get_data(self) -> Dict[str, Any]:
         return {
-            'id': self.id_,
+            'id': self.node_id,
         }
+
+    def create_node(self) -> Dict[str, Any]:
+        node = {
+            'labels': self.content_type.labels,
+            'data': {prop: val for prop, val in self.get_data().items() if val is not None},
+        }
+        PackParser.nodes.append(node)
+
+    def create_relationship(self, rel_type: Rel, target_node: str, **kwargs: Dict[str, Any]) -> None:
+        relationship = {
+            'from': self.node_id,
+            'type': rel_type.value,
+            'to': target_node,
+        }
+        if kwargs:
+            relationship.update({'props': kwargs})
+        PackParser.relationships.append(relationship)
 
 
 class PackParser(BaseContentParser):
-    PACK_METADATA_FILENAME = 'pack_metadata.json'
+    nodes: List[Dict[str, Any]] = []
+    relationships: List[Dict[str, Any]] = []
     def __init__(self, pack_folder: Path) -> None:
-        super().__init__(id_=f'{PACK}:{pack_folder.parts[-1]}')
-        self.path = pack_folder
+        super().__init__(pack_folder.parts[-1], ContentTypes.PACK)
+        self.path: Path = pack_folder
         try:
-            self.metadata = get_json(pack_folder / self.PACK_METADATA_FILENAME)
-            self.marketplaces = self.metadata.get('marketplaces', [])
-            self.node = nodes.PackNode.create_or_update(self.get_data())
+            self.metadata: Dict[str, Any] = get_json(pack_folder / PACK_METADATA_FILENAME)
+            self.marketplaces: List[str] = self.metadata.get('marketplaces', [])
+            self.create_node()
             self.parse_pack()
         except Exception as e:
             print(traceback.format_exc())
-            raise e
+            raise Exception(traceback.format_exc())
+    
+    @staticmethod
+    def to_graph(path: Path) -> Tuple[List, List]:
+        pack_parser: PackParser = PackParser(path)
+        return pack_parser.nodes, pack_parser.relationships
 
     def get_data(self) -> Dict[str, Any]:
-        pack_data = {
+        return {
+            'id': self.node_id,
             'name': self.metadata.get('name'),
             'file_path': self.path.as_posix(),
             'current_version': self.metadata.get('currentVersion'),
             'source': ['github.com', 'demisto', 'content'],  # todo
-            'author': self.metadata.get('author', ''),
+            'author': self.metadata.get('author'),
             'certification': 'certified' if self.metadata.get('support', '').lower() in ['xsoar', 'partner'] else '',
             'tags': self.metadata.get('tags', []),
             'use_cases': self.metadata.get('useCases', []),
@@ -65,205 +90,237 @@ class PackParser(BaseContentParser):
             'deprecated': self.metadata.get('deprecated', False),
             'marketplaces': self.marketplaces,
         }
-        pack_data.update(super().get_data())
-        return pack_data
 
     def parse_pack(self) -> None:
-        for folder in self.path.iterdir():
-            if folder.is_dir() and PackFolder.has_value(folder.parts[-1]):
-                self.parse_pack_folder(folder)
+        for folder in ContentTypes.pack_folders(self.path):
+            self.parse_pack_folder(folder)
 
     def parse_pack_folder(self, folder_path: Path) -> None:
-        for content_item in folder_path.iterdir():
-            if content_item_parser := ContentItemParser.from_path(content_item, self.marketplaces):
-                self.node.content_items.connect(content_item_parser.node)
+        for content_item_path in folder_path.iterdir():
+            if content_item := ContentItemParser.from_path(content_item_path, self.marketplaces):
+                content_item.connect_to_pack(self.node_id)
 
 
 class ContentItemParser(BaseContentParser):
-    def __init__(self, id_: str, content_type: str, path: Path, marketplaces: List[str]) -> None:
-        super().__init__(id_=f'{content_type}:{id_}')
-        self.type = content_type
-        self.name = id_
-        self.path = path
-        self.marketplaces = marketplaces
-        self.dependencies: List[str] = []
+    def __init__(
+        self,
+        id_: str,
+        content_type: ContentTypes,
+        path: Path,
+        deprecated: bool,
+        marketplaces: List[str],
+    ) -> None:
+        super().__init__(id_, content_type)
+        self.path: Path = path
+        self.deprecated = deprecated
+        self.marketplaces: List[str] = marketplaces
 
     @staticmethod
-    def by_folder(folder: PackFolder) -> Type['ContentItemParser']:
-        folder_to_parser = {
-            PackFolder.INTEGRATIONS: IntegrationParser,
-            PackFolder.SCRIPTS: ScriptParser,
-        }
-        return folder_to_parser.get(folder)
+    def is_package(path: Path) -> bool:
+        return path.is_dir()
+
+    @staticmethod
+    def is_unified_file(path: Path) -> bool:
+        return path.suffix in UNIFIED_FILES_SUFFIXES
+
+    @staticmethod
+    def is_content_item(path: Path) -> bool:
+        return ContentItemParser.is_package(path) or ContentItemParser.is_unified_file(path)
 
     @staticmethod
     def from_path(path: Path, marketplaces: List[str]) -> Optional['ContentItemParser']:
-        folder = PackFolder(path.parts[-2])
-        if parser := ContentItemParser.by_folder(folder):
-            if parser.is_content_item_package(path):
-                return parser(path, marketplaces)
+        if not ContentItemParser.is_content_item(path):
+            return None
 
-            elif parser.is_unified_content_item(path):
-                return parser(path, marketplaces, is_unified_file=True)
+        content_type: str = ContentTypes.by_folder(path.parts[-2]).value
+        parser_class_name: str = f'{content_type}Parser'
+        try:
+            parser_class: Type['ContentItemParser'] = getattr(sys.modules[__name__], parser_class_name)
+            return parser_class(path, marketplaces)
+        except (AttributeError, TypeError):
+            # parser class does not exist for this content type
+            return None
 
-        return None
+    def connect_to_pack(self, pack_id: str) -> None:
+        self.create_relationship(Rel.IN_PACK, pack_id)
 
-    @staticmethod
-    def is_content_item_package(path: Path) -> bool:
-        return path.is_dir()
-    
-    @staticmethod
-    def is_unified_content_item(path: Path) -> bool:
-        return path.suffix in ['.yml']
+    def add_dependency(self, dependency_id: str, dependency_type: ContentTypes, is_mandatory: bool = True) -> None:
+        dependency_node_id = f'{dependency_type.value}:{dependency_id}'
+        self.create_relationship(
+            Rel.DEPENDS_ON,
+            dependency_node_id,
+            mandatorily=is_mandatory,
+            deprecated=self.deprecated,
+        )
 
-    def add_dependency(self, content_type: str, content_item_id) -> None:
-        self.dependencies.append(f'{content_type}:{content_item_id}')
-    
     def get_data(self) -> Dict[str, Any]:
-        content_item_data = {
-            'name': self.name,
-            'dependencies_ids': self.dependencies,
+        return {
+            'id': self.node_id,
             'file_path': self.path.as_posix(),
+            'deprecated': self.deprecated,
             'marketplaces': self.marketplaces,
         }
-        content_item_data.update(super().get_data())
-        return content_item_data
 
 
 class CommandParser(BaseContentParser):
     def __init__(self, cmd_data: Dict[str, Any], deprecated: bool = False) -> None:
-        self.cmd_data = cmd_data
-        self.name = self.cmd_data.get('name')
-        self.deprecated = self.cmd_data.get('deprecated', False) or deprecated
-        super().__init__(id_=f'{COMMAND}:{self.name}')
-        self.node = nodes.CommandNode.create_or_update(self.get_data())
+        self.cmd_data: Dict[str, Any] = cmd_data
+        self.name: str = self.cmd_data.get('name')
+        self.deprecated: bool = self.cmd_data.get('deprecated', False) or deprecated
+        super().__init__(self.name, ContentTypes.COMMAND)
 
     def get_data(self) -> Dict[str, Any]:
-        command_data = {
+        return {
+            'id': self.node_id,
             'name': self.name,
             'deprecated': self.deprecated,
         }
-        command_data.update(super().get_data())
-        return command_data
 
 
 class IntegrationScriptParser(ContentItemParser):
-    def __init__(self, folder_path: Path, content_type: str, marketplaces: List[str], is_unified_file: bool = False) -> None:
-        self.yml_data = get_yaml_in_folder(folder_path, is_unified_file)
-        id_ = self.yml_data.get('commonfields', {}).get('id', '-')
-        marketplaces = self.yml_data.get('marketplaces', []) or marketplaces
-        super().__init__(id_, content_type, folder_path, marketplaces)
-        self.script = self.yml_data.get('script', {})
-        self.deprecated = self.yml_data.get('deprecated', False)
-        self.unifier = IntegrationScriptUnifier(folder_path.as_posix()) if not is_unified_file else None
+    def __init__(self, path: Path, content_type: ContentTypes, marketplaces: List[str]) -> None:
+        self.is_unified = ContentItemParser.is_unified_file(path)
+        self.yml_data: Dict[str, Any] = get_yaml_from_path(path, self.is_unified)
+        content_item_id: str = self.yml_data.get('commonfields', {}).get('id')
+        deprecated: bool = self.yml_data.get('deprecated', False)
+        marketplaces: List[str] = self.yml_data.get('marketplaces', []) or marketplaces
+        super().__init__(content_item_id, content_type, path, deprecated, marketplaces)
+        
+        self.unifier = None if self.is_unified else IntegrationScriptUnifier(path.as_posix())
+
+    
+    def connect_to_tests(self) -> None:
+        tests_playbooks: List[str] =  self.yml_data.get('tests', [])
+        for test_playbook_id in tests_playbooks:
+            if 'no test' not in test_playbook_id.lower():
+                self.create_relationship(Rel.TESTED_BY, test_playbook_id)
 
     def get_data(self) -> Dict[str, Any]:
+        content_item_data = super().get_data()
         integration_script_data = {
-            'name': self.yml_data.get('name', '-'),
-            'display_name': self.yml_data.get('display', '-'),
-            'deprecated': self.deprecated,
-            'tests': self.yml_data.get('tests'),
-            'toversion': self.yml_data.get('toversion'),
-            'fromversion': self.yml_data.get('fromversion'),
+            'name': self.yml_data.get('name'),
+            'from_version': self.yml_data.get('fromversion'),
+            'to_version': self.yml_data.get('toversion'),
             'source': ['github'],  # todo
         }
-        integration_script_data.update(super().get_data())
-        return integration_script_data
+        if to_version := integration_script_data['to_version']:
+            content_item_data['id'] += f'_{to_version}'
 
+        return content_item_data | integration_script_data
 
 
 class IntegrationParser(IntegrationScriptParser):
-    def __init__(self, folder_path: Path, marketplaces: List[str], is_unified_file: bool = False) -> None:
-        super().__init__(folder_path, PackFolder.INTEGRATIONS.type, marketplaces, is_unified_file)
-        self.get_dependencies_ids()
-        self.node = nodes.IntegrationNode.create_or_update(self.get_data())
-        self.parse_integration_commands()
+    def __init__(self, path: Path, marketplaces: List[str]) -> None:
+        super().__init__(path, ContentTypes.INTEGRATION, marketplaces)
+        self.script_info: Dict[str, Any] = self.yml_data.get('script', {})
+        self.integration_code = self.get_integration_code()
+        self.create_node()
+        self.connect_to_commands()
+        self.connect_to_dependencies()
+        self.connect_to_tests()
 
     def get_data(self) -> Dict[str, Any]:
+        integration_script_data = super().get_data()
         integration_data = {
-            'type': self.script.get('subtype') or self.script.get('type'),
-            'docker_image': self.script.get('dockerimage'),
-            'is_fetch': self.script.get('isfetch', False),
-            'is_feed': self.script.get('feed', False),
+            'display_name': self.yml_data.get('display'),
+            'type': self.script_info.get('subtype') or self.script_info.get('type'),
+            'docker_image': self.script_info.get('dockerimage'),
+            'is_fetch': self.script_info.get('isfetch', False),
+            'is_feed': self.script_info.get('feed', False),
         }
+
         if integration_data['type'] == 'python':
             integration_data['type'] += '2'
 
-        integration_data.update(super().get_data())
-        return integration_data
+        return integration_script_data | integration_data
 
-    def parse_integration_commands(self) -> None:
-        for command_data in self.script.get('commands', []):
-            cmd = CommandParser(command_data, self.deprecated)
-            self.node.commands.connect(cmd.node)
-    
-    def get_dependencies_ids(self) -> None:
+    def connect_to_commands(self) -> None:
+        for command_data in self.script_info.get('commands', []):
+            cmd_name = command_data.get('name')
+            node_id: str = f'{ContentTypes.COMMAND}:{cmd_name}'
+            deprecated: bool = command_data.get('deprecated', False) or self.deprecated
+            self.create_relationship(Rel.HAS_COMMAND, node_id, deprecated=deprecated)
+
+    def connect_to_dependencies(self) -> None:
         if default_classifier := self.yml_data.get('defaultclassifier'):
-            self.add_dependency(PackFolder.CLASSIFIERS.type, default_classifier)
+            self.add_dependency(default_classifier, ContentTypes.CLASSIFIER)
 
         if default_mapper_in := self.yml_data.get('defaultmapperin'):
-            self.add_dependency(PackFolder.CLASSIFIERS.type, default_mapper_in)
+            self.add_dependency(default_mapper_in, ContentTypes.CLASSIFIER)
 
         if default_mapper_out := self.yml_data.get('defaultmapperout'):
-            self.add_dependency(PackFolder.CLASSIFIERS.type, default_mapper_out)
+            self.add_dependency(default_mapper_out, ContentTypes.CLASSIFIER)
 
         if default_incident_type := self.yml_data.get('defaultIncidentType'):
-            self.add_dependency(PackFolder.INCIDENT_TYPES.type, default_incident_type)
+            self.add_dependency(default_incident_type, ContentTypes.INCIDENT_TYPE)
 
-        if api_module := self.get_integration_api_module():
-            self.add_dependency(PackFolder.SCRIPTS.type, api_module)
+        for api_module in self.get_integration_api_modules():
+            self.add_dependency(api_module, ContentTypes.SCRIPT)
 
-    def get_integration_api_module(self) -> Optional[str]:
-        integration_code = self.yml_data.get('script', {}).get('script', '')
-        if not integration_code:
-            if self.unifier:
-                _, integration_code = self.unifier.get_script_or_integration_package_data()
-            else:
-                return None  # todo: raise exception?
+    def get_integration_code(self) -> str:
+        if self.is_unified or self.script_info.get('script') not in ['-', '']:
+            return self.script_info.get('script')
+        return self.unifier.get_script_or_integration_package_data()[1]
 
-        return IntegrationScriptUnifier.check_api_module_imports(integration_code)[1]
+    def get_integration_api_modules(self) -> List[str]:
+        return list(IntegrationScriptUnifier.check_api_module_imports(self.integration_code).values())
 
 
 class ScriptParser(IntegrationScriptParser):
-    def __init__(self, folder_path: Path, marketplaces: List[str], is_unified_file: bool = False) -> None:
-        super().__init__(folder_path, PackFolder.SCRIPTS.type, marketplaces, is_unified_file)
-        self.get_dependencies_ids()
-        self.node = nodes.ScriptNode.create_or_update(self.get_data())
+    def __init__(self, path: Path, marketplaces: List[str]) -> None:
+        super().__init__(path, ContentTypes.SCRIPT, marketplaces)
+        self.script_code = self.get_script_code()
+        self.create_node()
+        self.connect_to_dependencies()
+        self.connect_to_tests()
 
     def get_data(self) -> Dict[str, Any]:
+        integration_script_data = super().get_data()
         script_data = {
             'type': self.yml_data.get('subtype') or self.yml_data.get('type'),
             'docker_image': self.yml_data.get('dockerimage'),
         }
+
         if script_data['type'] == 'python':
             script_data['type'] += '2'
 
-        script_data.update(super().get_data())
-        return script_data
+        return integration_script_data | script_data
 
-    def get_dependencies_ids(self) -> None:
+    def connect_to_dependencies(self) -> None:
         for cmd in self.get_depends_on():
-            self.add_dependency(COMMAND, cmd)
+            self.add_dependency(cmd, ContentTypes.COMMAND)
 
         for cmd in self.get_command_executions():
-            self.add_dependency(COMMAND, cmd)
+            self.add_dependency(cmd, ContentTypes.COMMAND)
 
     def get_depends_on(self) -> List[str]:
-        depends_on = self.yml_data.get('dependson', {}).get('must', [])
+        depends_on: List[str] = self.yml_data.get('dependson', {}).get('must', [])
         return list({cmd.split('|')[-1] for cmd in depends_on})
 
-    def get_command_executions(self) -> List[str]:
-        if not self.script:
-            if self.unifier:
-                _, self.script = self.unifier.get_script_or_integration_package_data()
-            else:
-                return []  # todo: raise exception?
+    def get_script_code(self) -> str:
+        if self.is_unified or self.yml_data.get('script') not in ['-', '']:
+            return self.yml_data.get('script')
+        return self.unifier.get_script_or_integration_package_data()[1]
 
-        return sorted(list(set(re.findall(r"execute_?command\(['\"](\w+)['\"].*", self.script, re.IGNORECASE))))
+    def get_command_executions(self) -> List[str]:
+        return set(EXECUTE_CMD_PATTERN.findall(self.script_code, re.IGNORECASE))
+
+
+class PlaybookParser(ContentItemParser):
+    pass
+
+
+class TestPlaybookParser(PlaybookParser):
+    pass
 
 
 class ClassifierParser(ContentItemParser):
     pass
+
+
+class ClassifierParser(ContentItemParser):
+    pass
+
 
 
 class MapperParser(ContentItemParser):
@@ -272,20 +329,3 @@ class MapperParser(ContentItemParser):
 
 class IncidentTypeParser(ContentItemParser):
     pass
-
-
-class RepositoryParser:
-    def __init__(self, repo_path: str) -> None:
-        self.repo_path = Path(repo_path)
-        self.packs_path = self.repo_path / PACKS_FOLDER
-        self.packs: List[PackParser] = []
-
-    def run(self) -> None:
-        self.parse_repository()
-    
-    def parse_repository(self) -> None:
-        packs_directories = [p for p in self.packs_path.iterdir() if p.is_dir()]
-        with Manager() as manager:
-            pool = manager.Pool(processes=PROCESSES_COUNT)
-            for pack in pool.map(PackParser, packs_directories):
-                self.packs.append(pack)

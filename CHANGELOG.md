@@ -9,7 +9,7 @@
 * Added new validation to the **validate** command to fail and list all the file paths of files that are using a deprecated integration command / script / playbook.
 * **validate** will no longer fail on playbooks calling subplaybooks that have a higher `fromVersion` value, if  calling the subplaybook has `skipifunavailable=True`.
 * Fixed an issue where relative paths were not accessed correctly.
-* Using `dotenv` configuration now overrides the existing environment variables if they exist.
+* Running any `demisto-sdk` command in a folder with a `.env` file will load it, temporarily overriding existing environment variables.
 
 ## 1.7.0
 * Allowed JSON Handlers to accept kwargs, for custoimzing behavior.

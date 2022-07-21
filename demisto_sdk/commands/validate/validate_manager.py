@@ -1361,7 +1361,7 @@ class ValidateManager:
         """
         if added_files:
             deleted_file_path = str(deleted_file_path)
-            deleted_file_dict = get_remote_file(deleted_file_path)
+            deleted_file_dict = get_remote_file(deleted_file_path, tag='master')  # for detecting deleted files
             if deleted_file_type := find_type(deleted_file_path, deleted_file_dict):
                 deleted_file_id = _get_file_id(deleted_file_type.value, deleted_file_dict)
                 if deleted_file_id:
@@ -1393,7 +1393,7 @@ class ValidateManager:
                     if not self.is_file_allowed_to_be_deleted(file_path):
                         file_path = str(file_path)
                         error_message, error_code = Errors.file_cannot_be_deleted(file_path)
-                        if self.handle_error(error_message, error_code, ''):
+                        if self.handle_error(error_message, error_code, file_path):
                             is_valid = False
 
         return is_valid

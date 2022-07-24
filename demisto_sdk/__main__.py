@@ -17,12 +17,12 @@ from demisto_sdk.commands.common.constants import (
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, ENV_DEMISTO_SDK_MARKETPLACE,
     MODELING_RULES_DIR, PARSING_RULES_DIR, FileType, MarketplaceVersions)
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (find_type,
+from demisto_sdk.commands.common.tools import (find_type, get_content_path,
                                                get_last_remote_release_version,
                                                get_release_note_entries,
                                                is_external_repository,
                                                print_error, print_success,
-                                               print_warning, get_content_path)
+                                               print_warning)
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
 json = JSON_Handler()

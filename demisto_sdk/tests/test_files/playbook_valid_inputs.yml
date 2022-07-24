@@ -8,6 +8,11 @@ tasks:
   '0':
     id: '0'
     task:
+    description: "This playbook identifies duplicate incidents using the Cortex\
+                \ XSOAR machine learning method (script).\n In this playbook, you can choose\
+                \ fields and/or indicators to be compared against other incidents in the Cortex\
+                \ XSOAR database. \n\n Note: To identify similar incidents you must must properly\
+                \ define the playbook inputs. "
     condition:
     - - operator: isEqualString
         left:

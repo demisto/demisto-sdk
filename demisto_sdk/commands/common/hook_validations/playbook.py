@@ -102,7 +102,7 @@ class PlaybookValidator(ContentEntityValidator):
         for input in all_inputs_occurrences:
             input = input.strip()
             splitted = input.split('.')
-            if len(splitted) > 1:
+            if len(splitted) > 1 and splitted[1]:
                 result.add(splitted[1])
         return result
 

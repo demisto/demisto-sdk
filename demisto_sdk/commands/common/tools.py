@@ -590,9 +590,9 @@ def get_last_remote_release_version():
 def get_file(file_path, type_of_file, clear_cache=False):
     if clear_cache:
         get_file.cache_clear()
-    file_path = Path(file_path)
+    file_path = Path(file_path).absolute()
     data_dictionary = None
-    with open(file_path.expanduser(), mode="r", encoding="utf8") as f:
+    with file_path.open(mode='r', encoding='utf8') as f:
         if type_of_file in file_path.suffix:
             read_file = f.read()
             replaced = read_file.replace("simple: =", "simple: '='")
@@ -2791,6 +2791,22 @@ def extract_none_deprecated_command_names_from_yml(yml_data: dict) -> list:
     commands_ls = []
     for command in yml_data.get('script', {}).get('commands', {}):
         if command.get('name') and not command.get('deprecated'):
+            commands_ls.append(command.get('name'))
+    return commands_ls
+
+
+def extract_deprecated_command_names_from_yml(yml_data: dict) -> list:
+    """
+    Go over all the commands in a yml file and return their names.
+    Args:
+        yml_data (dict): the yml content as a dict
+
+    Returns:
+        list: a list of all the commands names
+    """
+    commands_ls = []
+    for command in yml_data.get('script', {}).get('commands', {}):
+        if command.get('deprecated'):
             commands_ls.append(command.get('name'))
     return commands_ls
 

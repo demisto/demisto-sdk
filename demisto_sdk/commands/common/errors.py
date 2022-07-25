@@ -239,6 +239,7 @@ ERROR_CODE = {
     'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True, 'related_field': 'defaultvalue'},
     'not_supported_integration_parameter_url_defaultvalue': {'code': 'IN153', 'ui_applicable': False, 'related_field': 'defaultvalue'},
     'missing_reliability_parameter': {'code': 'IN154', 'ui_applicable': False, 'related_field': 'configuration'},
+    'integration_is_deprecated_and_used': {'code': 'IN155', 'ui_applicable': True, 'related_field': 'deprecated'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -249,7 +250,7 @@ ERROR_CODE = {
     "incident_type_non_existent_playbook_id": {'code': "IT104", 'ui_applicable': False, 'related_field': ''},
 
     # LI - Lists
-    "invalid_from_server_version_in_lists": {'code': "LI100", 'ui_applicable': False, 'related_field': 'fromVersion'},
+    "invalid_from_version_in_lists": {'code': "LI100", 'ui_applicable': False, 'related_field': 'fromVersion'},
     "missing_from_version_in_list": {'code': "LI101", 'ui_applicable': False, 'related_field': 'fromVersion'},
 
     # LO - Layouts
@@ -328,10 +329,13 @@ ERROR_CODE = {
     "playbook_tasks_not_quiet_mode": {'code': "PB115", 'ui_applicable': False, 'related_field': 'tasks'},
     "playbook_tasks_continue_on_error": {'code': "PB116", 'ui_applicable': False, 'related_field': 'tasks'},
     "content_entity_is_not_in_id_set": {'code': "PB117", 'ui_applicable': False, 'related_field': ''},
+    "input_key_not_in_tasks": {'code': "PB118", 'ui_applicable': False, 'related_field': ''},
+    "input_used_not_in_input_section": {'code': "PB119", 'ui_applicable': False, 'related_field': ''},
+    "playbook_is_deprecated_and_used": {'code': 'PB120', 'ui_applicable': False, 'related_field': 'deprecated'},
 
     # PP - Pre-Process Rules
-    "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
-                                                         'related_field': 'fromServerVersion'},
+    "invalid_from_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
+                                                  'related_field': 'fromVersion'},
     "invalid_incident_field_in_pre_process_rules": {'code': "PP101", 'ui_applicable': False, 'related_field': ''},
     "unknown_fields_in_pre_process_rules": {'code': "PP102", 'ui_applicable': False, 'related_field': ''},
 
@@ -380,6 +384,7 @@ ERROR_CODE = {
     "is_valid_script_file_path_in_folder": {'code': "SC103", 'ui_applicable': False, 'related_field': ''},
     "incident_in_script_arg": {'code': "SC105", 'ui_applicable': True, 'related_field': 'args.name'},
     "runas_is_dbotrole": {'code': "SC106", 'ui_applicable': False, 'related_field': 'runas'},
+    'script_is_deprecated_and_used': {'code': 'SC107', 'ui_applicable': True, 'related_field': 'deprecated'},
 
     # ST - Structures
     "structure_doesnt_match_scheme": {'code': "ST100", 'ui_applicable': False, 'related_field': ''},
@@ -911,6 +916,15 @@ class Errors:
         return f'Missing "Reliability" parameter in the {command} reputation command.' \
                f'Please add it to the YAML file.' \
                f'For more information, refer to https://xsoar.pan.dev/docs/integrations/dbot#reliability-level'
+
+    @staticmethod
+    @error_code_decorator
+    def integration_is_deprecated_and_used(integration_name: str, commands_dict: dict):
+        erorr_str = f"{integration_name} integration contains deprecated commands that are being used by other entites:\n"
+        for command_name, command_usage_list in commands_dict.items():
+            current_command_usage = '\n'.join(command_usage_list)
+            erorr_str += f"{command_name} is being used in the following locations:\n{current_command_usage}\n"
+        return erorr_str
 
     @staticmethod
     @error_code_decorator
@@ -1999,8 +2013,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_from_server_version_in_pre_process_rules(version_field):
-        return f'{version_field} field in Pre Process Rule needs to be at least 6.5.0'
+    def invalid_from_version_in_pre_process_rules():
+        return 'fromVersion field in Pre Process Rule needs to be at least 6.5.0'
 
     @staticmethod
     @error_code_decorator
@@ -2009,8 +2023,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_from_server_version_in_lists(version_field):
-        return f'{version_field} field in a list item needs to be at least 6.5.0'
+    def invalid_from_version_in_lists():
+        return 'fromVersion field in a list item needs to be at least 6.5.0'
 
     @staticmethod
     @error_code_decorator
@@ -2262,8 +2276,8 @@ class Errors:
         return f"To fix the problem, add pack name prefix to the field name. " \
                f"You can use the pack name or one of the prefixes found in the itemPrefix field in the pack_metadata. " \
                f"Example: {pack_prefix} {field_name}.\n" \
-               f"Also make sure to update the field id and cliName accordingly. " \
-               f"Example: cliName: {pack_prefix.replace(' ', '').lower()}{field_name.replace(' ', '')}, "
+               f"Also, make sure to update the field id and cliName accordingly. " \
+               f"Example: cliName: {pack_prefix.replace(' ', '').lower()}{field_name.replace(' ', '').lower()}."
 
     @staticmethod
     @error_code_decorator
@@ -2276,6 +2290,22 @@ class Errors:
         return f"Playbook {main_playbook} uses {entities_names}, which do not exist in the id_set.\n" \
                f"Possible reason for such an error, would be that the name of the entity in the yml file of " \
                f"{main_playbook} is not identical to its name in its own yml file. Or the id_set is not up to date"
+
+    @staticmethod
+    @error_code_decorator
+    def input_key_not_in_tasks(playbook_name: str, inputs: str):
+        return f"Playbook {playbook_name} contains inputs that are not used in any of its tasks: {', '.join(inputs)}"
+
+    @staticmethod
+    @error_code_decorator
+    def input_used_not_in_input_section(playbook_name: str, inputs: str):
+        return f"Playbook {playbook_name} uses inputs that do not appear in the inputs section: {', '.join(inputs)}"
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_is_deprecated_and_used(playbook_name: str, files_list: list):
+        files_list_str = '\n'.join(files_list)
+        return f"{playbook_name} playbook is deprecated and being used by the following entites:\n{files_list_str}"
 
     @staticmethod
     @error_code_decorator
@@ -2308,6 +2338,12 @@ class Errors:
     def runas_is_dbotrole():
         return 'The runas value is DBotRole, it may cause access and exposure of sensitive data. ' \
                'Please consider changing it.'
+
+    @staticmethod
+    @error_code_decorator
+    def script_is_deprecated_and_used(script_name: str, files_list: list):
+        files_list_str = '\n'.join(files_list)
+        return f"{script_name} script is deprecated and being used by the following entites:\n{files_list_str}"
 
     @staticmethod
     @error_code_decorator

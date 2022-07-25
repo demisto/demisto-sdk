@@ -82,8 +82,6 @@ mapping:
     type: str
   toServerVersion:
     type: str
-  fromServerVersion:
-    type: str
   propagationLabels:
     type: any
   openEnded:

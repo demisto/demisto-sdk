@@ -590,9 +590,9 @@ def get_last_remote_release_version():
 def get_file(file_path, type_of_file, clear_cache=False):
     if clear_cache:
         get_file.cache_clear()
-    file_path = Path(file_path)
+    file_path = Path(file_path).absolute()
     data_dictionary = None
-    with open(file_path.expanduser(), mode="r", encoding="utf8") as f:
+    with file_path.open(mode='r', encoding='utf8') as f:
         if type_of_file in file_path.suffix:
             read_file = f.read()
             replaced = read_file.replace("simple: =", "simple: '='")
@@ -1414,7 +1414,7 @@ def find_type(
             return None
         raise err
 
-    if file_type == 'yml':
+    if file_type == 'yml' or path.lower().endswith('.yml'):
         if 'category' in _dict:
             if _dict.get('beta') and not ignore_sub_categories:
                 return FileType.BETA_INTEGRATION
@@ -1443,7 +1443,7 @@ def find_type(
         if 'global_rule_id' in _dict:
             return FileType.CORRELATION_RULE
 
-    if file_type == 'json':
+    if file_type == 'json' or path.lower().endswith('.json'):
         if 'widgetType' in _dict:
             return FileType.WIDGET
 
@@ -1585,7 +1585,7 @@ def get_content_path() -> str:
             raise git.InvalidGitRepositoryError
         return git_repo.working_dir
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
-        print_error("Please run demisto-sdk in content repository - Aborting!")
+        print_warning("Please run demisto-sdk in content repository!")
     return ''
 
 
@@ -2022,10 +2022,11 @@ def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
 def item_type_to_content_items_header(item_type):
     converter = {
         "incidenttype": "incidentType",
-        "indicatortype": "indicatorType",
+        "reputation": "indicatorType",
         "indicatorfield": "indicatorField",
         "incidentfield": "incidentField",
         "layoutscontainer": "layout",
+        "betaintegration": "integration",
 
         # GOM
         "genericdefinition": "genericDefinition",
@@ -2790,6 +2791,22 @@ def extract_none_deprecated_command_names_from_yml(yml_data: dict) -> list:
     commands_ls = []
     for command in yml_data.get('script', {}).get('commands', {}):
         if command.get('name') and not command.get('deprecated'):
+            commands_ls.append(command.get('name'))
+    return commands_ls
+
+
+def extract_deprecated_command_names_from_yml(yml_data: dict) -> list:
+    """
+    Go over all the commands in a yml file and return their names.
+    Args:
+        yml_data (dict): the yml content as a dict
+
+    Returns:
+        list: a list of all the commands names
+    """
+    commands_ls = []
+    for command in yml_data.get('script', {}).get('commands', {}):
+        if command.get('deprecated'):
             commands_ls.append(command.get('name'))
     return commands_ls
 

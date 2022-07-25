@@ -1272,7 +1272,8 @@ def get_dict_from_file(path: str,
         raises_error - Whether to raise a FileNotFound error if `path` is not a valid file.
 
     Returns:
-        dict representation of the file, and the file_type, either .yml or .json
+        dict representation of the file or of the first item if the file contents are a list with a single dictionary,
+        and the file_type, either .yml or .json
     """
     try:
         if path:

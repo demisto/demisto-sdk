@@ -1444,6 +1444,9 @@ def find_type(
             return FileType.CORRELATION_RULE
 
     if file_type == 'json' or path.lower().endswith('.json'):
+        if path.lower().endswith('_schema.json'):
+            return FileType.MODELING_RULE_SCHEMA
+
         if 'widgetType' in _dict:
             return FileType.WIDGET
 

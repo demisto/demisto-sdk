@@ -125,6 +125,7 @@ class FileType(Enum):
     DOC_IMAGE = 'doc_image'
     PYTHON_FILE = 'pythonfile'
     XIF_FILE = 'xiffile'
+    MODELING_RULE_SCHEMA = 'modelingruleschema'
     JAVASCRIPT_FILE = 'javascriptfile'
     POWERSHELL_FILE = 'powershellfile'
     CONF_JSON = 'confjson'

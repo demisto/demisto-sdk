@@ -1279,7 +1279,15 @@ def get_dict_from_file(path: str,
             if path.endswith('.yml'):
                 return get_yaml(path, cache_clear=clear_cache), 'yml'
             elif path.endswith('.json'):
-                return get_json(path, cache_clear=clear_cache), 'json'
+                res = get_json(path, cache_clear=clear_cache)
+                if isinstance(res, dict):
+                    return res, 'json'
+                elif isinstance(res, list) and len(res) == 1 and isinstance(res[0], dict):
+                    return res[0], 'json'
+                elif isinstance(res, list) and len(res) > 1:
+                    return res, 'json'
+                else:
+                    raise Exception
             elif path.endswith('.py'):
                 return {}, 'py'
             elif path.endswith('.xif'):
@@ -2125,7 +2133,8 @@ def get_file_displayed_name(file_path):
                        FileType.INDICATOR_FIELD, FileType.LAYOUTS_CONTAINER, FileType.PRE_PROCESS_RULES,
                        FileType.DASHBOARD, FileType.WIDGET,
                        FileType.REPORT, FileType.JOB, FileType.WIZARD]:
-        return get_json(file_path).get('name')
+        res = get_json(file_path)
+        return res.get('name') if isinstance(res, dict) else res[0].get('name')
     elif file_type == FileType.OLD_CLASSIFIER:
         return get_json(file_path).get('brandName')
     elif file_type == FileType.LAYOUT:

@@ -102,7 +102,7 @@ class PlaybookValidator(ContentEntityValidator):
         for input in all_inputs_occurrences:
             input = input.strip()
             splitted = input.split('.')
-            if len(splitted) > 1 and splitted[1]:
+            if len(splitted) > 1 and splitted[1] and not splitted[1].startswith(' '):
                 result.add(splitted[1])
         return result
 
@@ -115,7 +115,8 @@ class PlaybookValidator(ContentEntityValidator):
         inputs: Dict = self.current_file.get('inputs', {})
         inputs_keys = []
         for input in inputs:
-            inputs_keys.append(input['key'])
+            if input['key']:
+                inputs_keys.append(input['key'])
         return set(inputs_keys)
 
     def inputs_in_use_check(self, is_modified: bool) -> bool:
@@ -132,8 +133,9 @@ class PlaybookValidator(ContentEntityValidator):
             return True
         inputs_in_use: set = self.collect_all_inputs_in_use()
         inputs_in_section: set = self.collect_all_inputs_from_inputs_section()
-        return self.are_all_inputs_in_use(inputs_in_use, inputs_in_section) and \
-            self.are_all_used_inputs_in_inputs_section(inputs_in_use, inputs_in_section)
+        all_inputs_in_use = self.are_all_inputs_in_use(inputs_in_use, inputs_in_section)
+        are_all_used_inputs_in_inputs_section = self.are_all_used_inputs_in_inputs_section(inputs_in_use, inputs_in_section)
+        return all_inputs_in_use and are_all_used_inputs_in_inputs_section
 
     @error_codes('PB118')
     def are_all_inputs_in_use(self, inputs_in_use: set, inputs_in_section: set) -> bool:

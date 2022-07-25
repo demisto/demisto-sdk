@@ -36,8 +36,10 @@ from demisto_sdk.commands.common.tools import (
     is_object_in_id_set, is_origin_content_repo, is_pack_path, is_uuid,
     retrieve_file_ending, run_command_os, server_version_compare,
     to_kebab_case)
-from demisto_sdk.tests.constants_test import (DUMMY_SCRIPT_PATH, IGNORED_PNG,
+from demisto_sdk.tests.constants_test import (CONTENT_VALID_INCIDENT_TYPE_FILE,
+                                              DUMMY_SCRIPT_PATH, IGNORED_PNG,
                                               INDICATORFIELD_EXTRA_FIELDS,
+                                              SERVER_VALID_INCIDENT_TYPE_FILE,
                                               SOURCE_FORMAT_INTEGRATION_COPY,
                                               TEST_PLAYBOOK,
                                               VALID_BETA_INTEGRATION_PATH,
@@ -53,8 +55,7 @@ from demisto_sdk.tests.constants_test import (DUMMY_SCRIPT_PATH, IGNORED_PNG,
                                               VALID_PLAYBOOK_ID_PATH,
                                               VALID_REPUTATION_FILE,
                                               VALID_SCRIPT_PATH,
-                                              VALID_WIDGET_PATH, SERVER_VALID_INCIDENT_TYPE_FILE,
-                                              CONTENT_VALID_INCIDENT_TYPE_FILE)
+                                              VALID_WIDGET_PATH)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT, MAPPER, OLD_CLASSIFIER, REPUTATION)
 from TestSuite.file import File

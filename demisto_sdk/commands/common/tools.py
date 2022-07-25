@@ -1280,14 +1280,10 @@ def get_dict_from_file(path: str,
                 return get_yaml(path, cache_clear=clear_cache), 'yml'
             elif path.endswith('.json'):
                 res = get_json(path, cache_clear=clear_cache)
-                if isinstance(res, dict):
-                    return res, 'json'
-                elif isinstance(res, list) and len(res) == 1 and isinstance(res[0], dict):
+                if isinstance(res, list) and len(res) == 1 and isinstance(res[0], dict):
                     return res[0], 'json'
-                elif isinstance(res, list) and len(res) > 1:
-                    return res, 'json'
                 else:
-                    raise Exception
+                    return res, 'json'
             elif path.endswith('.py'):
                 return {}, 'py'
             elif path.endswith('.xif'):

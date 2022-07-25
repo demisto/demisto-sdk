@@ -1,14 +1,13 @@
-import neo4j
 import multiprocessing
-
-from constants import PACKS_FOLDER, ContentTypes, Rel
-from content_parser import PackParser
+import neo4j
+import pickle
 
 from datetime import datetime
 from pathlib import Path
 from typing import Any, List, Optional, Tuple, Iterator, Dict
 
-import pickle
+from constants import PACKS_FOLDER, ContentTypes, Rel
+from parsers.pack import PackSubGraphCreator
 
 DATABASE_URL = 'bolt://localhost:7687'
 USERNAME = 'dtavori'
@@ -36,6 +35,8 @@ def batches_of(l: List[Any], size: int = BATCH_SIZE):
 
 class ContentGraph:
     def __init__(self, repo_path: Path, database_uri: str, user: str = None, password: str = None) -> None:
+        self.start_time = datetime.now()
+        self.end_time = None
         self.packs_path: Path = repo_path / PACKS_FOLDER
         auth: Optional[Tuple[str]] = (user, password) if user and password else None
         self.driver: neo4j.Neo4jDriver = neo4j.GraphDatabase.driver(database_uri, auth=auth)
@@ -54,8 +55,17 @@ class ContentGraph:
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         dump_pickle('/Users/dtavori/dev/demisto/content-graph/nodes.pkl', self.nodes)
         dump_pickle('/Users/dtavori/dev/demisto/content-graph/rels.pkl', self.relationships)
+        before_creating_nodes = datetime.now()
+        print(f'Time since started: {(before_creating_nodes - self.start_time).total_seconds() / 60} minutes')
         self.make_nodes_transaction()
+        after_creating_nodes = datetime.now()
+        print(f'Time to create nodes: {(after_creating_nodes - before_creating_nodes).total_seconds() / 60} minutes')
+        print(f'Time since started: {(after_creating_nodes - self.start_time).total_seconds() / 60} minutes')
+        before_creating_rels = datetime.now()
         self.make_relationships_transaction()
+        after_creating_rels = datetime.now()
+        print(f'Time to create rels: {(after_creating_rels - before_creating_rels).total_seconds() / 60} minutes')
+        print(f'Time since started: {(after_creating_rels - self.start_time).total_seconds() / 60} minutes')
         self.driver.close()
     
     def iter_packs(self) -> Iterator[Path]:
@@ -64,18 +74,24 @@ class ContentGraph:
                 yield path
     
     def parse_repository(self) -> None:
+        repo_packs: Iterator[Path] = self.iter_packs()
+        return self.parse_packs(repo_packs)
+    
+    def parse_packs(self, packs_paths: Iterator[Path]) -> None:
+        """ Parses packs into nodes and relationships by given paths. """
         if self.nodes and self.relationships:
             print('Skipping parsing.')
             return
         pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
-        for pack_nodes, pack_relationships in pool.map(PackParser.to_graph, self.iter_packs()):
+        for pack_nodes, pack_relationships in pool.map(PackSubGraphCreator.from_path, packs_paths):
             self.nodes.extend(pack_nodes)
             self.relationships.extend(pack_relationships)
+
 
     @staticmethod
     def create_indexes(tx: neo4j.Transaction) -> None:
         queries = [
-            f'CREATE INDEX node_id IF NOT EXISTS FOR (n:{ContentTypes.BASE_CONTENT}) ON (n.id)',
+            f'CREATE INDEX node_id IF NOT EXISTS FOR (n:{ContentTypes.BASE_CONTENT}) ON (n.node_id)',
         ]
         for query in queries:
             print(query)
@@ -160,11 +176,8 @@ class ContentGraph:
 
 def main() -> None:
     print(f'Starting...')
-    now_1 = datetime.now()
     with ContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD) as content_graph:
         content_graph.parse_repository()
-    now_2 = datetime.now()
-    print(f'Finished in {(now_2 - now_1).total_seconds()} seconds')
     
 
 if __name__ == '__main__':

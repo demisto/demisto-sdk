@@ -7,25 +7,6 @@ from typing import Iterator, Dict, List
 PACKS_FOLDER = 'Packs'
 PACK_METADATA_FILENAME = 'pack_metadata.json'
 
-class Marketplaces(enum.Enum):
-    XSOAR = 'xsoar'
-    XSIAM = 'marketplacev2'
-
-    @staticmethod
-    def to_dict():
-        return {i.value: i.name for i in Marketplaces}
-
-
-class ScriptTypes(enum.Enum):
-    PYTHON2 = 'python2'
-    PYTHON3 = 'python3'
-    JAVASCRIPT = 'javascript'
-    POWERSHELL = 'powershell'
-
-    @staticmethod
-    def to_dict():
-        return {i.value: i.value for i in ScriptTypes}
-
 
 class Rel(enum.Enum):
     DEPENDS_ON = 'DEPENDS_ON'
@@ -93,6 +74,9 @@ class ContentTypes(enum.Enum):
         if self.value == ContentTypes.SCRIPT.value:
             labels.append(ContentTypes.COMMAND.value)
 
+        if self.value == ContentTypes.TEST_PLAYBOOK.value:
+            labels.append(ContentTypes.PLAYBOOK.value)
+
         return labels
 
     @classmethod
@@ -113,14 +97,14 @@ class ContentTypes(enum.Enum):
     @staticmethod
     def props_uniqueness_constraints() -> Dict['ContentTypes', List[str]]:
         return {
-            ContentTypes.BASE_CONTENT: ['id'],
+            ContentTypes.BASE_CONTENT: ['node_id'],
         }
 
     @staticmethod
     def props_existence_constraints() -> Dict['ContentTypes', List[str]]:
         return {
             ContentTypes.PACK: ['name', 'deprecated', 'marketplaces', 'author', 'certification', 'current_version', 'categories'],
-            ContentTypes.CONTENT_ITEM: ['name', 'deprecated', 'marketplaces', 'from_version'],
+            ContentTypes.CONTENT_ITEM: ['name', 'deprecated', 'marketplaces', 'fromversion'],
             ContentTypes.INTEGRATION: ['display_name', 'type'],
             ContentTypes.SCRIPT: ['type'],
         }

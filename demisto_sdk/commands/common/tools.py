@@ -1414,7 +1414,7 @@ def find_type(
             return None
         raise err
 
-    if file_type == 'yml':
+    if file_type == 'yml' or path.lower().endswith('.yml'):
         if 'category' in _dict:
             if _dict.get('beta') and not ignore_sub_categories:
                 return FileType.BETA_INTEGRATION
@@ -1443,7 +1443,7 @@ def find_type(
         if 'global_rule_id' in _dict:
             return FileType.CORRELATION_RULE
 
-    if file_type == 'json':
+    if file_type == 'json' or path.lower().endswith('.json'):
         if 'widgetType' in _dict:
             return FileType.WIDGET
 

@@ -1859,7 +1859,7 @@ def test_validate_deleted_files(capsys, file_set, expected_output, expected_resu
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
     if added_files:
         mocker.patch('demisto_sdk.commands.validate.validate_manager._get_file_id', return_value='playbook')
-        mocker.patch('demisto_sdk.commands.validate.validate_manager.get_file', return_value={'id': 'id'})
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.get_remote_file', return_value={'id': 'id'})
 
     result = validate_manager.validate_deleted_files(file_set, added_files)
 

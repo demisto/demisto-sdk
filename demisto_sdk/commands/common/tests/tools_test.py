@@ -53,7 +53,8 @@ from demisto_sdk.tests.constants_test import (DUMMY_SCRIPT_PATH, IGNORED_PNG,
                                               VALID_PLAYBOOK_ID_PATH,
                                               VALID_REPUTATION_FILE,
                                               VALID_SCRIPT_PATH,
-                                              VALID_WIDGET_PATH)
+                                              VALID_WIDGET_PATH, SERVER_VALID_INCIDENT_TYPE_FILE,
+                                              CONTENT_VALID_INCIDENT_TYPE_FILE)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT, MAPPER, OLD_CLASSIFIER, REPUTATION)
 from TestSuite.file import File
@@ -91,7 +92,8 @@ class TestGenericFunctions:
         (VALID_SCRIPT_PATH, True, 'yml'),
         ('test', True, None),
         (None, True, None),
-        ('invalid-path.json', False, None)
+        ('invalid-path.json', False, None),
+        (SERVER_VALID_INCIDENT_TYPE_FILE, False, 'json')
     ]
 
     @pytest.mark.parametrize('path, raises_error, _type', data_test_get_dict_from_file)
@@ -1039,6 +1041,27 @@ def test_get_file_displayed_name__image(repo):
     with ChangeCWD(repo.path):
         display_name = get_file_displayed_name(integration.image.path)
         assert display_name == os.path.basename(integration.image.rel_path)
+
+
+INCIDENTS_TYPE_FILES_INPUTS = [(SERVER_VALID_INCIDENT_TYPE_FILE, "Access v2"),
+                               (CONTENT_VALID_INCIDENT_TYPE_FILE, "Access v2")]
+
+
+@pytest.mark.parametrize('input_path, expected_name', INCIDENTS_TYPE_FILES_INPUTS)
+def test_get_file_displayed_name__incident_type(input_path: str, expected_name: str):
+    """
+    Given
+    - The path to an incident type file.
+
+    When
+    - Running get_file_displayed_name.
+
+    Then:
+    - Ensure the returned name is the incident type name.
+    """
+
+    display_name = get_file_displayed_name(input_path)
+    assert display_name == expected_name
 
 
 def test_get_pack_metadata(repo):

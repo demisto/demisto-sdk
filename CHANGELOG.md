@@ -1,4 +1,3 @@
-
 # Changelog
 
 ## Unreleased
@@ -11,6 +10,7 @@
 * **validate** will no longer fail on playbooks calling subplaybooks that have a higher `fromVersion` value, if  calling the subplaybook has `skipifunavailable=True`.
 * Fixed an issue where relative paths were not accessed correctly.
 * Running any `demisto-sdk` command in a folder with a `.env` file will load it, temporarily overriding existing environment variables.
+* Fixed an issue where **validate** did not properly detect deleted files.
 * Fixed an issue where **find_type** function didn't recognize exported incident types.
 
 ## 1.7.0

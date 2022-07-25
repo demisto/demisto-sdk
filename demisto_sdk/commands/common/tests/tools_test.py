@@ -1061,8 +1061,7 @@ def test_get_file_displayed_name__incident_type(input_path: str, expected_name: 
     - Ensure the returned name is the incident type name.
     """
 
-    display_name = get_file_displayed_name(input_path)
-    assert display_name == expected_name
+    assert get_file_displayed_name(input_path) == expected_name
 
 
 def test_get_pack_metadata(repo):

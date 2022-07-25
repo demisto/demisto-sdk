@@ -23,7 +23,6 @@
 * Added a new validation to the `XSOAR-linter` in the **lint** command for verifying that demisto.log is not used in the code.
 * The **generate-docs** command will now auto-generate the Incident Mirroring section when implemented in an integration.
 * Added support to automatically generate release notes for deprecated items in the **update-release-notes** command.
-* Added new validations to the **validate** command to verify that the schema file exists for a modeling rule and that the schema and rules keys are empty in the yml file.
 * Fixed an issue causing any command to crash when unable to detect local repository properties.
 * Fixed an issue where running in a private gitlab repo caused a warning message to be shown multiple times.
 * Added a new validation to the **validate** command to verify that markdown and python files do not contain words related to copyright section.

@@ -466,7 +466,13 @@ ERROR_CODE = {
         'code': "WZ105",
         'ui_applicable': False,
         'related_field': 'wizard'
-    }
+    },
+
+    # MR - Modeling Rules
+    "modeling_rule_missing_schema_file": {'code': "MR100", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rule_keys_not_empty": {'code': "MR101", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rule_keys_are_missing": {'code': "MR102", 'ui_applicable': False, 'related_field': ''},
+    "invalid_rule_name": {'code': "MR103", 'ui_applicable': False, 'related_field': ''},
 }
 
 
@@ -526,7 +532,7 @@ class Errors:
         return "The file type is not supported in the validate command.\n" \
                "The validate command supports: Integrations, Scripts, Playbooks, " \
                "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields, Object types," \
-               " Object modules, Images, Release notes, Layouts, Jobs, Wizards, and Descriptions."
+               " Object modules, Images, Release notes, Layouts, Jobs, Wizards, Descriptions And Modeling Rules."
 
     @staticmethod
     @error_code_decorator
@@ -2437,3 +2443,26 @@ class Errors:
                f'The description of the pack in the pack_metadata.json should be one of the following formats:\n' \
                f'1. "Deprecated. Use <PACK_NAME> instead."\n' \
                f'2. "Deprecated. <REASON> No available replacement."'
+
+    @staticmethod
+    @error_code_decorator
+    def modeling_rule_missing_schema_file(file_path: str):
+        return f'The modeling rule {file_path} is missing a schema file.'
+
+    @staticmethod
+    @error_code_decorator
+    def modeling_rule_keys_not_empty():
+        return "Either the 'rules' key or the 'schema' key are not empty, make sure to set the value of these" \
+               " keys to an empty string."
+
+    @staticmethod
+    @error_code_decorator
+    def modeling_rule_keys_are_missing():
+        return "The 'rules' key or the 'schema' key is missing from the modeling rule yml file. " \
+               'Make sure to add them to your yml file with an empty string as value.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_rule_name(invalid_files):
+        return f"The following rule file name is invalid {invalid_files} - make sure that the rule name is " \
+               f"the same as the folder containing it."

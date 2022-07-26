@@ -36,24 +36,16 @@ from demisto_sdk.commands.common.tools import (
     is_object_in_id_set, is_origin_content_repo, is_pack_path, is_uuid,
     retrieve_file_ending, run_command_os, server_version_compare,
     to_kebab_case)
-from demisto_sdk.tests.constants_test import (DUMMY_SCRIPT_PATH, IGNORED_PNG,
-                                              INDICATORFIELD_EXTRA_FIELDS,
-                                              SOURCE_FORMAT_INTEGRATION_COPY,
-                                              TEST_PLAYBOOK,
-                                              VALID_BETA_INTEGRATION_PATH,
-                                              VALID_DASHBOARD_PATH,
-                                              VALID_GENERIC_DEFINITION_PATH,
-                                              VALID_GENERIC_FIELD_PATH,
-                                              VALID_GENERIC_MODULE_PATH,
-                                              VALID_GENERIC_TYPE_PATH,
-                                              VALID_INCIDENT_FIELD_PATH,
-                                              VALID_INCIDENT_TYPE_PATH,
-                                              VALID_INTEGRATION_TEST_PATH,
-                                              VALID_LAYOUT_PATH, VALID_MD,
-                                              VALID_PLAYBOOK_ID_PATH,
-                                              VALID_REPUTATION_FILE,
-                                              VALID_SCRIPT_PATH,
-                                              VALID_WIDGET_PATH)
+from demisto_sdk.tests.constants_test import (
+    DUMMY_SCRIPT_PATH, IGNORED_PNG, INDICATORFIELD_EXTRA_FIELDS,
+    SOURCE_FORMAT_INTEGRATION_COPY, TEST_PLAYBOOK, VALID_BETA_INTEGRATION_PATH,
+    VALID_DASHBOARD_PATH, VALID_GENERIC_DEFINITION_PATH,
+    VALID_GENERIC_FIELD_PATH, VALID_GENERIC_MODULE_PATH,
+    VALID_GENERIC_TYPE_PATH, VALID_INCIDENT_FIELD_PATH,
+    VALID_INCIDENT_TYPE_FILE, VALID_INCIDENT_TYPE_FILE__RAW_DOWNLOADED,
+    VALID_INCIDENT_TYPE_PATH, VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_PATH,
+    VALID_MD, VALID_PLAYBOOK_ID_PATH, VALID_REPUTATION_FILE, VALID_SCRIPT_PATH,
+    VALID_WIDGET_PATH)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT, MAPPER, OLD_CLASSIFIER, REPUTATION)
 from TestSuite.file import File
@@ -91,7 +83,8 @@ class TestGenericFunctions:
         (VALID_SCRIPT_PATH, True, 'yml'),
         ('test', True, None),
         (None, True, None),
-        ('invalid-path.json', False, None)
+        ('invalid-path.json', False, None),
+        (VALID_INCIDENT_TYPE_FILE__RAW_DOWNLOADED, False, 'json')
     ]
 
     @pytest.mark.parametrize('path, raises_error, _type', data_test_get_dict_from_file)
@@ -1041,6 +1034,26 @@ def test_get_file_displayed_name__image(repo):
         assert display_name == os.path.basename(integration.image.rel_path)
 
 
+INCIDENTS_TYPE_FILES_INPUTS = [(VALID_INCIDENT_TYPE_FILE__RAW_DOWNLOADED, "Access v2"),
+                               (VALID_INCIDENT_TYPE_FILE, "Access v2")]
+
+
+@pytest.mark.parametrize('input_path, expected_name', INCIDENTS_TYPE_FILES_INPUTS)
+def test_get_file_displayed_name__incident_type(input_path: str, expected_name: str):
+    """
+    Given
+    - The path to an incident type file.
+
+    When
+    - Running get_file_displayed_name.
+
+    Then:
+    - Ensure the returned name is the incident type name.
+    """
+
+    assert get_file_displayed_name(input_path) == expected_name
+
+
 def test_get_pack_metadata(repo):
     """
     Given
@@ -1621,6 +1634,12 @@ class TestIsObjectInIDSet:
                 "Script1",
                 "Script2",
             ],
+            "indicatorTypes": [
+                "JARM"
+            ],
+            "integrations": [
+                "Proofpoint Threat Response"
+            ]
         }
     }
 
@@ -1666,6 +1685,26 @@ class TestIsObjectInIDSet:
         """
         assert is_object_in_id_set('Phishing layout', FileType.LAYOUTS_CONTAINER.value, self.PACK_INFO)
         assert not is_object_in_id_set('Phishing', FileType.LAYOUTS_CONTAINER.value, self.PACK_INFO)
+
+    @pytest.mark.parametrize('entity_id, entity_type', [
+        ('JARM', FileType.REPUTATION.value),
+        ('Proofpoint Threat Response', FileType.BETA_INTEGRATION.value)
+    ])
+    def test_convertion_to_id_set_name(self, entity_id, entity_type):
+        """
+        Given:
+            - Pack object with indicatorType(s)
+            - Pack object with beta integration
+
+        When:
+            - Searching for an IndicatorType in the id_set.
+            - Searching for an beta integration in the id_set.
+
+        Then:
+            - make sure the indicator type is found.
+            - make sure the beta integration is found.
+        """
+        assert is_object_in_id_set(entity_id, entity_type, self.PACK_INFO)
 
 
 class TestGetItemMarketplaces:

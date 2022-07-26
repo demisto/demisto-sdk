@@ -38,6 +38,8 @@ from demisto_sdk.commands.common.hook_validations.correlation_rule import \
     CorrelationRuleValidator
 from demisto_sdk.commands.common.hook_validations.dashboard import \
     DashboardValidator
+from demisto_sdk.commands.common.hook_validations.deprecation import \
+    DeprecationValidator
 from demisto_sdk.commands.common.hook_validations.description import \
     DescriptionValidator
 from demisto_sdk.commands.common.hook_validations.generic_definition import \
@@ -73,6 +75,8 @@ from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.pre_process_rule import \
     PreProcessRuleValidator
+from demisto_sdk.commands.common.hook_validations.python_file import \
+    PythonFileValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.hook_validations.release_notes import \
     ReleaseNotesValidator
@@ -100,9 +104,11 @@ from demisto_sdk.commands.common.tools import (
     _get_file_id, find_type, get_api_module_ids,
     get_api_module_integrations_set, get_content_path, get_file,
     get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
-    get_relative_path_from_packs_dir, get_yaml, open_id_set_file,
-    run_command_os)
+    get_relative_path_from_packs_dir, get_remote_file, get_yaml,
+    open_id_set_file, run_command_os)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
+
+SKIPPED_FILES = ['CommonServerPython.py', 'CommonServerUserPython.py', 'demistomock.py']
 
 
 class ValidateManager:
@@ -112,7 +118,8 @@ class ValidateManager:
             validate_all=False, is_external_repo=False, skip_pack_rn_validation=False, print_ignored_errors=False,
             silence_init_prints=False, no_docker_checks=False, skip_dependencies=False, id_set_path=None, staged=False,
             create_id_set=False, json_file_path=None, skip_schema_check=False, debug_git=False, include_untracked=False,
-            pykwalify_logs=False, check_is_unskipped=True, quiet_bc=False, multiprocessing=True, specific_validations=None,
+            pykwalify_logs=False, check_is_unskipped=True, quiet_bc=False, multiprocessing=True,
+            specific_validations=None,
     ):
         # General configuration
         self.skip_docker_checks = False
@@ -166,6 +173,8 @@ class ValidateManager:
                                                    json_file_path=json_file_path,
                                                    specific_validations=self.specific_validations) if validate_id_set else None
 
+        self.deprecation_validator = DeprecationValidator(id_set_file=self.id_set_file)
+
         try:
             self.git_util = GitUtil(repo=Content.git())
             self.branch_name = self.git_util.get_current_git_branch_or_hash()
@@ -189,7 +198,8 @@ class ValidateManager:
         self.ignored_files = set()
         self.new_packs = set()
         self.skipped_file_types = (FileType.CHANGELOG,
-                                   FileType.DOC_IMAGE)
+                                   FileType.DOC_IMAGE,
+                                   FileType.MODELING_RULE_SCHEMA)
 
         self.is_external_repo = is_external_repo
         if is_external_repo:
@@ -452,7 +462,8 @@ class ValidateManager:
 
         for file_name in os.listdir(package_path):
             file_path = os.path.join(package_path, file_name)
-            if file_path.endswith('.yml') or file_path.endswith('.md'):
+            should_validate_py_file = file_path.endswith('.py') and file_name not in SKIPPED_FILES
+            if file_path.endswith('.yml') or file_path.endswith('.md') or should_validate_py_file:
                 package_entities_validation_results.add(self.run_validations_on_file(file_path, pack_error_ignore_list))
 
             else:
@@ -623,7 +634,7 @@ class ValidateManager:
             return self.validate_report(structure_validator, pack_error_ignore_list)
 
         elif file_type == FileType.PLAYBOOK:
-            return self.validate_playbook(structure_validator, pack_error_ignore_list, file_type)
+            return self.validate_playbook(structure_validator, pack_error_ignore_list, file_type, is_modified)
 
         elif file_type == FileType.INTEGRATION:
             return all([self.validate_integration(structure_validator, pack_error_ignore_list, is_modified,
@@ -632,6 +643,8 @@ class ValidateManager:
         elif file_type == FileType.SCRIPT:
             return all([self.validate_script(structure_validator, pack_error_ignore_list, is_modified,
                                              file_type), valid_in_conf])
+        elif file_type == FileType.PYTHON_FILE:
+            return self.validate_python_file(file_path, pack_error_ignore_list)
 
         elif file_type == FileType.BETA_INTEGRATION:
             return self.validate_beta_integration(structure_validator, pack_error_ignore_list)
@@ -883,6 +896,13 @@ class ValidateManager:
                                            specific_validations=self.specific_validations)
         return readme_validator.is_valid_file()
 
+    def validate_python_file(self, file_path, pack_error_ignore_list):
+        python_file_validator = PythonFileValidator(file_path, ignored_errors=pack_error_ignore_list,
+                                                    print_as_warnings=self.print_ignored_errors,
+                                                    json_file_path=self.json_file_path,
+                                                    specific_validations=self.specific_validations)
+        return python_file_validator.is_valid_file()
+
     def validate_test_playbook(self, structure_validator, pack_error_ignore_list):
         test_playbook_validator = TestPlaybookValidator(structure_validator=structure_validator,
                                                         ignored_errors=pack_error_ignore_list,
@@ -939,11 +959,12 @@ class ValidateManager:
                                                                      specific_validations=self.specific_validations)
         return release_notes_config_validator.is_file_valid()
 
-    def validate_playbook(self, structure_validator, pack_error_ignore_list, file_type):
+    def validate_playbook(self, structure_validator, pack_error_ignore_list, file_type, is_modified):
         playbook_validator = PlaybookValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                print_as_warnings=self.print_ignored_errors,
                                                json_file_path=self.json_file_path,
-                                               validate_all=self.validate_all)
+                                               validate_all=self.validate_all,
+                                               deprecation_validator=self.deprecation_validator)
 
         deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
                                                                file_path=structure_validator.file_path,
@@ -955,14 +976,16 @@ class ValidateManager:
             return deprecated_result
 
         return playbook_validator.is_valid_playbook(validate_rn=False,
-                                                    id_set_file=self.id_set_file)
+                                                    id_set_file=self.id_set_file,
+                                                    is_modified=is_modified)
 
     def validate_integration(self, structure_validator, pack_error_ignore_list, is_modified, file_type):
         integration_validator = IntegrationValidator(structure_validator, ignored_errors=pack_error_ignore_list,
                                                      print_as_warnings=self.print_ignored_errors,
                                                      skip_docker_check=self.skip_docker_checks,
                                                      json_file_path=self.json_file_path,
-                                                     validate_all=self.validate_all
+                                                     validate_all=self.validate_all,
+                                                     deprecation_validator=self.deprecation_validator
                                                      )
 
         deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
@@ -976,7 +999,8 @@ class ValidateManager:
         if is_modified and self.is_backward_check:
             return all([integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json,
                                                             check_is_unskipped=self.check_is_unskipped,
-                                                            conf_json_data=self.conf_json_data, is_modified=is_modified),
+                                                            conf_json_data=self.conf_json_data,
+                                                            is_modified=is_modified),
                         integration_validator.is_backward_compatible()])
         else:
             return integration_validator.is_valid_file(validate_rn=False, skip_test_conf=self.skip_conf_json,
@@ -988,7 +1012,8 @@ class ValidateManager:
                                            print_as_warnings=self.print_ignored_errors,
                                            skip_docker_check=self.skip_docker_checks,
                                            json_file_path=self.json_file_path,
-                                           validate_all=self.validate_all)
+                                           validate_all=self.validate_all,
+                                           deprecation_validator=self.deprecation_validator)
 
         deprecated_result = self.check_and_validate_deprecated(file_type=file_type,
                                                                file_path=structure_validator.file_path,
@@ -1020,7 +1045,8 @@ class ValidateManager:
             return True
         image_validator = ImageValidator(file_path, ignored_errors=pack_error_ignore_list,
                                          print_as_warnings=self.print_ignored_errors,
-                                         json_file_path=self.json_file_path, specific_validations=self.specific_validations)
+                                         json_file_path=self.json_file_path,
+                                         specific_validations=self.specific_validations)
         return image_validator.is_valid()
 
     def validate_author_image(self, file_path, pack_error_ignore_list):
@@ -1328,11 +1354,12 @@ class ValidateManager:
 
         """
         file_path = str(file_path)
-        file_type = find_type(file_path)
+        file_dict = get_remote_file(file_path, tag='master')
+        file_type = find_type(file_path, file_dict)
         return file_type in FileType_ALLOWED_TO_DELETE or not file_type
 
     @staticmethod
-    def was_file_renamed_but_labeled_as_deleted(file_path, added_files):
+    def was_file_renamed_but_labeled_as_deleted(deleted_file_path, added_files):
         """ Check if a file was renamed and not deleted (git false label the file as deleted)
         Args:
             file_path: The file path.
@@ -1341,15 +1368,16 @@ class ValidateManager:
 
         """
         if added_files:
-            file_path = str(file_path)
-            if file_type := find_type(file_path):
-                deleted_file_dict = get_file(file_path, file_type)
-                deleted_file_id = _get_file_id(file_path, deleted_file_dict)
+            deleted_file_path = str(deleted_file_path)
+            deleted_file_dict = get_remote_file(deleted_file_path, tag='master')  # for detecting deleted files
+            if deleted_file_type := find_type(deleted_file_path, deleted_file_dict):
+                deleted_file_id = _get_file_id(deleted_file_type.value, deleted_file_dict)
                 if deleted_file_id:
                     for file in added_files:
                         file = str(file)
-                        file_dict = get_file(file, find_type(file))
-                        if deleted_file_id == _get_file_id(file, file_dict):
+                        file_type = find_type(file)
+                        file_dict = get_file(file, file_type.value)
+                        if deleted_file_id == _get_file_id(file_type.value, file_dict):
                             return True
         return False
 
@@ -1501,7 +1529,8 @@ class ValidateManager:
                     error_message, error_code = Errors.missing_release_notes_for_pack(pack)
                 if not BaseValidator(ignored_errors=ignored_errors_list,
                                      print_as_warnings=self.print_ignored_errors,
-                                     json_file_path=self.json_file_path, specific_validations=self.specific_validations).handle_error(
+                                     json_file_path=self.json_file_path,
+                                     specific_validations=self.specific_validations).handle_error(
                     error_message, error_code,
                     file_path=os.path.join(os.getcwd(), PACKS_DIR, pack, PACKS_PACK_META_FILE_NAME)
                 ):
@@ -1679,7 +1708,9 @@ class ValidateManager:
                 file_path = str(path)
 
             try:
-                formatted_path, old_path, valid_file_extension = self.check_file_relevance_and_format_path(file_path, old_path, old_format_files)
+                formatted_path, old_path, valid_file_extension = self.check_file_relevance_and_format_path(file_path,
+                                                                                                           old_path,
+                                                                                                           old_format_files)
                 valid_types.add(valid_file_extension)
                 if formatted_path:
                     if old_path:
@@ -1724,7 +1755,8 @@ class ValidateManager:
         if file_type in [FileType.PYTHON_FILE, FileType.POWERSHELL_FILE, FileType.JAVASCRIPT_FILE, FileType.XIF_FILE]:
             if not (str(file_path).endswith('_test.py') or str(file_path).endswith('.Tests.ps1') or
                     str(file_path).endswith('_test.js')):
-                file_path = file_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml').replace('.xif', '.yml')
+                file_path = file_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml').replace(
+                    '.xif', '.yml')
 
                 if old_path:
                     old_path = old_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml')

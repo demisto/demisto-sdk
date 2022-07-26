@@ -24,9 +24,6 @@ from pylint.interfaces import IAstroidChecker
 cert_partner_msg = {
     "E9001": ("Sys.exit use is found, Please use return instead.", "sys-exit-exists",
               "Ensure to not use sys.exit in the code.",),
-    "W9004": ("Demisto.log is found, Please remove all demisto.log usage and exchange it with Logger/demisto.debug",
-              "demisto-log-exists",
-              "Please remove all demisto.log usage and exchange it with Logger/demisto.debug",),
     "W9005": ("Main function wasnt found in the file, Please add main()", "main-func-doesnt-exist",
               "Please remove all prints from the code.",),
     "W9008": (
@@ -67,7 +64,6 @@ class CertifiedPartnerChecker(BaseChecker):
 
     def visit_call(self, node):
         self._sys_exit_checker(node)
-        self._demisto_log_checker(node)
         self._return_outputs_checker(node)
         self._demisto_results_checker(node)
         self._init_params_checker(node)
@@ -109,21 +105,6 @@ class CertifiedPartnerChecker(BaseChecker):
         try:
             if node.func.attrname == 'exit' and node.func.expr.name == 'sys' and node.args and node.args[0].value != 0:
                 self.add_message("sys-exit-exists", node=node)
-
-        except Exception:
-            pass
-
-    def _demisto_log_checker(self, node):
-        """
-        Args: node which is a Call Node.
-        Check:
-        - if demisto.log() statement exists in the current node.
-
-        Adds the relevant error message using `add_message` function if one of the above exists.
-        """
-        try:
-            if node.func.attrname == 'log' and node.func.expr.name == 'demisto':
-                self.add_message("demisto-log-exists", node=node)
 
         except Exception:
             pass

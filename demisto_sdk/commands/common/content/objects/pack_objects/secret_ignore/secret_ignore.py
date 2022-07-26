@@ -2,8 +2,9 @@ from typing import Union
 
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.content.objects.abstract_objects import \
-    TextObject
+from demisto_sdk.commands.common.content.objects.abstract_objects import (
+    TextObject,
+)
 
 
 class SecretIgnore(TextObject):

@@ -8,7 +8,9 @@ yaml = YAML_Handler()
 
 
 class YAML(File):
-    def __init__(self, tmp_path: Path, repo_path: str, yml: Optional[dict] = None):
+    def __init__(
+        self, tmp_path: Path, repo_path: str, yml: Optional[dict] = None
+    ):
         super().__init__(tmp_path, repo_path)
         if yml:
             self.write_dict(yml)

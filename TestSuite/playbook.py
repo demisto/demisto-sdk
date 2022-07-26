@@ -10,7 +10,9 @@ yaml = YAML_Handler()
 
 
 class Playbook:
-    def __init__(self, tmpdir: Path, name, repo, is_test_playbook: bool = False):
+    def __init__(
+        self, tmpdir: Path, name, repo, is_test_playbook: bool = False
+    ):
         # Save entities
         self.name = name
         self._repo = repo
@@ -21,7 +23,9 @@ class Playbook:
         self.yml = YAML(tmpdir / f'{self.name}.yml', self._repo.path)
 
         if not self.is_test_playbook:
-            self.readme = File(tmpdir / f'{self.name}_README.md', self._repo.path)
+            self.readme = File(
+                tmpdir / f'{self.name}_README.md', self._repo.path
+            )
 
         if not self.is_test_playbook:
             # build playbook
@@ -31,12 +35,11 @@ class Playbook:
             self.create_default_test_playbook()
 
     def build(
-            self,
-            yml: Optional[dict] = None,
-            readme: Optional[str] = None,
+        self,
+        yml: Optional[dict] = None,
+        readme: Optional[str] = None,
     ):
-        """Writes not None objects to files.
-        """
+        """Writes not None objects to files."""
         if yml is not None:
             self.yml.write_dict(yml)
         if not self.is_test_playbook and readme is not None:
@@ -50,14 +53,18 @@ class Playbook:
 
         """
         default_playbook_dir = 'assets/default_playbook'
-        with open(suite_join_path(default_playbook_dir, 'playbook-sample.yml')) as yml_file:
+        with open(
+            suite_join_path(default_playbook_dir, 'playbook-sample.yml')
+        ) as yml_file:
             yml = yaml.load(yml_file)
             yml['id'] = yml['name'] = name
             self.build(yml=yml)
 
     def create_default_test_playbook(self, name: str = 'SamplePlaybookTest'):
         default_test_playbook_dir = 'assets/default_playbook'
-        with open(suite_join_path(default_test_playbook_dir, 'playbook-sample.yml')) as yml_file:
+        with open(
+            suite_join_path(default_test_playbook_dir, 'playbook-sample.yml')
+        ) as yml_file:
             yml = yaml.load(yml_file)
             yml['id'] = yml['name'] = name
             self.build(yml=yml)

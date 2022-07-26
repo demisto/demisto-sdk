@@ -8,7 +8,11 @@ from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.constants import ENV_DEMISTO_SDK_MARKETPLACE
 from demisto_sdk.commands.common.tools import src_root
 from demisto_sdk.commands.create_artifacts.tests.content_artifacts_creator_test import (
-    destroy_by_ext, duplicate_file, same_folders, temp_dir)
+    destroy_by_ext,
+    duplicate_file,
+    same_folders,
+    temp_dir,
+)
 from TestSuite.test_tools import ChangeCWD
 
 ARTIFACTS_CMD = 'create-content-artifacts'
@@ -34,7 +38,17 @@ def test_integration_create_content_artifacts_no_zip(repo):
     with ChangeCWD(repo.path):
         dir_path = repo.make_dir()
         runner = CliRunner()
-        result = runner.invoke(main, [ARTIFACTS_CMD, '-a', dir_path, '--no-zip', '-mp', 'marketplacev2'])
+        result = runner.invoke(
+            main,
+            [
+                ARTIFACTS_CMD,
+                '-a',
+                dir_path,
+                '--no-zip',
+                '-mp',
+                'marketplacev2',
+            ],
+        )
         os.rmdir(dir_path + '/content_packs')
         assert same_folders(dir_path, expected_artifacts_path)
         assert result.exit_code == 0
@@ -55,7 +69,7 @@ def test_integration_create_content_artifacts_zip(mock_git, repo):
         assert result.exit_code == 0
 
 
-@pytest.mark.parametrize(argnames="suffix", argvalues=["yml", "json"])
+@pytest.mark.parametrize(argnames='suffix', argvalues=['yml', 'json'])
 def test_malformed_file_failure(mock_git, suffix: str):
     with destroy_by_ext(suffix), temp_dir() as temp:
         runner = CliRunner()
@@ -73,8 +87,7 @@ def test_duplicate_file_failure(mock_git):
 
 
 def test_specific_pack_creation(repo):
-    """Test the -p flag for specific packs creation
-    """
+    """Test the -p flag for specific packs creation"""
     pack_1 = repo.setup_one_pack('Pack1')
     pack_1.pack_metadata.write_json(
         {
@@ -92,16 +105,21 @@ def test_specific_pack_creation(repo):
     with ChangeCWD(repo.path):
         with temp_dir() as temp:
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp, '-p', 'Pack1'])
+            result = runner.invoke(
+                main, [ARTIFACTS_CMD, '-a', temp, '-p', 'Pack1']
+            )
 
             assert result.exit_code == 0
-            assert os.path.exists(os.path.join(str(temp), 'uploadable_packs', 'Pack1.zip'))
-            assert not os.path.exists(os.path.join(str(temp), 'uploadable_packs', 'Pack2.zip'))
+            assert os.path.exists(
+                os.path.join(str(temp), 'uploadable_packs', 'Pack1.zip')
+            )
+            assert not os.path.exists(
+                os.path.join(str(temp), 'uploadable_packs', 'Pack2.zip')
+            )
 
 
 def test_all_packs_creation(repo):
-    """Test the -p flag for all packs creation
-    """
+    """Test the -p flag for all packs creation"""
     pack_1 = repo.setup_one_pack('Pack1')
     pack_1.pack_metadata.write_json(
         {
@@ -119,7 +137,9 @@ def test_all_packs_creation(repo):
     with ChangeCWD(repo.path):
         with temp_dir() as temp:
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [ARTIFACTS_CMD, '-a', temp, '-p', 'all'])
+            result = runner.invoke(
+                main, [ARTIFACTS_CMD, '-a', temp, '-p', 'all']
+            )
 
             assert result.exit_code == 0
             assert (temp / 'uploadable_packs' / 'Pack1.zip').exists()
@@ -137,30 +157,49 @@ def test_create_packs_with_filter_by_id_set(repo):
         - Verify that only the script in the ID set is exported to the pack artifacts.
     """
     pack = repo.create_pack('Joey')
-    pack.pack_metadata.write_json({
-        'name': 'Joey',
-    })
+    pack.pack_metadata.write_json(
+        {
+            'name': 'Joey',
+        }
+    )
     script1 = pack.create_script('HowYouDoing')
     script2 = pack.create_script('ShareFood')
-    repo.id_set.write_json({
-        'Packs': {
-            'Joey': {
-                'ContentItems': {
-                    'scripts': [
-                        'HowYouDoing',
-                    ],
+    repo.id_set.write_json(
+        {
+            'Packs': {
+                'Joey': {
+                    'ContentItems': {
+                        'scripts': [
+                            'HowYouDoing',
+                        ],
+                    },
                 },
             },
-        },
-    })
+        }
+    )
 
     dir_path = repo.make_dir()
 
     with ChangeCWD(repo.path):
         runner = CliRunner()
-        result = runner.invoke(main, [ARTIFACTS_CMD, '-a', dir_path, '--no-zip', '-fbi', '-idp', repo.id_set.path, '-p', 'Joey'])
+        result = runner.invoke(
+            main,
+            [
+                ARTIFACTS_CMD,
+                '-a',
+                dir_path,
+                '--no-zip',
+                '-fbi',
+                '-idp',
+                repo.id_set.path,
+                '-p',
+                'Joey',
+            ],
+        )
         assert result.exit_code == 0
 
-    scripts_folder_path = Path(dir_path) / 'content_packs' / pack.name / 'Scripts'
+    scripts_folder_path = (
+        Path(dir_path) / 'content_packs' / pack.name / 'Scripts'
+    )
     assert (scripts_folder_path / f'script-{script1.name}.yml').exists()
     assert not (scripts_folder_path / f'script-{script2.name}.yml').exists()

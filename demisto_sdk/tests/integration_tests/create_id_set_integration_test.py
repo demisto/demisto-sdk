@@ -11,7 +11,7 @@ from TestSuite.utils import IsEqualFunctions
 json = JSON_Handler()
 
 
-CREATE_ID_SET_CMD = "create-id-set"
+CREATE_ID_SET_CMD = 'create-id-set'
 
 
 class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytest
@@ -36,18 +36,33 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
         import demisto_sdk.commands.create_id_set.create_id_set as cis
         import demisto_sdk.commands.find_dependencies.find_dependencies as find_dependencies
         from demisto_sdk.tests.test_files.create_id_set import (
-            excluded_items_by_pack, excluded_items_by_type,
-            packs_dependencies_results)
+            excluded_items_by_pack,
+            excluded_items_by_type,
+            packs_dependencies_results,
+        )
 
-        mock_id_set = self.open_json_file('demisto_sdk/tests/test_files/create_id_set/unfiltered_id_set.json')
-        id_set_after_manual_removal = self.open_json_file('demisto_sdk/tests/test_files/create_id_set/id_set_after_manual_removal.json')
+        mock_id_set = self.open_json_file(
+            'demisto_sdk/tests/test_files/create_id_set/unfiltered_id_set.json'
+        )
+        id_set_after_manual_removal = self.open_json_file(
+            'demisto_sdk/tests/test_files/create_id_set/id_set_after_manual_removal.json'
+        )
 
         mocker.patch.object(cis, 'get_id_set', return_value=mock_id_set)
-        mocker.patch.object(find_dependencies, "get_packs_dependent_on_given_packs",
-                            side_effect=[(packs_dependencies_results.data, {}), ({}, {})])
-        mocker.patch.object(cis, 're_create_id_set', return_value=(id_set_after_manual_removal,
-                                                                   excluded_items_by_pack.data,
-                                                                   excluded_items_by_type.data))
+        mocker.patch.object(
+            find_dependencies,
+            'get_packs_dependent_on_given_packs',
+            side_effect=[(packs_dependencies_results.data, {}), ({}, {})],
+        )
+        mocker.patch.object(
+            cis,
+            're_create_id_set',
+            return_value=(
+                id_set_after_manual_removal,
+                excluded_items_by_pack.data,
+                excluded_items_by_type.data,
+            ),
+        )
 
         # Change working dir to repo
         with ChangeCWD(repo.path):
@@ -56,18 +71,30 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
             # so changing `cpu_count` return value to 1 still gives you multiprocessing but with only 2 processors,
             # and not the maximum amount.
             import demisto_sdk.commands.common.update_id_set as uis
+
             mocker.patch.object(uis, 'cpu_count', return_value=1)
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [CREATE_ID_SET_CMD, '-o', './id_set_result.json', '--marketplace', 'marketplacev2'],
-                                   catch_exceptions=False)
+            result = runner.invoke(
+                main,
+                [
+                    CREATE_ID_SET_CMD,
+                    '-o',
+                    './id_set_result.json',
+                    '--marketplace',
+                    'marketplacev2',
+                ],
+                catch_exceptions=False,
+            )
 
             id_set_result = self.open_json_file('./id_set_result.json')
 
-        expected_id_set = self.open_json_file('demisto_sdk/tests/test_files/create_id_set/id_set_after_removing_dependencies.json')
+        expected_id_set = self.open_json_file(
+            'demisto_sdk/tests/test_files/create_id_set/id_set_after_removing_dependencies.json'
+        )
 
         assert IsEqualFunctions.is_dicts_equal(id_set_result, expected_id_set)
         assert result.exit_code == 0
-        assert result.stderr == ""
+        assert result.stderr == ''
 
     def test_create_id_set_with_excluded_items_mini(self, mocker, repo):
         """
@@ -94,20 +121,37 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
         import demisto_sdk.commands.create_id_set.create_id_set as cis
         import demisto_sdk.commands.find_dependencies.find_dependencies as find_dependencies
         from demisto_sdk.tests.test_files.create_id_set.mini_id_set import (
-            excluded_items_by_pack, excluded_items_by_type,
-            packs_dependencies_results)
+            excluded_items_by_pack,
+            excluded_items_by_type,
+            packs_dependencies_results,
+        )
 
-        mock_id_set = self.open_json_file('demisto_sdk/tests/test_files/create_id_set/unfiltered_id_set.json')
-        id_set_after_manual_removal = self.open_json_file('demisto_sdk/tests/test_files/create_id_set/mini_id_set/id_set_after_manual_removal.json')
+        mock_id_set = self.open_json_file(
+            'demisto_sdk/tests/test_files/create_id_set/unfiltered_id_set.json'
+        )
+        id_set_after_manual_removal = self.open_json_file(
+            'demisto_sdk/tests/test_files/create_id_set/mini_id_set/id_set_after_manual_removal.json'
+        )
 
         mocker.patch.object(cis, 'get_id_set', return_value=mock_id_set)
-        mocker.patch.object(find_dependencies, "get_packs_dependent_on_given_packs",
-                            side_effect=[(packs_dependencies_results.first_iteration, {}),
-                                         (packs_dependencies_results.second_iteration, {}),
-                                         ({}, {})])
-        mocker.patch.object(cis, 're_create_id_set', return_value=(id_set_after_manual_removal,
-                                                                   excluded_items_by_pack.data,
-                                                                   excluded_items_by_type.data))
+        mocker.patch.object(
+            find_dependencies,
+            'get_packs_dependent_on_given_packs',
+            side_effect=[
+                (packs_dependencies_results.first_iteration, {}),
+                (packs_dependencies_results.second_iteration, {}),
+                ({}, {}),
+            ],
+        )
+        mocker.patch.object(
+            cis,
+            're_create_id_set',
+            return_value=(
+                id_set_after_manual_removal,
+                excluded_items_by_pack.data,
+                excluded_items_by_type.data,
+            ),
+        )
 
         # Change working dir to repo
         with ChangeCWD(repo.path):
@@ -116,18 +160,30 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
             # so changing `cpu_count` return value to 1 still gives you multiprocessing but with only 2 processors,
             # and not the maximum amount.
             import demisto_sdk.commands.common.update_id_set as uis
+
             mocker.patch.object(uis, 'cpu_count', return_value=1)
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [CREATE_ID_SET_CMD, '-o', './id_set_result.json', '--marketplace', 'marketplacev2'],
-                                   catch_exceptions=False)
+            result = runner.invoke(
+                main,
+                [
+                    CREATE_ID_SET_CMD,
+                    '-o',
+                    './id_set_result.json',
+                    '--marketplace',
+                    'marketplacev2',
+                ],
+                catch_exceptions=False,
+            )
 
             id_set_result = self.open_json_file('./id_set_result.json')
 
-        expected_id_set = self.open_json_file('demisto_sdk/tests/test_files/create_id_set/mini_id_set/id_set_after_removing_dependencies.json')
+        expected_id_set = self.open_json_file(
+            'demisto_sdk/tests/test_files/create_id_set/mini_id_set/id_set_after_removing_dependencies.json'
+        )
 
         assert IsEqualFunctions.is_dicts_equal(id_set_result, expected_id_set)
         assert result.exit_code == 0
-        assert result.stderr == ""
+        assert result.stderr == ''
 
     @staticmethod
     def test_excluded_items_contain_aliased_field(mocker, repo: Repo):
@@ -151,11 +207,13 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
             'marketplaces': ['xsoar'],
         }
         common_types_pack = repo.create_pack('CommonTypes')
-        common_types_pack.pack_metadata.write_json({
-            'name': 'CommonTypes',
-            'currentVersion': '1.0.0',
-            'marketplaces': ['xsoar', 'marketplacev2'],
-        })
+        common_types_pack.pack_metadata.write_json(
+            {
+                'name': 'CommonTypes',
+                'currentVersion': '1.0.0',
+                'marketplaces': ['xsoar', 'marketplacev2'],
+            }
+        )
         common_types_pack.create_incident_field('Host', content=host)
         common_types_pack.create_incident_type('IncidentType')
         host_name = {
@@ -169,16 +227,20 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
                     'type': 'shortText',
                     'name': 'Host',
                 }
-            ]
+            ],
         }
 
         core_alert_fields_pack = repo.create_pack('CoreAlertFields')
-        core_alert_fields_pack.pack_metadata.write_json({
-            'name': 'CoreAlertFields',
-            'currentVersion': '1.0.0',
-            'marketplaces': ['marketplacev2'],
-        })
-        core_alert_fields_pack.create_incident_field('HostName', content=host_name)
+        core_alert_fields_pack.pack_metadata.write_json(
+            {
+                'name': 'CoreAlertFields',
+                'currentVersion': '1.0.0',
+                'marketplaces': ['marketplacev2'],
+            }
+        )
+        core_alert_fields_pack.create_incident_field(
+            'HostName', content=host_name
+        )
         mapper = {
             'id': 'Mapper',
             'type': 'mapping-incoming',
@@ -186,20 +248,19 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
                 'IncidentType': {
                     'dontMapEventToLabels': False,
                     'internalMapping': {
-                        'Host': {
-                            'simple': 'blabla'
-                        },
-                    }
+                        'Host': {'simple': 'blabla'},
+                    },
                 }
-            }
-
+            },
         }
         pack = repo.create_pack('MapperPack')
-        pack.pack_metadata.write_json({
-            'name': 'MapperPack',
-            'currentVersion': '1.0.0',
-            'marketplaces': ['xsoar', 'marketplacev2'],
-        })
+        pack.pack_metadata.write_json(
+            {
+                'name': 'MapperPack',
+                'currentVersion': '1.0.0',
+                'marketplaces': ['xsoar', 'marketplacev2'],
+            }
+        )
         pack.create_mapper('Mapper', content=mapper)
 
         with ChangeCWD(repo.path):
@@ -208,10 +269,20 @@ class TestCreateIdSet:  # Use classes to speed up test - multi threaded py pytes
             # so changing `cpu_count` return value to 1 still gives you multiprocessing but with only 2 processors,
             # and not the maximum amount.
             import demisto_sdk.commands.common.update_id_set as uis
+
             mocker.patch.object(uis, 'cpu_count', return_value=1)
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [CREATE_ID_SET_CMD, '-o', 'id_set_result.json', '--marketplace', 'marketplacev2'],
-                                   catch_exceptions=False)
+            result = runner.invoke(
+                main,
+                [
+                    CREATE_ID_SET_CMD,
+                    '-o',
+                    'id_set_result.json',
+                    '--marketplace',
+                    'marketplacev2',
+                ],
+                catch_exceptions=False,
+            )
             assert result.exit_code == 0
 
         with open(os.path.join(repo.path, 'id_set_result.json')) as file_:

@@ -78,8 +78,11 @@ from typing import Dict, Optional
 import dateparser
 
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
-                                               print_error)
+from demisto_sdk.commands.common.tools import (
+    LOG_COLORS,
+    print_color,
+    print_error,
+)
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -117,7 +120,7 @@ def jsonise(context_key, value, description=''):
     return {
         'contextPath': context_key,
         'description': description,
-        'type': determine_type(value)
+        'type': determine_type(value),
     }
 
 
@@ -130,13 +133,22 @@ def is_date(val):
     """
     Determines if val is Date, if yes returns True otherwise False
     """
-    if isinstance(val, (int, float)) and val > 15737548065 and val < 2573754806500:
+    if (
+        isinstance(val, (int, float))
+        and val > 15737548065
+        and val < 2573754806500
+    ):
         # 15737548065 is Jul 02 1970 (milliseconds)
         # 2573754806500 is the year 2050 (milliseconds)
         # if number is between these two numbers it probably is timestamp=date
         return True
 
-    if isinstance(val, str) and len(val) >= 10 and len(val) <= 30 and (_is_min_date(val) or dateparser.parse(val)):
+    if (
+        isinstance(val, str)
+        and len(val) >= 10
+        and len(val) <= 30
+        and (_is_min_date(val) or dateparser.parse(val))
+    ):
         # the shortest date string is => len(2019-10-10) = 10
         # The longest date string I could think of wasn't of length over len=30 '2019-10-10T00:00:00.000 +0900'
         return True
@@ -159,7 +171,15 @@ def determine_type(val):
     return 'Unknown'
 
 
-def parse_json(data, command_name, prefix, verbose=False, interactive=False, descriptions: Optional[Dict] = None, return_object=False):
+def parse_json(
+    data,
+    command_name,
+    prefix,
+    verbose=False,
+    interactive=False,
+    descriptions: Optional[Dict] = None,
+    return_object=False,
+):
     if data == '':
         raise ValueError('Invalid input JSON - got empty string')
 
@@ -179,9 +199,13 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False, des
 
     flattened_data = flatten_json(data)
     if prefix:
-        flattened_data = {f'{prefix}.{key}': value for key, value in flattened_data.items()}
+        flattened_data = {
+            f'{prefix}.{key}': value for key, value in flattened_data.items()
+        }
         if descriptions:
-            descriptions = {f'{prefix}.{key}': value for key, value in descriptions.items()}
+            descriptions = {
+                f'{prefix}.{key}': value for key, value in descriptions.items()
+            }
 
     arg_json = []
     for key, value in flattened_data.items():
@@ -200,7 +224,7 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False, des
     outputs = {
         'name': command_name.lstrip('!'),
         'arguments': [],
-        'outputs': arg_json
+        'outputs': arg_json,
     }
 
     if return_object:
@@ -210,7 +234,15 @@ def parse_json(data, command_name, prefix, verbose=False, interactive=False, des
     return yaml_output
 
 
-def json_to_outputs(command, json, prefix, output=None, verbose=False, interactive=False, descriptions=None):
+def json_to_outputs(
+    command,
+    json,
+    prefix,
+    output=None,
+    verbose=False,
+    interactive=False,
+    descriptions=None,
+):
     """
     This script parses JSON to Demisto Outputs YAML format
 
@@ -231,20 +263,26 @@ def json_to_outputs(command, json, prefix, output=None, verbose=False, interacti
             with open(json, 'r') as json_file:
                 input_json = json_file.read()
         else:
-            print("Enter the command's output in JSON format.\n "
-                  "As an example, If one of the command's output is `item_id`,\n enter {\"item_id\": 1234}")
+            print(
+                "Enter the command's output in JSON format.\n "
+                'As an example, If one of the command\'s output is `item_id`,\n enter {"item_id": 1234}'
+            )
             input_json = input_multiline()
 
         descriptions = _parse_description_argument(descriptions)
-        yaml_output = parse_json(input_json, command, prefix, verbose, interactive, descriptions)
+        yaml_output = parse_json(
+            input_json, command, prefix, verbose, interactive, descriptions
+        )
 
         if output:
             with open(output, 'w') as yf:
                 yf.write(yaml_output)
 
-                print_color(f'Outputs file was saved to :\n{output}', LOG_COLORS.GREEN)
+                print_color(
+                    f'Outputs file was saved to :\n{output}', LOG_COLORS.GREEN
+                )
         else:
-            print_color("YAML Outputs\n\n", LOG_COLORS.GREEN)
+            print_color('YAML Outputs\n\n', LOG_COLORS.GREEN)
             print(yaml_output)
 
     except Exception as ex:
@@ -256,7 +294,7 @@ def json_to_outputs(command, json, prefix, output=None, verbose=False, interacti
 
 
 def _parse_description_argument(descriptions: Optional[str]) -> Optional[dict]:  # type: ignore
-    """Parses the descriptions argument, be it a path to JSON or a JSON body given as argument """
+    """Parses the descriptions argument, be it a path to JSON or a JSON body given as argument"""
 
     if not descriptions:  # None or empty
         return None
@@ -269,8 +307,8 @@ def _parse_description_argument(descriptions: Optional[str]) -> Optional[dict]: 
         else:
             parsed = json.loads(descriptions)  # argument input
             if not isinstance(parsed, Dict):
-                raise TypeError("Expected a dictionary")
+                raise TypeError('Expected a dictionary')
             return parsed
 
     except (json.JSONDecodeError, TypeError):
-        print("Error decoding JSON descriptions, ignoring them.")
+        print('Error decoding JSON descriptions, ignoring them.')

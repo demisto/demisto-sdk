@@ -1,4 +1,4 @@
-""" HelloWorldSlim integration for Cortex XSOAR (aka Demisto)
+"""HelloWorldSlim integration for Cortex XSOAR (aka Demisto)
 
 This is a slim version of our HelloWorld integration, which supplies a good example on how you can build a Cortex
 XSOAR Integration using Python 3. This slim version is intended only to demonstrate the structure of a basic integration,
@@ -7,7 +7,6 @@ For any other uses of an integration, see the original HelloWorld integration.
 
 The HelloWorldSlim resembles an integration that can retrive an alert from the api using the alert's id, and can also
 modify the alert's status.
-
 """
 import urllib3
 from typing import Any, Dict
@@ -43,12 +42,12 @@ class Client(BaseClient):   # type: ignore
         return self._http_request(
             method='GET',
             url_suffix='/get_alert_details',
-            params={
-                'alert_id': alert_id
-            }
+            params={'alert_id': alert_id},
         )
 
-    def update_alert_status(self, alert_id: str, alert_status: str) -> Dict[str, Any]:
+    def update_alert_status(
+        self, alert_id: str, alert_status: str
+    ) -> Dict[str, Any]:
         """
         Changes the status of a specific HelloWorld alert
         Args:
@@ -63,10 +62,7 @@ class Client(BaseClient):   # type: ignore
         return self._http_request(
             method='GET',
             url_suffix='/change_alert_status',
-            params={
-                'alert_id': alert_id,
-                'alert_status': alert_status
-            }
+            params={'alert_id': alert_id, 'alert_status': alert_status},
         )
 
 
@@ -119,17 +115,21 @@ def get_alert_command(client: Client, args: Dict[str, Any]) -> CommandResults:
 
     # tableToMarkdown() is defined is CommonServerPython.py and is used very
     # often to convert lists and dicts into a human readable format in markdown
-    readable_output = tableToMarkdown(f'HelloWorldSlim Alert {alert_id}', alert)
+    readable_output = tableToMarkdown(
+        f'HelloWorldSlim Alert {alert_id}', alert
+    )
 
     return CommandResults(
         readable_output=readable_output,
         outputs_prefix='HelloWorldSlim.Alert',
         outputs_key_field='alert_id',
-        outputs=alert
+        outputs=alert,
     )
 
 
-def update_alert_status_command(client: Client, args: Dict[str, Any]) -> CommandResults:
+def update_alert_status_command(
+    client: Client, args: Dict[str, Any]
+) -> CommandResults:
     """
     helloworldslim-update-alert-status command: Changes the status of an alert
 
@@ -163,13 +163,15 @@ def update_alert_status_command(client: Client, args: Dict[str, Any]) -> Command
 
     # tableToMarkdown() is defined is CommonServerPython.py and is used very
     # often to convert lists and dicts into a human readable format in markdown
-    readable_output = tableToMarkdown(f'HelloWorldSlim Alert {alert_id}', alert)
+    readable_output = tableToMarkdown(
+        f'HelloWorldSlim Alert {alert_id}', alert
+    )
 
     return CommandResults(
         readable_output=readable_output,
         outputs_prefix='HelloWorldSlim.Alert',
         outputs_key_field='alert_id',
-        outputs=alert
+        outputs=alert,
     )
 
 
@@ -191,14 +193,13 @@ def main() -> None:
 
     demisto.debug(f'Command being called is {command}')
     try:
-        headers = {
-            'Authorization': f'Bearer {api_key}'
-        }
+        headers = {'Authorization': f'Bearer {api_key}'}
         client = Client(
             base_url=base_url,
             verify=verify_certificate,
             headers=headers,
-            proxy=proxy)
+            proxy=proxy,
+        )
 
         if command == 'test-module':
             # This is the call made when pressing the integration Test button.
@@ -213,7 +214,9 @@ def main() -> None:
 
     # Log exceptions and return errors
     except Exception as e:
-        return_error(f'Failed to execute {command} command.\nError:\n{str(e)}', error=e)
+        return_error(
+            f'Failed to execute {command} command.\nError:\n{str(e)}', error=e
+        )
 
 
 if __name__ in ('__main__', '__builtin__', 'builtins'):  # pragma: no cover

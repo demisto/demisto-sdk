@@ -4,8 +4,9 @@ import demisto_client
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import PARSING_RULE, FileType
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_unify_content_object import \
-    YAMLContentUnifiedObject
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_unify_content_object import (
+    YAMLContentUnifiedObject,
+)
 
 
 class ParsingRule(YAMLContentUnifiedObject):

@@ -7,15 +7,22 @@ from ordered_set import OrderedSet
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.generate_unit_tests.common import (
-    ast_name, extract_outputs_from_command_run)
+    ast_name,
+    extract_outputs_from_command_run,
+)
 
 logger = logging.getLogger('demisto-sdk')
 json = JSON_Handler()
 
 
 class ArgsBuilder:
-    def __init__(self, command_name: str, directory_path: str, args_list: List[str] = [],
-                 commands_to_generate: Dict[str, List[str]] = {}):
+    def __init__(
+        self,
+        command_name: str,
+        directory_path: str,
+        args_list: List[str] = [],
+        commands_to_generate: Dict[str, List[str]] = {},
+    ):
         self.args_list = args_list
         self.command_name = command_name
         self.directory_path = directory_path
@@ -37,9 +44,15 @@ class ArgsBuilder:
         """
         global logger
         if self.input_args:
-            is_parametrize = True if len(self.commands_to_generate.get(self.command_name)) > 1 else False
+            is_parametrize = (
+                True
+                if len(self.commands_to_generate.get(self.command_name)) > 1
+                else False
+            )
             if is_parametrize:
-                logger.debug('Creating global argument object for parametrize.')
+                logger.debug(
+                    'Creating global argument object for parametrize.'
+                )
                 self.build_global_args()
                 self.build_decorator()
             else:
@@ -65,8 +78,12 @@ class ArgsBuilder:
         build a local var named args that will be given as input to the command.
         """
         keys, values = self.get_keys_values(self.input_args[0])
-        self.args.append(ast_mod.Assign(targets=[ast_name('args', ctx=ast_mod.Store())],
-                                        value=ast_mod.Dict(keys=keys, values=values)))
+        self.args.append(
+            ast_mod.Assign(
+                targets=[ast_name('args', ctx=ast_mod.Store())],
+                value=ast_mod.Dict(keys=keys, values=values),
+            )
+        )
 
     def build_global_args(self):
         """
@@ -77,8 +94,12 @@ class ArgsBuilder:
         for inputs in self.input_args:
             keys, values = self.get_keys_values(inputs)
             global_args.append(ast_mod.Dict(keys=keys, values=values))
-        self.global_arg.append(ast_mod.Assign(targets=[ast_name(self.global_arg_name, ast_mod.Store())],
-                                              value=ast_mod.List(elts=global_args, ctx=ast_mod.Store())))
+        self.global_arg.append(
+            ast_mod.Assign(
+                targets=[ast_name(self.global_arg_name, ast_mod.Store())],
+                value=ast_mod.List(elts=global_args, ctx=ast_mod.Store()),
+            )
+        )
 
     # ================= Decorator builder =====================
 
@@ -86,15 +107,24 @@ class ArgsBuilder:
         """
         builds decorator of parametrize.
         """
-        call = ast_mod.Call(func=ast_name('pytest.mark.parametrize'),
-                            args=[ast_mod.Constant('args'), ast_name(self.global_arg_name)],
-                            keywords=[])
+        call = ast_mod.Call(
+            func=ast_name('pytest.mark.parametrize'),
+            args=[ast_mod.Constant('args'), ast_name(self.global_arg_name)],
+            keywords=[],
+        )
         self.decorators.append(call)
 
 
 class TestCase:
-    def __init__(self, func: ast_mod.FunctionDef, directory_path: Path, client_ast: ast_mod.ClassDef,
-                 example_dict: dict, id: int = 0, module: ast_mod.Module = None):
+    def __init__(
+        self,
+        func: ast_mod.FunctionDef,
+        directory_path: Path,
+        client_ast: ast_mod.ClassDef,
+        example_dict: dict,
+        id: int = 0,
+        module: ast_mod.Module = None,
+    ):
         self.asserts = []
         self.func = func
         self.id = id
@@ -102,7 +132,7 @@ class TestCase:
         self.mocks = []
         self.inputs = []
         self.command_call = None
-        self.comment = "\n\tWhen:\n\tGiven:\n\tThen:\n\t"
+        self.comment = '\n\tWhen:\n\tGiven:\n\tThen:\n\t'
         self.directory_path = directory_path
         self.client_func_call = []
         self.args = []
@@ -131,14 +161,19 @@ class TestCase:
             args.append(ast_name('args'))
 
         test_func = ast_mod.FunctionDef(
-            name=f"test_{self.func.name}",
+            name=f'test_{self.func.name}',
             args=ast_mod.arguments(
-                posonlyargs=[], args=args, vararg=None, kwonlyargs=[], kw_defaults=[],
-                kwarg=None, defaults=[]
+                posonlyargs=[],
+                args=args,
+                vararg=None,
+                kwonlyargs=[],
+                kw_defaults=[],
+                kwarg=None,
+                defaults=[],
             ),
             body=body,
             decorator_list=self.decorators,
-            returns=None
+            returns=None,
         )
         return test_func
 
@@ -146,22 +181,36 @@ class TestCase:
 
     def request_mock_ast_builder(self):
         """
-            Builds ast nodes of requests mock.
+        Builds ast nodes of requests mock.
         """
         for call in self.client_func_call:
-            self.mocks.append(self.load_mock_from_json_ast_builder(f'mock_response_{call}', call))
-            self.mocks.append(self.load_mock_from_json_ast_builder('mock_results', str(self.func.name)))
+            self.mocks.append(
+                self.load_mock_from_json_ast_builder(
+                    f'mock_response_{call}', call
+                )
+            )
+            self.mocks.append(
+                self.load_mock_from_json_ast_builder(
+                    'mock_results', str(self.func.name)
+                )
+            )
 
             suffix, method = self.get_call_params_from_http_request(call)
-            url = f'SERVER_URL + \'{suffix}\'' if suffix is not None else 'SERVER_URL'
+            url = (
+                f"SERVER_URL + '{suffix}'"
+                if suffix is not None
+                else 'SERVER_URL'
+            )
 
-            attr = ast_mod.Attribute(value=ast_name('requests_mock'),
-                                     attr=ast_name(method.lower()))
-            ret_val = ast_mod.keyword(arg=ast_name('json'),
-                                      value=ast_name(f'mock_response_{call}'))
-            mock_call = ast_mod.Call(func=attr,
-                                     args=[ast_name(url)],
-                                     keywords=[ret_val])
+            attr = ast_mod.Attribute(
+                value=ast_name('requests_mock'), attr=ast_name(method.lower())
+            )
+            ret_val = ast_mod.keyword(
+                arg=ast_name('json'), value=ast_name(f'mock_response_{call}')
+            )
+            mock_call = ast_mod.Call(
+                func=attr, args=[ast_name(url)], keywords=[ret_val]
+            )
             self.mocks.append(ast_mod.Expr(value=mock_call))
 
     def load_mock_from_json_ast_builder(self, name: str, call: str):
@@ -170,11 +219,19 @@ class TestCase:
               call: name of the call, used to decide which file to choose from outputs directory.
         Return: Assign ast node of assignment of the mocked object.
         """
-        return ast_mod.Assign(targets=[ast_name(name, ctx=ast_mod.Store())],
-                              value=ast_mod.Call(func=ast_name('util_load_json'),
-                                                 args=[ast_mod.Constant(
-                                                     value='./' + str(Path('test_data', 'outputs', f'{call}.json')))],
-                                                 keywords=[]))
+        return ast_mod.Assign(
+            targets=[ast_name(name, ctx=ast_mod.Store())],
+            value=ast_mod.Call(
+                func=ast_name('util_load_json'),
+                args=[
+                    ast_mod.Constant(
+                        value='./'
+                        + str(Path('test_data', 'outputs', f'{call}.json'))
+                    )
+                ],
+                keywords=[],
+            ),
+        )
 
     def build_json_file_mocked_command_results(self):
         """
@@ -184,10 +241,19 @@ class TestCase:
         prefix = self.get_context_prefix()
 
         if prefix is not None:
-            self.examples_dict.update({'outputs': extract_outputs_from_command_run(self.examples_dict.get('outputs'), prefix)})
-            logger.debug(f'Creating mock command results file for {str(self.func.name)}')
-            Path(self.directory_path, 'outputs', f'{str(self.func.name)}.json').write_text(
-                json.dumps(self.examples_dict))
+            self.examples_dict.update(
+                {
+                    'outputs': extract_outputs_from_command_run(
+                        self.examples_dict.get('outputs'), prefix
+                    )
+                }
+            )
+            logger.debug(
+                f'Creating mock command results file for {str(self.func.name)}'
+            )
+            Path(
+                self.directory_path, 'outputs', f'{str(self.func.name)}.json'
+            ).write_text(json.dumps(self.examples_dict))
 
     def get_context_prefix(self):
         """
@@ -209,15 +275,21 @@ class TestCase:
         method = 'POST'
         suffix = None
         for block in self.client_ast.body:
-            if isinstance(block, ast_mod.FunctionDef) and block.name == def_name:
+            if (
+                isinstance(block, ast_mod.FunctionDef)
+                and block.name == def_name
+            ):
                 for node in block.body:
-                    if hasattr(node, 'value') and hasattr(node.value, 'func') and str(
-                            node.value.func) == "self._http_request":
+                    if (
+                        hasattr(node, 'value')
+                        and hasattr(node.value, 'func')
+                        and str(node.value.func) == 'self._http_request'
+                    ):
                         for key in node.value.keywords:
                             if hasattr(key, 'arg') and key.arg == 'method':
-                                method = str(key.value).strip("\'")
+                                method = str(key.value).strip("'")
                             if hasattr(key, 'arg') and key.arg == 'url_suffix':
-                                suffix = str(key.value).strip("\'")
+                                suffix = str(key.value).strip("'")
                     else:
                         continue
         return suffix, method
@@ -234,19 +306,30 @@ class TestCase:
         if returned_value:
             keywords = returned_value.keywords
             for keyword in keywords:
-                self.asserts.append(TestCase.create_command_results_assertion(keyword.arg, keyword.value))
+                self.asserts.append(
+                    TestCase.create_command_results_assertion(
+                        keyword.arg, keyword.value
+                    )
+                )
         else:
-            logger.warning('No return values were detected, thus no assertions being generated.')
+            logger.warning(
+                'No return values were detected, thus no assertions being generated.'
+            )
 
     @staticmethod
-    def assertions_builder(call: ast_mod.Attribute, ops: list, comperators: list):
+    def assertions_builder(
+        call: ast_mod.Attribute, ops: list, comperators: list
+    ):
         """
         Args: call: rhs of the assertions, item to check
                 ops: operation to check
                 comperators: values to check in the lhs
         Return: assert ast node
         """
-        return ast_mod.Assert(test=ast_mod.Compare(left=call, ops=ops, comparators=comperators), msg=None)
+        return ast_mod.Assert(
+            test=ast_mod.Compare(left=call, ops=ops, comparators=comperators),
+            msg=None,
+        )
 
     @staticmethod
     def get_links(value: ast_mod.Name):
@@ -259,7 +342,9 @@ class TestCase:
             return None
 
     @staticmethod
-    def create_command_results_assertion(arg: str, value: Union[ast_mod.Name, ast_mod.Constant]):
+    def create_command_results_assertion(
+        arg: str, value: Union[ast_mod.Name, ast_mod.Constant]
+    ):
         """
         Inputs: arg: CommandResults argument
                 value: CommandResults argument value
@@ -276,9 +361,19 @@ class TestCase:
             if link:
                 comperator = ast_name(f'mock_response_{link}')
         elif arg == 'outputs' or arg == 'readable_output':
-            get_call = ast_mod.Call(func=ast_name('get'), args=[ast_mod.Constant(arg)], keywords=[])
-            comperator = ast_mod.Attribute(value=ast_name('mock_results'), attr=get_call, ctx=ast_mod.Load())
-        return TestCase.assertions_builder(call, ops, [comperator]) if comperator else None
+            get_call = ast_mod.Call(
+                func=ast_name('get'), args=[ast_mod.Constant(arg)], keywords=[]
+            )
+            comperator = ast_mod.Attribute(
+                value=ast_name('mock_results'),
+                attr=get_call,
+                ctx=ast_mod.Load(),
+            )
+        return (
+            TestCase.assertions_builder(call, ops, [comperator])
+            if comperator
+            else None
+        )
 
     # ================= General functions =====================
 
@@ -296,7 +391,9 @@ class TestCase:
                 func = str(instance.func)
                 if func == 'args.get':
                     args_set.add(instance.args[0].value)
-                elif self.client_name is not None and func.startswith(self.client_name):
+                elif self.client_name is not None and func.startswith(
+                    self.client_name
+                ):
                     self.client_func_call.append(instance.func.attr)
             except AttributeError:
                 pass
@@ -311,7 +408,10 @@ class TestCase:
         global logger
         if hasattr(self.func.args, 'args'):
             for arg in self.func.args.args:
-                if hasattr(arg, 'annotation') and str(arg.annotation) == self.client_ast.name:
+                if (
+                    hasattr(arg, 'annotation')
+                    and str(arg.annotation) == self.client_ast.name
+                ):
                     self.client_name = arg.arg
                     logger.debug(f'Clinet name is {arg.arg}.')
 
@@ -321,7 +421,11 @@ class TestCase:
         Returns: array of ast nodes of returned values
         """
         for node in self.func.return_nodes:
-            if hasattr(node, 'value') and hasattr(node.value, 'func') and str(node.value.func) == 'CommandResults':
+            if (
+                hasattr(node, 'value')
+                and hasattr(node.value, 'func')
+                and str(node.value.func) == 'CommandResults'
+            ):
                 return node.value
         return None
 
@@ -330,11 +434,17 @@ class TestCase:
         Input: command_name: name of the command being called
         Returns: ast node of assignment command results to var.
         """
-        call_keywords = [ast_mod.keyword(arg='client', value=ast_name('client'))]
+        call_keywords = [
+            ast_mod.keyword(arg='client', value=ast_name('client'))
+        ]
         if len(self.args_list) > 0:
-            call_keywords.append(ast_mod.keyword(arg='args', value=ast_name('args')))
+            call_keywords.append(
+                ast_mod.keyword(arg='args', value=ast_name('args'))
+            )
 
-        self.command_call = ast_mod.Assign(targets=[ast_name('results', ctx=ast_mod.Store())],
-                                           value=ast_mod.Call(func=ast_name(self.func.name),
-                                                              args=[],
-                                                              keywords=call_keywords))
+        self.command_call = ast_mod.Assign(
+            targets=[ast_name('results', ctx=ast_mod.Store())],
+            value=ast_mod.Call(
+                func=ast_name(self.func.name), args=[], keywords=call_keywords
+            ),
+        )

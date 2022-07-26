@@ -1,14 +1,19 @@
 import pytest
 
-from demisto_sdk.commands.common.hook_validations.python_file import \
-    PythonFileValidator
+from demisto_sdk.commands.common.hook_validations.python_file import (
+    PythonFileValidator,
+)
 
 
-@pytest.mark.parametrize("file_input",
-                         ["# Copyright\n import pytest",
-                          "# BSD\n def test():\n pass",
-                          "# MIT\n import test",
-                          "# proprietary\n\ninput"])
+@pytest.mark.parametrize(
+    'file_input',
+    [
+        '# Copyright\n import pytest',
+        '# BSD\n def test():\n pass',
+        '# MIT\n import test',
+        '# proprietary\n\ninput',
+    ],
+)
 def test_copyright_sections(integration, file_input):
     """
     Given

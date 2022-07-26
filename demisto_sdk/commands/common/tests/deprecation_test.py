@@ -1,11 +1,14 @@
 import pytest
 
-from demisto_sdk.commands.common.hook_validations.deprecation import \
-    DeprecationValidator
-from demisto_sdk.commands.common.hook_validations.integration import \
-    IntegrationValidator
-from demisto_sdk.commands.common.hook_validations.playbook import \
-    PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.deprecation import (
+    DeprecationValidator,
+)
+from demisto_sdk.commands.common.hook_validations.integration import (
+    IntegrationValidator,
+)
+from demisto_sdk.commands.common.hook_validations.playbook import (
+    PlaybookValidator,
+)
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
 from demisto_sdk.commands.common.tests.integration_test import mock_structure
 

@@ -6,22 +6,31 @@ from shutil import rmtree
 import pytest
 from packaging.version import parse
 
-from demisto_sdk.commands.common.constants import (PACKS_DIR, XSOAR_AUTHOR,
-                                                   XSOAR_SUPPORT,
-                                                   XSOAR_SUPPORT_URL)
-from demisto_sdk.commands.common.content.objects.pack_objects import \
-    PackMetaData
+from demisto_sdk.commands.common.constants import (
+    PACKS_DIR,
+    XSOAR_AUTHOR,
+    XSOAR_SUPPORT,
+    XSOAR_SUPPORT_URL,
+)
+from demisto_sdk.commands.common.content.objects.pack_objects import (
+    PackMetaData,
+)
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.common.content.objects_factory import \
-    path_to_pack_object
+from demisto_sdk.commands.common.content.objects_factory import (
+    path_to_pack_object,
+)
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import src_root
 from TestSuite.test_tools import ChangeCWD
 
 TEST_DATA = src_root() / 'tests' / 'test_files'
 TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
-PACK_METADATA = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / 'pack_metadata.json'
-UNIT_TEST_DATA = (src_root() / 'commands' / 'create_artifacts' / 'tests' / 'data')
+PACK_METADATA = (
+    TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / 'pack_metadata.json'
+)
+UNIT_TEST_DATA = (
+    src_root() / 'commands' / 'create_artifacts' / 'tests' / 'data'
+)
 
 
 @contextmanager
@@ -100,12 +109,17 @@ def test_legacy_setter():
     assert obj.legacy
 
 
-@pytest.mark.parametrize('url, support, email, expected_url, expected_email', [
-    ('some url', 'xsoar', 'some email', 'some url', 'some email'),
-    (None, 'xsoar', 'some email', XSOAR_SUPPORT_URL, 'some email'),
-    (None, 'Partner', None, None, None),
-])
-def test_support_details_getter(url, support, email, expected_url, expected_email):
+@pytest.mark.parametrize(
+    'url, support, email, expected_url, expected_email',
+    [
+        ('some url', 'xsoar', 'some email', 'some url', 'some email'),
+        (None, 'xsoar', 'some email', XSOAR_SUPPORT_URL, 'some email'),
+        (None, 'Partner', None, None, None),
+    ],
+)
+def test_support_details_getter(
+    url, support, email, expected_url, expected_email
+):
     obj = PackMetaData(PACK_METADATA)
     obj.url = url
     obj.support = support
@@ -117,11 +131,19 @@ def test_support_details_getter(url, support, email, expected_url, expected_emai
     assert expected_email == support_details.get('email')
 
 
-@pytest.mark.parametrize('support, author, expected_author, expected_log', [
-    (XSOAR_SUPPORT, XSOAR_AUTHOR, XSOAR_AUTHOR, ''),
-    ('someone', 'someone', 'someone', ''),
-    (XSOAR_SUPPORT, 'someone', 'someone', f'someone author doest not match {XSOAR_AUTHOR} default value')
-])
+@pytest.mark.parametrize(
+    'support, author, expected_author, expected_log',
+    [
+        (XSOAR_SUPPORT, XSOAR_AUTHOR, XSOAR_AUTHOR, ''),
+        ('someone', 'someone', 'someone', ''),
+        (
+            XSOAR_SUPPORT,
+            'someone',
+            'someone',
+            f'someone author doest not match {XSOAR_AUTHOR} default value',
+        ),
+    ],
+)
 def test_author_getter(caplog, support, author, expected_author, expected_log):
     obj = PackMetaData(PACK_METADATA)
     obj.support = support
@@ -131,11 +153,9 @@ def test_author_getter(caplog, support, author, expected_author, expected_log):
     assert expected_log in caplog.text
 
 
-@pytest.mark.parametrize('new_price, expected_price', [
-    (10, 10),
-    ('10', 10),
-    ('not int', 0)
-])
+@pytest.mark.parametrize(
+    'new_price, expected_price', [(10, 10), ('10', 10), ('not int', 0)]
+)
 def test_price_setter_bad_int(new_price, expected_price):
     obj = PackMetaData(PACK_METADATA)
 
@@ -153,6 +173,7 @@ def test_dump_with_price(mocker):
     import builtins
 
     from demisto_sdk.commands.common.handlers import JSON_Handler
+
     json = JSON_Handler()
 
     obj = PackMetaData(PACK_METADATA)
@@ -179,8 +200,9 @@ def test_load_user_metadata_basic(repo):
         - Verify that pack's metadata information was loaded successfully.
 
     """
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
-        ArtifactsManager
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+        ArtifactsManager,
+    )
 
     pack_1 = repo.setup_one_pack('Pack1')
     pack_1.pack_metadata.write_json(
@@ -195,21 +217,25 @@ def test_load_user_metadata_basic(repo):
             'currentVersion': '1.1.1',
             'author': 'Cortex XSOAR',
             'tags': ['tag1'],
-            'dependencies': [{'dependency': {'dependency': '1'}}]
+            'dependencies': [{'dependency': {'dependency': '1'}}],
         }
     )
 
     with ChangeCWD(repo.path):
         with temp_dir() as temp:
-            artifact_manager = ArtifactsManager(artifacts_path=temp,
-                                                content_version='6.0.0',
-                                                zip=False,
-                                                suffix='',
-                                                cpus=1,
-                                                packs=True)
+            artifact_manager = ArtifactsManager(
+                artifacts_path=temp,
+                content_version='6.0.0',
+                zip=False,
+                suffix='',
+                cpus=1,
+                packs=True,
+            )
 
     pack_1_metadata = artifact_manager.content.packs['Pack1'].metadata
-    pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path, logging_setup(3))
+    pack_1_metadata.load_user_metadata(
+        'Pack1', 'Pack Number 1', pack_1.path, logging_setup(3)
+    )
 
     assert pack_1_metadata.id == 'Pack1'
     assert pack_1_metadata.name == 'Pack Number 1'
@@ -223,7 +249,9 @@ def test_load_user_metadata_basic(repo):
     assert pack_1_metadata.current_version == parse('1.1.1')
     assert pack_1_metadata.author == 'Cortex XSOAR'
     assert pack_1_metadata.tags == ['tag1']
-    assert pack_1_metadata.dependencies == [{'dependency': {'dependency': '1'}}]
+    assert pack_1_metadata.dependencies == [
+        {'dependency': {'dependency': '1'}}
+    ]
 
 
 def test_load_user_metadata_advanced(repo):
@@ -238,8 +266,9 @@ def test_load_user_metadata_advanced(repo):
         - Verify that pack's metadata information was loaded successfully.
 
     """
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
-        ArtifactsManager
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
+        ArtifactsManager,
+    )
 
     pack_1 = repo.setup_one_pack('Pack1')
     pack_1.pack_metadata.write_json(
@@ -249,21 +278,25 @@ def test_load_user_metadata_advanced(repo):
             'tags': ['tag1'],
             'useCases': ['usecase1'],
             'vendorId': 'vendorId',
-            'vendorName': 'vendorName'
+            'vendorName': 'vendorName',
         }
     )
 
     with ChangeCWD(repo.path):
         with temp_dir() as temp:
-            artifact_manager = ArtifactsManager(artifacts_path=temp,
-                                                content_version='6.0.0',
-                                                zip=False,
-                                                suffix='',
-                                                cpus=1,
-                                                packs=True)
+            artifact_manager = ArtifactsManager(
+                artifacts_path=temp,
+                content_version='6.0.0',
+                zip=False,
+                suffix='',
+                cpus=1,
+                packs=True,
+            )
 
     pack_1_metadata = artifact_manager.content.packs['Pack1'].metadata
-    pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path, logging_setup(3))
+    pack_1_metadata.load_user_metadata(
+        'Pack1', 'Pack Number 1', pack_1.path, logging_setup(3)
+    )
 
     assert pack_1_metadata.id == 'Pack1'
     assert pack_1_metadata.name == 'Pack Number 1'
@@ -297,17 +330,22 @@ def test_load_user_metadata_no_metadata_file(repo, capsys):
             'tags': ['tag1'],
             'useCases': ['usecase1'],
             'vendorId': 'vendorId',
-            'vendorName': 'vendorName'
+            'vendorName': 'vendorName',
         }
     )
     os.remove(pack_1.pack_metadata.path)
 
     content_object_pack = Pack(pack_1.path)
     pack_1_metadata = content_object_pack.metadata
-    pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path, logging_setup(3))
+    pack_1_metadata.load_user_metadata(
+        'Pack1', 'Pack Number 1', pack_1.path, logging_setup(3)
+    )
 
     captured = capsys.readouterr()
-    assert 'Pack Number 1 pack is missing pack_metadata.json file.' in captured.out
+    assert (
+        'Pack Number 1 pack is missing pack_metadata.json file.'
+        in captured.out
+    )
 
 
 def test_load_user_metadata_invalid_price(repo, capsys):
@@ -334,16 +372,21 @@ def test_load_user_metadata_invalid_price(repo, capsys):
             'tags': ['tag1'],
             'useCases': ['usecase1'],
             'vendorId': 'vendorId',
-            'vendorName': 'vendorName'
+            'vendorName': 'vendorName',
         }
     )
 
     content_object_pack = Pack(pack_1.path)
     pack_1_metadata = content_object_pack.metadata
-    pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path, logging_setup(3))
+    pack_1_metadata.load_user_metadata(
+        'Pack1', 'Pack Number 1', pack_1.path, logging_setup(3)
+    )
     captured = capsys.readouterr()
 
-    assert 'Pack Number 1 pack price is not valid. The price was set to 0.' in captured.out
+    assert (
+        'Pack Number 1 pack price is not valid. The price was set to 0.'
+        in captured.out
+    )
 
 
 def test_load_user_metadata_bad_pack_metadata_file(repo, capsys):
@@ -367,7 +410,9 @@ def test_load_user_metadata_bad_pack_metadata_file(repo, capsys):
     content_object_pack = Pack(pack_1.path)
 
     pack_1_metadata = content_object_pack.metadata
-    pack_1_metadata.load_user_metadata('Pack1', 'Pack Number 1', pack_1.path, logging_setup(3))
+    pack_1_metadata.load_user_metadata(
+        'Pack1', 'Pack Number 1', pack_1.path, logging_setup(3)
+    )
 
     captured = capsys.readouterr()
     assert 'Failed loading Pack Number 1 user metadata.' in captured.out

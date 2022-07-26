@@ -8,7 +8,6 @@ MAKE SURE YOU REVIEW/REPLACE ALL THE COMMENTS MARKED AS "TODO"
 Developer Documentation: https://xsoar.pan.dev/docs/welcome
 Code Conventions: https://xsoar.pan.dev/docs/integrations/code-conventions
 Linting: https://xsoar.pan.dev/docs/integrations/linting
-
 """
 
 from typing import Any, Dict
@@ -17,7 +16,7 @@ import demistomock as demisto
 from CommonServerPython import *
 from CommonServerUserPython import *
 
-''' STANDALONE FUNCTION '''
+""" STANDALONE FUNCTION """
 
 
 # TODO: REMOVE the following dummy function:
@@ -32,11 +31,13 @@ def basescript_dummy(dummy: str) -> Dict[str, str]:
     :rtype: ``str``
     """
 
-    return {"dummy": dummy}
+    return {'dummy': dummy}
+
+
 # TODO: ADD HERE THE FUNCTIONS TO INTERACT WITH YOUR PRODUCT API
 
 
-''' COMMAND FUNCTION '''
+""" COMMAND FUNCTION """
 
 
 # TODO: REMOVE the following dummy command function
@@ -54,10 +55,12 @@ def basescript_dummy_command(args: Dict[str, Any]) -> CommandResults:
         outputs_key_field='',
         outputs=result,
     )
+
+
 # TODO: ADD additional command functions that translate XSOAR inputs/outputs
 
 
-''' MAIN FUNCTION '''
+""" MAIN FUNCTION """
 
 
 def main():
@@ -68,7 +71,7 @@ def main():
         return_error(f'Failed to execute BaseScript. Error: {str(ex)}')
 
 
-''' ENTRY POINT '''
+""" ENTRY POINT """
 
 
 if __name__ in ('__main__', '__builtin__', 'builtins'):  # pragma: no cover

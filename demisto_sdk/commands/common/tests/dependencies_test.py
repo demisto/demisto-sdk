@@ -6,8 +6,9 @@ from typing import List
 import pytest
 
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
-from demisto_sdk.commands.find_dependencies.find_dependencies import \
-    PackDependencies
+from demisto_sdk.commands.find_dependencies.find_dependencies import (
+    PackDependencies,
+)
 from TestSuite.integration import Integration
 from TestSuite.json_based import JSONBased
 from TestSuite.playbook import Playbook
@@ -23,22 +24,30 @@ def update_id_set(repo):
 
 class IntegrationDependencies:
     @staticmethod
-    def make_integration_depend_on_classifier(integration: Integration, classifier: JSONBased):
+    def make_integration_depend_on_classifier(
+        integration: Integration, classifier: JSONBased
+    ):
         classifier_id = classifier.read_json_as_dict().get('id')
         integration.yml.update({'defaultclassifier': classifier_id})
 
     @staticmethod
-    def make_integration_depend_on_mapper_in(integration: Integration, mapper: JSONBased):
+    def make_integration_depend_on_mapper_in(
+        integration: Integration, mapper: JSONBased
+    ):
         mapper_id = mapper.read_json_as_dict().get('id')
         integration.yml.update({'defaultmapperin': mapper_id})
 
     @staticmethod
-    def make_integration_depend_on_mapper_out(integration: Integration, mapper: JSONBased):
+    def make_integration_depend_on_mapper_out(
+        integration: Integration, mapper: JSONBased
+    ):
         mapper_id = mapper.read_json_as_dict().get('id')
         integration.yml.update({'defaultmapperout': mapper_id})
 
     @staticmethod
-    def make_integration_depend_on_incident_type(integration: Integration, incident_type: JSONBased):
+    def make_integration_depend_on_incident_type(
+        integration: Integration, incident_type: JSONBased
+    ):
         incident_type_id = incident_type.read_json_as_dict().get('id')
         integration.yml.update({'defaultIncidentType': incident_type_id})
 
@@ -80,13 +89,13 @@ def update_tasks_in_playbook(playbook: Playbook, task_num: int, task: dict):
     # Connects the new task added to the last task in the playbook, so the whole playbook will be connected
     if task_num > 0:
         try:
-            tasks.get(str(task_num - 1)).get('nexttasks').get('#none#').append(str(task_num))
+            tasks.get(str(task_num - 1)).get('nexttasks').get('#none#').append(
+                str(task_num)
+            )
         except AttributeError:
-            tasks.get(str(task_num - 1)).update({
-                'nexttasks': {
-                    '#none#': [str(task_num)]
-                }
-            })
+            tasks.get(str(task_num - 1)).update(
+                {'nexttasks': {'#none#': [str(task_num)]}}
+            )
 
     tasks.update(task)
 
@@ -95,7 +104,9 @@ def update_tasks_in_playbook(playbook: Playbook, task_num: int, task: dict):
 
 class PlaybookDependencies:
     @staticmethod
-    def make_playbook_depend_on_script_skippable(playbook: Playbook, script: Script):
+    def make_playbook_depend_on_script_skippable(
+        playbook: Playbook, script: Script
+    ):
         script_name = script.yml.read_dict().get('name')
         task_num = get_new_task_number(playbook)
 
@@ -116,34 +127,33 @@ class PlaybookDependencies:
                 },
                 'scriptarguments': {
                     'entryID': {
-                        'complex': {
-                            'root': 'InfoFile',
-                            'accessor': 'EntryID'
-                        }
+                        'complex': {'root': 'InfoFile', 'accessor': 'EntryID'}
                     },
                     'fileName': {},
                     'lastZipFileInWarroom': {},
-                    'password': {}
+                    'password': {},
                 },
                 'separatecontext': False,
-                'view': '''| -
+                'view': """| -
                 {
                     "position": {
                         "x": 450,
                         "y": 350
                     }
-                }''',
+                }""",
                 'note': False,
                 'timertriggers': [],
                 'ignoreworker': False,
-                'skipunavailable': True
+                'skipunavailable': True,
             }
         }
 
         update_tasks_in_playbook(playbook, task_num, task)
 
     @staticmethod
-    def make_playbook_depend_on_script_not_skippable(playbook: Playbook, script: Script):
+    def make_playbook_depend_on_script_not_skippable(
+        playbook: Playbook, script: Script
+    ):
         script_name = script.yml.read_dict().get('name')
         task_num = get_new_task_number(playbook)
 
@@ -164,23 +174,20 @@ class PlaybookDependencies:
                 },
                 'scriptarguments': {
                     'entryID': {
-                        'complex': {
-                            'root': 'InfoFile',
-                            'accessor': 'EntryID'
-                        }
+                        'complex': {'root': 'InfoFile', 'accessor': 'EntryID'}
                     },
                     'fileName': {},
                     'lastZipFileInWarroom': {},
-                    'password': {}
+                    'password': {},
                 },
                 'separatecontext': False,
-                'view': '''| -
+                'view': """| -
                 {
                     "position": {
                         "x": 450,
                         "y": 350
                     }
-                }''',
+                }""",
                 'note': False,
                 'timertriggers': [],
                 'ignoreworker': False,
@@ -190,7 +197,9 @@ class PlaybookDependencies:
         update_tasks_in_playbook(playbook, task_num, task)
 
     @staticmethod
-    def make_playbook_depend_on_playbook_skippable(playbook: Playbook, playbook__1: Playbook):
+    def make_playbook_depend_on_playbook_skippable(
+        playbook: Playbook, playbook__1: Playbook
+    ):
         other_playbook_name = playbook__1.yml.read_dict().get('name')
         task_num = get_new_task_number(playbook)
 
@@ -214,27 +223,29 @@ class PlaybookDependencies:
                     'iscommand': False,
                     'exitCondition': '',
                     'wait': 1,
-                    'max': 0
+                    'max': 0,
                 },
-                'view': '''| -
+                'view': """| -
                             {
                                 "position": {
                                     "x": -800,
                                     "y": 980
                                 }
-                            }''',
+                            }""",
                 'note': False,
                 'timertriggers': [],
                 'ignoreworker': False,
                 'skipunavailable': True,
-                'quietmode': 0
+                'quietmode': 0,
             }
         }
 
         update_tasks_in_playbook(playbook, task_num, task)
 
     @staticmethod
-    def make_playbook_depend_on_playbook_not_skippable(playbook: Playbook, playbook__1: Playbook):
+    def make_playbook_depend_on_playbook_not_skippable(
+        playbook: Playbook, playbook__1: Playbook
+    ):
         other_playbook_name = playbook__1.yml.read_dict().get('name')
         task_num = get_new_task_number(playbook)
 
@@ -258,26 +269,28 @@ class PlaybookDependencies:
                     'iscommand': False,
                     'exitCondition': '',
                     'wait': 1,
-                    'max': 0
+                    'max': 0,
                 },
-                'view': '''| -
+                'view': """| -
                             {
                                 "position": {
                                     "x": -800,
                                     "y": 980
                                 }
-                            }''',
+                            }""",
                 'note': False,
                 'timertriggers': [],
                 'ignoreworker': False,
-                'quietmode': 0
+                'quietmode': 0,
             }
         }
 
         update_tasks_in_playbook(playbook, task_num, task)
 
     @staticmethod
-    def make_playbook_depend_on_integration_skippable(playbook: Playbook, integration: Integration):
+    def make_playbook_depend_on_integration_skippable(
+        playbook: Playbook, integration: Integration
+    ):
         integration_name = integration.yml.read_dict().get('name')
         task_num = get_new_task_number(playbook)
 
@@ -294,45 +307,42 @@ class PlaybookDependencies:
                     'type': 'regular',
                     'iscommand': True,
                     'brand': integration_name,
-                    'description': ''
+                    'description': '',
                 },
                 'scriptarguments': {
                     'env_bitness': {},
                     'env_type': {},
                     'env_version': {},
                     'file': {},
-                    'obj_type': {
-                        'simple': 'download'
-                    },
+                    'obj_type': {'simple': 'download'},
                     'obj_url': {
-                        'complex': {
-                            'root': 'inputs.URL',
-                            'accessor': 'Data'
-                        }
+                        'complex': {'root': 'inputs.URL', 'accessor': 'Data'}
                     },
                     'opt_kernel_heavyevasion': {},
                     'opt_network_connect': {},
                     'opt_privacy_type': {},
                 },
                 'separatecontext': True,
-                'view': '''| -
+                'view': """| -
                             {
                                 "position": {
                                     "x": -800,
                                     "y": 980
                                 }
-                            }''',
+                            }""",
                 'note': False,
                 'timertriggers': [],
                 'ignoreworker': False,
-                'skipunavailable': True
+                'skipunavailable': True,
             }
         }
 
         update_tasks_in_playbook(playbook, task_num, task)
 
     @staticmethod
-    def make_playbook_depend_on_integration_not_skippable(playbook: Playbook, integration: Integration):
+    def make_playbook_depend_on_integration_not_skippable(
+        playbook: Playbook, integration: Integration
+    ):
         integration_name = integration.yml.read_dict().get('name')
         task_num = get_new_task_number(playbook)
 
@@ -349,34 +359,29 @@ class PlaybookDependencies:
                     'type': 'regular',
                     'iscommand': True,
                     'brand': integration_name,
-                    'description': ''
+                    'description': '',
                 },
                 'scriptarguments': {
                     'env_bitness': {},
                     'env_type': {},
                     'env_version': {},
                     'file': {},
-                    'obj_type': {
-                        'simple': 'download'
-                    },
+                    'obj_type': {'simple': 'download'},
                     'obj_url': {
-                        'complex': {
-                            'root': 'inputs.URL',
-                            'accessor': 'Data'
-                        }
+                        'complex': {'root': 'inputs.URL', 'accessor': 'Data'}
                     },
                     'opt_kernel_heavyevasion': {},
                     'opt_network_connect': {},
                     'opt_privacy_type': {},
                 },
                 'separatecontext': True,
-                'view': '''| -
+                'view': """| -
                                 {
                                     "position": {
                                         "x": -800,
                                         "y": 980
                                     }
-                                }''',
+                                }""",
                 'note': False,
                 'timertriggers': [],
                 'ignoreworker': False,
@@ -386,7 +391,9 @@ class PlaybookDependencies:
         update_tasks_in_playbook(playbook, task_num, task)
 
     @staticmethod
-    def make_playbook_depend_on_incident_field(playbook: Playbook, incident_field: JSONBased):
+    def make_playbook_depend_on_incident_field(
+        playbook: Playbook, incident_field: JSONBased
+    ):
         incident_field_name = incident_field.read_json_as_dict().get('name')
 
         mapping = {
@@ -401,18 +408,18 @@ class PlaybookDependencies:
                                 'left': {
                                     'value': {
                                         'simple': 'context.path',
-                                        'iscontext': True
+                                        'iscontext': True,
                                     }
                                 },
                                 'right': {
                                     'value': {
-                                        'simple': "49151",
+                                        'simple': '49151',
                                     },
-                                    'accessor': 'DestPort'
-                                }
-                            }
+                                    'accessor': 'DestPort',
+                                },
+                            },
                         }
-                    }
+                    },
                 }
             ]
         }
@@ -420,18 +427,22 @@ class PlaybookDependencies:
         task_num = get_new_task_number(playbook)
         task_num_to_associate = random.choice(range(task_num - 1))
 
-        task = playbook.yml.read_dict().get('tasks').get(str(task_num_to_associate))
+        task = (
+            playbook.yml.read_dict()
+            .get('tasks')
+            .get(str(task_num_to_associate))
+        )
         task.update(mapping)
 
         task.update({'id': str(task_num)})
-        new_task = {
-            str(task_num): task
-        }
+        new_task = {str(task_num): task}
 
         update_tasks_in_playbook(playbook, task_num, new_task)
 
     @staticmethod
-    def make_playbook_depend_on_incident_field_builtin_command(playbook: Playbook, incident_field: JSONBased):
+    def make_playbook_depend_on_incident_field_builtin_command(
+        playbook: Playbook, incident_field: JSONBased
+    ):
         incident_field_name = incident_field.read_json_as_dict().get('name')
         task_num = get_new_task_number(playbook)
 
@@ -448,19 +459,17 @@ class PlaybookDependencies:
                     'type': 'regular',
                     'iscommand': True,
                     'brand': 'Builtin',
-                    'description': ''
+                    'description': '',
                 },
-                'scriptarguments': {
-                    incident_field_name: 'value'
-                },
+                'scriptarguments': {incident_field_name: 'value'},
                 'separatecontext': False,
-                'view': '''| -
+                'view': """| -
                             {
                                 "position": {
                                     "x": -800,
                                     "y": 980
                                 }
-                            }''',
+                            }""",
                 'note': False,
                 'timertriggers': [],
                 'ignoreworker': False,
@@ -470,17 +479,17 @@ class PlaybookDependencies:
         update_tasks_in_playbook(playbook, task_num, task)
 
     @staticmethod
-    def make_playbook_depend_on_incident_field_input_simple(playbook: Playbook, incident_field: JSONBased):
+    def make_playbook_depend_on_incident_field_input_simple(
+        playbook: Playbook, incident_field: JSONBased
+    ):
         incident_field_name = incident_field.read_json_as_dict().get('name')
 
         new_input = {
             'key': 'input',
-            'value': {
-                'simple': '${incident.' + incident_field_name + '}'
-            },
+            'value': {'simple': '${incident.' + incident_field_name + '}'},
             'required': False,
             'description': 'description',
-            'playbookInputQuery': None
+            'playbookInputQuery': None,
         }
 
         playbook_content = playbook.yml.read_dict()
@@ -493,7 +502,9 @@ class PlaybookDependencies:
         playbook.yml.write_dict(playbook_content)
 
     @staticmethod
-    def make_playbook_depend_on_incident_field_input_complex(playbook: Playbook, incident_field: JSONBased):
+    def make_playbook_depend_on_incident_field_input_complex(
+        playbook: Playbook, incident_field: JSONBased
+    ):
         incident_field_name = incident_field.read_json_as_dict().get('name')
 
         new_input = {
@@ -501,12 +512,12 @@ class PlaybookDependencies:
             'value': {
                 'complex': {
                     'root': 'incident',
-                    'accessor': incident_field_name
+                    'accessor': incident_field_name,
                 }
             },
             'required': False,
             'description': 'description',
-            'playbookInputQuery': None
+            'playbookInputQuery': None,
         }
 
         playbook_content = playbook.yml.read_dict()
@@ -519,7 +530,9 @@ class PlaybookDependencies:
         playbook.yml.write_dict(playbook_content)
 
     @staticmethod
-    def make_playbook_depend_on_indicator_field_builtin_command(playbook: Playbook, indicator_field: JSONBased):
+    def make_playbook_depend_on_indicator_field_builtin_command(
+        playbook: Playbook, indicator_field: JSONBased
+    ):
         indicator_field_name = indicator_field.read_json_as_dict().get('name')
         task_num = get_new_task_number(playbook)
 
@@ -536,19 +549,17 @@ class PlaybookDependencies:
                     'type': 'regular',
                     'iscommand': True,
                     'brand': 'Builtin',
-                    'description': ''
+                    'description': '',
                 },
-                'scriptarguments': {
-                    indicator_field_name: 'value'
-                },
+                'scriptarguments': {indicator_field_name: 'value'},
                 'separatecontext': False,
-                'view': '''| -
+                'view': """| -
                                 {
                                     "position": {
                                         "x": -800,
                                         "y": 980
                                     }
-                                }''',
+                                }""",
                 'note': False,
                 'timertriggers': [],
                 'ignoreworker': False,
@@ -560,12 +571,16 @@ class PlaybookDependencies:
 
 class ScriptDependencies:
     @staticmethod
-    def make_script_depend_on_integration(script: Script, integration: Integration):
+    def make_script_depend_on_integration(
+        script: Script, integration: Integration
+    ):
         integration_name = integration.yml.read_dict().get('name')
         script_content = script.yml.read_dict()
 
         if script_content.get('dependson'):
-            script_content['dependson']['must'].append(f'{integration_name}|||command_{integration_name}')
+            script_content['dependson']['must'].append(
+                f'{integration_name}|||command_{integration_name}'
+            )
             script.yml.write_dict(script_content)
         else:
             script.yml.update(
@@ -587,25 +602,21 @@ class ScriptDependencies:
             script_content['dependson']['must'].append(other_script_name)
             script.yml.write_dict(script_content)
         else:
-            script.yml.update(
-                {
-                    'dependson': {
-                        'must': [
-                            other_script_name
-                        ]
-                    }
-                }
-            )
+            script.yml.update({'dependson': {'must': [other_script_name]}})
 
 
 class ClassifierDependencies:
     @staticmethod
-    def make_classifier_depend_on_incident_type_default(classifier: JSONBased, incident_type: JSONBased):
+    def make_classifier_depend_on_incident_type_default(
+        classifier: JSONBased, incident_type: JSONBased
+    ):
         incident_type_id = incident_type.read_json_as_dict().get('id')
         classifier.update({'defaultIncidentType': incident_type_id})
 
     @staticmethod
-    def make_classifier_depend_on_incident_type_key_type_map(classifier: JSONBased, incident_type: JSONBased):
+    def make_classifier_depend_on_incident_type_key_type_map(
+        classifier: JSONBased, incident_type: JSONBased
+    ):
         incident_type_id = incident_type.read_json_as_dict().get('id')
         key_type_map = classifier.read_json_as_dict().get('keyTypeMap', {})
         key_type_map.update({'key': incident_type_id})
@@ -614,25 +625,31 @@ class ClassifierDependencies:
 
 class MapperDependencies:
     @staticmethod
-    def make_mapper_depend_on_incident_type_default(mapper: JSONBased, incident_type: JSONBased):
+    def make_mapper_depend_on_incident_type_default(
+        mapper: JSONBased, incident_type: JSONBased
+    ):
         incident_type_id = incident_type.read_json_as_dict().get('id')
         mapper.update({'defaultIncidentType': incident_type_id})
 
     @staticmethod
-    def make_classifier_depend_on_incident_type_and_fields(mapper: JSONBased, incident_type: JSONBased,
-                                                           incidents_fields: List[JSONBased]):
+    def make_classifier_depend_on_incident_type_and_fields(
+        mapper: JSONBased,
+        incident_type: JSONBased,
+        incidents_fields: List[JSONBased],
+    ):
         incident_type_id = incident_type.read_json_as_dict().get('id')
-        incidents_fields_ids = [incident_field.read_json_as_dict().get('id') for incident_field in incidents_fields]
+        incidents_fields_ids = [
+            incident_field.read_json_as_dict().get('id')
+            for incident_field in incidents_fields
+        ]
         mapping = mapper.read_json_as_dict().get('mapping', {})
 
         updates_to_map = {
             incident_type_id: {
-                'internalMapping':
-                    {
-                        incident_field_id: {
-                            "simple": "simple"
-                        } for incident_field_id in incidents_fields_ids
-                    }
+                'internalMapping': {
+                    incident_field_id: {'simple': 'simple'}
+                    for incident_field_id in incidents_fields_ids
+                }
             }
         }
 
@@ -642,39 +659,58 @@ class MapperDependencies:
 
 class IncidentTypeDependencies:
     @staticmethod
-    def make_incident_type_depend_on_playbook(incident_type: JSONBased, playbook: Playbook):
+    def make_incident_type_depend_on_playbook(
+        incident_type: JSONBased, playbook: Playbook
+    ):
         playbook_id = playbook.yml.read_dict().get('id')
         incident_type.update({'playbookId': playbook_id})
 
     @staticmethod
-    def make_incident_type_depend_on_script_pre_processing(incident_type: JSONBased, script: Script):
+    def make_incident_type_depend_on_script_pre_processing(
+        incident_type: JSONBased, script: Script
+    ):
         script_id = script.yml.read_dict().get('commonfields').get('id')
         incident_type.update({'preProcessingScript': script_id})
 
 
 class IndicatorTypeDependencies:
     @staticmethod
-    def make_indicator_type_depend_on_script_reputation(indicator_type: JSONBased, script: Script):
+    def make_indicator_type_depend_on_script_reputation(
+        indicator_type: JSONBased, script: Script
+    ):
         script_id = script.yml.read_dict().get('commonfields').get('id')
         indicator_type.update({'reputationScriptName': script_id})
 
     @staticmethod
-    def make_indicator_type_depend_on_script_enhancement(indicator_type: JSONBased, script: Script):
+    def make_indicator_type_depend_on_script_enhancement(
+        indicator_type: JSONBased, script: Script
+    ):
         script_id = script.yml.read_dict().get('commonfields').get('id')
         indicator_type.update({'enhancementScriptNames': [script_id]})
 
 
 class LayoutDependencies:
     @staticmethod
-    def make_layout_depend_on_incident_indicator_type(layout: JSONBased, incident_type: JSONBased):
+    def make_layout_depend_on_incident_indicator_type(
+        layout: JSONBased, incident_type: JSONBased
+    ):
         incident_type_id = incident_type.read_json_as_dict().get('id')
         layout.update({'TypeName': incident_type_id})
 
     @staticmethod
-    def make_layout_depend_on_incident_indicator_field(layout: JSONBased, indicators_fields: List[JSONBased],
-                                                       incidents_fields: List[JSONBased]):
-        indicators_fields_ids = [indicator_field.read_json_as_dict().get('id') for indicator_field in indicators_fields]
-        incidents_fields_ids = [incident_field.read_json_as_dict().get('id') for incident_field in incidents_fields]
+    def make_layout_depend_on_incident_indicator_field(
+        layout: JSONBased,
+        indicators_fields: List[JSONBased],
+        incidents_fields: List[JSONBased],
+    ):
+        indicators_fields_ids = [
+            indicator_field.read_json_as_dict().get('id')
+            for indicator_field in indicators_fields
+        ]
+        incidents_fields_ids = [
+            incident_field.read_json_as_dict().get('id')
+            for incident_field in incidents_fields
+        ]
 
         layout_data = layout.read_json_as_dict().get('layout', {})
         updates_to_layout = {
@@ -692,9 +728,10 @@ class LayoutDependencies:
                                 'height': 24,
                                 'id': 'id',
                                 'index': 0,
-                                'startCol': 0
-                            } for indicator_field_id in indicators_fields_ids
-                        ]
+                                'startCol': 0,
+                            }
+                            for indicator_field_id in indicators_fields_ids
+                        ],
                     },
                     {
                         'displayType': 'ROW',
@@ -708,10 +745,11 @@ class LayoutDependencies:
                                 'height': 24,
                                 'id': 'id',
                                 'index': 0,
-                                'startCol': 0
-                            } for incident_field_id in incidents_fields_ids
-                        ]
-                    }
+                                'startCol': 0,
+                            }
+                            for incident_field_id in incidents_fields_ids
+                        ],
+                    },
                 ]
             }
         }
@@ -722,15 +760,26 @@ class LayoutDependencies:
 
 class LayoutcontainerDependencies:
     @staticmethod
-    def make_layoutcontainer_depend_on_incident_indicator_type(layoutcontainer: JSONBased, incident_type: JSONBased):
+    def make_layoutcontainer_depend_on_incident_indicator_type(
+        layoutcontainer: JSONBased, incident_type: JSONBased
+    ):
         incident_type_id = incident_type.read_json_as_dict().get('id')
         layoutcontainer.update({'name': incident_type_id})
 
     @staticmethod
-    def make_layout_depend_on_incident_indicator_field(layout: JSONBased, indicators_fields: List[JSONBased],
-                                                       incidents_fields: List[JSONBased]):
-        indicators_fields_ids = [indicator_field.read_json_as_dict().get('id') for indicator_field in indicators_fields]
-        incidents_fields_ids = [incident_field.read_json_as_dict().get('id') for incident_field in incidents_fields]
+    def make_layout_depend_on_incident_indicator_field(
+        layout: JSONBased,
+        indicators_fields: List[JSONBased],
+        incidents_fields: List[JSONBased],
+    ):
+        indicators_fields_ids = [
+            indicator_field.read_json_as_dict().get('id')
+            for indicator_field in indicators_fields
+        ]
+        incidents_fields_ids = [
+            incident_field.read_json_as_dict().get('id')
+            for incident_field in incidents_fields
+        ]
 
         layout_data = layout.read_json_as_dict().get('layout', {})
         updates_to_layout = {
@@ -748,9 +797,10 @@ class LayoutcontainerDependencies:
                                 'height': 24,
                                 'id': 'id',
                                 'index': 0,
-                                'startCol': 0
-                            } for indicator_field_id in indicators_fields_ids
-                        ]
+                                'startCol': 0,
+                            }
+                            for indicator_field_id in indicators_fields_ids
+                        ],
                     },
                     {
                         'displayType': 'ROW',
@@ -764,10 +814,11 @@ class LayoutcontainerDependencies:
                                 'height': 24,
                                 'id': 'id',
                                 'index': 0,
-                                'startCol': 0
-                            } for incident_field_id in incidents_fields_ids
-                        ]
-                    }
+                                'startCol': 0,
+                            }
+                            for incident_field_id in incidents_fields_ids
+                        ],
+                    },
                 ]
             }
         }
@@ -790,22 +841,39 @@ class IncidentFieldDependencies:
     #     incident_field.update({'systemAssociatedTypes': [incident_type_id]})
 
     @staticmethod
-    def make_incident_field_depend_on_script(incident_field: JSONBased, script: Script):
+    def make_incident_field_depend_on_script(
+        incident_field: JSONBased, script: Script
+    ):
         script_id = script.yml.read_dict().get('commonfields').get('id')
         incident_field.update({'script': script_id})
 
     @staticmethod
-    def make_incident_field_depend_on_script_field_calc(incident_field: JSONBased, script: Script):
+    def make_incident_field_depend_on_script_field_calc(
+        incident_field: JSONBased, script: Script
+    ):
         script_id = script.yml.read_dict().get('commonfields').get('id')
         incident_field.update({'fieldCalcScript': script_id})
 
 
-CLASSES = [IntegrationDependencies, PlaybookDependencies, ScriptDependencies, ClassifierDependencies,
-           MapperDependencies, IncidentTypeDependencies, WidgetDependencies,
-           IndicatorTypeDependencies, LayoutDependencies, LayoutcontainerDependencies, IncidentFieldDependencies]
-METHODS_POOL: list = \
-    [(method_name, entity_class) for entity_class in CLASSES for method_name in list(entity_class.__dict__.keys())
-     if '_' != method_name[0]]
+CLASSES = [
+    IntegrationDependencies,
+    PlaybookDependencies,
+    ScriptDependencies,
+    ClassifierDependencies,
+    MapperDependencies,
+    IncidentTypeDependencies,
+    WidgetDependencies,
+    IndicatorTypeDependencies,
+    LayoutDependencies,
+    LayoutcontainerDependencies,
+    IncidentFieldDependencies,
+]
+METHODS_POOL: list = [
+    (method_name, entity_class)
+    for entity_class in CLASSES
+    for method_name in list(entity_class.__dict__.keys())
+    if '_' != method_name[0]
+]
 
 
 def get_entity_by_pack_number_and_entity_type(repo, pack_number, entity_type):
@@ -848,7 +916,7 @@ def get_entity_by_pack_number_and_entity_type(repo, pack_number, entity_type):
 
 LIST_ARGUMENTS_TO_METHODS = {
     'indicators_fields': 'indicator_field',
-    'incidents_fields': 'incident_field'
+    'incidents_fields': 'incident_field',
 }
 
 
@@ -867,8 +935,11 @@ def create_inputs_for_method(repo, current_pack, inputs_arguments):
     """
     dependencies = set()
 
-    inputs_values = {inputs_arguments[0]:
-                     get_entity_by_pack_number_and_entity_type(repo, current_pack, inputs_arguments[0])}
+    inputs_values = {
+        inputs_arguments[0]: get_entity_by_pack_number_and_entity_type(
+            repo, current_pack, inputs_arguments[0]
+        )
+    }
 
     inputs_arguments = inputs_arguments[1:]
     # Ignores the `CommonTypes` pack in the flow, so only numeric packs will be chosen
@@ -881,9 +952,16 @@ def create_inputs_for_method(repo, current_pack, inputs_arguments):
 
             input_argument = []
             for i in range(number_of_items_in_list):
-                pack_to_take_entity_from = random.choice(range(1, number_of_packs))
-                input_argument.append(get_entity_by_pack_number_and_entity_type(repo, pack_to_take_entity_from,
-                                                                                LIST_ARGUMENTS_TO_METHODS[arg_type]))
+                pack_to_take_entity_from = random.choice(
+                    range(1, number_of_packs)
+                )
+                input_argument.append(
+                    get_entity_by_pack_number_and_entity_type(
+                        repo,
+                        pack_to_take_entity_from,
+                        LIST_ARGUMENTS_TO_METHODS[arg_type],
+                    )
+                )
 
                 # The pack is not depend on packs with indicator_field because the Layout is of type incident
                 if arg_type == 'indicators_fields':
@@ -892,7 +970,9 @@ def create_inputs_for_method(repo, current_pack, inputs_arguments):
 
         else:
             pack_to_take_entity_from = random.choice(range(1, number_of_packs))
-            input_argument = get_entity_by_pack_number_and_entity_type(repo, pack_to_take_entity_from, arg_type)
+            input_argument = get_entity_by_pack_number_and_entity_type(
+                repo, pack_to_take_entity_from, arg_type
+            )
 
             # The pack is not depend on packs with indicator_type because the Layout is of type incident
             if arg_type == 'indicator_type':
@@ -904,8 +984,10 @@ def create_inputs_for_method(repo, current_pack, inputs_arguments):
     return inputs_values, dependencies
 
 
-def run_random_methods(repo, current_pack, current_methods_pool, number_of_methods_to_choose):
-    """ Runs random set of methods with size number_of_methods_to_choose
+def run_random_methods(
+    repo, current_pack, current_methods_pool, number_of_methods_to_choose
+):
+    """Runs random set of methods with size number_of_methods_to_choose
         out of the current_methods_pool.
 
     Args:
@@ -926,7 +1008,9 @@ def run_random_methods(repo, current_pack, current_methods_pool, number_of_metho
         method = getattr(chosen_method[1], chosen_method[0])
         inputs_arguments = inspect.getfullargspec(method)[0]
 
-        args, dependencies = create_inputs_for_method(repo, current_pack, inputs_arguments)
+        args, dependencies = create_inputs_for_method(
+            repo, current_pack, inputs_arguments
+        )
 
         if chosen_method[0] == 'make_integration_feed':
             all_dependencies.add('CommonTypes')
@@ -944,25 +1028,30 @@ def run_find_dependencies(mocker, repo_path, pack_name):
         # so changing `cpu_count` return value to 1 still gives you multiprocessing but with only 2 processors,
         # and not the maximum amount.
         import demisto_sdk.commands.common.update_id_set as uis
+
         mocker.patch.object(uis, 'cpu_count', return_value=1)
-        PackDependencies.find_dependencies(pack_name, silent_mode=True, update_pack_metadata=True)
+        PackDependencies.find_dependencies(
+            pack_name, silent_mode=True, update_pack_metadata=True
+        )
 
 
 @pytest.mark.parametrize('test_number', range(5))
 def test_dependencies(mocker, repo, test_number):
-    """ This test will run 5 times, when each time it will randomly generate dependencies in the repo and verify that
-        the expected dependencies has been updated in the pack metadata correctly.
+    """This test will run 5 times, when each time it will randomly generate dependencies in the repo and verify that
+    the expected dependencies has been updated in the pack metadata correctly.
 
-        Given
-        - Content repository
-        When
-        - Running find_dependencies
-        Then
-        - Update packs dependencies in pack metadata
+    Given
+    - Content repository
+    When
+    - Running find_dependencies
+    Then
+    - Update packs dependencies in pack metadata
     """
     # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
     mock_is_external_repo(mocker, False)
-    mocker.patch.dict(os.environ, {'DEMISTO_SDK_ID_SET_REFRESH_INTERVAL': '-1'})
+    mocker.patch.dict(
+        os.environ, {'DEMISTO_SDK_ID_SET_REFRESH_INTERVAL': '-1'}
+    )
     assert os.getenv('DEMISTO_SDK_ID_SET_REFRESH_INTERVAL') == '-1'
     number_of_packs = 10
     repo.setup_content_repo(number_of_packs)
@@ -971,12 +1060,18 @@ def test_dependencies(mocker, repo, test_number):
     pack_to_verify = random.choice(range(number_of_packs))
 
     number_of_methods_to_choose = random.choice(range(1, len(METHODS_POOL)))
-    dependencies = run_random_methods(repo, pack_to_verify, METHODS_POOL.copy(), number_of_methods_to_choose)
+    dependencies = run_random_methods(
+        repo, pack_to_verify, METHODS_POOL.copy(), number_of_methods_to_choose
+    )
 
     run_find_dependencies(mocker, repo.path, f'pack_{pack_to_verify}')
 
-    dependencies_from_pack_metadata = repo.packs[pack_to_verify].pack_metadata.read_json_as_dict().get(
-        'dependencies').keys()
+    dependencies_from_pack_metadata = (
+        repo.packs[pack_to_verify]
+        .pack_metadata.read_json_as_dict()
+        .get('dependencies')
+        .keys()
+    )
 
     if f'pack_{pack_to_verify}' in dependencies:
         dependencies.remove(f'pack_{pack_to_verify}')
@@ -986,33 +1081,42 @@ def test_dependencies(mocker, repo, test_number):
 
 @pytest.mark.parametrize('entity_class', CLASSES)
 def test_specific_entity(mocker, repo, entity_class):
-    """ This test will run for each entity in the repo, when each time it will randomly generate dependencies
-        in the repo and verify that the expected dependencies has been updated in the pack metadata correctly.
+    """This test will run for each entity in the repo, when each time it will randomly generate dependencies
+    in the repo and verify that the expected dependencies has been updated in the pack metadata correctly.
 
-        Given
-        - Content repository and content entity
-        When
-        - Running find_dependencies
-        Then
-        - Update packs dependencies in pack metadata
+    Given
+    - Content repository and content entity
+    When
+    - Running find_dependencies
+    Then
+    - Update packs dependencies in pack metadata
     """
     mock_is_external_repo(mocker, False)
     # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
-    mocker.patch.dict(os.environ, {'DEMISTO_SDK_ID_SET_REFRESH_INTERVAL': '-1'})
+    mocker.patch.dict(
+        os.environ, {'DEMISTO_SDK_ID_SET_REFRESH_INTERVAL': '-1'}
+    )
     assert os.getenv('DEMISTO_SDK_ID_SET_REFRESH_INTERVAL') == '-1'
     number_of_packs = 20
     repo.setup_content_repo(number_of_packs)
     repo.setup_one_pack('CommonTypes')
 
-    methods_pool: list = \
-        [(method_name, entity_class) for method_name in list(entity_class.__dict__.keys())
-         if '_' != method_name[0]]
+    methods_pool: list = [
+        (method_name, entity_class)
+        for method_name in list(entity_class.__dict__.keys())
+        if '_' != method_name[0]
+    ]
 
     dependencies = run_random_methods(repo, 0, methods_pool, len(methods_pool))
 
     run_find_dependencies(mocker, repo.path, 'pack_0')
 
-    dependencies_from_pack_metadata = repo.packs[0].pack_metadata.read_json_as_dict().get('dependencies').keys()
+    dependencies_from_pack_metadata = (
+        repo.packs[0]
+        .pack_metadata.read_json_as_dict()
+        .get('dependencies')
+        .keys()
+    )
 
     if 'pack_0' in dependencies:
         dependencies.remove('pack_0')
@@ -1023,7 +1127,7 @@ def test_specific_entity(mocker, repo, entity_class):
 def mock_is_external_repo(mocker, is_external_repo_return):
     return mocker.patch(
         'demisto_sdk.commands.find_dependencies.find_dependencies.is_external_repository',
-        return_value=is_external_repo_return
+        return_value=is_external_repo_return,
     )
 
 
@@ -1060,35 +1164,44 @@ def test_dependencies_case_1(mocker, repo):
     pack_common_types = repo.create_pack('CommonTypes')
 
     playbook_foo = pack_foo.create_playbook('playbook_foo')
-    integration_foo = pack_foo.create_integration('integration_foo', yml={'name': '=integration_foo', 'category': '',
-                                                                          'script': {'type': 'python'}})
-    script_bar = pack_bar.create_script('script_bar', yml={'script': '', 'type': 'python', 'name': 'script_bar'})
-    incident_field_email = pack_common_types.create_incident_field(name='incident_Email',
-                                                                   content={'id': 'incident_Email',
-                                                                            'name': 'incident_Email'})
+    integration_foo = pack_foo.create_integration(
+        'integration_foo',
+        yml={
+            'name': '=integration_foo',
+            'category': '',
+            'script': {'type': 'python'},
+        },
+    )
+    script_bar = pack_bar.create_script(
+        'script_bar',
+        yml={'script': '', 'type': 'python', 'name': 'script_bar'},
+    )
+    incident_field_email = pack_common_types.create_incident_field(
+        name='incident_Email',
+        content={'id': 'incident_Email', 'name': 'incident_Email'},
+    )
 
     # make playbook_foo depend on integration_foo
     PlaybookDependencies.make_playbook_depend_on_integration_not_skippable(
-        playbook_foo,
-        integration_foo
+        playbook_foo, integration_foo
     )
 
     # make playbook_foo depend on script_bar
     PlaybookDependencies.make_playbook_depend_on_script_skippable(
-        playbook_foo,
-        script_bar
+        playbook_foo, script_bar
     )
 
     # make playbook_foo depend on incident field Email
     PlaybookDependencies.make_playbook_depend_on_incident_field_input_complex(
-        playbook_foo,
-        incident_field_email
+        playbook_foo, incident_field_email
     )
 
     run_find_dependencies(mocker, repo.path, 'foo')
 
     expected_dependencies = {'bar', 'CommonTypes'}
-    dependencies_from_pack_metadata = pack_foo.pack_metadata.read_json_as_dict().get('dependencies').keys()
+    dependencies_from_pack_metadata = (
+        pack_foo.pack_metadata.read_json_as_dict().get('dependencies').keys()
+    )
 
     assert expected_dependencies == set(dependencies_from_pack_metadata)
 
@@ -1120,31 +1233,49 @@ def test_dependencies_case_2(mocker, repo):
     pack_bar = repo.create_pack('bar')
     pack_common_types = repo.create_pack('CommonTypes')
 
-    integration_foo = pack_foo.create_integration('integration_foo', yml={'name': 'integration_foo', 'category': '',
-                                                                          'script': {'type': 'python'}})
-    mapper_in_bar = pack_bar.create_mapper(name='mapper_in_bar', content={'id': 'mapper_in_bar',
-                                                                          'name': 'mapper_in_bar',
-                                                                          'mapping': {},
-                                                                          'type': 'mapping'})
+    integration_foo = pack_foo.create_integration(
+        'integration_foo',
+        yml={
+            'name': 'integration_foo',
+            'category': '',
+            'script': {'type': 'python'},
+        },
+    )
+    mapper_in_bar = pack_bar.create_mapper(
+        name='mapper_in_bar',
+        content={
+            'id': 'mapper_in_bar',
+            'name': 'mapper_in_bar',
+            'mapping': {},
+            'type': 'mapping',
+        },
+    )
     # Pack can not be empty
-    pack_common_types.create_integration('integration_common_types',
-                                         yml={'name': 'integration_common_types', 'category': '',
-                                              'script': {'type': 'python'}})
+    pack_common_types.create_integration(
+        'integration_common_types',
+        yml={
+            'name': 'integration_common_types',
+            'category': '',
+            'script': {'type': 'python'},
+        },
+    )
 
     # make integration_foo feed
-    IntegrationDependencies.make_integration_feed(
-        integration_foo
-    )
+    IntegrationDependencies.make_integration_feed(integration_foo)
 
     # make integration_foo depend on mapper_in_bar
     IntegrationDependencies.make_integration_depend_on_mapper_in(
-        integration_foo,
-        mapper_in_bar
+        integration_foo, mapper_in_bar
     )
 
     run_find_dependencies(mocker, repo.path, 'foo')
 
     expected_dependencies = {'bar', 'CommonTypes'}
-    dependencies_from_pack_metadata = repo.packs[0].pack_metadata.read_json_as_dict().get('dependencies').keys()
+    dependencies_from_pack_metadata = (
+        repo.packs[0]
+        .pack_metadata.read_json_as_dict()
+        .get('dependencies')
+        .keys()
+    )
 
     assert expected_dependencies == set(dependencies_from_pack_metadata)

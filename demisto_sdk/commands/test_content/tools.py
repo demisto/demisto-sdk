@@ -9,8 +9,13 @@ import demisto_client
 from demisto_sdk.commands.test_content.constants import SSH_USER
 
 
-def update_server_configuration(client, server_configuration,
-                                error_msg, logging_manager=logging, config_keys_to_delete=None):
+def update_server_configuration(
+    client,
+    server_configuration,
+    error_msg,
+    logging_manager=logging,
+    config_keys_to_delete=None,
+):
     """updates server configuration
 
     Args:
@@ -26,12 +31,12 @@ def update_server_configuration(client, server_configuration,
         prev_system_conf: Previous stored system conf
     """
     system_conf_response = demisto_client.generic_request_func(
-        self=client,
-        path='/system/config',
-        method='GET'
+        self=client, path='/system/config', method='GET'
     )
     system_conf = ast.literal_eval(system_conf_response[0]).get('sysConf', {})
-    logging_manager.debug(f'Current server configurations are {pformat(system_conf)}')
+    logging_manager.debug(
+        f'Current server configurations are {pformat(system_conf)}'
+    )
 
     prev_system_conf = deepcopy(system_conf)
 
@@ -42,20 +47,24 @@ def update_server_configuration(client, server_configuration,
     if server_configuration:
         system_conf.update(server_configuration)
 
-    data = {
-        'data': system_conf,
-        'version': -1
-    }
-    response_data, status_code, _ = demisto_client.generic_request_func(self=client, path='/system/config',
-                                                                        method='POST', body=data)
+    data = {'data': system_conf, 'version': -1}
+    response_data, status_code, _ = demisto_client.generic_request_func(
+        self=client, path='/system/config', method='POST', body=data
+    )
 
-    logging_manager.debug(f'Updating server configurations with {pformat(system_conf)}')
+    logging_manager.debug(
+        f'Updating server configurations with {pformat(system_conf)}'
+    )
 
     try:
         result_object = ast.literal_eval(response_data)
-        logging_manager.debug(f'Updated server configurations with response: {pformat(result_object)}')
+        logging_manager.debug(
+            f'Updated server configurations with response: {pformat(result_object)}'
+        )
     except ValueError as err:
-        logging_manager.exception(f'failed to parse response from demisto. response is {response_data}.\nError:\n{err}')
+        logging_manager.exception(
+            f'failed to parse response from demisto. response is {response_data}.\nError:\n{err}'
+        )
         return
 
     if status_code >= 300 or status_code < 200:
@@ -76,8 +85,10 @@ def is_redhat_instance(instance_ip: str) -> bool:
         True if the file '/home/ec2-user/rhel_ami' exists on the instance, else False
     """
     try:
-        check_output(f'ssh {SSH_USER}@{instance_ip} ls -l /home/ec2-user/rhel_ami'.split(),
-                     stderr=STDOUT)
+        check_output(
+            f'ssh {SSH_USER}@{instance_ip} ls -l /home/ec2-user/rhel_ami'.split(),
+            stderr=STDOUT,
+        )
         return True
     except CalledProcessError:
         return False

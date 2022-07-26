@@ -23,25 +23,28 @@ from docker.models.containers import Container
 from packaging.version import parse
 
 # Local packages
-from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
-                                                   DemistoException)
+from demisto_sdk.commands.common.constants import (
+    TYPE_PWSH,
+    TYPE_PYTHON,
+    DemistoException,
+)
 from demisto_sdk.commands.lint.docker_helper import init_global_docker_client
 
 # Python2 requirements
-PYTHON2_REQ = ["flake8", "vulture"]
+PYTHON2_REQ = ['flake8', 'vulture']
 
 # Define check exit code if failed
 EXIT_CODES = {
-    "flake8": 0b1,
-    "XSOAR_linter": 0b1000000000,
-    "bandit": 0b10,
-    "mypy": 0b100,
-    "vulture": 0b1000,
-    "pytest": 0b10000,
-    "pylint": 0b100000,
-    "pwsh_analyze": 0b1000000,
-    "pwsh_test": 0b10000000,
-    "image": 0b100000000,
+    'flake8': 0b1,
+    'XSOAR_linter': 0b1000000000,
+    'bandit': 0b10,
+    'mypy': 0b100,
+    'vulture': 0b1000,
+    'pytest': 0b10000,
+    'pylint': 0b100000,
+    'pwsh_analyze': 0b1000000,
+    'pwsh_test': 0b10000000,
+    'image': 0b100000000,
 }
 
 # Execution exit codes
@@ -51,8 +54,16 @@ RERUN = 0b10
 WARNING = 0b100
 
 # Power shell checks
-PWSH_CHECKS = ["pwsh_analyze", "pwsh_test"]
-PY_CHCEKS = ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture", "pytest", "pylint"]
+PWSH_CHECKS = ['pwsh_analyze', 'pwsh_test']
+PY_CHCEKS = [
+    'flake8',
+    'XSOAR_linter',
+    'bandit',
+    'mypy',
+    'vulture',
+    'pytest',
+    'pylint',
+]
 
 # Line break
 RL = '\n'
@@ -60,9 +71,18 @@ RL = '\n'
 logger = logging.getLogger('demisto-sdk')
 
 
-def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_pylint: bool, no_vulture: bool,
-                            no_xsoar_linter: bool,
-                            no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool, docker_engine: bool) -> float:
+def build_skipped_exit_code(
+    no_flake8: bool,
+    no_bandit: bool,
+    no_mypy: bool,
+    no_pylint: bool,
+    no_vulture: bool,
+    no_xsoar_linter: bool,
+    no_test: bool,
+    no_pwsh_analyze: bool,
+    no_pwsh_test: bool,
+    docker_engine: bool,
+) -> float:
     """
     no_flake8(bool): Whether to skip flake8.
     no_xsoar_linter(bool): Whether to skip xsoar linter.
@@ -78,29 +98,31 @@ def build_skipped_exit_code(no_flake8: bool, no_bandit: bool, no_mypy: bool, no_
     # Otherwise - When the CI env var is set - Run all linters without skipping
     if not os.environ.get('CI'):
         if no_flake8:
-            skipped_code |= EXIT_CODES["flake8"]
+            skipped_code |= EXIT_CODES['flake8']
         if no_xsoar_linter:
-            skipped_code |= EXIT_CODES["XSOAR_linter"]
+            skipped_code |= EXIT_CODES['XSOAR_linter']
         if no_bandit:
-            skipped_code |= EXIT_CODES["bandit"]
+            skipped_code |= EXIT_CODES['bandit']
         if no_mypy:
-            skipped_code |= EXIT_CODES["mypy"]
+            skipped_code |= EXIT_CODES['mypy']
         if no_vulture:
-            skipped_code |= EXIT_CODES["vulture"]
+            skipped_code |= EXIT_CODES['vulture']
         if no_pylint or not docker_engine:
-            skipped_code |= EXIT_CODES["pylint"]
+            skipped_code |= EXIT_CODES['pylint']
         if no_test or not docker_engine:
-            skipped_code |= EXIT_CODES["pytest"]
+            skipped_code |= EXIT_CODES['pytest']
         if no_pwsh_analyze or not docker_engine:
-            skipped_code |= EXIT_CODES["pwsh_analyze"]
+            skipped_code |= EXIT_CODES['pwsh_analyze']
         if no_pwsh_test or not docker_engine:
-            skipped_code |= EXIT_CODES["pwsh_test"]
+            skipped_code |= EXIT_CODES['pwsh_test']
 
     return skipped_code
 
 
-def get_test_modules(content_repo: Optional[git.Repo], is_external_repo: bool) -> Dict[Path, bytes]:
-    """ Get required test modules from content repository - {remote}/master
+def get_test_modules(
+    content_repo: Optional[git.Repo], is_external_repo: bool
+) -> Dict[Path, bytes]:
+    """Get required test modules from content repository - {remote}/master
     1. Tests/demistomock/demistomock.py
     2. Tests/scripts/dev_envs/pytest/conftest.py
     3. Scripts/CommonServerPython/CommonServerPython.py
@@ -110,19 +132,25 @@ def get_test_modules(content_repo: Optional[git.Repo], is_external_repo: bool) -
         dict: path and file content - see below modules dict
     """
     if is_external_repo:
-        modules = [Path("demistomock.py"),
-                   Path("dev_envs/pytest/conftest.py"),
-                   Path("CommonServerPython.py"),
-                   Path("demistomock.ps1"),
-                   Path("CommonServerPowerShell.ps1")
-                   ]
+        modules = [
+            Path('demistomock.py'),
+            Path('dev_envs/pytest/conftest.py'),
+            Path('CommonServerPython.py'),
+            Path('demistomock.ps1'),
+            Path('CommonServerPowerShell.ps1'),
+        ]
     else:
-        modules = [Path("Tests/demistomock/demistomock.py"),
-                   Path("Tests/scripts/dev_envs/pytest/conftest.py"),
-                   Path("Packs/Base/Scripts/CommonServerPython/CommonServerPython.py"),
-                   Path("Tests/demistomock/demistomock.ps1"),
-                   Path("Packs/Base/Scripts/CommonServerPowerShell/CommonServerPowerShell.ps1")
-                   ]
+        modules = [
+            Path('Tests/demistomock/demistomock.py'),
+            Path('Tests/scripts/dev_envs/pytest/conftest.py'),
+            Path(
+                'Packs/Base/Scripts/CommonServerPython/CommonServerPython.py'
+            ),
+            Path('Tests/demistomock/demistomock.ps1'),
+            Path(
+                'Packs/Base/Scripts/CommonServerPowerShell/CommonServerPowerShell.ps1'
+            ),
+        ]
     modules_content = {}
     if content_repo:
         # Trying to get file from local repo before downloading from GitHub repo (Get it from disk), Last fetch
@@ -135,24 +163,32 @@ def get_test_modules(content_repo: Optional[git.Repo], is_external_repo: bool) -
                 if module.match('*CommonServerPython.py'):
                     # Remove import of DemistoClassApiModule in CommonServerPython,
                     # since tests don't use this class and the import fails the tests.
-                    modules_content[module] = (module_full_path).read_bytes().replace(
-                        b'from DemistoClassApiModule import *', b'')
-                    logger.debug(f'Changed file {module_full_path} without demisto import')
+                    modules_content[module] = (
+                        (module_full_path)
+                        .read_bytes()
+                        .replace(b'from DemistoClassApiModule import *', b'')
+                    )
+                    logger.debug(
+                        f'Changed file {module_full_path} without demisto import'
+                    )
                 else:
                     modules_content[module] = (module_full_path).read_bytes()
             except FileNotFoundError:
                 module_not_found = True
-                logger.warning(f'Module {module} was not found, possibly deleted due to being in a feature branch')
+                logger.warning(
+                    f'Module {module} was not found, possibly deleted due to being in a feature branch'
+                )
 
         if module_not_found and is_external_repo:
-            raise DemistoException('Unable to find module in external repository')
+            raise DemistoException(
+                'Unable to find module in external repository'
+            )
     else:
         # If not succeed to get from local repo copy, Download the required modules from GitHub
         for module in modules:
             url = f'https://raw.githubusercontent.com/demisto/content/master/{module}'
             for trial in range(2):
-                res = requests.get(url=url,
-                                   verify=False)
+                res = requests.get(url=url, verify=False)
                 if res.ok:
                     logger.debug('got file {module} - ok - not 4XX or 5XX')
                     modules_content[module] = res.content
@@ -160,23 +196,23 @@ def get_test_modules(content_repo: Optional[git.Repo], is_external_repo: bool) -
                 elif trial == 2:
                     raise requests.exceptions.ConnectionError
 
-    modules_content[Path("CommonServerUserPython.py")] = b''
+    modules_content[Path('CommonServerUserPython.py')] = b''
 
     return modules_content
 
 
 @contextmanager
 def add_typing_module(lint_files: List[Path], python_version: str):
-    """ Check for typing import for python2 packages
-            1. Entrance - Add import typing in the begining of the file.
-            2. Closing - change back to original.
+    """Check for typing import for python2 packages
+        1. Entrance - Add import typing in the begining of the file.
+        2. Closing - change back to original.
 
-        Args:
-            lint_files(list): File to execute lint - for adding typing in python 2.7
-            python_version(str): The package python version.
+    Args:
+        lint_files(list): File to execute lint - for adding typing in python 2.7
+        python_version(str): The package python version.
 
-        Raises:
-            IOError: if can't write to files due permissions or other reasons
+    Raises:
+        IOError: if can't write to files due permissions or other reasons
     """
     added_modules: List[Path] = []
     back_lint_files: List[Path] = []
@@ -185,15 +221,17 @@ def add_typing_module(lint_files: List[Path], python_version: str):
         py_ver = parse(python_version).major
         if py_ver < 3:
             for lint_file in lint_files:
-                data = lint_file.read_text(encoding="utf-8")
-                typing_regex = "(from typing import|import typing)"
+                data = lint_file.read_text(encoding='utf-8')
+                typing_regex = '(from typing import|import typing)'
                 module_match = re.search(typing_regex, data)
                 if not module_match:
                     original_file = lint_file
                     back_file = lint_file.with_suffix('.bak')
                     original_file.rename(back_file)
                     data = back_file.read_text()
-                    original_file.write_text("from typing import *  # noqa: F401" + '\n' + data)
+                    original_file.write_text(
+                        'from typing import *  # noqa: F401' + '\n' + data
+                    )
                     back_lint_files.append(back_file)
                     added_modules.append(original_file)
         yield
@@ -210,21 +248,26 @@ def add_typing_module(lint_files: List[Path], python_version: str):
 
 
 @contextmanager
-def add_tmp_lint_files(content_repo: Path, pack_path: Path, lint_files: List[Path], modules: Dict[Path, bytes],
-                       pack_type: str):
-    """ LintFiles is context manager to mandatory files for lint and test
-            1. Entrance - download missing files to pack.
-            2. Closing - Remove downloaded files from pack.
+def add_tmp_lint_files(
+    content_repo: Path,
+    pack_path: Path,
+    lint_files: List[Path],
+    modules: Dict[Path, bytes],
+    pack_type: str,
+):
+    """LintFiles is context manager to mandatory files for lint and test
+        1. Entrance - download missing files to pack.
+        2. Closing - Remove downloaded files from pack.
 
-        Args:
-            pack_path(Path): Absolute path of pack
-            lint_files(list): File to execute lint - for adding typing in python 2.7
-            modules(dict): modules content to locate in pack path
-            content_repo(Path): Repository object
-            pack_type(st): Pack type.
+    Args:
+        pack_path(Path): Absolute path of pack
+        lint_files(list): File to execute lint - for adding typing in python 2.7
+        modules(dict): modules content to locate in pack path
+        content_repo(Path): Repository object
+        pack_type(st): Pack type.
 
-        Raises:
-            IOError: if can't write to files due permissions or other reasons
+    Raises:
+        IOError: if can't write to files due permissions or other reasons
     """
     added_modules: List[Path] = []
     try:
@@ -239,29 +282,35 @@ def add_tmp_lint_files(content_repo: Path, pack_path: Path, lint_files: List[Pat
                     added_modules.append(cur_path)
         if pack_type == TYPE_PYTHON:
             # Append empty so it will exists
-            cur_path = pack_path / "CommonServerUserPython.py"
+            cur_path = pack_path / 'CommonServerUserPython.py'
             if not cur_path.exists():
                 cur_path.touch()
                 added_modules.append(cur_path)
 
             # Add API modules to directory if needed
-            module_regex = r'from ([\w\d]+ApiModule) import \*(?:  # noqa: E402)?'
+            module_regex = (
+                r'from ([\w\d]+ApiModule) import \*(?:  # noqa: E402)?'
+            )
             for lint_file in lint_files:
-                module_name = ""
+                module_name = ''
                 data = lint_file.read_text()
                 module_match = re.search(module_regex, data)
                 if module_match:
                     module_name = module_match.group(1)
-                    rel_api_path = Path('Packs/ApiModules/Scripts') / module_name / f'{module_name}.py'
+                    rel_api_path = (
+                        Path('Packs/ApiModules/Scripts')
+                        / module_name
+                        / f'{module_name}.py'
+                    )
                     cur_path = pack_path / f'{module_name}.py'
                     if content_repo:
                         module_path = content_repo / rel_api_path
-                        shutil.copy(src=module_path,
-                                    dst=cur_path)
+                        shutil.copy(src=module_path, dst=cur_path)
                     else:
                         url = f'https://raw.githubusercontent.com/demisto/content/master/{rel_api_path}'
-                        api_content = requests.get(url=url,
-                                                   verify=False).content
+                        api_content = requests.get(
+                            url=url, verify=False
+                        ).content
                         cur_path.write_bytes(api_content)
 
                     added_modules.append(cur_path)
@@ -273,7 +322,7 @@ def add_tmp_lint_files(content_repo: Path, pack_path: Path, lint_files: List[Pat
 
 @lru_cache(maxsize=300)
 def get_python_version_from_image(image: str, timeout: int = 60) -> str:
-    """ Get python version from docker image
+    """Get python version from docker image
 
     Args:
         image(str): Docker image id or name
@@ -286,38 +335,46 @@ def get_python_version_from_image(image: str, timeout: int = 60) -> str:
     if 'pwsh' in image or 'powershell' in image:
         return '3.8'
 
-    match_group = re.match(r'[\d\w]+/python3?:(?P<python_version>[23]\.\d+)', image)
+    match_group = re.match(
+        r'[\d\w]+/python3?:(?P<python_version>[23]\.\d+)', image
+    )
     if match_group:
         return match_group.groupdict()['python_version']
     py_num = None
     # Run three times
     log_prompt = f'Get python version from image {image}'
-    docker_client = init_global_docker_client(timeout=timeout, log_prompt=log_prompt)
+    docker_client = init_global_docker_client(
+        timeout=timeout, log_prompt=log_prompt
+    )
     logger.info(f'{log_prompt} - Start')
     try:
         logger.debug(f'{log_prompt} - Running `sys.version_info` in the image')
-        command = "python -c \"import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))\""
+        command = 'python -c "import sys; print(\'{}.{}\'.format(sys.version_info[0], sys.version_info[1]))"'
 
         py_num = docker_client.containers.run(
             image=image,
             command=shlex.split(command),
             remove=True,
-            restart_policy={"Name": "on-failure", "MaximumRetryCount": 3}
+            restart_policy={'Name': 'on-failure', 'MaximumRetryCount': 3},
         )
         # Wait for container to finish
         logger.debug(f'{log_prompt} - Container finished running. {py_num=}')
 
         # Get python version
-        py_num = parse(py_num.decode("utf-8")).base_version
+        py_num = parse(py_num.decode('utf-8')).base_version
 
     except Exception:
-        logger.exception(f'{log_prompt} - Failed detecting Python version for image {image}')
+        logger.exception(
+            f'{log_prompt} - Failed detecting Python version for image {image}'
+        )
     logger.info(f'{log_prompt} - End. Python version is {py_num}')
     return py_num if py_num else '3.8'
 
 
-def get_file_from_container(container_obj: Container, container_path: str, encoding: str = "") -> Union[str, bytes]:
-    """ Copy file from container.
+def get_file_from_container(
+    container_obj: Container, container_path: str, encoding: str = ''
+) -> Union[str, bytes]:
+    """Copy file from container.
 
     Args:
         container_obj(Container): Container ID to copy file from
@@ -332,7 +389,7 @@ def get_file_from_container(container_obj: Container, container_path: str, encod
     """
     data: Union[str, bytes] = b''
     archive, stat = container_obj.get_archive(container_path)
-    file_like = io.BytesIO(b"".join(archive))
+    file_like = io.BytesIO(b''.join(archive))
     with tarfile.open(fileobj=file_like) as tar:
         before_read = tar.extractfile(stat['name'])
     if isinstance(before_read, io.BufferedReader):
@@ -343,8 +400,10 @@ def get_file_from_container(container_obj: Container, container_path: str, encod
     return data
 
 
-def copy_dir_to_container(container_obj: Container, host_path: Path, container_path: Path):
-    """ Copy all content directory from container.
+def copy_dir_to_container(
+    container_obj: Container, host_path: Path, container_path: Path
+):
+    """Copy all content directory from container.
 
     Args:
         container_obj(Container): Container ID to copy file from
@@ -357,34 +416,46 @@ def copy_dir_to_container(container_obj: Container, host_path: Path, container_p
     Raises:
         IOError: Rase IO error if unable to create temp file
     """
-    excluded_regex = "(__init__.py|.*.back)"
+    excluded_regex = '(__init__.py|.*.back)'
     file_like_object = io.BytesIO()
     old_cwd = os.getcwd()
     with tarfile.open(fileobj=file_like_object, mode='w:gz') as archive:
         os.chdir(host_path)
-        archive.add('.', recursive=True, filter=lambda tarinfo: (
-            tarinfo if not re.search(excluded_regex, Path(tarinfo.name).name) else None))
+        archive.add(
+            '.',
+            recursive=True,
+            filter=lambda tarinfo: (
+                tarinfo
+                if not re.search(excluded_regex, Path(tarinfo.name).name)
+                else None
+            ),
+        )
         os.chdir(old_cwd)
 
     for trial in range(2):
-        status = container_obj.put_archive(path=container_path,
-                                           data=file_like_object.getvalue())
+        status = container_obj.put_archive(
+            path=container_path, data=file_like_object.getvalue()
+        )
         if status:
             break
         elif trial == 1:
-            raise docker.errors.APIError(message="unable to copy dir to container")
+            raise docker.errors.APIError(
+                message='unable to copy dir to container'
+            )
 
 
-def stream_docker_container_output(streamer: Generator, logging_level: Callable = logger.info) -> None:
-    """ Stream container logs
+def stream_docker_container_output(
+    streamer: Generator, logging_level: Callable = logger.info
+) -> None:
+    """Stream container logs
 
     Args:
         streamer(Generator): Generator created by docker-sdk
     """
     try:
-        wrapper = textwrap.TextWrapper(initial_indent='\t',
-                                       subsequent_indent='\t',
-                                       width=150)
+        wrapper = textwrap.TextWrapper(
+            initial_indent='\t', subsequent_indent='\t', width=150
+        )
         for chunk in streamer:
             logging_level(wrapper.fill(str(chunk.decode('utf-8'))))
     except Exception:
@@ -403,32 +474,40 @@ def pylint_plugin(dest: Path):
 
     try:
         for file in plugin_dirs.iterdir():
-            if file.is_file() and file.name != '__pycache__' and file.name.split('.')[1] != 'pyc':
+            if (
+                file.is_file()
+                and file.name != '__pycache__'
+                and file.name.split('.')[1] != 'pyc'
+            ):
                 os.symlink(file, dest / file.name)
 
         yield
     finally:
         for file in plugin_dirs.iterdir():
-            if file.is_file() and file.name != '__pycache__' and file.name.split('.')[1] != 'pyc':
+            if (
+                file.is_file()
+                and file.name != '__pycache__'
+                and file.name.split('.')[1] != 'pyc'
+            ):
                 if os.path.lexists(dest / f'{file.name}'):
                     (dest / f'{file.name}').unlink()
 
 
 def split_warnings_errors(output: str):
     """
-        Function which splits the given string into warning messages and error using W or E in the beginning of string
-        For error messages that do not start with E , they will be returned as other.
-        The output of a certain pack can both include:
-            - Fail msgs
-            - Fail msgs and warnings msgs
-            - Passed msgs
-            - Passed msgs and warnings msgs
-            - warning msgs
-        Args:
-            output(str): string which contains messages from linters.
-        return:
-            list of error messags, list of warnings messages, list of all undetected messages
-        """
+    Function which splits the given string into warning messages and error using W or E in the beginning of string
+    For error messages that do not start with E , they will be returned as other.
+    The output of a certain pack can both include:
+        - Fail msgs
+        - Fail msgs and warnings msgs
+        - Passed msgs
+        - Passed msgs and warnings msgs
+        - warning msgs
+    Args:
+        output(str): string which contains messages from linters.
+    return:
+        list of error messags, list of warnings messages, list of all undetected messages
+    """
     output_lst = output.split('\n')
     # Warnings and errors lists currently relevant for XSOAR Linter
     warnings_list = []
@@ -438,9 +517,17 @@ def split_warnings_errors(output: str):
     for msg in output_lst:
         # 'W:' for python2 xsoar linter
         # 'W[0-9]' for python3 xsoar linter
-        if (msg.startswith('W') and msg[1].isdigit()) or 'W:' in msg or 'W90' in msg:
+        if (
+            (msg.startswith('W') and msg[1].isdigit())
+            or 'W:' in msg
+            or 'W90' in msg
+        ):
             warnings_list.append(msg)
-        elif (msg.startswith('E') and msg[1].isdigit()) or 'E:' in msg or 'E90' in msg:
+        elif (
+            (msg.startswith('E') and msg[1].isdigit())
+            or 'E:' in msg
+            or 'E90' in msg
+        ):
             error_list.append(msg)
         else:
             other_msg_list.append(msg)
@@ -467,7 +554,10 @@ def coverage_report_editor(coverage_file, code_file_absolute_path):
         if not index == 1:
             logger.debug('unexpected file list in coverage report')
         else:
-            cursor.execute('UPDATE file SET path = ? WHERE id = ?', (code_file_absolute_path, 1))
+            cursor.execute(
+                'UPDATE file SET path = ? WHERE id = ?',
+                (code_file_absolute_path, 1),
+            )
             sql_connection.commit()
         cursor.close()
     if not index == 1:
@@ -482,7 +572,9 @@ def coverage_files():
         yield str(cov_path)
 
 
-def generate_coverage_report(html=False, xml=False, report=True, cov_dir='coverage_report'):
+def generate_coverage_report(
+    html=False, xml=False, report=True, cov_dir='coverage_report'
+):
     """
     Args:
         html(bool): should generate an html report. default false
@@ -494,18 +586,26 @@ def generate_coverage_report(html=False, xml=False, report=True, cov_dir='covera
     cov = coverage.Coverage(data_file=cov_file)
     cov.combine(coverage_files())
     if not os.path.exists(cov_file):
-        logger.warning(f'skipping coverage report {cov_file} file not found. '
-                       f'Should not expect this if code files were changed or when linting all with pytest.')
+        logger.warning(
+            f'skipping coverage report {cov_file} file not found. '
+            f'Should not expect this if code files were changed or when linting all with pytest.'
+        )
         return
 
     export_msg = 'exporting {0} coverage report to {1}'
     if report:
         report_data = io.StringIO()
-        report_data.write('\n\n############################\n unit-tests coverage report\n############################\n')
+        report_data.write(
+            '\n\n############################\n unit-tests coverage report\n############################\n'
+        )
         try:
             cov.report(file=report_data)
         except coverage.misc.CoverageException as warning:
-            if isinstance(warning.args, tuple) and warning.args and warning.args[0] == 'No data to report.':
+            if (
+                isinstance(warning.args, tuple)
+                and warning.args
+                and warning.args[0] == 'No data to report.'
+            ):
                 logger.info(f'No coverage data in file {cov_file}')
                 return
             raise warning
@@ -514,7 +614,9 @@ def generate_coverage_report(html=False, xml=False, report=True, cov_dir='covera
 
     if html:
         html_dir = os.path.join(cov_dir, 'html')
-        logger.info(export_msg.format('html', os.path.join(html_dir, 'index.html')))
+        logger.info(
+            export_msg.format('html', os.path.join(html_dir, 'index.html'))
+        )
         try:
             cov.html_report(directory=html_dir)
         except coverage.misc.CoverageException as warning:

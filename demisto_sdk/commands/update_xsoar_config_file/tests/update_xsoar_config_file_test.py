@@ -8,13 +8,16 @@ import pytest
 from demisto_sdk.__main__ import xsoar_config_file_update
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import src_root
-from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import \
-    XSOARConfigFileUpdater
+from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import (
+    XSOARConfigFileUpdater,
+)
 
 json = JSON_Handler()
 
 
-UNIT_TEST_DATA = (src_root() / 'commands' / 'update_xsoar_config_file' / 'tests' / 'data')
+UNIT_TEST_DATA = (
+    src_root() / 'commands' / 'update_xsoar_config_file' / 'tests' / 'data'
+)
 
 
 @contextmanager
@@ -36,12 +39,24 @@ def temp_dir():
 
 
 class TestXSOARConfigFileUpdater:
-
-    @pytest.mark.parametrize(argnames='add_all_marketplace_packs, expected_path, expected_outputs',
-                             argvalues=[(True, 'xsoar_config.json',
-                                         {'marketplace_packs': [{'id': 'test1', 'version': '1.0.0'}]}),
-                                        (False, '', {})])
-    def test_add_all_marketplace_packs(self, mocker, add_all_marketplace_packs, expected_path, expected_outputs):
+    @pytest.mark.parametrize(
+        argnames='add_all_marketplace_packs, expected_path, expected_outputs',
+        argvalues=[
+            (
+                True,
+                'xsoar_config.json',
+                {'marketplace_packs': [{'id': 'test1', 'version': '1.0.0'}]},
+            ),
+            (False, '', {}),
+        ],
+    )
+    def test_add_all_marketplace_packs(
+        self,
+        mocker,
+        add_all_marketplace_packs,
+        expected_path,
+        expected_outputs,
+    ):
         """
         Given:
             - add_all_marketplace_packs arg as True or False
@@ -52,19 +67,24 @@ class TestXSOARConfigFileUpdater:
             - validate the xsoar_config file output is as expected
         """
 
-        mocker.patch.object(XSOARConfigFileUpdater, 'get_installed_packs', return_value=[
-            {"id": "test1", "version": "1.0.0"}])
+        mocker.patch.object(
+            XSOARConfigFileUpdater,
+            'get_installed_packs',
+            return_value=[{'id': 'test1', 'version': '1.0.0'}],
+        )
         with temp_dir() as tmp_output_dir:
             click.Context(command=xsoar_config_file_update).invoke(
                 xsoar_config_file_update,
                 file_path=tmp_output_dir / 'xsoar_config.json',
-                add_all_marketplace_packs=add_all_marketplace_packs
+                add_all_marketplace_packs=add_all_marketplace_packs,
             )
 
             assert Path(f'{tmp_output_dir}/{expected_path}').exists()
 
             try:
-                with open(f'{tmp_output_dir}/{expected_path}', 'r') as config_file:
+                with open(
+                    f'{tmp_output_dir}/{expected_path}', 'r'
+                ) as config_file:
                     config_file_info = json.load(config_file)
             except IsADirectoryError:
                 config_file_info = {}
@@ -81,18 +101,30 @@ class TestXSOARConfigFileUpdater:
             - validate the xsoar_config file output is as expected
         """
 
-        mocker.patch.object(XSOARConfigFileUpdater, 'get_installed_packs', return_value=[
-            {"id": "test1", "version": "1.0.0"}])
+        mocker.patch.object(
+            XSOARConfigFileUpdater,
+            'get_installed_packs',
+            return_value=[{'id': 'test1', 'version': '1.0.0'}],
+        )
 
         with temp_dir() as tmp_output_dir:
 
-            with open(f'{tmp_output_dir}/xsoar_config.json', 'w') as config_file:
-                json.dump({'marketplace_packs': [{'id': 'test2', 'version': '2.0.0'}]}, config_file)
+            with open(
+                f'{tmp_output_dir}/xsoar_config.json', 'w'
+            ) as config_file:
+                json.dump(
+                    {
+                        'marketplace_packs': [
+                            {'id': 'test2', 'version': '2.0.0'}
+                        ]
+                    },
+                    config_file,
+                )
 
             click.Context(command=xsoar_config_file_update).invoke(
                 xsoar_config_file_update,
                 file_path=tmp_output_dir / 'xsoar_config.json',
-                add_all_marketplace_packs=True
+                add_all_marketplace_packs=True,
             )
 
             assert Path(f'{tmp_output_dir}/xsoar_config.json').exists()
@@ -104,8 +136,12 @@ class TestXSOARConfigFileUpdater:
             elif not expected_path_object.is_file():
                 config_file_info = {}
 
-            assert config_file_info == {'marketplace_packs': [{'id': 'test2', 'version': '2.0.0'},
-                                                              {'id': 'test1', 'version': '1.0.0'}]}
+            assert config_file_info == {
+                'marketplace_packs': [
+                    {'id': 'test2', 'version': '2.0.0'},
+                    {'id': 'test1', 'version': '1.0.0'},
+                ]
+            }
 
     def test_add_marketplace_pack(self, capsys):
         """
@@ -119,19 +155,25 @@ class TestXSOARConfigFileUpdater:
         """
 
         with temp_dir() as tmp_output_dir:
-            click.Context(command=xsoar_config_file_update).invoke(xsoar_config_file_update,
-                                                                   file_path=tmp_output_dir / 'xsoar_config.json',
-                                                                   add_marketplace_pack=True,
-                                                                   pack_id='Pack1',
-                                                                   pack_data='1.0.1')
+            click.Context(command=xsoar_config_file_update).invoke(
+                xsoar_config_file_update,
+                file_path=tmp_output_dir / 'xsoar_config.json',
+                add_marketplace_pack=True,
+                pack_id='Pack1',
+                pack_data='1.0.1',
+            )
             assert Path(f'{tmp_output_dir}/xsoar_config.json').exists()
 
             try:
-                with open(f'{tmp_output_dir}/xsoar_config.json', 'r') as config_file:
+                with open(
+                    f'{tmp_output_dir}/xsoar_config.json', 'r'
+                ) as config_file:
                     config_file_info = json.load(config_file)
             except IsADirectoryError:
                 config_file_info = {}
-            assert config_file_info == {'marketplace_packs': [{'id': 'Pack1', 'version': '1.0.1'}]}
+            assert config_file_info == {
+                'marketplace_packs': [{'id': 'Pack1', 'version': '1.0.1'}]
+            }
 
     def test_add_custom_pack(self, capsys):
         """
@@ -145,25 +187,57 @@ class TestXSOARConfigFileUpdater:
         """
 
         with temp_dir() as tmp_output_dir:
-            click.Context(command=xsoar_config_file_update).invoke(xsoar_config_file_update,
-                                                                   file_path=tmp_output_dir / 'xsoar_config.json',
-                                                                   add_custom_pack=True,
-                                                                   pack_id='Pack1',
-                                                                   pack_data='Packs/Pack1')
+            click.Context(command=xsoar_config_file_update).invoke(
+                xsoar_config_file_update,
+                file_path=tmp_output_dir / 'xsoar_config.json',
+                add_custom_pack=True,
+                pack_id='Pack1',
+                pack_data='Packs/Pack1',
+            )
             assert Path(f'{tmp_output_dir}/xsoar_config.json').exists()
 
             try:
-                with open(f'{tmp_output_dir}/xsoar_config.json', 'r') as config_file:
+                with open(
+                    f'{tmp_output_dir}/xsoar_config.json', 'r'
+                ) as config_file:
                     config_file_info = json.load(config_file)
             except IsADirectoryError:
                 config_file_info = {}
-            assert config_file_info == {'custom_packs': [{'id': 'Pack1', 'url': 'Packs/Pack1'}]}
+            assert config_file_info == {
+                'custom_packs': [{'id': 'Pack1', 'url': 'Packs/Pack1'}]
+            }
 
-    @pytest.mark.parametrize(argnames='add_marketplace_pack, pack_id, pack_data, expected_path, err, expected_outputs',
-                             argvalues=[(True, '', '1.0.1', '', "Error: Missing option '-pi' / '--pack-id'.", {}),
-                                        (True, 'Pack1', '', '', "Error: Missing option '-pd' / '--pack-data'.", {})])
-    def test_add_marketplace_pack_with_missing_args(self, add_marketplace_pack, pack_id, pack_data, expected_path,
-                                                    capsys, err, expected_outputs):
+    @pytest.mark.parametrize(
+        argnames='add_marketplace_pack, pack_id, pack_data, expected_path, err, expected_outputs',
+        argvalues=[
+            (
+                True,
+                '',
+                '1.0.1',
+                '',
+                "Error: Missing option '-pi' / '--pack-id'.",
+                {},
+            ),
+            (
+                True,
+                'Pack1',
+                '',
+                '',
+                "Error: Missing option '-pd' / '--pack-data'.",
+                {},
+            ),
+        ],
+    )
+    def test_add_marketplace_pack_with_missing_args(
+        self,
+        add_marketplace_pack,
+        pack_id,
+        pack_data,
+        expected_path,
+        capsys,
+        err,
+        expected_outputs,
+    ):
         """
         Given:
             - add_marketplace_pack arg as True without the mandatory args
@@ -176,11 +250,13 @@ class TestXSOARConfigFileUpdater:
         """
 
         with temp_dir() as tmp_output_dir:
-            click.Context(command=xsoar_config_file_update).invoke(xsoar_config_file_update,
-                                                                   file_path=tmp_output_dir / 'xsoar_config.json',
-                                                                   add_marketplace_pack=add_marketplace_pack,
-                                                                   pack_id=pack_id,
-                                                                   pack_data=pack_data)
+            click.Context(command=xsoar_config_file_update).invoke(
+                xsoar_config_file_update,
+                file_path=tmp_output_dir / 'xsoar_config.json',
+                add_marketplace_pack=add_marketplace_pack,
+                pack_id=pack_id,
+                pack_data=pack_data,
+            )
             assert Path(f'{tmp_output_dir}/{expected_path}').exists()
 
             stdout, _ = capsys.readouterr()
@@ -188,17 +264,45 @@ class TestXSOARConfigFileUpdater:
                 assert err in stdout
 
             try:
-                with open(f'{tmp_output_dir}/{expected_path}', 'r') as config_file:
+                with open(
+                    f'{tmp_output_dir}/{expected_path}', 'r'
+                ) as config_file:
                     config_file_info = json.load(config_file)
             except IsADirectoryError:
                 config_file_info = {}
             assert config_file_info == expected_outputs
 
-    @pytest.mark.parametrize(argnames='add_custom_pack, pack_id, pack_data, expected_path, err, expected_outputs',
-                             argvalues=[(True, '', 'Packs/Pack1', '', "Error: Missing option '-pi' / '--pack-id'.", {}),
-                                        (True, 'Pack1', '', '', "Error: Missing option '-pd' / '--pack-data'.", {})])
-    def test_add_custom_pack_with_missing_args(self, add_custom_pack, pack_id, pack_data, expected_path, capsys, err,
-                                               expected_outputs):
+    @pytest.mark.parametrize(
+        argnames='add_custom_pack, pack_id, pack_data, expected_path, err, expected_outputs',
+        argvalues=[
+            (
+                True,
+                '',
+                'Packs/Pack1',
+                '',
+                "Error: Missing option '-pi' / '--pack-id'.",
+                {},
+            ),
+            (
+                True,
+                'Pack1',
+                '',
+                '',
+                "Error: Missing option '-pd' / '--pack-data'.",
+                {},
+            ),
+        ],
+    )
+    def test_add_custom_pack_with_missing_args(
+        self,
+        add_custom_pack,
+        pack_id,
+        pack_data,
+        expected_path,
+        capsys,
+        err,
+        expected_outputs,
+    ):
         """
         Given:
             - add_custom_pack arg as True
@@ -211,11 +315,13 @@ class TestXSOARConfigFileUpdater:
         """
 
         with temp_dir() as tmp_output_dir:
-            click.Context(command=xsoar_config_file_update).invoke(xsoar_config_file_update,
-                                                                   file_path=tmp_output_dir / 'xsoar_config.json',
-                                                                   add_custom_pack=add_custom_pack,
-                                                                   pack_id=pack_id,
-                                                                   pack_data=pack_data)
+            click.Context(command=xsoar_config_file_update).invoke(
+                xsoar_config_file_update,
+                file_path=tmp_output_dir / 'xsoar_config.json',
+                add_custom_pack=add_custom_pack,
+                pack_id=pack_id,
+                pack_data=pack_data,
+            )
             assert Path(f'{tmp_output_dir}/{expected_path}').exists()
 
             stdout, _ = capsys.readouterr()
@@ -223,18 +329,38 @@ class TestXSOARConfigFileUpdater:
                 assert err in stdout
 
             try:
-                with open(f'{tmp_output_dir}/{expected_path}', 'r') as config_file:
+                with open(
+                    f'{tmp_output_dir}/{expected_path}', 'r'
+                ) as config_file:
                     config_file_info = json.load(config_file)
             except IsADirectoryError:
                 config_file_info = {}
             assert config_file_info == expected_outputs
 
-    @pytest.mark.parametrize(argnames='add_custom_pack, pack_id, pack_data, err, exit_code',
-                             argvalues=[(True, '', 'Packs/Pack1', "Error: Missing option '-pi' / '--pack-id'.", False),
-                                        (True, 'Pack1', '', "Error: Missing option '-pd' / '--pack-data'.", False),
-                                        (True, 'Pack1', 'Packs/Pack1', "", True),
-                                        (False, 'Pack1', '', "", True)])
-    def test_verify_flags(self, add_custom_pack, pack_id, pack_data, err, exit_code, capsys):
+    @pytest.mark.parametrize(
+        argnames='add_custom_pack, pack_id, pack_data, err, exit_code',
+        argvalues=[
+            (
+                True,
+                '',
+                'Packs/Pack1',
+                "Error: Missing option '-pi' / '--pack-id'.",
+                False,
+            ),
+            (
+                True,
+                'Pack1',
+                '',
+                "Error: Missing option '-pd' / '--pack-data'.",
+                False,
+            ),
+            (True, 'Pack1', 'Packs/Pack1', '', True),
+            (False, 'Pack1', '', '', True),
+        ],
+    )
+    def test_verify_flags(
+        self, add_custom_pack, pack_id, pack_data, err, exit_code, capsys
+    ):
         """
         Given:
             - arguments to the xsoar-configuration-file
@@ -247,7 +373,9 @@ class TestXSOARConfigFileUpdater:
         self.add_custom_pack = add_custom_pack
         self.pack_id = pack_id
         self.pack_data = pack_data
-        config_file = XSOARConfigFileUpdater(pack_id, pack_data, add_custom_pack=add_custom_pack)
+        config_file = XSOARConfigFileUpdater(
+            pack_id, pack_data, add_custom_pack=add_custom_pack
+        )
         error_code = config_file.verify_flags()
         assert error_code == exit_code
 
@@ -255,12 +383,23 @@ class TestXSOARConfigFileUpdater:
         if err:
             assert err in stdout
 
-    @pytest.mark.parametrize(argnames='add_custom_pack, add_market_place_pack, pack_id, pack_data, exit_code',
-                             argvalues=[(True, False, '', "", 1),
-                                        (False, True, "Pack1", 'Packs/Pack1', 0),
-                                        (False, False, '', "", 0)])
-    def test_update_config_file_manager(self, mocker, add_custom_pack, add_market_place_pack, pack_id, pack_data,
-                                        exit_code):
+    @pytest.mark.parametrize(
+        argnames='add_custom_pack, add_market_place_pack, pack_id, pack_data, exit_code',
+        argvalues=[
+            (True, False, '', '', 1),
+            (False, True, 'Pack1', 'Packs/Pack1', 0),
+            (False, False, '', '', 0),
+        ],
+    )
+    def test_update_config_file_manager(
+        self,
+        mocker,
+        add_custom_pack,
+        add_market_place_pack,
+        pack_id,
+        pack_data,
+        exit_code,
+    ):
         """
         Given:
             - arguments to the xsoar-configuration-file
@@ -276,7 +415,11 @@ class TestXSOARConfigFileUpdater:
         self.pack_id = pack_id
         self.pack_data = pack_data
         self.add_marketplace_pack = add_market_place_pack
-        config_file = XSOARConfigFileUpdater(pack_id, pack_data, add_marketplace_pack=add_market_place_pack,
-                                             add_custom_pack=add_custom_pack)
+        config_file = XSOARConfigFileUpdater(
+            pack_id,
+            pack_data,
+            add_marketplace_pack=add_market_place_pack,
+            add_custom_pack=add_custom_pack,
+        )
         error_code = config_file.update_config_file_manager()
         assert error_code == exit_code

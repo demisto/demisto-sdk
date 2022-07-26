@@ -1,8 +1,9 @@
 import astroid
 import pylint.testutils
 
-from demisto_sdk.commands.lint.resources.pylint_plugins import \
-    certified_partner_level_checker
+from demisto_sdk.commands.lint.resources.pylint_plugins import (
+    certified_partner_level_checker,
+)
 
 # You can find documentation about adding new test checker here:
 # http://pylint.pycqa.org/en/latest/how_tos/custom_checkers.html#write-a-checker
@@ -12,6 +13,7 @@ class TestSysExitChecker(pylint.testutils.CheckerTestCase):
     """
     Class which tests the functionality of sys exit checker .
     """
+
     CHECKER_CLASS = certified_partner_level_checker.CertifiedPartnerChecker
 
     def test_sys_exit_exists(self):
@@ -23,17 +25,19 @@ class TestSysExitChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the correct message id is being added to the message errors of pylint
         """
-        _, node_b, _ = astroid.extract_node("""
+        _, node_b, _ = astroid.extract_node(
+            """
             def test_function(): #@
                 sys.exit(1) #@
                 return True #@
-        """)
+        """
+        )
         assert node_b is not None
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='sys-exit-exists',
-                    node=node_b,
-                ),
+            pylint.testutils.MessageTest(
+                msg_id='sys-exit-exists',
+                node=node_b,
+            ),
         ):
             self.checker.visit_call(node_b)
 
@@ -46,12 +50,14 @@ class TestSysExitChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that it does not raise any errors, Check that there is no error message.
         """
-        node_a, node_b = astroid.extract_node("""
+        node_a, node_b = astroid.extract_node(
+            """
             def test_function():
                 ''' this is sys.exit(1) in doc string test''' #@
                 # this is sys.exit(1) in comment #@
                 return True
-        """)
+        """
+        )
         assert node_a is None and node_b is None
         with self.assertNoMessages():
             self.checker.visit_call(node_a)
@@ -66,11 +72,13 @@ class TestSysExitChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that there is no errors, Check that there is no error message.
         """
-        _, node_b, _ = astroid.extract_node("""
+        _, node_b, _ = astroid.extract_node(
+            """
             def test_function(): #@
                 sys.exit(0) #@
                 return True #@
-        """)
+        """
+        )
         assert node_b is not None
         with self.assertNoMessages():
             self.checker.visit_call(node_b)
@@ -84,10 +92,12 @@ class TestSysExitChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that there is no errors, Check that there is no error message.
         """
-        node_a, node_b = astroid.extract_node("""
+        node_a, node_b = astroid.extract_node(
+            """
             def test_function(): #@
                 return True #@
-        """)
+        """
+        )
         assert node_a is not None and node_b is not None
         with self.assertNoMessages():
             self.checker.visit_call(node_a)
@@ -98,6 +108,7 @@ class TestMainChecker(pylint.testutils.CheckerTestCase):
     """
     Class which tests the functionality of main checker
     """
+
     CHECKER_CLASS = certified_partner_level_checker.CertifiedPartnerChecker
 
     def test_main_exists(self):
@@ -109,13 +120,15 @@ class TestMainChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that there is no error message added.
         """
-        node_a = astroid.extract_node("""
+        node_a = astroid.extract_node(
+            """
             def test():
                 return False
 
             def main(): #@
                 return True
-        """)
+        """
+        )
         assert node_a is not None
         with self.assertNoMessages():
             self.checker.visit_functiondef(node_a)
@@ -130,17 +143,19 @@ class TestMainChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the correct error message is added to pylint error message list.
         """
-        node_a, node_b, node_c, node_d = astroid.extract_node("""
+        node_a, node_b, node_c, node_d = astroid.extract_node(
+            """
             def test_function() -> bool:  #@
                 return True  #@
             def another_function() -> bool:#@
                 return False  #@
-        """)
+        """
+        )
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='main-func-doesnt-exist',
-                    node=node_a,
-                ),
+            pylint.testutils.MessageTest(
+                msg_id='main-func-doesnt-exist',
+                node=node_a,
+            ),
         ):
             self.checker.visit_functiondef(node_a)
             self.checker.visit_functiondef(node_c)
@@ -151,6 +166,7 @@ class TestDemistoResultsChecker(pylint.testutils.CheckerTestCase):
     """
     Class which tests the functionality of demisto.results checker .
     """
+
     CHECKER_CLASS = certified_partner_level_checker.CertifiedPartnerChecker
 
     def test_demisto_results_exists(self):
@@ -162,16 +178,18 @@ class TestDemistoResultsChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the correct message id is being added to the message errors of pylint
         """
-        _, node_b = astroid.extract_node("""
+        _, node_b = astroid.extract_node(
+            """
             def test_function(): #@
                 demisto.results('ok') #@
-        """)
+        """
+        )
         assert node_b is not None
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='demisto-results-exists',
-                    node=node_b,
-                ),
+            pylint.testutils.MessageTest(
+                msg_id='demisto-results-exists',
+                node=node_b,
+            ),
         ):
             self.checker.visit_call(node_b)
 
@@ -184,10 +202,12 @@ class TestDemistoResultsChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that there is no errors, Check that there is no error message.
         """
-        node_a, node_b = astroid.extract_node("""
+        node_a, node_b = astroid.extract_node(
+            """
             def test_function(): #@
                 return True #@
-        """)
+        """
+        )
         assert node_a is not None and node_b is not None
         with self.assertNoMessages():
             self.checker.visit_call(node_a)
@@ -202,11 +222,13 @@ class TestDemistoResultsChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that there is no errors, Check that there is no error message.
         """
-        node_a, node_b, node_c = astroid.extract_node("""
+        node_a, node_b, node_c = astroid.extract_node(
+            """
             def test_function(): #@
                 # demisto.results('ok') should be used #@
                 return True #@
-        """)
+        """
+        )
         assert node_a is not None and node_b is None and node_c is not None
         with self.assertNoMessages():
             self.checker.visit_call(node_a)
@@ -218,6 +240,7 @@ class TestReturnOutputChecker(pylint.testutils.CheckerTestCase):
     """
     Class which tests the functionality of demisto.results checker .
     """
+
     CHECKER_CLASS = certified_partner_level_checker.CertifiedPartnerChecker
 
     def test_return_output_exists(self):
@@ -229,16 +252,18 @@ class TestReturnOutputChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the correct message id is being added to the message errors of pylint
         """
-        _, node_b = astroid.extract_node("""
+        _, node_b = astroid.extract_node(
+            """
             def create_trail(args): #@
                 return_outputs(human_readable, ec) #@
-        """)
+        """
+        )
         assert node_b is not None
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='return-outputs-exists',
-                    node=node_b,
-                ),
+            pylint.testutils.MessageTest(
+                msg_id='return-outputs-exists',
+                node=node_b,
+            ),
         ):
             self.checker.visit_call(node_b)
 
@@ -251,10 +276,12 @@ class TestReturnOutputChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that there is no errors, Check that there is no error message.
         """
-        node_a, node_b = astroid.extract_node("""
+        node_a, node_b = astroid.extract_node(
+            """
             def test_function(): #@
                 return True #@
-        """)
+        """
+        )
         assert node_a is not None and node_b is not None
         with self.assertNoMessages():
             self.checker.visit_call(node_a)
@@ -269,11 +296,13 @@ class TestReturnOutputChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that there is no errors, Check that there is no error message.
         """
-        node_a, node_b, node_c = astroid.extract_node("""
+        node_a, node_b, node_c = astroid.extract_node(
+            """
             def test_function(): #@
                 # return_outputs(human_readable, ec) should be used #@
                 return True #@
-        """)
+        """
+        )
         assert node_a is not None and node_b is None and node_c is not None
         with self.assertNoMessages():
             self.checker.visit_call(node_a)
@@ -285,6 +314,7 @@ class TestInitParamsChecker(pylint.testutils.CheckerTestCase):
     """
     Class which tests that demisto.params() is used only in main function.
     """
+
     CHECKER_CLASS = certified_partner_level_checker.CertifiedPartnerChecker
 
     def test_init_params_in_main(self):
@@ -297,10 +327,12 @@ class TestInitParamsChecker(pylint.testutils.CheckerTestCase):
             - Ensure that it does not raise any errors, Check that there is no error message.
 
         """
-        node_b = astroid.parse("""
+        node_b = astroid.parse(
+            """
             def main():
                 demisto.params().get('name') #@
-        """)
+        """
+        )
         assert node_b is not None
         with self.assertNoMessages():
             self.checker.visit_call(node_b)
@@ -314,7 +346,8 @@ class TestInitParamsChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the correct message id is being added to the messages of pylint
         """
-        node_b = astroid.extract_node("""
+        node_b = astroid.extract_node(
+            """
             demisto.params() #@
             def test_function():
                 sys.exit(1)
@@ -323,13 +356,14 @@ class TestInitParamsChecker(pylint.testutils.CheckerTestCase):
                 return True
                 return_error('err')
 
-        """)
+        """
+        )
         assert node_b is not None
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='init-params-outside-main',
-                    node=node_b,
-                ),
+            pylint.testutils.MessageTest(
+                msg_id='init-params-outside-main',
+                node=node_b,
+            ),
         ):
             self.checker.visit_call(node_b)
 
@@ -338,6 +372,7 @@ class TestInitArgsChecker(pylint.testutils.CheckerTestCase):
     """
     Class which tests that demisto.args() is used only in main function.
     """
+
     CHECKER_CLASS = certified_partner_level_checker.CertifiedPartnerChecker
 
     def test_init_args_in_main(self):
@@ -350,10 +385,12 @@ class TestInitArgsChecker(pylint.testutils.CheckerTestCase):
             - Ensure that there are no errors, Check that there is no error message.
 
         """
-        node_b = astroid.parse("""
+        node_b = astroid.parse(
+            """
             def main():
                 demisto.args().get('name') #@
-        """)
+        """
+        )
         assert node_b is not None
         with self.assertNoMessages():
             self.checker.visit_call(node_b)
@@ -367,7 +404,8 @@ class TestInitArgsChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the correct message id is being added to the messages of pylint
         """
-        node_b = astroid.extract_node("""
+        node_b = astroid.extract_node(
+            """
             demisto.args() #@
             def test_function():
                 sys.exit(1)
@@ -376,12 +414,13 @@ class TestInitArgsChecker(pylint.testutils.CheckerTestCase):
                 return True
                 return_error('err')
 
-        """)
+        """
+        )
         assert node_b is not None
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='init-args-outside-main',
-                    node=node_b,
-                ),
+            pylint.testutils.MessageTest(
+                msg_id='init-args-outside-main',
+                node=node_b,
+            ),
         ):
             self.checker.visit_call(node_b)

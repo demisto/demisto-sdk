@@ -49,11 +49,11 @@ More Details
 
 More information about Unit Tests in Cortex XSOAR:
 https://xsoar.pan.dev/docs/integrations/unit-testing
-
 """
 
 import io
 from demisto_sdk.commands.common.handlers import JSON_Handler
+
 json = JSON_Handler()
 
 
@@ -72,10 +72,10 @@ def test_say_hello():
     """
     from HelloWorld import Client, say_hello_command
 
-    client = Client(base_url='https://test.com/api/v1', verify=False, auth=('test', 'test'))
-    args = {
-        'name': 'Dbot'
-    }
+    client = Client(
+        base_url='https://test.com/api/v1', verify=False, auth=('test', 'test')
+    )
+    args = {'name': 'Dbot'}
     response = say_hello_command(client, args)
 
     assert response.outputs == 'Hello Dbot'
@@ -92,21 +92,20 @@ def test_start_scan(requests_mock):
 
     mock_response = {
         'scan_id': '7a161a3f-8d53-42de-80cd-92fb017c5a12',
-        'status': 'RUNNING'
+        'status': 'RUNNING',
     }
-    requests_mock.get('https://test.com/api/v1/start_scan?hostname=example.com', json=mock_response)
+    requests_mock.get(
+        'https://test.com/api/v1/start_scan?hostname=example.com',
+        json=mock_response,
+    )
 
     client = Client(
         base_url='https://test.com/api/v1',
         verify=False,
-        headers={
-            'Authentication': 'Bearer some_api_key'
-        }
+        headers={'Authentication': 'Bearer some_api_key'},
     )
 
-    args = {
-        'hostname': 'example.com'
-    }
+    args = {'hostname': 'example.com'}
 
     response = scan_start_command(client, args)
 
@@ -115,7 +114,7 @@ def test_start_scan(requests_mock):
     assert response.outputs == {
         'scan_id': '7a161a3f-8d53-42de-80cd-92fb017c5a12',
         'status': 'RUNNING',
-        'hostname': 'example.com'
+        'hostname': 'example.com',
     }
 
 
@@ -129,53 +128,37 @@ def test_status_scan(requests_mock):
     """
     from HelloWorld import Client, scan_status_command
 
-    mock_response = {
-        'scan_id': '100',
-        'status': 'COMPLETE'
-    }
-    requests_mock.get('https://test.com/api/v1/check_scan?scan_id=100', json=mock_response)
+    mock_response = {'scan_id': '100', 'status': 'COMPLETE'}
+    requests_mock.get(
+        'https://test.com/api/v1/check_scan?scan_id=100', json=mock_response
+    )
 
-    mock_response = {
-        'scan_id': '200',
-        'status': 'RUNNING'
-    }
-    requests_mock.get('https://test.com/api/v1/check_scan?scan_id=200', json=mock_response)
+    mock_response = {'scan_id': '200', 'status': 'RUNNING'}
+    requests_mock.get(
+        'https://test.com/api/v1/check_scan?scan_id=200', json=mock_response
+    )
 
-    mock_response = {
-        'scan_id': '300',
-        'status': 'COMPLETE'
-    }
-    requests_mock.get('https://test.com/api/v1/check_scan?scan_id=300', json=mock_response)
+    mock_response = {'scan_id': '300', 'status': 'COMPLETE'}
+    requests_mock.get(
+        'https://test.com/api/v1/check_scan?scan_id=300', json=mock_response
+    )
 
     client = Client(
         base_url='https://test.com/api/v1',
         verify=False,
-        headers={
-            'Authentication': 'Bearer some_api_key'
-        }
+        headers={'Authentication': 'Bearer some_api_key'},
     )
 
-    args = {
-        'scan_id': ['100', '200', '300']
-    }
+    args = {'scan_id': ['100', '200', '300']}
 
     response = scan_status_command(client, args)
 
     assert response.outputs_prefix == 'HelloWorld.Scan'
     assert response.outputs_key_field == 'scan_id'
     assert response.outputs == [
-        {
-            'scan_id': '100',
-            'status': 'COMPLETE'
-        },
-        {
-            'scan_id': '200',
-            'status': 'RUNNING'
-        },
-        {
-            'scan_id': '300',
-            'status': 'COMPLETE'
-        }
+        {'scan_id': '100', 'status': 'COMPLETE'},
+        {'scan_id': '200', 'status': 'RUNNING'},
+        {'scan_id': '300', 'status': 'COMPLETE'},
     ]
 
 
@@ -190,20 +173,18 @@ def test_scan_results(requests_mock):
     from HelloWorld import Client, scan_results_command
 
     mock_response = util_load_json('test_data/scan_results.json')
-    requests_mock.get('https://test.com/api/v1/get_scan_results?scan_id=100', json=mock_response)
+    requests_mock.get(
+        'https://test.com/api/v1/get_scan_results?scan_id=100',
+        json=mock_response,
+    )
 
     client = Client(
         base_url='https://test.com/api/v1',
         verify=False,
-        headers={
-            'Authentication': 'Bearer some_api_key'
-        }
+        headers={'Authentication': 'Bearer some_api_key'},
     )
 
-    args = {
-        'scan_id': '100',
-        'format': 'json'
-    }
+    args = {'scan_id': '100', 'format': 'json'}
 
     response = scan_results_command(client, args)
 
@@ -229,21 +210,20 @@ def test_search_alerts(requests_mock):
     mock_response = util_load_json('test_data/search_alerts.json')
     requests_mock.get(
         'https://test.com/api/v1/get_alerts?alert_status=ACTIVE&severity=Critical&max_results=2&start_time=1581982463',
-        json=mock_response['alerts'])
+        json=mock_response['alerts'],
+    )
 
     client = Client(
         base_url='https://test.com/api/v1',
         verify=False,
-        headers={
-            'Authentication': 'Bearer some_api_key'
-        }
+        headers={'Authentication': 'Bearer some_api_key'},
     )
 
     args = {
         'severity': 'Critical',
         'start_time': 1581982463,
         'max_results': 2,
-        'status': 'ACTIVE'
+        'status': 'ACTIVE',
     }
 
     response = search_alerts_command(client, args)
@@ -268,15 +248,15 @@ def test_get_alert(requests_mock):
     from HelloWorld import Client, get_alert_command
 
     mock_response = util_load_json('test_data/get_alert.json')
-    requests_mock.get('https://test.com/api/v1/get_alert_details?alert_id=695b3238-05d6-4934-86f5-9fff3201aeb0',
-                      json=mock_response)
+    requests_mock.get(
+        'https://test.com/api/v1/get_alert_details?alert_id=695b3238-05d6-4934-86f5-9fff3201aeb0',
+        json=mock_response,
+    )
 
     client = Client(
         base_url='https://test.com/api/v1',
         verify=False,
-        headers={
-            'Authentication': 'Bearer some_api_key'
-        }
+        headers={'Authentication': 'Bearer some_api_key'},
     )
 
     args = {
@@ -306,19 +286,18 @@ def test_update_alert_status(requests_mock):
     mock_response = util_load_json('test_data/update_alert_status.json')
     requests_mock.get(
         'https://test.com/api/v1/change_alert_status?alert_id=695b3238-05d6-4934-86f5-9fff3201aeb0&alert_status=CLOSED',
-        json=mock_response)
+        json=mock_response,
+    )
 
     client = Client(
         base_url='https://test.com/api/v1',
         verify=False,
-        headers={
-            'Authentication': 'Bearer some_api_key'
-        }
+        headers={'Authentication': 'Bearer some_api_key'},
     )
 
     args = {
         'alert_id': '695b3238-05d6-4934-86f5-9fff3201aeb0',
-        'status': 'CLOSED'
+        'status': 'CLOSED',
     }
 
     response = update_alert_status_command(client, args)
@@ -344,15 +323,14 @@ def test_ip(requests_mock):
 
     ip_to_check = '151.1.1.1'
     mock_response = util_load_json('test_data/ip_reputation.json')
-    requests_mock.get(f'http://test.com/api/v1/ip?ip={ip_to_check}',
-                      json=mock_response)
+    requests_mock.get(
+        f'http://test.com/api/v1/ip?ip={ip_to_check}', json=mock_response
+    )
 
     client = Client(
         base_url='http://test.com/api/v1',
         verify=False,
-        headers={
-            'Authorization': 'Bearer some_api_key'
-        }
+        headers={'Authorization': 'Bearer some_api_key'},
     )
 
     args = {
@@ -385,15 +363,15 @@ def test_domain(requests_mock):
 
     domain_to_check = 'google.com'
     mock_response = util_load_json('test_data/domain_reputation.json')
-    requests_mock.get(f'http://test.com/api/v1/domain?domain={domain_to_check}',
-                      json=mock_response)
+    requests_mock.get(
+        f'http://test.com/api/v1/domain?domain={domain_to_check}',
+        json=mock_response,
+    )
 
     client = Client(
         base_url='http://test.com/api/v1',
         verify=False,
-        headers={
-            'Authorization': 'Bearer some_api_key'
-        }
+        headers={'Authorization': 'Bearer some_api_key'},
     )
 
     args = {
@@ -433,19 +411,17 @@ def test_fetch_incidents(requests_mock):
     requests_mock.get(
         'https://test.com/api/v1/get_alerts?alert_status=ACTIVE'
         '&severity=Low%2CMedium%2CHigh%2CCritical&max_results=2'
-        '&start_time=1581944401', json=mock_response['alerts'])
+        '&start_time=1581944401',
+        json=mock_response['alerts'],
+    )
 
     client = Client(
         base_url='https://test.com/api/v1',
         verify=False,
-        headers={
-            'Authentication': 'Bearer some_api_key'
-        }
+        headers={'Authentication': 'Bearer some_api_key'},
     )
 
-    last_run = {
-        'last_fetch': 1581944401  # Mon Feb 17 2020
-    }
+    last_run = {'last_fetch': 1581944401}  # Mon Feb 17 2020
 
     _, new_incidents = fetch_incidents(
         client=client,
@@ -469,5 +445,5 @@ def test_fetch_incidents(requests_mock):
             'occurred': '2020-02-17T23:34:23.000Z',
             'rawJSON': json.dumps(mock_response['alerts'][1]),
             'severity': 2,  # medium, this is XSOAR severity (already converted)
-        }
+        },
     ]

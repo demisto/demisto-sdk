@@ -1,5 +1,4 @@
 """
-
 """
 import os
 import shutil
@@ -47,32 +46,36 @@ class Repo:
         self.conf = ConfJSON(self._test_dir, 'conf.json', '')
         self.conf.write_json()
 
-        self.content_descriptor = JSONBased(self._tmpdir, 'content-descriptor', '')
+        self.content_descriptor = JSONBased(
+            self._tmpdir, 'content-descriptor', ''
+        )
         self.content_descriptor.write_json({})
 
         self.id_set = JSONBased(self._test_dir, 'id_set', '')
-        self.id_set.write_json({
-            'scripts': [],
-            'playbooks': [],
-            'integrations': [],
-            'TestPlaybooks': [],
-            'Classifiers': [],
-            'Dashboards': [],
-            'IncidentFields': [],
-            'IncidentTypes': [],
-            'IndicatorFields': [],
-            'IndicatorTypes': [],
-            'Layouts': [],
-            'Reports': [],
-            'Widgets': [],
-            'Mappers': [],
-            'GenericTypes': [],
-            'GenericFields': [],
-            'GenericModules': [],
-            'GenericDefinitions': [],
-            'Jobs': [],
-            'Wizards': [],
-        })
+        self.id_set.write_json(
+            {
+                'scripts': [],
+                'playbooks': [],
+                'integrations': [],
+                'TestPlaybooks': [],
+                'Classifiers': [],
+                'Dashboards': [],
+                'IncidentFields': [],
+                'IncidentTypes': [],
+                'IndicatorFields': [],
+                'IndicatorTypes': [],
+                'Layouts': [],
+                'Reports': [],
+                'Widgets': [],
+                'Mappers': [],
+                'GenericTypes': [],
+                'GenericFields': [],
+                'GenericModules': [],
+                'GenericDefinitions': [],
+                'Jobs': [],
+                'Wizards': [],
+            }
+        )
 
     def __del__(self):
         shutil.rmtree(self.path, ignore_errors=True)
@@ -106,7 +109,9 @@ class Repo:
         integration.yml.update({'name': f'{name}_integration'})
         integration.yml.update({'display': f'{name}_integration'})
         integration_content = integration.yml.read_dict()
-        integration_content['script']['commands'][0]['name'] = f'command_{name}_integration'
+        integration_content['script']['commands'][0][
+            'name'
+        ] = f'command_{name}_integration'
         integration.yml.write_dict(integration_content)
 
         classifier = pack.create_classifier(f'{name}_classifier')
@@ -121,7 +126,9 @@ class Repo:
         layout.update({'name': f'{name} - layout'})
         layout.update({'kind': ''})
 
-        layoutcontainer = pack.create_layoutcontainer(f'{name}_layoutcontainer')
+        layoutcontainer = pack.create_layoutcontainer(
+            f'{name}_layoutcontainer'
+        )
         layoutcontainer.write_json({'id': f'{name} - layoutcontainer'})
         layoutcontainer.update({'group': f'{name} - layoutcontainer'})
         layoutcontainer.update({'detailsV2': {}})
@@ -130,7 +137,9 @@ class Repo:
         mapper.write_json({'id': f'{name} - mapper'})
         mapper.update({'name': f'{name} - mapper'})
         mapper.update({'mapping': {}})
-        mapper.update({'type': 'mapping-incoming'})  # can also be mapping-outgoing, but this is the more common usage
+        mapper.update(
+            {'type': 'mapping-incoming'}
+        )  # can also be mapping-outgoing, but this is the more common usage
 
         incident_type = pack.create_incident_type(f'{name}_incident-type')
         incident_type.write_json({'id': f'{name} - incident_type'})
@@ -147,8 +156,12 @@ class Repo:
         indicator_type.update({'details': f'{name} - indicator_type'})
         indicator_type.update({'regex': ''})
 
-        indicator_field = pack.create_indicator_field(f'{name}_indicator-field')
-        indicator_field.write_json({'id': f'indicator_{name} - indicator_field'})
+        indicator_field = pack.create_indicator_field(
+            f'{name}_indicator-field'
+        )
+        indicator_field.write_json(
+            {'id': f'indicator_{name} - indicator_field'}
+        )
         indicator_field.update({'name': f'indicator_{name} - indicator_field'})
 
         dashboard = pack.create_dashboard(f'{name}_dashboard')
@@ -179,13 +192,19 @@ class Repo:
         playbook.yml.update({'id': f'{name}_playbook'})
         playbook.yml.update({'name': f'{name}_playbook'})
 
-        test_playbook = pack.create_test_playbook(f'{name}_integration_test_playbook')
+        test_playbook = pack.create_test_playbook(
+            f'{name}_integration_test_playbook'
+        )
         test_playbook.create_default_playbook()
         test_playbook.yml.update({'id': f'{name}_integration_test_playbook'})
         test_playbook.yml.update({'name': f'{name}_integration_test_playbook'})
-        integration.yml.update({'tests': [f'{name}_integration_test_playbook']})
+        integration.yml.update(
+            {'tests': [f'{name}_integration_test_playbook']}
+        )
 
-        test_playbook = pack.create_test_playbook(f'{name}_script_test_playbook')
+        test_playbook = pack.create_test_playbook(
+            f'{name}_script_test_playbook'
+        )
         test_playbook.create_default_playbook()
         test_playbook.yml.update({'id': f'{name}_script_test_playbook'})
         test_playbook.yml.update({'name': f'{name}_script_test_playbook'})
@@ -208,22 +227,71 @@ class Repo:
         generic_module.update({'views': [{'name': 'name'}]})
         generic_module.update({'definitionIds': ['definitionId']})
 
-        generic_definition = pack.create_generic_definition(f'{name}_generic-definition')
-        generic_definition.write_json({'id': f'generic_{name} - generic_definition'})
-        generic_definition.update({'name': f'generic_{name} - generic_definition'})
+        generic_definition = pack.create_generic_definition(
+            f'{name}_generic-definition'
+        )
+        generic_definition.write_json(
+            {'id': f'generic_{name} - generic_definition'}
+        )
+        generic_definition.update(
+            {'name': f'generic_{name} - generic_definition'}
+        )
         generic_definition.update({'auditable': False})
 
         pack.create_job(is_feed=False, name=name)
         pack.create_job(is_feed=True, name=f'{name}_all_feeds')
 
         if 'marketplacev2' in marketplaces:
-            pack.create_parsing_rule(f'{name}_parsingrule', {"id": "parsing_rule_id", "rules": "", "name": "parsing_rule_name"})
-            pack.create_modeling_rule(f'{name}_modelingrule', {"id": "modeling_rule_id", "rules": "", "name": "modeling_rule_name"})
-            pack.create_correlation_rule(f'{name}_correlationrule', {"global_rule_id": "correlation_rule_id",
-                                         "name": "correlation_rule_name", "alert_category": ""})
-            pack.create_xsiam_dashboard(f'{name}_xsiamdashboard', {"dashboards_data": [{"global_id": "xsiam_dashboard_id", "name": "xsiam_dashboard_name"}]})
-            pack.create_xsiam_report(f'{name}_xsiamreport', {"templates_data": [{"global_id": "xsiam_report_id", "name": "xsiam_report_name"}]})
-            pack.create_trigger(f'{name}_trigger', {"trigger_id": "trigger_id", "trigger_name": "trigger_name"})
+            pack.create_parsing_rule(
+                f'{name}_parsingrule',
+                {
+                    'id': 'parsing_rule_id',
+                    'rules': '',
+                    'name': 'parsing_rule_name',
+                },
+            )
+            pack.create_modeling_rule(
+                f'{name}_modelingrule',
+                {
+                    'id': 'modeling_rule_id',
+                    'rules': '',
+                    'name': 'modeling_rule_name',
+                },
+            )
+            pack.create_correlation_rule(
+                f'{name}_correlationrule',
+                {
+                    'global_rule_id': 'correlation_rule_id',
+                    'name': 'correlation_rule_name',
+                    'alert_category': '',
+                },
+            )
+            pack.create_xsiam_dashboard(
+                f'{name}_xsiamdashboard',
+                {
+                    'dashboards_data': [
+                        {
+                            'global_id': 'xsiam_dashboard_id',
+                            'name': 'xsiam_dashboard_name',
+                        }
+                    ]
+                },
+            )
+            pack.create_xsiam_report(
+                f'{name}_xsiamreport',
+                {
+                    'templates_data': [
+                        {
+                            'global_id': 'xsiam_report_id',
+                            'name': 'xsiam_report_name',
+                        }
+                    ]
+                },
+            )
+            pack.create_trigger(
+                f'{name}_trigger',
+                {'trigger_id': 'trigger_id', 'trigger_name': 'trigger_name'},
+            )
             print('parsing done')
         return pack
 
@@ -250,7 +318,7 @@ class Repo:
 
     def make_dir(self, dir_name: str = ''):
         if not dir_name:
-            dir_name = "NewDir"
+            dir_name = 'NewDir'
         dir_path = os.path.join(self.path, dir_name)
         os.mkdir(dir_path)
         return dir_path
@@ -266,4 +334,7 @@ class Repo:
             with open(file_path, 'w') as f:
                 f.write(file_content)
         else:
-            shutil.copy('demisto_sdk/tests/test_files/DummyPackScriptIsXsoarOnly/pack_metadata.json', file_path)
+            shutil.copy(
+                'demisto_sdk/tests/test_files/DummyPackScriptIsXsoarOnly/pack_metadata.json',
+                file_path,
+            )

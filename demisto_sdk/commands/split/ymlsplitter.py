@@ -7,7 +7,8 @@ import tempfile
 from io import open
 from pathlib import Path
 
-from ruamel.yaml.scalarstring import SingleQuotedScalarString
+from ruamel.yaml.scalarstring import (PlainScalarString,
+                                      SingleQuotedScalarString)
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
@@ -116,12 +117,13 @@ class YmlSplitter:
 
         if self.file_type in ('modelingrule', 'parsingrule'):
             self.extract_rules(f'{output_path}/{base_name}.xif')
-            self.extract_rule_schema_and_samples(f'{output_path}/{base_name}.json')
             if 'rules' in yaml_obj:
-                yaml_obj['rules'] = ''
+                yaml_obj['rules'] = PlainScalarString('')
             if 'schema' in yaml_obj:
-                yaml_obj['schema'] = ''
+                self.extract_rule_schema_and_samples(f'{output_path}/{base_name}_schema.json')
+                yaml_obj['schema'] = PlainScalarString('')
             if 'samples' in yaml_obj:
+                self.extract_rule_schema_and_samples(f'{output_path}/{base_name}.json')
                 del yaml_obj['samples']
             with open(yaml_out, 'w') as yf:
                 yaml.dump(yaml_obj, yf)

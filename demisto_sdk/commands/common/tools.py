@@ -590,9 +590,9 @@ def get_last_remote_release_version():
 def get_file(file_path, type_of_file, clear_cache=False):
     if clear_cache:
         get_file.cache_clear()
-    file_path = Path(file_path)
+    file_path = Path(file_path).absolute()
     data_dictionary = None
-    with open(file_path.expanduser(), mode="r", encoding="utf8") as f:
+    with file_path.open(mode='r', encoding='utf8') as f:
         if type_of_file in file_path.suffix:
             read_file = f.read()
             replaced = read_file.replace("simple: =", "simple: '='")
@@ -1272,14 +1272,19 @@ def get_dict_from_file(path: str,
         raises_error - Whether to raise a FileNotFound error if `path` is not a valid file.
 
     Returns:
-        dict representation of the file, and the file_type, either .yml or .json
+        dict representation of the file or of the first item if the file contents are a list with a single dictionary,
+        and the file_type, either .yml or .json
     """
     try:
         if path:
             if path.endswith('.yml'):
                 return get_yaml(path, cache_clear=clear_cache), 'yml'
             elif path.endswith('.json'):
-                return get_json(path, cache_clear=clear_cache), 'json'
+                res = get_json(path, cache_clear=clear_cache)
+                if isinstance(res, list) and len(res) == 1 and isinstance(res[0], dict):
+                    return res[0], 'json'
+                else:
+                    return res, 'json'
             elif path.endswith('.py'):
                 return {}, 'py'
             elif path.endswith('.xif'):
@@ -1414,7 +1419,7 @@ def find_type(
             return None
         raise err
 
-    if file_type == 'yml':
+    if file_type == 'yml' or path.lower().endswith('.yml'):
         if 'category' in _dict:
             if _dict.get('beta') and not ignore_sub_categories:
                 return FileType.BETA_INTEGRATION
@@ -1443,7 +1448,10 @@ def find_type(
         if 'global_rule_id' in _dict:
             return FileType.CORRELATION_RULE
 
-    if file_type == 'json':
+    if file_type == 'json' or path.lower().endswith('.json'):
+        if path.lower().endswith('_schema.json'):
+            return FileType.MODELING_RULE_SCHEMA
+
         if 'widgetType' in _dict:
             return FileType.WIDGET
 
@@ -1585,7 +1593,7 @@ def get_content_path() -> str:
             raise git.InvalidGitRepositoryError
         return git_repo.working_dir
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
-        print_error("Please run demisto-sdk in content repository - Aborting!")
+        print_warning("Please run demisto-sdk in content repository!")
     return ''
 
 
@@ -2022,10 +2030,11 @@ def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
 def item_type_to_content_items_header(item_type):
     converter = {
         "incidenttype": "incidentType",
-        "indicatortype": "indicatorType",
+        "reputation": "indicatorType",
         "indicatorfield": "indicatorField",
         "incidentfield": "incidentField",
         "layoutscontainer": "layout",
+        "betaintegration": "integration",
 
         # GOM
         "genericdefinition": "genericDefinition",
@@ -2124,7 +2133,8 @@ def get_file_displayed_name(file_path):
                        FileType.INDICATOR_FIELD, FileType.LAYOUTS_CONTAINER, FileType.PRE_PROCESS_RULES,
                        FileType.DASHBOARD, FileType.WIDGET,
                        FileType.REPORT, FileType.JOB, FileType.WIZARD]:
-        return get_json(file_path).get('name')
+        res = get_json(file_path)
+        return res.get('name') if isinstance(res, dict) else res[0].get('name')
     elif file_type == FileType.OLD_CLASSIFIER:
         return get_json(file_path).get('brandName')
     elif file_type == FileType.LAYOUT:
@@ -2790,6 +2800,22 @@ def extract_none_deprecated_command_names_from_yml(yml_data: dict) -> list:
     commands_ls = []
     for command in yml_data.get('script', {}).get('commands', {}):
         if command.get('name') and not command.get('deprecated'):
+            commands_ls.append(command.get('name'))
+    return commands_ls
+
+
+def extract_deprecated_command_names_from_yml(yml_data: dict) -> list:
+    """
+    Go over all the commands in a yml file and return their names.
+    Args:
+        yml_data (dict): the yml content as a dict
+
+    Returns:
+        list: a list of all the commands names
+    """
+    commands_ls = []
+    for command in yml_data.get('script', {}).get('commands', {}):
+        if command.get('deprecated'):
             commands_ls.append(command.get('name'))
     return commands_ls
 

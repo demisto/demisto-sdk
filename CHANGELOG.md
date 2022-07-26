@@ -1,6 +1,21 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where *indicatorTypes* and *betaIntegrations* were not found in the id_set.
+* Updated the default general `fromVersion` value on **format** to `6.5.0`
+* Fixed an issue where the **validate** command did not fail when the integration yml file name was not the same as the folder containing it.
+* Added an option to have **generate-docs** take a Playbooks folder path as input, and generate docs for all playbooks in it.
+* Fixed an issue where the suggestion in case of `IF113` included uppercase letters for the `cliName` parameter.
+* Added new validation to the **validate** command to fail and list all the file paths of files that are using a deprecated integration command / script / playbook.
+* **validate** will no longer fail on playbooks calling subplaybooks that have a higher `fromVersion` value, if  calling the subplaybook has `skipifunavailable=True`.
+* Fixed an issue where relative paths were not accessed correctly.
+* Running any `demisto-sdk` command in a folder with a `.env` file will load it, temporarily overriding existing environment variables.
+* Fixed an issue where **validate** did not properly detect deleted files.
+* Added new validations to the **validate** command to verify that the schema file exists for a modeling rule and that the schema and rules keys are empty in the yml file.
+* Fixed an issue where *find_type* didn't recognize exported incident types.
+
+## 1.7.0
+* Allowed JSON Handlers to accept kwargs, for custoimzing behavior.
 * Fixed an issue where an incorrect error was shown when the `id` of a content item differed from its `name` attribute.
 * Fixed an issue where the `preserve_quotes` in ruamel_handler received an incorrect value @icholy
 * Fixed an issue where ignoring RM110 error code wasn't working and added a validation to **ALLOWED_IGNORE_ERRORS** to validate that all error codes are inserted in the right format.
@@ -12,7 +27,9 @@
 * Fixed an issue causing any command to crash when unable to detect local repository properties.
 * Fixed an issue where running in a private gitlab repo caused a warning message to be shown multiple times.
 * Added a new validation to the **validate** command to verify that markdown and python files do not contain words related to copyright section.
-* Fixed an issue where **lint** crashd when provided an input file path (expecting a directory).
+* Fixed an issue where **lint** crashed when provided an input file path (expecting a directory).
+* Added a new validation to **validate**, making sure all inputs of a playbook are used.
+* Added a new validation to **validate**, making sure all inputs used in a playbook declared in the input section.
 
 ## 1.6.9
 * Added a new validation that checks whether a pack should be deprecated.
@@ -31,6 +48,7 @@
 * Added a new flag to **generate-docs** command, allowing to add a custom image link to a playbook README.
 * Added a new validation to the **validate** command to verify that the package directory name is the same as the files contained in the that package.
 * Added support in the **unify** command to unify a schema into its Modeling Rule.
+* The **format** command will now replace the *fromServerVersion* field with *fromVersion*.
 
 ## 1.6.8
 

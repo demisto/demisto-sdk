@@ -20,7 +20,7 @@ ALLOWED_IGNORE_ERRORS = [
     'IN109', 'IN110', 'IN122', 'IN124', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145', 'IN153', 'IN154',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
-    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107',
+    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107', 'PB118', 'PB119',
     'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM110', 'RM112', 'RM113',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
@@ -2293,12 +2293,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def input_key_not_in_tasks(playbook_name: str, inputs: str):
+    def input_key_not_in_tasks(playbook_name: str, inputs: List[str]):
         return f"Playbook {playbook_name} contains inputs that are not used in any of its tasks: {', '.join(inputs)}"
 
     @staticmethod
     @error_code_decorator
-    def input_used_not_in_input_section(playbook_name: str, inputs: str):
+    def input_used_not_in_input_section(playbook_name: str, inputs: List[str]):
         return f"Playbook {playbook_name} uses inputs that do not appear in the inputs section: {', '.join(inputs)}"
 
     @staticmethod

@@ -412,9 +412,10 @@ class TestPlaybook:
                     self.build_context.logging_module.exception(f'Searching incident with id {inc_id} failed')
             if time.time() > timeout:
                 if IS_XSIAM:
-                    self.build_context.logging_module.error(f'Got timeout for searching incident with id {inc_id}')
+                    self.build_context.logging_module.error(f'Got timeout for searching incident with name '
+                                                            f'{incident_name}')
                 else:
-                    self.build_context.logging_module.error(f'Got timeout for searching incident name {incident_name}')
+                    self.build_context.logging_module.error(f'Got timeout for searching incident id {inc_id}')
 
                 self.build_context.logging_module.error(f'Incident search responses: {incident_search_responses}')
                 return None

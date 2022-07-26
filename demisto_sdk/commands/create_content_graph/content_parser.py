@@ -287,5 +287,5 @@ class RepositoryParser:
         packs_directories = [p for p in self.packs_path.iterdir() if p.is_dir() and not p.name.startswith('.')]
         with Manager() as manager:
             pool = manager.Pool(processes=PROCESSES_COUNT)
-            for pack in pool.map(PackParser, packs_directories):
-                self.packs.append(pack)
+                for pack in pool.map(PackParser, packs_directories):
+                    self.packs.append(pack)

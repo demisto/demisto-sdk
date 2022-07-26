@@ -116,7 +116,7 @@ class PlaybookValidator(ContentEntityValidator):
         inputs_keys = []
         for input in inputs:
             if input['key']:
-                inputs_keys.append(input['key'])
+                inputs_keys.append(input['key'].strip())
         return set(inputs_keys)
 
     def inputs_in_use_check(self, is_modified: bool) -> bool:

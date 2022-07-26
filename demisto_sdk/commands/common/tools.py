@@ -1272,14 +1272,19 @@ def get_dict_from_file(path: str,
         raises_error - Whether to raise a FileNotFound error if `path` is not a valid file.
 
     Returns:
-        dict representation of the file, and the file_type, either .yml or .json
+        dict representation of the file or of the first item if the file contents are a list with a single dictionary,
+        and the file_type, either .yml or .json
     """
     try:
         if path:
             if path.endswith('.yml'):
                 return get_yaml(path, cache_clear=clear_cache), 'yml'
             elif path.endswith('.json'):
-                return get_json(path, cache_clear=clear_cache), 'json'
+                res = get_json(path, cache_clear=clear_cache)
+                if isinstance(res, list) and len(res) == 1 and isinstance(res[0], dict):
+                    return res[0], 'json'
+                else:
+                    return res, 'json'
             elif path.endswith('.py'):
                 return {}, 'py'
             elif path.endswith('.xif'):
@@ -2128,7 +2133,8 @@ def get_file_displayed_name(file_path):
                        FileType.INDICATOR_FIELD, FileType.LAYOUTS_CONTAINER, FileType.PRE_PROCESS_RULES,
                        FileType.DASHBOARD, FileType.WIDGET,
                        FileType.REPORT, FileType.JOB, FileType.WIZARD]:
-        return get_json(file_path).get('name')
+        res = get_json(file_path)
+        return res.get('name') if isinstance(res, dict) else res[0].get('name')
     elif file_type == FileType.OLD_CLASSIFIER:
         return get_json(file_path).get('brandName')
     elif file_type == FileType.LAYOUT:

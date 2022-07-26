@@ -12,6 +12,7 @@
 * Running any `demisto-sdk` command in a folder with a `.env` file will load it, temporarily overriding existing environment variables.
 * Fixed an issue where **validate** did not properly detect deleted files.
 * Added new validations to the **validate** command to verify that the schema file exists for a modeling rule and that the schema and rules keys are empty in the yml file.
+* Fixed an issue where *find_type* didn't recognize exported incident types.
 
 ## 1.7.0
 * Allowed JSON Handlers to accept kwargs, for custoimzing behavior.

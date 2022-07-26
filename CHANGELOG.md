@@ -11,6 +11,7 @@
 * Fixed an issue where relative paths were not accessed correctly.
 * Running any `demisto-sdk` command in a folder with a `.env` file will load it, temporarily overriding existing environment variables.
 * Fixed an issue where **validate** did not properly detect deleted files.
+* Fixed an issue where *find_type* didn't recognize exported incident types.
 * Added new validations to the **validate** command to verify that the schema file exists for a modeling rule and that the schema and rules keys are empty in the yml file.
 
 ## 1.7.0

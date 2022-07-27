@@ -505,6 +505,12 @@ class TestMergeScriptPackageToYMLIntegration:
 
     @pytest.mark.parametrize('marketplace', (MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2))
     def test_unify_integration(self, marketplace: MarketplaceVersions):
+        """
+        Given   an integration file with params that have different valid values for the `hidden` attribute
+        When    running unify
+        Then    make sure the list-type values are replaced with a boolean that matches the marketplace value
+                (see the update_hidden_parameters_value docstrings for more information)
+        """
         create_test_package(
             test_dir=self.test_dir_path,
             package_name=self.package_name,
@@ -514,9 +520,8 @@ class TestMergeScriptPackageToYMLIntegration:
             image_file='demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage_image.png',
         )
 
-        unifier = IntegrationScriptUnifier(
-            input=self.export_dir_path, output=self.test_dir_path, marketplace=marketplace
-        )
+        unifier = IntegrationScriptUnifier(input=self.export_dir_path, output=self.test_dir_path,
+                                           marketplace=marketplace)
         yml_files = unifier.unify()
 
         hidden_true = set()

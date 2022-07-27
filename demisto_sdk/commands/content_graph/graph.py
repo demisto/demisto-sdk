@@ -1,4 +1,5 @@
 import multiprocessing
+import shutil
 import neo4j
 import pickle
 
@@ -8,13 +9,20 @@ from typing import Any, List, Optional, Tuple, Iterator, Dict
 
 from constants import PACKS_FOLDER, ContentTypes, Rel
 from parsers.pack import PackSubGraphCreator
+from demisto_sdk.commands.common.git_util import GitUtil
+from demisto_sdk.commands.common.content.content import Content
+from demisto_sdk.commands.common.tools import run_command_os
 
-DATABASE_URL = 'bolt://localhost:7687'
-USERNAME = 'dtavori'
-PASSWORD = 'Aa123456'
-REPO_PATH = Path('/Users/dtavori/dev/demisto/content/')
+import docker
+
+DATABASE_URL = 'bolt://127.0.0.1:7687'
+USERNAME = 'neo4j'
+PASSWORD = 'test'
+REPO_PATH = Path(GitUtil(Content.git()).git_path())
 BATCH_SIZE = 10000
 
+import logging
+logger = logging.getLogger('demisto-sdk')
 
 def load_pickle(url: str) -> Any:
     try:
@@ -40,21 +48,19 @@ class ContentGraph:
         self.packs_path: Path = repo_path / PACKS_FOLDER
         auth: Optional[Tuple[str]] = (user, password) if user and password else None
         self.driver: neo4j.Neo4jDriver = neo4j.GraphDatabase.driver(database_uri, auth=auth)
-        self.nodes: List[Dict[str, Any]] = load_pickle('/Users/dtavori/dev/demisto/content-graph/nodes.pkl')
-        self.relationships: List[Dict[str, Any]] = load_pickle('/Users/dtavori/dev/demisto/content-graph/rels.pkl')
-    
+        self.nodes: List[Dict[str, Any]] = []
+        self.relationships: List[Dict[str, Any]] = []
+
     def __enter__(self):
         with self.driver.session() as session:
             tx = session.begin_transaction()
-            self.create_constraints(tx)
-            self.create_indexes(tx)
+            # self.create_constraints(tx)
+            # self.create_indexes(tx)
             tx.commit()
             tx.close()
         return self
 
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
-        dump_pickle('/Users/dtavori/dev/demisto/content-graph/nodes.pkl', self.nodes)
-        dump_pickle('/Users/dtavori/dev/demisto/content-graph/rels.pkl', self.relationships)
         before_creating_nodes = datetime.now()
         print(f'Time since started: {(before_creating_nodes - self.start_time).total_seconds() / 60} minutes')
         self.make_nodes_transaction()
@@ -67,16 +73,52 @@ class ContentGraph:
         print(f'Time to create rels: {(after_creating_rels - before_creating_rels).total_seconds() / 60} minutes')
         print(f'Time since started: {(after_creating_rels - self.start_time).total_seconds() / 60} minutes')
         self.driver.close()
-    
+        logger.info('Dumping graph to content/neo4j/backups/content-graph.dump')
+        dump()
+
+    def dump():
+        
+        docker_client = docker.from_env()
+        try:
+            docker_client.containers.get('neo4j-dump').remove(force=True)
+        except Exception as e:
+            print('Container does not exist')
+
+        docker_client.containers.run(image='neo4j/neo4j-admin:4.4.9',
+                                     remove=True,
+                                     volumes={f'{REPO_PATH}/neo4j/data': {'bind': '/data', 'mode': 'rw'},
+                                              f'{REPO_PATH}/neo4j/backups': {'bind': '/backups', 'mode': 'rw'}},
+
+                                     command='neo4j-admin dump --database=neo4j --to=/backups/content-graph.dump'
+                                     )
+
+    def load():
+        shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
+
+        docker_client = docker.from_env()
+        try:
+            docker_client.containers.get('neo4j-load').remove(force=True)
+        except Exception as e:
+            print('Container does not exist')
+        # remove neo4j folder
+        docker_client.containers.run(image='neo4j/neo4j-admin:4.4.9',
+                                     name='neo4j-load',
+                                     remove=True,
+                                     volumes={f'{REPO_PATH}/neo4j/data': {'bind': '/data', 'mode': 'rw'},
+                                              f'{REPO_PATH}/neo4j/backups': {'bind': '/backups', 'mode': 'rw'}},
+
+                                     command='neo4j-admin load --database=neo4j --from=/backups/content-graph.dump'
+                                     )
+
     def iter_packs(self) -> Iterator[Path]:
         for path in self.packs_path.iterdir():
             if path.is_dir():
                 yield path
-    
+
     def parse_repository(self) -> None:
         repo_packs: Iterator[Path] = self.iter_packs()
         return self.parse_packs(repo_packs)
-    
+
     def parse_packs(self, packs_paths: Iterator[Path]) -> None:
         """ Parses packs into nodes and relationships by given paths. """
         if self.nodes and self.relationships:
@@ -87,7 +129,6 @@ class ContentGraph:
             self.nodes.extend(pack_nodes)
             self.relationships.extend(pack_relationships)
 
-
     @staticmethod
     def create_indexes(tx: neo4j.Transaction) -> None:
         queries = [
@@ -96,7 +137,7 @@ class ContentGraph:
         for query in queries:
             print(query)
             tx.run(query)
-    
+
     @staticmethod
     def build_nodes_props_uniqueness_queries() -> List[str]:
         queries: List[str] = []
@@ -174,11 +215,10 @@ class ContentGraph:
                 session.write_transaction(self.merge_relationships_batch, batch)
 
 
-def main() -> None:
-    print(f'Starting...')
+
+def create_content_graph() -> None:
+    shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
+    run_command_os('docker-compose up', REPO_PATH / 'neo4j')
     with ContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD) as content_graph:
         content_graph.parse_repository()
-    
-
-if __name__ == '__main__':
-    main()
+    run_command_os('docker-compose down', REPO_PATH / 'neo4j')

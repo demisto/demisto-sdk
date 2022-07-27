@@ -2259,6 +2259,19 @@ def error_code(config, **kwargs):
     sys.exit(result)
 
 
+
+@main.command(
+    name='content-graph',
+    help='Content graph'
+)
+@click.help_option(
+    '-h', '--help'
+)
+def content_graph(config, **kwargs):
+    from demisto_sdk.commands.content_graph.graph import create_content_graph
+    create_content_graph()
+
+
 @main.result_callback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)

@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 from .base import BaseContentParser
-from constants import PACK_METADATA_FILENAME, ContentTypes, Rel
+from demisto_sdk.commands.content_graph.constants import PACK_METADATA_FILENAME, ContentTypes, Rel
 from .content_item import ContentItemParser
 
 

@@ -1,7 +1,7 @@
 from typing import Any, Dict
 
 from .base import BaseContentParser
-from constants import ContentTypes
+from demisto_sdk.commands.content_graph.constants import ContentTypes
 
 
 class CommandParser(BaseContentParser):

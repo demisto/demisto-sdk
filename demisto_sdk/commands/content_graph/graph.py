@@ -7,8 +7,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, List, Optional, Tuple, Iterator, Dict
 
-from constants import PACKS_FOLDER, ContentTypes, Rel
-from parsers.pack import PackSubGraphCreator
+from demisto_sdk.commands.content_graph.constants import PACKS_FOLDER, ContentTypes, Rel
+from demisto_sdk.commands.content_graph.parsers.pack import PackSubGraphCreator
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.common.tools import run_command_os

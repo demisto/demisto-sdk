@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 
-from constants import ContentTypes
+from demisto_sdk.commands.content_graph.constants import ContentTypes
 
 
 class BaseContentParser(ABC):

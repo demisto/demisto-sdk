@@ -2,7 +2,7 @@ import networkx
 from pathlib import Path
 from typing import Any, Dict, List
 
-from constants import ContentTypes
+from demisto_sdk.commands.content_graph.constants import ContentTypes
 from .content_item import YAMLContentItemParser, TestableMixin
 from .pack import PackSubGraphCreator
 

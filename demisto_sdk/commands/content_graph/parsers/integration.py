@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Any, Dict, List
 
-from constants import ContentTypes, Rel
+from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
 from .integration_script import IntegrationScriptParser, IntegrationScriptUnifier
 from .pack import PackSubGraphCreator
 

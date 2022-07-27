@@ -3,8 +3,8 @@ from abc import abstractmethod
 from pathlib import Path
 from typing import Any, Dict, Optional, List, Type, Union
 
-import parsers
-from constants import ContentTypes, Rel
+from demisto_sdk.commands.content_graph.parsers import BaseContentParser
+from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
 from demisto_sdk.commands.common.tools import get_yaml, get_yml_paths_in_dir
 
 UNIFIED_FILES_SUFFIXES = ['.yml']
@@ -14,7 +14,7 @@ class NotAContentItem(Exception):
     pass
 
 
-class ContentItemParser(parsers.BaseContentParser):
+class ContentItemParser(BaseContentParser):
     """ A class representation of a content item.
 
     Attributes:

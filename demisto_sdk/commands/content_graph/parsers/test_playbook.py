@@ -2,7 +2,7 @@
 from pathlib import Path
 from typing import List
 
-from constants import ContentTypes
+from demisto_sdk.commands.content_graph.constants import ContentTypes
 from .content_item import NotAContentItem
 from .playbook import PlaybookParser
 

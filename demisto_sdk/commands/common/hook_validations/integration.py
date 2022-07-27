@@ -1728,3 +1728,30 @@ class IntegrationValidator(ContentEntityValidator):
                     is_valid = False
 
         return is_valid
+
+    @error_codes('IN156')
+    def is_valid_hidden_attribute_for_params(self):
+        """
+         See update_hidden_parameters_value for the values we allow for the hidden attribute
+         Pkwalify schemas do not allow multiple types (e.g. equivalent for Union[list[str] | bool])
+         so we check it manually, using this method.
+        :return: whether the attribute is valid
+        """
+        is_valid = True
+        for param in self.current_file.get('configuration', ()):
+            param_name = param['name']
+            hidden = param.get('hidden')
+
+            if not isinstance(hidden, (type(None), bool, list, str)) \
+                    or isinstance(hidden, str) and hidden not in {'true', 'false'}:
+                message, code = Errors.invalid_hidden_attribute_for_param(param_name, hidden)
+                if self.handle_error(message, code, self.file_path):
+                    is_valid = False
+
+            elif isinstance(hidden, list) and (invalid := set(hidden).difference(MarketplaceVersions)):
+                # if the value is a list, all its values must be marketplace names
+                message, code = Errors.invalid_hidden_attribute_for_param(param_name, ', '.join(map(str, invalid)))
+                if self.handle_error(message, code, self.file_path):
+                    is_valid = False
+
+        return is_valid

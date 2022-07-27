@@ -150,7 +150,7 @@ schema;configuration_schema:
     required:
       type: bool
     hidden:
-      type: bool
+      type: Any
     hidden_x2:
       type: bool
     options:

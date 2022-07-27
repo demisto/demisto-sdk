@@ -10,6 +10,7 @@ from click.testing import CliRunner
 from mock import patch
 
 from demisto_sdk.__main__ import main
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
@@ -212,7 +213,7 @@ def test_get_integration_doc_link_positive(tmp_path):
     unifier = IntegrationScriptUnifier(str(tmp_path))
     integration_doc_link = unifier.get_integration_doc_link({'commonfields': {'id': 'Cortex XDR - IOC'}})
     assert integration_doc_link == \
-        '[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/cortex-xdr---ioc)'
+           '[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/cortex-xdr---ioc)'
     link = re.findall(r'\(([^)]+)\)', integration_doc_link)[0]
     try:
         r = requests.get(link, verify=False, timeout=10)
@@ -501,6 +502,43 @@ class TestMergeScriptPackageToYMLIntegration:
                                 'integration-SampleIntegPackageSanity.yml')
 
         assert expected_yml == actual_yml
+
+    @pytest.mark.parametrize('marketplace', (MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2))
+    def test_unify_integration(self, marketplace: MarketplaceVersions):
+        create_test_package(
+            test_dir=self.test_dir_path,
+            package_name=self.package_name,
+            base_yml='demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackageHiddenParams.yml',
+            script_code=TEST_VALID_CODE,
+            detailed_description=TEST_VALID_DETAILED_DESCRIPTION,
+            image_file='demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage_image.png',
+        )
+
+        unifier = IntegrationScriptUnifier(
+            input=self.export_dir_path, output=self.test_dir_path, marketplace=marketplace
+        )
+        yml_files = unifier.unify()
+
+        hidden_true = set()
+        hidden_false = set()
+        missing_hidden_field = set()
+
+        for param in get_yaml(yml_files[0])['configuration']:
+            # updates the three sets
+            {True: hidden_true,
+             False: hidden_false,
+             None: missing_hidden_field
+             }[param.get('hidden')].add(param['display'])
+
+        assert hidden_true.isdisjoint(hidden_false)
+        assert len(missing_hidden_field) == 5  # old params + `Should not be hidden - no hidden attribute`
+        assert len(hidden_true | hidden_false) == 5
+        assert ('Should be hidden on XSOAR only' in hidden_true) == (marketplace == MarketplaceVersions.XSOAR)
+        assert ('Should be hidden on XSIAM only' in hidden_true) == (marketplace == MarketplaceVersions.MarketplaceV2)
+        assert 'Should be hidden on both - 1' in hidden_true
+        assert 'Should be hidden on both - 2' in hidden_true
+        assert 'Should not be hidden - hidden attribute is False' in hidden_false
+        assert 'Should not be hidden - no hidden attribute' in missing_hidden_field
 
     def test_unify_integration__detailed_description_with_special_char(self):
         """

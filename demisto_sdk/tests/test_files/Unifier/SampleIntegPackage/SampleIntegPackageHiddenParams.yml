@@ -32,24 +32,24 @@ configuration:
   hidden:
     - marketplacev2
   type: 8
-- display: Should be hidden on both - 1
-  name: hidden_on_xsoar
+- display: Should be hidden on both - attribute is True
+  name: attribute_is_true
   required: false
   hidden: true
   type: 8
-- display: Should be hidden on both - 2
-  name: hidden_on_xsoar
+- display: Should be hidden on both - attribute lists both marketplaces
+  name: attribute_lists_both
   required: false
   hidden:
     - xsoar
     - marketplacev2
   type: 8
 - display: Should not be hidden - no hidden attribute
-  name: hidden_on_xsoar
+  name: no_hidden_attribute
   required: false
   type: 8
 - display: Should not be hidden - hidden attribute is False
-  name: hidden_on_xsoar
+  name: attribute_is_false
   required: false
   hidden: false
   type: 8

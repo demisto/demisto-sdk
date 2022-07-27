@@ -213,7 +213,7 @@ def test_get_integration_doc_link_positive(tmp_path):
     unifier = IntegrationScriptUnifier(str(tmp_path))
     integration_doc_link = unifier.get_integration_doc_link({'commonfields': {'id': 'Cortex XDR - IOC'}})
     assert integration_doc_link == \
-           '[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/cortex-xdr---ioc)'
+        '[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/cortex-xdr---ioc)'
     link = re.findall(r'\(([^)]+)\)', integration_doc_link)[0]
     try:
         r = requests.get(link, verify=False, timeout=10)
@@ -540,8 +540,8 @@ class TestMergeScriptPackageToYMLIntegration:
         assert len(hidden_true | hidden_false) == 5
         assert ('Should be hidden on XSOAR only' in hidden_true) == (marketplace == MarketplaceVersions.XSOAR)
         assert ('Should be hidden on XSIAM only' in hidden_true) == (marketplace == MarketplaceVersions.MarketplaceV2)
-        assert 'Should be hidden on both - 1' in hidden_true
-        assert 'Should be hidden on both - 2' in hidden_true
+        assert 'Should be hidden on both - attribute is True' in hidden_true
+        assert 'Should be hidden on both - attribute lists both marketplaces' in hidden_true
         assert 'Should not be hidden - hidden attribute is False' in hidden_false
         assert 'Should not be hidden - no hidden attribute' in missing_hidden_field
 

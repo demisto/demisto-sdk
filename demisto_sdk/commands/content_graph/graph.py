@@ -74,9 +74,10 @@ class ContentGraph:
         print(f'Time since started: {(after_creating_rels - self.start_time).total_seconds() / 60} minutes')
         self.driver.close()
         logger.info('Dumping graph to content/neo4j/backups/content-graph.dump')
-        dump()
+        self.dump()
 
-    def dump():
+
+    def dump(self):
         
         docker_client = docker.from_env()
         try:
@@ -92,7 +93,7 @@ class ContentGraph:
                                      command='neo4j-admin dump --database=neo4j --to=/backups/content-graph.dump'
                                      )
 
-    def load():
+    def load(self):
         shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
 
         docker_client = docker.from_env()
@@ -218,7 +219,5 @@ class ContentGraph:
 
 def create_content_graph() -> None:
     shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
-    run_command_os('docker-compose up', REPO_PATH / 'neo4j')
     with ContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD) as content_graph:
         content_graph.parse_repository()
-    run_command_os('docker-compose down', REPO_PATH / 'neo4j')

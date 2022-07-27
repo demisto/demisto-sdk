@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, List, Type, Union
 
 from demisto_sdk.commands.content_graph.parsers import BaseContentParser
+import demisto_sdk.commands.content_graph.parsers as parsers
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
 from demisto_sdk.commands.common.tools import get_yaml, get_yml_paths_in_dir
 

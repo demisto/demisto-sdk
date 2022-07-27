@@ -106,7 +106,7 @@ class YmlSplitter:
         code_file = output_path / base_name
         self.extract_code(code_file)
         script = self.yml_data.get('script', {})
-        lang_type: str = script.get('type', '') if self.file_type == 'integration' else self.yml_data.get('type')
+        lang_type: str = script.get('type', '') if self.file_type in ('integration', 'betaintegration') else self.yml_data.get('type')
         self.extract_image("{}/{}_image.png".format(output_path, base_name))
         self.extract_long_description("{}/{}_description.md".format(output_path, base_name))
         yaml_out = "{}/{}.yml".format(output_path, base_name)
@@ -129,7 +129,7 @@ class YmlSplitter:
                 yaml.dump(yaml_obj, yf)
         else:
             code_file = f"{code_file}{TYPE_TO_EXTENSION[lang_type]}"
-            if self.file_type == 'integration':
+            if self.file_type in ('integration', 'betaintegration'):
                 script_obj = yaml_obj['script']
                 if 'image' in yaml_obj:
                     del yaml_obj['image']
@@ -251,7 +251,7 @@ class YmlSplitter:
             return 0
 
         script = self.yml_data['script']
-        if self.file_type == 'integration':  # in integration the script is stored at a second level
+        if self.file_type in ('integration', 'betaintegration'):
             lang_type = script['type']
             script = script['script']
         else:

@@ -162,6 +162,11 @@ class IntegrationScriptUnifier(YAMLUnifier):
 
     def update_hidden_parameters_value(self) -> None:
         """
+        The `hidden` attribute of each param may be a bool (affecting both marketplaces),
+        or a list of marketplaces where this param is hidden.
+
+        This method replaces a list with a boolean, according to the self.marketplace value.
+        Boolean values are left untouched.
         """
         if not self.marketplace:
             return

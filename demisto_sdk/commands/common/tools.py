@@ -113,7 +113,7 @@ class MarketplaceTagParser:
     XSIAM_INLINE_PREFIX = '<~XSIAM>'
     XSIAM_INLINE_SUFFIX = '</~XSIAM>'
 
-    def __init__(self, marketplace: str = MarketplaceVersions.XSOAR.value):
+    def __init__(self, marketplace: str = MarketplaceVersions.XSOAR):
         self.marketplace = marketplace
         self._xsoar_parser = TagParser(
             tag_prefix=self.XSOAR_PREFIX,
@@ -139,8 +139,8 @@ class MarketplaceTagParser:
     @marketplace.setter
     def marketplace(self, marketplace):
         self._marketplace = marketplace
-        self._should_remove_xsoar_text = marketplace != MarketplaceVersions.XSOAR.value
-        self._should_remove_xsiam_text = marketplace != MarketplaceVersions.MarketplaceV2.value
+        self._should_remove_xsoar_text = marketplace != MarketplaceVersions.XSOAR
+        self._should_remove_xsiam_text = marketplace != MarketplaceVersions.MARKETPLACEV2
 
     def parse_text(self, text):
         # the order of parse is important. inline should always be checked after paragraph tag
@@ -184,7 +184,7 @@ def get_mp_tag_parser():
     global MARKETPLACE_TAG_PARSER
     if MARKETPLACE_TAG_PARSER is None:
         MARKETPLACE_TAG_PARSER = MarketplaceTagParser(
-            os.getenv(ENV_DEMISTO_SDK_MARKETPLACE, MarketplaceVersions.XSOAR.value))
+            os.getenv(ENV_DEMISTO_SDK_MARKETPLACE, MarketplaceVersions.XSOAR))
     return MARKETPLACE_TAG_PARSER
 
 
@@ -2515,7 +2515,7 @@ def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[st
     """
 
     if item_type and item_type in SIEM_ONLY_ENTITIES:
-        return [MarketplaceVersions.MarketplaceV2.value]
+        return [MarketplaceVersions.MARKETPLACEV2]
 
     if not item_data:
         file_type = Path(item_path).suffix
@@ -2528,11 +2528,11 @@ def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[st
     if not marketplaces:
         if 'pack_metadata' in item_path:
             # default supporting marketplace
-            marketplaces = [MarketplaceVersions.XSOAR.value]
+            marketplaces = [MarketplaceVersions.XSOAR]
         else:
             pack_name = get_pack_name(item_path)
             if packs and packs.get(pack_name):
-                marketplaces = packs.get(pack_name, {}).get('marketplaces', [MarketplaceVersions.XSOAR.value])
+                marketplaces = packs.get(pack_name, {}).get('marketplaces', [MarketplaceVersions.XSOAR])
             else:
                 marketplaces = get_mp_types_from_metadata_by_item(item_path)
 
@@ -2560,7 +2560,7 @@ def get_mp_types_from_metadata_by_item(file_path):
             metadata = json.load(metadata_file)
             marketplaces = metadata.get(MARKETPLACE_KEY_PACK_METADATA)
             if not marketplaces:
-                return [MarketplaceVersions.XSOAR.value]
+                return [MarketplaceVersions.XSOAR]
             return marketplaces
     except FileNotFoundError:
         return []

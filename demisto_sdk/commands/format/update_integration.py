@@ -153,7 +153,7 @@ class IntegrationYMLFormat(BaseUpdateYML):
             # if no marketplaces or xsoar in marketplaces - the required params will be INCIDENT_FETCH_REQUIRED_PARAMS (with Incident type etc. )
             # otherwise it will be the ALERT_FETCH_REQUIRED_PARAMS (with Alert type etc. )
             marketplaces = get_item_marketplaces(item_path=self.source_file, item_data=self.data)
-            is_xsoar_marketplace = not marketplaces or MarketplaceVersions.XSOAR.value in marketplaces
+            is_xsoar_marketplace = not marketplaces or MarketplaceVersions.XSOAR in marketplaces
             fetch_required_params, params_to_remove = (
                 INCIDENT_FETCH_REQUIRED_PARAMS, ALERT_FETCH_REQUIRED_PARAMS) if is_xsoar_marketplace else (
                 ALERT_FETCH_REQUIRED_PARAMS, INCIDENT_FETCH_REQUIRED_PARAMS)

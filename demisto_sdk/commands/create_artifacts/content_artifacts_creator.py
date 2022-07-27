@@ -57,7 +57,7 @@ EX_FAIL = 1
 
 class ArtifactsManager:
     def __init__(self, artifacts_path: str, zip: bool, packs: bool, content_version: str, suffix: str,
-                 cpus: int, marketplace: str = MarketplaceVersions.XSOAR.value, id_set_path: str = '',
+                 cpus: int, marketplace: str = MarketplaceVersions.XSOAR, id_set_path: str = '',
                  pack_names: str = 'all', signature_key: str = '', sign_directory: Path = None,
                  remove_test_playbooks: bool = True, filter_by_id_set: bool = False, alternate_fields: bool = False):
         """ Content artifacts configuration
@@ -770,7 +770,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         content_items_handler.handle_content_item(wizard)
         pack_report += dump_pack_conditionally(artifact_manager, wizard)
 
-    if artifact_manager.marketplace == MarketplaceVersions.XSOAR.value:
+    if artifact_manager.marketplace == MarketplaceVersions.XSOAR:
         for dashboard in pack.dashboards:
             content_items_handler.handle_content_item(dashboard)
             pack_report += dump_pack_conditionally(artifact_manager, dashboard)
@@ -795,7 +795,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         for widget in pack.widgets:
             content_items_handler.handle_content_item(widget)
             pack_report += dump_pack_conditionally(artifact_manager, widget)
-    elif artifact_manager.marketplace == MarketplaceVersions.MarketplaceV2.value:
+    elif artifact_manager.marketplace == MarketplaceVersions.MARKETPLACEV2:
         for parsing_rule in pack.parsing_rules:
             content_items_handler.handle_content_item(parsing_rule)
             pack_report += dump_pack_conditionally(artifact_manager, parsing_rule)

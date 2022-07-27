@@ -1528,7 +1528,7 @@ class TestDependsOnPlaybook:
             ],
         }
         found_result = PackDependencies._collect_playbooks_dependencies([playbook_info], id_set, True,
-                                                                        marketplace=MarketplaceVersions.MarketplaceV2.value)
+                                                                        marketplace=MarketplaceVersions.MARKETPLACEV2)
 
         assert set(found_result) == {('CoreAlertFields', True)}
 
@@ -2426,7 +2426,7 @@ class TestDependsOnMappers:
             'scripts': []
         }
         found_result = PackDependencies._collect_mappers_dependencies([mapper_info], id_set, True,
-                                                                      marketplace=MarketplaceVersions.MarketplaceV2.value)
+                                                                      marketplace=MarketplaceVersions.MARKETPLACEV2)
 
         assert set(found_result) == {('CoreAlertFields', True)}
 

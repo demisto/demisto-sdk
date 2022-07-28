@@ -1733,8 +1733,7 @@ class IntegrationValidator(ContentEntityValidator):
     def is_valid_hidden_attribute_for_params(self):
         """
          See update_hidden_parameters_value for the values we allow for the hidden attribute
-         Pkwalify schemas do not allow multiple types (e.g. equivalent for Union[list[str] | bool])
-         so we check it manually, using this method.
+         Workaround as pykwalify schemas do not allow multiple types (e.g. equivalent for Union[list[str] | bool]).
         :return: whether the attribute is valid
         """
         is_valid = True

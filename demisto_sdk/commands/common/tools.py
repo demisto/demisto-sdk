@@ -2982,7 +2982,7 @@ def string_to_bool(
             considered_false.update(map(func, _considered_false))
 
     if accept_single_letter:
-        considered_true.update(tuple(_[0] for _ in considered_true)) # note this takes considered_true as input
+        considered_true.update(tuple(_[0] for _ in considered_true))  # note this takes considered_true as input
         considered_false.update(tuple(_[0] for _ in considered_false))
 
     if input_ in considered_true:

@@ -284,8 +284,8 @@ class IntegrationScriptUnifier(YAMLUnifier):
             if 'CommonServer' not in yml_data['name']:
                 # CommonServerPython has those line hard-coded so there is no need to add them here.
                 clean_code = f"register_module_line('{yml_data['name']}', 'start', __line__())\n" \
-                             f'{clean_code}\n' \
-                             f"register_module_line('{yml_data['name']}', 'end', __line__())\n"
+                    f'{clean_code}\n' \
+                    f"register_module_line('{yml_data['name']}', 'end', __line__())\n"
         elif script_type == '.ps1':
             clean_code = self.clean_pwsh_code(script_code)
         else:
@@ -352,6 +352,7 @@ class IntegrationScriptUnifier(YAMLUnifier):
         :return: The integration script with the module code appended in place of the import
         """
         for module_import, module_name in import_to_name.items():
+
             module_path = os.path.join('./Packs', 'ApiModules', 'Scripts', module_name, module_name + '.py')
             module_code = IntegrationScriptUnifier._get_api_module_code(module_name, module_path)
 

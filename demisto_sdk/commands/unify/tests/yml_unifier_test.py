@@ -504,7 +504,7 @@ class TestMergeScriptPackageToYMLIntegration:
         assert expected_yml == actual_yml
 
     @pytest.mark.parametrize('marketplace', (MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2))
-    def test_unify_integration(self, marketplace: MarketplaceVersions):
+    def test_unify_integration__hidden_param(self, marketplace: MarketplaceVersions):
         """
         Given   an integration file with params that have different valid values for the `hidden` attribute
         When    running unify

@@ -1,6 +1,6 @@
 import os
 from copy import deepcopy
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import pytest
 from mock import mock_open, patch
@@ -1197,6 +1197,48 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.verify_reputation_commands_has_reliability(is_modified=True) is result
+
+    @pytest.mark.parametrize('hidden_value,is_valid', (
+        (None, True),
+        (True, True),
+        (False, True),
+        ([], True),
+        ([MarketplaceVersions.XSOAR], True),
+        ([MarketplaceVersions.MarketplaceV2], True),
+        ([MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2], True),
+        ('true', True),
+        ('false', True),
+        ('True', True),
+        ('False', True),
+        ([MarketplaceVersions.XSOAR, MarketplaceVersions.XSOAR], True),  # may be useless, but not invalid
+
+        # invalid cases
+        ('', False),
+        (42, False),
+        ('None', False),
+        ([''], False),
+        ([True], False),
+        (['true'], False),
+        (['True'], False),
+        (MarketplaceVersions.XSOAR, False),
+        ('🥲', False),
+        ('Trüe', False),
+        ('TRUE', False),
+        ([MarketplaceVersions.XSOAR, None], False),
+        ([MarketplaceVersions.MarketplaceV2, None], False),
+        ([MarketplaceVersions.XSOAR, True], False),
+        ([MarketplaceVersions.XSOAR, 1], False),
+        ([MarketplaceVersions.XSOAR, '🥲'], False),
+        ([MarketplaceVersions.XSOAR, 'true'], False),
+        ([MarketplaceVersions.XSOAR, 'True'], False),
+    ))
+    def test_invalid_hidden_attributes_for_param(self, hidden_value: Any, is_valid: bool):
+        assert IntegrationValidator(
+            mock_structure(
+                None,
+                {'configuration': [{'name': 'my_param_name', 'hidden': hidden_value}]}
+            )
+        ).is_valid_hidden_attribute_for_params() == is_valid
 
 
 class TestIsFetchParamsExist:

@@ -334,7 +334,6 @@ class Neo4jContentGraph(ContentGraph):
 
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         self.driver.close()
-        self.dump()
 
 
 def create_content_graph() -> None:
@@ -350,4 +349,5 @@ def create_content_graph() -> None:
     run_command_os('docker-compose up -d', REPO_PATH / 'neo4j')
     with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD) as content_graph:
         content_graph.parse_repository()
+        content_graph.dump()
     run_command_os('docker-compose down', REPO_PATH / 'neo4j')

@@ -17,7 +17,7 @@ from demisto_sdk.commands.common.tools import run_command_os
 
 import docker
 
-DATABASE_URL = 'bolt://neo4j:7687'
+DATABASE_URL = 'bolt://localhost:7687'
 USERNAME = 'neo4j'
 PASSWORD = 'test'
 REPO_PATH = Path(GitUtil(Content.git()).git_path())

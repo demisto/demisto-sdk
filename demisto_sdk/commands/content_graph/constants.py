@@ -6,9 +6,11 @@ from typing import Iterator, Dict, List
 
 PACKS_FOLDER = 'Packs'
 PACK_METADATA_FILENAME = 'pack_metadata.json'
-
+UNIFIED_FILES_SUFFIXES = ['.yml']
 
 class Rel(enum.Enum):
+    USES = 'USES'
+    EXECUTES = 'EXECUTES'
     DEPENDS_ON = 'DEPENDS_ON'
     TESTED_BY = 'TESTED_BY'
     IN_PACK = 'IN_PACK'
@@ -30,8 +32,8 @@ class Rel(enum.Enum):
 class ContentTypes(enum.Enum):
     BASE_CONTENT = 'BaseContent'
     PACK = 'Pack'
+    COMMAND_OR_SCRIPT = 'CommandOrScript'
     COMMAND = 'Command'
-    CONTENT_ITEM = 'ContentItem'
     SCRIPT = 'Script'
     PLAYBOOK = 'Playbook'
     INTEGRATION = 'Integration'
@@ -66,16 +68,13 @@ class ContentTypes(enum.Enum):
 
     @property
     def labels(self) -> List[str]:
-        labels: List[str] = [ContentTypes.BASE_CONTENT.value, self.value]
-
-        if self.value not in [ContentTypes.PACK.value, ContentTypes.COMMAND.value]:
-            labels.append(ContentTypes.CONTENT_ITEM.value)
-
-        if self.value == ContentTypes.SCRIPT.value:
-            labels.append(ContentTypes.COMMAND.value)
+        labels: List[str] = [ContentTypes.BASE_CONTENT, self.value]
 
         if self.value == ContentTypes.TEST_PLAYBOOK.value:
             labels.append(ContentTypes.PLAYBOOK.value)
+
+        if self in [ContentTypes.SCRIPT, ContentTypes.COMMAND]:
+            labels.append(ContentTypes.COMMAND_OR_SCRIPT.value)
 
         return labels
 
@@ -88,8 +87,29 @@ class ContentTypes(enum.Enum):
         return f'{self.value}s'
 
     @staticmethod
-    def pack_folders(pack_path: Path) -> Iterator[Path]:
+    def abstract_types() -> List['ContentTypes']:
+        return [ContentTypes.BASE_CONTENT, ContentTypes.COMMAND_OR_SCRIPT]
+
+    @staticmethod
+    def non_content_items() -> List['ContentTypes']:
+        return [ContentTypes.PACK, ContentTypes.COMMAND]
+
+    @staticmethod
+    def non_abstracts(include_non_content_items: bool = True) -> Iterator['ContentTypes']:
         for content_type in ContentTypes:
+            if content_type in ContentTypes.abstract_types():
+                continue
+            if not include_non_content_items and content_type in ContentTypes.non_content_items():
+                continue
+            yield content_type
+
+    @staticmethod
+    def content_items() -> Iterator['ContentTypes']:
+        return ContentTypes.non_abstracts(include_non_content_items=False)
+
+    @staticmethod
+    def pack_folders(pack_path: Path) -> Iterator[Path]:
+        for content_type in ContentTypes.content_items():
             pack_folder = pack_path / content_type.as_folder
             if pack_folder.is_dir():
                 yield pack_folder
@@ -103,8 +123,8 @@ class ContentTypes(enum.Enum):
     @staticmethod
     def props_existence_constraints() -> Dict['ContentTypes', List[str]]:
         return {
-            ContentTypes.PACK: ['name', 'deprecated', 'marketplaces', 'author', 'certification', 'current_version', 'categories'],
-            ContentTypes.CONTENT_ITEM: ['name', 'deprecated', 'marketplaces', 'fromversion'],
-            ContentTypes.INTEGRATION: ['display_name', 'type'],
-            ContentTypes.SCRIPT: ['type'],
+            # ContentTypes.PACK: ['name', 'deprecated', 'marketplaces', 'author', 'certification', 'current_version', 'categories'],
+            # ContentTypes.CONTENT_ITEM: ['name', 'deprecated', 'marketplaces', 'fromversion'],
+            # ContentTypes.INTEGRATION: ['display_name', 'type'],
+            # ContentTypes.SCRIPT: ['type'],
         }

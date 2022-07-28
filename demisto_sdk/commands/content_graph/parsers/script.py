@@ -2,19 +2,16 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes
-from .integration_script import IntegrationScriptParser
-from .pack import PackSubGraphCreator
-
+from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
+import parsers.integration_script as integration_script
 
 EXECUTE_CMD_PATTERN = re.compile(r"execute_?command\(['\"](\w+)['\"].*")
 
 
-class ScriptParser(IntegrationScriptParser):
+class ScriptParser(integration_script.IntegrationScriptParser):
     def __init__(self, path: Path, pack_marketplaces: List[str]) -> None:
         super().__init__(path, pack_marketplaces)
         print(f'Parsing {self.content_type} {self.content_item_id}')
-        PackSubGraphCreator.add_node(self)
         self.connect_to_dependencies()
         self.connect_to_tests()
 
@@ -26,7 +23,7 @@ class ScriptParser(IntegrationScriptParser):
         integration_script_data = super().get_data()
         script_data = {
             'type': self.yml_data.get('subtype') or self.yml_data.get('type'),
-            'docker_image': self.yml_data.get('dockerimage'),
+            'docker_image': self.yml_data.get('dockerimage', ''),
         }
 
         if script_data['type'] == 'python':
@@ -34,12 +31,19 @@ class ScriptParser(IntegrationScriptParser):
 
         return integration_script_data | script_data
 
+    def add_executes_relationship(self, command_id: str) -> None:
+        self.add_relationship(
+            Rel.EXECUTES,
+            command_id,
+            deprecated=self.deprecated,
+        )
+
     def connect_to_dependencies(self) -> None:
         for cmd in self.get_depends_on():
-            self.add_dependency(cmd, ContentTypes.COMMAND)
+            self.add_executes_relationship(cmd)
 
         for cmd in self.get_command_executions():
-            self.add_dependency(cmd, ContentTypes.COMMAND)
+            self.add_executes_relationship(cmd)
 
     def get_depends_on(self) -> List[str]:
         depends_on: List[str] = self.yml_data.get('dependson', {}).get('must', [])

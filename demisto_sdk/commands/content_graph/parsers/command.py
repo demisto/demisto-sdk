@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from .base import BaseContentParser
+from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
 from demisto_sdk.commands.content_graph.constants import ContentTypes
 
 

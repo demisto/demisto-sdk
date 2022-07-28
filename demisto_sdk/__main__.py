@@ -2267,7 +2267,7 @@ def error_code(config, **kwargs):
     '-h', '--help'
 )
 def content_graph():
-    from demisto_sdk.commands.content_graph.graph import create_content_graph
+    from demisto_sdk.commands.content_graph.content_graph import create_content_graph
     create_content_graph()
 
 

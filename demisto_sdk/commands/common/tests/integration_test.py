@@ -1208,6 +1208,8 @@ class TestIntegrationValidator:
         ([MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2], True),
         ('true', True),
         ('false', True),
+        ('True', True),
+        ('False', True),
         ([MarketplaceVersions.XSOAR, MarketplaceVersions.XSOAR], True),  # may be useless, but not invalid
 
         # invalid cases
@@ -1217,9 +1219,11 @@ class TestIntegrationValidator:
         ([''], False),
         ([True], False),
         (['true'], False),
+        (['True'], False),
         (MarketplaceVersions.XSOAR, False),
         ('🥲', False),
-        ('True', False),
+        ('Trüe', False),
+        ('TRUE', False),
         ([MarketplaceVersions.XSOAR, None], False),
         ([MarketplaceVersions.MarketplaceV2, None], False),
         ([MarketplaceVersions.XSOAR, True], False),

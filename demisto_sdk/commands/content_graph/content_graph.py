@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import csv
 import multiprocessing
 import shutil
+import time
 import neo4j
 import pickle
 
@@ -347,6 +348,7 @@ def create_content_graph() -> None:
     shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
     shutil.rmtree(REPO_PATH / 'neo4j' / 'import', ignore_errors=True)
     run_command_os('docker-compose up -d', REPO_PATH / 'neo4j')
+    time.sleep(10)  # wait for neo4j to start, TODO - create health check
     with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD) as content_graph:
         content_graph.parse_repository()
         content_graph.dump()

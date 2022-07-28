@@ -2,25 +2,13 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: content graph",
-            "type": "python",
-            "request": "launch",
-            "program": "/Users/ierukhimovic/dev/demisto/demisto-sdk/demisto_sdk/commands/create_content_graph/main.py",
-            "console": "integratedTerminal",
-            "justMyCode": false,
-            "cwd": "${env:CONTENT}", // Predefine the CONTENT variable in your environment first!
-            "env": {"DATABASE_URL": "bolt://neo4j:test@127.0.0.1:7687"}
-        },
-        {
             "name": "Python: Upload AbuseDB",
             "type": "python",
             "request": "launch",
             "module": "demisto_sdk",
             "cwd": "${env:CONTENT}", // Predefine the CONTENT variable in your environment first!
             "args": [
-                "upload",
-                "-i",
-                "${env:CONTENT}/Packs/AbuseDB/Integrations/AbuseDB"
+                "content-graph"
             ]
         },
         {

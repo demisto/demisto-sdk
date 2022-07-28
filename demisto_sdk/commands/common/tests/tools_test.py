@@ -1994,5 +1994,3 @@ def test_string_to_bool__all_params_true__false(value: str):
 def test_string_to_bool__all_params_false__error(value: str):
     with pytest.raises(ValueError):
         assert string_to_bool(value, False, False, False, False, False, False)
-
-

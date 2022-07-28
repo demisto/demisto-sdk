@@ -555,7 +555,7 @@ class ValidateManager:
             return xsoar_config_validator.is_valid_xsoar_config_file()
 
         if not self.check_only_schema:
-            validation_print = f"\nValidating {file_path} as {file_type.value}"
+            validation_print = f"\nValidating {file_path} as {file_type}"
             if self.print_percent:
                 if FOUND_FILES_AND_ERRORS:
                     validation_print += f' {Fore.RED}[{self.completion_percentage}%]{Fore.RESET}'
@@ -1371,13 +1371,13 @@ class ValidateManager:
             deleted_file_path = str(deleted_file_path)
             deleted_file_dict = get_remote_file(deleted_file_path, tag='master')  # for detecting deleted files
             if deleted_file_type := find_type(deleted_file_path, deleted_file_dict):
-                deleted_file_id = _get_file_id(deleted_file_type.value, deleted_file_dict)
+                deleted_file_id = _get_file_id(deleted_file_type, deleted_file_dict)
                 if deleted_file_id:
                     for file in added_files:
                         file = str(file)
                         file_type = find_type(file)
-                        file_dict = get_file(file, file_type.value)
-                        if deleted_file_id == _get_file_id(file_type.value, file_dict):
+                        file_dict = get_file(file, file_type)
+                        if deleted_file_id == _get_file_id(file_type, file_dict):
                             return True
         return False
 

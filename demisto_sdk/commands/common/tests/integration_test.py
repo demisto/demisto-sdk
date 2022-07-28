@@ -1260,12 +1260,12 @@ class TestIsFetchParamsExist:
         assert self.validator.is_valid_fetch(), 'is_valid_fetch() returns False instead True'
 
     @pytest.mark.parametrize(argnames='marketpalces, configs, expected_is_valid', argvalues=[
-        ([MarketplaceVersions.MarketplaceV2.value], INCIDENT_FETCH_REQUIRED_PARAMS, False),
-        ([MarketplaceVersions.MarketplaceV2.value], ALERT_FETCH_REQUIRED_PARAMS, True),
-        ([MarketplaceVersions.XSOAR.value], INCIDENT_FETCH_REQUIRED_PARAMS, True),
-        ([MarketplaceVersions.XSOAR.value], ALERT_FETCH_REQUIRED_PARAMS, False),
-        ([MarketplaceVersions.XSOAR.value, MarketplaceVersions.MarketplaceV2.value], ALERT_FETCH_REQUIRED_PARAMS, False),
-        ([MarketplaceVersions.XSOAR.value, MarketplaceVersions.MarketplaceV2.value], INCIDENT_FETCH_REQUIRED_PARAMS, True),
+        ([MarketplaceVersions.MarketplaceV2], INCIDENT_FETCH_REQUIRED_PARAMS, False),
+        ([MarketplaceVersions.MarketplaceV2], ALERT_FETCH_REQUIRED_PARAMS, True),
+        ([MarketplaceVersions.XSOAR], INCIDENT_FETCH_REQUIRED_PARAMS, True),
+        ([MarketplaceVersions.XSOAR], ALERT_FETCH_REQUIRED_PARAMS, False),
+        ([MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2], ALERT_FETCH_REQUIRED_PARAMS, False),
+        ([MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2], INCIDENT_FETCH_REQUIRED_PARAMS, True),
     ])
     def test_fetch_field_per_marketplaces_value(self, marketpalces, configs, expected_is_valid):
         self.validator.current_file['marketplaces'] = marketpalces

@@ -455,7 +455,7 @@ class FieldBaseValidator(ContentEntityValidator):
                 yield aliased_field
 
     def is_alias_has_invalid_marketplaces(self, aliased_field: dict) -> bool:
-        return aliased_field.get('marketplaces', [MarketplaceVersions.XSOAR.value]) != [MarketplaceVersions.XSOAR.value]
+        return aliased_field.get('marketplaces', [MarketplaceVersions.XSOAR]) != [MarketplaceVersions.XSOAR]
 
     def is_alias_has_inner_alias(self, aliased_field: dict) -> bool:
         return aliased_field is not None and 'aliases' in aliased_field

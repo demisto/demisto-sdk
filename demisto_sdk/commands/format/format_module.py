@@ -165,8 +165,8 @@ def format_manager(input: str = None,
             if any(test_dir in str(dirname) for test_dir in TESTS_AND_DOC_DIRECTORIES):
                 continue
 
-            if file_type and file_type.value not in UNFORMATTED_FILES:
-                file_type = file_type.value
+            if file_type and file_type not in UNFORMATTED_FILES:
+                file_type = file_type
                 info_res, err_res, skip_res = run_format_on_file(input=file_path,
                                                                  file_type=file_type,
                                                                  from_version=from_version,
@@ -186,7 +186,7 @@ def format_manager(input: str = None,
                 if skip_res:
                     log_list.extend([(skip_res, print_warning)])
             elif file_type:
-                log_list.append(([f"Ignoring format for {file_path} as {file_type.value} is currently not "
+                log_list.append(([f"Ignoring format for {file_path} as {file_type} is currently not "
                                   f"supported by format command"], print_warning))
             else:
                 log_list.append(([f"Was unable to identify the file type for the following file: {file_path}"],

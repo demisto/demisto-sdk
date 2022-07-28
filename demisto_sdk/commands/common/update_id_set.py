@@ -1029,7 +1029,7 @@ def get_pack_metadata_data(file_path, print_logs: bool, marketplace: str = ''):
             "tags": json_data.get('tags', []),
             "use_cases": json_data.get('useCases', []),
             "categories": json_data.get('categories', []),
-            "marketplaces": json_data.get('marketplaces', [MarketplaceVersions.XSOAR.value]),
+            "marketplaces": json_data.get('marketplaces', [MarketplaceVersions.XSOAR]),
         }
 
         pack_id = get_pack_name(file_path)
@@ -1201,7 +1201,7 @@ def get_xsiam_dashboard_data(path: str, packs: Dict[str, Dict] = None):
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
-    marketplaces = [MarketplaceVersions.MarketplaceV2.value]
+    marketplaces = [MarketplaceVersions.MarketplaceV2]
 
     data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
                                      from_version=fromversion, pack=pack, marketplaces=marketplaces)
@@ -1218,7 +1218,7 @@ def get_xsiam_report_data(path: str, packs: Dict[str, Dict] = None):
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
-    marketplaces = [MarketplaceVersions.MarketplaceV2.value]
+    marketplaces = [MarketplaceVersions.MarketplaceV2]
 
     data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
                                      from_version=fromversion, pack=pack, marketplaces=marketplaces)
@@ -1235,7 +1235,7 @@ def get_trigger_data(path: str, packs: Dict[str, Dict] = None):
     fromversion = json_data.get('fromVersion')
     toversion = json_data.get('toVersion')
     pack = get_pack_name(path)
-    marketplaces = [MarketplaceVersions.MarketplaceV2.value]
+    marketplaces = [MarketplaceVersions.MarketplaceV2]
 
     data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
                                      from_version=fromversion, pack=pack, marketplaces=marketplaces)
@@ -1252,7 +1252,7 @@ def get_parsing_rule_data(path: str, packs: Dict[str, Dict] = None):
     fromversion = yaml_data.get('fromversion')
     toversion = yaml_data.get('toversion')
     pack = get_pack_name(path)
-    marketplaces = [MarketplaceVersions.MarketplaceV2.value]
+    marketplaces = [MarketplaceVersions.MarketplaceV2]
 
     if not id_ and 'marketplacev2' in marketplaces:  # TODO: Should be removed after we have an agreed id field for parsing rule
         id_ = f"{pack}-{os.path.basename(path).split('.')[0]}"
@@ -1271,7 +1271,7 @@ def get_modeling_rule_data(path: str, packs: Dict[str, Dict] = None):
     fromversion = yaml_data.get('fromversion')
     toversion = yaml_data.get('toversion')
     pack = get_pack_name(path)
-    marketplaces = [MarketplaceVersions.MarketplaceV2.value]
+    marketplaces = [MarketplaceVersions.MarketplaceV2]
 
     if not id_ and 'marketplacev2' in marketplaces:  # TODO: Should be removed after we have an agreed id field for modeling rule
         id_ = f"{pack}-{os.path.basename(path).split('.')[0]}"
@@ -1290,7 +1290,7 @@ def get_correlation_rule_data(path: str, packs: Dict[str, Dict] = None):
     fromversion = yaml_data.get('fromversion')
     toversion = yaml_data.get('toversion')
     pack = get_pack_name(path)
-    marketplaces = [MarketplaceVersions.MarketplaceV2.value]
+    marketplaces = [MarketplaceVersions.MarketplaceV2]
 
     data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
                                      from_version=fromversion, pack=pack, marketplaces=marketplaces)
@@ -1567,7 +1567,7 @@ def process_layoutscontainers(file_path: str, packs: Dict[str, Dict], marketplac
 
         # only indicator layouts are supported in marketplace v2.
         layout_group = list(layout_data.values())[0].get('group')
-        if marketplace == MarketplaceVersions.MarketplaceV2.value and layout_group == 'incident':
+        if marketplace == MarketplaceVersions.MarketplaceV2 and layout_group == 'incident':
             print(f'incident layoutcontainer "{file_path}" is not supported in marketplace v2, excluding.')
             add_item_to_exclusion_dict(excluded_items_from_id_set, file_path, list(layout_data.keys())[0])
             return result, excluded_items_from_id_set
@@ -2037,13 +2037,13 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     Returns: id-set object
     """
     if id_set_path == "":
-        if marketplace == MarketplaceVersions.MarketplaceV2.value:
+        if marketplace == MarketplaceVersions.MarketplaceV2:
             id_set_path = MP_V2_ID_SET_PATH
         else:
             id_set_path = DEFAULT_ID_SET_PATH
 
     if not objects_to_create:
-        if marketplace == MarketplaceVersions.MarketplaceV2.value:
+        if marketplace == MarketplaceVersions.MarketplaceV2:
             objects_to_create = CONTENT_MP_V2_ENTITIES
         else:
             objects_to_create = CONTENT_ENTITIES
@@ -2707,7 +2707,7 @@ def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_c
     new_ids_dict['Wizards'] = sort(wizards_list)
     new_ids_dict['Packs'] = packs_dict
 
-    if marketplace != MarketplaceVersions.MarketplaceV2.value:
+    if marketplace != MarketplaceVersions.MarketplaceV2:
         new_ids_dict['GenericTypes'] = sort(generic_types_list)
         new_ids_dict['GenericFields'] = sort(generic_fields_list)
         new_ids_dict['GenericModules'] = sort(generic_modules_list)

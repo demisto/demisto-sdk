@@ -190,42 +190,42 @@ RN_HEADER_BY_FILE_TYPE = {
 }
 
 ENTITY_TYPE_TO_DIR = {
-    FileType.INTEGRATION.value: INTEGRATIONS_DIR,
-    FileType.PLAYBOOK.value: PLAYBOOKS_DIR,
-    FileType.SCRIPT.value: SCRIPTS_DIR,
+    FileType.INTEGRATION: INTEGRATIONS_DIR,
+    FileType.PLAYBOOK: PLAYBOOKS_DIR,
+    FileType.SCRIPT: SCRIPTS_DIR,
     AUTOMATION: SCRIPTS_DIR,
-    FileType.LAYOUT.value: LAYOUTS_DIR,
-    FileType.LAYOUTS_CONTAINER.value: LAYOUTS_DIR,
-    FileType.INCIDENT_FIELD.value: INCIDENT_FIELDS_DIR,
-    FileType.INCIDENT_TYPE.value: INCIDENT_TYPES_DIR,
-    FileType.INDICATOR_FIELD.value: INDICATOR_FIELDS_DIR,
-    FileType.CONNECTION.value: CONNECTIONS_DIR,
-    FileType.CLASSIFIER.value: CLASSIFIERS_DIR,
-    FileType.DASHBOARD.value: DASHBOARDS_DIR,
-    FileType.REPUTATION.value: INDICATOR_TYPES_DIR,
-    FileType.REPORT.value: REPORTS_DIR,
-    FileType.WIDGET.value: WIDGETS_DIR,
-    FileType.BETA_INTEGRATION.value: INTEGRATIONS_DIR,
-    FileType.MAPPER.value: CLASSIFIERS_DIR,
-    FileType.PRE_PROCESS_RULES.value: PRE_PROCESS_RULES_DIR,
-    FileType.GENERIC_DEFINITION.value: GENERIC_DEFINITIONS_DIR,
-    FileType.GENERIC_MODULE.value: GENERIC_MODULES_DIR,
-    FileType.GENERIC_FIELD.value: GENERIC_FIELDS_DIR,
-    FileType.GENERIC_TYPE.value: GENERIC_TYPES_DIR,
-    FileType.LISTS.value: LISTS_DIR,
-    FileType.JOB.value: JOBS_DIR,
-    FileType.PARSING_RULE.value: PARSING_RULES_DIR,
-    FileType.MODELING_RULE.value: MODELING_RULES_DIR,
-    FileType.WIZARD.value: WIZARDS_DIR,
+    FileType.LAYOUT: LAYOUTS_DIR,
+    FileType.LAYOUTS_CONTAINER: LAYOUTS_DIR,
+    FileType.INCIDENT_FIELD: INCIDENT_FIELDS_DIR,
+    FileType.INCIDENT_TYPE: INCIDENT_TYPES_DIR,
+    FileType.INDICATOR_FIELD: INDICATOR_FIELDS_DIR,
+    FileType.CONNECTION: CONNECTIONS_DIR,
+    FileType.CLASSIFIER: CLASSIFIERS_DIR,
+    FileType.DASHBOARD: DASHBOARDS_DIR,
+    FileType.REPUTATION: INDICATOR_TYPES_DIR,
+    FileType.REPORT: REPORTS_DIR,
+    FileType.WIDGET: WIDGETS_DIR,
+    FileType.BETA_INTEGRATION: INTEGRATIONS_DIR,
+    FileType.MAPPER: CLASSIFIERS_DIR,
+    FileType.PRE_PROCESS_RULES: PRE_PROCESS_RULES_DIR,
+    FileType.GENERIC_DEFINITION: GENERIC_DEFINITIONS_DIR,
+    FileType.GENERIC_MODULE: GENERIC_MODULES_DIR,
+    FileType.GENERIC_FIELD: GENERIC_FIELDS_DIR,
+    FileType.GENERIC_TYPE: GENERIC_TYPES_DIR,
+    FileType.LISTS: LISTS_DIR,
+    FileType.JOB: JOBS_DIR,
+    FileType.PARSING_RULE: PARSING_RULES_DIR,
+    FileType.MODELING_RULE: MODELING_RULES_DIR,
+    FileType.WIZARD: WIZARDS_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
-    FileType.PARSING_RULE.value,
-    FileType.MODELING_RULE.value,
-    FileType.CORRELATION_RULE.value,
-    FileType.XSIAM_DASHBOARD.value,
-    FileType.XSIAM_REPORT.value,
-    FileType.TRIGGER.value
+    FileType.PARSING_RULE,
+    FileType.MODELING_RULE,
+    FileType.CORRELATION_RULE,
+    FileType.XSIAM_DASHBOARD,
+    FileType.XSIAM_REPORT,
+    FileType.TRIGGER
 ]
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
@@ -1487,7 +1487,7 @@ class IronBankDockers:
     API_LINK = 'https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Fdemisto%2F'
 
 
-class MarketplaceVersions(Enum):
+class MarketplaceVersions(str, Enum):
     XSOAR = 'xsoar'
     MarketplaceV2 = 'marketplacev2'
 
@@ -1495,7 +1495,7 @@ class MarketplaceVersions(Enum):
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {'html': LooseVersion('6.1.0'), 'grid': LooseVersion('5.5.0')}
 
 
-class IdSetKeys(Enum):
+class IdSetKeys(str, Enum):
     SCRIPTS = 'scripts'
     INTEGRATIONS = 'integrations'
     PLAYBOOKS = "playbooks"
@@ -1526,36 +1526,36 @@ class IdSetKeys(Enum):
 
 
 FileTypeToIDSetKeys = {
-    FileType.INTEGRATION: IdSetKeys.INTEGRATIONS.value,
-    FileType.BETA_INTEGRATION: IdSetKeys.INTEGRATIONS.value,
-    FileType.PLAYBOOK: IdSetKeys.PLAYBOOKS.value,
-    FileType.SCRIPT: IdSetKeys.SCRIPTS.value,
-    FileType.TEST_SCRIPT: IdSetKeys.SCRIPTS.value,
-    FileType.TEST_PLAYBOOK: IdSetKeys.PLAYBOOKS.value,
-    FileType.DASHBOARD: IdSetKeys.DASHBOARDS.value,
-    FileType.WIDGET: IdSetKeys.WIDGETS.value,
-    FileType.REPORT: IdSetKeys.REPORTS.value,
-    FileType.OLD_CLASSIFIER: IdSetKeys.CLASSIFIERS.value,
-    FileType.CLASSIFIER: IdSetKeys.CLASSIFIERS.value,
-    FileType.MAPPER: IdSetKeys.MAPPERS.value,
-    FileType.LAYOUT: IdSetKeys.LAYOUTS.value,
-    FileType.LAYOUTS_CONTAINER: IdSetKeys.LAYOUTS.value,
-    FileType.LISTS: IdSetKeys.LISTS.value,
-    FileType.REPUTATION: IdSetKeys.INDICATOR_TYPES.value,
-    FileType.INDICATOR_FIELD: IdSetKeys.INDICATOR_FIELDS.value,
-    FileType.INCIDENT_FIELD: IdSetKeys.INCIDENT_FIELDS.value,
-    FileType.INCIDENT_TYPE: IdSetKeys.INCIDENT_TYPES.value,
-    FileType.GENERIC_TYPE: IdSetKeys.GENERIC_TYPES.value,
-    FileType.GENERIC_FIELD: IdSetKeys.GENERIC_FIELDS.value,
-    FileType.GENERIC_MODULE: IdSetKeys.GENERIC_MODULES.value,
-    FileType.GENERIC_DEFINITION: IdSetKeys.GENERIC_DEFINITIONS.value,
-    FileType.JOB: IdSetKeys.JOBS.value,
-    FileType.PARSING_RULE: IdSetKeys.PARSING_RULES.value,
-    FileType.MODELING_RULE: IdSetKeys.MODELING_RULES.value,
-    FileType.CORRELATION_RULE: IdSetKeys.CORRELATION_RULES.value,
-    FileType.XSIAM_DASHBOARD: IdSetKeys.XSIAM_DASHBOARDS.value,
-    FileType.XSIAM_REPORT: IdSetKeys.XSIAM_REPORTS.value,
-    FileType.TRIGGER: IdSetKeys.TRIGGERS.value
+    FileType.INTEGRATION: IdSetKeys.INTEGRATIONS,
+    FileType.BETA_INTEGRATION: IdSetKeys.INTEGRATIONS,
+    FileType.PLAYBOOK: IdSetKeys.PLAYBOOKS,
+    FileType.SCRIPT: IdSetKeys.SCRIPTS,
+    FileType.TEST_SCRIPT: IdSetKeys.SCRIPTS,
+    FileType.TEST_PLAYBOOK: IdSetKeys.PLAYBOOKS,
+    FileType.DASHBOARD: IdSetKeys.DASHBOARDS,
+    FileType.WIDGET: IdSetKeys.WIDGETS,
+    FileType.REPORT: IdSetKeys.REPORTS,
+    FileType.OLD_CLASSIFIER: IdSetKeys.CLASSIFIERS,
+    FileType.CLASSIFIER: IdSetKeys.CLASSIFIERS,
+    FileType.MAPPER: IdSetKeys.MAPPERS,
+    FileType.LAYOUT: IdSetKeys.LAYOUTS,
+    FileType.LAYOUTS_CONTAINER: IdSetKeys.LAYOUTS,
+    FileType.LISTS: IdSetKeys.LISTS,
+    FileType.REPUTATION: IdSetKeys.INDICATOR_TYPES,
+    FileType.INDICATOR_FIELD: IdSetKeys.INDICATOR_FIELDS,
+    FileType.INCIDENT_FIELD: IdSetKeys.INCIDENT_FIELDS,
+    FileType.INCIDENT_TYPE: IdSetKeys.INCIDENT_TYPES,
+    FileType.GENERIC_TYPE: IdSetKeys.GENERIC_TYPES,
+    FileType.GENERIC_FIELD: IdSetKeys.GENERIC_FIELDS,
+    FileType.GENERIC_MODULE: IdSetKeys.GENERIC_MODULES,
+    FileType.GENERIC_DEFINITION: IdSetKeys.GENERIC_DEFINITIONS,
+    FileType.JOB: IdSetKeys.JOBS,
+    FileType.PARSING_RULE: IdSetKeys.PARSING_RULES,
+    FileType.MODELING_RULE: IdSetKeys.MODELING_RULES,
+    FileType.CORRELATION_RULE: IdSetKeys.CORRELATION_RULES,
+    FileType.XSIAM_DASHBOARD: IdSetKeys.XSIAM_DASHBOARDS,
+    FileType.XSIAM_REPORT: IdSetKeys.XSIAM_REPORTS,
+    FileType.TRIGGER: IdSetKeys.TRIGGERS
 }
 
 FileType_ALLOWED_TO_DELETE = {

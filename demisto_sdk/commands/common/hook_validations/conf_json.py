@@ -86,7 +86,7 @@ class ConfJsonValidator(BaseValidator):
 
     def is_valid_file_in_conf_json(self, current_file, file_type, file_path):
         """Check if the file is valid in the conf.json"""
-        entity_id = _get_file_id(file_type.value, current_file)
+        entity_id = _get_file_id(file_type, current_file)
         if file_type in {FileType.INTEGRATION, FileType.BETA_INTEGRATION}:
             return self.integration_has_unskipped_test_playbook(current_file, entity_id, file_path)
         if file_type == FileType.SCRIPT:

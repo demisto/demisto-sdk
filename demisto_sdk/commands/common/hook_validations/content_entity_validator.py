@@ -191,10 +191,8 @@ class ContentEntityValidator(BaseValidator):
             return True
         conf_json_tests = self._load_conf_file()['tests']
         file_type = self.structure_validator.scheme_name
-        if not isinstance(file_type, str):
-            file_type = file_type.value  # type: ignore
 
-        content_item_id = _get_file_id(file_type, self.current_file)
+        content_item_id = _get_file_id(file_type, self.current_file)  # type: ignore[arg-type]
 
         # Test playbook case
         if file_type == 'testplaybook':

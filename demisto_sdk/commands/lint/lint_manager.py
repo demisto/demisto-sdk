@@ -1073,7 +1073,7 @@ class LintManager:
         full_error_output = {
             'filePath': file_path,
             'fileType': os.path.splitext(file_path)[1].replace('.', ''),
-            'entityType': file_type.value if file_type else '',
+            'entityType': file_type if file_type else '',
             'errorType': 'Code',
             'name': get_file_displayed_name(yml_file_path),  # type: ignore[arg-type]
             **output

@@ -315,7 +315,7 @@ class BaseValidator:
                 json_contents = existing_json
 
         file_type = find_type(file_path)
-        entity_type = file_type.value if file_type else 'pack'
+        entity_type = file_type if file_type else 'pack'
 
         # handling unified yml image errors
         if entity_type == FileType.INTEGRATION.value and error_code.startswith('IM'):

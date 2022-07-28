@@ -990,7 +990,7 @@ class IntegrationValidator(ContentEntityValidator):
             # if no marketplaces or xsoar in marketplaces - the required params will be INCIDENT_FETCH_REQUIRED_PARAMS (with Incident type etc. )
             # otherwise it will be the ALERT_FETCH_REQUIRED_PARAMS (with Alert type etc. )
             marketplaces = get_item_marketplaces(item_path=self.file_path, item_data=self.current_file)
-            is_xsoar_marketplace = not marketplaces or MarketplaceVersions.XSOAR.value in marketplaces
+            is_xsoar_marketplace = not marketplaces or MarketplaceVersions.XSOAR in marketplaces
             fetch_required_params = INCIDENT_FETCH_REQUIRED_PARAMS if is_xsoar_marketplace else ALERT_FETCH_REQUIRED_PARAMS
             params = [dict.copy(_key) for _key in self.current_file.get('configuration', [])]
             for param in params:

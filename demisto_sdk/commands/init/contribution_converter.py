@@ -277,7 +277,7 @@ class ContributionConverter:
             is_contribution: bool: Check if the content item is a new integration contribution or not.
         """
         file_type = find_type(yml_path)
-        file_type = file_type.value if file_type else file_type
+        file_type = file_type if file_type else file_type
         if file_type == 'integration':
             generate_integration_doc(yml_path, is_contribution=is_contribution)
         if file_type == 'script':
@@ -395,7 +395,7 @@ class ContributionConverter:
             if cf_name_lower.startswith((SCRIPT, AUTOMATION, INTEGRATION)) and cf_name_lower.endswith('yml'):
                 content_item_file_path = child_file
                 file_type = find_type(content_item_file_path)
-                file_type = file_type.value if file_type else file_type
+                file_type = file_type if file_type else file_type
                 try:
                     child_file_name = os.path.basename(child_file)
                     if source_mapping and child_file_name in source_mapping.keys():

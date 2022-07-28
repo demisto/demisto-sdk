@@ -22,7 +22,7 @@ USERNAME = 'neo4j'
 PASSWORD = 'test'
 REPO_PATH = Path(GitUtil(Content.git()).git_path())
 BATCH_SIZE = 10000
-IMPORT_PATH = ''  # todo
+IMPORT_PATH = '/var/lib/neo4j/import'  # todo
 
 import logging
 logger = logging.getLogger('demisto-sdk')

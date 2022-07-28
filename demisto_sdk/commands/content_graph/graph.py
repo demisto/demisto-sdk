@@ -78,6 +78,7 @@ class ContentGraph:
 
 
     def dump(self):
+        pass
         # docker_client = docker.from_env()
         # try:
         #     docker_client.containers.get('neo4j-dump').remove(force=True)

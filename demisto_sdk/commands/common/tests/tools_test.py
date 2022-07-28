@@ -1974,3 +1974,25 @@ def test_string_to_bool__default_params__false(value: str):
 def test_string_to_bool__default_params__error(value: str):
     with pytest.raises(ValueError):
         string_to_bool(value)
+
+
+@pytest.mark.parametrize('value', ('true', 'True', 'TRUE', 't', 'T', 'yes','Yes', 'YES', 'y','Y', '1'))
+def test_string_to_bool__all_params_true__true(value: str):
+    assert string_to_bool(value, True, True, True, True, True, True)
+
+
+@pytest.mark.parametrize('value', ('false', 'False', 'FALSE', 'f', 'F', 'no', 'No', 'NO', 'n', 'N', '0'))
+def test_string_to_bool__all_params_true__false(value: str):
+    assert not string_to_bool(value, True, True, True, True, True, True)
+
+
+@pytest.mark.parametrize('value',
+                         ('true', 'True', 'TRUE', 't', 'T', 'yes', 'Yes', 'YES', 'y', 'Y', '1',
+                          'false', 'False', 'FALSE', 'f', 'F', 'no', 'No', 'NO', 'n', 'N', '0',
+                          '', ' ', 1, True, None, 'אולי','None')
+                         )
+def test_string_to_bool__all_params_false__error(value: str):
+    with pytest.raises(ValueError):
+        assert string_to_bool(value, False, False, False, False, False, False)
+
+

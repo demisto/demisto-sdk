@@ -40,14 +40,47 @@ def dump_pickle(url: str, data: Any) -> None:
 
 
 class ContentGraph:
-    def __init__(self, repo_path: Path, database_uri: str, user: str = None, password: str = None) -> None:
-        self.start_time = datetime.now()
-        self.end_time = None
+    def __init__(self, repo_path: Path) -> None:
         self.packs_path: Path = repo_path / PACKS_FOLDER
-        auth: Optional[Tuple[str]] = (user, password) if user and password else None
-        self.driver: neo4j.Neo4jDriver = neo4j.GraphDatabase.driver(database_uri, auth=auth)
         self.nodes: Dict[ContentTypes, List[Dict[str, Any]]] = load_pickle('/Users/dtavori/dev/demisto/content-graph/nodes.pkl')
         self.relationships: Dict[Rel, List[Dict[str, Any]]] = load_pickle('/Users/dtavori/dev/demisto/content-graph/rels.pkl')
+
+    def parse_repository(self) -> None:
+        """ Parses packs into nodes and relationships by given paths. """
+        if self.nodes and self.relationships:
+            print('Skipping parsing.')
+            return
+        pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
+        for pack_nodes, pack_relationships in pool.map(PackSubGraphCreator.from_path, self.iter_packs()):
+            self.extend_graph_nodes_and_relationships(pack_nodes, pack_relationships)
+
+    def iter_packs(self) -> Iterator[Path]:
+        for path in self.packs_path.iterdir():  # todo: handle repo path is invalid
+            if path.is_dir():
+                yield path
+    
+    def extend_graph_nodes_and_relationships(
+        self,
+        pack_nodes: Dict[ContentTypes, List[Dict[str, Any]]],
+        pack_relationships: Dict[ContentTypes, List[Dict[str, Any]]],
+    ) -> None:
+        for content_type in ContentTypes:
+            if content_type not in self.nodes:
+                self.nodes[content_type] = []
+            self.nodes[content_type].extend(pack_nodes.get(content_type, []))
+        for rel in Rel:
+            if rel not in self.relationships:
+                self.relationships[rel] = []
+            self.relationships[rel].extend(pack_relationships.get(rel, []))
+
+
+class Neo4jContentGraph(ContentGraph):
+    def __init__(self, repo_path: Path, database_uri: str, user: str = None, password: str = None) -> None:
+        super().__init__(repo_path)
+        self.start_time = datetime.now()
+        self.end_time = None
+        auth: Optional[Tuple[str]] = (user, password) if user and password else None
+        self.driver: neo4j.Neo4jDriver = neo4j.GraphDatabase.driver(database_uri, auth=auth)
     
     def __enter__(self):
         with self.driver.session() as session:
@@ -130,34 +163,6 @@ class ContentGraph:
             for prop in props:
                 queries.append(template.format(label=label, prop=prop))
         return queries
-
-    def parse_repository(self) -> None:
-        """ Parses packs into nodes and relationships by given paths. """
-        if self.nodes and self.relationships:
-            print('Skipping parsing.')
-            return
-        pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
-        for pack_nodes, pack_relationships in pool.map(PackSubGraphCreator.from_path, self.iter_packs()):
-            self.extend_graph_nodes_and_relationships(pack_nodes, pack_relationships)
-
-    def iter_packs(self) -> Iterator[Path]:
-        for path in self.packs_path.iterdir():  # todo: handle repo path is invalid
-            if path.is_dir():
-                yield path
-    
-    def extend_graph_nodes_and_relationships(
-        self,
-        pack_nodes: Dict[ContentTypes, List[Dict[str, Any]]],
-        pack_relationships: Dict[ContentTypes, List[Dict[str, Any]]],
-    ) -> None:
-        for content_type in ContentTypes:
-            if content_type not in self.nodes:
-                self.nodes[content_type] = []
-            self.nodes[content_type].extend(pack_nodes.get(content_type, []))
-        for rel in Rel:
-            if rel not in self.relationships:
-                self.relationships[rel] = []
-            self.relationships[rel].extend(pack_relationships.get(rel, []))
 
     @staticmethod
     def import_nodes_by_type(tx: neo4j.Transaction, content_type: ContentTypes) -> None:
@@ -290,6 +295,6 @@ class ContentGraph:
 def create_content_graph() -> None:
     # shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
     # run_command_os('docker-compose up -d', REPO_PATH / 'neo4j')
-    with ContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD) as content_graph:
+    with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD) as content_graph:
         content_graph.parse_repository()
     # run_command_os('docker-compose down', REPO_PATH / 'neo4j')

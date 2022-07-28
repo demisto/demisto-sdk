@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
-import parsers.integration_script as integration_script
+import demisto_sdk.commands.content_graph.parsers.integration_script as integration_script
 
 EXECUTE_CMD_PATTERN = re.compile(r"execute_?command\(['\"](\w+)['\"].*")
 

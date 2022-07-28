@@ -161,7 +161,7 @@ def test_extract_to_package_format_modeling_rule(tmpdir):
         file_data = f.read()
         assert '[MODEL: dataset=okta_okta_raw, model=Audit]' in file_data
 
-    with open(out.join('OktaModelingRule').join('OktaModelingRule.json'), 'r', encoding='utf-8') as f:
+    with open(out.join('OktaModelingRule').join('OktaModelingRule_schema.json'), 'r', encoding='utf-8') as f:
         file_data = f.read()
         assert schema == json.loads(file_data)
 

@@ -3263,7 +3263,7 @@ def test_remove_items_from_content_entities_sections():
         "incidentfield": {'field1'},
         "incidenttype": {'type1'},
         "indicatorfield": {'field1'},
-        "indicatortype": {'type1'},
+        "reputation": {'type1'},
         "mapper": {'mapper1'},
         "dashboard": {'dashboard1'},
         "widget": {'widget1'},

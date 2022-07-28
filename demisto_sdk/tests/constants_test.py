@@ -106,6 +106,9 @@ INTEGRATION_WITH_TEST_PLAYBOOKS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/form
 PLAYBOOK_WITH_TEST_PLAYBOOKS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/format_playbook_with_test_playbooks.yml'
 PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-with-incidnet-" \
                                            f"indicator-fields.yml"
+INVALID_PLAYBOOK_INPUTS_USE = f'{GIT_ROOT}/demisto_sdk/tests/test_files/playbook_inputs_not_in_use.yml'
+VALID_PLAYBOOK_INPUTS_USE = f'{GIT_ROOT}/demisto_sdk/tests/test_files/playbook_valid_inputs.yml'
+
 SCRIPT_WITH_TEST_PLAYBOOKS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/format_script_with_test_playbooks.yml'
 INDICATORFIELD_EXTRA_FIELDS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/indicatorfield-extra-fields.json"
 INDICATORFIELD_EXACT_SCHEME = f"{GIT_ROOT}/demisto_sdk/tests/test_files/indicator-field-exact-scheme.json"
@@ -119,6 +122,8 @@ INVALID_INTEGRATION_YML_4 = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integratio
 INVALID_INTEGRATION_YML_5 = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-invalid-yml5.yml"
 VALID_REPUTATION_FILE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/reputation-cidr-valid.json"
 INVALID_REPUTATION_FILE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/reputation-cidr-invalid.json"
+VALID_INCIDENT_TYPE_FILE__RAW_DOWNLOADED = f"{GIT_ROOT}/demisto_sdk/tests/test_files/IncidentType__raw_downloaded.json"
+VALID_INCIDENT_TYPE_FILE = f"{GIT_ROOT}/demisto_sdk/tests/test_files/IncidentType.json"
 INVALID_NO_HIDDEN_PARAMS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-invalid-no-hidden-params.yml"
 VALID_NO_HIDDEN_PARAMS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration-valid-no-unallowed-hidden-params.yml"
 GIT_HAVE_MODIFIED_AND_NEW_FILES = f"{GIT_ROOT}/demisto_sdk/tests/test_files/git_have_modified_and_new_files.json"

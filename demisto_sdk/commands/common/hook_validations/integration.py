@@ -32,7 +32,8 @@ from demisto_sdk.commands.common.tools import (
     extract_deprecated_command_names_from_yml,
     extract_none_deprecated_command_names_from_yml, get_core_pack_list,
     get_file_version_suffix_if_exists, get_files_in_dir, get_item_marketplaces,
-    get_pack_name, is_iron_bank_pack, print_error, server_version_compare)
+    get_pack_name, is_iron_bank_pack, print_error, server_version_compare,
+    string_to_bool)
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -1725,6 +1726,40 @@ class IntegrationValidator(ContentEntityValidator):
             if used_commands_dict:
                 error_message, error_code = Errors.integration_is_deprecated_and_used(self.current_file.get("name"), used_commands_dict)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    is_valid = False
+
+        return is_valid
+
+    @error_codes('IN156')
+    def is_valid_hidden_attribute_for_params(self):
+        """
+         See update_hidden_parameters_value for the values we allow for the hidden attribute
+         Workaround as pykwalify schemas do not allow multiple types (e.g. equivalent for Union[list[str] | bool]).
+        :return: whether the attribute is valid
+        """
+
+        def is_bool(input_: str):
+            try:
+                string_to_bool(input_)
+                return True
+            except ValueError:
+                return False
+
+        is_valid = True
+        for param in self.current_file.get('configuration', ()):
+            param_name = param['name']
+            hidden = param.get('hidden')
+
+            if not isinstance(hidden, (type(None), bool, list, str)) \
+                    or isinstance(hidden, str) and not is_bool(hidden):
+                message, code = Errors.invalid_hidden_attribute_for_param(param_name, hidden)
+                if self.handle_error(message, code, self.file_path):
+                    is_valid = False
+
+            elif isinstance(hidden, list) and (invalid := set(hidden).difference(MarketplaceVersions)):
+                # if the value is a list, all its values must be marketplace names
+                message, code = Errors.invalid_hidden_attribute_for_param(param_name, ', '.join(map(str, invalid)))
+                if self.handle_error(message, code, self.file_path):
                     is_valid = False
 
         return is_valid

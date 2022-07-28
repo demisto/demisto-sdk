@@ -1319,9 +1319,9 @@ class TestFormatting:
         assert base_yml.data.get('id') == uid
 
     @pytest.mark.parametrize(argnames='marketpalces, configs_to_be_added, configs_to_be_removed', argvalues=[
-        ([MarketplaceVersions.XSOAR.value], INCIDENT_FETCH_REQUIRED_PARAMS, ALERT_FETCH_REQUIRED_PARAMS),
-        ([MarketplaceVersions.MarketplaceV2.value], ALERT_FETCH_REQUIRED_PARAMS, INCIDENT_FETCH_REQUIRED_PARAMS),
-        ([MarketplaceVersions.MarketplaceV2.value, MarketplaceVersions.XSOAR.value], INCIDENT_FETCH_REQUIRED_PARAMS,
+        ([MarketplaceVersions.XSOAR], INCIDENT_FETCH_REQUIRED_PARAMS, ALERT_FETCH_REQUIRED_PARAMS),
+        ([MarketplaceVersions.MarketplaceV2], ALERT_FETCH_REQUIRED_PARAMS, INCIDENT_FETCH_REQUIRED_PARAMS),
+        ([MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XSOAR], INCIDENT_FETCH_REQUIRED_PARAMS,
          ALERT_FETCH_REQUIRED_PARAMS),
 
     ])

@@ -86,7 +86,7 @@ class IDSetCreator:
 
     def save_id_set(self):
         if self.output == "":
-            self.output = MP_V2_ID_SET_PATH if self.marketplace == MarketplaceVersions.MarketplaceV2.value \
+            self.output = MP_V2_ID_SET_PATH if self.marketplace == MarketplaceVersions.MarketplaceV2 \
                 else DEFAULT_ID_SET_PATH
         if self.output:
             if not exists(self.output):

@@ -7,7 +7,8 @@ from requests import Response
 
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER, CONF_PATH, FILETYPE_TO_DEFAULT_FROMVERSION,
-    INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME, FileType)
+    INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME, FileType,
+    MarketplaceVersions)
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
@@ -236,10 +237,13 @@ ERROR_CODE = {
     'empty_outputs_common_paths': {'code': 'IN149', 'ui_applicable': False, 'related_field': 'contextOutput'},
     'invalid_siem_integration_name': {'code': 'IN150', 'ui_applicable': True, 'related_field': 'display'},
     "empty_command_arguments": {'code': 'IN151', 'ui_applicable': False, 'related_field': 'arguments'},
-    'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True, 'related_field': 'defaultvalue'},
-    'not_supported_integration_parameter_url_defaultvalue': {'code': 'IN153', 'ui_applicable': False, 'related_field': 'defaultvalue'},
+    'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True,
+                                                'related_field': 'defaultvalue'},
+    'not_supported_integration_parameter_url_defaultvalue': {'code': 'IN153', 'ui_applicable': False,
+                                                             'related_field': 'defaultvalue'},
     'missing_reliability_parameter': {'code': 'IN154', 'ui_applicable': False, 'related_field': 'configuration'},
     'integration_is_deprecated_and_used': {'code': 'IN155', 'ui_applicable': True, 'related_field': 'deprecated'},
+    'invalid_hidden_attribute_for_param': {'code': 'IN156', 'ui_applicable': False, 'related_field': 'hidden'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -925,6 +929,15 @@ class Errors:
             current_command_usage = '\n'.join(command_usage_list)
             erorr_str += f"{command_name} is being used in the following locations:\n{current_command_usage}\n"
         return erorr_str
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_hidden_attribute_for_param(param_name: str, invalid_value: str):
+        marketplace_values = ', '.join(MarketplaceVersions)
+        return f'The `hidden` attribute value ({invalid_value}) for the {param_name} parameter ' \
+               f'must be either a boolean, or a list of marketplace values ' \
+               f'(Possible marketplace values: {marketplace_values}). ' \
+               f'Note that this param is not required, and may be omitted.'
 
     @staticmethod
     @error_code_decorator

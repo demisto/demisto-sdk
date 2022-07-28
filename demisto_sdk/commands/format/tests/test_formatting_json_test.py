@@ -536,8 +536,8 @@ def test_remove_spaces_end_of_id_and_name(pack, name):
 
 
 @pytest.mark.parametrize(argnames='marketplaces', argvalues=[
-    [MarketplaceVersions.MarketplaceV2.value],
-    [MarketplaceVersions.XSOAR.value, MarketplaceVersions.MarketplaceV2.value]
+    [MarketplaceVersions.MarketplaceV2],
+    [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2]
 ])
 def test_set_marketplaces_xsoar_only_for_aliased_fields(mocker, pack, marketplaces):
     """

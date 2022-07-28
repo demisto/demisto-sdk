@@ -217,7 +217,7 @@ class ContentGraph:
 
 
 def create_content_graph() -> None:
-    shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
+    # shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
     # run_command_os('docker-compose up -d', REPO_PATH / 'neo4j')
     with ContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD) as content_graph:
         content_graph.parse_repository()

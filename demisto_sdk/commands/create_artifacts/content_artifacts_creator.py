@@ -795,7 +795,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         for widget in pack.widgets:
             content_items_handler.handle_content_item(widget)
             pack_report += dump_pack_conditionally(artifact_manager, widget)
-    elif artifact_manager.marketplace == MarketplaceVersions.MARKETPLACEV2:
+    elif artifact_manager.marketplace == MarketplaceVersions.MarketplaceV2:
         for parsing_rule in pack.parsing_rules:
             content_items_handler.handle_content_item(parsing_rule)
             pack_report += dump_pack_conditionally(artifact_manager, parsing_rule)

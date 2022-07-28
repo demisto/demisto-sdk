@@ -946,7 +946,7 @@ def upload(**kwargs):
             kwargs['detached_files'] = True
             kwargs.pop('input_config_file')
         if kwargs.pop('xsiam', False):
-            marketplace = MarketplaceVersions.MARKETPLACEV2
+            marketplace = MarketplaceVersions.MarketplaceV2
         else:
             marketplace = MarketplaceVersions.XSOAR
         os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()

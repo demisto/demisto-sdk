@@ -1928,7 +1928,7 @@ class TestMarketplaceTagParser:
         Then:
             - Remove all XSOAR tags and their text, and keep XSIAM text with tags
         """
-        self.MARKETPLACE_TAG_PARSER.marketplace = MarketplaceVersions.MARKETPLACEV2
+        self.MARKETPLACE_TAG_PARSER.marketplace = MarketplaceVersions.MarketplaceV2
         actual = self.MARKETPLACE_TAG_PARSER.parse_text(self.TEXT_WITH_TAGS)
         assert '### Sections:' in actual
         assert '### Inline:' in actual

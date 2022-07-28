@@ -140,7 +140,7 @@ class MarketplaceTagParser:
     def marketplace(self, marketplace):
         self._marketplace = marketplace
         self._should_remove_xsoar_text = marketplace != MarketplaceVersions.XSOAR
-        self._should_remove_xsiam_text = marketplace != MarketplaceVersions.MARKETPLACEV2
+        self._should_remove_xsiam_text = marketplace != MarketplaceVersions.MarketplaceV2
 
     def parse_text(self, text):
         # the order of parse is important. inline should always be checked after paragraph tag
@@ -2515,7 +2515,7 @@ def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[st
     """
 
     if item_type and item_type in SIEM_ONLY_ENTITIES:
-        return [MarketplaceVersions.MARKETPLACEV2]
+        return [MarketplaceVersions.MarketplaceV2]
 
     if not item_data:
         file_type = Path(item_path).suffix

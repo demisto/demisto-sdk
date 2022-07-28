@@ -1320,8 +1320,8 @@ class TestFormatting:
 
     @pytest.mark.parametrize(argnames='marketpalces, configs_to_be_added, configs_to_be_removed', argvalues=[
         ([MarketplaceVersions.XSOAR], INCIDENT_FETCH_REQUIRED_PARAMS, ALERT_FETCH_REQUIRED_PARAMS),
-        ([MarketplaceVersions.MARKETPLACEV2], ALERT_FETCH_REQUIRED_PARAMS, INCIDENT_FETCH_REQUIRED_PARAMS),
-        ([MarketplaceVersions.MARKETPLACEV2, MarketplaceVersions.XSOAR], INCIDENT_FETCH_REQUIRED_PARAMS,
+        ([MarketplaceVersions.MarketplaceV2], ALERT_FETCH_REQUIRED_PARAMS, INCIDENT_FETCH_REQUIRED_PARAMS),
+        ([MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XSOAR], INCIDENT_FETCH_REQUIRED_PARAMS,
          ALERT_FETCH_REQUIRED_PARAMS),
 
     ])

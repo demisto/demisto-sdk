@@ -2,21 +2,21 @@ import traceback
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-from .base import BaseContentParser
-from demisto_sdk.commands.content_graph.constants import PACK_METADATA_FILENAME, ContentTypes, Rel
-from .content_item import ContentItemParser
-
-
 from demisto_sdk.commands.common.tools import get_json
+from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, PACK_METADATA_FILENAME
+from demisto_sdk.commands.content_graph.parsers.parser_factory import ParserFactory
+import demisto_sdk.commands.content_graph.parsers.base_content as base_content
 
 
-class PackParser(BaseContentParser):
+class PackParser(base_content.BaseContentParser):
     def __init__(self, path: Path) -> None:
         self.pack_id: str = path.parts[-1]
         print(f'Parsing {self.content_type} {self.pack_id}')
         self.path: Path = path
         self.metadata: Dict[str, Any] = get_json(path / PACK_METADATA_FILENAME)
         self.marketplaces: List[str] = self.metadata.get('marketplaces', [])
+        self.nodes: Dict[ContentTypes, List[Dict[str, Any]]] = {}
+        self.relationships: Dict[Rel, List[Dict[str, Any]]] = {}
 
     @property
     def content_type(self) -> ContentTypes:
@@ -29,6 +29,18 @@ class PackParser(BaseContentParser):
     @property
     def deprecated(self) -> bool:
         return self.metadata.get('deprecated', False)
+
+    def add_pack_node(self) -> Dict[str, Any]:
+        self.nodes[ContentTypes.PACK] = [self.get_data()]
+
+    def add_content_item_node(self, parser: Any) -> Dict[str, Any]:
+        self.nodes.setdefault(parser.content_type, []).append(parser.get_data())
+
+    def add_content_item_relationships(self, parser: Any) -> None:
+        parser.add_relationship(Rel.IN_PACK, self.node_id)
+        for rel_type in Rel:
+            current_type_rels = parser.relationships.get(rel_type, [])
+            self.relationships.setdefault(rel_type, []).extend(current_type_rels)
 
     def get_data(self) -> Dict[str, Any]:
         return {
@@ -48,14 +60,15 @@ class PackParser(BaseContentParser):
         }
 
     def parse_pack(self) -> None:
-        PackSubGraphCreator.add_node(self)
+        self.add_pack_node()
         for folder in ContentTypes.pack_folders(self.path):
             self.parse_pack_folder(folder)
 
     def parse_pack_folder(self, folder_path: Path) -> None:
-        for content_item_path in folder_path.iterdir():
-            if content_item := ContentItemParser.from_path(content_item_path, self.marketplaces):
-                content_item.connect_to_pack(self.node_id)
+        for content_item_path in folder_path.iterdir():  # todo: consider multiprocessing
+            if content_item := ParserFactory.from_path(content_item_path, self.marketplaces):
+                self.add_content_item_node(content_item)
+                self.add_content_item_relationships(content_item)
 
 
 class PackSubGraphCreator:
@@ -65,34 +78,16 @@ class PackSubGraphCreator:
         nodes:         Holds all parsed nodes of a pack.
         relationships: Holds all parsed relationships of a pack.
     """
-    nodes: List[Dict[str, Any]] = []
-    relationships: List[Dict[str, Any]] = []
-
     @staticmethod
-    def from_path(path: Path) -> Tuple[List, List]:
+    def from_path(path: Path) -> Tuple[
+            Dict[ContentTypes, List[Dict[str, Any]]],
+            Dict[Rel, List[Dict[str, Any]]]
+        ]:
         """ Given a pack path, parses it into nodes and relationships. """
         try:
-            PackParser(path).parse_pack()
+            pack_parser = PackParser(path)
+            pack_parser.parse_pack()
         except Exception:
             print(traceback.format_exc())
             raise Exception(traceback.format_exc())
-        return PackSubGraphCreator.nodes, PackSubGraphCreator.relationships
-
-    @staticmethod
-    def add_node(parser: BaseContentParser) -> Dict[str, Any]:
-        node = {
-            'labels': parser.content_type.labels,
-            'data': {prop: val for prop, val in parser.get_data().items() if val is not None},
-        }
-        PackSubGraphCreator.nodes.append(node)
-
-    @staticmethod
-    def add_relationship(parser: BaseContentParser, rel_type: Rel, target_node: str, **kwargs: Dict[str, Any]) -> None:
-        relationship = {
-            'from': parser.node_id,
-            'type': rel_type.value,
-            'to': target_node,
-        }
-        if kwargs:
-            relationship.update({'props': kwargs})
-        PackSubGraphCreator.relationships.append(relationship)
+        return pack_parser.nodes, pack_parser.relationships

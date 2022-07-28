@@ -2,8 +2,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
-from .integration_script import IntegrationScriptParser, IntegrationScriptUnifier
-from .pack import PackSubGraphCreator
+from demisto_sdk.commands.content_graph.parsers.integration_script import IntegrationScriptParser, IntegrationScriptUnifier
 
 
 class IntegrationParser(IntegrationScriptParser):
@@ -11,7 +10,6 @@ class IntegrationParser(IntegrationScriptParser):
         super().__init__(path, pack_marketplaces)
         print(f'Parsing {self.content_type} {self.content_item_id}')
         self.script_info: Dict[str, Any] = self.yml_data.get('script', {})
-        PackSubGraphCreator.add_node(self)
         self.connect_to_commands()
         self.connect_to_dependencies()
         self.connect_to_tests()
@@ -25,7 +23,7 @@ class IntegrationParser(IntegrationScriptParser):
         integration_data = {
             'display_name': self.yml_data.get('display'),
             'type': self.script_info.get('subtype') or self.script_info.get('type'),
-            'docker_image': self.script_info.get('dockerimage'),
+            'docker_image': self.script_info.get('dockerimage', ''),
             'is_fetch': self.script_info.get('isfetch', False),
             'is_feed': self.script_info.get('feed', False),
         }
@@ -40,7 +38,7 @@ class IntegrationParser(IntegrationScriptParser):
             cmd_name = command_data.get('name')
             node_id: str = f'{ContentTypes.COMMAND}:{cmd_name}'
             deprecated: bool = command_data.get('deprecated', False) or self.deprecated
-            PackSubGraphCreator.add_relationship(self, Rel.HAS_COMMAND, node_id, deprecated=deprecated)
+            self.add_relationship(Rel.HAS_COMMAND, node_id, deprecated=deprecated)
 
     def connect_to_dependencies(self) -> None:
         if default_classifier := self.yml_data.get('defaultclassifier'):
@@ -64,4 +62,6 @@ class IntegrationParser(IntegrationScriptParser):
         return self.unifier.get_script_or_integration_package_data()[1]
 
     def get_integration_api_modules(self) -> List[str]:
-        return list(IntegrationScriptUnifier.check_api_module_imports(self.get_code()).values())
+        code = self.get_code()
+        api_modules = IntegrationScriptUnifier.check_api_module_imports(code).values()
+        return list(api_modules)

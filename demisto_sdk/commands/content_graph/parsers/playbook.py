@@ -2,24 +2,21 @@ import networkx
 from pathlib import Path
 from typing import Any, Dict, List
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes
-from .content_item import YAMLContentItemParser, TestableMixin
-from .pack import PackSubGraphCreator
-
 from demisto_sdk.commands.common.update_id_set import (
     BUILT_IN_FIELDS,
     get_fields_by_script_argument,
     build_tasks_graph
 )
+from demisto_sdk.commands.content_graph.constants import ContentTypes
+import demisto_sdk.commands.content_graph.parsers.content_item as content_item
 
 LIST_COMMANDS = ['Builtin|||setList', 'Builtin|||getList']
 
-class PlaybookParser(TestableMixin, YAMLContentItemParser):
+class PlaybookParser(content_item.YAMLContentItemParser):
     def __init__(self, path: Path, pack_marketplaces: List[str], is_test_playbook: bool = False) -> None:
         if not is_test_playbook:
             super().__init__(path, pack_marketplaces)
             print(f'Parsing {self.content_type} {self.content_item_id}')
-            PackSubGraphCreator.add_node(self)
             self.graph: networkx.DiGraph = build_tasks_graph(self.yml_data)
             self.connect_to_dependencies()
             self.connect_to_tests()
@@ -114,21 +111,3 @@ class PlaybookParser(TestableMixin, YAMLContentItemParser):
             self.handle_script_task(task, is_mandatory)
             self.handle_command_task(task, is_mandatory)
             self.handle_field_mapping(task, is_mandatory)
-
-    # def get_data(self) -> Dict[str, Any]:
-    #     yaml_content_item_data = super().get_data()
-    #     playbook_data = {
-    #         'node_id': self.node_id,
-    #         'id': self.content_item_id,
-    #         'name': self.yml_data.get('name'),
-    #         'deprecated': self.deprecated,
-    #         'display_name': self.yml_data.get('name'),
-    #         'fromversion': self.yml_data.get('fromversion'),
-    #         'toversion': self.yml_data.get('toversion'),
-    #         'source': ['github'],  # todo
-    #         'has_alternative_meta': False,  # todo (_x2)
-    #         'marketplaces': self.marketplaces,
-    #         'file_path': self.path.as_posix(),
-    #     }
-    #     return playbook_data | yaml_content_item_data
-

@@ -1,14 +1,14 @@
 from abc import abstractmethod
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import List
 
-from .content_item import YAMLContentItemParser, TestableMixin
+from demisto_sdk.commands.content_graph.parsers.content_item import YAMLContentItemParser
 
 from demisto_sdk.commands.unify.integration_script_unifier import \
     IntegrationScriptUnifier
 
 
-class IntegrationScriptParser(TestableMixin, YAMLContentItemParser):
+class IntegrationScriptParser(YAMLContentItemParser):
     def __init__(self, path: Path, pack_marketplaces: List[str]) -> None:
         super().__init__(path, pack_marketplaces)
         self.is_unified = YAMLContentItemParser.is_unified_file(self.path)

@@ -17,7 +17,7 @@ import docker
 
 DATABASE_URL = 'bolt://127.0.0.1:7687'
 USERNAME = 'neo4j'
-PASSWORD = 'test'
+PASSWORD = 'neo4j'
 REPO_PATH = Path(GitUtil(Content.git()).git_path())
 BATCH_SIZE = 10000
 

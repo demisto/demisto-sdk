@@ -58,7 +58,7 @@ class ContentGraph(ABC):
     def extend_graph_nodes_and_relationships(
         self,
         pack_nodes: Dict[ContentTypes, List[Dict[str, Any]]],
-        pack_relationships: Dict[ContentTypes, List[Dict[str, Any]]],
+        pack_relationships: Dict[Rel, List[Dict[str, Any]]],
     ) -> None:
         for content_type in ContentTypes:
             if content_type not in self.nodes:
@@ -164,9 +164,9 @@ class Neo4jContentGraph(ContentGraph):
     @staticmethod
     def create_constraints(tx: neo4j.Transaction) -> None:
         queries: List[str] = []
-        queries.extend(ContentGraph.build_nodes_props_uniqueness_queries())
-        # queries.extend(ContentGraph.build_nodes_props_existence_queries())
-        # queries.extend(ContentGraph.build_relationships_props_existence_queries())
+        queries.extend(Neo4jContentGraph.build_nodes_props_uniqueness_queries())
+        # queries.extend(Neo4jContentGraph.build_nodes_props_existence_queries())
+        # queries.extend(Neo4jContentGraph.build_relationships_props_existence_queries())
         for query in queries:
             print(query)
             tx.run(query)

@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import csv
 import multiprocessing
 import shutil
@@ -39,25 +40,20 @@ def dump_pickle(url: str, data: Any) -> None:
         file.write(pickle.dumps(data))
 
 
-class ContentGraph:
+class ContentGraph(ABC):
     def __init__(self, repo_path: Path) -> None:
         self.packs_path: Path = repo_path / PACKS_FOLDER
         self.nodes: Dict[ContentTypes, List[Dict[str, Any]]] = load_pickle('/Users/dtavori/dev/demisto/content-graph/nodes.pkl')
         self.relationships: Dict[Rel, List[Dict[str, Any]]] = load_pickle('/Users/dtavori/dev/demisto/content-graph/rels.pkl')
 
-    def parse_repository(self) -> None:
+    def parse_packs(self, packs_paths: Iterator[Path]) -> None:
         """ Parses packs into nodes and relationships by given paths. """
         if self.nodes and self.relationships:
             print('Skipping parsing.')
             return
         pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
-        for pack_nodes, pack_relationships in pool.map(PackSubGraphCreator.from_path, self.iter_packs()):
+        for pack_nodes, pack_relationships in pool.map(PackSubGraphCreator.from_path, packs_paths):
             self.extend_graph_nodes_and_relationships(pack_nodes, pack_relationships)
-
-    def iter_packs(self) -> Iterator[Path]:
-        for path in self.packs_path.iterdir():  # todo: handle repo path is invalid
-            if path.is_dir():
-                yield path
     
     def extend_graph_nodes_and_relationships(
         self,
@@ -72,6 +68,47 @@ class ContentGraph:
             if rel not in self.relationships:
                 self.relationships[rel] = []
             self.relationships[rel].extend(pack_relationships.get(rel, []))
+
+    def parse_repository(self) -> None:
+        """ Parses all repository packs into nodes and relationships. """
+        self.clean_graph()
+        all_packs_paths = self.iter_packs()
+        self.parse_packs(all_packs_paths)
+        self.add_parsed_nodes_and_relationships_to_graph()
+
+    @abstractmethod
+    def clean_graph(self) -> None:
+        pass
+
+    def iter_packs(self) -> Iterator[Path]:
+        for path in self.packs_path.iterdir():  # todo: handle repo path is invalid
+            if path.is_dir():
+                yield path
+
+    @abstractmethod
+    def add_parsed_nodes_and_relationships_to_graph(self) -> None:
+        pass
+
+    def build_modified_packs_paths(self, packs: List[str]) -> Iterator[Path]:
+        for pack_id in packs:
+            pack_path = Path(self.packs_path / pack_id)
+            if not pack_path.is_dir():
+                raise Exception(f'Could not find path of pack {pack_id}.')
+            yield pack_path
+
+    def parse_modified_packs(self) -> None:
+        packs = self.get_modified_packs()
+        self.delete_modified_packs_from_graph(packs)
+        packs_paths = self.build_modified_packs_paths(packs)
+        self.parse_packs(packs_paths)
+        self.add_parsed_nodes_and_relationships_to_graph()
+
+    @abstractmethod
+    def delete_modified_packs_from_graph(self, packs: List[str]) -> None:
+        pass
+
+    def get_modified_packs(self) -> List[str]:
+        return []  # todo
 
 
 class Neo4jContentGraph(ContentGraph):
@@ -163,6 +200,12 @@ class Neo4jContentGraph(ContentGraph):
             for prop in props:
                 queries.append(template.format(label=label, prop=prop))
         return queries
+
+    def clean_graph(self) -> None:
+        pass  # todo
+
+    def delete_modified_packs_from_graph(self, packs: List[str]) -> None:
+        pass  # todo
 
     @staticmethod
     def import_nodes_by_type(tx: neo4j.Transaction, content_type: ContentTypes) -> None:
@@ -264,7 +307,12 @@ class Neo4jContentGraph(ContentGraph):
             return True
         return False
 
-    def import_csv_nodes_and_relationships(self) -> None:
+    def add_parsed_nodes_and_relationships_to_graph(self) -> None:
+        dump_pickle('/Users/dtavori/dev/demisto/content-graph/nodes.pkl', self.nodes)
+        dump_pickle('/Users/dtavori/dev/demisto/content-graph/rels.pkl', self.relationships)
+        before_creating_nodes = datetime.now()
+        print(f'Time since started: {(before_creating_nodes - self.start_time).total_seconds() / 60} minutes')
+
         with self.driver.session() as session:
             for content_type in ContentTypes.non_abstracts():
                 if self.create_node_csv_file(content_type):
@@ -280,15 +328,11 @@ class Neo4jContentGraph(ContentGraph):
                     else:
                         session.write_transaction(self.import_relationships_by_type, rel)
 
-    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
-        dump_pickle('/Users/dtavori/dev/demisto/content-graph/nodes.pkl', self.nodes)
-        dump_pickle('/Users/dtavori/dev/demisto/content-graph/rels.pkl', self.relationships)
-        before_creating_nodes = datetime.now()
-        print(f'Time since started: {(before_creating_nodes - self.start_time).total_seconds() / 60} minutes')
-        self.import_csv_nodes_and_relationships()
         after_creating_nodes = datetime.now()
         print(f'Time to create graph: {(after_creating_nodes - before_creating_nodes).total_seconds() / 60} minutes')
         print(f'Time since started: {(after_creating_nodes - self.start_time).total_seconds() / 60} minutes')
+
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         self.driver.close()
         # self.dump()
 

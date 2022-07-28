@@ -308,8 +308,8 @@ class Neo4jContentGraph(ContentGraph):
         return False
 
     def add_parsed_nodes_and_relationships_to_graph(self) -> None:
-        dump_pickle('/Users/dtavori/dev/demisto/content-graph/nodes.pkl', self.nodes)
-        dump_pickle('/Users/dtavori/dev/demisto/content-graph/rels.pkl', self.relationships)
+        # dump_pickle('/Users/dtavori/dev/demisto/content-graph/nodes.pkl', self.nodes)
+        # dump_pickle('/Users/dtavori/dev/demisto/content-graph/rels.pkl', self.relationships)
         before_creating_nodes = datetime.now()
         print(f'Time since started: {(before_creating_nodes - self.start_time).total_seconds() / 60} minutes')
 

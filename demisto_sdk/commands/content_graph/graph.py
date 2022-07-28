@@ -74,24 +74,23 @@ class ContentGraph:
         print(f'Time since started: {(after_creating_rels - self.start_time).total_seconds() / 60} minutes')
         self.driver.close()
         logger.info('Dumping graph to content/neo4j/backups/content-graph.dump')
-        self.dump()
+        # self.dump()
 
 
     def dump(self):
-        
-        docker_client = docker.from_env()
-        try:
-            docker_client.containers.get('neo4j-dump').remove(force=True)
-        except Exception as e:
-            print('Container does not exist')
+        # docker_client = docker.from_env()
+        # try:
+        #     docker_client.containers.get('neo4j-dump').remove(force=True)
+        # except Exception as e:
+        #     print('Container does not exist')
 
-        docker_client.containers.run(image='neo4j/neo4j-admin:4.4.9',
-                                     remove=True,
-                                     volumes={f'{REPO_PATH}/neo4j/data': {'bind': '/data', 'mode': 'rw'},
-                                              f'{REPO_PATH}/neo4j/backups': {'bind': '/backups', 'mode': 'rw'}},
+        # docker_client.containers.run(image='neo4j/neo4j-admin:4.4.9',
+        #                              remove=True,
+        #                              volumes={f'{REPO_PATH}/neo4j/data': {'bind': '/data', 'mode': 'rw'},
+        #                                       f'{REPO_PATH}/neo4j/backups': {'bind': '/backups', 'mode': 'rw'}},
 
-                                     command='neo4j-admin dump --database=neo4j --to=/backups/content-graph.dump'
-                                     )
+        #                              command='neo4j-admin dump --database=neo4j --to=/backups/content-graph.dump'
+        #                              )
 
     def load(self):
         shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
@@ -219,5 +218,9 @@ class ContentGraph:
 
 def create_content_graph() -> None:
     shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
+    # run_command_os('docker-compose up -d', REPO_PATH / 'neo4j')
     with ContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD) as content_graph:
         content_graph.parse_repository()
+    # run_command_os('docker-compose down', REPO_PATH / 'neo4j')
+
+    

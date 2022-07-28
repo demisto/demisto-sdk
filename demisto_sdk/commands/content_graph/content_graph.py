@@ -18,7 +18,7 @@ import docker
 
 DATABASE_URL = 'bolt://127.0.0.1:7687'
 USERNAME = 'neo4j'
-PASSWORD = 'test'
+PASSWORD = 'neo4j'
 REPO_PATH = Path(GitUtil(Content.git()).git_path())
 BATCH_SIZE = 10000
 IMPORT_PATH = ''  # todo
@@ -58,20 +58,20 @@ class ContentGraph:
         return self
 
     def dump(self):
-        
-        docker_client = docker.from_env()
-        try:
-            docker_client.containers.get('neo4j-dump').remove(force=True)
-        except Exception as e:
-            print('Container does not exist')
+        pass
+        # docker_client = docker.from_env()
+        # try:
+        #     docker_client.containers.get('neo4j-dump').remove(force=True)
+        # except Exception as e:
+        #     print('Container does not exist')
 
-        docker_client.containers.run(image='neo4j/neo4j-admin:4.4.9',
-                                     remove=True,
-                                     volumes={f'{REPO_PATH}/neo4j/data': {'bind': '/data', 'mode': 'rw'},
-                                              f'{REPO_PATH}/neo4j/backups': {'bind': '/backups', 'mode': 'rw'}},
+        # docker_client.containers.run(image='neo4j/neo4j-admin:4.4.9',
+        #                              remove=True,
+        #                              volumes={f'{REPO_PATH}/neo4j/data': {'bind': '/data', 'mode': 'rw'},
+        #                                       f'{REPO_PATH}/neo4j/backups': {'bind': '/backups', 'mode': 'rw'}},
 
-                                     command='neo4j-admin dump --database=neo4j --to=/backups/content-graph.dump'
-                                     )
+        #                              command='neo4j-admin dump --database=neo4j --to=/backups/content-graph.dump'
+        #                              )
 
     def load(self):
         shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
@@ -285,8 +285,11 @@ class ContentGraph:
         print(f'Time to create graph: {(after_creating_nodes - before_creating_nodes).total_seconds() / 60} minutes')
         print(f'Time since started: {(after_creating_nodes - self.start_time).total_seconds() / 60} minutes')
         self.driver.close()
+        # self.dump()
 
 def create_content_graph() -> None:
-    shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
+    # shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
+    # run_command_os('docker-compose up -d', REPO_PATH / 'neo4j')
     with ContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD) as content_graph:
         content_graph.parse_repository()
+    # run_command_os('docker-compose down', REPO_PATH / 'neo4j')

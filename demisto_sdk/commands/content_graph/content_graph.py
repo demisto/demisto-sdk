@@ -43,8 +43,8 @@ def dump_pickle(url: str, data: Any) -> None:
 class ContentGraph(ABC):
     def __init__(self, repo_path: Path) -> None:
         self.packs_path: Path = repo_path / PACKS_FOLDER
-        self.nodes: Dict[ContentTypes, List[Dict[str, Any]]] = load_pickle('/Users/dtavori/dev/demisto/content-graph/nodes.pkl')
-        self.relationships: Dict[Rel, List[Dict[str, Any]]] = load_pickle('/Users/dtavori/dev/demisto/content-graph/rels.pkl')
+        self.nodes: Dict[ContentTypes, List[Dict[str, Any]]] = {}
+        self.relationships: Dict[Rel, List[Dict[str, Any]]] = {}
 
     def parse_packs(self, packs_paths: Iterator[Path]) -> None:
         """ Parses packs into nodes and relationships by given paths. """

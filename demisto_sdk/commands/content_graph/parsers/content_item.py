@@ -107,8 +107,7 @@ class YAMLContentItemParser(ContentItemParser):
         tests_playbooks: List[str] =  self.yml_data.get('tests', [])
         for test_playbook_id in tests_playbooks:
             if 'no test' not in test_playbook_id.lower():
-                test_playbook_node_id = f'{ContentTypes.TEST_PLAYBOOK}:{test_playbook_id}'
-                self.add_relationship(Rel.TESTED_BY, test_playbook_node_id)
+                self.add_relationship(Rel.TESTED_BY, test_playbook_id)
 
     def get_yaml(self) -> Dict[str, Union[str, List[str]]]:
         if not self.path.is_dir():

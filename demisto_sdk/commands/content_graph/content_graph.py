@@ -114,6 +114,139 @@ class ContentGraph(ABC):
         return []  # todo
 
 
+class Neo4jQuery:
+    @staticmethod
+    def create_nodes_indexes() -> List[str]:
+        queries: List[str] = []
+        template = 'CREATE INDEX ON :{label}({props})'
+        constraints = ContentTypes.props_indexes()
+        for label, props in constraints.items():
+            props = ', '.join(props)
+            queries.append(template.format(label=label, props=props))
+        return queries
+
+    @staticmethod
+    def create_nodes_props_uniqueness_constraints() -> List[str]:
+        queries: List[str] = []
+        template = 'CREATE CONSTRAINT IF NOT EXISTS FOR (n:{label}) REQUIRE {props} IS UNIQUE'
+        constraints = ContentTypes.props_uniqueness_constraints()
+        for label, props in constraints.items():
+            props = ', '.join([f'n.{p}' for p in props])
+            queries.append(template.format(label=label, props=props))
+        return queries
+
+    @staticmethod
+    def create_nodes_props_existence_constraints() -> List[str]:
+        queries: List[str] = []
+        template = 'CREATE CONSTRAINT IF NOT EXISTS FOR (n:{label}) REQUIRE n.{prop} IS NOT NULL'
+        constraints = ContentTypes.props_existence_constraints()
+        for label, props in constraints.items():
+            for prop in props:
+                queries.append(template.format(label=label, prop=prop))
+        return queries
+
+    @staticmethod
+    def create_relationships_props_existence_constraints() -> List[str]:
+        queries: List[str] = []
+        template = 'CREATE CONSTRAINT IF NOT EXISTS FOR ()-[r:{label}]-() REQUIRE r.{prop} IS NOT NULL'
+        constraints = Rel.props_existence_constraints()
+        for label, props in constraints.items():
+            for prop in props:
+                queries.append(template.format(label=label, prop=prop))
+        return queries
+
+    @staticmethod
+    def create_nodes_from_csv(content_type: ContentTypes) -> str:
+        filename = f'file:///{content_type}.csv'
+        return (
+            f'LOAD CSV WITH HEADERS FROM "{filename}" AS node_data '
+            f'CREATE (n:{Neo4jQuery.labels_of(content_type)}{{node_id: node_data.node_id}}) SET n += node_data'
+        )
+    
+    @staticmethod
+    def create_has_command_relationships_from_csv() -> str:
+        filename = f'file:///{Rel.HAS_COMMAND}.csv'
+        return (
+            f'LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data '
+            f'MATCH (a:{ContentTypes.INTEGRATION}{{node_id: rel_data.from}}) '
+            f'MERGE (b:{ContentTypes.COMMAND_OR_SCRIPT}{{id: rel_data.to}}) '
+            f'ON CREATE SET b :{ContentTypes.COMMAND}, b.node_id = "{ContentTypes.COMMAND}:" + rel_data.to '
+            f'MERGE (a)-[r:{Rel.HAS_COMMAND}]->(b) '
+            'SET r.deprecated = rel_data.deprecated'  # todo: see todo in generic create
+        )
+
+    @staticmethod
+    def create_executes_relationships_from_csv() -> str:
+        filename = f'file:///{Rel.EXECUTES}.csv'
+        return (
+            f'LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data '
+            f'MATCH (a:{ContentTypes.SCRIPT}{{node_id: rel_data.from}}) '
+            f'MERGE (b:{ContentTypes.COMMAND_OR_SCRIPT}{{id: rel_data.to}}) '
+            f'MERGE (a)-[r:{Rel.EXECUTES}]->(b) '
+            'SET r.deprecated = rel_data.deprecated'  # todo: see todo in generic create
+        )
+
+    @staticmethod
+    def create_tested_by_relationships_from_csv() -> str:
+        filename = f'file:///{Rel.TESTED_BY}.csv'
+        return (
+            f'LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data '
+            f'MATCH (a:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.from}}) '
+            f'MERGE (b:{ContentTypes.TEST_PLAYBOOK}{{id: rel_data.to}}) '
+            f'ON CREATE SET b.node_id = "{ContentTypes.TEST_PLAYBOOK}:" + rel_data.to '
+            f'MERGE (a)-[r:{Rel.TESTED_BY}]->(b) '
+        )
+
+    @staticmethod
+    def create_relationships_from_csv(rel_type: Rel) -> str:
+        if rel_type == Rel.EXECUTES:
+            return Neo4jQuery.create_executes_relationships_from_csv()
+        if rel_type == Rel.HAS_COMMAND:
+            return Neo4jQuery.create_has_command_relationships_from_csv()
+        if rel_type == Rel.TESTED_BY:
+            return Neo4jQuery.create_tested_by_relationships_from_csv()
+
+        filename = f'file:///{rel_type}.csv'
+        return (
+            f'LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data '
+            f'MATCH (a:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.from}}) '
+            f'MERGE (b:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.to}}) '
+            f'MERGE (a)-[r:{rel_type}]->(b) SET r = rel_data'  # todo: should be r += rel_data.props, update in parser
+        )
+    
+    @staticmethod
+    def create_pack_dependencies() -> str:
+        return (
+            ''
+        )
+
+    @staticmethod
+    def export_nodes_by_type(content_type: ContentTypes) -> None:
+        filename = f'{content_type}.csv'
+        return (
+            f'MATCH (n:{content_type}) '
+            'WITH collect(n) AS nodes '
+            f'CALL apoc.export.csv.data(nodes, [], "{filename}", {{}}) '
+            'YIELD file, nodes, done '
+            'RETURN file, nodes, done'
+        )
+
+    @staticmethod
+    def export_relationships_by_type(rel_type: Rel) -> None:
+        filename = f'{rel_type}.csv'
+        return (
+            f'MATCH ()-[n:{rel_type}]->() '
+            'WITH collect(n) AS rels '
+            f'CALL apoc.export.csv.data([], rels, "{filename}", {{}}) '
+            'YIELD done '
+            'RETURN done'
+        )
+
+    @staticmethod
+    def labels_of(content_type: ContentTypes) -> str:
+        return ':'.join(content_type.labels)
+
+
 class Neo4jContentGraph(ContentGraph):
     def __init__(self, repo_path: Path, database_uri: str, user: str = None, password: str = None) -> None:
         super().__init__(repo_path)
@@ -125,6 +258,7 @@ class Neo4jContentGraph(ContentGraph):
     def __enter__(self):
         with self.driver.session() as session:
             tx = session.begin_transaction()
+            self.create_indexes(tx)
             self.create_constraints(tx)
             tx.commit()
             tx.close()
@@ -163,44 +297,22 @@ class Neo4jContentGraph(ContentGraph):
                                      )
 
     @staticmethod
-    def create_constraints(tx: neo4j.Transaction) -> None:
+    def create_indexes(tx: neo4j.Transaction) -> None:
         queries: List[str] = []
-        queries.extend(Neo4jContentGraph.build_nodes_props_uniqueness_queries())
-        # queries.extend(Neo4jContentGraph.build_nodes_props_existence_queries())
-        # queries.extend(Neo4jContentGraph.build_relationships_props_existence_queries())
+        queries.extend(Neo4jQuery.create_nodes_indexes())
         for query in queries:
-            print(query)
+            print('Running query:' + query)
             tx.run(query)
 
     @staticmethod
-    def build_nodes_props_uniqueness_queries() -> List[str]:
+    def create_constraints(tx: neo4j.Transaction) -> None:
         queries: List[str] = []
-        template = 'CREATE CONSTRAINT IF NOT EXISTS FOR (n:{label}) REQUIRE {props} IS UNIQUE'
-        constraints = ContentTypes.props_uniqueness_constraints()
-        for label, props in constraints.items():
-            props = ', '.join([f'n.{p}' for p in props])
-            queries.append(template.format(label=label, props=props))
-        return queries
-
-    @staticmethod
-    def build_nodes_props_existence_queries() -> List[str]:
-        queries: List[str] = []
-        template = 'CREATE CONSTRAINT IF NOT EXISTS FOR (n:{label}) REQUIRE n.{prop} IS NOT NULL'
-        constraints = ContentTypes.props_existence_constraints()
-        for label, props in constraints.items():
-            for prop in props:
-                queries.append(template.format(label=label, prop=prop))
-        return queries
-
-    @staticmethod
-    def build_relationships_props_existence_queries() -> List[str]:
-        queries: List[str] = []
-        template = 'CREATE CONSTRAINT IF NOT EXISTS FOR ()-[r:{label}]-() REQUIRE r.{prop} IS NOT NULL'
-        constraints = Rel.props_existence_constraints()
-        for label, props in constraints.items():
-            for prop in props:
-                queries.append(template.format(label=label, prop=prop))
-        return queries
+        queries.extend(Neo4jQuery.create_nodes_props_uniqueness_constraints())
+        # queries.extend(Neo4jQuery.create_nodes_props_existence_constraints())
+        # queries.extend(Neo4jQuery.create_relationships_props_existence_constraints())
+        for query in queries:
+            print('Running query:' + query)
+            tx.run(query)
 
     def clean_graph(self) -> None:
         pass  # todo
@@ -208,83 +320,24 @@ class Neo4jContentGraph(ContentGraph):
     def delete_modified_packs_from_graph(self, packs: List[str]) -> None:
         pass  # todo
 
-    @staticmethod
-    def import_nodes_by_type(tx: neo4j.Transaction, content_type: ContentTypes) -> None:
-        filename = f'file:///{content_type}.csv'
-        labels = ''.join([f':{label}' for label in content_type.labels])
-        query = (
-            f'LOAD CSV WITH HEADERS FROM "{filename}" AS node_data '
-            f'CREATE (n{labels}{{node_id: node_data.node_id}}) SET n += node_data'
-        )
-        tx.run(query)
-        print(f'Imported {filename}')
+    def add_parsed_nodes_and_relationships_to_graph(self) -> None:
+        # dump_pickle('/Users/dtavori/dev/demisto/content-graph/nodes.pkl', self.nodes)
+        # dump_pickle('/Users/dtavori/dev/demisto/content-graph/rels.pkl', self.relationships)
+        before_creating_nodes = datetime.now()
+        print(f'Time since started: {(before_creating_nodes - self.start_time).total_seconds() / 60} minutes')
 
-    @staticmethod
-    def export_nodes_by_type(tx: neo4j.Transaction, content_type: ContentTypes) -> None:
-        query = (
-            'MATCH (n:$label) '
-            'WITH collect(n) AS nodes '
-            'CALL apoc.export.csv.data(nodes, [], "$filename", {}) '
-            'YIELD file, nodes, done '
-            'RETURN file, nodes, done'
-        )
-        result = tx.run(query, label=content_type.value, filename=f'{content_type.value}.csv').single()
-        print(result['done'])
-
-    @staticmethod
-    def import_relationships_by_type(tx: neo4j.Transaction, rel_type: Rel) -> None:
-        filename = f'file:///{rel_type}.csv'
-        query = (
-            f'LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data '
-            f'MATCH (a:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.from}}) '
-            f'MERGE (b:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.to}}) '
-            f'MERGE (a)-[r:{rel_type}]->(b) SET r += rel_data'
-        )
-        tx.run(query)
-        print(f'Imported {filename}')
-
-    @staticmethod
-    def import_executes_relationships(tx: neo4j.Transaction) -> None:
-        filename = f'file:///{Rel.EXECUTES}.csv'
-        query = (
-            f'LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data '
-            f'MATCH (a:{ContentTypes.SCRIPT}{{node_id: rel_data.from}}) '
-            f'MERGE (b:{ContentTypes.COMMAND_OR_SCRIPT}{{id: rel_data.to}}) '
-            f'MERGE (a)-[r:{Rel.EXECUTES}]->(b) SET r += rel_data'
-        )
-        tx.run(query)
-        print(f'Imported {filename}')
-
-    @staticmethod
-    def import_has_command_relationships(tx: neo4j.Transaction) -> None:
-        filename = f'file:///{Rel.HAS_COMMAND}.csv'
-        query = (
-            f'LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data '
-            f'MATCH (a:{ContentTypes.INTEGRATION}{{node_id: rel_data.from}}) '
-            f'MERGE (b:{ContentTypes.COMMAND}{{node_id: rel_data.to}}) '
-            f'MERGE (a)-[r:{Rel.HAS_COMMAND}]->(b) SET r += rel_data'
-        )
-        tx.run(query)
-        print(f'Imported {filename}')
-
-    @staticmethod
-    def export_relationships_by_type(tx: neo4j.Transaction, rel_type: Rel) -> None:
-        query = (
-            'MATCH ()-[n:$rel]->() '
-            'WITH collect(n) AS rels '
-            'CALL apoc.export.csv.data([], rels, "$rel.csv", {}) '
-            'YIELD done '
-            'RETURN done'
-        )
-        result = tx.run(query, rel=rel_type.value, filename=f'{rel_type.value}.csv').single()
-        print(result['done'])
-
-    def export_all(self) -> None:
         with self.driver.session() as session:
-            for content_type in ContentTypes.non_abstracts():
-                session.write_transaction(self.export_nodes_by_type, content_type)
+            for content_type in ContentTypes.non_abstracts():  # todo: parallelize?
+                if self.create_node_csv_file(content_type):
+                    session.write_transaction(self.import_nodes_by_type, content_type)
             for rel in Rel:
-                session.write_transaction(self.export_relationships_by_type, rel)
+                if self.create_relationship_csv_file(rel):  # todo: parallelize?
+                    session.write_transaction(self.import_relationships_by_type, rel)
+            # session.write_transaction(self.create_pack_dependencies_relationships)
+
+        after_creating_nodes = datetime.now()
+        print(f'Time to create graph: {(after_creating_nodes - before_creating_nodes).total_seconds() / 60} minutes')
+        print(f'Time since started: {(after_creating_nodes - self.start_time).total_seconds() / 60} minutes')
 
     def create_node_csv_file(self, content_type: ContentTypes) -> bool:
         if self.nodes.get(content_type):
@@ -308,30 +361,43 @@ class Neo4jContentGraph(ContentGraph):
             return True
         return False
 
-    def add_parsed_nodes_and_relationships_to_graph(self) -> None:
-        # dump_pickle('/Users/dtavori/dev/demisto/content-graph/nodes.pkl', self.nodes)
-        # dump_pickle('/Users/dtavori/dev/demisto/content-graph/rels.pkl', self.relationships)
-        before_creating_nodes = datetime.now()
-        print(f'Time since started: {(before_creating_nodes - self.start_time).total_seconds() / 60} minutes')
+    @staticmethod
+    def import_nodes_by_type(tx: neo4j.Transaction, content_type: ContentTypes) -> None:
+        query = Neo4jQuery.create_nodes_from_csv(content_type)
+        tx.run(query)
+        print(f'Imported {content_type}.csv')
 
+    @staticmethod
+    def import_relationships_by_type(tx: neo4j.Transaction, rel_type: Rel) -> None:
+        query = Neo4jQuery.create_relationships_from_csv(rel_type)
+        tx.run(query)
+        print(f'Imported {rel_type}')
+    
+    @staticmethod
+    def create_pack_dependencies_relationships(tx: neo4j.Transaction) -> None:
+        query = Neo4jQuery.create_pack_dependencies()
+        tx.run(query)
+        print('Created dependencies between packs.')
+
+
+    @staticmethod
+    def export_nodes_by_type(tx: neo4j.Transaction, content_type: ContentTypes) -> None:
+        query = Neo4jQuery.export_nodes_by_type(content_type)
+        result = tx.run(query).single()
+        print(result['done'])
+
+    @staticmethod
+    def export_relationships_by_type(tx: neo4j.Transaction, rel_type: Rel) -> None:
+        query = Neo4jQuery.export_relationships_by_type(rel_type)
+        result = tx.run(query).single()
+        print(result['done'])
+
+    def export_all(self) -> None:
         with self.driver.session() as session:
             for content_type in ContentTypes.non_abstracts():
-                if self.create_node_csv_file(content_type):
-                    session.write_transaction(self.import_nodes_by_type, content_type)
-            if self.create_relationship_csv_file(Rel.HAS_COMMAND):
-                session.write_transaction(self.import_has_command_relationships)
+                session.write_transaction(self.export_nodes_by_type, content_type)
             for rel in Rel:
-                if rel == Rel.HAS_COMMAND:
-                    continue
-                if self.create_relationship_csv_file(rel):
-                    if rel == Rel.EXECUTES:
-                        session.write_transaction(self.import_executes_relationships)
-                    else:
-                        session.write_transaction(self.import_relationships_by_type, rel)
-
-        after_creating_nodes = datetime.now()
-        print(f'Time to create graph: {(after_creating_nodes - before_creating_nodes).total_seconds() / 60} minutes')
-        print(f'Time since started: {(after_creating_nodes - self.start_time).total_seconds() / 60} minutes')
+                session.write_transaction(self.export_relationships_by_type, rel)
 
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         self.driver.close()

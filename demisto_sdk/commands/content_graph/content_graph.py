@@ -302,22 +302,22 @@ class Neo4jContentGraph(ContentGraph):
             try:
                 docker_client.containers.get(f'neo4j-{name}').remove(force=True)
             except Exception as e:
-                logger.info(f'Could not remove neo4j-dump container: {e}')
+                logger.info(f'Could not remove neo4j container: {e}')
             docker_client.containers.run(image='neo4j/neo4j-admin:4.4.9',
                                          name=f'neo4j-{name}',
                                          remove=True,
                                          volumes={f'{REPO_PATH}/neo4j/data': {'bind': '/data', 'mode': 'rw'},
                                                   f'{REPO_PATH}/neo4j/backups': {'bind': '/backups', 'mode': 'rw'}},
 
-                                         command=command
+                                         command=f'cd / && {command}'
                                          )
 
     def dump(self):
-        self.neo4j_admin_command('dump', 'neo4j-admin dump --database=neo4j --to=/backups/content-graph.dump')
+        self.neo4j_admin_command('dump', 'neo4j-admin dump --database=neo4j --to=backups/content-graph.dump')
 
     def load(self):
         shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
-        self.neo4j_admin_command('load', 'neo4j-admin load --from=/backups/content-graph.dump')
+        self.neo4j_admin_command('load', 'neo4j-admin load --from=backups/content-graph.dump')
 
     @staticmethod
     def create_indexes(tx: neo4j.Transaction) -> None:
@@ -352,7 +352,7 @@ class Neo4jContentGraph(ContentGraph):
                 if self.nodes.get(content_type):
                     session.write_transaction(self.import_nodes_by_type, content_type)
             for rel in Rel:
-                if self.relationships.get(rel):  # todo: parallelize?
+                if self.relationships.get(content_type):  # todo: parallelize?
                     session.write_transaction(self.import_relationships_by_type, rel)
             # session.write_transaction(self.create_pack_dependencies_relationships)
 

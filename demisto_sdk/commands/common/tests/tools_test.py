@@ -1801,8 +1801,7 @@ class TestGetItemMarketplaces:
                 'id': 'PackID2',
             }
         }
-        mocker.patch('demisto_sdk.commands.common.tools.get_mp_types_from_metadata_by_item',
-                     return_value=['marketplacev2'])
+        mocker.patch('demisto_sdk.commands.common.tools.get_mp_types_from_metadata_by_item', return_value=['marketplacev2'])
         marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml',
                                              item_data=item_data, packs=packs)
 

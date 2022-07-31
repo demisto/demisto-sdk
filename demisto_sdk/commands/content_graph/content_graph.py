@@ -271,6 +271,7 @@ class Neo4jContentGraph(ContentGraph):
 
     def start_neo4j_service(self, ):
         if not self.use_docker:
+            run_command_os(f'neo4j-admin set-initial-password {PASSWORD}', REPO_PATH / 'neo4j')
             run_command_os('neo4j start', REPO_PATH / 'neo4j')
         else:
             docker_client = docker.from_env()

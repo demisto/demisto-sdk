@@ -1134,9 +1134,7 @@ class IntegrationValidator(ContentEntityValidator):
         Returns:
             bool. True if there aren't non-allowed hidden parameters. False otherwise.
         """
-        def is_bool(input_: Union[bool, str]):
-            if isinstance(input_, bool):
-                return True
+        def is_str_bool(input_: str):
             try:
                 string_to_bool(input_)
                 return True
@@ -1150,14 +1148,14 @@ class IntegrationValidator(ContentEntityValidator):
             hidden = param.get('hidden')
 
             invalid_type = not isinstance(hidden, (type(None), bool, list, str))
-            invalid_string = isinstance(hidden, str) and not is_bool(hidden)
+            invalid_string = isinstance(hidden, str) and not is_str_bool(hidden)
 
             if invalid_type or invalid_string:
                 message, code = Errors.invalid_hidden_attribute_for_param(name, hidden)
                 if self.handle_error(message, code, self.file_path):
                     valid = False
 
-            is_true = (hidden is True) or (is_bool(hidden) and string_to_bool(hidden))
+            is_true = (hidden is True) or (is_str_bool(hidden) and string_to_bool(hidden))
             invalid_bool = is_true and name not in self.ALLOWED_HIDDEN_PARAMS
             hidden_in_all_marketplaces = isinstance(hidden, list) and set(hidden) == set(MarketplaceVersions)
 

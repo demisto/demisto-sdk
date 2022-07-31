@@ -2958,6 +2958,9 @@ def string_to_bool(
         accept_int: bool = False,
         accept_single_letter: bool = False,
 ) -> Optional[bool]:
+    if not isinstance(input_, str):
+        raise ValueError('cannot convert non-string to bool')
+
     _considered_true = ['true']
     _considered_false = ['false']
 

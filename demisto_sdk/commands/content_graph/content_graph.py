@@ -425,8 +425,7 @@ class Neo4jContentGraph(ContentGraph):
 
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         self.driver.close()
-        if self.should_use_docker:
-            self.stop_neo4j_service()
+        self.stop_neo4j_service()
 
 
 def create_content_graph(use_docker: bool = True) -> None:

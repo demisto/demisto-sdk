@@ -202,7 +202,7 @@ ERROR_CODE = {
     "parameter_missing_from_yml": {'code': "IN121", 'ui_applicable': True, 'related_field': 'configuration'},
     "parameter_missing_for_feed": {'code': "IN122", 'ui_applicable': True, 'related_field': 'configuration'},
     "invalid_version_integration_name": {'code': "IN123", 'ui_applicable': True, 'related_field': 'display'},
-    "found_hidden_param": {'code': "IN124", 'ui_applicable': False, 'related_field': '<parameter-name>.hidden'},
+    "param_not_allowed_to_hide": {'code': "IN124", 'ui_applicable': False, 'related_field': '<parameter-name>.hidden'},
     "no_default_value_in_parameter": {'code': "IN125", 'ui_applicable': False,
                                       'related_field': '<parameter-name>.default'},
     "parameter_missing_from_yml_not_community_contributor": {'code': "IN126", 'ui_applicable': False,
@@ -932,17 +932,24 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def param_not_allowed_to_hide(parameter_name: str):
+        """
+        Note: This error is used when the parameter has `hidden:true` or mentions all marketplaces (equivalent to true)
+        See invalid_hidden_attribute_for_param for invalid value types.
+
+        """
+        return f"Parameter: \"{parameter_name}\" can't be hidden in all marketplaces. " \
+               f"Please either remove the `hidden` attribute, " \
+               f"or replace its value with a list of marketplace names, where you wish it to be hidden."
+
+    @staticmethod
+    @error_code_decorator
     def invalid_hidden_attribute_for_param(param_name: str, invalid_value: str):
         marketplace_values = ', '.join(MarketplaceVersions)
         return f'The `hidden` attribute value ({invalid_value}) for the {param_name} parameter ' \
                f'must be either a boolean, or a list of marketplace values ' \
                f'(Possible marketplace values: {marketplace_values}). ' \
                f'Note that this param is not required, and may be omitted.'
-
-    @staticmethod
-    @error_code_decorator
-    def found_hidden_param(parameter_name):
-        return f"Parameter: \"{parameter_name}\" can't be hidden. Please remove this field."
 
     @staticmethod
     @error_code_decorator

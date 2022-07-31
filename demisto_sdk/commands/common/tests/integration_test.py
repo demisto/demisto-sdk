@@ -1236,9 +1236,10 @@ class TestIntegrationValidator:
         assert IntegrationValidator(
             mock_structure(
                 None,
-                {'configuration': [{'name': 'my_param_name', 'hidden': hidden_value}]}
+                # using `longRunning` here, as the name condition is tested in test_is_valid_hidden_params()
+                {'configuration': [{'name': 'longRunning', 'hidden': hidden_value}]}
             )
-        ).is_valid_hidden_attribute_for_params() == is_valid
+        ).is_valid_hidden_params() == is_valid
 
 
 class TestIsFetchParamsExist:

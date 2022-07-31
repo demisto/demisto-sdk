@@ -1,7 +1,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS, BANG_COMMAND_ARGS_MAPPING_DICT,
@@ -1122,24 +1122,58 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
-    @error_codes('IN124')
+    @error_codes('IN124,IN156')
     def is_valid_hidden_params(self) -> bool:
         """
         Verify there are no non-allowed hidden integration parameters.
+        This is a workaround as pykwalify schemas do not allow multiple types
+         (e.g. equivalent for Union[list[str] | bool]).
+
+        See update_hidden_parameters_value for the allowed values the hidden attribute.
+
         Returns:
             bool. True if there aren't non-allowed hidden parameters. False otherwise.
         """
-        ans = True
-        conf = self.current_file.get('configuration', [])
-        for int_parameter in conf:
-            is_param_hidden = int_parameter.get('hidden')
-            param_name = int_parameter.get('name')
-            if is_param_hidden and param_name not in self.ALLOWED_HIDDEN_PARAMS:
-                error_message, error_code = Errors.found_hidden_param(param_name)
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    ans = False
+        def is_bool(input_: Union[bool, str]):
+            if isinstance(input_, bool):
+                return True
+            try:
+                string_to_bool(input_)
+                return True
+            except ValueError:
+                return False
 
-        return ans
+        valid = True
+
+        for param in self.current_file.get('configuration', ()):
+            name = param.get('name', '')
+            hidden = param.get('hidden')
+
+            invalid_type = not isinstance(hidden, (type(None), bool, list, str))
+            invalid_string = isinstance(hidden, str) and not is_bool(hidden)
+
+            if invalid_type or invalid_string:
+                message, code = Errors.invalid_hidden_attribute_for_param(name, hidden)
+                if self.handle_error(message, code, self.file_path):
+                    valid = False
+
+            is_true = (hidden is True) or (is_bool(hidden) and string_to_bool(hidden))
+            invalid_bool = is_true and name not in self.ALLOWED_HIDDEN_PARAMS
+            hidden_in_all_marketplaces = isinstance(hidden, list) and set(hidden) == set(MarketplaceVersions)
+
+            if invalid_bool or hidden_in_all_marketplaces:
+                error_message, error_code = Errors.param_not_allowed_to_hide(name)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    valid = False
+
+            elif isinstance(hidden, list) and (invalid := set(hidden).difference(MarketplaceVersions)):
+                # if the value is a list, all its values must be marketplace names
+                joined_marketplaces = ', '.join(map(str, invalid))
+                message, code = Errors.invalid_hidden_attribute_for_param(name, joined_marketplaces)
+                if self.handle_error(message, code, self.file_path):
+                    valid = False
+
+        return valid
 
     def is_valid_image(self) -> bool:
         """Verifies integration image/logo is valid.
@@ -1726,40 +1760,6 @@ class IntegrationValidator(ContentEntityValidator):
             if used_commands_dict:
                 error_message, error_code = Errors.integration_is_deprecated_and_used(self.current_file.get("name"), used_commands_dict)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    is_valid = False
-
-        return is_valid
-
-    @error_codes('IN156')
-    def is_valid_hidden_attribute_for_params(self):
-        """
-         See update_hidden_parameters_value for the values we allow for the hidden attribute
-         Workaround as pykwalify schemas do not allow multiple types (e.g. equivalent for Union[list[str] | bool]).
-        :return: whether the attribute is valid
-        """
-
-        def is_bool(input_: str):
-            try:
-                string_to_bool(input_)
-                return True
-            except ValueError:
-                return False
-
-        is_valid = True
-        for param in self.current_file.get('configuration', ()):
-            param_name = param['name']
-            hidden = param.get('hidden')
-
-            if not isinstance(hidden, (type(None), bool, list, str)) \
-                    or isinstance(hidden, str) and not is_bool(hidden):
-                message, code = Errors.invalid_hidden_attribute_for_param(param_name, hidden)
-                if self.handle_error(message, code, self.file_path):
-                    is_valid = False
-
-            elif isinstance(hidden, list) and (invalid := set(hidden).difference(MarketplaceVersions)):
-                # if the value is a list, all its values must be marketplace names
-                message, code = Errors.invalid_hidden_attribute_for_param(param_name, ', '.join(map(str, invalid)))
-                if self.handle_error(message, code, self.file_path):
                     is_valid = False
 
         return is_valid

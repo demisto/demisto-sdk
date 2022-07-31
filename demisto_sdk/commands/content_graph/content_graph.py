@@ -251,13 +251,13 @@ class Neo4jQuery:
 
 
 class Neo4jContentGraph(ContentGraph):
-    def __init__(self, repo_path: Path, database_uri: str, user: str = None, password: str = None, should_use_docker: bool = True) -> None:
+    def __init__(self, repo_path: Path, database_uri: str, user: str = None, password: str = None, use_docker: bool = True) -> None:
         super().__init__(repo_path)
         self.start_time = datetime.now()
         self.end_time = None
         auth: Optional[Tuple[str, str]] = (user, password) if user and password else None
         self.driver: neo4j.Neo4jDriver = neo4j.GraphDatabase.driver(database_uri, auth=auth)
-        self.use_docker = should_use_docker
+        self.use_docker = use_docker
 
     def __enter__(self):
         self.start_neo4j_service()
@@ -301,7 +301,7 @@ class Neo4jContentGraph(ContentGraph):
             run_command_os('docker-compose down', REPO_PATH / 'neo4j')
 
     def neo4j_admin_command(self, name: str, command: str):
-        if not self.should_use_docker:
+        if not self.use_docker:
             run_command_os(command, REPO_PATH / 'neo4j')
         else:
             docker_client = docker.from_env()

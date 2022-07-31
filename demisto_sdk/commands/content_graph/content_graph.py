@@ -5,6 +5,8 @@ import shutil
 import requests
 from requests.adapters import HTTPAdapter, Retry
 
+import urllib3
+
 import neo4j
 import pickle
 
@@ -21,6 +23,8 @@ from demisto_sdk.commands.common.tools import run_command_os
 import docker
 import logging
 
+# disable warning prints from urllib3
+urllib3.disable_warnings()
 
 DATABASE_URL = 'bolt://localhost:7687'
 USERNAME = 'neo4j'
@@ -315,15 +319,24 @@ class Neo4jContentGraph(ContentGraph):
                                          volumes={f'{REPO_PATH}/neo4j/data': {'bind': '/data', 'mode': 'rw'},
                                                   f'{REPO_PATH}/neo4j/backups': {'bind': '/backups', 'mode': 'rw'}},
 
-                                         command=f'cd / && {command}'
+                                         command=f'{command}'
                                          )
 
     def dump(self):
-        self.neo4j_admin_command('dump', 'neo4j-admin dump --database=neo4j --to=backups/content-graph.dump')
+        if self.use_docker:
+            output = '/backups/content-graph.db'
+        else:
+            output = (REPO_PATH / 'neo4j' / 'backups' / 'content-graph.db').as_posix()
+        self.neo4j_admin_command('dump', f'neo4j-admin dump --database=neo4j --to={output}')
 
     def load(self):
-        shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
-        self.neo4j_admin_command('load', 'neo4j-admin load --from=backups/content-graph.dump')
+        if self.use_docker:
+            shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
+            output = '/backups/content-graph.db'
+        else:
+            output = (REPO_PATH / 'neo4j' / 'backups' / 'content-graph.db').as_posix()
+
+        self.neo4j_admin_command('load', f'neo4j-admin load --from={output}')
 
     @staticmethod
     def create_indexes(tx: neo4j.Transaction) -> None:

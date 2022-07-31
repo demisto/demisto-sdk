@@ -87,7 +87,7 @@ class ContentGraph(ABC):
 
     def iter_packs(self) -> Iterator[Path]:
         for path in self.packs_path.iterdir():  # todo: handle repo path is invalid
-            if path.is_dir():
+            if path.is_dir() and not path.name.startswith('.'):
                 yield path
 
     @abstractmethod
@@ -161,7 +161,7 @@ class Neo4jQuery:
     def create_nodes_from_csv(content_type: ContentTypes) -> str:
         filename = f'file:///{content_type}.csv'
         return (
-            f'LOAD CSV WITH HEADERS FROM "{filename}" AS node_data '
+            f'UNWIND $data AS node_data '
             f'CREATE (n:{Neo4jQuery.labels_of(content_type)}{{node_id: node_data.node_id}}) SET n += node_data'
         )
 
@@ -169,7 +169,7 @@ class Neo4jQuery:
     def create_has_command_relationships_from_csv() -> str:
         filename = f'file:///{Rel.HAS_COMMAND}.csv'
         return (
-            f'LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data '
+            f'UNWIND AS rel_data '
             f'MATCH (a:{ContentTypes.INTEGRATION}{{node_id: rel_data.from}}) '
             f'MERGE (b:{ContentTypes.COMMAND_OR_SCRIPT}{{id: rel_data.to}}) '
             f'ON CREATE SET b :{ContentTypes.COMMAND}, b.node_id = "{ContentTypes.COMMAND}:" + rel_data.to '
@@ -179,20 +179,21 @@ class Neo4jQuery:
 
     @staticmethod
     def create_executes_relationships_from_csv() -> str:
-        filename = f'file:///{Rel.EXECUTES}.csv'
+        # filename = f'file:///{Rel.EXECUTES}.csv'
         return (
-            f'LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data '
+            f'UNWIND $data AS rel_data '
             f'MATCH (a:{ContentTypes.SCRIPT}{{node_id: rel_data.from}}) '
             f'MERGE (b:{ContentTypes.COMMAND_OR_SCRIPT}{{id: rel_data.to}}) '
             f'MERGE (a)-[r:{Rel.EXECUTES}]->(b) '
-            'SET r.deprecated = rel_data.deprecated'  # todo: see todo in generic create
+            'SET r.deprecated = rel_data.deprecated'
+            # todo: see todo in generic create
         )
 
     @staticmethod
     def create_tested_by_relationships_from_csv() -> str:
         filename = f'file:///{Rel.TESTED_BY}.csv'
         return (
-            f'LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data '
+            f'UNWIND AS rel_data '
             f'MATCH (a:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.from}}) '
             f'MERGE (b:{ContentTypes.TEST_PLAYBOOK}{{id: rel_data.to}}) '
             f'ON CREATE SET b.node_id = "{ContentTypes.TEST_PLAYBOOK}:" + rel_data.to '
@@ -210,7 +211,7 @@ class Neo4jQuery:
 
         filename = f'file:///{rel_type}.csv'
         return (
-            f'LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data '
+            f'UNWIND AS rel_data '
             f'MATCH (a:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.from}}) '
             f'MERGE (b:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.to}}) '
             f'MERGE (a)-[r:{rel_type}]->(b) SET r = rel_data'  # todo: should be r += rel_data.props, update in parser
@@ -282,7 +283,9 @@ class Neo4jContentGraph(ContentGraph):
         s = requests.Session()
 
         retries = Retry(
-            connect=100
+            total=200,
+            connect=200,
+            backoff_factor=0.2
         )
 
         s.mount('http://localhost', HTTPAdapter(max_retries=retries))
@@ -291,7 +294,7 @@ class Neo4jContentGraph(ContentGraph):
     def stop_neo4j_service(self, ):
         run_command_os('docker-compose down', REPO_PATH / 'neo4j')
 
-    def neo4j_command(self, name: str, command: str):
+    def neo4j_admin_command(self, name: str, command: str):
         if not self.should_use_docker:
             run_command_os(command, REPO_PATH / 'neo4j')
         else:
@@ -310,11 +313,11 @@ class Neo4jContentGraph(ContentGraph):
                                          )
 
     def dump(self):
-        self.neo4j_command('dump', 'neo4j-admin dump --database=neo4j --to=/backups/content-graph.dump')
+        self.neo4j_admin_command('dump', 'neo4j-admin dump --database=neo4j --to=/backups/content-graph.dump')
 
     def load(self):
         shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
-        self.neo4j_command('load', 'neo4j-admin load --from=/backups/content-graph.dump')
+        self.neo4j_admin_command('load', 'neo4j-admin load --from=/backups/content-graph.dump')
 
     @staticmethod
     def create_indexes(tx: neo4j.Transaction) -> None:
@@ -379,16 +382,14 @@ class Neo4jContentGraph(ContentGraph):
             return True
         return False
 
-    @staticmethod
-    def import_nodes_by_type(tx: neo4j.Transaction, content_type: ContentTypes) -> None:
+    def import_nodes_by_type(self, tx: neo4j.Transaction, content_type: ContentTypes) -> None:
         query = Neo4jQuery.create_nodes_from_csv(content_type)
-        tx.run(query)
+        tx.run(query, {'data': self.nodes.get(content_type)})
         print(f'Imported {content_type}.csv')
 
-    @staticmethod
-    def import_relationships_by_type(tx: neo4j.Transaction, rel_type: Rel) -> None:
+    def import_relationships_by_type(self, tx: neo4j.Transaction, rel_type: Rel) -> None:
         query = Neo4jQuery.create_relationships_from_csv(rel_type)
-        tx.run(query)
+        tx.run(query, {'data': self.relationships.get(rel_type)})
         print(f'Imported {rel_type}')
 
     @staticmethod

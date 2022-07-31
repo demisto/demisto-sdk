@@ -169,7 +169,7 @@ class Neo4jQuery:
     def create_has_command_relationships_from_csv() -> str:
         filename = f'file:///{Rel.HAS_COMMAND}.csv'
         return (
-            f'UNWIND AS rel_data '
+            f'UNWIND $data AS rel_data '
             f'MATCH (a:{ContentTypes.INTEGRATION}{{node_id: rel_data.from}}) '
             f'MERGE (b:{ContentTypes.COMMAND_OR_SCRIPT}{{id: rel_data.to}}) '
             f'ON CREATE SET b :{ContentTypes.COMMAND}, b.node_id = "{ContentTypes.COMMAND}:" + rel_data.to '
@@ -193,7 +193,7 @@ class Neo4jQuery:
     def create_tested_by_relationships_from_csv() -> str:
         filename = f'file:///{Rel.TESTED_BY}.csv'
         return (
-            f'UNWIND AS rel_data '
+            f'UNWIND $data AS rel_data '
             f'MATCH (a:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.from}}) '
             f'MERGE (b:{ContentTypes.TEST_PLAYBOOK}{{id: rel_data.to}}) '
             f'ON CREATE SET b.node_id = "{ContentTypes.TEST_PLAYBOOK}:" + rel_data.to '
@@ -211,7 +211,7 @@ class Neo4jQuery:
 
         filename = f'file:///{rel_type}.csv'
         return (
-            f'UNWIND AS rel_data '
+            f'UNWIND $data AS rel_data '
             f'MATCH (a:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.from}}) '
             f'MERGE (b:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.to}}) '
             f'MERGE (a)-[r:{rel_type}]->(b) SET r = rel_data'  # todo: should be r += rel_data.props, update in parser

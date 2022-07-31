@@ -431,4 +431,4 @@ class Neo4jContentGraph(ContentGraph):
 def create_content_graph(use_docker: bool = True) -> None:
     with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD, use_docker) as content_graph:
         content_graph.parse_repository()
-        content_graph.dump()
+    content_graph.dump()

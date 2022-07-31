@@ -2266,9 +2266,10 @@ def error_code(config, **kwargs):
 @click.help_option(
     '-h', '--help'
 )
-def content_graph():
+@click.option('-d', '--use-docker', is_flag=True, help="Use docker to run the content graph")
+def content_graph(use_docker):
     from demisto_sdk.commands.content_graph.content_graph import create_content_graph
-    create_content_graph()
+    create_content_graph(use_docker=use_docker)
 
 
 @main.result_callback()

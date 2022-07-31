@@ -36,9 +36,12 @@ class IntegrationParser(IntegrationScriptParser):
     def connect_to_commands(self) -> None:
         for command_data in self.script_info.get('commands', []):
             cmd_name = command_data.get('name')
-            node_id: str = f'{ContentTypes.COMMAND}:{cmd_name}'
             deprecated: bool = command_data.get('deprecated', False) or self.deprecated
-            self.add_relationship(Rel.HAS_COMMAND, node_id, deprecated=deprecated)
+            self.add_relationship(
+                Rel.HAS_COMMAND,
+                cmd_name,
+                deprecated=deprecated,
+            )
 
     def connect_to_dependencies(self) -> None:
         if default_classifier := self.yml_data.get('defaultclassifier'):

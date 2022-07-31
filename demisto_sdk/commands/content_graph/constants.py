@@ -68,7 +68,7 @@ class ContentTypes(enum.Enum):
 
     @property
     def labels(self) -> List[str]:
-        labels: List[str] = [ContentTypes.BASE_CONTENT, self.value]
+        labels: List[str] = [ContentTypes.BASE_CONTENT.value, self.value]
 
         if self.value == ContentTypes.TEST_PLAYBOOK.value:
             labels.append(ContentTypes.PLAYBOOK.value)
@@ -113,6 +113,12 @@ class ContentTypes(enum.Enum):
             pack_folder = pack_path / content_type.as_folder
             if pack_folder.is_dir():
                 yield pack_folder
+
+    @staticmethod
+    def props_indexes() -> Dict['ContentTypes', List[str]]:
+        return {
+            ContentTypes.COMMAND_OR_SCRIPT: ['id'],
+        }
 
     @staticmethod
     def props_uniqueness_constraints() -> Dict['ContentTypes', List[str]]:

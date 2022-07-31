@@ -349,10 +349,10 @@ class Neo4jContentGraph(ContentGraph):
 
         with self.driver.session() as session:
             for content_type in ContentTypes.non_abstracts():  # todo: parallelize?
-                if self.create_node_csv_file(content_type):
+                if self.nodes.get(content_type):
                     session.write_transaction(self.import_nodes_by_type, content_type)
             for rel in Rel:
-                if self.create_relationship_csv_file(rel):  # todo: parallelize?
+                if self.relationships.get(rel):  # todo: parallelize?
                     session.write_transaction(self.import_relationships_by_type, rel)
             # session.write_transaction(self.create_pack_dependencies_relationships)
 
@@ -360,27 +360,27 @@ class Neo4jContentGraph(ContentGraph):
         print(f'Time to create graph: {(after_creating_nodes - before_creating_nodes).total_seconds() / 60} minutes')
         print(f'Time since started: {(after_creating_nodes - self.start_time).total_seconds() / 60} minutes')
 
-    def create_node_csv_file(self, content_type: ContentTypes) -> bool:
-        if self.nodes.get(content_type):
-            headers = list(sorted(self.nodes.get(content_type)[0].keys()))
-            with open(f'{IMPORT_PATH}/{content_type}.csv', 'w', encoding='utf-8') as f:
-                writer = csv.writer(f)
-                writer.writerow(headers)
-                for row in self.nodes.get(content_type):
-                    writer.writerow([row[k] for k in sorted(row.keys())])
-            return True
-        return False
+    # def create_node_csv_file(self, content_type: ContentTypes) -> bool:
+    #     if self.nodes.get(content_type):
+    #         headers = list(sorted(self.nodes.get(content_type)[0].keys()))
+    #         with open(f'{IMPORT_PATH}/{content_type}.csv', 'w', encoding='utf-8') as f:
+    #             writer = csv.writer(f)
+    #             writer.writerow(headers)
+    #             for row in self.nodes.get(content_type):
+    #                 writer.writerow([row[k] for k in sorted(row.keys())])
+    #         return True
+    #     return False
 
-    def create_relationship_csv_file(self, rel: Rel) -> bool:
-        if self.relationships.get(rel):
-            headers = list(sorted(self.relationships.get(rel)[0].keys()))
-            with open(f'{IMPORT_PATH}/{rel.value}.csv', 'w', encoding='utf-8') as f:
-                writer = csv.writer(f)
-                writer.writerow(headers)
-                for row in self.relationships.get(rel):
-                    writer.writerow([row[k] for k in sorted(row.keys())])
-            return True
-        return False
+    # def create_relationship_csv_file(self, rel: Rel) -> bool:
+    #     if self.relationships.get(rel):
+    #         headers = list(sorted(self.relationships.get(rel)[0].keys()))
+    #         with open(f'{IMPORT_PATH}/{rel.value}.csv', 'w', encoding='utf-8') as f:
+    #             writer = csv.writer(f)
+    #             writer.writerow(headers)
+    #             for row in self.relationships.get(rel):
+    #                 writer.writerow([row[k] for k in sorted(row.keys())])
+    #         return True
+    #     return False
 
     def import_nodes_by_type(self, tx: neo4j.Transaction, content_type: ContentTypes) -> None:
         query = Neo4jQuery.create_nodes_from_csv(content_type)

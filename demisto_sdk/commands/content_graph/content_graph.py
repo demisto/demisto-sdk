@@ -257,11 +257,10 @@ class Neo4jContentGraph(ContentGraph):
         self.end_time = None
         auth: Optional[Tuple[str, str]] = (user, password) if user and password else None
         self.driver: neo4j.Neo4jDriver = neo4j.GraphDatabase.driver(database_uri, auth=auth)
-        self.should_use_docker = should_use_docker
+        self.use_docker = should_use_docker
 
     def __enter__(self):
-        if self.should_use_docker:
-            self.start_neo4j_service()
+        self.start_neo4j_service()
         with self.driver.session() as session:
             tx = session.begin_transaction()
             self.create_indexes(tx)
@@ -271,28 +270,34 @@ class Neo4jContentGraph(ContentGraph):
         return self
 
     def start_neo4j_service(self, ):
-        docker_client = docker.from_env()
-        try:
-            docker_client.containers.get('neo4j-content').remove(force=True)
-        except Exception as e:
-            logger.info(f'Could not remove neo4j container: {e}')
-        # then we need to create a new one
-        shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
-        shutil.rmtree(REPO_PATH / 'neo4j' / 'import', ignore_errors=True)
-        run_command_os('docker-compose up -d', REPO_PATH / 'neo4j')
+        if not self.use_docker:
+            run_command_os('neo4j start', REPO_PATH / 'neo4j')
+        else:
+            docker_client = docker.from_env()
+            try:
+                docker_client.containers.get('neo4j-content').remove(force=True)
+            except Exception as e:
+                logger.info(f'Could not remove neo4j container: {e}')
+            # then we need to create a new one
+            shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
+            shutil.rmtree(REPO_PATH / 'neo4j' / 'import', ignore_errors=True)
+            run_command_os('docker-compose up -d', REPO_PATH / 'neo4j')
+        # health check to make sure that neo4j is up
         s = requests.Session()
 
         retries = Retry(
-            total=200,
-            connect=200,
-            backoff_factor=0.2
+            total=100,
+            backoff_factor=0.1
         )
 
         s.mount('http://localhost', HTTPAdapter(max_retries=retries))
         s.get('http://localhost:7474')
 
     def stop_neo4j_service(self, ):
-        run_command_os('docker-compose down', REPO_PATH / 'neo4j')
+        if not self.use_docker:
+            run_command_os('neo4j stop', REPO_PATH / 'neo4j')
+        else:
+            run_command_os('docker-compose down', REPO_PATH / 'neo4j')
 
     def neo4j_admin_command(self, name: str, command: str):
         if not self.should_use_docker:
@@ -423,7 +428,7 @@ class Neo4jContentGraph(ContentGraph):
             self.stop_neo4j_service()
 
 
-def create_content_graph(should_use_docker: bool = True) -> None:
-    with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD, should_use_docker) as content_graph:
+def create_content_graph(use_docker: bool = True) -> None:
+    with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD, use_docker) as content_graph:
         content_graph.parse_repository()
         content_graph.dump()

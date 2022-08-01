@@ -23,8 +23,6 @@ from demisto_sdk.commands.common.tools import run_command_os
 import docker
 import logging
 
-# disable warning prints from urllib3
-urllib3.disable_warnings()
 
 DATABASE_URL = 'bolt://localhost:7687'
 USERNAME = 'neo4j'

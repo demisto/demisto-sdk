@@ -74,6 +74,7 @@ class Content:
         try:
             if content_path := os.getenv('DEMISTO_SDK_CONTENT_PATH'):
                 repo = Repo(content_path)
+                logger.debug(f'Using content path: {content_path}')
             else:
                 repo = Repo(Path.cwd(), search_parent_directories=True)
         except InvalidGitRepositoryError:

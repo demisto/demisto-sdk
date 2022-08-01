@@ -304,7 +304,13 @@ class Neo4jContentGraph(ContentGraph):
 
     def neo4j_admin_command(self, name: str, command: str):
         if not self.use_docker:
-            run_command_os(command, REPO_PATH / 'neo4j')
+            stdout, stderr, exit_code = run_command_os(command, REPO_PATH / 'neo4j')
+            logger.info(f'{name}: stdout: {stdout}')
+            logger.info(f'{name}: stderr: {stderr}')
+            if exit_code:
+                msg = f'{name} failed with exit code {exit_code}'
+                logger.error(msg)
+                raise RuntimeError(msg)
         else:
             docker_client = docker.from_env()
             try:
@@ -324,6 +330,7 @@ class Neo4jContentGraph(ContentGraph):
         if self.use_docker:
             output = '/backups/content-graph.dump'
         else:
+            (REPO_PATH / 'neo4j' / 'backups').mkdir(parents=True, exist_ok=True)
             output = (REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump').as_posix()
         self.neo4j_admin_command('dump', f'neo4j-admin dump --database=neo4j --to={output}')
 

@@ -2,6 +2,7 @@
 
 ## Unreleased
 * Added an ability to provide list of marketplace names as a param attribute to **validate** and **upload**
+* Added the file type to the error message when it is not supported.
 
 ## 1.7.1
 

@@ -273,8 +273,8 @@ class Neo4jContentGraph(ContentGraph):
 
     def start_neo4j_service(self, ):
         if not self.use_docker:
-            run_command_os(f'neo4j-admin set-initial-password {PASSWORD}', REPO_PATH / 'neo4j')
-            run_command_os('neo4j start', REPO_PATH / 'neo4j')
+            stdout, stderr, exit_code = run_command_os(f'neo4j-admin set-initial-password {PASSWORD} && neo4j start', REPO_PATH / 'neo4j')
+
         else:
             docker_client = docker.from_env()
             try:
@@ -284,7 +284,13 @@ class Neo4jContentGraph(ContentGraph):
             # then we need to create a new one
             shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
             shutil.rmtree(REPO_PATH / 'neo4j' / 'import', ignore_errors=True)
-            run_command_os('docker-compose up -d', REPO_PATH / 'neo4j')
+            stdout, stderr, exit_code = run_command_os('docker-compose up -d', REPO_PATH / 'neo4j')
+        logger.info(stdout)
+        logger.error(stderr)
+        if exit_code:
+            msg = f'Failed to start neo4j service. Error: {stderr}'
+            raise RuntimeError(msg)
+
         # health check to make sure that neo4j is up
         s = requests.Session()
 
@@ -298,9 +304,14 @@ class Neo4jContentGraph(ContentGraph):
 
     def stop_neo4j_service(self, ):
         if not self.use_docker:
-            run_command_os('neo4j stop', REPO_PATH / 'neo4j')
+            stdout, stderr, exit_code = run_command_os('neo4j stop', REPO_PATH / 'neo4j')
         else:
-            run_command_os('docker-compose down', REPO_PATH / 'neo4j')
+            stdout, stderr, exit_code = run_command_os('docker-compose down', REPO_PATH / 'neo4j')
+        logger.info(stdout)
+        logger.error(stderr)
+        if exit_code:
+            msg = f'Failed to start neo4j service. Error: {stderr}'
+            raise RuntimeError(msg)
 
     def neo4j_admin_command(self, name: str, command: str):
         if not self.use_docker:
@@ -373,7 +384,7 @@ class Neo4jContentGraph(ContentGraph):
 
         dump_pickle('neo4j/nodes.pkl', self.nodes)
         dump_pickle('neo4j/relationships.pkl', self.relationships)
-        
+
         with self.driver.session() as session:
             for content_type in ContentTypes.non_abstracts():  # todo: parallelize?
                 if self.nodes.get(content_type):

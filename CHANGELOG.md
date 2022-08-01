@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Added `DEMISTO_SDK_CONTENT_PATH` environment variable to specify the content path when executing **demisto-sdk**.
+* Added the `DEMISTO_SDK_CONTENT_PATH` environment variable, implicitly used in various commands.
 
 ## 1.7.1
 

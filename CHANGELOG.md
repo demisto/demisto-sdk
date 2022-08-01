@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Added playbook modification capabilities in **TestSuite**.
+
 ## 1.7.1
 
 * Fixed an issue where *indicatorTypes* and *betaIntegrations* were not found in the id_set.

@@ -461,8 +461,10 @@ def create_content_graph(use_docker: bool = True) -> None:
     content_graph.dump()
 
 
-def load_content_graph(use_docker: bool = True, keep_service: bool = False) -> None:
+def load_content_graph(use_docker: bool = True, keep_service: bool = False, content_graph_path: Path = None) -> None:
     content_graph = Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD, use_docker, keep_service)
+    if content_graph_path and content_graph_path.is_file():
+        shutil.copy(content_graph_path, REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump')
     content_graph.load()
     content_graph.start_neo4j_service()
     if not keep_service:

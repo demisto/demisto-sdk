@@ -2282,9 +2282,10 @@ def create_content_graph(no_use_docker, keep_service):
 )
 @click.option('-nd', '--no-use-docker', is_flag=True, help="Use docker to run the content graph", default=False)
 @click.option('-ks', '--keep-service', is_flag=True, help="Keep the service running", default=False)
-def load_content_graph(no_use_docker, keep_service):
+@click.option('-cgp', '--content-graph-path', help="Path to the content graph", default=None)
+def load_content_graph(no_use_docker: bool, keep_service: bool, content_graph_path: Path):
     from demisto_sdk.commands.content_graph.content_graph import load_content_graph
-    load_content_graph(use_docker=not no_use_docker, keep_service=keep_service)
+    load_content_graph(use_docker=not no_use_docker, keep_service=keep_service, content_graph_path=content_graph_path)
 
 
 @main.result_callback()

@@ -39,7 +39,7 @@ def load_pickle(url: str) -> Any:
         with open(url, 'rb') as file:
             return pickle.load(file)
     except Exception:
-        return []
+        return {}
 
 
 def dump_pickle(url: str, data: Any) -> None:
@@ -50,8 +50,8 @@ def dump_pickle(url: str, data: Any) -> None:
 class ContentGraph(ABC):
     def __init__(self, repo_path: Path) -> None:
         self.packs_path: Path = repo_path / PACKS_FOLDER
-        self.nodes: Dict[ContentTypes, List[Dict[str, Any]]] = {}
-        self.relationships: Dict[Rel, List[Dict[str, Any]]] = {}
+        self.nodes: Dict[ContentTypes, List[Dict[str, Any]]] = load_pickle('neo4j/nodes.pkl')
+        self.relationships: Dict[Rel, List[Dict[str, Any]]] = load_pickle('neo4j/relationships.pkl')
 
     def parse_packs(self, packs_paths: Iterator[Path]) -> None:
         """ Parses packs into nodes and relationships by given paths. """
@@ -289,7 +289,7 @@ class Neo4jContentGraph(ContentGraph):
         s = requests.Session()
 
         retries = Retry(
-            total=100,
+            total=10,
             backoff_factor=0.1
         )
 
@@ -364,12 +364,15 @@ class Neo4jContentGraph(ContentGraph):
         before_creating_nodes = datetime.now()
         print(f'Time since started: {(before_creating_nodes - self.start_time).total_seconds() / 60} minutes')
 
+        dump_pickle('neo4j/nodes.pkl', self.nodes)
+        dump_pickle('neo4j/relationships.pkl', self.relationships)
+        
         with self.driver.session() as session:
             for content_type in ContentTypes.non_abstracts():  # todo: parallelize?
                 if self.nodes.get(content_type):
                     session.write_transaction(self.import_nodes_by_type, content_type)
             for rel in Rel:
-                if self.relationships.get(content_type):  # todo: parallelize?
+                if self.relationships.get(rel):  # todo: parallelize?
                     session.write_transaction(self.import_relationships_by_type, rel)
             # session.write_transaction(self.create_pack_dependencies_relationships)
 

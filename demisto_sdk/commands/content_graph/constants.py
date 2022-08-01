@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 PACKS_FOLDER = 'Packs'
 PACK_METADATA_FILENAME = 'pack_metadata.json'
-UNIFIED_FILES_SUFFIXES = ['.yml']
+UNIFIED_FILES_SUFFIXES = ['.yml', '.json']
 
 class Rel(enum.Enum):
     USES = 'USES'
@@ -40,15 +40,16 @@ class ContentTypes(enum.Enum):
     PLAYBOOK = 'Playbook'
     INTEGRATION = 'Integration'
     TEST_PLAYBOOK = 'TestPlaybook'
-    REPORT = 'Report'
-    DASHBOARD = 'Dashboard'
-    WIDGET = 'Widget'
     INCIDENT_FIELD = 'IncidentField'
     INCIDENT_TYPE = 'IncidentType'
-    INDICATOR_FIELD = 'IndicatorField'
-    LAYOUT = 'Layout'
-    CLASSIFIER = 'Classifier'
     INDICATOR_TYPE = 'IndicatorType'
+    INDICATOR_FIELD = 'IndicatorField'
+    CLASSIFIER = 'Classifier'
+    MAPPER = 'Mapper'
+    LAYOUT = 'Layout'
+    WIDGET = 'Widget'
+    DASHBOARD = 'Dashboard'
+    REPORT = 'Report'
     CONNECTION = 'Connection'
     GENERIC_DEFINITION = 'GenericDefinition'
     GENERIC_FIELD = 'GenericField'

@@ -1,11 +1,8 @@
 from abc import ABC, abstractmethod
-import csv
 import multiprocessing
 import shutil
 import requests
 from requests.adapters import HTTPAdapter, Retry
-
-import urllib3
 
 import neo4j
 import pickle
@@ -61,7 +58,8 @@ class ContentGraph(ABC):
         if self.nodes and self.relationships:
             print('Skipping parsing.')
             return
-        pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
+        pool = multiprocessing.Pool(processes=4)
+        # pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
         for pack_nodes, pack_relationships in pool.map(PackSubGraphCreator.from_path, packs_paths):
             self.extend_graph_nodes_and_relationships(pack_nodes, pack_relationships)
 

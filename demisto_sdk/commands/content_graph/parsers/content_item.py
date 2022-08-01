@@ -65,7 +65,7 @@ class ContentItemParser(base_content.BaseContentParser):
             self.add_relationship(
                 Rel.USES,
                 dependency_id,
-                target_label=dependency_type,
+                target_label=dependency_type.value,
                 mandatorily=is_mandatory,
             )
         else:

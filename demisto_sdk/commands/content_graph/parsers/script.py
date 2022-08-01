@@ -31,19 +31,12 @@ class ScriptParser(integration_script.IntegrationScriptParser):
 
         return integration_script_data | script_data
 
-    def add_executes_relationship(self, command_id: str) -> None:
-        self.add_relationship(
-            Rel.EXECUTES,
-            command_id,
-            deprecated=self.deprecated,
-        )
-
     def connect_to_dependencies(self) -> None:
         for cmd in self.get_depends_on():
-            self.add_executes_relationship(cmd)
+            self.add_dependency(cmd)
 
         for cmd in self.get_command_executions():
-            self.add_executes_relationship(cmd)
+            self.add_dependency(cmd)
 
     def get_depends_on(self) -> List[str]:
         depends_on: List[str] = self.yml_data.get('dependson', {}).get('must', [])

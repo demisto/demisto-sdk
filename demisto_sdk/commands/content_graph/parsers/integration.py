@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Any, Dict, List
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
 from demisto_sdk.commands.content_graph.parsers.integration_script import IntegrationScriptParser, IntegrationScriptUnifier
@@ -41,6 +42,8 @@ class IntegrationParser(IntegrationScriptParser):
                 Rel.HAS_COMMAND,
                 cmd_name,
                 deprecated=deprecated,
+                in_xsoar=MarketplaceVersions.XSOAR.value in self.marketplaces,
+                in_xsiam=MarketplaceVersions.MarketplaceV2.value in self.marketplaces,
             )
 
     def connect_to_dependencies(self) -> None:

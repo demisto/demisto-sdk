@@ -1,9 +1,9 @@
 from abc import abstractmethod
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, Optional, List, Union
 
-from demisto_sdk.commands.common.tools import get_yaml, get_yml_paths_in_dir
-from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, UNIFIED_FILES_SUFFIXES
+from demisto_sdk.commands.common.tools import get_yaml, get_yml_paths_in_dir, get_current_repo
+from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, UNIFIED_FILES_SUFFIXES, MarketplaceVersions
 import demisto_sdk.commands.content_graph.parsers.base_content as base_content
 
 
@@ -52,22 +52,28 @@ class ContentItemParser(base_content.BaseContentParser):
     def is_content_item(path: Path) -> bool:
         return ContentItemParser.is_package(path) or ContentItemParser.is_unified_file(path)
 
-    def add_relationship(self, rel_type: Rel, target_node: str, **kwargs: Dict[str, Any]) -> None:
-        relationship = {
+    def add_relationship(self, rel_type: Rel, target_id: str, **kwargs: Dict[str, Any]) -> None:
+        relationship: Dict[str, Any] = {
             'from': self.node_id,
-            'to': target_node,
+            'to': target_id,
         }
         relationship.update(kwargs)
         self.relationships.setdefault(rel_type, []).append(relationship)
 
-    def add_dependency(self, dependency_id: str, dependency_type: ContentTypes, is_mandatory: bool = True) -> None:
-        dependency_node_id = f'{dependency_type}:{dependency_id}'
-        self.add_relationship(
-            Rel.USES,
-            dependency_node_id,
-            mandatorily=is_mandatory,
-            deprecated=self.deprecated,
-        )
+    def add_dependency(self, dependency_id: str, dependency_type: Optional[ContentTypes] = None, is_mandatory: bool = True) -> None:
+        if dependency_type is not None:
+            self.add_relationship(
+                Rel.USES,
+                dependency_id,
+                target_label=dependency_type,
+                mandatorily=is_mandatory,
+            )
+        else:
+            self.add_relationship(
+                Rel.USES_COMMAND_OR_SCRIPT,
+                dependency_id,
+                mandatorily=is_mandatory,
+            )
 
 
 class YAMLContentItemParser(ContentItemParser):
@@ -94,8 +100,9 @@ class YAMLContentItemParser(ContentItemParser):
             'deprecated': self.deprecated,
             'fromversion': self.yml_data.get('fromversion'),
             'toversion': self.yml_data.get('toversion', ''),
-            'source': ['github'],  # todo
-            'marketplaces': self.marketplaces,
+            'source': list(get_current_repo()),
+            'in_xsoar': MarketplaceVersions.XSOAR.value in self.marketplaces,
+            'in_xsiam': MarketplaceVersions.MarketplaceV2.value in self.marketplaces,
             'file_path': self.path.as_posix(),
         }
         if to_version := yaml_content_item_data['toversion']:

@@ -29,13 +29,16 @@ IMPORT_PATH = REPO_PATH / 'neo4j' / 'import'
 
 logger = logging.getLogger('demisto-sdk')
 
+NODES_PKL_PATH = REPO_PATH / 'nodes.pkl'
+RELS_PKL_PATH = REPO_PATH / 'rels.pkl'
+
 
 def load_pickle(url: str) -> Any:
     try:
         with open(url, 'rb') as file:
             return pickle.load(file)
     except Exception:
-        return []
+        return {}
 
 
 def dump_pickle(url: str, data: Any) -> None:
@@ -46,8 +49,8 @@ def dump_pickle(url: str, data: Any) -> None:
 class ContentGraph(ABC):
     def __init__(self, repo_path: Path) -> None:
         self.packs_path: Path = repo_path / PACKS_FOLDER
-        self.nodes: Dict[ContentTypes, List[Dict[str, Any]]] = {}
-        self.relationships: Dict[Rel, List[Dict[str, Any]]] = {}
+        self.nodes: Dict[ContentTypes, List[Dict[str, Any]]] = load_pickle(NODES_PKL_PATH.as_posix())
+        self.relationships: Dict[Rel, List[Dict[str, Any]]] = load_pickle(RELS_PKL_PATH.as_posix())
 
     def parse_packs(self, packs_paths: Iterator[Path]) -> None:
         """ Parses packs into nodes and relationships by given paths. """
@@ -74,13 +77,13 @@ class ContentGraph(ABC):
 
     def parse_repository(self) -> None:
         """ Parses all repository packs into nodes and relationships. """
-        self.clean_graph()
         all_packs_paths = self.iter_packs()
         self.parse_packs(all_packs_paths)
         self.add_parsed_nodes_and_relationships_to_graph()
+        self.create_pack_dependencies()
 
     @abstractmethod
-    def clean_graph(self) -> None:
+    def create_pack_dependencies(self) -> None:
         pass
 
     def iter_packs(self) -> Iterator[Path]:
@@ -158,67 +161,170 @@ class Neo4jQuery:
     @staticmethod
     def create_nodes_from_csv(content_type: ContentTypes) -> str:
         filename = f'file:///{content_type}.csv'
-        return (
-            f'LOAD CSV WITH HEADERS FROM "{filename}" AS node_data '
-            f'CREATE (n:{Neo4jQuery.labels_of(content_type)}{{node_id: node_data.node_id}}) SET n += node_data'
-        )
-    
-    @staticmethod
-    def create_has_command_relationships_from_csv() -> str:
-        filename = f'file:///{Rel.HAS_COMMAND}.csv'
-        return (
-            f'LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data '
-            f'MATCH (a:{ContentTypes.INTEGRATION}{{node_id: rel_data.from}}) '
-            f'MERGE (b:{ContentTypes.COMMAND_OR_SCRIPT}{{id: rel_data.to}}) '
-            f'ON CREATE SET b :{ContentTypes.COMMAND}, b.node_id = "{ContentTypes.COMMAND}:" + rel_data.to '
-            f'MERGE (a)-[r:{Rel.HAS_COMMAND}]->(b) '
-            'SET r.deprecated = rel_data.deprecated'  # todo: see todo in generic create
-        )
+        return f"""
+            LOAD CSV WITH HEADERS FROM "{filename}" AS node_data
+            CREATE (n:{Neo4jQuery.labels_of(content_type)}{{node_id: node_data.node_id}}) SET n += node_data
+        """
 
     @staticmethod
-    def create_executes_relationships_from_csv() -> str:
-        filename = f'file:///{Rel.EXECUTES}.csv'
-        return (
-            f'LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data '
-            f'MATCH (a:{ContentTypes.SCRIPT}{{node_id: rel_data.from}}) '
-            f'MERGE (b:{ContentTypes.COMMAND_OR_SCRIPT}{{id: rel_data.to}}) '
-            f'MERGE (a)-[r:{Rel.EXECUTES}]->(b) '
-            'SET r.deprecated = rel_data.deprecated'  # todo: see todo in generic create
-        )
+    def create_has_command_relationships_from_csv() -> str:
+        """
+        Since commands nodes might be already created when creating the USES_COMMAND_OR_SCRIPT relationships
+        but we haven't yet catagorized them as commands, we search them by their `id` property
+        When they are created/found, we set their node_id and labels.
+        """
+        filename = f'file:///{Rel.HAS_COMMAND}.csv'
+        return f"""
+            LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data
+            MATCH (a:{ContentTypes.INTEGRATION}{{node_id: rel_data.from}})
+            MERGE (b:{Neo4jQuery.labels_of(ContentTypes.COMMAND)}{{
+                node_id: "{ContentTypes.COMMAND}:" + rel_data.to,
+                id: rel_data.to
+            }})
+            ON CREATE
+                SET b.in_xsoar = toBoolean(rel_data.in_xsoar),
+                    b.in_xsiam = toBoolean(rel_data.in_xsiam)
+            ON MATCH
+                SET b.in_xsoar = CASE WHEN toBoolean(b.in_xsoar) OR toBoolean(rel_data.in_xsoar) THEN "True"
+                                 ELSE "False" END,
+                    b.in_xsiam = CASE WHEN toBoolean(b.in_xsiam) OR toBoolean(rel_data.in_xsiam) THEN "True"
+                                 ELSE "False" END
+            MERGE (a)-[r:{Rel.HAS_COMMAND}{{deprecated: toBoolean(rel_data.deprecated)}}]->(b)
+        """
+
+    @staticmethod
+    def create_uses_relationships_from_csv() -> str:
+        """
+        We search both source and target nodes by their `node_id` properties.
+        Note: the FOR EACH statements are a workaround for Cypher not supporting IF statements.
+        """
+        filename = f'file:///{Rel.USES}.csv'
+        query = f"""
+            LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data
+            MATCH (a:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.from}})
+        """
+        for content_type in ContentTypes.content_items():
+            query += f"""
+            FOREACH (_ IN case when rel_data.target_label = "{content_type}" then [1] else [] end|
+                MERGE (b:{Neo4jQuery.labels_of(content_type)}{{
+                    node_id: "{content_type}:" + rel_data.to,
+                    id: rel_data.to
+                }})
+                MERGE (a)-[r:{Rel.USES}{{is_source_deprecated: toBoolean(a.deprecated)}}]->(b)
+                ON CREATE
+                    SET r.mandatorily = toBoolean(rel_data.mandatorily)
+                ON MATCH
+                    SET r.mandatorily = r.mandatorily OR toBoolean(rel_data.mandatorily)
+            )
+            """
+        return query
+
+    @staticmethod
+    def create_uses_command_or_script_relationships_from_csv() -> str:
+        """
+        When creating these relationships, since the target nodes types are not known (either Command or Script),
+        we are using only the `id` property to search/create it. If created, this is a Command (because script nodes
+        were already created).
+        """
+        filename = f'file:///{Rel.USES_COMMAND_OR_SCRIPT}.csv'
+        return f"""
+            LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data
+            MATCH (a:{ContentTypes.SCRIPT}{{node_id: rel_data.from}})
+            MERGE (b:{ContentTypes.COMMAND_OR_SCRIPT}{{id: rel_data.to}})
+            ON CREATE
+                SET b:{Neo4jQuery.labels_of(ContentTypes.COMMAND)}, b.node_id = "{ContentTypes.COMMAND}:" + rel_data.to
+
+            MERGE (a)-[r:{Rel.USES}{{is_source_deprecated: toBoolean(a.deprecated)}}]->(b)
+            ON CREATE
+                SET r.mandatorily = toBoolean(rel_data.mandatorily)
+            ON MATCH
+                SET r.mandatorily = r.mandatorily OR toBoolean(rel_data.mandatorily)
+        """
 
     @staticmethod
     def create_tested_by_relationships_from_csv() -> str:
         filename = f'file:///{Rel.TESTED_BY}.csv'
-        return (
-            f'LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data '
-            f'MATCH (a:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.from}}) '
-            f'MERGE (b:{ContentTypes.TEST_PLAYBOOK}{{id: rel_data.to}}) '
-            f'ON CREATE SET b.node_id = "{ContentTypes.TEST_PLAYBOOK}:" + rel_data.to '
-            f'MERGE (a)-[r:{Rel.TESTED_BY}]->(b) '
-        )
+        return f"""
+            LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data
+            MATCH (a:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.from}})
+            MERGE (b:{ContentTypes.TEST_PLAYBOOK}{{
+                node_id: "{ContentTypes.TEST_PLAYBOOK}:" + rel_data.to,
+                id: rel_data.to
+            }})
+            MERGE (a)-[r:{Rel.TESTED_BY}{{is_source_deprecated: toBoolean(a.deprecated)}}]->(b)
+        """
 
     @staticmethod
     def create_relationships_from_csv(rel_type: Rel) -> str:
-        if rel_type == Rel.EXECUTES:
-            return Neo4jQuery.create_executes_relationships_from_csv()
+        if rel_type == Rel.USES:
+            return Neo4jQuery.create_uses_relationships_from_csv()
+        if rel_type == Rel.USES_COMMAND_OR_SCRIPT:
+            return Neo4jQuery.create_uses_command_or_script_relationships_from_csv()
         if rel_type == Rel.HAS_COMMAND:
             return Neo4jQuery.create_has_command_relationships_from_csv()
         if rel_type == Rel.TESTED_BY:
             return Neo4jQuery.create_tested_by_relationships_from_csv()
 
+        # default
         filename = f'file:///{rel_type}.csv'
-        return (
-            f'LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data '
-            f'MATCH (a:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.from}}) '
-            f'MERGE (b:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.to}}) '
-            f'MERGE (a)-[r:{rel_type}]->(b) SET r = rel_data'  # todo: should be r += rel_data.props, update in parser
-        )
-    
+        return f"""
+            LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data
+            MATCH (a:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.from}})
+            MERGE (b:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.to}})
+            MERGE (a)-[r:{rel_type}]->(b)
+        """
+
     @staticmethod
-    def create_pack_dependencies() -> str:
-        return (
-            ''
-        )
+    def update_in_xsoar_property() -> str:
+        # todo: maybe need to run this in a while loop until no changes?
+        return f"""
+            MATCH (a:{ContentTypes.BASE_CONTENT}{{in_xsoar: "True"}})
+                -[:{Rel.USES}*{{mandatorily: true}}]->
+                    (b:{ContentTypes.BASE_CONTENT}{{in_xsoar: "False"}}),
+            (b)-[:{Rel.IN_PACK}]->(p)
+            WHERE NOT p.id IN ["DeprecatedContent", "NonSupported"]
+            SET a.in_xsoar = "False"
+        """
+
+    @staticmethod
+    def update_in_xsiam_property() -> str:
+        # todo: maybe need to run this in a while loop until no changes?
+        return f"""
+            MATCH (a:{ContentTypes.BASE_CONTENT}{{in_xsiam: "True"}})
+                -[:{Rel.USES}*{{mandatorily: true}}]->
+                    (b:{ContentTypes.BASE_CONTENT}{{in_xsiam: "False"}}),
+            (b)-[:{Rel.IN_PACK}]->(p)
+            WHERE NOT p.id IN ["DeprecatedContent", "NonSupported"]
+            SET a.in_xsiam = "False"
+        """
+
+    @staticmethod
+    def create_depends_on_in_xsoar() -> str:
+        return f"""
+            MATCH (a)-[:{Rel.USES}]->(b), (a)-[:{Rel.IN_PACK}]->(p1), (b)-[:{Rel.IN_PACK}]->(p2)
+            WHERE a.in_xsoar = "True" AND b.in_xsoar = "True"
+            AND p1.node_id <> p2.node_id
+            AND NOT p1.name CONTAINS 'Common' AND NOT p2.name CONTAINS 'Common'
+            AND NOT p1.name CONTAINS 'Deprecated' AND NOT p2.name CONTAINS 'Deprecated'
+            AND  p1.name <> 'Base' AND  p2.name <> 'Base'
+            WITH p1, p2
+            MERGE (p1)-[r:DEPENDS_ON_IN_XSOAR]->(p2)
+            RETURN *
+        """
+
+    @staticmethod
+    def create_depends_on_in_xsiam() -> str:
+        return f"""
+            MATCH (a)-[:{Rel.USES}]->(b), (a)-[:{Rel.IN_PACK}]->(p1), (b)-[:{Rel.IN_PACK}]->(p2)
+            WHERE a.in_xsiam = "True" AND b.in_xsiam = "True"
+            AND p1.node_id <> p2.node_id
+            AND NOT p1.name CONTAINS 'Common' AND NOT p2.name CONTAINS 'Common'
+            AND NOT p1.name CONTAINS 'Deprecated' AND NOT p2.name CONTAINS 'Deprecated'
+            AND  p1.name <> 'Base' AND  p2.name <> 'Base'
+            WITH p1, p2
+            MERGE (p1)-[r:DEPENDS_ON_IN_XSIAM]->(p2)
+            RETURN *
+        """
 
     @staticmethod
     def export_nodes_by_type(content_type: ContentTypes) -> None:
@@ -311,18 +417,15 @@ class Neo4jContentGraph(ContentGraph):
         # queries.extend(Neo4jQuery.create_nodes_props_existence_constraints())
         # queries.extend(Neo4jQuery.create_relationships_props_existence_constraints())
         for query in queries:
-            print('Running query:' + query)
+            print('Running query: ' + query)
             tx.run(query)
-
-    def clean_graph(self) -> None:
-        pass  # todo
 
     def delete_modified_packs_from_graph(self, packs: List[str]) -> None:
         pass  # todo
 
     def add_parsed_nodes_and_relationships_to_graph(self) -> None:
-        # dump_pickle('/Users/dtavori/dev/demisto/content-graph/nodes.pkl', self.nodes)
-        # dump_pickle('/Users/dtavori/dev/demisto/content-graph/rels.pkl', self.relationships)
+        dump_pickle(NODES_PKL_PATH.as_posix(), self.nodes)
+        dump_pickle(RELS_PKL_PATH.as_posix(), self.relationships)
         before_creating_nodes = datetime.now()
         print(f'Time since started: {(before_creating_nodes - self.start_time).total_seconds() / 60} minutes')
 
@@ -333,7 +436,6 @@ class Neo4jContentGraph(ContentGraph):
             for rel in Rel:
                 if self.create_relationship_csv_file(rel):  # todo: parallelize?
                     session.write_transaction(self.import_relationships_by_type, rel)
-            # session.write_transaction(self.create_pack_dependencies_relationships)
 
         after_creating_nodes = datetime.now()
         print(f'Time to create graph: {(after_creating_nodes - before_creating_nodes).total_seconds() / 60} minutes')
@@ -372,13 +474,27 @@ class Neo4jContentGraph(ContentGraph):
         query = Neo4jQuery.create_relationships_from_csv(rel_type)
         tx.run(query)
         print(f'Imported {rel_type}')
-    
+
+    def create_pack_dependencies(self) -> None:
+        with self.driver.session() as session:
+            session.write_transaction(self.fix_marketplaces_properties)
+            session.write_transaction(self.create_depends_on_relationships)
+
     @staticmethod
-    def create_pack_dependencies_relationships(tx: neo4j.Transaction) -> None:
-        query = Neo4jQuery.create_pack_dependencies()
+    def fix_marketplaces_properties(tx: neo4j.Transaction) -> None:
+        query = Neo4jQuery.update_in_xsoar_property()
+        tx.run(query)
+        query = Neo4jQuery.update_in_xsiam_property()
+        tx.run(query)
+        print('Fixed in_xsoar and in_xsiam properties.')
+
+    @staticmethod
+    def create_depends_on_relationships(tx: neo4j.Transaction) -> None:
+        query = Neo4jQuery.create_depends_on_in_xsoar()
+        tx.run(query)
+        query = Neo4jQuery.create_depends_on_in_xsiam()
         tx.run(query)
         print('Created dependencies between packs.')
-
 
     @staticmethod
     def export_nodes_by_type(tx: neo4j.Transaction, content_type: ContentTypes) -> None:

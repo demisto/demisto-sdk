@@ -2,8 +2,8 @@ import traceback
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-from demisto_sdk.commands.common.tools import get_json
-from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, PACK_METADATA_FILENAME
+from demisto_sdk.commands.common.tools import get_json, get_current_repo
+from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, PACK_METADATA_FILENAME, MarketplaceVersions
 from demisto_sdk.commands.content_graph.parsers.parser_factory import ParserFactory
 import demisto_sdk.commands.content_graph.parsers.base_content as base_content
 
@@ -49,14 +49,15 @@ class PackParser(base_content.BaseContentParser):
             'name': self.metadata.get('name'),
             'file_path': self.path.as_posix(),
             'current_version': self.metadata.get('currentVersion'),
-            'source': ['github.com', 'demisto', 'content'],  # todo
+            'source': list(get_current_repo()),
             'author': self.metadata.get('author'),
             'certification': 'certified' if self.metadata.get('support', '').lower() in ['xsoar', 'partner'] else '',
             'tags': self.metadata.get('tags', []),
             'use_cases': self.metadata.get('useCases', []),
             'categories': self.metadata.get('categories', []),
             'deprecated': self.deprecated,
-            'marketplaces': self.marketplaces,
+            'in_xsoar': MarketplaceVersions.XSOAR.value in self.marketplaces,
+            'in_xsiam': MarketplaceVersions.MarketplaceV2.value in self.marketplaces,
         }
 
     def parse_pack(self) -> None:

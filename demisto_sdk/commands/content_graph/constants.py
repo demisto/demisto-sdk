@@ -3,6 +3,8 @@ import enum
 from pathlib import Path
 from typing import Iterator, Dict, List
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
+
 
 PACKS_FOLDER = 'Packs'
 PACK_METADATA_FILENAME = 'pack_metadata.json'
@@ -10,7 +12,7 @@ UNIFIED_FILES_SUFFIXES = ['.yml']
 
 class Rel(enum.Enum):
     USES = 'USES'
-    EXECUTES = 'EXECUTES'
+    USES_COMMAND_OR_SCRIPT = 'USES_COMMAND_OR_SCRIPT'
     DEPENDS_ON = 'DEPENDS_ON'
     TESTED_BY = 'TESTED_BY'
     IN_PACK = 'IN_PACK'

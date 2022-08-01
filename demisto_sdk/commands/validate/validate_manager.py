@@ -513,7 +513,7 @@ class ValidateManager:
         If a file_type is unsupported, will return `False`.
         """
         if not file_type:
-            error_message, error_code = Errors.file_type_not_supported(file_type)
+            error_message, error_code = Errors.file_type_not_supported(file_type, file_path)
             if str(file_path).endswith('.png'):
                 error_message, error_code = Errors.invalid_image_name_or_location()
             if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path,
@@ -739,7 +739,7 @@ class ValidateManager:
 
     @error_codes('BA102')
     def file_type_not_supported(self, file_type: FileType, file_path: str):
-        error_message, error_code = Errors.file_type_not_supported(file_type)
+        error_message, error_code = Errors.file_type_not_supported(file_type, file_path)
         if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path):
             return False
         return True
@@ -1748,7 +1748,7 @@ class ValidateManager:
             if str(file_path).endswith('.png'):
                 error_message, error_code = Errors.invalid_image_name_or_location()
             else:
-                error_message, error_code = Errors.file_type_not_supported(None)
+                error_message, error_code = Errors.file_type_not_supported(None, file_path)
 
             self.handle_error(error_message, error_code, file_path=file_path)
             return '', '', False

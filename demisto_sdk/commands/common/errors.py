@@ -532,8 +532,10 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def file_type_not_supported(file_type: Optional[FileType]):
-        return f"File type {file_type} is not supported in the validate command.\n" \
+    def file_type_not_supported(file_type: Optional[FileType], file_path: str | Path):
+        joined_path = '/'.join(Path(file_path).parts[-3:])
+        file_type_str = f'File type {file_type}' if file_type else f'File {joined_path}'
+        return f"{file_type_str} is not supported in the validate command.\n" \
                "The validate command supports: Integrations, Scripts, Playbooks, " \
                "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields, Object types," \
                " Object modules, Images, Release notes, Layouts, Jobs, Wizards, Descriptions And Modeling Rules."

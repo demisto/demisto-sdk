@@ -1202,7 +1202,7 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
-        assert 'File type None is not supported in the validate command.' in result.stdout
+        assert '[BA102] - File PackName/Classifiers/classifier-new_classifier.json' in result.stdout
         assert result.exit_code == 1
 
     def test_valid_old_classifier(self, mocker, repo):
@@ -1455,7 +1455,7 @@ class TestMapperValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
-        assert 'File type None is not supported in the validate command.' in result.stdout
+        assert '[BA102] - File PackName/Classifiers/classifier-mapper-mapper.json is not supported' in result.stdout
         assert result.exit_code == 1
 
 

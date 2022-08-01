@@ -253,22 +253,26 @@ class Neo4jQuery:
 
 
 class Neo4jContentGraph(ContentGraph):
-    def __init__(self, repo_path: Path, database_uri: str, user: str = None, password: str = None, use_docker: bool = True) -> None:
+    def __init__(
+        self,
+        repo_path: Path,
+        database_uri: str,
+        user: str = None,
+        password: str = None,
+        use_docker: bool = True,
+        keep_service: bool = False,
+        dump_file: Path = None,
+    ) -> None:
         super().__init__(repo_path)
         self.start_time = datetime.now()
         self.end_time = None
         auth: Optional[Tuple[str, str]] = (user, password) if user and password else None
         self.driver: neo4j.Neo4jDriver = neo4j.GraphDatabase.driver(database_uri, auth=auth)
         self.use_docker = use_docker
+        self.keep_service = keep_service
 
     def __enter__(self):
         self.start_neo4j_service()
-        with self.driver.session() as session:
-            tx = session.begin_transaction()
-            self.create_indexes(tx)
-            self.create_constraints(tx)
-            tx.commit()
-            tx.close()
         return self
 
     def start_neo4j_service(self, ):
@@ -362,6 +366,8 @@ class Neo4jContentGraph(ContentGraph):
         pass  # todo
 
     def add_parsed_nodes_and_relationships_to_graph(self) -> None:
+        # init driver
+
         before_creating_nodes = datetime.now()
         print(f'Time since started: {(before_creating_nodes - self.start_time).total_seconds() / 60} minutes')
 
@@ -369,6 +375,11 @@ class Neo4jContentGraph(ContentGraph):
         dump_pickle('neo4j/relationships.pkl', self.relationships)
 
         with self.driver.session() as session:
+            tx = session.begin_transaction()
+            self.create_indexes(tx)
+            self.create_constraints(tx)
+            tx.commit()
+            tx.close()
             for content_type in ContentTypes.non_abstracts():  # todo: parallelize?
                 if self.nodes.get(content_type):
                     session.write_transaction(self.import_nodes_by_type, content_type)
@@ -440,10 +451,19 @@ class Neo4jContentGraph(ContentGraph):
 
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         self.driver.close()
-        self.stop_neo4j_service()
+        if not self.keep_service:
+            self.stop_neo4j_service()
 
 
 def create_content_graph(use_docker: bool = True) -> None:
     with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD, use_docker) as content_graph:
         content_graph.parse_repository()
     content_graph.dump()
+
+
+def load_content_graph(use_docker: bool = True, keep_service: bool = False) -> None:
+    content_graph = Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD, use_docker, keep_service)
+    content_graph.load()
+    content_graph.start_neo4j_service()
+    if not keep_service:
+        content_graph.stop_neo4j_service()

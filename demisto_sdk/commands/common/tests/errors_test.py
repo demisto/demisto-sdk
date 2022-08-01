@@ -105,7 +105,7 @@ class TestErrors(unittest.TestCase):
                           " Object types, Object modules, Images, Release notes, Layouts, Jobs, Wizards, " \
                           "Descriptions And Modeling Rules."
         expected_result = (error_statement, "BA102")
-        result = Errors.file_type_not_supported(FileType.CONF_JSON)
+        result = Errors.file_type_not_supported(FileType.CONF_JSON, 'dummy_path')
         assert result == expected_result
 
     def test_invalid_context_output(self):

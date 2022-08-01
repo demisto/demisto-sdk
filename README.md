@@ -13,11 +13,11 @@ The library uses python 3.8+.
 ### Installation
 
 1. **Install** - `pip3 install demisto-sdk`
-1. **Upgrade** - `pip3 install --upgrade demisto-sdk`
-1. **Connect demisto-sdk with Cortex XSOAR server** - In order that demisto-sdk and Cortex XSOAR server communicate, perfrom the following steps:
+2. **Upgrade** - `pip3 install --upgrade demisto-sdk`
+3. **Connect demisto-sdk with Cortex XSOAR server** - In order that demisto-sdk and Cortex XSOAR server communicate, perfrom the following steps:
 
    1. Get an API key for Cortex XSOAR/XSIAM-server - `Settings` -> `Integrations` -> `API keys` -> `Get your Key` (copy it)
-   1. Add the following parameters to your environment. You can also use a [.env file](https://pypi.org/project/python-dotenv/), the demisto-sdk will automatically load that file.:
+   2. Add the following parameters to your environment. You can also use a [.env file](https://pypi.org/project/python-dotenv/), the demisto-sdk will automatically load that file.:
 
       ```bash
       export DEMISTO_BASE_URL=<http or https>://<demisto-server url or ip>:<port>
@@ -39,9 +39,10 @@ The library uses python 3.8+.
       unset XSIAM_AUTH_ID
       ```
 
-      >For more configurations, check the [demisto-py](https://github.com/demisto/demisto-py) repository (which is used by the demisto-sdk to communicate with Cortex XSOAR).
-
-   1. Reload your terminal before continue.
+      >For more configurations, check the [demisto-py](https://github.com/demisto/demisto-py) repo (the SDK uses demisto-py to communicate with Cortex XSOAR).
+   3. Install [node.js]([url](https://nodejs.org/en/download/)), and then run `npm install`. This will install the packs from [package.json](https://github.com/demisto/demisto-sdk/blob/master/package.json).
+ MDX is used to validate markdown files, and make sure they render properly on XSOAR and [xsoar.pan.dev](https://xsoar.pan.dev). 
+   4. Reload your terminal.
 
 ---
 

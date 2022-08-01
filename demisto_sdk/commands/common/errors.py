@@ -1,6 +1,6 @@
 from distutils.version import LooseVersion
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import decorator
 from requests import Response
@@ -532,7 +532,7 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def file_type_not_supported(file_type: Optional[FileType], file_path: str | Path):
+    def file_type_not_supported(file_type: Optional[FileType], file_path: Union[str, Path]):
         joined_path = '/'.join(Path(file_path).parts[-3:])
         file_type_str = f'File type {file_type}' if file_type else f'File {joined_path}'
         return f"{file_type_str} is not supported in the validate command.\n" \

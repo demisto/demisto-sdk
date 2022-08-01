@@ -508,7 +508,7 @@ class ValidateManager:
         return True
 
     @error_codes('BA102,IM110')
-    def is_valid_file_type(self, file_type:FileType, file_path: str):
+    def is_valid_file_type(self, file_type: FileType, file_path: str):
         """
         If a file_type is unsupported, will return `False`.
         """

@@ -1,6 +1,7 @@
 from __future__ import annotations
-import os
 
+import logging
+import os
 from typing import Any, Iterator
 
 from git import InvalidGitRepositoryError, Repo
@@ -20,9 +21,8 @@ from demisto_sdk.commands.common.content.objects.root_objects import (
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 
-import logging
-
 logger = logging.getLogger('demisto-sdk')
+
 
 class Content:
     def __init__(self, path: str | Path):

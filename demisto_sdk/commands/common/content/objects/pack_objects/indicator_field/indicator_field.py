@@ -4,14 +4,10 @@ from typing import Union
 import demisto_client
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.constants import (
-    INCIDENT_FIELD,
-    INDICATOR_FIELD,
-    FileType,
-)
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import (
-    JSONContentObject,
-)
+from demisto_sdk.commands.common.constants import (INCIDENT_FIELD,
+                                                   INDICATOR_FIELD, FileType)
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
+    JSONContentObject
 from demisto_sdk.commands.common.handlers import JSON_Handler
 
 json = JSON_Handler()
@@ -33,26 +29,18 @@ class IndicatorField(JSONContentObject):
         """
         normalize_file_name = self._path.name
         # Handle case where "incidentfield-*hello-world.yml"
-        if normalize_file_name.startswith(
-            f'{INCIDENT_FIELD}-'
-        ) and not normalize_file_name.startswith(
-            f'{INCIDENT_FIELD}-{INDICATOR_FIELD}-'
-        ):
-            normalize_file_name = normalize_file_name.replace(
-                f'{INCIDENT_FIELD}-', f'{INCIDENT_FIELD}-{INDICATOR_FIELD}-'
-            )
+        if normalize_file_name.startswith(f'{INCIDENT_FIELD}-') and \
+                not normalize_file_name.startswith(f'{INCIDENT_FIELD}-{INDICATOR_FIELD}-'):
+            normalize_file_name = normalize_file_name.replace(f'{INCIDENT_FIELD}-',
+                                                              f'{INCIDENT_FIELD}-{INDICATOR_FIELD}-')
         else:
             # Handle case where "indicatorfield-*hello-world.yml"
             if normalize_file_name.startswith(f'{INDICATOR_FIELD}-'):
-                normalize_file_name = normalize_file_name.replace(
-                    f'{INDICATOR_FIELD}-',
-                    f'{INCIDENT_FIELD}-{INDICATOR_FIELD}-',
-                )
+                normalize_file_name = normalize_file_name.replace(f'{INDICATOR_FIELD}-',
+                                                                  f'{INCIDENT_FIELD}-{INDICATOR_FIELD}-')
             # Handle case where "*hello-world.yml"
             else:
-                normalize_file_name = (
-                    f'{INCIDENT_FIELD}-{INDICATOR_FIELD}-{normalize_file_name}'
-                )
+                normalize_file_name = f'{INCIDENT_FIELD}-{INDICATOR_FIELD}-{normalize_file_name}'
 
         return normalize_file_name
 
@@ -71,16 +59,10 @@ class IndicatorField(JSONContentObject):
         else:
             indicator_fields_unified_data = {'incidentFields': self._as_dict}
 
-        with NamedTemporaryFile(
-            suffix='.json'
-        ) as indicator_fields_unified_file:
-            indicator_fields_unified_file.write(
-                bytes(json.dumps(indicator_fields_unified_data), 'utf-8')
-            )
+        with NamedTemporaryFile(suffix='.json') as indicator_fields_unified_file:
+            indicator_fields_unified_file.write(bytes(json.dumps(indicator_fields_unified_data), 'utf-8'))
             indicator_fields_unified_file.seek(0)
-            return client.import_incident_fields(
-                file=indicator_fields_unified_file.name
-            )
+            return client.import_incident_fields(file=indicator_fields_unified_file.name)
 
     def type(self):
         return FileType.INDICATOR_FIELD

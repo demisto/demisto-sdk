@@ -5,18 +5,13 @@ from packaging.version import LegacyVersion, Version, parse
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_FROM_VERSION,
-    DEFAULT_CONTENT_ITEM_TO_VERSION,
-)
-from demisto_sdk.commands.common.content.objects.abstract_objects import (
-    JSONObject,
-)
-from demisto_sdk.commands.common.content.objects.pack_objects.change_log.change_log import (
-    ChangeLog,
-)
-from demisto_sdk.commands.common.content.objects.pack_objects.readme.readme import (
-    Readme,
-)
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION)
+from demisto_sdk.commands.common.content.objects.abstract_objects import \
+    JSONObject
+from demisto_sdk.commands.common.content.objects.pack_objects.change_log.change_log import \
+    ChangeLog
+from demisto_sdk.commands.common.content.objects.pack_objects.readme.readme import \
+    Readme
 from demisto_sdk.commands.common.tools import get_json
 
 
@@ -43,12 +38,7 @@ class JSONContentObject(JSONObject):
             1. Should be deprecated in the future.
         """
         if not self._change_log:
-            change_log_file = next(
-                self.path.parent.glob(
-                    patterns=rf'{re.escape(self.path.stem)}_CHANGELOG.md'
-                ),
-                None,
-            )
+            change_log_file = next(self.path.parent.glob(patterns=fr'{re.escape(self.path.stem)}_CHANGELOG.md'), None)
             if change_log_file:
                 self._change_log = ChangeLog(change_log_file)
 
@@ -62,12 +52,7 @@ class JSONContentObject(JSONObject):
             Readme object or None if Readme not found.
         """
         if not self._readme:
-            readme_file = next(
-                self.path.parent.glob(
-                    patterns=rf'{re.escape(self.path.stem)}_README.md'
-                ),
-                None,
-            )
+            readme_file = next(self.path.parent.glob(patterns=fr'{re.escape(self.path.stem)}_README.md'), None)
             if readme_file:
                 self._readme = Readme(readme_file)
 
@@ -84,9 +69,7 @@ class JSONContentObject(JSONObject):
             1. Version object - https://github.com/pypa/packaging
             2. Attribute info - https://xsoar.pan.dev/docs/integrations/yaml-file#version-and-tests
         """
-        return parse(
-            self.get('fromVersion', DEFAULT_CONTENT_ITEM_FROM_VERSION)
-        )
+        return parse(self.get('fromVersion', DEFAULT_CONTENT_ITEM_FROM_VERSION))
 
     @property
     def to_version(self) -> Union[Version, LegacyVersion]:
@@ -101,12 +84,8 @@ class JSONContentObject(JSONObject):
         """
         return parse(self.get('toVersion', DEFAULT_CONTENT_ITEM_TO_VERSION))
 
-    def dump(
-        self,
-        dest_dir: Optional[Union[str, Path]] = None,
-        change_log: Optional[bool] = False,
-        readme: Optional[bool] = False,
-    ) -> List[Path]:
+    def dump(self, dest_dir: Optional[Union[str, Path]] = None, change_log: Optional[bool] = False,
+             readme: Optional[bool] = False) -> List[Path]:
         """Dump JSONContentObject.
 
         Args:

@@ -15,9 +15,7 @@ class IsEqualFunctions:
             v2 = dict2[k]
 
             if isinstance(v1, dict):
-                comparison = IsEqualFunctions.is_dicts_equal(
-                    v1, v2, lists_as_sets
-                )
+                comparison = IsEqualFunctions.is_dicts_equal(v1, v2, lists_as_sets)
             elif isinstance(v1, list):
                 if lists_as_sets:
                     comparison = set(v1) == set(v2)

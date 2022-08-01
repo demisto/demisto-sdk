@@ -7,45 +7,31 @@ from typing import Dict, List, Tuple
 import click
 
 from demisto_sdk.commands.common.constants import (
-    LAYOUT_AND_MAPPER_BUILT_IN_FIELDS,
-    FileType,
-)
+    LAYOUT_AND_MAPPER_BUILT_IN_FIELDS, FileType)
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import (
-    LAYOUT_CONTAINER_FIELDS,
-    LOG_COLORS,
+    LAYOUT_CONTAINER_FIELDS, LOG_COLORS,
     get_all_incident_and_indicator_fields_from_id_set,
-    get_invalid_incident_fields_from_layout,
-    normalize_field_name,
-    print_color,
-    print_error,
-    remove_copy_and_dev_suffixes_from_str,
-)
+    get_invalid_incident_fields_from_layout, normalize_field_name, print_color,
+    print_error, remove_copy_and_dev_suffixes_from_str)
 from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS
 from demisto_sdk.commands.format.format_constants import (
-    DEFAULT_VERSION,
-    ERROR_RETURN_CODE,
-    NEW_FILE_DEFAULT_5_FROMVERSION,
-    SKIP_RETURN_CODE,
-    SUCCESS_RETURN_CODE,
-    VERSION_6_0_0,
-)
+    DEFAULT_VERSION, ERROR_RETURN_CODE, NEW_FILE_DEFAULT_5_FROMVERSION,
+    SKIP_RETURN_CODE, SUCCESS_RETURN_CODE, VERSION_6_0_0)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
 yaml = YAML_Handler()
 
 SCRIPT_QUERY_TYPE = 'script'
 
-LAYOUTS_CONTAINER_KINDS = [
-    'edit',
-    'indicatorsDetails',
-    'indicatorsQuickView',
-    'quickView',
-    'close',
-    'details',
-    'detailsV2',
-    'mobile',
-]
+LAYOUTS_CONTAINER_KINDS = ['edit',
+                           'indicatorsDetails',
+                           'indicatorsQuickView',
+                           'quickView',
+                           'close',
+                           'details',
+                           'detailsV2',
+                           'mobile']
 
 LAYOUTS_CONTAINER_CHECK_SCRIPTS = ('indicatorsDetails', 'detailsV2')
 
@@ -58,32 +44,21 @@ logger = logging.getLogger('demisto-sdk')
 
 
 class LayoutBaseFormat(BaseUpdateJSON, ABC):
-    def __init__(
-        self,
-        input: str = '',
-        output: str = '',
-        path: str = '',
-        from_version: str = '',
-        no_validate: bool = False,
-        verbose: bool = False,
-        clear_cache: bool = False,
-        **kwargs,
-    ):
-        super().__init__(
-            input=input,
-            output=output,
-            path=path,
-            from_version=from_version,
-            no_validate=no_validate,
-            verbose=verbose,
-            clear_cache=clear_cache,
-            **kwargs,
-        )
+
+    def __init__(self,
+                 input: str = '',
+                 output: str = '',
+                 path: str = '',
+                 from_version: str = '',
+                 no_validate: bool = False,
+                 verbose: bool = False,
+                 clear_cache: bool = False,
+                 **kwargs):
+        super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
+                         verbose=verbose, clear_cache=clear_cache, **kwargs)
 
         # layoutscontainer kinds are unique fields to containers, and shouldn't be in layouts
-        self.is_container = any(
-            self.data.get(kind) for kind in LAYOUTS_CONTAINER_KINDS
-        )
+        self.is_container = any(self.data.get(kind) for kind in LAYOUTS_CONTAINER_KINDS)
 
     def format_file(self) -> Tuple[int, int]:
         """Manager function for the Layout JSON updater."""
@@ -95,10 +70,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f'\n================= Updating file {self.source_file} =================',
-                fg='bright_blue',
-            )
+            click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             if self.is_container:
                 self.layoutscontainer__run_format()
             else:
@@ -108,14 +80,11 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             return SUCCESS_RETURN_CODE
         except Exception as err:
             if self.verbose:
-                click.secho(
-                    f'\nFailed to update file {self.source_file}. Error: {err}',
-                    fg='red',
-                )
+                click.secho(f'\nFailed to update file {self.source_file}. Error: {err}', fg='red')
             return ERROR_RETURN_CODE
 
     def arguments_to_remove(self):
-        """Finds diff between keys in file and schema of file type
+        """ Finds diff between keys in file and schema of file type
         Returns:
             Tuple -
                 Set of keys that should be deleted from file
@@ -140,13 +109,8 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
     def layout__set_output_path(self):
         output_basename = os.path.basename(self.output_file)
         if not output_basename.startswith(LAYOUT_PREFIX):
-            new_output_basename = (
-                LAYOUT_PREFIX
-                + output_basename.split(LAYOUTS_CONTAINER_PREFIX)[-1]
-            )
-            new_output_path = self.output_file.replace(
-                output_basename, new_output_basename
-            )
+            new_output_basename = LAYOUT_PREFIX + output_basename.split(LAYOUTS_CONTAINER_PREFIX)[-1]
+            new_output_path = self.output_file.replace(output_basename, new_output_basename)
 
             # rename file if source and output are the same
             if self.output_file == self.source_file:
@@ -167,16 +131,11 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
     def layoutscontainer__set_output_path(self):
         output_basename = os.path.basename(self.output_file)
         if not output_basename.startswith(LAYOUTS_CONTAINER_PREFIX):
-            new_output_basename = (
-                LAYOUTS_CONTAINER_PREFIX
-                + output_basename.split(LAYOUT_PREFIX)[-1]
-            )
-            new_output_path = self.output_file.replace(
-                output_basename, new_output_basename
-            )
+            new_output_basename = LAYOUTS_CONTAINER_PREFIX + output_basename.split(LAYOUT_PREFIX)[-1]
+            new_output_path = self.output_file.replace(output_basename, new_output_basename)
 
             if self.verbose:
-                click.echo(f'Renaming output file: {new_output_path}')
+                click.echo(f"Renaming output file: {new_output_path}")
 
             # rename file if source and output are the same
             if self.output_file == self.source_file:
@@ -187,53 +146,42 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
     def remove_unnecessary_keys(self):
         """Removes keys that are in file but not in schema of file type"""
-        (
-            arguments_to_remove,
-            layout_kind_args_to_remove,
-        ) = self.arguments_to_remove()
+        arguments_to_remove, layout_kind_args_to_remove = self.arguments_to_remove()
         for key in arguments_to_remove:
             if self.verbose:
-                click.echo(f'Removing unnecessary field: {key} from file')
+                click.echo(F'Removing unnecessary field: {key} from file')
             self.data.pop(key, None)
 
         for kind in layout_kind_args_to_remove:
             if self.verbose:
-                click.echo(f'Removing unnecessary fields from {kind} field')
+                click.echo(F'Removing unnecessary fields from {kind} field')
             for field in layout_kind_args_to_remove[kind]:
                 self.data[kind].pop(field, None)
 
     def set_layout_key(self):
-        if 'layout' not in self.data.keys():
+        if "layout" not in self.data.keys():
             kind = self.data['kind']
             id = self.data['id']
             self.data = {
-                'typeId': id,
-                'version': DEFAULT_VERSION,
-                'TypeName': id,
-                'kind': kind,
-                'fromVersion': NEW_FILE_DEFAULT_5_FROMVERSION,
-                'layout': self.data,
+                "typeId": id,
+                "version": DEFAULT_VERSION,
+                "TypeName": id,
+                "kind": kind,
+                "fromVersion": NEW_FILE_DEFAULT_5_FROMVERSION,
+                "layout": self.data
             }
 
     def set_group_field(self):
-        if (
-            self.data['group'] != 'incident'
-            and self.data['group'] != 'indicator'
-        ):
-            click.secho(
-                'No group is specified for this layout, would you like me to update for you? [Y/n]',
-                fg='red',
-            )
+        if self.data['group'] != 'incident' and self.data['group'] != 'indicator':
+            click.secho('No group is specified for this layout, would you like me to update for you? [Y/n]',
+                        fg='red')
             user_answer = input()
             # Checks if the user input is no
             if user_answer in ['n', 'N', 'No', 'no']:
                 print_error('Moving forward without updating group field')
                 return
 
-            print_color(
-                'Please specify the desired group: incident or indicator',
-                LOG_COLORS.YELLOW,
-            )
+            print_color('Please specify the desired group: incident or indicator', LOG_COLORS.YELLOW)
             user_desired_group = input()
             if re.match(r'(^incident$)', user_desired_group, re.IGNORECASE):
                 self.data['group'] = 'incident'
@@ -243,7 +191,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
                 print_error('Group is not valid')
 
     def layout__arguments_to_remove(self):
-        """Finds diff between keys in file and schema of file type
+        """ Finds diff between keys in file and schema of file type
         Returns:
             Tuple -
                 Set of keys that should be deleted from file
@@ -257,14 +205,12 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
 
         second_level_args = {}
         kind_schema = a['mapping'][LAYOUT_KIND]['mapping'].keys()
-        second_level_args[LAYOUT_KIND] = set(
-            self.data[LAYOUT_KIND].keys()
-        ) - set(kind_schema)
+        second_level_args[LAYOUT_KIND] = set(self.data[LAYOUT_KIND].keys()) - set(kind_schema)
 
         return first_level_args, second_level_args
 
     def layoutscontainer__arguments_to_remove(self):
-        """Finds diff between keys in file and schema of file type
+        """ Finds diff between keys in file and schema of file type
         Returns:
             Tuple -
                 Set of keys that should be deleted from file
@@ -280,9 +226,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         for kind in LAYOUTS_CONTAINER_KINDS:
             if kind in self.data:
                 kind_schema = a['mapping'][kind]['mapping'].keys()
-                second_level_args[kind] = set(self.data[kind].keys()) - set(
-                    kind_schema
-                )
+                second_level_args[kind] = set(self.data[kind].keys()) - set(kind_schema)
 
         return first_level_args, second_level_args
 
@@ -299,56 +243,28 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             for tab in container.get('tabs', ()):
                 for section in tab.get('sections', ()):
                     if section.get('queryType') == SCRIPT_QUERY_TYPE:
-                        section[
-                            'query'
-                        ] = remove_copy_and_dev_suffixes_from_str(
-                            section.get('query')
-                        )
-                        section[
-                            'name'
-                        ] = remove_copy_and_dev_suffixes_from_str(
-                            section.get('name')
-                        )
+                        section['query'] = remove_copy_and_dev_suffixes_from_str(section.get('query'))
+                        section['name'] = remove_copy_and_dev_suffixes_from_str(section.get('name'))
 
     def remove_copy_and_dev_suffixes_from_layout(self):
         if typename := self.data.get('TypeName'):
-            self.data['TypeName'] = remove_copy_and_dev_suffixes_from_str(
-                typename
-            )
+            self.data['TypeName'] = remove_copy_and_dev_suffixes_from_str(typename)
         if type_id := self.data.get('typeId'):
-            self.data['typeId'] = remove_copy_and_dev_suffixes_from_str(
-                type_id
-            )
+            self.data['typeId'] = remove_copy_and_dev_suffixes_from_str(type_id)
 
         if layout_data := self.data.get('layout'):
             if layout_tabs := layout_data.get('tabs', ()):
                 for tab in layout_tabs:
                     for section in tab.get('sections', ()):
                         if section.get('queryType') == SCRIPT_QUERY_TYPE:
-                            section[
-                                'query'
-                            ] = remove_copy_and_dev_suffixes_from_str(
-                                section.get('query')
-                            )
-                            section[
-                                'name'
-                            ] = remove_copy_and_dev_suffixes_from_str(
-                                section.get('name')
-                            )
+                            section['query'] = remove_copy_and_dev_suffixes_from_str(section.get('query'))
+                            section['name'] = remove_copy_and_dev_suffixes_from_str(section.get('name'))
 
             elif layout_sections := layout_data.get('sections'):
                 for section in layout_sections:
                     if section.get('queryType') == SCRIPT_QUERY_TYPE:
-                        section[
-                            'query'
-                        ] = remove_copy_and_dev_suffixes_from_str(
-                            section.get('query')
-                        )
-                        section[
-                            'name'
-                        ] = remove_copy_and_dev_suffixes_from_str(
-                            section.get('name')
-                        )
+                        section['query'] = remove_copy_and_dev_suffixes_from_str(section.get('query'))
+                        section['name'] = remove_copy_and_dev_suffixes_from_str(section.get('name'))
 
     def remove_non_existent_fields_container_layout(self):
         """
@@ -363,8 +279,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         content_fields = self.get_available_content_fields()
 
         layout_container_items = [
-            layout_container_field
-            for layout_container_field in LAYOUT_CONTAINER_FIELDS
+            layout_container_field for layout_container_field in LAYOUT_CONTAINER_FIELDS
             if self.data.get(layout_container_field)
         ]
 
@@ -391,9 +306,7 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         layout_sections = layout.get('sections', [])
         for section in layout_sections:
             fields = section.get('fields', [])
-            section['fields'] = self.extract_content_fields(
-                fields=fields, content_fields=content_fields
-            )
+            section['fields'] = self.extract_content_fields(fields=fields, content_fields=content_fields)
 
         self.remove_non_existent_fields_from_tabs(
             layout_tabs=layout.get('tabs', []), content_fields=content_fields
@@ -403,18 +316,12 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
         """
         Get all the available content indicator/incident fields available + all the built in fields.
         """
-        return (
-            get_all_incident_and_indicator_fields_from_id_set(
-                self.id_set_file, 'layout'
-            )
-            + [field.lower() for field in BUILT_IN_FIELDS]
-            + LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
-        )
+        return get_all_incident_and_indicator_fields_from_id_set(self.id_set_file, 'layout') + [
+            field.lower() for field in BUILT_IN_FIELDS
+        ] + LAYOUT_AND_MAPPER_BUILT_IN_FIELDS
 
     @staticmethod
-    def extract_content_fields(
-        fields: List[Dict], content_fields: List[str]
-    ) -> List[str]:
+    def extract_content_fields(fields: List[Dict], content_fields: List[str]) -> List[str]:
         """
         Get only incident/indicator fields which are part of the id json file.
 
@@ -426,17 +333,12 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             list[str]: fields which are part of the content items (id json).
         """
         return [
-            field
-            for field in fields  # type: ignore[misc]
-            if normalize_field_name(field=field.get('fieldId', '')).lower()
-            not in get_invalid_incident_fields_from_layout(
-                layout_incident_fields=fields, content_fields=content_fields
-            )
+            field for field in fields  # type: ignore[misc]
+            if normalize_field_name(field=field.get('fieldId', '')).lower() not in
+            get_invalid_incident_fields_from_layout(layout_incident_fields=fields, content_fields=content_fields)
         ]
 
-    def remove_non_existent_fields_from_tabs(
-        self, layout_tabs: list, content_fields: List[str]
-    ):
+    def remove_non_existent_fields_from_tabs(self, layout_tabs: list, content_fields: List[str]):
         """
         Remove non-existent fields which are not part of the id json from tabs.
 
@@ -448,6 +350,4 @@ class LayoutBaseFormat(BaseUpdateJSON, ABC):
             layout_sections = tab.get('sections', [])
             for section in layout_sections:
                 items = section.get('items', [])
-                section['items'] = self.extract_content_fields(
-                    fields=items, content_fields=content_fields
-                )
+                section['items'] = self.extract_content_fields(fields=items, content_fields=content_fields)

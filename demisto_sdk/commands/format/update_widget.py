@@ -3,50 +3,34 @@ from typing import Tuple
 
 import click
 
-from demisto_sdk.commands.format.format_constants import (
-    ERROR_RETURN_CODE,
-    SKIP_RETURN_CODE,
-    SUCCESS_RETURN_CODE,
-)
+from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
+                                                          SKIP_RETURN_CODE,
+                                                          SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
 
 class WidgetJSONFormat(BaseUpdateJSON):
     """WidgetJSONFormat class is designed to update widget JSON file according to Demisto's convention.
 
-    Attributes:
-         input (str): the path to the file we are updating at the moment.
-         output (str): the desired file name to save the updated version of the JSON to.
+       Attributes:
+            input (str): the path to the file we are updating at the moment.
+            output (str): the desired file name to save the updated version of the JSON to.
     """
-
     WIDGET_TYPE_METRICS_MIN_VERSION = '6.2.0'
 
-    def __init__(
-        self,
-        input: str = '',
-        output: str = '',
-        path: str = '',
-        from_version: str = '',
-        no_validate: bool = False,
-        verbose: bool = False,
-        **kwargs,
-    ):
-        super().__init__(
-            input=input,
-            output=output,
-            path=path,
-            from_version=from_version,
-            no_validate=no_validate,
-            verbose=verbose,
-            **kwargs,
-        )
+    def __init__(self, input: str = '',
+                 output: str = '',
+                 path: str = '',
+                 from_version: str = '',
+                 no_validate: bool = False,
+                 verbose: bool = False,
+                 **kwargs):
+        super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
+                         verbose=verbose, **kwargs)
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f'\n================= Updating file {self.source_file} =================',
-                fg='bright_blue',
-            )
+            click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             self.update_json()
             self.set_description()
             self.set_isPredefined()
@@ -57,10 +41,7 @@ class WidgetJSONFormat(BaseUpdateJSON):
 
         except Exception as err:
             if self.verbose:
-                click.secho(
-                    f'\nFailed to update file {self.source_file}. Error: {err}',
-                    fg='red',
-                )
+                click.secho(f'\nFailed to update file {self.source_file}. Error: {err}', fg='red')
             return ERROR_RETURN_CODE
 
     def format_file(self) -> Tuple[int, int]:
@@ -82,7 +63,6 @@ class WidgetJSONFormat(BaseUpdateJSON):
         widget_data_type = self.data.get('dataType', '')
         current_from_version = self.data.get('fromVersion')
 
-        if widget_data_type == 'metrics' and LooseVersion(
-            current_from_version
-        ) < LooseVersion(self.WIDGET_TYPE_METRICS_MIN_VERSION):
+        if widget_data_type == 'metrics' and \
+                LooseVersion(current_from_version) < LooseVersion(self.WIDGET_TYPE_METRICS_MIN_VERSION):
             self.data['fromVersion'] = self.WIDGET_TYPE_METRICS_MIN_VERSION

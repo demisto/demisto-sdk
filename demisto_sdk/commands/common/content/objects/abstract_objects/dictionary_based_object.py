@@ -9,7 +9,7 @@ from .general_object import GeneralObject
 
 
 class DictionaryBasedObject(GeneralObject):
-    def __init__(self, path: Union[Path, str], file_name_prefix: str = ''):
+    def __init__(self, path: Union[Path, str], file_name_prefix: str = ""):
         super().__init__(path, file_name_prefix)
         self._as_dict: Dict[str, Any] = {}
 

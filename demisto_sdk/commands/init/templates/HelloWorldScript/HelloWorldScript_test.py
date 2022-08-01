@@ -36,6 +36,7 @@ More information about Unit Tests in Cortex XSOAR:
 https://xsoar.pan.dev/docs/integrations/unit-testing
 
 Also please check the HelloWorld Integration Unit Tests file.
+
 """
 
 from HelloWorldScript import say_hello, say_hello_command
@@ -48,7 +49,9 @@ def test_say_hello():
 
 
 def test_say_hello_command():
-    args = {'name': 'Dbot'}
+    args = {
+        'name': 'Dbot'
+    }
 
     readable_output, outputs, raw_response = say_hello_command(args)
 

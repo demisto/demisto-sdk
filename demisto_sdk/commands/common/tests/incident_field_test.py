@@ -1,11 +1,9 @@
 import pytest
 
-from demisto_sdk.commands.common.hook_validations.incident_field import (
-    IncidentFieldValidator,
-)
-from demisto_sdk.commands.common.hook_validations.structure import (
-    StructureValidator,
-)
+from demisto_sdk.commands.common.hook_validations.incident_field import \
+    IncidentFieldValidator
+from demisto_sdk.commands.common.hook_validations.structure import \
+    StructureValidator
 
 INCIDENT_GROUP_NUMBER = 0
 
@@ -24,17 +22,9 @@ class TestIncidentFieldValidator:
         - Ensure is valid file returns true.
 
         """
-        incident_field = pack.create_incident_field(
-            'incident_1',
-            {
-                'type': field_type,
-                'cliName': 'testincident',
-                'version': -1,
-                'fromVersion': '5.0.0',
-                'content': True,
-                'group': INCIDENT_GROUP_NUMBER,
-            },
-        )
+        incident_field = pack.create_incident_field('incident_1', {'type': field_type, 'cliName': 'testincident',
+                                                                   'version': -1, 'fromVersion': '5.0.0',
+                                                                   'content': True, 'group': INCIDENT_GROUP_NUMBER})
         structure = StructureValidator(incident_field.path)
         validator = IncidentFieldValidator(structure)
         assert validator.is_valid_file()
@@ -51,17 +41,9 @@ class TestIncidentFieldValidator:
         - Ensure is valid file returns false.
 
         """
-        incident_field = pack.create_incident_field(
-            'incident_1',
-            {
-                'type': 'lol-unknown',
-                'cliName': 'testincident',
-                'version': -1,
-                'fromVersion': '5.0.0',
-                'content': True,
-                'group': INCIDENT_GROUP_NUMBER,
-            },
-        )
+        incident_field = pack.create_incident_field('incident_1', {'type': 'lol-unknown', 'cliName': 'testincident',
+                                                                   'version': -1, 'fromVersion': '5.0.0',
+                                                                   'content': True, 'group': INCIDENT_GROUP_NUMBER})
         structure = StructureValidator(incident_field.path)
         validator = IncidentFieldValidator(structure)
         assert not validator.is_valid_file()

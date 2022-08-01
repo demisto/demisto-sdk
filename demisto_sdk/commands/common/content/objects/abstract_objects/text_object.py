@@ -10,7 +10,7 @@ from .general_object import GeneralObject
 class TextObject(GeneralObject):
     def __init__(self, path: Union[Path, str]):
         super().__init__(path)
-        self._text = ''
+        self._text = ""
 
     @staticmethod
     def _fix_path(path: Union[Path, str]):

@@ -3,16 +3,15 @@ from typing import Optional
 
 import pytest
 
-from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classifier import (
-    Classifier,
-)
+from demisto_sdk.commands.common.content.objects.pack_objects.classifier.classifier import \
+    Classifier
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.convert.converters.classifier.classifier_base_converter import (
-    ClassifierBaseConverter,
-)
+from demisto_sdk.commands.convert.converters.classifier.classifier_base_converter import \
+    ClassifierBaseConverter
 
 
 class TestLayoutBaseConverter:
+
     def test_get_classifiers_schema_intersection_fields(self, tmpdir):
         """
         Given:
@@ -26,36 +25,16 @@ class TestLayoutBaseConverter:
 
         """
         classifier_converter = ClassifierBaseConverter(tmpdir)
-        result = (
-            classifier_converter.get_classifiers_schema_intersection_fields()
-        )
-        assert result == {
-            'custom',
-            'defaultIncidentType',
-            'feed',
-            'incidentSamples',
-            'indicatorSamples',
-            'isDefault',
-            'keyTypeMap',
-            'modified',
-            'propagationLabels',
-            'sortValues',
-            'transformer',
-            'unclassifiedCases',
-            'version',
-        }
+        result = classifier_converter.get_classifiers_schema_intersection_fields()
+        assert result == {'custom', 'defaultIncidentType', 'feed', 'incidentSamples', 'indicatorSamples',
+                          'isDefault', 'keyTypeMap', 'modified', 'propagationLabels', 'sortValues', 'transformer',
+                          'unclassifiedCases', 'version'}
 
-    EXTRACT_CLASSIFIER_NAME_INPUTS = [
-        ('classifier-Cymulate_5_9_9', 'Cymulate'),
-        ('classifier-Cymulate', None),
-    ]
+    EXTRACT_CLASSIFIER_NAME_INPUTS = [('classifier-Cymulate_5_9_9', 'Cymulate'),
+                                      ('classifier-Cymulate', None)]
 
-    @pytest.mark.parametrize(
-        'classifier_name, expected', EXTRACT_CLASSIFIER_NAME_INPUTS
-    )
-    def test_extract_classifier_name(
-        self, classifier_name: str, expected: Optional[str]
-    ):
+    @pytest.mark.parametrize('classifier_name, expected', EXTRACT_CLASSIFIER_NAME_INPUTS)
+    def test_extract_classifier_name(self, classifier_name: str, expected: Optional[str]):
         """
         Given:
         - Old classifier object.
@@ -67,15 +46,8 @@ class TestLayoutBaseConverter:
         - Ensure expected name is extracted, if name corresponds to the expected naming format. None if not.
 
         """
-        old_classifier_path = os.path.normpath(
-            os.path.join(
-                __file__,
-                f'{git_path()}/demisto_sdk/commands/convert/converters/'
-                f'classifier/tests/test_data/{classifier_name}.json',
-            )
-        )
+        old_classifier_path = os.path.normpath(os.path.join(__file__,
+                                                            f'{git_path()}/demisto_sdk/commands/convert/converters/'
+                                                            f'classifier/tests/test_data/{classifier_name}.json'))
         classifier = Classifier(old_classifier_path)
-        assert (
-            ClassifierBaseConverter.extract_classifier_name(classifier)
-            == expected
-        )
+        assert ClassifierBaseConverter.extract_classifier_name(classifier) == expected

@@ -4,67 +4,36 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from demisto_sdk.commands.common.constants import (
-    ALERT_FETCH_REQUIRED_PARAMS,
-    BANG_COMMAND_ARGS_MAPPING_DICT,
-    BANG_COMMAND_NAMES,
-    DBOT_SCORES_DICT,
-    DEFAULT_CONTENT_ITEM_FROM_VERSION,
-    DEPRECATED_REGEXES,
-    ENDPOINT_COMMAND_NAME,
-    ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
-    FEED_REQUIRED_PARAMS,
-    FIRST_FETCH,
-    FIRST_FETCH_PARAM,
-    INCIDENT_FETCH_REQUIRED_PARAMS,
-    INTEGRATION_CATEGORIES,
-    IOC_OUTPUTS_DICT,
-    MAX_FETCH,
-    MAX_FETCH_PARAM,
-    PACKS_DIR,
-    PACKS_PACK_META_FILE_NAME,
-    PYTHON_SUBTYPES,
-    REPUTATION_COMMAND_NAMES,
-    TYPE_PWSH,
-    XSOAR_CONTEXT_STANDARD_URL,
-    XSOAR_SUPPORT,
-    MarketplaceVersions,
-)
-from demisto_sdk.commands.common.default_additional_info_loader import (
-    load_default_additional_info_dict,
-)
-from demisto_sdk.commands.common.errors import (
-    FOUND_FILES_AND_ERRORS,
-    FOUND_FILES_AND_IGNORED_ERRORS,
-    Errors,
-)
+    ALERT_FETCH_REQUIRED_PARAMS, BANG_COMMAND_ARGS_MAPPING_DICT,
+    BANG_COMMAND_NAMES, DBOT_SCORES_DICT, DEFAULT_CONTENT_ITEM_FROM_VERSION,
+    DEPRECATED_REGEXES, ENDPOINT_COMMAND_NAME, ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
+    FEED_REQUIRED_PARAMS, FIRST_FETCH, FIRST_FETCH_PARAM,
+    INCIDENT_FETCH_REQUIRED_PARAMS, INTEGRATION_CATEGORIES, IOC_OUTPUTS_DICT,
+    MAX_FETCH, MAX_FETCH_PARAM, PACKS_DIR, PACKS_PACK_META_FILE_NAME,
+    PYTHON_SUBTYPES, REPUTATION_COMMAND_NAMES, TYPE_PWSH,
+    XSOAR_CONTEXT_STANDARD_URL, XSOAR_SUPPORT, MarketplaceVersions)
+from demisto_sdk.commands.common.default_additional_info_loader import \
+    load_default_additional_info_dict
+from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
+                                                FOUND_FILES_AND_IGNORED_ERRORS,
+                                                Errors)
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import (
-    error_codes,
-)
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
-    ContentEntityValidator,
-)
-from demisto_sdk.commands.common.hook_validations.description import (
-    DescriptionValidator,
-)
-from demisto_sdk.commands.common.hook_validations.docker import (
-    DockerImageValidator,
-)
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    error_codes
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
+    ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.description import \
+    DescriptionValidator
+from demisto_sdk.commands.common.hook_validations.docker import \
+    DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.tools import (
-    _get_file_id,
-    compare_context_path_in_yml_and_readme,
+    _get_file_id, compare_context_path_in_yml_and_readme,
     extract_deprecated_command_names_from_yml,
-    extract_none_deprecated_command_names_from_yml,
-    get_core_pack_list,
-    get_file_version_suffix_if_exists,
-    get_files_in_dir,
-    get_item_marketplaces,
-    get_pack_name,
-    is_iron_bank_pack,
-    print_error,
-    server_version_compare,
-)
+    extract_none_deprecated_command_names_from_yml, get_core_pack_list,
+    get_file_version_suffix_if_exists, get_files_in_dir, get_item_marketplaces,
+    get_pack_name, is_iron_bank_pack, print_error, server_version_compare,
+    string_to_bool)
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -77,48 +46,24 @@ class IntegrationValidator(ContentEntityValidator):
     """
 
     EXPIRATION_FIELD_TYPE = 17
-    ALLOWED_HIDDEN_PARAMS = {
-        'longRunning',
-        'feedIncremental',
-        'feedReputation',
-    }
+    ALLOWED_HIDDEN_PARAMS = {'longRunning', 'feedIncremental', 'feedReputation'}
 
-    def __init__(
-        self,
-        structure_validator,
-        ignored_errors=None,
-        print_as_warnings=False,
-        skip_docker_check=False,
-        json_file_path=None,
-        validate_all=False,
-        deprecation_validator=None,
-    ):
-        super().__init__(
-            structure_validator,
-            ignored_errors=ignored_errors,
-            print_as_warnings=print_as_warnings,
-            json_file_path=json_file_path,
-            skip_docker_check=skip_docker_check,
-        )
+    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
+                 json_file_path=None, validate_all=False, deprecation_validator=None):
+        super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
+                         json_file_path=json_file_path, skip_docker_check=skip_docker_check)
         self.validate_all = validate_all
         self.deprecation_validator = deprecation_validator
 
     @error_codes('BA100')
     def is_valid_version(self):
         # type: () -> bool
-        if (
-            self.current_file.get('commonfields', {}).get('version')
-            == self.DEFAULT_VERSION
-        ):
+        if self.current_file.get("commonfields", {}).get('version') == self.DEFAULT_VERSION:
             return True
 
         error_message, error_code = Errors.wrong_version()
-        if self.handle_error(
-            error_message,
-            error_code,
-            file_path=self.file_path,
-            suggested_fix=Errors.suggest_fix(self.file_path),
-        ):
+        if self.handle_error(error_message, error_code, file_path=self.file_path,
+                             suggested_fix=Errors.suggest_fix(self.file_path)):
             self.is_valid = False
             return False
 
@@ -185,14 +130,8 @@ class IntegrationValidator(ContentEntityValidator):
 
         return all(answers)
 
-    def is_valid_file(
-        self,
-        validate_rn: bool = True,
-        skip_test_conf: bool = False,
-        check_is_unskipped: bool = True,
-        conf_json_data: dict = {},
-        is_modified=False,
-    ) -> bool:
+    def is_valid_file(self, validate_rn: bool = True, skip_test_conf: bool = False,
+                      check_is_unskipped: bool = True, conf_json_data: dict = {}, is_modified=False) -> bool:
         """Check whether the Integration is valid or not according to the LEVEL SUPPORT OPTIONS
         that depends on the contributor type
 
@@ -214,7 +153,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_context_correct_in_readme(),
             self.verify_yml_commands_match_readme(is_modified),
             self.verify_reputation_commands_has_reliability(is_modified),
-            self.is_integration_deprecated_and_used(),
+            self.is_integration_deprecated_and_used()
         ]
 
         if check_is_unskipped:
@@ -234,11 +173,11 @@ class IntegrationValidator(ContentEntityValidator):
 
     def is_valid_beta_integration(self, validate_rn: bool = True) -> bool:
         """Check whether the beta Integration is valid or not, update the _is_valid field to determine that
-        Args:
-            validate_rn (bool): Whether to validate release notes (changelog) or not.
+            Args:
+                validate_rn (bool): Whether to validate release notes (changelog) or not.
 
-        Returns:
-            bool: True if integration is valid, False otherwise.
+            Returns:
+                bool: True if integration is valid, False otherwise.
         """
         answers = [
             self.core_integration_validations(validate_rn),
@@ -262,12 +201,8 @@ class IntegrationValidator(ContentEntityValidator):
         integration_id = _get_file_id('integration', self.current_file)
         if skipped_integrations and integration_id in skipped_integrations:
             skip_comment = skipped_integrations[integration_id]
-            error_message, error_code = Errors.integration_is_skipped(
-                integration_id, skip_comment
-            )
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            error_message, error_code = Errors.integration_is_skipped(integration_id, skip_comment)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
         return self.is_valid
 
@@ -278,13 +213,8 @@ class IntegrationValidator(ContentEntityValidator):
         display_name = self.current_file.get('display', '')
         if is_deprecated:
             if not display_name.endswith('(Deprecated)'):
-                (
-                    error_message,
-                    error_code,
-                ) = Errors.invalid_deprecated_integration_display_name()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.invalid_deprecated_integration_display_name()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
         return is_valid
 
@@ -296,18 +226,11 @@ class IntegrationValidator(ContentEntityValidator):
         deprecated_v2_regex = DEPRECATED_REGEXES[0]
         deprecated_no_replace_regex = DEPRECATED_REGEXES[1]
         if is_deprecated:
-            if re.search(deprecated_v2_regex, description) or re.search(
-                deprecated_no_replace_regex, description
-            ):
+            if re.search(deprecated_v2_regex, description) or re.search(deprecated_no_replace_regex, description):
                 pass
             else:
-                (
-                    error_message,
-                    error_code,
-                ) = Errors.invalid_deprecated_integration_description()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.invalid_deprecated_integration_description()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
 
         return is_valid
@@ -318,15 +241,8 @@ class IntegrationValidator(ContentEntityValidator):
         for param in config:
             if param.get('type') == 8:
                 if param.get('defaultvalue') not in [None, 'true', 'false']:
-                    (
-                        error_message,
-                        error_code,
-                    ) = Errors.invalid_defaultvalue_for_checkbox_field(
-                        param.get('name')
-                    )
-                    if self.handle_error(
-                        error_message, error_code, file_path=self.file_path
-                    ):
+                    error_message, error_code = Errors.invalid_defaultvalue_for_checkbox_field(param.get('name'))
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         return False
         return True
 
@@ -348,73 +264,37 @@ class IntegrationValidator(ContentEntityValidator):
             configuration_param_name = configuration_param['name']
             if configuration_param_name == param_name:
                 if configuration_param['display'] != param_display:
-                    error_message, error_code = Errors.wrong_display_name(
-                        param_name, param_display
-                    )
-                    formatted_message = self.handle_error(
-                        error_message,
-                        error_code,
-                        file_path=self.file_path,
-                        should_print=False,
-                    )
+                    error_message, error_code = Errors.wrong_display_name(param_name, param_display)
+                    formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                          should_print=False)
                     if formatted_message:
                         err_msgs.append(formatted_message)
 
-                if configuration_param.get('defaultvalue', '') not in (
-                    False,
-                    'false',
-                    '',
-                ):
-                    (
-                        error_message,
-                        error_code,
-                    ) = Errors.wrong_default_parameter_not_empty(
-                        param_name, "''"
-                    )
-                    formatted_message = self.handle_error(
-                        error_message,
-                        error_code,
-                        file_path=self.file_path,
-                        should_print=False,
-                    )
+                if configuration_param.get('defaultvalue', '') not in (False, 'false', ''):
+                    error_message, error_code = Errors.wrong_default_parameter_not_empty(param_name, "''")
+                    formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                          should_print=False)
                     if formatted_message:
                         err_msgs.append(formatted_message)
 
                 if configuration_param.get('required', False):
-                    error_message, error_code = Errors.wrong_required_value(
-                        param_name
-                    )
-                    formatted_message = self.handle_error(
-                        error_message,
-                        error_code,
-                        file_path=self.file_path,
-                        should_print=False,
-                    )
+                    error_message, error_code = Errors.wrong_required_value(param_name)
+                    formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                          should_print=False)
                     if formatted_message:
                         err_msgs.append(formatted_message)
 
                 if configuration_param.get('type') != 8:
-                    error_message, error_code = Errors.wrong_required_type(
-                        param_name
-                    )
-                    formatted_message = self.handle_error(
-                        error_message,
-                        error_code,
-                        file_path=self.file_path,
-                        should_print=False,
-                    )
+                    error_message, error_code = Errors.wrong_required_type(param_name)
+                    formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                          should_print=False)
                     if formatted_message:
                         err_msgs.append(formatted_message)
 
         if err_msgs:
-            print_error(
-                '{} Received the following error for {} validation:\n{}\n {}\n'.format(
-                    self.file_path,
-                    param_name,
-                    '\n'.join(err_msgs),
-                    Errors.suggest_fix(file_path=self.file_path),
-                )
-            )
+            print_error('{} Received the following error for {} validation:\n{}\n {}\n'
+                        .format(self.file_path, param_name, '\n'.join(err_msgs),
+                                Errors.suggest_fix(file_path=self.file_path)))
             self.is_valid = False
             return False
         return True
@@ -433,9 +313,7 @@ class IntegrationValidator(ContentEntityValidator):
             if configuration_param['name'] in ('insecure', 'unsecure'):
                 insecure_field_name = configuration_param['name']
         if insecure_field_name:
-            return self.is_valid_param(
-                insecure_field_name, 'Trust any certificate (not secure)'
-            )
+            return self.is_valid_param(insecure_field_name, 'Trust any certificate (not secure)')
         return True
 
     def is_checkbox_param_configured_correctly(self):
@@ -447,15 +325,8 @@ class IntegrationValidator(ContentEntityValidator):
         configuration = self.current_file.get('configuration', [])
         for configuration_param in configuration:
             param_name = configuration_param['name']
-            if configuration_param['type'] == 8 and param_name not in (
-                'insecure',
-                'unsecure',
-                'proxy',
-                'isFetch',
-            ):
-                if not self.is_valid_checkbox_param(
-                    configuration_param, param_name
-                ):
+            if configuration_param['type'] == 8 and param_name not in ('insecure', 'unsecure', 'proxy', 'isFetch'):
+                if not self.is_valid_checkbox_param(configuration_param, param_name):
                     self.is_valid = False
         if not self.is_valid:
             return False
@@ -470,9 +341,7 @@ class IntegrationValidator(ContentEntityValidator):
         """
         if configuration_param.get('required', False):
             error_message, error_code = Errors.wrong_required_value(param_name)
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
 
@@ -483,9 +352,7 @@ class IntegrationValidator(ContentEntityValidator):
         category = self.current_file.get('category', None)
         if category not in INTEGRATION_CATEGORIES:
             error_message, error_code = Errors.wrong_category(category)
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
 
@@ -514,42 +381,22 @@ class IntegrationValidator(ContentEntityValidator):
                     if arg_name in command_mapping['default']:
                         flag_found_arg = True
                         if arg.get('default') is False:
-                            (
-                                error_message,
-                                error_code,
-                            ) = Errors.wrong_default_argument(
-                                arg_name, command_name
-                            )
-                            if self.handle_error(
-                                error_message,
-                                error_code,
-                                file_path=self.file_path,
-                            ):
+                            error_message, error_code = Errors.wrong_default_argument(arg_name,
+                                                                                      command_name)
+                            if self.handle_error(error_message, error_code, file_path=self.file_path):
                                 self.is_valid = False
                                 flag = False
                         if not arg.get('isArray'):
-                            (
-                                error_message,
-                                error_code,
-                            ) = Errors.wrong_is_array_argument(
-                                arg_name, command_name
-                            )
-                            if self.handle_error(
-                                error_message,
-                                error_code,
-                                file_path=self.file_path,
-                            ):
+                            error_message, error_code = Errors.wrong_is_array_argument(arg_name,
+                                                                                       command_name)
+                            if self.handle_error(error_message, error_code, file_path=self.file_path):
                                 self.is_valid = False
                                 flag = False
 
                 flag_found_required = command_mapping.get('required', True)
                 if not flag_found_arg and flag_found_required:
-                    error_message, error_code = Errors.no_default_arg(
-                        command_name
-                    )
-                    if self.handle_error(
-                        error_message, error_code, file_path=self.file_path
-                    ):
+                    error_message, error_code = Errors.no_default_arg(command_name)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         flag = False
 
         if not flag:
@@ -572,48 +419,31 @@ class IntegrationValidator(ContentEntityValidator):
         for command in commands:
             default_args = set()
             if command.get('arguments', []) is None:
-                error_message, error_code = Errors.empty_command_arguments(
-                    command.get('name')
-                )
-                if self.handle_error(
-                    error_message,
-                    error_code,
-                    file_path=self.file_path,
-                    suggested_fix=Errors.suggest_fix(self.file_path),
-                ):
+                error_message, error_code = Errors.empty_command_arguments(command.get('name'))
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     suggested_fix=Errors.suggest_fix(self.file_path)):
                     is_valid = False  # do not break the main loop as there can be multiple invalid commands
                     continue
 
             for arg in command.get('arguments', []):
                 if arg.get('default'):
                     default_args.add(arg.get('name'))
-            if (
-                len(default_args) > 1
-            ):  # if more than one default arg, command is faulty
-                error_message, error_code = Errors.multiple_default_arg(
-                    command.get('name'), str(default_args)
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+            if len(default_args) > 1:  # if more than one default arg, command is faulty
+                error_message, error_code = Errors.multiple_default_arg(command.get('name'), str(default_args))
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False  # do not break the main loop as there can be multiple invalid commands
 
         return is_valid
 
     @staticmethod
-    def _get_invalid_dbot_outputs(
-        context_outputs_paths, context_outputs_descriptions
-    ):
+    def _get_invalid_dbot_outputs(context_outputs_paths, context_outputs_descriptions):
         missing_outputs = set()
         missing_descriptions = set()
         for dbot_score_output in DBOT_SCORES_DICT:
             if dbot_score_output not in context_outputs_paths:
                 missing_outputs.add(dbot_score_output)
             else:  # DBot Score output path is in the outputs
-                if (
-                    DBOT_SCORES_DICT.get(dbot_score_output)
-                    not in context_outputs_descriptions
-                ):
+                if DBOT_SCORES_DICT.get(dbot_score_output) not in context_outputs_descriptions:
                     missing_descriptions.add(dbot_score_output)
                     # self.is_valid = False - Do not fail build over wrong description
 
@@ -644,57 +474,31 @@ class IntegrationValidator(ContentEntityValidator):
 
                 # validate DBotScore outputs and descriptions
                 if command_name in REPUTATION_COMMAND_NAMES:
-                    (
-                        missing_outputs,
-                        missing_descriptions,
-                    ) = self._get_invalid_dbot_outputs(
-                        context_outputs_paths, context_outputs_descriptions
-                    )
+                    missing_outputs, missing_descriptions = self._get_invalid_dbot_outputs(
+                        context_outputs_paths, context_outputs_descriptions)
                     if missing_outputs:
-                        error_message, error_code = Errors.dbot_invalid_output(
-                            command_name, missing_outputs, context_standard
-                        )
-                        if self.handle_error(
-                            error_message,
-                            error_code,
-                            file_path=self.file_path,
-                            warning=self.structure_validator.quiet_bc,
-                        ):
+                        error_message, error_code = Errors.dbot_invalid_output(command_name, missing_outputs,
+                                                                               context_standard)
+                        if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                             warning=self.structure_validator.quiet_bc):
                             self.is_valid = False
                             output_for_reputation_valid = False
 
                     if missing_descriptions:
-                        (
-                            error_message,
-                            error_code,
-                        ) = Errors.dbot_invalid_description(
-                            command_name,
-                            missing_descriptions,
-                            context_standard,
-                        )
-                        if self.handle_error(
-                            error_message,
-                            error_code,
-                            file_path=self.file_path,
-                            warning=True,
-                        ):
+                        error_message, error_code = Errors.dbot_invalid_description(command_name,
+                                                                                    missing_descriptions,
+                                                                                    context_standard)
+                        if self.handle_error(error_message, error_code, file_path=self.file_path, warning=True):
                             self.is_valid = False
                             output_for_reputation_valid = False
 
                 # validate the IOC output
                 reputation_output = IOC_OUTPUTS_DICT.get(command_name)
-                if reputation_output and not reputation_output.intersection(
-                    context_outputs_paths
-                ):
-                    error_message, error_code = Errors.missing_reputation(
-                        command_name, reputation_output, context_standard
-                    )
-                    if self.handle_error(
-                        error_message,
-                        error_code,
-                        file_path=self.file_path,
-                        warning=self.structure_validator.quiet_bc,
-                    ):
+                if reputation_output and not reputation_output.intersection(context_outputs_paths):
+                    error_message, error_code = Errors.missing_reputation(command_name, reputation_output,
+                                                                          context_standard)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                         warning=self.structure_validator.quiet_bc):
                         self.is_valid = False
                         output_for_reputation_valid = False
 
@@ -709,9 +513,7 @@ class IntegrationValidator(ContentEntityValidator):
             subtype = self.current_file.get('script', {}).get('subtype')
             if subtype not in PYTHON_SUBTYPES:
                 error_message, error_code = Errors.wrong_subtype()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = False
                     return False
 
@@ -726,20 +528,11 @@ class IntegrationValidator(ContentEntityValidator):
         if type_ == 'python':
             subtype = self.current_file.get('script', {}).get('subtype')
             if self.old_file:
-                old_subtype = self.old_file.get('script', {}).get(
-                    'subtype', ''
-                )
+                old_subtype = self.old_file.get('script', {}).get('subtype', "")
                 if old_subtype and old_subtype != subtype:
-                    (
-                        error_message,
-                        error_code,
-                    ) = Errors.breaking_backwards_subtype()
-                    if self.handle_error(
-                        error_message,
-                        error_code,
-                        file_path=self.file_path,
-                        warning=self.structure_validator.quiet_bc,
-                    ):
+                    error_message, error_code = Errors.breaking_backwards_subtype()
+                    if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                         warning=self.structure_validator.quiet_bc):
                         self.is_valid = False
                         return False
 
@@ -753,12 +546,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid = False
             valid_status = False
         if not self.old_file:
-            if not all(
-                [
-                    self._id_has_no_beta_substring(),
-                    self._name_has_no_beta_substring(),
-                ]
-            ):
+            if not all([self._id_has_no_beta_substring(), self._name_has_no_beta_substring()]):
                 self.is_valid = False
                 valid_status = False
         return valid_status
@@ -771,9 +559,7 @@ class IntegrationValidator(ContentEntityValidator):
         integration_id = common_fields.get('id', '')
         if 'beta' in integration_id.lower():
             error_message, error_code = Errors.beta_in_id()
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 
         return True
@@ -785,9 +571,7 @@ class IntegrationValidator(ContentEntityValidator):
         name = self.current_file.get('name', '')
         if 'beta' in name.lower():
             error_message, error_code = Errors.beta_in_name()
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 
         return True
@@ -799,9 +583,7 @@ class IntegrationValidator(ContentEntityValidator):
         beta = self.current_file.get('beta', False)
         if not beta:
             error_message, error_code = Errors.beta_field_not_found()
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 
         return True
@@ -810,15 +592,11 @@ class IntegrationValidator(ContentEntityValidator):
     def _is_display_contains_beta(self):
         # type: () -> bool
         """Checks that 'display' field includes the substring 'beta'"""
-        if not self.current_file.get(
-            'deprecated'
-        ):  # this validation is not needed for deprecated beta integrations
+        if not self.current_file.get('deprecated'):  # this validation is not needed for deprecated beta integrations
             display = self.current_file.get('display', '')
             if 'beta' not in display.lower():
                 error_message, error_code = Errors.no_beta_in_display()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 
         return True
@@ -842,12 +620,8 @@ class IntegrationValidator(ContentEntityValidator):
             for arg in command.get('arguments', []):
                 arg_name = arg.get('name')
                 if arg_name in arg_names:
-                    error_message, error_code = Errors.duplicate_arg_in_file(
-                        arg_name, command['name']
-                    )
-                    if self.handle_error(
-                        error_message, error_code, file_path=self.file_path
-                    ):
+                    error_message, error_code = Errors.duplicate_arg_in_file(arg_name, command['name'])
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self.is_valid = False
                         does_not_have_duplicate_args = False
 
@@ -870,25 +644,15 @@ class IntegrationValidator(ContentEntityValidator):
                 commands_with_incident.append(command_name)
             args = command.get('arguments', [])
             for arg in args:
-                arg_name = arg.get('name')
+                arg_name = arg.get("name")
                 if 'incident' in arg_name:
-                    args_with_incident.setdefault(command_name, []).append(
-                        arg_name
-                    )
+                    args_with_incident.setdefault(command_name, []).append(arg_name)
 
         if commands_with_incident or args_with_incident:
-            (
-                error_message,
-                error_code,
-            ) = Errors.incident_in_command_name_or_args(
-                commands_with_incident, args_with_incident
-            )
-            if self.handle_error(
-                error_message,
-                error_code,
-                file_path=self.file_path,
-                suggested_fix=Errors.suggest_server_allowlist_fix(),
-            ):
+            error_message, error_code = Errors.incident_in_command_name_or_args(commands_with_incident,
+                                                                                args_with_incident)
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 suggested_fix=Errors.suggest_server_allowlist_fix()):
                 self.is_valid = False
                 no_incidents = False
 
@@ -909,9 +673,7 @@ class IntegrationValidator(ContentEntityValidator):
             param_name = configuration_param['name']
             if param_name in param_list:
                 error_message, error_code = Errors.duplicate_param(param_name)
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = False
                     does_not_have_duplicate_param = False
 
@@ -936,9 +698,7 @@ class IntegrationValidator(ContentEntityValidator):
         for command in commands:
             command_to_args[command['name']] = {}
             for arg in command.get('arguments', []):
-                command_to_args[command['name']][arg['name']] = arg.get(
-                    'required', False
-                )
+                command_to_args[command['name']][arg['name']] = arg.get('required', False)
         return command_to_args
 
     @error_codes('BC104')
@@ -954,24 +714,13 @@ class IntegrationValidator(ContentEntityValidator):
         old_command_to_args = self._get_command_to_args(self.old_file)
 
         for command, args_dict in old_command_to_args.items():
-            if (
-                command not in current_command_to_args.keys()
-                or not self.is_subset_dictionary(
-                    current_command_to_args[command], args_dict
-                )
-            ):
+            if command not in current_command_to_args.keys() or \
+                    not self.is_subset_dictionary(current_command_to_args[command], args_dict):
                 changed_commands.append(command)
         if changed_commands:
-            (
-                error_message,
-                error_code,
-            ) = Errors.breaking_backwards_command_arg_changed(changed_commands)
-            if self.handle_error(
-                error_message,
-                error_code,
-                file_path=self.file_path,
-                warning=self.structure_validator.quiet_bc,
-            ):
+            error_message, error_code = Errors.breaking_backwards_command_arg_changed(changed_commands)
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 warning=self.structure_validator.quiet_bc):
                 self.is_valid = False
                 return False
         return True
@@ -980,9 +729,7 @@ class IntegrationValidator(ContentEntityValidator):
     def _is_sub_set(supposed_bigger_list, supposed_smaller_list):
         # type: (list, list) -> bool
         """Check if supposed_smaller_list is a subset of the supposed_bigger_list"""
-        return all(
-            item in supposed_bigger_list for item in supposed_smaller_list
-        )
+        return all(item in supposed_bigger_list for item in supposed_smaller_list)
 
     @error_codes('IN115')
     def _get_command_to_context_paths(self, integration_json):
@@ -1007,12 +754,8 @@ class IntegrationValidator(ContentEntityValidator):
                 try:
                     context_list.append(output['contextPath'])
                 except KeyError:
-                    error_message, error_code = Errors.invalid_context_output(
-                        command_name, output
-                    )
-                    if self.handle_error(
-                        error_message, error_code, file_path=self.file_path
-                    ):
+                    error_message, error_code = Errors.invalid_context_output(command_name, output)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self.is_valid = False
 
             command_to_context_dict[command['name']] = sorted(context_list)
@@ -1026,41 +769,21 @@ class IntegrationValidator(ContentEntityValidator):
         Returns:
             bool. True if valid, and False otherwise.
         """
-        current_command_to_context_paths = self._get_command_to_context_paths(
-            self.current_file
-        )
-        old_command_to_context_paths = self._get_command_to_context_paths(
-            self.old_file
-        )
+        current_command_to_context_paths = self._get_command_to_context_paths(self.current_file)
+        old_command_to_context_paths = self._get_command_to_context_paths(self.old_file)
         # if old integration command has no outputs, no change of context will occur.
         if not old_command_to_context_paths:
             return True
         # if new integration command has no outputs, and old one does, a change of context will occur.
-        if (
-            not current_command_to_context_paths
-            and old_command_to_context_paths
-            and not self.structure_validator.quiet_bc
-        ):
+        if not current_command_to_context_paths and old_command_to_context_paths \
+                and not self.structure_validator.quiet_bc:
             return False
-        for (
-            old_command,
-            old_context_paths,
-        ) in old_command_to_context_paths.items():
+        for old_command, old_context_paths in old_command_to_context_paths.items():
             if old_command in current_command_to_context_paths.keys():
-                if not self._is_sub_set(
-                    current_command_to_context_paths[old_command],
-                    old_context_paths,
-                ):
-                    (
-                        error_message,
-                        error_code,
-                    ) = Errors.breaking_backwards_command(old_command)
-                    if self.handle_error(
-                        error_message,
-                        error_code,
-                        file_path=self.file_path,
-                        warning=self.structure_validator.quiet_bc,
-                    ):
+                if not self._is_sub_set(current_command_to_context_paths[old_command], old_context_paths):
+                    error_message, error_code = Errors.breaking_backwards_command(old_command)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                         warning=self.structure_validator.quiet_bc):
                         self.is_valid = False
                         return False
 
@@ -1075,21 +798,13 @@ class IntegrationValidator(ContentEntityValidator):
         no_removed_parameter = True
         current_configuration = self.current_file.get('configuration', [])
         old_configuration = self.old_file.get('configuration', [])
-        current_param_names = {
-            param.get('name') for param in current_configuration
-        }
+        current_param_names = {param.get('name') for param in current_configuration}
         old_param_names = {param.get('name') for param in old_configuration}
         if not old_param_names.issubset(current_param_names):
             removed_parameters = old_param_names - current_param_names
-            error_message, error_code = Errors.removed_integration_parameters(
-                repr(removed_parameters)
-            )
-            if self.handle_error(
-                error_message,
-                error_code,
-                file_path=self.file_path,
-                warning=self.structure_validator.quiet_bc,
-            ):
+            error_message, error_code = Errors.removed_integration_parameters(repr(removed_parameters))
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 warning=self.structure_validator.quiet_bc):
                 self.is_valid = False
                 no_removed_parameter = False
 
@@ -1116,15 +831,8 @@ class IntegrationValidator(ContentEntityValidator):
         """checks if some specific Fields in the yml file were changed from true to false or removed
         Returns True if valid, and False otherwise.
         """
-        fields = [
-            'feed',
-            'isfetch',
-            'longRunning',
-            'longRunningPort',
-            'ismappable',
-            'isremotesyncin',
-            'isremotesyncout',
-        ]
+        fields = ['feed', 'isfetch', 'longRunning', 'longRunningPort', 'ismappable', 'isremotesyncin',
+                  'isremotesyncout']
         currentscript = self.current_file.get('script', {})
         oldscript = self.old_file.get('script', {})
 
@@ -1134,24 +842,16 @@ class IntegrationValidator(ContentEntityValidator):
             old = oldscript.get(field)
             current = currentscript.get(field)
 
-            if (
-                old is not None and old is True
-            ):  # the field exists in old file and is true
+            if old is not None and old is True:  # the field exists in old file and is true
                 if current is None:  # the field was removed from current
                     removed[field] = old
                 elif not current:  # changed from true to false
                     changed[field] = old
 
         if removed or changed:
-            error_message, error_code = Errors.changed_integration_yml_fields(
-                repr(removed), repr(changed)
-            )
-            if self.handle_error(
-                error_message,
-                error_code,
-                file_path=self.file_path,
-                warning=self.structure_validator.quiet_bc,
-            ):
+            error_message, error_code = Errors.changed_integration_yml_fields(repr(removed), repr(changed))
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 warning=self.structure_validator.quiet_bc):
                 self.is_valid = False
                 return False
         return True
@@ -1162,36 +862,24 @@ class IntegrationValidator(ContentEntityValidator):
         """Check if required field were added.
         Returns True if valid, and False otherwise.
         """
-        current_field_to_required = self._get_field_to_required_dict(
-            self.current_file
-        )
+        current_field_to_required = self._get_field_to_required_dict(self.current_file)
         old_field_to_required = self._get_field_to_required_dict(self.old_file)
         no_added_required = True
         for field, required in current_field_to_required.items():
             if field in old_field_to_required.keys():
                 # if required is True and old_field is False.
                 if required and required != old_field_to_required[field]:
-                    error_message, error_code = Errors.added_required_fields(
-                        field
-                    )
-                    if self.handle_error(
-                        error_message,
-                        error_code,
-                        file_path=self.file_path,
-                        warning=self.structure_validator.quiet_bc,
-                    ):
+                    error_message, error_code = Errors.added_required_fields(field)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                         warning=self.structure_validator.quiet_bc):
                         self.is_valid = False
                         no_added_required = False
 
             # if required is True but no old field.
             elif required:
                 error_message, error_code = Errors.added_required_fields(field)
-                if self.handle_error(
-                    error_message,
-                    error_code,
-                    file_path=self.file_path,
-                    warning=self.structure_validator.quiet_bc,
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     warning=self.structure_validator.quiet_bc):
                     self.is_valid = False
                     no_added_required = False
 
@@ -1203,9 +891,7 @@ class IntegrationValidator(ContentEntityValidator):
         Returns:
             bool. True if valid, and False otherwise.
         """
-        return super(IntegrationValidator, self)._is_id_equals_name(
-            'integration'
-        )
+        return super(IntegrationValidator, self)._is_id_equals_name('integration')
 
     @error_codes('IN117,IN118')
     def is_valid_display_configuration(self):
@@ -1224,34 +910,17 @@ class IntegrationValidator(ContentEntityValidator):
             # This parameter type will not use the display value.
             if field_type == self.EXPIRATION_FIELD_TYPE:
                 if configuration_display:
-                    error_message, error_code = Errors.not_used_display_name(
-                        configuration_param['name']
-                    )
-                    if self.handle_error(
-                        error_message,
-                        error_code,
-                        file_path=self.file_path,
-                        warning=self.structure_validator.quiet_bc,
-                    ):
+                    error_message, error_code = Errors.not_used_display_name(configuration_param['name'])
+                    if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                         warning=self.structure_validator.quiet_bc):
                         self.is_valid = False
                         return False
 
-            elif (
-                not is_field_hidden
-                and not configuration_display
-                and not configuration_param.get('displaypassword')
-                and configuration_param['name']
-                not in ('feedExpirationPolicy', 'feedExpirationInterval')
-            ):
-                error_message, error_code = Errors.empty_display_configuration(
-                    configuration_param['name']
-                )
-                if self.handle_error(
-                    error_message,
-                    error_code,
-                    file_path=self.file_path,
-                    warning=self.structure_validator.quiet_bc,
-                ):
+            elif not is_field_hidden and not configuration_display and not configuration_param.get('displaypassword') \
+                    and configuration_param['name'] not in ('feedExpirationPolicy', 'feedExpirationInterval'):
+                error_message, error_code = Errors.empty_display_configuration(configuration_param['name'])
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     warning=self.structure_validator.quiet_bc):
                     self.is_valid = False
                     return False
 
@@ -1263,17 +932,13 @@ class IntegrationValidator(ContentEntityValidator):
         if self.skip_docker_check:
             return True
         is_iron_bank = is_iron_bank_pack(self.file_path)
-        docker_image_validator = DockerImageValidator(
-            self.file_path,
-            is_modified_file=True,
-            is_integration=True,
-            ignored_errors=self.ignored_errors,
-            print_as_warnings=self.print_as_warnings,
-            suppress_print=self.suppress_print,
-            json_file_path=self.json_file_path,
-            is_iron_bank=is_iron_bank,
-            specific_validations=self.specific_validations,
-        )
+        docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=True,
+                                                      ignored_errors=self.ignored_errors,
+                                                      print_as_warnings=self.print_as_warnings,
+                                                      suppress_print=self.suppress_print,
+                                                      json_file_path=self.json_file_path,
+                                                      is_iron_bank=is_iron_bank,
+                                                      specific_validations=self.specific_validations)
 
         # making sure we don't show error of validation if fetching is failed.
         _, error_code = Errors.docker_tag_not_fetched('', '')
@@ -1291,24 +956,11 @@ class IntegrationValidator(ContentEntityValidator):
         # type: () -> bool
         valid_from_version = valid_feed_params = True
         if self.current_file.get('script', {}).get('feed'):
-            from_version = self.current_file.get(
-                'fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION
-            )
-            if (
-                not from_version
-                or server_version_compare('5.5.0', from_version) == 1
-            ):
-                error_message, error_code = Errors.feed_wrong_from_version(
-                    from_version
-                )
-                if self.handle_error(
-                    error_message,
-                    error_code,
-                    file_path=self.file_path,
-                    suggested_fix=Errors.suggest_fix(
-                        self.file_path, '--from-version', '5.5.0'
-                    ),
-                ):
+            from_version = self.current_file.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION)
+            if not from_version or server_version_compare('5.5.0', from_version) == 1:
+                error_message, error_code = Errors.feed_wrong_from_version(from_version)
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     suggested_fix=Errors.suggest_fix(self.file_path, '--from-version', '5.5.0')):
                     valid_from_version = False
 
             valid_feed_params = self.all_feed_params_exist()
@@ -1317,24 +969,11 @@ class IntegrationValidator(ContentEntityValidator):
     @error_codes('IN120')
     def is_valid_pwsh(self) -> bool:
         if self.current_file.get('script', {}).get('type') == TYPE_PWSH:
-            from_version = self.current_file.get(
-                'fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION
-            )
-            if (
-                not from_version
-                or server_version_compare('5.5.0', from_version) > 0
-            ):
-                error_message, error_code = Errors.pwsh_wrong_version(
-                    from_version
-                )
-                if self.handle_error(
-                    error_message,
-                    error_code,
-                    file_path=self.file_path,
-                    suggested_fix=Errors.suggest_fix(
-                        self.file_path, '--from-version', '5.5.0'
-                    ),
-                ):
+            from_version = self.current_file.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION)
+            if not from_version or server_version_compare('5.5.0', from_version) > 0:
+                error_message, error_code = Errors.pwsh_wrong_version(from_version)
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     suggested_fix=Errors.suggest_fix(self.file_path, '--from-version', '5.5.0')):
                     return False
         return True
 
@@ -1351,22 +990,10 @@ class IntegrationValidator(ContentEntityValidator):
             # get the iten marketplaces to decide which are the required params
             # if no marketplaces or xsoar in marketplaces - the required params will be INCIDENT_FETCH_REQUIRED_PARAMS (with Incident type etc. )
             # otherwise it will be the ALERT_FETCH_REQUIRED_PARAMS (with Alert type etc. )
-            marketplaces = get_item_marketplaces(
-                item_path=self.file_path, item_data=self.current_file
-            )
-            is_xsoar_marketplace = (
-                not marketplaces
-                or MarketplaceVersions.XSOAR.value in marketplaces
-            )
-            fetch_required_params = (
-                INCIDENT_FETCH_REQUIRED_PARAMS
-                if is_xsoar_marketplace
-                else ALERT_FETCH_REQUIRED_PARAMS
-            )
-            params = [
-                dict.copy(_key)
-                for _key in self.current_file.get('configuration', [])
-            ]
+            marketplaces = get_item_marketplaces(item_path=self.file_path, item_data=self.current_file)
+            is_xsoar_marketplace = not marketplaces or MarketplaceVersions.XSOAR.value in marketplaces
+            fetch_required_params = INCIDENT_FETCH_REQUIRED_PARAMS if is_xsoar_marketplace else ALERT_FETCH_REQUIRED_PARAMS
+            params = [dict.copy(_key) for _key in self.current_file.get('configuration', [])]
             for param in params:
                 if 'defaultvalue' in param:
                     param.pop('defaultvalue')
@@ -1377,29 +1004,13 @@ class IntegrationValidator(ContentEntityValidator):
                     error_message = ''
                     error_code = ''
                     for param in params:
-                        if param.get('name') == fetch_required_param.get(
-                            'name'
-                        ):
-                            (
-                                error_message,
-                                error_code,
-                            ) = Errors.parameter_is_malformed(
-                                fetch_required_param.get('name'),
-                                yaml.dumps(fetch_required_param),
-                            )
+                        if param.get('name') == fetch_required_param.get('name'):
+                            error_message, error_code = Errors.parameter_is_malformed(fetch_required_param.get('name'),
+                                                                                      yaml.dumps(fetch_required_param))
                     if not error_message:
-                        (
-                            error_message,
-                            error_code,
-                        ) = Errors.parameter_missing_from_yml(
-                            fetch_required_param.get('name')
-                        )
-                    if self.handle_error(
-                        error_message,
-                        error_code,
-                        file_path=self.file_path,
-                        suggested_fix=Errors.suggest_fix(self.file_path),
-                    ):
+                        error_message, error_code = Errors.parameter_missing_from_yml(fetch_required_param.get('name'))
+                    if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                         suggested_fix=Errors.suggest_fix(self.file_path)):
                         fetch_params_exist = False
 
         return fetch_params_exist
@@ -1424,37 +1035,20 @@ class IntegrationValidator(ContentEntityValidator):
                     max_fetch_param = param
 
             if not first_fetch_param:
-                (
-                    error_message,
-                    error_code,
-                ) = Errors.parameter_missing_from_yml_not_community_contributor(
-                    'first_fetch', yaml.dumps(FIRST_FETCH_PARAM)
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.parameter_missing_from_yml_not_community_contributor(
+                    'first_fetch', yaml.dumps(FIRST_FETCH_PARAM))
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     fetch_params_exist = False
 
             if not max_fetch_param:
-                (
-                    error_message,
-                    error_code,
-                ) = Errors.parameter_missing_from_yml_not_community_contributor(
-                    'max_fetch', yaml.dumps(MAX_FETCH_PARAM)
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.parameter_missing_from_yml_not_community_contributor(
+                    'max_fetch', yaml.dumps(MAX_FETCH_PARAM))
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     fetch_params_exist = False
 
-            elif not max_fetch_param.get('defaultvalue'):
-                (
-                    error_message,
-                    error_code,
-                ) = Errors.no_default_value_in_parameter('max_fetch')
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+            elif not max_fetch_param.get("defaultvalue"):
+                error_message, error_code = Errors.no_default_value_in_parameter('max_fetch')
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     fetch_params_exist = False
 
         return fetch_params_exist
@@ -1469,9 +1063,7 @@ class IntegrationValidator(ContentEntityValidator):
         params_exist = True
         # Build params in efficient way of param_name: {param_field_name: param_field_value} to query quickly for param.
         params = {
-            param.get('name'): {k: v for k, v in param.items()}
-            for param in self.current_file.get('configuration', [])
-        }
+            param.get('name'): {k: v for k, v in param.items()} for param in self.current_file.get('configuration', [])}
 
         for param_name, param_details in params.items():
             if 'defaultvalue' in param_details and param_name != 'feed':
@@ -1486,33 +1078,16 @@ class IntegrationValidator(ContentEntityValidator):
             contained_key_values: Dict = required_param.get('must_contain', dict())  # type: ignore
             if param_details:
                 # Check length to see no unexpected key exists in the config. Add +1 for the 'name' key.
-                is_valid = (
-                    len(equal_key_values) + len(contained_key_values) + 1
-                    == len(param_details)
-                    and all(
-                        k in param_details and param_details[k] == v
-                        for k, v in equal_key_values.items()
-                    )
-                    and all(
-                        k in param_details and v in param_details[k]
-                        for k, v in contained_key_values.items()
-                    )
-                )
+                is_valid = len(equal_key_values) + len(contained_key_values) + 1 == len(param_details) and all(
+                    k in param_details and param_details[k] == v for k, v in equal_key_values.items()) and all(
+                    k in param_details and v in param_details[k]
+                    for k, v in contained_key_values.items())
             if not is_valid:
-                param_structure = dict(
-                    equal_key_values,
-                    **contained_key_values,
-                    name=required_param.get('name'),
-                )
-                error_message, error_code = Errors.parameter_missing_for_feed(
-                    required_param.get('name'), yaml.dumps(param_structure)
-                )
-                if self.handle_error(
-                    error_message,
-                    error_code,
-                    file_path=self.file_path,
-                    suggested_fix=Errors.suggest_fix(self.file_path),
-                ):
+                param_structure = dict(equal_key_values, **contained_key_values, name=required_param.get('name'))
+                error_message, error_code = Errors.parameter_missing_for_feed(required_param.get('name'),
+                                                                              yaml.dumps(param_structure))
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     suggested_fix=Errors.suggest_fix(self.file_path)):
                     params_exist = False
 
         return params_exist
@@ -1520,22 +1095,16 @@ class IntegrationValidator(ContentEntityValidator):
     @error_codes('IN123')
     def is_valid_display_name(self):
         # type: () -> bool
-        version_number: Optional[str] = get_file_version_suffix_if_exists(
-            self.current_file, check_in_display=True
-        )
+        version_number: Optional[str] = get_file_version_suffix_if_exists(self.current_file,
+                                                                          check_in_display=True)
         if not version_number:
             return True
         else:
             display_name = self.current_file.get('display')
             correct_name = f' v{version_number}'
             if not display_name.endswith(correct_name):  # type: ignore
-                (
-                    error_message,
-                    error_code,
-                ) = Errors.invalid_version_integration_name(version_number)
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.invalid_version_integration_name(version_number)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 
             return True
@@ -1547,42 +1116,62 @@ class IntegrationValidator(ContentEntityValidator):
         if is_siem:
             display_name = self.current_file.get('display', '')
             if not display_name.endswith('Event Collector'):
-                (
-                    error_message,
-                    error_code,
-                ) = Errors.invalid_siem_integration_name(display_name)
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.invalid_siem_integration_name(display_name)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 
         return True
 
-    @error_codes('IN124')
+    @error_codes('IN124,IN156')
     def is_valid_hidden_params(self) -> bool:
         """
         Verify there are no non-allowed hidden integration parameters.
+        This is a workaround as pykwalify schemas do not allow multiple types
+         (e.g. equivalent for Union[list[str] | bool]).
+
+        See update_hidden_parameters_value for the allowed values the hidden attribute.
+
         Returns:
             bool. True if there aren't non-allowed hidden parameters. False otherwise.
         """
-        ans = True
-        conf = self.current_file.get('configuration', [])
-        for int_parameter in conf:
-            is_param_hidden = int_parameter.get('hidden')
-            param_name = int_parameter.get('name')
-            if (
-                is_param_hidden
-                and param_name not in self.ALLOWED_HIDDEN_PARAMS
-            ):
-                error_message, error_code = Errors.found_hidden_param(
-                    param_name
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
-                    ans = False
+        def is_str_bool(input_: str):
+            try:
+                string_to_bool(input_)
+                return True
+            except ValueError:
+                return False
 
-        return ans
+        valid = True
+
+        for param in self.current_file.get('configuration', ()):
+            name = param.get('name', '')
+            hidden = param.get('hidden')
+
+            invalid_type = not isinstance(hidden, (type(None), bool, list, str))
+            invalid_string = isinstance(hidden, str) and not is_str_bool(hidden)
+
+            if invalid_type or invalid_string:
+                message, code = Errors.invalid_hidden_attribute_for_param(name, hidden)
+                if self.handle_error(message, code, self.file_path):
+                    valid = False
+
+            is_true = (hidden is True) or (is_str_bool(hidden) and string_to_bool(hidden))
+            invalid_bool = is_true and name not in self.ALLOWED_HIDDEN_PARAMS
+            hidden_in_all_marketplaces = isinstance(hidden, list) and set(hidden) == set(MarketplaceVersions)
+
+            if invalid_bool or hidden_in_all_marketplaces:
+                error_message, error_code = Errors.param_not_allowed_to_hide(name)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    valid = False
+
+            elif isinstance(hidden, list) and (invalid := set(hidden).difference(MarketplaceVersions)):
+                # if the value is a list, all its values must be marketplace names
+                joined_marketplaces = ', '.join(map(str, invalid))
+                message, code = Errors.invalid_hidden_attribute_for_param(name, joined_marketplaces)
+                if self.handle_error(message, code, self.file_path):
+                    valid = False
+
+        return valid
 
     def is_valid_image(self) -> bool:
         """Verifies integration image/logo is valid.
@@ -1590,13 +1179,10 @@ class IntegrationValidator(ContentEntityValidator):
         Returns:
             bool. True if integration image/logo is valid, False otherwise.
         """
-        image_validator = ImageValidator(
-            self.file_path,
-            ignored_errors=self.ignored_errors,
-            print_as_warnings=self.print_as_warnings,
-            json_file_path=self.json_file_path,
-            specific_validations=self.specific_validations,
-        )
+        image_validator = ImageValidator(self.file_path, ignored_errors=self.ignored_errors,
+                                         print_as_warnings=self.print_as_warnings,
+                                         json_file_path=self.json_file_path,
+                                         specific_validations=self.specific_validations)
         if not image_validator.is_valid():
             return False
         return True
@@ -1607,13 +1193,10 @@ class IntegrationValidator(ContentEntityValidator):
         Returns:
             bool: True if description is valid, False otherwise.
         """
-        description_validator = DescriptionValidator(
-            self.file_path,
-            ignored_errors=self.ignored_errors,
-            print_as_warnings=self.print_as_warnings,
-            json_file_path=self.json_file_path,
-            specific_validations=self.specific_validations,
-        )
+        description_validator = DescriptionValidator(self.file_path, ignored_errors=self.ignored_errors,
+                                                     print_as_warnings=self.print_as_warnings,
+                                                     json_file_path=self.json_file_path,
+                                                     specific_validations=self.specific_validations)
         if beta_integration:
             if not description_validator.is_valid_beta_description():
                 return False
@@ -1636,13 +1219,9 @@ class IntegrationValidator(ContentEntityValidator):
         """
         script = self.current_file.get('script', {})
 
-        if not any(
-            [
-                script.get('commands'),
-                script.get('isfetch', script.get('isFetch')),
-                script.get('feed'),
-                script.get('longRunning'),
-            ]
+        if not any([
+            script.get('commands'), script.get('isfetch', script.get('isFetch')), script.get("feed"),
+            script.get('longRunning')]
         ):
             self.is_valid = False
             error, code = Errors.integration_not_runnable()
@@ -1659,30 +1238,16 @@ class IntegrationValidator(ContentEntityValidator):
             False otherwise.
         """
         configuration = self.current_file.get('configuration', {})
-        parameters_display_name = [
-            param.get('display')
-            for param in configuration
-            if param.get('display')
-        ]
+        parameters_display_name = [param.get('display') for param in configuration if param.get('display')]
 
         invalid_display_names = []
         for parameter in parameters_display_name:
-            invalid_display_names.append(
-                parameter
-            ) if parameter and not parameter[
-                0
-            ].isupper() or '_' in parameter else None
+            invalid_display_names.append(parameter) if parameter and not parameter[0].isupper() or '_' in parameter \
+                else None
 
         if invalid_display_names:
-            (
-                error_message,
-                error_code,
-            ) = Errors.invalid_integration_parameters_display_name(
-                invalid_display_names
-            )
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            error_message, error_code = Errors.invalid_integration_parameters_display_name(invalid_display_names)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 
         return True
@@ -1696,25 +1261,14 @@ class IntegrationValidator(ContentEntityValidator):
             False otherwise.
         """
         configuration = self.current_file.get('configuration', {})
-        parameters_default_values = [
-            (param.get('display'), param.get('defaultvalue'))
-            for param in configuration
-            if param.get('defaultvalue')
-        ]
+        parameters_default_values = [(param.get('display'), param.get('defaultvalue')) for param in configuration if param.get('defaultvalue')]
 
         is_valid = True
         for param, defaultvalue in parameters_default_values:
             if defaultvalue and isinstance(defaultvalue, str):
                 if defaultvalue.startswith('http:'):
-                    (
-                        error_message,
-                        error_code,
-                    ) = Errors.not_supported_integration_parameter_url_defaultvalue(
-                        param, defaultvalue
-                    )
-                    if self.handle_error(
-                        error_message, error_code, file_path=self.file_path
-                    ):
+                    error_message, error_code = Errors.not_supported_integration_parameter_url_defaultvalue(param, defaultvalue)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         is_valid = False
 
         return is_valid
@@ -1722,9 +1276,7 @@ class IntegrationValidator(ContentEntityValidator):
     @error_codes('IN138,IN137')
     def is_valid_integration_file_path(self) -> bool:
         absolute_file_path = self.file_path
-        integrations_folder = os.path.basename(
-            os.path.dirname(absolute_file_path)
-        )
+        integrations_folder = os.path.basename(os.path.dirname(absolute_file_path))
         integration_file = os.path.basename(absolute_file_path)
 
         # drop file extension
@@ -1733,32 +1285,17 @@ class IntegrationValidator(ContentEntityValidator):
         if integrations_folder == 'Integrations':
             if not integration_file.startswith('integration-'):
 
-                (
-                    error_message,
-                    error_code,
-                ) = Errors.is_valid_integration_file_path_in_integrations_folder(
-                    integration_file
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = \
+                    Errors.is_valid_integration_file_path_in_integrations_folder(integration_file)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 
         elif integration_file != integrations_folder:
-            valid_integration_name = integration_file.replace('-', '').replace(
-                '_', ''
-            )
+            valid_integration_name = integration_file.replace('-', '').replace('_', '')
 
             if valid_integration_name != integrations_folder:
-                (
-                    error_message,
-                    error_code,
-                ) = Errors.is_valid_integration_file_path_in_folder(
-                    integration_file
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.is_valid_integration_file_path_in_folder(integration_file)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 
         return True
@@ -1766,16 +1303,9 @@ class IntegrationValidator(ContentEntityValidator):
     @error_codes('IN137')
     def is_valid_py_file_names(self):
         # Gets the all integration .py files from the integration folder.
-        excluded_files = [
-            'demistomock.py',
-            'conftest.py',
-            'CommonServerPython.py',
-            'CommonServerUserPython.py',
-            '.vulture_whitelist.py',
-        ]
-        files_to_check = get_files_in_dir(
-            os.path.dirname(self.file_path), ['py'], False
-        )
+        excluded_files = ['demistomock.py', 'conftest.py', 'CommonServerPython.py', 'CommonServerUserPython.py',
+                          '.vulture_whitelist.py']
+        files_to_check = get_files_in_dir(os.path.dirname(self.file_path), ['py'], False)
         invalid_files = []
         integrations_folder = os.path.basename(os.path.dirname(self.file_path))
 
@@ -1790,13 +1320,8 @@ class IntegrationValidator(ContentEntityValidator):
                     invalid_files.append(file_name)
 
         if invalid_files:
-            (
-                error_message,
-                error_code,
-            ) = Errors.is_valid_integration_file_path_in_folder(invalid_files)
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            error_message, error_code = Errors.is_valid_integration_file_path_in_folder(invalid_files)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
 
@@ -1811,9 +1336,7 @@ class IntegrationValidator(ContentEntityValidator):
         """
         script = self.current_file.get('script', {})
         if script.get('ismappable'):
-            command_names = {
-                command['name'] for command in script.get('commands', [])
-            }
+            command_names = {command['name'] for command in script.get('commands', [])}
             if 'get-mapping-fields' not in command_names:
                 error, code = Errors.missing_get_mapping_fields_command()
                 if self.handle_error(error, code, file_path=self.file_path):
@@ -1839,25 +1362,14 @@ class IntegrationValidator(ContentEntityValidator):
 
         # Only run validation if the validation has not run with is_context_different_in_yml on readme
         # so no duplicates errors will be created:
-        (
-            error,
-            missing_from_readme_error_code,
-        ) = Errors.readme_missing_output_context('', '')
-        error, missing_from_yml_error_code = Errors.missing_output_context(
-            '', ''
-        )
+        error, missing_from_readme_error_code = Errors.readme_missing_output_context('', '')
+        error, missing_from_yml_error_code = Errors.missing_output_context('', '')
         readme_path = os.path.join(dir_path, 'README.md')
 
-        if (
-            f'{readme_path} - [{missing_from_readme_error_code}]'
-            in FOUND_FILES_AND_IGNORED_ERRORS
-            or f'{readme_path} - [{missing_from_readme_error_code}]'
-            in FOUND_FILES_AND_ERRORS
-            or f'{self.file_path} - [{missing_from_yml_error_code}]'
-            in FOUND_FILES_AND_IGNORED_ERRORS
-            or f'{self.file_path} - [{missing_from_yml_error_code}]'
-            in FOUND_FILES_AND_ERRORS
-        ):
+        if f'{readme_path} - [{missing_from_readme_error_code}]' in FOUND_FILES_AND_IGNORED_ERRORS \
+                or f'{readme_path} - [{missing_from_readme_error_code}]' in FOUND_FILES_AND_ERRORS \
+                or f'{self.file_path} - [{missing_from_yml_error_code}]' in FOUND_FILES_AND_IGNORED_ERRORS \
+                or f'{self.file_path} - [{missing_from_yml_error_code}]' in FOUND_FILES_AND_ERRORS:
             return False
 
         # get README file's content
@@ -1865,23 +1377,18 @@ class IntegrationValidator(ContentEntityValidator):
             readme_content = readme.read()
 
         # commands = self.current_file.get("script", {}).get('commands', [])
-        difference = compare_context_path_in_yml_and_readme(
-            self.current_file, readme_content
-        )
+        difference = compare_context_path_in_yml_and_readme(self.current_file, readme_content)
         for command_name in difference:
             if difference[command_name].get('only in yml'):
                 error, code = Errors.readme_missing_output_context(
                     command_name,
-                    ', '.join(difference[command_name].get('only in yml')),
-                )
+                    ", ".join(difference[command_name].get('only in yml')))
                 if self.handle_error(error, code, file_path=readme_path):
                     valid = False
 
             if difference[command_name].get('only in readme'):
-                error, code = Errors.missing_output_context(
-                    command_name,
-                    ', '.join(difference[command_name].get('only in readme')),
-                )
+                error, code = Errors.missing_output_context(command_name,
+                                                            ", ".join(difference[command_name].get('only in readme')))
                 if self.handle_error(error, code, file_path=self.file_path):
                     valid = False
 
@@ -1894,16 +1401,14 @@ class IntegrationValidator(ContentEntityValidator):
         Returns:
             true if the folder/files names are valid and there are no separators, and false if not.
         """
-        is_unified_integration = self.current_file.get('script', {}).get(
-            'script', ''
-        ) not in ['-', '']
+        is_unified_integration = self.current_file.get('script', {}).get('script', '') not in ['-', '']
 
         if is_unified_integration:
             return True
 
         answers = [
             self.check_separators_in_folder(),
-            self.check_separators_in_files(),
+            self.check_separators_in_files()
         ]
 
         return all(answers)
@@ -1917,20 +1422,13 @@ class IntegrationValidator(ContentEntityValidator):
             true if the name is valid and there are no separators, and false if not.
         """
 
-        integration_folder_name = os.path.basename(
-            os.path.dirname(self.file_path)
-        )
-        valid_folder_name = self.remove_separators_from_name(
-            integration_folder_name
-        )
+        integration_folder_name = os.path.basename(os.path.dirname(self.file_path))
+        valid_folder_name = self.remove_separators_from_name(integration_folder_name)
 
         if valid_folder_name != integration_folder_name:
-            error_message, error_code = Errors.folder_name_has_separators(
-                'integration', integration_folder_name, valid_folder_name
-            )
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            error_message, error_code = Errors.folder_name_has_separators('integration', integration_folder_name,
+                                                                          valid_folder_name)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
 
@@ -1946,9 +1444,7 @@ class IntegrationValidator(ContentEntityValidator):
         """
 
         # Gets the all integration files that may have the integration name as base name
-        files_to_check = get_files_in_dir(
-            os.path.dirname(self.file_path), ['yml', 'py', 'md', 'png'], False
-        )
+        files_to_check = get_files_in_dir(os.path.dirname(self.file_path), ['yml', 'py', 'md', 'png'], False)
         invalid_files = []
         valid_files = []
 
@@ -1958,12 +1454,8 @@ class IntegrationValidator(ContentEntityValidator):
             if file_name.startswith('README'):
                 continue
 
-            if (
-                file_name.endswith('_image.png')
-                or file_name.endswith('_description.md')
-                or file_name.endswith('_test.py')
-                or file_name.endswith('_unified.yml')
-            ):
+            if file_name.endswith('_image.png') or file_name.endswith('_description.md') or \
+                    file_name.endswith('_test.py') or file_name.endswith('_unified.yml'):
                 base_name = file_name.rsplit('_', 1)[0]
 
             else:
@@ -1973,18 +1465,12 @@ class IntegrationValidator(ContentEntityValidator):
 
             if valid_base_name != base_name:
                 invalid_files.append(file_name)
-                valid_files.append(
-                    valid_base_name.join(file_name.rsplit(base_name, 1))
-                )
+                valid_files.append(valid_base_name.join(file_name.rsplit(base_name, 1)))
 
         if invalid_files:
 
-            error_message, error_code = Errors.file_name_has_separators(
-                'integration', invalid_files, valid_files
-            )
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            error_message, error_code = Errors.file_name_has_separators('integration', invalid_files, valid_files)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
 
@@ -2007,12 +1493,9 @@ class IntegrationValidator(ContentEntityValidator):
 
         if field_names:
             error_message, error_code = Errors.field_contain_forbidden_word(
-                field_names=field_names, word='integration'
-            )
+                field_names=field_names, word='integration')
 
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
 
@@ -2032,13 +1515,8 @@ class IntegrationValidator(ContentEntityValidator):
             return True
 
         # extracting the specific command from commands.
-        endpoint_command = [
-            arg for arg in commands if arg.get('name') == 'endpoint'
-        ][0]
-        return self._is_valid_endpoint_inputs(
-            endpoint_command,
-            required_arguments=ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
-        )
+        endpoint_command = [arg for arg in commands if arg.get('name') == 'endpoint'][0]
+        return self._is_valid_endpoint_inputs(endpoint_command, required_arguments=ENDPOINT_FLEXIBLE_REQUIRED_ARGS)
 
     @error_codes('IN141,IN105')
     def _is_valid_endpoint_inputs(self, command_data, required_arguments):
@@ -2053,37 +1531,22 @@ class IntegrationValidator(ContentEntityValidator):
 
         # checking at least one of the required argument is found as argument
         if not set(required_arguments).intersection(existing_arguments):
-            error_message, error_code = Errors.reputation_missing_argument(
-                list(required_arguments), command_data.get('name'), all=False
-            )
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            error_message, error_code = Errors.reputation_missing_argument(list(required_arguments),
+                                                                           command_data.get('name'),
+                                                                           all=False)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
 
         # checking no other arguments are default argument:
-        default_args_found = [
-            (arg.get('name'), arg.get('default', False))
-            for arg in endpoint_command_inputs
-        ]
-        command_default_arg_map = BANG_COMMAND_ARGS_MAPPING_DICT[
-            ENDPOINT_COMMAND_NAME
-        ]
+        default_args_found = [(arg.get('name'), arg.get('default', False)) for arg in endpoint_command_inputs]
+        command_default_arg_map = BANG_COMMAND_ARGS_MAPPING_DICT[ENDPOINT_COMMAND_NAME]
         default_arg_name = command_default_arg_map['default']
-        other_default_args_found = list(
-            filter(
-                lambda x: x[1] is True and x[0] not in default_arg_name,
-                default_args_found,
-            )
-        )
+        other_default_args_found = list(filter(
+            lambda x: x[1] is True and x[0] not in default_arg_name, default_args_found))
         if other_default_args_found:
-            error_message, error_code = Errors.wrong_default_argument(
-                default_arg_name, ENDPOINT_COMMAND_NAME
-            )
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            error_message, error_code = Errors.wrong_default_argument(default_arg_name, ENDPOINT_COMMAND_NAME)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
         return True
@@ -2100,45 +1563,24 @@ class IntegrationValidator(ContentEntityValidator):
         params_missing_defaults = []
         params_with_non_default_description = []
 
-        additional_info = {
-            param['name']: param.get('additionalinfo', '')
-            for param in self.current_file.get('configuration', [])
-        }
+        additional_info = {param['name']: param.get('additionalinfo', '')
+                           for param in self.current_file.get('configuration', [])}
 
         for param, info in additional_info.items():
-            if (
-                param in default_additional_info
-                and info != default_additional_info[param]
-            ):
+            if param in default_additional_info and info != default_additional_info[param]:
                 if not info:
                     params_missing_defaults.append(param)
                 else:
                     params_with_non_default_description.append(param)
         if params_with_non_default_description:
-            (
-                non_default_error_message,
-                non_default_error_code,
-            ) = Errors.non_default_additional_info(
-                params_with_non_default_description
-            )
-            self.handle_error(
-                non_default_error_message,
-                non_default_error_code,
-                file_path=self.file_path,
-                warning=True,
-            )
+            non_default_error_message, non_default_error_code = \
+                Errors.non_default_additional_info(params_with_non_default_description)
+            self.handle_error(non_default_error_message, non_default_error_code, file_path=self.file_path, warning=True)
 
         if params_missing_defaults:
-            (
-                missing_error_message,
-                missing_error_code,
-            ) = Errors.missing_default_additional_info(params_missing_defaults)
-            self.handle_error(
-                missing_error_message,
-                missing_error_code,
-                self.current_file,
-                suggested_fix=Errors.suggest_fix(self.file_path),
-            )
+            missing_error_message, missing_error_code = Errors.missing_default_additional_info(params_missing_defaults)
+            self.handle_error(missing_error_message, missing_error_code, self.current_file,
+                              suggested_fix=Errors.suggest_fix(self.file_path))
             return False
         return True
 
@@ -2151,9 +1593,7 @@ class IntegrationValidator(ContentEntityValidator):
         """
         pack_name = get_pack_name(self.file_path)
         if pack_name:
-            metadata_path = Path(
-                PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME
-            )
+            metadata_path = Path(PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME)
             metadata_content = self.get_metadata_file_content(metadata_path)
 
             if metadata_content.get('support', '').lower() == XSOAR_SUPPORT:
@@ -2162,26 +1602,17 @@ class IntegrationValidator(ContentEntityValidator):
             conf_params = self.current_file.get('configuration', [])
             for param_name in conf_params:
                 if 'fromlicense' in param_name.keys():
-                    (
-                        error_message,
-                        error_code,
-                    ) = Errors.fromlicense_in_parameters(
-                        param_name.get('name')
-                    )
+                    error_message, error_code = Errors.fromlicense_in_parameters(param_name.get('name'))
 
-                    if self.handle_error(
-                        error_message, error_code, file_path=self.file_path
-                    ):
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         self.is_valid = False
                         return False
 
             return True
 
         else:
-            raise Exception(
-                'Could not find the pack name of the integration, '
-                'please verify the integration is in a pack'
-            )
+            raise Exception('Could not find the pack name of the integration, '
+                            'please verify the integration is in a pack')
 
     @error_codes('IN145')
     def is_api_token_in_credential_type(self):
@@ -2193,9 +1624,7 @@ class IntegrationValidator(ContentEntityValidator):
         """
         pack_name = get_pack_name(self.file_path)
         if pack_name:
-            metadata_path = Path(
-                PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME
-            )
+            metadata_path = Path(PACKS_DIR, pack_name, PACKS_PACK_META_FILE_NAME)
             metadata_content = self.get_metadata_file_content(metadata_path)
 
             if metadata_content.get('support') != XSOAR_SUPPORT:
@@ -2204,51 +1633,32 @@ class IntegrationValidator(ContentEntityValidator):
             conf_params = self.current_file.get('configuration', [])
             for param in conf_params:
                 if param.get('type') == 4:
-                    (
-                        error_message,
-                        error_code,
-                    ) = Errors.api_token_is_not_in_credential_type(
-                        param.get('name')
-                    )
-                    if self.handle_error(
-                        error_message, error_code, file_path=self.file_path
-                    ):
+                    error_message, error_code = Errors.api_token_is_not_in_credential_type(param.get('name'))
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
                         return False
 
             return True
 
-        raise Exception(
-            'Could not find the pack name of the integration, '
-            'please verify the integration is in a pack'
-        )
+        raise Exception('Could not find the pack name of the integration, '
+                        'please verify the integration is in a pack')
 
     @error_codes('IN149')
     def are_common_outputs_with_description(self):
         defaults = json.loads(
-            (
-                Path(__file__).absolute().parents[2]
-                / 'common/default_output_descriptions.json'
-            ).read_text()
-        )
+            (Path(__file__).absolute().parents[2] / 'common/default_output_descriptions.json').read_text())
 
         missing = {}
         for command in self.current_file.get('script', {}).get('commands', []):
             command_missing = []
-            for output in (
-                command.get('outputs') or []
-            ):  # outputs in some UT are None
-                if output['contextPath'] in defaults and not output.get(
-                    'description'
-                ):
+            for output in command.get('outputs') or []:  # outputs in some UT are None
+                if output['contextPath'] in defaults and not output.get('description'):
                     command_missing.append(output['contextPath'])
 
             if command_missing:
                 missing[command['name']] = command_missing
 
         if missing:
-            error_message, error_code = Errors.empty_outputs_common_paths(
-                missing, self.file_path
-            )
+            error_message, error_code = Errors.empty_outputs_common_paths(missing, self.file_path)
             if self.handle_error(error_message, error_code, self.file_path):
                 return False
 
@@ -2263,11 +1673,8 @@ class IntegrationValidator(ContentEntityValidator):
         Return:
             list: A list with the same commands as the given list except for the get-indicators commands.
         """
-        return [
-            missing_command
-            for missing_command in missing_commands_from_readme
-            if not missing_command.endswith('get-indicators')
-        ]
+        return [missing_command for missing_command in missing_commands_from_readme if
+                not missing_command.endswith('get-indicators')]
 
     @error_codes('RM110')
     def verify_yml_commands_match_readme(self, is_modified=False):
@@ -2282,48 +1689,30 @@ class IntegrationValidator(ContentEntityValidator):
         """
         if not is_modified:
             return True
-        yml_commands_list = extract_none_deprecated_command_names_from_yml(
-            self.current_file
-        )
+        yml_commands_list = extract_none_deprecated_command_names_from_yml(self.current_file)
         is_valid = True
         readme_path = Path(self.file_path).parent / 'README.md'
         if not readme_path.exists():
             return False
 
         readme_content = readme_path.read_text()
-        excluded_from_readme_commands = [
-            'get-mapping-fields',
-            'xsoar-search-incidents',
-            'xsoar-get-incident',
-            'get-remote-data',
-            'update-remote-data',
-            'get-modified-remote-data',
-            'update-remote-system',
-        ]
+        excluded_from_readme_commands = ['get-mapping-fields', 'xsoar-search-incidents', 'xsoar-get-incident',
+                                         'get-remote-data', 'update-remote-data', 'get-modified-remote-data',
+                                         'update-remote-system']
         missing_commands_from_readme = [
-            command
-            for command in yml_commands_list
-            if command not in readme_content
-            and command not in excluded_from_readme_commands
-        ]
-        missing_commands_from_readme = self.exclude_get_indicators_commands(
-            missing_commands_from_readme
-        )
+            command for command in yml_commands_list if
+            command not in readme_content and command not in excluded_from_readme_commands]
+        missing_commands_from_readme = self.exclude_get_indicators_commands(missing_commands_from_readme)
         if missing_commands_from_readme:
             error_message, error_code = Errors.missing_commands_from_readme(
-                os.path.basename(self.file_path), missing_commands_from_readme
-            )
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+                os.path.basename(self.file_path), missing_commands_from_readme)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 is_valid = False
 
         return is_valid
 
     @error_codes('IN154')
-    def verify_reputation_commands_has_reliability(
-        self, is_modified: bool = False
-    ):
+    def verify_reputation_commands_has_reliability(self, is_modified: bool = False):
         """
         In case the integration has reputation command, ensure there is a reliability parameter.
         Args:
@@ -2335,29 +1724,14 @@ class IntegrationValidator(ContentEntityValidator):
         """
         if not is_modified:
             return True
-        commands_names = [
-            command.get('name')
-            for command in self.current_file.get('script', {}).get(
-                'commands', []
-            )
-        ]
-        yml_config_names = ' '.join(
-            [
-                config.get('name')
-                for config in self.current_file.get('configuration', {})
-            ]
-        )
+        commands_names = [command.get('name') for command in self.current_file.get('script', {}).get('commands', [])]
+        yml_config_names = ' '.join([config.get('name') for config in self.current_file.get('configuration', {})])
         for command in commands_names:
             if command in REPUTATION_COMMAND_NAMES:
                 if 'reliability' in yml_config_names.lower():
                     return True
-                (
-                    error_message,
-                    error_code,
-                ) = Errors.missing_reliability_parameter(command)
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.missing_reliability_parameter(command)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
         return True
 
@@ -2373,35 +1747,17 @@ class IntegrationValidator(ContentEntityValidator):
         deprecated_commands_list = []
         is_valid = True
 
-        if self.current_file.get('deprecated'):
-            deprecated_commands_list = [
-                command.get('name')
-                for command in self.current_file.get('script', {}).get(
-                    'commands', []
-                )
-            ]
+        if self.current_file.get("deprecated"):
+            deprecated_commands_list = [command.get('name') for command in self.current_file.get('script', {}).get('commands', [])]
         else:
-            deprecated_commands_list = (
-                extract_deprecated_command_names_from_yml(self.current_file)
-            )
+            deprecated_commands_list = extract_deprecated_command_names_from_yml(self.current_file)
 
         if deprecated_commands_list:
-            integration_id = self.current_file.get('commonfields', {}).get(
-                'id', ''
-            )
-            used_commands_dict = self.deprecation_validator.validate_integartion_commands_deprecation(
-                deprecated_commands_list, integration_id
-            )
+            integration_id = self.current_file.get("commonfields", {}).get("id", "")
+            used_commands_dict = self.deprecation_validator.validate_integartion_commands_deprecation(deprecated_commands_list, integration_id)
             if used_commands_dict:
-                (
-                    error_message,
-                    error_code,
-                ) = Errors.integration_is_deprecated_and_used(
-                    self.current_file.get('name'), used_commands_dict
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.integration_is_deprecated_and_used(self.current_file.get("name"), used_commands_dict)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
 
         return is_valid

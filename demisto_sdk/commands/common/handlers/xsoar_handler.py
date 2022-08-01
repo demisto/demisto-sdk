@@ -12,9 +12,7 @@ class XSOAR_Handler(ABC):
         pass
 
     @abstractmethod
-    def dump(
-        self, data: AnyStr, fp: IO[str], indent=0, sort_keys=False, **kwargs
-    ):
+    def dump(self, data: AnyStr, fp: IO[str], indent=0, sort_keys=False, **kwargs):
         pass
 
     @abstractmethod

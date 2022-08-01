@@ -13,28 +13,17 @@ yaml = YAML_Handler()
 @pytest.fixture
 def linter_obj(mocker) -> Linter:
     mocker.patch.object(linter, 'init_global_docker_client')
-    return Linter(
-        pack_dir=Path(__file__).parent
-        / 'content'
-        / 'Integrations'
-        / 'Sample_integration',
-        content_repo=Path(__file__).parent / 'data',
-        req_3=['pytest==3.0'],
-        req_2=['pytest==2.0'],
-        docker_engine=True,
-        docker_timeout=60,
-    )
+    return Linter(pack_dir=Path(__file__).parent / 'content' / 'Integrations' / 'Sample_integration',
+                  content_repo=Path(__file__).parent / 'data',
+                  req_3=["pytest==3.0"],
+                  req_2=["pytest==2.0"],
+                  docker_engine=True,
+                  docker_timeout=60)
 
 
 @pytest.fixture(scope='session')
 def lint_files() -> List[Path]:
-    return [
-        Path(__file__).parent
-        / 'test_data'
-        / 'Integration'
-        / 'intergration_sample'
-        / 'intergration_sample.py'
-    ]
+    return [Path(__file__).parent / 'test_data' / 'Integration' / 'intergration_sample' / 'intergration_sample.py']
 
 
 @pytest.fixture
@@ -57,25 +46,12 @@ def demisto_content() -> Callable:
 
 @pytest.fixture
 def create_integration(mocker) -> Callable:
-    def _create_integration(
-        content_path: Path,
-        path: str = 'Integrations',
-        no_lint_file: bool = False,
-        flake8: bool = False,
-        bandit: bool = False,
-        mypy: bool = False,
-        vulture: bool = False,
-        pylint: bool = False,
-        test: bool = False,
-        no_tests: bool = False,
-        yml: bool = False,
-        js_type: bool = False,
-        type_script_key: bool = False,
-        image: bool = False,
-        image_py_num: str = '3.7',
-        test_reqs: bool = False,
-    ) -> Path:
-        """Creates tmp content repositry for integration test
+    def _create_integration(content_path: Path, path: str = 'Integrations', no_lint_file: bool = False,
+                            flake8: bool = False, bandit: bool = False, mypy: bool = False, vulture: bool = False,
+                            pylint: bool = False, test: bool = False, no_tests: bool = False, yml: bool = False,
+                            js_type: bool = False, type_script_key: bool = False, image: bool = False,
+                            image_py_num: str = '3.7', test_reqs: bool = False) -> Path:
+        """ Creates tmp content repositry for integration test
 
         Args:
             content_path(Path): Content path from demisto_content fixture.
@@ -101,48 +77,26 @@ def create_integration(mocker) -> Callable:
         integration_name = 'Sample_integration'
         integration_path = Path(content_path / path / integration_name)
         integration_path.mkdir()
-        files_ext = [
-            '.py',
-            '.yml',
-            '_description.md',
-            '_image.png',
-            '_test.py',
-        ]
+        files_ext = ['.py', '.yml', '_description.md', '_image.png', '_test.py']
         for ext in files_ext:
-            if (ext == '_test.py' and no_tests) or (
-                ext == '.py' and no_lint_file
-            ):
+            if (ext == '_test.py' and no_tests) or (ext == '.py' and no_lint_file):
                 continue
             (integration_path / f'{integration_name}{ext}').touch()
         if test_reqs:
             (integration_path / 'test-requirements.txt').touch()
-            (integration_path / 'test-requirements.txt').write_text(
-                '\nmock\npre-commit\npytest'
-            )
+            (integration_path / 'test-requirements.txt').write_text('\nmock\npre-commit\npytest')
         if flake8:
-            (integration_path / f'{integration_name}.py').write_text(
-                '\nfrom typing import *'
-            )
+            (integration_path / f'{integration_name}.py').write_text('\nfrom typing import *')
         if bandit:
-            (integration_path / f'{integration_name}.py').write_text(
-                "\nimport os\n  os.chmod('/etc/hosts', 0o777)"
-            )
+            (integration_path / f'{integration_name}.py').write_text('\nimport os\n  os.chmod(\'/etc/hosts\', 0o777)')
         if mypy:
-            (integration_path / f'{integration_name}.py').write_text(
-                '\nx: int = "hello"'
-            )
+            (integration_path / f'{integration_name}.py').write_text('\nx: int = "hello"')
         if vulture:
-            (integration_path / f'{integration_name}.py').write_text(
-                '\nfrom typing import *'
-            )
+            (integration_path / f'{integration_name}.py').write_text('\nfrom typing import *')
         if pylint:
-            (integration_path / f'{integration_name}.py').write_text(
-                '\ntest()'
-            )
+            (integration_path / f'{integration_name}.py').write_text('\ntest()')
         if test and not no_tests:
-            (integration_path / f'{integration_name}_test.py').write_text(
-                '\nassert False'
-            )
+            (integration_path / f'{integration_name}_test.py').write_text('\nassert False')
         yml_file = integration_path / f'{integration_name}.yml'
         if yml:
             yml_file.write_text('')
@@ -159,7 +113,6 @@ def create_integration(mocker) -> Callable:
             if image:
                 yml_dict['dockerimage'] = image
             from demisto_sdk.commands.lint import linter
-
             mocker.patch.object(linter, 'get_python_version_from_image')
             linter.get_python_version_from_image.return_value = image_py_num
             yaml.dump(stream=yml_file.open(mode='w'), data=yml_dict)

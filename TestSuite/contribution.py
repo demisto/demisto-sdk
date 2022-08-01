@@ -86,20 +86,21 @@ class Contribution:
         self._layoutscontainer_path.mkdir()
 
     def create_integration(
-        self, name: Optional[str] = None, unified: Optional[bool] = True
+            self,
+            name: Optional[str] = None,
+            unified: Optional[bool] = True
     ):
         if name is None:
             name = f'integration{len(self.integrations)}'
-        integration = Integration(
-            self._integrations_path, name, self._repo, unified
-        )
+        integration = Integration(self._integrations_path, name, self._repo, unified)
         integration.create_default_integration()
         self.integrations.append(integration)
         return integration
 
     def create_script(
-        self, name: Optional[str] = None, unified: Optional[bool] = True
-    ):
+            self,
+            name: Optional[str] = None,
+            unified: Optional[bool] = True):
         if name is None:
             name = f'script{len(self.scripts)}'
         script = Script(self._scripts_path, name, self._repo, unified)
@@ -107,7 +108,9 @@ class Contribution:
         self.scripts.append(script)
         return script
 
-    def create_playbook(self, name: Optional[str] = None):
+    def create_playbook(
+            self,
+            name: Optional[str] = None):
         if name is None:
             name = f'playbook{len(self.playbooks)}'
         playbook = Playbook(self._playbooks_path, name, self._repo)
@@ -121,7 +124,11 @@ class Contribution:
         return script
 
     def _create_json_based(
-        self, name, prefix: str, content: dict = None, dir_path: Path = None
+            self,
+            name,
+            prefix: str,
+            content: dict = None,
+            dir_path: Path = None
     ):
         if content is None:
             content = {}
@@ -133,7 +140,10 @@ class Contribution:
         return obj
 
     def _create_text_based(
-        self, name, content: str = '', dir_path: Path = None
+            self,
+            name,
+            content: str = '',
+            dir_path: Path = None
     ):
         if dir_path:
             obj = TextBased(dir_path, name)
@@ -142,93 +152,106 @@ class Contribution:
         obj.write_text(content)
         return obj
 
-    def create_classifier(self, name, content: dict = None):
+    def create_classifier(
+            self,
+            name,
+            content: dict = None
+    ):
         prefix = 'classifier'
-        classifier = self._create_json_based(
-            name, prefix, content, dir_path=self._classifiers_path
-        )
+        classifier = self._create_json_based(name, prefix, content, dir_path=self._classifiers_path)
         self.classifiers.append(classifier)
         return classifier
 
-    def create_mapper(self, name, content: dict = None):
+    def create_mapper(
+            self,
+            name,
+            content: dict = None
+    ):
         prefix = 'classifier-mapper'
-        mapper = self._create_json_based(
-            name, prefix, content, dir_path=self._mappers_path
-        )
+        mapper = self._create_json_based(name, prefix, content, dir_path=self._mappers_path)
         self.mapper.append(mapper)
         return mapper
 
-    def create_dashboard(self, name, content: dict = None):
+    def create_dashboard(
+            self,
+            name,
+            content: dict = None
+    ):
         prefix = 'dashboard'
-        dashboard = self._create_json_based(
-            name, prefix, content, dir_path=self._dashboards_path
-        )
+        dashboard = self._create_json_based(name, prefix, content, dir_path=self._dashboards_path)
         self.dashboards.append(dashboard)
         return dashboard
 
-    def create_layout(self, name, content: dict = None):
+    def create_layout(
+            self,
+            name,
+            content: dict = None
+    ):
         prefix = LAYOUT
-        layout = self._create_json_based(
-            name, prefix, content, dir_path=self._layouts_path
-        )
+        layout = self._create_json_based(name, prefix, content, dir_path=self._layouts_path)
         self.layouts.append(layout)
         return layout
 
-    def create_layoutscontainer(self, name, content: dict = None):
+    def create_layoutscontainer(
+            self,
+            name,
+            content: dict = None
+    ):
         prefix = LAYOUTS_CONTAINER
-        layoutscontainer = self._create_json_based(
-            name, prefix, content, dir_path=self._layoutscontainer_path
-        )
+        layoutscontainer = self._create_json_based(name, prefix, content, dir_path=self._layoutscontainer_path)
         self.layouts_containers.append(layoutscontainer)
         return layoutscontainer
 
     def create_incident_field(
-        self, name, content: dict = None, release_notes: bool = False
+            self,
+            name,
+            content: dict = None,
+            release_notes: bool = False
     ):
         prefix = 'incident-field'
-        incident_field = self._create_json_based(
-            name, prefix, content, dir_path=self._incident_fields_path
-        )
+        incident_field = self._create_json_based(name, prefix, content, dir_path=self._incident_fields_path)
         if release_notes:
-            release_notes_file = self._create_text_based(
-                f'{incident_field}_CHANGELOG.md',
-                dir_path=self._incident_fields_path,
-            )
+            release_notes_file = self._create_text_based(f'{incident_field}_CHANGELOG.md',
+                                                         dir_path=self._incident_fields_path)
             self.incident_field.append(release_notes_file)
         self.incident_field.append(incident_field)
         return incident_field
 
-    def create_incident_type(self, name, content: dict = None):
+    def create_incident_type(
+            self,
+            name,
+            content: dict = None):
         prefix = 'incident-type'
-        incident_type = self._create_json_based(
-            name, prefix, content, dir_path=self._incident_types_path
-        )
+        incident_type = self._create_json_based(name, prefix, content, dir_path=self._incident_types_path)
         self.incident_types.append(incident_type)
         return incident_type
 
-    def create_indicator_field(self, name, content: dict = None):
+    def create_indicator_field(
+            self,
+            name,
+            content: dict = None
+    ):
         prefix = 'incident-field'
-        indicator_field = self._create_json_based(
-            name, prefix, content, dir_path=self._indicator_fields_path
-        )
+        indicator_field = self._create_json_based(name, prefix, content, dir_path=self._indicator_fields_path)
         self.indicator_field.append(indicator_field)
 
     def create_metadata_for_zip(self):
         fake_metadata = {
-            'name': self.name,
-            'description': '',
-            'updated': '0001-01-01T00:00:00Z',
-            'support': 'internalContribution',
-            'author': 'Who Cares',
-            'authorImage': '',
-            'supportDetails': {'url': '', 'email': 'madeup@madeup.com'},
+            "name": self.name,
+            "description": "",
+            "updated": "0001-01-01T00:00:00Z",
+            "support": "internalContribution",
+            "author": "Who Cares",
+            "authorImage": "",
+            "supportDetails": {
+                "url": "",
+                "email": "madeup@madeup.com"
+            }
         }
         self.metadata = JSONBased(self.target_dir, 'metadata', '')
         self.metadata.write_json(fake_metadata)
 
-    def create_zip(
-        self, zip_dst: Optional[Path] = None, del_src_files: bool = True
-    ):
+    def create_zip(self, zip_dst: Optional[Path] = None, del_src_files: bool = True):
         self.create_classifier(name='fakeclassifier')
         self.create_dashboard(name='fakedashboard')
         self.create_layoutscontainer(name='fakelayoutscontainer')

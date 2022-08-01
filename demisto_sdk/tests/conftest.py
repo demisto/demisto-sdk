@@ -10,4 +10,4 @@ def pytest_sessionstart(session):
 
 def pytest_sessionfinish(session):
     # return warnings to default
-    warnings.simplefilter('default', urllib3.exceptions.HTTPWarning)
+    warnings.simplefilter("default", urllib3.exceptions.HTTPWarning)

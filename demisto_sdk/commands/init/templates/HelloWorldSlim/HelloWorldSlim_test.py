@@ -5,11 +5,11 @@ on pytest.
 
 More information about Unit Tests in Cortex XSOAR:
 https://xsoar.pan.dev/docs/integrations/unit-testing
+
 """
 
 import io
 from demisto_sdk.commands.common.handlers import JSON_Handler
-
 json = JSON_Handler()
 
 
@@ -28,15 +28,15 @@ def test_get_alert(requests_mock):
     from HelloWorldSlim import Client, get_alert_command
 
     mock_response = util_load_json('test_data/get_alert.json')
-    requests_mock.get(
-        'https://test.com/api/v1/get_alert_details?alert_id=695b3238-05d6-4934-86f5-9fff3201aeb0',
-        json=mock_response,
-    )
+    requests_mock.get('https://test.com/api/v1/get_alert_details?alert_id=695b3238-05d6-4934-86f5-9fff3201aeb0',
+                      json=mock_response)
 
     client = Client(
         base_url='https://test.com/api/v1',
         verify=False,
-        headers={'Authentication': 'Bearer some_api_key'},
+        headers={
+            'Authentication': 'Bearer some_api_key'
+        }
     )
 
     args = {
@@ -66,18 +66,19 @@ def test_update_alert_status(requests_mock):
     mock_response = util_load_json('test_data/update_alert_status.json')
     requests_mock.get(
         'https://test.com/api/v1/change_alert_status?alert_id=695b3238-05d6-4934-86f5-9fff3201aeb0&alert_status=CLOSED',
-        json=mock_response,
-    )
+        json=mock_response)
 
     client = Client(
         base_url='https://test.com/api/v1',
         verify=False,
-        headers={'Authentication': 'Bearer some_api_key'},
+        headers={
+            'Authentication': 'Bearer some_api_key'
+        }
     )
 
     args = {
         'alert_id': '695b3238-05d6-4934-86f5-9fff3201aeb0',
-        'status': 'CLOSED',
+        'status': 'CLOSED'
     }
 
     response = update_alert_status_command(client, args)

@@ -1,5 +1,4 @@
 from demisto_sdk.commands.common.handlers import JSON_Handler
-
 json = JSON_Handler()
 
 import traceback
@@ -10,13 +9,13 @@ import demistomock as demisto
 import requests
 from CommonServerPython import *
 
-""" IMPORTS """
+''' IMPORTS '''
 
 
 # Disable insecure warnings
 requests.packages.urllib3.disable_warnings()
 
-""" CONSTANTS """
+''' CONSTANTS '''
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 MAX_INCIDENTS_TO_FETCH = 50
 
@@ -29,22 +28,23 @@ class Client(BaseClient):
 
     def get_ip_reputation(self, ip: str):
         return self._http_request(
-            method='GET', url_suffix='/ip', params={'ip': ip}
+            method='GET',
+            url_suffix='/ip',
+            params={
+                'ip': ip
+            }
         )
 
     def get_domain_reputation(self, domain: str):
         return self._http_request(
-            method='GET', url_suffix='/domain', params={'domain': domain}
+            method='GET',
+            url_suffix='/domain',
+            params={
+                'domain': domain
+            }
         )
 
-    def search_alerts(
-        self,
-        alert_status: str,
-        severity: int,
-        alert_type: str,
-        max_results: int,
-        start_time: int,
-    ):
+    def search_alerts(self, alert_status: str, severity: int, alert_type: str, max_results: int, start_time: int):
         request_params: Dict[str, Any] = {}
 
         if alert_status:
@@ -63,40 +63,55 @@ class Client(BaseClient):
             request_params['start_time'] = start_time
 
         return self._http_request(
-            method='GET', url_suffix='/get_alerts', params=request_params
+            method='GET',
+            url_suffix='/get_alerts',
+            params=request_params
         )
 
     def get_alert(self, alert_id: str):
         return self._http_request(
             method='GET',
             url_suffix='/get_alert_details',
-            params={'alert_id': alert_id},
+            params={
+                'alert_id': alert_id
+            }
         )
 
     def update_alert_status(self, alert_id: str, alert_status: str):
         self._http_request(
             method='GET',
             url_suffix='/change_alert_status',
-            params={'alert_id': alert_id, 'alert_status': alert_status},
+            params={
+                'alert_id': alert_id,
+                'alert_status': alert_status
+            }
         )
 
     def scan_start(self, hostname):
         return self._http_request(
             method='GET',
             url_suffix='/start_scan',
-            params={'hostname': hostname},
+            params={
+                'hostname': hostname
+            }
         )
 
     def scan_status(self, scan_id):
         return self._http_request(
-            method='GET', url_suffix='/check_scan', params={'scan_id': scan_id}
+            method='GET',
+            url_suffix='/check_scan',
+            params={
+                'scan_id': scan_id
+            }
         )
 
     def scan_results(self, scan_id):
         return self._http_request(
             method='GET',
             url_suffix='/get_scan_results',
-            params={'scan_id': scan_id},
+            params={
+                'scan_id': scan_id
+            }
         )
 
     def say_hello(self, name):
@@ -114,13 +129,7 @@ def test_module(client, first_fetch_time):
         'ok' if test passed, anything else will fail the test.
     """
 
-    client.search_alerts(
-        max_results=1,
-        start_time=first_fetch_time,
-        alert_status=None,
-        alert_type=None,
-        severity=None,
-    )
+    client.search_alerts(max_results=1, start_time=first_fetch_time, alert_status=None, alert_type=None, severity=None)
     return 'ok'
 
 
@@ -147,12 +156,14 @@ def say_hello_command(client, args):
 
     # readable output will be in markdown format - https://www.markdownguide.org/basic-syntax/
     readable_output = f'## {result}'
-    outputs = {'hello': result}
+    outputs = {
+        'hello': result
+    }
 
     return (
         readable_output,
         outputs,
-        result,  # raw response - the original response
+        result  # raw response - the original response
     )
 
 
@@ -161,13 +172,11 @@ def convert_to_demisto_severity(severity):
         '0': 1,  # low severity
         '1': 2,  # medium severity
         '2': 3,  # high severity
-        '3': 4,  # critical severity
+        '3': 4  # critical severity
     }[str(severity)]
 
 
-def fetch_incidents(
-    client, last_run, first_fetch_time, alert_type, alert_status
-):
+def fetch_incidents(client, last_run, first_fetch_time, alert_type, alert_status):
     """
     This function will execute each interval (default is 1 minute).
 
@@ -200,7 +209,7 @@ def fetch_incidents(
         alert_status=alert_status,
         max_results=MAX_INCIDENTS_TO_FETCH,
         start_time=last_fetch,
-        severity=None,
+        severity=None
     )
 
     for alert in alerts:
@@ -218,8 +227,8 @@ def fetch_incidents(
             'CustomFields': {
                 'helloworldid': alert.get('alert_id'),
                 'helloworldstatus': alert.get('alert_status'),
-                'helloworldtype': alert.get('alert_type'),
-            },
+                'helloworldtype': alert.get('alert_type')
+            }
         }
 
         incidents.append(incident)
@@ -257,15 +266,18 @@ def ip_reputation_command(client, args, default_threshold):
             'Indicator': ip,
             'Vendor': 'HelloWorld',
             'Type': 'ip',
-            'Score': score,
+            'Score': score
         }
-        ip_standard_context = {'Address': ip, 'ASN': ip_data.get('asn')}
+        ip_standard_context = {
+            'Address': ip,
+            'ASN': ip_data.get('asn')
+        }
 
         if score == 3:
             # if score is bad
             ip_standard_context['Malicious'] = {
                 'Vendor': 'HelloWorld',
-                'Desciption': f'Hello World returned reputation {reputation}',
+                'Desciption': f'Hello World returned reputation {reputation}'
             }
 
         ip_standard_list.append(ip_standard_context)
@@ -275,12 +287,16 @@ def ip_reputation_command(client, args, default_threshold):
     outputs = {
         'DBotScore(val.Vendor == obj.Vendor && val.Indicator == obj.Indicator)': dbot_score_list,
         outputPaths['ip']: ip_standard_list,
-        'HelloWorld.IP(val.ip == obj.ip)': ip_data_list,
+        'HelloWorld.IP(val.ip == obj.ip)': ip_data_list
     }
 
     readable_output = tableToMarkdown('IP List', ip_standard_list)
 
-    return (readable_output, outputs, ip_data_list)
+    return (
+        readable_output,
+        outputs,
+        ip_data_list
+    )
 
 
 def domain_reputation_command(client, args, default_threshold_domain):
@@ -308,7 +324,7 @@ def domain_reputation_command(client, args, default_threshold_domain):
             'Indicator': domain,
             'Vendor': 'HelloWorld',
             'Type': 'domain',
-            'Score': score,
+            'Score': score
         }
         domain_standard_context = {
             'Name': domain,
@@ -318,7 +334,7 @@ def domain_reputation_command(client, args, default_threshold_domain):
             # if score is bad
             domain_standard_context['Malicious'] = {
                 'Vendor': 'HelloWorld',
-                'Description': f'Hello World returned reputation {reputation}',
+                'Description': f'Hello World returned reputation {reputation}'
             }
 
         domain_standard_list.append(domain_standard_context)
@@ -328,12 +344,16 @@ def domain_reputation_command(client, args, default_threshold_domain):
     outputs = {
         'DBotScore(val.Vendor == obj.Vendor && val.Indicator == obj.Indicator)': dbot_score_list,
         outputPaths['domain']: domain_standard_list,
-        'HelloWorld.Domain(val.domain == obj.domain)': domain_data_list,
+        'HelloWorld.Domain(val.domain == obj.domain)': domain_data_list
     }
 
     readable_output = tableToMarkdown('Domain List', domain_standard_list)
 
-    return (readable_output, outputs, domain_data_list)
+    return (
+        readable_output,
+        outputs,
+        domain_data_list
+    )
 
 
 def arg_to_int(arg, arg_name: str, required: bool = False):
@@ -376,11 +396,15 @@ def search_alerts_command(client, args):
     severity = args.get('severity')
     alert_type = args.get('alert_type')
     start_time = arg_to_timestamp(
-        arg=args.get('start_time'), arg_name='start_time', required=False
+        arg=args.get('start_time'),
+        arg_name='start_time',
+        required=False
     )
 
     max_results = arg_to_int(
-        arg=args.get('max_results'), arg_name='max_results', required=False
+        arg=args.get('max_results'),
+        arg_name='max_results',
+        required=False
     )
 
     alerts = client.search_alerts(
@@ -388,13 +412,19 @@ def search_alerts_command(client, args):
         alert_status=status,
         alert_type=alert_type,
         start_time=start_time,
-        max_results=max_results,
+        max_results=max_results
     )
 
     readable_output = tableToMarkdown('HelloWorld Alerts', alerts)
-    outputs = {'HelloWorld.Alert(val.alert_id == obj.alert_id)': alerts}
+    outputs = {
+        'HelloWorld.Alert(val.alert_id == obj.alert_id)': alerts
+    }
 
-    return (readable_output, outputs, alerts)
+    return (
+        readable_output,
+        outputs,
+        alerts
+    )
 
 
 def get_alert_command(client, args):
@@ -403,9 +433,15 @@ def get_alert_command(client, args):
     alert = client.get_alert(alert_id=alert_id)
 
     readable_output = tableToMarkdown(f'HelloWorld Alert {alert_id}', alert)
-    outputs = {'HelloWorld.Alert(val.alert_id == obj.alert_id)': alert}
+    outputs = {
+        'HelloWorld.Alert(val.alert_id == obj.alert_id)': alert
+    }
 
-    return (readable_output, outputs, alert)
+    return (
+        readable_output,
+        outputs,
+        alert
+    )
 
 
 def scan_start_command(client, args):
@@ -415,8 +451,14 @@ def scan_start_command(client, args):
     scan_id = scan.get('scan_id')
 
     readable_output = f'Started scan {scan_id}'
-    outputs = {'HelloWorld.Scan(val.scan_id == obj.scan_id)': scan}
-    return (readable_output, outputs, scan)
+    outputs = {
+        'HelloWorld.Scan(val.scan_id == obj.scan_id)': scan
+    }
+    return (
+        readable_output,
+        outputs,
+        scan
+    )
 
 
 def scan_status_command(client, args):
@@ -428,9 +470,15 @@ def scan_status_command(client, args):
         scan_list.append(scan)
 
     readable_output = tableToMarkdown('Scan status', scan_list)
-    outputs = {'HelloWorld.Scan(val.scan_id == obj.scan_id)': scan_list}
+    outputs = {
+        'HelloWorld.Scan(val.scan_id == obj.scan_id)': scan_list
+    }
 
-    return (readable_output, outputs, scan_list)
+    return (
+        readable_output,
+        outputs,
+        scan_list
+    )
 
 
 def scan_results_command(client, args):
@@ -443,23 +491,23 @@ def scan_results_command(client, args):
             fileResult(
                 filename=f'{scan_id}.json',
                 data=json.dumps(results, indent=4),
-                file_type=entryTypes['entryInfoFile'],
+                file_type=entryTypes['entryInfoFile']
             )
         )
     elif scan_format == 'json':
-        markdown = tableToMarkdown(
-            f'Scan {scan_id} results', results.get('data')
-        )
+        markdown = tableToMarkdown(f'Scan {scan_id} results', results.get('data'))
         return_outputs(
             readable_output=markdown,
-            outputs={'HelloWorld.Scan(val.scan_id == obj.scan_id)': results},
-            raw_response=results,
+            outputs={
+                'HelloWorld.Scan(val.scan_id == obj.scan_id)': results
+            },
+            raw_response=results
         )
 
 
 def main():
     """
-    PARSE AND VALIDATE INTEGRATION PARAMS
+        PARSE AND VALIDATE INTEGRATION PARAMS
     """
     api_key = demisto.params().get('apikey')
 
@@ -472,20 +520,21 @@ def main():
     first_fetch_time = arg_to_timestamp(
         arg=demisto.params().get('first_fetch', '3 days'),
         arg_name='First fetch time',
-        required=True,
+        required=True
     )
 
     proxy = demisto.params().get('proxy', False)
 
     demisto.debug(f'Command being called is {demisto.command()}')
     try:
-        headers = {'Authorization': f'Bearer {api_key}'}
+        headers = {
+            'Authorization': f'Bearer {api_key}'
+        }
         client = Client(
             base_url=base_url,
             verify=verify_certificate,
             headers=headers,
-            proxy=proxy,
-        )
+            proxy=proxy)
 
         if demisto.command() == 'test-module':
             # This is the call made when pressing the integration Test button.
@@ -502,31 +551,19 @@ def main():
                 last_run=demisto.getLastRun(),
                 first_fetch_time=first_fetch_time,
                 alert_status=alert_status,
-                alert_type=alert_type,
+                alert_type=alert_type
             )
 
             demisto.setLastRun(next_run)
             demisto.incidents(incidents)
 
         elif demisto.command() == 'ip':
-            default_threshold_ip = int(
-                demisto.params().get('threshold_ip', '65')
-            )
-            return_outputs(
-                *ip_reputation_command(
-                    client, demisto.args(), default_threshold_ip
-                )
-            )
+            default_threshold_ip = int(demisto.params().get('threshold_ip', '65'))
+            return_outputs(*ip_reputation_command(client, demisto.args(), default_threshold_ip))
 
         elif demisto.command() == 'domain':
-            default_threshold_domain = int(
-                demisto.params().get('threshold_domain', '65')
-            )
-            return_outputs(
-                *domain_reputation_command(
-                    client, demisto.args(), default_threshold_domain
-                )
-            )
+            default_threshold_domain = int(demisto.params().get('threshold_domain', '65'))
+            return_outputs(*domain_reputation_command(client, demisto.args(), default_threshold_domain))
 
         elif demisto.command() == 'helloworld-say-hello':
             return_outputs(*say_hello_command(client, demisto.args()))
@@ -549,9 +586,7 @@ def main():
     # Log exceptions
     except Exception as e:
         demisto.error(traceback.format_exc())
-        return_error(
-            f'Failed to execute {demisto.command()} command.\nError:\n{str(e)}'
-        )
+        return_error(f'Failed to execute {demisto.command()} command.\nError:\n{str(e)}')
 
 
 if __name__ in ('__main__', '__builtin__', 'builtins'):

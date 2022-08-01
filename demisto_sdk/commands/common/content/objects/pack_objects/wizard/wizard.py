@@ -2,9 +2,8 @@ from pathlib import Path
 from typing import Union
 
 from demisto_sdk.commands.common.constants import WIZARD, FileType
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import (
-    JSONContentObject,
-)
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
+    JSONContentObject
 
 
 class Wizard(JSONContentObject):

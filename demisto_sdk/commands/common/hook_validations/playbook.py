@@ -5,42 +5,24 @@ import click
 
 from demisto_sdk.commands.common.constants import DEPRECATED_REGEXES
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import (
-    error_codes,
-)
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
-    ContentEntityValidator,
-)
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    error_codes
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
+    ContentEntityValidator
 from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
 
 
 class PlaybookValidator(ContentEntityValidator):
     """PlaybookValidator is designed to validate the correctness of the file structure we enter to content repo."""
 
-    def __init__(
-        self,
-        structure_validator,
-        ignored_errors=None,
-        print_as_warnings=False,
-        json_file_path=None,
-        validate_all=False,
-        deprecation_validator=None,
-    ):
-        super().__init__(
-            structure_validator,
-            ignored_errors=ignored_errors,
-            print_as_warnings=print_as_warnings,
-            json_file_path=json_file_path,
-        )
+    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, json_file_path=None,
+                 validate_all=False, deprecation_validator=None):
+        super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
+                         json_file_path=json_file_path)
         self.validate_all = validate_all
         self.deprecation_validator = deprecation_validator
 
-    def is_valid_playbook(
-        self,
-        validate_rn: bool = True,
-        id_set_file=None,
-        is_modified: bool = False,
-    ) -> bool:
+    def is_valid_playbook(self, validate_rn: bool = True, id_set_file=None, is_modified: bool = False) -> bool:
         """Check whether the playbook is valid or not.
 
          Args:
@@ -53,10 +35,7 @@ class PlaybookValidator(ContentEntityValidator):
             bool. Whether the playbook is valid or not
         """
         if 'TestPlaybooks' in self.file_path:
-            click.echo(
-                f'Skipping validation for Test Playbook {self.file_path}',
-                color=LOG_COLORS.YELLOW,
-            )
+            click.echo(f'Skipping validation for Test Playbook {self.file_path}', color=LOG_COLORS.YELLOW)
             return True
         playbook_checks = [
             super().is_valid_file(validate_rn),
@@ -119,11 +98,11 @@ class PlaybookValidator(ContentEntityValidator):
         result: set = set()
         with open(self.file_path, 'r') as f:
             playbook_text = f.read()
-        all_inputs_occurrences = re.findall(r'inputs\.[-\w ]+', playbook_text)
+        all_inputs_occurrences = re.findall(r"inputs\.[-\w ]+", playbook_text)
         for input in all_inputs_occurrences:
             input = input.strip()
             splitted = input.split('.')
-            if len(splitted) > 1:
+            if len(splitted) > 1 and splitted[1] and not splitted[1].startswith(' '):
                 result.add(splitted[1])
         return result
 
@@ -136,7 +115,8 @@ class PlaybookValidator(ContentEntityValidator):
         inputs: Dict = self.current_file.get('inputs', {})
         inputs_keys = []
         for input in inputs:
-            inputs_keys.append(input['key'])
+            if input['key']:
+                inputs_keys.append(input['key'].strip())
         return set(inputs_keys)
 
     def inputs_in_use_check(self, is_modified: bool) -> bool:
@@ -153,16 +133,12 @@ class PlaybookValidator(ContentEntityValidator):
             return True
         inputs_in_use: set = self.collect_all_inputs_in_use()
         inputs_in_section: set = self.collect_all_inputs_from_inputs_section()
-        return self.are_all_inputs_in_use(
-            inputs_in_use, inputs_in_section
-        ) and self.are_all_used_inputs_in_inputs_section(
-            inputs_in_use, inputs_in_section
-        )
+        all_inputs_in_use = self.are_all_inputs_in_use(inputs_in_use, inputs_in_section)
+        are_all_used_inputs_in_inputs_section = self.are_all_used_inputs_in_inputs_section(inputs_in_use, inputs_in_section)
+        return all_inputs_in_use and are_all_used_inputs_in_inputs_section
 
     @error_codes('PB118')
-    def are_all_inputs_in_use(
-        self, inputs_in_use: set, inputs_in_section: set
-    ) -> bool:
+    def are_all_inputs_in_use(self, inputs_in_use: set, inputs_in_section: set) -> bool:
         """Check whether the playbook inputs are in use in any of the tasks
 
         Return:
@@ -173,20 +149,14 @@ class PlaybookValidator(ContentEntityValidator):
 
         if inputs_not_in_use:
             playbook_name = self.current_file.get('name', '')
-            error_message, error_code = Errors.input_key_not_in_tasks(
-                playbook_name, sorted(inputs_not_in_use)
-            )
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            error_message, error_code = Errors.input_key_not_in_tasks(playbook_name, sorted(inputs_not_in_use))
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
         return True
 
     @error_codes('PB119')
-    def are_all_used_inputs_in_inputs_section(
-        self, inputs_in_use: set, inputs_in_section: set
-    ) -> bool:
+    def are_all_used_inputs_in_inputs_section(self, inputs_in_use: set, inputs_in_section: set) -> bool:
         """Check whether the playbook inputs that in use appear in the input section.
 
         Return:
@@ -197,12 +167,9 @@ class PlaybookValidator(ContentEntityValidator):
 
         if inputs_not_in_section:
             playbook_name = self.current_file.get('name', '')
-            error_message, error_code = Errors.input_used_not_in_input_section(
-                playbook_name, sorted(inputs_not_in_section)
-            )
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            error_message, error_code = Errors.input_used_not_in_input_section(playbook_name,
+                                                                               sorted(inputs_not_in_section))
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
         return True
@@ -217,9 +184,7 @@ class PlaybookValidator(ContentEntityValidator):
         rolename = self.current_file.get('rolename', None)
         if rolename:
             error_message, error_code = Errors.playbook_cant_have_rolename()
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
 
@@ -237,22 +202,16 @@ class PlaybookValidator(ContentEntityValidator):
             if task.get('type') == 'condition':
                 # builtin conditional task
                 if task.get('conditions'):
-                    is_all_condition_branches_handled = (
-                        self.is_builtin_condition_task_branches_handled(task)
-                        and is_all_condition_branches_handled
-                    )
+                    is_all_condition_branches_handled = self.is_builtin_condition_task_branches_handled(
+                        task) and is_all_condition_branches_handled
                 # ask conditional task
                 elif task.get('message'):
-                    is_all_condition_branches_handled = (
-                        self.is_ask_condition_branches_handled(task)
-                        and is_all_condition_branches_handled
-                    )
+                    is_all_condition_branches_handled = self.is_ask_condition_branches_handled(
+                        task) and is_all_condition_branches_handled
                 # script conditional task
                 elif task.get('scriptName'):
-                    is_all_condition_branches_handled = (
-                        self.is_script_condition_branches_handled(task)
-                        and is_all_condition_branches_handled
-                    )
+                    is_all_condition_branches_handled = self.is_script_condition_branches_handled(
+                        task) and is_all_condition_branches_handled
         return is_all_condition_branches_handled
 
     @error_codes('PB101,PB102')
@@ -287,25 +246,14 @@ class PlaybookValidator(ContentEntityValidator):
                 # else doesn't have a path, skip error
                 if '#DEFAULT#' == e.args[0]:
                     continue
-                (
-                    error_message,
-                    error_code,
-                ) = Errors.playbook_unreachable_condition(
-                    task.get('id'), next_task_branch
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.playbook_unreachable_condition(task.get('id'), next_task_branch)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = is_all_condition_branches_handled = False
 
         # if there are task_condition_labels left then not all branches are handled
         if task_condition_labels:
-            error_message, error_code = Errors.playbook_unhandled_condition(
-                task.get('id'), task_condition_labels
-            )
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            error_message, error_code = Errors.playbook_unhandled_condition(task.get('id'), task_condition_labels)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = is_all_condition_branches_handled = False
 
         return is_all_condition_branches_handled
@@ -328,20 +276,14 @@ class PlaybookValidator(ContentEntityValidator):
             return is_all_condition_branches_handled
 
         # ADD all replyOptions to unhandled_reply_options (UPPER)
-        unhandled_reply_options = set(
-            map(str.upper, task.get('message', {}).get('replyOptions', []))
-        )
+        unhandled_reply_options = set(map(str.upper, task.get('message', {}).get('replyOptions', [])))
 
         # Rename the keys in dictionary to upper case
         next_tasks_upper = {k.upper(): v for k, v in next_tasks.items()}
 
         # Rename the dictionary keys from 'True Positive\False Positive' to 'YES\NO'
-        next_tasks_upper['YES'] = next_tasks_upper.pop(
-            'TRUE POSITIVE', next_tasks_upper.get('YES')
-        )
-        next_tasks_upper['NO'] = next_tasks_upper.pop(
-            'FALSE POSITIVE', next_tasks_upper.get('NO')
-        )
+        next_tasks_upper['YES'] = next_tasks_upper.pop('TRUE POSITIVE', next_tasks_upper.get('YES'))
+        next_tasks_upper['NO'] = next_tasks_upper.pop('FALSE POSITIVE', next_tasks_upper.get('NO'))
 
         # Remove all nexttasks from unhandled_reply_options (UPPER)
         for next_task_branch, next_task_id in next_tasks_upper.items():
@@ -349,24 +291,13 @@ class PlaybookValidator(ContentEntityValidator):
                 if next_task_id:
                     unhandled_reply_options.remove(next_task_branch)
             except KeyError:
-                (
-                    error_message,
-                    error_code,
-                ) = Errors.playbook_unreachable_condition(
-                    task.get('id'), next_task_branch
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.playbook_unreachable_condition(task.get('id'), next_task_branch)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = is_all_condition_branches_handled = False
 
         if unhandled_reply_options:
-            error_message, error_code = Errors.playbook_unhandled_condition(
-                task.get('id'), unhandled_reply_options
-            )
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            error_message, error_code = Errors.playbook_unhandled_condition(task.get('id'), unhandled_reply_options)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = is_all_condition_branches_handled = False
         return is_all_condition_branches_handled
 
@@ -383,22 +314,14 @@ class PlaybookValidator(ContentEntityValidator):
         is_all_condition_branches_handled: bool = True
         next_tasks: Dict = task.get('nexttasks', {})
         if '#default#' not in next_tasks:
-            error_message, error_code = Errors.playbook_unhandled_condition(
-                task.get('id'), {'else'}
-            )
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            error_message, error_code = Errors.playbook_unhandled_condition(task.get('id'), {'else'})
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = is_all_condition_branches_handled = False
 
         if len(next_tasks) < 2:
             # there should be at least 2 next tasks, we don't know what condition is missing, but we know it's missing
-            error_message, error_code = Errors.playbook_unhandled_condition(
-                task.get('id'), {}
-            )
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            error_message, error_code = Errors.playbook_unhandled_condition(task.get('id'), {})
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = is_all_condition_branches_handled = False
 
         return is_all_condition_branches_handled
@@ -423,12 +346,8 @@ class PlaybookValidator(ContentEntityValidator):
                     next_tasks_bucket.update(next_task_ids)
         orphan_tasks = tasks_bucket.difference(next_tasks_bucket)
         if orphan_tasks:
-            error_message, error_code = Errors.playbook_unconnected_tasks(
-                orphan_tasks
-            )
-            if not self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            error_message, error_code = Errors.playbook_unconnected_tasks(orphan_tasks)
+            if not self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
 
         return tasks_bucket.issubset(next_tasks_bucket)
@@ -441,18 +360,11 @@ class PlaybookValidator(ContentEntityValidator):
         deprecated_v2_regex = DEPRECATED_REGEXES[0]
         deprecated_no_replace_regex = DEPRECATED_REGEXES[1]
         if is_deprecated:
-            if re.search(deprecated_v2_regex, description) or re.search(
-                deprecated_no_replace_regex, description
-            ):
+            if re.search(deprecated_v2_regex, description) or re.search(deprecated_no_replace_regex, description):
                 pass
             else:
-                (
-                    error_message,
-                    error_code,
-                ) = Errors.invalid_deprecated_playbook()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.invalid_deprecated_playbook()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
         return is_valid
 
@@ -467,19 +379,10 @@ class PlaybookValidator(ContentEntityValidator):
         for task in tasks.values():
             curr_task = task.get('task', {})
             scriptargs = task.get('scriptarguments', {})
-            if (
-                curr_task
-                and scriptargs
-                and curr_task.get('scriptName', '') == 'DeleteContext'
-                and scriptargs.get('all', {}).get('simple', '') == 'yes'
-            ):
-                (
-                    error_message,
-                    error_code,
-                ) = Errors.playbook_cant_have_deletecontext_all()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+            if curr_task and scriptargs and curr_task.get('scriptName', '') == 'DeleteContext' \
+                    and scriptargs.get('all', {}).get('simple', '') == 'yes':
+                error_message, error_code = Errors.playbook_cant_have_deletecontext_all()
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = False
                     return False
         return True
@@ -496,9 +399,7 @@ class PlaybookValidator(ContentEntityValidator):
             scriptargs = task.get('scriptarguments', {})
             if scriptargs and scriptargs.get('using', {}):
                 error_message, error_code = Errors.using_instance_in_playbook()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = False
                     return False
         return True
@@ -515,53 +416,32 @@ class PlaybookValidator(ContentEntityValidator):
         """
 
         if not id_set_file:
-            click.secho(
-                'Skipping playbook script id validation. Could not read id_set.json.',
-                fg='yellow',
-            )
+            click.secho("Skipping playbook script id validation. Could not read id_set.json.", fg="yellow")
             return True
 
-        id_set_scripts = id_set_file.get('scripts')
-        id_set_integrations = id_set_file.get('integrations')
+        id_set_scripts = id_set_file.get("scripts")
+        id_set_integrations = id_set_file.get("integrations")
         pb_tasks = self.current_file.get('tasks', {})
         for id, task_dict in pb_tasks.items():
             is_valid = True
             pb_task = task_dict.get('task', {})
             script_id_used_in_task = pb_task.get('script')
             task_script_name = pb_task.get('scriptName')
-            script_entry_to_check = (
-                script_id_used_in_task
-                if script_id_used_in_task
-                else task_script_name
-            )
-            integration_script_flag = '|||'
+            script_entry_to_check = script_id_used_in_task if script_id_used_in_task else task_script_name
+            integration_script_flag = "|||"
             if script_id_used_in_task:
-                if (
-                    integration_script_flag not in script_id_used_in_task
-                ):  # Checking script
-                    is_valid &= self.check_script_id(
-                        script_id_used_in_task, id_set_scripts
-                    )
+                if integration_script_flag not in script_id_used_in_task:  # Checking script
+                    is_valid &= self.check_script_id(script_id_used_in_task, id_set_scripts)
                 else:  # Checking integration command
-                    is_valid &= self.check_integration_command(
-                        script_id_used_in_task, id_set_integrations
-                    )
-            if (
-                task_script_name
-                and integration_script_flag not in task_script_name
-            ):
+                    is_valid &= self.check_integration_command(script_id_used_in_task,
+                                                               id_set_integrations)
+            if task_script_name and integration_script_flag not in task_script_name:
                 # if there is 'scriptName' and it is not integration
-                is_valid &= self.check_script_name(
-                    task_script_name, id_set_scripts
-                )
+                is_valid &= self.check_script_name(task_script_name, id_set_scripts)
 
             if not is_valid:
-                error_message, error_code = Errors.invalid_script_id(
-                    script_entry_to_check, pb_task
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.invalid_script_id(script_entry_to_check, pb_task)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 
         return True
@@ -575,19 +455,10 @@ class PlaybookValidator(ContentEntityValidator):
         Returns:
             True if script_used_in_task exists in id_set
         """
-        return any(
-            [
-                script_id_used_in_task in id_set_dict
-                for id_set_dict in id_set_scripts
-            ]
-        )
+        return any([script_id_used_in_task in id_set_dict for id_set_dict in id_set_scripts])
 
-    def check_integration_command(
-        self,
-        integration_id_used_in_task,
-        id_set_integrations,
-        command_without_brand=True,
-    ):
+    def check_integration_command(self, integration_id_used_in_task, id_set_integrations,
+                                  command_without_brand=True):
         """
         Checks if integration id and command exists in at least one of id_set's dicts
         Args:
@@ -599,20 +470,13 @@ class PlaybookValidator(ContentEntityValidator):
         Returns:
             True if integration_id and integration_command exist in id_set
         """
-        (
-            integration_id,
-            integration_command,
-        ) = integration_id_used_in_task.split('|||')
-        if integration_id == 'Builtin':  # skipping Builtin
+        integration_id, integration_command = integration_id_used_in_task.split("|||")
+        if integration_id == "Builtin":  # skipping Builtin
             return True
         for id_integration_dict in id_set_integrations:
             id_integration_id = list(id_integration_dict.keys())[0]
-            if (
-                command_without_brand and not integration_id
-            ) or id_integration_id == integration_id:
-                commands = id_integration_dict.get(id_integration_id, {}).get(
-                    'commands', []
-                )
+            if (command_without_brand and not integration_id) or id_integration_id == integration_id:
+                commands = id_integration_dict.get(id_integration_id, {}).get("commands", [])
                 if integration_command in commands:
                     return True
         return False
@@ -627,12 +491,8 @@ class PlaybookValidator(ContentEntityValidator):
             True if pb_script_name exists in id_set
         """
         return any(
-            [
-                pb_script_name == id_set_dict[key].get('name')
-                for id_set_dict in id_set_scripts
-                for key in id_set_dict
-            ]
-        )
+            [pb_script_name == id_set_dict[key].get('name') for id_set_dict in id_set_scripts
+             for key in id_set_dict])
 
     def _is_else_path_in_condition_task(self, task):
         next_tasks: Dict = task.get('nexttasks', {})
@@ -654,16 +514,8 @@ class PlaybookValidator(ContentEntityValidator):
                     error_tasks_ids.append(task.get('id'))
 
         if error_tasks_ids:
-            (
-                error_message,
-                error_code,
-            ) = Errors.playbook_condition_has_no_else_path(error_tasks_ids)
-            if self.handle_error(
-                error_message,
-                error_code,
-                file_path=self.file_path,
-                warning=True,
-            ):
+            error_message, error_code = Errors.playbook_condition_has_no_else_path(error_tasks_ids)
+            if self.handle_error(error_message, error_code, file_path=self.file_path, warning=True):
                 all_conditions_has_else_path = False
 
         return all_conditions_has_else_path
@@ -683,12 +535,8 @@ class PlaybookValidator(ContentEntityValidator):
 
             if not is_valid_task:
                 is_valid = is_valid_task
-                error_message, error_code = Errors.invalid_uuid(
-                    task_key, taskid, inner_id
-                )
-                self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                )  # Does not break after one
+                error_message, error_code = Errors.invalid_uuid(task_key, taskid, inner_id)
+                self.handle_error(error_message, error_code, file_path=self.file_path)  # Does not break after one
                 # invalid task in order to raise error for all the invalid tasks at the file
 
         return is_valid
@@ -705,16 +553,12 @@ class PlaybookValidator(ContentEntityValidator):
         for task_key, task in tasks.items():
             taskid = task.get('taskid', '')
             inner_id = task.get('task', {}).get('id', '')
-            is_valid_task = taskid == inner_id
+            is_valid_task = (taskid == inner_id)
 
             if not is_valid_task:
                 is_valid = is_valid_task
-                error_message, error_code = Errors.taskid_different_from_id(
-                    task_key, taskid, inner_id
-                )
-                self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                )  # Does not break after one
+                error_message, error_code = Errors.taskid_different_from_id(task_key, taskid, inner_id)
+                self.handle_error(error_message, error_code, file_path=self.file_path)  # Does not break after one
                 # invalid task in order to raise error for all the invalid tasks at the file
 
         return is_valid
@@ -728,12 +572,8 @@ class PlaybookValidator(ContentEntityValidator):
 
         name = self.current_file.get('name', '')
         if 'playbook' in name.lower():
-            error_message, error_code = Errors.field_contain_forbidden_word(
-                field_names=['name'], word='playbook'
-            )
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            error_message, error_code = Errors.field_contain_forbidden_word(field_names=['name'], word='playbook')
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
         return True
@@ -741,11 +581,7 @@ class PlaybookValidator(ContentEntityValidator):
     def is_valid_with_indicators_input(self):
         input_data = self.current_file.get('inputs', [])
         for item in input_data:
-            entity = (
-                item['playbookInputQuery'].get('queryEntity', '')
-                if item.get('playbookInputQuery', None)
-                else None
-            )
+            entity = item['playbookInputQuery'].get('queryEntity', '') if item.get('playbookInputQuery', None) else None
             if entity == 'indicators':
                 answer = [
                     self.is_playbook_quiet_mode(),
@@ -759,9 +595,7 @@ class PlaybookValidator(ContentEntityValidator):
     def is_playbook_quiet_mode(self):
         if not self.current_file.get('quiet', False):
             error_message, error_code = Errors.playbook_not_quiet_mode()
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
 
@@ -773,12 +607,8 @@ class PlaybookValidator(ContentEntityValidator):
             if task.get('quietmode', 0) == 2:
                 not_quiet.append(task_key)
         if not_quiet:
-            error_message, error_code = Errors.playbook_tasks_not_quiet_mode(
-                not_quiet
-            )
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            error_message, error_code = Errors.playbook_tasks_not_quiet_mode(not_quiet)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
 
@@ -790,13 +620,8 @@ class PlaybookValidator(ContentEntityValidator):
             if task.get('continueonerror', False):
                 continue_tasks.append(task_key)
         if continue_tasks:
-            (
-                error_message,
-                error_code,
-            ) = Errors.playbook_tasks_continue_on_error(continue_tasks)
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            error_message, error_code = Errors.playbook_tasks_continue_on_error(continue_tasks)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
         return True
 
@@ -812,22 +637,11 @@ class PlaybookValidator(ContentEntityValidator):
         """
         is_valid = True
 
-        if self.current_file.get('deprecated'):
-            used_files_list = (
-                self.deprecation_validator.validate_playbook_deprecation(
-                    self.current_file.get('name')
-                )
-            )
+        if self.current_file.get("deprecated"):
+            used_files_list = self.deprecation_validator.validate_playbook_deprecation(self.current_file.get('name'))
             if used_files_list:
-                (
-                    error_message,
-                    error_code,
-                ) = Errors.playbook_is_deprecated_and_used(
-                    self.current_file.get('name'), used_files_list
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.playbook_is_deprecated_and_used(self.current_file.get("name"), used_files_list)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
 
         return is_valid

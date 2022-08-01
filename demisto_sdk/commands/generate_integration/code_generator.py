@@ -11,24 +11,12 @@ import demisto_sdk.commands.common.tools as tools
 from demisto_sdk.commands.common.constants import ParameterType
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.generate_integration.base_code import (
-    BASE_ARGUMENT,
-    BASE_BASIC_AUTH,
-    BASE_BEARER_TOKEN,
-    BASE_CLIENT,
-    BASE_CLIENT_API_KEY,
-    BASE_CODE_TEMPLATE,
-    BASE_CREDENTIALS,
-    BASE_FUNCTION,
-    BASE_HEADER,
-    BASE_HEADER_API_KEY,
-    BASE_HEADER_FORMATTED,
-    BASE_LIST_FUNCTIONS,
-    BASE_PARAMS,
-    BASE_REQUEST_FUNCTION,
-)
-from demisto_sdk.commands.generate_integration.XSOARIntegration import (
-    XSOARIntegration,
-)
+    BASE_ARGUMENT, BASE_BASIC_AUTH, BASE_BEARER_TOKEN, BASE_CLIENT,
+    BASE_CLIENT_API_KEY, BASE_CODE_TEMPLATE, BASE_CREDENTIALS, BASE_FUNCTION,
+    BASE_HEADER, BASE_HEADER_API_KEY, BASE_HEADER_FORMATTED,
+    BASE_LIST_FUNCTIONS, BASE_PARAMS, BASE_REQUEST_FUNCTION)
+from demisto_sdk.commands.generate_integration.XSOARIntegration import \
+    XSOARIntegration
 
 json = JSON_Handler()
 yaml = YAML_Handler(width=50000)
@@ -44,7 +32,7 @@ ARGUMENT_TYPES = {
     'int': 'int',
     'str': 'str',
     'bool': 'bool',
-    None: None,
+    None: None
 }
 
 
@@ -52,9 +40,7 @@ def json_body_to_code(request_json_body):
     s = json.dumps(request_json_body, sort_keys=True)
     pattern = re.compile(r'\"\{[a-zA-Z0-9_]+\}\"')
     for leaf in re.findall(pattern, s):
-        s = s.replace(
-            leaf, leaf.replace('"{', '').replace('}"', '').lower(), 1
-        )
+        s = s.replace(leaf, leaf.replace('"{', '').replace('}"', '').lower(), 1)
 
     return f'data={s}'
 
@@ -67,19 +53,17 @@ class IntegrationGeneratorOutput:
 
 
 class IntegrationGeneratorArg:
-    def __init__(
-        self,
-        name: str,
-        description: Optional[str],
-        type_: Optional[str] = None,
-        in_: Optional[str] = None,
-        default_value='',
-        predefined_values: list = [],
-        is_array: bool = False,
-        required: bool = False,
-        ref=None,
-        in_object: Optional[List[str]] = None,
-    ):
+    def __init__(self,
+                 name: str,
+                 description: Optional[str],
+                 type_: Optional[str] = None,
+                 in_: Optional[str] = None,
+                 default_value='',
+                 predefined_values: list = [],
+                 is_array: bool = False,
+                 required: bool = False,
+                 ref=None,
+                 in_object: Optional[List[str]] = None):
         self.name = name
         self.description = description
         self.required = required
@@ -93,23 +77,10 @@ class IntegrationGeneratorArg:
 
 
 class IntegrationGeneratorCommand:
-    def __init__(
-        self,
-        name: str,
-        url_path: str,
-        http_method: str,
-        description: Optional[str],
-        arguments,
-        outputs,
-        context_path: str,
-        root_object: str,
-        headers: List[Dict[str, str]],
-        unique_key: str,
-        upload_file: bool = False,
-        returns_file: bool = False,
-        returns_entry_file: bool = False,
-        body_format=None,
-    ):
+    def __init__(self, name: str, url_path: str, http_method: str, description: Optional[str],
+                 arguments, outputs,
+                 context_path: str, root_object: str, headers: List[Dict[str, str]], unique_key: str, upload_file: bool = False,
+                 returns_file: bool = False, returns_entry_file: bool = False, body_format=None):
         self.name = name
         self.url_path = url_path
         self.http_method = http_method
@@ -124,39 +95,20 @@ class IntegrationGeneratorCommand:
         self.returns_file = returns_file
         self.returns_entry_file = returns_entry_file
 
-        if (
-            isinstance(arguments, list)
-            and len(arguments) > 0
-            and isinstance(arguments[0], dict)
-        ):
-            self.arguments = [
-                IntegrationGeneratorArg(**arg) for arg in arguments
-            ]
+        if isinstance(arguments, list) and len(arguments) > 0 and isinstance(arguments[0], dict):
+            self.arguments = [IntegrationGeneratorArg(**arg) for arg in arguments]
         else:
             self.arguments = arguments
 
-        if (
-            isinstance(outputs, list)
-            and len(outputs) > 0
-            and isinstance(outputs[0], dict)
-        ):
-            self.outputs = [
-                IntegrationGeneratorOutput(**output) for output in outputs
-            ]
+        if isinstance(outputs, list) and len(outputs) > 0 and isinstance(outputs[0], dict):
+            self.outputs = [IntegrationGeneratorOutput(**output) for output in outputs]
         else:
             self.outputs = outputs
 
 
 class IntegrationGeneratorParam:
-    def __init__(
-        self,
-        name: str,
-        display: str,
-        type_: Union[ParameterType, str],
-        required: bool,
-        defaultvalue: str = '',
-        options: Optional[list] = None,
-    ):
+    def __init__(self, name: str, display: str, type_: Union[ParameterType, str], required: bool, defaultvalue: str = '',
+                 options: Optional[list] = None):
         self.name = name
         self.display = display
         self.defaultvalue = defaultvalue
@@ -176,25 +128,10 @@ class IntegrationGeneratorParam:
 
 
 class IntegrationGeneratorConfig:
-    def __init__(
-        self,
-        name: str,
-        display_name: str,
-        description: str,
-        params,
-        category: str,
-        command_prefix: str,
-        commands,
-        docker_image,
-        url,
-        base_url_path,
-        auth,
-        context_path,
-        code_type='python',
-        code_subtype='python3',
-        is_fetch=False,
-        fix_code=True,
-    ):
+    def __init__(self, name: str, display_name: str, description: str, params,
+                 category: str, command_prefix: str,
+                 commands, docker_image, url, base_url_path,
+                 auth, context_path, code_type='python', code_subtype='python3', is_fetch=False, fix_code=True):
         self.name = name
         self.display_name = display_name
         self.description = description
@@ -210,26 +147,13 @@ class IntegrationGeneratorConfig:
         self.is_fetch = is_fetch
         self.fix_code = fix_code
 
-        if (
-            commands
-            and isinstance(commands, list)
-            and len(commands) > 0
-            and isinstance(commands[0], dict)
-        ):
-            self.commands = [
-                IntegrationGeneratorCommand(**command) for command in commands
-            ]
+        if commands and isinstance(commands, list) and len(commands) > 0 and isinstance(commands[0], dict):
+            self.commands = [IntegrationGeneratorCommand(**command) for command in commands]
         else:
             self.commands = commands
 
-        if (
-            isinstance(params, list)
-            and len(params) > 0
-            and isinstance(params[0], dict)
-        ):
-            self.params = [
-                IntegrationGeneratorParam(**param) for param in params
-            ]
+        if isinstance(params, list) and len(params) > 0 and isinstance(params[0], dict):
+            self.params = [IntegrationGeneratorParam(**param) for param in params]
         else:
             self.params = params
 
@@ -288,9 +212,7 @@ class IntegrationGeneratorConfig:
         params_string = base.replace(base_string, ', '.join(modified_params))
         return params_string
 
-    def generate_command_arguments(
-        self, command: IntegrationGeneratorCommand
-    ) -> tuple:
+    def generate_command_arguments(self, command: IntegrationGeneratorCommand) -> tuple:
         params_data = []
         body_data = []
         arguments = []
@@ -324,15 +246,10 @@ class IntegrationGeneratorConfig:
             if argument_default:
                 this_argument = f"{BASE_ARGUMENT.replace('$DARGNAME$', ref_arg_name)}{argument_default})"
             else:
-                this_argument = (
-                    f"{BASE_ARGUMENT.replace('$DARGNAME$', ref_arg_name)})"
-                )
+                this_argument = f"{BASE_ARGUMENT.replace('$DARGNAME$', ref_arg_name)})"
 
             if new_arg_type:
-                this_argument = (
-                    this_argument.replace('$ARGTYPE$', f'{new_arg_type}(')
-                    + ')'
-                )
+                this_argument = this_argument.replace('$ARGTYPE$', f'{new_arg_type}(') + ')'
             else:
                 this_argument = this_argument.replace('$ARGTYPE$', '')
 
@@ -343,75 +260,43 @@ class IntegrationGeneratorConfig:
 
             if arg.in_:
                 if 'query' in arg.in_:
-                    params_data.append({arg.name: code_arg_name})
+                    params_data.append({
+                        arg.name: code_arg_name
+                    })
                 elif arg.in_ in ['formData', 'body']:
-                    body_data.append({arg.name: code_arg_name})
+                    body_data.append({
+                        arg.name: code_arg_name
+                    })
 
-        return (
-            argument_names,
-            arguments,
-            arguments_found,
-            body_data,
-            params_data,
-        )
+        return argument_names, arguments, arguments_found, body_data, params_data
 
-    def generate_python_command_and_client_functions(
-        self,
-        command: IntegrationGeneratorCommand,
-        is_api_key_in_query=False,
-        auth=None,
-    ):
+    def generate_python_command_and_client_functions(self, command: IntegrationGeneratorCommand, is_api_key_in_query=False, auth=None):
         function_name = command.name.replace('-', '_')
         headers = command.headers
 
         logger.info(f'Adding the function {function_name} to the code...')
         function = BASE_FUNCTION.replace('$FUNCTIONNAME$', function_name)
-        req_function = BASE_REQUEST_FUNCTION.replace(
-            '$FUNCTIONNAME$', function_name
-        )
+        req_function = BASE_REQUEST_FUNCTION.replace('$FUNCTIONNAME$', function_name)
 
-        (
-            argument_names,
-            arguments,
-            arguments_found,
-            body_data,
-            params_data,
-        ) = self.generate_command_arguments(command)
+        argument_names, arguments, arguments_found, body_data, params_data = self.generate_command_arguments(command)
         if arguments_found:
-            function = function.replace(
-                '$ARGUMENTS$', '\n    '.join(arguments)
-            )
+            function = function.replace('$ARGUMENTS$', '\n    '.join(arguments))
             function = function.replace('$REQARGS$', ', '.join(argument_names))
             req_function = req_function.replace('$REQARGS$', ', $REQARGS$')
-            req_function = req_function.replace(
-                '$REQARGS$', ', '.join(argument_names)
-            )
+            req_function = req_function.replace('$REQARGS$', ', '.join(argument_names))
         else:
             req_function = req_function.replace('$REQARGS$', '')
             function = function.replace('$REQARGS$', '')
             function = '\n'.join(
-                [x for x in function.split('\n') if '$ARGUMENTS$' not in x]
-            )
+                [x for x in function.split('\n') if '$ARGUMENTS$' not in x])
 
         req_function = req_function.replace('$METHOD$', command.http_method)
 
-        command.url_path = (
-            f"'{command.url_path}'"
-            if "'" not in command.url_path
-            else command.url_path
-        )
-        command.url_path = (
-            f'f{command.url_path}'
-            if '{' in command.url_path
-            else command.url_path
-        )
-        for param in re.findall(
-            r'{([^}]+)}', command.url_path
-        ):  # get content inside curly brackets
+        command.url_path = f"'{command.url_path}'" if "'" not in command.url_path else command.url_path
+        command.url_path = f"f{command.url_path}" if "{" in command.url_path else command.url_path
+        for param in re.findall(r'{([^}]+)}', command.url_path):  # get content inside curly brackets
             if param in ILLEGAL_CODE_NAMES:
-                command.url_path = command.url_path.replace(
-                    param, f'{param}{NAME_FIX}'
-                )
+                command.url_path = command.url_path.replace(param, f'{param}{NAME_FIX}')
             command.url_path = command.url_path.replace(param, param.lower())
 
         req_function = req_function.replace('$PATH$', command.url_path)
@@ -420,43 +305,32 @@ class IntegrationGeneratorConfig:
             if params_data is None:
                 params_data = []
 
-            api_key_name = list(
-                filter(
-                    lambda x: 'key' in x and x['key'] == 'key', auth['apikey']
-                )
-            )[0]['value']
-            params_data.append({api_key_name: 'self.api_key'})
+            api_key_name = list(filter(lambda x: 'key' in x and x['key'] == 'key', auth['apikey']))[0]['value']
+            params_data.append({
+                api_key_name: 'self.api_key'
+            })
         if params_data:
             params = self.format_params(params_data, BASE_PARAMS, '$PARAMS$')
             req_function = req_function.replace('$PARAMETERS$', params)
         else:
             req_function = '\n'.join(
-                [
-                    x
-                    for x in req_function.split('\n')
-                    if '$PARAMETERS$' not in x
-                ]
-            )
+                [x for x in req_function.split('\n') if '$PARAMETERS$' not in x])
 
         if body_data:
             body_code = json_body_to_code(command.body_format)
             req_function = req_function.replace('$DATA$', body_code)
         else:
             req_function = '\n'.join(
-                [x for x in req_function.split('\n') if '$DATA$' not in x]
-            )
+                [x for x in req_function.split('\n') if '$DATA$' not in x])
 
         if params_data:
             req_function = req_function.replace(
-                '$NEWPARAMS$', ', params=params'
-            )
+                '$NEWPARAMS$', ', params=params')
         else:
             req_function = req_function.replace('$NEWPARAMS$', '')
 
         if body_data:
-            req_function = req_function.replace(
-                '$NEWDATA$', ', json_data=data'
-            )
+            req_function = req_function.replace('$NEWDATA$', ', json_data=data')
         else:
             req_function = req_function.replace('$NEWDATA$', '')
 
@@ -464,23 +338,12 @@ class IntegrationGeneratorConfig:
             new_headers = []
             for header in headers:
                 for k, v in header.items():
-                    new_headers.append(
-                        BASE_HEADER.replace('$HEADERKEY$', f"'{k}'").replace(
-                            '$HEADERVALUE$', f"'{v}'"
-                        )
-                    )
+                    new_headers.append(BASE_HEADER.replace('$HEADERKEY$', f"'{k}'")
+                                       .replace('$HEADERVALUE$', f"'{v}'"))
 
-            req_function = req_function.replace(
-                '$HEADERSOBJ$', ' \n        '.join(new_headers)
-            )
+            req_function = req_function.replace('$HEADERSOBJ$', ' \n        '.join(new_headers))
         else:
-            req_function = '\n'.join(
-                [
-                    x
-                    for x in req_function.split('\n')
-                    if '$HEADERSOBJ$' not in x
-                ]
-            )
+            req_function = '\n'.join([x for x in req_function.split('\n') if '$HEADERSOBJ$' not in x])
 
         if self.context_path:
             context_name = self.context_path
@@ -488,16 +351,12 @@ class IntegrationGeneratorConfig:
             context_name = command.name.title().replace('_', '')
 
         if command.context_path:
-            function = function.replace(
-                '$CONTEXTPATH$', f'.{command.context_path}'
-            )
+            function = function.replace('$CONTEXTPATH$', f'.{command.context_path}')
         else:
             function = function.replace('$CONTEXTPATH$', '')
 
         if command.root_object:
-            function = function.replace(
-                '$OUTPUTS$', f"response.get('{command.root_object}')"
-            )
+            function = function.replace('$OUTPUTS$', f"response.get('{command.root_object}')")
         else:
             function = function.replace('$OUTPUTS$', 'response')
 
@@ -533,25 +392,15 @@ class IntegrationGeneratorConfig:
 
                 if api_key_in == 'query':
                     auth_api_key_in_query = True
-                    code = code.replace(
-                        '$CLIENT_API_KEY$', BASE_CLIENT_API_KEY
-                    )
+                    code = code.replace('$CLIENT_API_KEY$', BASE_CLIENT_API_KEY)
                 else:
                     # api key passed in header
                     if api_key_format:
-                        code = code.replace(
-                            '$BEARERAUTHPARAMS$',
-                            BASE_HEADER_FORMATTED.replace(
-                                '$HEADER_NAME$', api_key_name
-                            ).replace('$HEADER_FORMAT$', api_key_format),
-                        )
+                        code = code.replace('$BEARERAUTHPARAMS$',
+                                            BASE_HEADER_FORMATTED.replace('$HEADER_NAME$', api_key_name).replace('$HEADER_FORMAT$', api_key_format))
                     else:
-                        code = code.replace(
-                            '$BEARERAUTHPARAMS$',
-                            BASE_HEADER_API_KEY.replace(
-                                '$HEADER_API_KEY$', api_key_name
-                            ),
-                        )
+                        code = code.replace('$BEARERAUTHPARAMS$',
+                                            BASE_HEADER_API_KEY.replace('$HEADER_API_KEY$', api_key_name))
             elif auth_method in 'bearer':
                 code = code.replace('$BEARERAUTHPARAMS$', BASE_BEARER_TOKEN)
 
@@ -571,12 +420,7 @@ class IntegrationGeneratorConfig:
         req_functions: list = []
 
         for command in self.commands:
-            (
-                function,
-                req_function,
-            ) = self.generate_python_command_and_client_functions(
-                command, auth_api_key_in_query, self.auth
-            )
+            function, req_function = self.generate_python_command_and_client_functions(command, auth_api_key_in_query, self.auth)
             functions.append(function)
             req_functions.append(req_function)
 
@@ -595,8 +439,7 @@ class IntegrationGeneratorConfig:
                 prefix = f'{self.command_prefix}-'
 
             function = BASE_LIST_FUNCTIONS.replace(
-                '$FUNCTIONNAME$', f'{prefix}{command.name}'.replace('_', '-')
-            )
+                '$FUNCTIONNAME$', f"{prefix}{command.name}".replace('_', '-'))
             fn = command.name.replace('-', '_')
             function = function.replace('$FUNCTIONCOMMAND$', f'{fn}_command')
             list_functions.append(function)
@@ -607,13 +450,10 @@ class IntegrationGeneratorConfig:
         if self.fix_code:
             logger.info('Fixing the code with autopep8...')
 
-            code = autopep8.fix_code(
-                code,
-                options={
-                    'max_line_length': 120,
-                    'ignore': ['W293', 'W504', 'F405', 'F403'],
-                },
-            )
+            code = autopep8.fix_code(code, options={
+                'max_line_length': 120,
+                'ignore': ['W293', 'W504', 'F405', 'F403']
+            })
 
         return code
 
@@ -638,16 +478,14 @@ class IntegrationGeneratorConfig:
                     auto = 'PREDEFINED'
                     options = arg.predefined_values
 
-                args.append(
-                    XSOARIntegration.Script.Command.Argument(
-                        name=arg.name.lower(),
-                        description=arg.description or '',
-                        required=required,
-                        auto=auto,
-                        predefined=options,
-                        is_array=is_array,
-                    )
-                )
+                args.append(XSOARIntegration.Script.Command.Argument(
+                    name=arg.name.lower(),
+                    description=arg.description or '',
+                    required=required,
+                    auto=auto,
+                    predefined=options,
+                    is_array=is_array
+                ))
 
             outputs = []
             brand_context_path = self.context_path
@@ -660,21 +498,13 @@ class IntegrationGeneratorConfig:
                 if brand_context_path:
                     output_name = f'{self.context_path}.{output_name}'
 
-                outputs.append(
-                    XSOARIntegration.Script.Command.Output(
-                        output.type_, output_name, output.description
-                    )
-                )
+                outputs.append(XSOARIntegration.Script.Command.Output(output.type_, output_name, output.description))
 
             prefix = ''
             if self.command_prefix:
                 prefix = f'{self.command_prefix}-'
-            command_name = f'{prefix}{command.name}'.replace('_', '-')
-            commands.append(
-                XSOARIntegration.Script.Command(
-                    command_name, command.description, args, outputs
-                )
-            )
+            command_name = f"{prefix}{command.name}".replace('_', '-')
+            commands.append(XSOARIntegration.Script.Command(command_name, command.description, args, outputs))
 
         return commands
 
@@ -687,15 +517,11 @@ class IntegrationGeneratorConfig:
         """
         params = []
         for param in self.params:
-            params.append(
-                XSOARIntegration.Configuration(
-                    display=param.display,
-                    name=param.name,
-                    defaultvalue=param.defaultvalue,
-                    type_=param.type_.value,
-                    required=param.required,
-                )
-            )
+            params.append(XSOARIntegration.Configuration(display=param.display,
+                                                         name=param.name,
+                                                         defaultvalue=param.defaultvalue,
+                                                         type_=param.type_.value,
+                                                         required=param.required))
 
         return params
 
@@ -722,7 +548,7 @@ class IntegrationGeneratorConfig:
             dockerimage=self.docker_image,
             isfetch=self.is_fetch,
             commands=commands,
-            script=code,
+            script=code
         )
 
         integration = XSOARIntegration(
@@ -732,21 +558,16 @@ class IntegrationGeneratorConfig:
             category=category,
             description=description,
             configuration=configurations,
-            script=script_object,
-        )
+            script=script_object)
 
         return integration
 
-    def generate_integration_package(
-        self, output_dir: Union[Path, str], is_unified: bool = False
-    ):
+    def generate_integration_package(self, output_dir: Union[Path, str], is_unified: bool = False):
         if is_unified:
             code = self.generate_integration_python_code()
-            code = (
-                code.replace('import demistomock as demisto', '')
-                .replace('from CommonServerPython import *', '')
+            code = code.replace('import demistomock as demisto', '')\
+                .replace('from CommonServerPython import *', '')\
                 .replace('from CommonServerUserPython import *', '')
-            )
 
             xsoar_integration = self.generate_integration_yml(code)
 
@@ -754,9 +575,7 @@ class IntegrationGeneratorConfig:
             with open(path, mode='w') as f:
                 yaml.dump(xsoar_integration.to_dict(), f)
 
-                logger.info(
-                    f'Generated integration yml at:\n{os.path.abspath(path)}'
-                )
+                logger.info(f'Generated integration yml at:\n{os.path.abspath(path)}')
 
             return path
 
@@ -775,11 +594,7 @@ class IntegrationGeneratorConfig:
                 yaml.dump(integration_obj.to_dict(), fp)
 
         except Exception as err:
-            logger.exception(
-                f'Failed to write integration yml file. Error: {err}'
-            )
+            logger.exception(f'Failed to write integration yml file. Error: {err}')
             raise
 
-        logger.info(
-            f'Generated integration package at:\n{os.path.abspath(package_dir)}'
-        )
+        logger.info(f'Generated integration package at:\n{os.path.abspath(package_dir)}')

@@ -3,56 +3,19 @@ from typing import Union
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import OLD_INDICATOR_TYPE, FileType
-from demisto_sdk.commands.common.content.objects.abstract_objects.general_object import (
-    GeneralObject,
-)
+from demisto_sdk.commands.common.content.objects.abstract_objects.general_object import \
+    GeneralObject
 from demisto_sdk.commands.common.content.objects.pack_objects import (
-    AgentTool,
-    AuthorImage,
-    ChangeLog,
-    Classifier,
-    ClassifierMapper,
-    Connection,
-    Contributors,
-    CorrelationRule,
-    Dashboard,
-    DocFile,
-    GenericDefinition,
-    GenericField,
-    GenericModule,
-    GenericType,
-    IncidentField,
-    IncidentType,
-    IndicatorField,
-    IndicatorType,
-    Integration,
-    Job,
-    Layout,
-    LayoutsContainer,
-    Lists,
-    ModelingRule,
-    OldClassifier,
-    OldIndicatorType,
-    PackIgnore,
-    PackMetaData,
-    ParsingRule,
-    Playbook,
-    PreProcessRule,
-    Readme,
-    ReleaseNote,
-    ReleaseNoteConfig,
-    Report,
-    Script,
-    SecretIgnore,
-    Trigger,
-    Widget,
-    Wizard,
-    XSIAMDashboard,
-    XSIAMReport,
-)
-from demisto_sdk.commands.common.content.objects.root_objects import (
-    Documentation,
-)
+    AgentTool, AuthorImage, ChangeLog, Classifier, ClassifierMapper,
+    Connection, Contributors, CorrelationRule, Dashboard, DocFile,
+    GenericDefinition, GenericField, GenericModule, GenericType, IncidentField,
+    IncidentType, IndicatorField, IndicatorType, Integration, Job, Layout,
+    LayoutsContainer, Lists, ModelingRule, OldClassifier, OldIndicatorType,
+    PackIgnore, PackMetaData, ParsingRule, Playbook, PreProcessRule, Readme,
+    ReleaseNote, ReleaseNoteConfig, Report, Script, SecretIgnore, Trigger,
+    Widget, Wizard, XSIAMDashboard, XSIAMReport)
+from demisto_sdk.commands.common.content.objects.root_objects import \
+    Documentation
 from demisto_sdk.commands.common.tools import find_type
 
 from .errors import ContentFactoryError
@@ -113,7 +76,7 @@ TYPE_CONVERSION_BY_FILE_NAME = {
 
 
 def path_to_pack_object(path: Union[Path, str]) -> GeneralObject:
-    """Create content object by path, By the following steps:
+    """ Create content object by path, By the following steps:
             1. Try determinist file name -> pack_metadata.json, .secrets-ignore, .pack-ignore, reputations.json
             2. If 'Tools' in path -> Object is AgentTool.
             3. If file start with 'doc-*' -> Object is Documentation.
@@ -143,8 +106,6 @@ def path_to_pack_object(path: Union[Path, str]) -> GeneralObject:
         object_type = TYPE_CONVERSION_BY_FileType.get(file_type)
     # Raise exception if not succeed
     if not object_type:
-        raise ContentFactoryError(
-            None, path, 'Unable to get object type from path.'
-        )
+        raise ContentFactoryError(None, path, "Unable to get object type from path.")
 
     return object_type(path)

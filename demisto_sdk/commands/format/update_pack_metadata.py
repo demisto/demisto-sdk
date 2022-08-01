@@ -4,17 +4,16 @@ import os
 import click
 
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.format.format_constants import (
-    ERROR_RETURN_CODE,
-    SKIP_RETURN_CODE,
-    SUCCESS_RETURN_CODE,
-)
+from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE,
+                                                          SKIP_RETURN_CODE,
+                                                          SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
 logger = logging.getLogger('demisto-sdk')
 
 
 class PackMetadataJsonFormat(BaseUpdateJSON):
+
     def __init__(
         self,
         input: str = '',
@@ -24,17 +23,11 @@ class PackMetadataJsonFormat(BaseUpdateJSON):
         no_validate: bool = False,
         verbose: bool = False,
         clear_cache: bool = False,
-        **kwargs,
+        **kwargs
     ):
         super().__init__(
-            input=input,
-            output=output,
-            path=path,
-            from_version=from_version,
-            no_validate=no_validate,
-            verbose=verbose,
-            clear_cache=clear_cache,
-            **kwargs,
+            input=input, output=output, path=path, from_version=from_version, no_validate=no_validate,
+            verbose=verbose, clear_cache=clear_cache, **kwargs
         )
 
     def format_file(self):
@@ -49,20 +42,14 @@ class PackMetadataJsonFormat(BaseUpdateJSON):
 
     def run_format(self) -> int:
         try:
-            click.secho(
-                f'\n================= Updating file {self.source_file} =================',
-                fg='bright_blue',
-            )
+            click.secho(f'\n================= Updating file {self.source_file} =================', fg='bright_blue')
             self.deprecate_pack()
             self.save_json_to_destination_file(encode_html_chars=False)
             return SUCCESS_RETURN_CODE
 
         except Exception as err:
             if self.verbose:
-                click.secho(
-                    f'\nFailed to update file {self.source_file}. Error: {err}',
-                    fg='red',
-                )
+                click.secho(f'\nFailed to update file {self.source_file}. Error: {err}', fg='red')
             return ERROR_RETURN_CODE
 
     def deprecate_pack(self):
@@ -79,8 +66,6 @@ class PackMetadataJsonFormat(BaseUpdateJSON):
             if not new_pack_name_to_use or new_pack_name_to_use.isspace():
                 description = 'Deprecated. No available replacement.'
             else:
-                description = (
-                    f'Deprecated. Use {new_pack_name_to_use.strip()} instead.'
-                )
+                description = f'Deprecated. Use {new_pack_name_to_use.strip()} instead.'
             self.data['name'] = f'{current_pack_name} (Deprecated)'
             self.data['description'] = description

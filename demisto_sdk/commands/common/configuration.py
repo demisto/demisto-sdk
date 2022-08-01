@@ -18,6 +18,4 @@ class Configuration:
         # refers to "demisto_sdk/commands" dir
         self.sdk_env_dir = str(Path(__file__).parent.parent)
         self.env_dir = str(Path().cwd())
-        self.envs_dirs_base = str(
-            Path(self.sdk_env_dir) / 'lint' / 'resources' / 'pipfile_python'
-        )
+        self.envs_dirs_base = str(Path(self.sdk_env_dir) / 'lint' / 'resources' / 'pipfile_python')

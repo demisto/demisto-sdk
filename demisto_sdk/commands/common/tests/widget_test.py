@@ -1,15 +1,12 @@
 import pytest
 from mock import patch
 
-from demisto_sdk.commands.common.hook_validations.structure import (
-    StructureValidator,
-)
+from demisto_sdk.commands.common.hook_validations.structure import \
+    StructureValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 
 
-def mock_structure(
-    file_path=None, current_file=None, old_file=None, quiet_bc=False
-):
+def mock_structure(file_path=None, current_file=None, old_file=None, quiet_bc=False):
     with patch.object(StructureValidator, '__init__', lambda a, b: None):
         structure = StructureValidator(file_path)
         structure.is_valid = True
@@ -24,14 +21,9 @@ def mock_structure(
         return structure
 
 
-@pytest.mark.parametrize(
-    'current_file, answer',
-    [
-        ({'dataType': 'metrics', 'fromVersion': '6.2.0'}, True),
-        ({'dataType': 'metrics', 'fromVersion': '5.5.0'}, False),
-        ({'dataType': 'incidents', 'fromVersion': '6.2.0'}, True),
-    ],
-)
+@pytest.mark.parametrize('current_file, answer', [({'dataType': 'metrics', 'fromVersion': '6.2.0'}, True),
+                                                  ({'dataType': 'metrics', 'fromVersion': '5.5.0'}, False),
+                                                  ({'dataType': 'incidents', 'fromVersion': '6.2.0'}, True)])
 def test_is_valid_fromversion(current_file, answer):
     """
     Given:

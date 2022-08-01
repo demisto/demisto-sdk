@@ -7,43 +7,29 @@ from shutil import make_archive
 
 import click
 
-from demisto_sdk.commands.common.constants import (
-    PACKS_DIR,
-    MarketplaceVersions,
-)
+from demisto_sdk.commands.common.constants import (PACKS_DIR,
+                                                   MarketplaceVersions)
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.tools import arg_to_list
 from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
-    IGNORED_PACKS,
-    ArtifactsManager,
-    ContentObject,
-    create_dirs,
-    delete_dirs,
-    dump_pack,
-    zip_packs,
-)
+    IGNORED_PACKS, ArtifactsManager, ContentObject, create_dirs, delete_dirs,
+    dump_pack, zip_packs)
 
 EX_SUCCESS = 0
 EX_FAIL = 1
 
 
 class PacksZipper:
-    def __init__(
-        self,
-        pack_paths: str,
-        output: str,
-        content_version: str,
-        zip_all: bool,
-        marketplace: str = MarketplaceVersions.XSOAR.value,
-        quiet_mode: bool = False,
-    ):
+
+    def __init__(self, pack_paths: str, output: str, content_version: str, zip_all: bool,
+                 marketplace: str = MarketplaceVersions.XSOAR.value, quiet_mode: bool = False):
         self.artifacts_manager = PacksManager(
             pack_paths=pack_paths,
             artifacts_path=output,
             content_version=content_version,
             all_in_one_zip=zip_all,
             quiet_mode=quiet_mode,
-            marketplace=marketplace,
+            marketplace=marketplace
         )
 
     def zip_packs(self):
@@ -56,10 +42,7 @@ class PacksZipper:
         """
         if self.artifacts_manager.pack_names:
             self.artifacts_manager.dump_packs()
-            return (
-                self.artifacts_manager.output_path,
-                self.artifacts_manager.pack_names,
-            )
+            return self.artifacts_manager.output_path, self.artifacts_manager.pack_names
 
         else:
             return None, None
@@ -75,30 +58,14 @@ class PacksManager(ArtifactsManager):
 
     """
 
-    def __init__(
-        self,
-        pack_paths: str,
-        all_in_one_zip: bool,
-        quiet_mode: bool,
-        marketplace: str = MarketplaceVersions.XSOAR.value,
-        **kwargs,
-    ):
-        super().__init__(
-            packs=True,
-            zip=True,
-            cpus=1,
-            suffix='',
-            marketplace=marketplace,
-            **kwargs,
-        )
+    def __init__(self, pack_paths: str, all_in_one_zip: bool, quiet_mode: bool,
+                 marketplace: str = MarketplaceVersions.XSOAR.value, **kwargs):
+        super().__init__(packs=True, zip=True, cpus=1, suffix='', marketplace=marketplace, **kwargs)
         self.init_packs(pack_paths)
         self.zip_all = all_in_one_zip
         self.quiet_mode = quiet_mode
-        self.output_path = (
-            f'{self.content_uploadable_zips_path}.zip'
-            if self.zip_all
+        self.output_path = f'{self.content_uploadable_zips_path}.zip' if self.zip_all \
             else str(self.content_uploadable_zips_path)
-        )
 
     def init_packs(self, pack_paths):
         """Init dict that map pack name to Pack object and init also the pack_names property.
@@ -110,16 +77,11 @@ class PacksManager(ArtifactsManager):
         self.packs = {}
         for path_str in arg_to_list(pack_paths):
             path = Path(path_str)
-            if (
-                len(path.parts) == 2 and path.parts[0] == PACKS_DIR
-            ):  # relative path from Packs/...
+            if len(path.parts) == 2 and path.parts[0] == PACKS_DIR:  # relative path from Packs/...
                 path = self.content.path / path
 
             if not os.path.exists(path):
-                click.secho(
-                    f'Error: Given input path: {path} does not exist, ignored',
-                    fg='bright_red',
-                )
+                click.secho(f'Error: Given input path: {path} does not exist, ignored', fg='bright_red')
                 continue
 
             self.packs.update({path.name: Pack(path)})
@@ -137,9 +99,7 @@ class PacksManager(ArtifactsManager):
         """
         for part in content_object.path.parts:
             if part in self.packs:
-                return content_object.path.relative_to(
-                    self.packs[part].path.parent
-                )
+                return content_object.path.relative_to(self.packs[part].path.parent)
 
     def get_dir_to_delete(self):
         """Get list of directories to delete after the unify process finished.
@@ -160,9 +120,7 @@ class PacksManager(ArtifactsManager):
         """
         reports = []
         # we quiet the outputs and in case we want the output - a summery will be printed
-        with QuietModeController(
-            quiet_logger=True, quiet_output=True
-        ), PacksDirsHandler(self):
+        with QuietModeController(quiet_logger=True, quiet_output=True), PacksDirsHandler(self):
             for pack_name in self.pack_names:
                 if pack_name not in IGNORED_PACKS:
                     reports.append(dump_pack(self, self.packs[pack_name]))
@@ -172,16 +130,8 @@ class PacksManager(ArtifactsManager):
             for report in reports:
                 logger.info(report.to_str(src_relative_to=None))
 
-            created_zip_path = (
-                self.output_path
-                if self.zip_all
-                else '\n'.join(
-                    [
-                        f'{self.output_path}/{pack_name}.zip'
-                        for pack_name in self.pack_names
-                    ]
-                )
-            )
+            created_zip_path = self.output_path if self.zip_all \
+                else '\n'.join([f'{self.output_path}/{pack_name}.zip' for pack_name in self.pack_names])
             logger.info(f'\nCreated zips:\n{created_zip_path}')
 
 
@@ -196,9 +146,7 @@ class QuietModeController:
     """
 
     def __init__(self, quiet_logger: bool, quiet_output):
-        self.quiet_modes = dict(
-            quiet_logger=quiet_logger, quiet_output=quiet_output
-        )
+        self.quiet_modes = dict(quiet_logger=quiet_logger, quiet_output=quiet_output)
         self.old_stdout = sys.stdout
         self.logger = logging.getLogger('demisto-sdk')
         self.prev_logger_level = self.logger.getEffectiveLevel()
@@ -223,7 +171,7 @@ def zip_uploadable_packs(artifact_manager: ArtifactsManager):
 
 @contextmanager
 def PacksDirsHandler(artifact_manager: PacksManager):
-    """Artifacts Directories handler.
+    """ Artifacts Directories handler.
     Logic by time line:
         1. Delete artifacts directories if exists.
         2. Create directories.

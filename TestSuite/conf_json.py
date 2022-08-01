@@ -15,13 +15,13 @@ class ConfJSON:
         self.write_json()
 
     def write_json(
-        self,
-        tests: Optional[List[str]] = None,
-        skipped_tests: Optional[List[str]] = None,
-        skipped_integrations: Optional[List[str]] = None,
-        nightly_integrations: Optional[List[str]] = None,
-        unmockable_integrations: Optional[List[str]] = None,
-        docker_thresholds: Optional[dict] = None,
+            self,
+            tests: Optional[List[str]] = None,
+            skipped_tests: Optional[List[str]] = None,
+            skipped_integrations: Optional[List[str]] = None,
+            nightly_integrations: Optional[List[str]] = None,
+            unmockable_integrations: Optional[List[str]] = None,
+            docker_thresholds: Optional[dict] = None
     ):
         if tests is None:
             tests = []
@@ -35,16 +35,11 @@ class ConfJSON:
             unmockable_integrations = []
         if docker_thresholds is None:
             docker_thresholds = {}
-        self._file_path.write_text(
-            json.dumps(
-                {
-                    'tests': tests,
-                    'skipped_tests': skipped_tests,
-                    'skipped_integrations': skipped_integrations,
-                    'nightly_integrations': nightly_integrations,
-                    'unmockable_integrations': unmockable_integrations,
-                    'docker_thresholds': docker_thresholds,
-                }
-            ),
-            None,
-        )
+        self._file_path.write_text(json.dumps({
+            'tests': tests,
+            'skipped_tests': skipped_tests,
+            'skipped_integrations': skipped_integrations,
+            'nightly_integrations': nightly_integrations,
+            'unmockable_integrations': unmockable_integrations,
+            'docker_thresholds': docker_thresholds
+        }), None)

@@ -3,9 +3,8 @@ from typing import Union
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import CANVAS, FileType
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import (
-    JSONContentObject,
-)
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
+    JSONContentObject
 
 
 class Connection(JSONContentObject):

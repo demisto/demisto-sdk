@@ -2,81 +2,29 @@ import os
 
 import pytest
 
-from demisto_sdk.commands.common.hook_validations.author_image import (
-    AuthorImageValidator,
-)
+from demisto_sdk.commands.common.hook_validations.author_image import \
+    AuthorImageValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 
 
 class TestAuthorImageValidator:
-    AUTHOR_IMAGE_FILES_PATH = os.path.normpath(
-        os.path.join(
-            f'{git_path()}/demisto_sdk/tests',
-            'test_files',
-            'AuthorImageValidator',
-        )
-    )
-    VALID_AUTHOR_IMAGE = os.path.join(
-        AUTHOR_IMAGE_FILES_PATH, 'valid_author_image.png'
-    )
-    EMPTY_AUTHOR_IMAGE = os.path.join(
-        AUTHOR_IMAGE_FILES_PATH, 'empty_author_image.png'
-    )
+    AUTHOR_IMAGE_FILES_PATH = os.path.normpath(os.path.join(f'{git_path()}/demisto_sdk/tests', 'test_files',
+                                                            'AuthorImageValidator'))
+    VALID_AUTHOR_IMAGE = os.path.join(AUTHOR_IMAGE_FILES_PATH, 'valid_author_image.png')
+    EMPTY_AUTHOR_IMAGE = os.path.join(AUTHOR_IMAGE_FILES_PATH, 'empty_author_image.png')
 
-    IS_VALID_INPUTS = [
-        (
-            'path_does_not_exist',
-            'xsoar',
-            AuthorImageValidator.IMAGE_MAX_SIZE,
-            True,
-        ),
-        (
-            'path_does_not_exist',
-            'partner',
-            AuthorImageValidator.IMAGE_MAX_SIZE,
-            False,
-        ),
-        (
-            VALID_AUTHOR_IMAGE,
-            'xsoar',
-            AuthorImageValidator.IMAGE_MAX_SIZE,
-            True,
-        ),
-        (
-            EMPTY_AUTHOR_IMAGE,
-            'xsoar',
-            AuthorImageValidator.IMAGE_MAX_SIZE,
-            False,
-        ),
-        (
-            VALID_AUTHOR_IMAGE,
-            'partner',
-            AuthorImageValidator.IMAGE_MAX_SIZE,
-            True,
-        ),
-        (
-            EMPTY_AUTHOR_IMAGE,
-            'partner',
-            AuthorImageValidator.IMAGE_MAX_SIZE,
-            False,
-        ),
-        (VALID_AUTHOR_IMAGE, 'xsoar', 100, False),
-        (VALID_AUTHOR_IMAGE, 'partner', 100, False),
-    ]
+    IS_VALID_INPUTS = [('path_does_not_exist', 'xsoar', AuthorImageValidator.IMAGE_MAX_SIZE, True),
+                       ('path_does_not_exist', 'partner', AuthorImageValidator.IMAGE_MAX_SIZE, False),
+                       (VALID_AUTHOR_IMAGE, 'xsoar', AuthorImageValidator.IMAGE_MAX_SIZE, True),
+                       (EMPTY_AUTHOR_IMAGE, 'xsoar', AuthorImageValidator.IMAGE_MAX_SIZE, False),
+                       (VALID_AUTHOR_IMAGE, 'partner', AuthorImageValidator.IMAGE_MAX_SIZE, True),
+                       (EMPTY_AUTHOR_IMAGE, 'partner', AuthorImageValidator.IMAGE_MAX_SIZE, False),
+                       (VALID_AUTHOR_IMAGE, 'xsoar', 100, False),
+                       (VALID_AUTHOR_IMAGE, 'partner', 100, False),
+                       ]
 
-    @pytest.mark.parametrize(
-        'author_image_path, support_level, max_image_size, expected',
-        IS_VALID_INPUTS,
-    )
-    def test_is_valid(
-        self,
-        mocker,
-        repo,
-        author_image_path: str,
-        support_level: str,
-        max_image_size: int,
-        expected: bool,
-    ):
+    @pytest.mark.parametrize('author_image_path, support_level, max_image_size, expected', IS_VALID_INPUTS)
+    def test_is_valid(self, mocker, repo, author_image_path: str, support_level: str, max_image_size: int, expected: bool):
         """
         Given:
         - 'author_image_path': path to where author image should be found.
@@ -110,14 +58,9 @@ class TestAuthorImageValidator:
             with open(author_image_path, 'rb') as f:
                 pack.author_image.write_bytes(f.read())
 
-        author_image_validator: AuthorImageValidator = AuthorImageValidator(
-            pack.author_image.path, maximum_image_size=max_image_size
-        )
+        author_image_validator: AuthorImageValidator = AuthorImageValidator(pack.author_image.path,
+                                                                            maximum_image_size=max_image_size)
         mocker.patch.object(author_image_validator, 'handle_error')
-        mocker.patch.object(
-            author_image_validator,
-            'get_support_level',
-            return_value=support_level,
-        )
+        mocker.patch.object(author_image_validator, 'get_support_level', return_value=support_level)
         author_image_validator.file_path = author_image_path
         assert author_image_validator.is_valid() == expected

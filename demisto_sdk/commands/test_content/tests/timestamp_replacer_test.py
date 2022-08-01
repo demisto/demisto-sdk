@@ -7,9 +7,8 @@ import pytest
 from mitmproxy.http import Headers, HTTPFlow, Request
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.test_content.timestamp_replacer import (
-    TimestampReplacer,
-)
+from demisto_sdk.commands.test_content.timestamp_replacer import \
+    TimestampReplacer
 
 json = JSON_Handler()
 
@@ -23,14 +22,15 @@ def flow():
         port=1234,
         method=b'',
         scheme=b'',
-        headers=Headers([(b'Host', b'example.com')]),
+        headers=Headers([(b"Host", b"example.com")]),
         content=None,
         timestamp_start=111.1,
         timestamp_end=111.2,
         authority=b'',
-        trailers='',
+        trailers=''
     )
-    flow = HTTPFlow(client_conn=MagicMock(), server_conn=MagicMock())
+    flow = HTTPFlow(client_conn=MagicMock(),
+                    server_conn=MagicMock())
     flow.request = request
     return flow
 
@@ -43,7 +43,6 @@ def tz(request):
     def teardown():
         if original_tz:
             os.environ['TZ'] = original_tz
-
     request.addfinalizer(teardown)
     return request
 
@@ -54,7 +53,7 @@ TIMESTAMP_FORMATS = [
     '1610639147',
     'Thu, 14 Jan 2021 15:45:47',
     'Thursday, 14-Jan-21 15:45:47 UTC',
-    '2021-01-14T15:45:47+00:00',
+    '2021-01-14T15:45:47+00:00'
 ]
 
 
@@ -64,7 +63,7 @@ class TestTimeStampReplacer:
         'detect_timestamps': False,
         'keys_filepath': 'problematic_keys.json',
         'script_mode': 'playback',
-        'debug': False,
+        'debug': False
     }
 
     @classmethod
@@ -85,15 +84,10 @@ class TestTimeStampReplacer:
         time_stamp_replacer.load(master_mock)
         python_version = sys.version_info
         if python_version.major == 3 and python_version.minor == 7:
-            pytest.skip(
-                'The current mock syntax is supported only in python 3.8+'
-            )
+            pytest.skip('The current mock syntax is supported only in python 3.8+')
         assert master_mock.add_option.call_count == 4
         for call in master_mock.add_option.mock_calls:
-            assert (
-                self.DEFAULT_OPTIONS_MAPPING[call.kwargs['name']]
-                == call.kwargs['default']
-            )
+            assert self.DEFAULT_OPTIONS_MAPPING[call.kwargs['name']] == call.kwargs['default']
 
     def test_running(self, mocker):
         """
@@ -104,26 +98,16 @@ class TestTimeStampReplacer:
         Then:
             - Ensure all problematic keys are loaded
         """
-        problematic_keys = {
-            'server_replay_ignore_params': 'query_key1 query_key2',
-            'server_replay_ignore_payload_params': 'payload_key1 payload_key2',
-            'keys_to_replace': 'key_to_replace1 key_to_replace2',
-        }
+        problematic_keys = {'server_replay_ignore_params': 'query_key1 query_key2',
+                            'server_replay_ignore_payload_params': 'payload_key1 payload_key2',
+                            'keys_to_replace': 'key_to_replace1 key_to_replace2'}
         mocker.patch('os.path.exists', return_value=True)
-        mocker.patch(
-            'builtins.open', mock_open(read_data=json.dumps(problematic_keys))
-        )
+        mocker.patch('builtins.open', mock_open(read_data=json.dumps(problematic_keys)))
         time_stamp_replacer = TimestampReplacer()
         time_stamp_replacer.running()
         assert time_stamp_replacer.query_keys == {'query_key2', 'query_key1'}
-        assert time_stamp_replacer.form_keys == {
-            'payload_key2',
-            'payload_key1',
-        }
-        assert time_stamp_replacer.json_keys == {
-            'key_to_replace2',
-            'key_to_replace1',
-        }
+        assert time_stamp_replacer.form_keys == {'payload_key2', 'payload_key1'}
+        assert time_stamp_replacer.json_keys == {'key_to_replace2', 'key_to_replace1'}
 
     @pytest.mark.parametrize('time', TIMESTAMP_FORMATS)
     def test_finding_problematic_keys_in_url_query(self, mocker, flow, time):
@@ -159,9 +143,7 @@ class TestTimeStampReplacer:
         mocker.patch('builtins.open', mock_open())
         mitmproxy.ctx.options.detect_timestamps = True
         mitmproxy.ctx.options.script_mode = 'record'
-        flow.request._set_urlencoded_form(
-            [('key1', 'value1'), ('timestamp_key', time)]
-        )
+        flow.request._set_urlencoded_form([('key1', 'value1'), ('timestamp_key', time)])
         time_stamp_replacer = TimestampReplacer()
         time_stamp_replacer.request(flow)
         assert 'timestamp_key' in time_stamp_replacer.form_keys
@@ -183,15 +165,9 @@ class TestTimeStampReplacer:
         mitmproxy.ctx.options.detect_timestamps = True
         mitmproxy.ctx.options.script_mode = 'record'
         flow.request.method = 'POST'
-        flow.request.set_content(
-            json.dumps(
-                {
-                    'key1': 'value1',
-                    'timestamp_key': time,
-                    'dict1': {'list': ['test', time]},
-                }
-            ).encode()
-        )
+        flow.request.set_content(json.dumps({'key1': 'value1',
+                                             'timestamp_key': time,
+                                             'dict1': {'list': ['test', time]}}).encode())
         time_stamp_replacer = TimestampReplacer()
         time_stamp_replacer.request(flow)
         assert 'timestamp_key' in time_stamp_replacer.json_keys
@@ -212,17 +188,13 @@ class TestTimeStampReplacer:
         mitmproxy.ctx.options.detect_timestamps = True
         mitmproxy.ctx.options.script_mode = 'record'
         flow.request.method = 'POST'
-        flow.request.set_content(
-            str({'timestamp_key': '2021-01-11T13:18:12+00:00'}).encode()
-        )
+        flow.request.set_content(str({'timestamp_key': '2021-01-11T13:18:12+00:00'}).encode())
         time_stamp_replacer = TimestampReplacer()
         time_stamp_replacer.request(flow)
         assert 'timestamp_key' in time_stamp_replacer.json_keys
 
     @pytest.mark.parametrize('time', TIMESTAMP_FORMATS)
-    def test_cleaning_problematic_keys_from_url_query(
-        self, mocker, flow, time
-    ):
+    def test_cleaning_problematic_keys_from_url_query(self, mocker, flow, time):
         """
         Given:
             - A timestamp replacer instance
@@ -243,9 +215,7 @@ class TestTimeStampReplacer:
                 assert val == time_stamp_replacer.constant
 
     @pytest.mark.parametrize('time', TIMESTAMP_FORMATS)
-    def test_cleaning_problematic_keys_from_form_keys(
-        self, mocker, flow, time
-    ):
+    def test_cleaning_problematic_keys_from_form_keys(self, mocker, flow, time):
         """
         Given:
             - A timestamp replacer instance
@@ -257,9 +227,7 @@ class TestTimeStampReplacer:
         mocker.patch('builtins.open', mock_open())
         mitmproxy.ctx.options.detect_timestamps = True
         mitmproxy.ctx.options.script_mode = 'playback'
-        flow.request._set_urlencoded_form(
-            [('key1', 'value1'), ('timestamp_key', time)]
-        )
+        flow.request._set_urlencoded_form([('key1', 'value1'), ('timestamp_key', time)])
         time_stamp_replacer = TimestampReplacer()
         time_stamp_replacer.form_keys = ['timestamp_key']
         time_stamp_replacer.request(flow)
@@ -268,9 +236,7 @@ class TestTimeStampReplacer:
                 assert val == time_stamp_replacer.constant
 
     @pytest.mark.parametrize('time', TIMESTAMP_FORMATS)
-    def test_cleaning_problematic_keys_from_json_keys(
-        self, mocker, flow, time
-    ):
+    def test_cleaning_problematic_keys_from_json_keys(self, mocker, flow, time):
         """
         Given:
             - A timestamp replacer instance
@@ -283,15 +249,9 @@ class TestTimeStampReplacer:
         mitmproxy.ctx.options.detect_timestamps = True
         mitmproxy.ctx.options.script_mode = 'playback'
         flow.request.method = 'POST'
-        flow.request.set_content(
-            json.dumps(
-                {
-                    'key1': 'value1',
-                    'timestamp_key': time,
-                    'dict1': {'list': ['test', time]},
-                }
-            ).encode()
-        )
+        flow.request.set_content(json.dumps({'key1': 'value1',
+                                             'timestamp_key': time,
+                                             'dict1': {'list': ['test', time]}}).encode())
         time_stamp_replacer = TimestampReplacer()
         time_stamp_replacer.json_keys = ['timestamp_key', 'dict1.list.1']
         time_stamp_replacer.request(flow)
@@ -323,12 +283,12 @@ class TestTimeStampReplacer:
 
     def test_live_false_when_running_in_playback_state(self, flow):
         """
-        Given:
-            - A flow
-        When:
-            - script is in playback mode
-        Then:
-            - Ensure that the request will not go out to the real world
+            Given:
+                - A flow
+            When:
+                - script is in playback mode
+            Then:
+                - Ensure that the request will not go out to the real world
         """
         mitmproxy.ctx.options.script_mode = 'playback'
         time_stamp_replacer = TimestampReplacer()
@@ -337,23 +297,16 @@ class TestTimeStampReplacer:
 
     def test_fixed_boundary(self, flow):
         """
-        Given:
-            - A multipart/form-data flow with a random boundary
-        Then:
-            - Ensure that the boundary will be replaced to 'fixed_boundary'
-        """
+           Given:
+               - A multipart/form-data flow with a random boundary
+           Then:
+               - Ensure that the boundary will be replaced to 'fixed_boundary'
+       """
         original_boundary = 'original_boundary'
-        flow.request.headers[
-            'Content-Type'
-        ] = f'multipart/form-data; boundary={original_boundary}'
-        flow.request.content = (
-            f'--{original_boundary}\nContent-Disposision: form-data; '
-            f'name="test"\n\nsomething\n--{original_boundary}--'.encode()
-        )
+        flow.request.headers['Content-Type'] = f'multipart/form-data; boundary={original_boundary}'
+        flow.request.content = f'--{original_boundary}\nContent-Disposision: form-data; ' \
+                               f'name="test"\n\nsomething\n--{original_boundary}--'.encode()
         time_stamp_replacer = TimestampReplacer()
         time_stamp_replacer.request(flow)
-        assert (
-            flow.request.content
-            == b'--fixed_boundary\nContent-Disposision: form-data; '
-            b'name="test"\n\nsomething\n--fixed_boundary--'
-        )
+        assert flow.request.content == b'--fixed_boundary\nContent-Disposision: form-data; ' \
+                                       b'name="test"\n\nsomething\n--fixed_boundary--'

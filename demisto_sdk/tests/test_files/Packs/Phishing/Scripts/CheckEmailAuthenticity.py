@@ -5,7 +5,7 @@ import demistomock as demisto
 from CommonServerPython import *
 from CommonServerUserPython import *
 
-"""HELPER FUNCTIONS"""
+'''HELPER FUNCTIONS'''
 
 
 def get_spf(auth, spf):
@@ -18,7 +18,7 @@ def get_spf(auth, spf):
     spf_context = {
         'Validation-Result': 'Unspecified',
         'Sender-IP': 'Unspecified',
-        'Reason': 'Unspecified',
+        'Reason': 'Unspecified'
     }
     if auth is None:
         spf_context['Validation-Result'] = spf.split(' ')[0].lower()
@@ -43,7 +43,7 @@ def get_dkim(auth):
     """
     dkim_context = {
         'Validation-Result': 'Unspecified',
-        'Signing-Domain': 'Unspecified',
+        'Signing-Domain': 'Unspecified'
     }
     if auth is not None:
         result = re.search(r'dkim=(\w+)', auth)
@@ -67,7 +67,7 @@ def get_dmarc(auth):
     dmarc_context = {
         'Validation-Result': 'Unspecified',
         'Tags': {'Unspecified': 'Unspecified'},
-        'Signing-Domain': 'Unspecified',
+        'Signing-Domain': 'Unspecified'
     }
     if auth is not None:
         result = re.search(r'dmarc=(\w+)', auth)
@@ -104,17 +104,13 @@ def auth_check(spf_data, dkim_data, dmarc_data, override_dict):
     if spf == 'softfail' or dkim == 'policy':
         return 'Suspicious'
     undetermined = [None, 'none', 'temperror', 'permerror']
-    if (
-        dmarc in undetermined
-        or spf in undetermined
-        or dkim in undetermined
-        or dkim == 'neutral'
-    ):
+    if dmarc in undetermined or spf in undetermined or dkim in undetermined \
+            or dkim == 'neutral':
         return 'Undetermined'
     return 'Pass'
 
 
-"""MAIN FUNCTION"""
+'''MAIN FUNCTION'''
 
 
 def main():
@@ -129,16 +125,7 @@ def main():
         # getting override options from user
         override_dict = {}
 
-        override_options = [
-            'fail',
-            'suspicious',
-            'undetermined',
-            'pass',
-            'Fail',
-            'Suspicious',
-            'Undetermined',
-            'Pass',
-        ]
+        override_options = ['fail', 'suspicious', 'undetermined', 'pass', 'Fail', 'Suspicious', 'Undetermined', 'Pass']
 
         override_fields = {
             'SPF_override_none': 'spf-none',
@@ -168,11 +155,11 @@ def main():
                 override_dict[value] = override.lower()
             else:
                 if override is not None:
-                    return_error(
-                        'Invalid override input for argument {}: got {}, expected one of {}.'.format(
-                            field, override, override_options
-                        )
-                    )
+                    return_error('Invalid override input for argument {}: got {}, expected one of {}.'.format(
+                        field,
+                        override,
+                        override_options
+                    ))
 
         for header in headers:
             if isinstance(header, dict):
@@ -183,10 +170,8 @@ def main():
                 if str(header.get('name')).lower() == 'message-id':
                     message_id = header.get('value')  # type: ignore
 
-        email_key = (
-            "Email(val.Headers.filter(function(header) {{ return header && header.name === 'Message-ID' && "
-            "header.value === '{}';}}))".format(message_id)
-        )
+        email_key = "Email(val.Headers.filter(function(header) {{ return header && header.name === 'Message-ID' && " \
+                    "header.value === '{}';}}))".format(message_id)
 
         if auth is None and spf is None:
             context = {
@@ -198,30 +183,18 @@ def main():
         dkim_data = get_dkim(auth)
         dmarc_data = get_dmarc(auth)
 
-        authenticity = auth_check(
-            spf_data, dkim_data, dmarc_data, override_dict
-        )
+        authenticity = auth_check(spf_data, dkim_data, dmarc_data, override_dict)
 
         md = "Email's authenticity is: **{}**\n".format(authenticity)
-        md += tableToMarkdown(
-            'SPF', spf_data, ['Validation-Result', 'Reason', 'Sender-IP']
-        )
-        md += tableToMarkdown(
-            'DKIM',
-            dkim_data,
-            ['Validation-Result', 'Reason', 'Signing-Domain'],
-        )
-        md += tableToMarkdown(
-            'DMARC',
-            dmarc_data,
-            ['Validation-Result', 'Tags', 'Signing-Domain'],
-        )
+        md += tableToMarkdown('SPF', spf_data, ['Validation-Result', 'Reason', 'Sender-IP'])
+        md += tableToMarkdown('DKIM', dkim_data, ['Validation-Result', 'Reason', 'Signing-Domain'])
+        md += tableToMarkdown('DMARC', dmarc_data, ['Validation-Result', 'Tags', 'Signing-Domain'])
 
         ec = {
             '{}.SPF'.format(email_key): spf_data,
             '{}.DMARC'.format(email_key): dmarc_data,
             '{}.DKIM'.format(email_key): dkim_data,
-            '{}.AuthenticityCheck'.format(email_key): authenticity,
+            '{}.AuthenticityCheck'.format(email_key): authenticity
         }
         return_outputs(md, ec)
 

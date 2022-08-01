@@ -1,2 +1,2 @@
 def main():
-    print('This is a fake integration!')
+    print("This is a fake integration!")

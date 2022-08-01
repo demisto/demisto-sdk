@@ -16,6 +16,7 @@ class.
 
 For a more complete example on how to build Integrations, please check the
 HelloWorld Integration code.
+
 """
 
 import traceback
@@ -67,9 +68,17 @@ def say_hello_command(args: Dict[str, Any]) -> Tuple[str, dict, str]:
     original_result = say_hello(name)
 
     markdown = f'## {original_result}'
-    outputs = {'HelloWorld': {'hello': original_result}}
+    outputs = {
+        'HelloWorld': {
+            'hello': original_result
+        }
+    }
 
-    return (markdown, outputs, original_result)
+    return (
+        markdown,
+        outputs,
+        original_result
+    )
 
 
 def main():

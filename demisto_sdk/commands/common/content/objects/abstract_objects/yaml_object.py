@@ -12,7 +12,7 @@ yaml = YAML_Handler(width=50000)
 
 
 class YAMLObject(DictionaryBasedObject):
-    def __init__(self, path: Union[Path, str], file_name_prefix: str = ''):
+    def __init__(self, path: Union[Path, str], file_name_prefix: str = ""):
         super().__init__(path=path, file_name_prefix=file_name_prefix)
 
     @staticmethod
@@ -35,22 +35,11 @@ class YAMLObject(DictionaryBasedObject):
         path = Path(path)
         if path.is_dir():
             try:
-                path = next(
-                    path.glob(
-                        patterns=r'@(*.yml|*yaml|!*unified*)',
-                        flags=EXTGLOB | NEGATE,
-                    )
-                )
+                path = next(path.glob(patterns=r'@(*.yml|*yaml|!*unified*)', flags=EXTGLOB | NEGATE))
             except StopIteration:
-                raise exc.ContentInitializeError(
-                    path,
-                    path,
-                    "Can't find yaml or yml file in path (excluding unified).",
-                )
-        elif not (path.is_file() and path.suffix in ['.yaml', '.yml']):
-            raise exc.ContentInitializeError(
-                path, path, "file suffix isn't yaml or yml."
-            )
+                raise exc.ContentInitializeError(path, path, "Can't find yaml or yml file in path (excluding unified).")
+        elif not (path.is_file() and path.suffix in [".yaml", ".yml"]):
+            raise exc.ContentInitializeError(path, path, "file suffix isn't yaml or yml.")
 
         return path
 
@@ -62,10 +51,9 @@ class YAMLObject(DictionaryBasedObject):
             raise exc.ContentSerializeError(self, self.path, e.problem)
 
     def _serialize(self, dest_dir: Path):
-        """Dump dictionary to yml file"""
-        dest_file = (
-            self._create_target_dump_dir(dest_dir) / self.normalize_file_name()
-        )
+        """Dump dictionary to yml file
+         """
+        dest_file = self._create_target_dump_dir(dest_dir) / self.normalize_file_name()
         with open(dest_file, 'w') as file:
             yaml.dump(self._as_dict, file)
         return [dest_file]

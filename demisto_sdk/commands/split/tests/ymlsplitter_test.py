@@ -15,22 +15,14 @@ json = JSON_Handler()
 
 def test_extract_long_description(tmpdir):
     # Test when script
-    extractor = YmlSplitter(
-        input=f'{git_path()}/demisto_sdk/tests/test_files/script-test_script.yml',
-        output='',
-        file_type='script',
-        no_demisto_mock=False,
-        no_common_server=False,
-        configuration=Configuration(),
-    )
+    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/script-test_script.yml',
+                            output='', file_type='script', no_demisto_mock=False,
+                            no_common_server=False, configuration=Configuration())
     assert extractor.extract_long_description('output_path') == 0
 
     # Test opening the file and writing to it
-    extractor = YmlSplitter(
-        input=f'{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml',
-        output=str(tmpdir.join('temp_text.txt')),
-        file_type='integration',
-    )
+    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml',
+                            output=str(tmpdir.join('temp_text.txt')), file_type='integration')
 
     extractor.extract_long_description(extractor.output)
     with open(extractor.output, 'rb') as temp_description:
@@ -48,10 +40,8 @@ def test_extract_modeling_rules(tmpdir):
         - Ensure that the rules were extracted
     """
     output = str(tmpdir.join('temp_rules.xif'))
-    extractor = YmlSplitter(
-        input=f'{git_path()}/demisto_sdk/tests/test_files/modelingrule-OktaModelingRules.yml',
-        file_type='modelingrule',
-    )
+    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/modelingrule-OktaModelingRules.yml',
+                            file_type='modelingrule')
 
     extractor.extract_rules(output)
     with open(output, 'rb') as temp_rules:
@@ -70,16 +60,20 @@ def test_extract_modeling_rules_schema(tmpdir):
         - Ensure that the schema was extracted
     """
     schema = {
-        'okta_okta_raw': {
-            'client': {'type': 'string', 'is_array': False},
-            'eventType': {'type': 'string', 'is_array': False},
+        "okta_okta_raw": {
+            "client": {
+                "type": "string",
+                "is_array": False
+            },
+            "eventType": {
+                "type": "string",
+                "is_array": False
+            }
         }
     }
     output = str(tmpdir.join('temp_rules.json'))
-    extractor = YmlSplitter(
-        input=f'{git_path()}/demisto_sdk/tests/test_files/modelingrule-OktaModelingRules.yml',
-        file_type='modelingrule',
-    )
+    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/modelingrule-OktaModelingRules.yml',
+                            file_type='modelingrule')
 
     extractor.extract_rule_schema_and_samples(output)
     with open(output, 'rb') as temp_rules:
@@ -98,10 +92,8 @@ def test_extract_parsing_rules(tmpdir):
         - Ensure that the rules were extracted
     """
     output = str(tmpdir.join('temp_rules.xif'))
-    extractor = YmlSplitter(
-        input=f'{git_path()}/demisto_sdk/tests/test_files/parsingrule-MyParsingRules.yml',
-        file_type='parsingrule',
-    )
+    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/parsingrule-MyParsingRules.yml',
+                            file_type='parsingrule')
 
     extractor.extract_rules(output)
     with open(output, 'rb') as temp_rules:
@@ -120,19 +112,17 @@ def test_extract_parsing_rules_sampels(tmpdir):
         - Ensure that the sample was extracted
     """
     sample = {
-        'okta_on_prem': [
+        "okta_on_prem": [
             {
-                'cefVersion': 'CEF:0',
-                'cefDeviceVendor': 'Zscaler',
-                'cefDeviceProduct': 'NSSWeblog',
+                "cefVersion": "CEF:0",
+                "cefDeviceVendor": "Zscaler",
+                "cefDeviceProduct": "NSSWeblog",
             }
         ]
     }
     output = str(tmpdir.join('temp_rules.json'))
-    extractor = YmlSplitter(
-        input=f'{git_path()}/demisto_sdk/tests/test_files/parsingrule-MyParsingRules.yml',
-        file_type='parsingrule',
-    )
+    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/parsingrule-MyParsingRules.yml',
+                            file_type='parsingrule')
 
     extractor.extract_rule_schema_and_samples(output)
     with open(output, 'rb') as temp_rules:
@@ -152,37 +142,30 @@ def test_extract_to_package_format_modeling_rule(tmpdir):
     """
     out = tmpdir.join('ModelingRules')
     schema = {
-        'okta_okta_raw': {
-            'client': {'type': 'string', 'is_array': False},
-            'eventType': {'type': 'string', 'is_array': False},
+        "okta_okta_raw": {
+            "client": {
+                "type": "string",
+                "is_array": False
+            },
+            "eventType": {
+                "type": "string",
+                "is_array": False
+            }
         }
     }
-    extractor = YmlSplitter(
-        input=f'{git_path()}/demisto_sdk/tests/test_files/modelingrule-OktaModelingRules.yml',
-        output=str(out),
-        file_type='modelingrule',
-    )
+    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/modelingrule-OktaModelingRules.yml',
+                            output=str(out), file_type='modelingrule')
     assert extractor.extract_to_package_format() == 0
     # check code
-    with open(
-        out.join('OktaModelingRule').join('OktaModelingRule.xif'),
-        'r',
-        encoding='utf-8',
-    ) as f:
+    with open(out.join('OktaModelingRule').join('OktaModelingRule.xif'), 'r', encoding='utf-8') as f:
         file_data = f.read()
         assert '[MODEL: dataset=okta_okta_raw, model=Audit]' in file_data
 
-    with open(
-        out.join('OktaModelingRule').join('OktaModelingRule_schema.json'),
-        'r',
-        encoding='utf-8',
-    ) as f:
+    with open(out.join('OktaModelingRule').join('OktaModelingRule_schema.json'), 'r', encoding='utf-8') as f:
         file_data = f.read()
         assert schema == json.loads(file_data)
 
-    with open(
-        out.join('OktaModelingRule').join('OktaModelingRule.yml'), 'r'
-    ) as f:
+    with open(out.join('OktaModelingRule').join('OktaModelingRule.yml'), 'r') as f:
         yaml_obj = yaml.load(f)
         assert yaml_obj['fromversion'] == '6.8.0'
 
@@ -198,30 +181,23 @@ def test_extract_to_package_format_parsing_rule(tmpdir):
     """
     out = tmpdir.join('ModelingRules')
     sample = {
-        'okta_on_prem': [
+        "okta_on_prem": [
             {
-                'cefVersion': 'CEF:0',
-                'cefDeviceVendor': 'Zscaler',
-                'cefDeviceProduct': 'NSSWeblog',
+                "cefVersion": "CEF:0",
+                "cefDeviceVendor": "Zscaler",
+                "cefDeviceProduct": "NSSWeblog",
             }
         ]
     }
-    extractor = YmlSplitter(
-        input=f'{git_path()}/demisto_sdk/tests/test_files/parsingrule-MyParsingRules.yml',
-        output=str(out),
-        file_type='parsingrule',
-    )
+    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/parsingrule-MyParsingRules.yml',
+                            output=str(out), file_type='parsingrule')
     assert extractor.extract_to_package_format() == 0
     # check code
-    with open(
-        out.join('MyRule').join('MyRule.xif'), 'r', encoding='utf-8'
-    ) as f:
+    with open(out.join('MyRule').join('MyRule.xif'), 'r', encoding='utf-8') as f:
         file_data = f.read()
         assert '[RULE:extract_hipmatch_only_fields]' in file_data
 
-    with open(
-        out.join('MyRule').join('MyRule.json'), 'r', encoding='utf-8'
-    ) as f:
+    with open(out.join('MyRule').join('MyRule.json'), 'r', encoding='utf-8') as f:
         file_data = f.read()
         assert sample == json.loads(file_data)
 
@@ -232,19 +208,13 @@ def test_extract_to_package_format_parsing_rule(tmpdir):
 
 def test_extract_image(tmpdir):
     # Test when script
-    extractor = YmlSplitter(
-        input=f'{git_path()}/demisto_sdk/tests/test_files/script-test_script.yml',
-        output='',
-        file_type='script',
-    )
+    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/script-test_script.yml',
+                            output='', file_type='script')
     assert extractor.extract_image('output_path') == 0
 
     # Test opening the file and writing to it
-    extractor = YmlSplitter(
-        input=f'{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml',
-        output=str(tmpdir.join('temp_image.png')),
-        file_type='integration',
-    )
+    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml',
+                            output=str(tmpdir.join('temp_image.png')), file_type='integration')
 
     extractor.extract_image(extractor.output)
     with open(extractor.output, 'rb') as temp_image:
@@ -254,11 +224,8 @@ def test_extract_image(tmpdir):
 
 
 def test_extract_code(tmpdir):
-    extractor = YmlSplitter(
-        input=f'{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml',
-        output=str(tmpdir.join('temp_code.py')),
-        file_type='integration',
-    )
+    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml',
+                            output=str(tmpdir.join('temp_code.py')), file_type='integration')
 
     extractor.extract_code(extractor.output)
     with open(extractor.output, 'rb') as temp_code:
@@ -289,11 +256,8 @@ def test_extract_code__with_apimodule(tmpdir):
     Then:
         - Ensure generated code is being deleted, and the import line exists
     """
-    extractor = YmlSplitter(
-        input=f'{git_path()}/demisto_sdk/tests/test_files/integration-EDL.yml',
-        output=str(tmpdir.join('temp_code.py')),
-        file_type='integration',
-    )
+    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/integration-EDL.yml',
+                            output=str(tmpdir.join('temp_code.py')), file_type='integration')
 
     extractor.extract_code(extractor.output)
     with open(extractor.output, 'rb') as temp_code:
@@ -301,10 +265,7 @@ def test_extract_code__with_apimodule(tmpdir):
         assert '### GENERATED CODE ###' not in file_data
         assert '### END GENERATED CODE ###' not in file_data
         assert 'from NGINXApiModule import *' in file_data
-        assert (
-            'def create_nginx_server_conf(file_path: str, port: int, params: Dict):'
-            not in file_data
-        )
+        assert 'def create_nginx_server_conf(file_path: str, port: int, params: Dict):' not in file_data
 
 
 def test_extract_code_modules_old_format(tmpdir):
@@ -316,34 +277,23 @@ def test_extract_code_modules_old_format(tmpdir):
     Then:
         - Make sure that the imported code is still there, and the code runs.
     """
-    extractor = YmlSplitter(
-        input=f'{git_path()}/demisto_sdk/tests/test_files/integration-EDL_old_generated.yml',
-        output=str(tmpdir.join('temp_code.py')),
-        file_type='integration',
-    )
+    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/integration-EDL_old_generated.yml',
+                            output=str(tmpdir.join('temp_code.py')), file_type='integration')
 
     extractor.extract_code(extractor.output)
     with open(extractor.output, 'rb') as temp_code:
         file_data = temp_code.read().decode('utf-8')
         assert '### GENERATED CODE ###' in file_data
-        assert (
-            'def nginx_log_process(nginx_process: subprocess.Popen):'
-            in file_data
-        )
+        assert 'def nginx_log_process(nginx_process: subprocess.Popen):' in file_data
 
 
 def test_extract_code_pwsh(tmpdir):
-    extractor = YmlSplitter(
-        input=f'{git_path()}/demisto_sdk/tests/test_files/integration-powershell_ssh_remote.yml',
-        output=str(tmpdir.join('temp_code')),
-        file_type='integration',
-    )
+    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/integration-powershell_ssh_remote.yml',
+                            output=str(tmpdir.join('temp_code')), file_type='integration')
 
     extractor.extract_code(extractor.output)
     # notice that we passed without an extension. Extractor should be adding .ps1
-    with open(
-        extractor.output.with_suffix('.ps1'), 'r', encoding='utf-8'
-    ) as temp_code:
+    with open(extractor.output.with_suffix('.ps1'), 'r', encoding='utf-8') as temp_code:
         file_data = temp_code.read()
         assert '. $PSScriptRoot\\CommonServerPowerShell.ps1\n' in file_data
         assert file_data[-1] == '\n'
@@ -351,13 +301,11 @@ def test_extract_code_pwsh(tmpdir):
 
 def test_get_output_path():
     out = f'{git_path()}/demisto_sdk/tests/Integrations'
-    extractor = YmlSplitter(
-        input=f'{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml',
-        file_type='integration',
-        output=out,
-    )
+    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml',
+                            file_type='integration',
+                            output=out)
     res = extractor.get_output_path()
-    assert res == Path(out + '/Zoom')
+    assert res == Path(out + "/Zoom")
 
 
 def test_get_output_path_relative(repo):
@@ -365,69 +313,41 @@ def test_get_output_path_relative(repo):
     integration = pack.create_integration()
 
     with ChangeCWD(repo.path):
-        extractor = YmlSplitter(
-            input=integration.yml.rel_path, file_type='integration'
-        )
+        extractor = YmlSplitter(input=integration.yml.rel_path, file_type='integration')
 
     output_path = extractor.get_output_path()
     assert output_path.is_absolute()
-    assert output_path.relative_to(pack.path) == Path(
-        integration.path
-    ).relative_to(pack.path)
+    assert output_path.relative_to(pack.path) == Path(integration.path).relative_to(pack.path)
 
 
 def test_get_output_path_empty_output():
-    input_path = Path(
-        f'{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml'
-    )
-    extractor = YmlSplitter(input=str(input_path), file_type='integration')
+    input_path = Path(f'{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml')
+    extractor = YmlSplitter(input=str(input_path),
+                            file_type='integration'
+                            )
     res = extractor.get_output_path()
     assert res == input_path.parent
 
 
 def test_extract_to_package_format_pwsh(tmpdir):
     out = tmpdir.join('Integrations')
-    extractor = YmlSplitter(
-        input=f'{git_path()}/demisto_sdk/tests/test_files/integration-powershell_ssh_remote.yml',
-        output=str(out),
-        file_type='integration',
-    )
+    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/integration-powershell_ssh_remote.yml',
+                            output=str(out), file_type='integration')
     assert extractor.extract_to_package_format() == 0
     # check code
-    with open(
-        out.join('PowerShellRemotingOverSSH').join(
-            'PowerShellRemotingOverSSH.ps1'
-        ),
-        'r',
-        encoding='utf-8',
-    ) as f:
+    with open(out.join('PowerShellRemotingOverSSH').join('PowerShellRemotingOverSSH.ps1'), 'r', encoding='utf-8') as f:
         file_data = f.read()
         assert '. $PSScriptRoot\\CommonServerPowerShell.ps1\n' in file_data
         assert file_data[-1] == '\n'
     # check description
-    with open(
-        out.join('PowerShellRemotingOverSSH').join(
-            'PowerShellRemotingOverSSH_description.md'
-        ),
-        'r',
-    ) as f:
+    with open(out.join('PowerShellRemotingOverSSH').join('PowerShellRemotingOverSSH_description.md'), 'r') as f:
         file_data = f.read()
-        assert (
-            'Username and password are both associated with the user in the target machine'
-            in file_data
-        )
+        assert 'Username and password are both associated with the user in the target machine' in file_data
     # check readme
-    with open(
-        out.join('PowerShellRemotingOverSSH').join('README.md'), 'r'
-    ) as f:
+    with open(out.join('PowerShellRemotingOverSSH').join('README.md'), 'r') as f:
         file_data = f.read()
         assert 'This is a sample test README' in file_data
-    with open(
-        out.join('PowerShellRemotingOverSSH').join(
-            'PowerShellRemotingOverSSH.yml'
-        ),
-        'r',
-    ) as f:
+    with open(out.join('PowerShellRemotingOverSSH').join('PowerShellRemotingOverSSH.yml'), 'r') as f:
         yaml_obj = yaml.load(f)
         assert yaml_obj['fromversion'] == '5.5.0'
         assert not yaml_obj['script']['script']
@@ -437,13 +357,11 @@ def test_extract_to_package_format_py(pack, mocker, tmp_path):
     mocker.patch.object(YmlSplitter, 'extract_image', return_value='12312321')
     mocker.patch(
         'demisto_sdk.commands.split.ymlsplitter.get_python_version',
-        return_value='2.7',
+        return_value='2.7'
     )
     mocker.patch(
         'demisto_sdk.commands.split.ymlsplitter.get_pipenv_dir',
-        return_value=os.path.join(
-            git_path(), 'demisto_sdk/tests/test_files/default_python2'
-        ),
+        return_value=os.path.join(git_path(), 'demisto_sdk/tests/test_files/default_python2')
     )
     mocker.patch(
         'demisto_sdk.commands.split.ymlsplitter.get_pip_requirements',
@@ -454,23 +372,23 @@ olefile==0.44
 PyYAML==3.12
 requests==2.18.4
 urllib3==1.22
-""",
+"""
     )
     integration = pack.create_integration('Sample')
     integration.create_default_integration()
     out = tmp_path / 'TestIntegration'
-    non_sorted_imports = (
-        'from CommonServerPython import *\nimport datetime\nimport json'
-    )
+    non_sorted_imports = 'from CommonServerPython import *\nimport datetime\nimport json'
     integration.yml.update(
         {
             'image': '',
-            'script': {'type': 'python', 'script': non_sorted_imports},
+            'script': {
+                'type': 'python',
+                'script': non_sorted_imports
+            }
         }
     )
-    extractor = YmlSplitter(
-        input=integration.yml.path, output=str(out), file_type='integration'
-    )
+    extractor = YmlSplitter(input=integration.yml.path,
+                            output=str(out), file_type='integration')
     extractor.extract_to_package_format()
     with open(out / 'TestIntegration.py', encoding='utf-8') as f:
         file_data = f.read()

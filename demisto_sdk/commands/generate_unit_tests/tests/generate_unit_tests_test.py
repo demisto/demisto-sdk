@@ -8,31 +8,19 @@ import pytest
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import (
-    UnitTestsGenerator,
-    run_generate_unit_tests,
-)
+    UnitTestsGenerator, run_generate_unit_tests)
 
-ARGS = [
-    ({'use_demisto': False}, 'malwarebazaar_all.py'),
-    (
-        {'use_demisto': False, 'commands': 'malwarebazaar-comment-add'},
-        'malwarebazaar_specific_command.py',
-    ),
-    ({'use_demisto': True}, 'malwarebazaar_all.py'),
-]
+ARGS = [({'use_demisto': False}, 'malwarebazaar_all.py'),
+        ({'use_demisto': False, 'commands': 'malwarebazaar-comment-add'}, 'malwarebazaar_specific_command.py'),
+        ({'use_demisto': True}, 'malwarebazaar_all.py')]
 
 
-EXAMPLES = {
-    'readable_output': 'test_md_example',
-    'outputs': {
-        'MalwareBazaar': {'MalwarebazaarCommentAdd': {'comment': 'test'}}
-    },
-}
+EXAMPLES = {'readable_output': "test_md_example", 'outputs': {"MalwareBazaar": {"MalwarebazaarCommentAdd": {"comment": "test"}}}}
 
 
 def compare_ast(node1, node2):
     """
-    Recursively comparing ast objects.
+     Recursively comparing ast objects.
     """
     if type(node1) is not type(node2):
         return False
@@ -50,23 +38,13 @@ def compare_ast(node1, node2):
 
 
 class TestUnitTestsGenerator:
-    test_files_path = Path(
-        __file__,
-        git_path(),
-        'demisto_sdk',
-        'commands',
-        'generate_unit_tests',
-        'tests',
-        'test_files',
-    )
+    test_files_path = Path(__file__, git_path(), 'demisto_sdk', 'commands', 'generate_unit_tests', 'tests', 'test_files')
     input_path = None
     output_dir = None
 
     @classmethod
     def setup_class(cls):
-        cls.input_path = str(
-            Path(cls.test_files_path, 'inputs', 'malwarebazaar.py')
-        )
+        cls.input_path = str(Path(cls.test_files_path, 'inputs', 'malwarebazaar.py'))
         cls.output_dir = str(Path(cls.test_files_path, 'outputs'))
 
     @pytest.mark.parametrize('args, expected_result', ARGS)
@@ -84,11 +62,7 @@ class TestUnitTestsGenerator:
         - the config file should be identical to the one we have under resources folder
         """
 
-        mocker.patch.object(
-            UnitTestsGenerator,
-            'execute_commands_into_dict',
-            return_value=(EXAMPLES, []),
-        )
+        mocker.patch.object(UnitTestsGenerator, "execute_commands_into_dict", return_value=(EXAMPLES, []))
 
         output_path = Path(self.output_dir, 'malwarebazaar_test.py')
         desired = Path(self.output_dir, expected_result)
@@ -100,7 +74,7 @@ class TestUnitTestsGenerator:
             examples='',
             insecure=False,
             use_demisto=False,
-            append=False,
+            append=False
         )
 
         with open(output_path, 'r') as f:

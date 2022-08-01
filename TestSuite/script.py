@@ -22,27 +22,16 @@ class Script(Integration):
 
         default_script_dir = 'assets/default_script'
 
-        with open(
-            suite_join_path(default_script_dir, 'sample_script.py')
-        ) as code_file:
+        with open(suite_join_path(default_script_dir, 'sample_script.py')) as code_file:
             code = str(code_file.read())
-        with open(
-            suite_join_path(default_script_dir, 'sample_script.yml')
-        ) as yml_file:
+        with open(suite_join_path(default_script_dir, 'sample_script.yml')) as yml_file:
             yml = yaml.load(yml_file)
             yml['name'] = yml['commonfields']['id'] = name
-        with open(
-            suite_join_path(default_script_dir, 'sample_script_image.png'),
-            'rb',
-        ) as image_file:
+        with open(suite_join_path(default_script_dir, 'sample_script_image.png'), 'rb') as image_file:
             image = image_file.read()
-        with open(
-            suite_join_path(default_script_dir, 'CHANGELOG.md')
-        ) as changelog_file:
+        with open(suite_join_path(default_script_dir, 'CHANGELOG.md')) as changelog_file:
             changelog = str(changelog_file.read())
-        with open(
-            suite_join_path(default_script_dir, 'sample_script_description.md')
-        ) as description_file:
+        with open(suite_join_path(default_script_dir, 'sample_script_description.md')) as description_file:
             description = str(description_file.read())
 
         self.build(
@@ -50,5 +39,5 @@ class Script(Integration):
             yml=yml,
             image=image,
             changelog=changelog,
-            description=description,
+            description=description
         )

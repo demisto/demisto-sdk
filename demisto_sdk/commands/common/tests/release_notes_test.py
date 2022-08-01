@@ -3,12 +3,10 @@ import os
 import pytest
 
 from demisto_sdk.commands.common.constants import FileType
-from demisto_sdk.commands.common.hook_validations.release_notes import (
-    ReleaseNotesValidator,
-)
-from demisto_sdk.commands.common.hook_validations.structure import (
-    StructureValidator,
-)
+from demisto_sdk.commands.common.hook_validations.release_notes import \
+    ReleaseNotesValidator
+from demisto_sdk.commands.common.hook_validations.structure import \
+    StructureValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_dict_from_file
 from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN
@@ -16,22 +14,15 @@ from TestSuite.pack import Pack
 
 
 def get_validator(file_path='', modified_files=None, added_files=None):
-    release_notes_validator = ReleaseNotesValidator('')
-    release_notes_validator.release_notes_file_path = os.path.join(
-        FILES_PATH, 'CortexXDR'
-    )
+    release_notes_validator = ReleaseNotesValidator("")
+    release_notes_validator.release_notes_file_path = os.path.join(FILES_PATH, 'CortexXDR')
     release_notes_validator.release_notes_path = file_path
     release_notes_validator.latest_release_notes = file_path
     release_notes_validator.modified_files = modified_files
     release_notes_validator.added_files = added_files
     release_notes_validator.pack_name = 'CortexXDR'
     release_notes_validator.file_types_that_should_not_appear_in_rn = {
-        FileType.TEST_SCRIPT,
-        FileType.TEST_PLAYBOOK,
-        FileType.README,
-        FileType.RELEASE_NOTES,
-        None,
-    }
+        FileType.TEST_SCRIPT, FileType.TEST_PLAYBOOK, FileType.README, FileType.RELEASE_NOTES, None}
     release_notes_validator.ignored_errors = {}
     release_notes_validator.checked_files = set()
     release_notes_validator.json_file_path = ''
@@ -43,19 +34,13 @@ def get_validator(file_path='', modified_files=None, added_files=None):
     return release_notes_validator
 
 
-FILES_PATH = os.path.normpath(
-    os.path.join(
-        __file__, f'{git_path()}/demisto_sdk/tests', 'test_files', 'Packs'
-    )
-)
+FILES_PATH = os.path.normpath(os.path.join(__file__, f'{git_path()}/demisto_sdk/tests', 'test_files', 'Packs'))
 nothing_in_rn = ''
 rn_not_filled_out = '%%UPDATE_RN%%'
 rn_filled_out = 'This are sample release notes'
-diff_package = [
-    (nothing_in_rn, False),
-    (rn_not_filled_out, False),
-    (rn_filled_out, True),
-]
+diff_package = [(nothing_in_rn, False),
+                (rn_not_filled_out, False),
+                (rn_filled_out, True)]
 
 
 @pytest.mark.parametrize('release_notes, expected_result', diff_package)
@@ -94,18 +79,15 @@ def test_init():
     Then
     - Ensure init returns valid file path and release notes contents.
     """
-    filepath = os.path.join(
-        FILES_PATH, 'CortexXDR', 'ReleaseNotes', '1_1_1.md'
-    )
+    filepath = os.path.join(FILES_PATH, 'CortexXDR', 'ReleaseNotes', '1_1_1.md')
     release_notes_validator = ReleaseNotesValidator(filepath, pack_name='test')
-    release_notes_validator.release_notes_file_path = (
-        'demisto_sdk/tests/test_files/Packs/CortexXDR/ReleaseNotes/' '1_1_1.md'
-    )
+    release_notes_validator.release_notes_file_path = 'demisto_sdk/tests/test_files/Packs/CortexXDR/ReleaseNotes/' \
+                                                      '1_1_1.md'
     assert release_notes_validator.release_notes_path == filepath
     assert release_notes_validator.latest_release_notes == '### Test'
 
 
-NOT_FILLED_OUT_RN = """
+NOT_FILLED_OUT_RN = '''
 ### Incident Types
 #### Cortex XDR Incident
 - %%UPDATE_RN%%
@@ -121,8 +103,8 @@ NOT_FILLED_OUT_RN = """
 ### Scripts
 #### EntryWidgetNumberHostsXDR
 - %%UPDATE_RN%%
-"""
-FILLED_OUT_RN = """
+'''
+FILLED_OUT_RN = '''
 ### Classifiers
 #### dummy classifier
 - Test
@@ -154,73 +136,39 @@ FILLED_OUT_RN = """
 ### Playbooks
 #### Cortex XDR Incident Handling
 - test
-"""
+'''
 
 TEST_RELEASE_NOTES_TEST_BANK_1 = [
     ('', False),  # Completely Empty
-    (
-        '### Integrations\n#### HelloWorld\n- Grammar correction for code '  # Missing Items
-        'description.\n\n### Scripts\n#### HelloWorldScript \n- Grammar correction for '
-        'code description. ',
-        False,
-    ),
+    ('### Integrations\n#### HelloWorld\n- Grammar correction for code '  # Missing Items
+     'description.\n\n### Scripts\n#### HelloWorldScript \n- Grammar correction for '
+     'code description. ', False),
     (NOT_FILLED_OUT_RN, False),
-    (FILLED_OUT_RN, True),
+    (FILLED_OUT_RN, True)
+
 ]
 MODIFIED_FILES = [
-    os.path.join(
-        FILES_PATH,
-        'CortexXDR',
-        'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml',
-    ),
-    os.path.join(
-        FILES_PATH,
-        'CortexXDR',
-        'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR_image.png',
-    ),
-    os.path.join(
-        FILES_PATH, 'CortexXDR', 'IncidentTypes/Cortex_XDR_Incident.json'
-    ),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR_image.png'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'IncidentTypes/Cortex_XDR_Incident.json'),
     os.path.join(FILES_PATH, 'CortexXDR', 'IncidentFields/XDR_Alerts.json'),
-    os.path.join(
-        FILES_PATH,
-        'CortexXDR',
-        'Scripts/EntryWidgetNumberHostsXDR/EntryWidgetNumberHostsXDR.yml',
-    ),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Scripts/EntryWidgetNumberHostsXDR/EntryWidgetNumberHostsXDR.yml'),
     os.path.join(FILES_PATH, 'CortexXDR', 'README.md'),
-    os.path.join(
-        FILES_PATH, 'CortexXDR', 'Playbooks/Cortex_XDR_Incident_Handling.yml'
-    ),
-    os.path.join(
-        FILES_PATH, 'CortexXDR', 'Layouts/details-Cortex_XDR_Incident.json'
-    ),
-    os.path.join(
-        FILES_PATH, 'CortexXDR', 'Classifiers/classifier-to-test.json'
-    ),
-    os.path.join(
-        FILES_PATH, 'CortexXDR', 'Dashboards/dashboard-sample_packs_new2.json'
-    ),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Playbooks/Cortex_XDR_Incident_Handling.yml'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Layouts/details-Cortex_XDR_Incident.json'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Classifiers/classifier-to-test.json'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Dashboards/dashboard-sample_packs_new2.json')
 ]
 ADDED_FILES = [
-    os.path.join(
-        FILES_PATH, 'CortexXDR', 'Playbooks/Cortex_XDR_Incident_Handling.yml'
-    ),
-    os.path.join(
-        FILES_PATH,
-        'CortexXDR',
-        'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR_description.md',
-    ),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Playbooks/Cortex_XDR_Incident_Handling.yml'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR_description.md'),
     os.path.join(FILES_PATH, 'CortexXDR', 'ReleaseNotes/1_0_0.md'),
     os.path.join(FILES_PATH, 'CortexXDR', 'README.md'),
 ]
 
 
-@pytest.mark.parametrize(
-    'release_notes, complete_expected_result', TEST_RELEASE_NOTES_TEST_BANK_1
-)
-def test_are_release_notes_complete(
-    release_notes, complete_expected_result, mocker
-):
+@pytest.mark.parametrize('release_notes, complete_expected_result', TEST_RELEASE_NOTES_TEST_BANK_1)
+def test_are_release_notes_complete(release_notes, complete_expected_result, mocker):
     """
     Given
     - Case 1: Empty release notes.
@@ -239,54 +187,28 @@ def test_are_release_notes_complete(
     - Case 3: Should print nothing and return True
     """
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
-    mocker.patch.object(
-        StructureValidator,
-        'scheme_of_file_by_path',
-        return_value='integration',
-    )
+    mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
     validator = get_validator(release_notes, MODIFIED_FILES)
     assert validator.are_release_notes_complete() == complete_expected_result
 
 
 MODIFIED_FILES_INVALID = [
-    os.path.join(
-        FILES_PATH,
-        'CortexXDR',
-        'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml',
-    ),
-    os.path.join(
-        FILES_PATH, 'CortexXDR', 'IncidentTypes/Cortex_XDR_Incident.json'
-    ),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'IncidentTypes/Cortex_XDR_Incident.json'),
     os.path.join(FILES_PATH, 'CortexXDR', 'IncidentFields/XDR_Alerts.json'),
-    os.path.join(
-        FILES_PATH,
-        'CortexXDR',
-        'Scripts/EntryWidgetNumberHostsXDR/EntryWidgetNumberHostsXDR.yml',
-    ),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Scripts/EntryWidgetNumberHostsXDR/EntryWidgetNumberHostsXDR.yml'),
     os.path.join(FILES_PATH, 'CortexXDR', 'TestPlaybooks/Cortex_XDR.yml'),
     os.path.join(FILES_PATH, 'CortexXDR', '.secrets-ignore'),
-    os.path.join(
-        FILES_PATH, 'CortexXDR', 'Playbooks/Cortex_XDR_Incident_Handling.yml'
-    ),
-    os.path.join(
-        FILES_PATH, 'CortexXDR', 'Layouts/details-Cortex_XDR_Incident.json'
-    ),
-    os.path.join(
-        FILES_PATH, 'CortexXDR', 'Classifiers/classifier-to-test.json'
-    ),
-    os.path.join(
-        FILES_PATH, 'CortexXDR', 'Dashboards/dashboard-sample_packs_new2.json'
-    ),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Playbooks/Cortex_XDR_Incident_Handling.yml'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Layouts/details-Cortex_XDR_Incident.json'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Classifiers/classifier-to-test.json'),
+    os.path.join(FILES_PATH, 'CortexXDR', 'Dashboards/dashboard-sample_packs_new2.json')
 ]
 
 
-@pytest.mark.parametrize(
-    'release_notes, complete_expected_result', TEST_RELEASE_NOTES_TEST_BANK_1
-)
-def test_are_release_notes_complete_invalid_file_type(
-    release_notes, complete_expected_result, mocker
-):
+@pytest.mark.parametrize('release_notes, complete_expected_result', TEST_RELEASE_NOTES_TEST_BANK_1)
+def test_are_release_notes_complete_invalid_file_type(release_notes, complete_expected_result, mocker):
     """
     Given
     - Case 1: Empty release notes.
@@ -305,11 +227,7 @@ def test_are_release_notes_complete_invalid_file_type(
     - Case 3: Should print nothing and return True
     """
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
-    mocker.patch.object(
-        StructureValidator,
-        'scheme_of_file_by_path',
-        return_value='integration',
-    )
+    mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
     validator = get_validator(release_notes, MODIFIED_FILES_INVALID)
     assert validator.are_release_notes_complete() == complete_expected_result
@@ -317,24 +235,17 @@ def test_are_release_notes_complete_invalid_file_type(
 
 TEST_RELEASE_NOTES_TEST_BANK_ADDED = [
     ('', False),  # Completely Empty
-    (
-        '### Integrations\n#### HelloWorld\n- Grammar correction for code '  # Missing Items
-        'description.\n\n### Scripts\n#### HelloWorldScript\n- Grammar correction for '
-        'code description. ',
-        False,
-    ),
+    ('### Integrations\n#### HelloWorld\n- Grammar correction for code '  # Missing Items
+     'description.\n\n### Scripts\n#### HelloWorldScript\n- Grammar correction for '
+     'code description. ', False),
     (NOT_FILLED_OUT_RN, False),
-    (FILLED_OUT_RN, True),
+    (FILLED_OUT_RN, True)
+
 ]
 
 
-@pytest.mark.parametrize(
-    'release_notes, complete_expected_result',
-    TEST_RELEASE_NOTES_TEST_BANK_ADDED,
-)
-def test_are_release_notes_complete_added(
-    release_notes, complete_expected_result, mocker
-):
+@pytest.mark.parametrize('release_notes, complete_expected_result', TEST_RELEASE_NOTES_TEST_BANK_ADDED)
+def test_are_release_notes_complete_added(release_notes, complete_expected_result, mocker):
     """
     Given
     - Case 1: Empty release notes.
@@ -353,11 +264,7 @@ def test_are_release_notes_complete_added(
     - Case 3: Should print nothing and return True
     """
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
-    mocker.patch.object(
-        StructureValidator,
-        'scheme_of_file_by_path',
-        return_value='integration',
-    )
+    mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
     validator = get_validator(release_notes, MODIFIED_FILES, ADDED_FILES)
     assert validator.are_release_notes_complete() == complete_expected_result
@@ -374,18 +281,8 @@ def test_are_release_notes_complete_renamed_file(mocker):
     -
     """
     renamed_file = [
-        (
-            os.path.join(
-                FILES_PATH,
-                'CortexXDR',
-                'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR_old.yml',
-            ),
-            os.path.join(
-                FILES_PATH,
-                'CortexXDR',
-                'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml',
-            ),
-        )
+        (os.path.join(FILES_PATH, 'CortexXDR', 'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR_old.yml'),
+         os.path.join(FILES_PATH, 'CortexXDR', 'Integrations/PaloAltoNetworks_XDR/PaloAltoNetworks_XDR.yml'))
     ]
     release_notes = """
     ### Integrations
@@ -393,19 +290,13 @@ def test_are_release_notes_complete_renamed_file(mocker):
     - Test
     """
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
-    mocker.patch.object(
-        StructureValidator,
-        'scheme_of_file_by_path',
-        return_value='integration',
-    )
+    mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
     validator = get_validator(release_notes, renamed_file)
     assert validator.are_release_notes_complete()
 
 
-def test_are_release_notes_complete_file_pack_contained_in_file_name_different_pack(
-    mocker, repo
-):
+def test_are_release_notes_complete_file_pack_contained_in_file_name_different_pack(mocker, repo):
     """
     Given:
     - Modified file whose name contains the checked pack name.
@@ -419,18 +310,12 @@ def test_are_release_notes_complete_file_pack_contained_in_file_name_different_p
     - Ensure validation returns true.
     """
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
-    mocker.patch.object(
-        StructureValidator,
-        'scheme_of_file_by_path',
-        return_value='integration',
-    )
+    mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
     pack = repo.create_pack('FeedCortexXDR')
     integration_outside_pack = pack.create_integration(name='FeedCortexXDR')
     integration_outside_pack.create_default_integration('FeedCortexXDR')
-    validator = get_validator(
-        '', modified_files=[integration_outside_pack.yml.path]
-    )
+    validator = get_validator('', modified_files=[integration_outside_pack.yml.path])
     assert validator.are_release_notes_complete()
 
 
@@ -446,11 +331,8 @@ def test_are_release_notes_complete_rn_config(pack):
     - Ensure it is not checked and release notes return valid response.
     """
     rn = pack.create_release_notes('1_0_1', is_bc=True)
-    validator = ReleaseNotesValidator(
-        rn.path,
-        modified_files=[rn.path.replace('md', 'json')],
-        pack_name=os.path.basename(pack.path),
-    )
+    validator = ReleaseNotesValidator(rn.path, modified_files=[rn.path.replace('md', 'json')],
+                                      pack_name=os.path.basename(pack.path))
     assert validator.are_release_notes_complete()
 
 
@@ -466,11 +348,7 @@ def test_are_release_notes_with_author_image(mocker, repo):
     - Ensure File is skipped from check.
     """
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
-    mocker.patch.object(
-        StructureValidator,
-        'scheme_of_file_by_path',
-        return_value='integration',
-    )
+    mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
     pack = repo.create_pack('CortexXDR')
     integration_outside_pack = pack.create_integration(name='CortexXDR')
@@ -481,25 +359,19 @@ def test_are_release_notes_with_author_image(mocker, repo):
 
 TEST_RELEASE_NOTES_TEST_BANK_2 = [
     ('', False),  # Completely Empty
-    (
-        '### Integrations\n#### HelloWorld\n- Grammar correction for code '  # Missing Items
-        'description.\n\n### Scripts\n#### HelloWorldScript\n- Grammar correction for '
-        'code description. ',
-        True,
-    ),
+    ('### Integrations\n#### HelloWorld\n- Grammar correction for code '  # Missing Items
+     'description.\n\n### Scripts\n#### HelloWorldScript\n- Grammar correction for '
+     'code description. ', True),
     (NOT_FILLED_OUT_RN, False),
     (FILLED_OUT_RN, True),
     ('<!-- Test -->', False),
-    ('<!-- Test --> #### Integrations\n##### Some Integration', True),
+    ('<!-- Test --> #### Integrations\n##### Some Integration', True)
+
 ]
 
 
-@pytest.mark.parametrize(
-    'release_notes, filled_expected_result', TEST_RELEASE_NOTES_TEST_BANK_2
-)
-def test_has_release_notes_been_filled_out(
-    release_notes, filled_expected_result, mocker
-):
+@pytest.mark.parametrize('release_notes, filled_expected_result', TEST_RELEASE_NOTES_TEST_BANK_2)
+def test_has_release_notes_been_filled_out(release_notes, filled_expected_result, mocker):
     """
     Given
     - Case 1: Empty release notes.
@@ -522,63 +394,26 @@ def test_has_release_notes_been_filled_out(
     - Case 5: Should print nothing and return True
     """
     mocker.patch.object(ReleaseNotesValidator, '__init__', lambda a, b: None)
-    mocker.patch.object(
-        StructureValidator,
-        'scheme_of_file_by_path',
-        return_value='integration',
-    )
+    mocker.patch.object(StructureValidator, 'scheme_of_file_by_path', return_value='integration')
     mocker.patch.object(UpdateRN, 'get_master_version', return_value='0.0.0')
     validator = get_validator(release_notes, MODIFIED_FILES)
-    assert (
-        validator.has_release_notes_been_filled_out() == filled_expected_result
-    )
+    assert validator.has_release_notes_been_filled_out() == filled_expected_result
 
 
 TEST_RELEASE_NOTES_TEST_BANK_3 = [
-    (
-        'Integration',
-        '#### Integrations\n##### Integration name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
-        {
-            'display': 'Integration name',
-            'script': {'dockerimage': 'demisto/python3:3.9.5.21272'},
-        },
-        True,
-    ),
-    (
-        'Script',
-        '\n#### Scripts\n##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
-        {'name': 'Script name', 'dockerimage': 'demisto/python3:3.9.5.21272'},
-        True,
-    ),
-    (
-        'Script',
-        '\n#### Scripts\n##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.2122*.',
-        {'name': 'Script name', 'dockerimage': 'demisto/python3:3.9.4.272'},
-        False,
-    ),
-    (
-        'Integration',
-        '#### Integrations\n##### Integration name\n- Moved the Pack to Cortex XSOAR support instead of community support.',
-        {
-            'display': 'Integration name',
-            'script': {'dockerimage': 'demisto/python3:3.9.5.21272'},
-        },
-        True,
-    ),
+    ('Integration', '#### Integrations\n##### Integration name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
+     {'display': 'Integration name', 'script': {'dockerimage': 'demisto/python3:3.9.5.21272'}}, True),
+    ('Script', '\n#### Scripts\n##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
+     {'name': 'Script name', 'dockerimage': 'demisto/python3:3.9.5.21272'}, True),
+    ('Script', '\n#### Scripts\n##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.2122*.',
+     {'name': 'Script name', 'dockerimage': 'demisto/python3:3.9.4.272'}, False),
+    ('Integration', '#### Integrations\n##### Integration name\n- Moved the Pack to Cortex XSOAR support instead of community support.',
+     {'display': 'Integration name', 'script': {'dockerimage': 'demisto/python3:3.9.5.21272'}}, True),
 ]
 
 
-@pytest.mark.parametrize(
-    'category, release_notes_content, yml_content, filled_expected_result',
-    TEST_RELEASE_NOTES_TEST_BANK_3,
-)
-def test_is_docker_image_same_as_yml(
-    category,
-    release_notes_content,
-    yml_content,
-    filled_expected_result,
-    pack: Pack,
-):
+@pytest.mark.parametrize('category, release_notes_content, yml_content, filled_expected_result', TEST_RELEASE_NOTES_TEST_BANK_3)
+def test_is_docker_image_same_as_yml(category, release_notes_content, yml_content, filled_expected_result, pack: Pack):
     """
     Given
     - Case 1: RN containing a docker update, integration YML containing a docker update, where docker image equal in both.
@@ -595,62 +430,36 @@ def test_is_docker_image_same_as_yml(
             return False.
     - Case 4: Should print nothing and return True.
     """
-    rn = pack.create_release_notes(
-        version='1_0_1', content=release_notes_content
-    )
-    if category == 'integration':
+    rn = pack.create_release_notes(version='1_0_1', content=release_notes_content)
+    if category == "integration":
         category = pack.create_integration()
     else:
         category = pack.create_script()
     category.yml.update(yml_content)
-    validator = ReleaseNotesValidator(
-        rn.path,
-        modified_files=[category.yml.path],
-        pack_name=os.path.basename(pack.path),
-    )
+    validator = ReleaseNotesValidator(rn.path, modified_files=[category.yml.path],
+                                      pack_name=os.path.basename(pack.path))
     assert validator.is_docker_image_same_as_yml() == filled_expected_result
 
 
 TEST_RELEASE_NOTES_TEST_BANK_4 = [
-    (
-        ReleaseNotesValidator.get_categories_from_rn,
-        '\n#### Integrations\n##### Integration name\n'
-        + '- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n'
-        + '#### Scripts\n##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
-        {
-            'Integrations': '##### Integration name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
-            'Scripts': '##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
-        },
-    ),
-    (
-        ReleaseNotesValidator.get_categories_from_rn,
-        '\n#### Integrations\n##### Integration name1\n'
-        + '- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n'
-        + '##### Integration name2\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
-        {
-            'Integrations': '##### Integration name1\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n'
-            + '##### Integration name2\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.'
-        },
-    ),
-    (
-        ReleaseNotesValidator.get_entities_from_category,
-        '\n##### Integration name1\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n'
-        + '##### Integration name2\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
-        {
-            'Integration name1': '- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
-            'Integration name2': '- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
-        },
-    ),
-]
+    (ReleaseNotesValidator.get_categories_from_rn, "\n#### Integrations\n##### Integration name\n" +
+     "- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n" +
+     "#### Scripts\n##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.",
+     {'Integrations': '##### Integration name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
+      'Scripts': '##### Script name\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.'}),
+    (ReleaseNotesValidator.get_categories_from_rn, "\n#### Integrations\n##### Integration name1\n" +
+     "- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n" +
+     "##### Integration name2\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.",
+     {'Integrations': "##### Integration name1\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n" +
+      "##### Integration name2\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*."}),
+    (ReleaseNotesValidator.get_entities_from_category, "\n##### Integration name1\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n" +
+     "##### Integration name2\n- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.",
+     {'Integration name1': '- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.',
+      'Integration name2': '- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.'}), ]
 
 
-@pytest.mark.parametrize(
-    'method_to_check, release_notes_content, filled_expected_result',
-    TEST_RELEASE_NOTES_TEST_BANK_4,
-)
-def test_get_categories_from_rn(
-    method_to_check, release_notes_content, filled_expected_result, pack: Pack
-):
+@pytest.mark.parametrize('method_to_check, release_notes_content, filled_expected_result', TEST_RELEASE_NOTES_TEST_BANK_4)
+def test_get_categories_from_rn(method_to_check, release_notes_content, filled_expected_result, pack: Pack):
     """
     Given
     - Case 1: RN containing notes for one integration and one script where each one of them have one entity
@@ -666,10 +475,7 @@ def test_get_categories_from_rn(
     - Case 2: Should Create a dict with one value for integration key that holds 2 integrations.
     - Case 3: Should Create a dict with two keys of integraition 1 and integration 2.
     """
-    assert (
-        method_to_check(ReleaseNotesValidator, release_notes_content)
-        == filled_expected_result
-    )
+    assert method_to_check(ReleaseNotesValidator, release_notes_content) == filled_expected_result
 
 
 def update_json(path, key, value):
@@ -682,44 +488,19 @@ def update_json(path, key, value):
 
 
 TEST_RELEASE_NOTES_BREAKING_CHANGE = [
-    (
-        '\n#### Integrations\n##### Integration name\n'
-        + '- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n',
-        False,
-        False,
-        True,
-    ),
-    (
-        '\n#### Integrations\n##### Integration name\n'
-        + '- Breaking change test\n',
-        False,
-        False,
-        False,
-    ),
-    (
-        '\n#### Integrations\n##### Integration name\n'
-        + '- Breaking change test\n',
-        True,
-        True,
-        False,
-    ),
-    (
-        '\n#### Integrations\n##### Integration name\n'
-        + '- Breaking change test\n',
-        True,
-        False,
-        True,
-    ),
+    ("\n#### Integrations\n##### Integration name\n" +
+     "- Upgraded the Docker image to: *demisto/python3:3.9.5.21272*.\n", False, False, True),
+    ("\n#### Integrations\n##### Integration name\n" +
+     "- Breaking change test\n", False, False, False),
+    ("\n#### Integrations\n##### Integration name\n" +
+     "- Breaking change test\n", True, True, False),
+    ("\n#### Integrations\n##### Integration name\n" +
+     "- Breaking change test\n", True, False, True)
 ]
 
 
-@pytest.mark.parametrize(
-    'release_notes_content, has_json, change_json, expected_result',
-    TEST_RELEASE_NOTES_BREAKING_CHANGE,
-)
-def test_validate_json_when_breaking_changes(
-    release_notes_content, has_json, change_json, expected_result, mocker, repo
-):
+@pytest.mark.parametrize('release_notes_content, has_json, change_json, expected_result', TEST_RELEASE_NOTES_BREAKING_CHANGE)
+def test_validate_json_when_breaking_changes(release_notes_content, has_json, change_json, expected_result, mocker, repo):
     """
     Given
     - A release note.
@@ -732,19 +513,11 @@ def test_validate_json_when_breaking_changes(
     validator = get_validator(release_notes_content, MODIFIED_FILES)
     pack = repo.create_pack('test_pack')
     if has_json:
-        release_note = pack.create_release_notes(
-            version='1.0.0', content=release_notes_content, is_bc=True
-        )
+        release_note = pack.create_release_notes(version='1.0.0', content=release_notes_content, is_bc=True)
     else:
-        release_note = pack.create_release_notes(
-            version='1.0.0', content=release_notes_content
-        )
+        release_note = pack.create_release_notes(version='1.0.0', content=release_notes_content)
     if change_json:
-        update_json(
-            path=release_note.path[:-2] + 'json',
-            key='breakingChanges',
-            value=False,
-        )
+        update_json(path=release_note.path[:-2] + 'json', key='breakingChanges', value=False)
 
     validator.release_notes_file_path = release_note.path
     assert validator.validate_json_when_breaking_changes() == expected_result

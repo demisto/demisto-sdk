@@ -8,17 +8,13 @@ def valid_spelled_content_pack(pack):
     """
     for i in range(3):
         pack.create_release_notes(
-            version=f'release-note-{i}',
-            content='\n#### Scripts\n##### ScriptName\n- Added the feature.',
+            version=f"release-note-{i}",
+            content="\n#### Scripts\n##### ScriptName\n- Added the feature."
         )
-        pack.create_integration(
-            name=f'integration-{i}', yml={'category': 'category'}
-        )
-        pack.create_incident_field(
-            name=f'incident-field-{i}', content={'test': 'test'}
-        )
-        pack.create_script(name=f'script-{i}', yml={'script': 'script'})
-        pack.create_layout(name=f'layout-{i}', content={'test': 'test'})
+        pack.create_integration(name=f"integration-{i}", yml={"category": "category"})
+        pack.create_incident_field(name=f"incident-field-{i}", content={"test": "test"})
+        pack.create_script(name=f"script-{i}", yml={"script": "script"})
+        pack.create_layout(name=f"layout-{i}", content={"test": "test"})
 
     return pack
 
@@ -32,29 +28,18 @@ def invalid_spelled_content_pack(pack):
 
     for i in range(3):
         rn = pack.create_release_notes(
-            version=f'release-note-{i}',
-            content='\n#### Scipt\n##### SciptName\n- Added the feature.',
+            version=f"release-note-{i}",
+            content="\n#### Scipt\n##### SciptName\n- Added the feature."
         )
         misspelled_files.add(rn.path)
         integration = pack.create_integration(
-            name=f'integration-{i}',
-            yml={
-                'display': 'invalidd',
-                'description': 'invalidd',
-                'category': 'category',
-            },
+            name=f"integration-{i}", yml={"display": "invalidd", "description": "invalidd", "category": "category"}
         )
         misspelled_files.add(integration.yml.path)
-        pack.create_incident_field(
-            name=f'incident-field-{i}', content={'invalidd': 'invalidd'}
-        )
-        script = pack.create_script(
-            name=f'script-{i}', yml={'comment': 'invalidd', 'script': 'script'}
-        )
+        pack.create_incident_field(name=f"incident-field-{i}", content={"invalidd": "invalidd"})
+        script = pack.create_script(name=f"script-{i}", yml={"comment": "invalidd", "script": "script"})
         misspelled_files.add(script.yml.path)
-        pack.create_layout(
-            name=f'layout-{i}', content={'invalidd': 'invalidd'}
-        )
+        pack.create_layout(name=f"layout-{i}", content={"invalidd": "invalidd"})
 
     return pack, misspelled_files
 

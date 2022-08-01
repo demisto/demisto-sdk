@@ -5,11 +5,11 @@ Pytest Unit Tests: all funcion names must start with "test_"
 More details: https://xsoar.pan.dev/docs/integrations/unit-testing
 
 MAKE SURE YOU REVIEW/REPLACE ALL THE COMMENTS MARKED AS "TODO"
+
 """
 
 import io
 from demisto_sdk.commands.common.handlers import JSON_Handler
-
 json = JSON_Handler()
 
 
@@ -29,12 +29,12 @@ def test_basescript_dummy():
     """
     from BaseScript import basescript_dummy_command
 
-    args = {'dummy': 'this is a dummy response'}
+    args = {
+        'dummy': 'this is a dummy response'
+    }
     response = basescript_dummy_command(args)
 
     mock_response = util_load_json('test_data/basescript-dummy.json')
 
     assert response.outputs == mock_response
-
-
 # TODO: ADD HERE your unit tests

@@ -3,69 +3,39 @@ import re
 from typing import Optional
 
 from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK,
-    DEFAULT_CONTENT_ITEM_FROM_VERSION,
-    DEPRECATED_REGEXES,
-    PYTHON_SUBTYPES,
-    TYPE_PWSH,
-)
+    API_MODULES_PACK, DEFAULT_CONTENT_ITEM_FROM_VERSION, DEPRECATED_REGEXES,
+    PYTHON_SUBTYPES, TYPE_PWSH)
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import (
-    error_codes,
-)
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
-    ContentEntityValidator,
-)
-from demisto_sdk.commands.common.hook_validations.docker import (
-    DockerImageValidator,
-)
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    error_codes
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
+    ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.docker import \
+    DockerImageValidator
 from demisto_sdk.commands.common.tools import (
-    get_core_pack_list,
-    get_file_version_suffix_if_exists,
-    get_files_in_dir,
-    get_pack_name,
-    server_version_compare,
-)
+    get_core_pack_list, get_file_version_suffix_if_exists, get_files_in_dir,
+    get_pack_name, server_version_compare)
 
 
 class ScriptValidator(ContentEntityValidator):
     """ScriptValidator is designed to validate the correctness of the file structure we enter to content repo. And
-    also try to catch possible Backward compatibility breaks due to the preformed changes.
+        also try to catch possible Backward compatibility breaks due to the preformed changes.
     """
 
-    def __init__(
-        self,
-        structure_validator,
-        ignored_errors=None,
-        print_as_warnings=False,
-        skip_docker_check=False,
-        json_file_path=None,
-        validate_all=False,
-        deprecation_validator=None,
-    ):
-        super().__init__(
-            structure_validator,
-            ignored_errors=ignored_errors,
-            print_as_warnings=print_as_warnings,
-            skip_docker_check=skip_docker_check,
-            json_file_path=json_file_path,
-        )
+    def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
+                 json_file_path=None, validate_all=False, deprecation_validator=None):
+        super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
+                         skip_docker_check=skip_docker_check,
+                         json_file_path=json_file_path)
         self.validate_all = validate_all
         self.deprecation_validator = deprecation_validator
 
     @error_codes('BA100')
     def is_valid_version(self) -> bool:
-        if (
-            self.current_file.get('commonfields', {}).get('version')
-            != self.DEFAULT_VERSION
-        ):
+        if self.current_file.get('commonfields', {}).get('version') != self.DEFAULT_VERSION:
             error_message, error_code = Errors.wrong_version()
-            if self.handle_error(
-                error_message,
-                error_code,
-                file_path=self.file_path,
-                suggested_fix=Errors.suggest_fix(self.file_path),
-            ):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 suggested_fix=Errors.suggest_fix(self.file_path)):
                 return False
 
         return True
@@ -90,7 +60,7 @@ class ScriptValidator(ContentEntityValidator):
             self.is_added_required_args(),
             self.is_arg_changed(),
             self.is_there_duplicates_args(),
-            self.is_changed_subtype(),
+            self.is_changed_subtype()
         ]
 
         # Add sane-doc-report exception
@@ -104,32 +74,34 @@ class ScriptValidator(ContentEntityValidator):
     def is_valid_file(self, validate_rn=True):
         # type: (bool) -> bool
         """Check whether the script is valid or not"""
-        is_script_valid = all(
-            [
-                super().is_valid_file(validate_rn),
-                self.validate_readme_exists(self.validate_all),
-                self.is_valid_subtype(),
-                self.is_id_equals_name(),
-                self.is_docker_image_valid(),
-                self.is_valid_pwsh(),
-                self.is_valid_script_file_path(),
-                self.is_there_separators_in_names(),
-                self.name_not_contain_the_type(),
-                self.runas_is_not_dbtrole(),
-                self.is_script_deprecated_and_used(),
-            ]
-        )
+        is_script_valid = all([
+            super().is_valid_file(validate_rn),
+            self.validate_readme_exists(self.validate_all),
+            self.is_valid_subtype(),
+            self.is_id_equals_name(),
+            self.is_docker_image_valid(),
+            self.is_valid_pwsh(),
+            self.is_valid_script_file_path(),
+            self.is_there_separators_in_names(),
+            self.name_not_contain_the_type(),
+            self.runas_is_not_dbtrole(),
+            self.is_script_deprecated_and_used(),
+        ])
         # check only on added files
         if not self.old_file:
-            is_script_valid = all([is_script_valid, self.is_valid_name()])
+            is_script_valid = all([
+                is_script_valid,
+                self.is_valid_name()
+            ])
         core_packs_list = get_core_pack_list()
 
         pack = get_pack_name(self.file_path)
         is_core = True if pack in core_packs_list else False
         if is_core:
-            is_script_valid = all(
-                [is_script_valid, self.no_incident_in_core_pack()]
-            )
+            is_script_valid = all([
+                is_script_valid,
+                self.no_incident_in_core_pack()
+            ])
         return is_script_valid
 
     @classmethod
@@ -155,18 +127,11 @@ class ScriptValidator(ContentEntityValidator):
         if type_ == 'python':
             subtype = self.current_file.get('subtype')
             if self.old_file:
-                old_subtype = self.old_file.get('subtype', '')
+                old_subtype = self.old_file.get('subtype', "")
                 if old_subtype and old_subtype != subtype:
-                    (
-                        error_message,
-                        error_code,
-                    ) = Errors.breaking_backwards_subtype()
-                    if self.handle_error(
-                        error_message,
-                        error_code,
-                        file_path=self.file_path,
-                        warning=self.structure_validator.quiet_bc,
-                    ):
+                    error_message, error_code = Errors.breaking_backwards_subtype()
+                    if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                         warning=self.structure_validator.quiet_bc):
                         return True
 
         return False
@@ -179,9 +144,7 @@ class ScriptValidator(ContentEntityValidator):
             subtype = self.current_file.get('subtype')
             if subtype not in PYTHON_SUBTYPES:
                 error_message, error_code = Errors.wrong_subtype()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 
         return True
@@ -189,26 +152,16 @@ class ScriptValidator(ContentEntityValidator):
     @error_codes('IN116')
     def is_added_required_args(self):
         """Check if required arg were added."""
-        current_args_to_required = self._get_arg_to_required_dict(
-            self.current_file
-        )
+        current_args_to_required = self._get_arg_to_required_dict(self.current_file)
         old_args_to_required = self._get_arg_to_required_dict(self.old_file)
 
         for arg, required in current_args_to_required.items():
             if required:
-                if (arg not in old_args_to_required) or (
-                    arg in old_args_to_required
-                    and required != old_args_to_required[arg]
-                ):
-                    error_message, error_code = Errors.added_required_fields(
-                        arg
-                    )
-                    if self.handle_error(
-                        error_message,
-                        error_code,
-                        file_path=self.file_path,
-                        warning=self.structure_validator.quiet_bc,
-                    ):
+                if (arg not in old_args_to_required) or \
+                        (arg in old_args_to_required and required != old_args_to_required[arg]):
+                    error_message, error_code = Errors.added_required_fields(arg)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                         warning=self.structure_validator.quiet_bc):
                         return True
         return False
 
@@ -223,15 +176,9 @@ class ScriptValidator(ContentEntityValidator):
                 strings_with_incident_list.append(arg['name'])
 
         if strings_with_incident_list:
-            error_message, error_code = Errors.incident_in_script_arg(
-                strings_with_incident_list
-            )
-            if self.handle_error(
-                error_message,
-                error_code,
-                file_path=self.file_path,
-                suggested_fix=Errors.suggest_server_allowlist_fix(),
-            ):
+            error_message, error_code = Errors.incident_in_script_arg(strings_with_incident_list)
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 suggested_fix=Errors.suggest_server_allowlist_fix()):
                 self.is_valid = False
                 no_incidents = False
 
@@ -241,10 +188,7 @@ class ScriptValidator(ContentEntityValidator):
         # type: () -> bool
         """Check if there are duplicated arguments."""
         args = [arg['name'] for arg in self.current_file.get('args', [])]
-        if (
-            len(args) != len(set(args))
-            and not self.structure_validator.quiet_bc
-        ):
+        if len(args) != len(set(args)) and not self.structure_validator.quiet_bc:
             return True
         return False
 
@@ -252,19 +196,13 @@ class ScriptValidator(ContentEntityValidator):
     def is_arg_changed(self):
         # type: () -> bool
         """Check if the argument has been changed."""
-        current_args = [
-            arg['name'] for arg in self.current_file.get('args', [])
-        ]
+        current_args = [arg['name'] for arg in self.current_file.get('args', [])]
         old_args = [arg['name'] for arg in self.old_file.get('args', [])]
 
         if not self._is_sub_set(current_args, old_args):
             error_message, error_code = Errors.breaking_backwards_arg_changed()
-            if self.handle_error(
-                error_message,
-                error_code,
-                file_path=self.file_path,
-                warning=self.structure_validator.quiet_bc,
-            ):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 warning=self.structure_validator.quiet_bc):
                 return True
 
         return False
@@ -273,23 +211,13 @@ class ScriptValidator(ContentEntityValidator):
     def is_context_path_changed(self):
         # type: () -> bool
         """Check if the context path as been changed."""
-        current_context = [
-            output['contextPath']
-            for output in self.current_file.get('outputs') or []
-        ]
-        old_context = [
-            output['contextPath']
-            for output in self.old_file.get('outputs') or []
-        ]
+        current_context = [output['contextPath'] for output in self.current_file.get('outputs') or []]
+        old_context = [output['contextPath'] for output in self.old_file.get('outputs') or []]
 
         if not self._is_sub_set(current_context, old_context):
             error_message, error_code = Errors.breaking_backwards_context()
-            if self.handle_error(
-                error_message,
-                error_code,
-                file_path=self.file_path,
-                warning=self.structure_validator.quiet_bc,
-            ):
+            if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                 warning=self.structure_validator.quiet_bc):
                 return True
 
         return False
@@ -297,9 +225,9 @@ class ScriptValidator(ContentEntityValidator):
     def is_id_equals_name(self):
         """Check whether the script's ID is equal to its name
 
-        Returns:
-            bool. Whether the script's id equals to its name
-        """
+            Returns:
+                bool. Whether the script's id equals to its name
+            """
         return super(ScriptValidator, self)._is_id_equals_name('script')
 
     def is_docker_image_valid(self):
@@ -309,16 +237,12 @@ class ScriptValidator(ContentEntityValidator):
         if self.skip_docker_check or API_MODULES_PACK in self.file_path:
             return True
 
-        docker_image_validator = DockerImageValidator(
-            self.file_path,
-            is_modified_file=True,
-            is_integration=False,
-            ignored_errors=self.ignored_errors,
-            print_as_warnings=self.print_as_warnings,
-            suppress_print=self.suppress_print,
-            json_file_path=self.json_file_path,
-            specific_validations=self.specific_validations,
-        )
+        docker_image_validator = DockerImageValidator(self.file_path, is_modified_file=True, is_integration=False,
+                                                      ignored_errors=self.ignored_errors,
+                                                      print_as_warnings=self.print_as_warnings,
+                                                      suppress_print=self.suppress_print,
+                                                      json_file_path=self.json_file_path,
+                                                      specific_validations=self.specific_validations)
         if docker_image_validator.is_docker_image_valid():
             return True
         return False
@@ -326,21 +250,15 @@ class ScriptValidator(ContentEntityValidator):
     @error_codes('SC100')
     def is_valid_name(self):
         # type: () -> bool
-        version_number: Optional[str] = get_file_version_suffix_if_exists(
-            self.current_file
-        )
+        version_number: Optional[str] = get_file_version_suffix_if_exists(self.current_file)
         if not version_number:
             return True
         else:
             name = self.current_file.get('name')
             correct_name = f'V{version_number}'
             if not name.endswith(correct_name):  # type: ignore
-                error_message, error_code = Errors.invalid_version_script_name(
-                    version_number
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.invalid_version_script_name(version_number)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 
             return True
@@ -348,24 +266,11 @@ class ScriptValidator(ContentEntityValidator):
     @error_codes('IN120')
     def is_valid_pwsh(self) -> bool:
         if self.current_file.get('type') == TYPE_PWSH:
-            from_version = self.current_file.get(
-                'fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION
-            )
-            if (
-                not from_version
-                or server_version_compare('5.5.0', from_version) > 0
-            ):
-                error_message, error_code = Errors.pwsh_wrong_version(
-                    from_version
-                )
-                if self.handle_error(
-                    error_message,
-                    error_code,
-                    file_path=self.file_path,
-                    suggested_fix=Errors.suggest_fix(
-                        self.file_path, '--from-version', '5.5.0'
-                    ),
-                ):
+            from_version = self.current_file.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION)
+            if not from_version or server_version_compare('5.5.0', from_version) > 0:
+                error_message, error_code = Errors.pwsh_wrong_version(from_version)
+                if self.handle_error(error_message, error_code, file_path=self.file_path,
+                                     suggested_fix=Errors.suggest_fix(self.file_path, '--from-version', '5.5.0')):
                     return False
 
         return True
@@ -378,15 +283,11 @@ class ScriptValidator(ContentEntityValidator):
         deprecated_v2_regex = DEPRECATED_REGEXES[0]
         deprecated_no_replace_regex = DEPRECATED_REGEXES[1]
         if is_deprecated:
-            if re.search(deprecated_v2_regex, comment) or re.search(
-                deprecated_no_replace_regex, comment
-            ):
+            if re.search(deprecated_v2_regex, comment) or re.search(deprecated_no_replace_regex, comment):
                 pass
             else:
                 error_message, error_code = Errors.invalid_deprecated_script()
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
         return is_valid
 
@@ -400,26 +301,16 @@ class ScriptValidator(ContentEntityValidator):
         if scripts_folder == 'Scripts':
             if not script_file.startswith('script-'):
 
-                (
-                    error_message,
-                    error_code,
-                ) = Errors.is_valid_script_file_path_in_folder(script_file)
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.is_valid_script_file_path_in_folder(script_file)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 
         elif script_file != scripts_folder:
             valid_script_file = script_file.replace('-', '').replace('_', '')
 
             if valid_script_file.lower() != scripts_folder.lower():
-                (
-                    error_message,
-                    error_code,
-                ) = Errors.is_valid_script_file_path_in_folder(script_file)
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.is_valid_script_file_path_in_folder(script_file)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
 
         return True
@@ -431,17 +322,14 @@ class ScriptValidator(ContentEntityValidator):
         Returns:
             true if the folder/files names are valid and there are no separators, and false if not.
         """
-        is_unified_script = self.current_file.get('script', '') not in [
-            '-',
-            '',
-        ]
+        is_unified_script = self.current_file.get('script', '') not in ['-', '']
 
         if is_unified_script:
             return True
 
         answers = [
             self.check_separators_in_folder(),
-            self.check_separators_in_files(),
+            self.check_separators_in_files()
         ]
 
         return all(answers)
@@ -456,17 +344,12 @@ class ScriptValidator(ContentEntityValidator):
         """
 
         script_folder_name = os.path.basename(os.path.dirname(self.file_path))
-        valid_folder_name = self.remove_separators_from_name(
-            script_folder_name
-        )
+        valid_folder_name = self.remove_separators_from_name(script_folder_name)
 
         if valid_folder_name != script_folder_name:
-            error_message, error_code = Errors.folder_name_has_separators(
-                'script', script_folder_name, valid_folder_name
-            )
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            error_message, error_code = Errors.folder_name_has_separators('script', script_folder_name,
+                                                                          valid_folder_name)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
 
@@ -482,9 +365,7 @@ class ScriptValidator(ContentEntityValidator):
         """
 
         # Gets the all script files that may have the script name as base name
-        files_to_check = get_files_in_dir(
-            os.path.dirname(self.file_path), ['yml', 'py'], False
-        )
+        files_to_check = get_files_in_dir(os.path.dirname(self.file_path), ['yml', 'py'], False)
         valid_files = []
         invalid_files = []
 
@@ -492,9 +373,7 @@ class ScriptValidator(ContentEntityValidator):
 
             file_name = os.path.basename(file_path)
 
-            if file_name.endswith('_test.py') or file_name.endswith(
-                '_unified.yml'
-            ):
+            if file_name.endswith('_test.py') or file_name.endswith('_unified.yml'):
                 base_name = file_name.rsplit('_', 1)[0]
 
             else:
@@ -503,19 +382,13 @@ class ScriptValidator(ContentEntityValidator):
             valid_base_name = self.remove_separators_from_name(base_name)
 
             if valid_base_name != base_name:
-                valid_files.append(
-                    valid_base_name.join(file_name.rsplit(base_name, 1))
-                )
+                valid_files.append(valid_base_name.join(file_name.rsplit(base_name, 1)))
                 invalid_files.append(file_name)
 
         if invalid_files:
 
-            error_message, error_code = Errors.file_name_has_separators(
-                'script', invalid_files, valid_files
-            )
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            error_message, error_code = Errors.file_name_has_separators('script', invalid_files, valid_files)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
 
@@ -530,12 +403,8 @@ class ScriptValidator(ContentEntityValidator):
 
         name = self.current_file.get('name', '')
         if 'script' in name.lower():
-            error_message, error_code = Errors.field_contain_forbidden_word(
-                field_names=['name'], word='script'
-            )
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            error_message, error_code = Errors.field_contain_forbidden_word(field_names=['name'], word='script')
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
         return True
@@ -549,9 +418,7 @@ class ScriptValidator(ContentEntityValidator):
         runas = self.current_file.get('runas', '')
         if runas == 'DBotRole':
             error_message, error_code = Errors.runas_is_dbotrole()
-            if self.handle_error(
-                error_message, error_code, file_path=self.file_path
-            ):
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False
         return True
@@ -568,22 +435,11 @@ class ScriptValidator(ContentEntityValidator):
         """
         is_valid = True
 
-        if self.current_file.get('deprecated'):
-            used_files_list = (
-                self.deprecation_validator.validate_script_deprecation(
-                    self.current_file.get('name')
-                )
-            )
+        if self.current_file.get("deprecated"):
+            used_files_list = self.deprecation_validator.validate_script_deprecation(self.current_file.get('name'))
             if used_files_list:
-                (
-                    error_message,
-                    error_code,
-                ) = Errors.script_is_deprecated_and_used(
-                    self.current_file.get('name'), used_files_list
-                )
-                if self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                ):
+                error_message, error_code = Errors.script_is_deprecated_and_used(self.current_file.get("name"), used_files_list)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
 
         return is_valid

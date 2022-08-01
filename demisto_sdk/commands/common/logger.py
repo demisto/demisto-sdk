@@ -6,10 +6,9 @@ from typing import Optional
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
 
-def logging_setup(
-    verbose: int, quiet: Optional[bool] = False, log_path: Optional[str] = None
-) -> logging.Logger:
-    """Init logger object for logging in demisto-sdk
+def logging_setup(verbose: int, quiet: Optional[bool] = False,
+                  log_path: Optional[str] = None) -> logging.Logger:
+    """ Init logger object for logging in demisto-sdk
         For more info - https://docs.python.org/3/library/logging.html
 
     Args:
@@ -25,13 +24,15 @@ def logging_setup(
     logging.basicConfig()
     l: logging.Logger = logging.getLogger('demisto-sdk')
 
-    levels = {0: logging.INFO, 1: logging.WARNING, 2: logging.DEBUG}
+    levels = {
+        0: logging.INFO,
+        1: logging.WARNING,
+        2: logging.DEBUG
+    }
 
     log_level: int = levels.get(verbose, levels[2])
     l.setLevel(log_level)
-    fmt = logging.Formatter(
-        '%(asctime)s [%(levelname)s]: %(message)s', datefmt=DATE_FORMAT
-    )
+    fmt = logging.Formatter('%(asctime)s [%(levelname)s]: %(message)s', datefmt=DATE_FORMAT)
     console_handler_index = -1
     file_handler_index = -1
 
@@ -55,14 +56,9 @@ def logging_setup(
 
     # Setting debug log file if in circleci
     if log_path:
-        file_handler = logging.FileHandler(
-            filename=os.path.join(log_path, 'lint_debug_log.log')
-        )
+        file_handler = logging.FileHandler(filename=os.path.join(log_path, 'lint_debug_log.log'))
         file_handler.setFormatter(
-            logging.Formatter(
-                '[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(message)s'
-            )
-        )
+            logging.Formatter('[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(message)s'))
         file_handler.name = 'file-handler'
         file_handler.setLevel(level=logging.DEBUG)
 
@@ -88,7 +84,6 @@ class Colors:
     i.e. colors.fg.red or colors.bg.greenalso, the generic bold, disable,
     underline, reverse, strike through,
     and invisible work with the main class i.e. colors.bold"""
-
     reset = '\033[0m'
     bold = '\033[01m'
     disable = '\033[02m'
@@ -99,7 +94,6 @@ class Colors:
 
     class Fg:
         """Forgrownd"""
-
         black = '\033[30m'
         red = '\033[31m'
         green = '\033[32m'
@@ -118,7 +112,6 @@ class Colors:
 
     class Bg:
         """Backgrownd"""
-
         black = '\033[40m'
         red = '\033[41m'
         green = '\033[42m'

@@ -16,13 +16,7 @@ class GenericModuleUnifier:
     Unifies a GenericModule object with it's Dashboards
     """
 
-    def __init__(
-        self,
-        input: str,
-        output: str = '',
-        force: bool = False,
-        marketplace: Optional[str] = None,
-    ):
+    def __init__(self, input: str, output: str = '', force: bool = False, marketplace: Optional[str] = None):
         """
         Init a GenericModuleUnifier
         Args:
@@ -35,18 +29,13 @@ class GenericModuleUnifier:
         self.pack_name = get_pack_name(file_path=self.input_path)
         self.pack_path = os.path.join(PACKS_DIR, self.pack_name)
 
-        self.input_file_name = os.path.basename(self.input_path).rstrip(
-            '.json'
-        )
+        self.input_file_name = os.path.basename(self.input_path).rstrip('.json')
         self.use_force = force
         self.marketplace = marketplace
 
         if output:
             if not os.path.isdir(output):
-                click.secho(
-                    'You have failed to provide a legal dir path',
-                    fg='bright_red',
-                )
+                click.secho('You have failed to provide a legal dir path', fg='bright_red')
                 sys.exit(1)
 
             self.dest_dir = output
@@ -55,9 +44,7 @@ class GenericModuleUnifier:
             # an output wasn't given, save the unified file in the input's file dir
             self.dest_dir = os.path.dirname(self.input_path)
 
-        self.dest_path = os.path.join(
-            self.dest_dir, f'{self.input_file_name}_unified.json'
-        )
+        self.dest_path = os.path.join(self.dest_dir, f'{self.input_file_name}_unified.json')
 
     def find_dashboard_by_id(self, dashboard_id: str) -> Optional[Dict]:
         """
@@ -95,18 +82,13 @@ class GenericModuleUnifier:
                 dashboard_id = tab.get('dashboard', {}).get('id')
                 if dashboard_id:
                     # search dashboard in the GenericModule's pack
-                    dashboard_content = self.find_dashboard_by_id(
-                        dashboard_id=dashboard_id
-                    )
+                    dashboard_content = self.find_dashboard_by_id(dashboard_id=dashboard_id)
                     if dashboard_content:
                         tab['dashboard'] = dashboard_content
 
                     else:
-                        click.secho(
-                            f'Dashboard {dashboard_id} was not found in pack: {self.pack_name} '
-                            f'and therefore was not unified',
-                            fg='bright_red',
-                        )
+                        click.secho(f'Dashboard {dashboard_id} was not found in pack: {self.pack_name} '
+                                    f'and therefore was not unified', fg="bright_red")
 
         self.save_unified_generic_module(generic_module)
 
@@ -120,11 +102,9 @@ class GenericModuleUnifier:
 
         """
         if os.path.isfile(self.dest_path) and self.use_force is False:
-            raise ValueError(
-                f'Output file already exists: {self.dest_path}.'
-                ' Make sure to remove this file from source control, set a different output dir or set the'
-                '-f argument to True in order to overwrite the preexisting file.'
-            )
+            raise ValueError(f'Output file already exists: {self.dest_path}.'
+                             ' Make sure to remove this file from source control, set a different output dir or set the'
+                             '-f argument to True in order to overwrite the preexisting file.')
 
         with open(self.dest_path, mode='w') as file:
             json.dump(unified_generic_module_json, file, indent=4)

@@ -4,66 +4,46 @@ from typing import Dict, List, Tuple
 
 import click
 
-from demisto_sdk.commands.common.constants import (
-    JOB,
-    TESTS_AND_DOC_DIRECTORIES,
-    FileType,
-)
+from demisto_sdk.commands.common.constants import (JOB,
+                                                   TESTS_AND_DOC_DIRECTORIES,
+                                                   FileType)
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.tools import (
-    find_type,
-    get_files_in_dir,
-    print_error,
-    print_success,
-    print_warning,
-)
+from demisto_sdk.commands.common.tools import (find_type, get_files_in_dir,
+                                               print_error, print_success,
+                                               print_warning)
 from demisto_sdk.commands.format.format_constants import SCHEMAS_PATH
 from demisto_sdk.commands.format.update_classifier import (
-    ClassifierJSONFormat,
-    OldClassifierJSONFormat,
-)
+    ClassifierJSONFormat, OldClassifierJSONFormat)
 from demisto_sdk.commands.format.update_connection import ConnectionJSONFormat
 from demisto_sdk.commands.format.update_dashboard import DashboardJSONFormat
 from demisto_sdk.commands.format.update_description import DescriptionFormat
-from demisto_sdk.commands.format.update_genericdefinition import (
-    GenericDefinitionJSONFormat,
-)
-from demisto_sdk.commands.format.update_genericfield import (
-    GenericFieldJSONFormat,
-)
-from demisto_sdk.commands.format.update_genericmodule import (
-    GenericModuleJSONFormat,
-)
-from demisto_sdk.commands.format.update_generictype import (
-    GenericTypeJSONFormat,
-)
-from demisto_sdk.commands.format.update_incidentfields import (
-    IncidentFieldJSONFormat,
-)
-from demisto_sdk.commands.format.update_incidenttype import (
-    IncidentTypesJSONFormat,
-)
-from demisto_sdk.commands.format.update_indicatorfields import (
-    IndicatorFieldJSONFormat,
-)
-from demisto_sdk.commands.format.update_indicatortype import (
-    IndicatorTypeJSONFormat,
-)
+from demisto_sdk.commands.format.update_genericdefinition import \
+    GenericDefinitionJSONFormat
+from demisto_sdk.commands.format.update_genericfield import \
+    GenericFieldJSONFormat
+from demisto_sdk.commands.format.update_genericmodule import \
+    GenericModuleJSONFormat
+from demisto_sdk.commands.format.update_generictype import \
+    GenericTypeJSONFormat
+from demisto_sdk.commands.format.update_incidentfields import \
+    IncidentFieldJSONFormat
+from demisto_sdk.commands.format.update_incidenttype import \
+    IncidentTypesJSONFormat
+from demisto_sdk.commands.format.update_indicatorfields import \
+    IndicatorFieldJSONFormat
+from demisto_sdk.commands.format.update_indicatortype import \
+    IndicatorTypeJSONFormat
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
 from demisto_sdk.commands.format.update_job import JobJSONFormat
 from demisto_sdk.commands.format.update_layout import LayoutBaseFormat
 from demisto_sdk.commands.format.update_lists import ListsFormat
 from demisto_sdk.commands.format.update_mapper import MapperJSONFormat
-from demisto_sdk.commands.format.update_pack_metadata import (
-    PackMetadataJsonFormat,
-)
-from demisto_sdk.commands.format.update_playbook import (
-    PlaybookYMLFormat,
-    TestPlaybookYMLFormat,
-)
-from demisto_sdk.commands.format.update_pre_process_rules import (
-    PreProcessRulesFormat,
-)
+from demisto_sdk.commands.format.update_pack_metadata import \
+    PackMetadataJsonFormat
+from demisto_sdk.commands.format.update_playbook import (PlaybookYMLFormat,
+                                                         TestPlaybookYMLFormat)
+from demisto_sdk.commands.format.update_pre_process_rules import \
+    PreProcessRulesFormat
 from demisto_sdk.commands.format.update_pythonfile import PythonFileFormat
 from demisto_sdk.commands.format.update_readme import ReadmeFormat
 from demisto_sdk.commands.format.update_report import ReportJSONFormat
@@ -103,15 +83,14 @@ FILE_TYPE_AND_LINKED_CLASS = {
     'metadata': PackMetadataJsonFormat,
 }
 
-UNFORMATTED_FILES = [
-    'releasenotes',
-    'changelog',
-    'image',
-    'javascriptfile',
-    'powershellfile',
-    'doc_image',
-    'author_image',
-]
+UNFORMATTED_FILES = ['releasenotes',
+                     'changelog',
+                     'image',
+                     'javascriptfile',
+                     'powershellfile',
+                     'doc_image',
+                     'author_image'
+                     ]
 
 VALIDATE_RES_SKIPPED_CODE = 2
 VALIDATE_RES_FAILED_CODE = 3
@@ -119,23 +98,21 @@ VALIDATE_RES_FAILED_CODE = 3
 CONTENT_ENTITY_IDS_TO_UPDATE: Dict = {}
 
 
-def format_manager(
-    input: str = None,
-    output: str = None,
-    from_version: str = '',
-    no_validate: bool = False,
-    verbose: bool = False,
-    update_docker: bool = False,
-    assume_yes: bool = False,
-    deprecate: bool = False,
-    use_git: bool = False,
-    prev_ver: str = None,
-    include_untracked: bool = False,
-    add_tests: bool = None,
-    interactive: bool = True,
-    id_set_path: str = None,
-    clear_cache: bool = False,
-):
+def format_manager(input: str = None,
+                   output: str = None,
+                   from_version: str = '',
+                   no_validate: bool = False,
+                   verbose: bool = False,
+                   update_docker: bool = False,
+                   assume_yes: bool = False,
+                   deprecate: bool = False,
+                   use_git: bool = False,
+                   prev_ver: str = None,
+                   include_untracked: bool = False,
+                   add_tests: bool = None,
+                   interactive: bool = True,
+                   id_set_path: str = None,
+                   clear_cache: bool = False):
     """
     Format_manager is a function that activated format command on different type of files.
     Args:
@@ -166,15 +143,11 @@ def format_manager(
         files = get_files_in_dir(input, supported_file_types)
 
     elif use_git:
-        files = get_files_to_format_from_git(
-            supported_file_types, prev_ver, include_untracked
-        )
+        files = get_files_to_format_from_git(supported_file_types, prev_ver, include_untracked)
 
     if output and not output.endswith(('yml', 'json', 'py')):
-        raise Exception(
-            'The given output path is not a specific file path.\n'
-            'Only file path can be a output path.  Please specify a correct output.'
-        )
+        raise Exception("The given output path is not a specific file path.\n"
+                        "Only file path can be a output path.  Please specify a correct output.")
 
     log_list = []
     error_list: List[Tuple[int, int]] = []
@@ -189,28 +162,23 @@ def format_manager(
                 current_excluded_files.remove('CommonServerPython.py')
             if os.path.basename(file_path) in current_excluded_files:
                 continue
-            if any(
-                test_dir in str(dirname)
-                for test_dir in TESTS_AND_DOC_DIRECTORIES
-            ):
+            if any(test_dir in str(dirname) for test_dir in TESTS_AND_DOC_DIRECTORIES):
                 continue
 
             if file_type and file_type.value not in UNFORMATTED_FILES:
                 file_type = file_type.value
-                info_res, err_res, skip_res = run_format_on_file(
-                    input=file_path,
-                    file_type=file_type,
-                    from_version=from_version,
-                    interactive=interactive,
-                    output=output,
-                    no_validate=no_validate,
-                    verbose=verbose,
-                    update_docker=update_docker,
-                    assume_yes=assume_yes,
-                    deprecate=deprecate,
-                    add_tests=add_tests,
-                    id_set_path=id_set_path,
-                )
+                info_res, err_res, skip_res = run_format_on_file(input=file_path,
+                                                                 file_type=file_type,
+                                                                 from_version=from_version,
+                                                                 interactive=interactive,
+                                                                 output=output,
+                                                                 no_validate=no_validate,
+                                                                 verbose=verbose,
+                                                                 update_docker=update_docker,
+                                                                 assume_yes=assume_yes,
+                                                                 deprecate=deprecate,
+                                                                 add_tests=add_tests,
+                                                                 id_set_path=id_set_path)
                 if err_res:
                     log_list.extend([(err_res, print_error)])
                 if info_res:
@@ -218,38 +186,17 @@ def format_manager(
                 if skip_res:
                     log_list.extend([(skip_res, print_warning)])
             elif file_type:
-                log_list.append(
-                    (
-                        [
-                            f'Ignoring format for {file_path} as {file_type.value} is currently not '
-                            f'supported by format command'
-                        ],
-                        print_warning,
-                    )
-                )
+                log_list.append(([f"Ignoring format for {file_path} as {file_type.value} is currently not "
+                                  f"supported by format command"], print_warning))
             else:
-                log_list.append(
-                    (
-                        [
-                            f'Was unable to identify the file type for the following file: {file_path}'
-                        ],
-                        print_error,
-                    )
-                )
+                log_list.append(([f"Was unable to identify the file type for the following file: {file_path}"],
+                                 print_error))
 
         update_content_entity_ids(files, verbose)
 
     else:
         if not use_git:
-            log_list.append(
-                (
-                    [
-                        f'Failed format file {input}.'
-                        + 'No such file or directory'
-                    ],
-                    print_error,
-                )
-            )
+            log_list.append(([f'Failed format file {input}.' + "No such file or directory"], print_error))
         return 1
 
     print('')  # Just adding a new line before summary
@@ -261,9 +208,7 @@ def format_manager(
     return 0
 
 
-def get_files_to_format_from_git(
-    supported_file_types: List[str], prev_ver: str, include_untracked: bool
-) -> List[str]:
+def get_files_to_format_from_git(supported_file_types: List[str], prev_ver: str, include_untracked: bool) -> List[str]:
     """Get the files to format from git.
 
     Args:
@@ -275,9 +220,7 @@ def get_files_to_format_from_git(
         list. a list of all the files that should be formatted.
     """
     git_util = GitUtil()
-    all_changed_files = git_util.get_all_changed_files(
-        prev_ver=prev_ver, include_untracked=include_untracked
-    )
+    all_changed_files = git_util.get_all_changed_files(prev_ver=prev_ver, include_untracked=include_untracked)
 
     filtered_files = []
     for file_path in all_changed_files:
@@ -285,17 +228,12 @@ def get_files_to_format_from_git(
 
         # get the file extension without the '.'
         file_extension = os.path.splitext(str_file_path)[1][1:]
-        if file_extension in supported_file_types and os.path.exists(
-            str_file_path
-        ):
+        if file_extension in supported_file_types and os.path.exists(str_file_path):
             filtered_files.append(str_file_path)
 
     if filtered_files:
-        detected_files_string = '\n'.join(filtered_files)
-        click.secho(
-            f'Found the following files to format:\n{detected_files_string}',
-            fg='bright_cyan',
-        )
+        detected_files_string = "\n".join(filtered_files)
+        click.secho(f'Found the following files to format:\n{detected_files_string}', fg='bright_cyan')
 
     else:
         click.secho('Did not find any files to format', fg='bright_red')
@@ -314,31 +252,23 @@ def update_content_entity_ids(files: List[str], verbose: bool):
         return
 
     if verbose:
-        click.echo(
-            f'Collected content entities IDs to update:\n{CONTENT_ENTITY_IDS_TO_UPDATE}\n'
-            f'Going over files to update these IDs in other files...'
-        )
+        click.echo(f'Collected content entities IDs to update:\n{CONTENT_ENTITY_IDS_TO_UPDATE}\n'
+                   f'Going over files to update these IDs in other files...')
     for file in files:
         file_path = str(Path(file))
         if verbose:
-            click.echo(
-                f'Processing file {file_path} to check for content entities IDs to update'
-            )
+            click.echo(f'Processing file {file_path} to check for content entities IDs to update')
         with open(file_path, 'r+') as f:
             file_content = f.read()
-            for (
-                id_to_replace,
-                updated_id,
-            ) in CONTENT_ENTITY_IDS_TO_UPDATE.items():
+            for id_to_replace, updated_id in CONTENT_ENTITY_IDS_TO_UPDATE.items():
                 file_content = file_content.replace(id_to_replace, updated_id)
             f.seek(0)
             f.write(file_content)
             f.truncate()
 
 
-def run_format_on_file(
-    input: str, file_type: str, from_version: str, interactive: bool, **kwargs
-) -> Tuple[List[str], List[str], List[str]]:
+def run_format_on_file(input: str, file_type: str, from_version: str, interactive: bool, **kwargs) -> \
+        Tuple[List[str], List[str], List[str]]:
     """Run the relevent format of file type.
     Args:
         input (str): The input file path.
@@ -352,62 +282,34 @@ def run_format_on_file(
     if file_type == 'betaintegration':
         file_type = 'integration'
     schema_path = os.path.normpath(
-        os.path.join(
-            __file__,
-            '..',
-            '..',
-            'common',
-            SCHEMAS_PATH,
-            '{}.yml'.format(file_type),
-        )
-    )
-    if (
-        file_type not in ('integration', 'script')
-        and 'update_docker' in kwargs
-    ):
+        os.path.join(__file__, "..", "..", "common", SCHEMAS_PATH, '{}.yml'.format(file_type)))
+    if file_type not in ('integration', 'script') and 'update_docker' in kwargs:
         # non code formatters don't support update_docker param. remove it
         del kwargs['update_docker']
-    if (
-        file_type not in ('integration', 'playbook', 'script')
-        and 'add_tests' in kwargs
-    ):
+    if file_type not in ('integration', 'playbook', 'script') and 'add_tests' in kwargs:
         # adding tests is relevant only for integrations, playbooks and scripts.
         del kwargs['add_tests']
-    if (
-        file_type
-        not in (
-            FileType.INCIDENT_FIELD.value,
-            FileType.LAYOUTS_CONTAINER.value,
-            FileType.LAYOUT.value,
-            FileType.MAPPER.value,
-        )
-        and 'id_set_path' in kwargs
-    ):
+    if file_type not in (
+        FileType.INCIDENT_FIELD.value, FileType.LAYOUTS_CONTAINER.value, FileType.LAYOUT.value, FileType.MAPPER.value
+    ) and 'id_set_path' in kwargs:
         # relevant only for incidentfield/layouts/mappers
         del kwargs['id_set_path']
     updater_class = FILE_TYPE_AND_LINKED_CLASS.get(file_type)
-    if (
-        not updater_class
-    ):  # fail format so long as xsiam entities dont have formatters
+    if not updater_class:  # fail format so long as xsiam entities dont have formatters
         print_warning(f'No  updater_class was found for file type {file_type}')
         return logger(input, 1, VALIDATE_RES_SKIPPED_CODE)
 
-    update_object = updater_class(
-        input=input,
-        path=schema_path,
-        from_version=from_version,
-        interactive=interactive,
-        **kwargs,
-    )
+    update_object = updater_class(input=input, path=schema_path, from_version=from_version,
+                                  interactive=interactive, **kwargs)
     format_res, validate_res = update_object.format_file()  # type: ignore
     CONTENT_ENTITY_IDS_TO_UPDATE.update(update_object.updated_ids)
     return logger(input, format_res, validate_res)
 
 
 def logger(
-    input: str,
-    format_res: int,
-    validate_res: int,
+        input: str,
+        format_res: int,
+        validate_res: int,
 ) -> Tuple[List[str], List[str], List[str]]:
     info_list = []
     error_list = []
@@ -433,9 +335,7 @@ def logger(
         else:
             info_list.append(f'Format Status   on file: {input} - Success')
             error_list.append(f'Validate Status on file: {input} - Failed')
-            error_list.append(
-                f'For more information run: `demisto-sdk validate -i {input}`'
-            )
+            error_list.append(f'For more information run: `demisto-sdk validate -i {input}`')
     elif not format_res and not validate_res:
         info_list.append(f'Format Status   on file: {input} - Success')
         info_list.append(f'Validate Status on file: {input} - Success')

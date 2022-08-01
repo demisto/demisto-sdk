@@ -10,9 +10,7 @@ class TestJSONHandler:
         slashes = '/' * slash_count
         url = f'https:{slashes}xsoar.com'
         dumped = JSON_Handler().dumps({'url': url})
-        assert (
-            url in dumped
-        ), 'Could not find the url in the dumped file. Maybe escaped char?'
+        assert url in dumped, 'Could not find the url in the dumped file. Maybe escaped char?'
 
     @pytest.mark.parametrize('slash_count', range(4))
     def test_no_escape_chars_dump(self, tmpdir, slash_count: int):

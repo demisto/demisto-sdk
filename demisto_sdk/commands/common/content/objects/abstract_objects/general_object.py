@@ -8,8 +8,8 @@ import demisto_sdk.commands.common.content.errors as exc
 
 
 class GeneralObject(object):
-    def __init__(self, path: Union[Path, str], file_name_prefix: str = ''):
-        """Abstract object for represent objects in content.
+    def __init__(self, path: Union[Path, str], file_name_prefix: str = ""):
+        """ Abstract object for represent objects in content.
 
         Args:
             path: Valid path for object. (Determined by object type - JSON/YAML/TEXT)
@@ -57,16 +57,12 @@ class GeneralObject(object):
             str: Normalize file name.
         """
         normalize_file_name = self._path.name
-        if self._prefix and not normalize_file_name.startswith(
-            f'{self._prefix}-'
-        ):
+        if self._prefix and not normalize_file_name.startswith(f'{self._prefix}-'):
             normalize_file_name = f'{self._prefix}-{normalize_file_name}'
 
         return normalize_file_name
 
-    def _create_target_dump_dir(
-        self, dest_dir: Optional[Union[Path, str]] = None
-    ) -> Path:
+    def _create_target_dump_dir(self, dest_dir: Optional[Union[Path, str]] = None) -> Path:
         """Create destination directory, Destination must be valid directory, If not specified dump in
          path of origin object.
 
@@ -82,9 +78,7 @@ class GeneralObject(object):
         if dest_dir:
             dest_dir = Path(dest_dir)
             if dest_dir.exists() and not Path(dest_dir).is_dir():
-                raise exc.ContentDumpError(
-                    self, self._path, 'Destiantion is not valid directory path'
-                )
+                raise exc.ContentDumpError(self, self._path, "Destiantion is not valid directory path")
             else:
                 dest_dir.mkdir(parents=True, exist_ok=True)
         else:
@@ -103,9 +97,7 @@ class GeneralObject(object):
 
         """
 
-        dest_file = (
-            self._create_target_dump_dir(dest_dir) / self.normalize_file_name()
-        )
+        dest_file = self._create_target_dump_dir(dest_dir) / self.normalize_file_name()
         return [copyfile(src=self._path, dst=dest_file)]
 
     def type(self):

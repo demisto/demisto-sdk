@@ -5,9 +5,8 @@ import demisto_client
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import INCIDENT_FIELD, FileType
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import (
-    JSONContentObject,
-)
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
+    JSONContentObject
 from demisto_sdk.commands.common.handlers import JSON_Handler
 
 json = JSON_Handler()
@@ -31,16 +30,10 @@ class IncidentField(JSONContentObject):
         else:
             incident_fields_unified_data = {'incidentFields': self._as_dict}
 
-        with NamedTemporaryFile(
-            suffix='.json'
-        ) as incident_fields_unified_file:
-            incident_fields_unified_file.write(
-                bytes(json.dumps(incident_fields_unified_data), 'utf-8')
-            )
+        with NamedTemporaryFile(suffix='.json') as incident_fields_unified_file:
+            incident_fields_unified_file.write(bytes(json.dumps(incident_fields_unified_data), 'utf-8'))
             incident_fields_unified_file.seek(0)
-            return client.import_incident_fields(
-                file=incident_fields_unified_file.name
-            )
+            return client.import_incident_fields(file=incident_fields_unified_file.name)
 
     def type(self):
         return FileType.INCIDENT_FIELD

@@ -1,10 +1,8 @@
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import (
-    error_codes,
-)
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
-    ContentEntityValidator,
-)
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    error_codes
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
+    ContentEntityValidator
 from demisto_sdk.commands.common.tools import is_string_uuid
 
 
@@ -30,15 +28,14 @@ class TestPlaybookValidator(ContentEntityValidator):
         return all(test_playbooks_check)
 
     def is_valid_file(self, validate_rn):
-        """Check whether the test playbook or script file is valid or not"""
+        """Check whether the test playbook or script file is valid or not
+        """
 
-        return all(
-            [
-                self.is_valid_fromversion(),
-                self.are_fromversion_and_toversion_in_correct_format(),
-                self.are_fromversion_toversion_synchronized(),
-            ]
-        )
+        return all([
+            self.is_valid_fromversion(),
+            self.are_fromversion_and_toversion_in_correct_format(),
+            self.are_fromversion_toversion_synchronized(),
+        ])
 
     def is_valid_version(self):  # type: () -> bool
         """Check whether the test playbook version is equal to DEFAULT_VERSION (see base_validator class)
@@ -63,12 +60,8 @@ class TestPlaybookValidator(ContentEntityValidator):
 
             if not is_valid_task:
                 is_valid = is_valid_task
-                error_message, error_code = Errors.invalid_uuid(
-                    task_key, taskid, inner_id
-                )
-                self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                )  # Does not break after one
+                error_message, error_code = Errors.invalid_uuid(task_key, taskid, inner_id)
+                self.handle_error(error_message, error_code, file_path=self.file_path)  # Does not break after one
                 # invalid task in order to raise error for all the invalid tasks at the file
 
         return is_valid
@@ -85,16 +78,12 @@ class TestPlaybookValidator(ContentEntityValidator):
         for task_key, task in tasks.items():
             taskid = task.get('taskid', '')
             inner_id = task.get('task', {}).get('id', '')
-            is_valid_task = taskid == inner_id
+            is_valid_task = (taskid == inner_id)
 
             if not is_valid_task:
                 is_valid = is_valid_task
-                error_message, error_code = Errors.taskid_different_from_id(
-                    task_key, taskid, inner_id
-                )
-                self.handle_error(
-                    error_message, error_code, file_path=self.file_path
-                )  # Does not break after one
+                error_message, error_code = Errors.taskid_different_from_id(task_key, taskid, inner_id)
+                self.handle_error(error_message, error_code, file_path=self.file_path)  # Does not break after one
                 # invalid task in order to raise error for all the invalid tasks at the file
 
         return is_valid

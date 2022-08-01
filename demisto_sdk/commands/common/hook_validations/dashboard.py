@@ -1,10 +1,8 @@
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import (
-    error_codes,
-)
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import (
-    ContentEntityValidator,
-)
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    error_codes
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
+    ContentEntityValidator
 from demisto_sdk.commands.common.tools import print_error
 
 
@@ -29,9 +27,10 @@ class DashboardValidator(ContentEntityValidator):
 
         # check only on added files
         if not self.old_file:
-            is_dashboard_valid = all(
-                [is_dashboard_valid, self.is_id_equals_name()]
-            )
+            is_dashboard_valid = all([
+                is_dashboard_valid,
+                self.is_id_equals_name()
+            ])
 
         return is_dashboard_valid
 
@@ -61,32 +60,18 @@ class DashboardValidator(ContentEntityValidator):
         Returns:
             True if exclude, else False.
         """
-        error_msg = ''
+        error_msg = ""
         is_valid = True
-        fields_to_exclude = [
-            'system',
-            'isCommon',
-            'shared',
-            'owner',
-            'sortValues',
-            'vcShouldIgnore',
-            'commitMessage',
-            'shouldCommit',
-        ]
+        fields_to_exclude = ['system', 'isCommon', 'shared', 'owner',
+                             'sortValues', 'vcShouldIgnore', 'commitMessage', 'shouldCommit']
 
         widgets = self.get_widgets_from_dashboard(self.current_file)
 
         for field in fields_to_exclude:
             if self.current_file.get(field) is not None:
-                error_message, error_code = Errors.remove_field_from_dashboard(
-                    field
-                )
-                formatted_message = self.handle_error(
-                    error_message,
-                    error_code,
-                    file_path=self.file_path,
-                    should_print=False,
-                )
+                error_message, error_code = Errors.remove_field_from_dashboard(field)
+                formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                      should_print=False)
                 if formatted_message:
                     is_valid = False
                     error_msg += formatted_message
@@ -94,16 +79,9 @@ class DashboardValidator(ContentEntityValidator):
             if widgets:
                 for widget in widgets:
                     if widget.get(field):
-                        (
-                            error_message,
-                            error_code,
-                        ) = Errors.remove_field_from_widget(field, widget)
-                        formatted_message = self.handle_error(
-                            error_message,
-                            error_code,
-                            file_path=self.file_path,
-                            should_print=False,
-                        )
+                        error_message, error_code = Errors.remove_field_from_widget(field, widget)
+                        formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                              should_print=False)
                         if formatted_message:
                             is_valid = False
                             error_msg += formatted_message
@@ -119,7 +97,7 @@ class DashboardValidator(ContentEntityValidator):
         Returns:
             True if include, else False.
         """
-        error_msg = ''
+        error_msg = ""
         is_valid = True
         fields_to_include = ['fromDate', 'toDate', 'fromDateLicense']
 
@@ -127,15 +105,9 @@ class DashboardValidator(ContentEntityValidator):
 
         for field in fields_to_include:
             if not self.current_file.get(field):
-                error_message, error_code = Errors.include_field_in_dashboard(
-                    field
-                )
-                formatted_message = self.handle_error(
-                    error_message,
-                    error_code,
-                    file_path=self.file_path,
-                    should_print=False,
-                )
+                error_message, error_code = Errors.include_field_in_dashboard(field)
+                formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                      should_print=False)
                 if formatted_message:
                     is_valid = False
                     error_msg += formatted_message
@@ -143,17 +115,10 @@ class DashboardValidator(ContentEntityValidator):
             if widgets:
                 for widget in widgets:
                     if not widget.get(field):
-                        widget_name = widget.get('name')
-                        (
-                            error_message,
-                            error_code,
-                        ) = Errors.include_field_in_widget(field, widget_name)
-                        formatted_message = self.handle_error(
-                            error_message,
-                            error_code,
-                            file_path=self.file_path,
-                            should_print=False,
-                        )
+                        widget_name = widget.get("name")
+                        error_message, error_code = Errors.include_field_in_widget(field, widget_name)
+                        formatted_message = self.handle_error(error_message, error_code, file_path=self.file_path,
+                                                              should_print=False)
                         if formatted_message:
                             is_valid = False
                             error_msg += formatted_message

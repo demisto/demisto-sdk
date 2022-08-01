@@ -2,35 +2,18 @@ import os
 import random
 
 from demisto_sdk.commands.common.constants import DEFAULT_ID_SET_PATH
-from demisto_sdk.commands.common.tools import (
-    get_from_version,
-    get_yaml,
-    open_id_set_file,
-    print_error,
-    print_warning,
-)
+from demisto_sdk.commands.common.tools import (get_from_version, get_yaml,
+                                               open_id_set_file, print_error,
+                                               print_warning)
 from demisto_sdk.commands.common.update_id_set import get_depends_on
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from demisto_sdk.commands.generate_docs.common import (
-    build_example_dict,
-    generate_list_section,
-    generate_numbered_section,
-    generate_section,
-    generate_table_section,
-    save_output,
-    string_escape_md,
-)
+    build_example_dict, generate_list_section, generate_numbered_section,
+    generate_section, generate_table_section, save_output, string_escape_md)
 
 
-def generate_script_doc(
-    input_path,
-    examples,
-    output: str = None,
-    permissions: str = None,
-    limitations: str = None,
-    insecure: bool = False,
-    verbose: bool = False,
-):
+def generate_script_doc(input_path, examples, output: str = None, permissions: str = None,
+                        limitations: str = None, insecure: bool = False, verbose: bool = False):
     try:
         doc: list = []
         errors: list = []
@@ -50,19 +33,13 @@ def generate_script_doc(
                         examples[i] = f'!{examples}'
 
             example_dict, build_errors = build_example_dict(examples, insecure)
-            script_name = (
-                list(example_dict.keys())[0] if example_dict else None
-            )
-            example_section, example_errors = generate_script_example(
-                script_name, example_dict
-            )
+            script_name = list(example_dict.keys())[0] if example_dict else None
+            example_section, example_errors = generate_script_example(script_name, example_dict)
             errors.extend(build_errors)
             errors.extend(example_errors)
         else:
-            errors.append(
-                'Note: Script example was not provided. For a more complete documentation,run with the -e '
-                'option with an example command. For example: -e "!ConvertFile entry_id=<entry_id>".'
-            )
+            errors.append('Note: Script example was not provided. For a more complete documentation,run with the -e '
+                          'option with an example command. For example: -e "!ConvertFile entry_id=<entry_id>".')
 
         script = get_yaml(input_path)
 
@@ -91,23 +68,15 @@ def generate_script_doc(
         errors.extend(outputs_errors)
 
         if not description:
-            errors.append(
-                'Error! You are missing a description for the Script'
-            )
+            errors.append('Error! You are missing a description for the Script')
 
         doc.append(description + '\n')
 
         doc.extend(generate_table_section(script_info, 'Script Data'))
 
         if dependencies:
-            doc.extend(
-                generate_list_section(
-                    'Dependencies',
-                    dependencies,
-                    True,
-                    text='This script uses the following commands and scripts.',
-                )
-            )
+            doc.extend(generate_list_section('Dependencies', dependencies, True,
+                                             text='This script uses the following commands and scripts.'))
 
         # Script global permissions
         if permissions == 'general':
@@ -115,53 +84,29 @@ def generate_script_doc(
 
         if used_in:
             if len(used_in) <= 10:
-                doc.extend(
-                    generate_list_section(
-                        'Used In',
-                        used_in,
-                        True,
-                        text='This script is used in the following playbooks and scripts.',
-                    )
-                )
+                doc.extend(generate_list_section('Used In', used_in, True,
+                                                 text='This script is used in the following playbooks and scripts.'))
             else:  # if we have more than 10 use a sample
                 print_warning(
                     f'"Used In" section found too many scripts/playbooks ({len(used_in)}). Will use a sample of 10.'
-                    ' Full list is available as a comment in the README file.'
-                )
+                    ' Full list is available as a comment in the README file.')
                 sample_used_in = random.sample(used_in, 10)
-                doc.extend(
-                    generate_list_section(
-                        'Used In',
-                        sorted(sample_used_in),
-                        True,
-                        text='Sample usage of this script can be found in the following playbooks and scripts.',
-                    )
-                )
+                doc.extend(generate_list_section('Used In', sorted(sample_used_in), True,
+                                                 text='Sample usage of this script can be found in the following playbooks and scripts.'))
                 used_in_str = '\n'.join(used_in)
                 doc.append(
-                    f'<!--\nUsed In: list was truncated. Full list commented out for reference:\n\n{used_in_str}\n -->\n'
-                )
+                    f"<!--\nUsed In: list was truncated. Full list commented out for reference:\n\n{used_in_str}\n -->\n")
 
-        doc.extend(
-            generate_table_section(
-                inputs, 'Inputs', 'There are no inputs for this script.'
-            )
-        )
+        doc.extend(generate_table_section(inputs, 'Inputs', 'There are no inputs for this script.'))
 
-        doc.extend(
-            generate_table_section(
-                outputs, 'Outputs', 'There are no outputs for this script.'
-            )
-        )
+        doc.extend(generate_table_section(outputs, 'Outputs', 'There are no outputs for this script.'))
 
         if example_section:
             doc.extend(example_section)
 
         # Known limitations
         if limitations:
-            doc.extend(
-                generate_numbered_section('Known Limitations', limitations)
-            )
+            doc.extend(generate_numbered_section('Known Limitations', limitations))
 
         doc_text = '\n'.join(doc)
 
@@ -202,9 +147,7 @@ def get_script_info(script_path: str, clear_cache: bool = False):
     if tags:
         res.append({'Name': 'Tags', 'Description': tags})
     if from_version != '':
-        res.append(
-            {'Name': 'Cortex XSOAR Version', 'Description': from_version}
-        )
+        res.append({'Name': 'Cortex XSOAR Version', 'Description': from_version})
     return res
 
 
@@ -223,17 +166,12 @@ def get_inputs(script):
     for arg in script.get('args'):
         if not arg.get('description'):
             errors.append(
-                'Error! You are missing description in script input {}'.format(
-                    arg.get('name')
-                )
-            )
+                'Error! You are missing description in script input {}'.format(arg.get('name')))
 
-        inputs.append(
-            {
-                'Argument Name': arg.get('name'),
-                'Description': string_escape_md(arg.get('description', '')),
-            }
-        )
+        inputs.append({
+            'Argument Name': arg.get('name'),
+            'Description': string_escape_md(arg.get('description', ''))
+        })
 
     return inputs, errors
 
@@ -253,18 +191,13 @@ def get_outputs(script):
     for arg in script.get('outputs'):
         if not arg.get('description'):
             errors.append(
-                'Error! You are missing description in script output {}'.format(
-                    arg.get('contextPath')
-                )
-            )
+                'Error! You are missing description in script output {}'.format(arg.get('contextPath')))
 
-        outputs.append(
-            {
-                'Path': arg.get('contextPath'),
-                'Description': string_escape_md(arg.get('description', '')),
-                'Type': arg.get('type', 'Unknown'),
-            }
-        )
+        outputs.append({
+            'Path': arg.get('contextPath'),
+            'Description': string_escape_md(arg.get('description', '')),
+            'Type': arg.get('type', 'Unknown')
+        })
 
     return outputs, errors
 
@@ -298,38 +231,25 @@ def generate_script_example(script_name, example=None):
     results = []
     errors = []
     if not example:
-        errors.append(
-            f'did not get any example for {script_name}. please add it manually.'
-        )
+        errors.append(f'did not get any example for {script_name}. please add it manually.')
     else:
         examples = example.get(script_name, None)
         if not examples:
-            return '', [
-                f'did not get any example for {script_name}. please add it manually.'
-            ]
+            return '', [f'did not get any example for {script_name}. please add it manually.']
         results.extend(['', '## Script Examples'])
         for script_example, md_example, context_example in examples:
             results.extend(['### Example command', f'```{script_example}```'])
             if context_example:
-                results.extend(
-                    [
-                        '### Context Example',
-                        '```json',
-                        '{}'.format(context_example),
-                        '```',
-                        '',
-                    ]
-                )
+                results.extend(['### Context Example',
+                                '```json',
+                                '{}'.format(context_example),
+                                '```',
+                                '', ])
             if md_example:
-                results.extend(
-                    [
-                        '### Human Readable Output',
-                        '{}'.format(
-                            '>'.join(f'\n{md_example}'.splitlines(True))
-                        ),
-                        # prefix human readable with quote
-                        '',
-                    ]
-                )
+                results.extend(['### Human Readable Output',
+                                '{}'.format('>'.join(f'\n{md_example}'.splitlines(True))),
+                                # prefix human readable with quote
+                                '',
+                                ])
 
     return results, errors

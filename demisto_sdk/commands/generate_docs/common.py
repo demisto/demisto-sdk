@@ -4,12 +4,8 @@ import re
 from typing import Dict, List, Tuple
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (
-    LOG_COLORS,
-    print_color,
-    print_warning,
-    run_command,
-)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
+                                               print_warning, run_command)
 from demisto_sdk.commands.run_cmd.runner import Runner
 
 json = JSON_Handler()
@@ -33,7 +29,7 @@ def save_output(path, file_name, content):
     """
     output = os.path.join(path, file_name)
 
-    with open(output, mode='w', encoding='utf8') as doc_file:
+    with open(output, mode="w", encoding="utf8") as doc_file:
         doc_file.write(content)
     add_file_to_git(output)
     print_color(f'Output file was saved to :\n{output}', LOG_COLORS.GREEN)
@@ -46,7 +42,10 @@ def generate_section(title, data=''):
     :param data: The section text.
     :return: array of strings contains the section lines in markdown format.
     """
-    section = ['## {}'.format(title), '']
+    section = [
+        '## {}'.format(title),
+        ''
+    ]
     if data:
         section.extend(add_lines(data))
     return section
@@ -59,7 +58,9 @@ def generate_numbered_section(title: str, data: str = ''):
     :param data: The section text.
     :return: array of strings contains the section lines in markdown format.
     """
-    section = ['## {}'.format(title)]
+    section = [
+        '## {}'.format(title)
+    ]
 
     list_data = data.split('* ')
     if list_data:
@@ -70,24 +71,17 @@ def generate_numbered_section(title: str, data: str = ''):
     return section
 
 
-def generate_list_section(
-    title,
-    data='',
-    horizontal_rule=False,
-    empty_message='',
-    text='',
-    header_type=HEADER_TYPE.H2,
-):
+def generate_list_section(title, data='', horizontal_rule=False, empty_message='', text='', header_type=HEADER_TYPE.H2):
     """
-    Generate list section in markdown format.
-    :param data: list of strings.
-    :param title: The list header.
-    :param horizontal_rule: add horizontal rule after title.
-    :param empty_message: message to print when the list is empty.
-    :param text: message to print after the header.
-    :param header_type: markdown header type - H1, H2 or H3, the default is H2.
-    :return: array of strings contains the list section in markdown format.
-    """
+     Generate list section in markdown format.
+     :param data: list of strings.
+     :param title: The list header.
+     :param horizontal_rule: add horizontal rule after title.
+     :param empty_message: message to print when the list is empty.
+     :param text: message to print after the header.
+     :param header_type: markdown header type - H1, H2 or H3, the default is H2.
+     :return: array of strings contains the list section in markdown format.
+     """
     section = []
     if title:
         section.append(f'{header_type} {title}')
@@ -107,14 +101,8 @@ def generate_list_section(
     return section
 
 
-def generate_table_section(
-    data: list,
-    title: str,
-    empty_message: str = '',
-    text: str = '',
-    horizontal_rule: bool = True,
-    numbered_section: bool = False,
-):
+def generate_table_section(data: list, title: str, empty_message: str = '', text: str = '',
+                           horizontal_rule: bool = True, numbered_section: bool = False):
     """
     Generate table in markdown format.
     :param data: list of dicts contains the table data.
@@ -139,9 +127,7 @@ def generate_table_section(
             section = ['']
         return section
 
-    section.extend(
-        [text, '    |', '    |']
-    ) if numbered_section else section.extend([text, '|', '|'])
+    section.extend([text, '    |', '    |']) if numbered_section else section.extend([text, '|', '|'])
     header_index = len(section) - 2
     for key in data[0]:
         section[header_index] += f' **{key}** |'
@@ -149,17 +135,11 @@ def generate_table_section(
 
     for item in data:
         tmp_item = '    |' if numbered_section else '|'
-        escape_less_greater_signs = (
-            'First fetch time' in item
-        )  # instead of html escaping
+        escape_less_greater_signs = 'First fetch time' in item  # instead of html escaping
         for key in item:
-            escaped_string = string_escape_md(
-                str(item.get(key, '')),
-                minimal_escaping=True,
-                escape_multiline=True,
-                escape_less_greater_signs=escape_less_greater_signs,
-            )
-            tmp_item += f' {escaped_string} |'
+            escaped_string = string_escape_md(str(item.get(key, '')), minimal_escaping=True, escape_multiline=True,
+                                              escape_less_greater_signs=escape_less_greater_signs)
+            tmp_item += f" {escaped_string} |"
         section.append(tmp_item)
 
     section.append('')
@@ -171,35 +151,30 @@ def add_lines(line):
     return output if output else [line]
 
 
-def string_escape_md(
-    st,
-    minimal_escaping=False,
-    escape_multiline=False,
-    escape_html=True,
-    escape_less_greater_signs=False,
-):
+def string_escape_md(st, minimal_escaping=False, escape_multiline=False, escape_html=True,
+                     escape_less_greater_signs=False):
     """
-    Escape any chars that might break a markdown string
+       Escape any chars that might break a markdown string
 
-    :type st: ``str``
-    :param st: The string to be modified (required)
+       :type st: ``str``
+       :param st: The string to be modified (required)
 
-    :type minimal_escaping: ``bool``
-    :param minimal_escaping: Whether replace all special characters or table format only (optional)
+       :type minimal_escaping: ``bool``
+       :param minimal_escaping: Whether replace all special characters or table format only (optional)
 
-    :type escape_multiline: ``bool``
-    :param escape_multiline: Whether convert line-ending characters (optional)
+       :type escape_multiline: ``bool``
+       :param escape_multiline: Whether convert line-ending characters (optional)
 
-    :type escape_html: ``bool``
-    :param escape_html: Whether to escape html (<,>,&) (default: True). Set to false if the string contains
-         html tags. Otherwise this should be true to support MDX complaint docs.
+       :type escape_html: ``bool``
+       :param escape_html: Whether to escape html (<,>,&) (default: True). Set to false if the string contains
+            html tags. Otherwise this should be true to support MDX complaint docs.
 
-    :type escape_less_greater_signs: ``bool``
-    :param escape_less_greater_signs: Whether to escape (<,>) (default: False) with (`<,>`).
-         Set to true for first fetch time param. called instead of the escape_html.
+       :type escape_less_greater_signs: ``bool``
+       :param escape_less_greater_signs: Whether to escape (<,>) (default: False) with (`<,>`).
+            Set to true for first fetch time param. called instead of the escape_html.
 
-    :return: A modified string
-    :rtype: ``str``
+       :return: A modified string
+       :rtype: ``str``
     """
 
     if escape_less_greater_signs:
@@ -218,9 +193,7 @@ def string_escape_md(
         for c in '|':
             st = st.replace(c, '\\' + c)
     else:
-        st = ''.join(
-            f'\\{str(c)}' if c in r'\`*{}[]()#+!' else str(c) for c in st
-        )
+        st = "".join(f'\\{str(c)}' if c in r"\`*{}[]()#+!" else str(c) for c in st)
 
         # The following code adds an escape character for '-' and '_' following cases:
         # 1. The string begins with a dash. e.g: - This input specifies the entry id
@@ -231,16 +204,8 @@ def string_escape_md(
         added_char_count = 1
         for match in re.finditer(r'([\s.,()])(_\S*)(_[\s.,()])', st):
             # In case there is more than one match, the next word index get changed because of the added escape chars.
-            st = (
-                st[: match.regs[0][0] + added_char_count]
-                + '\\'
-                + st[match.regs[0][0] + added_char_count :]
-            )
-            st = (
-                st[: match.regs[3][0] + added_char_count]
-                + '\\'
-                + st[match.regs[3][0] + added_char_count :]
-            )
+            st = st[:match.regs[0][0] + added_char_count] + '\\' + st[match.regs[0][0] + added_char_count:]
+            st = st[:match.regs[3][0] + added_char_count] + '\\' + st[match.regs[3][0] + added_char_count:]
             added_char_count += 2
 
     return st
@@ -255,19 +220,11 @@ def execute_command(command_example, insecure: bool):
         runner = Runner('', insecure=insecure)
         res, raw_context = runner.execute_command(command_example)
         if not res:
-            raise RuntimeError(
-                'something went wrong with your command: {}'.format(
-                    command_example
-                )
-            )
+            raise RuntimeError('something went wrong with your command: {}'.format(command_example))
 
         for entry in res:
             if is_error(entry):
-                raise RuntimeError(
-                    'something went wrong with your command: {}'.format(
-                        command_example
-                    )
-                )
+                raise RuntimeError('something went wrong with your command: {}'.format(command_example))
 
             if raw_context:
                 context = {k.split('(')[0]: v for k, v in raw_context.items()}
@@ -280,17 +237,12 @@ def execute_command(command_example, insecure: bool):
                     md_example = f'```\n{json.dumps(content, sort_keys=True, indent=4)}\n```'
 
     except RuntimeError:
-        errors.append(
-            'The provided example for cmd {} has failed...'.format(cmd)
-        )
+        errors.append('The provided example for cmd {} has failed...'.format(cmd))
 
     except Exception as e:
         errors.append(
-            'Error encountered in the processing of command {}, error was: {}. '.format(
-                cmd, str(e)
-            )
-            + '. Please check your command inputs and outputs'
-        )
+            'Error encountered in the processing of command {}, error was: {}. '.format(cmd, str(e)) +
+            '. Please check your command inputs and outputs')
 
     cmd = cmd.split(' ')[0][1:]
     return cmd, md_example, context, errors
@@ -298,13 +250,13 @@ def execute_command(command_example, insecure: bool):
 
 def is_error(execute_command_result):
     """
-    Check if the given execute_command_result has an error entry
+        Check if the given execute_command_result has an error entry
 
-    :type execute_command_result: ``dict`` or ``list``
-    :param execute_command_result: Demisto entry (required) or result of demisto.executeCommand()
+        :type execute_command_result: ``dict`` or ``list``
+        :param execute_command_result: Demisto entry (required) or result of demisto.executeCommand()
 
-    :return: True if the execute_command_result has an error entry, false otherwise
-    :rtype: ``bool``
+        :return: True if the execute_command_result has an error entry, false otherwise
+        :rtype: ``bool``
     """
     if not execute_command_result:
         return False
@@ -319,9 +271,7 @@ def is_error(execute_command_result):
     return execute_command_result.type == entryTypes['error']
 
 
-def build_example_dict(
-    command_examples: list, insecure: bool
-) -> Tuple[Dict[str, List[Tuple[str, str, str]]], List[str]]:
+def build_example_dict(command_examples: list, insecure: bool) -> Tuple[Dict[str, List[Tuple[str, str, str]]], List[str]]:
     """
     gets an array of command examples, run them one by one and return a map of
         {base command -> [(example command, markdown, outputs), ...]}.
@@ -329,9 +279,7 @@ def build_example_dict(
     examples = {}  # type: dict
     errors = []  # type: list
     for example in command_examples:
-        name, md_example, context_example, cmd_errors = execute_command(
-            example, insecure
-        )
+        name, md_example, context_example, cmd_errors = execute_command(example, insecure)
         if 'playbookQuery' in context_example:
             del context_example['playbookQuery']
 
@@ -378,7 +326,7 @@ entryTypes = {
     'entryInfoFile': 9,
     'warning': 11,
     'map': 15,
-    'widget': 17,
+    'widget': 17
 }
 
 

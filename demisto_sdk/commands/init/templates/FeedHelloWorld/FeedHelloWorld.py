@@ -148,6 +148,7 @@ Entry Point
 This is the integration code entry point. It checks whether the ``__name__``
 variable is ``__main__`` , ``__builtin__`` (for Python 2) or ``builtins`` (for
 Python 3) and then calls the ``main()`` function. Just keep this convention.
+
 """
 
 from typing import Dict, List, Optional
@@ -178,12 +179,11 @@ class Client(BaseClient):
 
         result = []
 
-        res = self._http_request(
-            'GET',
-            url_suffix='',
-            full_url=self._base_url,
-            resp_type='text',
-        )
+        res = self._http_request('GET',
+                                 url_suffix='',
+                                 full_url=self._base_url,
+                                 resp_type='text',
+                                 )
 
         # In this case the feed output is in text format, so extracting the indicators from the response requires
         # iterating over it's lines solely. Other feeds could be in other kinds of formats (CSV, MISP, etc.), or might
@@ -195,19 +195,15 @@ class Client(BaseClient):
                 # Infer the type of the indicator using 'auto_detect_indicator_type(indicator)' function
                 # (defined in CommonServerPython).
                 if auto_detect_indicator_type(indicator):
-                    result.append(
-                        {
-                            'value': indicator,
-                            'type': auto_detect_indicator_type(indicator),
-                            'FeedURL': self._base_url,
-                        }
-                    )
+                    result.append({
+                        'value': indicator,
+                        'type': auto_detect_indicator_type(indicator),
+                        'FeedURL': self._base_url
+                    })
 
         except ValueError as err:
             demisto.debug(str(err))
-            raise ValueError(
-                f'Could not parse returned data as indicator. \n\nError massage: {err}'
-            )
+            raise ValueError(f'Could not parse returned data as indicator. \n\nError massage: {err}')
         return result
 
 
@@ -232,12 +228,8 @@ def test_module(client: Client) -> str:
     return 'ok'
 
 
-def fetch_indicators(
-    client: Client,
-    tlp_color: Optional[str] = None,
-    feed_tags: List = [],
-    limit: int = -1,
-) -> List[Dict]:
+def fetch_indicators(client: Client, tlp_color: Optional[str] = None, feed_tags: List = [], limit: int = -1) \
+        -> List[Dict]:
     """Retrieves indicators from the feed
     Args:
         client (Client): Client object with request
@@ -278,7 +270,7 @@ def fetch_indicators(
             # in Cortex XSOAR to their values.
             'fields': {},
             # A dictionary of the raw data returned from the feed source about the indicator.
-            'rawJSON': raw_data,
+            'rawJSON': raw_data
         }
 
         if feed_tags:
@@ -292,9 +284,10 @@ def fetch_indicators(
     return indicators
 
 
-def get_indicators_command(
-    client: Client, params: Dict[str, str], args: Dict[str, str]
-) -> CommandResults:
+def get_indicators_command(client: Client,
+                           params: Dict[str, str],
+                           args: Dict[str, str]
+                           ) -> CommandResults:
     """Wrapper for retrieving indicators from the feed to the war-room.
     Args:
         client: Client object with request
@@ -307,13 +300,8 @@ def get_indicators_command(
     tlp_color = params.get('tlp_color')
     feed_tags = argToList(params.get('feedTags', ''))
     indicators = fetch_indicators(client, tlp_color, feed_tags, limit)
-    human_readable = tableToMarkdown(
-        'Indicators from HelloWorld Feed:',
-        indicators,
-        headers=['value', 'type'],
-        headerTransform=string_to_table_header,
-        removeNull=True,
-    )
+    human_readable = tableToMarkdown('Indicators from HelloWorld Feed:', indicators,
+                                     headers=['value', 'type'], headerTransform=string_to_table_header, removeNull=True)
     return CommandResults(
         readable_output=human_readable,
         outputs_prefix='',
@@ -323,9 +311,7 @@ def get_indicators_command(
     )
 
 
-def fetch_indicators_command(
-    client: Client, params: Dict[str, str]
-) -> List[Dict]:
+def fetch_indicators_command(client: Client, params: Dict[str, str]) -> List[Dict]:
     """Wrapper for fetching indicators from the feed to the Indicators tab.
     Args:
         client: Client object with request

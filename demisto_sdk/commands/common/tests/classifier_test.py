@@ -1,13 +1,11 @@
 import pytest
 from mock import patch
 
-from demisto_sdk.commands.common.hook_validations.classifier import (
-    ClassifierValidator,
-)
+from demisto_sdk.commands.common.hook_validations.classifier import \
+    ClassifierValidator
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
-from demisto_sdk.commands.common.hook_validations.structure import (
-    StructureValidator,
-)
+from demisto_sdk.commands.common.hook_validations.structure import \
+    StructureValidator
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None):
@@ -26,44 +24,21 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
 
 
 class TestClassifierValidator:
-    CLASSIFIER_WITH_VALID_INCIDENT_FIELD = {
-        'mapping': {
-            '0': {'internalMapping': {'Incident Field': 'incident field'}}
-        }
-    }
+    CLASSIFIER_WITH_VALID_INCIDENT_FIELD = {"mapping": {"0": {"internalMapping": {"Incident Field": "incident field"}}}}
 
-    ID_SET_WITH_INCIDENT_FIELD = {
-        'IncidentFields': [{'name': {'name': 'Incident Field'}}],
-        'IndicatorFields': [{'name': {'name': 'Incident Field'}}],
-    }
+    ID_SET_WITH_INCIDENT_FIELD = {"IncidentFields": [{"name": {"name": "Incident Field"}}],
+                                  "IndicatorFields": [{"name": {"name": "Incident Field"}}]}
 
-    ID_SET_WITHOUT_INCIDENT_FIELD = {
-        'IncidentFields': [{'name': {'name': 'name'}}],
-        'IndicatorFields': [{'name': {'name': 'name'}}],
-    }
+    ID_SET_WITHOUT_INCIDENT_FIELD = {"IncidentFields": [{"name": {"name": "name"}}],
+                                     "IndicatorFields": [{"name": {"name": "name"}}]}
 
     IS_INCIDENT_FIELD_EXIST = [
-        (
-            CLASSIFIER_WITH_VALID_INCIDENT_FIELD,
-            ID_SET_WITH_INCIDENT_FIELD,
-            True,
-            True,
-        ),
-        (
-            CLASSIFIER_WITH_VALID_INCIDENT_FIELD,
-            ID_SET_WITHOUT_INCIDENT_FIELD,
-            True,
-            False,
-        ),
+        (CLASSIFIER_WITH_VALID_INCIDENT_FIELD, ID_SET_WITH_INCIDENT_FIELD, True, True),
+        (CLASSIFIER_WITH_VALID_INCIDENT_FIELD, ID_SET_WITHOUT_INCIDENT_FIELD, True, False)
     ]
 
-    @pytest.mark.parametrize(
-        'classifier_json, id_set_json, is_circle, expected_result',
-        IS_INCIDENT_FIELD_EXIST,
-    )
-    def test_is_incident_field_exist(
-        self, repo, classifier_json, id_set_json, is_circle, expected_result
-    ):
+    @pytest.mark.parametrize("classifier_json, id_set_json, is_circle, expected_result", IS_INCIDENT_FIELD_EXIST)
+    def test_is_incident_field_exist(self, repo, classifier_json, id_set_json, is_circle, expected_result):
         """
         Given
         - A mapper with incident fields
@@ -74,64 +49,26 @@ class TestClassifierValidator:
         - validating that incident fields exist in id_set.
         """
         repo.id_set.write_json(id_set_json)
-        structure = mock_structure('', classifier_json)
+        structure = mock_structure("", classifier_json)
         validator = ClassifierValidator(structure)
-        assert (
-            validator.is_incident_field_exist(id_set_json, is_circle)
-            == expected_result
-        )
+        assert validator.is_incident_field_exist(id_set_json, is_circle) == expected_result
 
-    OLD_MAPPER = {
-        'mapping': {
-            '1': {
-                'internalMapping': {'field1': {'data1'}, 'field2': {'data2'}}
-            },
-            '2': {
-                'internalMapping': {'field1': {'data1'}, 'field2': {'data2'}}
-            },
-        }
-    }
-    NEW_MAPPER_WITH_DELETED_TYPES = {
-        'mapping': {
-            '1': {
-                'internalMapping': {'field1': {'data1'}, 'field2': {'data2'}}
-            }
-        }
-    }
-    NEW_MAPPER_WITH_DELETED_FIELDS = {
-        'mapping': {
-            '1': {
-                'internalMapping': {'field1': {'data1'}, 'field2': {'data2'}}
-            },
-            '2': {'internalMapping': {'field1': {'data1'}}},
-        }
-    }
-    NEW_VALID_MAPPER = {
-        'mapping': {
-            '1': {
-                'internalMapping': {'field1': {'data1'}, 'field2': {'data2'}}
-            },
-            '2': {
-                'internalMapping': {
-                    'field1': {'new_data1'},
-                    'field2': {'data2'},
-                }
-            },
-        }
-    }
+    OLD_MAPPER = {"mapping": {"1": {"internalMapping": {"field1": {"data1"}, "field2": {"data2"}}},
+                              "2": {"internalMapping": {"field1": {"data1"}, "field2": {"data2"}}}}}
+    NEW_MAPPER_WITH_DELETED_TYPES = {"mapping": {"1": {"internalMapping": {"field1": {"data1"}, "field2": {"data2"}}}}}
+    NEW_MAPPER_WITH_DELETED_FIELDS = {"mapping": {"1": {"internalMapping": {"field1": {"data1"}, "field2": {"data2"}}},
+                                                  "2": {"internalMapping": {"field1": {"data1"}}}}}
+    NEW_VALID_MAPPER = {"mapping": {"1": {"internalMapping": {"field1": {"data1"}, "field2": {"data2"}}},
+                                    "2": {"internalMapping": {"field1": {"new_data1"}, "field2": {"data2"}}}}}
 
     IS_CHANGED_INCIDENTS_FIELDS_INPUT = [
         (OLD_MAPPER, NEW_MAPPER_WITH_DELETED_FIELDS, True),
         (OLD_MAPPER, NEW_MAPPER_WITH_DELETED_TYPES, True),
-        (OLD_MAPPER, NEW_VALID_MAPPER, False),
+        (OLD_MAPPER, NEW_VALID_MAPPER, False)
     ]
 
-    @pytest.mark.parametrize(
-        'old_file, current_file, answer', IS_CHANGED_INCIDENTS_FIELDS_INPUT
-    )
-    def test_is_changed_removed_yml_fields(
-        self, old_file, current_file, answer
-    ):
+    @pytest.mark.parametrize("old_file, current_file, answer", IS_CHANGED_INCIDENTS_FIELDS_INPUT)
+    def test_is_changed_removed_yml_fields(self, old_file, current_file, answer):
         """
         Given
         - A mapper with incident fields
@@ -140,7 +77,7 @@ class TestClassifierValidator:
         Then
         - checks that incident fields or incidents types were not removed.
         """
-        structure = mock_structure('', current_file, old_file)
+        structure = mock_structure("", current_file, old_file)
         validator = MapperValidator(structure)
 
         assert validator.is_field_mapping_removed() == answer
@@ -149,11 +86,11 @@ class TestClassifierValidator:
         assert validator.is_field_mapping_removed() is False
 
     IS_MATCHING_NAME_ID_INPUT = [
-        ({'id': 'name', 'name': 'name'}, True),
-        ({'id': 'id_field', 'name': 'name_field'}, False),
+        ({"id": "name", "name": "name"}, True),
+        ({"id": "id_field", "name": "name_field"}, False)
     ]
 
-    @pytest.mark.parametrize('mapper, result', IS_MATCHING_NAME_ID_INPUT)
+    @pytest.mark.parametrize("mapper, result", IS_MATCHING_NAME_ID_INPUT)
     def test_is_name_id_equal(self, repo, mapper, result):
         """
         Given
@@ -164,7 +101,7 @@ class TestClassifierValidator:
         - validating that the mapper name and id are equal.
         """
 
-        structure = mock_structure('', mapper)
+        structure = mock_structure("", mapper)
         validator = ClassifierValidator(structure)
 
         assert validator.is_id_equals_name() == result

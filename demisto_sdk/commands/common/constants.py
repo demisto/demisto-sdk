@@ -95,7 +95,7 @@ MARKETPLACE_KEY_PACK_METADATA = 'marketplaces'
 ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
 
 
-class FileType(Enum):
+class FileType(str, Enum):
     INTEGRATION = 'integration'
     SCRIPT = 'script'
     TEST_SCRIPT = 'testscript'

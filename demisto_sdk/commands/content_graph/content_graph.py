@@ -18,7 +18,7 @@ from demisto_sdk.commands.content_graph.constants import PACKS_FOLDER, ContentTy
 from demisto_sdk.commands.content_graph.parsers.pack import PackSubGraphCreator
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.content.content import Content
-from demisto_sdk.commands.common.tools import run_command_os
+from demisto_sdk.commands.common.tools import run_command
 
 import docker
 import logging
@@ -273,7 +273,7 @@ class Neo4jContentGraph(ContentGraph):
 
     def start_neo4j_service(self, ):
         if not self.use_docker:
-            stdout, stderr, exit_code = run_command_os(f'neo4j-admin set-initial-password {PASSWORD} && neo4j start', REPO_PATH / 'neo4j')
+            run_command(f'neo4j-admin set-initial-password {PASSWORD} && neo4j start', cwd=REPO_PATH / 'neo4j', is_silenced=False)
 
         else:
             docker_client = docker.from_env()
@@ -284,13 +284,7 @@ class Neo4jContentGraph(ContentGraph):
             # then we need to create a new one
             shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
             shutil.rmtree(REPO_PATH / 'neo4j' / 'import', ignore_errors=True)
-            stdout, stderr, exit_code = run_command_os('docker-compose up -d', REPO_PATH / 'neo4j')
-        logger.info(stdout)
-        logger.error(stderr)
-        if exit_code:
-            msg = f'Failed to start neo4j service. Error: {stderr}'
-            raise RuntimeError(msg)
-
+            run_command('docker-compose up -d', cwd=REPO_PATH / 'neo4j', is_silenced=False)
         # health check to make sure that neo4j is up
         s = requests.Session()
 
@@ -304,24 +298,13 @@ class Neo4jContentGraph(ContentGraph):
 
     def stop_neo4j_service(self, ):
         if not self.use_docker:
-            stdout, stderr, exit_code = run_command_os('neo4j stop', REPO_PATH / 'neo4j')
+            run_command('neo4j stop', cwd=REPO_PATH / 'neo4j', is_silenced=False)
         else:
-            stdout, stderr, exit_code = run_command_os('docker-compose down', REPO_PATH / 'neo4j')
-        logger.info(stdout)
-        logger.error(stderr)
-        if exit_code:
-            msg = f'Failed to start neo4j service. Error: {stderr}'
-            raise RuntimeError(msg)
+            run_command('docker-compose down', cwd=REPO_PATH / 'neo4j', is_silenced=False)
 
     def neo4j_admin_command(self, name: str, command: str):
         if not self.use_docker:
-            stdout, stderr, exit_code = run_command_os(command, REPO_PATH / 'neo4j')
-            logger.info(f'{name}: stdout: {stdout}')
-            logger.info(f'{name}: stderr: {stderr}')
-            if exit_code:
-                msg = f'{name} failed with exit code {exit_code}'
-                logger.error(msg)
-                raise RuntimeError(msg)
+            run_command(command, cwd=REPO_PATH / 'neo4j', is_silenced=False)
         else:
             docker_client = docker.from_env()
             try:

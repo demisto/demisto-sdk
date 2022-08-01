@@ -322,17 +322,17 @@ class Neo4jContentGraph(ContentGraph):
 
     def dump(self):
         if self.use_docker:
-            output = '/backups/content-graph.db'
+            output = '/backups/content-graph.dump'
         else:
-            output = (REPO_PATH / 'neo4j' / 'backups' / 'content-graph.db').as_posix()
+            output = (REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump').as_posix()
         self.neo4j_admin_command('dump', f'neo4j-admin dump --database=neo4j --to={output}')
 
     def load(self):
         if self.use_docker:
             shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
-            output = '/backups/content-graph.db'
+            output = '/backups/content-graph.dump'
         else:
-            output = (REPO_PATH / 'neo4j' / 'backups' / 'content-graph.db').as_posix()
+            output = (REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump').as_posix()
 
         self.neo4j_admin_command('load', f'neo4j-admin load --from={output}')
 

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Added `DEMISTO_SDK_CONTENT_PATH` environment variable to specify the content path when executing **demisto-sdk**.
+
 ## 1.7.1
 
 * Fixed an issue where *indicatorTypes* and *betaIntegrations* were not found in the id_set.

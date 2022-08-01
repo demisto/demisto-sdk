@@ -45,6 +45,11 @@ The library uses python 3.8+.
 
 ---
 
+### Content path
+
+The **demisto-sdk** is build to work under [content](https://github.com/demisto/content) repo or a fork of it.
+It should be executed in a directory of a subdirectory of **content**. However, it is possible to set the `DEMISTO_SDK_CONTENT_PATH` environment variable to the **content** path.
+
 ### CLI usage
 
 You can use the SDK in the CLI as follows:

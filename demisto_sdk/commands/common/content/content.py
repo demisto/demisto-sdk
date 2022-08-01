@@ -1,4 +1,5 @@
 from __future__ import annotations
+import os
 
 from typing import Any, Iterator
 
@@ -19,6 +20,9 @@ from demisto_sdk.commands.common.content.objects.root_objects import (
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 
+import logging
+
+logger = logging.getLogger('demisto-sdk')
 
 class Content:
     def __init__(self, path: str | Path):
@@ -68,8 +72,12 @@ class Content:
             1. Should be called when cwd inside content repository.
         """
         try:
-            repo = Repo(Path.cwd(), search_parent_directories=True)
+            if content_path := os.getenv('DEMISTO_SDK_CONTENT_PATH'):
+                repo = Repo(content_path)
+            else:
+                repo = Repo(Path.cwd(), search_parent_directories=True)
         except InvalidGitRepositoryError:
+            logger.debug('Git repo was not found.')
             repo = None
 
         return repo

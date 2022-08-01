@@ -2,7 +2,9 @@ from abc import ABC, abstractmethod
 import csv
 import multiprocessing
 import shutil
-import time
+import requests
+from requests.adapters import HTTPAdapter, Retry
+
 import neo4j
 import pickle
 
@@ -354,14 +356,17 @@ class Neo4jQuery:
 
 
 class Neo4jContentGraph(ContentGraph):
-    def __init__(self, repo_path: Path, database_uri: str, user: str = None, password: str = None) -> None:
+    def __init__(self, repo_path: Path, database_uri: str, user: str = None, password: str = None, should_use_docker: bool = True) -> None:
         super().__init__(repo_path)
         self.start_time = datetime.now()
         self.end_time = None
         auth: Optional[Tuple[str, str]] = (user, password) if user and password else None
         self.driver: neo4j.Neo4jDriver = neo4j.GraphDatabase.driver(database_uri, auth=auth)
+        self.should_use_docker = should_use_docker
 
     def __enter__(self):
+        if self.should_use_docker:
+            self.start_neo4j_service()
         with self.driver.session() as session:
             tx = session.begin_transaction()
             self.create_indexes(tx)
@@ -369,6 +374,28 @@ class Neo4jContentGraph(ContentGraph):
             tx.commit()
             tx.close()
         return self
+
+    def start_neo4j_service(self, ):
+        docker_client = docker.from_env()
+        try:
+            docker_client.containers.get('neo4j-content').remove(force=True)
+        except Exception as e:
+            logger.info(f'Could not remove neo4j container: {e}')
+        # then we need to create a new one
+        shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
+        shutil.rmtree(REPO_PATH / 'neo4j' / 'import', ignore_errors=True)
+        run_command_os('docker-compose up -d', REPO_PATH / 'neo4j')
+        s = requests.Session()
+
+        retries = Retry(
+            connect=100
+        )
+
+        s.mount('http://localhost', HTTPAdapter(max_retries=retries))
+        s.get('http://localhost:7474')
+
+    def stop_neo4j_service(self, ):
+        run_command_os('docker-compose down', REPO_PATH / 'neo4j')
 
     def dump(self):
         docker_client = docker.from_env()
@@ -517,21 +544,11 @@ class Neo4jContentGraph(ContentGraph):
 
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         self.driver.close()
+        if self.should_use_docker:
+            self.stop_neo4j_service()
 
 
-def create_content_graph() -> None:
-    # first we need to remove the neo4j existing data folder
-    docker_client = docker.from_env()
-    try:
-        docker_client.containers.get('neo4j-content').remove(force=True)
-    except Exception as e:
-        logger.info(f'Could not remove neo4j container: {e}')
-    # then we need to create a new one
-    shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
-    shutil.rmtree(REPO_PATH / 'neo4j' / 'import', ignore_errors=True)
-    run_command_os('docker-compose up -d', REPO_PATH / 'neo4j')
-    time.sleep(10)  # wait for neo4j to start, TODO - create health check
-    with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD) as content_graph:
+def create_content_graph(should_use_docker: bool = True) -> None:
+    with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD, should_use_docker) as content_graph:
         content_graph.parse_repository()
         content_graph.dump()
-    run_command_os('docker-compose down', REPO_PATH / 'neo4j')

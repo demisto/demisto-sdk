@@ -1,5 +1,6 @@
 # Site packages
 import copy
+from email.policy import default
 import logging
 import os
 import sys
@@ -2260,15 +2261,31 @@ def error_code(config, **kwargs):
 
 
 @main.command(
-    name='content-graph',
-    help='Content graph'
+    name='create-content-graph',
+    help='create content graph'
 )
 @click.help_option(
     '-h', '--help'
 )
-def content_graph():
+@click.option('-nd', '--no-use-docker', is_flag=True, help="Use docker to run the content graph")
+def create_content_graph(no_use_docker, keep_service):
     from demisto_sdk.commands.content_graph.content_graph import create_content_graph
-    create_content_graph()
+    create_content_graph(use_docker=not no_use_docker)
+    
+    
+@main.command(
+    name='load-content-graph',
+    help='load content graph'
+)
+@click.help_option(
+    '-h', '--help'
+)
+@click.option('-nd', '--no-use-docker', is_flag=True, help="Use docker to run the content graph", default=False)
+@click.option('-ks', '--keep-service', is_flag=True, help="Keep the service running", default=False)
+@click.option('-cgp', '--content-graph-path', help="Path to the content graph", default=None)
+def load_content_graph(no_use_docker: bool, keep_service: bool, content_graph_path: Path):
+    from demisto_sdk.commands.content_graph.content_graph import load_content_graph
+    load_content_graph(use_docker=not no_use_docker, keep_service=keep_service, content_graph_path=content_graph_path)
 
 
 @main.result_callback()

@@ -5,6 +5,8 @@ import shutil
 import requests
 from requests.adapters import HTTPAdapter, Retry
 
+import urllib3
+
 import neo4j
 import pickle
 
@@ -16,7 +18,7 @@ from demisto_sdk.commands.content_graph.constants import PACKS_FOLDER, ContentTy
 from demisto_sdk.commands.content_graph.parsers.pack import PackSubGraphCreator
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.content.content import Content
-from demisto_sdk.commands.common.tools import run_command_os
+from demisto_sdk.commands.common.tools import run_command
 
 import docker
 import logging
@@ -90,7 +92,7 @@ class ContentGraph(ABC):
 
     def iter_packs(self) -> Iterator[Path]:
         for path in self.packs_path.iterdir():  # todo: handle repo path is invalid
-            if path.is_dir():
+            if path.is_dir() and not path.name.startswith('.'):
                 yield path
 
     @abstractmethod
@@ -161,10 +163,9 @@ class Neo4jQuery:
         return queries
 
     @staticmethod
-    def create_nodes_from_csv(content_type: ContentTypes) -> str:
-        filename = f'file:///{content_type}.csv'
+    def create_nodes(content_type: ContentTypes) -> str:
         return f"""
-            LOAD CSV WITH HEADERS FROM "{filename}" AS node_data
+            UNWIND $data AS node_data
             CREATE (n:{Neo4jQuery.labels_of(content_type)}{{node_id: node_data.node_id}}) SET n += node_data
         """
 
@@ -175,9 +176,8 @@ class Neo4jQuery:
         but we haven't yet catagorized them as commands, we search them by their `id` property
         When they are created/found, we set their node_id and labels.
         """
-        filename = f'file:///{Rel.HAS_COMMAND}.csv'
         return f"""
-            LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data
+            UNWIND $data AS rel_data
             MATCH (a:{ContentTypes.INTEGRATION}{{node_id: rel_data.from}})
             MERGE (b:{Neo4jQuery.labels_of(ContentTypes.COMMAND)}{{
                 node_id: "{ContentTypes.COMMAND}:" + rel_data.to,
@@ -200,9 +200,8 @@ class Neo4jQuery:
         We search both source and target nodes by their `node_id` properties.
         Note: the FOR EACH statements are a workaround for Cypher not supporting IF statements.
         """
-        filename = f'file:///{Rel.USES}.csv'
         query = f"""
-            LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data
+            UNWIND $data AS rel_data
             MATCH (a:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.from}})
         """
         for content_type in ContentTypes.content_items():
@@ -228,9 +227,8 @@ class Neo4jQuery:
         we are using only the `id` property to search/create it. If created, this is a Command (because script nodes
         were already created).
         """
-        filename = f'file:///{Rel.USES_COMMAND_OR_SCRIPT}.csv'
         return f"""
-            LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data
+            UNWIND $data AS rel_data
             MATCH (a:{ContentTypes.SCRIPT}{{node_id: rel_data.from}})
             MERGE (b:{ContentTypes.COMMAND_OR_SCRIPT}{{id: rel_data.to}})
             ON CREATE
@@ -245,9 +243,8 @@ class Neo4jQuery:
 
     @staticmethod
     def create_tested_by_relationships_from_csv() -> str:
-        filename = f'file:///{Rel.TESTED_BY}.csv'
         return f"""
-            LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data
+            UNWIND $data AS rel_data
             MATCH (a:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.from}})
             MERGE (b:{ContentTypes.TEST_PLAYBOOK}{{
                 node_id: "{ContentTypes.TEST_PLAYBOOK}:" + rel_data.to,
@@ -257,7 +254,7 @@ class Neo4jQuery:
         """
 
     @staticmethod
-    def create_relationships_from_csv(rel_type: Rel) -> str:
+    def create_relationships(rel_type: Rel) -> str:
         if rel_type == Rel.USES:
             return Neo4jQuery.create_uses_relationships_from_csv()
         if rel_type == Rel.USES_COMMAND_OR_SCRIPT:
@@ -268,9 +265,8 @@ class Neo4jQuery:
             return Neo4jQuery.create_tested_by_relationships_from_csv()
 
         # default
-        filename = f'file:///{rel_type}.csv'
         return f"""
-            LOAD CSV WITH HEADERS FROM "{filename}" AS rel_data
+            UNWIND $data AS rel_data
             MATCH (a:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.from}})
             MERGE (b:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.to}})
             MERGE (a)-[r:{rel_type}]->(b)
@@ -356,78 +352,93 @@ class Neo4jQuery:
 
 
 class Neo4jContentGraph(ContentGraph):
-    def __init__(self, repo_path: Path, database_uri: str, user: str = None, password: str = None, should_use_docker: bool = True) -> None:
+    def __init__(
+        self,
+        repo_path: Path,
+        database_uri: str,
+        user: str = None,
+        password: str = None,
+        use_docker: bool = True,
+        keep_service: bool = False,
+        dump_file: Path = None,
+    ) -> None:
         super().__init__(repo_path)
         self.start_time = datetime.now()
         self.end_time = None
         auth: Optional[Tuple[str, str]] = (user, password) if user and password else None
         self.driver: neo4j.Neo4jDriver = neo4j.GraphDatabase.driver(database_uri, auth=auth)
-        self.should_use_docker = should_use_docker
+        self.use_docker = use_docker
+        self.keep_service = keep_service
 
     def __enter__(self):
-        if self.should_use_docker:
-            self.start_neo4j_service()
-        with self.driver.session() as session:
-            tx = session.begin_transaction()
-            self.create_indexes(tx)
-            self.create_constraints(tx)
-            tx.commit()
-            tx.close()
+        self.start_neo4j_service()
         return self
 
     def start_neo4j_service(self, ):
-        docker_client = docker.from_env()
-        try:
-            docker_client.containers.get('neo4j-content').remove(force=True)
-        except Exception as e:
-            logger.info(f'Could not remove neo4j container: {e}')
-        # then we need to create a new one
-        shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
-        shutil.rmtree(REPO_PATH / 'neo4j' / 'import', ignore_errors=True)
-        run_command_os('docker-compose up -d', REPO_PATH / 'neo4j')
+        if not self.use_docker:
+            run_command(f'neo4j-admin set-initial-password {PASSWORD} && neo4j start', cwd=REPO_PATH / 'neo4j', is_silenced=False)
+
+        else:
+            docker_client = docker.from_env()
+            try:
+                docker_client.containers.get('neo4j-content').remove(force=True)
+            except Exception as e:
+                logger.info(f'Could not remove neo4j container: {e}')
+            # then we need to create a new one
+            shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
+            shutil.rmtree(REPO_PATH / 'neo4j' / 'import', ignore_errors=True)
+            run_command('docker-compose up -d', cwd=REPO_PATH / 'neo4j', is_silenced=False)
+        # health check to make sure that neo4j is up
         s = requests.Session()
 
         retries = Retry(
-            connect=100
+            total=10,
+            backoff_factor=0.1
         )
 
         s.mount('http://localhost', HTTPAdapter(max_retries=retries))
         s.get('http://localhost:7474')
 
     def stop_neo4j_service(self, ):
-        run_command_os('docker-compose down', REPO_PATH / 'neo4j')
+        if not self.use_docker:
+            run_command('neo4j stop', cwd=REPO_PATH / 'neo4j', is_silenced=False)
+        else:
+            run_command('docker-compose down', cwd=REPO_PATH / 'neo4j', is_silenced=False)
+
+    def neo4j_admin_command(self, name: str, command: str):
+        if not self.use_docker:
+            run_command(command, cwd=REPO_PATH / 'neo4j', is_silenced=False)
+        else:
+            docker_client = docker.from_env()
+            try:
+                docker_client.containers.get(f'neo4j-{name}').remove(force=True)
+            except Exception as e:
+                logger.info(f'Could not remove neo4j container: {e}')
+            docker_client.containers.run(image='neo4j/neo4j-admin:4.4.9',
+                                         name=f'neo4j-{name}',
+                                         remove=True,
+                                         volumes={f'{REPO_PATH}/neo4j/data': {'bind': '/data', 'mode': 'rw'},
+                                                  f'{REPO_PATH}/neo4j/backups': {'bind': '/backups', 'mode': 'rw'}},
+
+                                         command=f'{command}'
+                                         )
 
     def dump(self):
-        docker_client = docker.from_env()
-        try:
-            docker_client.containers.get('neo4j-dump').remove(force=True)
-        except Exception as e:
-            logger.info(f'Could not remove neo4j-dump container: {e}')
-        docker_client.containers.run(image='neo4j/neo4j-admin:4.4.9',
-                                     remove=True,
-                                     volumes={f'{REPO_PATH}/neo4j/data': {'bind': '/data', 'mode': 'rw'},
-                                              f'{REPO_PATH}/neo4j/backups': {'bind': '/backups', 'mode': 'rw'}},
-
-                                     command='neo4j-admin dump --database=neo4j --to=/backups/content-graph.dump'
-                                     )
+        if self.use_docker:
+            output = '/backups/content-graph.dump'
+        else:
+            (REPO_PATH / 'neo4j' / 'backups').mkdir(parents=True, exist_ok=True)
+            output = (REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump').as_posix()
+        self.neo4j_admin_command('dump', f'neo4j-admin dump --database=neo4j --to={output}')
 
     def load(self):
-        shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
+        if self.use_docker:
+            shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
+            output = '/backups/content-graph.dump'
+        else:
+            output = (REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump').as_posix()
 
-        docker_client = docker.from_env()
-        try:
-            docker_client.containers.get('neo4j-load').remove(force=True)
-        except Exception as e:
-            logger.info(f'Could not remove neo4j-load container: {e}')
-        # remove neo4j folder
-        docker_client.containers.run(image='neo4j/neo4j-admin:4.4.9',
-                                     name='neo4j-load',
-                                     remove=True,
-                                     volumes={f'{REPO_PATH}/neo4j/data': {'bind': '/data', 'mode': 'rw'},
-                                              f'{REPO_PATH}/neo4j/backups': {'bind': '/backups', 'mode': 'rw'}},
-
-                                     command='neo4j-admin load --database=neo4j --from=/backups/content-graph.dump'
-                                     )
+        self.neo4j_admin_command('load', f'neo4j-admin load --from={output}')
 
     @staticmethod
     def create_indexes(tx: neo4j.Transaction) -> None:
@@ -453,53 +464,36 @@ class Neo4jContentGraph(ContentGraph):
     def add_parsed_nodes_and_relationships_to_graph(self) -> None:
         dump_pickle(NODES_PKL_PATH.as_posix(), self.nodes)
         dump_pickle(RELS_PKL_PATH.as_posix(), self.relationships)
+        # init driver
+
         before_creating_nodes = datetime.now()
         print(f'Time since started: {(before_creating_nodes - self.start_time).total_seconds() / 60} minutes')
 
         with self.driver.session() as session:
+            tx = session.begin_transaction()
+            self.create_indexes(tx)
+            self.create_constraints(tx)
+            tx.commit()
+            tx.close()
             for content_type in ContentTypes.non_abstracts():  # todo: parallelize?
-                if self.create_node_csv_file(content_type):
+                if self.nodes.get(content_type):
                     session.write_transaction(self.import_nodes_by_type, content_type)
             for rel in Rel:
-                if self.create_relationship_csv_file(rel):  # todo: parallelize?
+                if self.relationships.get(rel):  # todo: parallelize?
                     session.write_transaction(self.import_relationships_by_type, rel)
 
         after_creating_nodes = datetime.now()
         print(f'Time to create graph: {(after_creating_nodes - before_creating_nodes).total_seconds() / 60} minutes')
         print(f'Time since started: {(after_creating_nodes - self.start_time).total_seconds() / 60} minutes')
 
-    def create_node_csv_file(self, content_type: ContentTypes) -> bool:
-        if self.nodes.get(content_type):
-            headers = list(sorted(self.nodes.get(content_type)[0].keys()))
-            with open(f'{IMPORT_PATH}/{content_type}.csv', 'w', encoding='utf-8') as f:
-                writer = csv.writer(f)
-                writer.writerow(headers)
-                for row in self.nodes.get(content_type):
-                    writer.writerow([row[k] for k in sorted(row.keys())])
-            return True
-        return False
+    def import_nodes_by_type(self, tx: neo4j.Transaction, content_type: ContentTypes) -> None:
+        query = Neo4jQuery.create_nodes(content_type)
+        tx.run(query, {'data': self.nodes.get(content_type)})
+        print(f'Imported {content_type}')
 
-    def create_relationship_csv_file(self, rel: Rel) -> bool:
-        if self.relationships.get(rel):
-            headers = list(sorted(self.relationships.get(rel)[0].keys()))
-            with open(f'{IMPORT_PATH}/{rel.value}.csv', 'w', encoding='utf-8') as f:
-                writer = csv.writer(f)
-                writer.writerow(headers)
-                for row in self.relationships.get(rel):
-                    writer.writerow([row[k] for k in sorted(row.keys())])
-            return True
-        return False
-
-    @staticmethod
-    def import_nodes_by_type(tx: neo4j.Transaction, content_type: ContentTypes) -> None:
-        query = Neo4jQuery.create_nodes_from_csv(content_type)
-        tx.run(query)
-        print(f'Imported {content_type}.csv')
-
-    @staticmethod
-    def import_relationships_by_type(tx: neo4j.Transaction, rel_type: Rel) -> None:
-        query = Neo4jQuery.create_relationships_from_csv(rel_type)
-        tx.run(query)
+    def import_relationships_by_type(self, tx: neo4j.Transaction, rel_type: Rel) -> None:
+        query = Neo4jQuery.create_relationships(rel_type)
+        tx.run(query, {'data': self.relationships.get(rel_type)})
         print(f'Imported {rel_type}')
 
     def create_pack_dependencies(self) -> None:
@@ -544,11 +538,21 @@ class Neo4jContentGraph(ContentGraph):
 
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         self.driver.close()
-        if self.should_use_docker:
+        if not self.keep_service:
             self.stop_neo4j_service()
 
 
-def create_content_graph(should_use_docker: bool = True) -> None:
-    with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD, should_use_docker) as content_graph:
+def create_content_graph(use_docker: bool = True) -> None:
+    with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD, use_docker) as content_graph:
         content_graph.parse_repository()
-        content_graph.dump()
+    content_graph.dump()
+
+
+def load_content_graph(use_docker: bool = True, keep_service: bool = False, content_graph_path: Path = None) -> None:
+    content_graph = Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD, use_docker, keep_service)
+    if content_graph_path and content_graph_path.is_file():
+        shutil.copy(content_graph_path, REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump')
+    content_graph.load()
+    content_graph.start_neo4j_service()
+    if not keep_service:
+        content_graph.stop_neo4j_service()

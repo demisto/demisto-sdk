@@ -40,13 +40,13 @@ The library uses python 3.8+.
       ```
 
       >For more configurations, check the [demisto-py](https://github.com/demisto/demisto-py) repo (the SDK uses demisto-py to communicate with Cortex XSOAR).
-  
+
    3. For the **Validate** and **Format** commands to work properly:
      - Install node.js, and make sure `@mdx-js/mdx`, `fs-extra` and `commander` are installed in node-modules folder (`npm install ...`).
      - Set the `DEMISTO_README_VALIDATION` environment variable to True.
 
-       MDX is used to validate markdown files, and make sure they render properly on XSOAR and [xsoar.pan.dev](https://xsoar.pan.dev). 
-       
+       MDX is used to validate markdown files, and make sure they render properly on XSOAR and [xsoar.pan.dev](https://xsoar.pan.dev).
+
    4. Reload your terminal.
 
 ---

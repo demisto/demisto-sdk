@@ -7,7 +7,8 @@ from requests import Response
 
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER, CONF_PATH, FILETYPE_TO_DEFAULT_FROMVERSION,
-    INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME, FileType)
+    INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME, FileType,
+    MarketplaceVersions)
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
@@ -20,7 +21,7 @@ ALLOWED_IGNORE_ERRORS = [
     'IN109', 'IN110', 'IN122', 'IN124', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145', 'IN153', 'IN154',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
-    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107',
+    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107', 'PB118', 'PB119',
     'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM110', 'RM112', 'RM113',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
@@ -201,7 +202,7 @@ ERROR_CODE = {
     "parameter_missing_from_yml": {'code': "IN121", 'ui_applicable': True, 'related_field': 'configuration'},
     "parameter_missing_for_feed": {'code': "IN122", 'ui_applicable': True, 'related_field': 'configuration'},
     "invalid_version_integration_name": {'code': "IN123", 'ui_applicable': True, 'related_field': 'display'},
-    "found_hidden_param": {'code': "IN124", 'ui_applicable': False, 'related_field': '<parameter-name>.hidden'},
+    "param_not_allowed_to_hide": {'code': "IN124", 'ui_applicable': False, 'related_field': '<parameter-name>.hidden'},
     "no_default_value_in_parameter": {'code': "IN125", 'ui_applicable': False,
                                       'related_field': '<parameter-name>.default'},
     "parameter_missing_from_yml_not_community_contributor": {'code': "IN126", 'ui_applicable': False,
@@ -236,10 +237,13 @@ ERROR_CODE = {
     'empty_outputs_common_paths': {'code': 'IN149', 'ui_applicable': False, 'related_field': 'contextOutput'},
     'invalid_siem_integration_name': {'code': 'IN150', 'ui_applicable': True, 'related_field': 'display'},
     "empty_command_arguments": {'code': 'IN151', 'ui_applicable': False, 'related_field': 'arguments'},
-    'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True, 'related_field': 'defaultvalue'},
-    'not_supported_integration_parameter_url_defaultvalue': {'code': 'IN153', 'ui_applicable': False, 'related_field': 'defaultvalue'},
+    'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True,
+                                                'related_field': 'defaultvalue'},
+    'not_supported_integration_parameter_url_defaultvalue': {'code': 'IN153', 'ui_applicable': False,
+                                                             'related_field': 'defaultvalue'},
     'missing_reliability_parameter': {'code': 'IN154', 'ui_applicable': False, 'related_field': 'configuration'},
     'integration_is_deprecated_and_used': {'code': 'IN155', 'ui_applicable': True, 'related_field': 'deprecated'},
+    'invalid_hidden_attribute_for_param': {'code': 'IN156', 'ui_applicable': False, 'related_field': 'hidden'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -466,7 +470,13 @@ ERROR_CODE = {
         'code': "WZ105",
         'ui_applicable': False,
         'related_field': 'wizard'
-    }
+    },
+
+    # MR - Modeling Rules
+    "modeling_rule_missing_schema_file": {'code': "MR100", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rule_keys_not_empty": {'code': "MR101", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rule_keys_are_missing": {'code': "MR102", 'ui_applicable': False, 'related_field': ''},
+    "invalid_rule_name": {'code': "MR103", 'ui_applicable': False, 'related_field': ''},
 }
 
 
@@ -526,7 +536,7 @@ class Errors:
         return "The file type is not supported in the validate command.\n" \
                "The validate command supports: Integrations, Scripts, Playbooks, " \
                "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields, Object types," \
-               " Object modules, Images, Release notes, Layouts, Jobs, Wizards, and Descriptions."
+               " Object modules, Images, Release notes, Layouts, Jobs, Wizards, Descriptions And Modeling Rules."
 
     @staticmethod
     @error_code_decorator
@@ -922,8 +932,24 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def found_hidden_param(parameter_name):
-        return f"Parameter: \"{parameter_name}\" can't be hidden. Please remove this field."
+    def param_not_allowed_to_hide(parameter_name: str):
+        """
+        Note: This error is used when the parameter has `hidden:true` or mentions all marketplaces (equivalent to true)
+        See invalid_hidden_attribute_for_param for invalid value types.
+
+        """
+        return f"Parameter: \"{parameter_name}\" can't be hidden in all marketplaces. " \
+               f"Please either remove the `hidden` attribute, " \
+               f"or replace its value with a list of marketplace names, where you wish it to be hidden."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_hidden_attribute_for_param(param_name: str, invalid_value: str):
+        marketplace_values = ', '.join(MarketplaceVersions)
+        return f'The `hidden` attribute value ({invalid_value}) for the {param_name} parameter ' \
+               f'must be either a boolean, or a list of marketplace values ' \
+               f'(Possible marketplace values: {marketplace_values}). ' \
+               f'Note that this param is not required, and may be omitted.'
 
     @staticmethod
     @error_code_decorator
@@ -2289,12 +2315,12 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def input_key_not_in_tasks(playbook_name: str, inputs: str):
+    def input_key_not_in_tasks(playbook_name: str, inputs: List[str]):
         return f"Playbook {playbook_name} contains inputs that are not used in any of its tasks: {', '.join(inputs)}"
 
     @staticmethod
     @error_code_decorator
-    def input_used_not_in_input_section(playbook_name: str, inputs: str):
+    def input_used_not_in_input_section(playbook_name: str, inputs: List[str]):
         return f"Playbook {playbook_name} uses inputs that do not appear in the inputs section: {', '.join(inputs)}"
 
     @staticmethod
@@ -2439,3 +2465,26 @@ class Errors:
                f'The description of the pack in the pack_metadata.json should be one of the following formats:\n' \
                f'1. "Deprecated. Use <PACK_NAME> instead."\n' \
                f'2. "Deprecated. <REASON> No available replacement."'
+
+    @staticmethod
+    @error_code_decorator
+    def modeling_rule_missing_schema_file(file_path: str):
+        return f'The modeling rule {file_path} is missing a schema file.'
+
+    @staticmethod
+    @error_code_decorator
+    def modeling_rule_keys_not_empty():
+        return "Either the 'rules' key or the 'schema' key are not empty, make sure to set the value of these" \
+               " keys to an empty string."
+
+    @staticmethod
+    @error_code_decorator
+    def modeling_rule_keys_are_missing():
+        return "The 'rules' key or the 'schema' key is missing from the modeling rule yml file. " \
+               'Make sure to add them to your yml file with an empty string as value.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_rule_name(invalid_files):
+        return f"The following rule file name is invalid {invalid_files} - make sure that the rule name is " \
+               f"the same as the folder containing it."

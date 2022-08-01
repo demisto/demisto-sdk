@@ -104,8 +104,8 @@ from demisto_sdk.commands.common.tools import (
     _get_file_id, find_type, get_api_module_ids,
     get_api_module_integrations_set, get_content_path, get_file,
     get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
-    get_relative_path_from_packs_dir, get_yaml, open_id_set_file,
-    run_command_os)
+    get_relative_path_from_packs_dir, get_remote_file, get_yaml,
+    open_id_set_file, run_command_os)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 SKIPPED_FILES = ['CommonServerPython.py', 'CommonServerUserPython.py', 'demistomock.py']
@@ -198,7 +198,8 @@ class ValidateManager:
         self.ignored_files = set()
         self.new_packs = set()
         self.skipped_file_types = (FileType.CHANGELOG,
-                                   FileType.DOC_IMAGE)
+                                   FileType.DOC_IMAGE,
+                                   FileType.MODELING_RULE_SCHEMA)
 
         self.is_external_repo = is_external_repo
         if is_external_repo:
@@ -1353,11 +1354,12 @@ class ValidateManager:
 
         """
         file_path = str(file_path)
-        file_type = find_type(file_path)
+        file_dict = get_remote_file(file_path, tag='master')
+        file_type = find_type(file_path, file_dict)
         return file_type in FileType_ALLOWED_TO_DELETE or not file_type
 
     @staticmethod
-    def was_file_renamed_but_labeled_as_deleted(file_path, added_files):
+    def was_file_renamed_but_labeled_as_deleted(deleted_file_path, added_files):
         """ Check if a file was renamed and not deleted (git false label the file as deleted)
         Args:
             file_path: The file path.
@@ -1366,15 +1368,16 @@ class ValidateManager:
 
         """
         if added_files:
-            file_path = str(file_path)
-            if file_type := find_type(file_path):
-                deleted_file_dict = get_file(file_path, file_type)
-                deleted_file_id = _get_file_id(file_path, deleted_file_dict)
+            deleted_file_path = str(deleted_file_path)
+            deleted_file_dict = get_remote_file(deleted_file_path, tag='master')  # for detecting deleted files
+            if deleted_file_type := find_type(deleted_file_path, deleted_file_dict):
+                deleted_file_id = _get_file_id(deleted_file_type.value, deleted_file_dict)
                 if deleted_file_id:
                     for file in added_files:
                         file = str(file)
-                        file_dict = get_file(file, find_type(file))
-                        if deleted_file_id == _get_file_id(file, file_dict):
+                        file_type = find_type(file)
+                        file_dict = get_file(file, file_type.value)
+                        if deleted_file_id == _get_file_id(file_type.value, file_dict):
                             return True
         return False
 

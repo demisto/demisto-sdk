@@ -865,7 +865,7 @@ class TestIntegrationValidation:
                                       "--allow-skipped"])
         assert result.exit_code == 1
         assert f"Validating {integration_path} as integration" in result.stdout
-        assert "can't be hidden. Please remove this field" in result.stdout
+        assert "[IN124] - Parameter: \"credentials\" can\'t be hidden in all marketplaces" in result.stdout
         assert result.stderr == ""
 
     def test_positive_hidden_param(self):

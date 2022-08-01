@@ -3,10 +3,14 @@ import os
 import pytest
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.unify.generic_module_unifier import \
-    GenericModuleUnifier
+from demisto_sdk.commands.unify.generic_module_unifier import (
+    GenericModuleUnifier,
+)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
-    DASHBOARD, GENERIC_MODULE, UNIFIED_GENERIC_MODULE)
+    DASHBOARD,
+    GENERIC_MODULE,
+    UNIFIED_GENERIC_MODULE,
+)
 from TestSuite.test_tools import ChangeCWD
 
 json = JSON_Handler()
@@ -26,7 +30,7 @@ def test_find_dashboard_by_id_positive(repo):
     """
     id_to_test = 'test'
     pack = repo.create_pack('PackName')
-    pack.create_generic_module("generic-module", GENERIC_MODULE)
+    pack.create_generic_module('generic-module', GENERIC_MODULE)
     generic_module_path = pack.generic_modules[0].path
     pack.create_dashboard('dashboard_1', DASHBOARD)
     dashboard_copy = DASHBOARD.copy()
@@ -52,7 +56,7 @@ def test_find_dashboard_by_id_negative(repo):
     """
     id_to_test = 'test'
     pack = repo.create_pack('PackName')
-    pack.create_generic_module("generic-module", GENERIC_MODULE)
+    pack.create_generic_module('generic-module', GENERIC_MODULE)
     generic_module_path = pack.generic_modules[0].path
     pack.create_dashboard('dashboard_1', DASHBOARD)
     dashboard_copy = DASHBOARD.copy()
@@ -76,14 +80,16 @@ def test_merge_generic_module_with_its_dashboards_positive(repo):
     - Ensure the module was unified successfully - i.e contains the dashboard's content
     """
     pack = repo.create_pack('PackName')
-    pack.create_generic_module("generic-module", GENERIC_MODULE)
+    pack.create_generic_module('generic-module', GENERIC_MODULE)
     generic_module_path = pack.generic_modules[0].path
     dashboard_copy = DASHBOARD.copy()
     dashboard_copy['id'] = 'asset_dashboard'
     pack.create_dashboard('dashboard_1', dashboard_copy)
     with ChangeCWD(pack.repo_path):
         unifier = GenericModuleUnifier(input=generic_module_path)
-        unified_generic_module = unifier.merge_generic_module_with_its_dashboards()
+        unified_generic_module = (
+            unifier.merge_generic_module_with_its_dashboards()
+        )
         assert unified_generic_module == UNIFIED_GENERIC_MODULE
 
 
@@ -100,17 +106,26 @@ def test_merge_generic_module_with_its_dashboards_negative(repo, capsys):
     - Ensure a suitable error message was printed.
     """
     pack = repo.create_pack('PackName')
-    pack.create_generic_module("generic-module", GENERIC_MODULE)
+    pack.create_generic_module('generic-module', GENERIC_MODULE)
     generic_module_path = pack.generic_modules[0].path
-    generic_module_dash_id = GENERIC_MODULE.get('views', {})[0].get('tabs', {})[0].get('dashboard', {}).get('id')
+    generic_module_dash_id = (
+        GENERIC_MODULE.get('views', {})[0]
+        .get('tabs', {})[0]
+        .get('dashboard', {})
+        .get('id')
+    )
     pack.create_dashboard('dashboard_1', DASHBOARD)
     with ChangeCWD(pack.repo_path):
         unifier = GenericModuleUnifier(input=generic_module_path)
-        non_unified_generic_module = unifier.merge_generic_module_with_its_dashboards()
+        non_unified_generic_module = (
+            unifier.merge_generic_module_with_its_dashboards()
+        )
         assert non_unified_generic_module == GENERIC_MODULE
         err_msg = capsys.readouterr()
-        assert f'Dashboard {generic_module_dash_id} was not found in pack: PackName and therefore was not unified\n' in\
-               err_msg
+        assert (
+            f'Dashboard {generic_module_dash_id} was not found in pack: PackName and therefore was not unified\n'
+            in err_msg
+        )
 
 
 def test_save_unified_generic_module(repo):
@@ -125,12 +140,19 @@ def test_save_unified_generic_module(repo):
     - Ensure the module was saved successfully in the desirable path.
     """
     pack = repo.create_pack('PackName')
-    pack.create_generic_module("generic-module", GENERIC_MODULE)
+    pack.create_generic_module('generic-module', GENERIC_MODULE)
     generic_module_path = pack.generic_modules[0].path
     with ChangeCWD(pack.repo_path):
-        unifier = GenericModuleUnifier(input=generic_module_path, output=pack._dashboards_path)
-        unifier.save_unified_generic_module(unified_generic_module_json=UNIFIED_GENERIC_MODULE)
-        saving_path = os.path.join(pack._dashboards_path, f'{pack.generic_modules[0].name.rstrip(".json")}_unified.json')
+        unifier = GenericModuleUnifier(
+            input=generic_module_path, output=pack._dashboards_path
+        )
+        unifier.save_unified_generic_module(
+            unified_generic_module_json=UNIFIED_GENERIC_MODULE
+        )
+        saving_path = os.path.join(
+            pack._dashboards_path,
+            f'{pack.generic_modules[0].name.rstrip(".json")}_unified.json',
+        )
         assert os.path.isfile(saving_path)
         with open(saving_path) as f:
             saved_generic_module = json.load(f)
@@ -149,13 +171,17 @@ def test_save_unified_generic_module_without_saving_path(repo):
     - Ensure the module was saved successfully in the unifier's input path.
     """
     pack = repo.create_pack('PackName')
-    pack.create_generic_module("generic-module", GENERIC_MODULE)
+    pack.create_generic_module('generic-module', GENERIC_MODULE)
     generic_module_path = pack.generic_modules[0].path
     with ChangeCWD(pack.repo_path):
         unifier = GenericModuleUnifier(input=generic_module_path)
-        unifier.save_unified_generic_module(unified_generic_module_json=UNIFIED_GENERIC_MODULE)
-        saving_path = os.path.join(pack._generic_modules_path,
-                                   f'{pack.generic_modules[0].name.rstrip(".json")}_unified.json')
+        unifier.save_unified_generic_module(
+            unified_generic_module_json=UNIFIED_GENERIC_MODULE
+        )
+        saving_path = os.path.join(
+            pack._generic_modules_path,
+            f'{pack.generic_modules[0].name.rstrip(".json")}_unified.json',
+        )
         assert os.path.isfile(saving_path)
         with open(saving_path) as f:
             saved_generic_module = json.load(f)
@@ -176,15 +202,24 @@ def test_save_unified_generic_module_file_is_already_exist(repo, capsys):
     - Ensure a suitable exception was raised.
     """
     pack = repo.create_pack('PackName')
-    pack.create_generic_module("generic-module", GENERIC_MODULE)
+    pack.create_generic_module('generic-module', GENERIC_MODULE)
     generic_module_path = pack.generic_modules[0].path
     with ChangeCWD(pack.repo_path):
-        unifier = GenericModuleUnifier(input=generic_module_path, output=pack._dashboards_path)
-        unifier.save_unified_generic_module(unified_generic_module_json=UNIFIED_GENERIC_MODULE)
+        unifier = GenericModuleUnifier(
+            input=generic_module_path, output=pack._dashboards_path
+        )
+        unifier.save_unified_generic_module(
+            unified_generic_module_json=UNIFIED_GENERIC_MODULE
+        )
         # try to save a different GenericModule in the same path - An exception should be raised:
         with pytest.raises(ValueError, match='Output file already exists'):
-            unifier.save_unified_generic_module(unified_generic_module_json=GENERIC_MODULE)
-        saving_path = os.path.join(pack._dashboards_path, f'{pack.generic_modules[0].name.rstrip(".json")}_unified.json')
+            unifier.save_unified_generic_module(
+                unified_generic_module_json=GENERIC_MODULE
+            )
+        saving_path = os.path.join(
+            pack._dashboards_path,
+            f'{pack.generic_modules[0].name.rstrip(".json")}_unified.json',
+        )
         with open(saving_path) as f:
             saved_generic_module = json.load(f)
         assert saved_generic_module == UNIFIED_GENERIC_MODULE
@@ -203,14 +238,23 @@ def test_save_unified_generic_module_file_is_already_exist_force(repo, capsys):
     - Ensure the module was saved in the desirable path.
     """
     pack = repo.create_pack('PackName')
-    pack.create_generic_module("generic-module", GENERIC_MODULE)
+    pack.create_generic_module('generic-module', GENERIC_MODULE)
     generic_module_path = pack.generic_modules[0].path
     with ChangeCWD(pack.repo_path):
-        unifier = GenericModuleUnifier(input=generic_module_path, output=pack._dashboards_path, force=True)
-        unifier.save_unified_generic_module(unified_generic_module_json=UNIFIED_GENERIC_MODULE)
+        unifier = GenericModuleUnifier(
+            input=generic_module_path, output=pack._dashboards_path, force=True
+        )
+        unifier.save_unified_generic_module(
+            unified_generic_module_json=UNIFIED_GENERIC_MODULE
+        )
         # try to save a different GenericModule in the same path - should succeed because force arg is true:
-        unifier.save_unified_generic_module(unified_generic_module_json=GENERIC_MODULE)
-        saving_path = os.path.join(pack._dashboards_path, f'{pack.generic_modules[0].name.rstrip(".json")}_unified.json')
+        unifier.save_unified_generic_module(
+            unified_generic_module_json=GENERIC_MODULE
+        )
+        saving_path = os.path.join(
+            pack._dashboards_path,
+            f'{pack.generic_modules[0].name.rstrip(".json")}_unified.json',
+        )
         with open(saving_path) as f:
             saved_generic_module = json.load(f)
         assert saved_generic_module == GENERIC_MODULE

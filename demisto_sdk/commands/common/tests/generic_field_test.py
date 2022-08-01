@@ -3,10 +3,12 @@ from collections import namedtuple
 
 from mock import patch
 
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
-from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
-    GENERIC_FIELD
+from demisto_sdk.commands.common.hook_validations.structure import (
+    StructureValidator,
+)
+from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
+    GENERIC_FIELD,
+)
 
 
 def mock_structure(file_path=None, current_file=None, old_file=None):
@@ -22,7 +24,9 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
         structure.quiet_bc = False
         structure.skip_schema_check = False
         structure.pykwalify_logs = False
-        structure.scheme_name = namedtuple('scheme_name', 'value')(value='genericfield')
+        structure.scheme_name = namedtuple('scheme_name', 'value')(
+            value='genericfield'
+        )
         structure.checked_files = set()
         structure.ignored_errors = dict()
         structure.suppress_print = True

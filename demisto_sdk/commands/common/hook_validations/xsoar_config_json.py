@@ -7,7 +7,9 @@ from prettytable import PrettyTable
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import (
-    BaseValidator, error_codes)
+    BaseValidator,
+    error_codes,
+)
 from demisto_sdk.commands.common.tools import get_dict_from_file
 
 json = JSON_Handler()
@@ -25,13 +27,27 @@ class XSOARConfigJsonValidator(BaseValidator):
         schema_json (dict): The data from the schema file.
     """
 
-    def __init__(self, configuration_file_path, json_file_path=None,
-                 ignored_errors=None, print_as_warnings=False, suppress_print=False, specific_validations=None):
-        super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
-                         suppress_print=suppress_print, json_file_path=json_file_path, specific_validations=specific_validations)
+    def __init__(
+        self,
+        configuration_file_path,
+        json_file_path=None,
+        ignored_errors=None,
+        print_as_warnings=False,
+        suppress_print=False,
+        specific_validations=None,
+    ):
+        super().__init__(
+            ignored_errors=ignored_errors,
+            print_as_warnings=print_as_warnings,
+            suppress_print=suppress_print,
+            json_file_path=json_file_path,
+            specific_validations=specific_validations,
+        )
         self._is_valid = True
         self.configuration_file_path = configuration_file_path
-        self.schema_path = os.path.normpath(os.path.join(__file__, '..', '..', 'schemas', 'xsoar_config.json'))
+        self.schema_path = os.path.normpath(
+            os.path.join(__file__, '..', '..', 'schemas', 'xsoar_config.json')
+        )
         self.configuration_json = self.load_xsoar_configuration_file()
         self.schema_json, _ = get_dict_from_file(self.schema_path)
 
@@ -45,15 +61,23 @@ class XSOARConfigJsonValidator(BaseValidator):
             with open(self.configuration_file_path, 'r') as f:
                 config_json = json.load(f)
         except Exception:
-            error_message, error_code = Errors.xsoar_config_file_is_not_json(self.configuration_file_path)
-            if self.handle_error(error_message, error_code, file_path=self.configuration_file_path):
+            error_message, error_code = Errors.xsoar_config_file_is_not_json(
+                self.configuration_file_path
+            )
+            if self.handle_error(
+                error_message,
+                error_code,
+                file_path=self.configuration_file_path,
+            ):
                 self._is_valid = False
             return None
 
         return config_json
 
     @staticmethod
-    def create_schema_validation_results_table(errors: Iterator[ValidationError]) -> Tuple[PrettyTable, bool]:
+    def create_schema_validation_results_table(
+        errors: Iterator[ValidationError],
+    ) -> Tuple[PrettyTable, bool]:
         """Parses the schema validation errors into a table.
 
         Args:
@@ -83,14 +107,21 @@ class XSOARConfigJsonValidator(BaseValidator):
         validator = Draft7Validator(schema=self.schema_json)
         errors = validator.iter_errors(self.configuration_json)
 
-        errors_table, errors_found = self.create_schema_validation_results_table(errors)
+        (
+            errors_table,
+            errors_found,
+        ) = self.create_schema_validation_results_table(errors)
         if errors_found:
             error_message, error_code = Errors.xsoar_config_file_malformed(
                 self.configuration_file_path,
                 self.schema_path,
                 errors_table,
             )
-            if self.handle_error(error_message, error_code, file_path=self.configuration_file_path):
+            if self.handle_error(
+                error_message,
+                error_code,
+                file_path=self.configuration_file_path,
+            ):
                 self._is_valid = False
 
         return self._is_valid

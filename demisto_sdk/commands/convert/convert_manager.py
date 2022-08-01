@@ -19,17 +19,28 @@ class ConvertManager:
             (int): Returns 0 upon success, 1 if failure occurred.
         """
         if self.MIN_VERSION_SUPPORTED > self.server_version:
-            click.secho(f'Version requested: {str(self.server_version)} should be higher or equal to '
-                        f'{str(self.MIN_VERSION_SUPPORTED)}', fg='red')
+            click.secho(
+                f'Version requested: {str(self.server_version)} should be higher or equal to '
+                f'{str(self.MIN_VERSION_SUPPORTED)}',
+                fg='red',
+            )
             return 1
         pack = self.create_pack_object()
-        all_dir_converters = [dir_converter(pack, self.input_path, self.server_version)  # type: ignore[abstract]
-                              for dir_converter in AbstractDirConvertManager.__subclasses__()]  # type: ignore[abstract]
-        relevant_dir_converters = [dir_converter for dir_converter in all_dir_converters
-                                   if dir_converter.should_convert()]
+        all_dir_converters = [
+            dir_converter(pack, self.input_path, self.server_version)  # type: ignore[abstract]
+            for dir_converter in AbstractDirConvertManager.__subclasses__()
+        ]  # type: ignore[abstract]
+        relevant_dir_converters = [
+            dir_converter
+            for dir_converter in all_dir_converters
+            if dir_converter.should_convert()
+        ]
         if not relevant_dir_converters:
-            click.secho(f'No entities were found to convert. Please validate your input path is '
-                        f'valid: {self.input_path}', fg='red')
+            click.secho(
+                f'No entities were found to convert. Please validate your input path is '
+                f'valid: {self.input_path}',
+                fg='red',
+            )
             return 1
         exit_code = 0
         for dir_converter in relevant_dir_converters:
@@ -37,7 +48,10 @@ class ConvertManager:
         if exit_code:
             print_error('Error occurred during convert command.')
         else:
-            click.secho(f'Finished convert for given path successfully:\n{self.input_path}', fg='green')
+            click.secho(
+                f'Finished convert for given path successfully:\n{self.input_path}',
+                fg='green',
+            )
         return exit_code
 
     def create_pack_object(self) -> Pack:
@@ -51,5 +65,9 @@ class ConvertManager:
         Returns:
             (Pack): Pack object of the pack the conversion was requested for.
         """
-        pack_path = self.input_path if is_pack_path(self.input_path) else os.path.dirname(self.input_path)
+        pack_path = (
+            self.input_path
+            if is_pack_path(self.input_path)
+            else os.path.dirname(self.input_path)
+        )
         return Pack(pack_path)

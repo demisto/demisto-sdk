@@ -4,14 +4,15 @@ import pytest
 from mock import patch
 
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
+from demisto_sdk.commands.common.hook_validations.structure import (
+    StructureValidator,
+)
 from TestSuite.test_tools import ChangeCWD
 
 
-def get_validator(current_file=None, old_file=None, file_path=""):
+def get_validator(current_file=None, old_file=None, file_path=''):
     with patch.object(StructureValidator, '__init__', lambda a, b: None):
-        structure = StructureValidator("")
+        structure = StructureValidator('')
         structure.current_file = current_file
         structure.old_file = old_file
         structure.file_path = file_path
@@ -27,20 +28,12 @@ def get_validator(current_file=None, old_file=None, file_path=""):
 
 
 class TestScriptValidator:
-    BASE_DOCKER_IMAGE = {
-        'dockerimage': '1.0.0'
-    }
+    BASE_DOCKER_IMAGE = {'dockerimage': '1.0.0'}
 
-    CHANGED_DOCKER_IMAGE = {
-        'dockerimage': 'test_updated'
-    }
-    NO_DOCKER_IMAGE = {
-        'no': 'dockerimage'
-    }
+    CHANGED_DOCKER_IMAGE = {'dockerimage': 'test_updated'}
+    NO_DOCKER_IMAGE = {'no': 'dockerimage'}
 
-    UPDATED_DOCKER_IMAGE = {
-        'dockerimage': '1.0.1'
-    }
+    UPDATED_DOCKER_IMAGE = {'dockerimage': '1.0.1'}
 
     INPUTS_DOCKER_IMAGES = [
         (BASE_DOCKER_IMAGE, NO_DOCKER_IMAGE, True),
@@ -51,15 +44,9 @@ class TestScriptValidator:
     ]
 
     SANE_DOC_PATH = 'Scripts/SaneDocReport/SaneDocReport.yml'
-    SANE_DOC_SUBTYPE = {
-        "type": "python",
-        "subtype": "python3"
-    }
+    SANE_DOC_SUBTYPE = {'type': 'python', 'subtype': 'python3'}
 
-    SAND_DOC_CHANGED_SUBTYPE = {
-        "type": "python",
-        "subtype": "python2"
-    }
+    SAND_DOC_CHANGED_SUBTYPE = {'type': 'python', 'subtype': 'python2'}
     """
     INPUTS_SANE_DOCS_IMAGES = [
         (SANE_DOC_PATH, SANE_DOC_SUBTYPE, SAND_DOC_CHANGED_SUBTYPE, True, False),
@@ -78,55 +65,20 @@ class TestScriptValidator:
     """
 
     CONTEXT_OLD = {
-        'outputs': [
-            {
-                'contextPath': 'test1'
-            },
-            {
-                'contextPath': 'test2'
-            }
-        ]
+        'outputs': [{'contextPath': 'test1'}, {'contextPath': 'test2'}]
     }
 
-    CONTEXT_NEW = {
-        'outputs': [
-            {
-                'contextPath': 'test1'
-            }
-        ]
-    }
+    CONTEXT_NEW = {'outputs': [{'contextPath': 'test1'}]}
 
-    CONTEXT_CHANGED = {
-        'outputs': [
-            {
-                'contextPath': 'test2'
-            }
-        ]
-    }
+    CONTEXT_CHANGED = {'outputs': [{'contextPath': 'test2'}]}
     CONTEXT_MULTI_OLD = {
-        'outputs': [
-            {
-                'contextPath': 'test1'
-            },
-            {
-                'contextPath': 'test2'
-            }
-        ]
+        'outputs': [{'contextPath': 'test1'}, {'contextPath': 'test2'}]
     }
 
     CONTEXT_MULTI_NEW = {
-        'outputs': [
-            {
-                'contextPath': 'test2'
-            },
-            {
-                'contextPath': 'test1'
-            }
-        ]
+        'outputs': [{'contextPath': 'test2'}, {'contextPath': 'test1'}]
     }
-    CONTEXT_EMPTY_OUTPUTS = {
-        'outputs': None
-    }
+    CONTEXT_EMPTY_OUTPUTS = {'outputs': None}
     INPUTS_CONTEXT_PATHS = [
         (CONTEXT_NEW, CONTEXT_OLD, True),
         (CONTEXT_OLD, CONTEXT_NEW, False),
@@ -136,117 +88,48 @@ class TestScriptValidator:
         (CONTEXT_NEW, CONTEXT_NEW, False),
         (CONTEXT_NEW, CONTEXT_MULTI_NEW, True),
         (CONTEXT_MULTI_NEW, CONTEXT_NEW, False),
-        (CONTEXT_EMPTY_OUTPUTS, CONTEXT_EMPTY_OUTPUTS, False)
+        (CONTEXT_EMPTY_OUTPUTS, CONTEXT_EMPTY_OUTPUTS, False),
     ]
 
-    @pytest.mark.parametrize('current_file, old_file, answer', INPUTS_CONTEXT_PATHS)
+    @pytest.mark.parametrize(
+        'current_file, old_file, answer', INPUTS_CONTEXT_PATHS
+    )
     def test_deleted_context_path(self, current_file, old_file, answer):
         validator = get_validator(current_file, old_file)
         assert validator.is_context_path_changed() is answer
         validator.structure_validator.quiet_bc = True
         assert validator.is_context_path_changed() is False
 
-    OLD_ARGS = {
-        'args': [
-            {
-                'name': 'test1'
-            }
-        ]
-    }
-    CURRENT_ARGS = {
-        'args': [
-            {
-                'name': 'test1'
-            },
-            {
-                'name': 'test2'
-            }
-        ]
-    }
-    MOVED_ARG = {
-        'args': [
-            {
-                'name': 'test2'
-            },
-            {
-                'name': 'test1'
-            }
-        ]
-    }
-    OLD_MULTI_ARGS = {
-        'args': [
-            {
-                'name': 'test1'
-            },
-            {
-                'name': 'test2'
-            }
-        ]
-    }
+    OLD_ARGS = {'args': [{'name': 'test1'}]}
+    CURRENT_ARGS = {'args': [{'name': 'test1'}, {'name': 'test2'}]}
+    MOVED_ARG = {'args': [{'name': 'test2'}, {'name': 'test1'}]}
+    OLD_MULTI_ARGS = {'args': [{'name': 'test1'}, {'name': 'test2'}]}
 
-    CURRENT_MULTI_ARGS = {
-        'args': [
-            {
-                'name': 'test1'
-            },
-            {
-                'name': 'test2'
-            }
-        ]
-    }
+    CURRENT_MULTI_ARGS = {'args': [{'name': 'test1'}, {'name': 'test2'}]}
 
     ADDED_MULTI_ARGS = {
-        'args': [
-            {
-                'name': 'test2'
-            },
-            {
-                'name': 'test1'
-            },
-            {
-                'name': 'test3'
-            }
-        ]
+        'args': [{'name': 'test2'}, {'name': 'test1'}, {'name': 'test3'}]
     }
     INPUTS_ARGS_CHANGED = [
         (CURRENT_ARGS, OLD_ARGS, False),
         (MOVED_ARG, OLD_ARGS, False),
         (CURRENT_MULTI_ARGS, OLD_MULTI_ARGS, False),
         (ADDED_MULTI_ARGS, OLD_MULTI_ARGS, False),
-        (OLD_MULTI_ARGS, ADDED_MULTI_ARGS, True)
+        (OLD_MULTI_ARGS, ADDED_MULTI_ARGS, True),
     ]
 
-    @pytest.mark.parametrize('current_file, old_file, answer', INPUTS_ARGS_CHANGED)
+    @pytest.mark.parametrize(
+        'current_file, old_file, answer', INPUTS_ARGS_CHANGED
+    )
     def test_is_arg_changed(self, current_file, old_file, answer):
         validator = get_validator(current_file, old_file)
         assert validator.is_arg_changed() is answer
         validator.structure_validator.quiet_bc = True
         assert validator.is_arg_changed() is False
 
-    DUP_1 = {
-        'args': [
-            {
-                'name': 'test1'
-            },
-            {
-                'name': 'test1'
-            }
-        ]
-    }
-    NO_DUP = {
-        'args': [
-            {
-                'name': 'test1'
-            },
-            {
-                'name': 'test2'
-            }
-        ]
-    }
-    INPUTS_DUPLICATES = [
-        (DUP_1, True),
-        (NO_DUP, False)
-    ]
+    DUP_1 = {'args': [{'name': 'test1'}, {'name': 'test1'}]}
+    NO_DUP = {'args': [{'name': 'test1'}, {'name': 'test2'}]}
+    INPUTS_DUPLICATES = [(DUP_1, True), (NO_DUP, False)]
 
     @pytest.mark.parametrize('current_file, answer', INPUTS_DUPLICATES)
     def test_is_there_duplicates_args(self, current_file, answer):
@@ -255,31 +138,19 @@ class TestScriptValidator:
         validator.structure_validator.quiet_bc = True
         assert validator.is_there_duplicates_args() is False
 
-    REQUIRED_ARGS_BASE = {
-        'args': [
-            {
-                'name': 'test',
-                'required': False
-            }
-        ]
-    }
+    REQUIRED_ARGS_BASE = {'args': [{'name': 'test', 'required': False}]}
 
-    REQUIRED_ARGS_TRUE = {
-        'args': [
-            {
-                'name': 'test',
-                'required': True
-            }
-        ]
-    }
+    REQUIRED_ARGS_TRUE = {'args': [{'name': 'test', 'required': True}]}
     INPUTS_REQUIRED_ARGS = [
         (REQUIRED_ARGS_BASE, REQUIRED_ARGS_BASE, False),
         (REQUIRED_ARGS_TRUE, REQUIRED_ARGS_BASE, True),
         (REQUIRED_ARGS_TRUE, REQUIRED_ARGS_TRUE, False),
-        (REQUIRED_ARGS_BASE, REQUIRED_ARGS_TRUE, False)
+        (REQUIRED_ARGS_BASE, REQUIRED_ARGS_TRUE, False),
     ]
 
-    @pytest.mark.parametrize('current_file, old_file, answer', INPUTS_REQUIRED_ARGS)
+    @pytest.mark.parametrize(
+        'current_file, old_file, answer', INPUTS_REQUIRED_ARGS
+    )
     def test_is_added_required_args(self, current_file, old_file, answer):
         validator = get_validator(current_file, old_file)
         assert validator.is_added_required_args() is answer
@@ -288,49 +159,37 @@ class TestScriptValidator:
 
     INPUT_CONFIGURATION_1 = {
         'args': [
-            {
-                'name': 'test',
-                'required': False
-            },
-            {
-                'name': 'test1',
-                'required': True
-            }
+            {'name': 'test', 'required': False},
+            {'name': 'test1', 'required': True},
         ]
     }
-    EXPECTED_CONFIGURATION_1 = {
-        'test': False,
-        'test1': True
-    }
+    EXPECTED_CONFIGURATION_1 = {'test': False, 'test1': True}
     INPUTS_CONFIGURATION_EXTRACTION = [
         (INPUT_CONFIGURATION_1, EXPECTED_CONFIGURATION_1)
     ]
 
-    @pytest.mark.parametrize('script, expected', INPUTS_CONFIGURATION_EXTRACTION)
+    @pytest.mark.parametrize(
+        'script, expected', INPUTS_CONFIGURATION_EXTRACTION
+    )
     def test_configuration_extraction(self, script, expected):
-        assert ScriptValidator._get_arg_to_required_dict(script) == expected, 'Failed to extract configuration'
+        assert (
+            ScriptValidator._get_arg_to_required_dict(script) == expected
+        ), 'Failed to extract configuration'
 
-    PYTHON3_SUBTYPE = {
-        "type": "python",
-        "subtype": "python3"
-    }
-    PYTHON2_SUBTYPE = {
-        "type": "python",
-        "subtype": "python2"
-    }
+    PYTHON3_SUBTYPE = {'type': 'python', 'subtype': 'python3'}
+    PYTHON2_SUBTYPE = {'type': 'python', 'subtype': 'python2'}
 
-    BLA_BLA_SUBTYPE = {
-        "type": "python",
-        "subtype": "blabla"
-    }
+    BLA_BLA_SUBTYPE = {'type': 'python', 'subtype': 'blabla'}
     INPUTS_SUBTYPE_TEST = [
         (PYTHON2_SUBTYPE, PYTHON3_SUBTYPE, True),
         (PYTHON3_SUBTYPE, PYTHON2_SUBTYPE, True),
         (PYTHON3_SUBTYPE, PYTHON3_SUBTYPE, False),
-        (PYTHON2_SUBTYPE, PYTHON2_SUBTYPE, False)
+        (PYTHON2_SUBTYPE, PYTHON2_SUBTYPE, False),
     ]
 
-    @pytest.mark.parametrize('current_file, old_file, answer', INPUTS_SUBTYPE_TEST)
+    @pytest.mark.parametrize(
+        'current_file, old_file, answer', INPUTS_SUBTYPE_TEST
+    )
     def test_is_changed_subtype_python(self, current_file, old_file, answer):
         validator = get_validator()
         validator.current_file = current_file
@@ -342,7 +201,7 @@ class TestScriptValidator:
     INPUTS_IS_VALID_SUBTYPE = [
         (BLA_BLA_SUBTYPE, False),
         (PYTHON2_SUBTYPE, True),
-        (PYTHON3_SUBTYPE, True)
+        (PYTHON3_SUBTYPE, True),
     ]
 
     @pytest.mark.parametrize('current_file, answer', INPUTS_IS_VALID_SUBTYPE)
@@ -351,43 +210,50 @@ class TestScriptValidator:
         validator.current_file = current_file
         assert validator.is_valid_subtype() is answer
 
-    V2_VALID = {"name": "scriptnameV2", "id": "scriptnameV2"}
-    V2_WRONG_DISPLAY = {"name": "scriptnamev2", "id": "scriptnamev2"}
+    V2_VALID = {'name': 'scriptnameV2', 'id': 'scriptnameV2'}
+    V2_WRONG_DISPLAY = {'name': 'scriptnamev2', 'id': 'scriptnamev2'}
     V2_NAME_INPUTS = [
         (V2_VALID, True),
         (V2_WRONG_DISPLAY, False),
     ]
 
-    IS_SKIPPING_DOCKER_CHECK = [("Packs/ApiModules", False, True),
-                                ("Packs/ApiModules", True, True),
-                                ("Packs/Pack1", True, True)]
+    IS_SKIPPING_DOCKER_CHECK = [
+        ('Packs/ApiModules', False, True),
+        ('Packs/ApiModules', True, True),
+        ('Packs/Pack1', True, True),
+    ]
 
-    @pytest.mark.parametrize("file_path, skip_docker_check, answer", IS_SKIPPING_DOCKER_CHECK)
+    @pytest.mark.parametrize(
+        'file_path, skip_docker_check, answer', IS_SKIPPING_DOCKER_CHECK
+    )
     def test_is_docker_image_valid(self, file_path, skip_docker_check, answer):
         validator = get_validator()
         validator.file_path = file_path
         validator.skip_docker_check = skip_docker_check
         assert validator.is_docker_image_valid() is answer
 
-    @pytest.mark.parametrize("current, answer", V2_NAME_INPUTS)
+    @pytest.mark.parametrize('current, answer', V2_NAME_INPUTS)
     def test_is_valid_name(self, current, answer):
         validator = get_validator()
         validator.current_file = current
         assert validator.is_valid_name() is answer
 
-    @pytest.mark.parametrize("script_type, fromversion, res", [
-        ('powershell', None, False),
-        ('powershell', '4.5.0', False),
-        ('powershell', '5.5.0', True),
-        ('powershell', '5.5.1', True),
-        ('powershell', '6.0.0', True),
-        ('python', '', True),
-        ('python', '4.5.0', True),
-    ])
+    @pytest.mark.parametrize(
+        'script_type, fromversion, res',
+        [
+            ('powershell', None, False),
+            ('powershell', '4.5.0', False),
+            ('powershell', '5.5.0', True),
+            ('powershell', '5.5.1', True),
+            ('powershell', '6.0.0', True),
+            ('python', '', True),
+            ('python', '4.5.0', True),
+        ],
+    )
     def test_valid_pwsh(self, script_type, fromversion, res):
         current = {
-            "type": script_type,
-            "fromversion": fromversion,
+            'type': script_type,
+            'fromversion': fromversion,
         }
         validator = get_validator()
         validator.current_file = current
@@ -404,7 +270,9 @@ class TestScriptValidator:
         """
 
         validator = get_validator()
-        validator.file_path = 'Packs/AbuseDB/Scripts/script-AbuseIPDBPopulateIndicators.yml'
+        validator.file_path = (
+            'Packs/AbuseDB/Scripts/script-AbuseIPDBPopulateIndicators.yml'
+        )
 
         assert validator.is_valid_script_file_path()
 
@@ -423,22 +291,26 @@ class TestScriptValidator:
         """
 
         validator = get_validator()
-        validator.file_path = 'Packs/AbuseDB/Scripts/AbuseIPDBPopulateIndicators.yml'
-        mocker.patch.object(validator, "handle_error", return_value=True)
+        validator.file_path = (
+            'Packs/AbuseDB/Scripts/AbuseIPDBPopulateIndicators.yml'
+        )
+        mocker.patch.object(validator, 'handle_error', return_value=True)
 
         assert not validator.is_valid_script_file_path()
 
-        validator.file_path = 'Packs/AWS-EC2/Scripts/AwsEC2GetPublicSGRules/Aws.yml'
-        mocker.patch.object(validator, "handle_error", return_value=True)
+        validator.file_path = (
+            'Packs/AWS-EC2/Scripts/AwsEC2GetPublicSGRules/Aws.yml'
+        )
+        mocker.patch.object(validator, 'handle_error', return_value=True)
 
         assert not validator.is_valid_script_file_path()
 
     NO_INCIDENT_INPUT = [
-        ({"args": [{"name": "arg1"}]}, True),
-        ({"args": [{"name": "incident_arg"}]}, False)
+        ({'args': [{'name': 'arg1'}]}, True),
+        ({'args': [{'name': 'incident_arg'}]}, False),
     ]
 
-    @pytest.mark.parametrize("content, answer", NO_INCIDENT_INPUT)
+    @pytest.mark.parametrize('content, answer', NO_INCIDENT_INPUT)
     def test_no_incident_in_core_pack(self, content, answer):
         """
         Given
@@ -521,25 +393,40 @@ class TestScriptValidator:
 
             assert not validator.check_separators_in_files()
 
-    DEPRECATED_VALID = {"deprecated": True, "comment": "Deprecated. Use the XXXX script instead."}
-    DEPRECATED_VALID2 = {"deprecated": True, "comment": "Deprecated. Feodo Tracker no longer supports this feed "
-                                                        "No available replacement."}
-    DEPRECATED_VALID3 = {"deprecated": True, "comment": "Deprecated. The script uses an unsupported scraping "
-                                                        "API. Use Proofpoint Protection Server v2 script instead."}
-    DEPRECATED_INVALID_DESC = {"deprecated": True, "comment": "Deprecated."}
-    DEPRECATED_INVALID_DESC2 = {"deprecated": True, "comment": "Use the ServiceNow script to manage..."}
-    DEPRECATED_INVALID_DESC3 = {"deprecated": True, "comment": "Deprecated. The script uses an unsupported scraping"
-                                                               " API."}
+    DEPRECATED_VALID = {
+        'deprecated': True,
+        'comment': 'Deprecated. Use the XXXX script instead.',
+    }
+    DEPRECATED_VALID2 = {
+        'deprecated': True,
+        'comment': 'Deprecated. Feodo Tracker no longer supports this feed '
+        'No available replacement.',
+    }
+    DEPRECATED_VALID3 = {
+        'deprecated': True,
+        'comment': 'Deprecated. The script uses an unsupported scraping '
+        'API. Use Proofpoint Protection Server v2 script instead.',
+    }
+    DEPRECATED_INVALID_DESC = {'deprecated': True, 'comment': 'Deprecated.'}
+    DEPRECATED_INVALID_DESC2 = {
+        'deprecated': True,
+        'comment': 'Use the ServiceNow script to manage...',
+    }
+    DEPRECATED_INVALID_DESC3 = {
+        'deprecated': True,
+        'comment': 'Deprecated. The script uses an unsupported scraping'
+        ' API.',
+    }
     DEPRECATED_INPUTS = [
         (DEPRECATED_VALID, True),
         (DEPRECATED_VALID2, True),
         (DEPRECATED_VALID3, True),
         (DEPRECATED_INVALID_DESC, False),
         (DEPRECATED_INVALID_DESC2, False),
-        (DEPRECATED_INVALID_DESC3, False)
+        (DEPRECATED_INVALID_DESC3, False),
     ]
 
-    @pytest.mark.parametrize("current, answer", DEPRECATED_INPUTS)
+    @pytest.mark.parametrize('current, answer', DEPRECATED_INPUTS)
     def test_is_valid_deprecated_script(self, current, answer):
         """
         Given
@@ -574,7 +461,7 @@ class TestScriptValidator:
             - Ensure the validate failed.
         """
 
-        script = pack.create_script(yml={"name": "test_script"})
+        script = pack.create_script(yml={'name': 'test_script'})
 
         with ChangeCWD(pack.repo_path):
             structure_validator = StructureValidator(script.yml.path)
@@ -592,7 +479,7 @@ class TestScriptValidator:
             - Ensure the validate passes.
         """
 
-        script = pack.create_script(yml={"name": "test"})
+        script = pack.create_script(yml={'name': 'test'})
 
         structure_validator = StructureValidator(script.yml.path)
         validator = ScriptValidator(structure_validator)
@@ -608,7 +495,7 @@ class TestScriptValidator:
             - Ensure the validate failed.
         """
 
-        script = pack.create_script(yml={"runas": "DBotRole"})
+        script = pack.create_script(yml={'runas': 'DBotRole'})
 
         with ChangeCWD(pack.repo_path):
             structure_validator = StructureValidator(script.yml.path)
@@ -634,36 +521,48 @@ class TestScriptValidator:
 
             assert validator.runas_is_not_dbtrole()
 
-    README_TEST_DATA = [(True, False, False),
-                        (False, False, True),
-                        (False, True, True),
-                        (True, True, True),
-                        ]
+    README_TEST_DATA = [
+        (True, False, False),
+        (False, False, True),
+        (False, True, True),
+        (True, True, True),
+    ]
 
-    @pytest.mark.parametrize("remove_readme, validate_all, expected_result", README_TEST_DATA)
-    @pytest.mark.parametrize("unified", [True, False])
-    def test_validate_readme_exists(self, repo, unified, remove_readme, validate_all, expected_result):
+    @pytest.mark.parametrize(
+        'remove_readme, validate_all, expected_result', README_TEST_DATA
+    )
+    @pytest.mark.parametrize('unified', [True, False])
+    def test_validate_readme_exists(
+        self, repo, unified, remove_readme, validate_all, expected_result
+    ):
         """
-              Given:
-                  - An integration yml that was added or modified to validate
+        Given:
+            - An integration yml that was added or modified to validate
 
-              When:
-                    All the tests occur twice for unified integrations = [True - False]
-                  - The integration is missing a readme.md file in the same folder
-                  - The integration has a readme.md file in the same folder
-                  - The integration is missing a readme.md file in the same folder but has not been changed or added
-                      (This check is for backward compatibility)
+        When:
+              All the tests occur twice for unified integrations = [True - False]
+            - The integration is missing a readme.md file in the same folder
+            - The integration has a readme.md file in the same folder
+            - The integration is missing a readme.md file in the same folder but has not been changed or added
+                (This check is for backward compatibility)
 
-              Then:
-                  - Ensure readme exists and validation fails
-                  - Ensure readme exists and validation passes
-                  - Ensure readme exists and validation passes
+        Then:
+            - Ensure readme exists and validation fails
+            - Ensure readme exists and validation passes
+            - Ensure readme exists and validation passes
         """
         read_me_pack = repo.create_pack('README_test')
         script = read_me_pack.create_script('script1', create_unified=unified)
 
         structure_validator = StructureValidator(script.yml.path)
-        script_validator = ScriptValidator(structure_validator, validate_all=validate_all)
+        script_validator = ScriptValidator(
+            structure_validator, validate_all=validate_all
+        )
         if remove_readme:
             os.remove(script.readme.path)
-        assert script_validator.validate_readme_exists(script_validator.validate_all) is expected_result
+        assert (
+            script_validator.validate_readme_exists(
+                script_validator.validate_all
+            )
+            is expected_result
+        )

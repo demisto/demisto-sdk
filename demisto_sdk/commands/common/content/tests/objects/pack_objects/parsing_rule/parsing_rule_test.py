@@ -1,7 +1,9 @@
-from demisto_sdk.commands.common.content.objects.pack_objects import \
-    ParsingRule
-from demisto_sdk.commands.common.content.objects_factory import \
-    path_to_pack_object
+from demisto_sdk.commands.common.content.objects.pack_objects import (
+    ParsingRule,
+)
+from demisto_sdk.commands.common.content.objects_factory import (
+    path_to_pack_object,
+)
 
 
 def get_parsing_rule(pack, name):
@@ -21,7 +23,10 @@ class TestParsingRule:
 
         parsing_rule = get_parsing_rule(pack, 'parsing_rule_name')
         obj = ParsingRule(parsing_rule._tmpdir_rule_path)
-        assert obj.normalize_file_name() == f"parsingrule-{parsing_rule.yml._tmp_path.name}"
+        assert (
+            obj.normalize_file_name()
+            == f'parsingrule-{parsing_rule.yml._tmp_path.name}'
+        )
 
     def test_files_detection(self, pack):
         parsing_rule = get_parsing_rule(pack, 'parsing_rule_name')

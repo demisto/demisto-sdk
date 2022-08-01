@@ -1,29 +1,41 @@
-from CommonServerPython import (IAMActions, IAMCommand, IAMErrors,
-                                IAMUserAppData, IAMUserProfile)
+from CommonServerPython import (
+    IAMActions,
+    IAMCommand,
+    IAMErrors,
+    IAMUserAppData,
+    IAMUserProfile,
+)
 from HelloIAMWorld import Client, get_mapping_fields
 from requests import Response, Session
 
 APP_USER_OUTPUT = {
-    "user_id": "mock_id",
-    "user_name": "mock_user_name",
-    "first_name": "mock_first_name",
-    "last_name": "mock_last_name",
-    "active": "true",
-    "email": "testdemisto2@paloaltonetworks.com"
+    'user_id': 'mock_id',
+    'user_name': 'mock_user_name',
+    'first_name': 'mock_first_name',
+    'last_name': 'mock_last_name',
+    'active': 'true',
+    'email': 'testdemisto2@paloaltonetworks.com',
 }
 
-USER_APP_DATA = IAMUserAppData("mock_id", "mock_user_name", is_active=True, app_data=APP_USER_OUTPUT)
+USER_APP_DATA = IAMUserAppData(
+    'mock_id', 'mock_user_name', is_active=True, app_data=APP_USER_OUTPUT
+)
 
 APP_DISABLED_USER_OUTPUT = {
-    "user_id": "mock_id",
-    "user_name": "mock_user_name",
-    "first_name": "mock_first_name",
-    "last_name": "mock_last_name",
-    "active": "false",
-    "email": "testdemisto2@paloaltonetworks.com"
+    'user_id': 'mock_id',
+    'user_name': 'mock_user_name',
+    'first_name': 'mock_first_name',
+    'last_name': 'mock_last_name',
+    'active': 'false',
+    'email': 'testdemisto2@paloaltonetworks.com',
 }
 
-DISABLED_USER_APP_DATA = IAMUserAppData("mock_id", "mock_user_name", is_active=False, app_data=APP_DISABLED_USER_OUTPUT)
+DISABLED_USER_APP_DATA = IAMUserAppData(
+    'mock_id',
+    'mock_user_name',
+    is_active=False,
+    app_data=APP_DISABLED_USER_OUTPUT,
+)
 
 
 def mock_client():
@@ -53,7 +65,9 @@ class TestGetUserCommand:
         args = {'user-profile': {'email': 'testdemisto2@paloaltonetworks.com'}}
 
         mocker.patch.object(client, 'get_user', return_value=USER_APP_DATA)
-        mocker.patch.object(IAMUserProfile, 'update_with_app_data', return_value={})
+        mocker.patch.object(
+            IAMUserProfile, 'update_with_app_data', return_value={}
+        )
 
         user_profile = IAMCommand().get_user(client, args)
         outputs = get_outputs_from_user_profile(user_profile)
@@ -63,7 +77,9 @@ class TestGetUserCommand:
         assert outputs.get('active') is True
         assert outputs.get('id') == 'mock_id'
         assert outputs.get('username') == 'mock_user_name'
-        assert outputs.get('details', {}).get('first_name') == 'mock_first_name'
+        assert (
+            outputs.get('details', {}).get('first_name') == 'mock_first_name'
+        )
         assert outputs.get('details', {}).get('last_name') == 'mock_last_name'
 
     def test_non_existing_user(self, mocker):
@@ -108,7 +124,9 @@ class TestGetUserCommand:
 
         bad_response = Response()
         bad_response.status_code = 500
-        bad_response._content = b'{"error": {"detail": "details", "message": "message"}}'
+        bad_response._content = (
+            b'{"error": {"detail": "details", "message": "message"}}'
+        )
 
         mocker.patch.object(demisto, 'error')
         mocker.patch.object(Session, 'request', return_value=bad_response)
@@ -148,7 +166,9 @@ class TestCreateUserCommand:
         assert outputs.get('active') is True
         assert outputs.get('id') == 'mock_id'
         assert outputs.get('username') == 'mock_user_name'
-        assert outputs.get('details', {}).get('first_name') == 'mock_first_name'
+        assert (
+            outputs.get('details', {}).get('first_name') == 'mock_first_name'
+        )
         assert outputs.get('details', {}).get('last_name') == 'mock_last_name'
 
     def test_user_already_exists(self, mocker):
@@ -164,10 +184,17 @@ class TestCreateUserCommand:
             - Ensure the command is considered successful and the user is still disabled
         """
         client = mock_client()
-        args = {'user-profile': {'email': 'testdemisto2@paloaltonetworks.com'}, 'allow-enable': 'false'}
+        args = {
+            'user-profile': {'email': 'testdemisto2@paloaltonetworks.com'},
+            'allow-enable': 'false',
+        }
 
-        mocker.patch.object(client, 'get_user', return_value=DISABLED_USER_APP_DATA)
-        mocker.patch.object(client, 'update_user', return_value=DISABLED_USER_APP_DATA)
+        mocker.patch.object(
+            client, 'get_user', return_value=DISABLED_USER_APP_DATA
+        )
+        mocker.patch.object(
+            client, 'update_user', return_value=DISABLED_USER_APP_DATA
+        )
 
         user_profile = IAMCommand().create_user(client, args)
         outputs = get_outputs_from_user_profile(user_profile)
@@ -177,7 +204,9 @@ class TestCreateUserCommand:
         assert outputs.get('active') is False
         assert outputs.get('id') == 'mock_id'
         assert outputs.get('username') == 'mock_user_name'
-        assert outputs.get('details', {}).get('first_name') == 'mock_first_name'
+        assert (
+            outputs.get('details', {}).get('first_name') == 'mock_first_name'
+        )
         assert outputs.get('details', {}).get('last_name') == 'mock_last_name'
 
 
@@ -197,13 +226,20 @@ class TestUpdateUserCommand:
             - Ensure a User Profile object with the user data is returned
         """
         client = mock_client()
-        args = {'user-profile': {'email': 'testdemisto2@paloaltonetworks.com', 'givenname': 'mock_first_name'}}
+        args = {
+            'user-profile': {
+                'email': 'testdemisto2@paloaltonetworks.com',
+                'givenname': 'mock_first_name',
+            }
+        }
 
         mocker.patch.object(client, 'get_user', return_value=None)
         mocker.patch.object(IAMUserProfile, 'map_object', return_value={})
         mocker.patch.object(client, 'create_user', return_value=USER_APP_DATA)
 
-        user_profile = IAMCommand(create_if_not_exists=True).update_user(client, args)
+        user_profile = IAMCommand(create_if_not_exists=True).update_user(
+            client, args
+        )
         outputs = get_outputs_from_user_profile(user_profile)
 
         assert outputs.get('action') == IAMActions.CREATE_USER
@@ -211,7 +247,9 @@ class TestUpdateUserCommand:
         assert outputs.get('active') is True
         assert outputs.get('id') == 'mock_id'
         assert outputs.get('username') == 'mock_user_name'
-        assert outputs.get('details', {}).get('first_name') == 'mock_first_name'
+        assert (
+            outputs.get('details', {}).get('first_name') == 'mock_first_name'
+        )
         assert outputs.get('details', {}).get('last_name') == 'mock_last_name'
 
     def test_command_is_disabled(self, mocker):
@@ -226,13 +264,20 @@ class TestUpdateUserCommand:
             - Ensure the command is considered successful and skipped
         """
         client = mock_client()
-        args = {'user-profile': {'email': 'testdemisto2@paloaltonetworks.com', 'givenname': 'mock_first_name'}}
+        args = {
+            'user-profile': {
+                'email': 'testdemisto2@paloaltonetworks.com',
+                'givenname': 'mock_first_name',
+            }
+        }
 
         mocker.patch.object(client, 'get_user', return_value=None)
         mocker.patch.object(IAMUserProfile, 'map_object', return_value={})
         mocker.patch.object(client, 'update_user', return_value=USER_APP_DATA)
 
-        user_profile = IAMCommand(is_update_enabled=False).update_user(client, args)
+        user_profile = IAMCommand(is_update_enabled=False).update_user(
+            client, args
+        )
         outputs = get_outputs_from_user_profile(user_profile)
 
         assert outputs.get('action') == IAMActions.UPDATE_USER
@@ -253,10 +298,17 @@ class TestUpdateUserCommand:
             - Ensure the user is enabled at the end of the command execution.
         """
         client = mock_client()
-        args = {'user-profile': {'email': 'testdemisto2@paloaltonetworks.com', 'givenname': 'mock_first_name'},
-                'allow-enable': 'true'}
+        args = {
+            'user-profile': {
+                'email': 'testdemisto2@paloaltonetworks.com',
+                'givenname': 'mock_first_name',
+            },
+            'allow-enable': 'true',
+        }
 
-        mocker.patch.object(client, 'get_user', return_value=DISABLED_USER_APP_DATA)
+        mocker.patch.object(
+            client, 'get_user', return_value=DISABLED_USER_APP_DATA
+        )
         mocker.patch.object(IAMUserProfile, 'map_object', return_value={})
         mocker.patch.object(client, 'update_user', return_value=USER_APP_DATA)
 
@@ -268,7 +320,9 @@ class TestUpdateUserCommand:
         assert outputs.get('active') is True
         assert outputs.get('id') == 'mock_id'
         assert outputs.get('username') == 'mock_user_name'
-        assert outputs.get('details', {}).get('first_name') == 'mock_first_name'
+        assert (
+            outputs.get('details', {}).get('first_name') == 'mock_first_name'
+        )
         assert outputs.get('details', {}).get('last_name') == 'mock_last_name'
 
 
@@ -310,10 +364,18 @@ def test_get_mapping_fields_command(mocker):
         - Ensure a GetMappingFieldsResponse object that contains the application fields is returned
     """
     client = mock_client()
-    mocker.patch.object(client, 'get_app_fields', return_value={'field1': 'desc1', 'field2': 'desc2'})
+    mocker.patch.object(
+        client,
+        'get_app_fields',
+        return_value={'field1': 'desc1', 'field2': 'desc2'},
+    )
 
     mapping_response = get_mapping_fields(client)
     mapping = mapping_response.extract_mapping()[0]
 
-    assert mapping.get(IAMUserProfile.INDICATOR_TYPE, {}).get('field1') == 'desc1'
-    assert mapping.get(IAMUserProfile.INDICATOR_TYPE, {}).get('field2') == 'desc2'
+    assert (
+        mapping.get(IAMUserProfile.INDICATOR_TYPE, {}).get('field1') == 'desc1'
+    )
+    assert (
+        mapping.get(IAMUserProfile.INDICATOR_TYPE, {}).get('field2') == 'desc2'
+    )

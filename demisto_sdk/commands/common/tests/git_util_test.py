@@ -32,31 +32,22 @@ def test_find_primary_branch():
     repo_with_remotes_refs_main = Object()
     repo_with_remotes_refs_main.remotes = []
     refs_main = Object()
-    refs_main.refs = [
-        'a',
-        'origin/main',
-        'c'
-    ]
+    refs_main.refs = ['a', 'origin/main', 'c']
     repo_with_remotes_refs_main.remotes.append(refs_main)
     assert GitUtil.find_primary_branch(repo_with_remotes_refs_main) == 'main'
 
     repo_with_remotes_refs_master = Object()
     repo_with_remotes_refs_master.remotes = []
     refs_master = Object()
-    refs_master.refs = [
-        'a',
-        'origin/master',
-        'c'
-    ]
+    refs_master.refs = ['a', 'origin/master', 'c']
     repo_with_remotes_refs_master.remotes.append(refs_master)
-    assert GitUtil.find_primary_branch(repo_with_remotes_refs_master) == 'master'
+    assert (
+        GitUtil.find_primary_branch(repo_with_remotes_refs_master) == 'master'
+    )
 
     repo_with_remotes_refs_other = Object()
     repo_with_remotes_refs_other.remotes = []
     refs_other = Object()
-    refs_other.refs = [
-        'a',
-        'b'
-    ]
+    refs_other.refs = ['a', 'b']
     repo_with_remotes_refs_other.remotes.append(refs_other)
     assert not GitUtil.find_primary_branch(repo_with_remotes_refs_other)

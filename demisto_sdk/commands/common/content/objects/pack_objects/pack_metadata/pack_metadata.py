@@ -6,16 +6,21 @@ from typing import Dict, List, Union
 from packaging.version import Version, parse
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
-                                                   XSOAR_AUTHOR, XSOAR_SUPPORT,
-                                                   XSOAR_SUPPORT_URL,
-                                                   ContentItems)
-from demisto_sdk.commands.common.content.objects.abstract_objects import \
-    JSONObject
+from demisto_sdk.commands.common.constants import (
+    PACKS_PACK_META_FILE_NAME,
+    XSOAR_AUTHOR,
+    XSOAR_SUPPORT,
+    XSOAR_SUPPORT_URL,
+    ContentItems,
+)
+from demisto_sdk.commands.common.content.objects.abstract_objects import (
+    JSONObject,
+)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import get_core_pack_list
-from demisto_sdk.commands.find_dependencies.find_dependencies import \
-    PackDependencies
+from demisto_sdk.commands.find_dependencies.find_dependencies import (
+    PackDependencies,
+)
 
 json = JSON_Handler()
 
@@ -38,7 +43,9 @@ class PackMetaData(JSONObject):
         self._updated: datetime = datetime.utcnow()
         self._legacy: bool = True
         self._support: str = ''
-        self._eulaLink: str = 'https://github.com/demisto/content/blob/master/LICENSE'
+        self._eulaLink: str = (
+            'https://github.com/demisto/content/blob/master/LICENSE'
+        )
         self._email: str = ''
         self._url: str = ''
         self._author: str = ''
@@ -118,7 +125,9 @@ class PackMetaData(JSONObject):
 
         if isinstance(new_pack_created_date, str):
             try:
-                self._created = datetime.strptime(new_pack_created_date, DATETIME_FORMAT)
+                self._created = datetime.strptime(
+                    new_pack_created_date, DATETIME_FORMAT
+                )
             except ValueError:
                 return
         else:
@@ -138,7 +147,9 @@ class PackMetaData(JSONObject):
         """Setter for the updated attribute"""
         if isinstance(new_pack_updated_date, str):
             try:
-                self._updated = datetime.strptime(new_pack_updated_date, DATETIME_FORMAT)
+                self._updated = datetime.strptime(
+                    new_pack_updated_date, DATETIME_FORMAT
+                )
             except ValueError:
                 return
         else:
@@ -183,7 +194,9 @@ class PackMetaData(JSONObject):
 
         if self.url:  # set support url from user input
             support_details['url'] = self.url
-        elif self.support == XSOAR_SUPPORT:  # in case support type is xsoar, set default xsoar support url
+        elif (
+            self.support == XSOAR_SUPPORT
+        ):  # in case support type is xsoar, set default xsoar support url
             support_details['url'] = XSOAR_SUPPORT_URL
         # add support email if defined
         if self.email:
@@ -244,7 +257,9 @@ class PackMetaData(JSONObject):
             if not self._author:
                 return XSOAR_AUTHOR
             elif self._author != XSOAR_AUTHOR:
-                logging.warning(f'{self._author} author doest not match {XSOAR_AUTHOR} default value')
+                logging.warning(
+                    f'{self._author} author doest not match {XSOAR_AUTHOR} default value'
+                )
                 return self._author
         return self._author
 
@@ -423,7 +438,9 @@ class PackMetaData(JSONObject):
     @categories.setter
     def categories(self, new_pack_categories: List[str]):
         """Setter for the categories attribute"""
-        self._categories = [category.title() for category in new_pack_categories]
+        self._categories = [
+            category.title() for category in new_pack_categories
+        ]
 
     @property
     def content_items(self) -> Dict[str, List]:
@@ -432,7 +449,10 @@ class PackMetaData(JSONObject):
         Returns:
             Dict[str, List]: pack content_items.
         """
-        return {content_entity.value: content_items for content_entity, content_items in self._contentItems.items()}
+        return {
+            content_entity.value: content_items
+            for content_entity, content_items in self._contentItems.items()
+        }
 
     @content_items.setter
     def content_items(self, new_pack_content_items: Dict[ContentItems, List]):
@@ -481,7 +501,9 @@ class PackMetaData(JSONObject):
         """Setter for the dependencies attribute"""
         self._dependencies = new_pack_dependencies
 
-    def dump_metadata_file(self, dest_dir: Union[Path, str] = '') -> List[Path]:
+    def dump_metadata_file(
+        self, dest_dir: Union[Path, str] = ''
+    ) -> List[Path]:
         file_content = {
             'name': self.name,
             'id': self.id,
@@ -502,7 +524,7 @@ class PackMetaData(JSONObject):
             'contentItems': self.content_items,
             'useCases': self.use_cases,
             'keywords': self.keywords,
-            'dependencies': self.dependencies
+            'dependencies': self.dependencies,
         }
 
         if self.price > 0:
@@ -518,7 +540,13 @@ class PackMetaData(JSONObject):
 
         return [Path(new_metadata_path)]
 
-    def load_user_metadata(self, pack_id: str, pack_name: str, pack_path: Path, logger: logging.Logger) -> None:
+    def load_user_metadata(
+        self,
+        pack_id: str,
+        pack_name: str,
+        pack_path: Path,
+        logger: logging.Logger,
+    ) -> None:
         """Loads user defined metadata and stores part of it's data in defined properties fields.
 
         Args:
@@ -528,15 +556,21 @@ class PackMetaData(JSONObject):
             logger (logging.Logger): System logger already initialized.
 
         """
-        user_metadata_path = os.path.join(pack_path, PACKS_PACK_META_FILE_NAME)  # user metadata path before parsing
+        user_metadata_path = os.path.join(
+            pack_path, PACKS_PACK_META_FILE_NAME
+        )  # user metadata path before parsing
 
         if not os.path.exists(user_metadata_path):
-            logger.error(f'{pack_name} pack is missing {PACKS_PACK_META_FILE_NAME} file.')
+            logger.error(
+                f'{pack_name} pack is missing {PACKS_PACK_META_FILE_NAME} file.'
+            )
             return None
 
         try:
-            with open(user_metadata_path, "r") as user_metadata_file:
-                user_metadata = json.load(user_metadata_file)  # loading user metadata
+            with open(user_metadata_path, 'r') as user_metadata_file:
+                user_metadata = json.load(
+                    user_metadata_file
+                )  # loading user metadata
                 # part of old packs are initialized with empty list
                 if isinstance(user_metadata, list):
                     user_metadata = {}
@@ -548,12 +582,16 @@ class PackMetaData(JSONObject):
             try:
                 self.price = int(user_metadata.get('price', 0))
             except Exception:
-                logger.error(f'{self.name} pack price is not valid. The price was set to 0.')
+                logger.error(
+                    f'{self.name} pack price is not valid. The price was set to 0.'
+                )
             self.support = user_metadata.get('support', '')
             self.url = user_metadata.get('url', '')
             self.email = user_metadata.get('email', '')
             self.certification = user_metadata.get('certification', '')
-            self.current_version = parse(user_metadata.get('currentVersion', '0.0.0'))
+            self.current_version = parse(
+                user_metadata.get('currentVersion', '0.0.0')
+            )
             self.author = user_metadata.get('author', '')
             self.hidden = user_metadata.get('hidden', False)
             self.tags = user_metadata.get('tags', [])
@@ -573,7 +611,9 @@ class PackMetaData(JSONObject):
         except Exception:
             logger.error(f'Failed loading {pack_name} user metadata.')
 
-    def handle_dependencies(self, pack_name: str, id_set_path: str, logger: logging.Logger) -> None:
+    def handle_dependencies(
+        self, pack_name: str, id_set_path: str, logger: logging.Logger
+    ) -> None:
         """Updates pack's dependencies using the find_dependencies command.
 
         Args:
@@ -581,21 +621,28 @@ class PackMetaData(JSONObject):
             id_set_path (str): the id_set file path.
             logger (logging.Logger): System logger already initialized.
         """
-        calculated_dependencies = PackDependencies.find_dependencies(pack_name,
-                                                                     id_set_path=id_set_path,
-                                                                     update_pack_metadata=False,
-                                                                     silent_mode=True,
-                                                                     complete_data=True)
+        calculated_dependencies = PackDependencies.find_dependencies(
+            pack_name,
+            id_set_path=id_set_path,
+            update_pack_metadata=False,
+            silent_mode=True,
+            complete_data=True,
+        )
 
         # If it is a core pack, check that no new mandatory packs (that are not core packs) were added
         # They can be overridden in the user metadata to be not mandatory so we need to check there as well
         if pack_name in CORE_PACKS_LIST:
-            mandatory_dependencies = [k for k, v in calculated_dependencies.items()
-                                      if v.get('mandatory', False) is True and
-                                      k not in CORE_PACKS_LIST and
-                                      k not in self.dependencies.keys()]
+            mandatory_dependencies = [
+                k
+                for k, v in calculated_dependencies.items()
+                if v.get('mandatory', False) is True
+                and k not in CORE_PACKS_LIST
+                and k not in self.dependencies.keys()
+            ]
             if mandatory_dependencies:
-                logger.error(f'New mandatory dependencies {mandatory_dependencies} were '
-                             f'found in the core pack {pack_name}')
+                logger.error(
+                    f'New mandatory dependencies {mandatory_dependencies} were '
+                    f'found in the core pack {pack_name}'
+                )
 
         self.dependencies.update(calculated_dependencies)

@@ -32,19 +32,25 @@ class Rule:
         self._tmpdir_rule_path.mkdir()
 
         self.path = str(self._tmpdir_rule_path)
-        self.yml = YAML(self._tmpdir_rule_path / f'{self.name}.yml', self._repo.path)
-        self.rules = File(self._tmpdir_rule_path / f'{self.name}.xif', self._repo.path)
-        self.schema = JSONBased(self._tmpdir_rule_path, f'{self.name}_schema', '')
+        self.yml = YAML(
+            self._tmpdir_rule_path / f'{self.name}.yml', self._repo.path
+        )
+        self.rules = File(
+            self._tmpdir_rule_path / f'{self.name}.xif', self._repo.path
+        )
+        self.schema = JSONBased(
+            self._tmpdir_rule_path, f'{self.name}_schema', ''
+        )
 
         self.samples: list[JSONBased] = []
         self.samples_dir_path = tmpdir / SAMPLES_DIR
 
     def build(
-            self,
-            yml: dict,
-            rules: str | None = None,
-            samples: list[dict] | None = None,
-            schema: dict | None = None,
+        self,
+        yml: dict,
+        rules: str | None = None,
+        samples: list[dict] | None = None,
+        schema: dict | None = None,
     ):
         self.yml.write_dict(yml)
         if rules:

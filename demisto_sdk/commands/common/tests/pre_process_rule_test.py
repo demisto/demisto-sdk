@@ -1,9 +1,9 @@
-from demisto_sdk.commands.common.hook_validations.pre_process_rule import \
-    PreProcessRuleValidator
+from demisto_sdk.commands.common.hook_validations.pre_process_rule import (
+    PreProcessRuleValidator,
+)
 
 
 class TestPreProcessRuleValidator:
-
     def test_get_field_name(self):
         """
         Given

@@ -2,12 +2,12 @@ from threading import Thread, currentThread
 
 import pytest
 
-from demisto_sdk.commands.test_content.ParallelLoggingManager import \
-    ParallelLoggingManager
+from demisto_sdk.commands.test_content.ParallelLoggingManager import (
+    ParallelLoggingManager,
+)
 
 
 class TestParallelLoggingManager:
-
     def test_queue_listener_sanity(self, tmp_path):
         """
         Given:
@@ -18,7 +18,9 @@ class TestParallelLoggingManager:
             - assert logs are not written to the file until execute_logs method is called
             - assert all logs appear in file after execute_logs method is called
         """
-        pytest.skip("For unknown reason this test cannot pass in the current infra")
+        pytest.skip(
+            'For unknown reason this test cannot pass in the current infra'
+        )
         log_file_path = f'{tmp_path}/log_file.log'
         logging_manager = ParallelLoggingManager(log_file_path)
         logging_manager.debug('debug1')
@@ -36,7 +38,9 @@ class TestParallelLoggingManager:
         assert not log_file_lines
         logging_manager.execute_logs()
         log_file_lines = self.get_log_content(log_file_path)
-        for expected_in_log, log_line in zip(self.get_expected_content('1').values(), log_file_lines):
+        for expected_in_log, log_line in zip(
+            self.get_expected_content('1').values(), log_file_lines
+        ):
             thread_name, level, content = expected_in_log
             self.assert_log_line(log_line, thread_name, level, content)
 
@@ -49,7 +53,9 @@ class TestParallelLoggingManager:
         Then:
             - assert logs are written to the file immediately
         """
-        pytest.skip("For unknown reason this test cannot pass in the current infra")
+        pytest.skip(
+            'For unknown reason this test cannot pass in the current infra'
+        )
         log_file_path = f'{tmp_path}/log_file.log'
         logging_manager = ParallelLoggingManager(log_file_path)
         expected_logs = self.get_expected_content('1')
@@ -76,7 +82,9 @@ class TestParallelLoggingManager:
             - assert logs does not appear in the file before each thread has called the 'execute_logs' method
             - assert logs are written to the file grouped together for each thread
         """
-        pytest.skip("For unknown reason this test cannot pass in the current infra")
+        pytest.skip(
+            'For unknown reason this test cannot pass in the current infra'
+        )
         log_file_path = f'{tmp_path}/log_file.log'
         logging_manager = ParallelLoggingManager(log_file_path)
         successful_threads_results = set()
@@ -86,16 +94,41 @@ class TestParallelLoggingManager:
             logging_manager.info('test1')
             logging_manager.info('test2')
             logging_manager.info('test3')
-            log_content_lines = TestParallelLoggingManager.get_log_content(logging_manager.log_file_name)
-            thread_logs = [line for line in log_content_lines if thread_name in line]
+            log_content_lines = TestParallelLoggingManager.get_log_content(
+                logging_manager.log_file_name
+            )
+            thread_logs = [
+                line for line in log_content_lines if thread_name in line
+            ]
             assert not thread_logs
             logging_manager.execute_logs()
-            log_content_lines = TestParallelLoggingManager.get_log_content(logging_manager.log_file_name)
-            first_thread_log_line = next(line for line in log_content_lines if thread_name in line)
-            first_thread_log_line_index = log_content_lines.index(first_thread_log_line)
-            self.assert_log_line(log_content_lines[first_thread_log_line_index], thread_name, 'INFO', 'test1')
-            self.assert_log_line(log_content_lines[first_thread_log_line_index + 1], thread_name, 'INFO', 'test2')
-            self.assert_log_line(log_content_lines[first_thread_log_line_index + 2], thread_name, 'INFO', 'test3')
+            log_content_lines = TestParallelLoggingManager.get_log_content(
+                logging_manager.log_file_name
+            )
+            first_thread_log_line = next(
+                line for line in log_content_lines if thread_name in line
+            )
+            first_thread_log_line_index = log_content_lines.index(
+                first_thread_log_line
+            )
+            self.assert_log_line(
+                log_content_lines[first_thread_log_line_index],
+                thread_name,
+                'INFO',
+                'test1',
+            )
+            self.assert_log_line(
+                log_content_lines[first_thread_log_line_index + 1],
+                thread_name,
+                'INFO',
+                'test2',
+            )
+            self.assert_log_line(
+                log_content_lines[first_thread_log_line_index + 2],
+                thread_name,
+                'INFO',
+                'test3',
+            )
             successful_threads_results.add(thread_name)
 
         threads = []
@@ -118,14 +151,19 @@ class TestParallelLoggingManager:
             A dict that contains for each log level a tuple with the thread name, the log level and the content
         """
         thread_name = currentThread().getName()
-        return {'debug': (thread_name, 'DEBUG', f'debug{content_postfix}'),
-                'info': (thread_name, 'INFO', f'info{content_postfix}'),
-                'warning': (thread_name, 'WARNING', f'warning{content_postfix}'),
-                'error': (thread_name, 'ERROR', f'error{content_postfix}'),
-                'critical': (thread_name, 'CRITICAL', f'critical{content_postfix}'),
-                'success': (thread_name, 'SUCCESS', f'success{content_postfix}'),
-                'exception': (thread_name, 'ERROR', f'exception{content_postfix}'),
-                }
+        return {
+            'debug': (thread_name, 'DEBUG', f'debug{content_postfix}'),
+            'info': (thread_name, 'INFO', f'info{content_postfix}'),
+            'warning': (thread_name, 'WARNING', f'warning{content_postfix}'),
+            'error': (thread_name, 'ERROR', f'error{content_postfix}'),
+            'critical': (
+                thread_name,
+                'CRITICAL',
+                f'critical{content_postfix}',
+            ),
+            'success': (thread_name, 'SUCCESS', f'success{content_postfix}'),
+            'exception': (thread_name, 'ERROR', f'exception{content_postfix}'),
+        }
 
     @staticmethod
     def get_log_content(log_file_path: str) -> list:
@@ -141,7 +179,9 @@ class TestParallelLoggingManager:
             log_file_lines = log_file.readlines()
         return log_file_lines
 
-    def assert_latest_log_line(self, log_file_path: str, thread_name: str, level: str, content: str) -> None:
+    def assert_latest_log_line(
+        self, log_file_path: str, thread_name: str, level: str, content: str
+    ) -> None:
         """
         Assert that the last line in the log file has the thread name, log level name, and content as expected
         Args:
@@ -154,7 +194,9 @@ class TestParallelLoggingManager:
         self.assert_log_line(latest_log_line, thread_name, level, content)
 
     @staticmethod
-    def assert_log_line(log_line: str, thread_name: str, level: str, content: str) -> None:
+    def assert_log_line(
+        log_line: str, thread_name: str, level: str, content: str
+    ) -> None:
         """
         Assert that the line of the log file has the thread name, log level name, and content as expected
         Args:

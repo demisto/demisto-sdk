@@ -11,7 +11,6 @@ Linting: https://xsoar.pan.dev/docs/integrations/linting
 
 This is an empty structure file. Check an example at;
 https://github.com/demisto/content/blob/master/Packs/HelloWorld/Integrations/HelloWorld/HelloWorld.py
-
 """
 
 from typing import Any, Dict, Optional
@@ -24,11 +23,11 @@ from CommonServerUserPython import *  # noqa
 # Disable insecure warnings
 urllib3.disable_warnings()
 
-''' CONSTANTS '''
+""" CONSTANTS """
 
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'  # ISO8601 format with UTC, default in XSOAR
 
-''' CLIENT CLASS '''
+""" CLIENT CLASS """
 
 
 class Client(BaseClient):
@@ -42,7 +41,9 @@ class Client(BaseClient):
     """
 
     # TODO: REMOVE the following dummy function:
-    def baseintegration_dummy(self, dummy: str, dummy2: Optional[int]) -> Dict[str, str]:
+    def baseintegration_dummy(
+        self, dummy: str, dummy2: Optional[int]
+    ) -> Dict[str, str]:
         """Returns a simple python dict with the information provided
         in the input (dummy).
 
@@ -54,14 +55,15 @@ class Client(BaseClient):
             The dict with the arguments
         """
         return {'dummy': dummy, 'dummy2': dummy2}
+
     # TODO: ADD HERE THE FUNCTIONS TO INTERACT WITH YOUR PRODUCT API
 
 
-''' HELPER FUNCTIONS '''
+""" HELPER FUNCTIONS """
 
 # TODO: ADD HERE ANY HELPER FUNCTION YOU MIGHT NEED (if any)
 
-''' COMMAND FUNCTIONS '''
+""" COMMAND FUNCTIONS """
 
 
 def test_module(client: Client) -> str:
@@ -87,7 +89,9 @@ def test_module(client: Client) -> str:
 
 
 # TODO: REMOVE the following dummy command function
-def baseintegration_dummy_command(client: Client, args: Dict[str, Any]) -> CommandResults:
+def baseintegration_dummy_command(
+    client: Client, args: Dict[str, Any]
+) -> CommandResults:
     dummy = args.get('dummy')  # dummy is a required argument, no default
     dummy2 = args.get('dummy2')  # dummy2 is not a required argument
 
@@ -135,7 +139,7 @@ def main():
             base_url=base_url,
             verify=verify_certificate,
             headers=headers,
-            proxy=proxy
+            proxy=proxy,
         )
         args = demisto.args()
         if command == 'test-module':
@@ -146,7 +150,9 @@ def main():
             result = baseintegration_dummy_command(client, args)
         else:
             raise NotImplementedError(f'Command {command} is not implemented')
-        return_results(result)  # Returns either str, CommandResults and a list of CommandResults
+        return_results(
+            result
+        )  # Returns either str, CommandResults and a list of CommandResults
     # Log exceptions and return errors
     except Exception as e:
         return_error(f'Failed to execute {command} command.\nError:\n{str(e)}')

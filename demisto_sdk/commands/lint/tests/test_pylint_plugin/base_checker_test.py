@@ -11,6 +11,7 @@ class TestPrintChecker(pylint.testutils.CheckerTestCase):
     """
     Class which tests the functionality of print checker .
     """
+
     CHECKER_CLASS = base_checker.CustomBaseChecker
 
     def test_print(self):
@@ -22,17 +23,19 @@ class TestPrintChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the correct message id is being added to the message errors of pylint
         """
-        _, node_b, _ = astroid.extract_node("""
+        _, node_b, _ = astroid.extract_node(
+            """
             def test_function(): #@
                 print('catch this print') #@
                 return True #@
-        """)
+        """
+        )
         assert node_b is not None
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='print-exists',
-                    node=node_b,
-                ),
+            pylint.testutils.MessageTest(
+                msg_id='print-exists',
+                node=node_b,
+            ),
         ):
             self.checker.visit_call(node_b)
 
@@ -45,10 +48,12 @@ class TestPrintChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that it does not raise any errors, Check that there is no error message.
         """
-        node_a, node_b = astroid.extract_node("""
+        node_a, node_b = astroid.extract_node(
+            """
             def test_function():  #@
                 return True #@
-        """)
+        """
+        )
         assert node_a is not None and node_b is not None
         with self.assertNoMessages():
             self.checker.visit_call(node_a)
@@ -63,11 +68,13 @@ class TestPrintChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that it does not raise any errors, Check that there is no error message.
         """
-        node_a = astroid.extract_node("""
+        node_a = astroid.extract_node(
+            """
             def test_function():
                 '''this is doc string of print('test') function''' #@
                 return True
-        """)
+        """
+        )
         assert node_a is None
         with self.assertNoMessages():
             self.checker.visit_call(node_a)
@@ -81,24 +88,26 @@ class TestPrintChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that it catches all the prints .
         """
-        node_a, node_b = astroid.extract_node("""
+        node_a, node_b = astroid.extract_node(
+            """
             def test_function():
                 print("first") #@
                 a=1
                 if(a==1):
                     print("second") #@
                 return True
-        """)
+        """
+        )
         assert node_a is not None and node_b is not None
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='print-exists',
-                    node=node_b,
-                ),
-                pylint.testutils.MessageTest(
-                    msg_id='print-exists',
-                    node=node_a,
-                ),
+            pylint.testutils.MessageTest(
+                msg_id='print-exists',
+                node=node_b,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id='print-exists',
+                node=node_a,
+            ),
         ):
             self.checker.visit_call(node_b)
             self.checker.visit_call(node_a)
@@ -108,6 +117,7 @@ class TestSleepChecker(pylint.testutils.CheckerTestCase):
     """
     Class which tests the functionality of Sleep checker .
     """
+
     CHECKER_CLASS = base_checker.CustomBaseChecker
 
     def test_sleep_exists(self):
@@ -120,28 +130,30 @@ class TestSleepChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the correct message id is being added to the message errors of pylint for each appearance
         """
-        _, node_a, node_b, node_c, _ = astroid.extract_node("""
+        _, node_a, node_b, node_c, _ = astroid.extract_node(
+            """
             def test_function(): #@
                 a=9
                 time.sleep(60) #@
                 time.sleep(a) #@
                 sleep(100) #@
                 return True #@
-        """)
+        """
+        )
         assert node_b is not None and node_a is not None and node_c is not None
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='sleep-exists',
-                    node=node_a,
-                ),
-                pylint.testutils.MessageTest(
-                    msg_id='sleep-exists',
-                    node=node_b,
-                ),
-                pylint.testutils.MessageTest(
-                    msg_id='sleep-exists',
-                    node=node_c,
-                ),
+            pylint.testutils.MessageTest(
+                msg_id='sleep-exists',
+                node=node_a,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id='sleep-exists',
+                node=node_b,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id='sleep-exists',
+                node=node_c,
+            ),
         ):
             self.checker.visit_call(node_a)
             self.checker.visit_call(node_b)
@@ -156,10 +168,12 @@ class TestSleepChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that there is no errors, Check that there is no error message.
         """
-        node_a, node_b = astroid.extract_node("""
+        node_a, node_b = astroid.extract_node(
+            """
             def test_function(): #@
                 return True #@
-        """)
+        """
+        )
         assert node_a is not None and node_b is not None
         with self.assertNoMessages():
             self.checker.visit_call(node_a)
@@ -170,6 +184,7 @@ class TestExitChecker(pylint.testutils.CheckerTestCase):
     """
     Class which tests the functionality of exit checker .
     """
+
     CHECKER_CLASS = base_checker.CustomBaseChecker
 
     def test_exit_exists(self):
@@ -181,23 +196,25 @@ class TestExitChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the correct message id is being added to the message errors of pylint for each appearance
         """
-        _, node_a, node_b, = astroid.extract_node("""
+        _, node_a, node_b, = astroid.extract_node(
+            """
             def test_function(): #@
                 if True:
                     exit() #@
                 return True
             exit() #@
-        """)
+        """
+        )
         assert node_b is not None and node_a is not None
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='exit-exists',
-                    node=node_a,
-                ),
-                pylint.testutils.MessageTest(
-                    msg_id='exit-exists',
-                    node=node_b,
-                ),
+            pylint.testutils.MessageTest(
+                msg_id='exit-exists',
+                node=node_a,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id='exit-exists',
+                node=node_b,
+            ),
         ):
             self.checker.visit_call(node_a)
             self.checker.visit_call(node_b)
@@ -211,10 +228,12 @@ class TestExitChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that there is no errors, Check that there is no error message.
         """
-        node_a, node_b = astroid.extract_node("""
+        node_a, node_b = astroid.extract_node(
+            """
             def test_function(): #@
                 return True #@
-        """)
+        """
+        )
         assert node_a is not None and node_b is not None
         with self.assertNoMessages():
             self.checker.visit_call(node_a)
@@ -225,6 +244,7 @@ class TestDemistoLogChecker(pylint.testutils.CheckerTestCase):
     """
     Class which tests the functionality of exit checker .
     """
+
     CHECKER_CLASS = base_checker.CustomBaseChecker
 
     def test_demisto_log_exists(self):
@@ -236,17 +256,19 @@ class TestDemistoLogChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the correct message id is being added to the message errors of pylint for each appearance
         """
-        _, node_a, _ = astroid.extract_node("""
+        _, node_a, _ = astroid.extract_node(
+            """
             def test_function(): #@
                 demisto.log("Some log message") #@
                 return True #@
-        """)
+        """
+        )
         assert node_a is not None
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='demisto-log-exists',
-                    node=node_a,
-                )
+            pylint.testutils.MessageTest(
+                msg_id='demisto-log-exists',
+                node=node_a,
+            )
         ):
             self.checker.visit_call(node_a)
 
@@ -259,11 +281,13 @@ class TestDemistoLogChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that there is no errors, Check that there is no error message.
         """
-        node_a, node_b, _ = astroid.extract_node("""
+        node_a, node_b, _ = astroid.extract_node(
+            """
             def test_function(): #@
                 # demisto.log("Some log message") #@
                 return True #@
-        """)
+        """
+        )
         assert node_a is not None and node_b is None
         with self.assertNoMessages():
             self.checker.visit_call(node_a)
@@ -274,6 +298,7 @@ class TestQuithecker(pylint.testutils.CheckerTestCase):
     """
     Class which tests the functionality of quit checker .
     """
+
     CHECKER_CLASS = base_checker.CustomBaseChecker
 
     def test_exit_exists(self):
@@ -285,17 +310,19 @@ class TestQuithecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that the correct message id is being added to the message errors of pylint for each appearance
         """
-        _, node_a = astroid.extract_node("""
+        _, node_a = astroid.extract_node(
+            """
             def test_function(): #@
                 return True
             quit() #@
-        """)
+        """
+        )
         assert node_a is not None
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='quit-exists',
-                    node=node_a,
-                ),
+            pylint.testutils.MessageTest(
+                msg_id='quit-exists',
+                node=node_a,
+            ),
         ):
             self.checker.visit_call(node_a)
 
@@ -308,11 +335,13 @@ class TestQuithecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that there is no errors, Check that there is no error message.
         """
-        node_a, node_b, node_c = astroid.extract_node("""
+        node_a, node_b, node_c = astroid.extract_node(
+            """
             def test_function(): #@
                 return True #@
                 # quit() #@
-        """)
+        """
+        )
         assert node_a is not None and node_b is not None
         with self.assertNoMessages():
             self.checker.visit_call(node_a)
@@ -324,6 +353,7 @@ class TestImportCommonServerPythonChecker(pylint.testutils.CheckerTestCase):
     """
     Class which tests the functionality of commonServerPython import checker .
     """
+
     CHECKER_CLASS = base_checker.CustomBaseChecker
 
     def test_valid_common_server_python_import(self):
@@ -349,17 +379,19 @@ class TestImportCommonServerPythonChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that there is no errors, Check that there is no error message.
         """
-        node_a = astroid.extract_node("""from CommonServerPython import DemistoException""")
+        node_a = astroid.extract_node(
+            """from CommonServerPython import DemistoException"""
+        )
         assert node_a
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='invalid-import-common-server-python',
-                    node=node_a,
-                ),
-                pylint.testutils.MessageTest(
-                    msg_id='invalid-import-common-server-python',
-                    node=node_a,
-                ),
+            pylint.testutils.MessageTest(
+                msg_id='invalid-import-common-server-python',
+                node=node_a,
+            ),
+            pylint.testutils.MessageTest(
+                msg_id='invalid-import-common-server-python',
+                node=node_a,
+            ),
         ):
             self.checker.visit_importfrom(node_a)
             self.checker.visit_importfrom(node_a)
@@ -369,6 +401,7 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
     """
     Class which tests the functionality of commands checker.
     """
+
     CHECKER_CLASS = base_checker.CustomBaseChecker
 
     def test_regular_if_else_checker(self):
@@ -381,45 +414,47 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             - Ensure that the correct message id is being added to the message errors of pylint for each appearance
         """
         self.checker.commands = ['test-1', 'test2']
-        node_a = astroid.extract_node("""
+        node_a = astroid.extract_node(
+            """
             if a == 'test-1': #@
                 return true
             else:
                 return false
-        """)
+        """
+        )
         assert node_a
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='unimplemented-commands-exist',
-                    node=node_a,
-                    args=str(['test2']),
-                ),
-                pylint.testutils.MessageTest(
-                    msg_id='unimplemented-test-module',
-                    node=node_a
-                )
+            pylint.testutils.MessageTest(
+                msg_id='unimplemented-commands-exist',
+                node=node_a,
+                args=str(['test2']),
+            ),
+            pylint.testutils.MessageTest(
+                msg_id='unimplemented-test-module', node=node_a
+            ),
         ):
             self.checker.visit_if(node_a)
             self.checker.leave_module(node_a)
 
         self.checker.commands = ['test-1', 'test2', 'test3']
-        node_a = astroid.extract_node("""
+        node_a = astroid.extract_node(
+            """
             if a == 'test-1' or a == 'test3': #@
                 return true
             else:
                 return false
-        """)
+        """
+        )
         assert node_a
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='unimplemented-commands-exist',
-                    node=node_a,
-                    args=str(['test2']),
-                ),
-                pylint.testutils.MessageTest(
-                    msg_id='unimplemented-test-module',
-                    node=node_a
-                )
+            pylint.testutils.MessageTest(
+                msg_id='unimplemented-commands-exist',
+                node=node_a,
+                args=str(['test2']),
+            ),
+            pylint.testutils.MessageTest(
+                msg_id='unimplemented-test-module', node=node_a
+            ),
         ):
             self.checker.visit_if(node_a)
             self.checker.leave_module(node_a)
@@ -434,14 +469,16 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             - Ensure no errors
         """
         self.checker.commands = ['test-1']
-        node_a = astroid.extract_node("""
+        node_a = astroid.extract_node(
+            """
             if a == 'test-1': #@
                 return True
             elif a == 'test-module':
                 return True
             else:
                 return False
-        """)
+        """
+        )
         assert node_a
         with self.assertNoMessages():
             self.checker.visit_if(node_a)
@@ -459,20 +496,21 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             - Ensure that the correct message id is being added to the message errors of pylint for each appearance
         """
         self.checker.commands = ['test-1', 'test2', 'test3']
-        node_a = astroid.extract_node("""
+        node_a = astroid.extract_node(
+            """
             {'test-1' : 1, 'test2':2 , 'test': 'test3'} #@
-        """)
+        """
+        )
         assert node_a
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='unimplemented-commands-exist',
-                    node=node_a,
-                    args=str(['test3']),
-                ),
-                pylint.testutils.MessageTest(
-                    msg_id='unimplemented-test-module',
-                    node=node_a
-                )
+            pylint.testutils.MessageTest(
+                msg_id='unimplemented-commands-exist',
+                node=node_a,
+                args=str(['test3']),
+            ),
+            pylint.testutils.MessageTest(
+                msg_id='unimplemented-test-module', node=node_a
+            ),
         ):
             self.checker.visit_dict(node_a)
             self.checker.visit_call(node_a)
@@ -488,17 +526,18 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             - Ensure that nothing being added to the message errors of pylint for each appearance
         """
         self.checker.commands = ['test-1', 'test2', 'test3']
-        node_a = astroid.extract_node("""
+        node_a = astroid.extract_node(
+            """
             {'test-1' : 1, 'test2':2 , 'test3': 3} #@
-        """)
+        """
+        )
         assert node_a
         with self.assertNoMessages():
             self.checker.visit_dict(node_a)
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='unimplemented-test-module',
-                    node=node_a
-                )
+            pylint.testutils.MessageTest(
+                msg_id='unimplemented-test-module', node=node_a
+            )
         ):
             self.checker.leave_module(node_a)
 
@@ -514,23 +553,24 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             - Ensure that no being added to the message errors of pylint for each appearance
         """
         self.checker.commands = ['test-1', 'test2', 'test3']
-        node_a, node_b = astroid.extract_node("""
+        node_a, node_b = astroid.extract_node(
+            """
             if a in ['test-1','test2']:  #@
                 return False
             elif a in ['test2']:
                 return True #@
-        """)
+        """
+        )
         assert node_a
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='unimplemented-commands-exist',
-                    node=node_a,
-                    args=str(['test3']),
-                ),
-                pylint.testutils.MessageTest(
-                    msg_id='unimplemented-test-module',
-                    node=node_a
-                )
+            pylint.testutils.MessageTest(
+                msg_id='unimplemented-commands-exist',
+                node=node_a,
+                args=str(['test3']),
+            ),
+            pylint.testutils.MessageTest(
+                msg_id='unimplemented-test-module', node=node_a
+            ),
         ):
             self.checker.visit_if(node_a)
             self.checker.visit_if(node_b)
@@ -546,18 +586,19 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             - Ensure that no being added to the message errors of pylint for each appearance
         """
         self.checker.commands = ['test-1', 'test2', 'test3']
-        node_a = astroid.extract_node("""
+        node_a = astroid.extract_node(
+            """
                    if a in ['test-1','test2','test3']:  #@
                        return False
-               """)
+               """
+        )
         assert node_a
         with self.assertNoMessages():
             self.checker.visit_if(node_a)
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='unimplemented-test-module',
-                    node=node_a
-                )
+            pylint.testutils.MessageTest(
+                msg_id='unimplemented-test-module', node=node_a
+            )
         ):
             self.checker.leave_module(node_a)
 
@@ -573,23 +614,24 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             - Ensure that no being added to the message errors of pylint for each appearance
         """
         self.checker.commands = ['test-1', 'test2', 'test3']
-        node_a = astroid.extract_node("""
+        node_a = astroid.extract_node(
+            """
             if a in ('test-1','test2'):  #@
                 return False
             else:
                 return True
-        """)
+        """
+        )
         assert node_a
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='unimplemented-commands-exist',
-                    node=node_a,
-                    args=str(['test3']),
-                ),
-                pylint.testutils.MessageTest(
-                    msg_id='unimplemented-test-module',
-                    node=node_a
-                )
+            pylint.testutils.MessageTest(
+                msg_id='unimplemented-commands-exist',
+                node=node_a,
+                args=str(['test3']),
+            ),
+            pylint.testutils.MessageTest(
+                msg_id='unimplemented-test-module', node=node_a
+            ),
         ):
             self.checker.visit_if(node_a)
             self.checker.leave_module(node_a)
@@ -604,18 +646,19 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             - Ensure that no being added to the message errors of pylint for each appearance
         """
         self.checker.commands = ['test-1', 'test2', 'test3']
-        node_a = astroid.extract_node("""
+        node_a = astroid.extract_node(
+            """
                    if a in ('test-1','test2','test3'):  #@
                        return False
-               """)
+               """
+        )
         assert node_a
         with self.assertNoMessages():
             self.checker.visit_if(node_a)
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='unimplemented-test-module',
-                    node=node_a
-                )
+            pylint.testutils.MessageTest(
+                msg_id='unimplemented-test-module', node=node_a
+            )
         ):
             self.checker.leave_module(node_a)
 
@@ -631,23 +674,24 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             - Ensure that no being added to the message errors of pylint for each appearance
         """
         self.checker.commands = ['test-1', 'test2', 'test3']
-        node_a = astroid.extract_node("""
+        node_a = astroid.extract_node(
+            """
             if a in {'test-1','test2'}:  #@
                 return False
             else:
                 return True
-        """)
+        """
+        )
         assert node_a
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='unimplemented-commands-exist',
-                    node=node_a,
-                    args=str(['test3']),
-                ),
-                pylint.testutils.MessageTest(
-                    msg_id='unimplemented-test-module',
-                    node=node_a
-                )
+            pylint.testutils.MessageTest(
+                msg_id='unimplemented-commands-exist',
+                node=node_a,
+                args=str(['test3']),
+            ),
+            pylint.testutils.MessageTest(
+                msg_id='unimplemented-test-module', node=node_a
+            ),
         ):
             self.checker.visit_if(node_a)
             self.checker.leave_module(node_a)
@@ -662,18 +706,19 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             - Ensure that no being added to the message errors of pylint for each appearance
         """
         self.checker.commands = ['test-1', 'test2', 'test3']
-        node_a = astroid.extract_node("""
+        node_a = astroid.extract_node(
+            """
                    if a in {'test-1','test2','test3'}:  #@
                        return False
-               """)
+               """
+        )
         assert node_a
         with self.assertNoMessages():
             self.checker.visit_if(node_a)
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='unimplemented-test-module',
-                    node=node_a
-                )
+            pylint.testutils.MessageTest(
+                msg_id='unimplemented-test-module', node=node_a
+            )
         ):
             self.checker.leave_module(node_a)
 
@@ -687,19 +732,20 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
             - Ensure that no being added to the message errors of pylint for each appearance
         """
         self.checker.commands = ['integration-name-test-1']
-        node_a = astroid.extract_node("""
+        node_a = astroid.extract_node(
+            """
                 A = 'integration-name'
                 if demisto.commands() == f'{A}-test-1':  #@
                     return False
-               """)
+               """
+        )
         assert node_a
         with self.assertNoMessages():
             self.checker.visit_if(node_a)
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='unimplemented-test-module',
-                    node=node_a
-                )
+            pylint.testutils.MessageTest(
+                msg_id='unimplemented-test-module', node=node_a
+            )
         ):
             self.checker.leave_module(node_a)
 
@@ -712,19 +758,23 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that no being added to the message errors of pylint for each appearance
         """
-        self.checker.commands = ['integration-name-test1', 'integration-name-test2']
-        node_a = astroid.extract_node("""
+        self.checker.commands = [
+            'integration-name-test1',
+            'integration-name-test2',
+        ]
+        node_a = astroid.extract_node(
+            """
                 A = 'integration-name'
                 {f'{A}-test1': run_1, f'{A}-test2': run_2}  #@
-               """)
+               """
+        )
         assert node_a
         with self.assertNoMessages():
             self.checker.visit_dict(node_a)
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='unimplemented-test-module',
-                    node=node_a
-                )
+            pylint.testutils.MessageTest(
+                msg_id='unimplemented-test-module', node=node_a
+            )
         ):
             self.checker.leave_module(node_a)
 
@@ -738,12 +788,17 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that no being added to the message errors of pylint for each appearance
         """
-        self.checker.commands = ['integration-name-test1', 'integration-name-test2']
-        node_a = astroid.extract_node("""
+        self.checker.commands = [
+            'integration-name-test1',
+            'integration-name-test2',
+        ]
+        node_a = astroid.extract_node(
+            """
                 from TestApiModule import *
 
 
-               """)
+               """
+        )
         assert node_a
         with self.assertNoMessages():
             self.checker.visit_importfrom(node_a)
@@ -751,8 +806,8 @@ class TestCommandsImplementedChecker(pylint.testutils.CheckerTestCase):
 
 
 class TestCommandResultsIndicatorsChecker(pylint.testutils.CheckerTestCase):
-    """
-    """
+    """ """
+
     CHECKER_CLASS = base_checker.CustomBaseChecker
 
     def test_indicators_exist(self):
@@ -765,13 +820,15 @@ class TestCommandResultsIndicatorsChecker(pylint.testutils.CheckerTestCase):
             - Ensure that the correct message id is being added to the message errors of pylint for each appearance
 
         """
-        node_a = astroid.extract_node("""CommandResults(name=name,test=test,indicators=indicators)""")
+        node_a = astroid.extract_node(
+            """CommandResults(name=name,test=test,indicators=indicators)"""
+        )
         assert node_a
         with self.assertAddsMessages(
-                pylint.testutils.MessageTest(
-                    msg_id='commandresults-indicators-exists',
-                    node=node_a,
-                ),
+            pylint.testutils.MessageTest(
+                msg_id='commandresults-indicators-exists',
+                node=node_a,
+            ),
         ):
             self.checker.visit_call(node_a)
 
@@ -785,7 +842,9 @@ class TestCommandResultsIndicatorsChecker(pylint.testutils.CheckerTestCase):
         Then:
             - Ensure that there is no errors, Check that there is no error message.
         """
-        node_a = astroid.extract_node("""CommandResults(name=name,test=test,indicator=indicators)""")
+        node_a = astroid.extract_node(
+            """CommandResults(name=name,test=test,indicator=indicators)"""
+        )
         assert node_a
         with self.assertNoMessages():
             self.checker.visit_call(node_a)

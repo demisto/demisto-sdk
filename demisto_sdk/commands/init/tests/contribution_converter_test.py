@@ -12,17 +12,18 @@ from mock import patch
 from demisto_sdk.commands.common.constants import LAYOUT, LAYOUTS_CONTAINER
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.init.contribution_converter import \
-    ContributionConverter
+from demisto_sdk.commands.init.contribution_converter import (
+    ContributionConverter,
+)
 from TestSuite.contribution import Contribution
 from TestSuite.repo import Repo
 
 json = JSON_Handler()
 
 
-RELEASE_NOTES_COPY = "demisto_sdk/commands/init/tests/RN/1_0_1-formatted.md"
-SOURCE_RELEASE_NOTES_FILE = "demisto_sdk/commands/init/tests/RN/1_0_1.md"
-EXPECTED_RELEASE_NOTES = "demisto_sdk/commands/init/tests/RN/1_0_1_expected.md"
+RELEASE_NOTES_COPY = 'demisto_sdk/commands/init/tests/RN/1_0_1-formatted.md'
+SOURCE_RELEASE_NOTES_FILE = 'demisto_sdk/commands/init/tests/RN/1_0_1.md'
+EXPECTED_RELEASE_NOTES = 'demisto_sdk/commands/init/tests/RN/1_0_1_expected.md'
 
 name_reformatting_test_examples = [
     ('PACKYAYOK', 'PACKYAYOK'),
@@ -31,9 +32,18 @@ name_reformatting_test_examples = [
     ('PackYayOK', 'PackYayOK'),
     ('-pack-yay-ok--', 'Pack-Yay-Ok'),
     ('PackYayOK', 'PackYayOK'),
-    ('The quick brown fox, jumps over the lazy dog!', 'TheQuickBrownFox_JumpsOverTheLazyDog'),
-    ('The quick`*+.brown fox, ;jumps over @@the lazy dog!', 'TheQuick_BrownFox_JumpsOver_TheLazyDog'),
-    ('ThE quIck`*+.brown fox, ;jumps ovER @@the lazy dog!', 'ThEQuIck_BrownFox_JumpsOvER_TheLazyDog')
+    (
+        'The quick brown fox, jumps over the lazy dog!',
+        'TheQuickBrownFox_JumpsOverTheLazyDog',
+    ),
+    (
+        'The quick`*+.brown fox, ;jumps over @@the lazy dog!',
+        'TheQuick_BrownFox_JumpsOver_TheLazyDog',
+    ),
+    (
+        'ThE quIck`*+.brown fox, ;jumps ovER @@the lazy dog!',
+        'ThEQuIck_BrownFox_JumpsOvER_TheLazyDog',
+    ),
 ]
 
 
@@ -47,19 +57,26 @@ def contrib_converter():
     return ContributionConverter('')
 
 
-def create_contribution_converter(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> ContributionConverter:
+def create_contribution_converter(
+    request: FixtureRequest, tmp_path_factory: TempPathFactory
+) -> ContributionConverter:
     tmp_dir = _mk_tmp(request, tmp_path_factory)
     return ContributionConverter(name=request.param, base_dir=str(tmp_dir))
 
 
 @pytest.fixture
-def contribution_converter(request: FixtureRequest, tmp_path_factory: TempPathFactory) -> ContributionConverter:
-    """Mocking tmp_path
-    """
+def contribution_converter(
+    request: FixtureRequest, tmp_path_factory: TempPathFactory
+) -> ContributionConverter:
+    """Mocking tmp_path"""
     return create_contribution_converter(request, tmp_path_factory)
 
 
-def rename_file_in_zip(path_to_zip: Union[os.PathLike, str], original_file_name: str, updated_file_name: str):
+def rename_file_in_zip(
+    path_to_zip: Union[os.PathLike, str],
+    original_file_name: str,
+    updated_file_name: str,
+):
     """Utility to rename a file in a zip file
 
     Useful for renaming files in an example contribution zip file to test specific cases.
@@ -70,7 +87,9 @@ def rename_file_in_zip(path_to_zip: Union[os.PathLike, str], original_file_name:
         original_file_name (str): The file which will be renamed
         updated_file_name (str): The name the original file will be renamed to
     """
-    modded_zip_file = os.path.join(os.path.dirname(path_to_zip), 'Edit' + os.path.basename(path_to_zip))
+    modded_zip_file = os.path.join(
+        os.path.dirname(path_to_zip), 'Edit' + os.path.basename(path_to_zip)
+    )
     tmp_zf = ZipFile(modded_zip_file, 'w')
     with ZipFile(path_to_zip, 'r') as zf:
         for item in zf.infolist():
@@ -84,7 +103,9 @@ def rename_file_in_zip(path_to_zip: Union[os.PathLike, str], original_file_name:
 
 @patch('demisto_sdk.commands.split.ymlsplitter.get_python_version')
 @patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
-def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python_version_mock, tmp_path, mocker):
+def test_convert_contribution_zip_updated_pack(
+    get_content_path_mock, get_python_version_mock, tmp_path, mocker
+):
     """
     Create a fake contribution zip file and test that it is converted to a Pack correctly.
     The pack already exists, checking the update flow.
@@ -138,8 +159,13 @@ def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python
     description = 'test pack description here'
     author = 'Octocat Smith'
     contrib_converter_inst = ContributionConverter(
-        name=name, contribution=contribution_path, description=description, author=author, create_new=False,
-        no_pipenv=True)
+        name=name,
+        contribution=contribution_path,
+        description=description,
+        author=author,
+        create_new=False,
+        no_pipenv=True,
+    )
     contrib_converter_inst.convert_contribution_to_pack()
     converted_pack_path = repo_dir / 'Packs' / 'TestPack'
     assert converted_pack_path.exists()
@@ -147,13 +173,22 @@ def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python
     sample_integration_path = integrations_path / 'integration0'
     integration_yml = sample_integration_path / 'integration0.yml'
     integration_py = sample_integration_path / 'integration0.py'
-    integration_description = sample_integration_path / 'integration0_description.md'
+    integration_description = (
+        sample_integration_path / 'integration0_description.md'
+    )
     integration_image = sample_integration_path / 'integration0_image.png'
     integration_readme_md = sample_integration_path / 'README.md'
     unified_yml = integrations_path / 'integration-integration0.yml'
-    unified_yml_in_sample = sample_integration_path / 'integration-integration0.yml'
-    integration_files = [integration_yml, integration_py, integration_description, integration_image,
-                         integration_readme_md]
+    unified_yml_in_sample = (
+        sample_integration_path / 'integration-integration0.yml'
+    )
+    integration_files = [
+        integration_yml,
+        integration_py,
+        integration_description,
+        integration_image,
+        integration_readme_md,
+    ]
     for integration_file in integration_files:
         assert integration_file.exists()
     # In a new pack that part will exist.
@@ -164,7 +199,9 @@ def test_convert_contribution_zip_updated_pack(get_content_path_mock, get_python
 
 @patch('demisto_sdk.commands.split.ymlsplitter.get_python_version')
 @patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
-def test_convert_contribution_zip_outputs_structure(get_content_path_mock, get_python_version_mock, tmp_path, mocker):
+def test_convert_contribution_zip_outputs_structure(
+    get_content_path_mock, get_python_version_mock, tmp_path, mocker
+):
     """Create a fake contribution zip file and test that it is converted to a Pack correctly
 
     Args:
@@ -209,7 +246,9 @@ def test_convert_contribution_zip_outputs_structure(get_content_path_mock, get_p
     # rename script-script0.yml unified to automation-script0.yml
     # this naming is aligned to how the server exports scripts in contribution zips
     rename_file_in_zip(
-        contrib_zip.created_zip_filepath, 'automation/script-script0.yml', 'automation/automation-script0.yml'
+        contrib_zip.created_zip_filepath,
+        'automation/script-script0.yml',
+        'automation/automation-script0.yml',
     )
 
     # Convert Zip
@@ -218,7 +257,12 @@ def test_convert_contribution_zip_outputs_structure(get_content_path_mock, get_p
     description = 'test pack description here'
     author = 'Octocat Smith'
     contrib_converter_inst = ContributionConverter(
-        name=name, contribution=contribution_path, description=description, author=author, no_pipenv=True)
+        name=name,
+        contribution=contribution_path,
+        description=description,
+        author=author,
+        no_pipenv=True,
+    )
     contrib_converter_inst.convert_contribution_to_pack()
 
     # Ensure directory/file structure output by conversion meets expectations
@@ -258,9 +302,16 @@ def test_convert_contribution_zip_outputs_structure(get_content_path_mock, get_p
     integration_image = sample_integration_path / 'Sample_image.png'
     integration_readme_md = sample_integration_path / 'README.md'
     unified_yml = integrations_path / 'integration-integration0.yml'
-    unified_yml_in_sample = sample_integration_path / 'integration-integration0.yml'
-    integration_files = [integration_yml, integration_py, integration_description, integration_image,
-                         integration_readme_md]
+    unified_yml_in_sample = (
+        sample_integration_path / 'integration-integration0.yml'
+    )
+    integration_files = [
+        integration_yml,
+        integration_py,
+        integration_description,
+        integration_image,
+        integration_readme_md,
+    ]
     for integration_file in integration_files:
         assert integration_file.exists()
     # generated integration readme should not be empty
@@ -274,7 +325,9 @@ def test_convert_contribution_zip_outputs_structure(get_content_path_mock, get_p
 
 @patch('demisto_sdk.commands.split.ymlsplitter.get_python_version')
 @patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
-def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock, tmp_path, mocker):
+def test_convert_contribution_zip(
+    get_content_path_mock, get_python_version_mock, tmp_path, mocker
+):
     """Create a fake contribution zip file and test that it is converted to a Pack correctly
 
     Args:
@@ -321,7 +374,9 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     # rename script-script0.yml unified to automation-script0.yml
     # this naming is aligned to how the server exports scripts in contribution zips
     rename_file_in_zip(
-        contrib_zip.created_zip_filepath, 'automation/script-script0.yml', 'automation/automation-script0.yml'
+        contrib_zip.created_zip_filepath,
+        'automation/script-script0.yml',
+        'automation/automation-script0.yml',
     )
 
     name = 'Contrib Test Pack'
@@ -329,7 +384,12 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     description = 'test pack description here'
     author = 'Octocat Smith'
     contrib_converter_inst = ContributionConverter(
-        name=name, contribution=contribution_path, description=description, author=author, no_pipenv=True)
+        name=name,
+        contribution=contribution_path,
+        description=description,
+        author=author,
+        no_pipenv=True,
+    )
     contrib_converter_inst.convert_contribution_to_pack()
 
     converted_pack_path = repo_dir / 'Packs' / 'ContribTestPack'
@@ -359,9 +419,16 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     integration_image = sample_integration_path / 'Sample_image.png'
     integration_readme_md = sample_integration_path / 'README.md'
     unified_yml = integrations_path / 'integration-integration0.yml'
-    unified_yml_in_sample = sample_integration_path / 'integration-integration0.yml'
-    integration_files = [integration_yml, integration_py, integration_description, integration_image,
-                         integration_readme_md]
+    unified_yml_in_sample = (
+        sample_integration_path / 'integration-integration0.yml'
+    )
+    integration_files = [
+        integration_yml,
+        integration_py,
+        integration_description,
+        integration_image,
+        integration_readme_md,
+    ]
     for integration_file in integration_files:
         assert integration_file.exists()
     assert not unified_yml.exists()
@@ -376,20 +443,27 @@ def test_convert_contribution_zip(get_content_path_mock, get_python_version_mock
     assert playbook_readme_md.exists()
 
     layouts_path = converted_pack_path / 'Layouts'
-    sample_layoutscontainer = layouts_path / f'{LAYOUTS_CONTAINER}-fakelayoutscontainer.json'
+    sample_layoutscontainer = (
+        layouts_path / f'{LAYOUTS_CONTAINER}-fakelayoutscontainer.json'
+    )
     sample_layout = layouts_path / f'{LAYOUT}-fakelayout.json'
 
     assert layouts_path.exists()
     assert sample_layoutscontainer.exists()
     assert sample_layout.exists()
 
-    assert set(contrib_converter_inst.readme_files) == {str(playbook_readme_md), str(integration_readme_md),
-                                                        str(script_readme_md)}
+    assert set(contrib_converter_inst.readme_files) == {
+        str(playbook_readme_md),
+        str(integration_readme_md),
+        str(script_readme_md),
+    }
 
 
 @patch('demisto_sdk.commands.split.ymlsplitter.get_python_version')
 @patch('demisto_sdk.commands.init.contribution_converter.get_content_path')
-def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_version_mock, tmp_path, mocker):
+def test_convert_contribution_zip_with_args(
+    get_content_path_mock, get_python_version_mock, tmp_path, mocker
+):
     """Convert a contribution zip to a pack and test that the converted pack's 'pack_metadata.json' is correct
 
     Args:
@@ -448,8 +522,13 @@ def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_ve
     author = 'Octocat Smith'
     gh_user = 'octocat'
     contrib_converter_inst = ContributionConverter(
-        name=name, contribution=contribution_path, description=description, author=author, gh_user=gh_user,
-        no_pipenv=True)
+        name=name,
+        contribution=contribution_path,
+        description=description,
+        author=author,
+        gh_user=gh_user,
+        no_pipenv=True,
+    )
     contrib_converter_inst.convert_contribution_to_pack()
 
     converted_pack_path = repo_dir / 'Packs' / 'TestPack'
@@ -467,9 +546,13 @@ def test_convert_contribution_zip_with_args(get_content_path_mock, get_python_ve
         assert not metadata.get('email')
 
 
-@pytest.mark.parametrize('input_name,expected_output_name', name_reformatting_test_examples)
-def test_format_pack_dir_name(contrib_converter, input_name, expected_output_name):
-    '''Test the 'format_pack_dir_name' method with various inputs
+@pytest.mark.parametrize(
+    'input_name,expected_output_name', name_reformatting_test_examples
+)
+def test_format_pack_dir_name(
+    contrib_converter, input_name, expected_output_name
+):
+    """Test the 'format_pack_dir_name' method with various inputs
 
     Args:
         contrib_converter (fixture): An instance of the ContributionConverter class
@@ -489,19 +572,28 @@ def test_format_pack_dir_name(contrib_converter, input_name, expected_output_nam
     - Ensure the reformatted pack name returned by the method matches the expected output
     - Ensure the reformatted pack name returned by the method contains only valid characters
         (alphanumeric, underscore, and dash with no whitespace)
-    '''
+    """
     output_name = contrib_converter.format_pack_dir_name(input_name)
     assert output_name == expected_output_name
     assert not re.search(
-        r'\s', output_name), 'Whitespace was found in the returned value from executing "format_pack_dir_name"'
+        r'\s', output_name
+    ), 'Whitespace was found in the returned value from executing "format_pack_dir_name"'
     err_msg = 'Characters other than alphanumeric, underscore, and dash were found in the output'
-    assert all([char.isalnum() or char in {'_', '-'} for char in output_name]), err_msg
+    assert all(
+        [char.isalnum() or char in {'_', '-'} for char in output_name]
+    ), err_msg
     if len(output_name) > 1:
         first_char = output_name[0]
         if first_char.isalpha():
-            assert first_char.isupper(), 'The output\'s first character should be capitalized'
-    assert not output_name.startswith(('-', '_')), 'The output\'s first character must be alphanumeric'
-    assert not output_name.endswith(('-', '_')), 'The output\'s last character must be alphanumeric'
+            assert (
+                first_char.isupper()
+            ), "The output's first character should be capitalized"
+    assert not output_name.startswith(
+        ('-', '_')
+    ), "The output's first character must be alphanumeric"
+    assert not output_name.endswith(
+        ('-', '_')
+    ), "The output's last character must be alphanumeric"
 
 
 def test_convert_contribution_dir_to_pack_contents(tmp_path):
@@ -532,12 +624,14 @@ def test_convert_contribution_dir_to_pack_contents(tmp_path):
     fake_pack_subdir = tmp_path / 'IncidentFields'
     fake_pack_subdir.mkdir()
     extant_file = fake_pack_subdir / 'incidentfield-SomeIncidentField.json'
-    old_json = {"field": "old_value"}
+    old_json = {'field': 'old_value'}
     extant_file.write_text(json.dumps(old_json))
     fake_pack_extracted_dir = tmp_path / 'incidentfield'
     fake_pack_extracted_dir.mkdir()
-    update_file = fake_pack_extracted_dir / 'incidentfield-SomeIncidentField.json'
-    new_json = {"field": "new_value"}
+    update_file = (
+        fake_pack_extracted_dir / 'incidentfield-SomeIncidentField.json'
+    )
+    new_json = {'field': 'new_value'}
     update_file.write_text(json.dumps(new_json))
     cc = ContributionConverter()
     cc.pack_dir_path = tmp_path
@@ -548,7 +642,9 @@ def test_convert_contribution_dir_to_pack_contents(tmp_path):
 
 @pytest.mark.parametrize('contribution_converter', ['TestPack'], indirect=True)
 class TestEnsureUniquePackDirName:
-    def test_ensure_unique_pack_dir_name_no_conflict(self, contribution_converter):
+    def test_ensure_unique_pack_dir_name_no_conflict(
+        self, contribution_converter
+    ):
         """Test the 'ensure_unique_pack_dir_name' method
 
         Args:
@@ -573,7 +669,9 @@ class TestEnsureUniquePackDirName:
         print(f'crb_crvrt.pack_dir_path={crb_crvrt.pack_dir_path}')
         assert os.path.isdir(crb_crvrt.pack_dir_path)
 
-    def test_ensure_unique_pack_dir_name_with_conflict(self, contribution_converter):
+    def test_ensure_unique_pack_dir_name_with_conflict(
+        self, contribution_converter
+    ):
         """Test the 'ensure_unique_pack_dir_name' method
 
         Args:
@@ -605,7 +703,9 @@ class TestEnsureUniquePackDirName:
         return args
 
     @pytest.mark.parametrize('new_pack', [True, False])
-    def test_format_converted_pack(self, contribution_converter, mocker, new_pack):
+    def test_format_converted_pack(
+        self, contribution_converter, mocker, new_pack
+    ):
         """Test the 'format_converted_pack' method
 
         Args:
@@ -623,14 +723,18 @@ class TestEnsureUniquePackDirName:
         - Ensure that we format the untracked files as well and the interactive flag is set to false
         """
         contribution_converter.create_new = new_pack
-        result = mocker.patch('demisto_sdk.commands.init.contribution_converter.format_manager',
-                              side_efect=self.mock_format_manager())
+        result = mocker.patch(
+            'demisto_sdk.commands.init.contribution_converter.format_manager',
+            side_efect=self.mock_format_manager(),
+        )
         contribution_converter.format_converted_pack()
 
         assert result.call_args[1].get('include_untracked')
         assert result.call_args[1].get('interactive') is False
 
-    def test_ensure_unique_pack_dir_name_with_conflict_and_version_suffix(self, contribution_converter):
+    def test_ensure_unique_pack_dir_name_with_conflict_and_version_suffix(
+        self, contribution_converter
+    ):
         """Test the 'ensure_unique_pack_dir_name' method
 
         Args:
@@ -659,7 +763,9 @@ class TestEnsureUniquePackDirName:
         assert new_pack_dir_name != pack_name
         assert new_pack_dir_name == pack_name + 'V2'
         os.makedirs(os.path.join(crb_crvrt.packs_dir_path, new_pack_dir_name))
-        incremented_new_pack_dir_name = crb_crvrt.ensure_unique_pack_dir_name(new_pack_dir_name)
+        incremented_new_pack_dir_name = crb_crvrt.ensure_unique_pack_dir_name(
+            new_pack_dir_name
+        )
         assert incremented_new_pack_dir_name == pack_name + 'V3'
 
 
@@ -670,7 +776,9 @@ class TestReleaseNotes:
         if os.path.exists(RELEASE_NOTES_COPY):
             os.remove(RELEASE_NOTES_COPY)
 
-    def test_replace_RN_template_with_value(self, mocker, contrib_converter, rn_file_copy):
+    def test_replace_RN_template_with_value(
+        self, mocker, contrib_converter, rn_file_copy
+    ):
         """Test the 'replace_RN_template_with_value' method
         Scenario:
             Adding the user's release note text to the rn file that was generated by the UpdateRN class.
@@ -685,24 +793,31 @@ class TestReleaseNotes:
         Then
         - Ensure the RN file template text was modified with the user's input
         """
-        contrib_converter.release_notes = "#### Integrations\n##### CrowdStrikeMalquery\n- release note entry number " \
-                                          "#1\n- release note entry number #2\n\n#### Playbooks\n##### " \
-                                          "CrowdStrikeMalquery - Multidownload and Fetch\n- changed this playbook\n- " \
-                                          "Updated another thing\n\n"
+        contrib_converter.release_notes = (
+            '#### Integrations\n##### CrowdStrikeMalquery\n- release note entry number '
+            '#1\n- release note entry number #2\n\n#### Playbooks\n##### '
+            'CrowdStrikeMalquery - Multidownload and Fetch\n- changed this playbook\n- '
+            'Updated another thing\n\n'
+        )
         contrib_converter.detected_content_items = [
             {
-                "id": "CrowdStrikeMalquery_copy",
-                "name": "CrowdStrikeMalquery_copy",
-                "source_id": "CrowdStrikeMalquery",
-                "source_name": "CrowdStrikeMalquery",
-                "source_file_name": "Packs/CrowdStrikeMalquery/Integrations/CrowdStrikeMalquery/CrowdStrikeMalquery.yml"
+                'id': 'CrowdStrikeMalquery_copy',
+                'name': 'CrowdStrikeMalquery_copy',
+                'source_id': 'CrowdStrikeMalquery',
+                'source_name': 'CrowdStrikeMalquery',
+                'source_file_name': 'Packs/CrowdStrikeMalquery/Integrations/CrowdStrikeMalquery/CrowdStrikeMalquery.yml',
             }
         ]
 
-        mocker.patch("demisto_sdk.commands.init.contribution_converter.get_display_name", return_value='CrowdStrike Malquery')
+        mocker.patch(
+            'demisto_sdk.commands.init.contribution_converter.get_display_name',
+            return_value='CrowdStrike Malquery',
+        )
         contrib_converter.replace_RN_template_with_value(RELEASE_NOTES_COPY)
 
-        assert util_open_file(RELEASE_NOTES_COPY) == util_open_file(EXPECTED_RELEASE_NOTES)
+        assert util_open_file(RELEASE_NOTES_COPY) == util_open_file(
+            EXPECTED_RELEASE_NOTES
+        )
         assert True
 
     def test_format_user_input(self, mocker, contrib_converter, rn_file_copy):
@@ -716,27 +831,39 @@ class TestReleaseNotes:
         Then
         - Ensure the dictionary being built contains the relevant data with the content item display name if exists.
         """
-        contrib_converter.release_notes = "#### Integrations\n##### CrowdStrikeMalquery\n- release note entry number " \
-                                          "#1\n- release note entry number #2\n\n#### Playbooks\n##### " \
-                                          "CrowdStrikeMalquery - Multidownload and Fetch\n- changed this playbook\n- " \
-                                          "Updated another thing\n\n"
+        contrib_converter.release_notes = (
+            '#### Integrations\n##### CrowdStrikeMalquery\n- release note entry number '
+            '#1\n- release note entry number #2\n\n#### Playbooks\n##### '
+            'CrowdStrikeMalquery - Multidownload and Fetch\n- changed this playbook\n- '
+            'Updated another thing\n\n'
+        )
         contrib_converter.detected_content_items = [
-            {"id": "a8026480-a286-46c7-8c44-b5161a37009d",
-             "name": "CrowdStrikeMalquery - Multidownload and Fetch_copy",
-             "source_id": "CrowdStrikeMalquery - Multidownload and Fetch",
-             "source_name": "CrowdStrikeMalquery - Multidownload and Fetch",
-             "source_file_name": "Packs/CrowdStrikeMalquery/Playbooks/CrowdStrikeMalquery_-_GenericPolling_"
-                                 "-_Multidownload_and_Fetch.yml"},
-            {"id": "CrowdStrikeMalquery_copy",
-             "name": "CrowdStrikeMalquery_copy",
-             "source_id": "CrowdStrikeMalquery",
-             "source_name": "CrowdStrikeMalquery",
-             "source_file_name": "Packs/CrowdStrikeMalquery/Integrations/CrowdStrikeMalquery/CrowdStrikeMalquery.yml"}]
-        expected_rn_per_content_item = {'CrowdStrike Malquery':
-                                        '- release note entry number #1\n- release note entry number #2\n',
-                                        'CrowdStrikeMalquery - Multidownload and Fetch':
-                                            '- changed this playbook\n- Updated another thing\n'}
-        mocker.patch("demisto_sdk.commands.init.contribution_converter.get_display_name",
-                     side_effect=['CrowdStrike Malquery', 'CrowdStrikeMalquery - Multidownload and Fetch'])
+            {
+                'id': 'a8026480-a286-46c7-8c44-b5161a37009d',
+                'name': 'CrowdStrikeMalquery - Multidownload and Fetch_copy',
+                'source_id': 'CrowdStrikeMalquery - Multidownload and Fetch',
+                'source_name': 'CrowdStrikeMalquery - Multidownload and Fetch',
+                'source_file_name': 'Packs/CrowdStrikeMalquery/Playbooks/CrowdStrikeMalquery_-_GenericPolling_'
+                '-_Multidownload_and_Fetch.yml',
+            },
+            {
+                'id': 'CrowdStrikeMalquery_copy',
+                'name': 'CrowdStrikeMalquery_copy',
+                'source_id': 'CrowdStrikeMalquery',
+                'source_name': 'CrowdStrikeMalquery',
+                'source_file_name': 'Packs/CrowdStrikeMalquery/Integrations/CrowdStrikeMalquery/CrowdStrikeMalquery.yml',
+            },
+        ]
+        expected_rn_per_content_item = {
+            'CrowdStrike Malquery': '- release note entry number #1\n- release note entry number #2\n',
+            'CrowdStrikeMalquery - Multidownload and Fetch': '- changed this playbook\n- Updated another thing\n',
+        }
+        mocker.patch(
+            'demisto_sdk.commands.init.contribution_converter.get_display_name',
+            side_effect=[
+                'CrowdStrike Malquery',
+                'CrowdStrikeMalquery - Multidownload and Fetch',
+            ],
+        )
         rn_per_content_item = contrib_converter.format_user_input()
         assert expected_rn_per_content_item == rn_per_content_item

@@ -21,7 +21,7 @@ community_msg = {}  # type: ignore
 
 class CommunityChecker(BaseChecker):
     __implements__ = IAstroidChecker
-    name = "community-checker"
+    name = 'community-checker'
     priority = -1
     msgs = community_msg
 

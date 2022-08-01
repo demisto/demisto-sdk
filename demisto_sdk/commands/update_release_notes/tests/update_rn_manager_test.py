@@ -1,16 +1,29 @@
 import pytest
 
-from demisto_sdk.commands.update_release_notes.update_rn_manager import \
-    UpdateReleaseNotesManager
+from demisto_sdk.commands.update_release_notes.update_rn_manager import (
+    UpdateReleaseNotesManager,
+)
 
 
 class TestUpdateRNManager:
-    get_existing_rn_params = [('Test2', {'Test1': 'path_to_rn'}, None, ''),
-                              ('Test1', {'Test1': 'path_to_rn'}, None, 'path_to_rn'),
-                              ('Test1', {'Test1': 'path_to_rn'}, 'revision', None)]
+    get_existing_rn_params = [
+        ('Test2', {'Test1': 'path_to_rn'}, None, ''),
+        ('Test1', {'Test1': 'path_to_rn'}, None, 'path_to_rn'),
+        ('Test1', {'Test1': 'path_to_rn'}, 'revision', None),
+    ]
 
-    @pytest.mark.parametrize('pack_name, packs_existing_rn, update_type, expected_output', get_existing_rn_params)
-    def test_get_existing_rn(self, mocker, pack_name, packs_existing_rn, update_type, expected_output):
+    @pytest.mark.parametrize(
+        'pack_name, packs_existing_rn, update_type, expected_output',
+        get_existing_rn_params,
+    )
+    def test_get_existing_rn(
+        self,
+        mocker,
+        pack_name,
+        packs_existing_rn,
+        update_type,
+        expected_output,
+    ):
         """
         Given:
             - case 1: pack was given but its not in the existing rn dict.
@@ -28,12 +41,23 @@ class TestUpdateRNManager:
         res = mng.get_existing_rn(pack_name)
         assert res == expected_output
 
-    check_existing_rn_params = [({'Packs/test1/ReleaseNotes/1_0_2.md', 'Packs/test2/ReleaseNotes/1_0_4.md'},
-                                 {'test2': 'Packs/test2/ReleaseNotes/1_0_4.md',
-                                  'test1': 'Packs/test1/ReleaseNotes/1_0_2.md'}),
-                                ({'Packs/test1/1_0_2.md', 'Packs/test2/1_0_4.md'}, {})]
+    check_existing_rn_params = [
+        (
+            {
+                'Packs/test1/ReleaseNotes/1_0_2.md',
+                'Packs/test2/ReleaseNotes/1_0_4.md',
+            },
+            {
+                'test2': 'Packs/test2/ReleaseNotes/1_0_4.md',
+                'test1': 'Packs/test1/ReleaseNotes/1_0_2.md',
+            },
+        ),
+        ({'Packs/test1/1_0_2.md', 'Packs/test2/1_0_4.md'}, {}),
+    ]
 
-    @pytest.mark.parametrize('added_files, expected_output', check_existing_rn_params)
+    @pytest.mark.parametrize(
+        'added_files, expected_output', check_existing_rn_params
+    )
     def test_check_existing_rn(self, added_files, expected_output):
         """
         Given:
@@ -50,7 +74,9 @@ class TestUpdateRNManager:
 
         assert mng.packs_existing_rn == expected_output
 
-    @pytest.mark.parametrize('path_to_api_module', ['Packs/ApiModules/Scripts/Test1', None])
+    @pytest.mark.parametrize(
+        'path_to_api_module', ['Packs/ApiModules/Scripts/Test1', None]
+    )
     def test_handle_api_module_change(self, mocker, path_to_api_module):
         """
         Given:
@@ -63,18 +89,28 @@ class TestUpdateRNManager:
             - case 2: update_api_modules_dependents_rn is called.
         """
         from demisto_sdk.commands.update_release_notes import update_rn_manager
-        mock_func = mocker.patch.object(update_rn_manager, 'update_api_modules_dependents_rn')
+
+        mock_func = mocker.patch.object(
+            update_rn_manager, 'update_api_modules_dependents_rn'
+        )
         mng = UpdateReleaseNotesManager(user_input=path_to_api_module)
         if not path_to_api_module:
             mng.changed_packs_from_git = 'Packs/ApiModules/Scripts/Test1'
         mng.handle_api_module_change(set(), set())
         assert mock_func.called
 
-    create_release_notes_params = [('Packs/test1', {'Packs/test1', 'Packs/test2'},),
-                                   (None, {'Packs/test1', 'Packs/test2'}),
-                                   (None, None)]
+    create_release_notes_params = [
+        (
+            'Packs/test1',
+            {'Packs/test1', 'Packs/test2'},
+        ),
+        (None, {'Packs/test1', 'Packs/test2'}),
+        (None, None),
+    ]
 
-    @pytest.mark.parametrize('user_input, git_changed_packs', create_release_notes_params)
+    @pytest.mark.parametrize(
+        'user_input, git_changed_packs', create_release_notes_params
+    )
     def test_create_release_notes(self, mocker, user_input, git_changed_packs):
         """
         Given:
@@ -90,15 +126,22 @@ class TestUpdateRNManager:
         """
         mng = UpdateReleaseNotesManager(user_input=user_input)
         mng.changed_packs_from_git = git_changed_packs
-        err = mocker.patch('demisto_sdk.commands.update_release_notes.update_rn_manager.print_warning')
-        mock_func = mocker.patch.object(UpdateReleaseNotesManager, 'create_pack_release_notes')
+        err = mocker.patch(
+            'demisto_sdk.commands.update_release_notes.update_rn_manager.print_warning'
+        )
+        mock_func = mocker.patch.object(
+            UpdateReleaseNotesManager, 'create_pack_release_notes'
+        )
         mng.create_release_notes(set(), set(), set())
         if user_input:
             assert mock_func.call_count == 1
         elif git_changed_packs:
             assert mock_func.call_count == 2
         else:
-            assert 'No changes that require release notes were detected.' in err.call_args[0][0]
+            assert (
+                'No changes that require release notes were detected.'
+                in err.call_args[0][0]
+            )
 
     def test_create_pack_release_notes_pack_success(self, mocker):
         """
@@ -109,12 +152,17 @@ class TestUpdateRNManager:
         Then:
             - execute_update in UpdateRN should be called.
         """
-        from demisto_sdk.commands.update_release_notes.update_rn_manager import \
-            UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn_manager import (
+            UpdateRN,
+        )
 
         mng = UpdateReleaseNotesManager()
-        mock_func = mocker.patch.object(UpdateRN, 'execute_update', return_result=True)
-        mng.create_pack_release_notes('test1', {'Packs/test1', 'Packs/test2'}, set(), set())
+        mock_func = mocker.patch.object(
+            UpdateRN, 'execute_update', return_result=True
+        )
+        mng.create_pack_release_notes(
+            'test1', {'Packs/test1', 'Packs/test2'}, set(), set()
+        )
         assert mock_func.call_count == 1
 
     def test_create_pack_release_notes_pack_fail(self, mocker):
@@ -127,8 +175,12 @@ class TestUpdateRNManager:
             - a warning should be printed which says that no RN is needed here.
         """
         mng = UpdateReleaseNotesManager()
-        err = mocker.patch('demisto_sdk.commands.update_release_notes.update_rn_manager.print_warning')
-        mng.create_pack_release_notes('test1', {'Packs/test2', 'Packs/test3'}, set(), set())
+        err = mocker.patch(
+            'demisto_sdk.commands.update_release_notes.update_rn_manager.print_warning'
+        )
+        mng.create_pack_release_notes(
+            'test1', {'Packs/test2', 'Packs/test3'}, set(), set()
+        )
         assert 'Either no changes were found in test1' in err.call_args[0][0]
 
     def test_manage_rn_update_fail(self):
@@ -153,13 +205,22 @@ class TestUpdateRNManager:
         Then:
             - The update is successfully executed and no error is raised.
         """
-        from demisto_sdk.commands.update_release_notes.update_rn_manager import \
-            UpdateReleaseNotesManager
-        mocker.patch.object(UpdateReleaseNotesManager, 'get_git_changed_files',
-                            return_value=({'Packs/test1', 'Packs/test2'}, set(), set()))
+        from demisto_sdk.commands.update_release_notes.update_rn_manager import (
+            UpdateReleaseNotesManager,
+        )
+
+        mocker.patch.object(
+            UpdateReleaseNotesManager,
+            'get_git_changed_files',
+            return_value=({'Packs/test1', 'Packs/test2'}, set(), set()),
+        )
         mocker.patch.object(UpdateReleaseNotesManager, 'check_existing_rn')
-        mocker.patch.object(UpdateReleaseNotesManager, 'handle_api_module_change')
-        func_mock = mocker.patch.object(UpdateReleaseNotesManager, 'create_release_notes')
+        mocker.patch.object(
+            UpdateReleaseNotesManager, 'handle_api_module_change'
+        )
+        func_mock = mocker.patch.object(
+            UpdateReleaseNotesManager, 'create_release_notes'
+        )
         mng = UpdateReleaseNotesManager(user_input='Packs/test1')
         mng.manage_rn_update()
         assert func_mock.called
@@ -173,17 +234,33 @@ class TestUpdateRNManager:
         Then:
             - The update is successfully executed on both packs and no error is raised.
         """
-        from demisto_sdk.commands.update_release_notes.update_rn_manager import \
-            UpdateReleaseNotesManager
-        from demisto_sdk.commands.validate.validate_manager import \
-            ValidateManager
+        from demisto_sdk.commands.update_release_notes.update_rn_manager import (
+            UpdateReleaseNotesManager,
+        )
+        from demisto_sdk.commands.validate.validate_manager import (
+            ValidateManager,
+        )
+
         mocker.patch.object(ValidateManager, 'setup_git_params')
-        mocker.patch.object(ValidateManager, 'filter_to_relevant_files', side_effect=(lambda x: (set(x), set(), True)))
-        mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git',
-                            return_value=({'Packs/test1', 'Packs/test2'}, set(), set()))
+        mocker.patch.object(
+            ValidateManager,
+            'filter_to_relevant_files',
+            side_effect=(lambda x: (set(x), set(), True)),
+        )
+        mocker.patch.object(
+            ValidateManager,
+            'get_unfiltered_changed_files_from_git',
+            return_value=({'Packs/test1', 'Packs/test2'}, set(), set()),
+        )
         mocker.patch.object(UpdateReleaseNotesManager, 'check_existing_rn')
-        mocker.patch.object(UpdateReleaseNotesManager, 'handle_api_module_change')
-        create_release_notes_mock = mocker.patch.object(UpdateReleaseNotesManager, 'create_release_notes')
+        mocker.patch.object(
+            UpdateReleaseNotesManager, 'handle_api_module_change'
+        )
+        create_release_notes_mock = mocker.patch.object(
+            UpdateReleaseNotesManager, 'create_release_notes'
+        )
         mng = UpdateReleaseNotesManager()
         mng.manage_rn_update()
-        create_release_notes_mock.assert_called_with({'Packs/test1', 'Packs/test2'}, set(), set())
+        create_release_notes_mock.assert_called_with(
+            {'Packs/test1', 'Packs/test2'}, set(), set()
+        )

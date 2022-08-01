@@ -2,11 +2,14 @@ from typing import Union
 
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.constants import (INDICATOR_TYPE,
-                                                   OLD_INDICATOR_TYPE,
-                                                   FileType)
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
-    JSONContentObject
+from demisto_sdk.commands.common.constants import (
+    INDICATOR_TYPE,
+    OLD_INDICATOR_TYPE,
+    FileType,
+)
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import (
+    JSONContentObject,
+)
 
 
 class IndicatorType(JSONContentObject):
@@ -31,7 +34,7 @@ class OldIndicatorType(JSONContentObject):
         Returns:
             str: Normalize file name.
         """
-        return "reputations.json"
+        return 'reputations.json'
 
     def type(self):
         return FileType.REPUTATION

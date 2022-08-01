@@ -207,7 +207,7 @@ class Neo4jQuery:
         """
         for content_type in ContentTypes.content_items():
             query += f"""
-            FOREACH (_ IN case when rel_data.target_label = "{content_type}" then [1] else [] end|
+            FOREACH (_ IN CASE WHEN rel_data.target_label = "{content_type}" THEN [1] ELSE [] END|
                 MERGE (b:{Neo4jQuery.labels_of(content_type)}{{
                     node_id: "{content_type}:" + rel_data.to,
                     id: rel_data.to

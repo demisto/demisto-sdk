@@ -1919,48 +1919,65 @@ class TestIntegrationValidator:
             == is_valid
         )
 
-    @pytest.mark.parametrize('hidden_value,is_valid', (
-        (None, True),
-        (True, True),
-        (False, True),
-        ([], True),
-        ([MarketplaceVersions.XSOAR], True),
-        ([MarketplaceVersions.MarketplaceV2], True),
-        ('true', True),
-        ('false', True),
-        ('True', True),
-        ('False', True),
-        ([MarketplaceVersions.XSOAR, MarketplaceVersions.XSOAR], True),  # may be useless, but not invalid
-
-        # invalid cases
-        ('', False),
-        (42, False),
-        ('None', False),
-        ([''], False),
-        ([True], False),
-        (['true'], False),
-        (['True'], False),
-        (MarketplaceVersions.XSOAR, False),
-        ([MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2], False),
-        ('🥲', False),
-        ('Trüe', False),
-        ('TRUE', False),
-        ([MarketplaceVersions.XSOAR, None], False),
-        ([MarketplaceVersions.MarketplaceV2, None], False),
-        ([MarketplaceVersions.XSOAR, True], False),
-        ([MarketplaceVersions.XSOAR, 1], False),
-        ([MarketplaceVersions.XSOAR, '🥲'], False),
-        ([MarketplaceVersions.XSOAR, 'true'], False),
-        ([MarketplaceVersions.XSOAR, 'True'], False),
-    ))
-    def test_invalid_hidden_attributes_for_param(self, hidden_value: Any, is_valid: bool):
-        assert IntegrationValidator(
-            mock_structure(
-                None,
-                # using `longRunning` here, as the name condition is tested in test_is_valid_hidden_params()
-                {'configuration': [{'name': 'longRunning', 'hidden': hidden_value}]}
-            )
-        ).is_valid_hidden_params() == is_valid
+    @pytest.mark.parametrize(
+        'hidden_value,is_valid',
+        (
+            (None, True),
+            (True, True),
+            (False, True),
+            ([], True),
+            ([MarketplaceVersions.XSOAR], True),
+            ([MarketplaceVersions.MarketplaceV2], True),
+            ('true', True),
+            ('false', True),
+            ('True', True),
+            ('False', True),
+            (
+                [MarketplaceVersions.XSOAR, MarketplaceVersions.XSOAR],
+                True,
+            ),  # may be useless, but not invalid
+            # invalid cases
+            ('', False),
+            (42, False),
+            ('None', False),
+            ([''], False),
+            ([True], False),
+            (['true'], False),
+            (['True'], False),
+            (MarketplaceVersions.XSOAR, False),
+            (
+                [MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
+                False,
+            ),
+            ('🥲', False),
+            ('Trüe', False),
+            ('TRUE', False),
+            ([MarketplaceVersions.XSOAR, None], False),
+            ([MarketplaceVersions.MarketplaceV2, None], False),
+            ([MarketplaceVersions.XSOAR, True], False),
+            ([MarketplaceVersions.XSOAR, 1], False),
+            ([MarketplaceVersions.XSOAR, '🥲'], False),
+            ([MarketplaceVersions.XSOAR, 'true'], False),
+            ([MarketplaceVersions.XSOAR, 'True'], False),
+        ),
+    )
+    def test_invalid_hidden_attributes_for_param(
+        self, hidden_value: Any, is_valid: bool
+    ):
+        assert (
+            IntegrationValidator(
+                mock_structure(
+                    None,
+                    # using `longRunning` here, as the name condition is tested in test_is_valid_hidden_params()
+                    {
+                        'configuration': [
+                            {'name': 'longRunning', 'hidden': hidden_value}
+                        ]
+                    },
+                )
+            ).is_valid_hidden_params()
+            == is_valid
+        )
 
 
 class TestIsFetchParamsExist:

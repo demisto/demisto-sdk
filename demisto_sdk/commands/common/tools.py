@@ -30,8 +30,6 @@ from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
 
-from demisto_sdk.commands.common.content import Content
-
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
     DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
@@ -1585,6 +1583,8 @@ def get_content_path() -> str:
     Returns:
         str: Absolute content path
     """
+    # avoid circular import
+    from demisto_sdk.commands.common.content import Content
     try:
         git_repo = Content.git()
         if not git_repo:

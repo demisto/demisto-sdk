@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import multiprocessing
+import shlex
 import shutil
 import requests
 from requests.adapters import HTTPAdapter, Retry
@@ -24,7 +25,7 @@ import logging
 
 DATABASE_URL = 'bolt://localhost:7687'
 USERNAME = 'neo4j'
-PASSWORD = 'test'
+NEO4J_PASSWORD = 'test'
 REPO_PATH = Path(GitUtil(Content.git()).git_path())
 BATCH_SIZE = 10000
 IMPORT_PATH = REPO_PATH / 'neo4j' / 'import'
@@ -148,7 +149,7 @@ class Neo4jContentGraph(ContentGraph):
 
     def start_neo4j_service(self, ):
         if not self.use_docker:
-            run_command(f'neo4j-admin set-initial-password {PASSWORD}', cwd=REPO_PATH / 'neo4j', is_silenced=False)
+            run_command(f'neo4j-admin set-initial-password {NEO4J_PASSWORD}', cwd=REPO_PATH / 'neo4j', is_silenced=False)
             run_command('neo4j start', cwd=REPO_PATH / 'neo4j', is_silenced=False)
 
         else:
@@ -158,8 +159,6 @@ class Neo4jContentGraph(ContentGraph):
             except Exception as e:
                 logger.info(f'Could not remove neo4j container: {e}')
             # then we need to create a new one
-            shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
-            shutil.rmtree(REPO_PATH / 'neo4j' / 'import', ignore_errors=True)
             run_command('docker-compose up -d', cwd=REPO_PATH / 'neo4j', is_silenced=False)
         # health check to make sure that neo4j is up
         s = requests.Session()
@@ -190,10 +189,8 @@ class Neo4jContentGraph(ContentGraph):
             docker_client.containers.run(image='neo4j/neo4j-admin:4.4.9',
                                          name=f'neo4j-{name}',
                                          remove=True,
-                                         volumes={f'{REPO_PATH}/neo4j/data': {'bind': '/data', 'mode': 'rw'},
-                                                  f'{REPO_PATH}/neo4j/backups': {'bind': '/backups', 'mode': 'rw'}},
-
-                                         command=f'{command}'
+                                         volumes=[f'{REPO_PATH}/neo4j/data:/data', f'{REPO_PATH}/neo4j/backups:/backups'],
+                                         command=shlex.split(command),
                                          )
 
     def dump(self):
@@ -209,9 +206,10 @@ class Neo4jContentGraph(ContentGraph):
             shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
             output = '/backups/content-graph.dump'
         else:
+            # todo delete data folder in host (should get it somehow)
             output = (REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump').as_posix()
 
-        self.neo4j_admin_command('load', f'neo4j-admin load --from={output}')
+        self.neo4j_admin_command('load', f'neo4j-admin load --database=neo4j --from={output}')
 
     @staticmethod
     def create_nodes_keys(tx: neo4j.Transaction) -> None:
@@ -293,7 +291,7 @@ class Neo4jContentGraph(ContentGraph):
         print('Created dependencies between packs in all marketplaces.')
 
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
-        self.driver.close()
+        # self.driver.close()
         if not self.keep_service:
             self.stop_neo4j_service()
 
@@ -302,7 +300,7 @@ class Neo4jContentGraph(ContentGraph):
 
 
 def create_content_graph(use_docker: bool = True, keep_service: bool = False) -> None:
-    with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD, use_docker, keep_service=keep_service, dump_on_exit=True) as content_graph:
+    with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, NEO4J_PASSWORD, use_docker, keep_service=keep_service, dump_on_exit=True) as content_graph:
         content_graph.parse_repository()
 
 
@@ -310,5 +308,5 @@ def load_content_graph(use_docker: bool = True, keep_service: bool = False, cont
     if content_graph_path and content_graph_path.is_file():
         shutil.copy(content_graph_path, REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump')
 
-    with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD, use_docker, keep_service, load_graph=True):
+    with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, NEO4J_PASSWORD, use_docker, keep_service, load_graph=True):
         logger.info('Content Graph was loaded')

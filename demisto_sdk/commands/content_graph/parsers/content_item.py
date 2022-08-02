@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.tools import (
     get_json, get_yaml,
     get_yml_paths_in_dir
 )
-from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, UNIFIED_FILES_SUFFIXES, MARKETPLACE_PROPERTIES
+from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, UNIFIED_FILES_SUFFIXES
 import demisto_sdk.commands.content_graph.parsers.base_content as base_content
 
 

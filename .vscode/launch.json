@@ -13,7 +13,7 @@
             ]
         },
         {
-            "name": "Python: create content graph",
+            "name": "Python: load content graph",
             "type": "python",
             "request": "launch",
             "module": "demisto_sdk",

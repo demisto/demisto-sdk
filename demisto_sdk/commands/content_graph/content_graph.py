@@ -130,6 +130,7 @@ class Neo4jContentGraph(ContentGraph):
         use_docker: bool = True,
         keep_service: bool = False,
         load_graph: bool = False,
+        dump_on_exit: bool = False,
     ) -> None:
         super().__init__(repo_path)
         self.start_time = datetime.now()
@@ -139,7 +140,8 @@ class Neo4jContentGraph(ContentGraph):
         self.use_docker = use_docker
         self.keep_service = keep_service
         self.load_graph = load_graph
-        
+        self.dump_on_exit = dump_on_exit
+
     def __enter__(self):
         if self.load_graph:
             self.load()
@@ -312,15 +314,14 @@ class Neo4jContentGraph(ContentGraph):
         self.driver.close()
         if not self.keep_service:
             self.stop_neo4j_service()
-            
+
         if self.dump_on_exit:
             self.dump()
 
 
 def create_content_graph(use_docker: bool = True) -> None:
-    with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD, use_docker) as content_graph:
+    with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD, use_docker, dump_on_exit=True) as content_graph:
         content_graph.parse_repository()
-    content_graph.dump()
 
 
 def load_content_graph(use_docker: bool = True, keep_service: bool = False, content_graph_path: Path = None) -> None:
@@ -329,3 +330,4 @@ def load_content_graph(use_docker: bool = True, keep_service: bool = False, cont
 
     with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD, use_docker, keep_service, load_graph=True):
         logger.info('Content Graph was loaded')
+

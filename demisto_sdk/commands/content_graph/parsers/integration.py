@@ -40,10 +40,10 @@ class IntegrationParser(IntegrationScriptParser):
             deprecated: bool = command_data.get('deprecated', False) or self.deprecated
             self.add_relationship(
                 Rel.HAS_COMMAND,
-                cmd_name,
+                target_id=cmd_name,
+                target_type=ContentTypes.COMMAND,
                 deprecated=deprecated,
-                in_xsoar=MarketplaceVersions.XSOAR.value in self.marketplaces,
-                in_xsiam=MarketplaceVersions.MarketplaceV2.value in self.marketplaces,
+                **self.marketplace_properties,
             )
 
     def connect_to_dependencies(self) -> None:

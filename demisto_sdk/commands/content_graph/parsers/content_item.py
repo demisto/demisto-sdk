@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Optional, List, Union
+from typing import Any, Dict, Optional, List, Union, Tuple
 
 from demisto_sdk.commands.common.tools import (
     get_current_repo,
@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.tools import (
     get_json, get_yaml,
     get_yml_paths_in_dir
 )
-from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, UNIFIED_FILES_SUFFIXES, MarketplaceVersions
+from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, UNIFIED_FILES_SUFFIXES, MARKETPLACE_PROPERTIES
 import demisto_sdk.commands.content_graph.parsers.base_content as base_content
 
 
@@ -24,7 +24,7 @@ class ContentItemParser(base_content.BaseContentParser):
     """
     def __init__(self, path: Path) -> None:
         self.path: Path = path
-        self.relationships: Dict[Rel, List[Dict[str, Any]]] = {}
+        self.relationships: Dict[Tuple[ContentTypes, Rel, ContentTypes], List[Dict[str, Any]]] = {}
 
     @property
     @abstractmethod
@@ -33,17 +33,37 @@ class ContentItemParser(base_content.BaseContentParser):
 
     @property
     @abstractmethod
+    def name(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
     def content_type(self) -> ContentTypes:
         pass
 
     @property
-    def node_id(self) -> str:
-        return f'{self.content_type}:{self.content_item_id}'
+    @abstractmethod
+    def fromversion(self) -> str:
+        pass
 
     @property
     @abstractmethod
-    def marketplaces(self) -> List[str]:
+    def toversion(self) -> str:
         pass
+
+    def get_data(self) -> Dict[str, Any]:
+        base_content_data: Dict[str, Any] = super().get_data()
+        content_item_data: Dict[str, Any] = {
+            'id': self.content_item_id,
+            'name': self.name,
+            'deprecated': self.deprecated,
+            'fromversion': self.fromversion,
+            'toversion': self.toversion,
+            'source': list(get_current_repo()),
+            'file_path': self.path.as_posix(),
+        }
+
+        return content_item_data | base_content_data
 
     @staticmethod
     def is_package(path: Path) -> bool:
@@ -57,28 +77,36 @@ class ContentItemParser(base_content.BaseContentParser):
     def is_content_item(path: Path) -> bool:
         return ContentItemParser.is_package(path) or ContentItemParser.is_unified_file(path)
 
-    def add_relationship(self, rel_type: Rel, target_id: str, **kwargs: Dict[str, Any]) -> None:
+    def add_relationship(
+        self,
+        relationship: Rel,
+        target_id: str,
+        target_type: ContentTypes = None,
+        **kwargs: Dict[str, Any],
+    ) -> None:
+        relationship_key: Tuple[ContentTypes, Rel, ContentTypes] = (self.content_type, relationship, target_type)
         relationship: Dict[str, Any] = {
-            'from': self.node_id,
-            'to': target_id,
+            'source_id': self.content_item_id,
+            'source_fromversion': self.fromversion,
+            'source_marketplaces': self.marketplaces,
+            'target_id': target_id,
         }
         relationship.update(kwargs)
-        self.relationships.setdefault(rel_type, []).append(relationship)
+        self.relationships.setdefault(relationship_key, []).append(relationship)
 
     def add_dependency(self, dependency_id: str, dependency_type: Optional[ContentTypes] = None, is_mandatory: bool = True) -> None:
-        if dependency_type is not None:
-            self.add_relationship(
-                Rel.USES,
-                dependency_id,
-                target_label=dependency_type.value,
-                mandatorily=is_mandatory,
-            )
-        else:
-            self.add_relationship(
-                Rel.USES_COMMAND_OR_SCRIPT,
-                dependency_id,
-                mandatorily=is_mandatory,
-            )
+        if dependency_type is None:
+            if self.content_type == ContentTypes.SCRIPT:
+                dependency_type = ContentTypes.COMMAND_OR_SCRIPT
+            else:
+                dependency_type = ContentTypes.BASE_CONTENT
+
+        self.add_relationship(
+            Rel.USES,
+            target_id=dependency_id,
+            target_type=dependency_type,
+            mandatorily=is_mandatory,
+        )
 
 
 class YAMLContentItemParser(ContentItemParser):
@@ -88,38 +116,36 @@ class YAMLContentItemParser(ContentItemParser):
         self.yml_data = self.get_yaml()
 
     @property
+    def name(self) -> str:
+        return self.yml_data.get('name')
+
+    @property
     def deprecated(self) -> bool:
         return self.yml_data.get('deprecated', False)
-    
+
+    @property
+    def fromversion(self) -> str:
+        return self.yml_data.get('fromversion')
+
+    @property
+    def toversion(self) -> str:
+        return self.yml_data.get('toversion')
+
     @property
     def marketplaces(self) -> List[str]:
         if not (marketplaces := self.yml_data.get('marketplaces', [])):
             return self.pack_marketplaces
         return marketplaces
 
-    def get_data(self) -> Dict[str, Any]:
-        yaml_content_item_data = {
-            'node_id': self.node_id,
-            'id': self.content_item_id,
-            'name': self.yml_data.get('name'),
-            'deprecated': self.deprecated,
-            'fromversion': self.yml_data.get('fromversion'),
-            'toversion': self.yml_data.get('toversion', ''),
-            'source': list(get_current_repo()),
-            'in_xsoar': MarketplaceVersions.XSOAR.value in self.marketplaces,
-            'in_xsiam': MarketplaceVersions.MarketplaceV2.value in self.marketplaces,
-            'file_path': self.path.as_posix(),
-        }
-        if to_version := yaml_content_item_data['toversion']:
-            yaml_content_item_data['node_id'] += f'_{to_version}'
-
-        return yaml_content_item_data
-
     def connect_to_tests(self) -> None:
         tests_playbooks: List[str] =  self.yml_data.get('tests', [])
         for test_playbook_id in tests_playbooks:
             if 'no test' not in test_playbook_id.lower():
-                self.add_relationship(Rel.TESTED_BY, test_playbook_id)
+                self.add_relationship(
+                    Rel.TESTED_BY,
+                    target_id=test_playbook_id,
+                    target_type=ContentTypes.TEST_PLAYBOOK,
+                )
 
     def get_yaml(self) -> Dict[str, Union[str, List[str]]]:
         if not self.path.is_dir():
@@ -143,32 +169,26 @@ class JSONContentItemParser(ContentItemParser):
         return self.json_data.get('id')
 
     @property
+    def name(self) -> str:
+        return self.json_data.get('name')
+
+    @property
     def deprecated(self) -> bool:
         return self.json_data.get('deprecated', False)
-    
+
+    @property
+    def fromversion(self) -> str:
+        return self.json_data.get('fromVersion')
+
+    @property
+    def toversion(self) -> str:
+        return self.json_data.get('toVersion', '')
+
     @property
     def marketplaces(self) -> List[str]:
         if not (marketplaces := self.json_data.get('marketplaces', [])):
             return self.pack_marketplaces
         return marketplaces
-
-    def get_data(self) -> Dict[str, Any]:
-        json_content_item_data = {
-            'node_id': self.node_id,
-            'id': self.content_item_id,
-            'name': self.json_data.get('name'),
-            'deprecated': self.deprecated,
-            'fromversion': self.json_data.get('fromVersion'),
-            'toversion': self.json_data.get('toVersion', ''),
-            'source': list(get_current_repo()),
-            'in_xsoar': MarketplaceVersions.XSOAR.value in self.marketplaces,
-            'in_xsiam': MarketplaceVersions.MarketplaceV2.value in self.marketplaces,
-            'file_path': self.path.as_posix(),
-        }
-        if to_version := json_content_item_data['toversion']:
-            json_content_item_data['node_id'] += f'_{to_version}'
-
-        return json_content_item_data
     
     def get_json(self) -> Dict[str, Any]:
         if self.path.is_dir():

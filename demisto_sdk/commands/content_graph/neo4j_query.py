@@ -1,8 +1,11 @@
 
-from typing import List
+from typing import Any, Dict, List
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
+from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, MARKETPLACE_PROPERTIES
 
+
+IGNORED_PACKS_IN_DEPENDENCY_CALC = ['NonSupported', 'Base', 'ApiModules']
 
 class Neo4jQuery:
     @staticmethod
@@ -48,162 +51,168 @@ class Neo4jQuery:
     @staticmethod
     def create_nodes(content_type: ContentTypes) -> str:
         return f"""
-            UNWIND $data AS node_data
-            CREATE (n:{Neo4jQuery.labels_of(content_type)}{{node_id: node_data.node_id}}) SET n += node_data
+            UNWIND $data AS data
+            CREATE (n:{Neo4jQuery.labels_of(content_type)}{Neo4jQuery.create_node_key_map()})
+            SET n += data
         """
+
+    @staticmethod
+    def create_node_map(data: Dict[str, str]) -> str:
+        return f"{{{', '.join([f'{prop}: {val}' for prop, val in data.items()])}}}"
+
+    @staticmethod
+    def create_node_key_map() -> str:
+        data: Dict[str, str] = {
+            'id': 'data.source_id',
+            'fromversion': 'data.fromversion',
+        }
+        for marketplace, mp_propery in MARKETPLACE_PROPERTIES.keys():
+            data[mp_propery] = f'{marketplace} in data.marketplaces'
+
+        return Neo4jQuery.create_node_map(data)
+
+    @staticmethod
+    def create_target_node_map() -> str:
+        data: Dict[str, str] = {
+            'id': 'data.target_id',
+        }
+        return Neo4jQuery.create_node_map(data)
+
+    @staticmethod
+    def get_command_marketplace_properties_to_set(
+        is_create: bool = True,
+        initialize_to_false: bool = False,
+    ) -> str:
+        if is_create:
+            if initialize_to_false:
+                return ', '.join([
+                f'cmd.{mp_property} = false' for mp_property in MARKETPLACE_PROPERTIES.keys()
+            ])
+            return ', '.join([
+                f'cmd.{mp_property} = data.{mp_property}'
+                for mp_property in MARKETPLACE_PROPERTIES.keys()
+            ])
+
+        return ', '.join([
+            f'cmd.{mp_property} = cmd.{mp_property} OR data.{mp_property}'
+            for mp_property in MARKETPLACE_PROPERTIES.keys()
+        ])
 
     @staticmethod
     def create_has_command_relationships() -> str:
-        """
-        Since commands nodes might be already created when creating the USES_COMMAND_OR_SCRIPT relationships
-        but we haven't yet catagorized them as commands, we search them by their `id` property
-        When they are created/found, we set their node_id and labels.
-        """
         return f"""
-            UNWIND $data AS rel_data
-            MATCH (a:{ContentTypes.INTEGRATION}{{node_id: rel_data.from}})
-            MERGE (b:{Neo4jQuery.labels_of(ContentTypes.COMMAND)}{{
-                node_id: "{ContentTypes.COMMAND}:" + rel_data.to,
-                id: rel_data.to
-            }})
+            UNWIND $data AS data
+            MATCH (integration:{ContentTypes.INTEGRATION}{Neo4jQuery.create_node_key_map()})
+            MERGE (cmd:{Neo4jQuery.labels_of(ContentTypes.COMMAND)}{Neo4jQuery.create_target_node_map()})
             ON CREATE
-                SET b.in_xsoar = toBoolean(rel_data.in_xsoar),
-                    b.in_xsiam = toBoolean(rel_data.in_xsiam)
+                SET {Neo4jQuery.get_command_marketplace_properties_to_set(is_create=True)}
             ON MATCH
-                SET b.in_xsoar = CASE WHEN toBoolean(b.in_xsoar) OR toBoolean(rel_data.in_xsoar) THEN "True"
-                                 ELSE "False" END,
-                    b.in_xsiam = CASE WHEN toBoolean(b.in_xsiam) OR toBoolean(rel_data.in_xsiam) THEN "True"
-                                 ELSE "False" END
-            MERGE (a)-[r:{Rel.HAS_COMMAND}{{deprecated: toBoolean(rel_data.deprecated)}}]->(b)
+                SET {Neo4jQuery.get_command_marketplace_properties_to_set(is_create=False)}
+            MERGE (integration)-[r:{Rel.HAS_COMMAND}{{deprecated: data.deprecated}}]->(cmd)
         """
 
     @staticmethod
-    def create_uses_relationships() -> str:
-        """
-        We search both source and target nodes by their `node_id` properties.
-        Note: the FOR EACH statements are a workaround for Cypher not supporting IF statements.
-        """
+    def create_uses_relationships(source_type: ContentTypes, target_type: ContentTypes) -> str:
+        if target_type == ContentTypes.COMMAND_OR_SCRIPT:
+            return Neo4jQuery.create_uses_command_or_script_relationships()
+
+        source_node_map = Neo4jQuery.create_node_key_map()
+        target_node_map = Neo4jQuery.create_target_node_map()
+
         query = f"""
-            UNWIND $data AS rel_data
-            MATCH (a:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.from}})
+            UNWIND $data AS data
+            MATCH (content_item:{source_type}{source_node_map})
+            MATCH (dependency:{Neo4jQuery.labels_of(target_type)}{target_node_map})
+            MERGE (content_item)-[r:{Rel.USES}]->(dependency)
+            ON CREATE
+                SET r.mandatorily = data.mandatorily
+            ON MATCH
+                SET r.mandatorily = r.mandatorily OR data.mandatorily
         """
-        for content_type in ContentTypes.content_items():
-            query += f"""
-            FOREACH (_ IN CASE WHEN rel_data.target_label = "{content_type}" THEN [1] ELSE [] END|
-                MERGE (b:{Neo4jQuery.labels_of(content_type)}{{
-                    node_id: "{content_type}:" + rel_data.to,
-                    id: rel_data.to
-                }})
-                MERGE (a)-[r:{Rel.USES}{{is_source_deprecated: toBoolean(a.deprecated)}}]->(b)
-                ON CREATE
-                    SET r.mandatorily = toBoolean(rel_data.mandatorily)
-                ON MATCH
-                    SET r.mandatorily = r.mandatorily OR toBoolean(rel_data.mandatorily)
-            )
-            """
         return query
 
     @staticmethod
     def create_uses_command_or_script_relationships() -> str:
         """
-        When creating these relationships, since the target nodes types are not known (either Command or Script),
-        we are using only the `id` property to search/create it. If created, this is a Command (because script nodes
-        were already created).
+        This query creates a relationship between a script and a command/scripts that is executed by the script.
+        Before running this query, it is not known whether the target node is a script or a command.
+        However, if the node was created during the merge, it is necessarily a command, since all scripts 
+        were previously created.
+        In this case, we initialize the command's marketplaces properties to 'false' and they will be updated
+        during the creation of HAS_COMMAND relationships (according to the implementing integrations' properties).
         """
         return f"""
-            UNWIND $data AS rel_data
-            MATCH (a:{ContentTypes.SCRIPT}{{node_id: rel_data.from}})
-            MERGE (b:{ContentTypes.COMMAND_OR_SCRIPT}{{id: rel_data.to}})
+            UNWIND $data AS data
+            MATCH (script:{ContentTypes.SCRIPT}{Neo4jQuery.create_node_key_map()})
+            MERGE (cmd:{ContentTypes.COMMAND_OR_SCRIPT}{Neo4jQuery.create_target_node_map()})
             ON CREATE
-                SET b:{Neo4jQuery.labels_of(ContentTypes.COMMAND)}, b.node_id = "{ContentTypes.COMMAND}:" + rel_data.to
+                SET cmd:{Neo4jQuery.labels_of(ContentTypes.COMMAND)},
+                    {Neo4jQuery.get_command_marketplace_properties_to_set(initialize_to_false=True)}
 
-            MERGE (a)-[r:{Rel.USES}{{is_source_deprecated: toBoolean(a.deprecated)}}]->(b)
+            MERGE (script)-[r:{Rel.USES}]->(cmd)
             ON CREATE
-                SET r.mandatorily = toBoolean(rel_data.mandatorily)
+                SET r.mandatorily = data.mandatorily
             ON MATCH
-                SET r.mandatorily = r.mandatorily OR toBoolean(rel_data.mandatorily)
+                SET r.mandatorily = r.mandatorily OR data.mandatorily
         """
 
     @staticmethod
-    def create_tested_by_relationships() -> str:
-        return f"""
-            UNWIND $data AS rel_data
-            MATCH (a:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.from}})
-            MERGE (b:{ContentTypes.TEST_PLAYBOOK}{{
-                node_id: "{ContentTypes.TEST_PLAYBOOK}:" + rel_data.to,
-                id: rel_data.to
-            }})
-            MERGE (a)-[r:{Rel.TESTED_BY}{{is_source_deprecated: toBoolean(a.deprecated)}}]->(b)
-        """
-
-    @staticmethod
-    def create_relationships(rel_type: Rel) -> str:
+    def create_relationships(source_type: ContentTypes, rel_type: Rel, target_type: ContentTypes) -> str:
         if rel_type == Rel.USES:
-            return Neo4jQuery.create_uses_relationships()
-        if rel_type == Rel.USES_COMMAND_OR_SCRIPT:
-            return Neo4jQuery.create_uses_command_or_script_relationships()
+            return Neo4jQuery.create_uses_relationships(source_type, target_type)
         if rel_type == Rel.HAS_COMMAND:
             return Neo4jQuery.create_has_command_relationships()
-        if rel_type == Rel.TESTED_BY:
-            return Neo4jQuery.create_tested_by_relationships()
 
-        # default
+        # default query
         return f"""
-            UNWIND $data AS rel_data
-            MATCH (a:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.from}})
-            MERGE (b:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.to}})
-            MERGE (a)-[r:{rel_type}]->(b)
+            UNWIND $data AS data
+            MATCH (source:{source_type}{Neo4jQuery.create_node_key_map()})
+            MERGE (target:{target_type}{Neo4jQuery.create_target_node_map()})
+            MERGE (source)-[r:{rel_type}]->(target)
         """
 
     @staticmethod
-    def update_in_xsoar_property() -> str:
-        # todo: maybe need to run this in a while loop until no changes?
-        return f"""
-            MATCH (a:{ContentTypes.BASE_CONTENT}{{in_xsoar: "True"}})
-                -[:{Rel.USES}*{{mandatorily: true}}]->
-                    (b:{ContentTypes.BASE_CONTENT}{{in_xsoar: "False"}}),
-            (b)-[:{Rel.IN_PACK}]->(p)
-            WHERE NOT p.id IN ["DeprecatedContent", "NonSupported"]
-            SET a.in_xsoar = "False"
+    def update_marketplace_property(mp_property: str) -> List[str]:
         """
+        In this query, we find all content items that are currently considered in a specific marketplace,
+        but uses a dependency that is not in this marketplace.
+        To make sure the dependency is not in this marketplace, we make sure there is no other node with
+        the same content type and id as the dependency.
+        We ignore dependencies that are part of a pack in IGNORED_PACKS_IN_DEPENDENCY_CALC list.
+
+        If such dependencies were found, we set the content item's marketplace property to "false".
+        """
+        queries: List[str] = []
+        for dependency_content_type in ContentTypes.content_items():
+            queries.append(f"""
+                MATCH (content_item:{ContentTypes.BASE_CONTENT}{{{mp_property}: true}})
+                    -[:{Rel.USES}*{{mandatorily: true}}]->
+                        (dependency:{dependency_content_type}{{{mp_property}: false}})
+                            -[:{Rel.IN_PACK}]->(pack),
+                (alternative_dependency:{dependency_content_type}{{
+                    {mp_property}: true,
+                    id: dependency.id
+                }})
+                WHERE NOT pack.id IN {IGNORED_PACKS_IN_DEPENDENCY_CALC},
+                WITH count(alternative_dependency) = 0 AS dependency_not_in_mp
+                WHERE dependency_not_in_mp
+                SET content_item.{mp_property} = false
+            """)
+        return queries
 
     @staticmethod
-    def update_in_xsiam_property() -> str:
-        # todo: maybe need to run this in a while loop until no changes?
+    def create_dependencies_for_marketplace(mp_property: str) -> str:
         return f"""
-            MATCH (a:{ContentTypes.BASE_CONTENT}{{in_xsiam: "True"}})
-                -[:{Rel.USES}*{{mandatorily: true}}]->
-                    (b:{ContentTypes.BASE_CONTENT}{{in_xsiam: "False"}}),
-            (b)-[:{Rel.IN_PACK}]->(p)
-            WHERE NOT p.id IN ["DeprecatedContent", "NonSupported"]
-            SET a.in_xsiam = "False"
-        """
-
-    @staticmethod
-    def create_depends_on_in_xsoar() -> str:
-        return f"""
-            MATCH (a)-[:{Rel.USES}]->(b), (a)-[:{Rel.IN_PACK}]->(p1), (b)-[:{Rel.IN_PACK}]->(p2)
-            WHERE a.in_xsoar = "True" AND b.in_xsoar = "True"
-            AND p1.node_id <> p2.node_id
-            AND NOT p1.name CONTAINS 'Common' AND NOT p2.name CONTAINS 'Common'
-            AND NOT p1.name CONTAINS 'Deprecated' AND NOT p2.name CONTAINS 'Deprecated'
-            AND  p1.name <> 'Base' AND  p2.name <> 'Base'
-            WITH p1, p2
-            MERGE (p1)-[r:DEPENDS_ON_IN_XSOAR]->(p2)
-            RETURN *
-        """
-
-    @staticmethod
-    def create_depends_on_in_xsiam() -> str:
-        return f"""
-            MATCH (a)-[:{Rel.USES}]->(b), (a)-[:{Rel.IN_PACK}]->(p1), (b)-[:{Rel.IN_PACK}]->(p2)
-            WHERE a.in_xsiam = "True" AND b.in_xsiam = "True"
-            AND p1.node_id <> p2.node_id
-            AND NOT p1.name CONTAINS 'Common' AND NOT p2.name CONTAINS 'Common'
-            AND NOT p1.name CONTAINS 'Deprecated' AND NOT p2.name CONTAINS 'Deprecated'
-            AND  p1.name <> 'Base' AND  p2.name <> 'Base'
-            WITH p1, p2
-            MERGE (p1)-[r:DEPENDS_ON_IN_XSIAM]->(p2)
+            MATCH (pack_a)<-[:{Rel.IN_PACK}]-(a)-[r:{Rel.USES}]->(b)-[:{Rel.IN_PACK}]->(pack_b),
+            WHERE a.{mp_property} AND b.{mp_property}
+            AND pack_a.id <> pack_b.id
+            AND NOT pack_a.id IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
+            AND NOT pack_b.id IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
+            WITH pack_a, pack_b
+            MERGE (pack_a)-[r:DEPENDS_ON{{
+                mandatorily: r.mandatorily,
+                {mp_property}: true
+            }}]->(pack_b)
             RETURN *
         """
 

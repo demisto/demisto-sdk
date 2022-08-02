@@ -9,6 +9,11 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 PACKS_FOLDER = 'Packs'
 PACK_METADATA_FILENAME = 'pack_metadata.json'
 UNIFIED_FILES_SUFFIXES = ['.yml', '.json']
+MARKETPLACE_PROPERTIES = {
+    MarketplaceVersions.XSOAR: 'in_xsoar',
+    MarketplaceVersions.MarketplaceV2: 'in_xsiam',
+    MarketplaceVersions.XPANSE: 'in_xspanse',
+}
 
 class Rel(enum.Enum):
     USES = 'USES'
@@ -119,15 +124,35 @@ class ContentTypes(enum.Enum):
 
     @staticmethod
     def props_indexes() -> Dict['ContentTypes', List[str]]:
-        return {
-            ContentTypes.COMMAND_OR_SCRIPT: ['id'],
-        }
+        return {}
+
+    @staticmethod
+    def node_key_constraints() -> Dict['ContentTypes', List[str]]:
+        """
+        Every content item node must have a unique combination of the following properties:
+        * ID
+        * from version
+            We can have multiple content items with the same type and IDs in the repository
+            if they are not in the same range of marketplace versions)
+        * in_<marketplace>, for every marketplace.
+            We can have multiple content items with the same type, ID and version range in
+            the repository as long as they are not in the same marketplace.
+        """
+        constraints: Dict['ContentTypes', List[str]] = {}
+        content_items_node_key_list: List[str] = ['id', 'fromversion'] + list(MARKETPLACE_PROPERTIES.values())
+
+        for content_type in ContentTypes.content_items():
+            constraints[content_type] = content_items_node_key_list
+
+        return constraints
 
     @staticmethod
     def props_uniqueness_constraints() -> Dict['ContentTypes', List[str]]:
-        return {
-            ContentTypes.BASE_CONTENT: ['node_id'],
-        }
+        constraints: Dict['ContentTypes', List[str]] = {}
+        for content_type in ContentTypes.non_content_items:
+            constraints[content_type] = ['id']
+
+        return constraints
 
     @staticmethod
     def props_existence_constraints() -> Dict['ContentTypes', List[str]]:

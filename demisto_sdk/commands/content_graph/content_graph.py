@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, List, Optional, Tuple, Iterator, Dict
 
-from demisto_sdk.commands.content_graph.constants import PACKS_FOLDER, ContentTypes, Rel
+from demisto_sdk.commands.content_graph.constants import PACKS_FOLDER, ContentTypes, Rel, MARKETPLACE_PROPERTIES
 from demisto_sdk.commands.content_graph.neo4j_query import Neo4jQuery
 from demisto_sdk.commands.content_graph.parsers.pack import PackSubGraphCreator
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -52,7 +52,8 @@ class ContentGraph(ABC):
     def __init__(self, repo_path: Path) -> None:
         self.packs_path: Path = repo_path / PACKS_FOLDER
         self.nodes: Dict[ContentTypes, List[Dict[str, Any]]] = load_pickle(NODES_PKL_PATH.as_posix())
-        self.relationships: Dict[Rel, List[Dict[str, Any]]] = load_pickle(RELS_PKL_PATH.as_posix())
+        self.relationships: Dict[Tuple[ContentTypes, Rel, ContentTypes], List[Dict[str, Any]]] = \
+            load_pickle(RELS_PKL_PATH.as_posix())
 
     def parse_packs(self, packs_paths: Iterator[Path]) -> None:
         """ Parses packs into nodes and relationships by given paths. """
@@ -67,16 +68,13 @@ class ContentGraph(ABC):
     def extend_graph_nodes_and_relationships(
         self,
         pack_nodes: Dict[ContentTypes, List[Dict[str, Any]]],
-        pack_relationships: Dict[Rel, List[Dict[str, Any]]],
+        pack_relationships: Dict[Tuple[ContentTypes, Rel, ContentTypes], List[Dict[str, Any]]],
     ) -> None:
-        for content_type in ContentTypes:
-            if content_type not in self.nodes:
-                self.nodes[content_type] = []
-            self.nodes[content_type].extend(pack_nodes.get(content_type, []))
-        for rel in Rel:
-            if rel not in self.relationships:
-                self.relationships[rel] = []
-            self.relationships[rel].extend(pack_relationships.get(rel, []))
+        for content_type, parsed_data in pack_nodes.items():
+            self.relationships.setdefault(content_type, []).extend(parsed_data)
+
+        for rel_key, parsed_data in pack_relationships.items():
+            self.relationships.setdefault(rel_key, []).extend(parsed_data)
 
     def parse_repository(self) -> None:
         """ Parses all repository packs into nodes and relationships. """
@@ -252,64 +250,47 @@ class Neo4jContentGraph(ContentGraph):
             tx.close()
             for content_type in ContentTypes.non_abstracts():  # todo: parallelize?
                 if self.nodes.get(content_type):
-                    session.write_transaction(self.import_nodes_by_type, content_type)
-            for rel in Rel:
-                if self.relationships.get(rel):  # todo: parallelize?
-                    session.write_transaction(self.import_relationships_by_type, rel)
+                    session.write_transaction(self.create_nodes_by_type, content_type)
+            for rel_key in self.relationships.keys():
+                session.write_transaction(self.create_relationships_by_key, rel_key)
 
         after_creating_nodes = datetime.now()
         print(f'Time to create graph: {(after_creating_nodes - before_creating_nodes).total_seconds() / 60} minutes')
         print(f'Time since started: {(after_creating_nodes - self.start_time).total_seconds() / 60} minutes')
 
-    def import_nodes_by_type(self, tx: neo4j.Transaction, content_type: ContentTypes) -> None:
+    def create_nodes_by_type(self, tx: neo4j.Transaction, content_type: ContentTypes) -> None:
         query = Neo4jQuery.create_nodes(content_type)
         tx.run(query, {'data': self.nodes.get(content_type)})
         print(f'Imported {content_type}')
 
-    def import_relationships_by_type(self, tx: neo4j.Transaction, rel_type: Rel) -> None:
-        query = Neo4jQuery.create_relationships(rel_type)
-        tx.run(query, {'data': self.relationships.get(rel_type)})
-        print(f'Imported {rel_type}')
+    def create_relationships_by_key(
+        self,
+        tx: neo4j.Transaction,
+        rel_key: Tuple[ContentTypes, Rel, ContentTypes],
+    ) -> None:
+        query = Neo4jQuery.create_relationships(*rel_key)
+        tx.run(query, {'data': self.relationships.get(rel_key)})
+        print(f'Imported {rel_key}')
 
     def create_pack_dependencies(self) -> None:
         with self.driver.session() as session:
             session.write_transaction(self.fix_marketplaces_properties)
-            session.write_transaction(self.create_depends_on_relationships)
+            session.write_transaction(self.create_depencies_for_all_marketplaces)
 
     @staticmethod
     def fix_marketplaces_properties(tx: neo4j.Transaction) -> None:
-        query = Neo4jQuery.update_in_xsoar_property()
-        tx.run(query)
-        query = Neo4jQuery.update_in_xsiam_property()
-        tx.run(query)
-        print('Fixed in_xsoar and in_xsiam properties.')
+        for property_name in MARKETPLACE_PROPERTIES.values():
+            queries = Neo4jQuery.update_marketplace_property(property_name)
+            for query in queries:
+                tx.run(query)
+        print('Fixed marketplaces properties.')
 
     @staticmethod
-    def create_depends_on_relationships(tx: neo4j.Transaction) -> None:
-        query = Neo4jQuery.create_depends_on_in_xsoar()
-        tx.run(query)
-        query = Neo4jQuery.create_depends_on_in_xsiam()
-        tx.run(query)
-        print('Created dependencies between packs.')
-
-    @staticmethod
-    def export_nodes_by_type(tx: neo4j.Transaction, content_type: ContentTypes) -> None:
-        query = Neo4jQuery.export_nodes_by_type(content_type)
-        result = tx.run(query).single()
-        print(result['done'])
-
-    @staticmethod
-    def export_relationships_by_type(tx: neo4j.Transaction, rel_type: Rel) -> None:
-        query = Neo4jQuery.export_relationships_by_type(rel_type)
-        result = tx.run(query).single()
-        print(result['done'])
-
-    def export_all(self) -> None:
-        with self.driver.session() as session:
-            for content_type in ContentTypes.non_abstracts():
-                session.write_transaction(self.export_nodes_by_type, content_type)
-            for rel in Rel:
-                session.write_transaction(self.export_relationships_by_type, rel)
+    def create_depencies_for_all_marketplaces(tx: neo4j.Transaction) -> None:
+        for mp_property in MARKETPLACE_PROPERTIES.keys():
+            query = Neo4jQuery.create_dependencies_for_marketplace(mp_property)
+            tx.run(query)
+        print('Created dependencies between packs in all marketplaces.')
 
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         self.driver.close()

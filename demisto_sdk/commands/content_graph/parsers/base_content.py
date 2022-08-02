@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict
+from typing import Any, Dict, List
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes
+from demisto_sdk.commands.content_graph.constants import ContentTypes, MARKETPLACE_PROPERTIES
 
 
 class BaseContentParser(ABC):
@@ -9,17 +9,12 @@ class BaseContentParser(ABC):
 
     Attributes:
         content_type (ContentTypes): The content type.
-        node_id      (str):          A unique ID representing the parsed content node.
-                                         Should be in the format `<content_type>:<content_id>`.
         deprecated   (bool):         Whether the content is deprecated or not.
+        marketplaces (List[str]):    The marketplaces in which the content should be.
     
     Methods:
         get_data (Dict[str, Any]): Returns the data of the parsed content.
     """
-    @property
-    @abstractmethod
-    def node_id(self) -> str:
-        pass
 
     @property
     @abstractmethod
@@ -31,7 +26,15 @@ class BaseContentParser(ABC):
     def deprecated(self) -> bool:
         pass
 
+    @property
     @abstractmethod
-    def get_data(self) -> Dict[str, Any]:
-        """ Returns the data of the parsed content. """
+    def marketplaces(self) -> List[str]:
         pass
+
+    def get_data(self) -> Dict[str, Any]:
+        base_data: Dict[str, Any] = {
+            'deprecated': self.deprecated,
+        }
+        for marketplace_property, marketplace_version in MARKETPLACE_PROPERTIES.items():
+            base_data[marketplace_property] = marketplace_version in self.marketplaces
+        return base_data

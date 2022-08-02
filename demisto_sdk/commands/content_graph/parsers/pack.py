@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 from demisto_sdk.commands.common.tools import get_json, get_current_repo
-from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, PACK_METADATA_FILENAME, MarketplaceVersions
+from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, PACK_METADATA_FILENAME
 from demisto_sdk.commands.content_graph.parsers.parser_factory import ParserFactory
 import demisto_sdk.commands.content_graph.parsers.base_content as base_content
 
@@ -14,21 +14,20 @@ class PackParser(base_content.BaseContentParser):
         print(f'Parsing {self.content_type} {self.pack_id}')
         self.path: Path = path
         self.metadata: Dict[str, Any] = get_json(path / PACK_METADATA_FILENAME)
-        self.marketplaces: List[str] = self.metadata.get('marketplaces', [])
         self.nodes: Dict[ContentTypes, List[Dict[str, Any]]] = {}
-        self.relationships: Dict[Rel, List[Dict[str, Any]]] = {}
+        self.relationships: Dict[Tuple[ContentTypes, Rel, ContentTypes], List[Dict[str, Any]]] = {}
 
     @property
     def content_type(self) -> ContentTypes:
         return ContentTypes.PACK
 
     @property
-    def node_id(self) -> str:
-        return f'{self.content_type}:{self.pack_id}'
-
-    @property
     def deprecated(self) -> bool:
         return self.metadata.get('deprecated', False)
+    
+    @property
+    def marketplaces(self) -> List[str]:
+        return self.metadata.get('marketplaces', [])
 
     def add_pack_node(self) -> Dict[str, Any]:
         self.nodes[ContentTypes.PACK] = [self.get_data()]
@@ -37,14 +36,17 @@ class PackParser(base_content.BaseContentParser):
         self.nodes.setdefault(parser.content_type, []).append(parser.get_data())
 
     def add_content_item_relationships(self, parser: Any) -> None:
-        parser.add_relationship(Rel.IN_PACK, self.node_id)
-        for rel_type in Rel:
-            current_type_rels = parser.relationships.get(rel_type, [])
-            self.relationships.setdefault(rel_type, []).extend(current_type_rels)
+        parser.add_relationship(
+            Rel.IN_PACK,
+            target_id=self.pack_id,
+            target_type=self.content_type,
+        )
+        for k, v in parser.relationships.items():
+            self.relationships.setdefault(k, []).extend(v)
 
     def get_data(self) -> Dict[str, Any]:
-        return {
-            'node_id': self.node_id,
+        base_content_data: Dict[str, Any] = super().get_data()
+        pack_data: Dict[str, Any] = {
             'id': self.pack_id,
             'name': self.metadata.get('name'),
             'file_path': self.path.as_posix(),
@@ -55,10 +57,8 @@ class PackParser(base_content.BaseContentParser):
             'tags': self.metadata.get('tags', []),
             'use_cases': self.metadata.get('useCases', []),
             'categories': self.metadata.get('categories', []),
-            'deprecated': self.deprecated,
-            'in_xsoar': MarketplaceVersions.XSOAR.value in self.marketplaces,
-            'in_xsiam': MarketplaceVersions.MarketplaceV2.value in self.marketplaces,
         }
+        return pack_data | base_content_data
 
     def parse_pack(self) -> None:
         self.add_pack_node()

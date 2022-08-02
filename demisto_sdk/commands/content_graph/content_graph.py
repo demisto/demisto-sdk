@@ -25,7 +25,7 @@ import logging
 
 DATABASE_URL = 'bolt://localhost:7687'
 USERNAME = 'neo4j'
-PASSWORD = 'test'
+NEO4J_PASSWORD = 'test'
 REPO_PATH = Path(GitUtil(Content.git()).git_path())
 BATCH_SIZE = 10000
 IMPORT_PATH = REPO_PATH / 'neo4j' / 'import'
@@ -151,8 +151,8 @@ class Neo4jContentGraph(ContentGraph):
 
     def start_neo4j_service(self, ):
         if not self.use_docker:
-            run_command(f'neo4j-admin set-initial-password {PASSWORD}', cwd=REPO_PATH / 'neo4j', is_silenced=False)
-            run_command('sudo neo4j start', cwd=REPO_PATH / 'neo4j', is_silenced=False)
+            run_command(f'neo4j-admin set-initial-password {NEO4J_PASSWORD}', cwd=REPO_PATH / 'neo4j', is_silenced=False)
+            run_command('neo4j start', cwd=REPO_PATH / 'neo4j', is_silenced=False)
 
         else:
             docker_client = docker.from_env()
@@ -319,7 +319,7 @@ class Neo4jContentGraph(ContentGraph):
 
 
 def create_content_graph(use_docker: bool = True, keep_service: bool = False) -> None:
-    with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD, use_docker, keep_service=keep_service, dump_on_exit=True) as content_graph:
+    with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, NEO4J_PASSWORD, use_docker, keep_service=keep_service, dump_on_exit=True) as content_graph:
         content_graph.parse_repository()
 
 
@@ -327,5 +327,5 @@ def load_content_graph(use_docker: bool = True, keep_service: bool = False, cont
     if content_graph_path and content_graph_path.is_file():
         shutil.copy(content_graph_path, REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump')
 
-    with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD, use_docker, keep_service, load_graph=True):
+    with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, NEO4J_PASSWORD, use_docker, keep_service, load_graph=True):
         logger.info('Content Graph was loaded')

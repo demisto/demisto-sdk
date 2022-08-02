@@ -4,6 +4,8 @@
 * Added an ability to provide list of marketplace names as a param attribute to **validate** and **upload**
 * Added the file type to the error message when it is not supported.
 
+* Added the `DEMISTO_SDK_CONTENT_PATH` environment variable, implicitly used in various commands.
+
 ## 1.7.1
 
 * Fixed an issue where *indicatorTypes* and *betaIntegrations* were not found in the id_set.

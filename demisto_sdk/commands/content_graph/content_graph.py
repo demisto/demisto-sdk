@@ -319,8 +319,8 @@ class Neo4jContentGraph(ContentGraph):
             self.dump()
 
 
-def create_content_graph(use_docker: bool = True) -> None:
-    with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD, use_docker, dump_on_exit=True) as content_graph:
+def create_content_graph(use_docker: bool = True, keep_service: bool = False) -> None:
+    with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD, use_docker, keep_service=keep_service, dump_on_exit=True) as content_graph:
         content_graph.parse_repository()
 
 

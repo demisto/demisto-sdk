@@ -1584,11 +1584,13 @@ def get_content_path() -> str:
         str: Absolute content path
     """
     # avoid circular import
-    from demisto_sdk.commands.common.content import Content
     try:
-        git_repo = Content.git()
-        if not git_repo:
-            raise git.InvalidGitRepositoryError()
+        if content_path := os.getenv('DEMISTO_SDK_CONTENT_PATH'):
+            git_repo = git.Repo(content_path)
+            logger.debug(f'Using content path: {content_path}')
+        else:
+            git_repo = git.Repo(Path.cwd(), search_parent_directories=True)
+
         remote_url = git_repo.remote().urls.__next__()
         is_fork_repo = 'content' in remote_url
         is_external_repo = is_external_repository()

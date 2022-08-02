@@ -30,6 +30,8 @@ from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
 
+from demisto_sdk.commands.common.content import Content
+
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
     DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
@@ -1584,7 +1586,9 @@ def get_content_path() -> str:
         str: Absolute content path
     """
     try:
-        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+        git_repo = Content.git()
+        if not git_repo:
+            raise git.InvalidGitRepositoryError()
         remote_url = git_repo.remote().urls.__next__()
         is_fork_repo = 'content' in remote_url
         is_external_repo = is_external_repository()

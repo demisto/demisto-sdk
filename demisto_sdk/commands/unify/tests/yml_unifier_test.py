@@ -10,6 +10,7 @@ from click.testing import CliRunner
 from mock import patch
 
 from demisto_sdk.__main__ import main
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
@@ -501,6 +502,48 @@ class TestMergeScriptPackageToYMLIntegration:
                                 'integration-SampleIntegPackageSanity.yml')
 
         assert expected_yml == actual_yml
+
+    @pytest.mark.parametrize('marketplace', (MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2))
+    def test_unify_integration__hidden_param(self, marketplace: MarketplaceVersions):
+        """
+        Given   an integration file with params that have different valid values for the `hidden` attribute
+        When    running unify
+        Then    make sure the list-type values are replaced with a boolean that matches the marketplace value
+                (see the update_hidden_parameters_value docstrings for more information)
+        """
+        create_test_package(
+            test_dir=self.test_dir_path,
+            package_name=self.package_name,
+            base_yml='demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackageHiddenParams.yml',
+            script_code=TEST_VALID_CODE,
+            detailed_description=TEST_VALID_DETAILED_DESCRIPTION,
+            image_file='demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage_image.png',
+        )
+
+        unifier = IntegrationScriptUnifier(input=self.export_dir_path, output=self.test_dir_path,
+                                           marketplace=marketplace)
+        yml_files = unifier.unify()
+
+        hidden_true = set()
+        hidden_false = set()
+        missing_hidden_field = set()
+
+        for param in get_yaml(yml_files[0])['configuration']:
+            # updates the three sets
+            {True: hidden_true,
+             False: hidden_false,
+             None: missing_hidden_field
+             }[param.get('hidden')].add(param['display'])
+
+        assert hidden_true.isdisjoint(hidden_false)
+        assert len(missing_hidden_field) == 5  # old params + `Should not be hidden - no hidden attribute`
+        assert len(hidden_true | hidden_false) == 5
+        assert ('Should be hidden on XSOAR only' in hidden_true) == (marketplace == MarketplaceVersions.XSOAR)
+        assert ('Should be hidden on XSIAM only' in hidden_true) == (marketplace == MarketplaceVersions.MarketplaceV2)
+        assert 'Should be hidden on both - attribute is True' in hidden_true
+        assert 'Should be hidden on both - attribute lists both marketplaces' in hidden_true
+        assert 'Should not be hidden - hidden attribute is False' in hidden_false
+        assert 'Should not be hidden - no hidden attribute' in missing_hidden_field
 
     def test_unify_integration__detailed_description_with_special_char(self):
         """

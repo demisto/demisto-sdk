@@ -1,13 +1,14 @@
 from distutils.version import LooseVersion
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import decorator
 from requests import Response
 
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER, CONF_PATH, FILETYPE_TO_DEFAULT_FROMVERSION,
-    INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME, FileType)
+    INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME, FileType,
+    MarketplaceVersions)
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
@@ -201,7 +202,7 @@ ERROR_CODE = {
     "parameter_missing_from_yml": {'code': "IN121", 'ui_applicable': True, 'related_field': 'configuration'},
     "parameter_missing_for_feed": {'code': "IN122", 'ui_applicable': True, 'related_field': 'configuration'},
     "invalid_version_integration_name": {'code': "IN123", 'ui_applicable': True, 'related_field': 'display'},
-    "found_hidden_param": {'code': "IN124", 'ui_applicable': False, 'related_field': '<parameter-name>.hidden'},
+    "param_not_allowed_to_hide": {'code': "IN124", 'ui_applicable': False, 'related_field': '<parameter-name>.hidden'},
     "no_default_value_in_parameter": {'code': "IN125", 'ui_applicable': False,
                                       'related_field': '<parameter-name>.default'},
     "parameter_missing_from_yml_not_community_contributor": {'code': "IN126", 'ui_applicable': False,
@@ -236,10 +237,13 @@ ERROR_CODE = {
     'empty_outputs_common_paths': {'code': 'IN149', 'ui_applicable': False, 'related_field': 'contextOutput'},
     'invalid_siem_integration_name': {'code': 'IN150', 'ui_applicable': True, 'related_field': 'display'},
     "empty_command_arguments": {'code': 'IN151', 'ui_applicable': False, 'related_field': 'arguments'},
-    'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True, 'related_field': 'defaultvalue'},
-    'not_supported_integration_parameter_url_defaultvalue': {'code': 'IN153', 'ui_applicable': False, 'related_field': 'defaultvalue'},
+    'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True,
+                                                'related_field': 'defaultvalue'},
+    'not_supported_integration_parameter_url_defaultvalue': {'code': 'IN153', 'ui_applicable': False,
+                                                             'related_field': 'defaultvalue'},
     'missing_reliability_parameter': {'code': 'IN154', 'ui_applicable': False, 'related_field': 'configuration'},
     'integration_is_deprecated_and_used': {'code': 'IN155', 'ui_applicable': True, 'related_field': 'deprecated'},
+    'invalid_hidden_attribute_for_param': {'code': 'IN156', 'ui_applicable': False, 'related_field': 'hidden'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -528,8 +532,10 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def file_type_not_supported():
-        return "The file type is not supported in the validate command.\n" \
+    def file_type_not_supported(file_type: Optional[FileType], file_path: Union[str, Path]):
+        joined_path = '/'.join(Path(file_path).parts[-3:])
+        file_type_str = f'File type {file_type}' if file_type else f'File {joined_path}'
+        return f"{file_type_str} is not supported in the validate command.\n" \
                "The validate command supports: Integrations, Scripts, Playbooks, " \
                "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields, Object types," \
                " Object modules, Images, Release notes, Layouts, Jobs, Wizards, Descriptions And Modeling Rules."
@@ -928,8 +934,24 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def found_hidden_param(parameter_name):
-        return f"Parameter: \"{parameter_name}\" can't be hidden. Please remove this field."
+    def param_not_allowed_to_hide(parameter_name: str):
+        """
+        Note: This error is used when the parameter has `hidden:true` or mentions all marketplaces (equivalent to true)
+        See invalid_hidden_attribute_for_param for invalid value types.
+
+        """
+        return f"Parameter: \"{parameter_name}\" can't be hidden in all marketplaces. " \
+               f"Please either remove the `hidden` attribute, " \
+               f"or replace its value with a list of marketplace names, where you wish it to be hidden."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_hidden_attribute_for_param(param_name: str, invalid_value: str):
+        marketplace_values = ', '.join(MarketplaceVersions)
+        return f'The `hidden` attribute value ({invalid_value}) for the {param_name} parameter ' \
+               f'must be either a boolean, or a list of marketplace values ' \
+               f'(Possible marketplace values: {marketplace_values}). ' \
+               f'Note that this param is not required, and may be omitted.'
 
     @staticmethod
     @error_code_decorator

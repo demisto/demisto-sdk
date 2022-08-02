@@ -105,7 +105,7 @@ class GitContentConfig:
             repo_name = parsed_git.repo
             if '@' in parsed_git.host:  # the library sometimes returns hostname as <username>@<hostname>
                 hostname = parsed_git.host.split('@')[1]  # to get proper hostname, without the username or tokens
-        if (self.repo_hostname, self.current_repository) not in GitContentConfig.ALLOWED_REPOS or \
+        if (self.repo_hostname, self.current_repository) not in GitContentConfig.ALLOWED_REPOS and \
            (self.repo_hostname, self.project_id) not in GitContentConfig.ALLOWED_REPOS:
             self._set_repo_config(hostname, organization, repo_name, project_id)  # type: ignore[arg-type]
 

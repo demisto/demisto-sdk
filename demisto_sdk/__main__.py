@@ -1,6 +1,5 @@
 # Site packages
 import copy
-from email.policy import default
 import logging
 import os
 import sys
@@ -2268,9 +2267,10 @@ def error_code(config, **kwargs):
     '-h', '--help'
 )
 @click.option('-nd', '--no-use-docker', is_flag=True, help="Use docker to run the content graph")
+@click.option('-ks', '--keep-service', is_flag=True, help="Keep the service running", default=False)
 def create_content_graph(no_use_docker, keep_service):
     from demisto_sdk.commands.content_graph.content_graph import create_content_graph
-    create_content_graph(use_docker=not no_use_docker)
+    create_content_graph(use_docker=not no_use_docker, keep_service=keep_service)
     
     
 @main.command(

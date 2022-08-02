@@ -1,11 +1,8 @@
 from abc import ABC, abstractmethod
-import csv
 import multiprocessing
 import shutil
 import requests
 from requests.adapters import HTTPAdapter, Retry
-
-import urllib3
 
 import neo4j
 import pickle
@@ -360,7 +357,7 @@ class Neo4jContentGraph(ContentGraph):
         password: str = None,
         use_docker: bool = True,
         keep_service: bool = False,
-        dump_file: Path = None,
+        load_graph: bool = False,
     ) -> None:
         super().__init__(repo_path)
         self.start_time = datetime.now()
@@ -369,8 +366,11 @@ class Neo4jContentGraph(ContentGraph):
         self.driver: neo4j.Neo4jDriver = neo4j.GraphDatabase.driver(database_uri, auth=auth)
         self.use_docker = use_docker
         self.keep_service = keep_service
-
+        self.load_graph = load_graph
+        
     def __enter__(self):
+        if self.load_graph:
+            self.load()
         self.start_neo4j_service()
         return self
 
@@ -540,6 +540,9 @@ class Neo4jContentGraph(ContentGraph):
         self.driver.close()
         if not self.keep_service:
             self.stop_neo4j_service()
+            
+        if self.dump_on_exit:
+            self.dump()
 
 
 def create_content_graph(use_docker: bool = True) -> None:
@@ -549,10 +552,8 @@ def create_content_graph(use_docker: bool = True) -> None:
 
 
 def load_content_graph(use_docker: bool = True, keep_service: bool = False, content_graph_path: Path = None) -> None:
-    content_graph = Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD, use_docker, keep_service)
     if content_graph_path and content_graph_path.is_file():
         shutil.copy(content_graph_path, REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump')
-    content_graph.load()
-    content_graph.start_neo4j_service()
-    if not keep_service:
-        content_graph.stop_neo4j_service()
+
+    with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD, use_docker, keep_service, load_graph=True):
+        logger.info('Content Graph was loaded')

@@ -2,7 +2,12 @@ from abc import abstractmethod
 from pathlib import Path
 from typing import Any, Dict, Optional, List, Union
 
-from demisto_sdk.commands.common.tools import get_yaml, get_yml_paths_in_dir, get_current_repo
+from demisto_sdk.commands.common.tools import (
+    get_current_repo,
+    get_files_in_dir,
+    get_json, get_yaml,
+    get_yml_paths_in_dir
+)
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, UNIFIED_FILES_SUFFIXES, MarketplaceVersions
 import demisto_sdk.commands.content_graph.parsers.base_content as base_content
 
@@ -125,3 +130,50 @@ class YAMLContentItemParser(ContentItemParser):
             raise NotAContentItem
 
         return get_yaml(yaml_path)
+
+
+class JSONContentItemParser(ContentItemParser):
+    def __init__(self, path: Path, pack_marketplaces: List[str]) -> None:
+        super().__init__(path)
+        self.pack_marketplaces: List[str] = pack_marketplaces
+        self.json_data: Dict[str, Any] = self.get_json()
+
+    @property
+    def content_item_id(self) -> str:
+        return self.json_data.get('id')
+
+    @property
+    def deprecated(self) -> bool:
+        return self.json_data.get('deprecated', False)
+    
+    @property
+    def marketplaces(self) -> List[str]:
+        if not (marketplaces := self.json_data.get('marketplaces', [])):
+            return self.pack_marketplaces
+        return marketplaces
+
+    def get_data(self) -> Dict[str, Any]:
+        json_content_item_data = {
+            'node_id': self.node_id,
+            'id': self.content_item_id,
+            'name': self.json_data.get('name'),
+            'deprecated': self.deprecated,
+            'fromversion': self.json_data.get('fromVersion'),
+            'toversion': self.json_data.get('toVersion', ''),
+            'source': list(get_current_repo()),
+            'in_xsoar': MarketplaceVersions.XSOAR.value in self.marketplaces,
+            'in_xsiam': MarketplaceVersions.MarketplaceV2.value in self.marketplaces,
+            'file_path': self.path.as_posix(),
+        }
+        if to_version := json_content_item_data['toversion']:
+            json_content_item_data['node_id'] += f'_{to_version}'
+
+        return json_content_item_data
+    
+    def get_json(self) -> Dict[str, Any]:
+        if self.path.is_dir():
+            json_files_in_dir = get_files_in_dir(self.path.as_posix(), ['json'], False)
+            if len(json_files_in_dir) != 1:
+                raise NotAContentItem(f'Directory {self.path} must have a single JSON file.')
+            self.path = Path(json_files_in_dir[0])
+        return get_json(self.path.as_posix())

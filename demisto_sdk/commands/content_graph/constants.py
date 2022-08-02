@@ -10,9 +10,9 @@ PACKS_FOLDER = 'Packs'
 PACK_METADATA_FILENAME = 'pack_metadata.json'
 UNIFIED_FILES_SUFFIXES = ['.yml', '.json']
 MARKETPLACE_PROPERTIES = {
-    MarketplaceVersions.XSOAR: 'in_xsoar',
-    MarketplaceVersions.MarketplaceV2: 'in_xsiam',
-    MarketplaceVersions.XPANSE: 'in_xspanse',
+    MarketplaceVersions.XSOAR.value: 'in_xsoar',
+    MarketplaceVersions.MarketplaceV2.value: 'in_xsiam',
+    MarketplaceVersions.XPANSE: 'in_xpanse',
 }
 
 class Rel(enum.Enum):

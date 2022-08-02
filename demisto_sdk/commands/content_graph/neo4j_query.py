@@ -9,12 +9,12 @@ IGNORED_PACKS_IN_DEPENDENCY_CALC = ['NonSupported', 'Base', 'ApiModules']
 
 class Neo4jQuery:
     @staticmethod
-    def create_nodes_indexes() -> List[str]:
+    def create_nodes_keys() -> List[str]:
         queries: List[str] = []
-        template = 'CREATE INDEX ON :{label}({props})'
-        constraints = ContentTypes.props_indexes()
+        template = 'CREATE CONSTRAINT IF NOT EXISTS FOR (n:{label}) REQUIRE ({props}) IS NODE KEY'
+        constraints = ContentTypes.node_key_constraints()
         for label, props in constraints.items():
-            props = ', '.join(props)
+            props = ', '.join([f'n.{p}' for p in props])
             queries.append(template.format(label=label, props=props))
         return queries
 
@@ -49,25 +49,28 @@ class Neo4jQuery:
         return queries
 
     @staticmethod
-    def create_nodes(content_type: ContentTypes) -> str:
-        return f"""
-            UNWIND $data AS data
-            CREATE (n:{Neo4jQuery.labels_of(content_type)}{Neo4jQuery.create_node_key_map()})
-            SET n += data
-        """
-
-    @staticmethod
     def create_node_map(data: Dict[str, str]) -> str:
         return f"{{{', '.join([f'{prop}: {val}' for prop, val in data.items()])}}}"
 
     @staticmethod
-    def create_node_key_map() -> str:
+    def create_single_node_map() -> str:
         data: Dict[str, str] = {
-            'id': 'data.source_id',
+            'id': 'data.id',
             'fromversion': 'data.fromversion',
         }
-        for marketplace, mp_propery in MARKETPLACE_PROPERTIES.keys():
-            data[mp_propery] = f'{marketplace} in data.marketplaces'
+        for marketplace, mp_propery in MARKETPLACE_PROPERTIES.items():
+            data[mp_propery] = f'"{marketplace}" IN data.marketplaces'
+
+        return Neo4jQuery.create_node_map(data)
+
+    @staticmethod
+    def create_source_node_map() -> str:
+        data: Dict[str, str] = {
+            'id': 'data.source_id',
+            'fromversion': 'data.source_fromversion',
+        }
+        for marketplace, mp_propery in MARKETPLACE_PROPERTIES.items():
+            data[mp_propery] = f'"{marketplace}" IN data.source_marketplaces'
 
         return Neo4jQuery.create_node_map(data)
 
@@ -79,6 +82,14 @@ class Neo4jQuery:
         return Neo4jQuery.create_node_map(data)
 
     @staticmethod
+    def create_nodes(content_type: ContentTypes) -> str:
+        return f"""
+            UNWIND $data AS data
+            CREATE (n:{Neo4jQuery.labels_of(content_type)}{Neo4jQuery.create_single_node_map()})
+            SET n += data
+        """
+
+    @staticmethod
     def get_command_marketplace_properties_to_set(
         is_create: bool = True,
         initialize_to_false: bool = False,
@@ -86,23 +97,23 @@ class Neo4jQuery:
         if is_create:
             if initialize_to_false:
                 return ', '.join([
-                f'cmd.{mp_property} = false' for mp_property in MARKETPLACE_PROPERTIES.keys()
+                f'cmd.{mp_property} = false' for mp_property in MARKETPLACE_PROPERTIES.values()
             ])
             return ', '.join([
                 f'cmd.{mp_property} = data.{mp_property}'
-                for mp_property in MARKETPLACE_PROPERTIES.keys()
+                for mp_property in MARKETPLACE_PROPERTIES.values()
             ])
 
         return ', '.join([
             f'cmd.{mp_property} = cmd.{mp_property} OR data.{mp_property}'
-            for mp_property in MARKETPLACE_PROPERTIES.keys()
+            for mp_property in MARKETPLACE_PROPERTIES.values()
         ])
 
     @staticmethod
     def create_has_command_relationships() -> str:
         return f"""
             UNWIND $data AS data
-            MATCH (integration:{ContentTypes.INTEGRATION}{Neo4jQuery.create_node_key_map()})
+            MATCH (integration:{ContentTypes.INTEGRATION}{Neo4jQuery.create_source_node_map()})
             MERGE (cmd:{Neo4jQuery.labels_of(ContentTypes.COMMAND)}{Neo4jQuery.create_target_node_map()})
             ON CREATE
                 SET {Neo4jQuery.get_command_marketplace_properties_to_set(is_create=True)}
@@ -116,7 +127,7 @@ class Neo4jQuery:
         if target_type == ContentTypes.COMMAND_OR_SCRIPT:
             return Neo4jQuery.create_uses_command_or_script_relationships()
 
-        source_node_map = Neo4jQuery.create_node_key_map()
+        source_node_map = Neo4jQuery.create_source_node_map()
         target_node_map = Neo4jQuery.create_target_node_map()
 
         query = f"""
@@ -143,7 +154,7 @@ class Neo4jQuery:
         """
         return f"""
             UNWIND $data AS data
-            MATCH (script:{ContentTypes.SCRIPT}{Neo4jQuery.create_node_key_map()})
+            MATCH (script:{ContentTypes.SCRIPT}{Neo4jQuery.create_source_node_map()})
             MERGE (cmd:{ContentTypes.COMMAND_OR_SCRIPT}{Neo4jQuery.create_target_node_map()})
             ON CREATE
                 SET cmd:{Neo4jQuery.labels_of(ContentTypes.COMMAND)},
@@ -166,7 +177,7 @@ class Neo4jQuery:
         # default query
         return f"""
             UNWIND $data AS data
-            MATCH (source:{source_type}{Neo4jQuery.create_node_key_map()})
+            MATCH (source:{source_type}{Neo4jQuery.create_source_node_map()})
             MERGE (target:{target_type}{Neo4jQuery.create_target_node_map()})
             MERGE (source)-[r:{rel_type}]->(target)
         """

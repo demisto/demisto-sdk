@@ -34,7 +34,6 @@ class BaseContentParser(ABC):
     def get_data(self) -> Dict[str, Any]:
         base_data: Dict[str, Any] = {
             'deprecated': self.deprecated,
+            'marketplaces': self.marketplaces,
         }
-        for marketplace_property, marketplace_version in MARKETPLACE_PROPERTIES.items():
-            base_data[marketplace_property] = marketplace_version in self.marketplaces
         return base_data

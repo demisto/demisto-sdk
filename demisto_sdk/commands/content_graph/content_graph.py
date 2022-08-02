@@ -71,7 +71,7 @@ class ContentGraph(ABC):
         pack_relationships: Dict[Tuple[ContentTypes, Rel, ContentTypes], List[Dict[str, Any]]],
     ) -> None:
         for content_type, parsed_data in pack_nodes.items():
-            self.relationships.setdefault(content_type, []).extend(parsed_data)
+            self.nodes.setdefault(content_type, []).extend(parsed_data)
 
         for rel_key, parsed_data in pack_relationships.items():
             self.relationships.setdefault(rel_key, []).extend(parsed_data)
@@ -214,9 +214,9 @@ class Neo4jContentGraph(ContentGraph):
         self.neo4j_admin_command('load', f'neo4j-admin load --from={output}')
 
     @staticmethod
-    def create_indexes(tx: neo4j.Transaction) -> None:
+    def create_nodes_keys(tx: neo4j.Transaction) -> None:
         queries: List[str] = []
-        queries.extend(Neo4jQuery.create_nodes_indexes())
+        queries.extend(Neo4jQuery.create_nodes_keys())
         for query in queries:
             print('Running query:' + query)
             tx.run(query)
@@ -244,7 +244,7 @@ class Neo4jContentGraph(ContentGraph):
 
         with self.driver.session() as session:
             tx = session.begin_transaction()
-            self.create_indexes(tx)
+            self.create_nodes_keys(tx)
             self.create_constraints(tx)
             tx.commit()
             tx.close()
@@ -287,7 +287,7 @@ class Neo4jContentGraph(ContentGraph):
 
     @staticmethod
     def create_depencies_for_all_marketplaces(tx: neo4j.Transaction) -> None:
-        for mp_property in MARKETPLACE_PROPERTIES.keys():
+        for mp_property in MARKETPLACE_PROPERTIES.values():
             query = Neo4jQuery.create_dependencies_for_marketplace(mp_property)
             tx.run(query)
         print('Created dependencies between packs in all marketplaces.')

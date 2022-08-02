@@ -1584,9 +1584,9 @@ def get_content_path() -> str:
         str: Absolute content path
     """
     # avoid circular import
-    from demisto_sdk.commands.common.content import Content
+    import demisto_sdk.commands.common.content as content
     try:
-        git_repo = Content.git()
+        git_repo = content.Content.git()
         if not git_repo:
             raise git.InvalidGitRepositoryError()
         remote_url = git_repo.remote().urls.__next__()

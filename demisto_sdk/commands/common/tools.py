@@ -1583,7 +1583,6 @@ def get_content_path() -> str:
     Returns:
         str: Absolute content path
     """
-    # avoid circular import
     try:
         if content_path := os.getenv('DEMISTO_SDK_CONTENT_PATH'):
             git_repo = git.Repo(content_path)

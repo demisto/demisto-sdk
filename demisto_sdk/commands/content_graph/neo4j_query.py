@@ -53,7 +53,7 @@ class Neo4jQuery:
         """
 
     @staticmethod
-    def create_has_command_relationships_from_csv() -> str:
+    def create_has_command_relationships() -> str:
         """
         Since commands nodes might be already created when creating the USES_COMMAND_OR_SCRIPT relationships
         but we haven't yet catagorized them as commands, we search them by their `id` property
@@ -78,7 +78,7 @@ class Neo4jQuery:
         """
 
     @staticmethod
-    def create_uses_relationships_from_csv() -> str:
+    def create_uses_relationships() -> str:
         """
         We search both source and target nodes by their `node_id` properties.
         Note: the FOR EACH statements are a workaround for Cypher not supporting IF statements.
@@ -104,7 +104,7 @@ class Neo4jQuery:
         return query
 
     @staticmethod
-    def create_uses_command_or_script_relationships_from_csv() -> str:
+    def create_uses_command_or_script_relationships() -> str:
         """
         When creating these relationships, since the target nodes types are not known (either Command or Script),
         we are using only the `id` property to search/create it. If created, this is a Command (because script nodes
@@ -125,7 +125,7 @@ class Neo4jQuery:
         """
 
     @staticmethod
-    def create_tested_by_relationships_from_csv() -> str:
+    def create_tested_by_relationships() -> str:
         return f"""
             UNWIND $data AS rel_data
             MATCH (a:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.from}})
@@ -139,13 +139,13 @@ class Neo4jQuery:
     @staticmethod
     def create_relationships(rel_type: Rel) -> str:
         if rel_type == Rel.USES:
-            return Neo4jQuery.create_uses_relationships_from_csv()
+            return Neo4jQuery.create_uses_relationships()
         if rel_type == Rel.USES_COMMAND_OR_SCRIPT:
-            return Neo4jQuery.create_uses_command_or_script_relationships_from_csv()
+            return Neo4jQuery.create_uses_command_or_script_relationships()
         if rel_type == Rel.HAS_COMMAND:
-            return Neo4jQuery.create_has_command_relationships_from_csv()
+            return Neo4jQuery.create_has_command_relationships()
         if rel_type == Rel.TESTED_BY:
-            return Neo4jQuery.create_tested_by_relationships_from_csv()
+            return Neo4jQuery.create_tested_by_relationships()
 
         # default
         return f"""
@@ -206,28 +206,6 @@ class Neo4jQuery:
             MERGE (p1)-[r:DEPENDS_ON_IN_XSIAM]->(p2)
             RETURN *
         """
-
-    @staticmethod
-    def export_nodes_by_type(content_type: ContentTypes) -> None:
-        filename = f'{content_type}.csv'
-        return (
-            f'MATCH (n:{content_type}) '
-            'WITH collect(n) AS nodes '
-            f'CALL apoc.export.csv.data(nodes, [], "{filename}", {{}}) '
-            'YIELD file, nodes, done '
-            'RETURN file, nodes, done'
-        )
-
-    @staticmethod
-    def export_relationships_by_type(rel_type: Rel) -> None:
-        filename = f'{rel_type}.csv'
-        return (
-            f'MATCH ()-[n:{rel_type}]->() '
-            'WITH collect(n) AS rels '
-            f'CALL apoc.export.csv.data([], rels, "{filename}", {{}}) '
-            'YIELD done '
-            'RETURN done'
-        )
 
     @staticmethod
     def labels_of(content_type: ContentTypes) -> str:

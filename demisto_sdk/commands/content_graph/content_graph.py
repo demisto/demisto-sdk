@@ -330,4 +330,3 @@ def load_content_graph(use_docker: bool = True, keep_service: bool = False, cont
 
     with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, PASSWORD, use_docker, keep_service, load_graph=True):
         logger.info('Content Graph was loaded')
-

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Type, Any
+from typing import List, Type, Any, Dict
 
 import demisto_sdk.commands.content_graph.parsers.content_item as content_item
 import demisto_sdk.commands.content_graph.parsers.incident_field as incident_field
@@ -12,15 +12,15 @@ import demisto_sdk.commands.content_graph.parsers.playbook as playbook
 import demisto_sdk.commands.content_graph.parsers.classifier_mapper as classifier_mapper
 from demisto_sdk.commands.content_graph.constants import ContentTypes
 
-CONTENT_TYPE_TO_PARSER: Type[content_item.ContentItemParser] = {
+CONTENT_TYPE_TO_PARSER: Dict[str, Type[content_item.ContentItemParser]] = {
     ContentTypes.INTEGRATION: integration.IntegrationParser,
     ContentTypes.SCRIPT: script.ScriptParser,
     ContentTypes.PLAYBOOK: playbook.PlaybookParser,
-    ContentTypes.CLASSIFIER: classifier_mapper.ClassifierMapperParser,
-    ContentTypes.INCIDENT_FIELD: incident_field.IncidentFieldParser,
-    ContentTypes.INCIDENT_TYPE: incident_type.IncidentTypeParser,
-    ContentTypes.INDICATOR_FIELD: indicator_field.IndicatorFieldParser,
-    ContentTypes.INDICATOR_TYPE: indicator_type.IndicatorTypeParser,
+    # ContentTypes.CLASSIFIER: classifier_mapper.ClassifierMapperParser,
+    # ContentTypes.INCIDENT_FIELD: incident_field.IncidentFieldParser,
+    # ContentTypes.INCIDENT_TYPE: incident_type.IncidentTypeParser,
+    # ContentTypes.INDICATOR_FIELD: indicator_field.IndicatorFieldParser,
+    # ContentTypes.INDICATOR_TYPE: indicator_type.IndicatorTypeParser,
 }
 
 

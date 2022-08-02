@@ -205,9 +205,10 @@ class Neo4jContentGraph(ContentGraph):
 
     def load(self):
         if self.use_docker:
-            # shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
+            shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
             output = '/backups/content-graph.dump'
         else:
+            # todo delete data folder in host (should get it somehow)
             output = (REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump').as_posix()
 
         self.neo4j_admin_command('load', f'neo4j-admin load --database=neo4j --from={output}')

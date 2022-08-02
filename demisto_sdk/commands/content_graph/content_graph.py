@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import multiprocessing
+import shlex
 import shutil
 import requests
 from requests.adapters import HTTPAdapter, Retry
@@ -160,8 +161,6 @@ class Neo4jContentGraph(ContentGraph):
             except Exception as e:
                 logger.info(f'Could not remove neo4j container: {e}')
             # then we need to create a new one
-            shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
-            shutil.rmtree(REPO_PATH / 'neo4j' / 'import', ignore_errors=True)
             run_command('docker-compose up -d', cwd=REPO_PATH / 'neo4j', is_silenced=False)
         # health check to make sure that neo4j is up
         s = requests.Session()
@@ -192,10 +191,8 @@ class Neo4jContentGraph(ContentGraph):
             docker_client.containers.run(image='neo4j/neo4j-admin:4.4.9',
                                          name=f'neo4j-{name}',
                                          remove=True,
-                                         volumes={f'{REPO_PATH}/neo4j/data': {'bind': '/data', 'mode': 'rw'},
-                                                  f'{REPO_PATH}/neo4j/backups': {'bind': '/backups', 'mode': 'rw'}},
-
-                                         command=f'{command}'
+                                         volumes=[f'{REPO_PATH}/neo4j/data:/data', f'{REPO_PATH}/neo4j/backups:/backups'],
+                                         command=shlex.split(command),
                                          )
 
     def dump(self):
@@ -208,12 +205,12 @@ class Neo4jContentGraph(ContentGraph):
 
     def load(self):
         if self.use_docker:
-            shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
+            # shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
             output = '/backups/content-graph.dump'
         else:
             output = (REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump').as_posix()
 
-        self.neo4j_admin_command('load', f'neo4j-admin load --from={output}')
+        self.neo4j_admin_command('load', f'neo4j-admin load --database=neo4j --from={output}')
 
     @staticmethod
     def create_indexes(tx: neo4j.Transaction) -> None:
@@ -312,7 +309,7 @@ class Neo4jContentGraph(ContentGraph):
                 session.write_transaction(self.export_relationships_by_type, rel)
 
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
-        self.driver.close()
+        # self.driver.close()
         if not self.keep_service:
             self.stop_neo4j_service()
 

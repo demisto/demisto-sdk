@@ -45,6 +45,13 @@ The library uses python 3.8+.
 
 ---
 
+### Content path
+
+The **demisto-sdk** is made to work with Cortex content, structured similar to the [official Cortex content repo](https://github.com/demisto/content).
+
+Demisto-SDK commands work best when called from the content directory or any of its subfolders.
+To run Demisto-SDK commands from other folders, you may set the `DEMISTO_SDK_CONTENT_PATH` environment variable.
+
 ### CLI usage
 
 You can use the SDK in the CLI as follows:

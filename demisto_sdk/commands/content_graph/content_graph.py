@@ -223,7 +223,7 @@ class Neo4jContentGraph(ContentGraph):
     def create_constraints(tx: neo4j.Transaction) -> None:
         queries: List[str] = []
         queries.extend(Neo4jQuery.create_nodes_props_uniqueness_constraints())
-        # queries.extend(Neo4jQuery.create_node_keys())  # todo
+        queries.extend(Neo4jQuery.create_node_keys())  # todo
         # queries.extend(Neo4jQuery.create_nodes_props_existence_constraints())
         # queries.extend(Neo4jQuery.create_relationships_props_existence_constraints())
         for query in queries:
@@ -306,6 +306,7 @@ def create_content_graph(use_docker: bool = True, keep_service: bool = False) ->
 
 
 def load_content_graph(use_docker: bool = True, keep_service: bool = False, content_graph_path: Path = None) -> None:
+    content_graph_path = Path(content_graph_path)
     if content_graph_path and content_graph_path.is_file():
         shutil.copy(content_graph_path, REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump')
 

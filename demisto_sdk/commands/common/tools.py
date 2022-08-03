@@ -2909,6 +2909,7 @@ def get_invalid_incident_fields_from_mapper(
         if mapping_type == "mapping-outgoing":
             # for inc timer type: "field.StartDate, and for using filters: "simple": "".
             if simple := inc_info.get('simple'):
+                simple = simple.lower()
                 if '.' in simple:
                     simple = simple.split('.')[0]
                 if simple not in content_fields:

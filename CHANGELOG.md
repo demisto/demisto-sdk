@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue in the **validate** command where incident fields were not found in mappers even when they exist
 * Added an ability to provide list of marketplace names as a param attribute to **validate** and **upload**
 * Added the file type to the error message when it is not supported.
 

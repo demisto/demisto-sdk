@@ -2911,7 +2911,7 @@ def get_invalid_incident_fields_from_mapper(
             if simple := inc_info.get('simple'):
                 if '.' in simple:
                     simple = simple.split('.')[0]
-                if simple not in content_fields:
+                if simple not in content_fields and simple.lower() not in content_fields:
                     non_existent_fields.append(inc_name)
 
     return non_existent_fields

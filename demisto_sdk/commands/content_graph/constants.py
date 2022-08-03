@@ -12,7 +12,7 @@ UNIFIED_FILES_SUFFIXES = ['.yml', '.json']
 MARKETPLACE_PROPERTIES = {
     MarketplaceVersions.XSOAR.value: 'in_xsoar',
     MarketplaceVersions.MarketplaceV2.value: 'in_xsiam',
-    MarketplaceVersions.XPANSE: 'in_xpanse',
+    MarketplaceVersions.XPANSE.value: 'in_xpanse',
 }
 
 class Rel(enum.Enum):
@@ -124,7 +124,9 @@ class ContentTypes(enum.Enum):
 
     @staticmethod
     def props_indexes() -> Dict['ContentTypes', List[str]]:
-        return {}
+        return {
+            ContentTypes.BASE_CONTENT: ['id'],
+        }
 
     @staticmethod
     def node_key_constraints() -> Dict['ContentTypes', List[str]]:
@@ -148,11 +150,14 @@ class ContentTypes(enum.Enum):
 
     @staticmethod
     def props_uniqueness_constraints() -> Dict['ContentTypes', List[str]]:
-        constraints: Dict['ContentTypes', List[str]] = {}
-        for content_type in ContentTypes.non_content_items:
-            constraints[content_type] = ['id']
+        # constraints: Dict['ContentTypes', List[str]] = {}
+        # for content_type in ContentTypes.non_content_items():
+        #     constraints[content_type] = ['id']
 
-        return constraints
+        # return constraints
+        return {
+            ContentTypes.COMMAND: ['id']  # todo: temporary. need to check if possible enterprise edition for node key.
+        }
 
     @staticmethod
     def props_existence_constraints() -> Dict['ContentTypes', List[str]]:

@@ -9,7 +9,17 @@ IGNORED_PACKS_IN_DEPENDENCY_CALC = ['NonSupported', 'Base', 'ApiModules']
 
 class Neo4jQuery:
     @staticmethod
-    def create_nodes_keys() -> List[str]:
+    def create_nodes_indexes() -> List[str]:
+        queries: List[str] = []
+        template = 'CREATE INDEX ON :{label}({props})'
+        constraints = ContentTypes.props_indexes()
+        for label, props in constraints.items():
+            props = ', '.join(props)
+            queries.append(template.format(label=label, props=props))
+        return queries
+
+    @staticmethod
+    def create_node_keys() -> List[str]:
         queries: List[str] = []
         template = 'CREATE CONSTRAINT IF NOT EXISTS FOR (n:{label}) REQUIRE ({props}) IS NODE KEY'
         constraints = ContentTypes.node_key_constraints()
@@ -100,13 +110,13 @@ class Neo4jQuery:
                 f'cmd.{mp_property} = false' for mp_property in MARKETPLACE_PROPERTIES.values()
             ])
             return ', '.join([
-                f'cmd.{mp_property} = data.{mp_property}'
-                for mp_property in MARKETPLACE_PROPERTIES.values()
+                f'cmd.{mp_property} = "{marketplace}" IN data.source_marketplaces'
+                for marketplace, mp_property in MARKETPLACE_PROPERTIES.items()
             ])
 
         return ', '.join([
-            f'cmd.{mp_property} = cmd.{mp_property} OR data.{mp_property}'
-            for mp_property in MARKETPLACE_PROPERTIES.values()
+            f'cmd.{mp_property} = cmd.{mp_property} OR "{marketplace}" IN data.source_marketplaces'
+            for marketplace, mp_property in MARKETPLACE_PROPERTIES.items()
         ])
 
     @staticmethod
@@ -204,8 +214,8 @@ class Neo4jQuery:
                     {mp_property}: true,
                     id: dependency.id
                 }})
-                WHERE NOT pack.id IN {IGNORED_PACKS_IN_DEPENDENCY_CALC},
-                WITH count(alternative_dependency) = 0 AS dependency_not_in_mp
+                WHERE NOT pack.id IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
+                WITH content_item, count(alternative_dependency) = 0 AS dependency_not_in_mp
                 WHERE dependency_not_in_mp
                 SET content_item.{mp_property} = false
             """)
@@ -214,16 +224,15 @@ class Neo4jQuery:
     @staticmethod
     def create_dependencies_for_marketplace(mp_property: str) -> str:
         return f"""
-            MATCH (pack_a)<-[:{Rel.IN_PACK}]-(a)-[r:{Rel.USES}]->(b)-[:{Rel.IN_PACK}]->(pack_b),
+            MATCH (pack_a)<-[:{Rel.IN_PACK}]-(a)-[r:{Rel.USES}]->(b)-[:{Rel.IN_PACK}]->(pack_b)
             WHERE a.{mp_property} AND b.{mp_property}
             AND pack_a.id <> pack_b.id
             AND NOT pack_a.id IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
             AND NOT pack_b.id IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
-            WITH pack_a, pack_b
-            MERGE (pack_a)-[r:DEPENDS_ON{{
-                mandatorily: r.mandatorily,
-                {mp_property}: true
-            }}]->(pack_b)
+            WITH r, pack_a, pack_b
+            MERGE (pack_a)-[dep:DEPENDS_ON]->(pack_b)
+            SET dep.{mp_property} = true, 
+                dep.mandatory_{mp_property} = r.mandatorily
             RETURN *
         """
 

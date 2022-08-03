@@ -212,9 +212,9 @@ class Neo4jContentGraph(ContentGraph):
         self.neo4j_admin_command('load', f'neo4j-admin load --database=neo4j --from={output}')
 
     @staticmethod
-    def create_nodes_keys(tx: neo4j.Transaction) -> None:
+    def create_indexes(tx: neo4j.Transaction) -> None:
         queries: List[str] = []
-        queries.extend(Neo4jQuery.create_nodes_keys())
+        queries.extend(Neo4jQuery.create_nodes_indexes())
         for query in queries:
             print('Running query:' + query)
             tx.run(query)
@@ -223,6 +223,7 @@ class Neo4jContentGraph(ContentGraph):
     def create_constraints(tx: neo4j.Transaction) -> None:
         queries: List[str] = []
         queries.extend(Neo4jQuery.create_nodes_props_uniqueness_constraints())
+        # queries.extend(Neo4jQuery.create_node_keys())  # todo
         # queries.extend(Neo4jQuery.create_nodes_props_existence_constraints())
         # queries.extend(Neo4jQuery.create_relationships_props_existence_constraints())
         for query in queries:
@@ -242,7 +243,7 @@ class Neo4jContentGraph(ContentGraph):
 
         with self.driver.session() as session:
             tx = session.begin_transaction()
-            self.create_nodes_keys(tx)
+            self.create_indexes(tx)
             self.create_constraints(tx)
             tx.commit()
             tx.close()

@@ -39,8 +39,7 @@ class IntegrationParser(IntegrationScriptParser):
             deprecated: bool = command_data.get('deprecated', False) or self.deprecated
             self.add_relationship(
                 Rel.HAS_COMMAND,
-                target_id=cmd_name,
-                target_type=ContentTypes.COMMAND,
+                target=cmd_name,
                 deprecated=deprecated,
             )
 

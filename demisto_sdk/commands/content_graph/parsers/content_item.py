@@ -24,7 +24,11 @@ class ContentItemParser(base_content.BaseContentParser):
     """
     def __init__(self, path: Path) -> None:
         self.path: Path = path
-        self.relationships: Dict[Tuple[ContentTypes, Rel, ContentTypes], List[Dict[str, Any]]] = {}
+        self.relationships: Dict[Rel, List[Dict[str, Any]]] = {}
+
+    @property
+    def node_id(self) -> str:
+        return f'{self.content_type}:{self.content_item_id}'
 
     @property
     @abstractmethod
@@ -54,6 +58,7 @@ class ContentItemParser(base_content.BaseContentParser):
     def get_data(self) -> Dict[str, Any]:
         base_content_data: Dict[str, Any] = super().get_data()
         content_item_data: Dict[str, Any] = {
+            'node_id': self.node_id,
             'id': self.content_item_id,
             'name': self.name,
             'deprecated': self.deprecated,
@@ -80,31 +85,29 @@ class ContentItemParser(base_content.BaseContentParser):
     def add_relationship(
         self,
         relationship: Rel,
-        target_id: str,
-        target_type: ContentTypes = None,
+        target: str,
         **kwargs: Dict[str, Any],
     ) -> None:
-        relationship_key: Tuple[ContentTypes, Rel, ContentTypes] = (self.content_type, relationship, target_type)
-        relationship: Dict[str, Any] = {
-            'source_id': self.content_item_id,
+        relationship_data: Dict[str, Any] = {
+            'source_node_id': self.node_id,
             'source_fromversion': self.fromversion,
             'source_marketplaces': self.marketplaces,
-            'target_id': target_id,
+            'target': target,
         }
-        relationship.update(kwargs)
-        self.relationships.setdefault(relationship_key, []).append(relationship)
+        relationship_data.update(kwargs)
+        self.relationships.setdefault(relationship, []).append(relationship_data)
 
     def add_dependency(self, dependency_id: str, dependency_type: Optional[ContentTypes] = None, is_mandatory: bool = True) -> None:
-        if dependency_type is None:
-            if self.content_type == ContentTypes.SCRIPT:
-                dependency_type = ContentTypes.COMMAND_OR_SCRIPT
-            else:
-                dependency_type = ContentTypes.BASE_CONTENT
+        if dependency_type is None:  # and self.content_type == ContentTypes.SCRIPT:
+            relationship = Rel.USES_COMMAND_OR_SCRIPT
+            target = dependency_id
+        else:
+            relationship = Rel.USES
+            target = f'{dependency_type}:{dependency_id}'
 
         self.add_relationship(
-            Rel.USES,
-            target_id=dependency_id,
-            target_type=dependency_type,
+            relationship,
+            target=target,
             mandatorily=is_mandatory,
         )
 
@@ -112,8 +115,8 @@ class ContentItemParser(base_content.BaseContentParser):
 class YAMLContentItemParser(ContentItemParser):
     def __init__(self, path: Path, pack_marketplaces: List[str]) -> None:
         super().__init__(path)
-        self.pack_marketplaces: List[str] = pack_marketplaces
         self.yml_data = self.get_yaml()
+        self.pack_marketplaces: List[str] = pack_marketplaces
 
     @property
     def name(self) -> str:
@@ -129,7 +132,7 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def toversion(self) -> str:
-        return self.yml_data.get('toversion')
+        return self.yml_data.get('toversion', '')
 
     @property
     def marketplaces(self) -> List[str]:
@@ -141,10 +144,10 @@ class YAMLContentItemParser(ContentItemParser):
         tests_playbooks: List[str] =  self.yml_data.get('tests', [])
         for test_playbook_id in tests_playbooks:
             if 'no test' not in test_playbook_id.lower():
+                tpb_node_id = f'{ContentTypes.TEST_PLAYBOOK}:{test_playbook_id}'
                 self.add_relationship(
                     Rel.TESTED_BY,
-                    target_id=test_playbook_id,
-                    target_type=ContentTypes.TEST_PLAYBOOK,
+                    target=tpb_node_id,
                 )
 
     def get_yaml(self) -> Dict[str, Union[str, List[str]]]:
@@ -161,8 +164,8 @@ class YAMLContentItemParser(ContentItemParser):
 class JSONContentItemParser(ContentItemParser):
     def __init__(self, path: Path, pack_marketplaces: List[str]) -> None:
         super().__init__(path)
-        self.pack_marketplaces: List[str] = pack_marketplaces
         self.json_data: Dict[str, Any] = self.get_json()
+        self.pack_marketplaces: List[str] = pack_marketplaces
 
     @property
     def content_item_id(self) -> str:

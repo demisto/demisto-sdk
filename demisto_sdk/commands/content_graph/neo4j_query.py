@@ -1,8 +1,7 @@
 
-from typing import Any, Dict, List
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from typing import List
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, MARKETPLACE_PROPERTIES
+from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
 
 
 IGNORED_PACKS_IN_DEPENDENCY_CALC = ['NonSupported', 'Base', 'ApiModules']
@@ -11,10 +10,10 @@ class Neo4jQuery:
     @staticmethod
     def create_nodes_indexes() -> List[str]:
         queries: List[str] = []
-        template = 'CREATE INDEX ON :{label}({props})'
+        template = 'CREATE INDEX IF NOT EXISTS FOR (n:{label}) ON ({props})'
         constraints = ContentTypes.props_indexes()
         for label, props in constraints.items():
-            props = ', '.join(props)
+            props = ', '.join([f'n.{p}' for p in props])
             queries.append(template.format(label=label, props=props))
         return queries
 
@@ -59,180 +58,142 @@ class Neo4jQuery:
         return queries
 
     @staticmethod
-    def create_node_map(data: Dict[str, str]) -> str:
-        return f"{{{', '.join([f'{prop}: {val}' for prop, val in data.items()])}}}"
-
-    @staticmethod
-    def create_single_node_map() -> str:
-        data: Dict[str, str] = {
-            'id': 'data.id',
-            'fromversion': 'data.fromversion',
-        }
-        for marketplace, mp_propery in MARKETPLACE_PROPERTIES.items():
-            data[mp_propery] = f'"{marketplace}" IN data.marketplaces'
-
-        return Neo4jQuery.create_node_map(data)
-
-    @staticmethod
-    def create_source_node_map() -> str:
-        data: Dict[str, str] = {
-            'id': 'data.source_id',
-            'fromversion': 'data.source_fromversion',
-        }
-        for marketplace, mp_propery in MARKETPLACE_PROPERTIES.items():
-            data[mp_propery] = f'"{marketplace}" IN data.source_marketplaces'
-
-        return Neo4jQuery.create_node_map(data)
-
-    @staticmethod
-    def create_target_node_map() -> str:
-        data: Dict[str, str] = {
-            'id': 'data.target_id',
-        }
-        return Neo4jQuery.create_node_map(data)
-
-    @staticmethod
     def create_nodes(content_type: ContentTypes) -> str:
         return f"""
-            UNWIND $data AS data
-            CREATE (n:{Neo4jQuery.labels_of(content_type)}{Neo4jQuery.create_single_node_map()})
-            SET n += data
+            UNWIND $data AS node_data
+            CREATE (n:{Neo4jQuery.labels_of(content_type)}{{id: node_data.id}})
+            SET n += node_data
         """
-
-    @staticmethod
-    def get_command_marketplace_properties_to_set(
-        is_create: bool = True,
-        initialize_to_false: bool = False,
-    ) -> str:
-        if is_create:
-            if initialize_to_false:
-                return ', '.join([
-                f'cmd.{mp_property} = false' for mp_property in MARKETPLACE_PROPERTIES.values()
-            ])
-            return ', '.join([
-                f'cmd.{mp_property} = "{marketplace}" IN data.source_marketplaces'
-                for marketplace, mp_property in MARKETPLACE_PROPERTIES.items()
-            ])
-
-        return ', '.join([
-            f'cmd.{mp_property} = cmd.{mp_property} OR "{marketplace}" IN data.source_marketplaces'
-            for marketplace, mp_property in MARKETPLACE_PROPERTIES.items()
-        ])
 
     @staticmethod
     def create_has_command_relationships() -> str:
+        # this must be the first rel query to execute!
         return f"""
-            UNWIND $data AS data
-            MATCH (integration:{ContentTypes.INTEGRATION}{Neo4jQuery.create_source_node_map()})
-            MERGE (cmd:{Neo4jQuery.labels_of(ContentTypes.COMMAND)}{Neo4jQuery.create_target_node_map()})
+            UNWIND $data AS rel_data
+            MATCH (integration:{ContentTypes.INTEGRATION}{{
+                node_id: rel_data.source_node_id,
+                fromversion: rel_data.source_fromversion,
+                marketplaces: rel_data.source_marketplaces
+            }})
+            MERGE (cmd:{Neo4jQuery.labels_of(ContentTypes.COMMAND)}{{
+                node_id: "{ContentTypes.COMMAND}:" + rel_data.target,
+                id: rel_data.target
+            }})
             ON CREATE
-                SET {Neo4jQuery.get_command_marketplace_properties_to_set(is_create=True)}
+                SET cmd.marketplaces = rel_data.source_marketplaces
             ON MATCH
-                SET {Neo4jQuery.get_command_marketplace_properties_to_set(is_create=False)}
-            MERGE (integration)-[r:{Rel.HAS_COMMAND}{{deprecated: data.deprecated}}]->(cmd)
+                SET cmd.marketplaces = REDUCE(
+                    marketplaces = cmd.marketplaces, mp IN rel_data.source_marketplaces |
+                    CASE WHEN NOT mp IN cmd.marketplaces THEN marketplaces + mp ELSE marketplaces END
+                )
+            MERGE (integration)-[r:{Rel.HAS_COMMAND}{{deprecated: rel_data.deprecated}}]->(cmd)
         """
 
     @staticmethod
-    def create_uses_relationships(source_type: ContentTypes, target_type: ContentTypes) -> str:
-        if target_type == ContentTypes.COMMAND_OR_SCRIPT:
-            return Neo4jQuery.create_uses_command_or_script_relationships()
+    def create_uses_relationships(target_type: ContentTypes) -> str:
+        """
+        Args:
+            target_type (ContentTypes): If node_id is known, target type is BaseContent.
+                Otherwise, a more specific ContentType, E.g., CommandOrScript.
 
-        source_node_map = Neo4jQuery.create_source_node_map()
-        target_node_map = Neo4jQuery.create_target_node_map()
+        This query searches for a content item by its type, ID and marketplaces,
+        as well as the dependency by its ID, type and whether it exists in one of the content item's marketplaces.
+        If both found, we create a USES relationship between them.
+        """
+        if target_type == ContentTypes.BASE_CONTENT:
+            target_property = 'node_id'
+        else:
+            target_property = 'id'
 
         query = f"""
-            UNWIND $data AS data
-            MATCH (content_item:{source_type}{source_node_map})
-            MATCH (dependency:{Neo4jQuery.labels_of(target_type)}{target_node_map})
+            UNWIND $data AS rel_data
+            MATCH (content_item:{ContentTypes.BASE_CONTENT}{{
+                node_id: rel_data.source_node_id,
+                fromversion: rel_data.source_fromversion,
+                marketplaces: rel_data.source_marketplaces
+            }})
+            MERGE (dependency:{target_type}{{
+                {target_property}: rel_data.target
+            }})
+            WITH rel_data, content_item, dependency,
+                ANY(
+                    marketplace IN dependency.marketplaces
+                    WHERE marketplace IN rel_data.source_marketplaces
+                ) AS dependency_exists_in_source_marketplace
+            WHERE dependency_exists_in_source_marketplace
             MERGE (content_item)-[r:{Rel.USES}]->(dependency)
             ON CREATE
-                SET r.mandatorily = data.mandatorily
+                SET r.mandatorily = rel_data.mandatorily
             ON MATCH
-                SET r.mandatorily = r.mandatorily OR data.mandatorily
+                SET r.mandatorily = r.mandatorily OR rel_data.mandatorily
         """
         return query
 
     @staticmethod
-    def create_uses_command_or_script_relationships() -> str:
-        """
-        This query creates a relationship between a script and a command/scripts that is executed by the script.
-        Before running this query, it is not known whether the target node is a script or a command.
-        However, if the node was created during the merge, it is necessarily a command, since all scripts 
-        were previously created.
-        In this case, we initialize the command's marketplaces properties to 'false' and they will be updated
-        during the creation of HAS_COMMAND relationships (according to the implementing integrations' properties).
-        """
-        return f"""
-            UNWIND $data AS data
-            MATCH (script:{ContentTypes.SCRIPT}{Neo4jQuery.create_source_node_map()})
-            MERGE (cmd:{ContentTypes.COMMAND_OR_SCRIPT}{Neo4jQuery.create_target_node_map()})
-            ON CREATE
-                SET cmd:{Neo4jQuery.labels_of(ContentTypes.COMMAND)},
-                    {Neo4jQuery.get_command_marketplace_properties_to_set(initialize_to_false=True)}
-
-            MERGE (script)-[r:{Rel.USES}]->(cmd)
-            ON CREATE
-                SET r.mandatorily = data.mandatorily
-            ON MATCH
-                SET r.mandatorily = r.mandatorily OR data.mandatorily
-        """
-
-    @staticmethod
-    def create_relationships(source_type: ContentTypes, rel_type: Rel, target_type: ContentTypes) -> str:
-        if rel_type == Rel.USES:
-            return Neo4jQuery.create_uses_relationships(source_type, target_type)
-        if rel_type == Rel.HAS_COMMAND:
+    def create_relationships(relationship: Rel) -> str:
+        if relationship == Rel.HAS_COMMAND:
             return Neo4jQuery.create_has_command_relationships()
+        if relationship == Rel.USES:
+            return Neo4jQuery.create_uses_relationships(target_type=ContentTypes.BASE_CONTENT)
+        if relationship == Rel.USES_COMMAND_OR_SCRIPT:
+            return Neo4jQuery.create_uses_relationships(target_type=ContentTypes.COMMAND_OR_SCRIPT)
 
         # default query
         return f"""
-            UNWIND $data AS data
-            MATCH (source:{source_type}{Neo4jQuery.create_source_node_map()})
-            MERGE (target:{target_type}{Neo4jQuery.create_target_node_map()})
-            MERGE (source)-[r:{rel_type}]->(target)
+            UNWIND $data AS rel_data
+            MATCH (source:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.source_node_id}})
+            MERGE (target:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.target}})
+            MERGE (source)-[r:{relationship}]->(target)
         """
 
     @staticmethod
-    def update_marketplace_property(mp_property: str) -> List[str]:
+    def update_marketplace_property(marketplace: str) -> str:
         """
-        In this query, we find all content items that are currently considered in a specific marketplace,
+        In this query, we find all content items that are currently considered in a given marketplace,
         but uses a dependency that is not in this marketplace.
-        To make sure the dependency is not in this marketplace, we make sure there is no other node with
-        the same content type and id as the dependency.
-        We ignore dependencies that are part of a pack in IGNORED_PACKS_IN_DEPENDENCY_CALC list.
+        To make sure the dependency is not in this marketplace, we make sure there is no alternative with
+        the same content type and id as the dependency which is in the marketplace.
 
-        If such dependencies were found, we set the content item's marketplace property to "false".
+        If such dependencies were found, we drop the content item from the marketplace.
         """
-        queries: List[str] = []
-        for dependency_content_type in ContentTypes.content_items():
-            queries.append(f"""
-                MATCH (content_item:{ContentTypes.BASE_CONTENT}{{{mp_property}: true}})
-                    -[:{Rel.USES}*{{mandatorily: true}}]->
-                        (dependency:{dependency_content_type}{{{mp_property}: false}})
-                            -[:{Rel.IN_PACK}]->(pack),
-                (alternative_dependency:{dependency_content_type}{{
-                    {mp_property}: true,
-                    id: dependency.id
-                }})
-                WHERE NOT pack.id IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
-                WITH content_item, count(alternative_dependency) = 0 AS dependency_not_in_mp
-                WHERE dependency_not_in_mp
-                SET content_item.{mp_property} = false
-            """)
-        return queries
+        # todo: USES{mandatorily?}
+        # ignore IGNORED_PACKS_IN_DEPENDENCY_CALC?
+        return f"""
+            MATCH (content_item:{ContentTypes.BASE_CONTENT})
+                -[:{Rel.USES}*{{mandatorily: true}}]->
+                    (dependency:{ContentTypes.BASE_CONTENT}),
+            (alternative_dependency:{ContentTypes.BASE_CONTENT}{{
+                node_id: dependency.node_id
+            }})
+            WHERE "{marketplace}" IN content_item.marketplaces
+            AND NOT "{marketplace}" IN dependency.marketplaces
+            AND "{marketplace}" IN alternative_dependency.marketplaces
+            WITH content_item,
+                count(alternative_dependency) = 0 AS no_alternative_dependency
+            WHERE no_alternative_dependency
+            SET content_item.marketplaces = REDUCE(
+                marketplaces = [], mp IN content_item.marketplaces |
+                CASE WHEN mp <> "{marketplace}" THEN marketplaces + mp ELSE marketplaces END
+            )
+            RETURN count(content_item) AS updated_marketplaces_count
+        """
 
     @staticmethod
-    def create_dependencies_for_marketplace(mp_property: str) -> str:
+    def create_dependencies_for_marketplace() -> str:
         return f"""
             MATCH (pack_a)<-[:{Rel.IN_PACK}]-(a)-[r:{Rel.USES}]->(b)-[:{Rel.IN_PACK}]->(pack_b)
-            WHERE a.{mp_property} AND b.{mp_property}
+            WHERE ANY(marketplace IN pack_a.marketplaces WHERE marketplace IN pack_b.marketplaces)
             AND pack_a.id <> pack_b.id
             AND NOT pack_a.id IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
             AND NOT pack_b.id IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
             WITH r, pack_a, pack_b
             MERGE (pack_a)-[dep:DEPENDS_ON]->(pack_b)
-            SET dep.{mp_property} = true, 
-                dep.mandatory_{mp_property} = r.mandatorily
+            WITH dep, r, REDUCE(
+                marketplaces = [], mp IN pack_a.marketplaces |
+                CASE WHEN mp IN pack_b.marketplaces THEN marketplaces + mp ELSE marketplaces END
+            ) AS common_marketplaces
+            SET dep.marketplaces = common_marketplaces,
+                dep.mandatorily = r.mandatorily
             RETURN *
         """
 

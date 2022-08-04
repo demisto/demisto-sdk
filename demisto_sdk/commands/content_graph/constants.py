@@ -3,17 +3,11 @@ import enum
 from pathlib import Path
 from typing import Iterator, Dict, List
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
-
 
 PACKS_FOLDER = 'Packs'
 PACK_METADATA_FILENAME = 'pack_metadata.json'
 UNIFIED_FILES_SUFFIXES = ['.yml', '.json']
-MARKETPLACE_PROPERTIES = {
-    MarketplaceVersions.XSOAR.value: 'in_xsoar',
-    MarketplaceVersions.MarketplaceV2.value: 'in_xsiam',
-    MarketplaceVersions.XPANSE.value: 'in_xpanse',
-}
+
 
 class Rel(enum.Enum):
     USES = 'USES'
@@ -25,7 +19,7 @@ class Rel(enum.Enum):
 
     def __str__(self):
         return self.value
-    
+
     @staticmethod
     def props_existence_constraints() -> Dict['Rel', List[str]]:
         constraints = {
@@ -33,7 +27,6 @@ class Rel(enum.Enum):
         }
         assert all(len(props) == 1 for props in constraints.values())  # constraints query limitation
         return constraints
-
 
 
 class ContentTypes(enum.Enum):
@@ -125,7 +118,7 @@ class ContentTypes(enum.Enum):
     @staticmethod
     def props_indexes() -> Dict['ContentTypes', List[str]]:
         return {
-            ContentTypes.BASE_CONTENT: ['id'],
+            ContentTypes.BASE_CONTENT: ['id', 'node_id'],
         }
 
     @staticmethod
@@ -133,15 +126,15 @@ class ContentTypes(enum.Enum):
         """
         Every content item node must have a unique combination of the following properties:
         * ID
-        * from version
+        * fromversion
             We can have multiple content items with the same type and IDs in the repository
             if they are not in the same range of marketplace versions)
-        * in_<marketplace>, for every marketplace.
-            We can have multiple content items with the same type, ID and version range in
+        * marketplaces
+            We can have different content items with the same type, ID and version range in
             the repository as long as they are not in the same marketplace.
         """
         constraints: Dict['ContentTypes', List[str]] = {}
-        content_items_node_key_list: List[str] = ['id', 'fromversion'] + list(MARKETPLACE_PROPERTIES.values())
+        content_items_node_key_list: List[str] = ['id', 'fromversion', 'marketplaces']
 
         for content_type in ContentTypes.content_items():
             constraints[content_type] = content_items_node_key_list
@@ -150,13 +143,8 @@ class ContentTypes(enum.Enum):
 
     @staticmethod
     def props_uniqueness_constraints() -> Dict['ContentTypes', List[str]]:
-        # constraints: Dict['ContentTypes', List[str]] = {}
-        # for content_type in ContentTypes.non_content_items():
-        #     constraints[content_type] = ['id']
-
-        # return constraints
         return {
-            ContentTypes.COMMAND: ['id']  # todo: temporary. need to check if possible enterprise edition for node key.
+            ContentTypes.COMMAND: ['id']
         }
 
     @staticmethod

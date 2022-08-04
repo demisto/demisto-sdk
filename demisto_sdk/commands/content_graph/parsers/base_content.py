@@ -1,13 +1,14 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes, MARKETPLACE_PROPERTIES
+from demisto_sdk.commands.content_graph.constants import ContentTypes
 
 
 class BaseContentParser(ABC):
     """ An abstract class for all content types.
 
     Attributes:
+        node_id      (str):          The content object node ID.
         content_type (ContentTypes): The content type.
         deprecated   (bool):         Whether the content is deprecated or not.
         marketplaces (List[str]):    The marketplaces in which the content should be.
@@ -15,6 +16,10 @@ class BaseContentParser(ABC):
     Methods:
         get_data (Dict[str, Any]): Returns the data of the parsed content.
     """
+
+    @property
+    def node_id(self) -> str:
+        pass
 
     @property
     @abstractmethod

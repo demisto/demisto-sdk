@@ -12,7 +12,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, List, Optional, Tuple, Iterator, Dict
 
-from demisto_sdk.commands.content_graph.constants import PACKS_FOLDER, ContentTypes, Rel, MARKETPLACE_PROPERTIES
+from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.content_graph.constants import PACKS_FOLDER, ContentTypes, Rel
 from demisto_sdk.commands.content_graph.neo4j_query import Neo4jQuery
 from demisto_sdk.commands.content_graph.parsers.pack import PackSubGraphCreator
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -53,29 +54,28 @@ class ContentGraph(ABC):
     def __init__(self, repo_path: Path) -> None:
         self.packs_path: Path = repo_path / PACKS_FOLDER
         self.nodes: Dict[ContentTypes, List[Dict[str, Any]]] = load_pickle(NODES_PKL_PATH.as_posix())
-        self.relationships: Dict[Tuple[ContentTypes, Rel, ContentTypes], List[Dict[str, Any]]] = \
-            load_pickle(RELS_PKL_PATH.as_posix())
+        self.relationships: Dict[Rel, List[Dict[str, Any]]] = load_pickle(RELS_PKL_PATH.as_posix())
 
     def parse_packs(self, packs_paths: Iterator[Path]) -> None:
         """ Parses packs into nodes and relationships by given paths. """
         if self.nodes and self.relationships:
             print('Skipping parsing.')
             return
-        pool = multiprocessing.Pool(processes=4)
-        # pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
+        # pool = multiprocessing.Pool(processes=4)
+        pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
         for pack_nodes, pack_relationships in pool.map(PackSubGraphCreator.from_path, packs_paths):
             self.extend_graph_nodes_and_relationships(pack_nodes, pack_relationships)
 
     def extend_graph_nodes_and_relationships(
         self,
         pack_nodes: Dict[ContentTypes, List[Dict[str, Any]]],
-        pack_relationships: Dict[Tuple[ContentTypes, Rel, ContentTypes], List[Dict[str, Any]]],
+        pack_relationships: Dict[Rel, List[Dict[str, Any]]],
     ) -> None:
         for content_type, parsed_data in pack_nodes.items():
             self.nodes.setdefault(content_type, []).extend(parsed_data)
 
-        for rel_key, parsed_data in pack_relationships.items():
-            self.relationships.setdefault(rel_key, []).extend(parsed_data)
+        for relationship, parsed_data in pack_relationships.items():
+            self.relationships.setdefault(relationship, []).extend(parsed_data)
 
     def parse_repository(self) -> None:
         """ Parses all repository packs into nodes and relationships. """
@@ -210,25 +210,33 @@ class Neo4jContentGraph(ContentGraph):
             output = (REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump').as_posix()
 
         self.neo4j_admin_command('load', f'neo4j-admin load --database=neo4j --from={output}')
+    
+    @staticmethod
+    def run_query(tx: neo4j.Transaction, query: str, parameters: Optional[Dict[str, Any]] = None) -> neo4j.Result:
+        try:
+            print('Running query:' + query)
+            return tx.run(query, parameters)
+        except Exception as e:
+            print(str(e))
+            raise e
+
 
     @staticmethod
     def create_indexes(tx: neo4j.Transaction) -> None:
         queries: List[str] = []
         queries.extend(Neo4jQuery.create_nodes_indexes())
         for query in queries:
-            print('Running query:' + query)
-            tx.run(query)
+            Neo4jContentGraph.run_query(tx, query)
 
     @staticmethod
     def create_constraints(tx: neo4j.Transaction) -> None:
         queries: List[str] = []
         queries.extend(Neo4jQuery.create_nodes_props_uniqueness_constraints())
-        queries.extend(Neo4jQuery.create_node_keys())  # todo
+        # queries.extend(Neo4jQuery.create_node_keys())  # todo
         # queries.extend(Neo4jQuery.create_nodes_props_existence_constraints())
         # queries.extend(Neo4jQuery.create_relationships_props_existence_constraints())
         for query in queries:
-            print('Running query: ' + query)
-            tx.run(query)
+            Neo4jContentGraph.run_query(tx, query)
 
     def delete_modified_packs_from_graph(self, packs: List[str]) -> None:
         pass  # todo
@@ -250,8 +258,12 @@ class Neo4jContentGraph(ContentGraph):
             for content_type in ContentTypes.non_abstracts():  # todo: parallelize?
                 if self.nodes.get(content_type):
                     session.write_transaction(self.create_nodes_by_type, content_type)
-            for rel_key in self.relationships.keys():
-                session.write_transaction(self.create_relationships_by_key, rel_key)
+            if self.relationships.get(Rel.HAS_COMMAND):
+                session.write_transaction(self.create_relationships_by_type, Rel.HAS_COMMAND)
+            for relationship in self.relationships.keys():
+                if relationship == Rel.HAS_COMMAND:
+                    continue
+                session.write_transaction(self.create_relationships_by_type, relationship)
 
         after_creating_nodes = datetime.now()
         print(f'Time to create graph: {(after_creating_nodes - before_creating_nodes).total_seconds() / 60} minutes')
@@ -259,17 +271,17 @@ class Neo4jContentGraph(ContentGraph):
 
     def create_nodes_by_type(self, tx: neo4j.Transaction, content_type: ContentTypes) -> None:
         query = Neo4jQuery.create_nodes(content_type)
-        tx.run(query, {'data': self.nodes.get(content_type)})
+        Neo4jContentGraph.run_query(tx, query, {'data': self.nodes.get(content_type)})
         print(f'Imported {content_type}')
 
-    def create_relationships_by_key(
+    def create_relationships_by_type(
         self,
         tx: neo4j.Transaction,
-        rel_key: Tuple[ContentTypes, Rel, ContentTypes],
+        relationship: Rel,
     ) -> None:
-        query = Neo4jQuery.create_relationships(*rel_key)
-        tx.run(query, {'data': self.relationships.get(rel_key)})
-        print(f'Imported {rel_key}')
+        query = Neo4jQuery.create_relationships(relationship)
+        Neo4jContentGraph.run_query(tx, query, {'data': self.relationships.get(relationship)})
+        print(f'Imported {relationship}')
 
     def create_pack_dependencies(self) -> None:
         with self.driver.session() as session:
@@ -278,17 +290,15 @@ class Neo4jContentGraph(ContentGraph):
 
     @staticmethod
     def fix_marketplaces_properties(tx: neo4j.Transaction) -> None:
-        for property_name in MARKETPLACE_PROPERTIES.values():
-            queries = Neo4jQuery.update_marketplace_property(property_name)
-            for query in queries:
-                tx.run(query)
+        for marketplace in MarketplaceVersions:
+            query = Neo4jQuery.update_marketplace_property(marketplace.value)
+            Neo4jContentGraph.run_query(tx, query)
         print('Fixed marketplaces properties.')
 
     @staticmethod
     def create_depencies_for_all_marketplaces(tx: neo4j.Transaction) -> None:
-        for mp_property in MARKETPLACE_PROPERTIES.values():
-            query = Neo4jQuery.create_dependencies_for_marketplace(mp_property)
-            tx.run(query)
+        query = Neo4jQuery.create_dependencies_for_marketplace()
+        Neo4jContentGraph.run_query(tx, query)
         print('Created dependencies between packs in all marketplaces.')
 
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:

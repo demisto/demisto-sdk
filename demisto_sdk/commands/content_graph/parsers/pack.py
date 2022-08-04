@@ -18,6 +18,10 @@ class PackParser(base_content.BaseContentParser):
         self.relationships: Dict[Tuple[ContentTypes, Rel, ContentTypes], List[Dict[str, Any]]] = {}
 
     @property
+    def node_id(self) -> str:
+        return f'{self.content_type}:{self.pack_id}'
+
+    @property
     def content_type(self) -> ContentTypes:
         return ContentTypes.PACK
 
@@ -38,8 +42,7 @@ class PackParser(base_content.BaseContentParser):
     def add_content_item_relationships(self, parser: Any) -> None:
         parser.add_relationship(
             Rel.IN_PACK,
-            target_id=self.pack_id,
-            target_type=self.content_type,
+            target=self.node_id,
         )
         for k, v in parser.relationships.items():
             self.relationships.setdefault(k, []).extend(v)
@@ -47,6 +50,7 @@ class PackParser(base_content.BaseContentParser):
     def get_data(self) -> Dict[str, Any]:
         base_content_data: Dict[str, Any] = super().get_data()
         pack_data: Dict[str, Any] = {
+            'node_id': self.node_id,
             'id': self.pack_id,
             'name': self.metadata.get('name'),
             'file_path': self.path.as_posix(),

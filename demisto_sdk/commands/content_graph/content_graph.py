@@ -214,8 +214,11 @@ class Neo4jContentGraph(ContentGraph):
     @staticmethod
     def run_query(tx: neo4j.Transaction, query: str, parameters: Optional[Dict[str, Any]] = None) -> neo4j.Result:
         try:
+            start = datetime.now()
             print('Running query:' + query)
-            return tx.run(query, parameters)
+            result = tx.run(query, parameters)
+            print(f'Took {(datetime.now() - start).total_seconds()} seconds')
+            return result
         except Exception as e:
             print(str(e))
             raise e
@@ -250,6 +253,7 @@ class Neo4jContentGraph(ContentGraph):
         print(f'Time since started: {(before_creating_nodes - self.start_time).total_seconds() / 60} minutes')
 
         with self.driver.session() as session:
+            start = datetime.now()
             tx = session.begin_transaction()
             self.create_indexes(tx)
             self.create_constraints(tx)
@@ -264,6 +268,8 @@ class Neo4jContentGraph(ContentGraph):
                 if relationship == Rel.HAS_COMMAND:
                     continue
                 session.write_transaction(self.create_relationships_by_type, relationship)
+            print(f'Took {(datetime.now() - start).total_seconds()} seconds to create all nodes and relationships')
+            print(f'Took {(datetime.now() - self.start_time).total_seconds()} seconds since started.')
 
         after_creating_nodes = datetime.now()
         print(f'Time to create graph: {(after_creating_nodes - before_creating_nodes).total_seconds() / 60} minutes')
@@ -316,9 +322,9 @@ def create_content_graph(use_docker: bool = True, keep_service: bool = False) ->
 
 
 def load_content_graph(use_docker: bool = True, keep_service: bool = False, content_graph_path: Path = None) -> None:
-    content_graph_path = Path(content_graph_path)
-    if content_graph_path and content_graph_path.is_file():
-        shutil.copy(content_graph_path, REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump')
+    # content_graph_path = Path('/Users/dtavori/dev/demisto/content/neo4j/backups/content-graph.dump')
+    # if content_graph_path and content_graph_path.is_file():
+    #     shutil.copy(content_graph_path, REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump')
 
     with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, NEO4J_PASSWORD, use_docker, keep_service, load_graph=True):
         logger.info('Content Graph was loaded')

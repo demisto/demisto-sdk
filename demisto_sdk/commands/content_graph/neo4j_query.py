@@ -70,7 +70,7 @@ class Neo4jQuery:
         # this must be the first rel query to execute!
         return f"""
             UNWIND $data AS rel_data
-            MATCH (integration:{ContentTypes.INTEGRATION}{{
+            MATCH (integration:{Neo4jQuery.labels_of(ContentTypes.INTEGRATION)}{{
                 node_id: rel_data.source_node_id,
                 fromversion: rel_data.source_fromversion,
                 marketplaces: rel_data.source_marketplaces
@@ -112,7 +112,7 @@ class Neo4jQuery:
                 fromversion: rel_data.source_fromversion,
                 marketplaces: rel_data.source_marketplaces
             }})
-            MERGE (dependency:{target_type}{{
+            MERGE (dependency:{Neo4jQuery.labels_of(target_type)}{{
                 {target_property}: rel_data.target
             }})
             WITH rel_data, content_item, dependency,
@@ -181,7 +181,7 @@ class Neo4jQuery:
     @staticmethod
     def create_dependencies_for_marketplace() -> str:
         return f"""
-            MATCH (pack_a)<-[:{Rel.IN_PACK}]-(a)-[r:{Rel.USES}]->(b)-[:{Rel.IN_PACK}]->(pack_b)
+            MATCH (pack_a:{ContentTypes.BASE_CONTENT})<-[:{Rel.IN_PACK}]-(a)-[r:{Rel.USES}]->(b)-[:{Rel.IN_PACK}]->(pack_b:{ContentTypes.BASE_CONTENT})
             WHERE ANY(marketplace IN pack_a.marketplaces WHERE marketplace IN pack_b.marketplaces)
             AND pack_a.id <> pack_b.id
             AND NOT pack_a.id IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}

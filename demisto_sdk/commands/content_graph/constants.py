@@ -1,7 +1,7 @@
 
 import enum
 from pathlib import Path
-from typing import Iterator, Dict, List
+from typing import Iterator, Dict, List, Set
 
 
 PACKS_FOLDER = 'Packs'
@@ -69,15 +69,15 @@ class ContentTypes(enum.Enum):
 
     @property
     def labels(self) -> List[str]:
-        labels: List[str] = [ContentTypes.BASE_CONTENT.value, self.value]
+        labels: Set[str] = {ContentTypes.BASE_CONTENT.value, self.value}
 
         if self.value == ContentTypes.TEST_PLAYBOOK.value:
-            labels.append(ContentTypes.PLAYBOOK.value)
+            labels.add(ContentTypes.PLAYBOOK.value)
 
         if self in [ContentTypes.SCRIPT, ContentTypes.COMMAND]:
-            labels.append(ContentTypes.COMMAND_OR_SCRIPT.value)
+            labels.add(ContentTypes.COMMAND_OR_SCRIPT.value)
 
-        return labels
+        return list(labels)
 
     @classmethod
     def by_folder(cls, folder: str) -> 'ContentTypes':
@@ -116,36 +116,22 @@ class ContentTypes(enum.Enum):
                 yield pack_folder
 
     @staticmethod
-    def props_indexes() -> Dict['ContentTypes', List[str]]:
-        return {
-            ContentTypes.BASE_CONTENT: ['id', 'node_id'],
-        }
-
-    @staticmethod
-    def node_key_constraints() -> Dict['ContentTypes', List[str]]:
-        """
-        Every content item node must have a unique combination of the following properties:
-        * ID
-        * fromversion
-            We can have multiple content items with the same type and IDs in the repository
-            if they are not in the same range of marketplace versions)
-        * marketplaces
-            We can have different content items with the same type, ID and version range in
-            the repository as long as they are not in the same marketplace.
-        """
-        constraints: Dict['ContentTypes', List[str]] = {}
-        content_items_node_key_list: List[str] = ['id', 'fromversion', 'marketplaces']
-
-        for content_type in ContentTypes.content_items():
-            constraints[content_type] = content_items_node_key_list
-
-        return constraints
+    def props_indexes(properties: List[str]) -> Dict['ContentTypes', List[str]]:
+        indexes: Dict['ContentTypes', List[str]] = {}
+        for content_type in ContentTypes:
+            if content_type != ContentTypes.COMMAND:
+                indexes[content_type] = properties
+        return indexes
 
     @staticmethod
     def props_uniqueness_constraints() -> Dict['ContentTypes', List[str]]:
         return {
-            ContentTypes.COMMAND: ['id']
+            ContentTypes.COMMAND: ['id', 'node_id']
         }
+        # constraints: Dict['ContentTypes', List[str]] = {}
+        # for content_type in ContentTypes.non_content_items():
+        #     constraints[content_type] = ['id', 'node_id']
+        # return constraints
 
     @staticmethod
     def props_existence_constraints() -> Dict['ContentTypes', List[str]]:

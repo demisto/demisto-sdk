@@ -11,30 +11,21 @@ class Neo4jQuery:
     def create_nodes_indexes() -> List[str]:
         queries: List[str] = []
         template = 'CREATE INDEX IF NOT EXISTS FOR (n:{label}) ON ({props})'
-        constraints = ContentTypes.props_indexes()
-        for label, props in constraints.items():
-            props = ', '.join([f'n.{p}' for p in props])
-            queries.append(template.format(label=label, props=props))
-        return queries
-
-    @staticmethod
-    def create_node_keys() -> List[str]:
-        queries: List[str] = []
-        template = 'CREATE CONSTRAINT IF NOT EXISTS FOR (n:{label}) REQUIRE ({props}) IS NODE KEY'
-        constraints = ContentTypes.node_key_constraints()
-        for label, props in constraints.items():
-            props = ', '.join([f'n.{p}' for p in props])
-            queries.append(template.format(label=label, props=props))
+        for index_option in [['node_id'], ['id'], ['node_id', 'fromversion', 'marketplaces']]:
+            indexes = ContentTypes.props_indexes(index_option)
+            for label, props in indexes.items():
+                props = ', '.join([f'n.{p}' for p in props])
+                queries.append(template.format(label=label, props=props))
         return queries
 
     @staticmethod
     def create_nodes_props_uniqueness_constraints() -> List[str]:
         queries: List[str] = []
-        template = 'CREATE CONSTRAINT IF NOT EXISTS FOR (n:{label}) REQUIRE {props} IS UNIQUE'
+        template = 'CREATE CONSTRAINT IF NOT EXISTS FOR (n:{label}) REQUIRE n.{prop} IS UNIQUE'
         constraints = ContentTypes.props_uniqueness_constraints()
         for label, props in constraints.items():
-            props = ', '.join([f'n.{p}' for p in props])
-            queries.append(template.format(label=label, props=props))
+            for prop in props:
+                queries.append(template.format(label=label, prop=prop))
         return queries
 
     @staticmethod
@@ -70,17 +61,18 @@ class Neo4jQuery:
         # this must be the first rel query to execute!
         return f"""
             UNWIND $data AS rel_data
-            MATCH (integration:{Neo4jQuery.labels_of(ContentTypes.INTEGRATION)}{{
+            MATCH (integration:{ContentTypes.INTEGRATION}{{
                 node_id: rel_data.source_node_id,
                 fromversion: rel_data.source_fromversion,
                 marketplaces: rel_data.source_marketplaces
             }})
-            MERGE (cmd:{Neo4jQuery.labels_of(ContentTypes.COMMAND)}{{
-                node_id: "{ContentTypes.COMMAND}:" + rel_data.target,
+            MERGE (cmd:{ContentTypes.COMMAND}{{
                 id: rel_data.target
             }})
             ON CREATE
-                SET cmd.marketplaces = rel_data.source_marketplaces
+                SET cmd:{ContentTypes.BASE_CONTENT},
+                    cmd.node_id = "{ContentTypes.COMMAND}:" + rel_data.target,
+                    cmd.marketplaces = rel_data.source_marketplaces
             ON MATCH
                 SET cmd.marketplaces = REDUCE(
                     marketplaces = cmd.marketplaces, mp IN rel_data.source_marketplaces |
@@ -112,15 +104,13 @@ class Neo4jQuery:
                 fromversion: rel_data.source_fromversion,
                 marketplaces: rel_data.source_marketplaces
             }})
-            MERGE (dependency:{Neo4jQuery.labels_of(target_type)}{{
+            MATCH (dependency:{target_type}{{
                 {target_property}: rel_data.target
             }})
-            WITH rel_data, content_item, dependency,
-                ANY(
-                    marketplace IN dependency.marketplaces
-                    WHERE marketplace IN rel_data.source_marketplaces
-                ) AS dependency_exists_in_source_marketplace
-            WHERE dependency_exists_in_source_marketplace
+            WHERE ANY(
+                marketplace IN dependency.marketplaces
+                WHERE marketplace IN rel_data.source_marketplaces
+            )
             MERGE (content_item)-[r:{Rel.USES}]->(dependency)
             ON CREATE
                 SET r.mandatorily = rel_data.mandatorily
@@ -130,6 +120,15 @@ class Neo4jQuery:
         return query
 
     @staticmethod
+    def create_in_pack_relationships() -> str:
+        return f"""
+            UNWIND $data AS rel_data
+            MATCH (source:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.source_node_id}})
+            MATCH (target:{ContentTypes.PACK}{{node_id: rel_data.target}})
+            MERGE (source)-[r:{Rel.IN_PACK}]->(target)
+        """
+
+    @staticmethod
     def create_relationships(relationship: Rel) -> str:
         if relationship == Rel.HAS_COMMAND:
             return Neo4jQuery.create_has_command_relationships()
@@ -137,12 +136,14 @@ class Neo4jQuery:
             return Neo4jQuery.create_uses_relationships(target_type=ContentTypes.BASE_CONTENT)
         if relationship == Rel.USES_COMMAND_OR_SCRIPT:
             return Neo4jQuery.create_uses_relationships(target_type=ContentTypes.COMMAND_OR_SCRIPT)
+        if relationship == Rel.IN_PACK:
+            return Neo4jQuery.create_in_pack_relationships()
 
         # default query
         return f"""
             UNWIND $data AS rel_data
             MATCH (source:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.source_node_id}})
-            MERGE (target:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.target}})
+            MATCH (target:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.target}})
             MERGE (source)-[r:{relationship}]->(target)
         """
 

@@ -278,7 +278,7 @@ class Neo4jContentGraph(ContentGraph):
     def create_nodes_by_type(self, tx: neo4j.Transaction, content_type: ContentTypes) -> None:
         query = Neo4jQuery.create_nodes(content_type)
         Neo4jContentGraph.run_query(tx, query, {'data': self.nodes.get(content_type)})
-        print(f'Imported {content_type}')
+        print(f'Merged {len(self.nodes.get(content_type))} {content_type} nodes')
 
     def create_relationships_by_type(
         self,
@@ -287,7 +287,7 @@ class Neo4jContentGraph(ContentGraph):
     ) -> None:
         query = Neo4jQuery.create_relationships(relationship)
         Neo4jContentGraph.run_query(tx, query, {'data': self.relationships.get(relationship)})
-        print(f'Imported {relationship}')
+        print(f'Merged {len(self.relationships.get(relationship))} {relationship} relationships')
 
     def create_pack_dependencies(self) -> None:
         with self.driver.session() as session:
@@ -322,9 +322,9 @@ def create_content_graph(use_docker: bool = True, keep_service: bool = False) ->
 
 
 def load_content_graph(use_docker: bool = True, keep_service: bool = False, content_graph_path: Path = None) -> None:
-    # content_graph_path = Path('/Users/dtavori/dev/demisto/content/neo4j/backups/content-graph.dump')
-    # if content_graph_path and content_graph_path.is_file():
-    #     shutil.copy(content_graph_path, REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump')
+    content_graph_path = Path(content_graph_path)
+    if content_graph_path and content_graph_path.is_file():
+        shutil.copy(content_graph_path, REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump')
 
     with Neo4jContentGraph(REPO_PATH, DATABASE_URL, USERNAME, NEO4J_PASSWORD, use_docker, keep_service, load_graph=True):
         logger.info('Content Graph was loaded')

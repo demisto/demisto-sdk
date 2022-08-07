@@ -12,6 +12,7 @@ from mock import patch
 from demisto_sdk.commands.common.constants import LAYOUT, LAYOUTS_CONTAINER
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.tools import get_child_directories
 from demisto_sdk.commands.init.contribution_converter import \
     ContributionConverter
 from TestSuite.contribution import Contribution
@@ -544,6 +545,43 @@ def test_convert_contribution_dir_to_pack_contents(tmp_path):
     cc.convert_contribution_dir_to_pack_contents(fake_pack_extracted_dir)
     assert json.loads(extant_file.read_text()) == new_json
     assert not fake_pack_extracted_dir.exists()
+
+
+indicatorfield_only_check = (
+    './test_files/contribution_indicatorfield_only.zip', {'IndicatorTypes', 'Layouts', 'IndicatorFields', 'Classifiers'})
+indicatorfield_and_incidentfield_check = (
+    './test_files/contribution_indicatorfield_and_incidentfield.zip', {'IndicatorTypes', 'Layouts', 'IndicatorFields', 'IncidentFields', 'Classifiers'})
+rearranging_before_conversion_inputs = [indicatorfield_only_check, indicatorfield_and_incidentfield_check]
+
+
+@pytest.mark.parametrize('zip_path, expected_directories', rearranging_before_conversion_inputs)
+def test_rearranging_before_conversion(zip_path: str, expected_directories: set):
+    """
+    Given a zip file, fixes the wrong server mapping.
+    if an indicatorfield is mapped to an incidentfield directory, then we will make sure that we have indeed created
+    a new directory for all indicatorsfield with a suitable name (indicatorfield),
+    and we will delete the original directory if it no longer contains anything.
+
+
+    Scenario: Simulate converting a contribution zip file.
+
+    Given
+    - zip_path (str): A contribution zip file
+    - expected_directories (set): A set of directories that we expect now after patching to be
+    When
+    - Converting the zipfile to a valid Pack structure
+    Then
+    - Ensure the mapping is correct now
+    - Ensure (at first test/check) in case the original directory becomes empty, then it is deleted
+
+    """
+    contribution_converter = ContributionConverter(contribution=zip_path)
+    contribution_converter.convert_contribution_to_pack()
+    unpacked_contribution_dirs = get_child_directories(contribution_converter.pack_dir_path)
+    results = set()
+    for directory in unpacked_contribution_dirs:
+        results.add(os.path.basename(directory))
+    assert expected_directories == results
 
 
 @pytest.mark.parametrize('contribution_converter', ['TestPack'], indirect=True)

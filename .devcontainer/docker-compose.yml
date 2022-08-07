@@ -1,0 +1,17 @@
+version: '3.9'
+
+volumes:
+  node_modules:
+  idea:
+  venv:
+services:
+  demisto-sdk:
+    build: .
+    volumes:
+      - ..:/workspaces/demisto-sdk:cached
+      - ../../content:/workspaces/content:cached
+      - node_modules:/workspaces/demisto-sdk/node_modules
+      - idea:/workspaces/demisto-sdk/.idea
+      - venv:/workspaces/demisto-sdk/.venv
+    working_dir: /workspaces/demisto-sdk
+    command: /bin/sh -c "while sleep 1000; do :; done"

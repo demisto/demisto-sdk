@@ -2268,7 +2268,12 @@ def error_code(config, **kwargs):
 )
 @click.option('-nd', '--no-use-docker', is_flag=True, help="Use docker to run the content graph")
 @click.option('-ks', '--keep-service', is_flag=True, help="Keep the service running", default=False)
-def create_content_graph(no_use_docker, keep_service):
+def create_content_graph(no_use_docker, keep_service, **kwargs):
+    from demisto_sdk.commands.common.logger import logging_setup
+    logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
+                  quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
+                  log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
+
     from demisto_sdk.commands.content_graph.neo4j_content_graph_builder import create_content_graph
     create_content_graph(use_docker=not no_use_docker, keep_service=keep_service)
     
@@ -2283,7 +2288,12 @@ def create_content_graph(no_use_docker, keep_service):
 @click.option('-nd', '--no-use-docker', is_flag=True, help="Use docker to run the content graph", default=False)
 @click.option('-ks', '--keep-service', is_flag=True, help="Keep the service running", default=False)
 @click.option('-cgp', '--content-graph-path', help="Path to the content graph", default=None)
-def load_content_graph(no_use_docker: bool, keep_service: bool, content_graph_path: Path):
+def load_content_graph(no_use_docker: bool, keep_service: bool, content_graph_path: Path, **kwargs):
+    from demisto_sdk.commands.common.logger import logging_setup
+    logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
+                  quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
+                  log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
+
     from demisto_sdk.commands.content_graph.neo4j_content_graph_builder import load_content_graph
     load_content_graph(use_docker=not no_use_docker, keep_service=keep_service, content_graph_path=content_graph_path)
 

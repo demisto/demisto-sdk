@@ -1,5 +1,4 @@
 import os
-import pathlib
 import re
 import shutil
 from os.path import join
@@ -588,7 +587,7 @@ def test_rearranging_before_conversion(zip_path: str, expected_directories: set)
     unpacked_contribution_dirs = get_child_directories(contribution_converter.pack_dir_path)
     results = set()
     for directory in unpacked_contribution_dirs:
-        results.add(pathlib.Path(directory).name)
+        results.add(os.path.basename(directory))
     assert expected_directories == results
 
 

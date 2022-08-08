@@ -1,4 +1,5 @@
 import os
+import pathlib
 import re
 import shutil
 import textwrap
@@ -327,25 +328,25 @@ class ContributionConverter:
 
         for unpacked_contribution_dir in unpacked_contribution_dirs:
 
-            dir_name = os.path.basename(unpacked_contribution_dir)
+            dir_name = pathlib.Path(unpacked_contribution_dir).name
 
             # incidentfield directory may contain indicator-fields files
             if dir_name == FileType.INCIDENT_FIELD.value:
 
                 dst_dir_path = None
                 is_first_file = True
-                src_path = os.path.join(self.pack_dir_path, dir_name)
+                src_path = pathlib.Path(self.pack_dir_path, dir_name)
 
-                for file in os.listdir(src_path):
+                for file in src_path.glob('*'):
 
-                    if file.startswith(FileType.INDICATOR_FIELD.value):
+                    if file.name.startswith(FileType.INDICATOR_FIELD.value):
                         # At first time, create another dir for all indicator-fields files and move them there
                         if is_first_file:
                             dst_dir_name = FileType.INDICATOR_FIELD.value
-                            dst_dir_path = os.path.join(self.pack_dir_path, dst_dir_name)
+                            dst_dir_path = pathlib.Path(self.pack_dir_path, dst_dir_name)
                             os.makedirs(dst_dir_path)
                             is_first_file = False
-                        file_path = os.path.join(self.pack_dir_path, dir_name, file)
+                        file_path = pathlib.Path(self.pack_dir_path, dir_name, file.name)
                         shutil.move(file_path, dst_dir_path)
 
                 # If there were only indicatorfiled files, the original folder will remain empty, so we will delete it

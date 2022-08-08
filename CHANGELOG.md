@@ -4,7 +4,7 @@
 * Fixed an issue in the **validate** command where incident fields were not found in mappers even when they exist
 * Added an ability to provide list of marketplace names as a param attribute to **validate** and **upload**
 * Added the file type to the error message when it is not supported.
-* Fixed an issue where indicatorfield was mapped to incidentfield directory in a contribution zip file.
+* Fixed an issue where `contribution_converter` incorrectly mapped _Indicator Field_ objects to the _incidentfield_ directory in contribution zip files.
 
 * Added the `DEMISTO_SDK_CONTENT_PATH` environment variable, implicitly used in various commands.
 

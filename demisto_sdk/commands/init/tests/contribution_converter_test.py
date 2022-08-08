@@ -1,6 +1,7 @@
 import os
 import re
 import shutil
+from os.path import join
 from typing import Union
 from zipfile import ZipFile
 
@@ -9,6 +10,7 @@ from _pytest.fixtures import FixtureRequest
 from _pytest.tmpdir import TempPathFactory, _mk_tmp
 from mock import patch
 
+from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.constants import LAYOUT, LAYOUTS_CONTAINER
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -19,7 +21,8 @@ from TestSuite.contribution import Contribution
 from TestSuite.repo import Repo
 
 json = JSON_Handler()
-
+DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
+CONTRIBUTION_TESTS = os.path.join(DEMISTO_SDK_PATH, 'commands', 'init', 'tests', 'test_files')
 
 RELEASE_NOTES_COPY = "demisto_sdk/commands/init/tests/RN/1_0_1-formatted.md"
 SOURCE_RELEASE_NOTES_FILE = "demisto_sdk/commands/init/tests/RN/1_0_1.md"
@@ -547,10 +550,14 @@ def test_convert_contribution_dir_to_pack_contents(tmp_path):
     assert not fake_pack_extracted_dir.exists()
 
 
-indicatorfield_only_check = (
-    './test_files/contribution_indicatorfield_only.zip', {'IndicatorTypes', 'Layouts', 'IndicatorFields', 'Classifiers'})
-indicatorfield_and_incidentfield_check = (
-    './test_files/contribution_indicatorfield_and_incidentfield.zip', {'IndicatorTypes', 'Layouts', 'IndicatorFields', 'IncidentFields', 'Classifiers'})
+directories_set_1 = {'IndicatorTypes', 'Layouts', 'IndicatorFields', 'Classifiers'}
+directories_set_2 = {'IndicatorTypes', 'Layouts', 'IndicatorFields', 'Classifiers', 'IncidentFields'}
+indicatorfield_only_check = (os.path.join(CONTRIBUTION_TESTS, 'contribution_indicatorfield_only.zip'),
+                             directories_set_1)
+indicatorfield_and_incidentfield_check = (os.path.join(CONTRIBUTION_TESTS,
+                                                       'contribution_indicatorfield_and_incidentfield.zip'),
+                                          directories_set_2)
+
 rearranging_before_conversion_inputs = [indicatorfield_only_check, indicatorfield_and_incidentfield_check]
 
 

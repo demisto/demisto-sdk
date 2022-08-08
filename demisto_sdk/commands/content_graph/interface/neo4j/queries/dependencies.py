@@ -1,27 +1,27 @@
-from neo4j import Transaction, Result
-from typing import List
+import logging
+from neo4j import Transaction
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query
+
 
 IGNORED_PACKS_IN_DEPENDENCY_CALC = ['NonSupported', 'Base', 'ApiModules']
 
-
-def create_pack_dependencies(tx: Transaction) -> List[Result]:
-    results: List[Result] = []
-    results.extend(fix_marketplaces_properties(tx))
-    results.append(create_depends_on_relationships(tx))
-    return results
+logger = logging.getLogger('demisto-sdk')
 
 
-def fix_marketplaces_properties(tx: Transaction) -> List[Result]:
-    results: List[Result] = []
+def create_pack_dependencies(tx: Transaction) -> None:
+    fix_marketplaces_properties(tx)
+    create_depends_on_relationships(tx)
+
+
+def fix_marketplaces_properties(tx: Transaction) -> None:
     for marketplace in MarketplaceVersions:
-        results.append(update_marketplaces_property(tx, marketplace.value))
-    return results
+        update_marketplaces_property(tx, marketplace.value)
 
 
-def update_marketplaces_property(tx: Transaction, marketplace: str) -> Result:
+def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
     """
     In this query, we find all content items that are currently considered in a given marketplace,
     but uses a dependency that is not in this marketplace.
@@ -51,11 +51,12 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> Result:
         )
         RETURN count(content_item) AS updated_marketplaces_count
     """
-    result = tx.run(query)
-    return result
+    result = run_query(tx, query).single()
+    updated_marketplaces_count: int = result['updated_marketplaces_count']
+    logger.info(f'Removed {marketplace} from marketplaces for {updated_marketplaces_count} content items.')
 
 
-def create_depends_on_relationships(tx: Transaction) -> Result:
+def create_depends_on_relationships(tx: Transaction) -> None:
     query = f"""
         MATCH (pack_a:{ContentTypes.BASE_CONTENT})<-[:{Rel.IN_PACK}]-(a)
             -[r:{Rel.USES}]->(b)-[:{Rel.IN_PACK}]->(pack_b:{ContentTypes.BASE_CONTENT})
@@ -71,7 +72,8 @@ def create_depends_on_relationships(tx: Transaction) -> Result:
         ) AS common_marketplaces
         SET dep.marketplaces = common_marketplaces,
             dep.mandatorily = r.mandatorily
-        RETURN *
+        RETURN count(dep) AS depends_on_relationships
     """
-    result = tx.run(query)
-    return result
+    result = run_query(tx, query).single()
+    depends_on_count: int = result['depends_on_relationships']
+    logger.info(f'Merged {depends_on_count} DEPENDS_ON relationships between {depends_on_count} packs.')

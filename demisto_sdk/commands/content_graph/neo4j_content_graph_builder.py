@@ -17,15 +17,6 @@ import docker
 import logging
 
 
-######### neo4j logging
-
-import sys
-
-from neo4j.debug import watch
-
-watch("neo4j", out=sys.stdout)
-
-
 DATABASE_URL = 'bolt://localhost:7687'
 USERNAME = 'neo4j'
 NEO4J_PASSWORD = 'test'
@@ -63,13 +54,6 @@ class Neo4jContentGraphBuilder(ContentGraphBuilder):
             self.load()
         self.start_neo4j_service()
         return self
-
-    @staticmethod
-    def enable_log(level: int, output_stream: TextIO):
-        handler = logging.StreamHandler(output_stream)
-        handler.setLevel(level)
-        logging.getLogger("neo4j").addHandler(handler)
-        logging.getLogger("neo4j").setLevel(level)
 
     def start_neo4j_service(self, ):
         if not self.use_docker:
@@ -145,9 +129,6 @@ class Neo4jContentGraphBuilder(ContentGraphBuilder):
 
         if self.dump_on_exit:
             self.dump()
-
-
-# Neo4jContentGraphBuilder.enable_log(logging.INFO, sys.stdout)
 
 
 def create_content_graph(use_docker: bool = True, keep_service: bool = False) -> None:

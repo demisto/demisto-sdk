@@ -1,19 +1,23 @@
-from neo4j import Transaction, Result
+import logging
+from neo4j import Transaction
 from typing import Any, Dict, List
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query
+
+
+logger = logging.getLogger('demisto-sdk')
 
 
 def create_relationships(
     tx: Transaction,
     relationships: Dict[Rel, List[Dict[str, Any]]],
-) -> List[Result]:
-    results: List[Result] = []
+) -> None:
     if data := relationships.pop(Rel.HAS_COMMAND):
-        results.append(create_relationships_by_type(tx, Rel.HAS_COMMAND, data))
+        create_relationships_by_type(tx, Rel.HAS_COMMAND, data)
 
     for relationship, data in relationships.items():
-        results.append(create_relationships_by_type(tx, relationship, data))
+        create_relationships_by_type(tx, relationship, data)
 
 
 def get_has_command_relationships_query() -> str:
@@ -37,6 +41,8 @@ def get_has_command_relationships_query() -> str:
                 CASE WHEN NOT mp IN cmd.marketplaces THEN marketplaces + mp ELSE marketplaces END
             )
         MERGE (integration)-[r:{Rel.HAS_COMMAND}{{deprecated: rel_data.deprecated}}]->(cmd)
+
+        RETURN count(r) AS relationships_created
     """
 
 
@@ -74,6 +80,8 @@ def get_uses_relationships_query(target_type: ContentTypes) -> str:
             SET r.mandatorily = rel_data.mandatorily
         ON MATCH
             SET r.mandatorily = r.mandatorily OR rel_data.mandatorily
+        
+        RETURN count(r) AS relationships_created
     """
     return query
 
@@ -84,6 +92,7 @@ def get_in_pack_relationships_query() -> str:
         MATCH (source:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.source_node_id}})
         MATCH (target:{ContentTypes.PACK}{{node_id: rel_data.target}})
         MERGE (source)-[r:{Rel.IN_PACK}]->(target)
+            RETURN count(r) AS relationships_created
     """
 
 
@@ -91,7 +100,7 @@ def create_relationships_by_type(
     tx: Transaction,
     relationship: Rel,
     data: List[Dict[str, Any]],
-) -> str:
+) -> None:
     if relationship == Rel.HAS_COMMAND:
         query = get_has_command_relationships_query()
     elif relationship == Rel.USES:
@@ -107,7 +116,10 @@ def create_relationships_by_type(
             MATCH (source:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.source_node_id}})
             MATCH (target:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.target}})
             MERGE (source)-[r:{relationship}]->(target)
+            RETURN count(r) AS relationships_created
         """
 
     result = tx.run(query, data=data)
-    return result
+    result = run_query(tx, query, data=data).single()
+    relationships_count: int = result['relationships_created']
+    logger.info(f'Created {relationships_count} relationships of type {relationship}.')

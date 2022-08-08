@@ -3,7 +3,7 @@ FROM python:3.10.6-bullseye
 ADD create_certs.sh .
 RUN apt-get update && apt-get install dos2unix -y \
     && dos2unix /create_certs.sh \
-    && chmod +x /create_certs.sh \ 
+    && chmod +x /create_certs.sh \
     && /create_certs.sh /usr/local/share/ca-certificates/certs.crt \
     && update-ca-certificates
 
@@ -23,7 +23,7 @@ ADD .zshrc /root/.zshrc
 SHELL [ "/bin/zsh", "-c" ]
 
 RUN apt-get update && apt-get -y --no-install-recommends upgrade && apt-get install \
-    git \ 
+    git \
     gcc \
     nodejs \
     npm \
@@ -39,9 +39,7 @@ RUN apt-get update && apt-get -y --no-install-recommends upgrade && apt-get inst
     && poetry --version \
     && source ~/.zshrc \
     && npm install -g jsdoc-to-markdown@5.0.3 \
-    # install poetry plugin for oh my zsh 
+    # install poetry plugin for oh my zsh
     && poetry completions zsh > $HOME/.oh-my-zsh/custom/plugins/poetry \
     && poetry config virtualenvs.in-project true \
     && apt-get autoclean && apt-get clean
-
-

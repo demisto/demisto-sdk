@@ -18,7 +18,7 @@
 		"python.testing.pytestEnabled": true,
 		"python.testing.pytestArgs": [
 			"."
-		],
+		]
 	},
 	"extensions": [
 		"cortexxsoarext.xsoar",

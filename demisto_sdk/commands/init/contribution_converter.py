@@ -347,7 +347,7 @@ class ContributionConverter:
                             os.makedirs(dst_dir_path)
                             is_first_file = False
                         file_path = pathlib.Path(self.pack_dir_path, dir_name, file.name)
-                        shutil.move(file_path, dst_dir_path)
+                        shutil.move(file_path, dst_dir_path)  # type: ignore
 
                 # If there were only indicatorfiled files, the original folder will remain empty, so we will delete it
                 if len(os.listdir(src_path)) == 0:

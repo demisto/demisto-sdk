@@ -319,9 +319,8 @@ class ContributionConverter:
 
     def rearranging_before_conversion(self) -> None:
         """
-        This method was written in order to fix a bug that exists in the server,
-        which incorrectly maps indicatorfield to incidentfield directory.
-        If this happened, this method will map the indicatorfield files to a separate folder called - indicatorfiled.
+        Rearrange content items that were mapped incorrectly by the server zip
+          - indicatorfields rearranged to be under indicatorfield directory instead of incidentfields.
         """
         unpacked_contribution_dirs = get_child_directories(self.pack_dir_path)
 

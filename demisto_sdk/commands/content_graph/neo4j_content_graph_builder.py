@@ -151,12 +151,12 @@ class Neo4jContentGraphBuilder(ContentGraphBuilder):
 
 
 def create_content_graph(use_docker: bool = True, keep_service: bool = False) -> None:
+    shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
     with Neo4jContentGraphBuilder(REPO_PATH, use_docker, keep_service=keep_service, dump_on_exit=True) as content_graph:
         content_graph.create_graph_from_repository()
 
 
 def load_content_graph(use_docker: bool = True, keep_service: bool = False, content_graph_path: Path = None) -> None:
-    content_graph_path = Path(content_graph_path)
     if content_graph_path and content_graph_path.is_file():
         shutil.copy(content_graph_path, REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump')
 

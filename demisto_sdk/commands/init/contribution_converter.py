@@ -332,21 +332,17 @@ class ContributionConverter:
             # incidentfield directory may contain indicator-fields files
             if dir_name == FileType.INCIDENT_FIELD.value:
 
-                dst_dir_path = None
-                is_first_file = True
+                dst_ioc_fields_dir = os.path.join(self.pack_dir_path, FileType.INDICATOR_FIELD.value)
                 src_path = os.path.join(self.pack_dir_path, dir_name)
 
                 for file in os.listdir(src_path):
 
                     if file.startswith(FileType.INDICATOR_FIELD.value):
                         # At first time, create another dir for all indicator-fields files and move them there
-                        if is_first_file:
-                            dst_dir_name = FileType.INDICATOR_FIELD.value
-                            dst_dir_path = os.path.join(self.pack_dir_path, dst_dir_name)
-                            os.makedirs(dst_dir_path)
-                            is_first_file = False
+                        if not os.path.exists(dst_ioc_fields_dir):
+                            os.makedirs(dst_ioc_fields_dir)
                         file_path = os.path.join(self.pack_dir_path, dir_name, file)
-                        shutil.move(file_path, dst_dir_path)  # type: ignore
+                        shutil.move(file_path, dst_ioc_fields_dir)  # type: ignore
 
                 # If there were only indicatorfiled files, the original folder will remain empty, so we will delete it
                 if len(os.listdir(src_path)) == 0:

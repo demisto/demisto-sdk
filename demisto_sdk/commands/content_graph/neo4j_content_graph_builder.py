@@ -61,12 +61,7 @@ class Neo4jContentGraphBuilder(ContentGraphBuilder):
             run_command('neo4j start', cwd=REPO_PATH / 'neo4j', is_silenced=False)
 
         else:
-            docker_client = docker.from_env()
-            try:
-                docker_client.containers.get('neo4j-content').remove(force=True)
-            except Exception as e:
-                logger.info(f'Could not remove neo4j container: {e}')
-            # then we need to create a new one
+            run_command('docker-compose down', cwd=REPO_PATH / 'neo4j', is_silenced=False)
             run_command('docker-compose up -d', cwd=REPO_PATH / 'neo4j', is_silenced=False)
         # health check to make sure that neo4j is up
         s = requests.Session()
@@ -126,9 +121,8 @@ class Neo4jContentGraphBuilder(ContentGraphBuilder):
         # self.driver.close()
         if not self.keep_service:
             self.stop_neo4j_service()
-
-        if self.dump_on_exit:
-            self.dump()
+            if self.dump_on_exit:
+                self.dump()
 
 
 def create_content_graph(use_docker: bool = True, keep_service: bool = False) -> None:

@@ -2,11 +2,11 @@
 	"folders": [
 		{
 			"name": "demisto-sdk",
-			"path": "."
+			"path": ".."
 		},
 		{
 			"name": "content",
-			"path": "../content"
+			"path": "../../content"
 		}
 	]
 }

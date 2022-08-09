@@ -8,7 +8,7 @@ services:
     build: .
     volumes:
       - ..:/workspaces/demisto-sdk:cached
-      - ../../content:/workspaces/content:cached
+      - ${CONTENT:-../../content}:/workspaces/content:cached
       - node_modules:/workspaces/demisto-sdk/node_modules
       - venv:/workspaces/demisto-sdk/.venv
     working_dir: /workspaces/demisto-sdk

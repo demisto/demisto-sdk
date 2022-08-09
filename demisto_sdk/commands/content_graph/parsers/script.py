@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
 import demisto_sdk.commands.content_graph.parsers.integration_script as integration_script
 
-EXECUTE_CMD_PATTERN = re.compile(r"execute_?command\(['\"](\w+)['\"].*")
+EXECUTE_CMD_PATTERN = re.compile(r"execute_?command\(['\"](\w+)['\"].*", re.IGNORECASE)
 
 
 class ScriptParser(integration_script.IntegrationScriptParser):
@@ -48,4 +48,4 @@ class ScriptParser(integration_script.IntegrationScriptParser):
         return self.unifier.get_script_or_integration_package_data()[1]
 
     def get_command_executions(self) -> List[str]:
-        return set(EXECUTE_CMD_PATTERN.findall(self.get_code(), re.IGNORECASE))
+        return set(EXECUTE_CMD_PATTERN.findall(self.get_code()))

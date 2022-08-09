@@ -8,6 +8,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import ru
 
 IGNORED_PACKS_IN_DEPENDENCY_CALC = ['NonSupported', 'Base', 'ApiModules']
 
+
 logger = logging.getLogger('demisto-sdk')
 
 
@@ -34,22 +35,22 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
     # ignore IGNORED_PACKS_IN_DEPENDENCY_CALC?
     query = f"""
         MATCH (content_item:{ContentTypes.BASE_CONTENT})
-            -[:{Rel.USES}*{{mandatorily: true}}]->
-                (dependency:{ContentTypes.BASE_CONTENT}),
-        (alternative_dependency:{ContentTypes.BASE_CONTENT}{{
-            node_id: dependency.node_id
-        }})
-        WHERE "{marketplace}" IN content_item.marketplaces
-        AND NOT "{marketplace}" IN dependency.marketplaces
-        AND "{marketplace}" IN alternative_dependency.marketplaces
-        WITH content_item,
-            count(alternative_dependency) = 0 AS no_alternative_dependency
-        WHERE no_alternative_dependency
+                -[r:{Rel.USES}*{{mandatorily: true}}]->
+                    (dependency:{ContentTypes.BASE_CONTENT})
+        WHERE
+            "{marketplace}" IN content_item.marketplaces
+        AND
+            NOT "{marketplace}" IN dependency.marketplaces
+        OPTIONAL MATCH (alternative_dependency:{ContentTypes.BASE_CONTENT}{{node_id: dependency.node_id}})
+        WHERE
+            "{marketplace}" IN alternative_dependency.marketplaces
+        WITH content_item, alternative_dependency
+        WHERE alternative_dependency IS NULL
         SET content_item.marketplaces = REDUCE(
             marketplaces = [], mp IN content_item.marketplaces |
             CASE WHEN mp <> "{marketplace}" THEN marketplaces + mp ELSE marketplaces END
         )
-        RETURN count(content_item) AS updated_marketplaces_count
+        RETURN count(content_item) AS updated_marketplaces_count  // fix count
     """
     result = run_query(tx, query).single()
     updated_marketplaces_count: int = result['updated_marketplaces_count']

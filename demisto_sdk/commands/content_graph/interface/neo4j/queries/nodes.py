@@ -3,17 +3,31 @@ from neo4j import Transaction
 from typing import Any, Dict, List
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query, versioned, intersects
 
 
 logger = logging.getLogger('demisto-sdk')
 
 
 CREATE_NODES_BY_TYPE_TEMPLATE = """
-    UNWIND $data AS node_data
-    CREATE (n:{labels}{{id: node_data.id}})
-    SET n += node_data
-    RETURN count(n) AS nodes_created
+UNWIND $data AS node_data
+CREATE (n:{labels}{{id: node_data.id}})
+SET n += node_data
+RETURN count(n) AS nodes_created
+"""
+
+FIND_DUPLICATES = f"""
+MATCH (a:{ContentTypes.BASE_CONTENT})
+MATCH (b:{ContentTypes.BASE_CONTENT}{'{node_id: a.node_id}'})
+WHERE
+    id(a) <> id(b)
+AND
+    {intersects('a.marketplaces', 'b.marketplaces')}
+AND
+    {versioned('a.toversion')} >= {versioned('b.fromversion')}
+AND
+    {versioned('b.toversion')} >= {versioned('a.fromversion')}
+RETURN count(b) > 0 AS found_duplicates
 """
 
 
@@ -24,6 +38,14 @@ def create_nodes(
     for content_type, data in nodes.items():
         create_nodes_by_type(tx, content_type, data)
 
+    if duplicates_exist(tx):
+        raise Exception('Duplicates found in graph.')
+    
+
+
+def duplicates_exist(tx) -> bool:
+    result = run_query(tx, FIND_DUPLICATES).single()
+    return result['found_duplicates']
 
 
 def create_nodes_by_type(

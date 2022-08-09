@@ -8,6 +8,7 @@ from demisto_sdk.commands.common.tools import (
     get_json, get_yaml,
     get_yml_paths_in_dir
 )
+from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_TO_VERSION
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, UNIFIED_FILES_SUFFIXES
 import demisto_sdk.commands.content_graph.parsers.base_content as base_content
 
@@ -132,7 +133,7 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def toversion(self) -> str:
-        return self.yml_data.get('toversion', '')
+        return self.yml_data.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)
 
     @property
     def marketplaces(self) -> List[str]:
@@ -185,7 +186,7 @@ class JSONContentItemParser(ContentItemParser):
 
     @property
     def toversion(self) -> str:
-        return self.json_data.get('toVersion', '')
+        return self.json_data.get('toVersion', DEFAULT_CONTENT_ITEM_TO_VERSION)
 
     @property
     def marketplaces(self) -> List[str]:

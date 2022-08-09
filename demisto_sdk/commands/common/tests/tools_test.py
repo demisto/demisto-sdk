@@ -35,7 +35,7 @@ from demisto_sdk.commands.common.tools import (
     get_test_playbook_id, get_to_version, get_yaml, has_remote_configured,
     is_object_in_id_set, is_origin_content_repo, is_pack_path, is_uuid,
     retrieve_file_ending, run_command_os, server_version_compare,
-    to_kebab_case)
+    string_to_bool, to_kebab_case)
 from demisto_sdk.tests.constants_test import (
     DUMMY_SCRIPT_PATH, IGNORED_PNG, INDICATORFIELD_EXTRA_FIELDS,
     SOURCE_FORMAT_INTEGRATION_COPY, TEST_PLAYBOOK, VALID_BETA_INTEGRATION_PATH,
@@ -1957,3 +1957,39 @@ def test_get_display_name(data, answer, tmpdir):
         """
     file = File(tmpdir / 'test_file.json', '', json.dumps(data))
     assert get_display_name(file.path) == answer
+
+
+@pytest.mark.parametrize('value', ('true', 'True'))
+def test_string_to_bool__default_params__true(value: str):
+    assert string_to_bool(value)
+
+
+@pytest.mark.parametrize('value', ('false', 'False'))
+def test_string_to_bool__default_params__false(value: str):
+    assert not string_to_bool(value)
+
+
+@pytest.mark.parametrize('value', ('1', 1, '', ' ', 'כן', None, 'None'))
+def test_string_to_bool__default_params__error(value: str):
+    with pytest.raises(ValueError):
+        string_to_bool(value)
+
+
+@pytest.mark.parametrize('value', ('true', 'True', 'TRUE', 't', 'T', 'yes', 'Yes', 'YES', 'y', 'Y', '1'))
+def test_string_to_bool__all_params_true__true(value: str):
+    assert string_to_bool(value, True, True, True, True, True, True)
+
+
+@pytest.mark.parametrize('value', ('false', 'False', 'FALSE', 'f', 'F', 'no', 'No', 'NO', 'n', 'N', '0'))
+def test_string_to_bool__all_params_true__false(value: str):
+    assert not string_to_bool(value, True, True, True, True, True, True)
+
+
+@pytest.mark.parametrize('value',
+                         ('true', 'True', 'TRUE', 't', 'T', 'yes', 'Yes', 'YES', 'y', 'Y', '1',
+                          'false', 'False', 'FALSE', 'f', 'F', 'no', 'No', 'NO', 'n', 'N', '0',
+                          '', ' ', 1, True, None, 'אולי', 'None')
+                         )
+def test_string_to_bool__all_params_false__error(value: str):
+    with pytest.raises(ValueError):
+        assert string_to_bool(value, False, False, False, False, False, False)

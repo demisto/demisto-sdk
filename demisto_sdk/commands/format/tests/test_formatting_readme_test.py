@@ -55,9 +55,8 @@ class TestReadmeFormat:
     @pytest.mark.parametrize('regex_relative_url,new_url,expected_link',
                              ((['[invalid relative 2]', 'www.relative2.com', True], 'https://new.com',
                                '[invalid relative 2](https://new.com)'), (
-                                      ['<a href="www.hreftesting.com"', 'www.hreftesting.com', False],
-                                      'https://new.com',
-                                      '<a href="https://new.com"'),
+                              ['<a href="www.hreftesting.com"', 'www.hreftesting.com', False], 'https://new.com',
+                              '<a href="https://new.com"'),
                               )
                              )
     def test_replace_url_in_content(self, regex_relative_url: list, new_url: str, expected_link: str):

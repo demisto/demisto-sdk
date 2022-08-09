@@ -18,7 +18,7 @@ from demisto_sdk.commands.common.errors import (ALLOWED_IGNORE_ERRORS,
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (
     find_type, get_file_displayed_name, get_json, get_pack_name,
-    get_relative_path_from_packs_dir, get_yaml)
+    get_relative_path_from_packs_dir, get_yaml, print_warning)
 
 json = JSON_Handler()
 
@@ -165,7 +165,10 @@ class BaseValidator:
                 file_path = str(file_path)
 
             file_name = os.path.basename(file_path)
-            self.check_file_flags(file_name, file_path)
+            try:
+                self.check_file_flags(file_name, file_path)
+            except FileNotFoundError:
+                print_warning(f'File {file_path} not found, cannot check its flags (deprecated, etc)')
 
             rel_file_path = get_relative_path_from_packs_dir(file_path)
 

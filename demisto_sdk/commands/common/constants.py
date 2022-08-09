@@ -95,7 +95,7 @@ MARKETPLACE_KEY_PACK_METADATA = 'marketplaces'
 ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
 
 
-class FileType(Enum):
+class FileType(str, Enum):
     INTEGRATION = 'integration'
     SCRIPT = 'script'
     TEST_SCRIPT = 'testscript'
@@ -125,6 +125,7 @@ class FileType(Enum):
     DOC_IMAGE = 'doc_image'
     PYTHON_FILE = 'pythonfile'
     XIF_FILE = 'xiffile'
+    MODELING_RULE_SCHEMA = 'modelingruleschema'
     JAVASCRIPT_FILE = 'javascriptfile'
     POWERSHELL_FILE = 'powershellfile'
     CONF_JSON = 'confjson'
@@ -258,6 +259,7 @@ CONTENT_ENTITIES_DIRS = [
     LISTS_DIR,
     JOBS_DIR,
     WIZARDS_DIR,
+    MODELING_RULES_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -527,6 +529,13 @@ JOB_JSON_REGEX = fr'{JOBS_DIR_REGEX}\/job-([^/]+)\.json'
 
 WIZARD_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{WIZARDS_DIR}'
 WIZARD_JSON_REGEX = fr'{WIZARD_DIR_REGEX}\/wizard-([^/]+)\.json'
+
+# Modeling Rules
+MODELING_RULE_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{MODELING_RULES_DIR}'
+MODELING_RULE_PACKAGE_REGEX = fr'{MODELING_RULE_DIR_REGEX}\/([^\\/]+)'
+MODELING_RULE_YML_REGEX = fr'{MODELING_RULE_PACKAGE_REGEX}\/\2\.yml'
+MODELING_RULE_RULES_REGEX = fr'{MODELING_RULE_PACKAGE_REGEX}\/\2\.xif'
+MODELING_RULE_SCHEMA_REGEX = fr'{MODELING_RULE_PACKAGE_REGEX}\/\2\.json'
 
 RELATIVE_HREF_URL_REGEX = r'(<.*?href\s*=\s*"((?!(?:https?:\/\/)|#|(?:mailto:)).*?)")'
 RELATIVE_MARKDOWN_URL_REGEX = r'(?<![!])(\[.*?\])\(((?!(?:https?:\/\/)|#|(?:mailto:)).*?)\)'
@@ -829,6 +838,11 @@ CHECKED_TYPES_REGEXES = [
     PACKS_SCRIPT_README_REGEX,
     PACKS_SCRIPT_TEST_PLAYBOOK,
 
+    # Modeling Rules
+    MODELING_RULE_YML_REGEX,
+    MODELING_RULE_RULES_REGEX,
+    MODELING_RULE_SCHEMA_REGEX,
+
     PACKS_CLASSIFIER_JSON_REGEX,
     PACKS_CLASSIFIER_JSON_5_9_9_REGEX,
     PACKS_MAPPER_JSON_REGEX,
@@ -867,7 +881,7 @@ PACKAGE_SCRIPTS_REGEXES = [
     PACKS_SCRIPT_YML_REGEX
 ]
 
-PACKAGE_SUPPORTING_DIRECTORIES = [INTEGRATIONS_DIR, SCRIPTS_DIR]
+PACKAGE_SUPPORTING_DIRECTORIES = [INTEGRATIONS_DIR, SCRIPTS_DIR, MODELING_RULES_DIR]
 
 IGNORED_TYPES_REGEXES = [DESCRIPTION_REGEX, IMAGE_REGEX, PIPFILE_REGEX, SCHEMA_REGEX]
 
@@ -1067,6 +1081,7 @@ SCHEMA_TO_REGEX = {
                ],
 
     'report': [PACKS_REPORT_JSON_REGEX],
+    'modelingrule': [MODELING_RULE_YML_REGEX],
     'release-notes': [PACKS_RELEASE_NOTES_REGEX],
     'genericfield': JSON_ALL_GENERIC_FIELDS_REGEXES,
     'generictype': JSON_ALL_GENERIC_TYPES_REGEXES,
@@ -1472,7 +1487,7 @@ class IronBankDockers:
     API_LINK = 'https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Fdemisto%2F'
 
 
-class MarketplaceVersions(Enum):
+class MarketplaceVersions(str, Enum):
     XSOAR = 'xsoar'
     MarketplaceV2 = 'marketplacev2'
 

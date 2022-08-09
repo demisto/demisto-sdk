@@ -4,10 +4,9 @@ from typing import Optional
 
 from genericpath import exists
 
-from demisto_sdk.commands.common.constants import (DEFAULT_ID_SET_PATH,
-                                                   GENERIC_COMMANDS_NAMES,
-                                                   MP_V2_ID_SET_PATH,
+from demisto_sdk.commands.common.constants import (GENERIC_COMMANDS_NAMES,
                                                    MarketplaceVersions)
+from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PATH, MP_V2_ID_SET_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import open_id_set_file
 from demisto_sdk.commands.common.update_id_set import re_create_id_set

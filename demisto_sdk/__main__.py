@@ -14,8 +14,9 @@ from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
-    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, ENV_DEMISTO_SDK_MARKETPLACE,
+    ENV_DEMISTO_SDK_MARKETPLACE,
     MODELING_RULES_DIR, PARSING_RULES_DIR, FileType, MarketplaceVersions)
+from demisto_sdk.commands.common.content_constant_paths import ALL_PACKS_DEPENDENCIES_DEFAULT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,

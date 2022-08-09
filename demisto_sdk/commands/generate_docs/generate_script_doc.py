@@ -1,7 +1,7 @@
 import os
 import random
 
-from demisto_sdk.commands.common.constants import DEFAULT_ID_SET_PATH
+from demisto_sdk.commands.common.content_constant_paths import DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.common.tools import (get_from_version, get_yaml,
                                                open_id_set_file, print_error,
                                                print_warning)

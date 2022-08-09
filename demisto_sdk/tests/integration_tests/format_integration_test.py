@@ -201,7 +201,6 @@ def test_integration_format_configuring_conf_json_no_interactive_positive(tmp_pa
     conf_json_path = str(tmp_path / 'conf.json')
     with open(conf_json_path, 'w') as file:
         json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
-    BaseUpdateYML.CONF_PATH = conf_json_path
 
     test_playbooks = ['test1', 'test2']
     saved_file_path = str(tmp_path / os.path.basename(destination_path))
@@ -244,7 +243,6 @@ def test_integration_format_configuring_conf_json_positive(mocker,
     conf_json_path = str(tmp_path / 'conf.json')
     with open(conf_json_path, 'w') as file:
         json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
-    BaseUpdateYML.CONF_PATH = conf_json_path
     mocker.patch.object(BaseUpdate, 'set_default_from_version', return_value=None)
 
     test_playbooks = ['test1', 'test2']
@@ -290,7 +288,6 @@ def test_integration_format_configuring_conf_json_negative(tmp_path: PosixPath,
     conf_json_path = str(tmp_path / 'conf.json')
     with open(conf_json_path, 'w') as file:
         json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
-    BaseUpdateYML.CONF_PATH = conf_json_path
 
     saved_file_path = str(tmp_path / os.path.basename(destination_path))
     runner = CliRunner()

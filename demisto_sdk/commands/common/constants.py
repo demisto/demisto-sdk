@@ -3,9 +3,9 @@ from distutils.version import LooseVersion
 from enum import Enum
 from functools import reduce
 from typing import Dict, List
-from demisto_sdk.commands.common.tools import get_content_path
+from demisto_sdk.commands.common.content import Content
 
-CONTENT_PATH = get_content_path()
+CONTENT_PATH = Content.git()
 
 CAN_START_WITH_DOT_SLASH = '(?:./)?'
 NOT_TEST = '(?!Test)'

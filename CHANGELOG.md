@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue in the **format** command where fail when executed from environment without mdx server available.
 
 ## 1.7.2
 

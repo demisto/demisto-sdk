@@ -10,6 +10,17 @@ INVALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-invalid.md'
 INVALID_MD_IN_PACK = f'{git_path()}/demisto_sdk/tests/test_files/Packs/DummyPack2'
 
 
+def test_format_wit_update_docker_flag(mocker):
+    """
+    Check when run demisto-sdk format execute with -ud (update docker) from repo which does not have a mdx server,
+    (but has a node), that the run ends without any exception.
+    """
+    from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
+    from demisto_sdk.commands.format.format_module import format_manager
+    mocker.patch.object(ReadMeValidator, 'are_modules_installed_for_verify', return_value=False)
+    assert format_manager(input=f'{git_path()}/Packs/TestPack', update_docker=True) == 0
+
+
 def get_new_url_from_user_assume_yes(relative_url: list) -> Optional[str]:
     """Check if new url is as expected when using assume_yes flag"""
     readme_formatter = ReadmeFormat(INVALID_MD, assume_yes=True)
@@ -44,8 +55,9 @@ class TestReadmeFormat:
     @pytest.mark.parametrize('regex_relative_url,new_url,expected_link',
                              ((['[invalid relative 2]', 'www.relative2.com', True], 'https://new.com',
                                '[invalid relative 2](https://new.com)'), (
-                              ['<a href="www.hreftesting.com"', 'www.hreftesting.com', False], 'https://new.com',
-                              '<a href="https://new.com"'),
+                                      ['<a href="www.hreftesting.com"', 'www.hreftesting.com', False],
+                                      'https://new.com',
+                                      '<a href="https://new.com"'),
                               )
                              )
     def test_replace_url_in_content(self, regex_relative_url: list, new_url: str, expected_link: str):

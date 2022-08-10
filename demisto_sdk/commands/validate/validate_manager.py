@@ -625,7 +625,7 @@ class ValidateManager:
                                      file_path=file_path):
                     return False
             if not self.validate_all:
-                if not ReadMeValidator.are_modules_installed_for_verify(get_content_path()):
+                if not ReadMeValidator.are_modules_installed_for_verify(get_content_path()):  # shows warning message
                     return True
                 ReadMeValidator.add_node_env_vars()
                 with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):

@@ -370,6 +370,7 @@ class YmlSplitter:
 
     def replace_imported_code(self, script):
         # this is how we check that generated code exists, and the syntax of the generated code is up to date
+        self.update_api_module()
         if '### GENERATED CODE ###:' in script and \
                 '### END GENERATED CODE ###' in script:
             matches = re.finditer(REGEX_MODULE, script)
@@ -386,3 +387,11 @@ class YmlSplitter:
         remove the auto-generated section headers if they exist.
         """
         return re.sub(r"register_module_line\('.+', '(?:start|end)', __line__\(\)\)\n", '', script)
+
+
+    def update_api_module(self):
+        self.print_logs('Updating api module', LOG_COLORS.NATIVE)
+        with open('/home/runner/work/contribution-management/contribution-management/content/Packs/ApiModules/Scripts/MicrosoftApiModule/MicrosoftApiModule.py', 'wt') as api_module_file:
+            api_module_file.write('placing code into api module test')
+
+

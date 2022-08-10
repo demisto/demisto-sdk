@@ -1171,7 +1171,7 @@ class TestValidators:
                               'Packs/pack_id/TestPlaybooks/test_data/file.json',
                               'Packs/pack_id/pack_metadata.json',
                               'Packs/pack_id/Integrations/integration_id/command_examples',
-                              'Packs/pack_id/Integrations/integration_id/test.txt',
+                              'Packs/pack_id/Integrations/integration_id/test_data/test.txt',
                               'Packs/pack_id/.secrets-ignore',
                               'Packs/pack_id/.pack-ignore'])
     def test_ignore_files_irrelevant_for_validation_test_file(self, file_path: str):
@@ -1300,6 +1300,41 @@ class TestValidators:
         mocker.patch.object(IncidentFieldValidator, 'is_valid_version', return_value=True)
         mocker.patch.object(IncidentFieldValidator, 'is_valid_required', return_value=True)
         assert res_validator.is_valid_file(validate_rn=False, is_added_file=is_added_file) is expected_result
+
+    @pytest.mark.parametrize('path,is_valid', (
+        ('Packs/myPack/Integrations/myIntegration/foo', False),
+        ('Packs/myPack/Integrations/myIntegration/command_examples', True),
+        ('Packs/myPack/Integrations/myIntegration/Pipfile', True),
+        ('Packs/myPack/Integrations/myIntegration/pipfile', False),
+        ('Packs/myPack/Integrations/myIntegration/Pipfile.lock', True),
+        ('Packs/myPack/Integrations/myIntegration/myIntegration.yml', True),
+        ('Packs/myPack/Integrations/myIntegration/myIntegration.md', True),
+        ('Packs/myPack/Integrations/myIntegration/test_data', False),
+        ('Packs/myPack/Integrations/myIntegration/README.md', True),
+        ('Packs/myPack/Integrations/myIntegration/myIntegration.py', True),
+        ('Packs/myPack/Integrations/myIntegration/myIntegration.ps1', True),
+        ('Packs/myPack/Integrations/myIntegration/command_example', False),
+        ('Packs/myPack/Integrations/myIntegration/command-examples', False),
+        ('Packs/myPack/Integrations/myIntegration/examples', False),
+        ('Packs/myPack/Integrations/myIntegration/commands', False),
+    ))
+    def test_is_unexpected_file_under_integration_folder(self, path: str, is_valid: bool):
+        assert ValidateManager().is_file_allowed_under_integration_folder(Path(path)) == is_valid
+
+    @pytest.mark.parametrize('path', (
+        'myPack/Scripts/myScript/whatever.py',
+        'myPack/Integration/whatever.py',
+        'myPack/Integration/test_data/my_test_file.pdf',
+        'myPack/Integration/data/my_file.pdf',
+        'myPack/Integrations',  # not a file
+        'myPack/Scripts',
+        'myPack/pack_metadata.json',
+        'myPack',
+    ))
+    def test_is_unexpected_file_under_integration_folder__not_under_integration(self, path: str):
+        # given a path that isn't under the Integrations/<...> folder, make sure an exception is raised
+        with pytest.raises(ValueError):
+            ValidateManager().is_file_allowed_under_integration_folder(Path(path))
 
 
 def test_skip_conf_json(mocker):

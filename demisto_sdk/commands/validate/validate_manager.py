@@ -733,9 +733,29 @@ class ValidateManager:
             # This is temporarily - need to add a proper contributors validations
             return True
 
-        else:
-            return self.file_type_not_supported(file_type, file_path)
-        return True
+        elif file_type is None:
+            try:
+                return self.is_file_allowed_under_integration_folder(Path(file_path))
+            except ValueError:  # not under Integrations
+                pass
+        return self.file_type_not_supported(file_type, file_path)
+
+    @error_codes('IN157')
+    def is_file_allowed_under_integration_folder(self, path: Path):
+        """
+        Whether the file is allowed under a (single) integration folder, e.g. Integrations/someIntegration/here_be_file
+        """
+        if path.is_dir() or len(path.parents) < 3 or path.parent.parent.name != 'Integrations':
+            raise ValueError('called on a file not under an integration pack')
+
+        if path.suffix.lower() in {'.py', '.yml', '.md', '.ps1', '.js'}:
+            return True
+        if path.name in {'command_examples', 'Pipfile', 'Pipfile.lock'}:
+            return True
+
+        error_message, error_code = Errors.file_not_allowed_in_integration_folder(path)
+        if self.handle_error(error_message, error_code, file_path=self.file_path):
+            return False
 
     @error_codes('BA102')
     def file_type_not_supported(self, file_type: FileType, file_path: str):

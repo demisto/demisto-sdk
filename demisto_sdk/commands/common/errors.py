@@ -244,6 +244,7 @@ ERROR_CODE = {
     'missing_reliability_parameter': {'code': 'IN154', 'ui_applicable': False, 'related_field': 'configuration'},
     'integration_is_deprecated_and_used': {'code': 'IN155', 'ui_applicable': True, 'related_field': 'deprecated'},
     'invalid_hidden_attribute_for_param': {'code': 'IN156', 'ui_applicable': False, 'related_field': 'hidden'},
+    'file_not_allowed_in_integration_folder': {'code': 'IN157', 'ui_applicable': False, 'related_field': ''},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -1402,7 +1403,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def content_entity_version_not_match_playbook_version(
-        main_playbook: str, entities_names_and_version: str, main_playbook_version: str, content_sub_type: str
+            main_playbook: str, entities_names_and_version: str, main_playbook_version: str, content_sub_type: str
     ):
         return f"Playbook {main_playbook} with 'fromversion' {main_playbook_version} uses the following" \
                f" {content_sub_type} with an invalid 'fromversion': [{entities_names_and_version}]. " \
@@ -2490,3 +2491,10 @@ class Errors:
     def invalid_rule_name(invalid_files):
         return f"The following rule file name is invalid {invalid_files} - make sure that the rule name is " \
                f"the same as the folder containing it."
+
+    @staticmethod
+    @error_code_decorator
+    def file_not_allowed_in_integration_folder(path: Path):
+        return f'File {path.name} under an integration folder is of an unsupported type;\n' \
+               f'The supported files are code (py, ps1, js), yml, image (png), markdown (md), ' \
+               f'Pipfile, Pipfile.lock, as well as files named command_examples (without a suffix)'

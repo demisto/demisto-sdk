@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Added a check for **Validate**, failing when invalid files are placed under an integration folder.
+
+
 ## 1.7.2
 
 * Fixed an issue in the **validate** command where incident fields were not found in mappers even when they exist

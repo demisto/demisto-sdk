@@ -1403,7 +1403,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def content_entity_version_not_match_playbook_version(
-            main_playbook: str, entities_names_and_version: str, main_playbook_version: str, content_sub_type: str
+        main_playbook: str, entities_names_and_version: str, main_playbook_version: str, content_sub_type: str
     ):
         return f"Playbook {main_playbook} with 'fromversion' {main_playbook_version} uses the following" \
                f" {content_sub_type} with an invalid 'fromversion': [{entities_names_and_version}]. " \

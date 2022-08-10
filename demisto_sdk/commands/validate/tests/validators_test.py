@@ -986,7 +986,7 @@ class TestValidators:
         old_format_files = {f"{git_path()}/demisto_sdk/tests/test_files/script-valid.yml",
                             f"{git_path()}/demisto_sdk/tests/test_files/integration-test.yml"}
         assert not validate_manager.validate_no_old_format(old_format_files)
-        assert handle_error_mock.call_count == 3
+        assert handle_error_mock.call_count == 2
 
     def test_validate_no_old_format_deprecated_content(self, repo):
         """

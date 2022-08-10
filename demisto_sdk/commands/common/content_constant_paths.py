@@ -1,5 +1,6 @@
-from demisto_sdk.commands.common.tools import get_content_path
 from pathlib import Path
+
+from demisto_sdk.commands.common.tools import get_content_path
 
 CONTENT_PATH = Path(get_content_path())
 

@@ -11,8 +11,8 @@ from mock import patch
 import demisto_sdk.commands.validate.validate_manager
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
-    FILETYPE_TO_DEFAULT_FROMVERSION, PACKS_PACK_META_FILE_NAME,
-    TEST_PLAYBOOK, FileType)
+    FILETYPE_TO_DEFAULT_FROMVERSION, PACKS_PACK_META_FILE_NAME, TEST_PLAYBOOK,
+    FileType)
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil

@@ -12,8 +12,8 @@ from demisto_sdk.commands.common.constants import (
     ENTITY_NAME_SEPARATORS, EXCLUDED_DISPLAY_NAME_WORDS, FEATURE_BRANCHES,
     FROM_TO_VERSION_REGEX, GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION,
     OLDEST_SUPPORTED_VERSION, FileType)
-from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler

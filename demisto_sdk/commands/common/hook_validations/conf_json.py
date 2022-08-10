@@ -1,7 +1,6 @@
 from pathlib import Path
 
-from demisto_sdk.commands.common.constants import (API_MODULES_PACK,
-                                                   FileType)
+from demisto_sdk.commands.common.constants import API_MODULES_PACK, FileType
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import JSON_Handler

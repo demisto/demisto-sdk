@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Fixed an issue when various **demisto-sdk** commands fails when running from a **content** subdirectory.
+
 ## 1.7.2
 
 * Fixed an issue in the **validate** command where incident fields were not found in mappers even when they exist

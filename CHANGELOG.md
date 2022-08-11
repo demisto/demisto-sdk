@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Fixed an issue when various **demisto-sdk** commands fails when running from a **content** subdirectory.
+* Fixed an issue when running from a subdirectory of a content repo failed.
 
 ## 1.7.2
 

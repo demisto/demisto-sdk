@@ -2,7 +2,7 @@
 	"name": "XSOAR Demisto-SDK",
 	"dockerComposeFile": "docker-compose.yml",
 	"service": "demisto-sdk",
-	"workspaceFolder": "/workspaces/demisto-sdk/.devcontainer/demisto-sdk.code-workspace",
+	"workspaceFolder": "/workspaces/demisto-sdk",
 
 	"settings": {
 		"terminal.integrated.defaultProfile.linux": "zsh",

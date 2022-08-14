@@ -2,13 +2,13 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Upload AbuseDB",
+            "name": "Python: Debug sdk (exmample)",
             "type": "python",
             "request": "launch",
             "module": "demisto_sdk",
             "cwd": "${env:CONTENT}", // Predefine the CONTENT variable in your environment first!
             "args": [
-                "upload",
+                "lint",
                 "-i",
                 "${env:CONTENT}/Packs/AbuseDB/Integrations/AbuseDB"
             ]

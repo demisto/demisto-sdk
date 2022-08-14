@@ -8,8 +8,11 @@ services:
     build: .
     volumes:
       - ..:/workspaces/demisto-sdk:cached
-      - ${CONTENT:-../../content}:/workspaces/content:cached
+      # allow users to override the default content path
+      - ${DEMISTO_SDK_CONTENT_PATH:-../../content}:/workspaces/content:cached
+      # Mount node modules and venv directories as volumes (not from host)
       - node_modules:/workspaces/demisto-sdk/node_modules
       - venv:/workspaces/demisto-sdk/.venv
     working_dir: /workspaces/demisto-sdk
+    # per VSCode recommendation, wait 1 second
     command: /bin/sh -c "while sleep 1000; do :; done"

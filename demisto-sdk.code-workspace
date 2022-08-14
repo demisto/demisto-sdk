@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"name": "demisto-sdk",
+			"path": "."
+		},
+		{
+			"name": "content",
+			"path": "../content"
+		}
+	],
+	"settings": {"python.defaultInterpreterPath": ".venv/bin/python"}
+}
+

@@ -508,12 +508,12 @@ class ValidateManager:
         return True
 
     @error_codes('BA102,IM110')
-    def is_valid_file_type(self, file_type, file_path):
+    def is_valid_file_type(self, file_type: FileType, file_path: str):
         """
         If a file_type is unsupported, will return `False`.
         """
         if not file_type:
-            error_message, error_code = Errors.file_type_not_supported()
+            error_message, error_code = Errors.file_type_not_supported(file_type, file_path)
             if str(file_path).endswith('.png'):
                 error_message, error_code = Errors.invalid_image_name_or_location()
             if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path,
@@ -625,6 +625,8 @@ class ValidateManager:
                                      file_path=file_path):
                     return False
             if not self.validate_all:
+                if not ReadMeValidator.are_modules_installed_for_verify(get_content_path()):  # shows warning message
+                    return True
                 ReadMeValidator.add_node_env_vars()
                 with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):
                     return self.validate_readme(file_path, pack_error_ignore_list)
@@ -734,12 +736,12 @@ class ValidateManager:
             return True
 
         else:
-            return self.file_type_not_supported(file_path)
+            return self.file_type_not_supported(file_type, file_path)
         return True
 
     @error_codes('BA102')
-    def file_type_not_supported(self, file_path):
-        error_message, error_code = Errors.file_type_not_supported()
+    def file_type_not_supported(self, file_type: FileType, file_path: str):
+        error_message, error_code = Errors.file_type_not_supported(file_type, file_path)
         if self.handle_error(error_message=error_message, error_code=error_code, file_path=file_path):
             return False
         return True
@@ -1745,9 +1747,11 @@ class ValidateManager:
             return irrelevant_file_output
 
         if not file_type:
-            error_message, error_code = Errors.file_type_not_supported()
             if str(file_path).endswith('.png'):
                 error_message, error_code = Errors.invalid_image_name_or_location()
+            else:
+                error_message, error_code = Errors.file_type_not_supported(None, file_path)
+
             self.handle_error(error_message, error_code, file_path=file_path)
             return '', '', False
 

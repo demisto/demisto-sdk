@@ -159,7 +159,8 @@ class YAMLContentItemParser(ContentItemParser):
         if not yaml_path:
             raise NotAContentItem
 
-        return get_yaml(yaml_path)
+        self.path = Path(yaml_path)
+        return get_yaml(self.path.as_posix())
 
 
 class JSONContentItemParser(ContentItemParser):

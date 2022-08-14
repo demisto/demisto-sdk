@@ -75,13 +75,13 @@ RETURN count(r) AS relationships_merged
 
 IN_PACK_RELATIONSHIPS_QUERY = f"""
 UNWIND $data AS rel_data
+MATCH (pack:{ContentTypes.PACK}{{node_id: rel_data.target}})
 MATCH (content_item:{ContentTypes.BASE_CONTENT}{{
     node_id: rel_data.source_node_id,
     fromversion: rel_data.source_fromversion,
     marketplaces: rel_data.source_marketplaces
 }})
-MATCH (target:{ContentTypes.PACK}{{node_id: rel_data.target}})
-MERGE (source)-[r:{Rel.IN_PACK}]->(target)
+MERGE (content_item)-[r:{Rel.IN_PACK}]->(pack)
 RETURN count(r) AS relationships_merged
 """
 
@@ -93,8 +93,8 @@ MATCH (content_item:{ContentTypes.BASE_CONTENT}{{
     fromversion: rel_data.source_fromversion,
     marketplaces: rel_data.source_marketplaces
 }})
-MERGE (target:{ContentTypes.TEST_PLAYBOOK}{{node_id: rel_data.target}})
-MERGE (source)-[r:{Rel.TESTED_BY}]->(target)
+MERGE (tpb:{ContentTypes.TEST_PLAYBOOK}{{node_id: rel_data.target}})
+MERGE (content_item)-[r:{Rel.TESTED_BY}]->(tpb)
 RETURN count(r) AS relationships_merged
 """
 

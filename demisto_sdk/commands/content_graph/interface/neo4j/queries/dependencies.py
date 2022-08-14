@@ -1,34 +1,15 @@
 import logging
 from neo4j import Transaction
+from typing import Dict, Set
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import MarketplaceVersions, REPUTATION_COMMAND_NAMES
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query
 
-"""
-MATCH (content_item:BaseContent)
-        -[r:USES*{mandatorily: true}]->
-            (dependency:BaseContent)
-WHERE
-    "marketplacev2" IN content_item.marketplaces
-AND
-    NOT "marketplacev2" IN dependency.marketplaces
-OPTIONAL MATCH (alternative_dependency:BaseContent{node_id: dependency.node_id})
-WHERE
-    "marketplacev2" IN alternative_dependency.marketplaces
-WITH content_item, alternative_dependency
-WHERE alternative_dependency IS NULL
-SET content_item.marketplaces = REDUCE(
-    marketplaces = [], mp IN content_item.marketplaces |
-    CASE WHEN mp <> "marketplacev2" THEN marketplaces + mp ELSE marketplaces END
-)
-RETURN count(content_item) AS updated_marketplaces_count  // fix count
-"""
 
-
-
+REPUTATION_COMMANDS_NODE_IDS = [f'{ContentTypes.COMMAND}:{cmd}' for cmd in REPUTATION_COMMAND_NAMES]
+IGNORED_CONTENT_ITEMS_IN_DEPENDENCY_CALC = REPUTATION_COMMANDS_NODE_IDS
 IGNORED_PACKS_IN_DEPENDENCY_CALC = ['NonSupported', 'Base', 'ApiModules']
-
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -52,8 +33,6 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
 
     If such dependencies were found, we drop the content item from the marketplace.
     """
-    # todo: USES{mandatorily?}
-    # ignore IGNORED_PACKS_IN_DEPENDENCY_CALC?
     query = f"""
         MATCH (content_item:{ContentTypes.BASE_CONTENT})
                 -[r:{Rel.USES}*{{mandatorily: true}}]->
@@ -65,17 +44,19 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
         OPTIONAL MATCH (alternative_dependency:{ContentTypes.BASE_CONTENT}{{node_id: dependency.node_id}})
         WHERE
             "{marketplace}" IN alternative_dependency.marketplaces
-        WITH content_item, alternative_dependency
+        WITH content_item, dependency, alternative_dependency
         WHERE alternative_dependency IS NULL
         SET content_item.marketplaces = REDUCE(
             marketplaces = [], mp IN content_item.marketplaces |
             CASE WHEN mp <> "{marketplace}" THEN marketplaces + mp ELSE marketplaces END
         )
-        RETURN count(content_item) AS updated_marketplaces_count  // fix count
+        RETURN content_item.node_id AS excluded_content_item, dependency.node_id AS reason
     """
-    result = run_query(tx, query).single()
-    updated_marketplaces_count: int = result['updated_marketplaces_count']
-    logger.info(f'Removed {marketplace} from marketplaces for {updated_marketplaces_count} content items.')
+    result = run_query(tx, query)
+    outputs: Dict[str, Set[str]] = {}
+    for row in result:
+        outputs.setdefault(row['excluded_content_item'], set()).add(row['reason'])
+    logger.info(f'Removed {marketplace} from marketplaces for {len(outputs.keys())} content items.')
 
 
 def create_depends_on_relationships(tx: Transaction) -> None:
@@ -86,6 +67,7 @@ def create_depends_on_relationships(tx: Transaction) -> None:
         AND pack_a.id <> pack_b.id
         AND NOT pack_a.id IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
         AND NOT pack_b.id IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
+        AND NOT b.node_id IN {IGNORED_CONTENT_ITEMS_IN_DEPENDENCY_CALC}
         WITH r, pack_a, pack_b
         MERGE (pack_a)-[dep:DEPENDS_ON]->(pack_b)
         WITH dep, r, REDUCE(

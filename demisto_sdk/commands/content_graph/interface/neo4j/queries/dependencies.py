@@ -5,6 +5,27 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query
 
+"""
+MATCH (content_item:BaseContent)
+        -[r:USES*{mandatorily: true}]->
+            (dependency:BaseContent)
+WHERE
+    "marketplacev2" IN content_item.marketplaces
+AND
+    NOT "marketplacev2" IN dependency.marketplaces
+OPTIONAL MATCH (alternative_dependency:BaseContent{node_id: dependency.node_id})
+WHERE
+    "marketplacev2" IN alternative_dependency.marketplaces
+WITH content_item, alternative_dependency
+WHERE alternative_dependency IS NULL
+SET content_item.marketplaces = REDUCE(
+    marketplaces = [], mp IN content_item.marketplaces |
+    CASE WHEN mp <> "marketplacev2" THEN marketplaces + mp ELSE marketplaces END
+)
+RETURN count(content_item) AS updated_marketplaces_count  // fix count
+"""
+
+
 
 IGNORED_PACKS_IN_DEPENDENCY_CALC = ['NonSupported', 'Base', 'ApiModules']
 

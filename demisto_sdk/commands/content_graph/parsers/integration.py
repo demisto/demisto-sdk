@@ -12,6 +12,7 @@ class IntegrationParser(IntegrationScriptParser):
         self.script_info: Dict[str, Any] = self.yml_data.get('script', {})
         self.connect_to_commands()
         self.connect_to_dependencies()
+        self.connect_to_api_modules()
         self.connect_to_tests()
 
     @property
@@ -56,15 +57,14 @@ class IntegrationParser(IntegrationScriptParser):
         if default_incident_type := self.yml_data.get('defaultIncidentType'):
             self.add_dependency(default_incident_type, ContentTypes.INCIDENT_TYPE)
 
-        for api_module in self.get_integration_api_modules():
-            self.add_dependency(api_module, ContentTypes.SCRIPT)
-
     def get_code(self) -> str:
         if self.is_unified or self.script_info.get('script') not in ['-', '']:
             return self.script_info.get('script')
         return self.unifier.get_script_or_integration_package_data()[1]
 
-    def get_integration_api_modules(self) -> List[str]:
+    def connect_to_api_modules(self) -> List[str]:
         code = self.get_code()
         api_modules = IntegrationScriptUnifier.check_api_module_imports(code).values()
-        return list(api_modules)
+        for api_module in api_modules:
+            api_module_node_id = f'{ContentTypes.SCRIPT}:{api_module}'
+            self.add_relationship(Rel.IMPORTS, api_module_node_id)

@@ -27,10 +27,10 @@ class IndicatorFieldParser(JSONContentItemParser):
 
     def connect_to_dependencies(self) -> None:
         for associated_type in set(self.json_data.get('associatedTypes') or []):
-            self.add_dependency(associated_type, ContentTypes.INCIDENT_TYPE)
+            self.add_dependency(associated_type, ContentTypes.INCIDENT_TYPE, is_mandatory=False)
 
         for system_associated_type in set(self.json_data.get('systemAssociatedTypes') or []):
-            self.add_dependency(system_associated_type, ContentTypes.INCIDENT_TYPE)
+            self.add_dependency(system_associated_type, ContentTypes.INCIDENT_TYPE, is_mandatory=False)
 
         if script := self.json_data.get('script'):
             self.add_dependency(script, ContentTypes.SCRIPT)

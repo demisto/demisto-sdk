@@ -10,13 +10,6 @@ import logging
 
 logger = logging.getLogger('demisto-sdk')
 
-def node(variable_name: str, label: ContentTypes, **kwargs: Dict[str, Any]) -> str:
-    properties = ', '.join([
-        f'{k}: {v}' for k, v in kwargs.items()
-    ])
-    return f'({variable_name}:{label}{{{properties}}})'
-
-
 def labels_of(content_type: ContentTypes) -> str:
     return ':'.join(content_type.labels)
 

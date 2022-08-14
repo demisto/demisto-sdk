@@ -16,6 +16,7 @@ class Rel(enum.Enum):
     TESTED_BY = 'TESTED_BY'
     IN_PACK = 'IN_PACK'
     HAS_COMMAND = 'HAS_COMMAND'
+    IMPORTS = 'IMPORTS'
 
     def __str__(self):
         return self.value

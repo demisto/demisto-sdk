@@ -3,7 +3,7 @@ from neo4j import Transaction
 from typing import Any, Dict, List
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query, labels_of, node
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query, labels_of
 
 
 HAS_COMMAND_RELATIONSHIPS_QUERY = f"""
@@ -81,7 +81,7 @@ MATCH (content_item:{ContentTypes.BASE_CONTENT}{{
     marketplaces: rel_data.source_marketplaces
 }})
 MATCH (target:{ContentTypes.PACK}{{node_id: rel_data.target}})
-MATCH (source)-[r:{Rel.IN_PACK}]->(target)
+MERGE (source)-[r:{Rel.IN_PACK}]->(target)
 RETURN count(r) AS relationships_merged
 """
 

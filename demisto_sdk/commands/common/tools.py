@@ -37,7 +37,7 @@ from demisto_sdk.commands.common.constants import (
     DOC_FILES_DIR, ENV_DEMISTO_SDK_MARKETPLACE, ID_IN_COMMONFIELDS, ID_IN_ROOT,
     INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
     INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
-    MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME, MODELING_RULES_DIR,
+    MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME, MODELING_RULES_DIR, NON_LETTERS_OR_NUMBERS_PATTERN,
     OFFICIAL_CONTENT_ID_SET_PATH, PACK_METADATA_IRON_BANK_TAG,
     PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
     PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
@@ -2947,3 +2947,19 @@ def normalize_field_name(field: str) -> str:
         field (str): the incident/indicator field.
     """
     return field.replace('incident_', '').replace('indicator_', '')
+
+
+def field_to_cli_name(field_name: str) -> str:
+    """
+    Returns the CLI name of an incident/indicator field by removing non letters/numbers
+    characters and lowering capitalized letters.
+
+    Input Example:
+        field = Employee Number
+    Output:
+        employeenumber
+
+    Args:
+        field_name (str): the incident/indicator field name.
+    """
+    return re.sub(NON_LETTERS_OR_NUMBERS_PATTERN, '', field_name).lower()

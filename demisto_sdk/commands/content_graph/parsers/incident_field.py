@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Any, Dict, List
+from demisto_sdk.commands.common.tools import normalize_field_name
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes
 from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentItemParser
@@ -17,13 +18,16 @@ class IncidentFieldParser(JSONContentItemParser):
 
     def get_data(self) -> Dict[str, Any]:
         json_content_item_data = super().get_data()
-        classifier_mapper_data = {
+        normalized_id = normalize_field_name(self.content_item_id)
+        incident_field_data = {
+            'node_id': f'{self.content_type}:{normalized_id}',
+            'id': normalized_id,
             'cliName': self.json_data.get('cliName'),
             'type': self.json_data.get('type'),
             'associatedToAll': self.json_data.get('associatedToAll'),
         }
         # todo: aliases - marketplacev2
-        return json_content_item_data | classifier_mapper_data
+        return json_content_item_data | incident_field_data
 
     def connect_to_dependencies(self) -> None:
         for associated_type in set(self.json_data.get('associatedTypes') or []):

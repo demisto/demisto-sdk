@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Any, Dict, List
+from demisto_sdk.commands.common.tools import field_to_cli_name
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes
 from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentItemParser
@@ -61,14 +62,23 @@ class ClassifierMapperParser(JSONContentItemParser):
                 for fields_mapper in internal_mapping.values():
                     if isinstance(fields_mapper, dict):
                         if incident_field_simple := fields_mapper.get('simple'):
-                            self.add_dependency(incident_field_simple, ContentTypes.INCIDENT_FIELD)
+                            self.add_dependency(
+                                field_to_cli_name(incident_field_simple),
+                                ContentTypes.INCIDENT_FIELD,
+                            )
                         elif incident_field_complex := fields_mapper.get('complex', {}).get('root'):
-                            self.add_dependency(incident_field_complex, ContentTypes.INCIDENT_FIELD)
+                            self.add_dependency(
+                                field_to_cli_name(incident_field_complex),
+                                ContentTypes.INCIDENT_FIELD,
+                            )
 
             elif self.json_data.get('type') == 'mapping-incoming':
                 # all the incident fields are the keys of the mapping
                 for incident_field in internal_mapping.keys():
-                    self.add_dependency(incident_field, ContentTypes.INCIDENT_FIELD)
+                    self.add_dependency(
+                        field_to_cli_name(incident_field),
+                        ContentTypes.INCIDENT_FIELD,
+                    )
 
             for internal_mapping in internal_mapping.values():
                 if incident_field_complex := internal_mapping.get('complex', {}):

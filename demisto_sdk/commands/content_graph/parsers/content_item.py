@@ -1,9 +1,8 @@
 from abc import abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Optional, List, Union, Tuple
+from typing import Any, Dict, Optional, List, Union
 
 from demisto_sdk.commands.common.tools import (
-    get_current_repo,
     get_files_in_dir,
     get_json, get_yaml,
     get_yml_paths_in_dir
@@ -65,7 +64,6 @@ class ContentItemParser(base_content.BaseContentParser):
             'deprecated': self.deprecated,
             'fromversion': self.fromversion,
             'toversion': self.toversion,
-            'source': list(get_current_repo()),
             'file_path': self.path.as_posix(),
         }
 

@@ -26,8 +26,10 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME, VERSION_REGEX)
+from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator, error_codes)
@@ -73,7 +75,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def __init__(self, pack, pack_path=None, validate_dependencies=False, ignored_errors=None, print_as_warnings=False,
                  should_version_raise=False, id_set_path=None, suppress_print=False, private_repo=False,
-                 skip_id_set_creation=False, prev_ver='master', json_file_path=None, support=None,
+                 skip_id_set_creation=False, prev_ver=None, json_file_path=None, support=None,
                  specific_validations=None):
         """Inits the content pack validator with pack's name, pack's path, and unique files to content packs such as:
         secrets whitelist file, pack-ignore file, pack-meta file and readme file
@@ -93,9 +95,16 @@ class PackUniqueFilesValidator(BaseValidator):
         self.id_set_path = id_set_path
         self.private_repo = private_repo
         self.skip_id_set_creation = skip_id_set_creation
-        self.prev_ver = prev_ver
         self.support = support
         self.metadata_content: Dict = dict()
+
+        if not prev_ver:
+            git_util = GitUtil(repo=Content.git())
+            main_branch = git_util.handle_prev_ver()[1]
+            self.prev_ver = f'origin/{main_branch}' if not main_branch.startswith('origin') else main_branch
+        else:
+            self.prev_ver = prev_ver
+
     # error handling
 
     def _add_error(self, error: Tuple[str, str], file_path: str, warning=False, suggested_fix=None, should_print=False):

@@ -26,10 +26,8 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME, VERSION_REGEX)
-from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator, error_codes)
@@ -73,14 +71,9 @@ class PackUniqueFilesValidator(BaseValidator):
     """PackUniqueFilesValidator is designed to validate the correctness of content pack's files structure.
     Existence and validity of this files is essential."""
 
-    git_util = GitUtil(repo=Content.git())
-    main_branch = git_util.handle_prev_ver()[1]
-    if not main_branch.startswith('origin'):
-        main_branch = 'origin/' + main_branch
-
     def __init__(self, pack, pack_path=None, validate_dependencies=False, ignored_errors=None, print_as_warnings=False,
                  should_version_raise=False, id_set_path=None, suppress_print=False, private_repo=False,
-                 skip_id_set_creation=False, prev_ver=main_branch, json_file_path=None, support=None,
+                 skip_id_set_creation=False, prev_ver='master', json_file_path=None, support=None,
                  specific_validations=None):
         """Inits the content pack validator with pack's name, pack's path, and unique files to content packs such as:
         secrets whitelist file, pack-ignore file, pack-meta file and readme file
@@ -671,7 +664,7 @@ class PackUniqueFilesValidator(BaseValidator):
                 click.secho("Running on master branch - skipping price change validation", fg="yellow")
             return None
         try:
-            old_meta_file_content = current_repo.git.show(f'{self.main_branch}:{metadata_file_path}')
+            old_meta_file_content = current_repo.git.show(f'{self.prev_ver}:{metadata_file_path}')
 
         except GitCommandError as e:
             if not self.suppress_print:

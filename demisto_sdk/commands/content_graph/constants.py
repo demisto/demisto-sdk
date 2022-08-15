@@ -1,7 +1,7 @@
 
 import enum
 from pathlib import Path
-from typing import Iterator, Dict, List, Set
+from typing import Any, Dict, Iterator, List, Set
 
 
 PACKS_FOLDER = 'Packs'
@@ -116,29 +116,6 @@ class ContentTypes(enum.Enum):
             if pack_folder.is_dir() and not pack_folder.name.startswith('.'):
                 yield pack_folder
 
-    @staticmethod
-    def props_indexes(properties: List[str]) -> Dict['ContentTypes', List[str]]:
-        indexes: Dict['ContentTypes', List[str]] = {}
-        for content_type in ContentTypes:
-            if content_type != ContentTypes.COMMAND:
-                indexes[content_type] = properties
-        return indexes
 
-    @staticmethod
-    def props_uniqueness_constraints() -> Dict['ContentTypes', List[str]]:
-        return {
-            ContentTypes.COMMAND: ['id', 'node_id']
-        }
-        # constraints: Dict['ContentTypes', List[str]] = {}
-        # for content_type in ContentTypes.non_content_items():
-        #     constraints[content_type] = ['id', 'node_id']
-        # return constraints
-
-    @staticmethod
-    def props_existence_constraints() -> Dict['ContentTypes', List[str]]:
-        return {
-            # ContentTypes.PACK: ['name', 'deprecated', 'marketplaces', 'author', 'certification', 'current_version', 'categories'],
-            # ContentTypes.CONTENT_ITEM: ['name', 'deprecated', 'marketplaces', 'fromversion'],
-            # ContentTypes.INTEGRATION: ['display_name', 'type'],
-            # ContentTypes.SCRIPT: ['type'],
-        }
+RelationshipData = Dict[str, Any]
+NodeData = Dict[str, Any]

@@ -1,4 +1,3 @@
-import traceback
 from datetime import datetime
 from packaging.version import Version, parse
 from pathlib import Path

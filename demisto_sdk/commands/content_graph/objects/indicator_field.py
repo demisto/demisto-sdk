@@ -16,7 +16,7 @@ class IndicatorField(JSONContentItem):
             self.content_type = ContentTypes.INDICATOR_FIELD
             self.object_id = normalize_field_name(self.object_id)
             print(f'Parsing {self.content_type} {self.object_id}')
-            self.node_id = f'{self.content_type}:{self.object_id}'
+            self.node_id = self.get_node_id()
             self.cli_name = self.json_data.get('cliName')
             self.field_type = self.json_data.get('type')
             self.associated_to_all = self.json_data.get('associatedToAll')

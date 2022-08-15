@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-import multiprocessing
 
 import pickle
 
@@ -9,9 +8,10 @@ from typing import Any, List, Iterator, Dict
 
 from demisto_sdk.commands.content_graph.constants import PACKS_FOLDER, ContentTypes, Rel
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
-from demisto_sdk.commands.content_graph.parsers.pack import PackSubGraphCreator
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.content.content import Content
+
+from demisto_sdk.commands.content_graph.objects.repository import Repository
 
 import logging
 
@@ -51,20 +51,8 @@ class ContentGraphBuilder(ABC):
         if self.nodes and self.relationships:
             print('Skipping parsing.')
             return
-        pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
-        for pack_nodes, pack_relationships in pool.map(PackSubGraphCreator.from_path, packs_paths):
-            self.extend_graph_nodes_and_relationships(pack_nodes, pack_relationships)
-
-    def extend_graph_nodes_and_relationships(
-        self,
-        pack_nodes: Dict[ContentTypes, List[Dict[str, Any]]],
-        pack_relationships: Dict[Rel, List[Dict[str, Any]]],
-    ) -> None:
-        for content_type, parsed_data in pack_nodes.items():
-            self.nodes.setdefault(content_type, []).extend(parsed_data)
-
-        for relationship, parsed_data in pack_relationships.items():
-            self.relationships.setdefault(relationship, []).extend(parsed_data)
+        repository = Repository(packs_paths)
+        self.nodes, self.relationships = repository.nodes, repository.relationships
 
     def create_graph_from_repository(self) -> None:
         """ Parses all repository packs into nodes and relationships. """

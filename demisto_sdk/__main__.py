@@ -1670,6 +1670,7 @@ def update_release_notes(**kwargs):
                                          " used for the packs ApiModules and Base", required=False, is_flag=True)
 @click.option("-d", "--dependency", help="Find which items in a specific content pack appears as a mandatory "
                                          "dependency of the searched pack ", required=False)
+@click.option("--use-graph", help="Whether or not to use content graph", is_flag=True)
 def find_dependencies(**kwargs):
     """Find pack dependencies and update pack metadata."""
     from demisto_sdk.commands.find_dependencies.find_dependencies import \
@@ -1684,19 +1685,28 @@ def find_dependencies(**kwargs):
     get_dependent_on = kwargs.get('get_dependent_on', False)
     output_path = kwargs.get('output_path', ALL_PACKS_DEPENDENCIES_DEFAULT_PATH)
     dependency = kwargs.get('dependency', '')
+    use_graph = kwargs.get('use_graph', False)
     try:
-
-        PackDependencies.find_dependencies_manager(
-            id_set_path=str(id_set_path),
-            verbose=verbose,
-            update_pack_metadata=update_pack_metadata,
-            use_pack_metadata=use_pack_metadata,
-            input_paths=input_paths,
-            all_packs_dependencies=all_packs_dependencies,
-            get_dependent_on=get_dependent_on,
-            output_path=output_path,
-            dependency=dependency,
-        )
+        if use_graph:
+            from demisto_sdk.commands.find_dependencies.find_dependencies_v2 import \
+                PackDependencies
+            PackDependencies(
+                input=input_paths,
+                output_path=output_path,
+                marketplace=MarketplaceVersions.XSOAR,
+            ).run()
+        else:
+            PackDependencies.find_dependencies_manager(
+                id_set_path=str(id_set_path),
+                verbose=verbose,
+                update_pack_metadata=update_pack_metadata,
+                use_pack_metadata=use_pack_metadata,
+                input_paths=input_paths,
+                all_packs_dependencies=all_packs_dependencies,
+                get_dependent_on=get_dependent_on,
+                output_path=output_path,
+                dependency=dependency,
+            )
 
     except ValueError as exp:
         print_error(str(exp))

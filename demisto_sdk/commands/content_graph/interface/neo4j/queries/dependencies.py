@@ -1,5 +1,5 @@
 import logging
-from neo4j import Transaction
+from neo4j import Transaction, Result
 from typing import Dict, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions, REPUTATION_COMMAND_NAMES
@@ -12,6 +12,26 @@ IGNORED_CONTENT_ITEMS_IN_DEPENDENCY_CALC = REPUTATION_COMMANDS_NODE_IDS
 IGNORED_PACKS_IN_DEPENDENCY_CALC = ['NonSupported', 'Base', 'ApiModules']
 
 logger = logging.getLogger('demisto-sdk')
+
+def get_packs_dependencies(tx: Transaction, marketplace: MarketplaceVersions) -> Result:
+    query = f"""
+        MATCH shortestPath((p1:{ContentTypes.PACK})-[:{Rel.DEPENDS_ON}*]->(p2:{ContentTypes.PACK}))
+        WHERE id(p1) <> id(p2) RETURN p1.id as pack_id, p1.file_path as pack_path, collect(p2.id) AS dependencies
+    """
+    result = run_query(tx, query)
+    logger.info(f'Found dependencies.')
+    return result
+
+
+def get_first_level_dependencies(tx: Transaction, marketplace: MarketplaceVersions) -> Result:
+    query = f"""
+        MATCH (p1:{ContentTypes.PACK})-[r:{Rel.DEPENDS_ON}]->(p2:{ContentTypes.PACK})
+        WITH p1, collect({{dependency_id: p2.id, mandatory: r.mandatorily, display_name: p2.name}}) as dependencies
+        RETURN p1.id AS pack_id, dependencies
+    """
+    result = run_query(tx, query)
+    logger.info(f'Found first level dependencies.')
+    return result
 
 
 def create_pack_dependencies(tx: Transaction) -> None:

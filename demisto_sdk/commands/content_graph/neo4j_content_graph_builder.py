@@ -131,9 +131,10 @@ def create_content_graph(use_docker: bool = True, keep_service: bool = False) ->
         content_graph.create_graph_from_repository()
 
 
-def load_content_graph(use_docker: bool = True, keep_service: bool = False, content_graph_path: Path = None) -> None:
+def load_content_graph(use_docker: bool = True, keep_service: bool = False, content_graph_path: Path = None) -> Neo4jContentGraphInterface:
     if content_graph_path and content_graph_path.is_file():
         shutil.copy(content_graph_path, REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump')
 
-    with Neo4jContentGraphBuilder(REPO_PATH, use_docker, keep_service, load_graph=True):
+    with Neo4jContentGraphBuilder(REPO_PATH, use_docker, keep_service, load_graph=True) as content_graph_builder:
         logger.info('Content Graph was loaded')
+    return content_graph_builder.content_graph

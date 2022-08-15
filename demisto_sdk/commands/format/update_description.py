@@ -29,7 +29,7 @@ class DescriptionFormat(BaseUpdate):
                  verbose: bool = False,
                  update_docker: bool = False,
                  **kwargs):
-        super().__init__(input, output, path, from_version, no_validate, verbose=verbose, **kwargs)
+        super().__init__(input=input, output=output, path=path, from_version=from_version, no_validate=no_validate, verbose=verbose, **kwargs)
         description_type = input.replace('_description.md', '.yml')
         self.is_beta = False
         file_type = find_type(description_type)

@@ -1,19 +1,21 @@
-import json
+import logging
 import os
 import re
 from abc import abstractmethod
 from distutils.version import LooseVersion
 from typing import Optional
 
+from packaging import version
+
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, DEFAULT_CONTENT_ITEM_FROM_VERSION,
     ENTITY_NAME_SEPARATORS, EXCLUDED_DISPLAY_NAME_WORDS, FEATURE_BRANCHES,
-    GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION, OLDEST_SUPPORTED_VERSION,
-    FileType)
+    FROM_TO_VERSION_REGEX, GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION,
+    OLDEST_SUPPORTED_VERSION, FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator, error_codes)
 from demisto_sdk.commands.common.hook_validations.structure import \
@@ -23,7 +25,9 @@ from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
                                                is_test_config_match,
                                                run_command)
 
+json = JSON_Handler()
 yaml = YAML_Handler()
+logger = logging.getLogger("demisto-sdk")
 
 
 class ContentEntityValidator(BaseValidator):
@@ -53,6 +57,8 @@ class ContentEntityValidator(BaseValidator):
             self.name_does_not_contain_excluded_word(),
             self.is_there_spaces_in_the_end_of_name(),
             self.is_there_spaces_in_the_end_of_id(),
+            self.are_fromversion_and_toversion_in_correct_format(),
+            self.are_fromversion_toversion_synchronized(),
         ]
         return all(tests)
 
@@ -145,18 +151,18 @@ class ContentEntityValidator(BaseValidator):
 
     @error_codes('BA101')
     def _is_id_equals_name(self, file_type):
-        """Validate that the id of the file equals to the name.
+        """Validates that the id of a content item matches its name attribute.
          Args:
-            file_type (str): the file type. can be 'integration', 'script', 'playbook', 'dashboard', 'id'
+            file_type (str): the file type. can be 'integration', 'script', 'playbook', 'dashboard'
 
         Returns:
-            bool. Whether the file's id is equal to to its name
+            bool. Whether the id attribute is equal to the name attribute.
         """
 
-        file_id = _get_file_id(file_type, self.current_file)
+        id_ = _get_file_id(file_type, self.current_file)
         name = self.current_file.get('name', '')
-        if file_id != name:
-            error_message, error_code = Errors.id_should_equal_name(name, file_id)
+        if id_ != name:
+            error_message, error_code = Errors.id_should_equal_name(name, id_, self.file_path)
             if self.handle_error(error_message, error_code, file_path=self.file_path,
                                  suggested_fix=Errors.suggest_fix(self.file_path)):
                 return False
@@ -248,6 +254,48 @@ class ContentEntityValidator(BaseValidator):
                for feature_branch_name in FEATURE_BRANCHES) or self.file_path.endswith('reputations.json'):
             return False
 
+        return True
+
+    @error_codes('BA117')
+    def are_fromversion_and_toversion_in_correct_format(self) -> bool:
+
+        if self.file_path.endswith('.json'):
+            from_version = self.current_file.get('fromVersion', '00.00.00') or '00.00.00'
+            to_version = self.current_file.get('toVersion', '00.00.00') or '00.00.00'
+        elif self.file_path.endswith('.yml'):
+            from_version = self.current_file.get('fromversion', '00.00.00') or '00.00.00'
+            to_version = self.current_file.get('toversion', '00.00.00') or '00.00.00'
+        else:
+            raise ValueError(f'{self.file_path} is not json or yml type')
+
+        for field, name in ((from_version, 'fromversion'), (to_version, 'toversion')):
+            if not FROM_TO_VERSION_REGEX.fullmatch(field):
+                error_message, error_code = Errors.incorrect_from_to_version_format(
+                    name)
+                self.handle_error(error_message, error_code, file_path=self.file_path)
+                return False
+        return True
+
+    @error_codes('BA118')
+    def are_fromversion_toversion_synchronized(self) -> bool:
+
+        if self.file_path.endswith('.json'):
+            from_version = self.current_file.get('fromVersion', '')
+            to_version = self.current_file.get('toVersion', '')
+        elif self.file_path.endswith('.yml'):
+            from_version = self.current_file.get('fromversion', '')
+            to_version = self.current_file.get('toversion', '')
+        else:
+            raise ValueError(f'{self.file_path} is not json or yml type')
+
+        if not from_version or not to_version:
+            logger.debug(f'either not from_version or not to_version in {self.file_path}, considering them synced')
+            return True
+
+        if version.parse(to_version) < version.parse(from_version):
+            error_message, error_code = Errors.mismatching_from_to_versions()
+            self.handle_error(error_message, error_code, file_path=self.file_path)
+            return False
         return True
 
     @error_codes('BA106')

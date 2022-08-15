@@ -899,7 +899,7 @@ class Downloader:
             if pack_obj_data:
                 merge(file_data, preserved_data)
             with open(file_path_to_write, 'w') as jf:
-                json.dump(obj=file_data, fp=jf, indent=4)
+                json.dump(data=file_data, fp=jf, indent=4)
 
     @staticmethod
     def get_extracted_file_detail(file_ending: str) -> str:

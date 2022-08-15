@@ -1,3 +1,5 @@
+import shutil
+import tempfile
 from typing import Callable
 
 from wcmatch.pathlib import Path
@@ -190,6 +192,7 @@ def test_remove_gitignore_files(mocker, demisto_content):
     - Remove the ignored files from self._facts['lint_files'].
 
     """
+
     class GitMock:
         def ignored(self, files):
             return files[-1:]
@@ -200,3 +203,27 @@ def test_remove_gitignore_files(mocker, demisto_content):
     assert files_paths[-1] in runner._facts['lint_files']
     runner._remove_gitignore_files("prompt")
     assert files_paths[-1] not in runner._facts['lint_files']
+
+
+def test_linter_pack_abs_dir():
+    from demisto_sdk.commands.lint.linter import Linter
+
+    dir_path = tempfile.mkdtemp()
+    python_path = f'{dir_path}/__init__.py'
+    expected_path = dir_path
+    path_list = [python_path, dir_path]
+
+    for path in path_list:
+        linter_instance: Linter = Linter(pack_dir=Path(path),
+                                         content_repo=Path(path),
+                                         req_3=[],
+                                         req_2=[],
+                                         docker_engine=False,
+                                         docker_timeout=30
+                                         )
+
+        assert linter_instance._pack_abs_dir == Path(expected_path)
+
+        # Delete the temporary directory we created
+        if Path(path).is_dir():
+            shutil.rmtree(Path(path))

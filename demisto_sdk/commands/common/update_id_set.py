@@ -372,7 +372,7 @@ def get_integration_api_modules(file_path, data_dictionary, is_unified_integrati
     else:
         _, integration_script_code = unifier.get_script_or_integration_package_data()
 
-    return unifier.check_api_module_imports(integration_script_code)[1]
+    return list(unifier.check_api_module_imports(integration_script_code).values())
 
 
 def get_integration_data(file_path, packs: Dict[str, Dict] = None):
@@ -1960,7 +1960,8 @@ class IDSet:
         if not IDSetType.has_value(object_type):
             raise ValueError(f'Invalid IDSetType {object_type}')
 
-        self._id_set_dict.setdefault(object_type, []).append(obj) if obj not in self._id_set_dict[object_type] else None
+        if obj not in self._id_set_dict.get(object_type, {}):
+            self._id_set_dict.setdefault(object_type, []).append(obj)
 
     def add_pack_to_id_set_packs(self, object_type: IDSetType, obj_name, obj_value):
         self._id_set_dict.setdefault(object_type, {}).update({obj_name: obj_value})

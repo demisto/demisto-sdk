@@ -1,6 +1,6 @@
 import os
 from copy import deepcopy
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import pytest
 from mock import mock_open, patch
@@ -969,6 +969,32 @@ class TestIntegrationValidator:
 
         assert not validator.is_valid_integration_file_path()
 
+    @pytest.mark.parametrize('file_name', ['IntNameTest.py', 'IntNameTest_test.py'])
+    def test_invalid_py_file_names(self, repo, file_name):
+        """
+        Given
+            - An integration with invalid python file path.
+            - A Unittest with invalid python file path.
+        When
+            - running is_valid_py_file_names.
+        Then
+            - The files are invalid (the integration name is incorrect).
+        """
+
+        pack = repo.create_pack('PackName')
+
+        integration = pack.create_integration('IntName')
+        integration.create_default_integration()
+        structure_validator = StructureValidator(integration.path, predefined_scheme='integration')
+
+        python_path = integration.code.path
+        new_name = f'{python_path.rsplit("/", 1)[0]}/{file_name}'
+        os.rename(python_path, new_name)
+        with ChangeCWD(repo.path):
+            validator = IntegrationValidator(structure_validator)
+            validator.file_path = new_name
+            assert not validator.is_valid_py_file_names()
+
     def test_folder_name_without_separators(self, pack):
         """
         Given
@@ -1171,6 +1197,49 @@ class TestIntegrationValidator:
         validator = IntegrationValidator(structure)
         validator.current_file = current
         assert validator.verify_reputation_commands_has_reliability(is_modified=True) is result
+
+    @pytest.mark.parametrize('hidden_value,is_valid', (
+        (None, True),
+        (True, True),
+        (False, True),
+        ([], True),
+        ([MarketplaceVersions.XSOAR], True),
+        ([MarketplaceVersions.MarketplaceV2], True),
+        ('true', True),
+        ('false', True),
+        ('True', True),
+        ('False', True),
+        ([MarketplaceVersions.XSOAR, MarketplaceVersions.XSOAR], True),  # may be useless, but not invalid
+
+        # invalid cases
+        ('', False),
+        (42, False),
+        ('None', False),
+        ([''], False),
+        ([True], False),
+        (['true'], False),
+        (['True'], False),
+        (MarketplaceVersions.XSOAR, False),
+        ([MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2], False),
+        ('🥲', False),
+        ('Trüe', False),
+        ('TRUE', False),
+        ([MarketplaceVersions.XSOAR, None], False),
+        ([MarketplaceVersions.MarketplaceV2, None], False),
+        ([MarketplaceVersions.XSOAR, True], False),
+        ([MarketplaceVersions.XSOAR, 1], False),
+        ([MarketplaceVersions.XSOAR, '🥲'], False),
+        ([MarketplaceVersions.XSOAR, 'true'], False),
+        ([MarketplaceVersions.XSOAR, 'True'], False),
+    ))
+    def test_invalid_hidden_attributes_for_param(self, hidden_value: Any, is_valid: bool):
+        assert IntegrationValidator(
+            mock_structure(
+                None,
+                # using `longRunning` here, as the name condition is tested in test_is_valid_hidden_params()
+                {'configuration': [{'name': 'longRunning', 'hidden': hidden_value}]}
+            )
+        ).is_valid_hidden_params() == is_valid
 
 
 class TestIsFetchParamsExist:

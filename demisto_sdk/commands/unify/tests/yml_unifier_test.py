@@ -10,6 +10,7 @@ from click.testing import CliRunner
 from mock import patch
 
 from demisto_sdk.__main__ import main
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
@@ -57,6 +58,7 @@ except Exception as e:
 
 
 from MicrosoftApiModule import *  # noqa: E402
+from CrowdStrikeApiModule import *
 
 if __name__ in ["builtins", "__main__"]:
     main()
@@ -72,7 +74,7 @@ OPROXY_AUTH_TYPE = 'oproxy'
 SELF_DEPLOYED_AUTH_TYPE = 'self_deployed'
 
 
-class MicrosoftClient(BaseClient):
+class CLASSNAME(BaseClient):
 
     def __init__(self, tenant_id: str = '', auth_id: str = '', enc_key: str = '',
                  token_retrieval_url: str = '', app_name: str = '', refresh_token: str = '',
@@ -82,6 +84,11 @@ class MicrosoftClient(BaseClient):
 '''
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
+
+
+def get_dummy_module(name='MicrosoftApiModule', path=None):
+    class_name = {'MicrosoftApiModule': 'MicrosoftClient', 'CrowdStrikeApiModule': 'CrowdStrikeApiClient'}[name]
+    return DUMMY_MODULE.replace('CLASSNAME', class_name)
 
 
 def test_clean_python_code(repo):
@@ -185,7 +192,7 @@ def test_insert_description_to_yml_with_no_detailed_desc(tmp_path):
     detailed_desc.write_text('')
     unifier = IntegrationScriptUnifier(str(tmp_path))
     yml_unified, _ = unifier.insert_description_to_yml({'commonfields': {'id': 'some integration id'}}, {})
-    assert '[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/some-integration-id)'\
+    assert '[View Integration Documentation](https://xsoar.pan.dev/docs/reference/integrations/some-integration-id)' \
            == yml_unified['detaileddescription']
 
 
@@ -220,10 +227,8 @@ def test_get_integration_doc_link_negative(tmp_path):
     Given:
         - Case A: integration which does not have README in the integration dir
         - Case B: integration with empty README in the integration dir
-
     When:
         - Getting integration doc link
-
     Then:
         - Verify an empty string is returned
     """
@@ -302,30 +307,57 @@ def test_insert_image_to_yml_without_image(tmp_path):
 
 
 def test_check_api_module_imports():
-    module_import, module_name = IntegrationScriptUnifier.check_api_module_imports(DUMMY_SCRIPT)
+    """
+       Given:
+        - A dummy script with 2 import statements
 
-    assert module_import == 'from MicrosoftApiModule import *  # noqa: E402'
-    assert module_name == 'MicrosoftApiModule'
+       When:
+        - calling check_api_module_imports
+
+       Then:
+        - Recieve a dict of import to name
+       """
+    import_to_name = IntegrationScriptUnifier.check_api_module_imports(DUMMY_SCRIPT)
+    assert import_to_name == {'from MicrosoftApiModule import *  # noqa: E402': 'MicrosoftApiModule',
+                              'from CrowdStrikeApiModule import *': 'CrowdStrikeApiModule'}
 
 
-@pytest.mark.parametrize('import_name', ['from MicrosoftApiModule import *  # noqa: E402',
-                                         'from MicrosoftApiModule import *'])
-def test_insert_module_code(mocker, import_name):
-    mocker.patch.object(IntegrationScriptUnifier, '_get_api_module_code', return_value=DUMMY_MODULE)
-    module_name = 'MicrosoftApiModule'
-    module_code = f'\n### GENERATED CODE ###' \
-                  f': {import_name}\n' \
-                  f'# This code was inserted in place of an API module.\n' \
-                  f"register_module_line('MicrosoftApiModule', 'start', __line__(), wrapper=-3)\n" \
-                  f'{DUMMY_MODULE}\n' \
-                  f"register_module_line('MicrosoftApiModule', 'end', __line__(), wrapper=1)\n" \
-                  f'### END GENERATED CODE ###'
+@pytest.mark.parametrize('import_to_module', [
+    {'from MicrosoftApiModule import *  # noqa: E402': 'MicrosoftApiModule',
+     'from CrowdStrikeApiModule import *': 'CrowdStrikeApiModule'},
+    {'from MicrosoftApiModule import *': 'MicrosoftApiModule'}])
+def test_insert_module_code(mocker, import_to_module):
+    """
+       Given:
+        - Import statements and its respective module name
 
-    new_code = DUMMY_SCRIPT.replace(import_name, module_code)
+       When:
+        - calling get_generated_module_code
 
-    code = IntegrationScriptUnifier.insert_module_code(DUMMY_SCRIPT, import_name, module_name)
+       Then:
+        - Ensure the code returned contains the mocked module code
+       """
+    mocker.patch.object(IntegrationScriptUnifier, '_get_api_module_code', side_effect=get_dummy_module)
+    expected_result = DUMMY_SCRIPT
+    for import_name, module_name in import_to_module.items():
+        module_code = get_generated_module_code(import_name, module_name)
 
-    assert code == new_code
+        expected_result = expected_result.replace(import_name, module_code)
+        assert module_code in expected_result
+
+    code = IntegrationScriptUnifier.insert_module_code(DUMMY_SCRIPT, import_to_module)
+
+    assert code == expected_result
+
+
+def get_generated_module_code(import_name, api_module_name):
+    return f'\n### GENERATED CODE ###' \
+           f': {import_name}\n' \
+           f'# This code was inserted in place of an API module.\n' \
+           f"register_module_line('{api_module_name}', 'start', __line__(), wrapper=-3)\n" \
+           f'{get_dummy_module(api_module_name)}\n' \
+           f"register_module_line('{api_module_name}', 'end', __line__(), wrapper=1)\n" \
+           f'### END GENERATED CODE ###'
 
 
 def test_insert_module_code__verify_offsets(mocker):
@@ -337,12 +369,12 @@ def test_insert_module_code__verify_offsets(mocker):
     Then:
         verify the wrapper of the section line numbers are correct.
     """
-    mocker.patch.object(IntegrationScriptUnifier, '_get_api_module_code', return_value=DUMMY_MODULE)
+    mocker.patch.object(IntegrationScriptUnifier, '_get_api_module_code', return_value=get_dummy_module())
     import_name = 'from MicrosoftApiModule import *  # noqa: E402'
     before_api_import, after_api_import = DUMMY_SCRIPT.split(import_name, 1)
     module_name = 'MicrosoftApiModule'
 
-    code = IntegrationScriptUnifier.insert_module_code(DUMMY_SCRIPT, import_name, module_name)
+    code = IntegrationScriptUnifier.insert_module_code(DUMMY_SCRIPT, {import_name: module_name})
     # get only the generated ApiModule code
     code = code[len(before_api_import):-len(after_api_import)]
 
@@ -470,6 +502,48 @@ class TestMergeScriptPackageToYMLIntegration:
                                 'integration-SampleIntegPackageSanity.yml')
 
         assert expected_yml == actual_yml
+
+    @pytest.mark.parametrize('marketplace', (MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2))
+    def test_unify_integration__hidden_param(self, marketplace: MarketplaceVersions):
+        """
+        Given   an integration file with params that have different valid values for the `hidden` attribute
+        When    running unify
+        Then    make sure the list-type values are replaced with a boolean that matches the marketplace value
+                (see the update_hidden_parameters_value docstrings for more information)
+        """
+        create_test_package(
+            test_dir=self.test_dir_path,
+            package_name=self.package_name,
+            base_yml='demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackageHiddenParams.yml',
+            script_code=TEST_VALID_CODE,
+            detailed_description=TEST_VALID_DETAILED_DESCRIPTION,
+            image_file='demisto_sdk/tests/test_files/Unifier/SampleIntegPackage/SampleIntegPackage_image.png',
+        )
+
+        unifier = IntegrationScriptUnifier(input=self.export_dir_path, output=self.test_dir_path,
+                                           marketplace=marketplace)
+        yml_files = unifier.unify()
+
+        hidden_true = set()
+        hidden_false = set()
+        missing_hidden_field = set()
+
+        for param in get_yaml(yml_files[0])['configuration']:
+            # updates the three sets
+            {True: hidden_true,
+             False: hidden_false,
+             None: missing_hidden_field
+             }[param.get('hidden')].add(param['display'])
+
+        assert hidden_true.isdisjoint(hidden_false)
+        assert len(missing_hidden_field) == 5  # old params + `Should not be hidden - no hidden attribute`
+        assert len(hidden_true | hidden_false) == 5
+        assert ('Should be hidden on XSOAR only' in hidden_true) == (marketplace == MarketplaceVersions.XSOAR)
+        assert ('Should be hidden on XSIAM only' in hidden_true) == (marketplace == MarketplaceVersions.MarketplaceV2)
+        assert 'Should be hidden on both - attribute is True' in hidden_true
+        assert 'Should be hidden on both - attribute lists both marketplaces' in hidden_true
+        assert 'Should not be hidden - hidden attribute is False' in hidden_false
+        assert 'Should not be hidden - no hidden attribute' in missing_hidden_field
 
     def test_unify_integration__detailed_description_with_special_char(self):
         """
@@ -833,7 +907,8 @@ def test_unify_partner_contributed_pack(mocker, repo):
     mocker.patch.object(IntegrationScriptUnifier, 'insert_script_to_yml', return_value=(PARTNER_UNIFY, ''))
     mocker.patch.object(IntegrationScriptUnifier, 'insert_image_to_yml', return_value=(PARTNER_UNIFY, ''))
     mocker.patch.object(IntegrationScriptUnifier, 'insert_description_to_yml', return_value=(PARTNER_UNIFY, ''))
-    mocker.patch.object(IntegrationScriptUnifier, 'get_data', return_value=(PACK_METADATA_PARTNER, pack.pack_metadata.path))
+    mocker.patch.object(IntegrationScriptUnifier, 'get_data',
+                        return_value=(PACK_METADATA_PARTNER, pack.pack_metadata.path))
 
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
@@ -862,8 +937,10 @@ def test_unify_partner_contributed_pack_no_email(mocker, repo):
     pack.pack_metadata.write_json(PACK_METADATA_PARTNER_NO_EMAIL)
     mocker.patch.object(IntegrationScriptUnifier, 'insert_script_to_yml', return_value=(PARTNER_UNIFY_NO_EMAIL, ''))
     mocker.patch.object(IntegrationScriptUnifier, 'insert_image_to_yml', return_value=(PARTNER_UNIFY_NO_EMAIL, ''))
-    mocker.patch.object(IntegrationScriptUnifier, 'insert_description_to_yml', return_value=(PARTNER_UNIFY_NO_EMAIL, ''))
-    mocker.patch.object(IntegrationScriptUnifier, 'get_data', return_value=(PACK_METADATA_PARTNER_NO_EMAIL, pack.pack_metadata.path))
+    mocker.patch.object(IntegrationScriptUnifier, 'insert_description_to_yml',
+                        return_value=(PARTNER_UNIFY_NO_EMAIL, ''))
+    mocker.patch.object(IntegrationScriptUnifier, 'get_data',
+                        return_value=(PACK_METADATA_PARTNER_NO_EMAIL, pack.pack_metadata.path))
 
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
@@ -893,7 +970,8 @@ def test_unify_contributor_emails_list(mocker, repo, pack_metadata):
     integration = pack.create_integration('integration', 'bla', INTEGRATION_YAML)
     pack.pack_metadata.write_json(pack_metadata)
     mocker.patch.object(IntegrationScriptUnifier, 'insert_image_to_yml', return_value=(PARTNER_UNIFY_EMAIL_LIST, ''))
-    mocker.patch.object(IntegrationScriptUnifier, 'insert_description_to_yml', return_value=(PARTNER_UNIFY_EMAIL_LIST, ''))
+    mocker.patch.object(IntegrationScriptUnifier, 'insert_description_to_yml',
+                        return_value=(PARTNER_UNIFY_EMAIL_LIST, ''))
     mocker.patch.object(IntegrationScriptUnifier, 'get_data', return_value=(pack_metadata, pack.pack_metadata.path))
 
     with ChangeCWD(pack.repo_path):
@@ -919,7 +997,8 @@ def test_unify_partner_contributed_pack_no_url(mocker, repo):
     mocker.patch.object(IntegrationScriptUnifier, 'insert_script_to_yml', return_value=(PARTNER_UNIFY_NO_URL, ''))
     mocker.patch.object(IntegrationScriptUnifier, 'insert_image_to_yml', return_value=(PARTNER_UNIFY_NO_URL, ''))
     mocker.patch.object(IntegrationScriptUnifier, 'insert_description_to_yml', return_value=(PARTNER_UNIFY_NO_URL, ''))
-    mocker.patch.object(IntegrationScriptUnifier, 'get_data', return_value=(PACK_METADATA_PARTNER_NO_URL, pack.pack_metadata.path))
+    mocker.patch.object(IntegrationScriptUnifier, 'get_data',
+                        return_value=(PACK_METADATA_PARTNER_NO_URL, pack.pack_metadata.path))
 
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
@@ -949,7 +1028,8 @@ def test_unify_not_partner_contributed_pack(mocker, repo):
     mocker.patch.object(IntegrationScriptUnifier, 'insert_script_to_yml', return_value=(XSOAR_UNIFY, ''))
     mocker.patch.object(IntegrationScriptUnifier, 'insert_image_to_yml', return_value=(XSOAR_UNIFY, ''))
     mocker.patch.object(IntegrationScriptUnifier, 'insert_description_to_yml', return_value=(XSOAR_UNIFY, ''))
-    mocker.patch.object(IntegrationScriptUnifier, 'get_data', return_value=(PACK_METADATA_XSOAR, pack.pack_metadata.path))
+    mocker.patch.object(IntegrationScriptUnifier, 'get_data',
+                        return_value=(PACK_METADATA_XSOAR, pack.pack_metadata.path))
 
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)
@@ -978,7 +1058,8 @@ def test_unify_community_contributed(mocker, repo):
     mocker.patch.object(IntegrationScriptUnifier, 'insert_script_to_yml', return_value=(COMMUNITY_UNIFY, ''))
     mocker.patch.object(IntegrationScriptUnifier, 'insert_image_to_yml', return_value=(COMMUNITY_UNIFY, ''))
     mocker.patch.object(IntegrationScriptUnifier, 'insert_description_to_yml', return_value=(COMMUNITY_UNIFY, ''))
-    mocker.patch.object(IntegrationScriptUnifier, 'get_data', return_value=(PACK_METADATA_COMMUNITY, pack.pack_metadata.path))
+    mocker.patch.object(IntegrationScriptUnifier, 'get_data',
+                        return_value=(PACK_METADATA_COMMUNITY, pack.pack_metadata.path))
 
     with ChangeCWD(pack.repo_path):
         runner = CliRunner(mix_stderr=False)

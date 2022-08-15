@@ -865,7 +865,7 @@ class TestIntegrationValidation:
                                       "--allow-skipped"])
         assert result.exit_code == 1
         assert f"Validating {integration_path} as integration" in result.stdout
-        assert "can't be hidden. Please remove this field" in result.stdout
+        assert "[IN124] - Parameter: \"credentials\" can\'t be hidden in all marketplaces" in result.stdout
         assert result.stderr == ""
 
     def test_positive_hidden_param(self):
@@ -982,6 +982,7 @@ class TestPackValidation:
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         mocker.patch.object(IntegrationValidator, 'is_there_separators_in_names', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_docker_image_valid', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_py_file_names', return_value=True)
         mocker.patch.object(ContentEntityValidator, 'validate_readme_exists', return_value=True)
         mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_usecases',
                      return_value=[])
@@ -1201,7 +1202,7 @@ class TestClassifierValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', classifier.path], catch_exceptions=False)
-        assert 'The file type is not supported in the validate command.' in result.stdout
+        assert '[BA102] - File PackName/Classifiers/classifier-new_classifier.json' in result.stdout
         assert result.exit_code == 1
 
     def test_valid_old_classifier(self, mocker, repo):
@@ -1454,7 +1455,7 @@ class TestMapperValidation:
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
             result = runner.invoke(main, [VALIDATE_CMD, '-i', mapper.path], catch_exceptions=False)
-        assert 'The file type is not supported in the validate command.' in result.stdout
+        assert '[BA102] - File PackName/Classifiers/classifier-mapper-mapper.json is not supported' in result.stdout
         assert result.exit_code == 1
 
 

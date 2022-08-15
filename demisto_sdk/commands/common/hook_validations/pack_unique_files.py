@@ -27,6 +27,7 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
     PACKS_WHITELIST_FILE_NAME, VERSION_REGEX)
 from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -104,7 +105,7 @@ class PackUniqueFilesValidator(BaseValidator):
         self.metadata_content: Dict = dict()
     # error handling
 
-    def _add_error(self, error: Tuple[str, str], file_path: str, warning=False):
+    def _add_error(self, error: Tuple[str, str], file_path: str, warning=False, suggested_fix=None, should_print=False):
         """Adds error entry to a list under pack's name
         Returns True if added and false otherwise"""
         error_message, error_code = error
@@ -112,8 +113,10 @@ class PackUniqueFilesValidator(BaseValidator):
         if self.pack_path not in file_path:
             file_path = os.path.join(self.pack_path, file_path)
 
-        formatted_error = self.handle_error(error_message, error_code, file_path=file_path, should_print=False,
-                                            warning=warning)
+        formatted_error = self.handle_error(
+            error_message, error_code,
+            file_path=file_path, should_print=should_print, warning=warning, suggested_fix=suggested_fix
+        )
         if formatted_error:
             self._errors.append(formatted_error)
             return True
@@ -242,6 +245,16 @@ class PackUniqueFilesValidator(BaseValidator):
             return False
         return True
 
+    @error_codes('RM112')
+    def validate_pack_readme_relative_urls(self):
+        readme_file_path = os.path.join(self.pack_path, self.readme_file)
+        readme_validator = ReadMeValidator(readme_file_path, ignored_errors=self.ignored_errors, specific_validations=self.specific_validations)
+        errors = readme_validator.check_readme_relative_url_paths(is_pack_readme=True)
+        if errors:
+            self._errors.extend(errors)
+            return False
+        return True
+
     @error_codes('IM109')
     def validate_author_image_exists(self):
         if self.metadata_content.get(PACK_METADATA_SUPPORT) == 'partner':
@@ -321,6 +334,7 @@ class PackUniqueFilesValidator(BaseValidator):
             self._is_price_changed(),
             self._is_valid_support_type(),
             self.is_right_usage_of_usecase_tag(),
+            not self.should_pack_be_deprecated()
         ]):
             if self.should_version_raise:
                 return self.validate_version_bump()
@@ -711,6 +725,7 @@ class PackUniqueFilesValidator(BaseValidator):
             self.validate_pack_readme_and_pack_description()
             self.validate_pack_readme_images()
             self.validate_author_image_exists()
+            self.validate_pack_readme_relative_urls()
 
             # We only check pack dependencies for -g flag
             if self.validate_dependencies:
@@ -798,3 +813,23 @@ class PackUniqueFilesValidator(BaseValidator):
             if self._add_error((error_message, error_code), file_path=self.pack_path):
                 return False
         return True
+
+    @error_codes('PA132')
+    def should_pack_be_deprecated(self) -> bool:
+        """
+        Validates whether a pack should be deprecated
+        if all its content items (playbooks/scripts/integrations) are deprecated.
+
+        Returns:
+            bool: True if pack should be deprecated, False if it shouldn't.
+        """
+        pack = Pack(self.pack_path)
+        if pack.should_be_deprecated():
+            error_message, error_code = Errors.pack_should_be_deprecated(self.pack)
+            return self._add_error(
+                (error_message, error_code),
+                file_path=self.pack_meta_file,
+                should_print=True,
+                suggested_fix=Errors.suggest_fix(file_path=self._get_pack_file_path(self.pack_meta_file))
+            )
+        return False

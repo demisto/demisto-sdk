@@ -5,7 +5,7 @@ import io
 import os
 import re
 import shutil
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Union
 
 import click
 from inflection import dasherize, underscore
@@ -16,9 +16,8 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_IMAGE_PREFIX, INTEGRATIONS_DIR, SCRIPTS_DIR, TYPE_TO_EXTENSION,
     FileType)
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS,
-                                               MARKETPLACE_TAG_PARSER,
-                                               arg_to_list, find_type,
+from demisto_sdk.commands.common.tools import (LOG_COLORS, arg_to_list,
+                                               find_type, get_mp_tag_parser,
                                                get_pack_name, get_yaml,
                                                get_yml_paths_in_dir,
                                                print_color, print_warning,
@@ -26,7 +25,6 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS,
 from demisto_sdk.commands.unify.yaml_unifier import YAMLUnifier
 
 json = JSON_Handler()
-
 
 PACK_METADATA_PATH = 'pack_metadata.json'
 CONTRIBUTOR_DISPLAY_NAME = ' ({} Contribution)'
@@ -126,12 +124,13 @@ class IntegrationScriptUnifier(YAMLUnifier):
         return output_map
 
     def unify(self, file_name_suffix=None):
-        print("Merging package: {}".format(self.package_path))
+        print(f"Merging package: {self.package_path}")
         self._set_dest_path(file_name_suffix)
 
         script_obj = self.yml_data
 
-        if not self.is_script_package:
+        if not self.is_script_package:  # integration
+            self.update_hidden_parameters_value()  # changes self.yml_data
             script_obj = self.yml_data['script']
         script_type = TYPE_TO_EXTENSION[script_obj['type']]
 
@@ -160,6 +159,22 @@ class IntegrationScriptUnifier(YAMLUnifier):
         print_color(f'Created unified yml: {list(output_map.keys())}', LOG_COLORS.GREEN)
 
         return unifier_outputs[0]
+
+    def update_hidden_parameters_value(self) -> None:
+        """
+        The `hidden` attribute of each param may be a bool (affecting both marketplaces),
+        or a list of marketplaces where this param is hidden.
+
+        This method replaces a list with a boolean, according to the self.marketplace value.
+        Boolean values are left untouched.
+        """
+        if not self.marketplace:
+            return
+
+        for i, param in enumerate(self.yml_data.get('configuration', ())):
+            if isinstance(hidden := (param.get('hidden')), list):
+                # converts list to bool
+                self.yml_data['configuration'][i]['hidden'] = self.marketplace in hidden
 
     def add_custom_section(self, unified_yml: Dict) -> Dict:
         """
@@ -204,7 +219,7 @@ class IntegrationScriptUnifier(YAMLUnifier):
 
         detailed_description = ''
         if desc_data:
-            detailed_description = MARKETPLACE_TAG_PARSER.parse_text(FoldedScalarString(desc_data.decode('utf-8')))
+            detailed_description = get_mp_tag_parser().parse_text(FoldedScalarString(desc_data.decode('utf-8')))
 
         integration_doc_link = ''
         if '[View Integration Documentation]' not in detailed_description:
@@ -261,9 +276,8 @@ class IntegrationScriptUnifier(YAMLUnifier):
 
         # Check if the script imports an API module. If it does,
         # the API module code will be pasted in place of the import.
-        module_import, module_name = self.check_api_module_imports(script_code)
-        if module_import:
-            script_code = self.insert_module_code(script_code, module_import, module_name)
+        imports_to_names = self.check_api_module_imports(script_code)
+        script_code = self.insert_module_code(script_code, imports_to_names)
 
         if script_type == '.py':
             clean_code = self.clean_python_code(script_code)
@@ -314,7 +328,7 @@ class IntegrationScriptUnifier(YAMLUnifier):
         return yml_path, code
 
     @staticmethod
-    def check_api_module_imports(script_code: str) -> Tuple[str, str]:
+    def check_api_module_imports(script_code: str) -> Dict[str, str]:
         """
         Checks integration code for API module imports
         :param script_code: The integration code
@@ -324,35 +338,35 @@ class IntegrationScriptUnifier(YAMLUnifier):
         # General regex to find API module imports, for example: "from MicrosoftApiModule import *  # noqa: E402"
         module_regex = r'from ([\w\d]+ApiModule) import \*(?:  # noqa: E402)?'
 
-        module_match = re.search(module_regex, script_code)
-        if module_match:
-            return module_match.group(), module_match.group(1)
+        module_matches = re.finditer(module_regex, script_code)
 
-        return '', ''
+        return {module_match.group(): module_match.group(1) for module_match in module_matches}
 
     @staticmethod
-    def insert_module_code(script_code: str, module_import: str, module_name: str) -> str:
+    def insert_module_code(script_code: str, import_to_name: Dict[str, str]) -> str:
         """
         Inserts API module in place of an import to the module according to the module name
         :param script_code: The integration code
-        :param module_import: The module import string to replace
-        :param module_name: The module name
+        :param import_to_name: A dictionary where the keys are The module import string to replace
+        and the values are The module name
         :return: The integration script with the module code appended in place of the import
         """
+        for module_import, module_name in import_to_name.items():
 
-        module_path = os.path.join('./Packs', 'ApiModules', 'Scripts', module_name, module_name + '.py')
-        module_code = IntegrationScriptUnifier._get_api_module_code(module_name, module_path)
+            module_path = os.path.join('./Packs', 'ApiModules', 'Scripts', module_name, module_name + '.py')
+            module_code = IntegrationScriptUnifier._get_api_module_code(module_name, module_path)
 
-        # the wrapper numbers represents the number of generated lines added
-        # before (negative) or after (positive) the registration line
-        module_code = f'\n### GENERATED CODE ###: {module_import}\n' \
-                      f'# This code was inserted in place of an API module.\n' \
-                      f"register_module_line('{module_name}', 'start', __line__(), wrapper=-3)\n" \
-                      f'{module_code}\n' \
-                      f"register_module_line('{module_name}', 'end', __line__(), wrapper=1)\n" \
-                      f'### END GENERATED CODE ###'
+            # the wrapper numbers represents the number of generated lines added
+            # before (negative) or after (positive) the registration line
+            module_code = f'\n### GENERATED CODE ###: {module_import}\n' \
+                          f'# This code was inserted in place of an API module.\n' \
+                          f"register_module_line('{module_name}', 'start', __line__(), wrapper=-3)\n" \
+                          f'{module_code}\n' \
+                          f"register_module_line('{module_name}', 'end', __line__(), wrapper=1)\n" \
+                          f'### END GENERATED CODE ###'
 
-        return script_code.replace(module_import, module_code)
+            script_code = script_code.replace(module_import, module_code)
+        return script_code
 
     @staticmethod
     def _get_api_module_code(module_name, module_path):

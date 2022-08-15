@@ -415,7 +415,7 @@ class TestIntegrations:
                          'xdr-get-create-distribution-status',
                          'xdr-get-audit-management-logs',
                          'xdr-get-audit-agent-reports'],
-            "api_modules": "HTTPFeedApiModule",
+            "api_modules": ["HTTPFeedApiModule"],
             "classifiers": "dummy-classifier",
             "incident_types": "dummy-incident-type",
             "indicator_fields": "CommonTypes",
@@ -451,7 +451,7 @@ class TestIntegrations:
                          'xdr-get-create-distribution-status',
                          'xdr-get-audit-management-logs',
                          'xdr-get-audit-agent-reports'],
-            "api_modules": "HTTPFeedApiModule",
+            "api_modules": ["HTTPFeedApiModule"],
             "classifiers": "dummy-classifier",
             "incident_types": "dummy-incident-type",
             "indicator_fields": "CommonTypes",
@@ -2004,7 +2004,6 @@ class TestDashboard:
                 "widget": {
                     "category": "",
                     "dataType": "scripts",
-                    "fromServerVersion": "",
                     "id": "dummy_widget",
                     "name": "dummy_dashboard",
                     "query": "dummy_script",
@@ -2029,7 +2028,6 @@ class TestDashboard:
                     "id": "dummy_widget",
                     "name": "dummy_dashboard",
                     "packID": "",
-                    "toServerVersion": "",
                     "widgetType": "table"
                 },
             }

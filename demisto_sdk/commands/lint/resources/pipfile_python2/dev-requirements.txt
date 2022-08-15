@@ -1,0 +1,13 @@
+pylint==1.9.5
+pytest==4.6.11
+pytest-mock==2.0.0
+requests-mock==1.9.3
+pytest-xdist==1.34.0
+pytest-json==0.4.0
+pytest-cov==2.12.1
+pytest-xdist==1.34.0
+pytest-datadir-ng==1.1.1
+freezegun==0.3.4
+flake8==3.9.2
+vulture==1.6
+lazy-object-proxy==1.6.0

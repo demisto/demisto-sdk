@@ -29,9 +29,11 @@ from demisto_sdk.commands.common.hook_validations.docker import \
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.tools import (
     _get_file_id, compare_context_path_in_yml_and_readme,
+    extract_deprecated_command_names_from_yml,
     extract_none_deprecated_command_names_from_yml, get_core_pack_list,
     get_file_version_suffix_if_exists, get_files_in_dir, get_item_marketplaces,
-    get_pack_name, is_iron_bank_pack, print_error, server_version_compare)
+    get_pack_name, is_iron_bank_pack, print_error, server_version_compare,
+    string_to_bool)
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -47,10 +49,11 @@ class IntegrationValidator(ContentEntityValidator):
     ALLOWED_HIDDEN_PARAMS = {'longRunning', 'feedIncremental', 'feedReputation'}
 
     def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
-                 json_file_path=None, validate_all=False):
+                 json_file_path=None, validate_all=False, deprecation_validator=None):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          json_file_path=json_file_path, skip_docker_check=skip_docker_check)
         self.validate_all = validate_all
+        self.deprecation_validator = deprecation_validator
 
     @error_codes('BA100')
     def is_valid_version(self):
@@ -115,6 +118,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_valid_parameter_url_default_value(),
             self.is_mapping_fields_command_exist(),
             self.is_valid_integration_file_path(),
+            self.is_valid_py_file_names(),
             self.has_no_duplicate_params(),
             self.has_no_duplicate_args(),
             self.is_there_separators_in_names(),
@@ -149,6 +153,7 @@ class IntegrationValidator(ContentEntityValidator):
             self.is_context_correct_in_readme(),
             self.verify_yml_commands_match_readme(is_modified),
             self.verify_reputation_commands_has_reliability(is_modified),
+            self.is_integration_deprecated_and_used()
         ]
 
         if check_is_unskipped:
@@ -1117,24 +1122,56 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
-    @error_codes('IN124')
+    @error_codes('IN124,IN156')
     def is_valid_hidden_params(self) -> bool:
         """
         Verify there are no non-allowed hidden integration parameters.
+        This is a workaround as pykwalify schemas do not allow multiple types
+         (e.g. equivalent for Union[list[str] | bool]).
+
+        See update_hidden_parameters_value for the allowed values the hidden attribute.
+
         Returns:
             bool. True if there aren't non-allowed hidden parameters. False otherwise.
         """
-        ans = True
-        conf = self.current_file.get('configuration', [])
-        for int_parameter in conf:
-            is_param_hidden = int_parameter.get('hidden')
-            param_name = int_parameter.get('name')
-            if is_param_hidden and param_name not in self.ALLOWED_HIDDEN_PARAMS:
-                error_message, error_code = Errors.found_hidden_param(param_name)
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    ans = False
+        def is_str_bool(input_: str):
+            try:
+                string_to_bool(input_)
+                return True
+            except ValueError:
+                return False
 
-        return ans
+        valid = True
+
+        for param in self.current_file.get('configuration', ()):
+            name = param.get('name', '')
+            hidden = param.get('hidden')
+
+            invalid_type = not isinstance(hidden, (type(None), bool, list, str))
+            invalid_string = isinstance(hidden, str) and not is_str_bool(hidden)
+
+            if invalid_type or invalid_string:
+                message, code = Errors.invalid_hidden_attribute_for_param(name, hidden)
+                if self.handle_error(message, code, self.file_path):
+                    valid = False
+
+            is_true = (hidden is True) or (is_str_bool(hidden) and string_to_bool(hidden))
+            invalid_bool = is_true and name not in self.ALLOWED_HIDDEN_PARAMS
+            hidden_in_all_marketplaces = isinstance(hidden, list) and set(hidden) == set(MarketplaceVersions)
+
+            if invalid_bool or hidden_in_all_marketplaces:
+                error_message, error_code = Errors.param_not_allowed_to_hide(name)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    valid = False
+
+            elif isinstance(hidden, list) and (invalid := set(hidden).difference(MarketplaceVersions)):
+                # if the value is a list, all its values must be marketplace names
+                joined_marketplaces = ', '.join(map(str, invalid))
+                message, code = Errors.invalid_hidden_attribute_for_param(name, joined_marketplaces)
+                if self.handle_error(message, code, self.file_path):
+                    valid = False
+
+        return valid
 
     def is_valid_image(self) -> bool:
         """Verifies integration image/logo is valid.
@@ -1254,12 +1291,39 @@ class IntegrationValidator(ContentEntityValidator):
                     return False
 
         elif integration_file != integrations_folder:
-            valid_integration_file = integration_file.replace('-', '').replace('_', '')
+            valid_integration_name = integration_file.replace('-', '').replace('_', '')
 
-            if valid_integration_file.lower() != integrations_folder.lower():
+            if valid_integration_name != integrations_folder:
                 error_message, error_code = Errors.is_valid_integration_file_path_in_folder(integration_file)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
+
+        return True
+
+    @error_codes('IN137')
+    def is_valid_py_file_names(self):
+        # Gets the all integration .py files from the integration folder.
+        excluded_files = ['demistomock.py', 'conftest.py', 'CommonServerPython.py', 'CommonServerUserPython.py',
+                          '.vulture_whitelist.py']
+        files_to_check = get_files_in_dir(os.path.dirname(self.file_path), ['py'], False)
+        invalid_files = []
+        integrations_folder = os.path.basename(os.path.dirname(self.file_path))
+
+        for file_path in files_to_check:
+            file_name = os.path.basename(file_path)
+            if file_name not in excluded_files:
+                # The unittest has _test.py suffix whereas the integration only has the .py suffix
+                splitter = '_' if file_name.endswith('_test.py') else '.'
+                base_name = file_name.rsplit(splitter, 1)[0]
+
+                if integrations_folder != base_name:
+                    invalid_files.append(file_name)
+
+        if invalid_files:
+            error_message, error_code = Errors.is_valid_integration_file_path_in_folder(invalid_files)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
 
         return True
 
@@ -1670,3 +1734,30 @@ class IntegrationValidator(ContentEntityValidator):
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
         return True
+
+    @error_codes('IN155')
+    def is_integration_deprecated_and_used(self):
+        """
+        Checks if there are commands that are deprecated and is used in other none-deprcated scripts / playbooks.
+
+        Return:
+            bool: False if there are deprecated commands that are used in any none-deprcated scripts / playbooks.
+            True otherwise.
+        """
+        deprecated_commands_list = []
+        is_valid = True
+
+        if self.current_file.get("deprecated"):
+            deprecated_commands_list = [command.get('name') for command in self.current_file.get('script', {}).get('commands', [])]
+        else:
+            deprecated_commands_list = extract_deprecated_command_names_from_yml(self.current_file)
+
+        if deprecated_commands_list:
+            integration_id = self.current_file.get("commonfields", {}).get("id", "")
+            used_commands_dict = self.deprecation_validator.validate_integartion_commands_deprecation(deprecated_commands_list, integration_id)
+            if used_commands_dict:
+                error_message, error_code = Errors.integration_is_deprecated_and_used(self.current_file.get("name"), used_commands_dict)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    is_valid = False
+
+        return is_valid

@@ -13,7 +13,6 @@ import docker.models.containers
 import git
 import requests.exceptions
 import urllib3.exceptions
-from filelock import FileLock
 from packaging.version import parse
 from wcmatch.pathlib import NEGATE, Path
 
@@ -28,7 +27,8 @@ from demisto_sdk.commands.lint.commands_builder import (
     build_bandit_command, build_flake8_command, build_mypy_command,
     build_pwsh_analyze_command, build_pwsh_test_command, build_pylint_command,
     build_pytest_command, build_vulture_command, build_xsoar_linter_command)
-from demisto_sdk.commands.lint.docker_helper import Docker
+from demisto_sdk.commands.lint.docker_helper import (Docker,
+                                                     init_global_docker_client)
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, RERUN, RL,
                                                SUCCESS, WARNING,
                                                add_tmp_lint_files,
@@ -66,12 +66,15 @@ class Linter:
         self._req_3 = req_3
         self._req_2 = req_2
         self._content_repo = content_repo
-        self._pack_abs_dir = Path(pack_dir)
+
+        # For covering the case when a path file is sent instead of a directory
+        self._pack_abs_dir = pack_dir if pack_dir.is_dir() else pack_dir.parent
+
         self._pack_name = None
         self.docker_timeout = docker_timeout
         # Docker client init
         if docker_engine:
-            self._docker_client: docker.DockerClient = docker.from_env(timeout=docker_timeout)
+            self._docker_client: docker.DockerClient = init_global_docker_client(timeout=docker_timeout, log_prompt='Linter')
             self._docker_hub_login = self._docker_login()
         # Facts gathered regarding pack lint and test
         self._facts: Dict[str, Any] = {
@@ -164,11 +167,9 @@ class Linter:
                                     pack_type=self._pkg_lint_status["pack_type"]):
                 # Run lint check on host - flake8, bandit, mypy
                 if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
-                    self._run_lint_in_host(no_flake8=no_flake8,
-                                           no_bandit=no_bandit,
+                    self._run_lint_in_host(no_bandit=no_bandit,
                                            no_mypy=no_mypy,
-                                           no_vulture=no_vulture,
-                                           no_xsoar_linter=no_xsoar_linter)
+                                           no_xsoar_linter=no_xsoar_linter,)
 
                 # Run lint and test check on pack docker image
                 if self._facts["docker_engine"]:
@@ -178,7 +179,10 @@ class Linter:
                                                    no_pwsh_test=no_pwsh_test,
                                                    keep_container=keep_container,
                                                    test_xml=test_xml,
-                                                   no_coverage=no_coverage)
+                                                   no_coverage=no_coverage,
+                                                   no_vulture=no_vulture,
+                                                   no_flake8=no_flake8,
+                                                   )
         except Exception as ex:
             err = f'{self._pack_abs_dir}: Unexpected fatal exception: {str(ex)}'
             logger.error(f"{err}. Traceback: {traceback.format_exc()}")
@@ -202,7 +206,6 @@ class Linter:
         logger.info(f"{log_prompt} - Using yaml file {self._yml_file}")
         # Parsing pack yaml - in order to verify if check needed
         try:
-
             script_obj: Dict = {}
             yml_obj: Dict = YAML_Handler().load(self._yml_file)
             if isinstance(yml_obj, dict):
@@ -224,6 +227,8 @@ class Linter:
         if self._facts["docker_engine"]:
             logger.info(f'{log_prompt} - Collecting all docker images to pull')
             self._facts["images"] = [[image, -1] for image in get_all_docker_images(script_obj=script_obj)]
+            if os.getenv('GITLAB_CI', False):
+                self._facts["images"] = [[f'docker-io.art.code.pan.run/{image[0]}', -1] for image in self._facts["images"]]
             # Gather environment variables for docker execution
             self._facts["env_vars"] = {
                 "CI": os.getenv("CI", False),
@@ -298,7 +303,17 @@ class Linter:
         # Remove files that are in gitignore
 
         self._split_lint_files()
+
+        self._linter_to_commands()
+
         return False
+
+    def _linter_to_commands(self):
+        self._facts['lint_to_commands'] = {
+            'pylint': build_pylint_command(self._facts["lint_files"], docker_version=self._facts.get('python_version')),
+            'flake8': build_flake8_command(self._facts['lint_files'] + self._facts['lint_unittest_files']),
+            'vulture': build_vulture_command(self._facts['lint_files'], self._pack_abs_dir)
+        }
 
     def _remove_gitignore_files(self, log_prompt: str) -> None:
         """
@@ -330,7 +345,7 @@ class Linter:
                 self._facts["lint_files"].remove(lint_file)
 
     @timer(group_name='lint')
-    def _run_lint_in_host(self, no_flake8: bool, no_bandit: bool, no_mypy: bool, no_vulture: bool,
+    def _run_lint_in_host(self, no_bandit: bool, no_mypy: bool,
                           no_xsoar_linter: bool):
         """ Run lint check on host
 
@@ -342,22 +357,10 @@ class Linter:
         """
         log_prompt = f'{self._pack_name} - Run Lint In Host'
         logger.info(f'{log_prompt} - Started')
-        warning = []
-        error = []
-        other = []
-        exit_code: int = 0
-        for lint_check in ["flake8", "XSOAR_linter", "bandit", "mypy", "vulture"]:
+        exit_code: int = SUCCESS
+        for lint_check in ["XSOAR_linter", "bandit", "mypy"]:
             exit_code = SUCCESS
             output = ""
-            if self._facts["lint_files"] or self._facts["lint_unittest_files"]:
-                if lint_check == "flake8" and not no_flake8:
-                    flake8_lint_files = copy.deepcopy(self._facts["lint_files"])
-                    # if there are unittest.py then we would run flake8 on them too.
-                    if self._facts['lint_unittest_files']:
-                        flake8_lint_files.extend(self._facts['lint_unittest_files'])
-                    exit_code, output = self._run_flake8(py_num=self._facts["python_version"],
-                                                         lint_files=flake8_lint_files)
-
             if self._facts["lint_files"]:
                 if lint_check == "XSOAR_linter" and not no_xsoar_linter:
                     exit_code, output = self._run_xsoar_linter(py_num=self._facts["python_version"],
@@ -368,55 +371,25 @@ class Linter:
                 elif lint_check == "mypy" and not no_mypy:
                     exit_code, output = self._run_mypy(py_num=self._facts["python_version"],
                                                        lint_files=self._facts["lint_files"])
-                elif lint_check == "vulture" and not no_vulture:
-                    exit_code, output = self._run_vulture(py_num=self._facts["python_version"],
-                                                          lint_files=self._facts["lint_files"])
 
-            # check for any exit code other than 0
-            if exit_code:
-                error, warning, other = split_warnings_errors(output)
-            if exit_code and warning:
-                self._pkg_lint_status["warning_code"] |= EXIT_CODES[lint_check]
-                self._pkg_lint_status[f"{lint_check}_warnings"] = "\n".join(warning)
-            if exit_code & FAIL:
-                self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
-                # if the error were extracted correctly as they start with E
-                if error:
-                    self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(error)
-                # if there were errors but they do not start with E
-                else:
-                    self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
+            self._handle_lint_results(exit_code, lint_check, output)
         logger.info(f'{log_prompt} - Finished successfully')
 
-    @timer(group_name='lint')
-    def _run_flake8(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
-        """ Runs flake8 in pack dir
-
-        Args:
-            py_num(str): The python version in use
-            lint_files(List[Path]): file to perform lint
-
-        Returns:
-           int:  0 on successful else 1, errors
-           str: Bandit errors
-        """
-        log_prompt = f"{self._pack_name} - Flake8"
-        logger.info(f"{log_prompt} - Start")
-        stdout, stderr, exit_code = run_command_os(command=build_flake8_command(lint_files, py_num),
-                                                   cwd=self._content_repo)
-        logger.debug(f"{log_prompt} - Finished, exit-code: {exit_code}")
-        logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
-        logger.debug(f"{log_prompt} - Finished, stderr: {RL if stderr else ''}{stderr}")
-        if stderr or exit_code:
-            logger.error(f"{log_prompt} - Finished, errors found")
-            if stderr:
-                return FAIL, stderr
+    def _handle_lint_results(self, exit_code, lint_check, output):
+        # check for any exit code other than 0
+        if exit_code:
+            error, warning, other = split_warnings_errors(output)
+        if exit_code and warning:
+            self._pkg_lint_status["warning_code"] |= EXIT_CODES[lint_check]
+            self._pkg_lint_status[f"{lint_check}_warnings"] = "\n".join(warning)
+        if exit_code & FAIL:
+            self._pkg_lint_status["exit_code"] |= EXIT_CODES[lint_check]
+            # if the error were extracted correctly as they start with E
+            if error:
+                self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(error)
+                # if there were errors but they do not start with E
             else:
-                return FAIL, stdout
-
-        logger.info(f"{log_prompt} - Successfully finished")
-
-        return SUCCESS, ""
+                self._pkg_lint_status[f"{lint_check}_errors"] = "\n".join(other)
 
     @timer(group_name='lint')
     def _run_xsoar_linter(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
@@ -451,7 +424,7 @@ class Linter:
             myenv['commands'] = ','.join([str(elem) for elem in self._facts['commands']]) \
                 if self._facts['commands'] else ''
             stdout, stderr, exit_code = run_command_os(
-                command=build_xsoar_linter_command(lint_files, py_num, self._facts.get('support_level', 'base')),
+                command=build_xsoar_linter_command(lint_files, self._facts.get('support_level', 'base')),
                 cwd=self._pack_abs_dir, env=myenv)
         if exit_code & FAIL_PYLINT:
             logger.error(f"{log_prompt} - Finished, errors found")
@@ -543,40 +516,8 @@ class Linter:
         return SUCCESS, ""
 
     @timer(group_name='lint')
-    def _run_vulture(self, py_num: str, lint_files: List[Path]) -> Tuple[int, str]:
-        """ Run mypy in pack dir
-
-        Args:
-            py_num(str): The python version in use
-            lint_files(List[Path]): file to perform lint
-
-        Returns:
-           int: 0 on successful else 1, errors
-           str: Vulture errors
-        """
-        log_prompt = f"{self._pack_name} - Vulture"
-        logger.info(f"{log_prompt} - Start")
-        stdout, stderr, exit_code = run_command_os(command=build_vulture_command(files=lint_files,
-                                                                                 pack_path=self._pack_abs_dir,
-                                                                                 py_num=py_num),
-                                                   cwd=self._pack_abs_dir)
-        logger.debug(f"{log_prompt} - Finished, exit-code: {exit_code}")
-        logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
-        logger.debug(f"{log_prompt} - Finished, stderr: {RL if stderr else ''}{stderr}")
-        if stderr or exit_code:
-            logger.error(f"{log_prompt} - Finished, errors found")
-            if stderr:
-                return FAIL, stderr
-            else:
-                return FAIL, stdout
-
-        logger.info(f"{log_prompt} - Successfully finished")
-
-        return SUCCESS, ""
-
-    @timer(group_name='lint')
     def _run_lint_on_docker_image(self, no_pylint: bool, no_test: bool, no_pwsh_analyze: bool, no_pwsh_test: bool,
-                                  keep_container: bool, test_xml: str, no_coverage: bool):
+                                  keep_container: bool, test_xml: str, no_coverage: bool, no_flake8: bool, no_vulture: bool):
         """ Run lint check on docker image
 
         Args:
@@ -613,14 +554,23 @@ class Linter:
 
             if image_id and not errors:
                 # Set image creation status
-                for check in ["pylint", "pytest", "pwsh_analyze", "pwsh_test"]:
+                for check in ["pylint", "pytest", "pwsh_analyze", "pwsh_test", "flake8", "vulture"]:
                     exit_code = SUCCESS
                     output = ""
                     for trial in range(2):
                         if self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
+                            if not no_flake8 and check == 'flake8' and (self._facts['lint_files'] or self._facts['lint_unittest_files']):
+                                exit_code, output = self._docker_run_linter(linter=check,
+                                                                            test_image=image_id,
+                                                                            keep_container=keep_container)
+                            if not no_vulture and check == 'vulture' and self._facts['lint_files']:
+                                exit_code, output = self._docker_run_linter(linter=check,
+                                                                            test_image=image_id,
+                                                                            keep_container=keep_container)
                             # Perform pylint
                             if not no_pylint and check == "pylint" and self._facts["lint_files"]:
-                                exit_code, output = self._docker_run_pylint(test_image=image_id,
+                                exit_code, output = self._docker_run_linter(linter=check,
+                                                                            test_image=image_id,
                                                                             keep_container=keep_container)
                             # Perform pytest
                             elif not no_test and self._facts["test"] and check == "pytest":
@@ -642,8 +592,11 @@ class Linter:
                         # But it failing in second time it will count as test failure.
                         if (exit_code == RERUN and trial == 1) or exit_code == FAIL or exit_code == SUCCESS:
                             if exit_code in [RERUN, FAIL]:
-                                self._pkg_lint_status["exit_code"] |= EXIT_CODES[check]
-                                status[f"{check}_errors"] = output
+                                if check in {'flake8', 'vulture'}:
+                                    self._handle_lint_results(exit_code, check, output)
+                                else:
+                                    self._pkg_lint_status["exit_code"] |= EXIT_CODES[check]
+                                    status[f"{check}_errors"] = output
                             break
             else:
                 status["image_errors"] = str(errors)
@@ -665,13 +618,15 @@ class Linter:
         """
         docker_user = os.getenv('DOCKERHUB_USER')
         docker_pass = os.getenv('DOCKERHUB_PASSWORD')
-        try:
-            self._docker_client.login(username=docker_user,
-                                      password=docker_pass,
-                                      registry="https://index.docker.io/v1")
-            return self._docker_client.ping()
-        except docker.errors.APIError:
-            return False
+        if docker_user and docker_pass:
+            try:
+                self._docker_client.login(username=docker_user,
+                                          password=docker_pass,
+                                          registry="https://index.docker.io/v1")
+                return self._docker_client.ping()
+            except docker.errors.APIError:
+                return False
+        return False
 
     @timer(group_name='lint')
     def _docker_image_create(self, docker_base_image: List[Any]) -> Tuple[str, str]:
@@ -703,7 +658,7 @@ class Linter:
         # Trying to pull image based on dockerfile hash, will check if something changed
         errors = ""
         identifier = hashlib.md5("\n".join(sorted(pip_requirements)).encode("utf-8")).hexdigest()
-        test_image_name = f'devtest{docker_base_image[0]}-{identifier}'
+        test_image_name = f'{docker_base_image[0].replace("demisto", "devtestdemisto")}-{identifier}'
         test_image = None
         try:
             logger.info(f"{log_prompt} - Trying to pull existing image {test_image_name}")
@@ -722,8 +677,9 @@ class Linter:
                 if self._docker_hub_login:
                     for _ in range(2):
                         try:
-                            self._docker_client.images.push(test_image_name)
-                            logger.info(f"{log_prompt} - Image {test_image_name} pushed to repository")
+                            test_image_name_to_push = test_image_name.replace('docker-io.art.code.pan.run/', '')
+                            self._docker_client.images.push(test_image_name_to_push)
+                            logger.info(f"{log_prompt} - Image {test_image_name_to_push} pushed to repository")
                             break
                         except (requests.exceptions.ConnectionError, urllib3.exceptions.ReadTimeoutError,
                                 requests.exceptions.ReadTimeout):
@@ -745,21 +701,10 @@ class Linter:
             if platform.system() != 'Darwin' or 'Connection broken' not in str(err):
                 raise
 
-    @timer(group_name='lint')
-    def _docker_run_pylint(self, test_image: str, keep_container: bool) -> Tuple[int, str]:
-        """ Run Pylint in created test image
-
-        Args:
-            test_image(str): test image id/name
-            keep_container(bool): True if to keep container after execution finished
-
-        Returns:
-            int: 0 on successful, errors 1, need to retry 2
-            str: Container log
-        """
-        log_prompt = f'{self._pack_name} - Pylint - Image {test_image}'
+    def _docker_run_linter(self, linter: str, test_image: str, keep_container: bool) -> Tuple[int, str]:
+        log_prompt = f'{self._pack_name} - {linter} - Image {test_image}'
         logger.info(f"{log_prompt} - Start")
-        container_name = f"{self._pack_name}-pylint"
+        container_name = f"{self._pack_name}-{linter}"
         # Check if previous run left container a live if it do, we remove it
         self._docker_remove_container(container_name)
 
@@ -770,10 +715,7 @@ class Linter:
             container: docker.models.containers.Container = Docker.create_container(
                 name=container_name,
                 image=test_image,
-                command=[
-                    build_pylint_command(
-                        self._facts["lint_files"], docker_version=self._facts.get('python_version'))
-                ],
+                command=[self._facts['lint_to_commands'][linter]],
                 user=f"{os.getuid()}:4000",
                 files_to_push=[(self._pack_abs_dir, '/devwork')],
                 environment=self._facts["env_vars"],
@@ -787,9 +729,10 @@ class Linter:
             # Getting container logs
             container_log = container.logs().decode("utf-8")
             logger.info(f"{log_prompt} - exit-code: {container_exit_code}")
-            if container_exit_code in [1, 2]:
+            if container_exit_code in [1, 2, 127]:
                 # 1-fatal message issued
                 # 2-Error message issued
+                # 127-Command failure (for instance the linter is not exists)
                 exit_code = FAIL
                 output = container_log
                 logger.error(f"{log_prompt} - Finished, errors found")
@@ -808,14 +751,14 @@ class Linter:
             # Keeping container if needed or remove it
             if keep_container:
                 print(f"{log_prompt} - container name {container_name}")
-                container.commit(repository=container_name.lower(), tag="pylint")
+                container.commit(repository=container_name.lower(), tag=linter)
             else:
                 try:
                     container.remove(force=True)
                 except docker.errors.NotFound as e:
                     logger.critical(f"{log_prompt} - Unable to delete container - {e}")
         except Exception as e:
-            logger.exception(f"{log_prompt} - Unable to run pylint")
+            logger.exception(f"{log_prompt} - Unable to run {linter}")
             exit_code = RERUN
             output = str(e)
         return exit_code, output
@@ -844,15 +787,17 @@ class Linter:
         test_json = {}
         try:
             # Running pytest container
-            cov = '' if no_coverage else self._pack_abs_dir.stem
+            cov_file_path = Path.joinpath(self._pack_abs_dir, '.coverage')
+            cov = self._pack_abs_dir.stem if not no_coverage else ''
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
-            container = Docker.create_container(
-                name=container_name, image=test_image, user=f"{uid}:4000",
+            container: docker.models.containers.Container = Docker.create_container(
+                name=container_name,
+                image=test_image,
                 command=[build_pytest_command(test_xml=test_xml, json=True, cov=cov)],
-                environment=self._facts["env_vars"], files_to_push=[
-                    (self._pack_abs_dir, '/devwork')
-                ],
+                user=f"{uid}:4000",
+                files_to_push=[(self._pack_abs_dir, '/devwork')],
+                environment=self._facts["env_vars"],
             )
             container.start()
             stream_docker_container_output(container.logs(stream=True))
@@ -876,8 +821,7 @@ class Linter:
                     with open(file=xml_apth, mode='bw') as f:
                         f.write(test_data_xml)  # type: ignore
 
-                if not no_coverage:
-                    cov_file_path = os.path.join(self._pack_abs_dir, '.coverage')
+                if cov:
                     cov_data = get_file_from_container(container_obj=container,
                                                        container_path="/devwork/.coverage")
                     cov_data = cov_data if isinstance(cov_data, bytes) else cov_data.encode()
@@ -996,11 +940,10 @@ class Linter:
         pack_dir = self._pack_abs_dir.parent if self._pack_abs_dir.parts[-1] == INTEGRATIONS_DIR else \
             self._pack_abs_dir.parent.parent
         pack_metadata_file = pack_dir / PACKS_PACK_META_FILE_NAME
-        with FileLock(f'{pack_metadata_file.as_posix()}.lock'):
-            logger.debug(f'Lock acquired for {pack_metadata_file} to {self._pack_name}')
-            with pack_metadata_file.open() as f:
-                pack_meta_content: Dict = json.load(f)
-        logger.debug(f'Lock released for {pack_metadata_file} of {self._pack_name}')
+        logger.debug(f'Before reading content of {pack_metadata_file}')
+        with pack_metadata_file.open() as f:
+            pack_meta_content: Dict = json.load(f)
+        logger.debug(f'After reading content of {pack_metadata_file}')
         self._facts['support_level'] = pack_meta_content.get('support')
         if self._facts['support_level'] == 'partner' and pack_meta_content.get('Certification'):
             self._facts['support_level'] = 'certified partner'

@@ -33,26 +33,19 @@ from demisto_sdk.commands.common.tools import (
     get_relative_path_from_packs_dir, get_release_note_entries,
     get_release_notes_file_path, get_scripts_and_commands_from_yml_data,
     get_test_playbook_id, get_to_version, get_yaml, has_remote_configured,
-    is_origin_content_repo, is_pack_path, is_uuid, retrieve_file_ending,
-    run_command_os, server_version_compare, to_kebab_case)
-from demisto_sdk.tests.constants_test import (DUMMY_SCRIPT_PATH, IGNORED_PNG,
-                                              INDICATORFIELD_EXTRA_FIELDS,
-                                              SOURCE_FORMAT_INTEGRATION_COPY,
-                                              TEST_PLAYBOOK,
-                                              VALID_BETA_INTEGRATION_PATH,
-                                              VALID_DASHBOARD_PATH,
-                                              VALID_GENERIC_DEFINITION_PATH,
-                                              VALID_GENERIC_FIELD_PATH,
-                                              VALID_GENERIC_MODULE_PATH,
-                                              VALID_GENERIC_TYPE_PATH,
-                                              VALID_INCIDENT_FIELD_PATH,
-                                              VALID_INCIDENT_TYPE_PATH,
-                                              VALID_INTEGRATION_TEST_PATH,
-                                              VALID_LAYOUT_PATH, VALID_MD,
-                                              VALID_PLAYBOOK_ID_PATH,
-                                              VALID_REPUTATION_FILE,
-                                              VALID_SCRIPT_PATH,
-                                              VALID_WIDGET_PATH)
+    is_object_in_id_set, is_origin_content_repo, is_pack_path, is_uuid,
+    retrieve_file_ending, run_command_os, server_version_compare,
+    string_to_bool, to_kebab_case)
+from demisto_sdk.tests.constants_test import (
+    DUMMY_SCRIPT_PATH, IGNORED_PNG, INDICATORFIELD_EXTRA_FIELDS,
+    SOURCE_FORMAT_INTEGRATION_COPY, TEST_PLAYBOOK, VALID_BETA_INTEGRATION_PATH,
+    VALID_DASHBOARD_PATH, VALID_GENERIC_DEFINITION_PATH,
+    VALID_GENERIC_FIELD_PATH, VALID_GENERIC_MODULE_PATH,
+    VALID_GENERIC_TYPE_PATH, VALID_INCIDENT_FIELD_PATH,
+    VALID_INCIDENT_TYPE_FILE, VALID_INCIDENT_TYPE_FILE__RAW_DOWNLOADED,
+    VALID_INCIDENT_TYPE_PATH, VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_PATH,
+    VALID_MD, VALID_PLAYBOOK_ID_PATH, VALID_REPUTATION_FILE, VALID_SCRIPT_PATH,
+    VALID_WIDGET_PATH)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT, MAPPER, OLD_CLASSIFIER, REPUTATION)
 from TestSuite.file import File
@@ -65,7 +58,7 @@ GIT_ROOT = git_path()
 
 
 class TestGenericFunctions:
-    PATH_TO_HERE = f'{git_path()}/demisto_sdk/tests/test_files/'
+    PATH_TO_HERE = f'{GIT_ROOT}/demisto_sdk/tests/test_files/'
     FILE_PATHS = [
         (os.path.join(PATH_TO_HERE, 'fake_integration.yml'), tools.get_yaml),
         (os.path.join(PATH_TO_HERE, 'fake_json.json'), tools.get_json)
@@ -75,7 +68,7 @@ class TestGenericFunctions:
     def test_get_file(self, file_path, func):
         assert func(file_path)
 
-    @pytest.mark.parametrize('dir_path', ['demisto_sdk', f'{git_path()}/demisto_sdk/tests/test_files'])
+    @pytest.mark.parametrize('dir_path', ['demisto_sdk', f'{GIT_ROOT}/demisto_sdk/tests/test_files'])
     def test_get_yml_paths_in_dir(self, dir_path):
         yml_paths, first_yml_path = tools.get_yml_paths_in_dir(dir_path, error_msg='')
         yml_paths_test = glob.glob(os.path.join(dir_path, '*yml'))
@@ -90,7 +83,8 @@ class TestGenericFunctions:
         (VALID_SCRIPT_PATH, True, 'yml'),
         ('test', True, None),
         (None, True, None),
-        ('invalid-path.json', False, None)
+        ('invalid-path.json', False, None),
+        (VALID_INCIDENT_TYPE_FILE__RAW_DOWNLOADED, False, 'json')
     ]
 
     @pytest.mark.parametrize('path, raises_error, _type', data_test_get_dict_from_file)
@@ -545,7 +539,7 @@ def test_get_latest_release_notes_text_invalid():
     Then
     - Ensure None is returned
     """
-    PATH_TO_HERE = f'{git_path()}/demisto_sdk/tests/test_files/'
+    PATH_TO_HERE = f'{GIT_ROOT}/demisto_sdk/tests/test_files/'
     file_path = os.path.join(PATH_TO_HERE, 'empty-RN.md')
     assert get_latest_release_notes_text(file_path) is None
 
@@ -1040,6 +1034,26 @@ def test_get_file_displayed_name__image(repo):
         assert display_name == os.path.basename(integration.image.rel_path)
 
 
+INCIDENTS_TYPE_FILES_INPUTS = [(VALID_INCIDENT_TYPE_FILE__RAW_DOWNLOADED, "Access v2"),
+                               (VALID_INCIDENT_TYPE_FILE, "Access v2")]
+
+
+@pytest.mark.parametrize('input_path, expected_name', INCIDENTS_TYPE_FILES_INPUTS)
+def test_get_file_displayed_name__incident_type(input_path: str, expected_name: str):
+    """
+    Given
+    - The path to an incident type file.
+
+    When
+    - Running get_file_displayed_name.
+
+    Then:
+    - Ensure the returned name is the incident type name.
+    """
+
+    assert get_file_displayed_name(input_path) == expected_name
+
+
 def test_get_pack_metadata(repo):
     """
     Given
@@ -1428,7 +1442,7 @@ def test_get_definition_name():
     - Ensure the returned name is the connected definitions name.
     """
 
-    pack_path = f'{git_path()}/demisto_sdk/tests/test_files/generic_testing'
+    pack_path = f'{GIT_ROOT}/demisto_sdk/tests/test_files/generic_testing'
     field_path = pack_path + "/GenericFields/Object/genericfield-Sample.json"
     type_path = pack_path + "/GenericTypes/Object/generictype-Sample.json"
 
@@ -1448,7 +1462,7 @@ def test_gitlab_ci_yml_load():
             - Ensure that the load does not fail.
             - Ensure the file has no identification
     """
-    test_file = f'{git_path()}/demisto_sdk/tests/test_files/gitlab_ci_test_file.yml'
+    test_file = f'{GIT_ROOT}/demisto_sdk/tests/test_files/gitlab_ci_test_file.yml'
     try:
         res = find_type(test_file)
     except Exception:
@@ -1598,6 +1612,99 @@ def test_get_scripts_and_commands_from_yml_data(data, file_type, expected_comman
     commands, scripts = get_scripts_and_commands_from_yml_data(data=data, file_type=file_type)
     assert commands == expected_commands
     assert scripts == expected_scripts
+
+
+class TestIsObjectInIDSet:
+    PACK_INFO = {
+        "name": "Sample1",
+        "current_version": "1.1.1",
+        "source": [],
+        "categories": [
+            "Data Enrichment & Threat Intelligence"
+        ],
+        "ContentItems": {
+            "incidentTypes": [
+                "Phishing",
+                "Test Type",
+            ],
+            "layouts": [
+                "Phishing layout",
+            ],
+            "scripts": [
+                "Script1",
+                "Script2",
+            ],
+            "indicatorTypes": [
+                "JARM"
+            ],
+            "integrations": [
+                "Proofpoint Threat Response"
+            ]
+        }
+    }
+
+    def test_sanity(self):
+        """
+        Given:
+            - Pack object.
+            - Object type.
+            - ID set.
+        When:
+            - Searching for an item in a pack.
+        Then:
+            - Return if the item is in the id set or not.
+        """
+        assert is_object_in_id_set('Script2', FileType.SCRIPT.value, self.PACK_INFO)
+        assert not is_object_in_id_set('Script', FileType.SCRIPT.value, self.PACK_INFO)
+
+    def test_no_such_type(self):
+        """
+        Given:
+            - Pack object.
+            - Object type.
+            - ID set.
+        When:
+            - Searching for an item in a pack.
+            - Pack doesn't include items of the given type.
+        Then:
+            - Return if the item is in the id set or not.
+        """
+        assert not is_object_in_id_set('Integration', FileType.INTEGRATION.value, self.PACK_INFO)
+
+    def test_no_item_id_in_specific_type(self):
+        """
+        Given:
+            - Pack object.
+            - Object type.
+            - ID set.
+        When:
+            - Searching for an item in a pack.
+            - Item ID exists for a different type.
+        Then:
+            - Return if the item is in the id set or not.
+        """
+        assert is_object_in_id_set('Phishing layout', FileType.LAYOUTS_CONTAINER.value, self.PACK_INFO)
+        assert not is_object_in_id_set('Phishing', FileType.LAYOUTS_CONTAINER.value, self.PACK_INFO)
+
+    @pytest.mark.parametrize('entity_id, entity_type', [
+        ('JARM', FileType.REPUTATION.value),
+        ('Proofpoint Threat Response', FileType.BETA_INTEGRATION.value)
+    ])
+    def test_convertion_to_id_set_name(self, entity_id, entity_type):
+        """
+        Given:
+            - Pack object with indicatorType(s)
+            - Pack object with beta integration
+
+        When:
+            - Searching for an IndicatorType in the id_set.
+            - Searching for an beta integration in the id_set.
+
+        Then:
+            - make sure the indicator type is found.
+            - make sure the beta integration is found.
+        """
+        assert is_object_in_id_set(entity_id, entity_type, self.PACK_INFO)
 
 
 class TestGetItemMarketplaces:
@@ -1850,3 +1957,39 @@ def test_get_display_name(data, answer, tmpdir):
         """
     file = File(tmpdir / 'test_file.json', '', json.dumps(data))
     assert get_display_name(file.path) == answer
+
+
+@pytest.mark.parametrize('value', ('true', 'True'))
+def test_string_to_bool__default_params__true(value: str):
+    assert string_to_bool(value)
+
+
+@pytest.mark.parametrize('value', ('false', 'False'))
+def test_string_to_bool__default_params__false(value: str):
+    assert not string_to_bool(value)
+
+
+@pytest.mark.parametrize('value', ('1', 1, '', ' ', 'כן', None, 'None'))
+def test_string_to_bool__default_params__error(value: str):
+    with pytest.raises(ValueError):
+        string_to_bool(value)
+
+
+@pytest.mark.parametrize('value', ('true', 'True', 'TRUE', 't', 'T', 'yes', 'Yes', 'YES', 'y', 'Y', '1'))
+def test_string_to_bool__all_params_true__true(value: str):
+    assert string_to_bool(value, True, True, True, True, True, True)
+
+
+@pytest.mark.parametrize('value', ('false', 'False', 'FALSE', 'f', 'F', 'no', 'No', 'NO', 'n', 'N', '0'))
+def test_string_to_bool__all_params_true__false(value: str):
+    assert not string_to_bool(value, True, True, True, True, True, True)
+
+
+@pytest.mark.parametrize('value',
+                         ('true', 'True', 'TRUE', 't', 'T', 'yes', 'Yes', 'YES', 'y', 'Y', '1',
+                          'false', 'False', 'FALSE', 'f', 'F', 'no', 'No', 'NO', 'n', 'N', '0',
+                          '', ' ', 1, True, None, 'אולי', 'None')
+                         )
+def test_string_to_bool__all_params_false__error(value: str):
+    with pytest.raises(ValueError):
+        assert string_to_bool(value, False, False, False, False, False, False)

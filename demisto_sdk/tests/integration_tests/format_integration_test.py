@@ -551,7 +551,7 @@ def test_format_integration_skipped_files(repo):
 
     assert '======= Updating file' in format_result.stdout
     assert 'Success' in format_result.stdout
-    for excluded_file in excluded_files + ['pack_metadata.json']:
+    for excluded_file in excluded_files:
         assert excluded_file not in format_result.stdout
 
 

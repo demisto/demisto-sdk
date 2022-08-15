@@ -1,7 +1,77 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue in the **format** command where fail when executed from environment without mdx server available.
+* Added `Added a`, `Added an` to the list of allowed changelog prefixes.
+* Added support for Indicator Types/Reputations in the **upload** command.
 
+## 1.7.2
+
+* Fixed an issue in the **validate** command where incident fields were not found in mappers even when they exist
+* Added an ability to provide list of marketplace names as a param attribute to **validate** and **upload**
+* Added the file type to the error message when it is not supported.
+* Fixed an issue where `contribution_converter` incorrectly mapped _Indicator Field_ objects to the _incidentfield_ directory in contribution zip files.
+* Fixed a bug where **validate** returned error on empty inputs not used in playbooks.
+* Added the `DEMISTO_SDK_CONTENT_PATH` environment variable, implicitly used in various commands.
+* Added link to documentation for error messages regarding use cases and tags.
+
+## 1.7.1
+
+* Fixed an issue where *indicatorTypes* and *betaIntegrations* were not found in the id_set.
+* Updated the default general `fromVersion` value on **format** to `6.5.0`
+* Fixed an issue where the **validate** command did not fail when the integration yml file name was not the same as the folder containing it.
+* Added an option to have **generate-docs** take a Playbooks folder path as input, and generate docs for all playbooks in it.
+* Fixed an issue where the suggestion in case of `IF113` included uppercase letters for the `cliName` parameter.
+* Added new validation to the **validate** command to fail and list all the file paths of files that are using a deprecated integration command / script / playbook.
+* **validate** will no longer fail on playbooks calling subplaybooks that have a higher `fromVersion` value, if  calling the subplaybook has `skipifunavailable=True`.
+* Fixed an issue where relative paths were not accessed correctly.
+* Running any `demisto-sdk` command in a folder with a `.env` file will load it, temporarily overriding existing environment variables.
+* Fixed an issue where **validate** did not properly detect deleted files.
+* Added new validations to the **validate** command to verify that the schema file exists for a modeling rule and that the schema and rules keys are empty in the yml file.
+* Fixed an issue where *find_type* didn't recognize exported incident types.
+* Added a new validation to **validate**, making sure all inputs of a playbook are used.
+* Added a new validation to **validate**, making sure all inputs used in a playbook declared in the input section.
+* The **format** command will now replace the *fromServerVersion* field with *fromVersion*.
+
+## 1.7.0
+
+* Allowed JSON Handlers to accept kwargs, for custoimzing behavior.
+* Fixed an issue where an incorrect error was shown when the `id` of a content item differed from its `name` attribute.
+* Fixed an issue where the `preserve_quotes` in ruamel_handler received an incorrect value @icholy
+* Fixed an issue where ignoring RM110 error code wasn't working and added a validation to **ALLOWED_IGNORE_ERRORS** to validate that all error codes are inserted in the right format.
+* Fixed an issue where the contribution credit text was not added correctly to the pack README.
+* Changed the contribution file implementation from markdown to a list of contributor names. The **create-content-artifact** will use this list to prepare the needed credit message.
+* Added a new validation to the `XSOAR-linter` in the **lint** command for verifying that demisto.log is not used in the code.
+* The **generate-docs** command will now auto-generate the Incident Mirroring section when implemented in an integration.
+* Added support to automatically generate release notes for deprecated items in the **update-release-notes** command.
+* Fixed an issue causing any command to crash when unable to detect local repository properties.
+* Fixed an issue where running in a private gitlab repo caused a warning message to be shown multiple times.
+* Added a new validation to the **validate** command to verify that markdown and python files do not contain words related to copyright section.
+* Fixed an issue where **lint** crashed when provided an input file path (expecting a directory).
+
+## 1.6.9
+
+* Added a new validation that checks whether a pack should be deprecated.
+* Added a new ability to the **format** command to deprecate a pack.
+* Fixed an issue where the **validate** command sometimes returned a false negative in cases where there are several sub-playbooks with the same ID.
+* Added a new validation to the **validate** command to verify that the docker in use is not deprecated.
+* Added support for multiple ApiModules in the **unify** command
+* Added a check to **validate** command, preventing use of relative urls in README files.
+* Added environment variable **DEMISTO_SDK_MARKETPLACE** expected to affect *MarketplaceTagParser* *marketplace* value. The value will be automatically set when passing *marketplace* arg to the commands **unify**, **zip-packs**, **create-content-artifacts** and **upload**.
+* Added slack notifier for build failures on the master branch.
+* Added support for modeling and parsing rules in the **split** command.
+* Added support for README files in **format** command.
+* Added a **validate** check, making sure classifier id and name values match. Updated the classifier **format** to update the id accordingly.
+* The **generate-docs** command will now auto-generate the playbook image link by default.
+* Added the `--custom-image-link` argument to override.
+* Added a new flag to **generate-docs** command, allowing to add a custom image link to a playbook README.
+* Added a new validation to the **validate** command to verify that the package directory name is the same as the files contained in the that package.
+* Added support in the **unify** command to unify a schema into its Modeling Rule.
+
+## 1.6.8
+
+* Fixed an issue where **validate** did not fail on invalid playbook entities' versions (i.e. subplaybooks or scripts with higher fromversion than their parent playbook).
+* Added support for running lint via a remote docker ssh connection. Use `DOCKER_HOST` env variable to specify a remote docker connection, such as: `DOCKER_HOST=ssh://myuser@myhost.com`.
 * Fixed an issue where the pack cache in *get_marketplaces* caused the function to return invalid values.
 * Fixed an issue where running format on a pack with XSIAM entities would fail.
 * Added the new `display_name` field to relevant entities in the **create-id-set** command.
@@ -10,11 +80,16 @@
 * Removed the validation of a subtype change in integrations and scripts from **validate**.
 * Fixed an issue where **download** did not behave as expected when prompting for a version update. Reported by @K-Yo
 * Added support for adoption release notes.
+* Fixed an issue where **merge-id-sets** failed when a key was missing in one id-set.json.
 * Fixed a bug where some mypy messages were not parsed properly in **lint**.
+* Added a validation to the **validate** command, failing when '`fromversion`' or '`toversion`' in a content entity are incorrect format.
+* Added a validation to the **validate** command, checking if `fromversion` <= `toversion`.
 * Fixed an issue where coverage reports used the wrong logging level, marking debug logs as errors.
 * Added a new validation to the **validate** command, to check when the discouraged `http` prefixes are used when setting defaultvalue, rather than `https`.
 * Added a check to the **lint** command for finding hard-coded usage of the http protocol.
-* Added support for Indicator Types/Reputations in the **upload** command.
+* Locked the dependency on Docker.
+* Removed a traceback line from the **init** command templates: BaseIntegration, BaseScript.
+* Updated the token in **_add_pr_comment** method from the content-bot token to the xsoar-bot token.
 
 ## 1.6.7
 

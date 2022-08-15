@@ -14,6 +14,7 @@
 * Fixed an issue where coverage reports used the wrong logging level, marking debug logs as errors.
 * Added a new validation to the **validate** command, to check when the discouraged `http` prefixes are used when setting defaultvalue, rather than `https`.
 * Added a check to the **lint** command for finding hard-coded usage of the http protocol.
+* Added support for Indicator Types/Reputations in the **upload** command.
 
 ## 1.6.7
 

@@ -1,23 +1,28 @@
 from typing import Any, Dict, List
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes, NodeData, Rel
+from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
 from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript, IntegrationScriptUnifier
 
 
+class Command:
+    name: str
+    deprecated: bool = False
+    description: str
+
 class Integration(IntegrationScript):
-    display_name: str
-    type: str
-    docker_image: str
+    display_name: str = ''
     is_fetch: bool = False
     is_feed: bool = False
-    script_info: Dict[str, Any]
-    commands: List[NodeData]
+    script_info: Dict[str, Any] = {}
+    commands: List[Command] = []  # todo: use Command class
 
     def __post_init__(self) -> None:
-        if not self.content_type:
+        if self.should_parse_object:
             self.content_type =  ContentTypes.INTEGRATION
+            print(f'Parsing {self.content_type} {self.object_id}')
             self.script_info = self.get_code()
-            self.display_name = self.yml_data.get('script', {})
+            self.display_name = self.yml_data.get('display')
             self.type = self.script_info.get('subtype') or self.script_info.get('type')
             self.docker_image = self.script_info.get('dockerimage', '')
             self.is_fetch = self.script_info.get('isfetch', False)
@@ -29,7 +34,6 @@ class Integration(IntegrationScript):
             self.connect_to_commands()
             self.connect_to_dependencies()
             self.connect_to_api_modules()
-            self.connect_to_tests()
 
     def connect_to_commands(self) -> None:
         for command_data in self.script_info.get('commands', []):

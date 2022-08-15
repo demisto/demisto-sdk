@@ -12,14 +12,14 @@ class ClassifierMapper(JSONContentItem):
     definition_id: str = Field('', alias='definitionId')
 
     def __post_init__(self) -> None:
-        self.classifier_mapper_type = self.classifier_mapper_type or self.json_data.get('type')
-        self.definition_id = self.definition_id or self.json_data.get('definitionId')
-        if not self.content_type:
+        if self.should_parse_object:
             if self.classifier_mapper_type == 'classification':
                 self.content_type = ContentTypes.CLASSIFIER
             self.content_type = ContentTypes.MAPPER
+            self.classifier_mapper_type = self.json_data.get('type')
+            self.definition_id = self.json_data.get('definitionId')
 
-        self.connect_to_dependencies()
+            self.connect_to_dependencies()
 
     def get_filters_and_transformers_from_complex_value(self, complex_value: dict) -> None:
         for filter in complex_value.get('filters', []):
@@ -52,7 +52,7 @@ class ClassifierMapper(JSONContentItem):
             self.add_dependency(incident_type, ContentTypes.INCIDENT_TYPE)
             internal_mapping: Dict[str, Any] = mapping_data.get('internalMapping')
 
-            if self.json_data.get('type') == 'mapping-outgoing':
+            if self.classifier_mapper_type == 'mapping-outgoing':
                 # incident fields are in the simple / complex.root key of each key
                 for fields_mapper in internal_mapping.values():
                     if isinstance(fields_mapper, dict):
@@ -67,7 +67,7 @@ class ClassifierMapper(JSONContentItem):
                                 ContentTypes.INCIDENT_FIELD,
                             )
 
-            elif self.json_data.get('type') == 'mapping-incoming':
+            elif self.classifier_mapper_type == 'mapping-incoming':
                 # all the incident fields are the keys of the mapping
                 for incident_field in internal_mapping.keys():
                     self.add_dependency(

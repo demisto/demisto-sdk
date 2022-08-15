@@ -20,11 +20,12 @@ class NotAContentItem(Exception):
 
 
 class ContentItem(base_content.BaseContent):
-    path: Path = Field(None, alias='file_path')
-    name: str
+    path: Path
+    pack_marketplaces: List[MarketplaceVersions] = []
+    name: str = ''
     from_version: Version = parse('0.0.0')
     to_version: Version = parse('0.0.0')
-    relationships: Dict[Rel, List[RelationshipData]]
+    relationships: Dict[Rel, List[RelationshipData]] = {}
 
     @staticmethod
     def is_package(path: Path) -> bool:
@@ -45,7 +46,7 @@ class ContentItem(base_content.BaseContent):
         **kwargs: Dict[str, Any],
     ) -> None:
         relationship_data: RelationshipData = {
-            'source_node_id': self.item_id,
+            'source_node_id': self.object_id,
             'source_fromversion': self.from_version,
             'source_marketplaces': self.marketplaces,
             'target': target,
@@ -74,17 +75,18 @@ class ContentItem(base_content.BaseContent):
 
 
 class YAMLContentItem(ContentItem):
-    yml_data: Dict[str, Any]
-    pack_marketplaces: List[MarketplaceVersions]
+    yml_data: Dict[str, Any] = {}
 
     def __post_init__(self):
-        if not self.content_type:
+        if self.should_parse_object:
             self.yml_data = self.get_yaml()
             self.name = self.yml_data.get('name')
             self.deprecated = self.yml_data.get('deprecated', False)
             self.from_version = self.yml_data.get('fromversion')
             self.to_version = self.yml_data.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)
             self.marketplaces = self.yml_data.get('marketplaces', []) or self.pack_marketplaces
+
+            self.connect_to_tests()
 
     def connect_to_tests(self) -> None:
         tests_playbooks: List[str] =  self.yml_data.get('tests', [])
@@ -109,19 +111,18 @@ class YAMLContentItem(ContentItem):
 
 
 class JSONContentItem(ContentItem):
-    json_data: Dict[str, Any]
-    pack_marketplaces: List[MarketplaceVersions]
+    json_data: Dict[str, Any] = {}
 
     def __post_init__(self):
-        if not self.name:
+        if self.should_parse_object:
             self.json_data = self.get_json()
-            self.item_id = self.json_data.get('id')
+            self.object_id = self.json_data.get('id')
             self.name = self.json_data.get('name')
             self.deprecated = self.json_data.get('deprecated', False)
             self.from_version = self.json_data.get('fromVersion')
             self.to_version = self.json_data.get('toVersion', DEFAULT_CONTENT_ITEM_TO_VERSION)
             self.marketplaces = self.json_data.get('marketplaces', []) or self.pack_marketplaces
-    
+
     def get_json(self) -> Dict[str, Any]:
         if self.path.is_dir():
             json_files_in_dir = get_files_in_dir(self.path.as_posix(), ['json'], False)

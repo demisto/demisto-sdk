@@ -1,6 +1,5 @@
 import networkx
-from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from demisto_sdk.commands.common.update_id_set import (
     BUILT_IN_FIELDS,
@@ -12,27 +11,20 @@ import demisto_sdk.commands.content_graph.objects.content_item as content_item
 
 LIST_COMMANDS = ['Builtin|||setList', 'Builtin|||getList']
 
-class PlaybookParser(content_item.YAMLContentItemParser):
-    def __init__(self, path: Path, pack_marketplaces: List[str], is_test_playbook: bool = False) -> None:
-        if not is_test_playbook:
-            super().__init__(path, pack_marketplaces)
-            print(f'Parsing {self.content_type} {self.content_item_id}')
+
+class Playbook(content_item.YAMLContentItem):
+    is_test_playbook: bool = False
+
+    def __post_init__(self) -> None:
+        if self.should_parse_object:
+            self.object_id = self.yml_data.get('id')
+            self.content_type = ContentTypes.PLAYBOOK
+            print(f'Parsing {self.content_type} {self.object_id}')
+            self.deprecated = self.yml_data.get('deprecated', False)
             self.graph: networkx.DiGraph = build_tasks_graph(self.yml_data)
             self.connect_to_dependencies()
             self.connect_to_tests()
 
-    @property
-    def content_item_id(self) -> str:
-        return self.yml_data.get('id')
-
-    @property
-    def content_type(self) -> ContentTypes:
-        return ContentTypes.PLAYBOOK
-
-    @property
-    def deprecated(self) -> bool:
-        return self.yml_data.get('deprecated', False)
-    
     def is_mandatory_dependency(self, task_id: str) -> bool:
         try:
             return self.graph.nodes[task_id]['mandatory']

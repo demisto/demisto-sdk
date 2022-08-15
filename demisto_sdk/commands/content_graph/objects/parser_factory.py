@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import List, Type, Any, Dict
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 import demisto_sdk.commands.content_graph.objects.content_item as content_item
 import demisto_sdk.commands.content_graph.objects.incident_field as incident_field
@@ -31,14 +32,17 @@ class ContentItemFactory:
         return None
         
     @staticmethod
-    def from_path(path: Path, pack_marketplaces: List[str]) -> Any:
+    def from_path(path: Path, pack_marketplaces: List[MarketplaceVersions]) -> Any:
         if not content_item.ContentItem.is_content_item(path):
             return None
         
         content_type: ContentTypes = ContentTypes.by_folder(path.parts[-2])
         if class_name := CONTENT_TYPE_TO_CLASS.get(content_type):
             try:
-                return class_name(path, pack_marketplaces)
+                return class_name(
+                    path=path,
+                    pack_marketplaces=pack_marketplaces,
+                )
             except content_item.NotAContentItem:  # as e:
                 # during the parsing we detected this is not a content item
                 # print(str(e))

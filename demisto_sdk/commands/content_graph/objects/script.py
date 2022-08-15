@@ -1,35 +1,25 @@
 import re
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import List
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
+from demisto_sdk.commands.content_graph.constants import ContentTypes
 import demisto_sdk.commands.content_graph.objects.integration_script as integration_script
 
 EXECUTE_CMD_PATTERN = re.compile(r"execute_?command\(['\"](\w+)['\"].*", re.IGNORECASE)
 
 
-class ScriptParser(integration_script.IntegrationScriptParser):
-    def __init__(self, path: Path, pack_marketplaces: List[str]) -> None:
-        super().__init__(path, pack_marketplaces)
-        print(f'Parsing {self.content_type} {self.content_item_id}')
-        self.connect_to_dependencies()
-        self.connect_to_tests()
+class Script(integration_script.IntegrationScript):
+    def __post_init__(self) -> None:
+        if self.should_parse_object:
+            self.content_type =  ContentTypes.SCRIPT
+            print(f'Parsing {self.content_type} {self.object_id}')
+            self.type = self.yml_data.get('subtype') or self.yml_data.get('type')
+            self.docker_image = self.yml_data.get('dockerimage', '')
 
-    @property
-    def content_type(self) -> ContentTypes:
-        return ContentTypes.SCRIPT
+            if self.type == 'python':
+                self.type += '2'
 
-    def get_data(self) -> Dict[str, Any]:
-        integration_script_data = super().get_data()
-        script_data = {
-            'type': self.yml_data.get('subtype') or self.yml_data.get('type'),
-            'docker_image': self.yml_data.get('dockerimage', ''),
-        }
-
-        if script_data['type'] == 'python':
-            script_data['type'] += '2'
-
-        return integration_script_data | script_data
+            self.connect_to_dependencies()
 
     def connect_to_dependencies(self) -> None:
         for cmd in self.get_depends_on():

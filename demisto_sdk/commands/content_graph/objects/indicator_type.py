@@ -1,29 +1,22 @@
 from pathlib import Path
 from typing import Any, Dict, List
 
+from pydantic import Field
+
 from demisto_sdk.commands.content_graph.constants import ContentTypes
-from demisto_sdk.commands.content_graph.objects.content_item import JSONContentItemParser
+from demisto_sdk.commands.content_graph.objects.content_item import JSONContentItem
 
 
-class IndicatorTypeParser(JSONContentItemParser):
-    def __init__(self, path: Path, pack_marketplaces: List[str]) -> None:
-        super().__init__(path, pack_marketplaces)
-        print(f'Parsing {self.content_type} {self.content_item_id}')
-        self.connect_to_dependencies()
+class IndicatorType(JSONContentItem):
+    regex: str = ''
 
-    @property
-    def content_type(self) -> ContentTypes:
-        return ContentTypes.INDICATOR_TYPE
+    def __post_init__(self) -> None:
+        if self.should_parse_object:
+            self.content_type = ContentTypes.INDICATOR_TYPE
+            print(f'Parsing {self.content_type} {self.object_id}')
+            self.regex = self.json_data.get('regex')
 
-    def get_data(self) -> Dict[str, Any]:
-        json_content_item_data = super().get_data()
-        classifier_mapper_data = {
-            'name': self.json_data.get('details'),
-            'type': self.json_data.get('type'),
-            'associatedToAll': self.json_data.get('associatedToAll'),
-        }
-        # todo: aliases - marketplacev2
-        return json_content_item_data | classifier_mapper_data
+            self.connect_to_dependencies()
 
     def connect_to_dependencies(self) -> None:
         for field in ['reputationScriptName', 'enhancementScriptNames']:
@@ -35,3 +28,6 @@ class IndicatorTypeParser(JSONContentItemParser):
 
         if reputation_command := self.json_data.get('reputationCommand'):
             self.add_dependency(reputation_command, ContentTypes.COMMAND, is_mandatory=False)
+
+        if layout := self.json_data.get('layout'):
+            self.add_dependency(layout, ContentTypes.LAYOUT)

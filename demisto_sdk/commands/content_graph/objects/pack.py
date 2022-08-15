@@ -18,8 +18,8 @@ import demisto_sdk.commands.content_graph.objects.base_content as base_content
 
 
 class PackMetadata(BaseModel):
-    name: str
-    description: str
+    name: str = ''
+    description: str = ''
     created: datetime = datetime.utcnow()
     updated: datetime = datetime.utcnow()
     legacy: bool = True
@@ -30,8 +30,8 @@ class PackMetadata(BaseModel):
     )
     email: str = ''
     url: str = ''
-    author: str
-    certification: str
+    author: str = ''
+    certification: str = ''
     price: int = 0
     premium: bool = False
     vendor_id: str = Field('', alias='vendorId')
@@ -54,16 +54,19 @@ class PackMetadata(BaseModel):
 
 
 class Pack(base_content.BaseContent):
-    path: Path = Field(None, alias='file_path')
-    pack_id: str = Field(None, alias='id')
-    metadata: PackMetadata
+    path: Path = ...
+    metadata: PackMetadata = None
     content_items: Dict[ContentTypes, List] = Field({}, alias='contentItems')
-    relationships: Dict[Rel, List[RelationshipData]]
+    relationships: Dict[Rel, List[RelationshipData]] = {}
 
     def __post_init__(self):
-        self.content_type = self.content_type or ContentTypes.PACK
-        self.pack_id = self.pack_id or self.path.parts[-1]
-        self.metadata = self.metadata or PackMetadata(**get_json(self.path / PACK_METADATA_FILENAME))
+        if self.should_parse_object:
+            self.object_id = self.path.parts[-1]
+            self.content_type = ContentTypes.PACK
+            print(f'Parsing {self.content_type} {self.object_id}')
+            self.node_id = self.get_node_id()
+            self.metadata = PackMetadata(**get_json(self.path / PACK_METADATA_FILENAME))
+            self.parse_pack()
 
     @staticmethod
     def from_database(pack_data: Any) -> 'Pack':

@@ -13,7 +13,7 @@ from demisto_sdk.commands.content_graph.constants import (
     RelationshipData,
     NodeData
 )
-from demisto_sdk.commands.content_graph.objects.parser_factory import ContentItemFactory
+from demisto_sdk.commands.content_graph.objects.content_item_factory import ContentItemFactory
 import demisto_sdk.commands.content_graph.objects.base_content as base_content
 
 

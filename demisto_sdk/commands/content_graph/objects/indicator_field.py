@@ -23,7 +23,6 @@ class IndicatorField(JSONContentItem):
 
             self.connect_to_dependencies()
 
-
     def connect_to_dependencies(self) -> None:
         for associated_type in set(self.json_data.get('associatedTypes') or []):
             self.add_dependency(associated_type, ContentTypes.INDICATOR_TYPE, is_mandatory=False)

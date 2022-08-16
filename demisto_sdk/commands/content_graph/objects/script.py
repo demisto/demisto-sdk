@@ -9,10 +9,12 @@ EXECUTE_CMD_PATTERN = re.compile(r"execute_?command\(['\"](\w+)['\"].*", re.IGNO
 
 
 class Script(integration_script.IntegrationScript):
-    def __post_init__(self) -> None:
-        if self.should_parse_object:
+    def __init__(self, **data) -> None:
+        super().__init__(**data)
+        if self.parsing_object:
             self.content_type =  ContentTypes.SCRIPT
             print(f'Parsing {self.content_type} {self.object_id}')
+            self.node_id = self.get_node_id()
             self.type = self.yml_data.get('subtype') or self.yml_data.get('type')
             self.docker_image = self.yml_data.get('dockerimage', '')
 

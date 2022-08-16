@@ -11,8 +11,9 @@ class IndicatorField(JSONContentItem):
     field_type: str = Field('', alias='type')
     associated_to_all: bool = Field(False, alias='associatedToAll')
 
-    def __post_init__(self) -> None:
-        if self.should_parse_object:
+    def __init__(self, **data) -> None:
+        super().__init__(**data)
+        if self.parsing_object:
             self.content_type = ContentTypes.INDICATOR_FIELD
             self.object_id = normalize_field_name(self.object_id)
             print(f'Parsing {self.content_type} {self.object_id}')

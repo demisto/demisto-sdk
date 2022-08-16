@@ -6,10 +6,12 @@ from demisto_sdk.commands.content_graph.objects.content_item import JSONContentI
 
 
 class IncidentType(JSONContentItem):
-    def __post_init__(self) -> None:
-        if self.should_parse_object:
+    def __init__(self, **data) -> None:
+        super().__init__(**data)
+        if self.parsing_object:
             self.content_type = ContentTypes.INCIDENT_TYPE
             print(f'Parsing {self.content_type} {self.object_id}')
+            self.node_id = self.get_node_id()
 
             self.connect_to_dependencies()
 

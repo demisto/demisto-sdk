@@ -10,10 +10,12 @@ class IncidentField(JSONContentItem):
     field_type: str = Field('', alias='type')
     associated_to_all: bool = Field(False, alias='associatedToAll')
 
-    def __post_init__(self) -> None:
-        if self.should_parse_object:
+    def __init__(self, **data) -> None:
+        super().__init__(**data)
+        if self.parsing_object:
             self.content_type = ContentTypes.INCIDENT_FIELD
             self.object_id = normalize_field_name(self.object_id)
+            print(f'Parsing {self.content_type} {self.object_id}')
             self.node_id = self.get_node_id()
             self.cli_name = self.json_data.get('cliName')
             self.field_type = self.json_data.get('type')

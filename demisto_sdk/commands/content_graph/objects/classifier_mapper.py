@@ -11,11 +11,14 @@ class ClassifierMapper(JSONContentItem):
     classifier_mapper_type: str = Field('', alias='type')
     definition_id: str = Field('', alias='definitionId')
 
-    def __post_init__(self) -> None:
-        if self.should_parse_object:
+    def __init__(self, **data) -> None:
+        super().__init__(**data)
+        if self.parsing_object:
             if self.classifier_mapper_type == 'classification':
                 self.content_type = ContentTypes.CLASSIFIER
             self.content_type = ContentTypes.MAPPER
+            print(f'Parsing {self.content_type} {self.object_id}')
+            self.node_id = self.get_node_id()
             self.classifier_mapper_type = self.json_data.get('type')
             self.definition_id = self.json_data.get('definitionId')
 

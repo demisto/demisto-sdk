@@ -1,4 +1,6 @@
 from typing import Any, Dict, List
+
+from pydantic import Field
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
@@ -14,14 +16,16 @@ class Integration(IntegrationScript):
     display_name: str = ''
     is_fetch: bool = False
     is_feed: bool = False
-    script_info: Dict[str, Any] = {}
-    commands: List[Command] = []  # todo: use Command class
+    script_info: Dict[str, Any] = Field({}, exclude=True)
+    commands: List[Command] = Field([], exclude=True)  # todo: override exclusion when loading
 
-    def __post_init__(self) -> None:
-        if self.should_parse_object:
+    def __init__(self, **data) -> None:
+        super().__init__(**data)
+        if self.parsing_object:
             self.content_type =  ContentTypes.INTEGRATION
             print(f'Parsing {self.content_type} {self.object_id}')
-            self.script_info = self.get_code()
+            self.node_id = self.get_node_id()
+            self.script_info = self.yml_data.get('script')
             self.display_name = self.yml_data.get('display')
             self.type = self.script_info.get('subtype') or self.script_info.get('type')
             self.docker_image = self.script_info.get('dockerimage', '')

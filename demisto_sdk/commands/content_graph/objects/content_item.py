@@ -21,11 +21,11 @@ class NotAContentItem(Exception):
 
 class ContentItem(base_content.BaseContent):
     path: Path
-    pack_marketplaces: List[MarketplaceVersions] = []
+    pack_marketplaces: List[MarketplaceVersions] = Field([], exclude=True)
     name: str = ''
-    from_version: Version = parse('0.0.0')
-    to_version: Version = parse('0.0.0')
-    relationships: Dict[Rel, List[RelationshipData]] = {}
+    from_version: str = ''
+    to_version: str = ''
+    relationships: Dict[Rel, List[RelationshipData]] = Field({}, exclude=True)
 
     @staticmethod
     def is_package(path: Path) -> bool:
@@ -75,10 +75,11 @@ class ContentItem(base_content.BaseContent):
 
 
 class YAMLContentItem(ContentItem):
-    yml_data: Dict[str, Any] = {}
+    yml_data: Dict[str, Any] = Field({}, exclude=True)
 
-    def __post_init__(self):
-        if self.should_parse_object:
+    def __init__(self, **data) -> None:
+        super().__init__(**data)
+        if self.parsing_object:
             self.yml_data = self.get_yaml()
             self.name = self.yml_data.get('name')
             self.deprecated = self.yml_data.get('deprecated', False)
@@ -111,10 +112,11 @@ class YAMLContentItem(ContentItem):
 
 
 class JSONContentItem(ContentItem):
-    json_data: Dict[str, Any] = {}
+    json_data: Dict[str, Any] = Field({}, exclude=True)
 
-    def __post_init__(self):
-        if self.should_parse_object:
+    def __init__(self, **data) -> None:
+        super().__init__(**data)
+        if self.parsing_object:
             self.json_data = self.get_json()
             self.object_id = self.json_data.get('id')
             self.name = self.json_data.get('name')

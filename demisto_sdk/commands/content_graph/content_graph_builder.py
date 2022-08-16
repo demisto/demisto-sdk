@@ -51,7 +51,8 @@ class ContentGraphBuilder(ABC):
         if self.nodes and self.relationships:
             print('Skipping parsing.')
             return
-        repository = Repository(packs_paths)
+        packs_paths = list(self.packs_path.iterdir())
+        repository = Repository(packs_paths=packs_paths)
         self.nodes, self.relationships = repository.nodes, repository.relationships
 
     def create_graph_from_repository(self) -> None:

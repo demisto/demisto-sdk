@@ -1,5 +1,6 @@
 import multiprocessing
 from pathlib import Path
+import traceback
 from pydantic import BaseModel, Field
 from typing import Any, Dict, Iterator, List, Tuple
 from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -7,27 +8,37 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.constants import ContentTypes, NodeData, Rel, RelationshipData
 
 
-def parse_pack(path: Path) -> Tuple[List[NodeData], List[RelationshipData]]:
-    pack = Pack(path=path)
-    nodes = [node.dict() for node in pack.content_items]  # todo: include/exclude
-    nodes.append(pack.dict())
+def parse_pack(path: Path) -> Tuple[
+        Dict[ContentTypes, List[NodeData]],
+        Dict[Rel, List[RelationshipData]],
+    ]:
+    nodes: Dict[ContentTypes, List[NodeData]] = {}
+    pack = Pack.from_repository(path)
+    for content_type, content_items in pack.content_items.items():
+        nodes[content_type] = [node.dict() for node in content_items]
+    nodes[ContentTypes.PACK] = [pack.dict()]
     # relationships = [rel.dict() for rel in pack.relationships]
     return nodes, pack.relationships  # todo: consider pydantic for relationships
 
 
 class Repository(BaseModel):
-    packs_paths: Iterator[Path]
-    should_parse_repo: bool = True
-    nodes: Dict[ContentTypes, List[NodeData]] = Field({}, alias='contentItems')
+    packs_paths: List[Path] = Field(exclude=True)
+    should_parse_repo: bool = Field(True, exclude=True)
+    nodes: Dict[ContentTypes, List[NodeData]] = {}
     relationships: Dict[Rel, List[RelationshipData]] = {}
 
-    def __post_init__(self):
-        if self.should_parse_repo:
-            pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
-            for pack_nodes, pack_relationships in pool.map(parse_pack, self.packs_paths):
-                self.extend_graph_nodes_and_relationships(pack_nodes, pack_relationships)
+    def __init__(self, **data) -> None:
+        super().__init__(**data)
+        try:
+            if self.should_parse_repo:
+                pool = multiprocessing.Pool(processes=multiprocessing.cpu_count() - 1)
+                for pack_nodes, pack_relationships in pool.map(parse_pack, self.packs_paths):
+                    self.extend_nodes_and_relationships(pack_nodes, pack_relationships)
+        except Exception as e:
+            print(traceback.format_exc())
+            raise e
 
-    def extend_graph_nodes_and_relationships(
+    def extend_nodes_and_relationships(
         self,
         pack_nodes: Dict[ContentTypes, List[Dict[str, Any]]],
         pack_relationships: Dict[Rel, List[Dict[str, Any]]],

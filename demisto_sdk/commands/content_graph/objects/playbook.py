@@ -1,3 +1,4 @@
+from pydantic import Field
 import networkx
 from typing import Any, Dict
 
@@ -14,12 +15,15 @@ LIST_COMMANDS = ['Builtin|||setList', 'Builtin|||getList']
 
 class Playbook(content_item.YAMLContentItem):
     is_test_playbook: bool = False
+    graph: networkx.DiGraph = Field(None, exclude=True)
 
-    def __post_init__(self) -> None:
-        if self.should_parse_object:
+    def __init__(self, **data) -> None:
+        super().__init__(**data)
+        if self.parsing_object:
             self.object_id = self.yml_data.get('id')
             self.content_type = ContentTypes.PLAYBOOK
             print(f'Parsing {self.content_type} {self.object_id}')
+            self.node_id = self.get_node_id()
             self.deprecated = self.yml_data.get('deprecated', False)
             self.graph: networkx.DiGraph = build_tasks_graph(self.yml_data)
             self.connect_to_dependencies()

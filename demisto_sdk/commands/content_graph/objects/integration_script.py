@@ -12,11 +12,12 @@ from demisto_sdk.commands.unify.integration_script_unifier import \
 class IntegrationScript(YAMLContentItem):
     type: str = ''
     docker_image: str = ''
-    is_unified: bool = False
-    unifier: IntegrationScriptUnifier = None
+    is_unified: bool = Field(False, exclude=True)
+    unifier: IntegrationScriptUnifier = Field(None, exclude=True)
 
-    def __post_init__(self) -> None:
-        if self.should_parse_object:
+    def __init__(self, **data) -> None:
+        super().__init__(**data)
+        if self.parsing_object:
             self.object_id = self.yml_data.get('commonfields', {}).get('id')
             self.is_unified = YAMLContentItem.is_unified_file(self.path)
             self.unifier = None if self.is_unified else IntegrationScriptUnifier(self.path.as_posix())

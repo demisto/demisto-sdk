@@ -10,6 +10,9 @@ class IndicatorTypeParser(JSONContentItemParser):
         super().__init__(path, pack_marketplaces)
         print(f'Parsing {self.content_type} {self.content_item_id}')
         self.connect_to_dependencies()
+        self.name = self.json_data.get('details')
+        self.type = self.json_data.get('type')
+        self.associated_to_all = self.json_data.get('associatedToAll')
 
     @property
     def content_type(self) -> ContentTypes:

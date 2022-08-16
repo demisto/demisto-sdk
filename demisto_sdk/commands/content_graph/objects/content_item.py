@@ -22,10 +22,10 @@ class NotAContentItem(Exception):
 class ContentItem(base_content.BaseContent):
     path: Path
     pack_marketplaces: List[MarketplaceVersions] = Field([], exclude=True)
-    name: str = ''
-    from_version: str = ''
-    to_version: str = ''
-    relationships: Dict[Rel, List[RelationshipData]] = Field({}, exclude=True)
+    name: str
+    from_version: str
+    to_version: str
+    # relationships: Dict[Rel, List[RelationshipData]] = Field({}, exclude=True)
 
     @staticmethod
     def is_package(path: Path) -> bool:
@@ -39,56 +39,62 @@ class ContentItem(base_content.BaseContent):
     def is_content_item(path: Path) -> bool:
         return ContentItem.is_package(path) or ContentItem.is_unified_file(path)
 
-    def add_relationship(
-        self,
-        relationship: Rel,
-        target: str,
-        **kwargs: Dict[str, Any],
-    ) -> None:
-        relationship_data: RelationshipData = {
-            'source_node_id': self.object_id,
-            'source_fromversion': self.from_version,
-            'source_marketplaces': self.marketplaces,
-            'target': target,
-        }
-        relationship_data.update(kwargs)
-        self.relationships.setdefault(relationship, []).append(relationship_data)
+    # def add_relationship(
+    #     self,
+    #     relationship: Rel,
+    #     target: str,
+    #     **kwargs: Dict[str, Any],
+    # ) -> None:
+    #     relationship_data: RelationshipData = {
+    #         'source_node_id': self.object_id,
+    #         'source_fromversion': self.from_version,
+    #         'source_marketplaces': self.marketplaces,
+    #         'target': target,
+    #     }
+    #     relationship_data.update(kwargs)
+    #     self.relationships.setdefault(relationship, []).append(relationship_data)
 
-    def add_dependency(
-        self,
-        dependency_id: str,
-        dependency_type: Optional[ContentTypes] = None,
-        is_mandatory: bool = True
-    ) -> None:
-        if dependency_type is None:  # and self.content_type == ContentTypes.SCRIPT:
-            relationship = Rel.USES_COMMAND_OR_SCRIPT
-            target = dependency_id
-        else:
-            relationship = Rel.USES
-            target = f'{dependency_type}:{dependency_id}'
+    # def add_dependency(
+    #     self,
+    #     dependency_id: str,
+    #     dependency_type: Optional[ContentTypes] = None,
+    #     is_mandatory: bool = True
+    # ) -> None:
+    #     if dependency_type is None:  # and self.content_type == ContentTypes.SCRIPT:
+    #         relationship = Rel.USES_COMMAND_OR_SCRIPT
+    #         target = dependency_id
+    #     else:
+    #         relationship = Rel.USES
+    #         target = f'{dependency_type}:{dependency_id}'
 
-        self.add_relationship(
-            relationship,
-            target=target,
-            mandatorily=is_mandatory,
-        )
+    #     self.add_relationship(
+    #         relationship,
+    #         target=target,
+    #         mandatorily=is_mandatory,
+    #     )
 
 
 class YAMLContentItem(ContentItem):
     yml_data: Dict[str, Any] = Field({}, exclude=True)
 
-    def __init__(self, **data) -> None:
-        super().__init__(**data)
-        if self.parsing_object:
-            self.yml_data = self.get_yaml()
-            self.name = self.yml_data.get('name')
-            self.deprecated = self.yml_data.get('deprecated', False)
-            self.from_version = self.yml_data.get('fromversion')
-            self.to_version = self.yml_data.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)
-            self.marketplaces = self.yml_data.get('marketplaces', []) or self.pack_marketplaces
+    # def __init__(self, **data) -> None:
+    #     super().__init__(**data)
+    #     if self.parsing_object:
+    #         self.yml_data = self.get_yaml()
+    #         self.name = self.yml_data.get('name')
+    #         self.deprecated = self.yml_data.get('deprecated', False)
+    #         self.from_version = self.yml_data.get('fromversion')
+    #         self.to_version = self.yml_data.get('toversion', DEFAULT_CONTENT_ITEM_TO_VERSION)
+    #         self.marketplaces = self.yml_data.get('marketplaces', []) or self.pack_marketplaces
 
-            self.connect_to_tests()
-
+    #         self.connect_to_tests()
+    @staticmethod
+    def from_path(path: Path):
+        yaml_path = YAMLContentItem.get_content_item_yaml_path(path)
+        yml_data = YAMLContentItem.get_yaml(yaml_path)
+        return YAMLContentItem()
+        
+    
     def connect_to_tests(self) -> None:
         tests_playbooks: List[str] =  self.yml_data.get('tests', [])
         for test_playbook_id in tests_playbooks:
@@ -98,17 +104,21 @@ class YAMLContentItem(ContentItem):
                     Rel.TESTED_BY,
                     target=tpb_node_id,
                 )
-
-    def get_yaml(self) -> Dict[str, Union[str, List[str]]]:
-        if not self.path.is_dir():
-            yaml_path = self.path.as_posix()
+    
+    @staticmethod
+    def get_content_item_yaml_path(path: Path) -> Path:
+        if not path.is_dir():
+            yaml_path = path.as_posix()
         else:
-            _, yaml_path = get_yml_paths_in_dir(self.path.as_posix())
+            _, yaml_path = get_yml_paths_in_dir(path.as_posix())
         if not yaml_path:
             raise NotAContentItem
+        return Path(yaml_path)
 
-        self.path = Path(yaml_path)
-        return get_yaml(self.path.as_posix())
+    
+    @staticmethod
+    def get_yaml(path: Path) -> Dict[str, Union[str, List[str]]]:
+        return get_yaml(path)
 
 
 class JSONContentItem(ContentItem):

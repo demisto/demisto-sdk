@@ -11,18 +11,18 @@ class ClassifierMapper(JSONContentItem):
     classifier_mapper_type: str = Field('', alias='type')
     definition_id: str = Field('', alias='definitionId')
 
-    def __init__(self, **data) -> None:
-        super().__init__(**data)
-        if self.parsing_object:
-            if self.classifier_mapper_type == 'classification':
-                self.content_type = ContentTypes.CLASSIFIER
-            self.content_type = ContentTypes.MAPPER
-            print(f'Parsing {self.content_type} {self.object_id}')
-            self.node_id = self.get_node_id()
-            self.classifier_mapper_type = self.json_data.get('type')
-            self.definition_id = self.json_data.get('definitionId')
+    # def __init__(self, **data) -> None:
+    #     super().__init__(**data)
+    #     if self.parsing_object:
+    #         if self.classifier_mapper_type == 'classification':
+    #             self.content_type = ContentTypes.CLASSIFIER
+    #         self.content_type = ContentTypes.MAPPER
+    #         print(f'Parsing {self.content_type} {self.object_id}')
+    #         self.node_id = self.get_node_id()
+    #         self.classifier_mapper_type = self.json_data.get('type')
+    #         self.definition_id = self.json_data.get('definitionId')
 
-            self.connect_to_dependencies()
+    #         self.connect_to_dependencies()
 
     def get_filters_and_transformers_from_complex_value(self, complex_value: dict) -> None:
         for filter in complex_value.get('filters', []):

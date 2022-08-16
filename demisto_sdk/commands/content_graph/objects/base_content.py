@@ -1,27 +1,32 @@
-from pydantic import BaseModel, Field
+from abc import abstractmethod, ABC
+from pathlib import Path
+from pydantic import BaseModel, Field, validator
 from typing import List
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes
 
 
-class BaseContent(BaseModel):
-    parsing_object: bool = Field(False, exclude=True)
-    node_id: str = ''
+class BaseContent(ABC, BaseModel):
+    # parsing_object: bool = Field(False, exclude=True)
     object_id: str = Field('', alias='id')
     content_type: ContentTypes = ContentTypes.BASE_CONTENT
     deprecated: bool = False
     marketplaces: List[MarketplaceVersions] = []
+    node_id: str = ''
+    
+    # def __init__(self, **data) -> None:
+    #     super().__init__(**data)
+    #     self.parsing_object = self.node_id == ''
 
-    def __init__(self, **data) -> None:
-        super().__init__(**data)
-        self.parsing_object = self.node_id == ''
-
-    def get_node_id(self) -> str:
-        if not self.content_type or not self.object_id:
-            raise ValueError(
-                f'Missing content type ("{self.content_type}") or object ID ("{self.object_id}")'
-            )
-        return f'{self.content_type}:{self.object_id}'
+    @validator("node_id", always=True)
+    def set_node_id(cls, v, values, **kwargs) -> str:
+        """
+        Set node id by the content_type and id
+        """
+        return v or f'{values.get("content_type")}:{values.get("id")}'
+    
     class Config:
         arbitrary_types_allowed = True
+        orm_mode = True
+        allow_population_by_field_name = True

@@ -1,9 +1,11 @@
+from pathlib import Path
 from typing import Any, Dict, List
 
 from pydantic import Field
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
+from .base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript, IntegrationScriptUnifier
 
 
@@ -14,30 +16,48 @@ class Command:
 
 class Integration(IntegrationScript):
     display_name: str = ''
+    content_type: ContentTypes = ContentTypes.INTEGRATION
     is_fetch: bool = False
     is_feed: bool = False
     script_info: Dict[str, Any] = Field({}, exclude=True)
     commands: List[Command] = Field([], exclude=True)  # todo: override exclusion when loading
+    
+    @staticmethod
+    def from_path(path: Path) -> 'Integration':
+        print(f'Parsing {ContentTypes.INTEGRATION} {path}')
+        path = Integration.get_content_item_yaml_path(path)
+        yml_data = Integration.get_yaml(path)
+        relathinships = parse_yml_data()
+        # yml_data = 
+        script_info = yml_data.get('script')
+        self.display_name = self.yml_data.get('display')
+        self.type = self.script_info.get('subtype') or self.script_info.get('type')
+        self.docker_image = self.script_info.get('dockerimage', '')
+        self.is_fetch = self.script_info.get('isfetch', False)
+        self.is_feed = self.script_info.get('feed', False)
 
-    def __init__(self, **data) -> None:
-        super().__init__(**data)
-        if self.parsing_object:
-            self.content_type =  ContentTypes.INTEGRATION
-            print(f'Parsing {self.content_type} {self.object_id}')
-            self.node_id = self.get_node_id()
-            self.script_info = self.yml_data.get('script')
-            self.display_name = self.yml_data.get('display')
-            self.type = self.script_info.get('subtype') or self.script_info.get('type')
-            self.docker_image = self.script_info.get('dockerimage', '')
-            self.is_fetch = self.script_info.get('isfetch', False)
-            self.is_feed = self.script_info.get('feed', False)
+        if self.type == 'python':
+            self.type += '2'
 
-            if self.type == 'python':
-                self.type += '2'
+    # def __init__(self, **data) -> None:
+    #     super().__init__(**data)
+    #     if self.parsing_object:
+    #         self.content_type =  ContentTypes.INTEGRATION
+    #         print(f'Parsing {self.content_type} {self.object_id}')
+    #         self.node_id = self.get_node_id()
+    #         self.script_info = self.yml_data.get('script')
+    #         self.display_name = self.yml_data.get('display')
+    #         self.type = self.script_info.get('subtype') or self.script_info.get('type')
+    #         self.docker_image = self.script_info.get('dockerimage', '')
+    #         self.is_fetch = self.script_info.get('isfetch', False)
+    #         self.is_feed = self.script_info.get('feed', False)
 
-            self.connect_to_commands()
-            self.connect_to_dependencies()
-            self.connect_to_api_modules()
+    #         if self.type == 'python':
+    #             self.type += '2'
+
+    #         self.connect_to_commands()
+    #         self.connect_to_dependencies()
+    #         self.connect_to_api_modules()
 
     def connect_to_commands(self) -> None:
         for command_data in self.script_info.get('commands', []):

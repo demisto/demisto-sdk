@@ -23,17 +23,12 @@ class ContentItemParser(base_content.BaseContentParser):
         path (Path):
     """
     def __init__(self, path: Path) -> None:
-        self.path: Path = path
+        super().__init__(path)
         self.relationships: Dict[Rel, List[Dict[str, Any]]] = {}
 
     @property
     def node_id(self) -> str:
-        return f'{self.content_type}:{self.content_item_id}'
-
-    @property
-    @abstractmethod
-    def content_item_id(self) -> str:
-        pass
+        return f'{self.content_type}:{self.object_id}'
 
     @property
     @abstractmethod
@@ -54,20 +49,6 @@ class ContentItemParser(base_content.BaseContentParser):
     @abstractmethod
     def toversion(self) -> str:
         pass
-
-    def get_data(self) -> Dict[str, Any]:
-        base_content_data: Dict[str, Any] = super().get_data()
-        content_item_data: Dict[str, Any] = {
-            'node_id': self.node_id,
-            'id': self.content_item_id,
-            'name': self.name,
-            'deprecated': self.deprecated,
-            'fromversion': self.fromversion,
-            'toversion': self.toversion,
-            'file_path': self.path.as_posix(),
-        }
-
-        return content_item_data | base_content_data
 
     @staticmethod
     def is_package(path: Path) -> bool:
@@ -168,8 +149,8 @@ class JSONContentItemParser(ContentItemParser):
         self.pack_marketplaces: List[str] = pack_marketplaces
 
     @property
-    def content_item_id(self) -> str:
-        return self.json_data.get('id')
+    def object_id(self) -> str:
+        return self.json_data['id']
 
     @property
     def name(self) -> str:

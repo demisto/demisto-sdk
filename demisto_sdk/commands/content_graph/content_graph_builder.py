@@ -61,10 +61,6 @@ class ContentGraphBuilder(ABC):
         self.parse_packs(all_packs_paths)
         self.add_parsed_nodes_and_relationships_to_graph()
 
-    def iter_packs(self) -> Iterator[Path]:
-        for path in self.packs_path.iterdir():  # todo: handle repo path is invalid
-            if path.is_dir() and not path.name.startswith('.'):
-                yield path
 
     def add_parsed_nodes_and_relationships_to_graph(self) -> None:
         dump_pickle(NODES_PKL_PATH.as_posix(), self.nodes)

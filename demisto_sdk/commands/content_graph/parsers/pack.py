@@ -1,24 +1,48 @@
-import traceback
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional
 
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, PACK_METADATA_FILENAME
-from .content_item import ContentItemParser
 from demisto_sdk.commands.content_graph.parsers.parser_factory import ParserFactory
-import demisto_sdk.commands.content_graph.parsers.base_content as base_content
-from demisto_sdk.commands.content_graph.objects.pack import PackMetadata
+from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
+from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
 
 
-class PackParser(base_content.BaseContentParser, PackMetadata):
+class PackMetadataParser:
+    def __init__(self, metadata: Dict[str, Any]) -> None:
+        self.name: str = metadata['name']
+        self.description: str = metadata['description']
+        self.created: str = metadata.get('created', '')
+        self.updated: str = metadata.get('updated', '')
+        self.support: str = metadata['support']
+        self.email: str = metadata.get('email', '')
+        self.url: str = metadata['url']
+        self.author: str = metadata['author']
+        self.certification: str = 'certified' if self.support.lower() in ['xsoar', 'partner'] else ''
+        self.hidden: bool = metadata.get('hidden', False)
+        self.server_min_version: str = metadata.get('serverMinVersion', '')
+        self.current_version: str = metadata['currentVersion']
+        self.tags: List[str] = metadata['tags']
+        self.categories: List[str] = metadata['categories']
+        self.use_cases: List[str] = metadata['useCases']
+        self.keywords: List[str] = metadata['keywords']
+        self.price: Optional[int] = metadata.get('price')
+        self.premium: Optional[bool] = metadata.get('premium')
+        self.vendor_id: Optional[str] = metadata.get('vendorId')
+        self.vendor_name: Optional[str] = metadata.get('vendorName')
+        self.preview_only: Optional[bool] = metadata.get('previewOnly')
+
+
+class PackParser(BaseContentParser, PackMetadataParser):
     def __init__(self, path: Path) -> None:
-        metadata = PackMetadata.parse_file(path / PACK_METADATA_FILENAME)
-        PackMetadata().__init__(**metadata)
-        print(f'Parsing {self.content_type} {self.pack_id}')
+        metadata: Dict[str, Any] = get_json(path / PACK_METADATA_FILENAME)
+        PackMetadataParser.__init__(self, metadata)
+        print(f'Parsing {self.content_type} {self.object_id}')
         self.path: Path = path
-        self.metadata = PackMetadata.parse_file(path / PACK_METADATA_FILENAME)
+        self.marketplaces = metadata.get('marketplaces', [])
         self.content_items: Dict[ContentTypes, List[ContentItemParser]] = {}
-        # self.relationships: Dict[Tuple[ContentTypes, Rel, ContentTypes], List[Dict[str, Any]]] = {}
+
+        self.parse_pack_folders()
     
     @property
     def object_id(self) -> str:
@@ -28,54 +52,20 @@ class PackParser(base_content.BaseContentParser, PackMetadata):
     def content_type(self) -> ContentTypes:
         return ContentTypes.PACK
 
-    @property
-    def deprecated(self) -> bool:
-        return self.metadata.get('deprecated', False)
-    
-    @property
-    def marketplaces(self) -> List[str]:
-        return self.metadata.get('marketplaces', [])
-
-    def add_content_item_node(self, parser: Any) -> Dict[str, Any]:
+    def add_content_item_node(self, parser: ContentItemParser) -> Dict[str, Any]:
         self.content_items.setdefault(parser.content_type, []).append(parser)
 
-    # def add_content_item_relationships(self, parser: Any) -> None:
-    #     parser.add_relationship(
-    #         Rel.IN_PACK,
-    #         target=self.node_id,
-    #     )
-    #     for k, v in parser.relationships.items():
-    #         self.relationships.setdefault(k, []).extend(v)
+    def add_content_item_relationships(self, content_item: ContentItemParser) -> None:
+        content_item.add_relationship(
+            Rel.IN_PACK,
+            target=self.node_id,
+        )
+        for k, v in content_item.relationships.items():
+            self.relationships.setdefault(k, []).extend(v)
 
-    def parse_pack(self) -> None:
-        self.add_pack_node()
-        for folder in ContentTypes.pack_folders(self.path):
-            self.parse_pack_folder(folder)
-
-    def parse_pack_folder(self, folder_path: Path) -> None:
-        for content_item_path in folder_path.iterdir():  # todo: consider multiprocessing
-            if content_item := ParserFactory.from_path(content_item_path, self.marketplaces):
-                self.add_content_item_node(content_item)
-                self.add_content_item_relationships(content_item)
-
-
-class PackSubGraphCreator:
-    """ Creates a graph representation of a pack in content repository.
-
-    Attributes:
-        nodes:         Holds all parsed nodes of a pack.
-        relationships: Holds all parsed relationships of a pack.
-    """
-    @staticmethod
-    def from_path(path: Path) -> Tuple[
-            Dict[ContentTypes, List[Dict[str, Any]]],
-            Dict[Rel, List[Dict[str, Any]]]
-        ]:
-        """ Given a pack path, parses it into nodes and relationships. """
-        try:
-            pack_parser = PackParser(path)
-            pack_parser.parse_pack()
-        except Exception:
-            print(traceback.format_exc())
-            raise Exception(traceback.format_exc())
-        return pack_parser.content_items, pack_parser.relationships
+    def parse_pack_folders(self) -> None:
+        for folder_path in ContentTypes.pack_folders(self.path):
+            for content_item_path in folder_path.iterdir():  # todo: consider multiprocessing
+                if content_item := ParserFactory.from_path(content_item_path, self.marketplaces):
+                    self.add_content_item_node(content_item)
+                    content_item.add_relationship(Rel.IN_PACK, target=self.node_id)

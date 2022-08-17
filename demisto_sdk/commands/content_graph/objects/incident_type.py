@@ -1,26 +1,13 @@
-from pathlib import Path
+from dataclasses import Field
 from typing import List
-
-from demisto_sdk.commands.content_graph.constants import ContentTypes
-from demisto_sdk.commands.content_graph.objects.content_item import JSONContentItem
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
-class IncidentType(JSONContentItem):
-    def __init__(self, **data) -> None:
-        super().__init__(**data)
-        if self.parsing_object:
-            self.content_type = ContentTypes.INCIDENT_TYPE
-            print(f'Parsing {self.content_type} {self.object_id}')
-            self.node_id = self.get_node_id()
-
-            self.connect_to_dependencies()
-
-    def connect_to_dependencies(self) -> None:
-        if pre_processing_script := self.json_data.get('preProcessingScript'):
-            self.add_dependency(pre_processing_script, ContentTypes.SCRIPT)
-
-        if playbook := self.json_data.get('playbookId'):
-            self.add_dependency(playbook, ContentTypes.PLAYBOOK)
-
-        if layout := self.json_data.get('layout'):
-            self.add_dependency(layout, ContentTypes.LAYOUT)
+class IncidentType(ContentItem):
+    playbook: str
+    hours: int
+    days: int
+    weeks: int
+    closure_script: str = Field(alias='closureScript')
+    reputation_script_name: str = Field(alias='reputationScriptName')
+    enhancement_script_names: List[str] = Field(alias='enhancementScriptNames')

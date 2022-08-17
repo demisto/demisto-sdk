@@ -13,20 +13,13 @@ class IndicatorTypeParser(JSONContentItemParser):
         self.name = self.json_data.get('details')
         self.type = self.json_data.get('type')
         self.associated_to_all = self.json_data.get('associatedToAll')
+        self.details = self.json_data.get('details')
+        self.reputation_script_names = self.json_data.get('reputationScriptName')
+        self.enhancement_script_names = self.json_data.get('enhancementScriptNames')
 
     @property
     def content_type(self) -> ContentTypes:
         return ContentTypes.INDICATOR_TYPE
-
-    def get_data(self) -> Dict[str, Any]:
-        json_content_item_data = super().get_data()
-        classifier_mapper_data = {
-            'name': self.json_data.get('details'),
-            'type': self.json_data.get('type'),
-            'associatedToAll': self.json_data.get('associatedToAll'),
-        }
-        # todo: aliases - marketplacev2
-        return json_content_item_data | classifier_mapper_data
 
     def connect_to_dependencies(self) -> None:
         for field in ['reputationScriptName', 'enhancementScriptNames']:
@@ -38,3 +31,6 @@ class IndicatorTypeParser(JSONContentItemParser):
 
         if reputation_command := self.json_data.get('reputationCommand'):
             self.add_dependency(reputation_command, ContentTypes.COMMAND, is_mandatory=False)
+
+        if layout := self.json_data.get('layout'):
+            self.add_dependency(layout, ContentTypes.LAYOUT)

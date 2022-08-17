@@ -1,0 +1,24 @@
+from pathlib import Path
+from typing import List
+
+from demisto_sdk.commands.content_graph.constants import ContentTypes
+from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentItemParser
+
+
+class DashboardParser(JSONContentItemParser):
+    def __init__(self, path: Path, pack_marketplaces: List[str]) -> None:
+        super().__init__(path, pack_marketplaces)
+        self.description: str = self.json_data.get('description')
+
+        self.connect_to_dependencies()
+
+    @property
+    def content_type(self) -> ContentTypes:
+        return ContentTypes.DASHBOARD
+
+    def connect_to_dependencies(self) -> None:
+        for layout in self.json_data.get('layout', []):
+            widget_data = layout.get('widget')
+            if widget_data.get('dataType') == 'scripts':
+                if script_name := widget_data.get('query'):
+                    self.add_dependency(script_name, ContentTypes.SCRIPT, is_mandatory=False)

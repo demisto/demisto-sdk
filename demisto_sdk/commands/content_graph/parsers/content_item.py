@@ -27,17 +27,18 @@ class ContentItemParser(base_content.BaseContentParser):
         self.relationships: Dict[Rel, List[Dict[str, Any]]] = {}
 
     @property
-    def node_id(self) -> str:
-        return f'{self.content_type}:{self.object_id}'
-
-    @property
     @abstractmethod
     def name(self) -> str:
         pass
 
     @property
     @abstractmethod
-    def content_type(self) -> ContentTypes:
+    def deprecated(self) -> bool:
+        pass
+
+    @property
+    @abstractmethod
+    def marketplaces(self) -> List[str]:
         pass
 
     @property

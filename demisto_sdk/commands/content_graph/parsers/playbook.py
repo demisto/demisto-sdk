@@ -13,25 +13,21 @@ import demisto_sdk.commands.content_graph.parsers.content_item as content_item
 LIST_COMMANDS = ['Builtin|||setList', 'Builtin|||getList']
 
 class PlaybookParser(content_item.YAMLContentItemParser):
-    def __init__(self, path: Path, pack_marketplaces: List[str], is_test_playbook: bool = False) -> None:
-        if not is_test_playbook:
-            super().__init__(path, pack_marketplaces)
-            print(f'Parsing {self.content_type} {self.content_item_id}')
-            self.graph: networkx.DiGraph = build_tasks_graph(self.yml_data)
-            self.connect_to_dependencies()
-            self.connect_to_tests()
+    def __init__(self, path: Path, pack_marketplaces: List[str]) -> None:
+        self.description = self.yml_data['description']
+        super().__init__(path, pack_marketplaces)
+        print(f'Parsing {self.content_type} {self.object_id}')
+        self.graph: networkx.DiGraph = build_tasks_graph(self.yml_data)
+        self.connect_to_dependencies()
+        self.connect_to_tests()
 
     @property
-    def content_item_id(self) -> str:
+    def object_id(self) -> str:
         return self.yml_data.get('id')
 
     @property
     def content_type(self) -> ContentTypes:
         return ContentTypes.PLAYBOOK
-
-    @property
-    def deprecated(self) -> bool:
-        return self.yml_data.get('deprecated', False)
     
     def is_mandatory_dependency(self, task_id: str) -> bool:
         try:

@@ -15,7 +15,7 @@ class IntegrationScriptParser(YAMLContentItemParser):
         self.unifier = None if self.is_unified else IntegrationScriptUnifier(self.path.as_posix())
 
     @property
-    def content_item_id(self) -> str:
+    def object_id(self) -> str:
         return self.yml_data.get('commonfields', {}).get('id')
 
     @abstractmethod

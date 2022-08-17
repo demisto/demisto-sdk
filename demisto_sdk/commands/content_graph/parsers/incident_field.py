@@ -13,7 +13,6 @@ class IncidentFieldParser(JSONContentItemParser):
         self.cli_name = self.json_data.get('cliName')
         self.field_type = self.json_data.get('type')
         self.associated_to_all = self.json_data.get('associatedToAll')
-        self.description = self.json_data.get('description')
 
         self.connect_to_dependencies()
 

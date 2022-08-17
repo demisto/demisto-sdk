@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Any, Dict, List
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import field_to_cli_name
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes
@@ -7,7 +8,7 @@ from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentI
 
 
 class ClassifierMapperParser(JSONContentItemParser):
-    def __init__(self, path: Path, pack_marketplaces: List[str]) -> None:
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         super().__init__(path, pack_marketplaces)
         print(f'Parsing {self.content_type} {self.object_id}')
         self.type = self.json_data.get('type')

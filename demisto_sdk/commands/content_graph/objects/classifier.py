@@ -1,4 +1,5 @@
-from dataclasses import Field
+from pydantic import Field
+
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 

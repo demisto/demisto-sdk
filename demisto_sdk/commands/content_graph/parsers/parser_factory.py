@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Dict, List, Optional, Type
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser, NotAContentItem
 from demisto_sdk.commands.content_graph.parsers.incident_field import IncidentFieldParser
 from demisto_sdk.commands.content_graph.parsers.incident_type import IncidentTypeParser
@@ -27,7 +28,7 @@ CONTENT_TYPE_TO_PARSER: Dict[str, Type[ContentItemParser]] = {
 
 class ParserFactory:
     @staticmethod
-    def from_path(path: Path, pack_marketplaces: List[str]) -> Optional[ContentItemParser]:
+    def from_path(path: Path, pack_marketplaces: List[MarketplaceVersions]) -> Optional[ContentItemParser]:
         if not ContentItemParser.is_content_item(path):
             return None
         

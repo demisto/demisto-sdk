@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Any, Dict, List
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
 from demisto_sdk.commands.content_graph.parsers.integration_script import IntegrationScriptParser, IntegrationScriptUnifier
 
@@ -12,7 +13,7 @@ class CommandParser:
 
 
 class IntegrationParser(IntegrationScriptParser):
-    def __init__(self, path: Path, pack_marketplaces: List[str]) -> None:
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         super().__init__(path, pack_marketplaces)
         print(f'Parsing {self.content_type} {self.object_id}')
         self.commands: List[CommandParser] = []

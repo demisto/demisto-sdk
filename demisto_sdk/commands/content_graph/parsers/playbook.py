@@ -2,6 +2,7 @@ import networkx
 from pathlib import Path
 from typing import Any, Dict, List
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.update_id_set import (
     BUILT_IN_FIELDS,
     get_fields_by_script_argument,
@@ -13,8 +14,7 @@ import demisto_sdk.commands.content_graph.parsers.content_item as content_item
 LIST_COMMANDS = ['Builtin|||setList', 'Builtin|||getList']
 
 class PlaybookParser(content_item.YAMLContentItemParser):
-    def __init__(self, path: Path, pack_marketplaces: List[str]) -> None:
-        self.description = self.yml_data['description']
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         super().__init__(path, pack_marketplaces)
         print(f'Parsing {self.content_type} {self.object_id}')
         self.graph: networkx.DiGraph = build_tasks_graph(self.yml_data)

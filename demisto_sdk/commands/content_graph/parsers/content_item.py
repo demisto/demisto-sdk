@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.tools import (
     get_json, get_yaml,
     get_yml_paths_in_dir
 )
-from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_TO_VERSION
+from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_TO_VERSION, MarketplaceVersions
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, UNIFIED_FILES_SUFFIXES
 import demisto_sdk.commands.content_graph.parsers.base_content as base_content
 
@@ -38,7 +38,12 @@ class ContentItemParser(base_content.BaseContentParser):
 
     @property
     @abstractmethod
-    def marketplaces(self) -> List[str]:
+    def description(self) -> str:
+        pass
+
+    @property
+    @abstractmethod
+    def marketplaces(self) -> List[MarketplaceVersions]:
         pass
 
     @property
@@ -94,10 +99,10 @@ class ContentItemParser(base_content.BaseContentParser):
 
 
 class YAMLContentItemParser(ContentItemParser):
-    def __init__(self, path: Path, pack_marketplaces: List[str]) -> None:
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         super().__init__(path)
-        self.yml_data = self.get_yaml()
-        self.pack_marketplaces: List[str] = pack_marketplaces
+        self.yml_data: Dict[str, Any] = self.get_yaml()
+        self.pack_marketplaces: List[MarketplaceVersions] = pack_marketplaces
 
     @property
     def name(self) -> str:
@@ -106,6 +111,10 @@ class YAMLContentItemParser(ContentItemParser):
     @property
     def deprecated(self) -> bool:
         return self.yml_data.get('deprecated', False)
+
+    @property
+    def description(self) -> str:
+        return self.yml_data.get('description', '')
 
     @property
     def fromversion(self) -> str:
@@ -144,10 +153,10 @@ class YAMLContentItemParser(ContentItemParser):
 
 
 class JSONContentItemParser(ContentItemParser):
-    def __init__(self, path: Path, pack_marketplaces: List[str]) -> None:
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         super().__init__(path)
         self.json_data: Dict[str, Any] = self.get_json()
-        self.pack_marketplaces: List[str] = pack_marketplaces
+        self.pack_marketplaces: List[MarketplaceVersions] = pack_marketplaces
 
     @property
     def object_id(self) -> str:
@@ -160,6 +169,10 @@ class JSONContentItemParser(ContentItemParser):
     @property
     def deprecated(self) -> bool:
         return self.json_data.get('deprecated', False)
+
+    @property
+    def description(self) -> str:
+        return self.json_data.get('description', '')
 
     @property
     def fromversion(self) -> str:

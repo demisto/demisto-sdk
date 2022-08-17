@@ -1,12 +1,13 @@
 from pathlib import Path
 from typing import List
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.constants import ContentTypes
 from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentItemParser
 
 
 class IncidentTypeParser(JSONContentItemParser):
-    def __init__(self, path: Path, pack_marketplaces: List[str]) -> None:
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         super().__init__(path, pack_marketplaces)
         print(f'Parsing {self.content_type} {self.object_id}')
         self.playbook: str = self.json_data.get('playbookId')
@@ -16,6 +17,7 @@ class IncidentTypeParser(JSONContentItemParser):
         self.closure_script: str = self.json_data.get('closureScript')
         self.reputation_script_name: str = self.json_data.get('reputationScriptName')
         self.enhancement_script_names: List[str] = self.json_data.get('enhancementScriptNames')
+
         self.connect_to_dependencies()
 
     @property

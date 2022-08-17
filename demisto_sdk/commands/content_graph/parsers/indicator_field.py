@@ -1,19 +1,18 @@
 from pathlib import Path
-from typing import Any, Dict, List
-from demisto_sdk.commands.common.tools import normalize_field_name
+from typing import List
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.constants import ContentTypes
 from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentItemParser
 
 
 class IndicatorFieldParser(JSONContentItemParser):
-    def __init__(self, path: Path, pack_marketplaces: List[str]) -> None:
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         super().__init__(path, pack_marketplaces)
         print(f'Parsing {self.content_type} {self.object_id}')
         self.cli_name = self.json_data.get('cliName')
         self.type = self.json_data.get('type')
         self.associated_to_all = self.json_data.get('associatedToAll')
-        self.description = self.json_data.get('description')
 
         self.connect_to_dependencies()
 

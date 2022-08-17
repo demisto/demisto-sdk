@@ -2,14 +2,15 @@ import re
 from pathlib import Path
 from typing import List
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
+from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.content_graph.constants import ContentTypes
 import demisto_sdk.commands.content_graph.parsers.integration_script as integration_script
 
 EXECUTE_CMD_PATTERN = re.compile(r"execute_?command\(['\"](\w+)['\"].*", re.IGNORECASE)
 
 
 class ScriptParser(integration_script.IntegrationScriptParser):
-    def __init__(self, path: Path, pack_marketplaces: List[str]) -> None:
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         super().__init__(path, pack_marketplaces)
         print(f'Parsing {self.content_type} {self.object_id}')
         self.docker_image = self.yml_data.get('dockerimage', '')
@@ -24,6 +25,10 @@ class ScriptParser(integration_script.IntegrationScriptParser):
     @property
     def content_type(self) -> ContentTypes:
         return ContentTypes.SCRIPT
+
+    @property
+    def description(self) -> str:
+        return self.yml_data.get('comment', '')
 
     def connect_to_dependencies(self) -> None:
         for cmd in self.get_depends_on():

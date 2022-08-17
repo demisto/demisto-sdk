@@ -21,6 +21,10 @@ class ClassifierMapperParser(JSONContentItemParser):
             return ContentTypes.CLASSIFIER
         return ContentTypes.MAPPER
 
+    @property
+    def name(self) -> str:
+        return self.json_data.get('name') or self.json_data.get('brandName')
+
     def get_filters_and_transformers_from_complex_value(self, complex_value: dict) -> None:
         for filter in complex_value.get('filters', []):
             if filter:

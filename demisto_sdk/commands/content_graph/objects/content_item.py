@@ -7,7 +7,7 @@ from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 
 class ContentItem(BaseContent):
     path: Path
-    marketplaces: List[MarketplaceVersions] = []
+    marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
     name: str
-    from_version: str
-    to_version: str
+    fromversion: str
+    toversion: str

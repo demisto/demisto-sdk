@@ -7,9 +7,10 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.constants import ContentTypes, NodeData, Rel, RelationshipData, PACKS_FOLDER
 
 
-
 class Repository(BaseModel):
     path: Path
     packs: List[Pack]
-        
 
+    class Config:
+        orm_mode = True
+        allow_population_by_field_name = True

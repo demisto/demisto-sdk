@@ -16,8 +16,8 @@ class BaseContentParser(ABC):
     def __init__(self, path: Path) -> None:
         self.path = path
 
-    @abstractmethod
     @property
+    @abstractmethod
     def object_id(self) -> str:
         pass
 

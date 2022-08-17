@@ -2,7 +2,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes
+from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, RelationshipData
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 import demisto_sdk.commands.content_graph.objects.base_content as base_content
 
@@ -40,4 +40,6 @@ class Pack(base_content.BaseContent, PackMetadata):
     content_type: ContentTypes = ContentTypes.PACK
     node_id: str
     content_items: Dict[ContentTypes, List[ContentItem]] = Field(alias='contentItems')
+    relationships: Dict[Rel, List[RelationshipData]] = Field({}, exclude=True)
+
 

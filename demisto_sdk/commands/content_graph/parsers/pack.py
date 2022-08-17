@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from demisto_sdk.commands.common.tools import get_json
-from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, PACK_METADATA_FILENAME
+from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, PACK_METADATA_FILENAME, RelationshipData
 from demisto_sdk.commands.content_graph.parsers.parser_factory import ParserFactory
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
 from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
@@ -35,24 +35,24 @@ class PackMetadataParser:
 
 class PackParser(BaseContentParser, PackMetadataParser):
     def __init__(self, path: Path) -> None:
+        BaseContentParser.__init__(self, path)
         metadata: Dict[str, Any] = get_json(path / PACK_METADATA_FILENAME)
         PackMetadataParser.__init__(self, metadata)
         print(f'Parsing {self.content_type} {self.object_id}')
-        self.path: Path = path
         self.marketplaces = metadata.get('marketplaces', [])
         self.content_items: Dict[ContentTypes, List[ContentItemParser]] = {}
-
+        self.relationships: Dict[Rel, List[RelationshipData]] = {}
         self.parse_pack_folders()
-    
+
     @property
     def object_id(self) -> str:
         return self.path.name
-    
+
     @property
     def content_type(self) -> ContentTypes:
         return ContentTypes.PACK
 
-    def add_content_item_node(self, parser: ContentItemParser) -> Dict[str, Any]:
+    def add_content_item_node(self, parser: ContentItemParser) -> None:
         self.content_items.setdefault(parser.content_type, []).append(parser)
 
     def add_content_item_relationships(self, content_item: ContentItemParser) -> None:
@@ -68,4 +68,4 @@ class PackParser(BaseContentParser, PackMetadataParser):
             for content_item_path in folder_path.iterdir():  # todo: consider multiprocessing
                 if content_item := ParserFactory.from_path(content_item_path, self.marketplaces):
                     self.add_content_item_node(content_item)
-                    content_item.add_relationship(Rel.IN_PACK, target=self.node_id)
+                    self.add_content_item_relationships(content_item)

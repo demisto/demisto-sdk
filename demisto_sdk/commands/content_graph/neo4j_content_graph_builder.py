@@ -49,11 +49,11 @@ class Neo4jContentGraphBuilder(ContentGraphBuilder):
     def content_graph(self) -> Neo4jContentGraphInterface:
         return self._content_graph
 
-    def __enter__(self):
-        if self.load_graph:
-            self.load()
-        self.start_neo4j_service()
-        return self
+    # def __enter__(self):
+    #     if self.load_graph:
+    #         self.load()
+    #     self.start_neo4j_service()
+    #     return self
 
     def start_neo4j_service(self, ):
         if not self.use_docker:
@@ -117,18 +117,19 @@ class Neo4jContentGraphBuilder(ContentGraphBuilder):
     def delete_modified_packs_from_graph(self, packs: List[str]) -> None:
         pass  # todo
 
-    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
-        # self.driver.close()
-        if not self.keep_service:
-            self.stop_neo4j_service()
-            if self.dump_on_exit:
-                self.dump()
+    # def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+    #     # self.driver.close()
+    #     if not self.keep_service:
+    #         self.stop_neo4j_service()
+    #         if self.dump_on_exit:
+    #             self.dump()
 
 
 def create_content_graph(use_docker: bool = True, keep_service: bool = False) -> None:
     shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
-    with Neo4jContentGraphBuilder(REPO_PATH, use_docker, keep_service=keep_service, dump_on_exit=True) as content_graph:
-        content_graph.create_graph_from_repository()
+    content_graph_builder = Neo4jContentGraphBuilder(REPO_PATH, use_docker, keep_service=keep_service, dump_on_exit=True)
+    content_graph_builder.start_neo4j_service()
+    content_graph_builder.create_graph()
 
 
 def load_content_graph(use_docker: bool = True, keep_service: bool = False, content_graph_path: Path = None) -> Neo4jContentGraphInterface:

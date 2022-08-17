@@ -11,7 +11,8 @@ class BaseContent(ABC, BaseModel):
     object_id: str = Field(alias='id')
     content_type: ContentTypes
     marketplaces: List[MarketplaceVersions] = []
-    node_id: str    
+    node_id: str
+
     class Config:
         arbitrary_types_allowed = True
         orm_mode = True

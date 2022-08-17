@@ -1,14 +1,15 @@
 from pathlib import Path
 from typing import Any, Dict, List
 from demisto_sdk.commands.common.tools import normalize_field_name
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes
 from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentItemParser
 
 
 class IncidentFieldParser(JSONContentItemParser):
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
+        super().__init__(path, pack_marketplaces)
         print(f'Parsing {self.content_type} {self.object_id}')
         self.cli_name = self.json_data.get('cliName')
         self.field_type = self.json_data.get('type')
@@ -22,7 +23,7 @@ class IncidentFieldParser(JSONContentItemParser):
 
     @property
     def object_id(self) -> str:
-        return self.cli_name
+        return self.json_data.get('cliName')
 
     def connect_to_dependencies(self) -> None:
         for associated_type in set(self.json_data.get('associatedTypes') or []):

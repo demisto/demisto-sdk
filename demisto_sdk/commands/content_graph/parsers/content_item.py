@@ -72,7 +72,7 @@ class ContentItemParser(base_content.BaseContentParser):
         self,
         relationship: Rel,
         target: str,
-        **kwargs: Dict[str, Any],
+        **kwargs,
     ) -> None:
         relationship_data: Dict[str, Any] = {
             'source_node_id': self.node_id,

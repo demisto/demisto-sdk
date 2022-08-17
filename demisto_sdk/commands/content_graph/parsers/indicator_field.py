@@ -22,7 +22,7 @@ class IndicatorFieldParser(JSONContentItemParser):
 
     @property
     def object_id(self) -> str:
-        return self.cli_name
+        return self.json_data.get('cliName')
     
     def connect_to_dependencies(self) -> None:
         for associated_type in set(self.json_data.get('associatedTypes') or []):

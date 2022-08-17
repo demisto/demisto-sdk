@@ -926,7 +926,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def integration_is_deprecated_and_used(integration_name: str, commands_dict: dict):
-        erorr_str = f"{integration_name} integration contains deprecated commands that are being used by other entites:\n"
+        erorr_str = f"{integration_name} integration contains deprecated commands that are being used by other entities:\n"
         for command_name, command_usage_list in commands_dict.items():
             current_command_usage = '\n'.join(command_usage_list)
             erorr_str += f"{command_name} is being used in the following locations:\n{current_command_usage}\n"

@@ -41,7 +41,7 @@ class Rel(enum.Enum):
         return constraints
 
 
-class ContentTypes(enum.Enum):
+class ContentTypes(str, enum.Enum):
     BASE_CONTENT = 'BaseContent'
     PACK = 'Pack'
     COMMAND_OR_SCRIPT = 'CommandOrScript'
@@ -75,9 +75,6 @@ class ContentTypes(enum.Enum):
     XSIAM_REPORT = 'XSIAMReport'
     TRIGGER = 'Trigger'
     WIZARD = 'Wizard'
-
-    def __str__(self) -> str:
-        return self.value
 
     @property
     def labels(self) -> List[str]:

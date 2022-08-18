@@ -3,6 +3,7 @@
 ## Unreleased
 * Fixed an issue in the **format** command where fail when executed from environment without mdx server available.
 * Added `Added a`, `Added an` to the list of allowed changelog prefixes.
+* Changing the way we are using XSIAM servers api-keys in ***test-content*** command.
 
 ## 1.7.2
 

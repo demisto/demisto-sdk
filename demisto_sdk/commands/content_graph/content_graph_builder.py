@@ -48,14 +48,14 @@ class ContentGraphBuilder(ABC):
             dump_pickle(REPO_PKL_PATH.as_posix(), self.repository)
 
         for pack in self.repository.packs:
-            self.extend_nodes_and_relationships(pack.content_items, pack.relationships)
+            self._extend_nodes_and_relationships(pack.content_items, pack.relationships)
 
     @property
     # @abstractmethod
     def content_graph(self) -> ContentGraphInterface:
         pass
 
-    def extend_nodes_and_relationships(
+    def _extend_nodes_and_relationships(
         self,
         pack_content_items: Dict[ContentTypes, List[ContentItem]],
         pack_relationships: Dict[Rel, List[RelationshipData]],

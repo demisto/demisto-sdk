@@ -2329,7 +2329,7 @@ class Errors:
     @error_code_decorator
     def playbook_is_deprecated_and_used(playbook_name: str, files_list: list):
         files_list_str = '\n'.join(files_list)
-        return f"{playbook_name} playbook is deprecated and being used by the following entites:\n{files_list_str}"
+        return f"{playbook_name} playbook is deprecated and being used by the following entities:\n{files_list_str}"
 
     @staticmethod
     @error_code_decorator
@@ -2367,7 +2367,7 @@ class Errors:
     @error_code_decorator
     def script_is_deprecated_and_used(script_name: str, files_list: list):
         files_list_str = '\n'.join(files_list)
-        return f"{script_name} script is deprecated and being used by the following entites:\n{files_list_str}"
+        return f"{script_name} script is deprecated and being used by the following entities:\n{files_list_str}"
 
     @staticmethod
     @error_code_decorator

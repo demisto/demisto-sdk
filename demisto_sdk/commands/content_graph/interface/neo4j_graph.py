@@ -7,7 +7,7 @@ from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import create_indexes
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import create_constraints
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import create_nodes
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import create_nodes, duplicates_exist
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import create_relationships
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import create_pack_dependencies, get_first_level_dependencies, get_packs_dependencies
 
@@ -29,6 +29,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             tx: neo4j.Transaction = session.begin_transaction()
             create_nodes(tx, nodes)
             tx.commit()
+            if duplicates_exist(tx):
+                raise Exception('Duplicates found in graph.')
             tx.close()
 
     def create_relationships(self, relationships: Dict[Rel, List[Dict[str, Any]]]) -> None:

@@ -38,9 +38,6 @@ def create_nodes(
     for content_type, data in nodes.items():
         create_nodes_by_type(tx, content_type, data)
 
-    if duplicates_exist(tx):
-        raise Exception('Duplicates found in graph.')
-
 
 def duplicates_exist(tx) -> bool:
     result = run_query(tx, FIND_DUPLICATES).single()
@@ -57,3 +54,4 @@ def create_nodes_by_type(
     result = run_query(tx, query, data=data).single()
     nodes_count: int = result['nodes_created']
     logger.info(f'Created {nodes_count} nodes of type {content_type}.')
+    

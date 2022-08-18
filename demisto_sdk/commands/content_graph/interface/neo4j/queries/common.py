@@ -1,4 +1,5 @@
 from datetime import datetime
+import traceback
 from neo4j import Transaction, Result
 from typing import Any, Dict
 
@@ -30,5 +31,5 @@ def run_query(tx: Transaction, query: str, **kwargs: Dict[str, Any]) -> Result:
         logger.info(f'Took {(datetime.now() - start_time).total_seconds()} seconds')
         return result
     except Exception as e:
-        logger.error(str(e))
+        logger.error(traceback.format_exc())
         raise e

@@ -6,7 +6,7 @@ import traceback
 from typing import Any, List, Dict
 
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes, NodeData, Rel, RelationshipData
+from demisto_sdk.commands.content_graph.constants import ContentTypes, NodeData, Rel, RelationshipData, REPO_PATH
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.content.content import Content
@@ -15,10 +15,13 @@ from .objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.repository import Repository
 from demisto_sdk.commands.content_graph.parsers.repository import RepositoryParser
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
 
 import logging
 
-REPO_PATH = Path(GitUtil(Content.git()).git_path())
+json = JSON_Handler()
+
+
 REPO_PARSER_PKL_PATH = REPO_PATH / 'repo_parser.pkl'
 
 logger = logging.getLogger('demisto-sdk')
@@ -52,10 +55,10 @@ class ContentGraphBuilder:
             try:
                 repository_parser = RepositoryParser(path)
                 dump_pickle(REPO_PARSER_PKL_PATH.as_posix(), repository_parser)
-                return Repository.from_orm(repository_parser)
             except Exception:
                 print(traceback.format_exc())
                 raise
+        return Repository.from_orm(repository_parser)
 
     def _extend_nodes_and_relationships(
         self,
@@ -63,7 +66,7 @@ class ContentGraphBuilder:
         pack_relationships: Dict[Rel, List[RelationshipData]],
     ) -> None:
         for content_type, content_items in pack_content_items.items():
-            pack_nodes = [content_item.dict() for content_item in content_items]  # TODO do we really need to convert to dict?
+            pack_nodes = [json.loads(content_item.json()) for content_item in content_items]  # TODO do we really need to convert to dict?
             self.nodes.setdefault(content_type, []).extend(pack_nodes)
 
         for relationship, parsed_data in pack_relationships.items():

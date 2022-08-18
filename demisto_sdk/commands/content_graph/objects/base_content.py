@@ -1,5 +1,4 @@
 from abc import abstractmethod, ABC
-from pathlib import Path
 from pydantic import BaseModel, Field, validator
 from typing import List
 from demisto_sdk.commands.common.constants import MarketplaceVersions

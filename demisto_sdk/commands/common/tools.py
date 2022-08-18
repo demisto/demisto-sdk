@@ -274,8 +274,6 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
         if exit_on_error:
             print_error('Failed to run command {}\nerror details:\n{}'.format(command, err))
             sys.exit(1)
-        else:
-            raise RuntimeError('Failed to run command {}\nerror details:\n{}'.format(command, err))
 
     return output
 

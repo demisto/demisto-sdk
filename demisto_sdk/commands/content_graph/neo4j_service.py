@@ -9,8 +9,11 @@ from demisto_sdk.commands.content_graph.constants import NEO4J_PASSWORD, REPO_PA
 
 logger = logging.getLogger('demisto-sdk')
 
-
-IS_NEO4J_ADMIN_AVAILABLE = run_command('neo4j-admin --version', cwd=REPO_PATH / 'neo4j', is_silenced=True) == 0
+try:
+    run_command('neo4j-admin --version', cwd=REPO_PATH / 'neo4j', is_silenced=True)
+    IS_NEO4J_ADMIN_AVAILABLE = True
+except Exception:
+    IS_NEO4J_ADMIN_AVAILABLE = False
 
 
 def start_neo4j_service(use_docker: bool = True):

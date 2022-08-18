@@ -40,7 +40,6 @@ def create_nodes(
 
     if duplicates_exist(tx):
         raise Exception('Duplicates found in graph.')
-    
 
 
 def duplicates_exist(tx) -> bool:

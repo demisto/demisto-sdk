@@ -7,9 +7,11 @@ from demisto_sdk.commands.content_graph.content_graph_builder import \
 from demisto_sdk.commands.content_graph.interface.neo4j_graph import \
     Neo4jContentGraphInterface
 
-import neo4j_service
-from constants import (NEO4J_DATABASE_URL, NEO4J_PASSWORD, NEO4J_USERNAME,
-                       REPO_PATH)
+import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
+from demisto_sdk.commands.content_graph.constants import (NEO4J_DATABASE_URL,
+                                                          NEO4J_PASSWORD,
+                                                          NEO4J_USERNAME,
+                                                          REPO_PATH)
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -20,7 +22,7 @@ def create_content_graph(use_docker: bool = True, keep_service: bool = False) ->
     shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
     neo4j_service.start_neo4j_service(use_docker)
     content_graph_builder = ContentGraphBuilder(REPO_PATH, neo4j_interface)
-    content_graph_builder.create_graph_from_repository()
+    content_graph_builder.create_graph()
     if not keep_service:
         neo4j_service.stop_neo4j_service(use_docker)
         neo4j_service.dump()

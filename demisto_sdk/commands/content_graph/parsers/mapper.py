@@ -1,17 +1,14 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict
+from typing import Any, Dict
 from demisto_sdk.commands.common.tools import field_to_cli_name
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes
 from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentItemParser
 
-if TYPE_CHECKING:
-    from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
-
-class ClassifierMapperParser(JSONContentItemParser):
-    def __init__(self, path: Path, pack: 'PackParser') -> None:
-        super().__init__(path, pack)
+class MapperParser(JSONContentItemParser, content_type=ContentTypes.MAPPER):
+    def __init__(self, path: Path) -> None:
+        super().__init__(path)
         print(f'Parsing {self.content_type} {self.object_id}')
         self.type = self.json_data.get('type')
         self.definition_id = self.json_data.get('definitionId')
@@ -19,19 +16,11 @@ class ClassifierMapperParser(JSONContentItemParser):
 
     @property
     def content_type(self) -> ContentTypes:
-        if self.json_data.get('type') == 'classification':
-            return ContentTypes.CLASSIFIER
         return ContentTypes.MAPPER
 
     @property
     def name(self) -> str:
         return self.json_data.get('name') or self.json_data.get('brandName')
-
-    def add_to_pack(self) -> None:
-        if self.content_type == ContentTypes.CLASSIFIER:
-            self.pack.content_items.classifier.append(self)
-        else:
-            self.pack.content_items.mapper.append(self)
 
     def get_filters_and_transformers_from_complex_value(self, complex_value: dict) -> None:
         for filter in complex_value.get('filters', []):
@@ -48,18 +37,6 @@ class ClassifierMapperParser(JSONContentItemParser):
         if default_incident_type := self.json_data.get('defaultIncidentType'):
             self.add_dependency(default_incident_type, ContentTypes.INCIDENT_TYPE)
 
-        if self.content_type == ContentTypes.CLASSIFIER:
-            self.connect_to_classifier_dependencies()
-        else:
-            self.connect_to_mapper_dependencies()
-
-    def connect_to_classifier_dependencies(self) -> None:
-        for incident_type in self.json_data.get('keyTypeMap', {}).values():
-            self.add_dependency(incident_type, ContentTypes.INCIDENT_TYPE)
-        if transformer_complex_value := self.json_data.get('transformer', {}).get('complex', {}):
-            self.get_filters_and_transformers_from_complex_value(transformer_complex_value)
-
-    def connect_to_mapper_dependencies(self) -> None:
         for incident_type, mapping_data in self.json_data.get('mapping', {}).items():
             self.add_dependency(incident_type, ContentTypes.INCIDENT_TYPE)
             internal_mapping: Dict[str, Any] = mapping_data.get('internalMapping')
@@ -79,7 +56,7 @@ class ClassifierMapperParser(JSONContentItemParser):
                                 ContentTypes.INCIDENT_FIELD,
                             )
 
-            elif self.type == 'mapping-incoming':
+            else:  # self.type == 'mapping-incoming'
                 # all the incident fields are the keys of the mapping
                 for incident_field in internal_mapping.keys():
                     self.add_dependency(

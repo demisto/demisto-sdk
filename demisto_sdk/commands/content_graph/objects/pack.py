@@ -1,6 +1,6 @@
 from pathlib import Path
 from pydantic import BaseModel, Field
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, RelationshipData
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -34,32 +34,32 @@ from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
 
 
 class PackContentItems(BaseModel):
-    classifier: List['Classifier'] = Field([], alias=ContentTypes.CLASSIFIER.value)
-    correlation_rule: List['CorrelationRule'] = Field([], alias=ContentTypes.CORRELATION_RULE.value)
-    dashboard: List['Dashboard'] = Field([], alias=ContentTypes.DASHBOARD.value)
-    generic_definition: List['GenericDefinition'] = Field([], alias=ContentTypes.GENERIC_DEFINITION.value)
-    generic_module: List['GenericModule'] = Field([], alias=ContentTypes.GENERIC_MODULE.value)
-    generic_type: List['GenericType'] = Field([], alias=ContentTypes.GENERIC_TYPE.value)
-    incident_field: List['IncidentField'] = Field([], alias=ContentTypes.INCIDENT_FIELD.value)
-    incident_type: List['IncidentType'] = Field([], alias=ContentTypes.INCIDENT_TYPE.value)
-    indicator_field: List['IndicatorField'] = Field([], alias=ContentTypes.INDICATOR_FIELD.value)
-    indicator_type: List['IndicatorType'] = Field([], alias=ContentTypes.INDICATOR_TYPE.value)
-    integration: List['Integration'] = Field([], alias=ContentTypes.INTEGRATION.value)
-    job: List['Job'] = Field([], alias=ContentTypes.JOB.value)
-    layout: List['Layout'] = Field([], alias=ContentTypes.LAYOUT.value)
-    list_object: List['ListObject'] = Field([], alias=ContentTypes.LIST.value)
-    mapper: List['Mapper'] = Field([], alias=ContentTypes.MAPPER.value)
-    modeling_rule: List['ModelingRule'] = Field([], alias=ContentTypes.MODELING_RULE.value)
-    parsing_rule: List['ParsingRule'] = Field([], alias=ContentTypes.PARSING_RULE.value)
-    playbook: List['Playbook'] = Field([], alias=ContentTypes.PLAYBOOK.value)
-    report: List['Report'] = Field([], alias=ContentTypes.REPORT.value)
-    script: List['Script'] = Field([], alias=ContentTypes.SCRIPT.value)
-    test_playbook: List['TestPlaybook'] = Field([], alias=ContentTypes.TEST_PLAYBOOK.value)
-    trigger: List['Trigger'] = Field([], alias=ContentTypes.TRIGGER.value)
-    widget: List['Widget'] = Field([], alias=ContentTypes.WIDGET.value)
-    wizard: List['Wizard'] = Field([], alias=ContentTypes.WIZARD.value)
-    xsiam_dashboard: List['XSIAMDashboard'] = Field([], alias=ContentTypes.XSIAM_DASHBOARD.value)
-    xsiam_report: List['XSIAMReport'] = Field([], alias=ContentTypes.XSIAM_REPORT.value)
+    classifier: List[Classifier] = Field([], alias=ContentTypes.CLASSIFIER.value)
+    correlation_rule: List[CorrelationRule] = Field([], alias=ContentTypes.CORRELATION_RULE.value)
+    dashboard: List[Dashboard] = Field([], alias=ContentTypes.DASHBOARD.value)
+    generic_definition: List[GenericDefinition] = Field([], alias=ContentTypes.GENERIC_DEFINITION.value)
+    generic_module: List[GenericModule] = Field([], alias=ContentTypes.GENERIC_MODULE.value)
+    generic_type: List[GenericType] = Field([], alias=ContentTypes.GENERIC_TYPE.value)
+    incident_field: List[IncidentField] = Field([], alias=ContentTypes.INCIDENT_FIELD.value)
+    incident_type: List[IncidentType] = Field([], alias=ContentTypes.INCIDENT_TYPE.value)
+    indicator_field: List[IndicatorField] = Field([], alias=ContentTypes.INDICATOR_FIELD.value)
+    indicator_type: List[IndicatorType] = Field([], alias=ContentTypes.INDICATOR_TYPE.value)
+    integration: List[Integration] = Field([], alias=ContentTypes.INTEGRATION.value)
+    job: List[Job] = Field([], alias=ContentTypes.JOB.value)
+    layout: List[Layout] = Field([], alias=ContentTypes.LAYOUT.value)
+    list: List[ListObject] = Field([], alias=ContentTypes.LIST.value)
+    mapper: List[Mapper] = Field([], alias=ContentTypes.MAPPER.value)
+    modeling_rule: List[ModelingRule] = Field([], alias=ContentTypes.MODELING_RULE.value)
+    parsing_rule: List[ParsingRule] = Field([], alias=ContentTypes.PARSING_RULE.value)
+    playbook: List[Playbook] = Field([], alias=ContentTypes.PLAYBOOK.value)
+    report: List[Report] = Field([], alias=ContentTypes.REPORT.value)
+    script: List[Script] = Field([], alias=ContentTypes.SCRIPT.value)
+    test_playbook: List[TestPlaybook] = Field([], alias=ContentTypes.TEST_PLAYBOOK.value)
+    trigger: List[Trigger] = Field([], alias=ContentTypes.TRIGGER.value)
+    widget: List[Widget] = Field([], alias=ContentTypes.WIDGET.value)
+    wizard: List[Wizard] = Field([], alias=ContentTypes.WIZARD.value)
+    xsiam_dashboard: List[XSIAMDashboard] = Field([], alias=ContentTypes.XSIAM_DASHBOARD.value)
+    xsiam_report: List[XSIAMReport] = Field([], alias=ContentTypes.XSIAM_REPORT.value)
 
     def __iter__(self):
         for _, content_items in vars(self).items():
@@ -103,7 +103,7 @@ class PackMetadata(BaseModel):
 class Pack(BaseContent, PackMetadata):
     path: Path
     object_id: str
-    content_type: ContentTypes = ContentTypes.PACK
+    content_type: ContentTypes
     node_id: str
     content_items: PackContentItems = Field(alias='contentItems', exclude=True)
     relationships: Dict[Rel, List[RelationshipData]] = Field({}, exclude=True)

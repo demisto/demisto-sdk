@@ -1,6 +1,7 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.content_graph.constants import (
     ContentTypes,
@@ -8,64 +9,91 @@ from demisto_sdk.commands.content_graph.constants import (
     PACK_METADATA_FILENAME,
     RelationshipData
 )
-from demisto_sdk.commands.content_graph.parsers.parser_factory import ParserFactory
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
-
-if TYPE_CHECKING:
-    from demisto_sdk.commands.content_graph.parsers.classifier_mapper import ClassifierMapperParser
-    from demisto_sdk.commands.content_graph.parsers.correlation_rule import CorrelationRuleParser
-    from demisto_sdk.commands.content_graph.parsers.dashboard import DashboardParser
-    from demisto_sdk.commands.content_graph.parsers.generic_definition import GenericDefinitionParser
-    from demisto_sdk.commands.content_graph.parsers.generic_module import GenericModuleParser
-    from demisto_sdk.commands.content_graph.parsers.generic_type import GenericTypeParser
-    from demisto_sdk.commands.content_graph.parsers.incident_field import IncidentFieldParser
-    from demisto_sdk.commands.content_graph.parsers.incident_type import IncidentTypeParser
-    from demisto_sdk.commands.content_graph.parsers.indicator_field import IndicatorFieldParser
-    from demisto_sdk.commands.content_graph.parsers.indicator_type import IndicatorTypeParser
-    from demisto_sdk.commands.content_graph.parsers.integration import IntegrationParser
-    from demisto_sdk.commands.content_graph.parsers.job import JobParser
-    from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser
-    from demisto_sdk.commands.content_graph.parsers.list import ListParser
-    from demisto_sdk.commands.content_graph.parsers.modeling_rule import ModelingRuleParser
-    from demisto_sdk.commands.content_graph.parsers.parsing_rule import ParsingRuleParser
-    from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
-    from demisto_sdk.commands.content_graph.parsers.report import ReportParser
-    from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
-    from demisto_sdk.commands.content_graph.parsers.test_playbook import TestPlaybookParser
-    from demisto_sdk.commands.content_graph.parsers.trigger import TriggerParser
-    from demisto_sdk.commands.content_graph.parsers.widget import WidgetParser
-    from demisto_sdk.commands.content_graph.parsers.wizard import WizardParser
-    from demisto_sdk.commands.content_graph.parsers.xsiam_dashboard import XSIAMDashboardParser
-    from demisto_sdk.commands.content_graph.parsers.xsiam_report import XSIAMReportParser
+from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
 
 class PackContentItems:
     def __init__(self) -> None:
-        self.classifier: List['ClassifierMapperParser'] = []
-        self.correlation_rule: List['CorrelationRuleParser'] = []
-        self.dashboard: List['DashboardParser'] = []
-        self.generic_definition: List['GenericDefinitionParser'] = []
-        self.generic_module: List['GenericModuleParser'] = []
-        self.generic_type: List['GenericTypeParser'] = []
-        self.incident_field: List['IncidentFieldParser'] = []
-        self.incident_type: List['IncidentTypeParser'] = []
-        self.indicator_field: List['IndicatorFieldParser'] = []
-        self.indicator_type: List['IndicatorTypeParser'] = []
-        self.integration: List['IntegrationParser'] = []
-        self.job: List['JobParser'] = []
-        self.layout: List['LayoutParser'] = []
-        self.list_object: List['ListParser'] = []
-        self.mapper: List['ClassifierMapperParser'] = []
-        self.modeling_rule: List['ModelingRuleParser'] = []
-        self.parsing_rule: List['ParsingRuleParser'] = []
-        self.playbook: List['PlaybookParser'] = []
-        self.report: List['ReportParser'] = []
-        self.script: List['ScriptParser'] = []
-        self.test_playbook: List['TestPlaybookParser'] = []
-        self.trigger: List['TriggerParser'] = []
-        self.widget: List['WidgetParser'] = []
-        self.wizard: List['WizardParser'] = []
-        self.xsiam_dashboard: List['XSIAMDashboardParser'] = []
-        self.xsiam_report: List['XSIAMReportParser'] = []
+        self.classifier: List[ContentItemParser] = []
+        self.correlation_rule: List[ContentItemParser] = []
+        self.dashboard: List[ContentItemParser] = []
+        self.generic_definition: List[ContentItemParser] = []
+        self.generic_module: List[ContentItemParser] = []
+        self.generic_type: List[ContentItemParser] = []
+        self.incident_field: List[ContentItemParser] = []
+        self.incident_type: List[ContentItemParser] = []
+        self.indicator_field: List[ContentItemParser] = []
+        self.indicator_type: List[ContentItemParser] = []
+        self.integration: List[ContentItemParser] = []
+        self.job: List[ContentItemParser] = []
+        self.layout: List[ContentItemParser] = []
+        self.list: List[ContentItemParser] = []
+        self.mapper: List[ContentItemParser] = []
+        self.modeling_rule: List[ContentItemParser] = []
+        self.parsing_rule: List[ContentItemParser] = []
+        self.playbook: List[ContentItemParser] = []
+        self.report: List[ContentItemParser] = []
+        self.script: List[ContentItemParser] = []
+        self.test_playbook: List[ContentItemParser] = []
+        self.trigger: List[ContentItemParser] = []
+        self.widget: List[ContentItemParser] = []
+        self.wizard: List[ContentItemParser] = []
+        self.xsiam_dashboard: List[ContentItemParser] = []
+        self.xsiam_report: List[ContentItemParser] = []
+    
+    def append(self, obj: ContentItemParser) -> None:
+        if obj.content_type == ContentTypes.CLASSIFIER:
+            self.classifier.append(obj)
+        elif obj.content_type == ContentTypes.CORRELATION_RULE:
+            self.correlation_rule.append(obj)
+        elif obj.content_type == ContentTypes.DASHBOARD:
+            self.dashboard.append(obj)
+        elif obj.content_type == ContentTypes.GENERIC_DEFINITION:
+            self.generic_definition.append(obj)
+        elif obj.content_type == ContentTypes.GENERIC_MODULE:
+            self.generic_module.append(obj)
+        elif obj.content_type == ContentTypes.GENERIC_TYPE:
+            self.generic_type.append(obj)
+        elif obj.content_type == ContentTypes.INCIDENT_FIELD:
+            self.incident_field.append(obj)
+        elif obj.content_type == ContentTypes.INCIDENT_TYPE:
+            self.incident_type.append(obj)
+        elif obj.content_type == ContentTypes.INDICATOR_FIELD:
+            self.indicator_field.append(obj)
+        elif obj.content_type == ContentTypes.INDICATOR_TYPE:
+            self.indicator_type.append(obj)
+        elif obj.content_type == ContentTypes.INTEGRATION:
+            self.integration.append(obj)
+        elif obj.content_type == ContentTypes.JOB:
+            self.job.append(obj)
+        elif obj.content_type == ContentTypes.LAYOUT:
+            self.layout.append(obj)
+        elif obj.content_type == ContentTypes.LIST:
+            self.list.append(obj)
+        if obj.content_type == ContentTypes.MAPPER:
+            self.mapper.append(obj)
+        elif obj.content_type == ContentTypes.MODELING_RULE:
+            self.modeling_rule.append(obj)
+        elif obj.content_type == ContentTypes.PARSING_RULE:
+            self.parsing_rule.append(obj)
+        elif obj.content_type == ContentTypes.PLAYBOOK:
+            self.playbook.append(obj)
+        elif obj.content_type == ContentTypes.REPORT:
+            self.report.append(obj)
+        elif obj.content_type == ContentTypes.SCRIPT:
+            self.script.append(obj)
+        elif obj.content_type == ContentTypes.TEST_PLAYBOOK:
+            self.test_playbook.append(obj)
+        elif obj.content_type == ContentTypes.TRIGGER:
+            self.trigger.append(obj)
+        elif obj.content_type == ContentTypes.WIDGET:
+            self.widget.append(obj)
+        elif obj.content_type == ContentTypes.WIZARD:
+            self.wizard.append(obj)
+        elif obj.content_type == ContentTypes.XSIAM_DASHBOARD:
+            self.xsiam_dashboard.append(obj)
+        elif obj.content_type == ContentTypes.XSIAM_REPORT:
+            self.xsiam_report.append(obj)
 
 
 class PackMetadataParser:
@@ -99,7 +127,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         metadata: Dict[str, Any] = get_json(path / PACK_METADATA_FILENAME)
         PackMetadataParser.__init__(self, metadata)
         print(f'Parsing {self.content_type} {self.object_id}')
-        self.marketplaces = metadata.get('marketplaces', [])
+        self.marketplaces = metadata.get('marketplaces', list(MarketplaceVersions))
         self.content_items: PackContentItems = PackContentItems()
         self.relationships: Dict[Rel, List[RelationshipData]] = {}
         self.parse_pack_folders()
@@ -115,5 +143,10 @@ class PackParser(BaseContentParser, PackMetadataParser):
     def parse_pack_folders(self) -> None:
         for folder_path in ContentTypes.pack_folders(self.path):
             for content_item_path in folder_path.iterdir():  # todo: consider multiprocessing
-                if content_item := ParserFactory.from_path(content_item_path, self):
-                    content_item.add_to_pack()
+                self.parse_content_item(content_item_path)
+
+    def parse_content_item(self, content_item_path) -> None:
+        if content_item := ContentItemParser.from_path(content_item_path):
+            self.content_items.append(content_item)
+            for relationship, parsed_data in content_item.relationships.items():
+                self.relationships.setdefault(relationship, []).extend(parsed_data)

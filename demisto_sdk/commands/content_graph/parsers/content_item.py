@@ -1,33 +1,63 @@
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Optional, List, Union, TYPE_CHECKING
+from typing import Any, Dict, Optional, List, Type, Union
 
 from demisto_sdk.commands.common.tools import (
     get_files_in_dir,
     get_json, get_yaml,
     get_yml_paths_in_dir
 )
-from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_TO_VERSION, MarketplaceVersions
-from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, UNIFIED_FILES_SUFFIXES
+from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_TO_VERSION
+from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, UNIFIED_FILES_SUFFIXES, RelationshipData
+from demisto_sdk.commands.content_graph.parsers import *
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
-
-if TYPE_CHECKING:
-    from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
 
 class NotAContentItem(Exception):
     pass
 
 
-class ContentItemParser(BaseContentParser):
+class IncorrectParser(Exception):
+    def __init__(self, correct_parser: 'ContentItemParser') -> None:
+        self.correct_parser = correct_parser
+        super().__init__()
+
+
+class ParserMeta(ABCMeta):
+    def __new__(cls, name, bases, namespace, content_type: ContentTypes = None, **kwargs):
+        parser_cls = super().__new__(cls, name, bases, namespace)
+        if content_type:
+            ContentItemParser.content_type_to_parser[content_type] = parser_cls
+            # parser_cls.content_type: ContentTypes = content_type  # todo: consider self.content_type replacing with this
+        return parser_cls
+
+
+class ContentItemParser(BaseContentParser, metaclass=ParserMeta):
+    content_type_to_parser: Dict[ContentTypes, Type['ContentItemParser']] = {}
     """ A class representation of a content item.
 
     Attributes:
         path (Path):
     """
-    def __init__(self, path: Path, pack: 'PackParser') -> None:
+    def __init__(self, path: Path) -> None:
         super().__init__(path)
-        self.pack: 'PackParser' = pack
+        self.relationships: Dict[Rel, List[RelationshipData]] = {}
+
+    @staticmethod
+    def from_path(path: Path) -> Optional['ContentItemParser']:
+        if not ContentItemParser.is_content_item(path):
+            return None
+        
+        content_type: ContentTypes = ContentTypes.by_folder(path.parts[-2])
+        if parser := ContentItemParser.content_type_to_parser.get(content_type):
+            try:
+                return parser(path)
+            except IncorrectParser as e:
+                return e.correct_parser(path)
+            except NotAContentItem:  # as e:
+                # during the parsing we detected this is not a content item
+                pass
+        return None
 
     @property
     @abstractmethod
@@ -46,7 +76,7 @@ class ContentItemParser(BaseContentParser):
 
     @property
     @abstractmethod
-    def marketplaces(self) -> List[MarketplaceVersions]:
+    def marketplaces(self) -> List[str]:
         pass
 
     @property
@@ -71,10 +101,6 @@ class ContentItemParser(BaseContentParser):
     def is_content_item(path: Path) -> bool:
         return ContentItemParser.is_package(path) or ContentItemParser.is_unified_file(path)
 
-    @abstractmethod
-    def add_to_pack(self) -> None:
-        pass
-
     def add_relationship(
         self,
         relationship: Rel,
@@ -82,13 +108,13 @@ class ContentItemParser(BaseContentParser):
         **kwargs,
     ) -> None:
         relationship_data: Dict[str, Any] = {
-            'source_node_id': self.node_id,
+            'source': self.node_id,
             'source_fromversion': self.fromversion,
             'source_marketplaces': self.marketplaces,
             'target': target,
         }
         relationship_data.update(kwargs)
-        self.pack.relationships.setdefault(relationship, []).append(relationship_data)
+        self.relationships.setdefault(relationship, []).append(relationship_data)
 
     def add_dependency(self, dependency_id: str, dependency_type: Optional[ContentTypes] = None, is_mandatory: bool = True) -> None:
         if dependency_type is None:  # and self.content_type == ContentTypes.SCRIPT:
@@ -106,8 +132,8 @@ class ContentItemParser(BaseContentParser):
 
 
 class YAMLContentItemParser(ContentItemParser):
-    def __init__(self, path: Path, pack: 'PackParser') -> None:
-        super().__init__(path, pack)
+    def __init__(self, path: Path) -> None:
+        super().__init__(path)
         self.yml_data: Dict[str, Any] = self.get_yaml()
 
     @property
@@ -132,9 +158,7 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def marketplaces(self) -> List[str]:
-        if not (marketplaces := self.yml_data.get('marketplaces', [])):
-            return self.pack.marketplaces
-        return marketplaces
+        return self.yml_data.get('marketplaces', [])
 
     def connect_to_tests(self) -> None:
         tests_playbooks: List[str] =  self.yml_data.get('tests', [])
@@ -159,10 +183,9 @@ class YAMLContentItemParser(ContentItemParser):
 
 
 class JSONContentItemParser(ContentItemParser):
-    def __init__(self, path: Path, pack: 'PackParser') -> None:
-        super().__init__(path, pack)
+    def __init__(self, path: Path) -> None:
+        super().__init__(path)
         self.json_data: Dict[str, Any] = self.get_json()
-        self.pack: 'PackParser' = pack
 
     @property
     def object_id(self) -> str:
@@ -190,9 +213,7 @@ class JSONContentItemParser(ContentItemParser):
 
     @property
     def marketplaces(self) -> List[str]:
-        if not (marketplaces := self.json_data.get('marketplaces', [])):
-            return self.pack.marketplaces
-        return marketplaces
+        return self.json_data.get('marketplaces', [])
     
     def get_json(self) -> Dict[str, Any]:
         if self.path.is_dir():

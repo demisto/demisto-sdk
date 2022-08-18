@@ -9,7 +9,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import ru
 HAS_COMMAND_RELATIONSHIPS_QUERY = f"""
 UNWIND $data AS rel_data
 MATCH (integration:{ContentTypes.INTEGRATION}{{
-    node_id: rel_data.source_node_id,
+    node_id: rel_data.source,
     fromversion: rel_data.source_fromversion,
     marketplaces: rel_data.source_marketplaces
 }})
@@ -33,7 +33,7 @@ RETURN count(r) AS relationships_merged
 USES_RELATIONSHIPS_QUERY = f"""
 UNWIND $data AS rel_data
 MATCH (content_item:{ContentTypes.BASE_CONTENT}{{
-    node_id: rel_data.source_node_id,
+    node_id: rel_data.source,
     fromversion: rel_data.source_fromversion,
     marketplaces: rel_data.source_marketplaces
 }})
@@ -54,7 +54,7 @@ RETURN count(r) AS relationships_merged
 USES_RELATIONSHIPS_QUERY_FOR_COMMAND_OR_SCRIPT = f"""
 UNWIND $data AS rel_data
 MATCH (content_item:{ContentTypes.BASE_CONTENT}{{
-    node_id: rel_data.source_node_id,
+    node_id: rel_data.source,
     fromversion: rel_data.source_fromversion,
     marketplaces: rel_data.source_marketplaces
 }})
@@ -77,7 +77,7 @@ IN_PACK_RELATIONSHIPS_QUERY = f"""
 UNWIND $data AS rel_data
 MATCH (pack:{ContentTypes.PACK}{{node_id: rel_data.target}})
 MATCH (content_item:{ContentTypes.BASE_CONTENT}{{
-    node_id: rel_data.source_node_id,
+    node_id: rel_data.source,
     fromversion: rel_data.source_fromversion,
     marketplaces: rel_data.source_marketplaces
 }})
@@ -89,7 +89,7 @@ RETURN count(r) AS relationships_merged
 TESTED_BY_RELATIONSHIPS_QUERY = f"""
 UNWIND $data AS rel_data
 MATCH (content_item:{ContentTypes.BASE_CONTENT}{{
-    node_id: rel_data.source_node_id,
+    node_id: rel_data.source,
     fromversion: rel_data.source_fromversion,
     marketplaces: rel_data.source_marketplaces
 }})
@@ -132,7 +132,7 @@ def create_relationships_by_type(
         # default query
         query = f"""
             UNWIND $data AS rel_data
-            MATCH (source:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.source_node_id}})
+            MATCH (source:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.source}})
             MERGE (target:{ContentTypes.BASE_CONTENT}{{node_id: rel_data.target}})
             MERGE (source)-[r:{relationship}]->(target)
             RETURN count(r) AS relationships_merged

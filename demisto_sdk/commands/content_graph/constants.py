@@ -1,4 +1,5 @@
 
+from dataclasses import dataclass
 import enum
 import os
 from pathlib import Path

@@ -1,18 +1,16 @@
 from pathlib import Path
-from typing import TYPE_CHECKING, List
+from typing import List
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes
 from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentItemParser, NotAContentItem
 
-if TYPE_CHECKING:
-    from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
 class LayoutParser(JSONContentItemParser):
-    def __init__(self, path: Path, pack: 'PackParser') -> None:
+    def __init__(self, path: Path) -> None:
         if 'layoutscontainer' not in path.name:
             raise NotAContentItem
 
-        super().__init__(path, pack)
+        super().__init__(path)
         print(f'Parsing {self.content_type} {self.object_id}')
         self.kind: str = self.json_data.get('kind')
         self.tabs: List[str] = self.json_data.get('tabs')
@@ -27,7 +25,6 @@ class LayoutParser(JSONContentItemParser):
         self.details: bool = bool(self.json_data.get('details'))
         self.details_v2: bool = bool(self.json_data.get('detailsV2'))
         self.mobile: bool = bool(self.json_data.get('mobile'))
-
 
         self.connect_to_dependencies()
 
@@ -66,6 +63,3 @@ class LayoutParser(JSONContentItemParser):
 
         get_values(self.json_data)
         return values
-
-    def add_to_pack(self) -> None:
-        self.pack.content_items.layout.append(self)

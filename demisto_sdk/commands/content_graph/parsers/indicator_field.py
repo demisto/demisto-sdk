@@ -1,16 +1,12 @@
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes
 from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentItemParser
 
-if TYPE_CHECKING:
-    from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
-
-class IndicatorFieldParser(JSONContentItemParser):
-    def __init__(self, path: Path, pack: 'PackParser') -> None:
-        super().__init__(path, pack)
+class IndicatorFieldParser(JSONContentItemParser, content_type=ContentTypes.INDICATOR_FIELD):
+    def __init__(self, path: Path) -> None:
+        super().__init__(path)
         print(f'Parsing {self.content_type} {self.object_id}')
         self.cli_name = self.json_data.get('cliName')
         self.type = self.json_data.get('type')
@@ -38,6 +34,3 @@ class IndicatorFieldParser(JSONContentItemParser):
 
         if field_calc_script := self.json_data.get('fieldCalcScript'):
             self.add_dependency(field_calc_script, ContentTypes.SCRIPT)
-
-    def add_to_pack(self) -> None:
-        self.pack.content_items.indicator_field.append(self)

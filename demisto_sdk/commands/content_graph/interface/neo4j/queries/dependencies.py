@@ -40,9 +40,22 @@ def create_pack_dependencies(tx: Transaction) -> None:
 
 
 def fix_marketplaces_properties(tx: Transaction) -> None:
+    inherit_content_items_marketplaces_property_from_packs(tx)
     for marketplace in MarketplaceVersions:
         update_marketplaces_property(tx, marketplace.value)
 
+
+def inherit_content_items_marketplaces_property_from_packs(tx: Transaction) -> None:
+    query = f"""
+        MATCH (content_item:{ContentTypes.BASE_CONTENT})-[:{Rel.IN_PACK}]->(pack)
+        WHERE content_item.marketplaces = []
+        WITH content_item, pack
+        SET content_item.marketplaces = pack.marketplaces
+        RETURN count(content_item) AS updated
+    """
+    result = run_query(tx, query).single()
+    updated_count: int = result['updated']
+    logger.info(f'Updated marketplaces properties of {updated_count} content items.')
 
 def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
     """

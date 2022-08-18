@@ -9,7 +9,7 @@ from demisto_sdk.commands.content_graph.constants import ContentTypes
 class BaseContent(ABC, BaseModel):
     object_id: str = Field(alias='id')
     content_type: ContentTypes
-    marketplaces: List[MarketplaceVersions] = []
+    marketplaces: List[MarketplaceVersions]
     node_id: str
 
     class Config:

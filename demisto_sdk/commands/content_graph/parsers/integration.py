@@ -50,17 +50,21 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentTypes.INTEG
             )
 
     def connect_to_dependencies(self) -> None:
-        if default_classifier := self.yml_data.get('defaultclassifier') and default_classifier != 'null':
-            self.add_dependency(default_classifier, ContentTypes.CLASSIFIER)
+        if default_classifier := self.yml_data.get('defaultclassifier'):
+            if default_classifier != 'null':
+                self.add_dependency(default_classifier, ContentTypes.CLASSIFIER)
 
-        if default_mapper_in := self.yml_data.get('defaultmapperin') and default_mapper_in != 'null':
-            self.add_dependency(default_mapper_in, ContentTypes.MAPPER)
+        if default_mapper_in := self.yml_data.get('defaultmapperin'):
+            if default_mapper_in != 'null':
+                self.add_dependency(default_mapper_in, ContentTypes.MAPPER)
 
-        if default_mapper_out := self.yml_data.get('defaultmapperout') and default_mapper_out != 'null':
-            self.add_dependency(default_mapper_out, ContentTypes.MAPPER)
+        if default_mapper_out := self.yml_data.get('defaultmapperout'):
+            if default_mapper_out != 'null':
+                self.add_dependency(default_mapper_out, ContentTypes.MAPPER)
 
-        if default_incident_type := self.yml_data.get('defaultIncidentType') and default_incident_type != 'null':
-            self.add_dependency(default_incident_type, ContentTypes.INCIDENT_TYPE)
+        if default_incident_type := self.yml_data.get('defaultIncidentType'):
+            if default_incident_type != 'null':
+                self.add_dependency(default_incident_type, ContentTypes.INCIDENT_TYPE)
 
     def get_code(self) -> str:
         if self.is_unified or self.script_info.get('script') not in ['-', '']:

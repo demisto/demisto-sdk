@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.tools import (
     get_yml_paths_in_dir
 )
 from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_TO_VERSION
-from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, UNIFIED_FILES_SUFFIXES, RelationshipData
+from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, UNIFIED_FILES_SUFFIXES, Relationships
 from demisto_sdk.commands.content_graph.parsers import *
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
 
@@ -41,7 +41,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMeta):
     """
     def __init__(self, path: Path) -> None:
         super().__init__(path)
-        self.relationships: Dict[Rel, List[RelationshipData]] = {}
+        self.relationships: Relationships = Relationships()
 
     @staticmethod
     def from_path(path: Path) -> Optional['ContentItemParser']:
@@ -107,14 +107,14 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMeta):
         target: str,
         **kwargs,
     ) -> None:
-        relationship_data: Dict[str, Any] = {
-            'source': self.node_id,
-            'source_fromversion': self.fromversion,
-            'source_marketplaces': self.marketplaces,
-            'target': target,
-        }
-        relationship_data.update(kwargs)
-        self.relationships.setdefault(relationship, []).append(relationship_data)
+        self.relationships.add(
+            relationship,
+            source=self.node_id,
+            source_fromversion=self.fromversion,
+            source_marketplaces=self.marketplaces,
+            target=target,
+            **kwargs
+        )
 
     def add_dependency(self, dependency_id: str, dependency_type: Optional[ContentTypes] = None, is_mandatory: bool = True) -> None:
         if dependency_type is None:  # and self.content_type == ContentTypes.SCRIPT:

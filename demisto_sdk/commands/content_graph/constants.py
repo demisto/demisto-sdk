@@ -1,5 +1,4 @@
 
-from dataclasses import dataclass
 import enum
 import os
 from pathlib import Path
@@ -126,5 +125,31 @@ class ContentTypes(str, enum.Enum):
                 yield pack_folder
 
 
-RelationshipData = Dict[str, Any]
-NodeData = Dict[str, Any]
+class Relationships(dict):
+    def add(self, relationship: Rel, **kwargs):
+        if relationship not in self.keys():
+            self.__setitem__(relationship, [])
+        self.__getitem__(relationship).append(kwargs)
+
+    def add_batch(self, relationship: Rel, data: List[Dict[str, Any]]):
+        if relationship not in self.keys():
+            self.__setitem__(relationship, [])
+        self.__getitem__(relationship).extend(data)
+    
+    def update(self, other: 'Relationships'):
+        for relationship, parsed_data in other.items():
+            if relationship not in Rel or not isinstance(parsed_data, list):
+                raise TypeError
+            self.add_batch(relationship, parsed_data)
+
+class Nodes(dict):
+    def add_batch(self, content_type: ContentTypes, data: List[Dict[str, Any]]):
+        if content_type not in self.keys():
+            self.__setitem__(content_type, [])
+        self.__getitem__(content_type).extend(data)
+    
+    def update(self, other: 'Nodes'):
+        for content_type, parsed_data in other.items():
+            if content_type not in ContentTypes or not isinstance(parsed_data, list):
+                raise TypeError
+            self.add_batch(content_type, parsed_data)

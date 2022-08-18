@@ -5,9 +5,8 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.content_graph.constants import (
     ContentTypes,
-    Rel,
     PACK_METADATA_FILENAME,
-    RelationshipData
+    Relationships
 )
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
 from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
@@ -129,7 +128,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         print(f'Parsing {self.content_type} {self.object_id}')
         self.marketplaces = metadata.get('marketplaces', list(MarketplaceVersions))
         self.content_items: PackContentItems = PackContentItems()
-        self.relationships: Dict[Rel, List[RelationshipData]] = {}
+        self.relationships: Relationships = Relationships()
         self.parse_pack_folders()
 
     @property
@@ -148,5 +147,4 @@ class PackParser(BaseContentParser, PackMetadataParser):
     def parse_content_item(self, content_item_path) -> None:
         if content_item := ContentItemParser.from_path(content_item_path):
             self.content_items.append(content_item)
-            for relationship, parsed_data in content_item.relationships.items():
-                self.relationships.setdefault(relationship, []).extend(parsed_data)
+            self.relationships.update(content_item.relationships)

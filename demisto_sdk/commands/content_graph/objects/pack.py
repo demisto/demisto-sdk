@@ -1,8 +1,9 @@
+import json
 from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, RelationshipData
+from demisto_sdk.commands.content_graph.constants import ContentTypes, Nodes, Relationships
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
@@ -65,6 +66,12 @@ class PackContentItems(BaseModel):
         for _, content_items in vars(self).items():
             if content_items:
                 yield content_items[0].content_type, content_items
+    
+    def to_nodes(self) -> Nodes:
+        nodes = Nodes()
+        for content_type, content_items in self:
+            nodes.add_batch(content_type, [json.loads(content_item.json()) for content_item in content_items])
+        return nodes
 
     class Config:
         arbitrary_types_allowed = True
@@ -106,4 +113,4 @@ class Pack(BaseContent, PackMetadata):
     content_type: ContentTypes
     node_id: str
     content_items: PackContentItems = Field(alias='contentItems', exclude=True)
-    relationships: Dict[Rel, List[RelationshipData]] = Field({}, exclude=True)
+    relationships: Relationships = Field(Relationships(), exclude=True)

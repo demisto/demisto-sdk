@@ -3,13 +3,11 @@ import pickle
 
 from pathlib import Path
 import traceback
-from typing import Any, List, Dict
+from typing import Any, List
 
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes, NodeData, Rel, RelationshipData, REPO_PATH
+from demisto_sdk.commands.content_graph.constants import REPO_PATH, Nodes, Relationships
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
-from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.content.content import Content
 from demisto_sdk.commands.content_graph.objects.pack import PackContentItems
 
 from demisto_sdk.commands.content_graph.objects.repository import Repository
@@ -43,11 +41,13 @@ def dump_pickle(url: str, data: Any) -> None:
 class ContentGraphBuilder:
     def __init__(self, repo_path: Path, content_graph: ContentGraphInterface):
         self.content_graph = content_graph
-        self.nodes: Dict[ContentTypes, List[NodeData]] = {}
-        self.relationships: Dict[Rel, List[RelationshipData]] = {}
+        self.nodes: Nodes = Nodes()
+        self.relationships: Relationships = Relationships()
         self.repository: Repository = self._parse_repo(repo_path)
+
         for pack in self.repository.packs:
-            self._extend_nodes_and_relationships(pack.content_items, pack.relationships)
+            self.nodes.update(pack.content_items.to_nodes())
+            self.relationships.update(pack.relationships)
 
     def _parse_repo(self, path: Path) -> Repository:
         repository_parser: RepositoryParser = load_pickle(REPO_PARSER_PKL_PATH.as_posix())
@@ -59,18 +59,6 @@ class ContentGraphBuilder:
                 print(traceback.format_exc())
                 raise
         return Repository.from_orm(repository_parser)
-
-    def _extend_nodes_and_relationships(
-        self,
-        pack_content_items: PackContentItems,
-        pack_relationships: Dict[Rel, List[RelationshipData]],
-    ) -> None:
-        for content_type, content_items in pack_content_items:
-            pack_nodes = [json.loads(content_item.json()) for content_item in content_items]  # TODO do we really need to convert to dict?
-            self.nodes.setdefault(content_type, []).extend(pack_nodes)
-
-        for relationship, parsed_data in pack_relationships.items():
-            self.relationships.setdefault(relationship, []).extend(parsed_data)
 
     def create_graph(self) -> None:
         self.content_graph.create_indexes_and_constraints()

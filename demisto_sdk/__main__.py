@@ -2285,7 +2285,7 @@ def error_code(config, **kwargs):
               type=click.Path(resolve_path=True))
 def create_content_graph(no_use_docker, keep_service, **kwargs):
     from demisto_sdk.commands.common.logger import logging_setup
-    from demisto_sdk.commands.content_graph.neo4j_content_graph_builder import create_content_graph
+    from demisto_sdk.commands.content_graph.content_graph_commands import create_content_graph
     logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
                   quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
                   log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
@@ -2310,7 +2310,7 @@ def create_content_graph(no_use_docker, keep_service, **kwargs):
               type=click.Path(resolve_path=True))
 def load_content_graph(no_use_docker: bool, keep_service: bool, content_graph_path: Path, **kwargs):
     from demisto_sdk.commands.common.logger import logging_setup
-    from demisto_sdk.commands.content_graph.neo4j_content_graph_builder import load_content_graph
+    from demisto_sdk.commands.content_graph.content_graph_commands import load_content_graph
     logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
                   quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
                   log_path=kwargs.get('log_path'))  # type: ignore[arg-type]

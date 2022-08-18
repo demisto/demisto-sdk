@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.tools import (
     print_warning
 )
                                                     
-from demisto_sdk.commands.content_graph.neo4j_content_graph_builder import load_content_graph
+from demisto_sdk.commands.content_graph.content_graph_commands import load_content_graph
 
 
 USE_DOCKER = not os.getenv('CI', False)

@@ -516,10 +516,12 @@ class BuildContext:
         self.conf, self.secret_conf = self._load_conf_files(kwargs['conf'], kwargs['secret'])
         if self.is_xsiam:
             xsiam_servers_api_keys = get_json(kwargs.get('xsiam_servers_api_keys_path'))
+            self.logging_module.info(f'{kwargs.get("xsiam_servers_api_keys_path")=}, {xsiam_servers_api_keys=}, ')
             self.xsiam_conf = self._load_xsiam_file(self.xsiam_servers_path)
             self.env_json = [self.xsiam_conf.get(self.xsiam_machine, {})]
             self.api_key = xsiam_servers_api_keys.get(self.xsiam_machine)
             self.auth_id = self.env_json[0].get('x-xdr-auth-id')
+            self.logging_module.info(f'{self.auth_id=}, {self.xsiam_machine=}, ')
             self.xsiam_ui_path = self.env_json[0].get('ui_url')
         else:
             self.api_key = kwargs['api_key']

@@ -3,11 +3,14 @@ from typing import List
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.constants import ContentTypes
-from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentItemParser
+from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentItemParser, NotAContentItem
 
 
 class LayoutParser(JSONContentItemParser):
     def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
+        if 'layoutscontainer' not in path.name:
+            raise NotAContentItem
+
         super().__init__(path, pack_marketplaces)
         print(f'Parsing {self.content_type} {self.object_id}')
         self.kind: str = self.json_data.get('kind')

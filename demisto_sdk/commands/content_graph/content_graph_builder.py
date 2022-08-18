@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 import pickle
 
 from pathlib import Path
+import traceback
 from typing import Any, List, Iterator, Dict
 
 
@@ -20,6 +21,7 @@ import logging
 
 REPO_PATH = Path(GitUtil(Content.git()).git_path())
 REPO_PKL_PATH = REPO_PATH / 'repo.pkl'
+REPO_PARSER_PKL_PATH = REPO_PATH / 'repo_parser.pkl'
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -42,10 +44,16 @@ class ContentGraphBuilder(ABC):
         self.nodes: Dict[ContentTypes, List[NodeData]] = {}
         self.relationships: Dict[Rel, List[RelationshipData]] = {}
         self.repository: Repository = load_pickle(REPO_PKL_PATH.as_posix())
-        if not self.repository:
-            repository_parser: RepositoryParser = RepositoryParser(repo_path)
-            self.repository = Repository.from_orm(repository_parser)
-            dump_pickle(REPO_PKL_PATH.as_posix(), self.repository)
+        repository_parser = load_pickle(REPO_PARSER_PKL_PATH.as_posix())
+        if not repository_parser:
+            try:
+                repository_parser: RepositoryParser = RepositoryParser(repo_path)
+                dump_pickle(REPO_PARSER_PKL_PATH.as_posix(), repository_parser)
+                self.repository = Repository.from_orm(repository_parser)
+                dump_pickle(REPO_PKL_PATH.as_posix(), self.repository)
+            except Exception:
+                print(traceback.format_exc())
+                raise
 
         for pack in self.repository.packs:
             self._extend_nodes_and_relationships(pack.content_items, pack.relationships)

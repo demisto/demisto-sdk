@@ -34,6 +34,7 @@ def start_neo4j_service(use_docker: bool = True):
 
     s.mount('http://localhost', HTTPAdapter(max_retries=retries))
     s.get('http://localhost:7474')
+    logger.info('Connected to neo4j service')
 
 
 def stop_neo4j_service(use_docker: bool):

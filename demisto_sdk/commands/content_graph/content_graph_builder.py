@@ -10,7 +10,7 @@ from demisto_sdk.commands.content_graph.constants import ContentTypes, NodeData,
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.content.content import Content
-from .objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.objects.pack import PackContentItems
 
 from demisto_sdk.commands.content_graph.objects.repository import Repository
 from demisto_sdk.commands.content_graph.parsers.repository import RepositoryParser
@@ -62,10 +62,10 @@ class ContentGraphBuilder:
 
     def _extend_nodes_and_relationships(
         self,
-        pack_content_items: Dict[ContentTypes, List[ContentItem]],
+        pack_content_items: PackContentItems,
         pack_relationships: Dict[Rel, List[RelationshipData]],
     ) -> None:
-        for content_type, content_items in pack_content_items.items():
+        for content_type, content_items in pack_content_items:
             pack_nodes = [json.loads(content_item.json()) for content_item in content_items]  # TODO do we really need to convert to dict?
             self.nodes.setdefault(content_type, []).extend(pack_nodes)
 

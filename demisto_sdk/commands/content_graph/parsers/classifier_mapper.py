@@ -1,15 +1,17 @@
 from pathlib import Path
-from typing import Any, Dict, List
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from typing import TYPE_CHECKING, Any, Dict
 from demisto_sdk.commands.common.tools import field_to_cli_name
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes
 from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentItemParser
 
+if TYPE_CHECKING:
+    from demisto_sdk.commands.content_graph.parsers.pack import PackParser
+
 
 class ClassifierMapperParser(JSONContentItemParser):
-    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
-        super().__init__(path, pack_marketplaces)
+    def __init__(self, path: Path, pack: 'PackParser') -> None:
+        super().__init__(path, pack)
         print(f'Parsing {self.content_type} {self.object_id}')
         self.type = self.json_data.get('type')
         self.definition_id = self.json_data.get('definitionId')
@@ -24,6 +26,12 @@ class ClassifierMapperParser(JSONContentItemParser):
     @property
     def name(self) -> str:
         return self.json_data.get('name') or self.json_data.get('brandName')
+
+    def add_to_pack(self) -> None:
+        if self.content_type == ContentTypes.CLASSIFIER:
+            self.pack.content_items.classifier.append(self)
+        else:
+            self.pack.content_items.mapper.append(self)
 
     def get_filters_and_transformers_from_complex_value(self, complex_value: dict) -> None:
         for filter in complex_value.get('filters', []):

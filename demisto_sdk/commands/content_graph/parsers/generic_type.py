@@ -1,14 +1,16 @@
 from pathlib import Path
-from typing import List
+from typing import TYPE_CHECKING
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.constants import ContentTypes
 from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentItemParser
 
+if TYPE_CHECKING:
+    from demisto_sdk.commands.content_graph.parsers.pack import PackParser
+
 
 class GenericTypeParser(JSONContentItemParser):
-    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
-        super().__init__(path, pack_marketplaces)
+    def __init__(self, path: Path, pack: 'PackParser') -> None:
+        super().__init__(path, pack)
         print(f'Parsing {self.content_type} {self.object_id}')
         self.definition_id = self.json_data.get('definitionId')
 
@@ -25,3 +27,6 @@ class GenericTypeParser(JSONContentItemParser):
     def connect_to_dependencies(self) -> None:
         if layout := self.json_data.get('layout'):
             self.add_dependency(layout, ContentTypes.LAYOUT)
+
+    def add_to_pack(self) -> None:
+        self.pack.content_items.generic_type.append(self)

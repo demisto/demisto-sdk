@@ -18,6 +18,10 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
+    def validate_graph(self) -> None:
+        pass
+
+    @abstractmethod
     def create_pack_dependencies(self) -> None:
         pass
 

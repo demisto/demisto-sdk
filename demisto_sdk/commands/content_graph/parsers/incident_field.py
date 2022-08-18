@@ -1,15 +1,16 @@
 from pathlib import Path
-from typing import Any, Dict, List
-from demisto_sdk.commands.common.tools import normalize_field_name
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from typing import TYPE_CHECKING
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes
 from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentItemParser
 
+if TYPE_CHECKING:
+    from demisto_sdk.commands.content_graph.parsers.pack import PackParser
+
 
 class IncidentFieldParser(JSONContentItemParser):
-    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
-        super().__init__(path, pack_marketplaces)
+    def __init__(self, path: Path, pack: 'PackParser') -> None:
+        super().__init__(path, pack)
         print(f'Parsing {self.content_type} {self.object_id}')
         self.cli_name = self.json_data.get('cliName')
         self.field_type = self.json_data.get('type')
@@ -19,7 +20,7 @@ class IncidentFieldParser(JSONContentItemParser):
 
     @property
     def content_type(self) -> ContentTypes:
-        return ContentTypes.INDICATOR_FIELD
+        return ContentTypes.INCIDENT_FIELD
 
     @property
     def object_id(self) -> str:
@@ -37,3 +38,6 @@ class IncidentFieldParser(JSONContentItemParser):
 
         if field_calc_script := self.json_data.get('fieldCalcScript'):
             self.add_dependency(field_calc_script, ContentTypes.SCRIPT)
+
+    def add_to_pack(self) -> None:
+        self.pack.content_items.incident_field.append(self)

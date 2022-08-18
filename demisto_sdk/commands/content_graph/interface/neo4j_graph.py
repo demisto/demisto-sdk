@@ -29,6 +29,13 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             tx: neo4j.Transaction = session.begin_transaction()
             create_nodes(tx, nodes)
             tx.commit()
+            # if duplicates_exist(tx):
+            #     raise Exception('Duplicates found in graph.')
+            tx.close()
+    
+    def validate_graph(self) -> None:
+        with self.driver.session() as session:
+            tx: neo4j.Transaction = session.begin_transaction()
             if duplicates_exist(tx):
                 raise Exception('Duplicates found in graph.')
             tx.close()

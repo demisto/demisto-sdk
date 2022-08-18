@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from pathlib import Path
-from typing import Any, Dict, Optional, List, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional, List, Union, TYPE_CHECKING
 
 from demisto_sdk.commands.common.tools import (
     get_files_in_dir,
@@ -9,22 +9,25 @@ from demisto_sdk.commands.common.tools import (
 )
 from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_TO_VERSION, MarketplaceVersions
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, UNIFIED_FILES_SUFFIXES
-import demisto_sdk.commands.content_graph.parsers.base_content as base_content
+from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
+
+if TYPE_CHECKING:
+    from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
 
 class NotAContentItem(Exception):
     pass
 
 
-class ContentItemParser(base_content.BaseContentParser):
+class ContentItemParser(BaseContentParser):
     """ A class representation of a content item.
 
     Attributes:
         path (Path):
     """
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, pack: 'PackParser') -> None:
         super().__init__(path)
-        self.relationships: Dict[Rel, List[Dict[str, Any]]] = {}
+        self.pack: 'PackParser' = pack
 
     @property
     @abstractmethod
@@ -68,6 +71,10 @@ class ContentItemParser(base_content.BaseContentParser):
     def is_content_item(path: Path) -> bool:
         return ContentItemParser.is_package(path) or ContentItemParser.is_unified_file(path)
 
+    @abstractmethod
+    def add_to_pack(self) -> None:
+        pass
+
     def add_relationship(
         self,
         relationship: Rel,
@@ -81,7 +88,7 @@ class ContentItemParser(base_content.BaseContentParser):
             'target': target,
         }
         relationship_data.update(kwargs)
-        self.relationships.setdefault(relationship, []).append(relationship_data)
+        self.pack.relationships.setdefault(relationship, []).append(relationship_data)
 
     def add_dependency(self, dependency_id: str, dependency_type: Optional[ContentTypes] = None, is_mandatory: bool = True) -> None:
         if dependency_type is None:  # and self.content_type == ContentTypes.SCRIPT:
@@ -99,10 +106,9 @@ class ContentItemParser(base_content.BaseContentParser):
 
 
 class YAMLContentItemParser(ContentItemParser):
-    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
-        super().__init__(path)
+    def __init__(self, path: Path, pack: 'PackParser') -> None:
+        super().__init__(path, pack)
         self.yml_data: Dict[str, Any] = self.get_yaml()
-        self.pack_marketplaces: List[MarketplaceVersions] = pack_marketplaces
 
     @property
     def name(self) -> str:
@@ -127,7 +133,7 @@ class YAMLContentItemParser(ContentItemParser):
     @property
     def marketplaces(self) -> List[str]:
         if not (marketplaces := self.yml_data.get('marketplaces', [])):
-            return self.pack_marketplaces
+            return self.pack.marketplaces
         return marketplaces
 
     def connect_to_tests(self) -> None:
@@ -153,10 +159,10 @@ class YAMLContentItemParser(ContentItemParser):
 
 
 class JSONContentItemParser(ContentItemParser):
-    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
-        super().__init__(path)
+    def __init__(self, path: Path, pack: 'PackParser') -> None:
+        super().__init__(path, pack)
         self.json_data: Dict[str, Any] = self.get_json()
-        self.pack_marketplaces: List[MarketplaceVersions] = pack_marketplaces
+        self.pack: 'PackParser' = pack
 
     @property
     def object_id(self) -> str:
@@ -185,7 +191,7 @@ class JSONContentItemParser(ContentItemParser):
     @property
     def marketplaces(self) -> List[str]:
         if not (marketplaces := self.json_data.get('marketplaces', [])):
-            return self.pack_marketplaces
+            return self.pack.marketplaces
         return marketplaces
     
     def get_json(self) -> Dict[str, Any]:

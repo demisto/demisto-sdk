@@ -1,21 +1,23 @@
 import re
 from pathlib import Path
-from typing import List
+from typing import TYPE_CHECKING, List
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.constants import ContentTypes
-import demisto_sdk.commands.content_graph.parsers.integration_script as integration_script
+from demisto_sdk.commands.content_graph.parsers.integration_script import IntegrationScriptParser
+
+if TYPE_CHECKING:
+    from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
 EXECUTE_CMD_PATTERN = re.compile(r"execute_?command\(['\"](\w+)['\"].*", re.IGNORECASE)
 
 
-class ScriptParser(integration_script.IntegrationScriptParser):
-    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
-        super().__init__(path, pack_marketplaces)
+class ScriptParser(IntegrationScriptParser):
+    def __init__(self, path: Path, pack: 'PackParser') -> None:
+        super().__init__(path, pack)
         print(f'Parsing {self.content_type} {self.object_id}')
-        self.docker_image = self.yml_data.get('dockerimage', '')
-        self.type = self.yml_data.get('subtype') or self.yml_data.get('type')
-        self.tags = self.yml_data.get('tags', [])
+        self.docker_image: str = self.yml_data.get('dockerimage', '')
+        self.type: str = self.yml_data.get('subtype') or self.yml_data.get('type')
+        self.tags: List[str] = self.yml_data.get('tags', [])
         if self.type == 'python':
             self.type += '2'
 
@@ -48,3 +50,6 @@ class ScriptParser(integration_script.IntegrationScriptParser):
 
     def get_command_executions(self) -> List[str]:
         return set(EXECUTE_CMD_PATTERN.findall(self.get_code()))
+
+    def add_to_pack(self) -> None:
+        self.pack.content_items.script.append(self)

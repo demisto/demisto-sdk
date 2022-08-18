@@ -1,11 +1,71 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from demisto_sdk.commands.common.tools import get_json
-from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, PACK_METADATA_FILENAME, RelationshipData
+from demisto_sdk.commands.content_graph.constants import (
+    ContentTypes,
+    Rel,
+    PACK_METADATA_FILENAME,
+    RelationshipData
+)
 from demisto_sdk.commands.content_graph.parsers.parser_factory import ParserFactory
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
-from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
+
+if TYPE_CHECKING:
+    from demisto_sdk.commands.content_graph.parsers.classifier_mapper import ClassifierMapperParser
+    from demisto_sdk.commands.content_graph.parsers.correlation_rule import CorrelationRuleParser
+    from demisto_sdk.commands.content_graph.parsers.dashboard import DashboardParser
+    from demisto_sdk.commands.content_graph.parsers.generic_definition import GenericDefinitionParser
+    from demisto_sdk.commands.content_graph.parsers.generic_module import GenericModuleParser
+    from demisto_sdk.commands.content_graph.parsers.generic_type import GenericTypeParser
+    from demisto_sdk.commands.content_graph.parsers.incident_field import IncidentFieldParser
+    from demisto_sdk.commands.content_graph.parsers.incident_type import IncidentTypeParser
+    from demisto_sdk.commands.content_graph.parsers.indicator_field import IndicatorFieldParser
+    from demisto_sdk.commands.content_graph.parsers.indicator_type import IndicatorTypeParser
+    from demisto_sdk.commands.content_graph.parsers.integration import IntegrationParser
+    from demisto_sdk.commands.content_graph.parsers.job import JobParser
+    from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser
+    from demisto_sdk.commands.content_graph.parsers.list import ListParser
+    from demisto_sdk.commands.content_graph.parsers.modeling_rule import ModelingRuleParser
+    from demisto_sdk.commands.content_graph.parsers.parsing_rule import ParsingRuleParser
+    from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
+    from demisto_sdk.commands.content_graph.parsers.report import ReportParser
+    from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
+    from demisto_sdk.commands.content_graph.parsers.test_playbook import TestPlaybookParser
+    from demisto_sdk.commands.content_graph.parsers.trigger import TriggerParser
+    from demisto_sdk.commands.content_graph.parsers.widget import WidgetParser
+    from demisto_sdk.commands.content_graph.parsers.wizard import WizardParser
+    from demisto_sdk.commands.content_graph.parsers.xsiam_dashboard import XSIAMDashboardParser
+    from demisto_sdk.commands.content_graph.parsers.xsiam_report import XSIAMReportParser
+
+class PackContentItems:
+    def __init__(self) -> None:
+        self.classifier: List['ClassifierMapperParser'] = []
+        self.correlation_rule: List['CorrelationRuleParser'] = []
+        self.dashboard: List['DashboardParser'] = []
+        self.generic_definition: List['GenericDefinitionParser'] = []
+        self.generic_module: List['GenericModuleParser'] = []
+        self.generic_type: List['GenericTypeParser'] = []
+        self.incident_field: List['IncidentFieldParser'] = []
+        self.incident_type: List['IncidentTypeParser'] = []
+        self.indicator_field: List['IndicatorFieldParser'] = []
+        self.indicator_type: List['IndicatorTypeParser'] = []
+        self.integration: List['IntegrationParser'] = []
+        self.job: List['JobParser'] = []
+        self.layout: List['LayoutParser'] = []
+        self.list_object: List['ListParser'] = []
+        self.mapper: List['ClassifierMapperParser'] = []
+        self.modeling_rule: List['ModelingRuleParser'] = []
+        self.parsing_rule: List['ParsingRuleParser'] = []
+        self.playbook: List['PlaybookParser'] = []
+        self.report: List['ReportParser'] = []
+        self.script: List['ScriptParser'] = []
+        self.test_playbook: List['TestPlaybookParser'] = []
+        self.trigger: List['TriggerParser'] = []
+        self.widget: List['WidgetParser'] = []
+        self.wizard: List['WizardParser'] = []
+        self.xsiam_dashboard: List['XSIAMDashboardParser'] = []
+        self.xsiam_report: List['XSIAMReportParser'] = []
 
 
 class PackMetadataParser:
@@ -40,7 +100,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         PackMetadataParser.__init__(self, metadata)
         print(f'Parsing {self.content_type} {self.object_id}')
         self.marketplaces = metadata.get('marketplaces', [])
-        self.content_items: Dict[ContentTypes, List[ContentItemParser]] = {}
+        self.content_items: PackContentItems = PackContentItems()
         self.relationships: Dict[Rel, List[RelationshipData]] = {}
         self.parse_pack_folders()
 
@@ -52,20 +112,8 @@ class PackParser(BaseContentParser, PackMetadataParser):
     def content_type(self) -> ContentTypes:
         return ContentTypes.PACK
 
-    def add_content_item_node(self, parser: ContentItemParser) -> None:
-        self.content_items.setdefault(parser.content_type, []).append(parser)
-
-    def add_content_item_relationships(self, content_item: ContentItemParser) -> None:
-        content_item.add_relationship(
-            Rel.IN_PACK,
-            target=self.node_id,
-        )
-        for k, v in content_item.relationships.items():
-            self.relationships.setdefault(k, []).extend(v)
-
     def parse_pack_folders(self) -> None:
         for folder_path in ContentTypes.pack_folders(self.path):
             for content_item_path in folder_path.iterdir():  # todo: consider multiprocessing
-                if content_item := ParserFactory.from_path(content_item_path, self.marketplaces):
-                    self.add_content_item_node(content_item)
-                    self.add_content_item_relationships(content_item)
+                if content_item := ParserFactory.from_path(content_item_path, self):
+                    content_item.add_to_pack()

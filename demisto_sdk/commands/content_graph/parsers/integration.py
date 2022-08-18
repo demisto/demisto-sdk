@@ -1,10 +1,14 @@
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
-from demisto_sdk.commands.content_graph.parsers.integration_script import IntegrationScriptParser, IntegrationScriptUnifier
+from demisto_sdk.commands.content_graph.parsers.integration_script import (
+    IntegrationScriptParser,
+    IntegrationScriptUnifier
+)
 
+if TYPE_CHECKING:
+    from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
 class CommandParser:
     def __init__(self, cmd_data: Dict[str, Any]) -> None:
@@ -13,8 +17,8 @@ class CommandParser:
 
 
 class IntegrationParser(IntegrationScriptParser):
-    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
-        super().__init__(path, pack_marketplaces)
+    def __init__(self, path: Path, pack: 'PackParser') -> None:
+        super().__init__(path, pack)
         print(f'Parsing {self.content_type} {self.object_id}')
         self.commands: List[CommandParser] = []
         self.script_info: Dict[str, Any] = self.yml_data.get('script', {})
@@ -52,10 +56,10 @@ class IntegrationParser(IntegrationScriptParser):
             self.add_dependency(default_classifier, ContentTypes.CLASSIFIER)
 
         if default_mapper_in := self.yml_data.get('defaultmapperin'):
-            self.add_dependency(default_mapper_in, ContentTypes.CLASSIFIER)
+            self.add_dependency(default_mapper_in, ContentTypes.MAPPER)
 
         if default_mapper_out := self.yml_data.get('defaultmapperout'):
-            self.add_dependency(default_mapper_out, ContentTypes.CLASSIFIER)
+            self.add_dependency(default_mapper_out, ContentTypes.MAPPER)
 
         if default_incident_type := self.yml_data.get('defaultIncidentType'):
             self.add_dependency(default_incident_type, ContentTypes.INCIDENT_TYPE)
@@ -71,3 +75,6 @@ class IntegrationParser(IntegrationScriptParser):
         for api_module in api_modules:
             api_module_node_id = f'{ContentTypes.SCRIPT}:{api_module}'
             self.add_relationship(Rel.IMPORTS, api_module_node_id)
+
+    def add_to_pack(self) -> None:
+        self.pack.content_items.integration.append(self)

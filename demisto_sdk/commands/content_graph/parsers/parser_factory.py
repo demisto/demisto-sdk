@@ -1,10 +1,10 @@
 from pathlib import Path
-from typing import Dict, List, Optional, Type
+from typing import TYPE_CHECKING, Dict, List, Optional, Type
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.constants import ContentTypes
-from demisto_sdk.commands.content_graph.parsers.classifier_mapper import ClassifierMapperParser
 from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser, NotAContentItem
+from demisto_sdk.commands.content_graph.parsers.classifier_mapper import ClassifierMapperParser
 from demisto_sdk.commands.content_graph.parsers.correlation_rule import CorrelationRuleParser
 from demisto_sdk.commands.content_graph.parsers.dashboard import DashboardParser
 from demisto_sdk.commands.content_graph.parsers.generic_definition import GenericDefinitionParser
@@ -29,6 +29,9 @@ from demisto_sdk.commands.content_graph.parsers.widget import WidgetParser
 from demisto_sdk.commands.content_graph.parsers.wizard import WizardParser
 from demisto_sdk.commands.content_graph.parsers.xsiam_dashboard import XSIAMDashboardParser
 from demisto_sdk.commands.content_graph.parsers.xsiam_report import XSIAMReportParser
+
+if TYPE_CHECKING:
+    from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
 
 CONTENT_TYPE_TO_PARSER: Dict[ContentTypes, Type[ContentItemParser]] = {
@@ -62,14 +65,14 @@ CONTENT_TYPE_TO_PARSER: Dict[ContentTypes, Type[ContentItemParser]] = {
 
 class ParserFactory:
     @staticmethod
-    def from_path(path: Path, pack_marketplaces: List[MarketplaceVersions]) -> Optional[ContentItemParser]:
+    def from_path(path: Path, pack: 'PackParser') -> Optional[ContentItemParser]:
         if not ContentItemParser.is_content_item(path):
             return None
         
         content_type: ContentTypes = ContentTypes.by_folder(path.parts[-2])
         if parser := CONTENT_TYPE_TO_PARSER.get(content_type):
             try:
-                return parser(path, pack_marketplaces)
+                return parser(path, pack)
             except NotAContentItem:  # as e:
                 # during the parsing we detected this is not a content item
                 # print(str(e))

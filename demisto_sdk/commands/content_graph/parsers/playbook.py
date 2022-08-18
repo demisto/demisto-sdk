@@ -1,21 +1,23 @@
 import networkx
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.update_id_set import (
     BUILT_IN_FIELDS,
     get_fields_by_script_argument,
     build_tasks_graph
 )
 from demisto_sdk.commands.content_graph.constants import ContentTypes
-import demisto_sdk.commands.content_graph.parsers.content_item as content_item
+from demisto_sdk.commands.content_graph.parsers.content_item import YAMLContentItemParser
+
+if TYPE_CHECKING:
+    from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
 LIST_COMMANDS = ['Builtin|||setList', 'Builtin|||getList']
 
-class PlaybookParser(content_item.YAMLContentItemParser):
-    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
-        super().__init__(path, pack_marketplaces)
+class PlaybookParser(YAMLContentItemParser):
+    def __init__(self, path: Path, pack: 'PackParser') -> None:
+        super().__init__(path, pack)
         print(f'Parsing {self.content_type} {self.object_id}')
         self.graph: networkx.DiGraph = build_tasks_graph(self.yml_data)
         self.connect_to_dependencies()
@@ -107,3 +109,6 @@ class PlaybookParser(content_item.YAMLContentItemParser):
             self.handle_script_task(task, is_mandatory)
             self.handle_command_task(task, is_mandatory)
             self.handle_field_mapping(task, is_mandatory)
+
+    def add_to_pack(self) -> None:
+        self.pack.content_items.playbook.append(self)

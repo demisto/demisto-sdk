@@ -3,11 +3,12 @@
 import multiprocessing
 from pathlib import Path
 from typing import Iterator, List
-from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 from demisto_sdk.commands.content_graph.constants import PACKS_FOLDER
 
+from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
-IGNORED_PACKS_FOR_PARSING = ['NonSupported']
+
+IGNORED_PACKS_FOR_PARSING = ['NonSupported']  # todo
 
 class RepositoryParser:
     def __init__(self, path: Path) -> None:
@@ -20,4 +21,3 @@ class RepositoryParser:
         for path in packs_folder.iterdir():  # todo: handle repo path is invalid
             if path.is_dir() and not path.name.startswith('.') and path.name not in IGNORED_PACKS_FOR_PARSING:
                 yield path
-            

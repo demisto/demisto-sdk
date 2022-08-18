@@ -76,6 +76,7 @@ class ContentGraphBuilder:
         self.content_graph.create_indexes_and_constraints()
         self.content_graph.create_nodes(self.nodes)
         self.content_graph.create_relationships(self.relationships)
+        self.content_graph.validate_graph()
 
     # def build_modified_packs_paths(self, packs: List[str]) -> Iterator[Path]:
     #     for pack_id in packs:

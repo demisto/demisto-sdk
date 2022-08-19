@@ -11,7 +11,7 @@ class IndicatorTypeParser(JSONContentItemParser, content_type=ContentTypes.INDIC
         print(f'Parsing {self.content_type} {self.object_id}')
         self.connect_to_dependencies()
         self.regex: str = self.json_data.get('regex')
-        self.reputation_script_names: str = self.json_data.get('reputationScriptName')  # TODO should be `name`
+        self.reputation_script_name: str = self.json_data.get('reputationScriptName')  # TODO should be `name`
         self.enhancement_script_names: List[str] = self.json_data.get('enhancementScriptNames')
 
     @property

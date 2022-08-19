@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from pydantic import BaseModel, Field
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Nodes, Relationships
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent

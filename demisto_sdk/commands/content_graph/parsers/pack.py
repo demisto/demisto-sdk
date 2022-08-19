@@ -11,6 +11,7 @@ from demisto_sdk.commands.content_graph.constants import (
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
 from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
 
+
 class PackContentItems:
     def __init__(self) -> None:
         self.classifier: List[ContentItemParser] = []

@@ -1,8 +1,8 @@
 from pathlib import Path
+from pydantic import BaseModel
 from typing import List
 
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from pydantic import BaseModel
 
 
 class Repository(BaseModel):

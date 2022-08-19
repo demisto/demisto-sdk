@@ -12,7 +12,7 @@ class TestPlaybookParser(PlaybookParser, content_type=ContentTypes.TEST_PLAYBOOK
         super().__init__(path)
 
         if self.yml_data.get('script'):
-            raise IncorrectParser(correct_parser=ScriptParser)
+            raise IncorrectParser(correct_parser=ScriptParser)  # todo: need to mark as a test script
 
         print(f'Parsing {self.content_type} {self.object_id}')
 

@@ -1,5 +1,5 @@
-from abc import abstractmethod, ABC
-from pydantic import BaseModel, Field, validator
+from abc import ABC
+from pydantic import BaseModel, Field
 from typing import List
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 

@@ -5,6 +5,8 @@
 * Added `Added a`, `Added an` to the list of allowed changelog prefixes.
 * Added support for Indicator Types/Reputations in the **upload** command.
 
+* Fixed an issue when running from a subdirectory of a content repo failed.
+
 ## 1.7.2
 
 * Fixed an issue in the **validate** command where incident fields were not found in mappers even when they exist

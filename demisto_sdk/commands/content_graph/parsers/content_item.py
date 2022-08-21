@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.tools import (
     get_json, get_yaml,
     get_yml_paths_in_dir
 )
-from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_TO_VERSION
+from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, UNIFIED_FILES_SUFFIXES, Relationships
 from demisto_sdk.commands.content_graph.parsers import *
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
@@ -153,7 +153,7 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def fromversion(self) -> str:
-        return self.yml_data.get('fromversion')
+        return self.yml_data.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION)
 
     @property
     def toversion(self) -> str:
@@ -208,7 +208,7 @@ class JSONContentItemParser(ContentItemParser):
 
     @property
     def fromversion(self) -> str:
-        return self.json_data.get('fromVersion')
+        return self.json_data.get('fromVersion', DEFAULT_CONTENT_ITEM_FROM_VERSION)
 
     @property
     def toversion(self) -> str:

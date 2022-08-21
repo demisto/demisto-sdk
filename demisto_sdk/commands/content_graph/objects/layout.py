@@ -1,13 +1,13 @@
 from pydantic import Field
-from typing import List
+from typing import List, Optional
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
 class Layout(ContentItem):
-    kind: str
+    kind: Optional[str]
     description: str
-    tabs: List[str]
-    definition_id: str = Field(alias='definitionId')
+    tabs: Optional[List[str]]
+    definition_id: Optional[str] = Field(alias='definitionId')
     group: str
     edit: bool
     indicators_details: bool

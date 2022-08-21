@@ -716,7 +716,6 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     pack.pack_info_from_id_set = artifact_manager.packs_section_from_id_set
     content_items_handler = ContentItemsHandler(artifact_manager.id_set, artifact_manager.alternate_fields)
     is_feed_pack = False
-
     for classifier in pack.classifiers:
         content_items_handler.handle_content_item(classifier)
         pack_report += dump_pack_conditionally(artifact_manager, classifier)

@@ -59,7 +59,7 @@ def restore_content_graph():
     pass
 
 
-def load_db_to_models(use_docker: bool = True, keep_service: bool = False, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR):
+def load_db_to_models(keep_service: bool = False, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR):
     content_graph_loader = ContentGraphLoader(marketplace, neo4j_interface)
     content_graph_loader.load()
     if not keep_service:

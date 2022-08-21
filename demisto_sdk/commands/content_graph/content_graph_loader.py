@@ -20,7 +20,6 @@ class ContentGraphLoader:
         self.content_graph = content_graph
 
     def load(self) -> Repository:
-
         packs = []
         integrations_to_commands = {integration['integration_id']: integration['commands']
                                     for integration in self.content_graph.get_all_integrations_with_commands()}
@@ -30,7 +29,7 @@ class ContentGraphLoader:
             content_items_dct: Dict[str, Any] = {}
             for content_item in content_items:
                 if (content_type := content_item['content_type']) == ContentTypes.INTEGRATION:
-                    content_item['commands'] = integrations_to_commands.get(content_item['object_id'])
+                    content_item['commands'] = integrations_to_commands.get(content_item['object_id'], [])
                     
                 content_items_dct.setdefault(content_type, []).append(content_item)
             pack['content_items'] = content_items_dct

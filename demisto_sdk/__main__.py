@@ -2317,11 +2317,6 @@ def load_content_graph(no_use_docker: bool, keep_service: bool, content_graph_pa
 
     load_content_graph(use_docker=not no_use_docker, keep_service=keep_service, content_graph_path=content_graph_path)
 
-@main.command()
-def load_db_to_models():  # for debugging
-    from demisto_sdk.commands.content_graph.content_graph_commands import load_db_to_models
-    load_db_to_models(use_docker=True, keep_service=True, marketplace='xsoar')
-
 
 @main.result_callback()
 def exit_from_program(result=0, **kwargs):

@@ -1,7 +1,10 @@
+from pathlib import Path
+from typing import Any, Dict, List, Union
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.repository import Repository
+from demisto_sdk.commands.content_graph.constants import ContentTypes
 
 
 class ContentGraphLoader:
@@ -19,13 +22,17 @@ class ContentGraphLoader:
     def load(self) -> Repository:
 
         packs = []
-        for pack_dict in self.content_graph.get_packs_content_items(self.marketplace):
-            content_items = pack_dict.pop('content_items')
-            content_items_dct = {}
+        integrations_to_commands = {integration['integration_id']: integration['commands']
+                                    for integration in self.content_graph.get_all_integrations_with_commands()}
+        for result in self.content_graph.get_packs_content_items(self.marketplace):
+            content_items = result['content_items']
+            pack = result['pack']
+            content_items_dct: Dict[str, Any] = {}
             for content_item in content_items:
-                content_items_dct.setdefault(content_item['content_type'], []).append(content_item)
-            pack_dict['contentItems'] = content_items_dct
-            packs.append(Pack(**pack_dict))
-            
-        return Repository(packs=packs)
-                
+                if (content_type := content_item['content_type']) == ContentTypes.INTEGRATION:
+                    content_item['commands'] = integrations_to_commands.get(content_item['object_id'])
+                    
+                content_items_dct.setdefault(content_type, []).append(content_item)
+            pack['content_items'] = content_items_dct
+            packs.append(Pack(**pack))
+        return Repository(packs=packs, path=Path(Path.cwd()))  # TODO decide what to do with repo path?

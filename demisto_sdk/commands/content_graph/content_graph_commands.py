@@ -1,9 +1,11 @@
 import logging
 import shutil
 from pathlib import Path
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 from demisto_sdk.commands.content_graph.content_graph_builder import \
     ContentGraphBuilder
+from demisto_sdk.commands.content_graph.content_graph_loader import ContentGraphLoader
 from demisto_sdk.commands.content_graph.interface.neo4j_graph import \
     Neo4jContentGraphInterface
 
@@ -55,3 +57,10 @@ def backup_content_graph():
 
 def restore_content_graph():
     pass
+
+
+def load_db_to_models(use_docker: bool = True, keep_service: bool = False, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR):
+    content_graph_loader = ContentGraphLoader(marketplace, neo4j_interface)
+    content_graph_loader.load()
+    if not keep_service:
+        neo4j_service.stop_neo4j_service()

@@ -24,6 +24,16 @@
             ]
         },
         {
+            "name": "Python: load db to models",
+            "type": "python",
+            "request": "launch",
+            "module": "demisto_sdk",
+            "cwd": "${env:CONTENT}", // Predefine the CONTENT variable in your environment first!
+            "args": [
+                "load-db-to-models",
+            ]
+        },
+        {
             "name": "Python: Lint AbuseDB with logs",
             "type": "python",
             "request": "launch",

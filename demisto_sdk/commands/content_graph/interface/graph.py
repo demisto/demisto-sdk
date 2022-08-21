@@ -31,5 +31,9 @@ class ContentGraphInterface(ABC):
         pass
     
     @abstractmethod
+    def get_all_integrations_with_commands(self):
+        pass
+    
+    @abstractmethod
     def run_single_query(self, query: str, parameters: Optional[Dict[str, Any]] = None) -> Any:
         pass

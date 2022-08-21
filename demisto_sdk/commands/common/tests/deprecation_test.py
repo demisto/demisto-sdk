@@ -251,7 +251,7 @@ class TestDeprecationValidator:
                 },
                 'tests': ['testplaybook_1', 'testplaybook_2'],
             },
-            '[IN155] - integration_format_case_1 integration contains deprecated commands that are being used by other entites:\n'
+            '[IN155] - integration_format_case_1 integration contains deprecated commands that are being used by other entities:\n'
             'ifc1_command1 is being used in the following locations:\nplaybook_2.yml\n'
             'ifc1_command2 is being used in the following locations:\nscript_2.yml\n\n',
         )
@@ -321,7 +321,7 @@ class TestDeprecationValidator:
     SCRIPTS_FORMAT_VALIDATIONS = [
         (
             {'name': 'script_format_case_1', 'deprecated': True},
-            '[SC107] - script_format_case_1 script is deprecated and being used by the following entites:\nscript_2.yml\nplaybook_2.yml\n\n',
+            '[SC107] - script_format_case_1 script is deprecated and being used by the following entities:\nscript_2.yml\nplaybook_2.yml\n\n',
         )
     ]
 
@@ -382,7 +382,7 @@ class TestDeprecationValidator:
     PLAYBOOKS_FORMAT_VALIDATIONS = [
         (
             {'name': 'playbook_format_case_1', 'deprecated': True},
-            '[PB120] - playbook_format_case_1 playbook is deprecated and being used by the following entites:\nplaybook_2.yml\n\n',
+            '[PB120] - playbook_format_case_1 playbook is deprecated and being used by the following entities:\nplaybook_2.yml\n\n',
         )
     ]
 

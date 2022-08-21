@@ -13,6 +13,7 @@ from demisto_sdk.commands.common.constants import (
     FROM_TO_VERSION_REGEX, GENERIC_OBJECTS_OLDEST_SUPPORTED_VERSION,
     OLDEST_SUPPORTED_VERSION, FileType)
 from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
@@ -32,7 +33,6 @@ logger = logging.getLogger("demisto-sdk")
 
 class ContentEntityValidator(BaseValidator):
     DEFAULT_VERSION = -1
-    CONF_PATH = "./Tests/conf.json"
 
     def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
                  suppress_print=False, json_file_path=None, oldest_supported_version=None):
@@ -170,7 +170,7 @@ class ContentEntityValidator(BaseValidator):
         return True
 
     def _load_conf_file(self):
-        with open(self.CONF_PATH) as data_file:
+        with open(CONF_PATH) as data_file:
             return json.load(data_file)
 
     @error_codes('CJ104,CJ102')

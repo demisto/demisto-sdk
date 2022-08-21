@@ -292,6 +292,55 @@ class TestPlaybookValidator:
               "taskid": "8bff5d33-9554-4ab9-833c-cc0c0d5fdfd8"}
     }
 
+    PLAYBOOK_JSON_CORRECT_VALUE_REFERENCE = {
+        "1": {
+            "id": "1",
+            "type": "condition",
+            "conditions": [
+                {
+                    "label": "yes",
+                    "condition": [
+                        [
+                            {
+                                "operator": "isEqualString",
+                                "left": {
+                                    "value": {
+                                        "simple": "inputs.myinput"
+                                    },
+                                    "iscontext": 'true'
+                                }
+                            }
+                        ]
+                    ]
+                }
+            ]
+        }
+    }
+
+    PLAYBOOK_JSON_INCORRECT_VALUE_REFERENCE = {
+        "1": {
+            "id": "1",
+            "type": "condition",
+            "conditions": [
+                {
+                    "label": "yes",
+                    "condition": [
+                        [
+                            {
+                                "operator": "isEqualString",
+                                "left": {
+                                    "value": {
+                                        "simple": "inputs.wrongvalue"
+                                    }
+                                }
+                            }
+                        ]
+                    ]
+                }
+            ]
+        }
+    }
+
     PLAYBOOK_JSON_INDICATORS_INPUT_VALID = {
         'inputs': [
             {'playbookInputQuery': {'queryEntity': 'indicators'}}
@@ -349,6 +398,11 @@ class TestPlaybookValidator:
     IS_TASK_ID_EQUALS_ID = [
         (PLAYBOOK_JSON_ID_EQUALS_TASKID, True),
         (PLAYBOOK_JSON_ID_NOT_EQUAL_TO_TASKID, False)
+    ]
+
+    IS_CORRECT_VALUE_REFERENCE = [
+        (PLAYBOOK_JSON_CORRECT_VALUE_REFERENCE, True),
+        (PLAYBOOK_JSON_INCORRECT_VALUE_REFERENCE, False)
     ]
 
     DEPRECATED_VALID = {"deprecated": True, "description": "Deprecated. Use the XXXX playbook instead."}
@@ -542,6 +596,24 @@ class TestPlaybookValidator:
         structure = mock_structure("", playbook_json)
         validator = PlaybookValidator(structure)
         validator._is_taskid_equals_id() is expected_result
+
+    @pytest.mark.parametrize("playbook_json, expected_result", IS_CORRECT_VALUE_REFERENCE)
+    def test_is_correct_value_references(self, playbook_json, expected_result):
+        """
+        Given
+        - A playbook
+
+        When
+        - The playbook include taskid and inside task that has conditions, .
+        - The playbook include taskid and inside task field an id that are different values.
+
+        Then
+        - Ensure validation passes if the taskid field and the id inside task field have the same value
+        - Ensure validation fails if the taskid field and the id inside task field are have different value
+        """
+        structure = mock_structure("", playbook_json)
+        validator = PlaybookValidator(structure)
+        validator._is_correct_value_references() is expected_result
 
     @pytest.mark.parametrize("current, answer", DEPRECATED_INPUTS)
     def test_is_valid_deprecated_playbook(self, current, answer):

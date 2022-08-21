@@ -3,6 +3,7 @@
 ## Unreleased
 * Fixed an issue in the **format** command where fail when executed from environment without mdx server available.
 * Added `Added a`, `Added an` to the list of allowed changelog prefixes.
+* Added new validation to the **validate** command to check the playbook task's value references.
 
 ## 1.7.2
 

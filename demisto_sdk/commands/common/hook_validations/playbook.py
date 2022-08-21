@@ -51,6 +51,7 @@ class PlaybookValidator(ContentEntityValidator):
             self.is_script_id_valid(id_set_file),
             self._is_id_uuid(),
             self._is_taskid_equals_id(),
+            self._is_correct_value_references(),
             self.verify_condition_tasks_has_else_path(),
             self.name_not_contain_the_type(),
             self.is_valid_with_indicators_input(),
@@ -560,6 +561,39 @@ class PlaybookValidator(ContentEntityValidator):
                 error_message, error_code = Errors.taskid_different_from_id(task_key, taskid, inner_id)
                 self.handle_error(error_message, error_code, file_path=self.file_path)  # Does not break after one
                 # invalid task in order to raise error for all the invalid tasks at the file
+
+        return is_valid
+
+    @error_codes('PB121')
+    def _is_correct_value_references(self):
+        """
+        Check that when refer to incident.(something) we do not do it "by value"
+        Returns: True if valid
+
+        """
+        is_valid = True
+        tasks: dict = self.current_file.get('tasks', {})
+        for task_key, task in tasks.items():
+            if task.get('type') == 'condition':
+                task_conditions = task.get('conditions', [])
+                for conditions in task_conditions:
+                    conditions = conditions.get('condition')
+                    for condition in conditions:
+                        for condition_info in condition:
+                            condition_name = condition_info.get('operator')
+                            if condition_info.get('left'):
+                                if condition_info.get('left').get('value', {}).get('simple', '').startswith('inputs.'):
+                                    if not condition_info.get('left').get('iscontext', None):
+                                        is_valid = False
+                                        error_message, error_code = Errors.incorrect_value_references(task_key, condition_name)
+                                        self.handle_error(error_message, error_code, file_path=self.file_path)
+
+                            if condition_info.get('right'):
+                                if condition_info.get('right').get('value', {}).get('simple', '').startswith('inputs.'):
+                                    if not condition_info.get('right').get('iscontext', {}):
+                                        is_valid = False
+                                        error_message, error_code = Errors.incorrect_value_references(task_key, condition_name)
+                                        self.handle_error(error_message, error_code, file_path=self.file_path)
 
         return is_valid
 

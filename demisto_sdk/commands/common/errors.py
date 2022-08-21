@@ -336,6 +336,7 @@ ERROR_CODE = {
     "input_key_not_in_tasks": {'code': "PB118", 'ui_applicable': False, 'related_field': ''},
     "input_used_not_in_input_section": {'code': "PB119", 'ui_applicable': False, 'related_field': ''},
     "playbook_is_deprecated_and_used": {'code': 'PB120', 'ui_applicable': False, 'related_field': 'deprecated'},
+    "incorrect_value_references": {'code': "PB121", 'ui_applicable': False, 'related_field': 'taskid'},
 
     # PP - Pre-Process Rules
     "invalid_from_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
@@ -2184,6 +2185,12 @@ class Errors:
     def taskid_different_from_id(task_key, id_, taskid):
         return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id_}, " \
                f"must be with equal value. "
+
+    @staticmethod
+    @error_code_decorator
+    def incorrect_value_references(task_key, condition_name):
+        return f"On task: {task_key}, condition name: {condition_name}, make sure to change the refrence to 'From previous tasks'" \
+            " from 'As value' when referencing a value from the context."
 
     @staticmethod
     @error_code_decorator

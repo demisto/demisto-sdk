@@ -5,7 +5,7 @@ from demisto_sdk.commands.content_graph.constants import ContentTypes
 from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentItemParser, NotAContentItem
 
 
-class LayoutParser(JSONContentItemParser):
+class LayoutParser(JSONContentItemParser, content_type=ContentTypes.LAYOUT):
     def __init__(self, path: Path) -> None:
         if 'layoutscontainer' not in path.name:
             raise NotAContentItem

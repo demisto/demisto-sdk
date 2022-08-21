@@ -4,7 +4,7 @@ from demisto_sdk.commands.content_graph.constants import ContentTypes
 from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentItemParser
 
 
-class ParsingRuleParser(JSONContentItemParser):
+class ParsingRuleParser(JSONContentItemParser, content_type=ContentTypes.PARSING_RULE):
     def __init__(self, path: Path) -> None:
         super().__init__(path)
         print(f'Parsing {self.content_type} {self.object_id}')

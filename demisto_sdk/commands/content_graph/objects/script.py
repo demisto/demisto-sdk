@@ -6,3 +6,4 @@ from demisto_sdk.commands.content_graph.constants import ContentTypes
 
 class Script(IntegrationScript):
     tags: List[str]
+    is_test: bool

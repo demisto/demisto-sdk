@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.tools import (
     get_json, get_yaml,
     get_yml_paths_in_dir
 )
-from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_TO_VERSION
+from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, UNIFIED_FILES_SUFFIXES, Relationships
 from demisto_sdk.commands.content_graph.parsers import *
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
@@ -18,8 +18,9 @@ class NotAContentItem(Exception):
 
 
 class IncorrectParser(Exception):
-    def __init__(self, correct_parser: 'ContentItemParser') -> None:
+    def __init__(self, correct_parser: 'ContentItemParser', **kwargs) -> None:
         self.correct_parser = correct_parser
+        self.kwargs = kwargs
         super().__init__()
 
 
@@ -54,7 +55,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMeta):
             try:
                 return parser(path)
             except IncorrectParser as e:
-                return e.correct_parser(path)
+                return e.correct_parser(path, **e.kwargs)
             except NotAContentItem:  # as e:
                 # during the parsing we detected this is not a content item
                 pass
@@ -154,7 +155,7 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def fromversion(self) -> str:
-        return self.yml_data.get('fromversion')
+        return self.yml_data.get('fromversion', DEFAULT_CONTENT_ITEM_FROM_VERSION)
 
     @property
     def toversion(self) -> str:
@@ -209,7 +210,7 @@ class JSONContentItemParser(ContentItemParser):
 
     @property
     def fromversion(self) -> str:
-        return self.json_data.get('fromVersion')
+        return self.json_data.get('fromVersion', DEFAULT_CONTENT_ITEM_FROM_VERSION)
 
     @property
     def toversion(self) -> str:

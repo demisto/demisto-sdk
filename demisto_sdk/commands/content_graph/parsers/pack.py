@@ -149,3 +149,4 @@ class PackParser(BaseContentParser, PackMetadataParser):
         if content_item := ContentItemParser.from_path(content_item_path):
             self.content_items.append(content_item)
             self.relationships.update(content_item.relationships)
+            

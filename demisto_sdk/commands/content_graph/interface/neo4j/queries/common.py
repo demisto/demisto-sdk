@@ -11,6 +11,7 @@ import logging
 
 logger = logging.getLogger('demisto-sdk')
 
+
 def labels_of(content_type: ContentTypes) -> str:
     return ':'.join(content_type.labels)
 

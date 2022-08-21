@@ -114,3 +114,6 @@ class Pack(BaseContent, PackMetadata):
     node_id: str
     content_items: PackContentItems = Field(alias='contentItems', exclude=True)
     relationships: Relationships = Field(Relationships(), exclude=True)
+
+    def dump():
+        return self.dict(include={})

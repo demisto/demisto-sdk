@@ -1,8 +1,9 @@
 import logging
 from neo4j import Transaction
 from typing import Any, Dict, List
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes
+from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query, versioned, intersects
 
 
@@ -54,4 +55,15 @@ def create_nodes_by_type(
     result = run_query(tx, query, data=data).single()
     nodes_count: int = result['nodes_created']
     logger.info(f'Created {nodes_count} nodes of type {content_type}.')
-    
+
+
+def get_packs_content_items(
+    tx: Transaction,
+    marketplace: MarketplaceVersions,
+):
+    query = f"""
+    MATCH (n:{ContentTypes.PACK})<-[:{Rel.IN_PACK}]-(c:{ContentTypes.BASE_CONTENT})
+    WHERE n.marketplaces CONTAINS {marketplace}
+    RETURN p as pack, collect(c) AS content_items
+    """
+    return run_query(tx, query).data()

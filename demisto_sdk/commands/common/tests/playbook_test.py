@@ -309,6 +309,15 @@ class TestPlaybookValidator:
                                     },
                                     "iscontext": 'true'
                                 }
+                            },
+                            {
+                                "operator": "isEqualString",
+                                "left": {
+                                    "value": {
+                                        "simple": "incident.myinput"
+                                    },
+                                    "iscontext": 'true'
+                                }
                             }
                         ]
                     ]
@@ -331,6 +340,14 @@ class TestPlaybookValidator:
                                 "left": {
                                     "value": {
                                         "simple": "inputs.wrongvalue"
+                                    }
+                                }
+                            },
+                            {
+                                "operator": "isEqualString",
+                                "left": {
+                                    "value": {
+                                        "simple": "incident.wrongvalue"
                                     }
                                 }
                             }

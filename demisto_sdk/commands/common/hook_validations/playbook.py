@@ -582,15 +582,17 @@ class PlaybookValidator(ContentEntityValidator):
                         for condition_info in condition:
                             condition_name = condition_info.get('operator')
                             if condition_info.get('left'):
-                                if condition_info.get('left').get('value', {}).get('simple', '').startswith('inputs.'):
-                                    if not condition_info.get('left').get('iscontext', None):
+                                value = condition_info.get('left').get('value', {}).get('simple', '')
+                                if value.startswith('inputs.') or value.startswith('incident.'):
+                                    if not condition_info.get('left').get('iscontext', ''):
                                         is_valid = False
                                         error_message, error_code = Errors.incorrect_value_references(task_key, condition_name)
                                         self.handle_error(error_message, error_code, file_path=self.file_path)
 
                             if condition_info.get('right'):
-                                if condition_info.get('right').get('value', {}).get('simple', '').startswith('inputs.'):
-                                    if not condition_info.get('right').get('iscontext', {}):
+                                value = condition_info.get('right').get('value', {}).get('simple', '')
+                                if value.startswith('inputs.') or value.startswith('incident.'):
+                                    if not condition_info.get('right').get('iscontext', ''):
                                         is_valid = False
                                         error_message, error_code = Errors.incorrect_value_references(task_key, condition_name)
                                         self.handle_error(error_message, error_code, file_path=self.file_path)

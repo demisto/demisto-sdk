@@ -2002,6 +2002,7 @@ def openapi_codegen(**kwargs):
     '--xsiam-machine',
     help='XSIAM machine to use, if it is XSIAM build.')
 @click.option('--xsiam-servers-path', help='Path to secret xsiam server metadata file.')
+@click.option('--xsiam-servers-api-keys-path', help='Path to file with XSIAM Servers api keys.')
 def test_content(**kwargs):
     """Configure instances for the integration needed to run tests_to_run tests.
     Run test module on each integration.

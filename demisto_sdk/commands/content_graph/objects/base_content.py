@@ -1,6 +1,7 @@
 from abc import ABC
+import json
 from pydantic import BaseModel, Field
-from typing import List
+from typing import Any, Dict, List
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes
@@ -16,3 +17,6 @@ class BaseContent(ABC, BaseModel):
         arbitrary_types_allowed = True
         orm_mode = True
         allow_population_by_field_name = True
+
+    def to_dict(self) -> Dict[str, Any]:
+        return json.loads(self.json())

@@ -142,14 +142,27 @@ class Relationships(dict):
                 raise TypeError
             self.add_batch(relationship, parsed_data)
 
+
 class Nodes(dict):
-    def add_batch(self, content_type: ContentTypes, data: List[Dict[str, Any]]):
+    def __init__(self, *args) -> None:
+        super().__init__(self)
+        for arg in args:
+            if not isinstance(arg, dict):
+                raise ValueError(f'Excpected a dict: {arg}')
+        self.add_batch(args)
+
+    def add(self, **kwargs):
+        content_type: ContentTypes = ContentTypes(kwargs.get('content_type'))
         if content_type not in self.keys():
             self.__setitem__(content_type, [])
-        self.__getitem__(content_type).extend(data)
+        self.__getitem__(content_type).append(kwargs)
+
+    def add_batch(self, data: List[Dict[str, Any]]):
+        for obj in data:
+            self.add(**obj)
     
     def update(self, other: 'Nodes'):
         for content_type, parsed_data in other.items():
             if content_type not in ContentTypes or not isinstance(parsed_data, list):
                 raise TypeError
-            self.add_batch(content_type, parsed_data)
+            self.add_batch(parsed_data)

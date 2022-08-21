@@ -8,7 +8,6 @@ from typing import Any, List
 
 from demisto_sdk.commands.content_graph.constants import REPO_PATH, Nodes, Relationships
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
-from demisto_sdk.commands.content_graph.objects.pack import PackContentItems
 
 from demisto_sdk.commands.content_graph.objects.repository import Repository
 from demisto_sdk.commands.content_graph.parsers.repository import RepositoryParser
@@ -46,7 +45,7 @@ class ContentGraphBuilder:
         self.repository: Repository = self._parse_repo(repo_path)
 
         for pack in self.repository.packs:
-            self.nodes.update(pack.content_items.to_nodes())
+            self.nodes.update(pack.to_nodes())
             self.relationships.update(pack.relationships)
 
     def _parse_repo(self, path: Path) -> Repository:

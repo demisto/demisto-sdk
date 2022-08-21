@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from demisto_sdk.commands.common.constants import (API_MODULES_PACK, CONF_PATH,
-                                                   FileType)
+from demisto_sdk.commands.common.constants import API_MODULES_PACK, FileType
+from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import (
@@ -18,7 +18,6 @@ class ConfJsonValidator(BaseValidator):
         _is_valid (bool): Whether the conf.json file current state is valid or not.
         conf_data (dict): The data from the conf.json file in our repo.
     """
-    CONF_PATH = "./Tests/conf.json"
     DYNAMIC_SECTION_TAG = 'dynamic-section'
 
     def __init__(self, ignored_errors=None, print_as_warnings=False, suppress_print=False, json_file_path=None, specific_validations=None):
@@ -28,7 +27,7 @@ class ConfJsonValidator(BaseValidator):
         self.conf_data = self.load_conf_file()
 
     def load_conf_file(self):
-        with open(self.CONF_PATH) as data_file:
+        with open(CONF_PATH) as data_file:
             return json.load(data_file)
 
     def is_valid_conf_json(self):

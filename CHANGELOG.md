@@ -3,7 +3,10 @@
 ## Unreleased
 * Fixed an issue in the **format** command where fail when executed from environment without mdx server available.
 * Added `Added a`, `Added an` to the list of allowed changelog prefixes.
+* Added support for Indicator Types/Reputations in the **upload** command.
+* Fixed an issue when running from a subdirectory of a content repo failed.
 * Changing the way we are using XSIAM servers api-keys in ***test-content*** command.
+
 
 ## 1.7.2
 

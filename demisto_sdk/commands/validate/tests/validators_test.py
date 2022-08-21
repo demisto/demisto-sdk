@@ -11,8 +11,9 @@ from mock import patch
 import demisto_sdk.commands.validate.validate_manager
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
-    CONF_PATH, FILETYPE_TO_DEFAULT_FROMVERSION, PACKS_PACK_META_FILE_NAME,
-    TEST_PLAYBOOK, FileType)
+    FILETYPE_TO_DEFAULT_FROMVERSION, PACKS_PACK_META_FILE_NAME, TEST_PLAYBOOK,
+    FileType)
+from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -985,7 +986,7 @@ class TestValidators:
         old_format_files = {f"{git_path()}/demisto_sdk/tests/test_files/script-valid.yml",
                             f"{git_path()}/demisto_sdk/tests/test_files/integration-test.yml"}
         assert not validate_manager.validate_no_old_format(old_format_files)
-        assert handle_error_mock.call_count == 3
+        assert handle_error_mock.call_count == 2
 
     def test_validate_no_old_format_deprecated_content(self, repo):
         """

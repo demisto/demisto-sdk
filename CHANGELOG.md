@@ -5,6 +5,7 @@
 * Added `Added a`, `Added an` to the list of allowed changelog prefixes.
 * Added support for Indicator Types/Reputations in the **upload** command.
 * Fixed an issue when running from a subdirectory of a content repo failed.
+* Changing the way we are using XSIAM servers api-keys in ***test-content*** command.
 * Added a new validation to the **validate** command to check the playbook task's value references.
 
 ## 1.7.2

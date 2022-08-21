@@ -117,6 +117,9 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMeta):
             **kwargs
         )
 
+    def add_to_pack(self, pack: str) -> None:
+        self.add_relationship(Rel.IN_PACK, pack)
+
     def add_dependency(self, dependency_id: str, dependency_type: Optional[ContentTypes] = None, is_mandatory: bool = True) -> None:
         if dependency_type is None:  # and self.content_type == ContentTypes.SCRIPT:
             relationship = Rel.USES_COMMAND_OR_SCRIPT

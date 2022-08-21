@@ -1,11 +1,9 @@
-import json
 from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Nodes, Relationships
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
@@ -63,15 +61,9 @@ class PackContentItems(BaseModel):
     xsiam_report: List[XSIAMReport] = Field([], alias=ContentTypes.XSIAM_REPORT.value)
 
     def __iter__(self):
-        for _, content_items in vars(self).items():
-            if content_items:
-                yield content_items[0].content_type, content_items
-    
-    def to_nodes(self) -> Nodes:
-        nodes = Nodes()
-        for content_type, content_items in self:
-            nodes.add_batch(content_type, [json.loads(content_item.json()) for content_item in content_items])
-        return nodes
+        for content_items in vars(self).values():
+            for content_item in content_items:
+                yield content_item
 
     class Config:
         arbitrary_types_allowed = True
@@ -115,5 +107,5 @@ class Pack(BaseContent, PackMetadata):
     content_items: PackContentItems = Field(alias='contentItems', exclude=True)
     relationships: Relationships = Field(Relationships(), exclude=True)
 
-    def dump():
-        return self.dict(include={})
+    def to_nodes(self) -> Nodes:
+        return Nodes(self.to_dict(), *[content_item.to_dict() for content_item in self.content_items])

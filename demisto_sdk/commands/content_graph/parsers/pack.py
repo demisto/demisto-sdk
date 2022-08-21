@@ -147,6 +147,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
 
     def parse_content_item(self, content_item_path) -> None:
         if content_item := ContentItemParser.from_path(content_item_path):
+            content_item.add_to_pack(self.node_id)
             self.content_items.append(content_item)
             self.relationships.update(content_item.relationships)
             

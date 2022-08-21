@@ -8,17 +8,10 @@ from demisto_sdk.commands.content_graph.parsers.integration_script import (
 )
 
 
-class CommandParser:
-    def __init__(self, cmd_data: Dict[str, Any]) -> None:
-        self.name = cmd_data['name']
-        self.description = cmd_data['description']
-
-
 class IntegrationParser(IntegrationScriptParser, content_type=ContentTypes.INTEGRATION):
     def __init__(self, path: Path) -> None:
         super().__init__(path)
         print(f'Parsing {self.content_type} {self.object_id}')
-        self.commands: List[CommandParser] = []
         self.script_info: Dict[str, Any] = self.yml_data.get('script', {})
         self.category = self.yml_data['category']
         self.display_name = self.yml_data['display']
@@ -40,13 +33,12 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentTypes.INTEG
 
     def connect_to_commands(self) -> None:
         for command_data in self.script_info.get('commands', []):
-            self.commands.append(CommandParser(cmd_data=command_data))
-            cmd_name = command_data.get('name')
-            deprecated: bool = command_data.get('deprecated', False) or self.deprecated
             self.add_relationship(
                 Rel.HAS_COMMAND,
-                target=cmd_name,
-                deprecated=deprecated,
+                target=command_data.get('name'),
+                name=command_data.get('name'),
+                deprecated=command_data.get('deprecated', False) or self.deprecated,
+                description=command_data.get('description')
             )
 
     def connect_to_dependencies(self) -> None:

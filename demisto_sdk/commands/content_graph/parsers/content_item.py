@@ -18,8 +18,9 @@ class NotAContentItem(Exception):
 
 
 class IncorrectParser(Exception):
-    def __init__(self, correct_parser: 'ContentItemParser') -> None:
+    def __init__(self, correct_parser: 'ContentItemParser', **kwargs) -> None:
         self.correct_parser = correct_parser
+        self.kwargs = kwargs
         super().__init__()
 
 
@@ -53,7 +54,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMeta):
             try:
                 return parser(path)
             except IncorrectParser as e:
-                return e.correct_parser(path)
+                return e.correct_parser(path, **e.kwargs)
             except NotAContentItem:  # as e:
                 # during the parsing we detected this is not a content item
                 pass

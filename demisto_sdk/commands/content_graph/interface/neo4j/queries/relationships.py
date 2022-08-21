@@ -19,13 +19,17 @@ MERGE (cmd:{ContentTypes.COMMAND}{{
 ON CREATE
     SET cmd:{labels_of(ContentTypes.COMMAND)},
         cmd.node_id = "{ContentTypes.COMMAND}:" + rel_data.target,
-        cmd.marketplaces = rel_data.source_marketplaces
+        cmd.marketplaces = rel_data.source_marketplaces,
+        cmd.name = rel_data.name
 ON MATCH
     SET cmd.marketplaces = REDUCE(
         marketplaces = cmd.marketplaces, mp IN rel_data.source_marketplaces |
         CASE WHEN NOT mp IN cmd.marketplaces THEN marketplaces + mp ELSE marketplaces END
     )
-MERGE (integration)-[r:{Rel.HAS_COMMAND}{{deprecated: rel_data.deprecated}}]->(cmd)
+MERGE (integration)-[r:{Rel.HAS_COMMAND}{{
+    deprecated: rel_data.deprecated,
+    description: rel_data.description
+}}]->(cmd)
 
 RETURN count(r) AS relationships_merged
 """

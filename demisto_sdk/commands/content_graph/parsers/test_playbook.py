@@ -9,10 +9,10 @@ from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
 
 class TestPlaybookParser(PlaybookParser, content_type=ContentTypes.TEST_PLAYBOOK):
     def __init__(self, path: Path) -> None:
-        super().__init__(path)
+        super().__init__(path, is_test=True)
 
         if self.yml_data.get('script'):
-            raise IncorrectParser(correct_parser=ScriptParser)  # todo: need to mark as a test script
+            raise IncorrectParser(correct_parser=ScriptParser, is_test=True)
 
         print(f'Parsing {self.content_type} {self.object_id}')
 

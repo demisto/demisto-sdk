@@ -618,15 +618,15 @@ class TestPlaybookValidator:
     def test_is_correct_value_references(self, playbook_json, expected_result):
         """
         Given
-        - A playbook
+        - A playbook.
 
         When
-        - The playbook include taskid and inside task that has conditions, .
-        - The playbook include taskid and inside task field an id that are different values.
+        - The playbook include taskid and inside task that has conditions with correct value reference.
+        - The playbook include taskid and inside task that has conditions with incorrect value reference.
 
         Then
-        - Ensure validation passes if the taskid field and the id inside task field have the same value
-        - Ensure validation fails if the taskid field and the id inside task field are have different value
+        - Ensure validation passes if the the reference is from previous task and not as value.
+        - Ensure validation failes if the the reference is as value task and not from previous task.
         """
         structure = mock_structure("", playbook_json)
         validator = PlaybookValidator(structure)

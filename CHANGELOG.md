@@ -7,6 +7,7 @@
 * Fixed an issue when running from a subdirectory of a content repo failed.
 * Changing the way we are using XSIAM servers api-keys in **test-content** .
 * Added a success message to **postman-codegen**.
+* Added name normalization according to new convention to XSIAM content items
 
 ## 1.7.2
 

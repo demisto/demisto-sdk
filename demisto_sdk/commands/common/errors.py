@@ -1,13 +1,15 @@
 from distutils.version import LooseVersion
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import decorator
 from requests import Response
 
 from demisto_sdk.commands.common.constants import (
-    BETA_INTEGRATION_DISCLAIMER, CONF_PATH, FILETYPE_TO_DEFAULT_FROMVERSION,
-    INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME, FileType)
+    BETA_INTEGRATION_DISCLAIMER, FILETYPE_TO_DEFAULT_FROMVERSION,
+    INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME, FileType,
+    MarketplaceVersions)
+from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
@@ -20,7 +22,7 @@ ALLOWED_IGNORE_ERRORS = [
     'IN109', 'IN110', 'IN122', 'IN124', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145', 'IN153', 'IN154',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
-    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107',
+    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107', 'PB118', 'PB119',
     'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM110', 'RM112', 'RM113',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
@@ -201,7 +203,7 @@ ERROR_CODE = {
     "parameter_missing_from_yml": {'code': "IN121", 'ui_applicable': True, 'related_field': 'configuration'},
     "parameter_missing_for_feed": {'code': "IN122", 'ui_applicable': True, 'related_field': 'configuration'},
     "invalid_version_integration_name": {'code': "IN123", 'ui_applicable': True, 'related_field': 'display'},
-    "found_hidden_param": {'code': "IN124", 'ui_applicable': False, 'related_field': '<parameter-name>.hidden'},
+    "param_not_allowed_to_hide": {'code': "IN124", 'ui_applicable': False, 'related_field': '<parameter-name>.hidden'},
     "no_default_value_in_parameter": {'code': "IN125", 'ui_applicable': False,
                                       'related_field': '<parameter-name>.default'},
     "parameter_missing_from_yml_not_community_contributor": {'code': "IN126", 'ui_applicable': False,
@@ -236,10 +238,13 @@ ERROR_CODE = {
     'empty_outputs_common_paths': {'code': 'IN149', 'ui_applicable': False, 'related_field': 'contextOutput'},
     'invalid_siem_integration_name': {'code': 'IN150', 'ui_applicable': True, 'related_field': 'display'},
     "empty_command_arguments": {'code': 'IN151', 'ui_applicable': False, 'related_field': 'arguments'},
-    'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True, 'related_field': 'defaultvalue'},
-    'not_supported_integration_parameter_url_defaultvalue': {'code': 'IN153', 'ui_applicable': False, 'related_field': 'defaultvalue'},
+    'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True,
+                                                'related_field': 'defaultvalue'},
+    'not_supported_integration_parameter_url_defaultvalue': {'code': 'IN153', 'ui_applicable': False,
+                                                             'related_field': 'defaultvalue'},
     'missing_reliability_parameter': {'code': 'IN154', 'ui_applicable': False, 'related_field': 'configuration'},
     'integration_is_deprecated_and_used': {'code': 'IN155', 'ui_applicable': True, 'related_field': 'deprecated'},
+    'invalid_hidden_attribute_for_param': {'code': 'IN156', 'ui_applicable': False, 'related_field': 'hidden'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -528,8 +533,10 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def file_type_not_supported():
-        return "The file type is not supported in the validate command.\n" \
+    def file_type_not_supported(file_type: Optional[FileType], file_path: Union[str, Path]):
+        joined_path = '/'.join(Path(file_path).parts[-3:])
+        file_type_str = f'File type {file_type}' if file_type else f'File {joined_path}'
+        return f"{file_type_str} is not supported in the validate command.\n" \
                "The validate command supports: Integrations, Scripts, Playbooks, " \
                "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields, Object types," \
                " Object modules, Images, Release notes, Layouts, Jobs, Wizards, Descriptions And Modeling Rules."
@@ -920,7 +927,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def integration_is_deprecated_and_used(integration_name: str, commands_dict: dict):
-        erorr_str = f"{integration_name} integration contains deprecated commands that are being used by other entites:\n"
+        erorr_str = f"{integration_name} integration contains deprecated commands that are being used by other entities:\n"
         for command_name, command_usage_list in commands_dict.items():
             current_command_usage = '\n'.join(command_usage_list)
             erorr_str += f"{command_name} is being used in the following locations:\n{current_command_usage}\n"
@@ -928,8 +935,24 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def found_hidden_param(parameter_name):
-        return f"Parameter: \"{parameter_name}\" can't be hidden. Please remove this field."
+    def param_not_allowed_to_hide(parameter_name: str):
+        """
+        Note: This error is used when the parameter has `hidden:true` or mentions all marketplaces (equivalent to true)
+        See invalid_hidden_attribute_for_param for invalid value types.
+
+        """
+        return f"Parameter: \"{parameter_name}\" can't be hidden in all marketplaces. " \
+               f"Please either remove the `hidden` attribute, " \
+               f"or replace its value with a list of marketplace names, where you wish it to be hidden."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_hidden_attribute_for_param(param_name: str, invalid_value: str):
+        marketplace_values = ', '.join(MarketplaceVersions)
+        return f'The `hidden` attribute value ({invalid_value}) for the {param_name} parameter ' \
+               f'must be either a boolean, or a list of marketplace values ' \
+               f'(Possible marketplace values: {marketplace_values}). ' \
+               f'Note that this param is not required, and may be omitted.'
 
     @staticmethod
     @error_code_decorator
@@ -1698,12 +1721,14 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_metadata_non_approved_usecases(non_approved_usecases: set) -> str:
-        return f'The pack metadata contains non approved usecases: {", ".join(non_approved_usecases)}'
+        return f'The pack metadata contains non approved usecases: {", ".join(non_approved_usecases)}' \
+               f'The list of approved use cases can be found in https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories'
 
     @staticmethod
     @error_code_decorator
     def pack_metadata_non_approved_tags(non_approved_tags: set) -> str:
-        return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}'
+        return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}' \
+               f'The list of approved tags can be found in https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories'
 
     @staticmethod
     @error_code_decorator
@@ -2293,19 +2318,19 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def input_key_not_in_tasks(playbook_name: str, inputs: str):
+    def input_key_not_in_tasks(playbook_name: str, inputs: List[str]):
         return f"Playbook {playbook_name} contains inputs that are not used in any of its tasks: {', '.join(inputs)}"
 
     @staticmethod
     @error_code_decorator
-    def input_used_not_in_input_section(playbook_name: str, inputs: str):
+    def input_used_not_in_input_section(playbook_name: str, inputs: List[str]):
         return f"Playbook {playbook_name} uses inputs that do not appear in the inputs section: {', '.join(inputs)}"
 
     @staticmethod
     @error_code_decorator
     def playbook_is_deprecated_and_used(playbook_name: str, files_list: list):
         files_list_str = '\n'.join(files_list)
-        return f"{playbook_name} playbook is deprecated and being used by the following entites:\n{files_list_str}"
+        return f"{playbook_name} playbook is deprecated and being used by the following entities:\n{files_list_str}"
 
     @staticmethod
     @error_code_decorator
@@ -2343,7 +2368,7 @@ class Errors:
     @error_code_decorator
     def script_is_deprecated_and_used(script_name: str, files_list: list):
         files_list_str = '\n'.join(files_list)
-        return f"{script_name} script is deprecated and being used by the following entites:\n{files_list_str}"
+        return f"{script_name} script is deprecated and being used by the following entities:\n{files_list_str}"
 
     @staticmethod
     @error_code_decorator

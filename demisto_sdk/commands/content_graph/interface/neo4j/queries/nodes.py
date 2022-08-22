@@ -1,8 +1,9 @@
 import logging
 from neo4j import Transaction
 from typing import Any, Dict, List
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes
+from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query, versioned, intersects
 
 
@@ -54,4 +55,26 @@ def create_nodes_by_type(
     result = run_query(tx, query, data=data).single()
     nodes_count: int = result['nodes_created']
     logger.info(f'Created {nodes_count} nodes of type {content_type}.')
-    
+
+
+def get_packs_content_items(
+    tx: Transaction,
+    marketplace: MarketplaceVersions,
+):
+    query = f"""
+    MATCH (p:{ContentTypes.PACK})<-[:{Rel.IN_PACK}]-(c:{ContentTypes.BASE_CONTENT})
+    WHERE '{marketplace}' IN p.marketplaces
+    RETURN p AS pack, collect(c) AS content_items
+    """
+    return run_query(tx, query).data()
+
+
+def get_all_integrations_with_commands(
+    tx: Transaction
+):
+    query = f"""
+    MATCH (i:{ContentTypes.INTEGRATION})-[r:{Rel.HAS_COMMAND}]->(c:{ContentTypes.COMMAND})
+    WITH i, {{name: c.name, description: r.description, deprecated: r.deprecated}} AS command_data
+    RETURN i.object_id AS integration_id, collect(command_data) AS commands
+    """
+    return run_query(tx, query).data()

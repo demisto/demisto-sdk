@@ -150,3 +150,4 @@ class PackParser(BaseContentParser, PackMetadataParser):
             content_item.add_to_pack(self.node_id)
             self.content_items.append(content_item)
             self.relationships.update(content_item.relationships)
+            

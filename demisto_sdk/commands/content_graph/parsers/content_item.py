@@ -40,6 +40,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMeta):
     Attributes:
         path (Path):
     """
+
     def __init__(self, path: Path) -> None:
         super().__init__(path)
         self.relationships: Relationships = Relationships()
@@ -48,7 +49,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMeta):
     def from_path(path: Path) -> Optional['ContentItemParser']:
         if not ContentItemParser.is_content_item(path):
             return None
-        
+
         content_type: ContentTypes = ContentTypes.by_folder(path.parts[-2])
         if parser := ContentItemParser.content_type_to_parser.get(content_type):
             try:
@@ -165,7 +166,7 @@ class YAMLContentItemParser(ContentItemParser):
         return self.yml_data.get('marketplaces', [])
 
     def connect_to_tests(self) -> None:
-        tests_playbooks: List[str] =  self.yml_data.get('tests', [])
+        tests_playbooks: List[str] = self.yml_data.get('tests', [])
         for test_playbook_id in tests_playbooks:
             if 'no test' not in test_playbook_id.lower():
                 tpb_node_id = f'{ContentTypes.TEST_PLAYBOOK}:{test_playbook_id}'
@@ -218,7 +219,7 @@ class JSONContentItemParser(ContentItemParser):
     @property
     def marketplaces(self) -> List[str]:
         return self.json_data.get('marketplaces', [])
-    
+
     def get_json(self) -> Dict[str, Any]:
         if self.path.is_dir():
             json_files_in_dir = get_files_in_dir(self.path.as_posix(), ['json'], False)

@@ -7,9 +7,14 @@ from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import create_indexes
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import create_constraints
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import create_nodes, duplicates_exist
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (create_nodes,
+                                                                              duplicates_exist,
+                                                                              get_packs_content_items,
+                                                                              get_all_integrations_with_commands)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import create_relationships
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import create_pack_dependencies, get_first_level_dependencies, get_packs_dependencies
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (create_pack_dependencies,
+                                                                                     get_first_level_dependencies,
+                                                                                     get_packs_dependencies)
 
 
 class Neo4jContentGraphInterface(ContentGraphInterface):
@@ -84,6 +89,20 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             } for row in result
         }
 
+    def get_packs_content_items(self, marketplace: MarketplaceVersions):
+        with self.driver.session() as session:
+            tx: neo4j.Transaction = session.begin_transaction()
+            result = get_packs_content_items(tx, marketplace)
+            tx.close()
+        return result
+    
+    def get_all_integrations_with_commands(self):
+        with self.driver.session() as session:
+            tx: neo4j.Transaction = session.begin_transaction()
+            result = get_all_integrations_with_commands(tx)
+            tx.close()
+        return result
+    
     def run_single_query(self, query: str, parameters: Optional[Dict[str, Any]] = None) -> neo4j.Result:
         with self.driver.session() as session:
             tx: neo4j.Transaction = session.begin_transaction()
@@ -91,3 +110,5 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             tx.commit()
             tx.close()
         return result
+    
+    

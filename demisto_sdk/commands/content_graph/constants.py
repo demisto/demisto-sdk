@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any, Dict, Iterator, List, Set
 from demisto_sdk.commands.common.tools import get_content_path
 
-
 REPO_PATH = Path(get_content_path())
 
 NEO4J_ADMIN_DOCKER = ''
@@ -135,8 +134,8 @@ class Relationships(dict):
         if relationship not in self.keys():
             self.__setitem__(relationship, [])
         self.__getitem__(relationship).extend(data)
-    
-    def update(self, other: 'Relationships'):
+
+    def update(self, other: 'Relationships') -> None:
         for relationship, parsed_data in other.items():
             if relationship not in Rel or not isinstance(parsed_data, list):
                 raise TypeError
@@ -148,7 +147,7 @@ class Nodes(dict):
         super().__init__(self)
         for arg in args:
             if not isinstance(arg, dict):
-                raise ValueError(f'Excpected a dict: {arg}')
+                raise ValueError(f'Expected a dict: {arg}')
         self.add_batch(args)
 
     def add(self, **kwargs):
@@ -157,12 +156,12 @@ class Nodes(dict):
             self.__setitem__(content_type, [])
         self.__getitem__(content_type).append(kwargs)
 
-    def add_batch(self, data: List[Dict[str, Any]]):
+    def add_batch(self, data: Iterator[Dict[str, Any]]):
         for obj in data:
             self.add(**obj)
-    
+
     def update(self, other: 'Nodes'):
-        for content_type, parsed_data in other.items():
-            if content_type not in ContentTypes or not isinstance(parsed_data, list):
+        for content_type, data in other.items():
+            if content_type not in ContentTypes or not isinstance(data, list):
                 raise TypeError
-            self.add_batch(parsed_data)
+            self.add_batch(data)

@@ -412,9 +412,10 @@ class TestPlaybook:
                     self.build_context.logging_module.exception(f'Searching incident with id {inc_id} failed')
             if time.time() > timeout:
                 if IS_XSIAM:
-                    self.build_context.logging_module.error(f'Got timeout for searching incident with id {inc_id}')
+                    self.build_context.logging_module.error(f'Got timeout for searching incident with name '
+                                                            f'{incident_name}')
                 else:
-                    self.build_context.logging_module.error(f'Got timeout for searching incident name {incident_name}')
+                    self.build_context.logging_module.error(f'Got timeout for searching incident id {inc_id}')
 
                 self.build_context.logging_module.error(f'Incident search responses: {incident_search_responses}')
                 return None
@@ -514,9 +515,11 @@ class BuildContext:
         self.xsiam_servers_path = kwargs.get('xsiam_servers_path')
         self.conf, self.secret_conf = self._load_conf_files(kwargs['conf'], kwargs['secret'])
         if self.is_xsiam:
+            with open(kwargs.get('xsiam_servers_api_keys_path'), 'r') as json_file:  # type: ignore[arg-type]
+                xsiam_servers_api_keys = json.loads(json_file.read())
             self.xsiam_conf = self._load_xsiam_file(self.xsiam_servers_path)
             self.env_json = [self.xsiam_conf.get(self.xsiam_machine, {})]
-            self.api_key = self.env_json[0].get('api_key')
+            self.api_key = xsiam_servers_api_keys.get(self.xsiam_machine)
             self.auth_id = self.env_json[0].get('x-xdr-auth-id')
             self.xsiam_ui_path = self.env_json[0].get('ui_url')
         else:

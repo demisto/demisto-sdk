@@ -15,7 +15,7 @@ from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     AUTOMATION, ENTITY_TYPE_TO_DIR, INTEGRATION, INTEGRATIONS_DIR,
     MARKETPLACE_LIVE_DISCUSSIONS, MARKETPLACES, PACK_INITIAL_VERSION, SCRIPT,
-    SCRIPTS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL)
+    SCRIPTS_DIR, XSOAR_AUTHOR, XSOAR_SUPPORT, XSOAR_SUPPORT_URL, FileType)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, capital_case,
                                                find_type,
@@ -317,6 +317,36 @@ class ContributionConverter:
                     if file_name.startswith('playbook') and file_name.endswith('.yml'):
                         self.generate_readme_for_pack_content_item(file)
 
+    def rearranging_before_conversion(self) -> None:
+        """
+        Rearrange content items that were mapped incorrectly by the server zip
+          - indicatorfields rearranged to be under indicatorfield directory instead of incidentfields.
+        """
+        unpacked_contribution_dirs = get_child_directories(self.pack_dir_path)
+
+        for unpacked_contribution_dir in unpacked_contribution_dirs:
+
+            dir_name = os.path.basename(unpacked_contribution_dir)
+
+            # incidentfield directory may contain indicator-fields files
+            if dir_name == FileType.INCIDENT_FIELD.value:
+
+                dst_ioc_fields_dir = os.path.join(self.pack_dir_path, FileType.INDICATOR_FIELD.value)
+                src_path = os.path.join(self.pack_dir_path, dir_name)
+
+                for file in os.listdir(src_path):
+
+                    if file.startswith(FileType.INDICATOR_FIELD.value):
+                        # At first time, create another dir for all indicator-fields files and move them there
+                        if not os.path.exists(dst_ioc_fields_dir):
+                            os.makedirs(dst_ioc_fields_dir)
+                        file_path = os.path.join(self.pack_dir_path, dir_name, file)
+                        shutil.move(file_path, dst_ioc_fields_dir)  # type: ignore
+
+                # If there were only indicatorfiled files, the original folder will remain empty, so we will delete it
+                if len(os.listdir(src_path)) == 0:
+                    shutil.rmtree(src_path, ignore_errors=True)
+
     def convert_contribution_to_pack(self, files_to_source_mapping: Dict = None):
         """Create or updates a pack in the content repo from the contents of a contribution zipfile
 
@@ -342,6 +372,7 @@ class ContributionConverter:
             # unpack
             self.unpack_contribution_to_dst_pack_directory()
             # convert
+            self.rearranging_before_conversion()
             unpacked_contribution_dirs = get_child_directories(self.pack_dir_path)
             for unpacked_contribution_dir in unpacked_contribution_dirs:
                 self.convert_contribution_dir_to_pack_contents(unpacked_contribution_dir)

@@ -13,6 +13,7 @@ IGNORED_PACKS_IN_DEPENDENCY_CALC = ['NonSupported', 'Base', 'ApiModules']
 
 logger = logging.getLogger('demisto-sdk')
 
+
 def get_packs_dependencies(tx: Transaction, marketplace: MarketplaceVersions) -> Result:
     query = f"""
         MATCH shortestPath((p1:{ContentTypes.PACK})-[:{Rel.DEPENDS_ON}*]->(p2:{ContentTypes.PACK}))
@@ -56,6 +57,7 @@ def inherit_content_items_marketplaces_property_from_packs(tx: Transaction) -> N
     result = run_query(tx, query).single()
     updated_count: int = result['updated']
     logger.info(f'Updated marketplaces properties of {updated_count} content items.')
+
 
 def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
     """

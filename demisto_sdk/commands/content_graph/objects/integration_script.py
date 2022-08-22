@@ -5,3 +5,4 @@ class IntegrationScript(ContentItem):
     type: str
     docker_image: str
     description: str
+    code: str

@@ -10,7 +10,7 @@ class CorrelationRuleParser(YAMLContentItemParser, content_type=ContentTypes.COR
         print(f'Parsing {self.content_type} {self.object_id}')
 
     @property
-    def name(self) -> str:
+    def object_id(self) -> str:
         return self.yml_data['global_rule_id']
 
     @property

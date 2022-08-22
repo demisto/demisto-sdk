@@ -8,6 +8,7 @@ class ListParser(JSONContentItemParser, content_type=ContentTypes.LIST):
     def __init__(self, path: Path) -> None:
         super().__init__(path)
         print(f'Parsing {self.content_type} {self.object_id}')
+        self.type = self.json_data.get('type')
 
     @property
     def content_type(self) -> ContentTypes:

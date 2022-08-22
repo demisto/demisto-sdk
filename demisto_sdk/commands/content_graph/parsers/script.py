@@ -17,6 +17,7 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentTypes.SCRIPT):
         self.docker_image: str = self.yml_data.get('dockerimage', '')
         self.type: str = self.yml_data.get('subtype') or self.yml_data.get('type')
         self.tags: List[str] = self.yml_data.get('tags', [])
+        self.code = self.get_code()
         if self.type == 'python':
             self.type += '2'
 
@@ -48,4 +49,4 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentTypes.SCRIPT):
         return self.unifier.get_script_or_integration_package_data()[1]
 
     def get_command_executions(self) -> List[str]:
-        return set(EXECUTE_CMD_PATTERN.findall(self.get_code()))
+        return set(EXECUTE_CMD_PATTERN.findall(self.code))

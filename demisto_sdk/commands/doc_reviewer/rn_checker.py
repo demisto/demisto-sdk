@@ -52,6 +52,8 @@ class ReleaseNotesChecker:
     RN_PREFIX_TEMPLATES = {
         'Added support for',
         'Added the',
+        'Added a ',
+        'Added an ',
         'Fixed an issue',
         'Improved implementation',
         'Updated the Docker image to',

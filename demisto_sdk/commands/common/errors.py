@@ -6,9 +6,10 @@ import decorator
 from requests import Response
 
 from demisto_sdk.commands.common.constants import (
-    BETA_INTEGRATION_DISCLAIMER, CONF_PATH, FILETYPE_TO_DEFAULT_FROMVERSION,
+    BETA_INTEGRATION_DISCLAIMER, FILETYPE_TO_DEFAULT_FROMVERSION,
     INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME, FileType,
     MarketplaceVersions)
+from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
@@ -926,7 +927,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def integration_is_deprecated_and_used(integration_name: str, commands_dict: dict):
-        erorr_str = f"{integration_name} integration contains deprecated commands that are being used by other entites:\n"
+        erorr_str = f"{integration_name} integration contains deprecated commands that are being used by other entities:\n"
         for command_name, command_usage_list in commands_dict.items():
             current_command_usage = '\n'.join(command_usage_list)
             erorr_str += f"{command_name} is being used in the following locations:\n{current_command_usage}\n"
@@ -2329,7 +2330,7 @@ class Errors:
     @error_code_decorator
     def playbook_is_deprecated_and_used(playbook_name: str, files_list: list):
         files_list_str = '\n'.join(files_list)
-        return f"{playbook_name} playbook is deprecated and being used by the following entites:\n{files_list_str}"
+        return f"{playbook_name} playbook is deprecated and being used by the following entities:\n{files_list_str}"
 
     @staticmethod
     @error_code_decorator
@@ -2367,7 +2368,7 @@ class Errors:
     @error_code_decorator
     def script_is_deprecated_and_used(script_name: str, files_list: list):
         files_list_str = '\n'.join(files_list)
-        return f"{script_name} script is deprecated and being used by the following entites:\n{files_list_str}"
+        return f"{script_name} script is deprecated and being used by the following entities:\n{files_list_str}"
 
     @staticmethod
     @error_code_decorator

@@ -13,9 +13,12 @@ import git
 from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (
-    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, ENV_DEMISTO_SDK_MARKETPLACE,
-    MODELING_RULES_DIR, PARSING_RULES_DIR, FileType, MarketplaceVersions)
+from demisto_sdk.commands.common.constants import (ENV_DEMISTO_SDK_MARKETPLACE,
+                                                   MODELING_RULES_DIR,
+                                                   PARSING_RULES_DIR, FileType,
+                                                   MarketplaceVersions)
+from demisto_sdk.commands.common.content_constant_paths import \
+    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
@@ -1999,6 +2002,7 @@ def openapi_codegen(**kwargs):
     '--xsiam-machine',
     help='XSIAM machine to use, if it is XSIAM build.')
 @click.option('--xsiam-servers-path', help='Path to secret xsiam server metadata file.')
+@click.option('--xsiam-servers-api-keys-path', help='Path to file with XSIAM Servers api keys.')
 def test_content(**kwargs):
     """Configure instances for the integration needed to run tests_to_run tests.
     Run test module on each integration.

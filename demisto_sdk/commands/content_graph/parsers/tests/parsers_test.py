@@ -168,7 +168,7 @@ class TestParsers:
 
     def test_generic_definition_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.parsers.generic_definition import GenericDefinitionParser
-        generic_definition = pack.create_generic_definition('TestGenericDefinition', load_yaml('generic_definition.json'))
+        generic_definition = pack.create_generic_definition('TestGenericDefinition', load_json('generic_definition.json'))
         generic_definition_path = Path(generic_definition.path)
         parser = GenericDefinitionParser(generic_definition_path)
         ContentItemParserVerifier.run(
@@ -183,7 +183,7 @@ class TestParsers:
 
     def test_generic_module_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.parsers.generic_module import GenericModuleParser
-        generic_module = pack.create_generic_module('TestGenericModule', load_yaml('generic_module.json'))
+        generic_module = pack.create_generic_module('TestGenericModule', load_json('generic_module.json'))
         generic_module_path = Path(generic_module.path)
         parser = GenericModuleParser(generic_module_path)
         ContentItemParserVerifier.run(
@@ -199,7 +199,7 @@ class TestParsers:
 
     def test_generic_type_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.parsers.generic_type import GenericTypeParser
-        generic_type = pack.create_generic_module('TestGenericType', load_yaml('generic_type.json'))
+        generic_type = pack.create_generic_module('TestGenericType', load_json('generic_type.json'))
         generic_type_path = Path(generic_type.path)
         parser = GenericTypeParser(generic_type_path)
         ContentItemParserVerifier.run(
@@ -216,7 +216,7 @@ class TestParsers:
 
     def test_incident_field_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.parsers.incident_field import IncidentFieldParser
-        incident_field = pack.create_incident_field('TestIncidentField', load_yaml('incident_field.json'))
+        incident_field = pack.create_incident_field('TestIncidentField', load_json('incident_field.json'))
         incident_field_path = Path(incident_field.path)
         parser = IncidentFieldParser(incident_field_path)
         ContentItemParserVerifier.run(
@@ -261,7 +261,7 @@ class TestParsers:
 
     def test_indicator_field_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.parsers.indicator_field import IndicatorFieldParser
-        indicator_field = pack.create_incident_field('TestIndicatorField', load_yaml('indicator_field.json'))
+        indicator_field = pack.create_incident_field('TestIndicatorField', load_json('indicator_field.json'))
         indicator_field_path = Path(indicator_field.path)
         parser = IndicatorFieldParser(indicator_field_path)
         ContentItemParserVerifier.run(
@@ -282,7 +282,7 @@ class TestParsers:
 
     def test_indicator_type_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.parsers.indicator_type import IndicatorTypeParser
-        indicator_type = pack.create_indicator_type('TestIndicatorType', load_yaml('indicator_type.json'))
+        indicator_type = pack.create_indicator_type('TestIndicatorType', load_json('indicator_type.json'))
         indicator_type_path = Path(indicator_type.path)
         parser = IndicatorTypeParser(indicator_type_path)
         ContentItemParserVerifier.run(
@@ -308,6 +308,21 @@ class TestParsers:
 
     def test_job_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.parsers.job import JobParser
+        job = pack.create_job(is_feed=False, name='TestJob')
+        job_path = Path(job.path)
+        parser = JobParser(job_path)
+        ContentItemParserVerifier.run(
+            parser,
+            expected_id='TestJob',
+            expected_name='TestJob',
+            expected_path=job_path,
+            expected_content_type=ContentTypes.JOB,
+            expected_fromversion='6.8.0',
+            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+            dependencies={
+                ContentTypes.PLAYBOOK: ['job-TestJob_playbook'],
+            },
+        )
 
     def test_layout_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser
@@ -375,15 +390,52 @@ class TestParsers:
 
     def test_modeling_rule_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.parsers.modeling_rule import ModelingRuleParser
+        modeling_rule = pack.create_modeling_rule('TestModelingRule', load_yaml('modeling_rule.yml'))
+        modeling_rule_path = Path(modeling_rule.path)
+        parser = ModelingRuleParser(modeling_rule_path)
+        ContentItemParserVerifier.run(
+            parser,
+            expected_id='duo_modeling_rule',
+            expected_name='Duo Modeling Rule',
+            expected_content_type=ContentTypes.MODELING_RULE,
+            expected_fromversion='6.8.0',
+            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+        )
 
     def test_parsing_rule_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.parsers.parsing_rule import ParsingRuleParser
+        parsing_rule = pack.create_parsing_rule('TestParsingRule', load_yaml('parsing_rule.yml'))
+        parsing_rule_path = Path(parsing_rule.path)
+        parser = ParsingRuleParser(parsing_rule_path)
+        ContentItemParserVerifier.run(
+            parser,
+            expected_id='_parsing_rule_id',
+            expected_name='My Rule',
+            expected_content_type=ContentTypes.PARSING_RULE,
+            expected_fromversion='6.8.0',
+            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+        )
 
     def test_playbook_parser(self, pack: Pack):
-        from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
+        from demisto_sdk.commands.content_graph.parsers.test_playbook import TestPlaybookParser
 
     def test_report_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.parsers.report import ReportParser
+        report = pack.create_report('TestReport', load_json('report.json'))
+        report_path = Path(report.path)
+        parser = ReportParser(report_path)
+        ContentItemParserVerifier.run(
+            parser,
+            expected_id='ProofpointTAPWeeklyReport',
+            expected_name='Proofpoint TAP Weekly Report',
+            expected_path=report_path,
+            expected_content_type=ContentTypes.REPORT,
+            expected_fromversion='5.0.0',
+            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+            dependencies={
+                ContentTypes.SCRIPT: ['ProofpointTAPMostAttackedUsers', 'ProofpointTapTopClickers'],
+            }
+        )
 
     def test_script_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.parsers.script import ScriptParser

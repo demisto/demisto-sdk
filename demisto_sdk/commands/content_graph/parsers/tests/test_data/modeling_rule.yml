@@ -1,3 +1,6 @@
-global_rule_id: correlation_rule_id
-rules: null
-name: correlation_rule_name
+name: Duo Modeling Rule
+id: duo_modeling_rule
+fromversion: 6.8.0
+tags: duo
+rules: ''
+schema: ''

@@ -540,15 +540,20 @@ class ContributionConverter:
 
         return pack_metadata
 
-    def execute_update_rn(self):
+    def execute_update_rn(self, api_module_path: None):
         """
         Bump the pack version in the pack metadata according to the update type
         and create a release-note file using the release-notes text.
 
         """
-        rn_mng = UpdateReleaseNotesManager(user_input=self.dir_name, update_type=self.update_type, )
-        rn_mng.manage_rn_update()
-        self.replace_RN_template_with_value(rn_mng.rn_path[0])
+        if api_module_path:
+            rn_mng = UpdateReleaseNotesManager(user_input=api_module_path, update_type=self.update_type, )
+            rn_mng.manage_rn_update()
+            self.replace_RN_template_with_value(rn_mng.rn_path[0])
+        else:
+            rn_mng = UpdateReleaseNotesManager(user_input=self.dir_name, update_type=self.update_type, )
+            rn_mng.manage_rn_update()
+            self.replace_RN_template_with_value(rn_mng.rn_path[0])
 
     def format_user_input(self) -> Dict[str, str]:
         """

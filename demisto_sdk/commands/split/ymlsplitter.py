@@ -381,6 +381,8 @@ class YmlSplitter:
                 if len(imported_line_arr) >= 3 and imported_line_arr[0] == 'from' and imported_line_arr[2] == 'import':
                     module_name = imported_line_arr[1]
                     module_path = os.path.join('./Packs', 'ApiModules', 'Scripts', module_name, module_name + '.py')
+                    print(f"changing API MODULE module_name ({module_name})")
+                    print(f"changing API MODULE module_path ({module_path})")
                     with open(module_path, 'w') as f:
                         f.write('from CommonServerPython import *  # noqa: F401\n')
                         f.write('import demistomock as demisto  # noqa: F401\n')

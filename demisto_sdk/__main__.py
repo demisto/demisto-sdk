@@ -1787,6 +1787,9 @@ def postman_codegen(
             yml_splitter = YmlSplitter(configuration=config.configuration, file_type=FileType.INTEGRATION.value,
                                        input=str(yml_path), output=str(output))
             yml_splitter.extract_to_package_format()
+            print_success(f'Package generated at {str(output.absolute())} successfully')
+        else:
+            print_success(f'Integration generated at {str(yml_path.absolute())} successfully')
 
 
 # ====================== generate-integration ====================== #

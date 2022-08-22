@@ -1,140 +1,222 @@
 {
-    "id": "Confluera Dashboard",
+    "id": "Malware Use Case Adoption Wizard",
     "version": -1,
-    "fromVersion": "6.0.0",
-    "fromDate": "0001-01-01T00:00:00Z",
-    "toDate": "0001-01-01T00:00:00Z",
-    "period": {
-        "by": "",
-        "byTo": "",
-        "byFrom": "days",
-        "toValue": null,
-        "fromValue": 7,
-        "field": ""
-    },
-    "fromDateLicense": "0001-01-01T00:00:00Z",
-    "name": "Confluera Dashboard",
-    "description": "Confluera Iqhub Dashboard",
-    "layout": [
+    "modified": "2022-04-10T11:55:54.250933+03:00",
+    "fromVersion": "6.9.0",
+    "name": "Malware Use Case Adoption Wizard",
+    "description": "Welcome to the Deployment Wizard!  These steps will guide you through configuring your content pack so you'll have a working use case when the wizard finishes. Make sure to follow the steps in order, you can always continue the wizard where you left off. Learn more about this pack’s deployment.",
+    "dependency_packs": [
+      {
+        "name": "Endpoint Detection & Response",
+        "min_required": 1,
+        "packs": [
+          {
+            "name": "CrowdStrikeFalcon",
+            "display_name": "CrowdStrike Falcon"
+          },
+          {
+            "name": "MicrosoftDefenderAdvancedThreatProtection",
+            "display_name": "Microsoft Defender for Endpoint"
+          },
+          {
+            "name": "CortexXDR",
+            "display_name": "Palo Alto Networks Cortex XDR - Investigation and Response"
+          }
+        ]
+      },
+      {
+        "name": "Sandbox",
+        "min_required": 0,
+        "packs": [
+          {
+            "name": "Palo_Alto_Networks_WildFire",
+            "display_name": "Palo Alto Networks WildFire"
+          },
+          {
+            "name": "CrowdStrikeFalconX",
+            "display_name": "CrowdStrike Falcon X"
+          }
+        ]
+      },
+      {
+        "name": "Messaging",
+        "min_required": 0,
+        "packs": [
+          {
+            "name": "EWSMailSender",
+            "display_name": "EWS Mail Sender"
+          },
+          {
+            "name": "Gmail",
+            "display_name": "Gmail"
+          },
+          {
+            "name": "MicrosoftGraphMail",
+            "display_name": "Microsoft Graph Mail"
+          }
+        ]
+      },
+      {
+        "name": "Case Management",
+        "min_required": 0,
+        "packs": [
+          {
+            "name": "Jira",
+            "display_name": "Atlassian Jira v2"
+          },
+          {
+            "name": "ServiceNow",
+            "display_name": "ServiceNow v2"
+          }
+        ]
+      },
+      {
+        "name": "Data Enrichment & Threat Intelligence",
+        "min_required": 0,
+        "packs": [
+          {
+            "name": "AutoFocus",
+            "display_name": "Palo Alto Networks AutoFocus"
+          },
+          {
+            "name": "VirusTotal",
+            "display_name": "VirusTotal"
+          },
+          {
+            "name": "FeedMitreAttackv2",
+            "display_name": "Mitre Attack v2"
+          }
+        ]
+      }
+    ],
+    "wizard": {
+      "fetching_integrations": [
         {
-            "id": "f67f9740-b28a-11eb-95ce-a72ccc0b5d68",
-            "forceRange": false,
-            "x": 0,
-            "y": 2,
-            "i": "f67f9740-b28a-11eb-95ce-a72ccc0b5d68",
-            "w": 2,
-            "h": 3,
-            "widget": {
-                "id": "detcount",
-                "version": 3,
-                "modified": "2021-05-11T18:54:25.406907061Z",
-                "sortValues": null,
-                "packID": "",
-                "itemVersion": "",
-                "fromServerVersion": "",
-                "toServerVersion": "",
-                "propagationLabels": [
-                    "all"
-                ],
-                "vcShouldIgnore": false,
-                "vcShouldKeepItemLegacyProdMachine": false,
-                "commitMessage": "Widget imported",
-                "shouldCommit": true,
-                "name": "Confluera Detections Count",
-                "prevName": "Confluera Detections Count",
-                "dataType": "scripts",
-                "widgetType": "number",
-                "query": "DetectionsCount",
-                "sort": null,
-                "isPredefined": false,
-                "description": "Logs detections count",
-                "dateRange": {
-                    "fromDate": "0001-01-01T00:00:00Z",
-                    "toDate": "0001-01-01T00:00:00Z",
-                    "period": {
-                        "by": "",
-                        "byTo": "",
-                        "byFrom": "days",
-                        "toValue": null,
-                        "fromValue": null,
-                        "field": ""
-                    },
-                    "fromDateLicense": "0001-01-01T00:00:00Z"
-                },
-                "params": {
-                    "colors": {
-                        "isEnabled": true,
-                        "items": {
-                            "#1DB846": {
-                                "value": 0
-                            },
-                            "#D13C3C": {
-                                "value": 500
-                            },
-                            "#EF9700": {
-                                "value": 100
-                            }
-                        },
-                        "type": "above"
-                    },
-                    "tableColumns": [
-
-                    ]
-                },
-                "size": 0,
-                "category": ""
-            }
+          "priority": 3,
+          "name": "Microsoft Defender Advanced Threat Protection",
+          "action": {
+            "existing": "Update your current instance to work with the new Malware Investigation and Response incident type: \n1. Enable fetching. \n2. Set the Incident type field to Malware Investigation and Response. \n3. Set the Mapper field to 'Microsoft Defender For Endpoint Mapper'. \n4. Check the 'Fetch alert evidence' option.",
+            "new": "Set up new 'Microsoft Defender Advanced Threat Protection' instance to start fetching Malware Investigation and Response incidents: \n1. Enable fetching. \n2. Set the Incident type field to Malware Investigation and Response. \n3. Set the Mapper field to 'Microsoft Defender For Endpoint Mapper'. \n4. Check the 'Fetch alert evidence' option."
+          },
+          "description": "Set up the 'Microsoft Defender for Endpoint' integration to work with your Malware Investigation and Response use case.",
+          "incident_type": "Malware Investigation and Response"
         },
         {
-            "id": "f6d77b40-b28a-11eb-95ce-a72ccc0b5d68",
-            "forceRange": false,
-            "x": 0,
-            "y": 5,
-            "i": "f6d77b40-b28a-11eb-95ce-a72ccc0b5d68",
-            "w": 12,
-            "h": 3,
-            "widget": {
-                "id": "detchart",
-                "version": 3,
-                "modified": "2021-05-11T18:55:28.183105807Z",
-                "sortValues": null,
-                "packID": "",
-                "itemVersion": "",
-                "fromServerVersion": "",
-                "toServerVersion": "",
-                "propagationLabels": [
-                    "all"
-                ],
-                "vcShouldIgnore": false,
-                "vcShouldKeepItemLegacyProdMachine": false,
-                "commitMessage": "Widget imported",
-                "shouldCommit": true,
-                "name": "Confluera Detections Data",
-                "prevName": "Confluera Detections Data",
-                "dataType": "scripts",
-                "widgetType": "column",
-                "query": "DetectionsData",
-                "sort": null,
-                "isPredefined": false,
-                "description": "Logs detections data ( detection vs risk-contribution )",
-                "dateRange": {
-                    "fromDate": "0001-01-01T00:00:00Z",
-                    "toDate": "0001-01-01T00:00:00Z",
-                    "period": {
-                        "by": "",
-                        "byTo": "",
-                        "byFrom": "",
-                        "toValue": null,
-                        "fromValue": null,
-                        "field": ""
-                    },
-                    "fromDateLicense": "0001-01-01T00:00:00Z"
-                },
-                "params": null,
-                "size": 0,
-                "category": ""
-            }
+          "priority": 2,
+          "name": "CrowdstrikeFalcon",
+          "action": {
+            "existing": "Update your current instance to work with the new Malware incident type: \n1. Enable fetching. \n2. Remove the default Classifier.  \n3. Set the Incident type field to Malware Investigation and Response. \n4. Set the Mapper field to 'CrowdStrike Falcon Mapper'.",
+            "new": "Set up new 'Crowdstrike Falcon' instance to start fetching Malware Investigation and Response incidents: \n1. Enable fetching.\n2. Remove the default Classifier. \n3. Set the Incident type field to Malware Investigation and Response. \n4. Set the Mapper field to 'CrowdStrike Falcon Mapper'."
+          },
+          "description": "Set up the 'Crowdstrike Falcon' integration to work with your Malware Investigation and Response use case.",
+          "incident_type": "Malware Investigation and Response"
+        },
+        {
+          "priority": 1,
+          "name": "Cortex XDR - IR",
+          "action": {
+            "existing": "Update your current instance to work with the new Malware Investigation and Response incident type: \n1. Enable fetching. \n2. Set the 'Cortex XDR Incident Handler - Classifier'.\n3. Set the Incident type field to Malware Investigation and Response. \n4. Set the Mapper field to 'XDR - Incoming Mapper'.",
+            "new": "Set up new 'Cortex XDR - IR' instance to work with the Malware Investigation and Response incident type: \n1. Turn on fetching. \n2. Choose the 'Cortex XDR Incident Handler - Classifier .\n3. Set the Incident type field to Malware Investigation and Response. \n4. Set the Mapper field to 'XDR - Incoming Mapper'."
+          },
+          "description": "Set up the 'Cortex XDR - IR' integration to work with your Malware Investigation and Response use case.",
+          "incident_type": "Malware Investigation and Response"
         }
-    ],
-    "isPredefined": true
-}
+      ],
+      "set_playbook": [
+        {
+          "name": "Malware Investigation & Response Incident Handler"
+        }
+      ],
+      "supporting_integrations": [
+        {
+          "name": "WildFire-v2",
+          "action": {
+            "existing": "Configure 'Wildfire' to enable file detonation to improve investigation.",
+            "new": "Configure 'Wildfire' to enable file detonation to improve investigation."
+          },
+          "description": "Configure Wildfire to enable file detonation to improve investigation."
+        },
+        {
+          "name": "CrowdStrike Falcon X",
+          "action": {
+            "existing": "Configure 'CrowdStrike Falcon X' to enable file detonation to improve investigation.",
+            "new": "Configure 'CrowdStrike Falcon X' to enable file detonation to improve investigation."
+          },
+          "description": "Configure 'CrowdStrike Falcon X' to enable file detonation to improve investigation."
+        },
+        {
+          "name": "EWS Mail Sender",
+          "action": {
+            "existing": "Configure 'EWS Mail Sender' to enable email notifications.",
+            "new": "Configure EWS Mail Sender to enable email notifications."
+          },
+          "description": "Configure EWS Mail Sender to enable email notifications."
+        },
+        {
+          "name": "Gmail",
+          "action": {
+            "existing": "Configure 'Gmail' to enable email notifications.",
+            "new": "Configure Gmail to enable email notifications."
+          },
+          "description": "Configure Gmail to enable email notifications."
+        },
+        {
+          "name": "MicrosoftGraphMail",
+          "action": {
+            "existing": "Configure 'Microsoft Graph Mail' to enable email notifications.",
+            "new": "Configure 'Microsoft Graph Mail' to enable email notifications."
+          },
+          "description": "Configure Microsoft Graph Mail to enable email notifications."
+        },
+        {
+          "name": "ServiceNow v2",
+          "action": {
+            "existing": "Configure 'ServiceNow v2' to open a ticket for a true positive incident.",
+            "new": "Configure 'ServiceNow v2' to open a ticket for a true positive incident."
+          },
+          "description": "Configure 'ServiceNow v2' to open a ticket for a true positive incident."
+        },
+        {
+        "name": "jira-v2",
+        "action": {
+          "existing": "Configure 'jira-v2' to open a ticket for a true positive incident.",
+          "new": "Configure 'jira-v2' to open a ticket for a true positive incident."
+          },
+        "description": "Configure 'ServiceNow v2' to open a ticket for a true positive incident."
+        },
+        {
+        "name": "AutoFocus V2",
+        "action": {
+          "existing": "Configure 'Palo Alto Networks AutoFocus v2' to enrich IOCs as part of the investigation.",
+          "new": "Configure 'Palo Alto Networks AutoFocus v2' to enrich IOCs as part of the investigation."
+          },
+        "description": "Configure 'Palo Alto Networks AutoFocus v2' to enrich IOCs as part of the investigation."
+        },
+        {
+        "name": "VirusTotal (API v3)",
+        "action": {
+          "existing": "Configure 'VirusTotal (API v3)' to enrich IOCs as part of the investigation.",
+          "new": "Configure 'VirusTotal (API v3)' to enrich IOCs as part of the investigation."
+          },
+        "description": "Configure 'VirusTotal (API v3)' to enrich IOCs as part of the investigation."
+        },
+        {
+        "name": "MITRE ATT&CK v2",
+        "action": {
+          "existing": "Configure 'MITRE ATT&CK v2' to enrich IOCs as part of the investigation.",
+          "new": "Configure 'MITRE ATT&CK v2' to enrich IOCs as part of the investigation."
+          },
+        "description": "Configure 'MITRE ATT&CK v2' to enrich IOCs as part of the investigation."
+        }
+      ],
+      "next": [
+        {
+          "name": "Enable Your Use Case",
+          "action": {
+            "existing": "Enable the fetching integrations to start ingesting data and run the playbook.",
+            "new": "Enable the fetching integrations to start ingesting data and run the playbook."
+          }
+        }
+      ]
+    }
+  }

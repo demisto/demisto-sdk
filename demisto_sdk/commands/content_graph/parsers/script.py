@@ -6,7 +6,7 @@ from demisto_sdk.commands.content_graph.constants import ContentTypes
 from demisto_sdk.commands.content_graph.parsers.integration_script import IntegrationScriptParser
 
 
-EXECUTE_CMD_PATTERN = re.compile(r"execute_?command\(['\"](\w+)['\"].*", re.IGNORECASE)
+EXECUTE_CMD_PATTERN = re.compile(r"execute_?command\(['\"]([a-zA-Z-_]+)['\"].*", re.IGNORECASE)
 
 
 class ScriptParser(IntegrationScriptParser, content_type=ContentTypes.SCRIPT):

@@ -1,3 +1,5 @@
+import pytest
+
 from pathlib import Path
 from typing import Dict, List, Optional
 from TestSuite.pack import Pack
@@ -6,7 +8,7 @@ from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, Relationships
 from demisto_sdk.commands.content_graph.parsers import dashboard
-from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
+from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser, IncorrectParser, NotAContentItem
 
 
 TEST_DATA_PATH = Path(git_path()) / 'demisto_sdk' / 'commands' / 'content_graph' / 'parsers' / 'tests' / 'test_data'
@@ -47,23 +49,43 @@ class ContentItemParserVerifier:
         assert target_node_ids == expected_target_node_ids
 
     @staticmethod
+    def verify_command_executions(
+        relationships: Relationships,
+        expected_commands: List[str],
+    ) -> None:
+        target_node_ids = set([
+            relationship.get('target')
+            for relationship in relationships.get(Rel.USES_COMMAND_OR_SCRIPT, [])
+        ])
+        expected_target_node_ids = set([command for command in expected_commands])
+        assert target_node_ids == expected_target_node_ids
+
+    @staticmethod
+    def verify_integration_commands(
+        relationships: Relationships,
+        expected_commands: List[str],
+    ) -> None:
+        target_node_ids = set([
+            relationship.get('target')
+            for relationship in relationships.get(Rel.HAS_COMMAND, [])
+        ])
+        expected_target_node_ids = set([command for command in expected_commands])
+        assert target_node_ids == expected_target_node_ids
+
+    @staticmethod
     def verify_expected_relationships(
         relationships: Relationships,
         dependencies: Dict[ContentTypes, List[str]] = {},
-        commands_or_scripts_executions: Dict[ContentTypes, List[str]] = {},
         tests: Dict[ContentTypes, List[str]] = {},
         imports: Dict[ContentTypes, List[str]] = {},
-        integration_commands: Dict[ContentTypes, List[str]] = {},
+        commands_or_scripts_executions: List[str] = [],
+        integration_commands: List[str] = [],
     ) -> None:
-        for args in (
-            (Rel.USES, dependencies),
-            (Rel.USES_COMMAND_OR_SCRIPT, commands_or_scripts_executions),
-            (Rel.TESTED_BY, tests),
-            (Rel.IMPORTS, imports),
-            (Rel.HAS_COMMAND, integration_commands),
-        ):
-            rel, expected_targets = args
-            ContentItemParserVerifier.verify_relationships_by_type(relationships, rel, expected_targets)
+            ContentItemParserVerifier.verify_relationships_by_type(relationships, Rel.USES, dependencies)
+            ContentItemParserVerifier.verify_relationships_by_type(relationships, Rel.TESTED_BY, tests)
+            ContentItemParserVerifier.verify_relationships_by_type(relationships, Rel.IMPORTS, imports)
+            ContentItemParserVerifier.verify_command_executions(relationships, commands_or_scripts_executions)
+            ContentItemParserVerifier.verify_integration_commands(relationships, integration_commands)
 
     @staticmethod
     def run(
@@ -305,6 +327,48 @@ class TestParsers:
 
     def test_integration_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.parsers.integration import IntegrationParser
+        integration = pack.create_integration()
+        integration.create_default_integration('TestIntegration')
+        integration.code.write('from MicrosoftApiModule import *')
+        integration.yml.update({'tests': ['test_playbook']})
+        integration_path = Path(integration.path)
+        parser = IntegrationParser(integration_path)
+        ContentItemParserVerifier.run(
+            parser,
+            expected_id='TestIntegration',
+            expected_name='TestIntegration',
+            expected_content_type=ContentTypes.INTEGRATION,
+            expected_fromversion='5.0.0',
+            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+            integration_commands=['test-command'],
+            imports={
+                ContentTypes.SCRIPT: ['MicrosoftApiModule']
+            },
+            tests={
+                ContentTypes.TEST_PLAYBOOK: ['test_playbook']
+            },
+        )
+
+    def test_unified_integration_parser(self, pack: Pack):
+        from demisto_sdk.commands.content_graph.parsers.integration import IntegrationParser
+        integration = pack.create_integration(yml=load_yaml('unified_integration.yml'))
+        integration_path = Path(integration.path)
+        parser = IntegrationParser(integration_path)
+        ContentItemParserVerifier.run(
+            parser,
+            expected_id='malwr',
+            expected_name='malwr',
+            expected_content_type=ContentTypes.INTEGRATION,
+            expected_fromversion='5.0.0',
+            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+            integration_commands=['malwr-submit', 'malwr-status', 'malwr-result', 'malwr-detonate'],
+        )
+        assert parser.category == 'Forensics & Malware Analysis'
+        assert parser.display_name == 'malwr'
+        assert parser.docker_image == 'demisto/bs4:1.0.0.7863'
+        assert not parser.is_fetch
+        assert not parser.is_feed
+        assert parser.type == 'python2'
 
     def test_job_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.parsers.job import JobParser
@@ -326,6 +390,37 @@ class TestParsers:
 
     def test_layout_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser
+        layout = pack.create_layout('TestLayout')
+        layout_path = Path(layout.path)
+        with pytest.raises(NotAContentItem):
+            LayoutParser(layout_path)
+
+    def test_layoutscontainer_parser(self, pack: Pack):
+        from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser
+        layout = pack.create_layoutcontainer('TestLayoutscontainer', load_json('layoutscontainer.json'))
+        layout_path = Path(layout.path)
+        parser = LayoutParser(layout_path)
+        ContentItemParserVerifier.run(
+            parser,
+            expected_id='Cortex XDR Device Control Violations',
+            expected_name='Cortex XDR Device Control Violations',
+            expected_path=layout_path,
+            expected_content_type=ContentTypes.LAYOUT,
+            expected_fromversion='6.0.0',
+            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+            dependencies={
+                ContentTypes.INCIDENT_FIELD: [
+                    'xdrdevicecontrolviolations',
+                    'type',
+                    'dbotsource',
+                    'sourceinstance',
+                    'severity',
+                    'playbookid',
+                    'sourcebrand',
+                    'owner',
+                ],
+            },
+        )
 
     def test_list_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.parsers.list import ListParser
@@ -417,7 +512,23 @@ class TestParsers:
         )
 
     def test_playbook_parser(self, pack: Pack):
-        from demisto_sdk.commands.content_graph.parsers.test_playbook import TestPlaybookParser
+        from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
+        playbook = pack.create_playbook()
+        playbook.create_default_playbook(name='sample')
+        playbook_path = Path(playbook.path)
+        parser = PlaybookParser(playbook_path)
+        ContentItemParserVerifier.run(
+            parser,
+            expected_id='sample',
+            expected_name='sample',
+            expected_content_type=ContentTypes.PLAYBOOK,
+            expected_fromversion='5.0.0',
+            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+            dependencies={
+                ContentTypes.SCRIPT: ['DeleteContext']
+            },
+        )
+        assert not parser.is_test
 
     def test_report_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.parsers.report import ReportParser
@@ -439,21 +550,124 @@ class TestParsers:
 
     def test_script_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
+        script = pack.create_script()
+        script.create_default_script()
+        script.code.write('demisto.executeCommand("dummy-command", dArgs)')
+        script_path = Path(script.path)
+        parser = ScriptParser(script_path)
+        ContentItemParserVerifier.run(
+            parser,
+            expected_id='sample_script',
+            expected_name='sample_script',
+            expected_content_type=ContentTypes.SCRIPT,
+            expected_fromversion='5.0.0',
+            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+            commands_or_scripts_executions=['dummy-command'],
+        )
+        assert parser.type == 'python3'
+        assert parser.docker_image == 'demisto/python3:3.8.3.8715'
+        assert parser.tags == ['transformer']
+        assert not parser.is_test
 
     def test_test_playbook_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.parsers.test_playbook import TestPlaybookParser
+        test_playbook = pack.create_test_playbook()
+        test_playbook.create_default_test_playbook(name='sample')
+        test_playbook_path = Path(test_playbook.path)
+        parser = TestPlaybookParser(test_playbook_path)
+        ContentItemParserVerifier.run(
+            parser,
+            expected_id='sample',
+            expected_name='sample',
+            expected_content_type=ContentTypes.TEST_PLAYBOOK,
+            expected_fromversion='5.0.0',
+            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+            dependencies={
+                ContentTypes.SCRIPT: ['DeleteContext']
+            },
+        )
+        assert parser.is_test
 
     def test_trigger_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.parsers.trigger import TriggerParser
+        trigger = pack.create_trigger('TestTrigger', load_json('trigger.json'))
+        trigger_path = Path(trigger.path)
+        parser = TriggerParser(trigger_path)
+        ContentItemParserVerifier.run(
+            parser,
+            expected_id='73545719a1bdeba6ba91f6a16044c021',
+            expected_name='NGFW Scanning Alerts',
+            expected_path=trigger_path,
+            expected_content_type=ContentTypes.TRIGGER,
+            expected_fromversion=DEFAULT_CONTENT_ITEM_FROM_VERSION,
+            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+            dependencies={
+                ContentTypes.PLAYBOOK: ['NGFW Scan'],
+            }
+        )
 
     def test_widget_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.parsers.widget import WidgetParser
+        widget = pack.create_widget('TestWidget', load_json('widget.json'))
+        widget_path = Path(widget.path)
+        parser = WidgetParser(widget_path)
+        ContentItemParserVerifier.run(
+            parser,
+            expected_id='Feed Integrations Errors',
+            expected_name='Feed Integrations Errors',
+            expected_path=widget_path,
+            expected_content_type=ContentTypes.WIDGET,
+            expected_fromversion='6.1.0',
+            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+            dependencies={
+                ContentTypes.SCRIPT: ['FeedIntegrationErrorWidget'],
+            }
+        )
 
     def test_wizard_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.parsers.wizard import WizardParser
+        wizard = pack.create_wizard('TestWizard')
+        wizard_path = Path(wizard.path)
+        parser = WizardParser(wizard_path)
+        ContentItemParserVerifier.run(
+            parser,
+            expected_id='TestWizard',
+            expected_name='TestWizard',
+            expected_path=wizard_path,
+            expected_content_type=ContentTypes.WIZARD,
+            expected_fromversion='6.8.0',
+            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+            # dependencies={
+            #     ContentTypes.SCRIPT: ['FeedIntegrationErrorWidget'],
+            # }
+        )
 
     def test_xsiam_dashboard_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.parsers.xsiam_dashboard import XSIAMDashboardParser
+        xsiam_dashboard = pack.create_xsiam_dashboard('TestXSIAMDashboard', load_json('xsiam_dashboard.json'))
+        xsiam_dashboard_path = Path(xsiam_dashboard.path)
+        parser = XSIAMDashboardParser(xsiam_dashboard_path)
+        ContentItemParserVerifier.run(
+            parser,
+            expected_id='ce27311ce69c41b1b4a84c7888b34852',
+            expected_name='New Import test ',
+            expected_path=xsiam_dashboard_path,
+            expected_content_type=ContentTypes.XSIAM_DASHBOARD,
+            expected_fromversion=DEFAULT_CONTENT_ITEM_FROM_VERSION,
+            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+        )
 
     def test_xsiam_report_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.parsers.xsiam_report import XSIAMReportParser
+        xsiam_report = pack.create_xsiam_report('TestXSIAMReport', load_json('xsiam_report.json'))
+        xsiam_report_path = Path(xsiam_report.path)
+        parser = XSIAMReportParser(xsiam_report_path)
+        ContentItemParserVerifier.run(
+            parser,
+            expected_id='sample',
+            expected_name='sample',
+            expected_path=xsiam_report_path,
+            expected_content_type=ContentTypes.XSIAM_REPORT,
+            expected_fromversion=DEFAULT_CONTENT_ITEM_FROM_VERSION,
+            expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+        )

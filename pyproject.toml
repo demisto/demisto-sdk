@@ -106,6 +106,7 @@ paramiko = "^2.11.0"
 [tool.poetry.dev-dependencies]
 mitmproxy = "^8.0.0"
 mock = "^4.0.3"
+ipykernel = "^6.15.1"
 pre-commit = "^2.18.1"
 pytest = "^7.1.1"
 pytest-cov = "^3.0.0"

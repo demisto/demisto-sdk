@@ -12,6 +12,14 @@ class ParsingRule(YAMLContentUnifiedObject):
     def __init__(self, path: Union[Path, str]):
         super().__init__(path, FileType.PARSING_RULE, PARSING_RULE)
 
+    def normalize_file_name(self) -> str:
+        normalize_file_name = self._path.name
+        if normalize_file_name.startswith(f'{PARSING_RULE}-'):
+            normalize_file_name = normalize_file_name.replace(f'{PARSING_RULE}-', f'{PARSING_RULE}-external-')
+        else:
+            normalize_file_name = f'{PARSING_RULE}-external-{normalize_file_name}'
+        return normalize_file_name
+
     def upload(self, client: demisto_client):
         """
         Upload the parsing_rule to demisto_client

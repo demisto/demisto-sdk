@@ -12,6 +12,14 @@ class XSIAMDashboard(JSONContentObject):
     def __init__(self, path: Union[Path, str]):
         super().__init__(path, XSIAM_DASHBOARD)
 
+    def normalize_file_name(self) -> str:
+        normalize_file_name = self._path.name
+        if normalize_file_name.startswith(f'{XSIAM_DASHBOARD}-'):
+            normalize_file_name = normalize_file_name.replace(f'{XSIAM_DASHBOARD}-', f'{XSIAM_DASHBOARD}-external-')
+        else:
+            normalize_file_name = f'{XSIAM_DASHBOARD}-external-{normalize_file_name}'
+        return normalize_file_name
+
     def upload(self, client: demisto_client):
         """
         Upload the xsiam_dashboard to demisto_client

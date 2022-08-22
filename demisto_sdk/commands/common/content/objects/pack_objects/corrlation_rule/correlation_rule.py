@@ -12,6 +12,14 @@ class CorrelationRule(YAMLContentObject):
     def __init__(self, path: Union[Path, str]):
         super().__init__(path, CORRELATION_RULE)
 
+    def normalize_file_name(self) -> str:
+        normalize_file_name = self._path.name
+        if normalize_file_name.startswith(f'{CORRELATION_RULE}-'):
+            normalize_file_name = normalize_file_name.replace(f'{CORRELATION_RULE}-', f'{CORRELATION_RULE}-external-')
+        else:
+            normalize_file_name = f'{CORRELATION_RULE}-external-{normalize_file_name}'
+        return normalize_file_name
+
     def upload(self, client: demisto_client):
         """
         Upload the correlation_rule to demisto_client

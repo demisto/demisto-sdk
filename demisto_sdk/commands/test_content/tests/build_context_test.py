@@ -144,7 +144,6 @@ def generate_xsiam_servers_data():
         "qa2-test-111111": {
             "ui_url": "https://xsiam1.paloaltonetworks.com/",
             "instance_name": "qa2-test-111111",
-            "api_key": "1234567890",
             "x-xdr-auth-id": 1,
             "base_url": "https://api1.paloaltonetworks.com/",
             "xsiam_version": "3.2.0",
@@ -153,7 +152,6 @@ def generate_xsiam_servers_data():
         "qa2-test-222222": {
             "ui_url": "https://xsoar-content-2.xdr-qa2-uat.us.paloaltonetworks.com/",
             "instance_name": "qa2-test-222222",
-            "api_key": "1234567890",
             "x-xdr-auth-id": 1,
             "base_url": "https://api-xsoar-content-2.xdr-qa2-uat.us.paloaltonetworks.com",
             "xsiam_version": "3.2.0",
@@ -232,6 +230,9 @@ def create_xsiam_build(mocker, tmp_file):
     xsiam_servers_path = tmp_file / 'xsiam_servers_path.json'
     xsiam_servers_path.write_text(json.dumps(generate_xsiam_servers_data()))
 
+    xsiam_api_keys_path = tmp_file / 'xsiam_api_keys_path.json'
+    xsiam_api_keys_path.write_text(json.dumps({"qa2-test-111111": "api_key", "qa2-test-222222": "api_key"}))
+
     env_results_path = tmp_file / 'env_results_path'
     env_results_path.write_text(json.dumps(generate_env_results_content()))
     mocker.patch('demisto_sdk.commands.test_content.TestContentClasses.ENV_RESULTS_PATH', str(env_results_path))
@@ -259,7 +260,8 @@ def create_xsiam_build(mocker, tmp_file):
         'mem_check': False,
         'server_type': 'XSIAM',
         'xsiam_servers_path': xsiam_servers_path,
-        'xsiam_machine': 'qa2-test-111111'
+        'xsiam_machine': 'qa2-test-111111',
+        'xsiam_servers_api_keys_path': xsiam_api_keys_path
     }
     return BuildContext(kwargs, logging_manager)
 

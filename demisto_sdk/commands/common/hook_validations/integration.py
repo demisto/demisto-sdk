@@ -32,7 +32,8 @@ from demisto_sdk.commands.common.tools import (
     extract_deprecated_command_names_from_yml,
     extract_none_deprecated_command_names_from_yml, get_core_pack_list,
     get_file_version_suffix_if_exists, get_files_in_dir, get_item_marketplaces,
-    get_pack_name, is_iron_bank_pack, print_error, server_version_compare)
+    get_pack_name, is_iron_bank_pack, print_error, server_version_compare,
+    string_to_bool)
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -1121,24 +1122,56 @@ class IntegrationValidator(ContentEntityValidator):
 
         return True
 
-    @error_codes('IN124')
+    @error_codes('IN124,IN156')
     def is_valid_hidden_params(self) -> bool:
         """
         Verify there are no non-allowed hidden integration parameters.
+        This is a workaround as pykwalify schemas do not allow multiple types
+         (e.g. equivalent for Union[list[str] | bool]).
+
+        See update_hidden_parameters_value for the allowed values the hidden attribute.
+
         Returns:
             bool. True if there aren't non-allowed hidden parameters. False otherwise.
         """
-        ans = True
-        conf = self.current_file.get('configuration', [])
-        for int_parameter in conf:
-            is_param_hidden = int_parameter.get('hidden')
-            param_name = int_parameter.get('name')
-            if is_param_hidden and param_name not in self.ALLOWED_HIDDEN_PARAMS:
-                error_message, error_code = Errors.found_hidden_param(param_name)
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    ans = False
+        def is_str_bool(input_: str):
+            try:
+                string_to_bool(input_)
+                return True
+            except ValueError:
+                return False
 
-        return ans
+        valid = True
+
+        for param in self.current_file.get('configuration', ()):
+            name = param.get('name', '')
+            hidden = param.get('hidden')
+
+            invalid_type = not isinstance(hidden, (type(None), bool, list, str))
+            invalid_string = isinstance(hidden, str) and not is_str_bool(hidden)
+
+            if invalid_type or invalid_string:
+                message, code = Errors.invalid_hidden_attribute_for_param(name, hidden)
+                if self.handle_error(message, code, self.file_path):
+                    valid = False
+
+            is_true = (hidden is True) or (is_str_bool(hidden) and string_to_bool(hidden))
+            invalid_bool = is_true and name not in self.ALLOWED_HIDDEN_PARAMS
+            hidden_in_all_marketplaces = isinstance(hidden, list) and set(hidden) == set(MarketplaceVersions)
+
+            if invalid_bool or hidden_in_all_marketplaces:
+                error_message, error_code = Errors.param_not_allowed_to_hide(name)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    valid = False
+
+            elif isinstance(hidden, list) and (invalid := set(hidden).difference(MarketplaceVersions)):
+                # if the value is a list, all its values must be marketplace names
+                joined_marketplaces = ', '.join(map(str, invalid))
+                message, code = Errors.invalid_hidden_attribute_for_param(name, joined_marketplaces)
+                if self.handle_error(message, code, self.file_path):
+                    valid = False
+
+        return valid
 
     def is_valid_image(self) -> bool:
         """Verifies integration image/logo is valid.

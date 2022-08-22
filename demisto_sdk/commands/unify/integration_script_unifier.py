@@ -124,12 +124,13 @@ class IntegrationScriptUnifier(YAMLUnifier):
         return output_map
 
     def unify(self, file_name_suffix=None):
-        print("Merging package: {}".format(self.package_path))
+        print(f"Merging package: {self.package_path}")
         self._set_dest_path(file_name_suffix)
 
         script_obj = self.yml_data
 
-        if not self.is_script_package:
+        if not self.is_script_package:  # integration
+            self.update_hidden_parameters_value()  # changes self.yml_data
             script_obj = self.yml_data['script']
         script_type = TYPE_TO_EXTENSION[script_obj['type']]
 
@@ -158,6 +159,22 @@ class IntegrationScriptUnifier(YAMLUnifier):
         print_color(f'Created unified yml: {list(output_map.keys())}', LOG_COLORS.GREEN)
 
         return unifier_outputs[0]
+
+    def update_hidden_parameters_value(self) -> None:
+        """
+        The `hidden` attribute of each param may be a bool (affecting both marketplaces),
+        or a list of marketplaces where this param is hidden.
+
+        This method replaces a list with a boolean, according to the self.marketplace value.
+        Boolean values are left untouched.
+        """
+        if not self.marketplace:
+            return
+
+        for i, param in enumerate(self.yml_data.get('configuration', ())):
+            if isinstance(hidden := (param.get('hidden')), list):
+                # converts list to bool
+                self.yml_data['configuration'][i]['hidden'] = self.marketplace in hidden
 
     def add_custom_section(self, unified_yml: Dict) -> Dict:
         """

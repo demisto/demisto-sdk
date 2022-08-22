@@ -6,6 +6,7 @@ import subprocess
 import tempfile
 from io import open
 from pathlib import Path
+from typing import Optional
 
 from ruamel.yaml.scalarstring import (PlainScalarString,
                                       SingleQuotedScalarString)
@@ -74,6 +75,7 @@ class YmlSplitter:
         self.autocreate_dir = not no_auto_create_dir
         with open(self.input, 'rb') as yml_file:
             self.yml_data = yaml.load(yml_file)
+        self.api_module_path: Optional[str] = None
 
     def get_output_path(self):
         """Get processed output path
@@ -383,6 +385,7 @@ class YmlSplitter:
                     module_path = os.path.join('./Packs', 'ApiModules', 'Scripts', module_name, module_name + '.py')
                     print(f"changing API MODULE module_name ({module_name})")
                     print(f"changing API MODULE module_path ({module_path})")
+                    self.api_module_path = module_path
                     with open(module_path, 'w') as f:
                         f.write('from CommonServerPython import *  # noqa: F401\n')
                         f.write('import demistomock as demisto  # noqa: F401\n')

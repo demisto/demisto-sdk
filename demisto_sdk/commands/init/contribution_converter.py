@@ -7,7 +7,7 @@ import zipfile
 from collections import defaultdict
 from datetime import datetime
 from string import punctuation
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 import click
 
@@ -113,6 +113,7 @@ class ContributionConverter:
         if not os.path.isdir(self.pack_dir_path):
             os.makedirs(self.pack_dir_path)
         self.readme_files: List[str] = []
+        self.api_module_path: Optional[str] = None
 
     @staticmethod
     def format_pack_dir_name(name: str) -> str:
@@ -450,6 +451,7 @@ class ContributionConverter:
                         extractor = YmlSplitter(input=content_item_file_path, file_type=file_type,
                                                 output=content_item_dir, no_pipenv=self.no_pipenv)
                     extractor.extract_to_package_format()
+                    self.api_module_path = extractor.api_module_path
                 except Exception as e:
                     err_msg = f'Error occurred while trying to split the unified YAML "{content_item_file_path}" ' \
                               f'into its component parts.\nError: "{e}"'

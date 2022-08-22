@@ -376,6 +376,15 @@ class YmlSplitter:
                 code = match.group(1)
                 lines = code.split('\n')
                 imported_line = lines[0][2:]  # the first two chars are not part of the code
+                imported_line_arr = imported_line.split(' ')
+                updated_lines = lines[4: len(lines) - 3]
+                if len(imported_line_arr) >= 3 and imported_line_arr[0] == 'from' and imported_line_arr[2] == 'import':
+                    module_name = imported_line_arr[1]
+                    module_path = os.path.join('./Packs', 'ApiModules', 'Scripts', module_name, module_name + '.py')
+                    with open(module_path, 'w') as f:
+                        f.write('from CommonServerPython import *  # noqa: F401\n')
+                        f.write('import demistomock as demisto  # noqa: F401\n')
+                        f.write('\n'.join(updated_lines))
                 self.print_logs(f'Replacing code block with `{imported_line}`', LOG_COLORS.NATIVE)
                 script = script.replace(match.group(), imported_line)
         return script

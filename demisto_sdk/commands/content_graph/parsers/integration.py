@@ -64,6 +64,8 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentTypes.INTEG
         return self.unifier.get_script_or_integration_package_data()[1]
 
     def connect_to_api_modules(self) -> List[str]:
+        if self.type == 'javascript':
+            return []
         code = self.get_code()
         api_modules = IntegrationScriptUnifier.check_api_module_imports(code).values()
         for api_module in api_modules:

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 from pydantic import Field
 
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -6,4 +6,4 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 class GenericModule(ContentItem):
     description: str
-    definition_id: Optional[str] = Field(alias='definitionId')
+    definition_ids: Optional[List[str]] = Field(alias='definitionIds')

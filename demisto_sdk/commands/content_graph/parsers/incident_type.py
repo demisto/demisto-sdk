@@ -13,9 +13,7 @@ class IncidentTypeParser(JSONContentItemParser, content_type=ContentTypes.INCIDE
         self.hours: int = self.json_data.get('hours')
         self.days: int = self.json_data.get('days')
         self.weeks: int = self.json_data.get('weeks')
-        self.closure_script: str = self.json_data.get('closureScript')
-        self.reputation_script_name: str = self.json_data.get('reputationScriptName')
-        self.enhancement_script_names: List[str] = self.json_data.get('enhancementScriptNames')
+        self.closure_script: str = self.json_data.get('closureScript') or None
 
         self.connect_to_dependencies()
 

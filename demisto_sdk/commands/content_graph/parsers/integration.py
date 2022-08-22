@@ -18,7 +18,6 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentTypes.INTEG
         self.docker_image = self.script_info.get('dockerimage', '')
         self.is_fetch = self.script_info.get('isfetch', False)
         self.is_feed = self.script_info.get('feed', False)
-        self.code = self.get_code()
         self.type = self.script_info.get('subtype') or self.script_info.get('type')
         if self.type == 'python':
             self.type += '2'
@@ -65,7 +64,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentTypes.INTEG
         return self.unifier.get_script_or_integration_package_data()[1]
 
     def connect_to_api_modules(self) -> List[str]:
-        api_modules = IntegrationScriptUnifier.check_api_module_imports(self.code).values()
+        api_modules = IntegrationScriptUnifier.check_api_module_imports(self.get_code()).values()
         for api_module in api_modules:
             api_module_node_id = f'{ContentTypes.SCRIPT}:{api_module}'
             self.add_relationship(Rel.IMPORTS, api_module_node_id)

@@ -10,5 +10,3 @@ class IncidentType(ContentItem):
     days: int
     weeks: int
     closure_script: Optional[str] = Field(alias='closureScript')
-    reputation_script_name: Optional[str] = Field(alias='reputationScriptName')
-    enhancement_script_names: Optional[List[str]] = Field(alias='enhancementScriptNames')

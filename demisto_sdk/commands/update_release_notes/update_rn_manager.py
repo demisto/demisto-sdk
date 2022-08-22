@@ -57,8 +57,9 @@ class UpdateReleaseNotesManager:
             get_pack_names_from_files(added_files)).union(get_pack_names_from_files(old_format_files))
         # Check whether the packs have some existing RNs already (created manually or by the command)
         self.check_existing_rn(added_files)
-
+        print("ENTER HANDLE API MODULE CHANGE")
         self.handle_api_module_change(modified_files, added_files)
+        print("LEFT HANDLE API MODULE CHANGE")
         self.create_release_notes(modified_files, added_files, old_format_files)
         if len(self.total_updated_packs) > 1:
             print_color('\nSuccessfully updated the following packs:\n' + '\n'.join(self.total_updated_packs),
@@ -155,8 +156,11 @@ class UpdateReleaseNotesManager:
         # We want to handle ApiModules changes when:
         # (1) The user gave a path to the api module which was changed.
         # (2) The user did not give a specific path at all (is_all = True) but some ApiModules were changed.
+        print(f"modified_files {modified_files}")
         api_module_was_given = self.given_pack and API_MODULES_PACK in self.given_pack
+        print(f"api_module_was_given {api_module_was_given}")
         api_module_changed_in_git = self.changed_packs_from_git and API_MODULES_PACK in self.changed_packs_from_git
+        print(f"api_module_changed_in_git {api_module_changed_in_git}")
 
         if api_module_was_given or (api_module_changed_in_git and self.is_all):
             updated_packs = update_api_modules_dependents_rn(self.pre_release, self.update_type, added_files,

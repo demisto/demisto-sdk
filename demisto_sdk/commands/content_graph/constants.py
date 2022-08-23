@@ -93,6 +93,8 @@ class ContentTypes(str, enum.Enum):
 
     @property
     def as_folder(self) -> str:
+        if self == ContentTypes.MAPPER:
+            return f'{ContentTypes.CLASSIFIER}s'
         return f'{self.value}s'
 
     @staticmethod

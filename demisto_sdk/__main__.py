@@ -2284,19 +2284,20 @@ def error_code(config, **kwargs):
 )
 @click.option('-nd', '--no-use-docker', is_flag=True, help="Use docker to run the content graph")
 @click.option('-ks', '--keep-service', is_flag=True, help="Keep the service running", default=False)
+@click.option('-us', '--use-existing', is_flag=True, help="Use existing service", default=False)
 @click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
               type=click.IntRange(0, 3, clamp=True), default=2, show_default=True)
 @click.option('-q', "--quiet", is_flag=True, help="Quiet output, only output results in the end")
 @click.option("-lp", "--log-path", help="Path to store all levels of logs",
               type=click.Path(resolve_path=True))
-def create_content_graph(no_use_docker, keep_service, **kwargs):
+def create_content_graph(no_use_docker, keep_service, use_existing, **kwargs):
     from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.content_graph.content_graph_commands import create_content_graph
     logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
                   quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
                   log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
 
-    create_content_graph(use_docker=not no_use_docker, keep_service=keep_service)
+    create_content_graph(use_docker=not no_use_docker, keep_service=keep_service, use_existing=use_existing)
 
 
 @main.command(

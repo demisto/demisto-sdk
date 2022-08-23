@@ -1,15 +1,16 @@
 import pytest
 
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
 from TestSuite.pack import Pack
-from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION
+from TestSuite.repo import Repo
+from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION, MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, Relationships
+from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
-from demisto_sdk.commands.content_graph.parsers import dashboard
-from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser, IncorrectParser, NotAContentItem
+from demisto_sdk.commands.content_graph.parsers.content_item import NotAContentItem
 
 
 TEST_DATA_PATH = Path(git_path()) / 'demisto_sdk' / 'commands' / 'content_graph' / 'tests' / 'test_data'
@@ -31,7 +32,16 @@ def load_yaml(file_path: str):
         return yaml.load(f)
 
 
-class ContentItemRelationshipsVerifier:
+def content_items_to_node_ids(content_items_dict: Dict[ContentTypes, List[str]]) -> Set[str]:
+    """ A helper method that converts a dict of content items to a set of their node ids. """
+    return set([
+        f'{content_type}:{content_item_id}'
+        for content_type, content_items in content_items_dict.items()
+        for content_item_id in content_items
+    ])
+
+
+class RelationshipsVerifier:
     @staticmethod
     def verify_relationships_by_type(
         relationships: Relationships,
@@ -42,12 +52,7 @@ class ContentItemRelationshipsVerifier:
             relationship.get('target')
             for relationship in relationships.get(relationship_type, [])
         ])
-        expected_target_node_ids = set([
-            f'{content_type}:{content_item}'
-            for content_type, targets in expected_targets.items()
-            for content_item in targets
-        ])
-        assert target_node_ids == expected_target_node_ids
+        assert target_node_ids == content_items_to_node_ids(expected_targets)
 
     @staticmethod
     def verify_command_executions(
@@ -70,7 +75,7 @@ class ContentItemRelationshipsVerifier:
             relationship.get('target')
             for relationship in relationships.get(Rel.HAS_COMMAND, [])
         ])
-        expected_target_node_ids = set([command for command in expected_commands])
+        expected_target_node_ids = set(expected_commands)
         assert target_node_ids == expected_target_node_ids
 
     @staticmethod
@@ -80,13 +85,13 @@ class ContentItemRelationshipsVerifier:
         commands_or_scripts_executions: Dict[ContentTypes, List[str]] = {},
         tests: Dict[ContentTypes, List[str]] = {},
         imports: Dict[ContentTypes, List[str]] = {},
-        integration_commands: Dict[ContentTypes, List[str]] = {},
+        integration_commands: List[str] = [],
         ) -> None:
-        ContentItemRelationshipsVerifier.verify_relationships_by_type(relationships, Rel.USES, dependencies)
-        ContentItemRelationshipsVerifier.verify_relationships_by_type(relationships, Rel.TESTED_BY, tests)
-        ContentItemRelationshipsVerifier.verify_relationships_by_type(relationships, Rel.IMPORTS, imports)
-        ContentItemRelationshipsVerifier.verify_command_executions(relationships, commands_or_scripts_executions)
-        ContentItemRelationshipsVerifier.verify_integration_commands(relationships, integration_commands)
+        RelationshipsVerifier.verify_relationships_by_type(relationships, Rel.USES, dependencies)
+        RelationshipsVerifier.verify_relationships_by_type(relationships, Rel.TESTED_BY, tests)
+        RelationshipsVerifier.verify_relationships_by_type(relationships, Rel.IMPORTS, imports)
+        RelationshipsVerifier.verify_command_executions(relationships, commands_or_scripts_executions)
+        RelationshipsVerifier.verify_integration_commands(relationships, integration_commands)
 
 
 class ContentItemModelVerifier:
@@ -111,7 +116,80 @@ class ContentItemModelVerifier:
         assert expected_fromversion is None or model.fromversion == expected_fromversion
         assert expected_toversion is None or model.toversion == expected_toversion
 
-class TestParsers:
+class PackModelVerifier:
+    @staticmethod
+    def run(
+        model: PackModel,
+        expected_id: Optional[str] = None,
+        expected_name: Optional[str] = None,
+        expected_path: Optional[Path] = None,
+        expected_description: Optional[str] = None,
+        expected_created: Optional[str] = None,
+        expected_updated: Optional[str] = None,
+        expected_support: Optional[str] = None,
+        expected_email: Optional[str] = None,
+        expected_url: Optional[str] = None,
+        expected_author: Optional[str] = None,
+        expected_certification: Optional[str] = None,
+        expected_hidden: Optional[bool] = None,
+        expected_server_min_version: Optional[str] = None,
+        expected_current_version: Optional[str] = None,
+        expected_tags: Optional[List[str]] = None,
+        expected_categories: Optional[List[str]] = None,
+        expected_use_cases: Optional[List[str]] = None,
+        expected_keywords: Optional[List[str]] = None,
+        expected_price: Optional[int] = None,
+        expected_premium: Optional[bool] = None,
+        expected_vendor_id: Optional[str] = None,
+        expected_vendor_name: Optional[str] = None,
+        expected_preview_only: Optional[bool] = None,
+        expected_marketplaces: Optional[List[MarketplaceVersions]] = None,
+        expected_content_items: Dict[ContentTypes, List[str]] = {},
+    ) -> None:
+        assert model.content_type == ContentTypes.PACK
+        assert expected_id is None or model.object_id == expected_id
+        assert expected_name is None or model.name == expected_name
+        assert expected_path is None or model.path == expected_path
+        assert expected_description is None or model.description == expected_description
+        assert expected_created is None or model.created == expected_created
+        assert expected_updated is None or model.updated == expected_updated
+        assert expected_support is None or model.support == expected_support
+        assert expected_email is None or model.email == expected_email
+        assert expected_url is None or model.url == expected_url
+        assert expected_author is None or model.author == expected_author
+        assert expected_certification is None or model.certification == expected_certification
+        assert expected_hidden is None or model.hidden == expected_hidden
+        assert expected_server_min_version is None or model.server_min_version == expected_server_min_version
+        assert expected_current_version is None or model.current_version == expected_current_version
+        assert expected_tags is None or model.tags == expected_tags
+        assert expected_categories is None or model.categories == expected_categories
+        assert expected_use_cases is None or model.use_cases == expected_use_cases
+        assert expected_keywords is None or model.keywords == expected_keywords
+        assert expected_price is None or model.price == expected_price
+        assert expected_premium is None or model.premium == expected_premium
+        assert expected_vendor_id is None or model.vendor_id == expected_vendor_id
+        assert expected_vendor_name is None or model.vendor_name == expected_vendor_name
+        assert expected_preview_only is None or model.preview_only == expected_preview_only
+        assert expected_marketplaces is None or model.marketplaces == expected_marketplaces
+
+        content_items_node_ids = set([content_item.node_id for content_item in model.content_items])
+        assert content_items_node_ids == content_items_to_node_ids(expected_content_items)
+
+
+class PackRelationshipsVerifier:
+    @staticmethod
+    def run(
+        relationships: Relationships,
+        expected_content_items: Dict[ContentTypes, List[str]] = {},
+    ) -> None:
+        content_items_node_ids = set([
+            relationship.get('source')
+            for relationship in relationships.get(Rel.IN_PACK, [])
+        ])
+        assert content_items_node_ids == content_items_to_node_ids(expected_content_items)
+
+
+class TestParsersAndModels:
     """
     Given:
         - A pack with a content item (for every content type).
@@ -129,7 +207,7 @@ class TestParsers:
         classifier = pack.create_classifier('TestClassifier', load_json('classifier.json'))
         classifier_path = Path(classifier.path)
         parser = ClassifierParser(classifier_path)
-        ContentItemRelationshipsVerifier.run(
+        RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
                 ContentTypes.INCIDENT_TYPE: ['Github', 'DevSecOps New Git PR'],
@@ -173,7 +251,7 @@ class TestParsers:
         dashboard = pack.create_dashboard('TestDashboard', load_json('dashboard.json'))
         dashboard_path = Path(dashboard.path)
         parser = DashboardParser(dashboard_path)
-        ContentItemRelationshipsVerifier.run(
+        RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
                 ContentTypes.SCRIPT: ['DetectionsCount', 'DetectionsData'],
@@ -233,7 +311,7 @@ class TestParsers:
         generic_type = pack.create_generic_module('TestGenericType', load_json('generic_type.json'))
         generic_type_path = Path(generic_type.path)
         parser = GenericTypeParser(generic_type_path)
-        ContentItemRelationshipsVerifier.run(
+        RelationshipsVerifier.run(
             parser.relationships,
             dependencies={ContentTypes.LAYOUT: ['Malware Report']},
         )
@@ -255,7 +333,7 @@ class TestParsers:
         incident_field = pack.create_incident_field('TestIncidentField', load_json('incident_field.json'))
         incident_field_path = Path(incident_field.path)
         parser = IncidentFieldParser(incident_field_path)
-        ContentItemRelationshipsVerifier.run(
+        RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
                 ContentTypes.INCIDENT_TYPE: ['Vulnerability', 'Malware'],
@@ -281,7 +359,7 @@ class TestParsers:
         incident_type = pack.create_incident_field('TestIncidentType', load_json('incident_type.json'))
         incident_type_path = Path(incident_type.path)
         parser = IncidentTypeParser(incident_type_path)
-        ContentItemRelationshipsVerifier.run(
+        RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
                 ContentTypes.LAYOUT: ['Traps'],
@@ -310,7 +388,7 @@ class TestParsers:
         indicator_field = pack.create_incident_field('TestIndicatorField', load_json('indicator_field.json'))
         indicator_field_path = Path(indicator_field.path)
         parser = IndicatorFieldParser(indicator_field_path)
-        ContentItemRelationshipsVerifier.run(
+        RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
                 ContentTypes.INDICATOR_TYPE: ['User Profile'],
@@ -336,7 +414,7 @@ class TestParsers:
         indicator_type = pack.create_indicator_type('TestIndicatorType', load_json('indicator_type.json'))
         indicator_type_path = Path(indicator_type.path)
         parser = IndicatorTypeParser(indicator_type_path)
-        ContentItemRelationshipsVerifier.run(
+        RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
                 ContentTypes.SCRIPT: ['URLReputation'],
@@ -367,7 +445,7 @@ class TestParsers:
         integration.yml.update({'tests': ['test_playbook']})
         integration_path = Path(integration.path)
         parser = IntegrationParser(integration_path)
-        ContentItemRelationshipsVerifier.run(
+        RelationshipsVerifier.run(
             parser.relationships,
             integration_commands=['test-command'],
             imports={
@@ -393,7 +471,7 @@ class TestParsers:
         integration = pack.create_integration(yml=load_yaml('unified_integration.yml'))
         integration_path = Path(integration.path)
         parser = IntegrationParser(integration_path)
-        ContentItemRelationshipsVerifier.run(
+        RelationshipsVerifier.run(
             parser.relationships,
             integration_commands=['malwr-submit', 'malwr-status', 'malwr-result', 'malwr-detonate'],
         )
@@ -419,7 +497,7 @@ class TestParsers:
         job = pack.create_job(is_feed=False, name='TestJob')
         job_path = Path(job.path)
         parser = JobParser(job_path)
-        ContentItemRelationshipsVerifier.run(
+        RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
                 ContentTypes.PLAYBOOK: ['job-TestJob_playbook'],
@@ -450,7 +528,7 @@ class TestParsers:
         layout = pack.create_layoutcontainer('TestLayoutscontainer', load_json('layoutscontainer.json'))
         layout_path = Path(layout.path)
         parser = LayoutParser(layout_path)
-        ContentItemRelationshipsVerifier.run(
+        RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
                 ContentTypes.INCIDENT_FIELD: [
@@ -502,7 +580,7 @@ class TestParsers:
         mapper = pack.create_mapper('TestIncomingMapper', load_json('incoming_mapper.json'))
         mapper_path = Path(mapper.path)
         parser = MapperParser(mapper_path)
-        ContentItemRelationshipsVerifier.run(
+        RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
                 ContentTypes.INCIDENT_TYPE: ['DevSecOps New Git PR'],
@@ -529,7 +607,7 @@ class TestParsers:
         mapper = pack.create_mapper('TestOutgoingMapper', load_json('outgoing_mapper.json'))
         mapper_path = Path(mapper.path)
         parser = MapperParser(mapper_path)
-        ContentItemRelationshipsVerifier.run(
+        RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
                 ContentTypes.INCIDENT_TYPE: ['Azure DevOps'],
@@ -591,7 +669,7 @@ class TestParsers:
         playbook.create_default_playbook(name='sample')
         playbook_path = Path(playbook.path)
         parser = PlaybookParser(playbook_path)
-        ContentItemRelationshipsVerifier.run(
+        RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
                 ContentTypes.SCRIPT: ['DeleteContext']
@@ -614,7 +692,7 @@ class TestParsers:
         report = pack.create_report('TestReport', load_json('report.json'))
         report_path = Path(report.path)
         parser = ReportParser(report_path)
-        ContentItemRelationshipsVerifier.run(
+        RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
                 ContentTypes.SCRIPT: ['ProofpointTAPMostAttackedUsers', 'ProofpointTapTopClickers'],
@@ -639,7 +717,7 @@ class TestParsers:
         script.code.write('demisto.executeCommand("dummy-command", dArgs)')
         script_path = Path(script.path)
         parser = ScriptParser(script_path)
-        ContentItemRelationshipsVerifier.run(
+        RelationshipsVerifier.run(
             parser.relationships,
             commands_or_scripts_executions=['dummy-command'],
         )
@@ -664,7 +742,7 @@ class TestParsers:
         test_playbook.create_default_test_playbook(name='sample')
         test_playbook_path = Path(test_playbook.path)
         parser = TestPlaybookParser(test_playbook_path)
-        ContentItemRelationshipsVerifier.run(
+        RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
                 ContentTypes.SCRIPT: ['DeleteContext']
@@ -687,7 +765,7 @@ class TestParsers:
         trigger = pack.create_trigger('TestTrigger', load_json('trigger.json'))
         trigger_path = Path(trigger.path)
         parser = TriggerParser(trigger_path)
-        ContentItemRelationshipsVerifier.run(
+        RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
                 ContentTypes.PLAYBOOK: ['NGFW Scan'],
@@ -710,7 +788,7 @@ class TestParsers:
         widget = pack.create_widget('TestWidget', load_json('widget.json'))
         widget_path = Path(widget.path)
         parser = WidgetParser(widget_path)
-        ContentItemRelationshipsVerifier.run(
+        RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
                 ContentTypes.SCRIPT: ['FeedIntegrationErrorWidget'],
@@ -733,7 +811,7 @@ class TestParsers:
         wizard = pack.create_wizard('TestWizard')
         wizard_path = Path(wizard.path)
         parser = WizardParser(wizard_path)
-        ContentItemRelationshipsVerifier.run(
+        RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
                 ContentTypes.PACK: ['blabla'],  # todo
@@ -785,3 +863,60 @@ class TestParsers:
             expected_fromversion=DEFAULT_CONTENT_ITEM_FROM_VERSION,
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
+
+    def test_pack_parser(self, repo: Repo):
+        from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
+        from demisto_sdk.commands.content_graph.parsers.pack import PackParser
+        pack = repo.create_pack('HelloWorld')
+        pack.pack_metadata.write_json(load_json('pack_metadata.json'))
+        pack.create_classifier('sample', load_json('classifier.json'))
+        pack.create_incident_field('sample', load_json('incident_field.json'))
+        pack.create_incident_type('sample', load_json('incident_type.json'))
+        pack.create_indicator_field('sample', load_json('indicator_field.json'))
+        pack.create_indicator_type('sample', load_json('indicator_type.json'))
+        pack_path = Path(pack.path)
+        parser = PackParser(pack_path)
+        expected_content_items = {
+            ContentTypes.CLASSIFIER: ['Github_Classifier_v1'],
+            ContentTypes.INCIDENT_FIELD: ['cve'],
+            ContentTypes.INCIDENT_TYPE: ['Traps'],
+            ContentTypes.INDICATOR_FIELD: ['email'],
+            ContentTypes.INDICATOR_TYPE: ['urlRep'],
+        }
+        PackRelationshipsVerifier.run(
+            parser.relationships,
+            expected_content_items=expected_content_items,
+        )
+        model = PackModel.from_orm(parser)
+        PackModelVerifier.run(
+            model,
+            expected_id='HelloWorld',
+            expected_name='HelloWorld',
+            expected_path=pack_path,
+            expected_description='This is the Hello World integration for getting started.',
+            expected_created='2020-03-10T08:37:18Z',
+            expected_support='community',
+            expected_url='https://www.paloaltonetworks.com/cortex',
+            expected_author='Cortex XSOAR',
+            expected_certification='',
+            expected_hidden=False,
+            expected_current_version='1.2.12',
+            expected_tags=[],
+            expected_categories=["Utilities"],
+            expected_use_cases=[],
+            expected_keywords=[],
+            expected_marketplaces=[MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2],
+            expected_content_items=expected_content_items,
+        )
+
+    def test_repo_parser(self, repo: Repo):
+        from demisto_sdk.commands.content_graph.objects.repository import Repository
+        from demisto_sdk.commands.content_graph.parsers.repository import RepositoryParser
+        pack1 = repo.create_pack('sample1')
+        pack1.pack_metadata.write_json(load_json('pack_metadata.json'))
+        pack2 = repo.create_pack('sample2')
+        pack2.pack_metadata.write_json(load_json('pack_metadata.json'))
+        parser = RepositoryParser(Path(repo.path))
+        model = Repository.from_orm(parser)
+        pack_ids = set([pack.object_id for pack in model.packs])
+        assert pack_ids == {'sample1', 'sample2'}

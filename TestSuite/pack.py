@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import (CORRELATION_RULES_DIR,
                                                    DEFAULT_IMAGE_BASE64,

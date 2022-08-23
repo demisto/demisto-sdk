@@ -87,6 +87,14 @@ class ContentTypes(str, enum.Enum):
 
         return list(labels)
 
+    @property
+    def prefix(self) -> str:
+        return self.lower()
+
+    @staticmethod
+    def prefixes() -> List[str]:
+        return [c.prefix for c in ContentTypes]
+
     @classmethod
     def by_folder(cls, folder: str) -> 'ContentTypes':
         return cls(folder[:-1])  # remove the `s`

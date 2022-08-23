@@ -7,3 +7,7 @@ class IntegrationScript(ContentItem):
     docker_image: str
     description: str
     code_path: Path
+    
+    def dump(self, path: Path):
+        # demisto-sdk unify self.path -> path
+        pass

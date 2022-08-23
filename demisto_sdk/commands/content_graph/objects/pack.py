@@ -5,6 +5,7 @@ from typing import List, Optional
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Nodes, Relationships
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
 from demisto_sdk.commands.content_graph.objects.generic_definition import GenericDefinition
@@ -107,8 +108,15 @@ class Pack(BaseContent, PackMetadata):
     content_items: PackContentItems = Field(alias='contentItems', exclude=True)
     relationships: Relationships = Field(Relationships(), exclude=True)
 
-    def dump(path: Path):
-        pass
+    def dump(self, path: Path):
+        for _, content_item in self.content_items:
+            assert isinstance(content_item, ContentItem)
+            content_item.dump(path / content_item.content_type.as_folder())
+        # take care of metadata
+        # take care of readme
+        # take care of releasenotes
+        # take care of author image
+        
     
     def to_nodes(self) -> Nodes:
         return Nodes(self.to_dict(), *[content_item.to_dict() for content_item in self.content_items])

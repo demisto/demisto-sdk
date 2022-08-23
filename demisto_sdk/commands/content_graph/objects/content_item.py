@@ -1,3 +1,4 @@
+import shutil
 from typing import List
 from pathlib import Path
 
@@ -12,3 +13,13 @@ class ContentItem(BaseContent):
     name: str
     fromversion: str
     toversion: str
+    
+    
+    def normalize_file_name(self, path: Path) -> str:
+        
+        return path.with_name('') 
+        
+        
+    def dump(self, path: Path):
+        path.mkdir(exist_ok=True, parents=True)
+        shutil.copy(self.path, normalize_file_name(path))

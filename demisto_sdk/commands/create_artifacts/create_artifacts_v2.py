@@ -8,13 +8,13 @@ from demisto_sdk.commands.content_graph.objects.repository import Repository
 
 
 class ContentArtifactManager:
-    
+
     def __init__(self,
                  marketplace: MarketplaceVersions,
                  output: Path) -> None:
         self.marketplace = marketplace
         self.output = output
-    
+
     def create_artifacts(self) -> None:
         repo: Repository = load_db_to_models(keep_service=True, marketplace=self.marketplace)
-        repo.dump(self.output)
+        repo.dump(self.output, self.marketplace)

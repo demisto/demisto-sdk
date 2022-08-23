@@ -6,6 +6,7 @@ from wcmatch.pathlib import Path
 from demisto_sdk.commands.common.constants import PARSING_RULE, FileType
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_unify_content_object import \
     YAMLContentUnifiedObject
+from demisto_sdk.commands.common.tools import generate_xsiam_normalized_name
 
 
 class ParsingRule(YAMLContentUnifiedObject):
@@ -13,12 +14,7 @@ class ParsingRule(YAMLContentUnifiedObject):
         super().__init__(path, FileType.PARSING_RULE, PARSING_RULE)
 
     def normalize_file_name(self) -> str:
-        normalize_file_name = self._path.name
-        if normalize_file_name.startswith(f'{PARSING_RULE}-'):
-            normalize_file_name = normalize_file_name.replace(f'{PARSING_RULE}-', f'{PARSING_RULE}-external-')
-        else:
-            normalize_file_name = f'{PARSING_RULE}-external-{normalize_file_name}'
-        return normalize_file_name
+        generate_xsiam_normalized_name(self._path.name, PARSING_RULE)
 
     def upload(self, client: demisto_client):
         """

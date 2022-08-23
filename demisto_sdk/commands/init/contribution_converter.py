@@ -549,10 +549,16 @@ class ContributionConverter:
         if api_module_path:
             rn_mng = UpdateReleaseNotesManager(user_input=api_module_path, update_type=self.update_type, )
             rn_mng.manage_rn_update()
+            for updated_pack in rn_mng.rn_path:
+                print(rn_mng.rn_path)
+                self.replace_RN_template_with_value(updated_pack)
         else:
             rn_mng = UpdateReleaseNotesManager(user_input=self.dir_name, update_type=self.update_type, )
             rn_mng.manage_rn_update()
             self.replace_RN_template_with_value(rn_mng.rn_path[0])
+
+        print(f"TOTAL = {rn_mng.total_updated_packs}")
+        return rn_mng.total_updated_packs
 
     def format_user_input(self) -> Dict[str, str]:
         """

@@ -1,6 +1,7 @@
 from pathlib import Path
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import Any, Generator, Iterator, List, Optional
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes, Nodes, Relationships
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -61,7 +62,7 @@ class PackContentItems(BaseModel):
     xsiam_dashboard: List[XSIAMDashboard] = Field([], alias=ContentTypes.XSIAM_DASHBOARD.value)
     xsiam_report: List[XSIAMReport] = Field([], alias=ContentTypes.XSIAM_REPORT.value)
 
-    def __iter__(self):
+    def __iter__(self) -> Generator[ContentItem, Any, Any]:
         for content_items in vars(self).values():
             for content_item in content_items:
                 yield content_item
@@ -108,10 +109,12 @@ class Pack(BaseContent, PackMetadata):
     content_items: PackContentItems = Field(alias='contentItems', exclude=True)
     relationships: Relationships = Field(Relationships(), exclude=True)
 
-    def dump(self, path: Path):
-        for _, content_item in self.content_items:
-            assert isinstance(content_item, ContentItem)
-            content_item.dump(path / content_item.content_type.as_folder())
+    def parse_metadata(self) -> dict:
+        pass
+    
+    def dump(self, path: Path, marketplace: MarketplaceVersions):
+        for content_item in self.content_items:
+            content_item.dump(path / content_item.content_type.as_folder)
         # take care of metadata
         # take care of readme
         # take care of releasenotes

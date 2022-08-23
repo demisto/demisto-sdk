@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 import json
-from pathlib import Path
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, DirectoryPath, Field
 from typing import Any, Dict, List
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
@@ -23,5 +22,5 @@ class BaseContent(ABC, BaseModel):
         return json.loads(self.json())
 
     @abstractmethod
-    def dump(self, path: Path) -> None:
+    def dump(self, path: DirectoryPath, marketplace: MarketplaceVersions) -> None:
         pass

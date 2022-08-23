@@ -1,6 +1,7 @@
 from pathlib import Path
-from pydantic import BaseModel
+from pydantic import BaseModel, DirectoryPath
 from typing import List
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 
@@ -9,9 +10,9 @@ class Repository(BaseModel):
     path: Path
     packs: List[Pack]
 
-    def dump(self, path: Path, marketplace):
+    def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions):
         for pack in self.packs:
-            pack.dump(path / pack.name)
+            pack.dump(dir / pack.name, marketplace)
         # save everything in zip
         # sign zip
                     

@@ -60,6 +60,7 @@ class UpdateReleaseNotesManager:
         print("ENTER HANDLE API MODULE CHANGE")
         self.handle_api_module_change(modified_files, added_files)
         print("LEFT HANDLE API MODULE CHANGE")
+        print(f"modified_files {modified_files}")
         self.create_release_notes(modified_files, added_files, old_format_files)
         if len(self.total_updated_packs) > 1:
             print_color('\nSuccessfully updated the following packs:\n' + '\n'.join(self.total_updated_packs),
@@ -220,6 +221,8 @@ class UpdateReleaseNotesManager:
                                       text=self.text, is_force=self.is_force,
                                       existing_rn_version_path=existing_rn_version, is_bc=self.is_bc)
             updated = update_pack_rn.execute_update()
+            print(f'**DEBUG** in create_pack_release_notes given pack {pack}')
+            print(f'**DEBUG** in create_pack_release_notes update_pack_rn.rn_path {update_pack_rn.rn_path}')
             self.rn_path.append(update_pack_rn.rn_path)
 
             # If new release notes were created add it to the total number of packs that were updated.

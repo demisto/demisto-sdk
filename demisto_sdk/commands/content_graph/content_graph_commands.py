@@ -56,7 +56,7 @@ def backup_content_graph():
     pass
 
 
-def restore_content_graph():
+def upload_content_graph():
     pass
 
 

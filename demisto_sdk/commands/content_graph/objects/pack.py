@@ -115,11 +115,10 @@ class Pack(BaseContent, PackMetadata):
     def dump(self, path: Path, marketplace: MarketplaceVersions):
         for content_item in self.content_items:
             content_item.dump(path / content_item.content_type.as_folder)
-        # take care of metadata
-        # take care of readme
-        # take care of releasenotes
-        # take care of author image
-        
-    
+        # TODO take care of metadata
+        # TODO take care of readme
+        # TODO take care of releasenotes
+        # TODO take care of author image
+            
     def to_nodes(self) -> Nodes:
         return Nodes(self.to_dict(), *[content_item.to_dict() for content_item in self.content_items])

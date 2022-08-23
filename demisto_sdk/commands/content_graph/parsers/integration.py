@@ -11,7 +11,6 @@ from demisto_sdk.commands.content_graph.parsers.integration_script import (
 class IntegrationParser(IntegrationScriptParser, content_type=ContentTypes.INTEGRATION):
     def __init__(self, path: Path) -> None:
         super().__init__(path)
-        print(f'Parsing {self.content_type} {self.object_id}')
         self.script_info: Dict[str, Any] = self.yml_data.get('script', {})
         self.category = self.yml_data['category']
         self.display_name = self.yml_data['display']

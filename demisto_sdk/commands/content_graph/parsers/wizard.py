@@ -8,7 +8,6 @@ from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentI
 class WizardParser(JSONContentItemParser, content_type=ContentTypes.WIZARD):
     def __init__(self, path: Path) -> None:
         super().__init__(path)
-        print(f'Parsing {self.content_type} {self.object_id}')
         self.packs: List[str] = self.get_packs()
         self.integrations: List[str] = self.get_integrations()
         self.playbooks: List[str] = self.get_playbooks()

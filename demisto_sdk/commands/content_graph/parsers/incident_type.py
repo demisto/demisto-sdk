@@ -8,7 +8,6 @@ from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentI
 class IncidentTypeParser(JSONContentItemParser, content_type=ContentTypes.INCIDENT_TYPE):
     def __init__(self, path: Path) -> None:
         super().__init__(path)
-        print(f'Parsing {self.content_type} {self.object_id}')
         self.playbook: str = self.json_data.get('playbookId')
         self.hours: int = self.json_data.get('hours')
         self.days: int = self.json_data.get('days')

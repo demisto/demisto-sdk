@@ -8,7 +8,6 @@ class XSIAMReportParser(JSONContentItemParser, content_type=ContentTypes.XSIAM_R
     def __init__(self, path: Path) -> None:
         super().__init__(path)
         self.json_data = self.json_data.get('templates_data', [{}])[0]
-        print(f'Parsing {self.content_type} {self.object_id}')
 
     @property
     def content_type(self) -> ContentTypes:

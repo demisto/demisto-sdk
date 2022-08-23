@@ -14,7 +14,6 @@ class TestPlaybookParser(PlaybookParser, content_type=ContentTypes.TEST_PLAYBOOK
         if self.yml_data.get('script'):
             raise IncorrectParser(correct_parser=ScriptParser, is_test=True)
 
-        print(f'Parsing {self.content_type} {self.object_id}')
 
     @property
     def content_type(self) -> ContentTypes:

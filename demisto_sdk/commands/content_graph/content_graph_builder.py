@@ -39,16 +39,32 @@ def dump_pickle(url: str, data: Any) -> None:
 
 class ContentGraphBuilder:
     def __init__(self, repo_path: Path, content_graph: ContentGraphInterface):
+        """ Given a repo path and graph DB interface:
+        1. Creates a repository model
+        2. Collects all nodes and relationships from the model
+
+        Args:
+            repo_path (Path): The repository path.
+            content_graph (ContentGraphInterface): The interface to create the graph with.
+        """
         self.content_graph = content_graph
         self.nodes: Nodes = Nodes()
         self.relationships: Relationships = Relationships()
-        self.repository: Repository = self._parse_repo(repo_path)
+        self.repository: Repository = self._create_repository(repo_path)
 
         for pack in self.repository.packs:
             self.nodes.update(pack.to_nodes())
             self.relationships.update(pack.relationships)
 
-    def _parse_repo(self, path: Path) -> Repository:
+    def _create_repository(self, path: Path) -> Repository:
+        """ Parses the repository and creates a repostitory model.
+
+        Args:
+            path (Path): The repository path.
+
+        Returns:
+            Repository: The repository model.
+        """
         repository_parser: RepositoryParser = load_pickle(REPO_PARSER_PKL_PATH.as_posix())
         if not repository_parser:
             try:
@@ -60,6 +76,8 @@ class ContentGraphBuilder:
         return Repository.from_orm(repository_parser)
 
     def create_graph(self) -> None:
+        """ Runs DB queries using the collected nodes and relationships to create the content graph.
+        """
         self.content_graph.create_indexes_and_constraints()
         self.content_graph.create_nodes(self.nodes)
         self.content_graph.create_relationships(self.relationships)

@@ -12,12 +12,22 @@ IGNORED_PACKS_FOR_PARSING = ['NonSupported']  # todo
 
 class RepositoryParser:
     def __init__(self, path: Path) -> None:
+        """ Parsing all repository packs.
+
+        Args:
+            path (Path): The repository path.
+        """
         self.path: Path = path
         pool = multiprocessing.Pool()
         self.packs: List[PackParser] = list(pool.map(PackParser, self.iter_packs()))
     
     def iter_packs(self) -> Iterator[Path]:
+        """ Iterates all packs in the repository.
+
+        Yields:
+            Iterator[Path]: A pack path.
+        """
         packs_folder: Path = self.path / PACKS_FOLDER
-        for path in packs_folder.iterdir():  # todo: handle repo path is invalid
+        for path in packs_folder.iterdir():
             if path.is_dir() and not path.name.startswith('.') and path.name not in IGNORED_PACKS_FOR_PARSING:
                 yield path

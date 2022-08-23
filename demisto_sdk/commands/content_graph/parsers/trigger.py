@@ -7,7 +7,6 @@ from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentI
 class TriggerParser(JSONContentItemParser, content_type=ContentTypes.TRIGGER):
     def __init__(self, path: Path) -> None:
         super().__init__(path)
-        print(f'Parsing {self.content_type} {self.object_id}')
 
         self.connect_to_dependencies()
 

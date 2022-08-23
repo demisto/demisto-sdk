@@ -11,7 +11,6 @@ class LayoutParser(JSONContentItemParser, content_type=ContentTypes.LAYOUT):
             raise NotAContentItem
 
         super().__init__(path)
-        print(f'Parsing {self.content_type} {self.object_id}')
         self.kind: str = self.json_data.get('kind')
         self.tabs: List[str] = self.json_data.get('tabs')
         self.definition_id: str = self.json_data.get('definitionId')

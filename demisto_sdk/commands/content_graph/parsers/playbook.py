@@ -16,7 +16,6 @@ LIST_COMMANDS = ['Builtin|||setList', 'Builtin|||getList']
 class PlaybookParser(YAMLContentItemParser, content_type=ContentTypes.PLAYBOOK):
     def __init__(self, path: Path, is_test: bool = False) -> None:
         super().__init__(path)
-        print(f'Parsing {self.content_type} {self.object_id}')
         self.is_test: bool = is_test
         self.graph: networkx.DiGraph = build_tasks_graph(self.yml_data)
         self.connect_to_dependencies()

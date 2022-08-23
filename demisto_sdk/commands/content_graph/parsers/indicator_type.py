@@ -8,7 +8,6 @@ from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentI
 class IndicatorTypeParser(JSONContentItemParser, content_type=ContentTypes.INDICATOR_TYPE):
     def __init__(self, path: Path) -> None:
         super().__init__(path)
-        print(f'Parsing {self.content_type} {self.object_id}')
         self.connect_to_dependencies()
         self.regex: str = self.json_data.get('regex')
         self.reputation_script_name: str = self.json_data.get('reputationScriptName') or None

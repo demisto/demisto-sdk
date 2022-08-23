@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -11,6 +12,7 @@ from demisto_sdk.commands.content_graph.constants import (
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
 from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
 
+logger = logging.getLogger('demisto-sdk')
 
 class PackContentItems:
     def __init__(self) -> None:
@@ -123,14 +125,19 @@ class PackMetadataParser:
 
 class PackParser(BaseContentParser, PackMetadataParser):
     def __init__(self, path: Path) -> None:
+        """ Parses a pack and its content items.
+
+        Args:
+            path (Path): The pack path.
+        """
         BaseContentParser.__init__(self, path)
         metadata: Dict[str, Any] = get_json(path / PACK_METADATA_FILENAME)
         PackMetadataParser.__init__(self, metadata)
-        print(f'Parsing {self.content_type} {self.object_id}')
         self.marketplaces = metadata.get('marketplaces', list(MarketplaceVersions))
         self.content_items: PackContentItems = PackContentItems()
         self.relationships: Relationships = Relationships()
         self.parse_pack_folders()
+        logger.info(f'Parsed {self.node_id}')
 
     @property
     def object_id(self) -> str:
@@ -141,13 +148,19 @@ class PackParser(BaseContentParser, PackMetadataParser):
         return ContentTypes.PACK
 
     def parse_pack_folders(self) -> None:
+        """ Parses all pack content items by iterating its folders.
+        """
         for folder_path in ContentTypes.pack_folders(self.path):
             for content_item_path in folder_path.iterdir():  # todo: consider multiprocessing
                 self.parse_content_item(content_item_path)
 
-    def parse_content_item(self, content_item_path) -> None:
+    def parse_content_item(self, content_item_path: Path) -> None:
+        """ Potentially parses a single content item.
+
+        Args:
+            content_item_path (Path): The content item path.
+        """
         if content_item := ContentItemParser.from_path(content_item_path):
             content_item.add_to_pack(self.node_id)
             self.content_items.append(content_item)
             self.relationships.update(content_item.relationships)
-            

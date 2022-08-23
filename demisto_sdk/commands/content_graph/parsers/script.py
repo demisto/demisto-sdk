@@ -12,7 +12,6 @@ EXECUTE_CMD_PATTERN = re.compile(r"execute_?command\(['\"]([a-zA-Z-_]+)['\"].*",
 class ScriptParser(IntegrationScriptParser, content_type=ContentTypes.SCRIPT):
     def __init__(self, path: Path, is_test: bool = False) -> None:
         super().__init__(path)
-        print(f'Parsing {self.content_type} {self.object_id}')
         self.is_test: bool = is_test
         self.docker_image: str = self.yml_data.get('dockerimage', '')
         self.type: str = self.yml_data.get('subtype') or self.yml_data.get('type')

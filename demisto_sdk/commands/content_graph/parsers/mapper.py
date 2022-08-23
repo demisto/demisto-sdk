@@ -9,7 +9,6 @@ from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentI
 class MapperParser(JSONContentItemParser, content_type=ContentTypes.MAPPER):
     def __init__(self, path: Path) -> None:
         super().__init__(path)
-        print(f'Parsing {self.content_type} {self.object_id}')
         self.type = self.json_data.get('type')
         self.definition_id = self.json_data.get('definitionId')
         self.connect_to_dependencies()

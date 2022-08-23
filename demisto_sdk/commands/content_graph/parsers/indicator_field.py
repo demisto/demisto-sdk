@@ -7,7 +7,6 @@ from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentI
 class IndicatorFieldParser(JSONContentItemParser, content_type=ContentTypes.INDICATOR_FIELD):
     def __init__(self, path: Path) -> None:
         super().__init__(path)
-        print(f'Parsing {self.content_type} {self.object_id}')
         self.cli_name = self.json_data.get('cliName')
         self.type = self.json_data.get('type')
         self.associated_to_all = self.json_data.get('associatedToAll')

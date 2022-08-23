@@ -8,7 +8,6 @@ class XSIAMDashboardParser(JSONContentItemParser, content_type=ContentTypes.XSIA
     def __init__(self, path: Path) -> None:
         super().__init__(path)
         self.json_data = self.json_data.get('dashboards_data', [{}])[0]
-        print(f'Parsing {self.content_type} {self.object_id}')
 
     @property
     def object_id(self) -> str:

@@ -9,7 +9,6 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentTypes.CLASSIFI
     def __init__(self, path: Path) -> None:
         super().__init__(path)
 
-        print(f'Parsing {self.content_type} {self.object_id}')
         self.type = self.json_data.get('type')
         if self.type != 'classification':
             raise IncorrectParser(correct_parser=MapperParser)

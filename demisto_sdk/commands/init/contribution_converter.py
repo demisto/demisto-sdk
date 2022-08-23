@@ -450,7 +450,7 @@ class ContributionConverter:
                     else:
                         extractor = YmlSplitter(input=content_item_file_path, file_type=file_type,
                                                 output=content_item_dir, no_pipenv=self.no_pipenv)
-                    extractor.extract_to_package_format()
+                    extractor.extract_to_package_format(executed_from_contrib_converter=True)
                     self.api_module_path = extractor.api_module_path
                 except Exception as e:
                     err_msg = f'Error occurred while trying to split the unified YAML "{content_item_file_path}" ' \

@@ -549,7 +549,6 @@ class ContributionConverter:
         if api_module_path:
             rn_mng = UpdateReleaseNotesManager(user_input=api_module_path, update_type=self.update_type, )
             rn_mng.manage_rn_update()
-            self.replace_RN_template_with_value(rn_mng.rn_path[0])
         else:
             rn_mng = UpdateReleaseNotesManager(user_input=self.dir_name, update_type=self.update_type, )
             rn_mng.manage_rn_update()

@@ -5,7 +5,6 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 class Layout(ContentItem):
     kind: Optional[str]
-    description: str
     tabs: Optional[List[str]]
     definition_id: Optional[str] = Field(alias='definitionId')
     group: str

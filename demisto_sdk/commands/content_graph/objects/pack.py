@@ -107,5 +107,8 @@ class Pack(BaseContent, PackMetadata):
     content_items: PackContentItems = Field(alias='contentItems', exclude=True)
     relationships: Relationships = Field(Relationships(), exclude=True)
 
+    def dump(path: Path):
+        pass
+    
     def to_nodes(self) -> Nodes:
         return Nodes(self.to_dict(), *[content_item.to_dict() for content_item in self.content_items])

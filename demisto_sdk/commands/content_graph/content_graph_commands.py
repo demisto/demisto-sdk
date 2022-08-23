@@ -14,6 +14,7 @@ from demisto_sdk.commands.content_graph.constants import (NEO4J_DATABASE_URL,
                                                           NEO4J_PASSWORD,
                                                           NEO4J_USERNAME,
                                                           REPO_PATH)
+from demisto_sdk.commands.content_graph.objects.repository import Repository
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -59,8 +60,9 @@ def restore_content_graph():
     pass
 
 
-def load_db_to_models(keep_service: bool = False, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR):
+def load_db_to_models(keep_service: bool = False, marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR) -> Repository:
     content_graph_loader = ContentGraphLoader(marketplace, neo4j_interface)
-    content_graph_loader.load()
+    repo: Repository = content_graph_loader.load()
     if not keep_service:
         neo4j_service.stop_neo4j_service()
+    return repo

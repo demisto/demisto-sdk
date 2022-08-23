@@ -546,12 +546,13 @@ class ContributionConverter:
         and create a release-note file using the release-notes text.
 
         """
+        print(f"api_module_path: {api_module_path}")
         if api_module_path:
             rn_mng = UpdateReleaseNotesManager(user_input=api_module_path, update_type=self.update_type, )
             rn_mng.manage_rn_update()
             for updated_pack in rn_mng.total_updated_packs:
-                print("total_updated_packs" + rn_mng.total_updated_packs)
-                self.replace_RN_template_with_value(rn_mng.pack_updated_pack)
+                print(f"total_updated_packs {rn_mng.total_updated_packs}")
+                self.replace_RN_template_with_value(rn_mng.pack)
         else:
             rn_mng = UpdateReleaseNotesManager(user_input=self.dir_name, update_type=self.update_type, )
             rn_mng.manage_rn_update()

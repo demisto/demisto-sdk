@@ -179,13 +179,19 @@ class UpdateReleaseNotesManager:
         # Certain file types do not require release notes update
         filtered_modified_files = filter_files_by_type(modified_files, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
         filtered_added_files = filter_files_by_type(added_files, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
-        if self.given_pack:  # A specific pack was chosen to update
+        print(f"self.given_pack {self.given_pack}")
+
+        if self.given_pack and API_MODULES_PACK not in self.given_pack:  # A specific pack was chosen to update
+            print("HERE1")
             self.create_pack_release_notes(self.given_pack, filtered_modified_files, filtered_added_files,
                                            old_format_files)
 
         elif self.changed_packs_from_git:  # update all changed packs
+            print(f"changed_packs_from_git: {self.changed_packs_from_git}")
+            print("HERE2")
             for pack in self.changed_packs_from_git:
-                if 'APIModules' in pack:  # We already handled Api Modules so we can skip it.
+                print("HERE3")
+                if API_MODULES_PACK in pack:  # We already handled Api Modules so we can skip it.
                     continue
                 self.create_pack_release_notes(pack, filtered_modified_files, filtered_added_files, old_format_files)
         else:

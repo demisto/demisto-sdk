@@ -16,10 +16,6 @@ class GenericTypeParser(JSONContentItemParser, content_type=ContentTypes.GENERIC
     def content_type(self) -> ContentTypes:
         return ContentTypes.GENERIC_TYPE
 
-    @property
-    def description(self) -> str:
-        return self.json_data.get('details')
-
     def connect_to_dependencies(self) -> None:
         if layout := self.json_data.get('layout'):
             self.add_dependency(layout, ContentTypes.LAYOUT)

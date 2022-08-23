@@ -808,15 +808,17 @@ class TestParsersAndModels:
     def test_wizard_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.objects.wizard import Wizard
         from demisto_sdk.commands.content_graph.parsers.wizard import WizardParser
-        wizard = pack.create_wizard('TestWizard')
+        wizard_json = load_json('wizard.json')
+        wizard = pack.create_wizard(
+            'TestWizard',
+            categories_to_packs={c['name']: c['packs'] for c in wizard_json['dependency_packs']},
+            fetching_integrations=[i['name'] for i in wizard_json['wizard']['fetching_integrations']],
+            set_playbooks=wizard_json['wizard']['set_playbook'],
+            supporting_integrations=[i['name'] for i in wizard_json['wizard']['supporting_integrations']],
+        )
         wizard_path = Path(wizard.path)
         parser = WizardParser(wizard_path)
-        RelationshipsVerifier.run(
-            parser.relationships,
-            dependencies={
-                ContentTypes.PACK: ['blabla'],  # todo
-            }
-        )
+        assert not parser.relationships
         model = Wizard.from_orm(parser)
         ContentItemModelVerifier.run(
             model,
@@ -827,6 +829,9 @@ class TestParsersAndModels:
             expected_fromversion='6.8.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
+        assert set(model.packs) == set(['CrowdStrikeFalcon', 'MicrosoftDefenderAdvancedThreatProtection', 'CortexXDR'])
+        assert set(model.integrations) == set(['WildFire-v2', 'Microsoft Defender Advanced Threat Protection'])
+        assert set(model.playbooks) == set(['Malware Investigation & Response Incident Handler'])
 
     def test_xsiam_dashboard_parser(self, pack: Pack):
         from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard

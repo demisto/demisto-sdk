@@ -1,5 +1,5 @@
 import shutil
-from typing import List
+from typing import List, Optional
 from pathlib import Path
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -13,6 +13,8 @@ class ContentItem(BaseContent):
     name: str
     fromversion: str
     toversion: str
+    deprecated: bool
+    description: Optional[str]
     
     
     def normalize_file_name(self, path: Path) -> str:

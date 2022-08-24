@@ -14,7 +14,7 @@ class CorrelationRule(YAMLContentObject):
         super().__init__(path, CORRELATION_RULE)
 
     def normalize_file_name(self) -> str:
-        generate_xsiam_normalized_name(self._path.name, CORRELATION_RULE)
+        return generate_xsiam_normalized_name(self._path.name, CORRELATION_RULE)
 
     def upload(self, client: demisto_client):
         """

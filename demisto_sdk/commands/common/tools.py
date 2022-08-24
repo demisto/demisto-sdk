@@ -171,7 +171,9 @@ SDK_PYPI_VERSION = r'https://pypi.org/pypi/demisto-sdk/json'
 SUFFIX_TO_REMOVE = ('_dev', '_copy')
 
 def generate_xsiam_normalized_name(file_name, prefix):
-    if file_name.startswith(f'{prefix}-'):
+    if file_name.startswith(f'{prefix}-external-'):
+        return file_name
+    elif file_name.startswith(f'{prefix}-'):
         return file_name.replace(f'{prefix}-', f'{prefix}-external-')
     else:
         return f'{prefix}-external-{file_name}'

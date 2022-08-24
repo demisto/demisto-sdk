@@ -14,7 +14,7 @@ class XSIAMReport(JSONContentObject):
         super().__init__(path, XSIAM_REPORT)
 
     def normalize_file_name(self) -> str:
-        generate_xsiam_normalized_name(self._path.name, XSIAM_REPORT)
+        return generate_xsiam_normalized_name(self._path.name, XSIAM_REPORT)
 
     def upload(self, client: demisto_client):
         """

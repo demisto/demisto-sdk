@@ -14,7 +14,7 @@ class ParsingRule(YAMLContentUnifiedObject):
         super().__init__(path, FileType.PARSING_RULE, PARSING_RULE)
 
     def normalize_file_name(self) -> str:
-        generate_xsiam_normalized_name(self._path.name, PARSING_RULE)
+        return generate_xsiam_normalized_name(self._path.name, PARSING_RULE)
 
     def upload(self, client: demisto_client):
         """

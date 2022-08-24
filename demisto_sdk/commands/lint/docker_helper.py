@@ -22,6 +22,8 @@ CAN_MOUNT_FILES = bool(os.getenv('GITLAB_CI', False)) or ((not os.getenv('CIRCLE
 )
 )
 
+class DockerException(Exception):
+    pass
 
 def init_global_docker_client(timeout: int = 60, log_prompt: str = ''):
 
@@ -35,7 +37,12 @@ def init_global_docker_client(timeout: int = 60, log_prompt: str = ''):
         if ssh_client:
             logger.debug(f'{log_prompt} - Using ssh client setting: {ssh_client}')
         logger.debug(f'{log_prompt} - Using docker mounting: {CAN_MOUNT_FILES}')
-        DOCKER_CLIENT = docker.from_env(timeout=timeout, use_ssh_client=ssh_client)
+        try:
+            DOCKER_CLIENT = docker.from_env(timeout=timeout, use_ssh_client=ssh_client)
+        except docker.errors.DockerException:
+            msg = 'Failed to init docker client. Please check that your docker daemon is running.'
+            logger.error(f'{log_prompt} - {msg}')
+            raise DockerException(msg)
         docker_user = os.getenv('DOCKERHUB_USER')
         docker_pass = os.getenv('DOCKERHUB_PASSWORD')
         if docker_user and docker_pass:

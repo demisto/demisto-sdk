@@ -3,7 +3,7 @@ from typing import Any, Dict
 from demisto_sdk.commands.common.tools import field_to_cli_name
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes
-from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentItemParser
+from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
 
 
 class MapperParser(JSONContentItemParser, content_type=ContentTypes.MAPPER):

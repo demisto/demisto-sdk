@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from demisto_sdk.commands.content_graph.constants import ContentTypes
-from demisto_sdk.commands.content_graph.parsers.content_item import YAMLContentItemParser
+from demisto_sdk.commands.content_graph.parsers.yaml_content_item import YAMLContentItemParser
 
 
 class CorrelationRuleParser(YAMLContentItemParser, content_type=ContentTypes.CORRELATION_RULE):

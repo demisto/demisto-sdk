@@ -2,7 +2,7 @@
 
 ## Unreleased
 * Fixed an issue in **validate**, where backward-compatibility failures prevented other validations from running.
-* Added an error message in **lint** to check if the `docker daemon` is running. 
+* Added an error when the docker daemon is unavailable when running **lint**.
 
 ## 1.7.3
 

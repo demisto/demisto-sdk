@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.tools import (
     get_yml_paths_in_dir
 )
 from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION
-from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
+from demisto_sdk.commands.content_graph.common import ContentTypes, Rel
 from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser, NotAContentItem
 
 

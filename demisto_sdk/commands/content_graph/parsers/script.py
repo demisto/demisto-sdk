@@ -2,7 +2,7 @@ import re
 from pathlib import Path
 from typing import List
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes
+from demisto_sdk.commands.content_graph.common import ContentTypes
 from demisto_sdk.commands.content_graph.parsers.integration_script import IntegrationScriptParser
 
 

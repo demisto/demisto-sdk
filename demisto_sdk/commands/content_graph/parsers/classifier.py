@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes
+from demisto_sdk.commands.content_graph.common import ContentTypes
 from demisto_sdk.commands.content_graph.parsers.content_item import IncorrectParser
 from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
 from demisto_sdk.commands.content_graph.parsers.mapper import MapperParser

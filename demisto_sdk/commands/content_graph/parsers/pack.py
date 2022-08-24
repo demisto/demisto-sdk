@@ -4,7 +4,7 @@ from typing import Any, Dict, Iterator, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_json
-from demisto_sdk.commands.content_graph.constants import (
+from demisto_sdk.commands.content_graph.common import (
     ContentTypes,
     PACK_METADATA_FILENAME,
     Relationships

@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.update_id_set import (
     get_fields_by_script_argument,
     build_tasks_graph
 )
-from demisto_sdk.commands.content_graph.constants import ContentTypes
+from demisto_sdk.commands.content_graph.common import ContentTypes
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import YAMLContentItemParser
 
 

@@ -7,7 +7,7 @@ from TestSuite.repo import Repo
 from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION, MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, Relationships
+from demisto_sdk.commands.content_graph.common import ContentTypes, Rel, Relationships
 from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.parsers.content_item import NotAContentItem

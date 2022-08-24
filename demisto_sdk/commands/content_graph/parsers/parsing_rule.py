@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes
+from demisto_sdk.commands.content_graph.common import ContentTypes
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import YAMLContentItemParser
 
 

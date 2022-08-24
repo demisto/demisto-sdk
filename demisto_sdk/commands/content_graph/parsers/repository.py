@@ -3,7 +3,7 @@
 import multiprocessing
 from pathlib import Path
 from typing import Iterator, List
-from demisto_sdk.commands.content_graph.constants import PACKS_FOLDER
+from demisto_sdk.commands.content_graph.common import PACKS_FOLDER
 
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 

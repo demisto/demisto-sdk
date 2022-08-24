@@ -6,7 +6,7 @@ import traceback
 from typing import Any, List
 
 
-from demisto_sdk.commands.content_graph.constants import REPO_PATH, Nodes, Relationships
+from demisto_sdk.commands.content_graph.common import REPO_PATH, Nodes, Relationships
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 
 from demisto_sdk.commands.content_graph.objects.repository import Repository

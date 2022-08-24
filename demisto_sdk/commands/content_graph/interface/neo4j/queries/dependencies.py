@@ -3,7 +3,7 @@ from neo4j import Transaction, Result
 from typing import Dict, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions, REPUTATION_COMMAND_NAMES
-from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel
+from demisto_sdk.commands.content_graph.common import ContentTypes, Rel
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query
 
 

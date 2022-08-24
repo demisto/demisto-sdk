@@ -10,10 +10,10 @@ from demisto_sdk.commands.content_graph.interface.neo4j_graph import \
     Neo4jContentGraphInterface
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
-from demisto_sdk.commands.content_graph.constants import (NEO4J_DATABASE_URL,
-                                                          NEO4J_PASSWORD,
-                                                          NEO4J_USERNAME,
-                                                          REPO_PATH)
+from demisto_sdk.commands.content_graph.common import (NEO4J_DATABASE_URL,
+                                                       NEO4J_PASSWORD,
+                                                       NEO4J_USERNAME,
+                                                       REPO_PATH)
 
 logger = logging.getLogger('demisto-sdk')
 

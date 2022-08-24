@@ -5,7 +5,7 @@ import requests
 from demisto_sdk.commands.common.tools import run_command
 from requests.adapters import HTTPAdapter, Retry
 
-from demisto_sdk.commands.content_graph.constants import NEO4J_PASSWORD, REPO_PATH
+from demisto_sdk.commands.content_graph.common import NEO4J_PASSWORD, REPO_PATH
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -16,14 +16,33 @@ except Exception:
     IS_NEO4J_ADMIN_AVAILABLE = False
 
 
+class Neo4jServiceException(Exception):
+    pass
+
+
 def start_neo4j_service(use_docker: bool = True):
     if not use_docker:
         neo4j_admin_command('set-initial-password', f'neo4j - admin set - initial - password {NEO4J_PASSWORD}')
         run_command('neo4j start', cwd=REPO_PATH / 'neo4j', is_silenced=False)
 
     else:
-        run_command('docker-compose down', cwd=REPO_PATH / 'neo4j', is_silenced=False)
-        run_command('docker-compose up -d', cwd=REPO_PATH / 'neo4j', is_silenced=False)
+        try:
+            docker_client = docker.from_env(timeout=10)
+        except docker.errors.DockerException:
+            msg = 'Could not connect to docker daemon. Please make sure docker is running.'
+            raise Neo4jServiceException(msg)
+        try:
+            docker_client.containers.get('neo4j-content').remove(force=True)
+        except Exception as e:
+            logger.info(f'Could not remove neo4j container: {e}')
+        docker_client.containers.run(
+            image='neo4j:4.4.9',
+            name='neo4j-content',
+            ports={'7474/tcp': 7474, '7687/tcp': 7687},
+            volumes=[f'{REPO_PATH / "neo4j" / "data"}:/data'],
+            detach=True,
+            environment={'NEO4J_AUTH': f'neo4j/{NEO4J_PASSWORD}'},
+        )
     # health check to make sure that neo4j is up
     s = requests.Session()
 

@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 from pathlib import Path
 from typing import Dict, Optional, List, Type
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes, Rel, UNIFIED_FILES_SUFFIXES, Relationships
+from demisto_sdk.commands.content_graph.common import ContentTypes, Rel, UNIFIED_FILES_SUFFIXES, Relationships
 from demisto_sdk.commands.content_graph.parsers import *
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
 

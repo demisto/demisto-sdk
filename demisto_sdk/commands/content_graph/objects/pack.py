@@ -2,7 +2,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes, Nodes, Relationships
+from demisto_sdk.commands.content_graph.common import ContentTypes, Nodes, Relationships
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule

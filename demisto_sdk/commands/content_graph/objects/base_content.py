@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 from typing import Any, Dict, List
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes
+from demisto_sdk.commands.content_graph.common import ContentTypes
 
 
 class BaseContent(ABC, BaseModel):

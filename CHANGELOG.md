@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue in the **validate** command where backward compatability validations prevent other validations from running.
 * Fixed an issue in the **format** command where fail when executed from environment without mdx server available.
 * Added `Added a`, `Added an` to the list of allowed changelog prefixes.
 * Added support for Indicator Types/Reputations in the **upload** command.

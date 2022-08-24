@@ -14,12 +14,14 @@ from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, AUTHOR_IMAGE_FILE_NAME, CONTENT_ENTITIES_DIRS,
-    DEFAULT_CONTENT_ITEM_TO_VERSION, DEFAULT_ID_SET_PATH, GENERIC_FIELDS_DIR,
-    GENERIC_TYPES_DIR, IGNORED_PACK_NAMES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
+    DEFAULT_CONTENT_ITEM_TO_VERSION, GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR,
+    IGNORED_PACK_NAMES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
     PACKS_PACK_META_FILE_NAME, SKIP_RELEASE_NOTES_FOR_TYPES,
     VALIDATION_USING_GIT_IGNORABLE_DATA, FileType, FileType_ALLOWED_TO_DELETE,
     PathLevel)
 from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.content_constant_paths import \
+    DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
@@ -625,6 +627,8 @@ class ValidateManager:
                                      file_path=file_path):
                     return False
             if not self.validate_all:
+                if not ReadMeValidator.are_modules_installed_for_verify(get_content_path()):  # shows warning message
+                    return True
                 ReadMeValidator.add_node_env_vars()
                 with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):
                     return self.validate_readme(file_path, pack_error_ignore_list)

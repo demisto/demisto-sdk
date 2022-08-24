@@ -1,12 +1,22 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue in the **format** command where fail when executed from environment without mdx server available.
+* Added `Added a`, `Added an` to the list of allowed changelog prefixes.
+* Added support for Indicator Types/Reputations in the **upload** command.
+* Fixed an issue when running from a subdirectory of a content repo failed.
+* Changing the way we are using XSIAM servers api-keys in **test-content** .
+* Added a success message to **postman-codegen**.
+
+## 1.7.2
+
 * Fixed an issue in the **validate** command where incident fields were not found in mappers even when they exist
 * Added an ability to provide list of marketplace names as a param attribute to **validate** and **upload**
 * Added the file type to the error message when it is not supported.
 * Fixed an issue where `contribution_converter` incorrectly mapped _Indicator Field_ objects to the _incidentfield_ directory in contribution zip files.
-
+* Fixed a bug where **validate** returned error on empty inputs not used in playbooks.
 * Added the `DEMISTO_SDK_CONTENT_PATH` environment variable, implicitly used in various commands.
+* Added link to documentation for error messages regarding use cases and tags.
 
 ## 1.7.1
 
@@ -17,9 +27,7 @@
 * Fixed an issue where the suggestion in case of `IF113` included uppercase letters for the `cliName` parameter.
 * Added new validation to the **validate** command to fail and list all the file paths of files that are using a deprecated integration command / script / playbook.
 * **validate** will no longer fail on playbooks calling subplaybooks that have a higher `fromVersion` value, if  calling the subplaybook has `skipifunavailable=True`.
-* Added link to documentation for error messages regarding use cases and tags.
 * Fixed an issue where relative paths were not accessed correctly.
-* Fixed a bug where **validate** returned error on empty inputs not used in playbooks.
 * Running any `demisto-sdk` command in a folder with a `.env` file will load it, temporarily overriding existing environment variables.
 * Fixed an issue where **validate** did not properly detect deleted files.
 * Added new validations to the **validate** command to verify that the schema file exists for a modeling rule and that the schema and rules keys are empty in the yml file.

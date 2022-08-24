@@ -64,7 +64,7 @@ def start_neo4j_service(use_docker: bool = True):
         docker_client.containers.run(
             image=NEO4J_SERVICE_IMAGE,
             name='neo4j-content',
-            ports={'7474/tcp': 7474, '7687/tcp': 7687},
+            ports={'7474/tcp': 7474, '7687/tcp': 7687, '7473/tcp': 7473},
             volumes=[f'{REPO_PATH / "neo4j" / "data"}:/data'],
             detach=True,
             environment={'NEO4J_AUTH': f'neo4j/{NEO4J_PASSWORD}'},

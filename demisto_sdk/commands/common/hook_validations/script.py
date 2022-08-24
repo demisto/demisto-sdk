@@ -56,6 +56,7 @@ class ScriptValidator(ContentEntityValidator):
             return True
 
         is_breaking_backwards = [
+            super().is_backward_compatible(),
             self.is_context_path_changed(),
             self.is_added_required_args(),
             self.is_arg_changed(),
@@ -63,12 +64,6 @@ class ScriptValidator(ContentEntityValidator):
             self.is_changed_subtype()
         ]
 
-        # Add sane-doc-report exception
-        # Sane-doc-report uses docker and every fix/change requires a docker tag change,
-        # thus it won't be backwards compatible.
-        # All other tests should be False (i.e. no problems)
-        if self.file_path == 'Scripts/SaneDocReport/SaneDocReport.yml':
-            return not any(is_breaking_backwards[1:])
         return not any(is_breaking_backwards)
 
     def is_valid_file(self, validate_rn=True):

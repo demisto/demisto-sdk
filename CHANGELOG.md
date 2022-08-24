@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-
+* Fixed an issue in **validate**, where backward-compatibility failures prevented other validations from running.
 
 ## 1.7.3
 

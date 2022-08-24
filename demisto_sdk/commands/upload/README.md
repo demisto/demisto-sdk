@@ -1,6 +1,6 @@
 ## Upload
 
-**Upload a content entity to Cortex XSOAR.**
+**Upload a content entity to Cortex XSOAR/XSIAM.**
 
 In order to run the command, `DEMISTO_BASE_URL` environment variable should contain the Cortex XSOAR/XSIAM instance URL,
 and `DEMISTO_API_KEY` environment variable should contain a valid Cortex XSOAR/XSIAM API Key.

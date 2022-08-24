@@ -17,8 +17,8 @@ def test_format_wit_update_docker_flag(mocker):
     """
     from demisto_sdk.commands.common.hook_validations.readme import \
         ReadMeValidator
-    from demisto_sdk.commands.validate.validate_manager import ValidateManager
     from demisto_sdk.commands.format.format_module import format_manager
+    from demisto_sdk.commands.validate.validate_manager import ValidateManager
     mocker.patch.object(ReadMeValidator, 'are_modules_installed_for_verify', return_value=False)
     mocker.patch.object(ValidateManager, 'get_changed_files_from_git', return_value=(set(), set(), set(), set(), True))
     assert format_manager(input=f'{git_path()}/Packs/TestPack', update_docker=True) == 0

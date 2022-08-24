@@ -9,3 +9,6 @@ class IndicatorType(ContentItem):
     regex: str
     reputation_script_name: Optional[str] = Field(alias='reputationScriptName')
     enhancement_script_names: Optional[List[str]] = Field(alias='enhancementScriptNames')
+
+    def summary(self):
+        return self.dict(include=['details', 'reputationScriptName', 'enhancementScriptNames'])

@@ -19,3 +19,14 @@ class Integration(IntegrationScript):
     is_feed: bool = False
     category: str
     commands: List[Command] = Field([], exclude=True)  # todo: override exclusion when loading from database
+
+    def summary(self):
+        return self.dict(include={'name': True,
+                                  'description': True,
+                                  'category': True,
+                                  'commands':
+                                      {
+                                          'name': True,
+                                          'description': True
+                                      }
+                                  })

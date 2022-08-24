@@ -10,3 +10,6 @@ class IncidentType(ContentItem):
     days: int
     weeks: int
     closure_script: Optional[str] = Field(alias='closureScript')
+
+    def summary(self):
+        return self.dict(include=['name', 'playbook', 'closureScript', 'hours', 'days', 'week'])

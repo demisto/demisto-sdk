@@ -7,3 +7,6 @@ class IncidentField(ContentItem):
     cli_name: str = Field(alias='cliName')
     field_type: str = Field(alias='type')
     associated_to_all: bool = Field(False, alias='associatedToAll')
+
+    def summary(self):
+        return self.dict(include=['name', 'type', 'description'])

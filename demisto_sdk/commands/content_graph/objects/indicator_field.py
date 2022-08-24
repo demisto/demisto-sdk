@@ -7,3 +7,6 @@ class IndicatorField(ContentItem):
     cli_name: str = Field(alias='cliName')
     type: str
     associated_to_all: bool = Field(alias='associatedToAll')
+
+    def summary(self):
+        return self.dict(include=['name', 'type', 'description'])

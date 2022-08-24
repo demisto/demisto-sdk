@@ -16,3 +16,6 @@ class Layout(ContentItem):
     details: bool
     details_v2: bool
     mobile: bool
+    
+    def summary(self):
+        return self.dict(include=['name', 'description'])

@@ -6,3 +6,8 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 class GenericType(ContentItem):
     definition_id: Optional[str] = Field(alias='definitionId')
+
+    def summary(self):
+        return self.dict(include=['name', 'details'])  # TODO not such property?
+
+# TODO no generic_field, no pre-proccess rule

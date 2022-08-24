@@ -34,6 +34,10 @@ from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDash
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
 
 
+from demisto_sdk.commands.common.handlers import JSON_Handler
+json = JSON_Handler()
+
+
 class PackContentItems(BaseModel):
     classifier: List[Classifier] = Field([], alias=ContentTypes.CLASSIFIER.value)
     correlation_rule: List[CorrelationRule] = Field([], alias=ContentTypes.CORRELATION_RULE.value)
@@ -108,17 +112,20 @@ class Pack(BaseContent, PackMetadata):
     node_id: str
     content_items: PackContentItems = Field(alias='contentItems', exclude=True)
     relationships: Relationships = Field(Relationships(), exclude=True)
+    dependencies: dict = Field({}, exclude=True)
 
-    def parse_metadata(self) -> dict:
-        pass
-    
+    def dump_metadata(self, path: Path) -> None:
+        with open(path / 'metadata.json', 'w') as f:
+            json.dump(self.dict(include={'contentItems', 'dependencies'}), f, indent=4)
+
     def dump(self, path: Path, marketplace: MarketplaceVersions):
+        path.mkdir(exist_ok=True, parents=True)
         for content_item in self.content_items:
             content_item.dump(path / content_item.content_type.as_folder)
-        # TODO take care of metadata
+        self.dump_metadata(path)
         # TODO take care of readme
         # TODO take care of releasenotes
         # TODO take care of author image
-            
+
     def to_nodes(self) -> Nodes:
         return Nodes(self.to_dict(), *[content_item.to_dict() for content_item in self.content_items])

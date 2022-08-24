@@ -8,5 +8,5 @@ class Classifier(ContentItem):
     type: Optional[str]
     definition_id: Optional[str] = Field(alias='definitionId')
     
-    def data(self):
-        return self.json(include=['name'])
+    def summary(self):
+        return self.dict(include=['name', 'description'])

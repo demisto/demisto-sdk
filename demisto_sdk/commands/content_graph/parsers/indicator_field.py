@@ -22,6 +22,8 @@ class IndicatorFieldParser(JSONContentItemParser, content_type=ContentTypes.INDI
         return self.json_data.get('cliName')
     
     def connect_to_dependencies(self) -> None:
+        """ Collects indicator types used by the field as optional dependencies, and scripts as mandatory dependencies.
+        """
         for associated_type in set(self.json_data.get('associatedTypes') or []):
             self.add_dependency(associated_type, ContentTypes.INDICATOR_TYPE, is_mandatory=False)
 

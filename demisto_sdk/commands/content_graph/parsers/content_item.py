@@ -74,10 +74,11 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMeta):
             return None
 
         content_type: ContentTypes = ContentTypes.by_folder(path.parts[-2])
-        if parser := ContentItemParser.content_type_to_parser.get(content_type):
+        if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
             try:
-                logger.info(f'Parsed {parser.node_id}')
-                return parser(path)
+                parser = parser_cls(path)
+                print(f'Parsed {parser.node_id}')
+                return parser
             except IncorrectParser as e:
                 return e.correct_parser(path, **e.kwargs)
             except NotAContentItem:

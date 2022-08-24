@@ -16,5 +16,7 @@ class GenericTypeParser(JSONContentItemParser, content_type=ContentTypes.GENERIC
         return ContentTypes.GENERIC_TYPE
 
     def connect_to_dependencies(self) -> None:
+        """ Collects the layouts used in the generic type as mandatory dependencies.
+        """
         if layout := self.json_data.get('layout'):
             self.add_dependency(layout, ContentTypes.LAYOUT)

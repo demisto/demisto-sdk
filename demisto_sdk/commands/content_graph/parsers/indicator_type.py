@@ -26,10 +26,14 @@ class IndicatorTypeParser(JSONContentItemParser, content_type=ContentTypes.INDIC
         return self.json_data.get('details')
 
     def connect_to_dependencies(self) -> None:
+        """ Collects scripts and the reputation command used as optional dependencies,
+        and the layout as a mandatory dependency.
+        """
         for field in ['reputationScriptName', 'enhancementScriptNames']:
             associated_scripts = self.json_data.get(field)
             if associated_scripts and associated_scripts != 'null':
-                associated_scripts = [associated_scripts] if not isinstance(associated_scripts, list) else associated_scripts
+                associated_scripts = [associated_scripts] if not isinstance(associated_scripts, list) \
+                    else associated_scripts
                 for script in associated_scripts:
                     self.add_dependency(script, ContentTypes.SCRIPT, is_mandatory=False)
 

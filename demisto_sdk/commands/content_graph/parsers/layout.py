@@ -33,6 +33,8 @@ class LayoutParser(JSONContentItemParser, content_type=ContentTypes.LAYOUT):
         return ContentTypes.LAYOUT
 
     def connect_to_dependencies(self) -> None:
+        """ Collects the incident/indicator fields used as optional dependencies.
+        """
         if self.group == 'incident':
             dependency_field_type = ContentTypes.INCIDENT_FIELD
         else:

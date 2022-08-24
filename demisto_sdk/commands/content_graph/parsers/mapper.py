@@ -33,6 +33,9 @@ class MapperParser(JSONContentItemParser, content_type=ContentTypes.MAPPER):
                 self.add_dependency(transformer_script, ContentTypes.SCRIPT)
 
     def connect_to_dependencies(self) -> None:
+        """ Collects the incident types, incident fields, filters and transformers
+        used in the mapper as required dependencies.
+        """
         if default_incident_type := self.json_data.get('defaultIncidentType'):
             self.add_dependency(default_incident_type, ContentTypes.INCIDENT_TYPE)
 

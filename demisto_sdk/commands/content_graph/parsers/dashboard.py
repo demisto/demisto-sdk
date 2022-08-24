@@ -15,6 +15,8 @@ class DashboardParser(JSONContentItemParser, content_type=ContentTypes.DASHBOARD
         return ContentTypes.DASHBOARD
 
     def connect_to_dependencies(self) -> None:
+        """ Collects the scripts used in the dashboard as optional dependencies.
+        """
         for layout in self.json_data.get('layout', []):
             widget_data = layout.get('widget')
             if widget_data.get('dataType') == 'scripts':

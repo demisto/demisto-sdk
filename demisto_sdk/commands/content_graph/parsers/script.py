@@ -31,6 +31,11 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentTypes.SCRIPT):
         return self.yml_data.get('comment', '')
 
     def connect_to_dependencies(self) -> None:
+        """ Creates USES_COMMAND_OR_SCRIPT mandatory relationships with the commands/scripts used.
+        At this stage, we can't determine whether the dependences are commands or scripts.
+        Only when we add the relationships to the database we can detect their actual content types,
+        and then they are added as USES relationships.
+        """
         for cmd in self.get_depends_on():
             self.add_dependency(cmd)
 
@@ -42,6 +47,13 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentTypes.SCRIPT):
         return list({cmd.split('|')[-1] for cmd in depends_on})
 
     def get_code(self) -> str:
+        """ Gets the script code.
+        If the script is unified, simply takes it from the yml file.
+        Otherwise, uses the Unifier object to get it.
+
+        Returns:
+            str: The script code.
+        """
         if self.is_unified or self.yml_data.get('script') not in ['-', '']:
             return self.yml_data.get('script')
         return self.unifier.get_script_or_integration_package_data()[1]

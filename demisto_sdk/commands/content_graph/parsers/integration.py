@@ -31,6 +31,10 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentTypes.INTEG
         return ContentTypes.INTEGRATION
 
     def connect_to_commands(self) -> None:
+        """ Creates HAS_COMMAND relationships with the integration commands.
+        Command's properties are stored in the relationship's data,
+        since there will be a single node for all commands with the same name.
+        """
         for command_data in self.script_info.get('commands', []):
             self.add_relationship(
                 Rel.HAS_COMMAND,
@@ -41,6 +45,8 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentTypes.INTEG
             )
 
     def connect_to_dependencies(self) -> None:
+        """ Collects the default classifier, mappers and incident type used as mandatory dependencies.
+        """
         if default_classifier := self.yml_data.get('defaultclassifier'):
             if default_classifier != 'null':
                 self.add_dependency(default_classifier, ContentTypes.CLASSIFIER)
@@ -58,11 +64,20 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentTypes.INTEG
                 self.add_dependency(default_incident_type, ContentTypes.INCIDENT_TYPE)
 
     def get_code(self) -> str:
+        """ Gets the integration code.
+        If the integration is unified, simply takes it from the yml file.
+        Otherwise, uses the Unifier object to get it.
+
+        Returns:
+            str: The integration code.
+        """
         if self.is_unified or self.script_info.get('script') not in ['-', '']:
             return self.script_info.get('script')
         return self.unifier.get_script_or_integration_package_data()[1]
 
     def connect_to_api_modules(self) -> List[str]:
+        """ Creates IMPORTS relationships with the API modules used in the integration.
+        """
         api_modules = IntegrationScriptUnifier.check_api_module_imports(self.get_code()).values()
         for api_module in api_modules:
             api_module_node_id = f'{ContentTypes.SCRIPT}:{api_module}'

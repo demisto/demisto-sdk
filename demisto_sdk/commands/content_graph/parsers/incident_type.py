@@ -21,6 +21,8 @@ class IncidentTypeParser(JSONContentItemParser, content_type=ContentTypes.INCIDE
         return ContentTypes.INCIDENT_TYPE
 
     def connect_to_dependencies(self) -> None:
+        """ Collects the script, playbook and layout used by the incident type as mandatory dependencies.
+        """
         if pre_processing_script := self.json_data.get('preProcessingScript'):
             self.add_dependency(pre_processing_script, ContentTypes.SCRIPT)
 

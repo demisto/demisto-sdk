@@ -22,6 +22,8 @@ class IncidentFieldParser(JSONContentItemParser, content_type=ContentTypes.INCID
         return self.json_data.get('cliName')
 
     def connect_to_dependencies(self) -> None:
+        """ Collects incident types used as optional dependencies, and scripts as mandatory dependencies.
+        """
         for associated_type in set(self.json_data.get('associatedTypes') or []):
             self.add_dependency(associated_type, ContentTypes.INCIDENT_TYPE, is_mandatory=False)
 

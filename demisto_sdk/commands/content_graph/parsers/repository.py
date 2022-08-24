@@ -10,7 +10,13 @@ from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
 IGNORED_PACKS_FOR_PARSING = ['NonSupported']  # todo
 
+
 class RepositoryParser:
+    """
+    Attributes:
+        path (Path): The repository path.
+        packs (List[PackParser]): A list of the repository's packs parser objects.
+    """
     def __init__(self, path: Path) -> None:
         """ Parsing all repository packs.
 

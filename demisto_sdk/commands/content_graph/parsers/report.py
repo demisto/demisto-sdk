@@ -15,6 +15,8 @@ class ReportParser(JSONContentItemParser, content_type=ContentTypes.REPORT):
         return ContentTypes.REPORT
 
     def connect_to_dependencies(self) -> None:
+        """ Collects scripts used in the report as optional dependencies.
+        """
         for layout in self.json_data.get('dashboard', {}).get('layout', []):
             widget_data = layout.get('widget')
             if widget_data.get('dataType') == 'scripts':

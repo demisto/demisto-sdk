@@ -2,12 +2,12 @@ import logging
 
 import docker
 import requests
+import urllib3
 from demisto_sdk.commands.common.tools import run_command
 from requests.adapters import HTTPAdapter, Retry
 
 from demisto_sdk.commands.content_graph.common import NEO4J_PASSWORD, REPO_PATH
 
-DOCKER_TIMEOUT = 10
 NEO4J_SERVICE_IMAGE = 'neo4j:4.4.9'
 NEO4J_ADMIN_IMAGE = 'neo4j/neo4j-admin:4.4.9'
 
@@ -26,7 +26,7 @@ class Neo4jServiceException(Exception):
 
 def _get_docker_client() -> docker.DockerClient:
     try:
-        docker_client = docker.from_env(timeout=DOCKER_TIMEOUT)
+        docker_client = docker.from_env()
     except docker.errors.DockerException:
         msg = 'Could not connect to docker daemon. Please make sure docker is running.'
         raise Neo4jServiceException(msg)
@@ -47,7 +47,8 @@ def _wait_until_service_is_up():
         total=10,
         backoff_factor=0.1
     )
-
+    # suppress warning from urllib3
+    # urllib3.disable_warnings(urllib3.exceptions.ConnectionError)
     s.mount('http://localhost', HTTPAdapter(max_retries=retries))
     s.get('http://localhost:7474')
 

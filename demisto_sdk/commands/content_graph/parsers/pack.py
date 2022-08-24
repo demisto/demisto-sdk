@@ -73,8 +73,8 @@ class PackContentItems:
         self.xsiam_report = ContentItemsList(content_type=ContentTypes.XSIAM_REPORT)
 
     def iter_lists(self) -> Iterator[ContentItemsList]:
-      for attribute in vars(self).values():
-        yield attribute
+        for attribute in vars(self).values():
+            yield attribute
 
     def append(self, obj: ContentItemParser) -> None:
         """ Appends a content item by iterating the content item lists

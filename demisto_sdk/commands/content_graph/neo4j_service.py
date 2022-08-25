@@ -25,6 +25,14 @@ class Neo4jServiceException(Exception):
 
 
 def _get_docker_client() -> docker.DockerClient:
+    """Helper function to get the docker client
+
+    Raises:
+        Neo4jServiceException: If docker is not available in the system.
+
+    Returns:
+        docker.DockerClient: The docker client to use
+    """
     try:
         docker_client = docker.from_env()
     except docker.errors.DockerException:
@@ -34,6 +42,11 @@ def _get_docker_client() -> docker.DockerClient:
 
 
 def _stop_neo4j_service_docker(docker_client: docker.DockerClient):
+    """Helper function to stop the neo4j service docker container
+
+    Args:
+        docker_client (docker.DockerClient): The docker client to use
+    """
     try:
         docker_client.containers.get('neo4j-content').remove(force=True)
     except Exception as e:
@@ -41,21 +54,26 @@ def _stop_neo4j_service_docker(docker_client: docker.DockerClient):
 
 
 def _wait_until_service_is_up():
+    """Helper function to wait until service is up
+    """
     s = requests.Session()
 
     retries = Retry(
         total=10,
         backoff_factor=0.1
     )
-    # suppress warning from urllib3
-    # urllib3.disable_warnings(urllib3.exceptions.ConnectionError)
     s.mount('http://localhost', HTTPAdapter(max_retries=retries))
     s.get('http://localhost:7474')
 
 
 def start_neo4j_service(use_docker: bool = True):
+    """Starting the neo4j service
+
+    Args:
+        use_docker (bool, optional): Whether use docker or run locally. Defaults to True.
+    """
     if not use_docker:
-        neo4j_admin_command('set-initial-password', f'neo4j - admin set - initial - password {NEO4J_PASSWORD}')
+        _neo4j_admin_command('set-initial-password', f'neo4j - admin set - initial - password {NEO4J_PASSWORD}')
         run_command('neo4j start', cwd=REPO_PATH / 'neo4j', is_silenced=False)
 
     else:
@@ -74,6 +92,11 @@ def start_neo4j_service(use_docker: bool = True):
 
 
 def stop_neo4j_service(use_docker: bool):
+    """Stop the neo4j service
+
+    Args:
+        use_docker (bool): Whether stop the sercive using docker or not.
+    """
     if not use_docker:
         run_command('neo4j stop', cwd=REPO_PATH / 'neo4j', is_silenced=False)
     else:
@@ -81,7 +104,13 @@ def stop_neo4j_service(use_docker: bool):
         _stop_neo4j_service_docker(docker_client)
 
 
-def neo4j_admin_command(name: str, command: str):
+def _neo4j_admin_command(name: str, command: str):
+    """Helper function to run neo4j admin command
+
+    Args:
+        name (str): name of the command
+        command (str): The neo4j admin command to run
+    """
     if IS_NEO4J_ADMIN_AVAILABLE:
         run_command(command, cwd=REPO_PATH / 'neo4j', is_silenced=False)
     else:
@@ -90,19 +119,24 @@ def neo4j_admin_command(name: str, command: str):
             docker_client.containers.get(f'neo4j-{name}').remove(force=True)
         except Exception as e:
             logger.info(f'Could not remove neo4j container: {e}')
-        docker_client.containers.run(image=NEO4J_ADMIN_IMAGE,
-                                     name=f'neo4j-{name}',
-                                     remove=True,
-                                     volumes=[f'{REPO_PATH}/neo4j/data:/data', f'{REPO_PATH}/neo4j/backups:/backups'],
-                                     command=command,
-                                     )
+        docker_client.containers.run(
+            image=NEO4J_ADMIN_IMAGE,
+            name=f'neo4j-{name}',
+            remove=True,
+            volumes=[f'{REPO_PATH}/neo4j/data:/data', f'{REPO_PATH}/neo4j/backups:/backups'],
+            command=command,
+        )
 
 
 def dump():
+    """Dump the content graph to a file
+    """
     command = f'neo4j-admin dump --database=neo4j --to={"/backups/content-graph.dump" if IS_NEO4J_ADMIN_AVAILABLE else REPO_PATH / "neo4" / "content-graph.dump"}'
-    neo4j_admin_command('dump', command)
+    _neo4j_admin_command('dump', command)
 
 
 def load():
+    """Load the content graph from a file
+    """
     command = f'neo4j-admin load --database=neo4j --from={"/backups/content-graph.dump" if IS_NEO4J_ADMIN_AVAILABLE else REPO_PATH / "neo4" / "content-graph.dump"}'
-    neo4j_admin_command('load', command)
+    _neo4j_admin_command('load', command)

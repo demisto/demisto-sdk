@@ -209,7 +209,11 @@ class TestCreateContentGraph:
                 mock_relationship(
                     f'{ContentTypes.INTEGRATION}:SampleIntegration',
                     f'{ContentTypes.PACK}:SamplePack'
-                )
+                ),
+                mock_relationship(
+                    f'{ContentTypes.SCRIPT}:SampleScript',
+                    f'{ContentTypes.PACK}:SamplePack'
+                ),
             ],
             Rel.HAS_COMMAND: [
                 mock_relationship(
@@ -261,7 +265,12 @@ class TestCreateContentGraph:
         interface = create_content_graph(use_existing=True)
         content_items = interface.get_packs_content_items(marketplace=MarketplaceVersions.XSOAR)
         assert len(content_items) == 1
-        
+        assert content_items[0]['pack']['name'] == 'SamplePack'
+        assert all(
+            content_item['name'] in ['SampleIntegration', 'SampleScript']
+            for content_item in content_items[0]['content_items']
+        )
+        assert False  # todo: complete assertions on relationships
 
     def test_stop_content_graph(self):
         """

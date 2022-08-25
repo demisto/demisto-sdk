@@ -10,7 +10,8 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints impo
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (create_nodes,
                                                                               duplicates_exist,
                                                                               get_packs_content_items,
-                                                                              get_all_integrations_with_commands)
+                                                                              get_all_integrations_with_commands,
+                                                                              delete_all_graph_nodes)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import create_relationships
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (create_pack_dependencies,
                                                                                      get_first_level_dependencies,
@@ -102,7 +103,13 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             result = get_all_integrations_with_commands(tx)
             tx.close()
         return result
-    
+
+    def delete_all_graph_nodes_and_relationships(self):
+        with self.driver.session() as session:
+            tx: neo4j.Transaction = session.begin_transaction()
+            delete_all_graph_nodes(tx)
+            tx.close()
+
     def run_single_query(self, query: str, parameters: Optional[Dict[str, Any]] = None) -> neo4j.Result:
         with self.driver.session() as session:
             tx: neo4j.Transaction = session.begin_transaction()

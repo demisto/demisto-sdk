@@ -2,7 +2,6 @@ import logging
 
 import docker
 import requests
-import urllib3
 from demisto_sdk.commands.common.tools import run_command
 from requests.adapters import HTTPAdapter, Retry
 
@@ -128,15 +127,19 @@ def _neo4j_admin_command(name: str, command: str):
         )
 
 
-def dump():
+def dump(use_docker=True):
     """Dump the content graph to a file
     """
+    stop_neo4j_service(use_docker)
     command = f'neo4j-admin dump --database=neo4j --to={"/backups/content-graph.dump" if IS_NEO4J_ADMIN_AVAILABLE else REPO_PATH / "neo4" / "content-graph.dump"}'
     _neo4j_admin_command('dump', command)
+    start_neo4j_service(use_docker)
 
 
-def load():
+def load(use_docker=True):
     """Load the content graph from a file
     """
+    stop_neo4j_service(use_docker=True)
     command = f'neo4j-admin load --database=neo4j --from={"/backups/content-graph.dump" if IS_NEO4J_ADMIN_AVAILABLE else REPO_PATH / "neo4" / "content-graph.dump"}'
     _neo4j_admin_command('load', command)
+    start_neo4j_service(use_docker=True)

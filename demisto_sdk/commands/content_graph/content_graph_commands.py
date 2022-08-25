@@ -25,6 +25,7 @@ NEO4J_INTERFACE = Neo4jContentGraphInterface(NEO4J_DATABASE_URL, auth=(NEO4J_USE
 def create_content_graph(
     use_docker: bool = True,
     use_existing: bool = False,
+    should_dump: bool = False,
 ) -> ContentGraphInterface:
     """This function creates a new content graph database in neo4j from the content path
 
@@ -40,6 +41,8 @@ def create_content_graph(
         neo4j_service.start_neo4j_service(use_docker)
     content_graph_builder = ContentGraphBuilder(REPO_PATH, NEO4J_INTERFACE)
     content_graph_builder.create_graph()
+    if should_dump:
+        neo4j_service.dump(use_docker=use_docker)
     return content_graph_builder.content_graph
 
 
@@ -59,8 +62,7 @@ def load_content_graph(
     """
     if content_graph_path and content_graph_path.is_file():
         shutil.copy(content_graph_path, REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump')
-    neo4j_service.load()
-    neo4j_service.start_neo4j_service(use_docker)
+    neo4j_service.load(use_docker=use_docker)
     content_graph_builder = ContentGraphBuilder(REPO_PATH, NEO4J_INTERFACE)
     logger.info('Content Graph was loaded')
     return content_graph_builder.content_graph

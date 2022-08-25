@@ -9,7 +9,7 @@ from demisto_sdk.commands.content_graph.common import ContentTypes, Rel, Relatio
 from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.parsers.content_item import NotAContentItem
-from demisto_sdk.commands.content_graph.tests.common import load_json, load_yaml
+from demisto_sdk.commands.content_graph.tests.tests_utils import load_json, load_yaml
 
 
 def content_items_to_node_ids(content_items_dict: Dict[ContentTypes, List[str]]) -> Set[str]:

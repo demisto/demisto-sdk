@@ -108,6 +108,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             tx: neo4j.Transaction = session.begin_transaction()
             delete_all_graph_nodes(tx)
+            tx.commit()
             tx.close()
 
     def run_single_query(self, query: str, parameters: Optional[Dict[str, Any]] = None) -> neo4j.Result:

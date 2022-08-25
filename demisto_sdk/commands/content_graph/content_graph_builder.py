@@ -38,7 +38,7 @@ def dump_pickle(url: str, data: Any) -> None:
 
 
 class ContentGraphBuilder:
-    def __init__(self, repo_path: Path, content_graph: ContentGraphInterface):
+    def __init__(self, repo_path: Path, content_graph: ContentGraphInterface, clean_graph: bool = True):
         """ Given a repo path and graph DB interface:
         1. Creates a repository model
         2. Collects all nodes and relationships from the model
@@ -48,6 +48,8 @@ class ContentGraphBuilder:
             content_graph (ContentGraphInterface): The interface to create the graph with.
         """
         self.content_graph = content_graph
+        if clean_graph:
+            self.content_graph.delete_all_graph_nodes_and_relationships()
         self.nodes: Nodes = Nodes()
         self.relationships: Relationships = Relationships()
         self.repository: Repository = self._create_repository(repo_path)

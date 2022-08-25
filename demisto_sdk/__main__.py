@@ -2283,8 +2283,8 @@ def error_code(config, **kwargs):
     '-h', '--help'
 )
 @click.option('-nd', '--no-use-docker', is_flag=True, help="Use docker to run the content graph")
-@click.option('-ks', '--keep-service', is_flag=True, help="Keep the service running", default=False)
 @click.option('-us', '--use-existing', is_flag=True, help="Use existing service", default=False)
+@click.option('-sd', '--should-dump', is_flag=True, help="Dump the graph to a file", default=False)
 @click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
               type=click.IntRange(0, 3, clamp=True), default=2, show_default=True)
 @click.option('-q', "--quiet", is_flag=True, help="Quiet output, only output results in the end")
@@ -2297,7 +2297,7 @@ def create_content_graph(no_use_docker, keep_service, use_existing, **kwargs):
                   quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
                   log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
 
-    create_content_graph(use_docker=not no_use_docker, keep_service=keep_service, use_existing=use_existing)
+    create_content_graph(use_docker=not no_use_docker, use_existing=use_existing)
 
 
 @main.command(
@@ -2308,7 +2308,6 @@ def create_content_graph(no_use_docker, keep_service, use_existing, **kwargs):
     '-h', '--help'
 )
 @click.option('-nd', '--no-use-docker', is_flag=True, help="Use docker to run the content graph", default=False)
-@click.option('-ks', '--keep-service', is_flag=True, help="Keep the service running", default=False)
 @click.option('-cgp', '--content-graph-path', help="Path to the content graph", default=None, type=click.Path(resolve_path=True))
 @click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
               type=click.IntRange(0, 3, clamp=True), default=2, show_default=True)
@@ -2322,7 +2321,7 @@ def load_content_graph(no_use_docker: bool, keep_service: bool, content_graph_pa
                   quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
                   log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
 
-    load_content_graph(use_docker=not no_use_docker, keep_service=keep_service, content_graph_path=content_graph_path)
+    load_content_graph(use_docker=not no_use_docker, content_graph_path=content_graph_path)
 
 
 @main.result_callback()

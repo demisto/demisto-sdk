@@ -4,7 +4,7 @@ from neo4j import Transaction, Result
 from typing import Any, Dict
 
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes
+from demisto_sdk.commands.content_graph.common import ContentTypes
 
 import logging
 

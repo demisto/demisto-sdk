@@ -31,14 +31,6 @@ class Rel(enum.Enum):
     def __str__(self):
         return self.value
 
-    @staticmethod
-    def props_existence_constraints() -> Dict['Rel', List[str]]:
-        constraints = {
-            Rel.DEPENDS_ON: ['mandatorily'],
-        }
-        assert all(len(props) == 1 for props in constraints.values())  # constraints query limitation
-        return constraints
-
 
 class ContentTypes(str, enum.Enum):
     BASE_CONTENT = 'BaseContent'

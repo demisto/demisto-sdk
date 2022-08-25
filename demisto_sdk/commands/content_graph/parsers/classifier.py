@@ -1,15 +1,23 @@
 from pathlib import Path
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes
-from demisto_sdk.commands.content_graph.parsers.content_item import IncorrectParser, JSONContentItemParser
+from demisto_sdk.commands.content_graph.common import ContentTypes
+from demisto_sdk.commands.content_graph.parsers.content_item import IncorrectParser
+from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
 from demisto_sdk.commands.content_graph.parsers.mapper import MapperParser
 
 
 class ClassifierParser(JSONContentItemParser, content_type=ContentTypes.CLASSIFIER):
     def __init__(self, path: Path) -> None:
+        """ Parses the classifier.
+
+        Args:
+            path (Path): The classifier's path.
+
+        Raises:
+            IncorrectParser: When detecting this content item is a mapper.
+        """
         super().__init__(path)
 
-        print(f'Parsing {self.content_type} {self.object_id}')
         self.type = self.json_data.get('type')
         if self.type != 'classification':
             raise IncorrectParser(correct_parser=MapperParser)
@@ -37,6 +45,8 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentTypes.CLASSIFI
                 self.add_dependency(transformer_script, ContentTypes.SCRIPT)
 
     def connect_to_dependencies(self) -> None:
+        """ Collects the incident types, filters and transformers used in the classifier as required dependencies.
+        """
         if default_incident_type := self.json_data.get('defaultIncidentType'):
             self.add_dependency(default_incident_type, ContentTypes.INCIDENT_TYPE)
 

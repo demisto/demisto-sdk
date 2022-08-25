@@ -1,7 +1,7 @@
 from neo4j import Transaction, Result
 from typing import List
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes
+from demisto_sdk.commands.content_graph.common import ContentTypes
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query
 
 

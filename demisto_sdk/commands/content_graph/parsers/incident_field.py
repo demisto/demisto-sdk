@@ -1,13 +1,12 @@
 from pathlib import Path
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes
-from demisto_sdk.commands.content_graph.parsers.content_item import JSONContentItemParser
+from demisto_sdk.commands.content_graph.common import ContentTypes
+from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
 
 
 class IncidentFieldParser(JSONContentItemParser, content_type=ContentTypes.INCIDENT_FIELD):
     def __init__(self, path: Path) -> None:
         super().__init__(path)
-        print(f'Parsing {self.content_type} {self.object_id}')
         self.cli_name = self.json_data.get('cliName')
         self.field_type = self.json_data.get('type')
         self.associated_to_all = self.json_data.get('associatedToAll')
@@ -23,6 +22,8 @@ class IncidentFieldParser(JSONContentItemParser, content_type=ContentTypes.INCID
         return self.json_data.get('cliName')
 
     def connect_to_dependencies(self) -> None:
+        """ Collects incident types used as optional dependencies, and scripts as mandatory dependencies.
+        """
         for associated_type in set(self.json_data.get('associatedTypes') or []):
             self.add_dependency(associated_type, ContentTypes.INCIDENT_TYPE, is_mandatory=False)
 

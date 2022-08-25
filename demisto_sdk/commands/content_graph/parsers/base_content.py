@@ -1,16 +1,16 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes
+from demisto_sdk.commands.content_graph.common import ContentTypes
 
 
 class BaseContentParser(ABC):
     """ An abstract class for all content types.
 
     Attributes:
-        object_id    (str):          The content object ID.
+        object_id (str): The content object ID.
         content_type (ContentTypes): The content object type.
-        node_id      (str):          The content object node ID.
+        node_id (str): The content object node ID.
     """
     
     def __init__(self, path: Path) -> None:

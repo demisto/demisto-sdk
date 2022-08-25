@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from typing import Any, Generator, Iterator, List, Optional
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes, Nodes, Relationships
+from demisto_sdk.commands.content_graph.common import ContentTypes, Nodes, Relationships
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -67,6 +67,8 @@ class PackContentItems(BaseModel):
     xsiam_report: List[XSIAMReport] = Field([], alias=ContentTypes.XSIAM_REPORT.value)
 
     def __iter__(self) -> Generator[ContentItem, Any, Any]:
+        """ Defines the iteration of the object. Each iteration yields a single content item.
+        """
         for content_items in vars(self).values():
             for content_item in content_items:
                 yield content_item

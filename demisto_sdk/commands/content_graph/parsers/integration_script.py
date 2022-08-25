@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from pathlib import Path
 
-from demisto_sdk.commands.content_graph.parsers.content_item import YAMLContentItemParser
+from demisto_sdk.commands.content_graph.parsers.yaml_content_item import YAMLContentItemParser
 from demisto_sdk.commands.unify.integration_script_unifier import \
     IntegrationScriptUnifier
 

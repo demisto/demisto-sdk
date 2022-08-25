@@ -4,7 +4,7 @@ from pydantic import BaseModel, DirectoryPath, Field
 from typing import Any, Dict, List
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
-from demisto_sdk.commands.content_graph.constants import ContentTypes
+from demisto_sdk.commands.content_graph.common import ContentTypes
 
 
 class BaseContent(ABC, BaseModel):
@@ -14,9 +14,9 @@ class BaseContent(ABC, BaseModel):
     node_id: str
 
     class Config:
-        arbitrary_types_allowed = True
-        orm_mode = True
-        allow_population_by_field_name = True
+        arbitrary_types_allowed = True  # allows having custom classes for properties in model
+        orm_mode = True  # allows using from_orm() method
+        allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
 
     def to_dict(self) -> Dict[str, Any]:
         return json.loads(self.json())

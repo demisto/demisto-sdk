@@ -1,102 +1,101 @@
+import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterator, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_json
-from demisto_sdk.commands.content_graph.constants import (
+from demisto_sdk.commands.content_graph.common import (
     ContentTypes,
     PACK_METADATA_FILENAME,
     Relationships
 )
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
-from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
+from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser, NotAContentItem
+
+
+logger = logging.getLogger('demisto-sdk')
+
+
+class ContentItemsList(list):
+    """ An extension for list - a list of a specific content type.
+
+    Attributes:
+        content_type (ContentTypes): The content types allowed to be included in this list.
+    """
+    def __init__(self, content_type: ContentTypes):
+        self.content_type: ContentTypes = content_type
+        super().__init__()
+
+    def append_conditionally(self, content_item: ContentItemParser) -> bool:
+        """ Appends if the content item is in the correct type.
+
+        Args:
+            content_item (ContentItemParser): The content item.
+
+        Returns:
+            bool: True iff the content item was appended.
+        """
+        if isinstance(content_item, ContentItemParser) and content_item.content_type == self.content_type:
+            self.append(content_item)
+            return True
+        return False
 
 
 class PackContentItems:
+    """ A class that holds all pack's content items in lists by their types.
+    """
     def __init__(self) -> None:
-        self.classifier: List[ContentItemParser] = []
-        self.correlation_rule: List[ContentItemParser] = []
-        self.dashboard: List[ContentItemParser] = []
-        self.generic_definition: List[ContentItemParser] = []
-        self.generic_module: List[ContentItemParser] = []
-        self.generic_type: List[ContentItemParser] = []
-        self.incident_field: List[ContentItemParser] = []
-        self.incident_type: List[ContentItemParser] = []
-        self.indicator_field: List[ContentItemParser] = []
-        self.indicator_type: List[ContentItemParser] = []
-        self.integration: List[ContentItemParser] = []
-        self.job: List[ContentItemParser] = []
-        self.layout: List[ContentItemParser] = []
-        self.list: List[ContentItemParser] = []
-        self.mapper: List[ContentItemParser] = []
-        self.modeling_rule: List[ContentItemParser] = []
-        self.parsing_rule: List[ContentItemParser] = []
-        self.playbook: List[ContentItemParser] = []
-        self.report: List[ContentItemParser] = []
-        self.script: List[ContentItemParser] = []
-        self.test_playbook: List[ContentItemParser] = []
-        self.trigger: List[ContentItemParser] = []
-        self.widget: List[ContentItemParser] = []
-        self.wizard: List[ContentItemParser] = []
-        self.xsiam_dashboard: List[ContentItemParser] = []
-        self.xsiam_report: List[ContentItemParser] = []
-    
+        self.classifier = ContentItemsList(content_type=ContentTypes.CLASSIFIER)
+        self.correlation_rule = ContentItemsList(content_type=ContentTypes.CORRELATION_RULE)
+        self.dashboard = ContentItemsList(content_type=ContentTypes.DASHBOARD)
+        self.generic_definition = ContentItemsList(content_type=ContentTypes.GENERIC_DEFINITION)
+        self.generic_module = ContentItemsList(content_type=ContentTypes.GENERIC_MODULE)
+        self.generic_type = ContentItemsList(content_type=ContentTypes.GENERIC_TYPE)
+        self.incident_field = ContentItemsList(content_type=ContentTypes.INCIDENT_FIELD)
+        self.incident_type = ContentItemsList(content_type=ContentTypes.INCIDENT_TYPE)
+        self.indicator_field = ContentItemsList(content_type=ContentTypes.INDICATOR_FIELD)
+        self.indicator_type = ContentItemsList(content_type=ContentTypes.INDICATOR_TYPE)
+        self.integration = ContentItemsList(content_type=ContentTypes.INTEGRATION)
+        self.job = ContentItemsList(content_type=ContentTypes.JOB)
+        self.layout = ContentItemsList(content_type=ContentTypes.LAYOUT)
+        self.list = ContentItemsList(content_type=ContentTypes.LIST)
+        self.mapper = ContentItemsList(content_type=ContentTypes.MAPPER)
+        self.modeling_rule = ContentItemsList(content_type=ContentTypes.MODELING_RULE)
+        self.parsing_rule = ContentItemsList(content_type=ContentTypes.PARSING_RULE)
+        self.playbook = ContentItemsList(content_type=ContentTypes.PLAYBOOK)
+        self.report = ContentItemsList(content_type=ContentTypes.REPORT)
+        self.script = ContentItemsList(content_type=ContentTypes.SCRIPT)
+        self.test_playbook = ContentItemsList(content_type=ContentTypes.TEST_PLAYBOOK)
+        self.trigger = ContentItemsList(content_type=ContentTypes.TRIGGER)
+        self.widget = ContentItemsList(content_type=ContentTypes.WIDGET)
+        self.wizard = ContentItemsList(content_type=ContentTypes.WIZARD)
+        self.xsiam_dashboard = ContentItemsList(content_type=ContentTypes.XSIAM_DASHBOARD)
+        self.xsiam_report = ContentItemsList(content_type=ContentTypes.XSIAM_REPORT)
+
+    def iter_lists(self) -> Iterator[ContentItemsList]:
+        for attribute in vars(self).values():
+            yield attribute
+
     def append(self, obj: ContentItemParser) -> None:
-        if obj.content_type == ContentTypes.CLASSIFIER:
-            self.classifier.append(obj)
-        elif obj.content_type == ContentTypes.CORRELATION_RULE:
-            self.correlation_rule.append(obj)
-        elif obj.content_type == ContentTypes.DASHBOARD:
-            self.dashboard.append(obj)
-        elif obj.content_type == ContentTypes.GENERIC_DEFINITION:
-            self.generic_definition.append(obj)
-        elif obj.content_type == ContentTypes.GENERIC_MODULE:
-            self.generic_module.append(obj)
-        elif obj.content_type == ContentTypes.GENERIC_TYPE:
-            self.generic_type.append(obj)
-        elif obj.content_type == ContentTypes.INCIDENT_FIELD:
-            self.incident_field.append(obj)
-        elif obj.content_type == ContentTypes.INCIDENT_TYPE:
-            self.incident_type.append(obj)
-        elif obj.content_type == ContentTypes.INDICATOR_FIELD:
-            self.indicator_field.append(obj)
-        elif obj.content_type == ContentTypes.INDICATOR_TYPE:
-            self.indicator_type.append(obj)
-        elif obj.content_type == ContentTypes.INTEGRATION:
-            self.integration.append(obj)
-        elif obj.content_type == ContentTypes.JOB:
-            self.job.append(obj)
-        elif obj.content_type == ContentTypes.LAYOUT:
-            self.layout.append(obj)
-        elif obj.content_type == ContentTypes.LIST:
-            self.list.append(obj)
-        if obj.content_type == ContentTypes.MAPPER:
-            self.mapper.append(obj)
-        elif obj.content_type == ContentTypes.MODELING_RULE:
-            self.modeling_rule.append(obj)
-        elif obj.content_type == ContentTypes.PARSING_RULE:
-            self.parsing_rule.append(obj)
-        elif obj.content_type == ContentTypes.PLAYBOOK:
-            self.playbook.append(obj)
-        elif obj.content_type == ContentTypes.REPORT:
-            self.report.append(obj)
-        elif obj.content_type == ContentTypes.SCRIPT:
-            self.script.append(obj)
-        elif obj.content_type == ContentTypes.TEST_PLAYBOOK:
-            self.test_playbook.append(obj)
-        elif obj.content_type == ContentTypes.TRIGGER:
-            self.trigger.append(obj)
-        elif obj.content_type == ContentTypes.WIDGET:
-            self.widget.append(obj)
-        elif obj.content_type == ContentTypes.WIZARD:
-            self.wizard.append(obj)
-        elif obj.content_type == ContentTypes.XSIAM_DASHBOARD:
-            self.xsiam_dashboard.append(obj)
-        elif obj.content_type == ContentTypes.XSIAM_REPORT:
-            self.xsiam_report.append(obj)
+        """ Appends a content item by iterating the content item lists
+        until finds the correct list and appends to it.
+
+        Args:
+            obj (ContentItemParser): The conten item to append.
+
+        Raises:
+            NotAContentItem: If did not find any matching content item list.
+        """
+        for content_item_list in self.iter_lists():
+            if content_item_list.append_conditionally(obj):
+                break
+        else:
+            raise NotAContentItem
 
 
 class PackMetadataParser:
+    """ A pack metadata parser.
+    """
     def __init__(self, metadata: Dict[str, Any]) -> None:
         self.name: str = metadata['name']
         self.description: str = metadata['description']
@@ -122,15 +121,27 @@ class PackMetadataParser:
 
 
 class PackParser(BaseContentParser, PackMetadataParser):
+    """ A parsed representation of a pack.
+
+    Attributes:
+        marketplaces (List[MarketplaceVersions]): The marketplaces supporting this pack.
+        content_items (PackContentItems): A collection of this pack's content item parsers.
+        relationships (Relationships): A collection of the relationships in this pack.
+    """
     def __init__(self, path: Path) -> None:
+        """ Parses a pack and its content items.
+
+        Args:
+            path (Path): The pack path.
+        """
         BaseContentParser.__init__(self, path)
         metadata: Dict[str, Any] = get_json(path / PACK_METADATA_FILENAME)
         PackMetadataParser.__init__(self, metadata)
-        print(f'Parsing {self.content_type} {self.object_id}')
         self.marketplaces = metadata.get('marketplaces', list(MarketplaceVersions))
         self.content_items: PackContentItems = PackContentItems()
         self.relationships: Relationships = Relationships()
         self.parse_pack_folders()
+        logger.info(f'Parsed {self.node_id}')
 
     @property
     def object_id(self) -> str:
@@ -141,13 +152,19 @@ class PackParser(BaseContentParser, PackMetadataParser):
         return ContentTypes.PACK
 
     def parse_pack_folders(self) -> None:
+        """ Parses all pack content items by iterating its folders.
+        """
         for folder_path in ContentTypes.pack_folders(self.path):
             for content_item_path in folder_path.iterdir():  # todo: consider multiprocessing
                 self.parse_content_item(content_item_path)
 
-    def parse_content_item(self, content_item_path) -> None:
+    def parse_content_item(self, content_item_path: Path) -> None:
+        """ Potentially parses a single content item.
+
+        Args:
+            content_item_path (Path): The content item path.
+        """
         if content_item := ContentItemParser.from_path(content_item_path):
             content_item.add_to_pack(self.node_id)
             self.content_items.append(content_item)
             self.relationships.update(content_item.relationships)
-            

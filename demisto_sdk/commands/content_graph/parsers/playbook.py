@@ -30,10 +30,6 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentTypes.PLAYBOOK):
     @property
     def object_id(self) -> str:
         return self.yml_data.get('id')
-
-    @property
-    def content_type(self) -> ContentTypes:
-        return ContentTypes.PLAYBOOK
     
     def is_mandatory_dependency(self, task_id: str) -> bool:
         try:

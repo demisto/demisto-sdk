@@ -22,7 +22,3 @@ class TestPlaybookParser(PlaybookParser, content_type=ContentTypes.TEST_PLAYBOOK
         if self.yml_data.get('script'):
             raise IncorrectParser(correct_parser=ScriptParser, is_test=True)
 
-
-    @property
-    def content_type(self) -> ContentTypes:
-        return ContentTypes.TEST_PLAYBOOK

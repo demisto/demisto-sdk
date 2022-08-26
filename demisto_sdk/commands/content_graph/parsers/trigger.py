@@ -11,10 +11,6 @@ class TriggerParser(JSONContentItemParser, content_type=ContentTypes.TRIGGER):
         self.connect_to_dependencies()
 
     @property
-    def content_type(self) -> ContentTypes:
-        return ContentTypes.TRIGGER
-
-    @property
     def object_id(self) -> str:
         return self.json_data.get('trigger_id')
 

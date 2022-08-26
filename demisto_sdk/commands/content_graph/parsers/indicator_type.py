@@ -14,10 +14,6 @@ class IndicatorTypeParser(JSONContentItemParser, content_type=ContentTypes.INDIC
         self.enhancement_script_names: List[str] = self.json_data.get('enhancementScriptNames')
 
     @property
-    def content_type(self) -> ContentTypes:
-        return ContentTypes.INDICATOR_TYPE
-
-    @property
     def name(self) -> str:
         return self.json_data.get('details')
 

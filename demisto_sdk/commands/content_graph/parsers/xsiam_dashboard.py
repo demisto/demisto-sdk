@@ -12,7 +12,3 @@ class XSIAMDashboardParser(JSONContentItemParser, content_type=ContentTypes.XSIA
     @property
     def object_id(self) -> str:
         return self.json_data['global_id']
-
-    @property
-    def content_type(self) -> ContentTypes:
-        return ContentTypes.XSIAM_DASHBOARD

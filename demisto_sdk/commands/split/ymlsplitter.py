@@ -371,12 +371,11 @@ class YmlSplitter:
 
     def split_api_module_for_contribution(self, lines: list, imported_line: str):
         imported_line_arr = imported_line.split(' ')  # example: imported_line = from CorIRApiModule import *
-        updated_lines = lines[4: len(lines) - 3]
+        updated_lines = lines[4: len(lines) - 3]  # ignore first 3 lines and last line.
         if len(imported_line_arr) >= 3 and imported_line_arr[0] == 'from' and imported_line_arr[2] == 'import':
             module_name = imported_line_arr[1]
-            module_path = os.path.join('./Packs', 'ApiModules', 'Scripts', module_name, module_name + '.py')
-            self.api_module_path = module_path
-            with open(module_path, 'w') as f:
+            self.api_module_path = os.path.join('./Packs', 'ApiModules', 'Scripts', module_name, module_name + '.py')
+            with open(self.api_module_path, 'w') as f:
                 f.write('from CommonServerPython import *  # noqa: F401\n')
                 f.write('import demistomock as demisto  # noqa: F401\n')
                 f.write('\n'.join(updated_lines))

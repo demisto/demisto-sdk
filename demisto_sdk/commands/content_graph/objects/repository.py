@@ -1,4 +1,5 @@
 from pathlib import Path
+import shutil
 import zipfile
 from pydantic import BaseModel, DirectoryPath
 from typing import List
@@ -28,6 +29,7 @@ class Repository(BaseModel):
         with zipfile.ZipFile(dir / 'content_packs.zip', "w", zipfile.ZIP_DEFLATED) as zip_file:
             for entry in dir.rglob("*"):
                 zip_file.write(entry, entry.relative_to(dir))
+                shutil.rmtree(entry)
 
         # save everything in zip
         # sign zip

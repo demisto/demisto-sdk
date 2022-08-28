@@ -6,7 +6,7 @@
 * Added support for Indicator Types/Reputations in the **upload** command.
 * Fixed an issue when running from a subdirectory of a content repo failed.
 * Changing the way we are using XSIAM servers api-keys in ***test-content*** command.
-* Fixed an issue where the `contribution_converter` did not support contributions in the ApiModules pack.
+* Fixed an issue where the `contribution_converter` did not support changes made in the ApiModules pack.
 
 ## 1.7.2
 

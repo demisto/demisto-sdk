@@ -15,13 +15,13 @@ class TestParsingRule:
         assert isinstance(obj, ParsingRule)
 
     def test_prefix(self, pack):
-        parsing_rule = get_parsing_rule(pack, 'parsingrule-parsing_rule_name')
+        parsing_rule = get_parsing_rule(pack, 'parsingrule-external-parsing_rule_name')
         obj = ParsingRule(parsing_rule._tmpdir_rule_path)
         assert obj.normalize_file_name() == parsing_rule.yml._tmp_path.name
 
         parsing_rule = get_parsing_rule(pack, 'parsing_rule_name')
         obj = ParsingRule(parsing_rule._tmpdir_rule_path)
-        assert obj.normalize_file_name() == f"parsingrule-{parsing_rule.yml._tmp_path.name}"
+        assert obj.normalize_file_name() == f"parsingrule-external-{parsing_rule.yml._tmp_path.name}"
 
     def test_files_detection(self, pack):
         parsing_rule = get_parsing_rule(pack, 'parsing_rule_name')

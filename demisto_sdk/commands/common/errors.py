@@ -70,6 +70,8 @@ ERROR_CODE = {
     "breaking_backwards_command": {'code': "BC102", 'ui_applicable': False, 'related_field': 'contextPath'},
     "breaking_backwards_arg_changed": {'code': "BC103", 'ui_applicable': False, 'related_field': 'name'},
     "breaking_backwards_command_arg_changed": {'code': "BC104", 'ui_applicable': False, 'related_field': 'args'},
+    "file_id_changed": {'code': "BC105", 'ui_applicable': False, 'related_field': 'id'},
+    "from_version_modified": {'code': "BC106", 'ui_applicable': False, 'related_field': 'fromversion'},
 
     # CJ - conf.json
     "description_missing_from_conf_json": {'code': "CJ100", 'ui_applicable': False, 'related_field': ''},
@@ -395,8 +397,6 @@ ERROR_CODE = {
     # ST - Structures
     "structure_doesnt_match_scheme": {'code': "ST100", 'ui_applicable': False, 'related_field': ''},
     "file_id_contains_slashes": {'code': "ST101", 'ui_applicable': False, 'related_field': 'id'},
-    "file_id_changed": {'code': "ST102", 'ui_applicable': False, 'related_field': 'id'},
-    "from_version_modified": {'code': "ST103", 'ui_applicable': False, 'related_field': 'fromversion'},
     "wrong_file_extension": {'code': "ST104", 'ui_applicable': False, 'related_field': ''},
     "invalid_file_path": {'code': "ST105", 'ui_applicable': False, 'related_field': ''},
     "invalid_package_structure": {'code': "ST106", 'ui_applicable': False, 'related_field': ''},

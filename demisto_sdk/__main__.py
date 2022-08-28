@@ -1784,9 +1784,16 @@ def postman_codegen(
         # generate integration yml
         yml_path = postman_config.generate_integration_package(output, is_unified=True)
         if package:
-            yml_splitter = YmlSplitter(configuration=config.configuration, file_type=FileType.INTEGRATION.value,
-                                       input=str(yml_path), output=str(output))
+            yml_splitter = YmlSplitter(
+                configuration=config.configuration,
+                file_type=FileType.INTEGRATION,
+                input=str(yml_path),
+                output=str(output),
+            )
             yml_splitter.extract_to_package_format()
+            print_success(f'Package generated at {str(Path(output).absolute())} successfully')
+        else:
+            print_success(f'Integration generated at {str(yml_path.absolute())} successfully')
 
 
 # ====================== generate-integration ====================== #

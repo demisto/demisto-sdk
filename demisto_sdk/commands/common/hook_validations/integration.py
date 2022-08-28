@@ -76,6 +76,7 @@ class IntegrationValidator(ContentEntityValidator):
             return True
 
         answers = [
+            super().is_backward_compatible(),
             self.no_change_to_context_path(),
             self.no_removed_integration_parameters(),
             self.no_added_required_fields(),

@@ -6,11 +6,15 @@ from wcmatch.pathlib import Path
 from demisto_sdk.commands.common.constants import XSIAM_REPORT, FileType
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
     JSONContentObject
+from demisto_sdk.commands.common.tools import generate_xsiam_normalized_name
 
 
 class XSIAMReport(JSONContentObject):
     def __init__(self, path: Union[Path, str]):
         super().__init__(path, XSIAM_REPORT)
+
+    def normalize_file_name(self) -> str:
+        return generate_xsiam_normalized_name(self._path.name, XSIAM_REPORT)
 
     def upload(self, client: demisto_client):
         """

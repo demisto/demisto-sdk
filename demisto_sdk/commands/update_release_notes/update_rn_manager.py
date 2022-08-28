@@ -57,6 +57,7 @@ class UpdateReleaseNotesManager:
             get_pack_names_from_files(added_files)).union(get_pack_names_from_files(old_format_files))
         # Check whether the packs have some existing RNs already (created manually or by the command)
         self.check_existing_rn(added_files)
+
         self.handle_api_module_change(modified_files, added_files)
         self.create_release_notes(modified_files, added_files, old_format_files)
         if len(self.total_updated_packs) > 1:

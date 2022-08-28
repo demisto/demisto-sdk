@@ -20,11 +20,6 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
     create_relationships,
     get_relationships_by_type,
 )
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
-    create_pack_dependencies,
-    get_first_level_dependencies,
-    get_packs_dependencies,
-)
 
 
 class Neo4jContentGraphInterface(ContentGraphInterface):
@@ -59,43 +54,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             create_relationships(tx, relationships)
             tx.commit()
             tx.close()
-
-    def create_pack_dependencies(self) -> None:
-        with self.driver.session() as session:
-            tx: neo4j.Transaction = session.begin_transaction()
-            create_pack_dependencies(tx)
-            tx.commit()
-            tx.close()
-    
-    def get_all_level_dependencies(self, marketplace: MarketplaceVersions) -> Dict[str, Any]:
-        with self.driver.session() as session:
-            tx: neo4j.Transaction = session.begin_transaction()
-            result = get_packs_dependencies(tx, marketplace).data()
-            tx.commit()
-            tx.close()
-        return {
-            row['pack_id']: {
-                'allLevelDependencies': row['dependencies'],
-                'fullPath': row['pack_path'],
-                'path': Path(*Path(row['pack_path']).parts[-2:]).as_posix(),
-            } for row in result
-        }
-    
-    def get_first_level_dependencies(self, marketplace: MarketplaceVersions) -> Dict[str, Dict[str, Any]]:
-        with self.driver.session() as session:
-            tx: neo4j.Transaction = session.begin_transaction()
-            result = get_first_level_dependencies(tx, marketplace).data()
-            tx.commit()
-            tx.close()
-        return {
-            row['pack_id']: {
-                dependency['dependency_id']: {
-                    'mandatory': dependency['mandatory'],
-                    'display_name': dependency['display_name'],
-                }
-                for dependency in row['dependencies']
-            } for row in result
-        }
 
     def get_packs_content_items(self, marketplace: MarketplaceVersions):
         with self.driver.session() as session:

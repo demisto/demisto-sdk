@@ -21,10 +21,6 @@ class ContentGraphInterface(ABC):
     @abstractmethod
     def validate_graph(self) -> None:
         pass
-
-    @abstractmethod
-    def create_pack_dependencies(self) -> None:
-        pass
     
     @abstractmethod
     def get_packs_content_items(self, marketplace: MarketplaceVersions):

@@ -1,0 +1,242 @@
+id: 061c28c4-5381-453c-821a-f97a63a9dcb5
+version: 3
+vcShouldKeepItemLegacyProdMachine: false
+name: Good playbook
+starttaskid: "0"
+tasks:
+  "0":
+    id: "0"
+    taskid: 8fee879e-3399-4bfa-8337-50e80d71cd07
+    type: start
+    task:
+      id: 8fee879e-3399-4bfa-8337-50e80d71cd07
+      version: -1
+      name: ""
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "1"
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 450,
+          "y": 50
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  "1":
+    id: "1"
+    taskid: 4f1e9266-fc99-4f42-8024-f5ce5d67a6de
+    type: regular
+    task:
+      id: 4f1e9266-fc99-4f42-8024-f5ce5d67a6de
+      version: -1
+      name: Untitled Task
+      type: regular
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "2"
+    separatecontext: false
+    defaultassigneecomplex:
+      simple: ${incident}
+    view: |-
+      {
+        "position": {
+          "x": 450,
+          "y": 170
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  "2":
+    id: "2"
+    taskid: cdb20071-4a9c-478e-825e-602d9b23db46
+    type: condition
+    task:
+      id: cdb20071-4a9c-478e-825e-602d9b23db46
+      version: -1
+      name: Untitled Task
+      type: condition
+      iscommand: false
+      brand: ""
+    nexttasks:
+      "yes":
+      - "3"
+    separatecontext: false
+    conditions:
+    - label: "yes"
+      condition:
+      - - operator: isEqualString
+          left:
+            value:
+              simple: incident.alertmalicious
+            iscontext: true
+          right:
+            value:
+              simple: '{incident.Alert}'
+    view: |-
+      {
+        "position": {
+          "x": 450,
+          "y": 330
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  "3":
+    id: "3"
+    taskid: 228b98f2-3cc0-40c7-8cf8-6e48295b3c31
+    type: collection
+    task:
+      id: 228b98f2-3cc0-40c7-8cf8-6e48295b3c31
+      version: -1
+      name: Untitled Task
+      type: collection
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "4"
+    scriptarguments:
+      using:
+        simple: ${incident.accountid}
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 450,
+          "y": 500
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    message:
+      to:
+        simple: ${incident.agentversion}
+      subject:
+        simple: ${incident.alertname}
+      body: null
+      methods:
+      - email
+      format: ""
+      bcc: null
+      cc:
+        simple: ${incident.alertattacktime}
+      timings:
+        retriescount: 2
+        retriesinterval: 360
+        completeafterreplies: 1
+        completeafterv2: false
+        completeaftersla: false
+    form:
+      questions:
+      - id: "0"
+        label: ""
+        labelarg:
+          simple: ${incident.alerttypeid}
+        required: false
+        gridcolumns: []
+        defaultrows: []
+        type: shortText
+        options: []
+        optionsarg: []
+        fieldassociated: ""
+        placeholder: ""
+        tooltip: ""
+        readonly: false
+      title: question
+      description: ""
+      sender: ""
+      expired: false
+      totalanswers: 0
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+  "4":
+    id: "4"
+    taskid: 61fa6f3c-a670-4c17-8645-cd69fd733bbe
+    type: regular
+    task:
+      id: 61fa6f3c-a670-4c17-8645-cd69fd733bbe
+      version: -1
+      name: Untitled Task
+      description: |
+        Adds provided entries to the incident Evidence Board. In playbook, can be positioned after a task to add the previous task's entries to Evidence Board automatically (with no need to provide arguments)
+      scriptName: AddEvidence
+      type: regular
+      iscommand: false
+      brand: ""
+    scriptarguments:
+      entryIDs:
+        simple: ${incident.accountid}
+      using:
+        complex:
+          root: incident
+          filters:
+          - - operator: isEqualString
+              left:
+                value:
+                  simple: incident
+                iscontext: true
+              right:
+                value:
+                  simple: ${incident.Alert}
+          accessor: accountname
+          transformers:
+          - operator: EmailDomainBlacklist
+            args:
+              domain_list:
+                value:
+                  simple: ${inputs.tocheck}
+                iscontext: true
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 450,
+          "y": 650
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
+    isoversize: false
+    isautoswitchedtoquietmode: false
+view: |-
+  {
+    "linkLabelsPosition": {},
+    "paper": {
+      "dimensions": {
+        "height": 695,
+        "width": 380,
+        "x": 450,
+        "y": 50
+      }
+    }
+  }
+inputs: []
+outputs: []

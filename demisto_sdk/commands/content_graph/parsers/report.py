@@ -10,10 +10,6 @@ class ReportParser(JSONContentItemParser, content_type=ContentTypes.REPORT):
 
         self.connect_to_dependencies()
 
-    @property
-    def content_type(self) -> ContentTypes:
-        return ContentTypes.REPORT
-
     def connect_to_dependencies(self) -> None:
         """ Collects scripts used in the report as optional dependencies.
         """

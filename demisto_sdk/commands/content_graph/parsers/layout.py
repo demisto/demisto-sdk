@@ -28,10 +28,6 @@ class LayoutParser(JSONContentItemParser, content_type=ContentTypes.LAYOUT):
 
         self.connect_to_dependencies()
 
-    @property
-    def content_type(self) -> ContentTypes:
-        return ContentTypes.LAYOUT
-
     def connect_to_dependencies(self) -> None:
         """ Collects the incident/indicator fields used as optional dependencies.
         """

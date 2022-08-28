@@ -8,7 +8,3 @@ class GenericModuleParser(JSONContentItemParser, content_type=ContentTypes.GENER
     def __init__(self, path: Path) -> None:
         super().__init__(path)
         self.definition_ids = self.json_data.get('definitionIds')
-
-    @property
-    def content_type(self) -> ContentTypes:
-        return ContentTypes.GENERIC_MODULE

@@ -5,31 +5,11 @@ from typing import Dict, List, Optional, Set
 from TestSuite.pack import Pack
 from TestSuite.repo import Repo
 from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION, MarketplaceVersions
-from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.content_graph.common import ContentTypes, Rel, Relationships
 from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.parsers.content_item import NotAContentItem
-
-
-TEST_DATA_PATH = Path(git_path()) / 'demisto_sdk' / 'commands' / 'content_graph' / 'tests' / 'test_data'
-
-
-json = JSON_Handler()
-yaml = YAML_Handler()
-
-
-def load_json(file_path: str):
-    full_path = (TEST_DATA_PATH / file_path).as_posix()
-    with open(full_path, mode='r') as f:
-        return json.load(f)
-
-
-def load_yaml(file_path: str):
-    full_path = (TEST_DATA_PATH / file_path).as_posix()
-    with open(full_path, mode='r') as f:
-        return yaml.load(f)
+from demisto_sdk.commands.content_graph.tests.tests_utils import load_json, load_yaml
 
 
 def content_items_to_node_ids(content_items_dict: Dict[ContentTypes, List[str]]) -> Set[str]:

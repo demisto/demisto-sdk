@@ -38,7 +38,7 @@ def dump_pickle(url: str, data: Any) -> None:
 
 
 class ContentGraphBuilder:
-    def __init__(self, repo_path: Path, content_graph: ContentGraphInterface):
+    def __init__(self, repo_path: Path, content_graph: ContentGraphInterface, clean_graph: bool = True):
         """ Given a repo path and graph DB interface:
         1. Creates a repository model
         2. Collects all nodes and relationships from the model
@@ -48,6 +48,8 @@ class ContentGraphBuilder:
             content_graph (ContentGraphInterface): The interface to create the graph with.
         """
         self.content_graph = content_graph
+        if clean_graph:
+            self.content_graph.delete_all_graph_nodes_and_relationships()
         self.nodes: Nodes = Nodes()
         self.relationships: Relationships = Relationships()
         self.repository: Repository = self._create_repository(repo_path)
@@ -71,7 +73,7 @@ class ContentGraphBuilder:
                 repository_parser = RepositoryParser(path)
                 dump_pickle(REPO_PARSER_PKL_PATH.as_posix(), repository_parser)
             except Exception:
-                print(traceback.format_exc())
+                logger.error(traceback.format_exc())
                 raise
         return Repository.from_orm(repository_parser)
 
@@ -82,20 +84,6 @@ class ContentGraphBuilder:
         self.content_graph.create_nodes(self.nodes)
         self.content_graph.create_relationships(self.relationships)
         self.content_graph.validate_graph()
-
-    # def build_modified_packs_paths(self, packs: List[str]) -> Iterator[Path]:
-    #     for pack_id in packs:
-    #         pack_path = Path(self.packs_path / pack_id)
-    #         if not pack_path.is_dir():
-    #             raise Exception(f'Could not find path of pack {pack_id}.')
-    #         yield pack_path
-
-    # def parse_modified_packs(self) -> None:
-    #     packs = self.get_modified_packs()
-    #     self.delete_modified_packs_from_graph(packs)
-    #     packs_paths = self.build_modified_packs_paths(packs)
-    #     self.parse_packs(packs_paths)
-    #     self.create_graph()
 
     def delete_modified_packs_from_graph(self, packs: List[str]) -> None:
         pass

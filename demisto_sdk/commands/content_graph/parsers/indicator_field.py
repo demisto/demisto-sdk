@@ -14,10 +14,6 @@ class IndicatorFieldParser(JSONContentItemParser, content_type=ContentTypes.INDI
         self.connect_to_dependencies()
 
     @property
-    def content_type(self) -> ContentTypes:
-        return ContentTypes.INDICATOR_FIELD
-
-    @property
     def object_id(self) -> str:
         return self.json_data.get('cliName')
     

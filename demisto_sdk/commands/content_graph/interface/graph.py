@@ -29,9 +29,13 @@ class ContentGraphInterface(ABC):
     @abstractmethod
     def get_packs_content_items(self, marketplace: MarketplaceVersions):
         pass
-    
+
     @abstractmethod
     def get_all_integrations_with_commands(self):
+        pass
+
+    @abstractmethod
+    def delete_all_graph_nodes_and_relationships(self):
         pass
     
     @abstractmethod

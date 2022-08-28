@@ -118,6 +118,7 @@ class PackMetadataParser:
         self.vendor_id: Optional[str] = metadata.get('vendorId')
         self.vendor_name: Optional[str] = metadata.get('vendorName')
         self.preview_only: Optional[bool] = metadata.get('previewOnly')
+        self.marketplaces: List[MarketplaceVersions] = metadata.get('marketplaces', list(MarketplaceVersions))
 
 
 class PackParser(BaseContentParser, PackMetadataParser):
@@ -135,9 +136,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
             path (Path): The pack path.
         """
         BaseContentParser.__init__(self, path)
-        metadata: Dict[str, Any] = get_json(path / PACK_METADATA_FILENAME)
-        PackMetadataParser.__init__(self, metadata)
-        self.marketplaces = metadata.get('marketplaces', list(MarketplaceVersions))
+        PackMetadataParser.__init__(self, metadata=get_json(path / PACK_METADATA_FILENAME))
         self.content_items: PackContentItems = PackContentItems()
         self.relationships: Relationships = Relationships()
         self.parse_pack_folders()

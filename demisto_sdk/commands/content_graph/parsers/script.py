@@ -23,10 +23,6 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentTypes.SCRIPT):
         self.connect_to_tests()
 
     @property
-    def content_type(self) -> ContentTypes:
-        return ContentTypes.SCRIPT
-
-    @property
     def description(self) -> str:
         return self.yml_data.get('comment', '')
 

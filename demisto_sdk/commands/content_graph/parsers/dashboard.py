@@ -10,10 +10,6 @@ class DashboardParser(JSONContentItemParser, content_type=ContentTypes.DASHBOARD
 
         self.connect_to_dependencies()
 
-    @property
-    def content_type(self) -> ContentTypes:
-        return ContentTypes.DASHBOARD
-
     def connect_to_dependencies(self) -> None:
         """ Collects the scripts used in the dashboard as optional dependencies.
         """

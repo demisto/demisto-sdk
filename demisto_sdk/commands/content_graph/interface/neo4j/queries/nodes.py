@@ -78,3 +78,13 @@ def get_all_integrations_with_commands(
     RETURN i.object_id AS integration_id, collect(command_data) AS commands
     """
     return run_query(tx, query).data()
+
+
+def delete_all_graph_nodes(
+    tx: Transaction
+) -> None:
+    query = f"""
+    MATCH (n)
+    DETACH DELETE n
+    """
+    run_query(tx, query)

@@ -22,9 +22,8 @@ class BaseContentParser(ABC):
         pass
 
     @property
-    @abstractmethod
     def content_type(self) -> ContentTypes:
-        pass
+        raise NotImplementedError
 
     @property
     def node_id(self) -> str:

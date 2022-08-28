@@ -9,9 +9,5 @@ class ModelingRuleParser(YAMLContentItemParser, content_type=ContentTypes.MODELI
         super().__init__(path)
 
     @property
-    def content_type(self) -> ContentTypes:
-        return ContentTypes.MODELING_RULE
-
-    @property
     def object_id(self) -> str:
         return self.yml_data.get('id')

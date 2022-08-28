@@ -10,10 +10,6 @@ class XSIAMReportParser(JSONContentItemParser, content_type=ContentTypes.XSIAM_R
         self.json_data = self.json_data.get('templates_data', [{}])[0]
 
     @property
-    def content_type(self) -> ContentTypes:
-        return ContentTypes.XSIAM_REPORT
-
-    @property
     def name(self) -> str:
         return self.json_data['report_name']
 

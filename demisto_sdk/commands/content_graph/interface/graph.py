@@ -36,13 +36,9 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def get_all_level_dependencies(self, marketplace: MarketplaceVersions) -> Dict[str, Any]:
+    def delete_all_graph_nodes_and_relationships(self):
         pass
-
-    @abstractmethod
-    def get_first_level_dependencies(self, marketplace: MarketplaceVersions) -> Dict[str, Dict[str, Any]]:
-        pass
-
+    
     @abstractmethod
     def run_single_query(self, query: str, parameters: Optional[Dict[str, Any]] = None) -> Any:
         pass

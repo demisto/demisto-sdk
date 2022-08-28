@@ -11,10 +11,6 @@ class GenericTypeParser(JSONContentItemParser, content_type=ContentTypes.GENERIC
 
         self.connect_to_dependencies()
 
-    @property
-    def content_type(self) -> ContentTypes:
-        return ContentTypes.GENERIC_TYPE
-
     def connect_to_dependencies(self) -> None:
         """ Collects the layouts used in the generic type as mandatory dependencies.
         """

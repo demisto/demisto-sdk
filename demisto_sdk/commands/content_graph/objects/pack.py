@@ -109,9 +109,6 @@ class PackMetadata(BaseModel):
 
 class Pack(BaseContent, PackMetadata):
     path: Path
-    object_id: str
-    content_type: ContentTypes
-    node_id: str
     content_items: PackContentItems = Field(alias='contentItems', exclude=True)
     relationships: Relationships = Field(Relationships(), exclude=True)
     dependencies: dict = Field({}, exclude=True)

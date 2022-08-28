@@ -26,10 +26,6 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentTypes.CLASSIFI
         self.connect_to_dependencies()
 
     @property
-    def content_type(self) -> ContentTypes:
-        return ContentTypes.CLASSIFIER
-
-    @property
     def name(self) -> str:
         return self.json_data.get('name') or self.json_data.get('brandName')
 

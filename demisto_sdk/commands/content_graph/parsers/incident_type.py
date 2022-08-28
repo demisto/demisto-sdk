@@ -16,10 +16,6 @@ class IncidentTypeParser(JSONContentItemParser, content_type=ContentTypes.INCIDE
 
         self.connect_to_dependencies()
 
-    @property
-    def content_type(self) -> ContentTypes:
-        return ContentTypes.INCIDENT_TYPE
-
     def connect_to_dependencies(self) -> None:
         """ Collects the script, playbook and layout used by the incident type as mandatory dependencies.
         """

@@ -14,10 +14,6 @@ class IncidentFieldParser(JSONContentItemParser, content_type=ContentTypes.INCID
         self.connect_to_dependencies()
 
     @property
-    def content_type(self) -> ContentTypes:
-        return ContentTypes.INCIDENT_FIELD
-
-    @property
     def object_id(self) -> str:
         return self.json_data.get('cliName')
 

@@ -21,7 +21,7 @@ class IncorrectParser(Exception):
         super().__init__()
 
 
-class ParserMeta(ABCMeta):
+class ParserMetaclass(ABCMeta):
     def __new__(cls, name, bases, namespace, content_type: ContentTypes = None, **kwargs):
         """ This method is called before every creation of a ContentItemParser *class* (NOT class instances!).
         If `content_type` is passed as an argument of the class, we add a mapping between the content type
@@ -39,14 +39,14 @@ class ParserMeta(ABCMeta):
         Returns:
             ContentItemParser: The parser class.
         """
-        parser_cls = super().__new__(cls, name, bases, namespace)
+        parser_cls: Type['ContentItemParser'] = super().__new__(cls, name, bases, namespace)
         if content_type:
             ContentItemParser.content_type_to_parser[content_type] = parser_cls
-            # parser_cls.content_type: ContentTypes = content_type  # todo: consider self.content_type replacing with this
+            parser_cls.content_type: ContentTypes = content_type
         return parser_cls
 
 
-class ContentItemParser(BaseContentParser, metaclass=ParserMeta):
+class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     """ A content item parser.
 
     Static Attributes:
@@ -77,7 +77,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMeta):
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
             try:
                 parser = parser_cls(path)
-                print(f'Parsed {parser.node_id}')
+                logger.info(f'Parsed {parser.node_id}')
                 return parser
             except IncorrectParser as e:
                 return e.correct_parser(path, **e.kwargs)

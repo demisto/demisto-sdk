@@ -11,7 +11,3 @@ class CorrelationRuleParser(YAMLContentItemParser, content_type=ContentTypes.COR
     @property
     def object_id(self) -> str:
         return self.yml_data['global_rule_id']
-
-    @property
-    def content_type(self) -> ContentTypes:
-        return ContentTypes.CORRELATION_RULE

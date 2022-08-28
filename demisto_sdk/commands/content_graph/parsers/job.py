@@ -11,10 +11,6 @@ class JobParser(JSONContentItemParser, content_type=ContentTypes.JOB):
         self.connect_to_dependencies()
 
     @property
-    def content_type(self) -> ContentTypes:
-        return ContentTypes.JOB
-
-    @property
     def description(self) -> str:
         return self.json_data.get('details')
 

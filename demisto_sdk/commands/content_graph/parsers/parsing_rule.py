@@ -11,7 +11,3 @@ class ParsingRuleParser(YAMLContentItemParser, content_type=ContentTypes.PARSING
     @property
     def object_id(self) -> str:
         return self.yml_data.get('id')
-
-    @property
-    def content_type(self) -> ContentTypes:
-        return ContentTypes.PARSING_RULE

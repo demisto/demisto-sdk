@@ -549,7 +549,7 @@ class TestPlaybookValidator:
         validator = PlaybookValidator(structure)
         validator._is_taskid_equals_id() is expected_result
 
-    @pytest.mark.parametrize("playbook_json, expected_result", IS_CORRECT_VALUE_REFERENCE)
+    @pytest.mark.parametrize("playbook_path, expected_result", IS_CORRECT_VALUE_REFERENCE)
     def test_is_correct_value_references(self, playbook_path, expected_result):
         """
         Given

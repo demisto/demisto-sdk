@@ -7,7 +7,7 @@ import zipfile
 from collections import defaultdict
 from datetime import datetime
 from string import punctuation
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Union
 
 import click
 
@@ -113,7 +113,6 @@ class ContributionConverter:
         if not os.path.isdir(self.pack_dir_path):
             os.makedirs(self.pack_dir_path)
         self.readme_files: List[str] = []
-        self.api_module_path: Optional[str] = None
 
     @staticmethod
     def format_pack_dir_name(name: str) -> str:
@@ -451,7 +450,6 @@ class ContributionConverter:
                         extractor = YmlSplitter(input=content_item_file_path, file_type=file_type,
                                                 output=content_item_dir, no_pipenv=self.no_pipenv)
                     extractor.extract_to_package_format(executed_from_contrib_converter=True)
-                    self.api_module_path = extractor.api_module_path
                 except Exception as e:
                     err_msg = f'Error occurred while trying to split the unified YAML "{content_item_file_path}" ' \
                               f'into its component parts.\nError: "{e}"'
@@ -540,26 +538,15 @@ class ContributionConverter:
 
         return pack_metadata
 
-    def execute_update_rn(self, api_module_path: None):
+    def execute_update_rn(self):
         """
         Bump the pack version in the pack metadata according to the update type
         and create a release-note file using the release-notes text.
 
         """
-        print(f"api_module_path: {api_module_path}")
-        if api_module_path:
-            rn_mng = UpdateReleaseNotesManager(user_input=api_module_path, update_type=self.update_type, )
-            rn_mng.manage_rn_update()
-            for updated_pack in rn_mng.total_updated_packs:
-                print(f"total_updated_packs {rn_mng.total_updated_packs}")
-                self.replace_RN_template_with_value(rn_mng.pack)
-        else:
-            rn_mng = UpdateReleaseNotesManager(user_input=self.dir_name, update_type=self.update_type, )
-            rn_mng.manage_rn_update()
-            self.replace_RN_template_with_value(rn_mng.rn_path[0])
-
-        print(f"TOTAL = {rn_mng.total_updated_packs}")
-        return rn_mng.total_updated_packs
+        rn_mng = UpdateReleaseNotesManager(user_input=self.dir_name, update_type=self.update_type, )
+        rn_mng.manage_rn_update()
+        self.replace_RN_template_with_value(rn_mng.rn_path[0])
 
     def format_user_input(self) -> Dict[str, str]:
         """

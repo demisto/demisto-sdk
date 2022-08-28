@@ -57,10 +57,7 @@ class UpdateReleaseNotesManager:
             get_pack_names_from_files(added_files)).union(get_pack_names_from_files(old_format_files))
         # Check whether the packs have some existing RNs already (created manually or by the command)
         self.check_existing_rn(added_files)
-        print("ENTER HANDLE API MODULE CHANGE")
         self.handle_api_module_change(modified_files, added_files)
-        print("LEFT HANDLE API MODULE CHANGE")
-        print(f"modified_files {modified_files}")
         self.create_release_notes(modified_files, added_files, old_format_files)
         if len(self.total_updated_packs) > 1:
             print_color('\nSuccessfully updated the following packs:\n' + '\n'.join(self.total_updated_packs),
@@ -157,11 +154,8 @@ class UpdateReleaseNotesManager:
         # We want to handle ApiModules changes when:
         # (1) The user gave a path to the api module which was changed.
         # (2) The user did not give a specific path at all (is_all = True) but some ApiModules were changed.
-        print(f"modified_files {modified_files}")
         api_module_was_given = self.given_pack and API_MODULES_PACK in self.given_pack
-        print(f"api_module_was_given {api_module_was_given}")
         api_module_changed_in_git = self.changed_packs_from_git and API_MODULES_PACK in self.changed_packs_from_git
-        print(f"api_module_changed_in_git {api_module_changed_in_git}")
 
         if api_module_was_given or (api_module_changed_in_git and self.is_all):
             updated_packs = update_api_modules_dependents_rn(self.pre_release, self.update_type, added_files,
@@ -179,18 +173,12 @@ class UpdateReleaseNotesManager:
         # Certain file types do not require release notes update
         filtered_modified_files = filter_files_by_type(modified_files, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
         filtered_added_files = filter_files_by_type(added_files, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
-        print(f"self.given_pack {self.given_pack}")
-
-        if self.given_pack and API_MODULES_PACK not in self.given_pack:  # A specific pack was chosen to update
-            print("HERE1")
+        if self.given_pack:  # A specific pack was chosen to update
             self.create_pack_release_notes(self.given_pack, filtered_modified_files, filtered_added_files,
                                            old_format_files)
 
         elif self.changed_packs_from_git:  # update all changed packs
-            print(f"changed_packs_from_git: {self.changed_packs_from_git}")
-            print("HERE2")
             for pack in self.changed_packs_from_git:
-                print("HERE3")
                 if API_MODULES_PACK in pack:  # We already handled Api Modules so we can skip it.
                     continue
                 self.create_pack_release_notes(pack, filtered_modified_files, filtered_added_files, old_format_files)
@@ -227,8 +215,6 @@ class UpdateReleaseNotesManager:
                                       text=self.text, is_force=self.is_force,
                                       existing_rn_version_path=existing_rn_version, is_bc=self.is_bc)
             updated = update_pack_rn.execute_update()
-            print(f'**DEBUG** in create_pack_release_notes given pack {pack}')
-            print(f'**DEBUG** in create_pack_release_notes update_pack_rn.rn_path {update_pack_rn.rn_path}')
             self.rn_path.append(update_pack_rn.rn_path)
 
             # If new release notes were created add it to the total number of packs that were updated.

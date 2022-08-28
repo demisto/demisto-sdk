@@ -51,7 +51,7 @@ class PlaybookValidator(ContentEntityValidator):
             self.is_script_id_valid(id_set_file),
             self._is_id_uuid(),
             self._is_taskid_equals_id(),
-            self._is_correct_value_references(),
+            self._is_correct_value_references_interface(),
             self.verify_condition_tasks_has_else_path(),
             self.name_not_contain_the_type(),
             self.is_valid_with_indicators_input(),
@@ -577,12 +577,10 @@ class PlaybookValidator(ContentEntityValidator):
             if task.get('type') == 'condition':
                 task_conditions = task.get('conditions', [])
                 for conditions in task_conditions:
-                    conditions = conditions.get('condition')
-                    for condition in conditions:
+                    for condition in conditions.get('condition'):
                         for condition_info in condition:
                             condition_name = condition_info.get('operator')
-                            if condition_info.get('left'):
-                                value = condition_info.get('left').get('value', {}).get('simple', '')
+                            if value := condition_info.get('left', {}).get('value', {}).get('simple', ''):
                                 if value.startswith('inputs.') or value.startswith('incident.'):
                                     if not condition_info.get('left').get('iscontext', ''):
                                         is_valid = False
@@ -591,11 +589,131 @@ class PlaybookValidator(ContentEntityValidator):
 
                             if condition_info.get('right'):
                                 value = condition_info.get('right').get('value', {}).get('simple', '')
-                                if value.startswith('inputs.') or value.startswith('incident.'):
-                                    if not condition_info.get('right').get('iscontext', ''):
+                                if value := condition_info.get('right', {}).get('value', {}).get('simple', ''):
+                                    if value.startswith('inputs.') or value.startswith('incident.'):
                                         is_valid = False
                                         error_message, error_code = Errors.incorrect_value_references(task_key, condition_name)
                                         self.handle_error(error_message, error_code, file_path=self.file_path)
+
+        return is_valid
+
+    def _is_correct_value_references_interface(self):
+        answers = []
+        tasks: dict = self.current_file.get('tasks', {})
+        for task_id, task in tasks.items():
+            tasks_check = [
+                self.handle_condition_task(task, task_id),
+                self.handle_regular_task(task, task_id),
+                self.handle_data_collection(task, task_id)
+            ]
+            answers.extend(tasks_check)
+
+        answers.append(self.handle_playbook_inputs(self.current_file.get('inputs')))
+        return all(answers)
+
+    def handle_condition_task(self, task, task_key):
+        is_valid = True
+        if task.get('type') == 'condition':
+            for conditions in task.get('conditions', []):
+                for condition in conditions.get('condition'):
+                    for condition_info in condition:
+                        if value := condition_info.get('left', {}).get('value', {}).get('simple', ''):
+                            if not self.handle_incorrect_reference_value(task_key, value, condition_info):
+                                is_valid = False
+
+                        if condition_info.get('right'):
+                            if value := condition_info.get('right', {}).get('value', {}).get('simple', ''):
+                                if not self.handle_incorrect_reference_value(task_key, value, condition_info):
+                                    is_valid = False
+
+            for _, message_value in task.get('message'):
+                if value := message_value.get('simple', ''):
+                    if not self.handle_incorrect_reference_value(task_key, value):
+                        is_valid = False
+
+        return is_valid
+
+    def handle_regular_task(self, task, task_id):
+        is_valid = True
+        if task.get('type') == 'regular':
+            if default_assignee := task.get('defaultassigneecomplex', ''):
+                if not self.handle_incorrect_reference_value(task_id, default_assignee):
+                    is_valid = False
+
+            for script_argument in task.get('scriptarguments', {}).values():
+                if arg_value := script_argument.get('simple', ''):
+                    if not self.handle_incorrect_reference_value(task_id, arg_value, script_argument):
+                        is_valid = False
+
+            for incident_field in task.get('fieldMapping', []):
+                field_output = incident_field.get('output', {}).get('complex', {})
+                if not self.handle_transformers_and_filters(field_output, task_id):
+                    is_valid = False
+
+        return is_valid
+
+    def handle_data_collection(self, task, task_id):
+        is_valid = True
+        if task.get('type') == 'collection':
+            for script_argument in task.get('scriptarguments', {}).values():
+                if arg_value := script_argument.get('simple', ''):
+                    if not self.handle_incorrect_reference_value(task_id, arg_value):
+                        is_valid = False
+
+            for _, message_value in task.get('message'):
+                if value := message_value.get('simple', ''):
+                    if not self.handle_incorrect_reference_value(task_id, value, message_value):
+                        is_valid = False
+
+            for form_question in task.get('form', {}).get('questions', []):
+                if value := form_question.get('labelarg', {}).get('simple', ''):
+                    if not self.handle_incorrect_reference_value(task_id, value, form_question):
+                        is_valid = False
+
+        return is_valid
+
+    def handle_playbook_inputs(self, inputs):
+        is_valid = True
+        for playbook_input in inputs:
+            if value := playbook_input.get('value', {}).get('simple', ''):
+                if not self.handle_incorrect_reference_value('inputs', value, playbook_input):
+                    is_valid = False
+
+            elif value := playbook_input.get('value', {}).get('complex', ''):
+                if not self.handle_transformers_and_filters('inputs', value):
+
+                    is_valid = False
+
+        return is_valid
+
+    def handle_transformers_and_filters(self, field_output, task_id):
+        is_valid = True
+        filters = field_output.get('filters', [])
+        for incident_filter in filters:
+            for filter_info in incident_filter:
+                if value := filter_info.get('left', {}).get('value', {}).get('simple', ''):
+                    if not self.handle_incorrect_reference_value(task_id, value, filter_info):
+                        is_valid = False
+
+                if value := filter_info.get('right', {}).get('value', {}).get('simple', ''):
+                    if not self.handle_incorrect_reference_value(task_id, value, filter_info):
+                        is_valid = False
+
+        for transformer in field_output.get('transformers', []):
+            for _, arg_info in transformer.get('args', {}).items():
+                if value := arg_info.get('value', {}).get('simple', ''):
+                    if not self.handle_incorrect_reference_value(task_id, value, arg_info):
+                        is_valid = False
+
+        return is_valid
+
+    def handle_incorrect_reference_value(self, task_id, value, value_info: dict = {}):
+        is_valid = True
+        if value.startswith('incident.') or value.startswith('inputs.'):
+            if not value_info.get('iscontext', ''):
+                is_valid = False
+                error_message, error_code = Errors.incorrect_value_references(task_id, value)
+                self.handle_error(error_message, error_code, file_path=self.file_path)
 
         return is_valid
 

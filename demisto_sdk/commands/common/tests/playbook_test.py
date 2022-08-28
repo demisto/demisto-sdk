@@ -327,9 +327,146 @@ class TestPlaybookValidator:
     }
 
     PLAYBOOK_JSON_INCORRECT_VALUE_REFERENCE = {
+        "0": {
+            "id": "0",
+            "taskid": "96b2052c-2dd2-4df6-84bf-dc18bd917d4b",
+            "type": "start",
+            "task": {
+                "id": "96b2052c-2dd2-4df6-84bf-dc18bd917d4b",
+                "version": -1,
+                "name": "",
+                "iscommand": False,
+                "brand": ""
+            }
+        },
         "1": {
             "id": "1",
+            "taskid": "ae2934f9-19b9-4da6-893b-8bce523cc3aa",
+            "type": "regular",
+            "task": {
+                "name": "Standard without automation have to be in context assignee",
+                "type": "regular",
+                "brand": ""
+            },
+            "defaultassigneecomplex": {
+                "simple": "incident.assignee"
+            },
+        },
+        "2": {
+            "id": "2",
+            "type": "regular",
+            "task": {
+                "name": "standard with automation and transformers",
+                "description": "Adds provided entries to the incident Evidence Board.\n",
+                "scriptName": "AddEvidence",
+                "type": "regular",
+            },
+            "scriptarguments": {
+                "desc": {
+                    "simple": "inputs.nocontext"
+                },
+                "description": {
+                    "simple": "inputs.nocontext"
+                }
+            },
+            "fieldMapping": [
+                {
+                    "incidentfield": "Account ID",
+                    "output": {
+                        "complex": {
+                            "root": "incident",
+                            "filters": [
+                                [
+                                    {
+                                        "operator": "isEqualString",
+                                        "left": {
+                                            "value": {
+                                                "simple": "incident"
+                                            },
+                                            "iscontext": True
+                                        },
+                                        "right": {
+                                            "value": {
+                                                "simple": "inputs.asvalue333"
+                                            }
+                                        }
+                                    }
+                                ],
+                                [
+                                    {
+                                        "operator": "isEqualString",
+                                        "left": {
+                                            "value": {
+                                                "simple": "incident.tocontext"
+                                            },
+                                            "iscontext": True
+                                        },
+                                        "right": {
+                                            "value": {
+                                                "simple": "inputs.asvalueaswell"
+                                            }
+                                        }
+                                    }
+                                ]
+                            ],
+                            "transformers": [
+                                {
+                                    "operator": "atIndex",
+                                    "args": {
+                                        "index": {
+                                            "value": {
+                                                "simple": "inputs.notgood"
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "operator": "DT",
+                                    "args": {
+                                        "dt": {
+                                            "value": {
+                                                "simple": "incident.asvalue"
+                                            },
+                                            "iscontext": True
+                                        }
+                                    }
+                                },
+                                {
+                                    "operator": "sliceByItem",
+                                    "args": {
+                                        "from": {
+                                            "value": {
+                                                "simple": "incident.status"
+                                            },
+                                            "iscontext": True
+                                        },
+                                        "to": {
+                                            "value": {
+                                                "simple": "two args to transformer"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        "3": {
+            "id": "3",
+            "taskid": "cbcb1e4d-78cf-4fb9-8125-6653a8daa984",
             "type": "condition",
+            "task": {
+                "id": "cbcb1e4d-78cf-4fb9-8125-6653a8daa984",
+                "name": "conditional",
+                "type": "condition",
+            },
+            "nexttasks": {
+                "yes": [
+                    "4"
+                ]
+            },
             "conditions": [
                 {
                     "label": "yes",
@@ -339,15 +476,13 @@ class TestPlaybookValidator:
                                 "operator": "isEqualString",
                                 "left": {
                                     "value": {
-                                        "simple": "inputs.wrongvalue"
-                                    }
-                                }
-                            },
-                            {
-                                "operator": "isEqualString",
-                                "left": {
+                                        "simple": "inputs.asvaluegood"
+                                    },
+                                    "iscontext": True
+                                },
+                                "right": {
                                     "value": {
-                                        "simple": "incident.wrongvalue"
+                                        "simple": "inputs.asvaluenotgood"
                                     }
                                 }
                             }
@@ -355,6 +490,163 @@ class TestPlaybookValidator:
                     ]
                 }
             ]
+        },
+        "4": {
+            "id": "4",
+            "taskid": "f01fcda6-f3b5-4668-8bf1-fea45b099c29",
+            "type": "condition",
+            "task": {
+                "id": "f01fcda6-f3b5-4668-8bf1-fea45b099c29",
+                "version": -1,
+                "name": "conditional matbe complex",
+                "type": "condition",
+            },
+            "conditions": [
+                {
+                    "label": "condition-1",
+                    "condition": [
+                        [
+                            {
+                                "operator": "isAfter",
+                                "left": {
+                                    "value": {
+                                        "simple": "inputs.context"
+                                    },
+                                    "iscontext": True
+                                },
+                                "right": {
+                                    "value": {
+                                        "simple": "inputs.valueeee1"
+                                    }
+                                }
+                            }
+                        ]
+                    ]
+                },
+                {
+                    "label": "condition-2",
+                    "condition": [
+                        [
+                            {
+                                "operator": "isEqualString",
+                                "left": {
+                                    "value": {
+                                        "simple": "inputs.asvalue"
+                                    }
+                                },
+                                "right": {
+                                    "value": {
+                                        "simple": "inputs.asvalue2"
+                                    }
+                                }
+                            }
+                        ],
+                        [
+                            {
+                                "operator": "isEqualString",
+                                "left": {
+                                    "value": {
+                                        "simple": "inputs.asvalue"
+                                    }
+                                },
+                                "right": {
+                                    "value": {
+                                        "simple": "inputs.asvalue3"
+                                    }
+                                }
+                            }
+                        ]
+                    ]
+                }
+            ]
+        },
+        "5": {
+            "id": "5",
+            "taskid": "0daa75b6-180b-4bf5-8ff0-e11810c49ec5",
+            "type": "condition",
+            "task": {
+                "id": "0daa75b6-180b-4bf5-8ff0-e11810c49ec5",
+                "version": -1,
+                "name": "conditional with assignee and question",
+                "type": "condition",
+            },
+            "nexttasks": {
+                "Yes": [
+                    "6"
+                ]
+            },
+            "scriptarguments": {
+                "using": {
+                    "simple": "incident.value"
+                }
+            },
+            "message": {
+                "to": {
+                    "simple": "incident.yay"
+                },
+                "subject": {
+                    "simple": "incident.yay3"
+                },
+                "body": {
+                    "simple": "inputs.tocheck"
+                },
+                "methods": [
+                    "email"
+                ],
+                "format": "",
+                "bcc": None,
+                "cc": {
+                    "simple": "incident.yay2"
+                },
+            }
+        },
+        "6": {
+            "id": "6",
+            "taskid": "68b4b3ea-6ce3-4c5b-8514-819033ce39dc",
+            "type": "collection",
+            "task": {
+                "id": "68b4b3ea-6ce3-4c5b-8514-819033ce39dc",
+                "version": -1,
+                "name": "data collection",
+                "type": "collection",
+            },
+            "scriptarguments": {
+                "using": {
+                    "simple": "incident.asvalue89"
+                }
+            },
+            "message": {
+                "to": {
+                    "simple": "Analyst,inputs.asvalue"
+                },
+                "subject": {
+                    "simple": "inputs.asvalue7"
+                },
+                "body": None,
+                "methods": [
+                    "email"
+                ],
+                "format": "",
+                "bcc": None,
+                "cc": {
+                    "simple": "inputs.asvalue4"
+                }
+            },
+            "form": {
+                "questions": [
+                    {
+                        "id": "0",
+                        "label": "",
+                        "labelarg": {
+                            "simple": "inputs.asvalue9"
+                        }
+                    }
+                ],
+                "title": "question",
+                "description": "",
+                "sender": "",
+                "totalanswers": 0
+            }
         }
     }
 
@@ -418,8 +710,8 @@ class TestPlaybookValidator:
     ]
 
     IS_CORRECT_VALUE_REFERENCE = [
-        (PLAYBOOK_JSON_CORRECT_VALUE_REFERENCE, True),
-        (PLAYBOOK_JSON_INCORRECT_VALUE_REFERENCE, False)
+        (PLAYBOOK_JSON_INCORRECT_VALUE_REFERENCE, False),
+        (PLAYBOOK_JSON_CORRECT_VALUE_REFERENCE, True)
     ]
 
     DEPRECATED_VALID = {"deprecated": True, "description": "Deprecated. Use the XXXX playbook instead."}
@@ -630,7 +922,7 @@ class TestPlaybookValidator:
         """
         structure = mock_structure("", playbook_json)
         validator = PlaybookValidator(structure)
-        validator._is_correct_value_references() is expected_result
+        validator._is_correct_value_references_interface() is expected_result
 
     @pytest.mark.parametrize("current, answer", DEPRECATED_INPUTS)
     def test_is_valid_deprecated_playbook(self, current, answer):

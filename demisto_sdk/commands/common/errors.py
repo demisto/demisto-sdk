@@ -2189,9 +2189,9 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def incorrect_value_references(task_key, condition_name):
-        return f"On task: {task_key}, condition name: {condition_name}, make sure to change the reference to 'From previous tasks' " \
-            "from 'As value' when referencing a value from the context, or add '${' '}' to wrap the string"
+    def incorrect_value_references(task_key, value):
+        return f"On task: {task_key}, an input with the value: {value} was passed as string, rather than as reference. Change the reference to" \
+            " 'From previous tasks' from 'As value' when referencing a value from the context, or wrap it with  ${'<condition>'}"
 
     @staticmethod
     @error_code_decorator

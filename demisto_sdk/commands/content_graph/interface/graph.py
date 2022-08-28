@@ -39,5 +39,29 @@ class ContentGraphInterface(ABC):
         pass
     
     @abstractmethod
+    def get_nodes_by_type(self, content_type: ContentTypes) -> Any:
+        pass
+
+    @abstractmethod
+    def search_nodes(
+        self,
+        content_type: Optional[ContentTypes] = None,
+        **properties,
+    ) -> Any:
+        pass
+
+    @abstractmethod
+    def get_single_node(
+        self,
+        content_type: Optional[ContentTypes] = None,
+        **properties,
+    ) -> Any:
+        pass
+
+    @abstractmethod
+    def get_relationships_by_type(self, relationship: Rel) -> Any:
+        pass
+
+    @abstractmethod
     def run_single_query(self, query: str, parameters: Optional[Dict[str, Any]] = None) -> Any:
         pass

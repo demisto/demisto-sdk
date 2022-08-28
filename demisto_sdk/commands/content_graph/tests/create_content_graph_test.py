@@ -27,11 +27,16 @@ def setup(mocker, repo: Repo):
 
 
 @pytest.fixture
-def repository():
-    return Repository(
+def repository(mocker):
+    repository = Repository(
         path=Path('/dummypath'),
         packs=[],
     )
+    mocker.patch(
+        'demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_repository',
+        return_value=repository,
+    )
+    return repository
 
 
 @pytest.fixture
@@ -184,7 +189,6 @@ class TestCreateContentGraph:
 
     def test_create_content_graph_single_pack(
         self,
-        mocker,
         repository: Repository,
         pack: Pack,
         integration: Integration,
@@ -200,7 +204,7 @@ class TestCreateContentGraph:
                 4. A default classifier SampleClassifier.
               - A script SampleScript that uses SampleScript2.
         When:
-            - Running create_content_graph() with an existing service and killing it.
+            - Running create_content_graph().
         Then:
             - Make sure the graph has all the corresponding nodes and relationships.
         """
@@ -257,20 +261,293 @@ class TestCreateContentGraph:
         pack.content_items.integration.append(integration)
         pack.content_items.script.append(script)
         repository.packs.append(pack)
-        mocker.patch(
-            'demisto_sdk.commands.content_graph.content_graph_builder.ContentGraphBuilder._create_repository',
-            return_value=repository,
-        )
+        interface = create_content_graph(use_existing=True)
+
+        result = interface.get_relationships_by_type(Rel.IN_PACK)
+        for rel in result:
+            assert rel['source']['name'] in ['SampleIntegration', 'SampleScript']
+            assert rel['target']['name'] == 'SamplePack'
+
+        result = interface.get_relationships_by_type(Rel.HAS_COMMAND)
+        for rel in result:
+            assert rel['source']['name'] == 'SampleIntegration'
+            assert rel['target']['name'] == 'test-command'
+
+        result = interface.get_relationships_by_type(Rel.USES)
+        for rel in result:
+            if rel['source']['name'] == 'SampleIntegration':
+                assert rel['target']['node_id'] == f'{ContentTypes.CLASSIFIER}:SampleClassifier'
+            elif rel['source']['name'] == 'SampleScript':
+                assert rel['target']['object_id'] == 'SampleScript2'
+            else:
+                assert False  # there is no else case
+
+        result = interface.get_relationships_by_type(Rel.TESTED_BY)
+        for rel in result:
+            assert rel['source']['name'] == 'SampleIntegration'
+            assert rel['target']['node_id'] == f'{ContentTypes.TEST_PLAYBOOK}:SampleTestPlaybook'
+
+        result = interface.get_relationships_by_type(Rel.IMPORTS)
+        for rel in result:
+            assert rel['source']['name'] == 'SampleIntegration'
+            assert rel['target']['node_id'] == f'{ContentTypes.SCRIPT}:TestApiModule'
+
+    def test_create_content_graph_two_integrations_with_same_command(
+        self,
+        repository: Repository,
+        pack: Pack,
+        integration: Integration,
+    ):
+        """
+        Given:
+            - A mocked model of a repository with a pack TestPack, containing two integrations,
+              each has a command named test-command.
+        When:
+            - Running create_content_graph().
+        Then:
+            - Make sure only one command node was created.
+        """
+        integration2 = integration.copy()
+        integration2.name = integration2.object_id = 'SampleIntegration2'
+        integration2.node_id = f'{ContentTypes.INTEGRATION}:{integration2.object_id}'
+
+        relationships = {
+            Rel.IN_PACK: [
+                mock_relationship(
+                    f'{ContentTypes.INTEGRATION}:SampleIntegration',
+                    f'{ContentTypes.PACK}:SamplePack'
+                ),
+                mock_relationship(
+                    f'{ContentTypes.INTEGRATION}:SampleIntegration2',
+                    f'{ContentTypes.PACK}:SamplePack'
+                ),
+            ],
+            Rel.HAS_COMMAND: [
+                mock_relationship(
+                    f'{ContentTypes.INTEGRATION}:SampleIntegration',
+                    'test-command',
+                    name='test-command',
+                    description='',
+                    deprecated=False,
+                ),
+                mock_relationship(
+                    f'{ContentTypes.INTEGRATION}:SampleIntegration2',
+                    'test-command',
+                    name='test-command',
+                    description='',
+                    deprecated=False,
+                )
+            ],
+        }
+        pack.relationships = relationships
+        pack.content_items.integration.append(integration)
+        pack.content_items.integration.append(integration2)
+        repository.packs.append(pack)
         
         interface = create_content_graph(use_existing=True)
-        content_items = interface.get_packs_content_items(marketplace=MarketplaceVersions.XSOAR)
-        assert len(content_items) == 1
-        assert content_items[0]['pack']['name'] == 'SamplePack'
-        assert all(
-            content_item['name'] in ['SampleIntegration', 'SampleScript']
-            for content_item in content_items[0]['content_items']
-        )
-        assert False  # todo: complete assertions on relationships
+        assert len(interface.get_nodes_by_type(ContentTypes.INTEGRATION)) == 2
+        assert len(interface.get_nodes_by_type(ContentTypes.COMMAND)) == 1
+
+    def test_create_content_graph_playbook_uses_script_not_in_repository(
+        self,
+        repository: Repository,
+        pack: Pack,
+        playbook: Playbook,
+    ):
+        """
+        Given:
+            - A mocked model of a repository with a pack TestPack, containing a playbook tha
+              wasn't parsed, meaning it's not in the repository.
+        When:
+            - Running create_content_graph().
+        Then:
+            - Make sure the script has the boolean property "not_in_repository".
+        """
+        relationships = {
+            Rel.IN_PACK: [
+                mock_relationship(
+                    f'{ContentTypes.PLAYBOOK}:SamplePlaybook',
+                    f'{ContentTypes.PACK}:SamplePack'
+                ),
+            ],
+            Rel.USES: [
+                mock_relationship(
+                    f'{ContentTypes.PLAYBOOK}:SamplePlaybook',
+                    f'{ContentTypes.SCRIPT}:TestScript'
+                ),
+            ],
+        }
+        pack.relationships = relationships
+        pack.content_items.integration.append(playbook)
+        repository.packs.append(pack)
+        
+        interface = create_content_graph(use_existing=True)
+        script = interface.get_single_node(node_id=f'{ContentTypes.SCRIPT}:TestScript')
+        assert script.get('not_in_repository')
+
+    def test_create_content_graph_duplicate_integrations(
+        self,
+        repository: Repository,
+        pack: Pack,
+        integration: Integration,
+    ):
+        """
+        Given:
+            - A mocked model of a repository with a pack TestPack, containing two integrations
+              with the exact same properties.
+        When:
+            - Running create_content_graph().
+        Then:
+            - Make sure the duplicates are found and the command fails.
+        """
+        integration2 = integration.copy()
+        relationships = {
+            Rel.IN_PACK: [
+                mock_relationship(
+                    f'{ContentTypes.INTEGRATION}:SampleIntegration',
+                    f'{ContentTypes.PACK}:SamplePack'
+                ),
+                mock_relationship(
+                    f'{ContentTypes.INTEGRATION}:SampleIntegration',
+                    f'{ContentTypes.PACK}:SamplePack'
+                ),
+            ],
+            Rel.HAS_COMMAND: [
+                mock_relationship(
+                    f'{ContentTypes.INTEGRATION}:SampleIntegration',
+                    'test-command',
+                    name='test-command',
+                    description='',
+                    deprecated=False,
+                ),
+                mock_relationship(
+                    f'{ContentTypes.INTEGRATION}:SampleIntegration',
+                    'test-command',
+                    name='test-command',
+                    description='',
+                    deprecated=False,
+                )
+            ],
+        }
+        pack.relationships = relationships
+        pack.content_items.integration.append(integration)
+        pack.content_items.script.append(integration2)
+        repository.packs.append(pack)
+        
+        with pytest.raises(Exception) as e:
+            create_content_graph(use_existing=True)
+        assert 'Duplicates found in graph' in str(e)
+
+    def test_create_content_graph_duplicate_integrations_different_marketplaces(
+        self,
+        repository: Repository,
+        pack: Pack,
+        integration: Integration,
+    ):
+        """
+        Given:
+            - A mocked model of a repository with a pack TestPack, containing two integrations
+              with the exact same properties but they are from different markletplaces.
+        When:
+            - Running create_content_graph().
+        Then:
+            - Make sure the the integrations are not recognized as duplicates and the command succeeds.
+        """
+        integration2 = integration.copy()
+        integration2.marketplaces = [MarketplaceVersions.MarketplaceV2]
+        relationships = {
+            Rel.IN_PACK: [
+                mock_relationship(
+                    f'{ContentTypes.INTEGRATION}:SampleIntegration',
+                    f'{ContentTypes.PACK}:SamplePack'
+                ),
+                mock_relationship(
+                    f'{ContentTypes.INTEGRATION}:SampleIntegration',
+                    f'{ContentTypes.PACK}:SamplePack',
+                    source_marketplaces=[MarketplaceVersions.MarketplaceV2]
+                ),
+            ],
+            Rel.HAS_COMMAND: [
+                mock_relationship(
+                    f'{ContentTypes.INTEGRATION}:SampleIntegration',
+                    'test-command',
+                    name='test-command',
+                    description='',
+                    deprecated=False,
+                ),
+                mock_relationship(
+                    f'{ContentTypes.INTEGRATION}:SampleIntegration',
+                    'test-command',
+                    name='test-command',
+                    description='',
+                    deprecated=False,
+                    source_marketplaces=[MarketplaceVersions.MarketplaceV2]
+                )
+            ],
+        }
+        pack.relationships = relationships
+        pack.content_items.integration.append(integration)
+        pack.content_items.script.append(integration2)
+        repository.packs.append(pack)
+        
+        interface = create_content_graph(use_existing=True)
+        assert len(interface.get_nodes_by_type(ContentTypes.INTEGRATION)) == 2
+
+    def test_create_content_graph_duplicate_integrations_different_fromversion(
+        self,
+        repository: Repository,
+        pack: Pack,
+        integration: Integration,
+    ):
+        """
+        Given:
+            - A mocked model of a repository with a pack TestPack, containing two integrations
+              with the exact same properties but have different version ranges.
+        When:
+            - Running create_content_graph().
+        Then:
+            - Make sure the the integrations are not recognized as duplicates and the command succeeds.
+        """
+        integration2 = integration.copy()
+        integration.toversion = '6.0.0'
+        integration2.fromversion = '6.0.2'
+        relationships = {
+            Rel.IN_PACK: [
+                mock_relationship(
+                    f'{ContentTypes.INTEGRATION}:SampleIntegration',
+                    f'{ContentTypes.PACK}:SamplePack'
+                ),
+                mock_relationship(
+                    f'{ContentTypes.INTEGRATION}:SampleIntegration',
+                    f'{ContentTypes.PACK}:SamplePack',
+                    source_fromversion='6.0.2'
+                ),
+            ],
+            Rel.HAS_COMMAND: [
+                mock_relationship(
+                    f'{ContentTypes.INTEGRATION}:SampleIntegration',
+                    'test-command',
+                    name='test-command',
+                    description='',
+                    deprecated=False,
+                ),
+                mock_relationship(
+                    f'{ContentTypes.INTEGRATION}:SampleIntegration',
+                    'test-command',
+                    name='test-command',
+                    description='',
+                    deprecated=False,
+                    source_fromversion='6.0.2',
+                )
+            ],
+        }
+        pack.relationships = relationships
+        pack.content_items.integration.append(integration)
+        pack.content_items.script.append(integration2)
+        repository.packs.append(pack)
+        
+        interface = create_content_graph(use_existing=True)
+        assert len(interface.get_nodes_by_type(ContentTypes.INTEGRATION)) == 2
 
     def test_stop_content_graph(self):
         """

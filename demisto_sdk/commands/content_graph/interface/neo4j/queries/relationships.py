@@ -150,7 +150,8 @@ def create_relationships(
     tx: Transaction,
     relationships: Dict[Rel, List[Dict[str, Any]]],
 ) -> None:
-    if data := relationships.pop(Rel.HAS_COMMAND):
+    if relationships.get(Rel.HAS_COMMAND):
+        data = relationships.pop(Rel.HAS_COMMAND)
         create_relationships_by_type(tx, Rel.HAS_COMMAND, data)
 
     for relationship, data in relationships.items():
@@ -187,3 +188,10 @@ def create_relationships_by_type(
     result = run_query(tx, query, data=data).single()
     merged_relationships_count: int = result['relationships_merged']
     logger.info(f'Merged {merged_relationships_count} relationships of type {relationship}.')
+
+
+def get_relationships_by_type(tx: Transaction, rel: Rel):
+    query = f"""
+    MATCH (source)-[rel:{rel}]->(target) return source, rel, target
+    """
+    return run_query(tx, query).data()

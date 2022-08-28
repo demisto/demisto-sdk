@@ -1,3 +1,4 @@
+from typing import Set
 from pydantic import Field
 
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -8,5 +9,5 @@ class IncidentField(ContentItem):
     field_type: str = Field(alias='type')
     associated_to_all: bool = Field(False, alias='associatedToAll')
 
-    def summary(self):
-        return self.dict(include=['name', 'type', 'description'])
+    def included_in_metadata(self) -> Set[str]:
+        return {'name', 'type', 'description'}

@@ -113,7 +113,9 @@ class MarketplaceTagParser:
     XSIAM_INLINE_PREFIX = '<~XSIAM>'
     XSIAM_INLINE_SUFFIX = '</~XSIAM>'
 
-    def __init__(self, marketplace: str = MarketplaceVersions.XSOAR.value):
+    def __init__(self, marketplace: str = None):
+        if not marketplace:
+            marketplace = os.getenv(ENV_DEMISTO_SDK_MARKETPLACE, MarketplaceVersions.XSOAR.value)
         self.marketplace = marketplace
         self._xsoar_parser = TagParser(
             tag_prefix=self.XSOAR_PREFIX,
@@ -180,11 +182,10 @@ def get_log_verbose() -> bool:
     return LOG_VERBOSE
 
 
-def get_mp_tag_parser():
+def get_mp_tag_parser(marketplace: MarketplaceVersions = None):
     global MARKETPLACE_TAG_PARSER
     if MARKETPLACE_TAG_PARSER is None:
-        MARKETPLACE_TAG_PARSER = MarketplaceTagParser(
-            os.getenv(ENV_DEMISTO_SDK_MARKETPLACE, MarketplaceVersions.XSOAR.value))
+        MARKETPLACE_TAG_PARSER = MarketplaceTagParser(marketplace)
     return MARKETPLACE_TAG_PARSER
 
 

@@ -37,6 +37,7 @@ def create_content_graph(
     Returns:
         ContentGraphInterface: The content graph interface that was created.
     """
+    logger.info('Creating content graph')
     if not use_existing:
         shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
         neo4j_service.start_neo4j_service(use_docker)
@@ -79,15 +80,18 @@ def stop_content_graph(
     neo4j_service.stop_neo4j_service(use_docker=use_docker)
 
 
-def marshal_content_graph(marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR) -> Repository:    
+def marshal_content_graph(
+    marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+    with_dependencies: bool = False,
+) -> Repository:
     """This function marshals the content graph to python models.
 
     Args:
         marketplace (MarketplaceVersions, optional): The marketplace to use. Defaults to MarketplaceVersions.XSOAR.
-    
+
     Returns:
         Repository: The repository model loaded from the content graph.
 
     """
-    content_graph_loader = ContentGraphLoader(marketplace, NEO4J_INTERFACE)
+    content_graph_loader = ContentGraphLoader(marketplace, NEO4J_INTERFACE, with_dependencies)
     return content_graph_loader.load()

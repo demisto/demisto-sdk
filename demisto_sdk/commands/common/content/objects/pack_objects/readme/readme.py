@@ -42,7 +42,7 @@ class Readme(TextObject):
         try:
             with open(self._path, 'r+') as f:
                 text = f.read()
-                parsed_text = get_mp_tag_parser().parse_text(text)
+                parsed_text = get_mp_tag_parser(marketplace=None).parse_text(text)
                 if len(text) != len(parsed_text):
                     f.seek(0)
                     f.write(parsed_text)

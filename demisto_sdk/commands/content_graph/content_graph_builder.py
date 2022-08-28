@@ -70,20 +70,24 @@ class ContentGraphBuilder:
         repository_parser: RepositoryParser = load_pickle(REPO_PARSER_PKL_PATH.as_posix())
         if not repository_parser:
             try:
+                logger.info('Parsing repository')
                 repository_parser = RepositoryParser(path)
                 dump_pickle(REPO_PARSER_PKL_PATH.as_posix(), repository_parser)
             except Exception:
                 logger.error(traceback.format_exc())
                 raise
+        logger.info('Creating models')
         return Repository.from_orm(repository_parser)
 
     def create_graph(self) -> None:
         """ Runs DB queries using the collected nodes and relationships to create the content graph.
         """
+        logger.info('Creating graph')
         self.content_graph.create_indexes_and_constraints()
         self.content_graph.create_nodes(self.nodes)
         self.content_graph.create_relationships(self.relationships)
         self.content_graph.validate_graph()
+        logger.info('Finished graph creation')
 
     def delete_modified_packs_from_graph(self, packs: List[str]) -> None:
         pass

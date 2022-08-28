@@ -11,10 +11,11 @@ from demisto_sdk.commands.find_dependencies.find_dependencies_v2 import PackDepe
 
 class ContentGraphLoader:
 
-    def __init__(self,
-                 marketplace: MarketplaceVersions,
-                 content_graph: ContentGraphInterface,
-                 with_dependencies: bool = False) -> None:
+    def __init__(
+            self,
+            marketplace: MarketplaceVersions,
+            content_graph: ContentGraphInterface,
+            with_dependencies: bool = False) -> None:
         """_summary_
 
         Args:
@@ -27,7 +28,7 @@ class ContentGraphLoader:
 
     def load(self) -> Repository:
         if self.with_dependencies:
-            all_dependencies = PackDependencies(marketplace=self.marketplace, content_graph=self.content_graph).get_packs_dependencies()
+            all_dependencies = PackDependencies(marketplace=self.marketplace, content_graph=self.content_graph).run()
         packs: List[Dict] = []
         repository = {'path': Path(Path.cwd()), 'packs': packs}  # TODO decide what to do with repo path?
         integrations_to_commands = {integration['integration_id']: integration['commands']

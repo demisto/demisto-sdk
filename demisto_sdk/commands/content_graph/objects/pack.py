@@ -1,7 +1,9 @@
 from pathlib import Path
+import shutil
 from pydantic import BaseModel, Field
 from typing import Any, Generator, Iterator, List, Optional
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import CONTRIBUTORS_README_TEMPLATE, MarketplaceVersions
+from demisto_sdk.commands.common.tools import get_json, get_mp_tag_parser
 
 from demisto_sdk.commands.content_graph.common import ContentTypes, Nodes, Relationships
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -33,10 +35,12 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
 
+import logging
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
 json = JSON_Handler()
 
+logger = logging.getLogger('demisto-sdk')
 
 class PackContentItems(BaseModel):
     classifier: List[Classifier] = Field([], alias=ContentTypes.CLASSIFIER.value)
@@ -114,17 +118,53 @@ class Pack(BaseContent, PackMetadata):
     dependencies: dict = Field({}, exclude=True)
 
     def dump_metadata(self, path: Path) -> None:
-        with open(path / 'metadata.json', 'w') as f:
-            json.dump(self.dict(include={'contentItems', 'dependencies'}), f, indent=4)
+        metadata = self.dict(exclude={'path', 'node_id', 'content_type'})
+        metadata['contentItems'] = {}
+        for content_item in self.content_items:
+            try:
+                metadata['contentItems'].setdefault(content_item.content_type, []).append(content_item.summary())
+            except NotImplementedError as e:
+                logger.debug(f'Could not add {content_item.name} to pack metadata: {e}')
+        with open(path, 'w') as f:
+            json.dump(metadata, f, indent=4)
 
+    def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:
+        shutil.copyfile(self.path / 'README.md', path)
+        contributors = None
+        try:
+            contributors = get_json(self.path / 'contributors.json')
+        except FileNotFoundError:
+            print('no contribs')
+        if contributors:
+            fixed_contributor_names = [f' - {contrib_name}\n' for contrib_name in contributors]
+            contribution_data = CONTRIBUTORS_README_TEMPLATE.format(contributors_names=''.join(fixed_contributor_names))
+            with open(path, 'a+') as f:
+                f.write(contribution_data)
+        with open(path, 'r+') as f:
+            try:
+                text = f.read()
+                parsed_text = get_mp_tag_parser(marketplace).parse_text(text)
+                if len(text) != len(parsed_text):
+                    f.seek(0)
+                    f.write(parsed_text)
+                    f.truncate()
+            except Exception as e:
+                logger.error(f'Failed dumping readme: {e}')
+        
     def dump(self, path: Path, marketplace: MarketplaceVersions):
         path.mkdir(exist_ok=True, parents=True)
         for content_item in self.content_items:
-            content_item.dump(path / content_item.content_type.as_folder)
-        self.dump_metadata(path)
-        # TODO take care of readme
-        # TODO take care of releasenotes
-        # TODO take care of author image
-
+            content_item.dump(path / content_item.content_type.as_folder, marketplace)
+        self.dump_metadata(path / 'metadata.json')
+        self.dump_readme(path / 'README.md', marketplace)
+        try:
+            shutil.copytree(self.path / 'ReleaseNotes', path / 'ReleaseNotes')
+        except FileNotFoundError:
+            print(f'No such file {self.path / "ReleaseNotes"}')
+        try:
+            shutil.copy(self.path / 'Author_image.png', path / 'Author_image.png')
+        except FileNotFoundError:
+            print(f'No such file {self.path / "Author_image.png"}')
+             
     def to_nodes(self) -> Nodes:
         return Nodes(self.to_dict(), *[content_item.to_dict() for content_item in self.content_items])

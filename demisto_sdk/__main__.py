@@ -2297,14 +2297,14 @@ def error_code(config, **kwargs):
 @click.option('-q', "--quiet", is_flag=True, help="Quiet output, only output results in the end")
 @click.option("-lp", "--log-path", help="Path to store all levels of logs",
               type=click.Path(resolve_path=True))
-def create_content_graph(no_use_docker, keep_service, use_existing, **kwargs):
+def create_content_graph(no_use_docker, use_existing, should_dump, **kwargs):
     from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.content_graph.content_graph_commands import create_content_graph
     logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
                   quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
                   log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
 
-    create_content_graph(use_docker=not no_use_docker, use_existing=use_existing)
+    create_content_graph(use_docker=not no_use_docker, use_existing=use_existing, should_dump=should_dump)
 
 
 @main.command(
@@ -2338,7 +2338,7 @@ def load_content_graph(no_use_docker: bool, keep_service: bool, content_graph_pa
 @click.help_option(
     '-h', '--help'
 )
-@click.option('-mp', '--marketplace', is_flag=True, help="Marketplace to use", default=MarketplaceVersions.XSOAR)
+@click.option('-mp', '--marketplace', help="Marketplace to use", default=MarketplaceVersions.XSOAR, type=MarketplaceVersions)
 @click.option('-o', '--output', help="Path to save the output zip file", default=None, type=click.Path(resolve_path=True))
 @click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
               type=click.IntRange(0, 3, clamp=True), default=2, show_default=True)

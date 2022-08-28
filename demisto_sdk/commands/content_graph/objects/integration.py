@@ -20,13 +20,13 @@ class Integration(IntegrationScript):
     category: str
     commands: List[Command] = Field([], exclude=True)  # todo: override exclusion when loading from database
 
-    def summary(self):
-        return self.dict(include={'name': True,
-                                  'description': True,
-                                  'category': True,
-                                  'commands':
-                                      {
-                                          'name': True,
-                                          'description': True
-                                      }
-                                  })
+    def included_in_metadata(self):
+        return {'name': True,
+                'description': True,
+                'category': True,
+                'commands':
+                {
+                    'name': True,
+                    'description': True
+                }
+                }

@@ -1668,16 +1668,19 @@ class ValidateManager:
 
         # filter files only to relevant files
         filtered_modified, old_format_files, _ = self.filter_to_relevant_files(modified_files)
-        filtered_renamed, _, renamed_files_valid_types = self.filter_to_relevant_files(renamed_files)
+        filtered_renamed, _, valid_types_renamed = self.filter_to_relevant_files(renamed_files)
         filtered_modified = filtered_modified.union(filtered_renamed)
-        filtered_added, new_files_in_old_format, added_files_valid_types = self.filter_to_relevant_files(added_files)
-        old_format_files = old_format_files.union(new_files_in_old_format)
-        valid_types = all([added_files_valid_types, renamed_files_valid_types])
+
+        filtered_added, old_format_added, valid_types_added = self.filter_to_relevant_files(added_files)
+        old_format_files |= old_format_added
+
+        valid_types = all((valid_types_added, valid_types_renamed))
 
         # extract metadata files from the recognised changes
         changed_meta = self.pack_metadata_extraction(modified_files, added_files, renamed_files)
-
-        return filtered_modified, filtered_added, changed_meta, old_format_files, valid_types
+        filtered_changed_meta, old_format_changed, _ = self.filter_to_relevant_files(changed_meta)
+        old_format_files |= old_format_changed
+        return filtered_modified, filtered_added, filtered_changed_meta, old_format_files, valid_types
 
     def pack_metadata_extraction(self, modified_files, added_files, renamed_files):
         """Extract pack metadata files from the modified and added files

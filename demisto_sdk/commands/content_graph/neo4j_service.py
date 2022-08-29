@@ -135,7 +135,7 @@ def dump(use_docker=True):
     """Dump the content graph to a file
     """
     stop_neo4j_service(use_docker)
-    dump_path = "/backups/content-graph.dump" if IS_NEO4J_ADMIN_AVAILABLE else REPO_PATH / "neo4" / "content-graph.dump"
+    dump_path = "/backups/content-graph.dump" if use_docker else REPO_PATH / "neo4" / "content-graph.dump"
     command = f'neo4j-admin dump --database=neo4j --to={dump_path}'
     _neo4j_admin_command('dump', command)
     start_neo4j_service(use_docker)
@@ -145,7 +145,7 @@ def load(use_docker=True):
     """Load the content graph from a file
     """
     stop_neo4j_service(use_docker)
-    dump_path = "/backups/content-graph.dump" if IS_NEO4J_ADMIN_AVAILABLE else REPO_PATH / "neo4" / "content-graph.dump"
+    dump_path = "/backups/content-graph.dump" if use_docker else REPO_PATH / "neo4" / "content-graph.dump"
     command = f'neo4j-admin load --database=neo4j --from={dump_path}'
     _neo4j_admin_command('load', command)
     start_neo4j_service(use_docker)

@@ -7,6 +7,7 @@ from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.content_graph.common import (
     ContentType,
     PACK_METADATA_FILENAME,
+    PACK_CONTRIBUTORS_FILENAME,
     Relationships
 )
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
@@ -139,6 +140,11 @@ class PackParser(BaseContentParser, PackMetadataParser):
         PackMetadataParser.__init__(self, metadata=get_json(path / PACK_METADATA_FILENAME))
         self.content_items: PackContentItems = PackContentItems()
         self.relationships: Relationships = Relationships()
+        self.contributors = []
+        try:
+            self.contributors = get_json(path / PACK_CONTRIBUTORS_FILENAME)
+        except FileNotFoundError:
+            self.contributors = []
         self.parse_pack_folders()
         logger.info(f'Parsed {self.node_id}')
 

@@ -109,7 +109,7 @@ def search_nodes(
 def delete_all_graph_nodes(
     tx: Transaction
 ) -> None:
-    query = f"""
+    query = """
     MATCH (n)
     DETACH DELETE n
     """

@@ -2290,13 +2290,17 @@ def error_code(config, **kwargs):
 def create_content_graph(no_use_docker, use_existing, should_dump, **kwargs):
     from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.content_graph.content_graph_commands import create_content_graph
+    from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import Neo4jContentGraphInterface
     logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
                   quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
                   log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
-
-    create_content_graph(use_docker=not no_use_docker,
-                         use_existing=use_existing,
-                         should_dump=should_dump)
+    with Neo4jContentGraphInterface() as content_graph_interface:
+        create_content_graph(
+            content_graph_interface=content_graph_interface,
+            use_docker=not no_use_docker,
+            use_existing=use_existing,
+            should_dump=should_dump
+        )
 
 
 @main.command(
@@ -2316,11 +2320,17 @@ def create_content_graph(no_use_docker, use_existing, should_dump, **kwargs):
 def load_content_graph(no_use_docker: bool, content_graph_path: Path, **kwargs):
     from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.content_graph.content_graph_commands import load_content_graph
+    from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import Neo4jContentGraphInterface
     logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
                   quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
                   log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
 
-    load_content_graph(use_docker=not no_use_docker, content_graph_path=content_graph_path)
+    with Neo4jContentGraphInterface() as content_graph_interface:
+        load_content_graph(
+            content_graph_interface=content_graph_interface,
+            use_docker=not no_use_docker,
+            content_graph_path=content_graph_path,
+        )
 
 
 @main.command(

@@ -140,11 +140,10 @@ class PackParser(BaseContentParser, PackMetadataParser):
         PackMetadataParser.__init__(self, metadata=get_json(path / PACK_METADATA_FILENAME))
         self.content_items: PackContentItems = PackContentItems()
         self.relationships: Relationships = Relationships()
-        self.contributors = []
         try:
-            self.contributors = get_json(path / PACK_CONTRIBUTORS_FILENAME)
+            self.contributors: List[str] = get_json(path / PACK_CONTRIBUTORS_FILENAME)
         except FileNotFoundError:
-            self.contributors = []
+            logger.info(f'No contributors file found in {path}')
         self.parse_pack_folders()
         logger.info(f'Parsed {self.node_id}')
 

@@ -68,5 +68,5 @@ class ContentGraphInterface(ABC):
         pass
     
     @abstractmethod
-    def run_single_query(self, query: str, parameters: Optional[Dict[str, Any]] = None) -> Any:
+    def run_single_query(self, query: str, **kwargs) -> Any:
         pass

@@ -664,9 +664,14 @@ class PlaybookValidator(ContentEntityValidator):
                     is_valid = False
 
             for form_question in task.get('form', {}).get('questions', []):
-                if value := form_question.get('labelarg', {}).get('simple', ''):
-                    if not self.handle_incorrect_reference_value(task_id, value, form_question):
-                        is_valid = False
+                if form_question:
+                    if value := form_question.get('labelarg', {}).get('simple', ''):
+                        if not self.handle_incorrect_reference_value(task_id, value, form_question):
+                            is_valid = False
+
+                    elif value := form_question.get('labelarg', {}).get('complex', {}):
+                        if not self.handle_transformers_and_filters(value, 'inputs'):
+                            is_valid = False
 
         return is_valid
 

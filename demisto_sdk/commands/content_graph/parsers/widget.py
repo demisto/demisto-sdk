@@ -1,10 +1,10 @@
 from pathlib import Path
 
-from demisto_sdk.commands.content_graph.common import ContentTypes
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
 
 
-class WidgetParser(JSONContentItemParser, content_type=ContentTypes.WIDGET):
+class WidgetParser(JSONContentItemParser, content_type=ContentType.WIDGET):
     def __init__(self, path: Path) -> None:
         super().__init__(path)
         self.data_type = self.json_data.get('dataType')
@@ -17,4 +17,4 @@ class WidgetParser(JSONContentItemParser, content_type=ContentTypes.WIDGET):
         """
         if self.data_type:
             if script := self.json_data.get('query'):
-                self.add_dependency(script, ContentTypes.SCRIPT)
+                self.add_dependency(script, ContentType.SCRIPT)

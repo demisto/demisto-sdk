@@ -3,7 +3,7 @@ import neo4j
 from typing import Any, Dict, List, Optional, Tuple
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
-from demisto_sdk.commands.content_graph.common import ContentTypes, Rel
+from demisto_sdk.commands.content_graph.common import ContentType, Relationship
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import create_indexes
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import create_constraints
@@ -34,7 +34,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             tx.commit()
             tx.close()
 
-    def create_nodes(self, nodes: Dict[ContentTypes, List[Dict[str, Any]]]) -> None:
+    def create_nodes(self, nodes: Dict[ContentType, List[Dict[str, Any]]]) -> None:
         with self.driver.session() as session:
             tx: neo4j.Transaction = session.begin_transaction()
             create_nodes(tx, nodes)
@@ -48,7 +48,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 raise Exception('Duplicates found in graph.')
             tx.close()
 
-    def create_relationships(self, relationships: Dict[Rel, List[Dict[str, Any]]]) -> None:
+    def create_relationships(self, relationships: Dict[Relationship, List[Dict[str, Any]]]) -> None:
         with self.driver.session() as session:
             tx: neo4j.Transaction = session.begin_transaction()
             create_relationships(tx, relationships)
@@ -76,7 +76,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             tx.commit()
             tx.close()
 
-    def get_nodes_by_type(self, content_type: ContentTypes) -> Any:
+    def get_nodes_by_type(self, content_type: ContentType) -> Any:
         with self.driver.session() as session:
             tx: neo4j.Transaction = session.begin_transaction()
             result = get_nodes_by_type(tx, content_type)
@@ -85,7 +85,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def search_nodes(
         self,
-        content_type: Optional[ContentTypes] = None,
+        content_type: Optional[ContentType] = None,
         **properties
     ) -> Any:
         with self.driver.session() as session:
@@ -96,7 +96,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def get_single_node(
         self,
-        content_type: Optional[ContentTypes] = None,
+        content_type: Optional[ContentType] = None,
         **properties
     ) -> Any:
         with self.driver.session() as session:
@@ -105,7 +105,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             tx.close()
         return result
 
-    def get_relationships_by_type(self, relationship: Rel) -> Any:
+    def get_relationships_by_type(self, relationship: Relationship) -> Any:
         with self.driver.session() as session:
             tx: neo4j.Transaction = session.begin_transaction()
             result = get_relationships_by_type(tx, relationship)

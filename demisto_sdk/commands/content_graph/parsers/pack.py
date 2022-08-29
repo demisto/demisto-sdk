@@ -5,7 +5,7 @@ from typing import Any, Dict, Iterator, List, Optional
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.content_graph.common import (
-    ContentTypes,
+    ContentType,
     PACK_METADATA_FILENAME,
     Relationships
 )
@@ -22,8 +22,8 @@ class ContentItemsList(list):
     Attributes:
         content_type (ContentTypes): The content types allowed to be included in this list.
     """
-    def __init__(self, content_type: ContentTypes):
-        self.content_type: ContentTypes = content_type
+    def __init__(self, content_type: ContentType):
+        self.content_type: ContentType = content_type
         super().__init__()
 
     def append_conditionally(self, content_item: ContentItemParser) -> bool:
@@ -45,32 +45,32 @@ class PackContentItems:
     """ A class that holds all pack's content items in lists by their types.
     """
     def __init__(self) -> None:
-        self.classifier = ContentItemsList(content_type=ContentTypes.CLASSIFIER)
-        self.correlation_rule = ContentItemsList(content_type=ContentTypes.CORRELATION_RULE)
-        self.dashboard = ContentItemsList(content_type=ContentTypes.DASHBOARD)
-        self.generic_definition = ContentItemsList(content_type=ContentTypes.GENERIC_DEFINITION)
-        self.generic_module = ContentItemsList(content_type=ContentTypes.GENERIC_MODULE)
-        self.generic_type = ContentItemsList(content_type=ContentTypes.GENERIC_TYPE)
-        self.incident_field = ContentItemsList(content_type=ContentTypes.INCIDENT_FIELD)
-        self.incident_type = ContentItemsList(content_type=ContentTypes.INCIDENT_TYPE)
-        self.indicator_field = ContentItemsList(content_type=ContentTypes.INDICATOR_FIELD)
-        self.indicator_type = ContentItemsList(content_type=ContentTypes.INDICATOR_TYPE)
-        self.integration = ContentItemsList(content_type=ContentTypes.INTEGRATION)
-        self.job = ContentItemsList(content_type=ContentTypes.JOB)
-        self.layout = ContentItemsList(content_type=ContentTypes.LAYOUT)
-        self.list = ContentItemsList(content_type=ContentTypes.LIST)
-        self.mapper = ContentItemsList(content_type=ContentTypes.MAPPER)
-        self.modeling_rule = ContentItemsList(content_type=ContentTypes.MODELING_RULE)
-        self.parsing_rule = ContentItemsList(content_type=ContentTypes.PARSING_RULE)
-        self.playbook = ContentItemsList(content_type=ContentTypes.PLAYBOOK)
-        self.report = ContentItemsList(content_type=ContentTypes.REPORT)
-        self.script = ContentItemsList(content_type=ContentTypes.SCRIPT)
-        self.test_playbook = ContentItemsList(content_type=ContentTypes.TEST_PLAYBOOK)
-        self.trigger = ContentItemsList(content_type=ContentTypes.TRIGGER)
-        self.widget = ContentItemsList(content_type=ContentTypes.WIDGET)
-        self.wizard = ContentItemsList(content_type=ContentTypes.WIZARD)
-        self.xsiam_dashboard = ContentItemsList(content_type=ContentTypes.XSIAM_DASHBOARD)
-        self.xsiam_report = ContentItemsList(content_type=ContentTypes.XSIAM_REPORT)
+        self.classifier = ContentItemsList(content_type=ContentType.CLASSIFIER)
+        self.correlation_rule = ContentItemsList(content_type=ContentType.CORRELATION_RULE)
+        self.dashboard = ContentItemsList(content_type=ContentType.DASHBOARD)
+        self.generic_definition = ContentItemsList(content_type=ContentType.GENERIC_DEFINITION)
+        self.generic_module = ContentItemsList(content_type=ContentType.GENERIC_MODULE)
+        self.generic_type = ContentItemsList(content_type=ContentType.GENERIC_TYPE)
+        self.incident_field = ContentItemsList(content_type=ContentType.INCIDENT_FIELD)
+        self.incident_type = ContentItemsList(content_type=ContentType.INCIDENT_TYPE)
+        self.indicator_field = ContentItemsList(content_type=ContentType.INDICATOR_FIELD)
+        self.indicator_type = ContentItemsList(content_type=ContentType.INDICATOR_TYPE)
+        self.integration = ContentItemsList(content_type=ContentType.INTEGRATION)
+        self.job = ContentItemsList(content_type=ContentType.JOB)
+        self.layout = ContentItemsList(content_type=ContentType.LAYOUT)
+        self.list = ContentItemsList(content_type=ContentType.LIST)
+        self.mapper = ContentItemsList(content_type=ContentType.MAPPER)
+        self.modeling_rule = ContentItemsList(content_type=ContentType.MODELING_RULE)
+        self.parsing_rule = ContentItemsList(content_type=ContentType.PARSING_RULE)
+        self.playbook = ContentItemsList(content_type=ContentType.PLAYBOOK)
+        self.report = ContentItemsList(content_type=ContentType.REPORT)
+        self.script = ContentItemsList(content_type=ContentType.SCRIPT)
+        self.test_playbook = ContentItemsList(content_type=ContentType.TEST_PLAYBOOK)
+        self.trigger = ContentItemsList(content_type=ContentType.TRIGGER)
+        self.widget = ContentItemsList(content_type=ContentType.WIDGET)
+        self.wizard = ContentItemsList(content_type=ContentType.WIZARD)
+        self.xsiam_dashboard = ContentItemsList(content_type=ContentType.XSIAM_DASHBOARD)
+        self.xsiam_report = ContentItemsList(content_type=ContentType.XSIAM_REPORT)
 
     def iter_lists(self) -> Iterator[ContentItemsList]:
         for attribute in vars(self).values():
@@ -147,13 +147,13 @@ class PackParser(BaseContentParser, PackMetadataParser):
         return self.path.name
 
     @property
-    def content_type(self) -> ContentTypes:
-        return ContentTypes.PACK
+    def content_type(self) -> ContentType:
+        return ContentType.PACK
 
     def parse_pack_folders(self) -> None:
         """ Parses all pack content items by iterating its folders.
         """
-        for folder_path in ContentTypes.pack_folders(self.path):
+        for folder_path in ContentType.pack_folders(self.path):
             for content_item_path in folder_path.iterdir():  # todo: consider multiprocessing
                 self.parse_content_item(content_item_path)
 

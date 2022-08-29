@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
-from demisto_sdk.commands.content_graph.common import ContentTypes, Rel
+from demisto_sdk.commands.content_graph.common import ContentType, Relationship
 
 class ContentGraphInterface(ABC):
     @abstractmethod
@@ -11,11 +11,11 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def create_nodes(self, nodes: Dict[ContentTypes, List[Dict[str, Any]]]) -> None:
+    def create_nodes(self, nodes: Dict[ContentType, List[Dict[str, Any]]]) -> None:
         pass
 
     @abstractmethod
-    def create_relationships(self, relationships: Dict[Rel, List[Dict[str, Any]]]) -> None:
+    def create_relationships(self, relationships: Dict[Relationship, List[Dict[str, Any]]]) -> None:
         pass
 
     @abstractmethod
@@ -35,13 +35,13 @@ class ContentGraphInterface(ABC):
         pass
     
     @abstractmethod
-    def get_nodes_by_type(self, content_type: ContentTypes) -> Any:
+    def get_nodes_by_type(self, content_type: ContentType) -> Any:
         pass
 
     @abstractmethod
     def search_nodes(
         self,
-        content_type: Optional[ContentTypes] = None,
+        content_type: Optional[ContentType] = None,
         **properties,
     ) -> Any:
         pass
@@ -49,13 +49,13 @@ class ContentGraphInterface(ABC):
     @abstractmethod
     def get_single_node(
         self,
-        content_type: Optional[ContentTypes] = None,
+        content_type: Optional[ContentType] = None,
         **properties,
     ) -> Any:
         pass
 
     @abstractmethod
-    def get_relationships_by_type(self, relationship: Rel) -> Any:
+    def get_relationships_by_type(self, relationship: Relationship) -> Any:
         pass
 
     @abstractmethod

@@ -1,6 +1,6 @@
 from neo4j import Transaction
 
-from demisto_sdk.commands.content_graph.common import ContentTypes, Rel
+from demisto_sdk.commands.content_graph.common import ContentType, Relationship
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query
 
 
@@ -15,13 +15,13 @@ def create_constraints(tx: Transaction) -> None:
 
 
 def create_nodes_constraints(tx: Transaction) -> None:
-    create_node_property_uniqueness_constraint(tx, ContentTypes.COMMAND, 'id')
-    create_node_property_uniqueness_constraint(tx, ContentTypes.COMMAND, 'node_id')
+    create_node_property_uniqueness_constraint(tx, ContentType.COMMAND, 'id')
+    create_node_property_uniqueness_constraint(tx, ContentType.COMMAND, 'node_id')
 
 
 def create_node_property_uniqueness_constraint(
     tx: Transaction,
-    content_type: ContentTypes,
+    content_type: ContentType,
     prop: str
 ) -> None:
     query = NODE_PROPERTY_UNIQUENESS_TEMPLATE.format(label=content_type, prop=prop)
@@ -30,7 +30,7 @@ def create_node_property_uniqueness_constraint(
 
 def create_node_property_existence_constraint(
     tx: Transaction,
-    content_type: ContentTypes,
+    content_type: ContentType,
     prop: str,
 ) -> None:
     query = NODE_PROPERTY_EXISTENCE_TEMPLATE.format(label=content_type, prop=prop)
@@ -38,12 +38,12 @@ def create_node_property_existence_constraint(
 
 
 def create_relationships_constraints(tx: Transaction) -> None:
-    create_relationship_property_existence_constraint(tx, Rel.DEPENDS_ON, 'mandatorily')
+    create_relationship_property_existence_constraint(tx, Relationship.DEPENDS_ON, 'mandatorily')
 
 
 def create_relationship_property_existence_constraint(
     tx: Transaction,
-    rel: Rel,
+    rel: Relationship,
     prop: str,
 ) -> None:
     query = REL_PROPERTY_EXISTENCE_TEMPLATE.format(label=rel, prop=prop)

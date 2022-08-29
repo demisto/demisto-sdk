@@ -1,13 +1,13 @@
 
 from pathlib import Path
 
-from demisto_sdk.commands.content_graph.common import ContentTypes
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.content_item import IncorrectParser
 from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
 from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
 
 
-class TestPlaybookParser(PlaybookParser, content_type=ContentTypes.TEST_PLAYBOOK):
+class TestPlaybookParser(PlaybookParser, content_type=ContentType.TEST_PLAYBOOK):
     def __init__(self, path: Path) -> None:
         """ Parses the test playbook.
 

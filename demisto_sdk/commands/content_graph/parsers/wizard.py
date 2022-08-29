@@ -1,11 +1,11 @@
 from pathlib import Path
 from typing import List
 
-from demisto_sdk.commands.content_graph.common import ContentTypes
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
 
 
-class WizardParser(JSONContentItemParser, content_type=ContentTypes.WIZARD):
+class WizardParser(JSONContentItemParser, content_type=ContentType.WIZARD):
     def __init__(self, path: Path) -> None:
         super().__init__(path)
         self.packs: List[str] = self.get_packs()

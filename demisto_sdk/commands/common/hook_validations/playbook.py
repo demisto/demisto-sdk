@@ -755,17 +755,18 @@ class PlaybookValidator(ContentEntityValidator):
 
         return is_valid
 
-    def handle_incorrect_reference_value(self, task_id, value, value_info: dict = {}):
+    def handle_incorrect_reference_value(self, task_id, values, value_info: dict = {}):
         """
         Check that When referencing a context value, it is valid, i.e. iscontext: true or surrounded by ${<condition>},
         Returns: True if the references are correct
         """
         is_valid = True
-        if value.startswith('incident.') or value.startswith('inputs.'):
-            if not value_info.get('iscontext', ''):
-                is_valid = False
-                error_message, error_code = Errors.incorrect_value_references(task_id, value)
-                self.handle_error(error_message, error_code, file_path=self.file_path)
+        for value in values.split(','):
+            if value.startswith('incident.') or value.startswith('inputs.'):
+                if not value_info.get('iscontext', ''):
+                    is_valid = False
+                    error_message, error_code = Errors.incorrect_value_references(task_id, value)
+                    self.handle_error(error_message, error_code, file_path=self.file_path)
 
         return is_valid
 

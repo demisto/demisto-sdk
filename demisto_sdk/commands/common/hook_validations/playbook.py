@@ -566,6 +566,10 @@ class PlaybookValidator(ContentEntityValidator):
 
     @error_codes('PB121')
     def _is_correct_value_references_interface(self):
+        """
+        Check that When referencing a context value, it is valid, i.e. iscontext: true or surrounded by ${<condition>}
+        Returns: True if the references are correct
+        """
         answers = []
         tasks: dict = self.current_file.get('tasks', {})
         for task_id, task in tasks.items():
@@ -579,49 +583,62 @@ class PlaybookValidator(ContentEntityValidator):
         answers.append(self.handle_playbook_inputs(self.current_file.get('inputs', [])))
         return all(answers)
 
-    def handle_condition_task(self, task, task_key):
+    def handle_condition_task(self, task, task_id):
+        """
+        Check that When referencing a context value, it is valid, i.e. iscontext: true or surrounded by ${<condition>},
+        in a condition task
+        Returns: True if the references are correct
+        """
         is_valid = True
         if task.get('type') == 'condition':
             for conditions in task.get('conditions', []):
                 for condition in conditions.get('condition'):
                     for condition_info in condition:
                         if value := condition_info.get('left', {}).get('value', {}).get('simple', ''):
-                            if not self.handle_incorrect_reference_value(task_key, value, condition_info.get('left', {})):
+                            if not self.handle_incorrect_reference_value(task_id, value, condition_info.get('left', {})):
                                 is_valid = False
 
-                        if condition_info.get('right'):
-                            if value := condition_info.get('right', {}).get('value', {}).get('simple', ''):
-                                if not self.handle_incorrect_reference_value(task_key, value, condition_info.get('right', {})):
-                                    is_valid = False
+                        elif value := condition_info.get('left', {}).get('value', {}).get('complex', {}):
+                            if not self.handle_transformers_and_filters(value, task_id):
+                                is_valid = False
+
+                        if value := condition_info.get('right', {}).get('value', {}).get('simple', ''):
+                            if not self.handle_incorrect_reference_value(task_id, value, condition_info.get('right', {})):
+                                is_valid = False
+
+                        elif value := condition_info.get('right', {}).get('value', {}).get('complex', {}):
+                            if not self.handle_transformers_and_filters(value, task_id):
+                                is_valid = False
 
             for message_key, message_value in task.get('message', {}).items():
-                if message_key and message_value:
-                    if not isinstance(message_value, list):
-                        if value := message_value.get('simple', ''):
-                            if not self.handle_incorrect_reference_value(task_key, value):
-                                is_valid = False
+                if not self.handle_message_value(message_key, message_value, task_id):
+                    is_valid = False
+
+            for script_argument in task.get('scriptarguments', {}).values():
+                if not self.handle_script_arguments(script_argument, task_id):
+                    is_valid = False
 
         return is_valid
 
     def handle_regular_task(self, task, task_id):
+        """
+        Check that When referencing a context value, it is valid, i.e. iscontext: true or surrounded by ${<condition>},
+        in a regular task
+        Returns: True if the references are correct
+        """
         is_valid = True
         if task.get('type') == 'regular':
             if default_assignee := task.get('defaultassigneecomplex', {}).get('simple', ''):
                 if not self.handle_incorrect_reference_value(task_id, default_assignee):
                     is_valid = False
 
-            elif default_assignee := task.get('defaultassigneecomplex', {}).get('complex', ''):
+            elif default_assignee := task.get('defaultassigneecomplex', {}).get('complex', {}):
                 if not self.handle_transformers_and_filters(default_assignee, task_id):
                     is_valid = False
 
             for script_argument in task.get('scriptarguments', {}).values():
-                if arg_value := script_argument.get('simple', ''):
-                    if not self.handle_incorrect_reference_value(task_id, arg_value, script_argument):
-                        is_valid = False
-
-                elif arg_value := script_argument.get('complex', ''):
-                    if not self.handle_transformers_and_filters(arg_value, task_id):
-                        is_valid = False
+                if not self.handle_script_arguments(script_argument, task_id):
+                    is_valid = False
 
             for incident_field in task.get('fieldMapping', []):
                 field_output = incident_field.get('output', {}).get('complex', {})
@@ -631,23 +648,20 @@ class PlaybookValidator(ContentEntityValidator):
         return is_valid
 
     def handle_data_collection(self, task, task_id):
+        """
+        Check that When referencing a context value, it is valid, i.e. iscontext: true or surrounded by ${<condition>},
+        in a data collection task
+        Returns: True if the references are correct
+        """
         is_valid = True
         if task.get('type') == 'collection':
             for script_argument in task.get('scriptarguments', {}).values():
-                if arg_value := script_argument.get('simple', ''):
-                    if not self.handle_incorrect_reference_value(task_id, arg_value):
-                        is_valid = False
-
-                    elif arg_value := script_argument.get('complex', ''):
-                        if not self.handle_transformers_and_filters(arg_value, task_id):
-                            is_valid = False
+                if not self.handle_script_arguments(script_argument, task_id):
+                    is_valid = False
 
             for message_key, message_value in task.get('message', {}).items():
-                if message_key and message_value:
-                    if not isinstance(message_value, list):
-                        if value := message_value.get('simple', ''):
-                            if not self.handle_incorrect_reference_value(task_id, value):
-                                is_valid = False
+                if not self.handle_message_value(message_key, message_value, task_id):
+                    is_valid = False
 
             for form_question in task.get('form', {}).get('questions', []):
                 if value := form_question.get('labelarg', {}).get('simple', ''):
@@ -657,19 +671,29 @@ class PlaybookValidator(ContentEntityValidator):
         return is_valid
 
     def handle_playbook_inputs(self, inputs):
+        """
+        Check that When referencing a context value, it is valid, i.e. iscontext: true or surrounded by ${<condition>},
+        in the inputs section
+        Returns: True if the references are correct
+        """
         is_valid = True
         for playbook_input in inputs:
             if value := playbook_input.get('value', {}).get('simple', ''):
                 if not self.handle_incorrect_reference_value('inputs', value, playbook_input):
                     is_valid = False
 
-            elif complex_value := playbook_input.get('value', {}).get('complex', ''):
+            elif complex_value := playbook_input.get('value', {}).get('complex', {}):
                 if not self.handle_transformers_and_filters(complex_value, 'inputs'):
                     is_valid = False
 
         return is_valid
 
-    def handle_transformers_and_filters(self, field_output, task_id):
+    def handle_transformers_and_filters(self, field_output: dict, task_id):
+        """
+        Check that When referencing a context value, it is valid, i.e. iscontext: true or surrounded by ${<condition>},
+        in a transformers and filters section.
+        Returns: True if the references are correct
+        """
         is_valid = True
         filters = field_output.get('filters', [])
         for incident_filter in filters:
@@ -690,7 +714,43 @@ class PlaybookValidator(ContentEntityValidator):
 
         return is_valid
 
+    def handle_script_arguments(self, script_argument: dict, task_id):
+        """
+        Check that When referencing a context value, it is valid, i.e. iscontext: true or surrounded by ${<condition>},
+        in a script arguments section.
+        Returns: True if the references are correct
+        """
+        is_valid = True
+        if arg_value := script_argument.get('simple', ''):
+            if not self.handle_incorrect_reference_value(task_id, arg_value):
+                is_valid = False
+
+            elif arg_value := script_argument.get('complex', ''):
+                if not self.handle_transformers_and_filters(arg_value, task_id):
+                    is_valid = False
+
+        return is_valid
+
+    def handle_message_value(self, message_key, message_value, task_id):
+        """
+        Check that When referencing a context value, it is valid, i.e. iscontext: true or surrounded by ${<condition>},
+        in a message section.
+        Returns: True if the references are correct
+        """
+        is_valid = True
+        if message_key and message_value:
+            if isinstance(message_value, dict):
+                if value := message_value.get('simple', ''):
+                    if not self.handle_incorrect_reference_value(task_id, value):
+                        is_valid = False
+
+        return is_valid
+
     def handle_incorrect_reference_value(self, task_id, value, value_info: dict = {}):
+        """
+        Check that When referencing a context value, it is valid, i.e. iscontext: true or surrounded by ${<condition>},
+        Returns: True if the references are correct
+        """
         is_valid = True
         if value.startswith('incident.') or value.startswith('inputs.'):
             if not value_info.get('iscontext', ''):

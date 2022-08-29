@@ -1,6 +1,5 @@
 from pathlib import Path
 import shutil
-import zipfile
 from pydantic import BaseModel, DirectoryPath
 from typing import List
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -26,10 +25,9 @@ class Repository(BaseModel):
         logger.info(f'ending repo dump. Took {time_taken} seconds')
 
         # zip all packs
-        with zipfile.ZipFile(dir / 'content_all.zip', "w", zipfile.ZIP_DEFLATED) as zip_file:
-            for entry in dir.rglob("*"):
-                zip_file.write(entry, entry.relative_to(dir))
-                shutil.rmtree(entry)
+        shutil.make_archive(str(dir.parent / 'content_packs'), 'zip', dir)
+
+        shutil.rmtree(dir)
 
         # save everything in zip
         # sign zip

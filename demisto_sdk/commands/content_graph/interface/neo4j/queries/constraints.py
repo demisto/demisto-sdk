@@ -15,7 +15,7 @@ def create_constraints(tx: Transaction) -> None:
 
 
 def create_nodes_constraints(tx: Transaction) -> None:
-    create_node_property_uniqueness_constraint(tx, ContentType.COMMAND, 'id')
+    create_node_property_uniqueness_constraint(tx, ContentType.COMMAND, 'object_id')
     create_node_property_uniqueness_constraint(tx, ContentType.COMMAND, 'node_id')
 
 

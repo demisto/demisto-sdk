@@ -9,7 +9,7 @@ CREATE_NODE_INDEX_TEMPLATE = 'CREATE INDEX IF NOT EXISTS FOR (n:{label}) ON ({pr
 NODE_INDEX_OPTIONS = [
     ['node_id'],
     ['marketplaces'],
-    ['id'],
+    ['object_id'],
     ['node_id', 'fromversion', 'marketplaces']
 ]
 

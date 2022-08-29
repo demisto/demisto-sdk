@@ -21,15 +21,15 @@ def _handle_github_response(response, logging_module) -> dict:
     return res_dict
 
 
-def _add_pr_comment(comment, logging_module, build='GitLab'):
-    if build == 'GitLab':
-        token = os.environ['XSOAR_BOT_TEST_CONTENT']
-        branch_name = os.environ['CI_COMMIT_BRANCH']
-        sha1 = os.environ['CI_COMMIT_SHA']
-    else:
+def _add_pr_comment(comment, logging_module, build=''):
+    if build == 'circleci':
         token = os.environ['CONTENT_GITHUB_TOKEN']
         branch_name = os.environ['CIRCLE_BRANCH']
         sha1 = os.environ['CIRCLE_SHA1']
+    else:
+        token = os.environ['XSOAR_BOT_TEST_CONTENT']
+        branch_name = os.environ['CI_COMMIT_BRANCH']
+        sha1 = os.environ['CI_COMMIT_SHA']
 
     query = '?q={}+repo:demisto/content+org:demisto+is:pr+is:open+head:{}+is:open'.format(sha1, branch_name)
     url = 'https://api.github.com/search/issues'

@@ -28,60 +28,37 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     
     def create_indexes_and_constraints(self) -> None:
         with self.driver.session() as session:
-            tx: neo4j.Transaction = session.begin_transaction()
-            create_indexes(tx)
-            create_constraints(tx)
-            tx.commit()
-            tx.close()
+            session.write_transaction(create_indexes)
+            session.write_transaction(create_constraints)
 
     def create_nodes(self, nodes: Dict[ContentType, List[Dict[str, Any]]]) -> None:
         with self.driver.session() as session:
-            tx: neo4j.Transaction = session.begin_transaction()
-            create_nodes(tx, nodes)
-            tx.commit()
-            tx.close()
+            session.write_transaction(create_nodes, nodes)
     
     def validate_graph(self) -> None:
         with self.driver.session() as session:
-            tx: neo4j.Transaction = session.begin_transaction()
-            if duplicates_exist(tx):
+            if session.read_transaction(duplicates_exist):
                 raise Exception('Duplicates found in graph.')
-            tx.close()
 
     def create_relationships(self, relationships: Dict[Relationship, List[Dict[str, Any]]]) -> None:
         with self.driver.session() as session:
-            tx: neo4j.Transaction = session.begin_transaction()
-            create_relationships(tx, relationships)
-            tx.commit()
-            tx.close()
+            session.write_transaction(create_relationships, relationships)
 
     def get_packs_content_items(self, marketplace: MarketplaceVersions):
         with self.driver.session() as session:
-            tx: neo4j.Transaction = session.begin_transaction()
-            result = get_packs_content_items(tx, marketplace)
-            tx.close()
-        return result
+            return session.read_transaction(get_packs_content_items, marketplace)
     
     def get_all_integrations_with_commands(self):
         with self.driver.session() as session:
-            tx: neo4j.Transaction = session.begin_transaction()
-            result = get_all_integrations_with_commands(tx)
-            tx.close()
-        return result
+            return session.read_transaction(get_all_integrations_with_commands)
 
     def clean_graph(self):
         with self.driver.session() as session:
-            tx: neo4j.Transaction = session.begin_transaction()
-            delete_all_graph_nodes(tx)
-            tx.commit()
-            tx.close()
+            session.write_transaction(delete_all_graph_nodes)
 
     def get_nodes_by_type(self, content_type: ContentType) -> Any:
         with self.driver.session() as session:
-            tx: neo4j.Transaction = session.begin_transaction()
-            result = get_nodes_by_type(tx, content_type)
-            tx.close()
-        return result
+            return session.read_transaction(get_nodes_by_type, content_type)
 
     def search_nodes(
         self,
@@ -89,10 +66,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         **properties
     ) -> Any:
         with self.driver.session() as session:
-            tx: neo4j.Transaction = session.begin_transaction()
-            result = search_nodes(tx, content_type, **properties)
-            tx.close()
-        return result
+            return session.read_transaction(content_type, **properties)
 
     def get_single_node(
         self,
@@ -100,24 +74,12 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         **properties
     ) -> Any:
         with self.driver.session() as session:
-            tx: neo4j.Transaction = session.begin_transaction()
-            result = search_nodes(tx, content_type, single_result=True, **properties)
-            tx.close()
-        return result
+            return session.read_transaction(search_nodes, content_type, single_result=True, **properties)
 
     def get_relationships_by_type(self, relationship: Relationship) -> Any:
         with self.driver.session() as session:
-            tx: neo4j.Transaction = session.begin_transaction()
-            result = get_relationships_by_type(tx, relationship)
-            tx.close()
-        return result
+            return session.read_transaction(get_relationships_by_type, relationship)
 
-    def run_single_query(self, query: str, parameters: Optional[Dict[str, Any]] = None) -> neo4j.Result:
+    def run_single_query(self, query: str, **kwargs) -> neo4j.Result:
         with self.driver.session() as session:
-            tx: neo4j.Transaction = session.begin_transaction()
-            result = tx.run(query, parameters)
-            tx.commit()
-            tx.close()
-        return result
-    
-    
+            return session.write_transaction(query, **kwargs)

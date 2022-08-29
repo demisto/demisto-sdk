@@ -5,6 +5,7 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
 
+
 class ContentGraphInterface(ABC):
     @abstractmethod
     def create_indexes_and_constraints(self) -> None:
@@ -59,5 +60,5 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def run_single_query(self, query: str, parameters: Optional[Dict[str, Any]] = None) -> Any:
+    def run_single_query(self, query: str, **kwargs) -> Any:
         pass

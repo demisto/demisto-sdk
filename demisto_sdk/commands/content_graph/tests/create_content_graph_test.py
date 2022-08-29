@@ -2,7 +2,8 @@ from typing import Any, Dict, List
 import pytest
 from pathlib import Path
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
-
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import \
+    Neo4jContentGraphInterface as ContentGraphInterface
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 import demisto_sdk.commands.content_graph.content_graph_commands as content_graph_commands
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -164,8 +165,9 @@ class TestCreateContentGraph:
         integration = pack.create_integration()
         integration.create_default_integration('TestIntegration')
 
-        interface = create_content_graph(use_existing=False)
-        content_items = interface.get_packs_content_items(marketplace=MarketplaceVersions.XSOAR)
+        with ContentGraphInterface() as interface:
+            create_content_graph(interface, use_existing=False)
+            content_items = interface.get_packs_content_items(marketplace=MarketplaceVersions.XSOAR)
         assert len(content_items) == 1
 
     def test_create_content_graph_end_to_end_with_existing_service(self, repo: Repo):
@@ -183,8 +185,9 @@ class TestCreateContentGraph:
         integration = pack.create_integration()
         integration.create_default_integration('TestIntegration')
 
-        interface = create_content_graph(use_existing=True)
-        content_items = interface.get_packs_content_items(marketplace=MarketplaceVersions.XSOAR)
+        with ContentGraphInterface() as interface:
+            create_content_graph(interface, use_existing=True)
+            content_items = interface.get_packs_content_items(marketplace=MarketplaceVersions.XSOAR)
         assert len(content_items) == 1
 
     def test_create_content_graph_single_pack(
@@ -261,36 +264,36 @@ class TestCreateContentGraph:
         pack.content_items.integration.append(integration)
         pack.content_items.script.append(script)
         repository.packs.append(pack)
-        interface = create_content_graph(use_existing=True)
+        with ContentGraphInterface() as interface:
+            create_content_graph(interface, use_existing=True)
+            result = interface.get_relationships_by_type(Relationship.IN_PACK)
+            for rel in result:
+                assert rel['source']['name'] in ['SampleIntegration', 'SampleScript']
+                assert rel['target']['name'] == 'SamplePack'
 
-        result = interface.get_relationships_by_type(Relationship.IN_PACK)
-        for rel in result:
-            assert rel['source']['name'] in ['SampleIntegration', 'SampleScript']
-            assert rel['target']['name'] == 'SamplePack'
+            result = interface.get_relationships_by_type(Relationship.HAS_COMMAND)
+            for rel in result:
+                assert rel['source']['name'] == 'SampleIntegration'
+                assert rel['target']['name'] == 'test-command'
 
-        result = interface.get_relationships_by_type(Relationship.HAS_COMMAND)
-        for rel in result:
-            assert rel['source']['name'] == 'SampleIntegration'
-            assert rel['target']['name'] == 'test-command'
+            result = interface.get_relationships_by_type(Relationship.USES)
+            for rel in result:
+                if rel['source']['name'] == 'SampleIntegration':
+                    assert rel['target']['node_id'] == f'{ContentType.CLASSIFIER}:SampleClassifier'
+                elif rel['source']['name'] == 'SampleScript':
+                    assert rel['target']['object_id'] == 'SampleScript2'
+                else:
+                    assert False  # there is no else case
 
-        result = interface.get_relationships_by_type(Relationship.USES)
-        for rel in result:
-            if rel['source']['name'] == 'SampleIntegration':
-                assert rel['target']['node_id'] == f'{ContentType.CLASSIFIER}:SampleClassifier'
-            elif rel['source']['name'] == 'SampleScript':
-                assert rel['target']['object_id'] == 'SampleScript2'
-            else:
-                assert False  # there is no else case
+            result = interface.get_relationships_by_type(Relationship.TESTED_BY)
+            for rel in result:
+                assert rel['source']['name'] == 'SampleIntegration'
+                assert rel['target']['node_id'] == f'{ContentType.TEST_PLAYBOOK}:SampleTestPlaybook'
 
-        result = interface.get_relationships_by_type(Relationship.TESTED_BY)
-        for rel in result:
-            assert rel['source']['name'] == 'SampleIntegration'
-            assert rel['target']['node_id'] == f'{ContentType.TEST_PLAYBOOK}:SampleTestPlaybook'
-
-        result = interface.get_relationships_by_type(Relationship.IMPORTS)
-        for rel in result:
-            assert rel['source']['name'] == 'SampleIntegration'
-            assert rel['target']['node_id'] == f'{ContentType.SCRIPT}:TestApiModule'
+            result = interface.get_relationships_by_type(Relationship.IMPORTS)
+            for rel in result:
+                assert rel['source']['name'] == 'SampleIntegration'
+                assert rel['target']['node_id'] == f'{ContentType.SCRIPT}:TestApiModule'
 
     def test_create_content_graph_two_integrations_with_same_command(
         self,
@@ -343,10 +346,10 @@ class TestCreateContentGraph:
         pack.content_items.integration.append(integration)
         pack.content_items.integration.append(integration2)
         repository.packs.append(pack)
-        
-        interface = create_content_graph(use_existing=True)
-        assert len(interface.get_nodes_by_type(ContentType.INTEGRATION)) == 2
-        assert len(interface.get_nodes_by_type(ContentType.COMMAND)) == 1
+        with ContentGraphInterface() as interface:
+            create_content_graph(interface, use_existing=True)
+            assert len(interface.get_nodes_by_type(ContentType.INTEGRATION)) == 2
+            assert len(interface.get_nodes_by_type(ContentType.COMMAND)) == 1
 
     def test_create_content_graph_playbook_uses_script_not_in_repository(
         self,
@@ -380,9 +383,9 @@ class TestCreateContentGraph:
         pack.relationships = relationships
         pack.content_items.integration.append(playbook)
         repository.packs.append(pack)
-        
-        interface = create_content_graph(use_existing=True)
-        script = interface.get_single_node(node_id=f'{ContentType.SCRIPT}:TestScript')
+        with ContentGraphInterface() as interface:
+            create_content_graph(interface, use_existing=True)
+            script = interface.get_single_node(node_id=f'{ContentType.SCRIPT}:TestScript')
         assert script.get('not_in_repository')
 
     def test_create_content_graph_duplicate_integrations(
@@ -435,7 +438,8 @@ class TestCreateContentGraph:
         repository.packs.append(pack)
         
         with pytest.raises(Exception) as e:
-            create_content_graph(use_existing=True)
+            with ContentGraphInterface() as interface:
+                create_content_graph(interface, use_existing=True)
         assert 'Duplicates found in graph' in str(e)
 
     def test_create_content_graph_duplicate_integrations_different_marketplaces(
@@ -490,8 +494,9 @@ class TestCreateContentGraph:
         pack.content_items.script.append(integration2)
         repository.packs.append(pack)
         
-        interface = create_content_graph(use_existing=True)
-        assert len(interface.get_nodes_by_type(ContentType.INTEGRATION)) == 2
+        with ContentGraphInterface() as interface:
+            create_content_graph(interface, use_existing=True)
+            assert len(interface.get_nodes_by_type(ContentType.INTEGRATION)) == 2
 
     def test_create_content_graph_duplicate_integrations_different_fromversion(
         self,
@@ -546,8 +551,9 @@ class TestCreateContentGraph:
         pack.content_items.script.append(integration2)
         repository.packs.append(pack)
         
-        interface = create_content_graph(use_existing=True)
-        assert len(interface.get_nodes_by_type(ContentType.INTEGRATION)) == 2
+        with ContentGraphInterface() as interface:
+            create_content_graph(interface, use_existing=True)
+            assert len(interface.get_nodes_by_type(ContentType.INTEGRATION)) == 2
 
     def test_stop_content_graph(self):
         """

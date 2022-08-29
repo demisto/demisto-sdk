@@ -1,8 +1,14 @@
 import neo4j
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
-from demisto_sdk.commands.content_graph.common import ContentType, Relationship
+from demisto_sdk.commands.content_graph.common import (
+    ContentType,
+    Relationship,
+    NEO4J_DATABASE_URL,
+    NEO4J_PASSWORD,
+    NEO4J_USERNAME,
+)
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import create_indexes
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import create_constraints
@@ -22,9 +28,21 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
 
 
 class Neo4jContentGraphInterface(ContentGraphInterface):
-    def __init__(self, database_uri, auth: Tuple[str, str]) -> None:
-        self.driver: neo4j.Neo4jDriver = neo4j.GraphDatabase.driver(database_uri, auth=auth)
-    
+    def __init__(self) -> None:
+        self.driver: neo4j.Neo4jDriver = neo4j.GraphDatabase.driver(
+            NEO4J_DATABASE_URL,
+            auth=(NEO4J_USERNAME, NEO4J_PASSWORD),
+        )
+
+    def __enter__(self) -> 'Neo4jContentGraphInterface':
+        return self
+
+    def __exit__(self, *args) -> None:
+        self.driver.close()
+
+    def close(self) -> None:
+        self.driver.close()
+
     def create_indexes_and_constraints(self) -> None:
         with self.driver.session() as session:
             session.write_transaction(create_indexes)

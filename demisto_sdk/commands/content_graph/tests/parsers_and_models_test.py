@@ -96,6 +96,7 @@ class ContentItemModelVerifier:
         assert expected_fromversion is None or model.fromversion == expected_fromversion
         assert expected_toversion is None or model.toversion == expected_toversion
 
+
 class PackModelVerifier:
     @staticmethod
     def run(

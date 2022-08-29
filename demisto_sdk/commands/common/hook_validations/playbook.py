@@ -659,21 +659,19 @@ class PlaybookValidator(ContentEntityValidator):
                 if not self.handle_script_arguments(script_argument, task_id):
                     is_valid = False
 
-            for message_key, message_value in task.get('message', {}).items():
-                if not self.handle_message_value(message_key, message_value, task_id):
-                    is_valid = False
-            try:
-                for form_question in task.get('form', {}).get('questions', []):
-                    if form_question:
-                        if value := form_question.get('labelarg', {}).get('simple', ''):
-                            if not self.handle_incorrect_reference_value(task_id, value, form_question):
-                                is_valid = False
+        for message_key, message_value in task.get('message', {}).items():
+            if not self.handle_message_value(message_key, message_value, task_id):
+                is_valid = False
 
-                        elif value := form_question.get('labelarg', {}).get('complex', {}):
-                            if not self.handle_transformers_and_filters(value, 'inputs'):
-                                is_valid = False
-            except Exception as e:
-                click.secho(f'A problem was encountered when validating playbook references: {str(e)}', fg="yellow")
+        for form_question in task.get('form', {}).get('questions', []):
+            if form_question.get('labelarg'):
+                if value := form_question.get('labelarg', {}).get('simple', ''):
+                    if not self.handle_incorrect_reference_value(task_id, value, form_question):
+                        is_valid = False
+
+                elif value := form_question.get('labelarg', {}).get('complex', {}):
+                    if not self.handle_transformers_and_filters(value, 'inputs'):
+                        is_valid = False
 
         return is_valid
 
@@ -732,9 +730,9 @@ class PlaybookValidator(ContentEntityValidator):
             if not self.handle_incorrect_reference_value(task_id, arg_value):
                 is_valid = False
 
-            elif arg_value := script_argument.get('complex', ''):
-                if not self.handle_transformers_and_filters(arg_value, task_id):
-                    is_valid = False
+        elif arg_value := script_argument.get('complex', {}):
+            if not self.handle_transformers_and_filters(arg_value, task_id):
+                is_valid = False
 
         return is_valid
 
@@ -749,6 +747,10 @@ class PlaybookValidator(ContentEntityValidator):
             if isinstance(message_value, dict):
                 if value := message_value.get('simple', ''):
                     if not self.handle_incorrect_reference_value(task_id, value):
+                        is_valid = False
+
+                elif value := message_value.get('complex', {}):
+                    if not self.handle_transformers_and_filters(value, task_id):
                         is_valid = False
 
         return is_valid

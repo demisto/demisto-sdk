@@ -1,7 +1,7 @@
 from pathlib import Path
 import shutil
 from pydantic import BaseModel, Field
-from typing import Any, Generator, Iterator, List, Optional
+from typing import Any, Generator, List, Optional
 from demisto_sdk.commands.common.constants import CONTRIBUTORS_README_TEMPLATE, MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_json, get_mp_tag_parser
 
@@ -41,6 +41,7 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 json = JSON_Handler()
 
 logger = logging.getLogger('demisto-sdk')
+
 
 class PackContentItems(BaseModel):
     classifier: List[Classifier] = Field([], alias=ContentTypes.CLASSIFIER.value)
@@ -150,7 +151,7 @@ class Pack(BaseContent, PackMetadata):
                     f.truncate()
             except Exception as e:
                 logger.error(f'Failed dumping readme: {e}')
-        
+
     def dump(self, path: Path, marketplace: MarketplaceVersions):
         path.mkdir(exist_ok=True, parents=True)
         for content_item in self.content_items:
@@ -165,6 +166,6 @@ class Pack(BaseContent, PackMetadata):
             shutil.copy(self.path / 'Author_image.png', path / 'Author_image.png')
         except FileNotFoundError:
             print(f'No such file {self.path / "Author_image.png"}')
-             
+
     def to_nodes(self) -> Nodes:
         return Nodes(self.to_dict(), *[content_item.to_dict() for content_item in self.content_items])

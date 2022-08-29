@@ -26,7 +26,7 @@ class Repository(BaseModel):
         logger.info(f'ending repo dump. Took {time_taken} seconds')
 
         # zip all packs
-        with zipfile.ZipFile(dir / 'content_packs.zip', "w", zipfile.ZIP_DEFLATED) as zip_file:
+        with zipfile.ZipFile(dir / 'content_all.zip', "w", zipfile.ZIP_DEFLATED) as zip_file:
             for entry in dir.rglob("*"):
                 zip_file.write(entry, entry.relative_to(dir))
                 shutil.rmtree(entry)

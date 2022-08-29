@@ -1,12 +1,18 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue in **validate**, where backward-compatibility failures prevented other validations from running.
+* fixed an issue in **validate**, where content-like files under infrastructure paths were not ignored.
+
+## 1.7.3
+
 * Fixed an issue in the **format** command where fail when executed from environment without mdx server available.
 * Added `Added a`, `Added an` to the list of allowed changelog prefixes.
 * Added support for Indicator Types/Reputations in the **upload** command.
 * Fixed an issue when running from a subdirectory of a content repo failed.
 * Changing the way we are using XSIAM servers api-keys in **test-content** .
 * Added a success message to **postman-codegen**.
+* Added name normalization according to new convention to XSIAM content items
 
 ## 1.7.2
 

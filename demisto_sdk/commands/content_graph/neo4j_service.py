@@ -11,11 +11,11 @@ NEO4J_SERVICE_IMAGE = 'neo4j:4.4.9'
 NEO4J_ADMIN_IMAGE = 'neo4j/neo4j-admin:4.4.9'
 
 logger = logging.getLogger('demisto-sdk')
-
 try:
     run_command('neo4j-admin --version', cwd=REPO_PATH / 'neo4j', is_silenced=True)
     IS_NEO4J_ADMIN_AVAILABLE = True
 except Exception:
+    logger.info('Could not find neo4j-admin in path. Using docker instead.')
     IS_NEO4J_ADMIN_AVAILABLE = False
 
 
@@ -72,7 +72,7 @@ def start_neo4j_service(use_docker: bool = True):
         use_docker (bool, optional): Whether use docker or run locally. Defaults to True.
     """
     if not use_docker:
-        _neo4j_admin_command('set-initial-password', f'neo4j - admin set - initial - password {NEO4J_PASSWORD}')
+        _neo4j_admin_command('set-initial-password', f'neo4j-admin set-initial-password {NEO4J_PASSWORD}')
         run_command('neo4j start', cwd=REPO_PATH / 'neo4j', is_silenced=False)
 
     else:

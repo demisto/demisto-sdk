@@ -16,6 +16,7 @@ NEO4J_PASSWORD = os.getenv('DEMISTO_SDK_NEO4J_USERNAME', 'test')
 
 PACKS_FOLDER = 'Packs'
 PACK_METADATA_FILENAME = 'pack_metadata.json'
+PACK_CONTRIBUTORS_FILENAME = 'contributors.json'
 UNIFIED_FILES_SUFFIXES = ['.yml', '.json']
 
 

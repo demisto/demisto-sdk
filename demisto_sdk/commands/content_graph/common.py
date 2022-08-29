@@ -163,7 +163,7 @@ class Nodes(dict):
         for obj in data:
             self.add(**obj)
 
-    def update(self, other: 'Nodes'):
+    def update(self, other: 'Nodes', **kwargs) -> None:
         for content_type, data in other.items():
             if content_type not in ContentType or not isinstance(data, list):
                 raise TypeError

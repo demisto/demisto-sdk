@@ -103,7 +103,7 @@ class PackMetadata(BaseModel):
 
 class Pack(BaseContent, PackMetadata):
     path: Path
-    contributors: List[str]
+    contributors: Optional[List[str]] = None
     content_items: PackContentItems = Field(alias='contentItems', exclude=True)
     relationships: Relationships = Field(Relationships(), exclude=True)
 

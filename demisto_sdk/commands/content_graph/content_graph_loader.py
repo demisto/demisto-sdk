@@ -28,7 +28,7 @@ class ContentGraphLoader:
 
     def load(self) -> Repository:
         if self.with_dependencies:
-            all_dependencies = PackDependencies(marketplace=self.marketplace, content_graph=self.content_graph).run()
+            first_level_dependencies = PackDependencies(marketplace=self.marketplace, content_graph=self.content_graph).run()
         packs: List[Dict] = []
         repository = {'path': Path(Path.cwd()), 'packs': packs}  # TODO decide what to do with repo path?
         integrations_to_commands = {integration['integration_id']: integration['commands']
@@ -44,6 +44,6 @@ class ContentGraphLoader:
                 content_items_dct.setdefault(content_type, []).append(content_item)
             pack['content_items'] = content_items_dct
             if self.with_dependencies:
-                pack['dependencies'] = all_dependencies.get(pack['id'], {})
+                pack['dependencies'] = first_level_dependencies.get(pack['id'], {})
             packs.append(pack)
         return Repository.parse_obj(repository)

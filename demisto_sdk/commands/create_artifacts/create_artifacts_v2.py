@@ -22,6 +22,6 @@ class ContentArtifactManager:
     def create_artifacts(self) -> None:
         # TODO add dependencies to marshal when it's fixed
         repo: Repository = marshal_content_graph(marketplace=self.marketplace,
-                                                 with_dependencies=False)
+                                                 with_dependencies=True)
         shutil.rmtree(self.output, ignore_errors=True)
         repo.dump(self.output, self.marketplace)

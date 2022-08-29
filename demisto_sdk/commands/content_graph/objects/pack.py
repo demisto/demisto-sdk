@@ -5,7 +5,7 @@ from typing import Any, Generator, List, Optional
 from demisto_sdk.commands.common.constants import CONTRIBUTORS_README_TEMPLATE, MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_json, get_mp_tag_parser
 
-from demisto_sdk.commands.content_graph.common import ContentType, Nodes, Relationships
+from demisto_sdk.commands.content_graph.common import PACK_METADATA_FILENAME, ContentType, Nodes, Relationships
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -154,6 +154,7 @@ class Pack(BaseContent, PackMetadata):
             content_item.dump(path / content_item.content_type.as_folder, marketplace)
         self.dump_metadata(path / 'metadata.json')
         self.dump_readme(path / 'README.md', marketplace)
+        shutil.copy(self.path / PACK_METADATA_FILENAME, path / PACK_METADATA_FILENAME)
         try:
             shutil.copytree(self.path / 'ReleaseNotes', path / 'ReleaseNotes')
         except FileNotFoundError:

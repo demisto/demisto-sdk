@@ -2,15 +2,23 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Upload AbuseDB",
+            "name": "Python: create graph",
             "type": "python",
             "request": "launch",
             "module": "demisto_sdk",
             "cwd": "${env:CONTENT}", // Predefine the CONTENT variable in your environment first!
             "args": [
-                "upload",
-                "-i",
-                "${env:CONTENT}/Packs/AbuseDB/Integrations/AbuseDB"
+                "create-content-graph",
+            ]
+        },
+        {
+            "name": "Python: create artifacts",
+            "type": "python",
+            "request": "launch",
+            "module": "demisto_sdk",
+            "cwd": "${env:CONTENT}", // Predefine the CONTENT variable in your environment first!
+            "args": [
+                "create-content-artifacts-v2",
             ]
         },
         {
@@ -18,7 +26,7 @@
             "type": "python",
             "request": "launch",
             "module": "demisto_sdk",
-            "cwd": "${env:CONTENT}",  // Predefine the CONTENT variable in your environment first!
+            "cwd": "${env:CONTENT}", // Predefine the CONTENT variable in your environment first!
             "args": [
                 "lint",
                 "-i",

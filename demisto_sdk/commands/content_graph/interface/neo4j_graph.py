@@ -23,14 +23,15 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
 
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
     get_first_level_dependencies,
-    get_packs_dependencies,
+    get_all_level_packs_dependencies,
+    create_pack_dependencies
 )
 
 
 class Neo4jContentGraphInterface(ContentGraphInterface):
     def __init__(self, database_uri, auth: Tuple[str, str]) -> None:
         self.driver: neo4j.Neo4jDriver = neo4j.GraphDatabase.driver(database_uri, auth=auth)
-    
+
     def create_indexes_and_constraints(self) -> None:
         with self.driver.session() as session:
             session.write_transaction(create_indexes)
@@ -39,7 +40,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def create_nodes(self, nodes: Dict[ContentType, List[Dict[str, Any]]]) -> None:
         with self.driver.session() as session:
             session.write_transaction(create_nodes, nodes)
-    
+
     def validate_graph(self) -> None:
         with self.driver.session() as session:
             if session.read_transaction(duplicates_exist):
@@ -52,7 +53,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def get_packs_content_items(self, marketplace: MarketplaceVersions):
         with self.driver.session() as session:
             return session.read_transaction(get_packs_content_items, marketplace)
-    
+
     def get_all_integrations_with_commands(self):
         with self.driver.session() as session:
             return session.read_transaction(get_all_integrations_with_commands)
@@ -81,17 +82,17 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             return session.read_transaction(search_nodes, content_type, single_result=True, **properties)
 
-    def get_all_level_dependencies(self, marketplace: MarketplaceVersions) -> Dict[str, Any]:
+    def create_pack_dependencies(self):
         with self.driver.session() as session:
             tx: neo4j.Transaction = session.begin_transaction()
-            result = get_relationships_by_type(tx, relationship)
+            create_pack_dependencies(tx)
+            tx.commit()
             tx.close()
-        return result
     
     def get_all_level_dependencies(self, marketplace: MarketplaceVersions) -> Dict[str, Any]:
         with self.driver.session() as session:
             tx: neo4j.Transaction = session.begin_transaction()
-            result = get_packs_dependencies(tx, marketplace).data()
+            result = get_all_level_packs_dependencies(tx, marketplace).data()
             tx.commit()
             tx.close()
         return {
@@ -101,7 +102,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 'path': Path(*Path(row['pack_path']).parts[-2:]).as_posix(),
             } for row in result
         }
-    
+        
     def get_first_level_dependencies(self, marketplace: MarketplaceVersions) -> Dict[str, Dict[str, Any]]:
         with self.driver.session() as session:
             tx: neo4j.Transaction = session.begin_transaction()
@@ -118,7 +119,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             } for row in result
         }
 
-    
+    def get_relationships_by_type(self, relationship_type: Relationship) -> Any:
+        with self.driver.session() as session:
+            return session.read_transaction(get_relationships_by_type, relationship_type)
+
     def run_single_query(self, query: str, parameters: Optional[Dict[str, Any]] = None) -> neo4j.Result:
         with self.driver.session() as session:
             tx: neo4j.Transaction = session.begin_transaction()
@@ -126,5 +130,3 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             tx.commit()
             tx.close()
         return result
-    
-    

@@ -275,9 +275,9 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
         string. The output of the command you are trying to execute.
     """
     if is_silenced:
-        p = Popen(command.split(), stdout=PIPE, stderr=PIPE, universal_newlines=True, cwd=cwd)
+        p = Popen(shlex.split(command), stdout=PIPE, stderr=PIPE, universal_newlines=True, cwd=cwd)
     else:
-        p = Popen(command.split(), cwd=cwd)  # type: ignore
+        p = Popen(shlex.split(command), cwd=cwd)  # type: ignore
 
     output, err = p.communicate()
     if err:

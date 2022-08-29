@@ -11,8 +11,10 @@ NEO4J_SERVICE_IMAGE = 'neo4j:4.4.9'
 NEO4J_ADMIN_IMAGE = 'neo4j/neo4j-admin:4.4.9'
 
 logger = logging.getLogger('demisto-sdk')
+
 try:
-    run_command('neo4j-admin --version', cwd=REPO_PATH / 'neo4j', is_silenced=True)
+    run_command('neo4j-admin --version', cwd=REPO_PATH, is_silenced=True)
+    logger.info('Using local neo4j-admin')
     IS_NEO4J_ADMIN_AVAILABLE = True
 except Exception:
     logger.info('Could not find neo4j-admin in path. Using docker instead.')
@@ -113,7 +115,7 @@ def _neo4j_admin_command(name: str, command: str):
     if IS_NEO4J_ADMIN_AVAILABLE:
         run_command(command, cwd=REPO_PATH / 'neo4j', is_silenced=False)
     else:
-        docker_client = docker.from_env()
+        docker_client = _get_docker_client()
         try:
             docker_client.containers.get(f'neo4j-{name}').remove(force=True)
         except Exception as e:

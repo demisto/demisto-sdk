@@ -31,7 +31,7 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def delete_all_graph_nodes_and_relationships(self):
+    def clean_graph(self):
         pass
     
     @abstractmethod

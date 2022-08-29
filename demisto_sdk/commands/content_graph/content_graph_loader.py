@@ -11,11 +11,11 @@ from demisto_sdk.commands.content_graph.objects.repository import Repository
 class ContentGraphLoader:
 
     def __init__(self, marketplace: MarketplaceVersions, content_graph: ContentGraphInterface) -> None:
-        """_summary_
+        """ Initiates a ContentGraphLoader class instance.
 
         Args:
-            marketplace (MarketplaceVersions): _description_
-            content_graph (ContentGraphInterface): _description_
+            marketplace (MarketplaceVersions): The marketplace version.
+            content_graph (ContentGraphInterface): The content graph interface object.
         """
         self.marketplace = marketplace
         self.content_graph = content_graph

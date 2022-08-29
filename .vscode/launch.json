@@ -2,35 +2,15 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: create content graph",
+            "name": "Python: Upload AbuseDB",
             "type": "python",
             "request": "launch",
             "module": "demisto_sdk",
             "cwd": "${env:CONTENT}", // Predefine the CONTENT variable in your environment first!
             "args": [
-                "create-content-graph",
-                "--keep-service"
-            ]
-        },
-        {
-            "name": "Python: load content graph",
-            "type": "python",
-            "request": "launch",
-            "module": "demisto_sdk",
-            "cwd": "${env:CONTENT}", // Predefine the CONTENT variable in your environment first!
-            "args": [
-                "load-content-graph",
-                "--keep-service"
-            ]
-        },
-        {
-            "name": "Python: load db to models",
-            "type": "python",
-            "request": "launch",
-            "module": "demisto_sdk",
-            "cwd": "${env:CONTENT}", // Predefine the CONTENT variable in your environment first!
-            "args": [
-                "load-db-to-models",
+                "upload",
+                "-i",
+                "${env:CONTENT}/Packs/AbuseDB/Integrations/AbuseDB"
             ]
         },
         {
@@ -38,7 +18,7 @@
             "type": "python",
             "request": "launch",
             "module": "demisto_sdk",
-            "cwd": "${env:CONTENT}", // Predefine the CONTENT variable in your environment first!
+            "cwd": "${env:CONTENT}",  // Predefine the CONTENT variable in your environment first!
             "args": [
                 "lint",
                 "-i",

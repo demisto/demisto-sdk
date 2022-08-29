@@ -49,7 +49,7 @@ class ContentGraphBuilder:
         """
         self.content_graph = content_graph
         if clean_graph:
-            self.content_graph.delete_all_graph_nodes_and_relationships()
+            self.content_graph.clean_graph()
         self.nodes: Nodes = Nodes()
         self.relationships: Relationships = Relationships()
         self.repository: Repository = self._create_repository(repo_path)

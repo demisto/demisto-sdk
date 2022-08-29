@@ -69,7 +69,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             tx.close()
         return result
 
-    def delete_all_graph_nodes_and_relationships(self):
+    def clean_graph(self):
         with self.driver.session() as session:
             tx: neo4j.Transaction = session.begin_transaction()
             delete_all_graph_nodes(tx)

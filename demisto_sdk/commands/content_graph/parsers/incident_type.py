@@ -1,11 +1,11 @@
 from pathlib import Path
 from typing import List
 
-from demisto_sdk.commands.content_graph.common import ContentTypes
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
 
 
-class IncidentTypeParser(JSONContentItemParser, content_type=ContentTypes.INCIDENT_TYPE):
+class IncidentTypeParser(JSONContentItemParser, content_type=ContentType.INCIDENT_TYPE):
     def __init__(self, path: Path) -> None:
         super().__init__(path)
         self.playbook: str = self.json_data.get('playbookId')
@@ -20,10 +20,10 @@ class IncidentTypeParser(JSONContentItemParser, content_type=ContentTypes.INCIDE
         """ Collects the script, playbook and layout used by the incident type as mandatory dependencies.
         """
         if pre_processing_script := self.json_data.get('preProcessingScript'):
-            self.add_dependency(pre_processing_script, ContentTypes.SCRIPT)
+            self.add_dependency(pre_processing_script, ContentType.SCRIPT)
 
         if playbook := self.json_data.get('playbookId'):
-            self.add_dependency(playbook, ContentTypes.PLAYBOOK)
+            self.add_dependency(playbook, ContentType.PLAYBOOK)
 
         if layout := self.json_data.get('layout'):
-            self.add_dependency(layout, ContentTypes.LAYOUT)
+            self.add_dependency(layout, ContentType.LAYOUT)

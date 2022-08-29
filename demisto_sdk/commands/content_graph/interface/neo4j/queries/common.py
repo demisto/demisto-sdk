@@ -4,7 +4,7 @@ from neo4j import Transaction, Result
 from typing import Any, Dict
 
 
-from demisto_sdk.commands.content_graph.common import ContentTypes
+from demisto_sdk.commands.content_graph.common import ContentType
 
 import logging
 
@@ -12,7 +12,7 @@ import logging
 logger = logging.getLogger('demisto-sdk')
 
 
-def labels_of(content_type: ContentTypes) -> str:
+def labels_of(content_type: ContentType) -> str:
     return ':'.join(content_type.labels)
 
 

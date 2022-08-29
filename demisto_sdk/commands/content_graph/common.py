@@ -11,15 +11,16 @@ NEO4J_ADMIN_DOCKER = ''
 
 NEO4J_DATABASE_URL = os.getenv('DEMISTO_SDK_NEO4J_DATABASE_URL', 'bolt://localhost:7687')
 NEO4J_USERNAME = os.getenv('DEMISTO_SDK_NEO4J_USERNAME', 'neo4j')
-NEO4J_PASSWORD = os.getenv('DEMISTO_SDK_NEO4J_USERNAME', 'test')
+NEO4J_PASSWORD = os.getenv('DEMISTO_SDK_NEO4J_PASSWORD', 'test')
 
 
 PACKS_FOLDER = 'Packs'
 PACK_METADATA_FILENAME = 'pack_metadata.json'
+PACK_CONTRIBUTORS_FILENAME = 'contributors.json'
 UNIFIED_FILES_SUFFIXES = ['.yml', '.json']
 
 
-class Rel(enum.Enum):
+class Relationship(enum.Enum):
     USES = 'USES'
     USES_COMMAND_OR_SCRIPT = 'USES_COMMAND_OR_SCRIPT'
     DEPENDS_ON = 'DEPENDS_ON'
@@ -32,7 +33,7 @@ class Rel(enum.Enum):
         return self.value
 
 
-class ContentTypes(str, enum.Enum):
+class ContentType(str, enum.Enum):
     BASE_CONTENT = 'BaseContent'
     PACK = 'Pack'
     COMMAND_OR_SCRIPT = 'CommandOrScript'
@@ -69,13 +70,13 @@ class ContentTypes(str, enum.Enum):
 
     @property
     def labels(self) -> List[str]:
-        labels: Set[str] = {ContentTypes.BASE_CONTENT.value, self.value}
+        labels: Set[str] = {ContentType.BASE_CONTENT.value, self.value}
 
-        if self.value == ContentTypes.TEST_PLAYBOOK.value:
-            labels.add(ContentTypes.PLAYBOOK.value)
+        if self.value == ContentType.TEST_PLAYBOOK.value:
+            labels.add(ContentType.PLAYBOOK.value)
 
-        if self in [ContentTypes.SCRIPT, ContentTypes.COMMAND]:
-            labels.add(ContentTypes.COMMAND_OR_SCRIPT.value)
+        if self in [ContentType.SCRIPT, ContentType.COMMAND]:
+            labels.add(ContentType.COMMAND_OR_SCRIPT.value)
 
         return list(labels)
 
@@ -85,61 +86,61 @@ class ContentTypes(str, enum.Enum):
 
     @staticmethod
     def prefixes() -> List[str]:
-        return [c.prefix for c in ContentTypes]
+        return [c.prefix for c in ContentType]
 
     @classmethod
-    def by_folder(cls, folder: str) -> 'ContentTypes':
+    def by_folder(cls, folder: str) -> 'ContentType':
         return cls(folder[:-1])  # remove the `s`
 
     @property
     def as_folder(self) -> str:
-        if self == ContentTypes.MAPPER:
-            return f'{ContentTypes.CLASSIFIER}s'
+        if self == ContentType.MAPPER:
+            return f'{ContentType.CLASSIFIER}s'
         return f'{self.value}s'
 
     @staticmethod
-    def abstract_types() -> List['ContentTypes']:
-        return [ContentTypes.BASE_CONTENT, ContentTypes.COMMAND_OR_SCRIPT]
+    def abstract_types() -> List['ContentType']:
+        return [ContentType.BASE_CONTENT, ContentType.COMMAND_OR_SCRIPT]
 
     @staticmethod
-    def non_content_items() -> List['ContentTypes']:
-        return [ContentTypes.PACK, ContentTypes.COMMAND]
+    def non_content_items() -> List['ContentType']:
+        return [ContentType.PACK, ContentType.COMMAND]
 
     @staticmethod
-    def non_abstracts(include_non_content_items: bool = True) -> Iterator['ContentTypes']:
-        for content_type in ContentTypes:
-            if content_type in ContentTypes.abstract_types():
+    def non_abstracts(include_non_content_items: bool = True) -> Iterator['ContentType']:
+        for content_type in ContentType:
+            if content_type in ContentType.abstract_types():
                 continue
-            if not include_non_content_items and content_type in ContentTypes.non_content_items():
+            if not include_non_content_items and content_type in ContentType.non_content_items():
                 continue
             yield content_type
 
     @staticmethod
-    def content_items() -> Iterator['ContentTypes']:
-        return ContentTypes.non_abstracts(include_non_content_items=False)
+    def content_items() -> Iterator['ContentType']:
+        return ContentType.non_abstracts(include_non_content_items=False)
 
     @staticmethod
     def pack_folders(pack_path: Path) -> Iterator[Path]:
-        for content_type in ContentTypes.content_items():
+        for content_type in ContentType.content_items():
             pack_folder = pack_path / content_type.as_folder
             if pack_folder.is_dir() and not pack_folder.name.startswith('.'):
                 yield pack_folder
 
 
 class Relationships(dict):
-    def add(self, relationship: Rel, **kwargs):
+    def add(self, relationship: Relationship, **kwargs):
         if relationship not in self.keys():
             self.__setitem__(relationship, [])
         self.__getitem__(relationship).append(kwargs)
 
-    def add_batch(self, relationship: Rel, data: List[Dict[str, Any]]):
+    def add_batch(self, relationship: Relationship, data: List[Dict[str, Any]]):
         if relationship not in self.keys():
             self.__setitem__(relationship, [])
         self.__getitem__(relationship).extend(data)
 
     def update(self, other: 'Relationships') -> None:
         for relationship, parsed_data in other.items():
-            if relationship not in Rel or not isinstance(parsed_data, list):
+            if relationship not in Relationship or not isinstance(parsed_data, list):
                 raise TypeError
             self.add_batch(relationship, parsed_data)
 
@@ -153,7 +154,7 @@ class Nodes(dict):
         self.add_batch(args)
 
     def add(self, **kwargs):
-        content_type: ContentTypes = ContentTypes(kwargs.get('content_type'))
+        content_type: ContentType = ContentType(kwargs.get('content_type'))
         if content_type not in self.keys():
             self.__setitem__(content_type, [])
         self.__getitem__(content_type).append(kwargs)
@@ -164,6 +165,6 @@ class Nodes(dict):
 
     def update(self, other: 'Nodes'):
         for content_type, data in other.items():
-            if content_type not in ContentTypes or not isinstance(data, list):
+            if content_type not in ContentType or not isinstance(data, list):
                 raise TypeError
             self.add_batch(data)

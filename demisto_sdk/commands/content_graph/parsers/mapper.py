@@ -2,11 +2,11 @@ from pathlib import Path
 from typing import Any, Dict
 from demisto_sdk.commands.common.tools import field_to_cli_name
 
-from demisto_sdk.commands.content_graph.common import ContentTypes
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
 
 
-class MapperParser(JSONContentItemParser, content_type=ContentTypes.MAPPER):
+class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
     def __init__(self, path: Path) -> None:
         super().__init__(path)
         self.type = self.json_data.get('type')
@@ -21,22 +21,22 @@ class MapperParser(JSONContentItemParser, content_type=ContentTypes.MAPPER):
         for filter in complex_value.get('filters', []):
             if filter:
                 filter_script = filter[0].get('operator')
-                self.add_dependency(filter_script, ContentTypes.SCRIPT)
+                self.add_dependency(filter_script, ContentType.SCRIPT)
 
         for transformer in complex_value.get('transformers', []):
             if transformer:
                 transformer_script = transformer.get('operator')
-                self.add_dependency(transformer_script, ContentTypes.SCRIPT)
+                self.add_dependency(transformer_script, ContentType.SCRIPT)
 
     def connect_to_dependencies(self) -> None:
         """ Collects the incident types, incident fields, filters and transformers
         used in the mapper as required dependencies.
         """
         if default_incident_type := self.json_data.get('defaultIncidentType'):
-            self.add_dependency(default_incident_type, ContentTypes.INCIDENT_TYPE)
+            self.add_dependency(default_incident_type, ContentType.INCIDENT_TYPE)
 
         for incident_type, mapping_data in self.json_data.get('mapping', {}).items():
-            self.add_dependency(incident_type, ContentTypes.INCIDENT_TYPE)
+            self.add_dependency(incident_type, ContentType.INCIDENT_TYPE)
             internal_mapping: Dict[str, Any] = mapping_data.get('internalMapping')
 
             if self.type == 'mapping-outgoing':
@@ -46,12 +46,12 @@ class MapperParser(JSONContentItemParser, content_type=ContentTypes.MAPPER):
                         if incident_field_simple := fields_mapper.get('simple'):
                             self.add_dependency(
                                 field_to_cli_name(incident_field_simple),
-                                ContentTypes.INCIDENT_FIELD,
+                                ContentType.INCIDENT_FIELD,
                             )
                         elif incident_field_complex := fields_mapper.get('complex', {}).get('root'):
                             self.add_dependency(
                                 field_to_cli_name(incident_field_complex),
-                                ContentTypes.INCIDENT_FIELD,
+                                ContentType.INCIDENT_FIELD,
                             )
 
             else:  # self.type == 'mapping-incoming'
@@ -59,7 +59,7 @@ class MapperParser(JSONContentItemParser, content_type=ContentTypes.MAPPER):
                 for incident_field in internal_mapping.keys():
                     self.add_dependency(
                         field_to_cli_name(incident_field),
-                        ContentTypes.INCIDENT_FIELD,
+                        ContentType.INCIDENT_FIELD,
                     )
 
             for internal_mapping in internal_mapping.values():

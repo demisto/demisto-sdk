@@ -1675,7 +1675,6 @@ def update_release_notes(**kwargs):
                                          " used for the packs ApiModules and Base", required=False, is_flag=True)
 @click.option("-d", "--dependency", help="Find which items in a specific content pack appears as a mandatory "
                                          "dependency of the searched pack ", required=False)
-@click.option("--use-graph", help="Whether or not to use content graph", is_flag=True)
 def find_dependencies(**kwargs):
     """Find pack dependencies and update pack metadata."""
     from demisto_sdk.commands.find_dependencies.find_dependencies import \
@@ -1690,28 +1689,19 @@ def find_dependencies(**kwargs):
     get_dependent_on = kwargs.get('get_dependent_on', False)
     output_path = kwargs.get('output_path', ALL_PACKS_DEPENDENCIES_DEFAULT_PATH)
     dependency = kwargs.get('dependency', '')
-    use_graph = kwargs.get('use_graph', False)
     try:
-        if use_graph:
-            from demisto_sdk.commands.find_dependencies.find_dependencies_v2 import \
-                PackDependencies
-            PackDependencies(
-                input=input_paths,
-                output_path=output_path,
-                marketplace=MarketplaceVersions.XSOAR,
-            ).run()
-        else:
-            PackDependencies.find_dependencies_manager(
-                id_set_path=str(id_set_path),
-                verbose=verbose,
-                update_pack_metadata=update_pack_metadata,
-                use_pack_metadata=use_pack_metadata,
-                input_paths=input_paths,
-                all_packs_dependencies=all_packs_dependencies,
-                get_dependent_on=get_dependent_on,
-                output_path=output_path,
-                dependency=dependency,
-            )
+
+        PackDependencies.find_dependencies_manager(
+            id_set_path=str(id_set_path),
+            verbose=verbose,
+            update_pack_metadata=update_pack_metadata,
+            use_pack_metadata=use_pack_metadata,
+            input_paths=input_paths,
+            all_packs_dependencies=all_packs_dependencies,
+            get_dependent_on=get_dependent_on,
+            output_path=output_path,
+            dependency=dependency,
+        )
 
     except ValueError as exp:
         print_error(str(exp))
@@ -2304,7 +2294,9 @@ def create_content_graph(no_use_docker, use_existing, should_dump, **kwargs):
                   quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
                   log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
 
-    create_content_graph(use_docker=not no_use_docker, use_existing=use_existing, should_dump=should_dump)
+    create_content_graph(use_docker=not no_use_docker,
+                         use_existing=use_existing,
+                         should_dump=should_dump)
 
 
 @main.command(
@@ -2321,7 +2313,7 @@ def create_content_graph(no_use_docker, use_existing, should_dump, **kwargs):
 @click.option('-q', "--quiet", is_flag=True, help="Quiet output, only output results in the end")
 @click.option("-lp", "--log-path", help="Path to store all levels of logs",
               type=click.Path(resolve_path=True))
-def load_content_graph(no_use_docker: bool, keep_service: bool, content_graph_path: Path, **kwargs):
+def load_content_graph(no_use_docker: bool, content_graph_path: Path, **kwargs):
     from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.content_graph.content_graph_commands import load_content_graph
     logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]

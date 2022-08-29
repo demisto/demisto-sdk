@@ -4,12 +4,12 @@ from pydantic import BaseModel, DirectoryPath, Field
 from typing import Any, Dict, List
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
-from demisto_sdk.commands.content_graph.common import ContentTypes
+from demisto_sdk.commands.content_graph.common import ContentType
 
 
 class BaseContent(ABC, BaseModel):
     object_id: str = Field(alias='id')
-    content_type: ContentTypes
+    content_type: ContentType
     marketplaces: List[MarketplaceVersions]
     node_id: str
 

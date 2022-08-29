@@ -36,7 +36,7 @@ from demisto_sdk.commands.common.tools import (
     get_test_playbook_id, get_to_version, get_yaml, has_remote_configured,
     is_object_in_id_set, is_origin_content_repo, is_pack_path, is_uuid,
     retrieve_file_ending, run_command_os, server_version_compare,
-    string_to_bool, to_kebab_case)
+    string_to_bool, to_kebab_case, field_to_cli_name)
 from demisto_sdk.tests.constants_test import (
     DUMMY_SCRIPT_PATH, IGNORED_PNG, INDICATORFIELD_EXTRA_FIELDS,
     SOURCE_FORMAT_INTEGRATION_COPY, TEST_PLAYBOOK, VALID_BETA_INTEGRATION_PATH,
@@ -2002,3 +2002,14 @@ def test_string_to_bool__all_params_true__false(value: str):
 def test_string_to_bool__all_params_false__error(value: str):
     with pytest.raises(ValueError):
         assert string_to_bool(value, False, False, False, False, False, False)
+
+
+@pytest.mark.parametrize('value, expected', [
+    ('Employee Number', 'employeenumber'),
+    ('Employee_Number', 'employeenumber'),
+    ('Employee & Number', 'employeenumber'),
+    ('Employee, Number?', 'employeenumber'),
+    ('Employee Number!!!', 'employeenumber'),
+])
+def test_field_to_cliname(value: str, expected: str):
+    assert field_to_cli_name(value) == expected

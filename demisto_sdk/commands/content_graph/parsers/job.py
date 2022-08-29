@@ -1,10 +1,10 @@
 from pathlib import Path
 
-from demisto_sdk.commands.content_graph.common import ContentTypes
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
 
 
-class JobParser(JSONContentItemParser, content_type=ContentTypes.JOB):
+class JobParser(JSONContentItemParser, content_type=ContentType.JOB):
     def __init__(self, path: Path) -> None:
         super().__init__(path)
 
@@ -17,4 +17,4 @@ class JobParser(JSONContentItemParser, content_type=ContentTypes.JOB):
     def connect_to_dependencies(self) -> None:
         # todo: selectedFeeds - it's an *instances* list, not integrations!
         if playbook := self.json_data.get('playbookId'):
-            self.add_dependency(playbook, ContentTypes.PLAYBOOK)
+            self.add_dependency(playbook, ContentType.PLAYBOOK)

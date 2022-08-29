@@ -1,14 +1,14 @@
 from pathlib import Path
 from typing import Any, Dict, List
 
-from demisto_sdk.commands.content_graph.common import ContentTypes, Rel
+from demisto_sdk.commands.content_graph.common import ContentType, Relationship
 from demisto_sdk.commands.content_graph.parsers.integration_script import (
     IntegrationScriptParser,
     IntegrationScriptUnifier
 )
 
 
-class IntegrationParser(IntegrationScriptParser, content_type=ContentTypes.INTEGRATION):
+class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
     def __init__(self, path: Path) -> None:
         super().__init__(path)
         self.script_info: Dict[str, Any] = self.yml_data.get('script', {})
@@ -33,7 +33,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentTypes.INTEG
         """
         for command_data in self.script_info.get('commands', []):
             self.add_relationship(
-                Rel.HAS_COMMAND,
+                Relationship.HAS_COMMAND,
                 target=command_data.get('name'),
                 name=command_data.get('name'),
                 deprecated=command_data.get('deprecated', False) or self.deprecated,
@@ -45,19 +45,19 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentTypes.INTEG
         """
         if default_classifier := self.yml_data.get('defaultclassifier'):
             if default_classifier != 'null':
-                self.add_dependency(default_classifier, ContentTypes.CLASSIFIER)
+                self.add_dependency(default_classifier, ContentType.CLASSIFIER)
 
         if default_mapper_in := self.yml_data.get('defaultmapperin'):
             if default_mapper_in != 'null':
-                self.add_dependency(default_mapper_in, ContentTypes.MAPPER)
+                self.add_dependency(default_mapper_in, ContentType.MAPPER)
 
         if default_mapper_out := self.yml_data.get('defaultmapperout'):
             if default_mapper_out != 'null':
-                self.add_dependency(default_mapper_out, ContentTypes.MAPPER)
+                self.add_dependency(default_mapper_out, ContentType.MAPPER)
 
         if default_incident_type := self.yml_data.get('defaultIncidentType'):
             if default_incident_type != 'null':
-                self.add_dependency(default_incident_type, ContentTypes.INCIDENT_TYPE)
+                self.add_dependency(default_incident_type, ContentType.INCIDENT_TYPE)
 
     def get_code(self) -> str:
         """ Gets the integration code.
@@ -76,5 +76,5 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentTypes.INTEG
         """
         api_modules = IntegrationScriptUnifier.check_api_module_imports(self.get_code()).values()
         for api_module in api_modules:
-            api_module_node_id = f'{ContentTypes.SCRIPT}:{api_module}'
-            self.add_relationship(Rel.IMPORTS, api_module_node_id)
+            api_module_node_id = f'{ContentType.SCRIPT}:{api_module}'
+            self.add_relationship(Relationship.IMPORTS, api_module_node_id)

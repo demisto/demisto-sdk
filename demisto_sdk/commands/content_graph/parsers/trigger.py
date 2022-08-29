@@ -1,10 +1,10 @@
 from pathlib import Path
 
-from demisto_sdk.commands.content_graph.common import ContentTypes
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
 
 
-class TriggerParser(JSONContentItemParser, content_type=ContentTypes.TRIGGER):
+class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
     def __init__(self, path: Path) -> None:
         super().__init__(path)
 
@@ -22,4 +22,4 @@ class TriggerParser(JSONContentItemParser, content_type=ContentTypes.TRIGGER):
         """ Collects the playbook used in the trigger as a mandatory dependency.
         """
         if playbook := self.json_data.get('playbook_id'):
-            self.add_dependency(playbook, ContentTypes.PLAYBOOK)
+            self.add_dependency(playbook, ContentType.PLAYBOOK)

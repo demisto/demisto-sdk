@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.tools import (
     get_yml_paths_in_dir
 )
 from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION
-from demisto_sdk.commands.content_graph.common import ContentTypes, Rel
+from demisto_sdk.commands.content_graph.common import ContentType, Relationship
 from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser, NotAContentItem
 
 
@@ -50,9 +50,9 @@ class YAMLContentItemParser(ContentItemParser):
         tests_playbooks: List[str] = self.yml_data.get('tests', [])
         for test_playbook_id in tests_playbooks:
             if 'no test' not in test_playbook_id.lower():
-                tpb_node_id = f'{ContentTypes.TEST_PLAYBOOK}:{test_playbook_id}'
+                tpb_node_id = f'{ContentType.TEST_PLAYBOOK}:{test_playbook_id}'
                 self.add_relationship(
-                    Rel.TESTED_BY,
+                    Relationship.TESTED_BY,
                     target=tpb_node_id,
                 )
 

@@ -5,14 +5,14 @@ from typing import Dict, List, Optional, Set
 from TestSuite.pack import Pack
 from TestSuite.repo import Repo
 from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION, MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import ContentTypes, Rel, Relationships
+from demisto_sdk.commands.content_graph.common import ContentType, Relationship, Relationships
 from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.parsers.content_item import NotAContentItem
 from demisto_sdk.commands.content_graph.tests.tests_utils import load_json, load_yaml
 
 
-def content_items_to_node_ids(content_items_dict: Dict[ContentTypes, List[str]]) -> Set[str]:
+def content_items_to_node_ids(content_items_dict: Dict[ContentType, List[str]]) -> Set[str]:
     """ A helper method that converts a dict of content items to a set of their node ids. """
     return set([
         f'{content_type}:{content_item_id}'
@@ -25,8 +25,8 @@ class RelationshipsVerifier:
     @staticmethod
     def verify_relationships_by_type(
         relationships: Relationships,
-        relationship_type: Rel,
-        expected_targets: Dict[ContentTypes, List[str]],
+        relationship_type: Relationship,
+        expected_targets: Dict[ContentType, List[str]],
     ) -> None:
         target_node_ids = set([
             relationship.get('target')
@@ -41,7 +41,7 @@ class RelationshipsVerifier:
     ) -> None:
         target_node_ids = set([
             relationship.get('target')
-            for relationship in relationships.get(Rel.USES_COMMAND_OR_SCRIPT, [])
+            for relationship in relationships.get(Relationship.USES_COMMAND_OR_SCRIPT, [])
         ])
         expected_target_node_ids = set([command for command in expected_commands])
         assert target_node_ids == expected_target_node_ids
@@ -53,7 +53,7 @@ class RelationshipsVerifier:
     ) -> None:
         target_node_ids = set([
             relationship.get('target')
-            for relationship in relationships.get(Rel.HAS_COMMAND, [])
+            for relationship in relationships.get(Relationship.HAS_COMMAND, [])
         ])
         expected_target_node_ids = set(expected_commands)
         assert target_node_ids == expected_target_node_ids
@@ -61,15 +61,15 @@ class RelationshipsVerifier:
     @staticmethod
     def run(
         relationships: Relationships,
-        dependencies: Dict[ContentTypes, List[str]] = {},
-        commands_or_scripts_executions: Dict[ContentTypes, List[str]] = {},
-        tests: Dict[ContentTypes, List[str]] = {},
-        imports: Dict[ContentTypes, List[str]] = {},
+        dependencies: Dict[ContentType, List[str]] = {},
+        commands_or_scripts_executions: Dict[ContentType, List[str]] = {},
+        tests: Dict[ContentType, List[str]] = {},
+        imports: Dict[ContentType, List[str]] = {},
         integration_commands: List[str] = [],
         ) -> None:
-        RelationshipsVerifier.verify_relationships_by_type(relationships, Rel.USES, dependencies)
-        RelationshipsVerifier.verify_relationships_by_type(relationships, Rel.TESTED_BY, tests)
-        RelationshipsVerifier.verify_relationships_by_type(relationships, Rel.IMPORTS, imports)
+        RelationshipsVerifier.verify_relationships_by_type(relationships, Relationship.USES, dependencies)
+        RelationshipsVerifier.verify_relationships_by_type(relationships, Relationship.TESTED_BY, tests)
+        RelationshipsVerifier.verify_relationships_by_type(relationships, Relationship.IMPORTS, imports)
         RelationshipsVerifier.verify_command_executions(relationships, commands_or_scripts_executions)
         RelationshipsVerifier.verify_integration_commands(relationships, integration_commands)
 
@@ -81,7 +81,7 @@ class ContentItemModelVerifier:
         expected_id: Optional[str] = None,
         expected_name: Optional[str] = None,
         expected_path: Optional[Path] = None,
-        expected_content_type: Optional[ContentTypes] = None,
+        expected_content_type: Optional[ContentType] = None,
         expected_description: Optional[str] = None,
         expected_deprecated: Optional[bool] = None,
         expected_fromversion: Optional[str] = None,
@@ -124,9 +124,9 @@ class PackModelVerifier:
         expected_vendor_name: Optional[str] = None,
         expected_preview_only: Optional[bool] = None,
         expected_marketplaces: Optional[List[MarketplaceVersions]] = None,
-        expected_content_items: Dict[ContentTypes, List[str]] = {},
+        expected_content_items: Dict[ContentType, List[str]] = {},
     ) -> None:
-        assert model.content_type == ContentTypes.PACK
+        assert model.content_type == ContentType.PACK
         assert expected_id is None or model.object_id == expected_id
         assert expected_name is None or model.name == expected_name
         assert expected_path is None or model.path == expected_path
@@ -160,11 +160,11 @@ class PackRelationshipsVerifier:
     @staticmethod
     def run(
         relationships: Relationships,
-        expected_content_items: Dict[ContentTypes, List[str]] = {},
+        expected_content_items: Dict[ContentType, List[str]] = {},
     ) -> None:
         content_items_node_ids = set([
             relationship.get('source')
-            for relationship in relationships.get(Rel.IN_PACK, [])
+            for relationship in relationships.get(Relationship.IN_PACK, [])
         ])
         assert content_items_node_ids == content_items_to_node_ids(expected_content_items)
 
@@ -189,8 +189,8 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
-                ContentTypes.INCIDENT_TYPE: ['Github', 'DevSecOps New Git PR'],
-                ContentTypes.SCRIPT: ['isEqualString', 'isNotEmpty', 'getField'],
+                ContentType.INCIDENT_TYPE: ['Github', 'DevSecOps New Git PR'],
+                ContentType.SCRIPT: ['isEqualString', 'isNotEmpty', 'getField'],
             }
         )
         model = Classifier.from_orm(parser)
@@ -200,7 +200,7 @@ class TestParsersAndModels:
             expected_name='Github Classifier',
             expected_path=classifier_path,
             expected_description='Github Classifier',
-            expected_content_type=ContentTypes.CLASSIFIER,
+            expected_content_type=ContentType.CLASSIFIER,
             expected_fromversion='6.0.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -229,7 +229,7 @@ class TestParsersAndModels:
             expected_id='correlation_rule_id',
             expected_name='correlation_rule_name',
             expected_path=colrrelation_rule_path,
-            expected_content_type=ContentTypes.CORRELATION_RULE,
+            expected_content_type=ContentType.CORRELATION_RULE,
             expected_fromversion=DEFAULT_CONTENT_ITEM_FROM_VERSION,
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -253,7 +253,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
-                ContentTypes.SCRIPT: ['DetectionsCount', 'DetectionsData'],
+                ContentType.SCRIPT: ['DetectionsCount', 'DetectionsData'],
             },
         )
         model = Dashboard.from_orm(parser)
@@ -262,7 +262,7 @@ class TestParsersAndModels:
             expected_id='Confluera Dashboard',
             expected_name='Confluera Dashboard',
             expected_path=dashboard_path,
-            expected_content_type=ContentTypes.DASHBOARD,
+            expected_content_type=ContentType.DASHBOARD,
             expected_fromversion='6.0.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -290,7 +290,7 @@ class TestParsersAndModels:
             expected_id='ThreatIntelReport',
             expected_name='Threat Intel Report',
             expected_path=generic_definition_path,
-            expected_content_type=ContentTypes.GENERIC_DEFINITION,
+            expected_content_type=ContentType.GENERIC_DEFINITION,
             expected_fromversion='6.5.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -318,7 +318,7 @@ class TestParsersAndModels:
             expected_id='threatIntel',
             expected_name='Threat Intel',
             expected_path=generic_module_path,
-            expected_content_type=ContentTypes.GENERIC_MODULE,
+            expected_content_type=ContentType.GENERIC_MODULE,
             expected_fromversion='6.5.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -342,7 +342,7 @@ class TestParsersAndModels:
         parser = GenericTypeParser(generic_type_path)
         RelationshipsVerifier.run(
             parser.relationships,
-            dependencies={ContentTypes.LAYOUT: ['Malware Report']},
+            dependencies={ContentType.LAYOUT: ['Malware Report']},
         )
         model = GenericType.from_orm(parser)
         ContentItemModelVerifier.run(
@@ -350,7 +350,7 @@ class TestParsersAndModels:
             expected_id='ThreatIntelReport_Malware',
             expected_name='Malware',
             expected_path=generic_type_path,
-            expected_content_type=ContentTypes.GENERIC_TYPE,
+            expected_content_type=ContentType.GENERIC_TYPE,
             expected_fromversion='6.5.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -375,7 +375,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
-                ContentTypes.INCIDENT_TYPE: ['Vulnerability', 'Malware'],
+                ContentType.INCIDENT_TYPE: ['Vulnerability', 'Malware'],
             },
         )
         model = IncidentField.from_orm(parser)
@@ -384,7 +384,7 @@ class TestParsersAndModels:
             expected_id='cve',
             expected_name='CVE',
             expected_path=incident_field_path,
-            expected_content_type=ContentTypes.INCIDENT_FIELD,
+            expected_content_type=ContentType.INCIDENT_FIELD,
             expected_fromversion='5.0.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -411,8 +411,8 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
-                ContentTypes.LAYOUT: ['Traps'],
-                ContentTypes.PLAYBOOK: ['Palo Alto Networks - Endpoint Malware Investigation']
+                ContentType.LAYOUT: ['Traps'],
+                ContentType.PLAYBOOK: ['Palo Alto Networks - Endpoint Malware Investigation']
             },
         )
         model = IncidentType.from_orm(parser)
@@ -421,7 +421,7 @@ class TestParsersAndModels:
             expected_id='Traps',
             expected_name='Traps',
             expected_path=incident_type_path,
-            expected_content_type=ContentTypes.INCIDENT_TYPE,
+            expected_content_type=ContentType.INCIDENT_TYPE,
             expected_fromversion='5.0.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -450,7 +450,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
-                ContentTypes.INDICATOR_TYPE: ['User Profile'],
+                ContentType.INDICATOR_TYPE: ['User Profile'],
             },
         )
         model = IndicatorField.from_orm(parser)
@@ -459,7 +459,7 @@ class TestParsersAndModels:
             expected_id='email',
             expected_name='Email',
             expected_path=indicator_field_path,
-            expected_content_type=ContentTypes.INDICATOR_FIELD,
+            expected_content_type=ContentType.INDICATOR_FIELD,
             expected_fromversion='5.0.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -486,9 +486,9 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
-                ContentTypes.SCRIPT: ['URLReputation'],
-                ContentTypes.COMMAND: ['url'],
-                ContentTypes.LAYOUT: ['urlRep'],
+                ContentType.SCRIPT: ['URLReputation'],
+                ContentType.COMMAND: ['url'],
+                ContentType.LAYOUT: ['urlRep'],
             },
         )
         model = IndicatorType.from_orm(parser)
@@ -497,7 +497,7 @@ class TestParsersAndModels:
             expected_id='urlRep',
             expected_name='URL',
             expected_path=indicator_type_path,
-            expected_content_type=ContentTypes.INDICATOR_TYPE,
+            expected_content_type=ContentType.INDICATOR_TYPE,
             expected_fromversion='5.5.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -528,10 +528,10 @@ class TestParsersAndModels:
             parser.relationships,
             integration_commands=['test-command'],
             imports={
-                ContentTypes.SCRIPT: ['MicrosoftApiModule']
+                ContentType.SCRIPT: ['MicrosoftApiModule']
             },
             tests={
-                ContentTypes.TEST_PLAYBOOK: ['test_playbook']
+                ContentType.TEST_PLAYBOOK: ['test_playbook']
             },
         )
         model = Integration.from_orm(parser)
@@ -539,7 +539,7 @@ class TestParsersAndModels:
             model,
             expected_id='TestIntegration',
             expected_name='TestIntegration',
-            expected_content_type=ContentTypes.INTEGRATION,
+            expected_content_type=ContentType.INTEGRATION,
             expected_fromversion='5.0.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -569,7 +569,7 @@ class TestParsersAndModels:
             model,
             expected_id='malwr',
             expected_name='malwr',
-            expected_content_type=ContentTypes.INTEGRATION,
+            expected_content_type=ContentType.INTEGRATION,
             expected_fromversion='5.0.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -599,7 +599,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
-                ContentTypes.PLAYBOOK: ['job-TestJob_playbook'],
+                ContentType.PLAYBOOK: ['job-TestJob_playbook'],
             },
         )
         model = Job.from_orm(parser)
@@ -608,7 +608,7 @@ class TestParsersAndModels:
             expected_id='TestJob',
             expected_name='TestJob',
             expected_path=job_path,
-            expected_content_type=ContentTypes.JOB,
+            expected_content_type=ContentType.JOB,
             expected_fromversion='6.8.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -649,7 +649,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
-                ContentTypes.INCIDENT_FIELD: [
+                ContentType.INCIDENT_FIELD: [
                     'xdrdevicecontrolviolations',
                     'type',
                     'dbotsource',
@@ -667,7 +667,7 @@ class TestParsersAndModels:
             expected_id='Cortex XDR Device Control Violations',
             expected_name='Cortex XDR Device Control Violations',
             expected_path=layout_path,
-            expected_content_type=ContentTypes.LAYOUT,
+            expected_content_type=ContentType.LAYOUT,
             expected_fromversion='6.0.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -696,7 +696,7 @@ class TestParsersAndModels:
             expected_name='checked integrations',
             expected_path=list_path,
             expected_description='',
-            expected_content_type=ContentTypes.LIST,
+            expected_content_type=ContentType.LIST,
             expected_fromversion='6.5.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -721,9 +721,9 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
-                ContentTypes.INCIDENT_TYPE: ['DevSecOps New Git PR'],
-                ContentTypes.INCIDENT_FIELD: ['devsecopsrepositoryname', 'devsecopsrepositoryorganization'],
-                ContentTypes.SCRIPT: ['substringTo'],
+                ContentType.INCIDENT_TYPE: ['DevSecOps New Git PR'],
+                ContentType.INCIDENT_FIELD: ['devsecopsrepositoryname', 'devsecopsrepositoryorganization'],
+                ContentType.SCRIPT: ['substringTo'],
             }
         )
         model = Mapper.from_orm(parser)
@@ -733,7 +733,7 @@ class TestParsersAndModels:
             expected_name='GitHub Mapper',
             expected_path=mapper_path,
             expected_description='',
-            expected_content_type=ContentTypes.MAPPER,
+            expected_content_type=ContentType.MAPPER,
             expected_fromversion='6.0.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -758,9 +758,9 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
-                ContentTypes.INCIDENT_TYPE: ['Azure DevOps'],
-                ContentTypes.INCIDENT_FIELD: ['description', 'azuredevopsprojectname'],
-                ContentTypes.SCRIPT: ['MapValuesTransformer'],
+                ContentType.INCIDENT_TYPE: ['Azure DevOps'],
+                ContentType.INCIDENT_FIELD: ['description', 'azuredevopsprojectname'],
+                ContentType.SCRIPT: ['MapValuesTransformer'],
             }
         )
         model = Mapper.from_orm(parser)
@@ -770,7 +770,7 @@ class TestParsersAndModels:
             expected_name='Azure DevOps Outgoing Mapper',
             expected_path=mapper_path,
             expected_description='',
-            expected_content_type=ContentTypes.MAPPER,
+            expected_content_type=ContentType.MAPPER,
             expected_fromversion='6.0.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -798,7 +798,7 @@ class TestParsersAndModels:
             model,
             expected_id='duo_modeling_rule',
             expected_name='Duo Modeling Rule',
-            expected_content_type=ContentTypes.MODELING_RULE,
+            expected_content_type=ContentType.MODELING_RULE,
             expected_fromversion='6.8.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -825,7 +825,7 @@ class TestParsersAndModels:
             model,
             expected_id='_parsing_rule_id',
             expected_name='My Rule',
-            expected_content_type=ContentTypes.PARSING_RULE,
+            expected_content_type=ContentType.PARSING_RULE,
             expected_fromversion='6.8.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -850,7 +850,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
-                ContentTypes.SCRIPT: ['DeleteContext']
+                ContentType.SCRIPT: ['DeleteContext']
             },
         )
         model = Playbook.from_orm(parser)
@@ -858,7 +858,7 @@ class TestParsersAndModels:
             model,
             expected_id='sample',
             expected_name='sample',
-            expected_content_type=ContentTypes.PLAYBOOK,
+            expected_content_type=ContentType.PLAYBOOK,
             expected_fromversion='5.0.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -883,7 +883,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
-                ContentTypes.SCRIPT: ['ProofpointTAPMostAttackedUsers', 'ProofpointTapTopClickers'],
+                ContentType.SCRIPT: ['ProofpointTAPMostAttackedUsers', 'ProofpointTapTopClickers'],
             }
         )
         model = Report.from_orm(parser)
@@ -892,7 +892,7 @@ class TestParsersAndModels:
             expected_id='ProofpointTAPWeeklyReport',
             expected_name='Proofpoint TAP Weekly Report',
             expected_path=report_path,
-            expected_content_type=ContentTypes.REPORT,
+            expected_content_type=ContentType.REPORT,
             expected_fromversion='5.0.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -924,7 +924,7 @@ class TestParsersAndModels:
             model,
             expected_id='sample_script',
             expected_name='sample_script',
-            expected_content_type=ContentTypes.SCRIPT,
+            expected_content_type=ContentType.SCRIPT,
             expected_fromversion='5.0.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -953,7 +953,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
-                ContentTypes.SCRIPT: ['DeleteContext']
+                ContentType.SCRIPT: ['DeleteContext']
             },
         )
         model = TestPlaybook.from_orm(parser)
@@ -961,7 +961,7 @@ class TestParsersAndModels:
             model,
             expected_id='sample',
             expected_name='sample',
-            expected_content_type=ContentTypes.TEST_PLAYBOOK,
+            expected_content_type=ContentType.TEST_PLAYBOOK,
             expected_fromversion='5.0.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -986,7 +986,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
-                ContentTypes.PLAYBOOK: ['NGFW Scan'],
+                ContentType.PLAYBOOK: ['NGFW Scan'],
             }
         )
         model = Trigger.from_orm(parser)
@@ -995,7 +995,7 @@ class TestParsersAndModels:
             expected_id='73545719a1bdeba6ba91f6a16044c021',
             expected_name='NGFW Scanning Alerts',
             expected_path=trigger_path,
-            expected_content_type=ContentTypes.TRIGGER,
+            expected_content_type=ContentType.TRIGGER,
             expected_fromversion=DEFAULT_CONTENT_ITEM_FROM_VERSION,
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -1019,7 +1019,7 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             dependencies={
-                ContentTypes.SCRIPT: ['FeedIntegrationErrorWidget'],
+                ContentType.SCRIPT: ['FeedIntegrationErrorWidget'],
             }
         )
         model = Widget.from_orm(parser)
@@ -1028,7 +1028,7 @@ class TestParsersAndModels:
             expected_id='Feed Integrations Errors',
             expected_name='Feed Integrations Errors',
             expected_path=widget_path,
-            expected_content_type=ContentTypes.WIDGET,
+            expected_content_type=ContentType.WIDGET,
             expected_fromversion='6.1.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -1063,7 +1063,7 @@ class TestParsersAndModels:
             expected_id='TestWizard',
             expected_name='TestWizard',
             expected_path=wizard_path,
-            expected_content_type=ContentTypes.WIZARD,
+            expected_content_type=ContentType.WIZARD,
             expected_fromversion='6.8.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -1094,7 +1094,7 @@ class TestParsersAndModels:
             expected_id='ce27311ce69c41b1b4a84c7888b34852',
             expected_name='New Import test ',
             expected_path=xsiam_dashboard_path,
-            expected_content_type=ContentTypes.XSIAM_DASHBOARD,
+            expected_content_type=ContentType.XSIAM_DASHBOARD,
             expected_fromversion=DEFAULT_CONTENT_ITEM_FROM_VERSION,
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -1122,7 +1122,7 @@ class TestParsersAndModels:
             expected_id='sample',
             expected_name='sample',
             expected_path=xsiam_report_path,
-            expected_content_type=ContentTypes.XSIAM_REPORT,
+            expected_content_type=ContentType.XSIAM_REPORT,
             expected_fromversion=DEFAULT_CONTENT_ITEM_FROM_VERSION,
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
         )
@@ -1150,11 +1150,11 @@ class TestParsersAndModels:
         pack_path = Path(pack.path)
         parser = PackParser(pack_path)
         expected_content_items = {
-            ContentTypes.CLASSIFIER: ['Github_Classifier_v1'],
-            ContentTypes.INCIDENT_FIELD: ['cve'],
-            ContentTypes.INCIDENT_TYPE: ['Traps'],
-            ContentTypes.INDICATOR_FIELD: ['email'],
-            ContentTypes.INDICATOR_TYPE: ['urlRep'],
+            ContentType.CLASSIFIER: ['Github_Classifier_v1'],
+            ContentType.INCIDENT_FIELD: ['cve'],
+            ContentType.INCIDENT_TYPE: ['Traps'],
+            ContentType.INDICATOR_FIELD: ['email'],
+            ContentType.INDICATOR_TYPE: ['urlRep'],
         }
         PackRelationshipsVerifier.run(
             parser.relationships,

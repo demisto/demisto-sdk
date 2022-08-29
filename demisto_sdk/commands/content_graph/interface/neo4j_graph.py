@@ -3,19 +3,23 @@ import neo4j
 from typing import Any, Dict, List, Optional, Tuple
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
-from demisto_sdk.commands.content_graph.common import ContentTypes, Rel
+from demisto_sdk.commands.content_graph.common import ContentType, Relationship
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import create_indexes
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import create_constraints
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (create_nodes,
-                                                                              duplicates_exist,
-                                                                              get_packs_content_items,
-                                                                              get_all_integrations_with_commands,
-                                                                              delete_all_graph_nodes)
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import create_relationships
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (create_pack_dependencies,
-                                                                                     get_first_level_dependencies,
-                                                                                     get_packs_dependencies)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
+    create_nodes,
+    duplicates_exist,
+    get_packs_content_items,
+    get_all_integrations_with_commands,
+    delete_all_graph_nodes,
+    get_nodes_by_type,
+    search_nodes,
+)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
+    create_relationships,
+    get_relationships_by_type,
+)
 
 
 class Neo4jContentGraphInterface(ContentGraphInterface):
@@ -30,13 +34,11 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             tx.commit()
             tx.close()
 
-    def create_nodes(self, nodes: Dict[ContentTypes, List[Dict[str, Any]]]) -> None:
+    def create_nodes(self, nodes: Dict[ContentType, List[Dict[str, Any]]]) -> None:
         with self.driver.session() as session:
             tx: neo4j.Transaction = session.begin_transaction()
             create_nodes(tx, nodes)
             tx.commit()
-            # if duplicates_exist(tx):
-            #     raise Exception('Duplicates found in graph.')
             tx.close()
     
     def validate_graph(self) -> None:
@@ -46,49 +48,12 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 raise Exception('Duplicates found in graph.')
             tx.close()
 
-    def create_relationships(self, relationships: Dict[Rel, List[Dict[str, Any]]]) -> None:
+    def create_relationships(self, relationships: Dict[Relationship, List[Dict[str, Any]]]) -> None:
         with self.driver.session() as session:
             tx: neo4j.Transaction = session.begin_transaction()
             create_relationships(tx, relationships)
             tx.commit()
             tx.close()
-
-    def create_pack_dependencies(self) -> None:
-        with self.driver.session() as session:
-            tx: neo4j.Transaction = session.begin_transaction()
-            create_pack_dependencies(tx)
-            tx.commit()
-            tx.close()
-    
-    def get_all_level_dependencies(self, marketplace: MarketplaceVersions) -> Dict[str, Any]:
-        with self.driver.session() as session:
-            tx: neo4j.Transaction = session.begin_transaction()
-            result = get_packs_dependencies(tx, marketplace).data()
-            tx.commit()
-            tx.close()
-        return {
-            row['pack_id']: {
-                'allLevelDependencies': row['dependencies'],
-                'fullPath': row['pack_path'],
-                'path': Path(*Path(row['pack_path']).parts[-2:]).as_posix(),
-            } for row in result
-        }
-    
-    def get_first_level_dependencies(self, marketplace: MarketplaceVersions) -> Dict[str, Dict[str, Any]]:
-        with self.driver.session() as session:
-            tx: neo4j.Transaction = session.begin_transaction()
-            result = get_first_level_dependencies(tx, marketplace).data()
-            tx.commit()
-            tx.close()
-        return {
-            row['pack_id']: {
-                dependency['dependency_id']: {
-                    'mandatory': dependency['mandatory'],
-                    'display_name': dependency['display_name'],
-                }
-                for dependency in row['dependencies']
-            } for row in result
-        }
 
     def get_packs_content_items(self, marketplace: MarketplaceVersions):
         with self.driver.session() as session:
@@ -104,12 +69,48 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             tx.close()
         return result
 
-    def delete_all_graph_nodes_and_relationships(self):
+    def clean_graph(self):
         with self.driver.session() as session:
             tx: neo4j.Transaction = session.begin_transaction()
             delete_all_graph_nodes(tx)
             tx.commit()
             tx.close()
+
+    def get_nodes_by_type(self, content_type: ContentType) -> Any:
+        with self.driver.session() as session:
+            tx: neo4j.Transaction = session.begin_transaction()
+            result = get_nodes_by_type(tx, content_type)
+            tx.close()
+        return result
+
+    def search_nodes(
+        self,
+        content_type: Optional[ContentType] = None,
+        **properties
+    ) -> Any:
+        with self.driver.session() as session:
+            tx: neo4j.Transaction = session.begin_transaction()
+            result = search_nodes(tx, content_type, **properties)
+            tx.close()
+        return result
+
+    def get_single_node(
+        self,
+        content_type: Optional[ContentType] = None,
+        **properties
+    ) -> Any:
+        with self.driver.session() as session:
+            tx: neo4j.Transaction = session.begin_transaction()
+            result = search_nodes(tx, content_type, single_result=True, **properties)
+            tx.close()
+        return result
+
+    def get_relationships_by_type(self, relationship: Relationship) -> Any:
+        with self.driver.session() as session:
+            tx: neo4j.Transaction = session.begin_transaction()
+            result = get_relationships_by_type(tx, relationship)
+            tx.close()
+        return result
 
     def run_single_query(self, query: str, parameters: Optional[Dict[str, Any]] = None) -> neo4j.Result:
         with self.driver.session() as session:

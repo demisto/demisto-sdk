@@ -1,11 +1,11 @@
 from pathlib import Path
 from typing import List
 
-from demisto_sdk.commands.content_graph.common import ContentTypes
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
 
 
-class IndicatorTypeParser(JSONContentItemParser, content_type=ContentTypes.INDICATOR_TYPE):
+class IndicatorTypeParser(JSONContentItemParser, content_type=ContentType.INDICATOR_TYPE):
     def __init__(self, path: Path) -> None:
         super().__init__(path)
         self.connect_to_dependencies()
@@ -31,10 +31,10 @@ class IndicatorTypeParser(JSONContentItemParser, content_type=ContentTypes.INDIC
                 associated_scripts = [associated_scripts] if not isinstance(associated_scripts, list) \
                     else associated_scripts
                 for script in associated_scripts:
-                    self.add_dependency(script, ContentTypes.SCRIPT, is_mandatory=False)
+                    self.add_dependency(script, ContentType.SCRIPT, is_mandatory=False)
 
         if reputation_command := self.json_data.get('reputationCommand'):
-            self.add_dependency(reputation_command, ContentTypes.COMMAND, is_mandatory=False)
+            self.add_dependency(reputation_command, ContentType.COMMAND, is_mandatory=False)
 
         if layout := self.json_data.get('layout'):
-            self.add_dependency(layout, ContentTypes.LAYOUT)
+            self.add_dependency(layout, ContentType.LAYOUT)

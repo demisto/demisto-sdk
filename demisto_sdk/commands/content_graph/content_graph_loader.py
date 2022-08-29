@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import ContentTypes
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.interface.graph import \
     ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.repository import Repository
@@ -19,8 +19,8 @@ class ContentGraphLoader:
         """_summary_
 
         Args:
-            marketplace (MarketplaceVersions): _description_
-            content_graph (ContentGraphInterface): _description_
+            marketplace (MarketplaceVersions): The marketplace version.
+            content_graph (ContentGraphInterface): The content graph interface object.
         """
         self.marketplace = marketplace
         self.content_graph = content_graph
@@ -38,7 +38,7 @@ class ContentGraphLoader:
             pack = result['pack']
             content_items_dct: Dict[str, Any] = {}
             for content_item in content_items:
-                if (content_type := content_item['content_type']) == ContentTypes.INTEGRATION:
+                if (content_type := content_item['content_type']) == ContentType.INTEGRATION:
                     content_item['commands'] = integrations_to_commands.get(content_item['object_id'], [])
 
                 content_items_dct.setdefault(content_type, []).append(content_item)

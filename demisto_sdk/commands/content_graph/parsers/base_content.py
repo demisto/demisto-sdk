@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from demisto_sdk.commands.content_graph.common import ContentTypes
+from demisto_sdk.commands.content_graph.common import ContentType
 
 
 class BaseContentParser(ABC):
@@ -22,7 +22,7 @@ class BaseContentParser(ABC):
         pass
 
     @property
-    def content_type(self) -> ContentTypes:
+    def content_type(self) -> ContentType:
         raise NotImplementedError
 
     @property

@@ -1,12 +1,12 @@
 from pathlib import Path
 from typing import List
 
-from demisto_sdk.commands.content_graph.common import ContentTypes
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.content_item import NotAContentItem
 from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
 
 
-class LayoutParser(JSONContentItemParser, content_type=ContentTypes.LAYOUT):
+class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
     def __init__(self, path: Path) -> None:
         if 'layoutscontainer' not in path.name:
             raise NotAContentItem
@@ -32,9 +32,9 @@ class LayoutParser(JSONContentItemParser, content_type=ContentTypes.LAYOUT):
         """ Collects the incident/indicator fields used as optional dependencies.
         """
         if self.group == 'incident':
-            dependency_field_type = ContentTypes.INCIDENT_FIELD
+            dependency_field_type = ContentType.INCIDENT_FIELD
         else:
-            dependency_field_type = ContentTypes.INDICATOR_FIELD
+            dependency_field_type = ContentType.INDICATOR_FIELD
 
         for field in self.get_field_ids_recursively():
             self.add_dependency(field, dependency_field_type, is_mandatory=False)

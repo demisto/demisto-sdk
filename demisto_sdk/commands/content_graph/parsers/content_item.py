@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 from pathlib import Path
 from typing import Dict, Optional, List, Type
 
-from demisto_sdk.commands.content_graph.common import ContentTypes, Rel, UNIFIED_FILES_SUFFIXES, Relationships
+from demisto_sdk.commands.content_graph.common import ContentType, Relationship, UNIFIED_FILES_SUFFIXES, Relationships
 from demisto_sdk.commands.content_graph.parsers import *
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
 
@@ -22,7 +22,7 @@ class IncorrectParser(Exception):
 
 
 class ParserMetaclass(ABCMeta):
-    def __new__(cls, name, bases, namespace, content_type: ContentTypes = None, **kwargs):
+    def __new__(cls, name, bases, namespace, content_type: ContentType = None, **kwargs):
         """ This method is called before every creation of a ContentItemParser *class* (NOT class instances!).
         If `content_type` is passed as an argument of the class, we add a mapping between the content type
         and the parser class object.
@@ -42,7 +42,7 @@ class ParserMetaclass(ABCMeta):
         parser_cls: Type['ContentItemParser'] = super().__new__(cls, name, bases, namespace)
         if content_type:
             ContentItemParser.content_type_to_parser[content_type] = parser_cls
-            parser_cls.content_type: ContentTypes = content_type
+            parser_cls.content_type: ContentType = content_type
         return parser_cls
 
 
@@ -56,7 +56,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     Attributes:
         relationships (Relationships): The relationships collections of the content item.
     """
-    content_type_to_parser: Dict[ContentTypes, Type['ContentItemParser']] = {}
+    content_type_to_parser: Dict[ContentType, Type['ContentItemParser']] = {}
 
     def __init__(self, path: Path) -> None:
         super().__init__(path)
@@ -73,7 +73,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         if not ContentItemParser.is_content_item(path):
             return None
 
-        content_type: ContentTypes = ContentTypes.by_folder(path.parts[-2])
+        content_type: ContentType = ContentType.by_folder(path.parts[-2])
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
             try:
                 parser = parser_cls(path)
@@ -140,7 +140,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
     def add_relationship(
         self,
-        relationship: Rel,
+        relationship: Relationship,
         target: str,
         **kwargs,
     ) -> None:
@@ -166,12 +166,12 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         Args:
             pack (str): The pack node_id.
         """
-        self.add_relationship(Rel.IN_PACK, pack)
+        self.add_relationship(Relationship.IN_PACK, pack)
 
     def add_dependency(
         self,
         dependency_id: str,
-        dependency_type: Optional[ContentTypes] = None,
+        dependency_type: Optional[ContentType] = None,
         is_mandatory: bool = True
     ) -> None:
         """ Creates a USES relationship between the content item and a given dependency.
@@ -185,10 +185,10 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             is_mandatory (bool, optional): Whether or not the dependency is mandatory. Defaults to True.
         """
         if dependency_type is None:
-            relationship = Rel.USES_COMMAND_OR_SCRIPT
+            relationship = Relationship.USES_COMMAND_OR_SCRIPT
             target = dependency_id
         else:
-            relationship = Rel.USES
+            relationship = Relationship.USES
             target = f'{dependency_type}:{dependency_id}'
 
         self.add_relationship(

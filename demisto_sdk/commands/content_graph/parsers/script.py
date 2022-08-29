@@ -2,14 +2,14 @@ import re
 from pathlib import Path
 from typing import List
 
-from demisto_sdk.commands.content_graph.common import ContentTypes
+from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.integration_script import IntegrationScriptParser
 
 
 EXECUTE_CMD_PATTERN = re.compile(r"execute_?command\(['\"]([a-zA-Z-_]+)['\"].*", re.IGNORECASE)
 
 
-class ScriptParser(IntegrationScriptParser, content_type=ContentTypes.SCRIPT):
+class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
     def __init__(self, path: Path, is_test: bool = False) -> None:
         super().__init__(path)
         self.is_test: bool = is_test

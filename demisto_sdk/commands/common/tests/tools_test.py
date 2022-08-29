@@ -23,11 +23,12 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS, MarketplaceTagParser, TagParser, arg_to_list,
     compare_context_path_in_yml_and_readme, filter_files_by_type,
-    filter_files_on_pack, filter_packagify_changes, find_type, get_code_lang,
-    get_current_repo, get_dict_from_file, get_display_name,
-    get_entity_id_by_entity_type, get_entity_name_by_entity_type,
-    get_file_displayed_name, get_file_version_suffix_if_exists,
-    get_files_in_dir, get_ignore_pack_skipped_tests, get_item_marketplaces,
+    filter_files_on_pack, filter_packagify_changes, find_type,
+    generate_xsiam_normalized_name, get_code_lang, get_current_repo,
+    get_dict_from_file, get_display_name, get_entity_id_by_entity_type,
+    get_entity_name_by_entity_type, get_file_displayed_name,
+    get_file_version_suffix_if_exists, get_files_in_dir,
+    get_ignore_pack_skipped_tests, get_item_marketplaces,
     get_last_release_version, get_last_remote_release_version,
     get_latest_release_notes_text, get_pack_metadata,
     get_relative_path_from_packs_dir, get_release_note_entries,
@@ -67,6 +68,13 @@ class TestGenericFunctions:
     @pytest.mark.parametrize('file_path, func', FILE_PATHS)
     def test_get_file(self, file_path, func):
         assert func(file_path)
+
+    @pytest.mark.parametrize('file_name, prefix, result',
+                             [('test.json', 'parsingrule', 'parsingrule-external-test.json'),
+                              ('parsingrule-external-test.json', 'parsingrule', 'parsingrule-external-test.json'),
+                              ('parsingrule-test.json', 'parsingrule', 'parsingrule-external-test.json')])
+    def test_generate_xsiam_normalized_name(self, file_name, prefix, result):
+        assert generate_xsiam_normalized_name(file_name, prefix)
 
     @pytest.mark.parametrize('dir_path', ['demisto_sdk', f'{GIT_ROOT}/demisto_sdk/tests/test_files'])
     def test_get_yml_paths_in_dir(self, dir_path):
@@ -1801,7 +1809,8 @@ class TestGetItemMarketplaces:
                 'id': 'PackID2',
             }
         }
-        mocker.patch('demisto_sdk.commands.common.tools.get_mp_types_from_metadata_by_item', return_value=['marketplacev2'])
+        mocker.patch('demisto_sdk.commands.common.tools.get_mp_types_from_metadata_by_item',
+                     return_value=['marketplacev2'])
         marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml',
                                              item_data=item_data, packs=packs)
 

@@ -69,6 +69,4 @@ class ContentGraphInterface(ABC):
     
     @abstractmethod
     def run_single_query(self, query: str, parameters: Optional[Dict[str, Any]] = None) -> Any:
-=======
-    def get_nodes_by_type(self, content_type: ContentType) -> Any:
         pass

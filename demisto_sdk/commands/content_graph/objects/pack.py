@@ -114,6 +114,7 @@ class PackMetadata(BaseModel):
 
 class Pack(BaseContent, PackMetadata):
     path: Path
+    contributors: List[str]
     content_items: PackContentItems = Field(alias='contentItems', exclude=True)
     relationships: Relationships = Field(Relationships(), exclude=True)
     dependencies: dict = Field({}, exclude=True)
@@ -131,13 +132,8 @@ class Pack(BaseContent, PackMetadata):
 
     def dump_readme(self, path: Path, marketplace: MarketplaceVersions) -> None:
         shutil.copyfile(self.path / 'README.md', path)
-        contributors = None
-        try:
-            contributors = get_json(self.path / 'contributors.json')
-        except FileNotFoundError:
-            print('no contribs')
-        if contributors:
-            fixed_contributor_names = [f' - {contrib_name}\n' for contrib_name in contributors]
+        if self.contributors:
+            fixed_contributor_names = [f' - {contrib_name}\n' for contrib_name in self.contributors]
             contribution_data = CONTRIBUTORS_README_TEMPLATE.format(contributors_names=''.join(fixed_contributor_names))
             with open(path, 'a+') as f:
                 f.write(contribution_data)

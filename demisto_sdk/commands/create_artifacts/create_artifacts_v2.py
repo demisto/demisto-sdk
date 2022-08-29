@@ -18,6 +18,7 @@ class ContentArtifactManager:
         if not output:
             output = REPO_PATH / 'artifacts'
         self.output = output / marketplace.value
+        self.output.mkdir(parents=True, exist_ok=True)
 
     def create_artifacts(self) -> None:
         # TODO add dependencies to marshal when it's fixed

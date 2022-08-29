@@ -17,7 +17,7 @@ class ContentArtifactManager:
         self.marketplace = marketplace
         if not output:
             output = REPO_PATH / 'artifacts'
-        self.output = output / marketplace
+        self.output = output / marketplace.value
 
     def create_artifacts(self) -> None:
         # TODO add dependencies to marshal when it's fixed

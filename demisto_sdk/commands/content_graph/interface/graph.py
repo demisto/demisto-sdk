@@ -21,10 +21,6 @@ class ContentGraphInterface(ABC):
     @abstractmethod
     def validate_graph(self) -> None:
         pass
-
-    @abstractmethod
-    def create_pack_dependencies(self) -> None:
-        pass
     
     @abstractmethod
     def get_packs_content_items(self, marketplace: MarketplaceVersions):
@@ -38,6 +34,30 @@ class ContentGraphInterface(ABC):
     def delete_all_graph_nodes_and_relationships(self):
         pass
     
+    @abstractmethod
+    def get_nodes_by_type(self, content_type: ContentTypes) -> Any:
+        pass
+
+    @abstractmethod
+    def search_nodes(
+        self,
+        content_type: Optional[ContentTypes] = None,
+        **properties,
+    ) -> Any:
+        pass
+
+    @abstractmethod
+    def get_single_node(
+        self,
+        content_type: Optional[ContentTypes] = None,
+        **properties,
+    ) -> Any:
+        pass
+
+    @abstractmethod
+    def get_relationships_by_type(self, relationship: Rel) -> Any:
+        pass
+
     @abstractmethod
     def run_single_query(self, query: str, parameters: Optional[Dict[str, Any]] = None) -> Any:
         pass

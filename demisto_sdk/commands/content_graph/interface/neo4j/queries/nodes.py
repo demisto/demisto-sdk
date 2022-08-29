@@ -1,6 +1,6 @@
 import logging
 from neo4j import Transaction
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 from demisto_sdk.commands.content_graph.common import ContentTypes, Rel
@@ -77,6 +77,32 @@ def get_all_integrations_with_commands(
     WITH i, {{name: c.name, description: r.description, deprecated: r.deprecated}} AS command_data
     RETURN i.object_id AS integration_id, collect(command_data) AS commands
     """
+    return run_query(tx, query).data()
+
+
+def get_nodes_by_type(tx: Transaction, content_type: ContentTypes):
+    query = f"""
+    MATCH (node:{content_type}) return node
+    """
+    return run_query(tx, query).data()
+
+
+def search_nodes(
+    tx: Transaction,
+    content_type: Optional[ContentTypes] = None,
+    single_result: bool = False,
+    **properties
+):
+    if not content_type and properties:
+        content_type = ContentTypes.BASE_CONTENT
+    content_type_str = f':{content_type}' if content_type else ''
+    params_str = ', '.join(f'{k}: "{v}"' for k, v in properties.items())
+    params_str = f'{{{params_str}}}' if params_str else ''
+    query = f"""
+    MATCH (node{content_type_str}{params_str}) return node
+    """
+    if single_result:
+        return run_query(tx, query).single()['node']
     return run_query(tx, query).data()
 
 

@@ -3,6 +3,7 @@
 ## Unreleased
 * Fixed an issue in **validate**, where backward-compatibility failures prevented other validations from running.
 * fixed an issue in **validate**, where content-like files under infrastructure paths were not ignored.
+* Added the ability to send a comment to a pr throw circleci.
 
 ## 1.7.3
 

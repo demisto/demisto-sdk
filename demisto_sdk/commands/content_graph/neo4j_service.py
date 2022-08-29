@@ -75,7 +75,7 @@ def start_neo4j_service(use_docker: bool = True):
     """
     if not use_docker:
         _neo4j_admin_command('set-initial-password', f'neo4j-admin set-initial-password {NEO4J_PASSWORD}')
-        run_command('neo4j start', cwd=REPO_PATH / 'neo4j', is_silenced=False)
+        run_command('neo4j start', cwd=REPO_PATH, is_silenced=False)
 
     else:
         docker_client = _get_docker_client()
@@ -99,7 +99,7 @@ def stop_neo4j_service(use_docker: bool):
         use_docker (bool): Whether stop the sercive using docker or not.
     """
     if not use_docker:
-        run_command('neo4j stop', cwd=REPO_PATH / 'neo4j', is_silenced=False)
+        run_command('neo4j stop', cwd=REPO_PATH, is_silenced=False)
     else:
         docker_client = _get_docker_client()
         _stop_neo4j_service_docker(docker_client)
@@ -113,7 +113,7 @@ def _neo4j_admin_command(name: str, command: str):
         command (str): The neo4j admin command to run
     """
     if IS_NEO4J_ADMIN_AVAILABLE:
-        run_command(command, cwd=REPO_PATH / 'neo4j', is_silenced=False)
+        run_command(command, cwd=REPO_PATH, is_silenced=False)
     else:
         docker_client = _get_docker_client()
         try:

@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 import docker
 import requests
@@ -74,6 +75,7 @@ def start_neo4j_service(use_docker: bool = True):
         use_docker (bool, optional): Whether use docker or run locally. Defaults to True.
     """
     if not use_docker:
+        Path.mkdir(REPO_PATH / 'neo4j', exist_ok=True, parents=True)
         _neo4j_admin_command('set-initial-password', f'neo4j-admin set-initial-password {NEO4J_PASSWORD}')
         run_command('neo4j start', cwd=REPO_PATH, is_silenced=False)
 

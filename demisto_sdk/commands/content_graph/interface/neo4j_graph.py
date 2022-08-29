@@ -1,4 +1,3 @@
-from pathlib import Path
 import neo4j
 from typing import Any, Dict, List, Optional, Tuple
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -81,5 +80,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             return session.read_transaction(get_relationships_by_type, relationship)
 
     def run_single_query(self, query: str, **kwargs) -> neo4j.Result:
+        def q(tx: neo4j.Transaction, **kwargs) -> Any:
+            return tx.run(query, **kwargs).data()
+
         with self.driver.session() as session:
-            return session.write_transaction(query, **kwargs)
+            return session.read_transaction(q, **kwargs)

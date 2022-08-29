@@ -2,6 +2,22 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: profile",
+            "type": "python",
+            "request": "launch",
+            "module": "cProfile",
+            "console": "integratedTerminal",
+            "cwd": "${env:CONTENT}", // Predefine the CONTENT variable in your environment first!
+            "args": [
+                "-o",
+                "profile.out",
+                "-m",
+                "demisto_sdk",
+                "create-content-artifacts-v2"
+            ],
+            "justMyCode": true
+        },
+        {
             "name": "Python: create graph",
             "type": "python",
             "request": "launch",

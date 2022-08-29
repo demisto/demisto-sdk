@@ -121,10 +121,13 @@ class Pack(BaseContent, PackMetadata):
 
     def dump_metadata(self, path: Path) -> None:
         metadata = self.dict(exclude={'path', 'node_id', 'content_type'})
+        metadata['dependencies'] = self.dependencies
         metadata['contentItems'] = {}
         for content_item in self.content_items:
+            if content_item == ContentType.TEST_PLAYBOOK:
+                continue
             try:
-                metadata['contentItems'].setdefault(content_item.content_type, []).append(content_item.summary())
+                metadata['contentItems'].setdefault(content_item.content_type.server_name, []).append(content_item.summary())
             except NotImplementedError as e:
                 logger.debug(f'Could not add {content_item.name} to pack metadata: {e}')
         with open(path, 'w') as f:

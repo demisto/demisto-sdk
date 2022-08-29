@@ -81,12 +81,12 @@ class ContentType(str, enum.Enum):
         return list(labels)
 
     @property
-    def prefix(self) -> str:
+    def server_name(self) -> str:
         return self.lower()
 
     @staticmethod
     def prefixes() -> List[str]:
-        return [c.prefix for c in ContentType]
+        return [c.server_name for c in ContentType]
 
     @classmethod
     def by_folder(cls, folder: str) -> 'ContentType':

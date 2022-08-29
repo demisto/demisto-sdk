@@ -44,6 +44,6 @@ class ContentGraphLoader:
                 content_items_dct.setdefault(content_type, []).append(content_item)
             pack['content_items'] = content_items_dct
             if self.with_dependencies:
-                pack['dependencies'] = first_level_dependencies.get(pack['id'], {})
+                pack['dependencies'] = first_level_dependencies.get(pack['name'], {})
             packs.append(pack)
         return Repository.parse_obj(repository)

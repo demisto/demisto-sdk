@@ -26,10 +26,10 @@ class ContentItem(BaseContent):
         raise NotImplementedError('Should be implemented in subclasses')
 
     def normalize_file_name(self, name: str) -> str:
-        for prefix in ContentTypes.prefixes():
+        for prefix in ContentType.prefixes():
             name = name.replace(f'{prefix}-', '')
 
-        return f'{self.content_type.prefix}-{name}'
+        return f'{self.content_type.server_name}-{name}'
 
     def dump(self, dir: DirectoryPath, _: MarketplaceVersions) -> None:
         dir.mkdir(exist_ok=True, parents=True)

@@ -48,7 +48,7 @@ class ContentType(str, enum.Enum):
     INDICATOR_FIELD = 'IndicatorField'
     CLASSIFIER = 'Classifier'
     MAPPER = 'Mapper'
-    LAYOUT = 'Layout'
+    LAYOUT = 'Layouts'
     WIDGET = 'Widget'
     DASHBOARD = 'Dashboard'
     REPORT = 'Report'
@@ -82,11 +82,21 @@ class ContentType(str, enum.Enum):
 
     @property
     def server_name(self) -> str:
+        if self == ContentType.SCRIPT:
+            return 'automation'
+        elif self == ContentType.INDICATOR_TYPE:
+            return 'reputation'
+        elif self == ContentType.INDICATOR_FIELD:
+            return 'incidentfield-indicatorfield'
+        elif self == ContentType.LAYOUT:
+            return 'layoutscontainer'
+        elif self == ContentType.PREPROCESS_RULE:
+            return 'pre-process-rule'
         return self.lower()
 
     @staticmethod
     def prefixes() -> List[str]:
-        return [c.server_name for c in ContentType]
+        return [c.server_name for c in ContentType] + ['indicatorfield']
 
     @classmethod
     def by_folder(cls, folder: str) -> 'ContentType':

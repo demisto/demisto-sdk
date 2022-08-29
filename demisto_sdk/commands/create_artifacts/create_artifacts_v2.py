@@ -17,7 +17,7 @@ class ContentArtifactManager:
         self.marketplace = marketplace
         if not output:
             output = REPO_PATH / 'artifacts'
-        self.output = output / marketplace.value
+        self.output: Path = output / marketplace.value
         self.output.mkdir(parents=True, exist_ok=True)
 
     def create_artifacts(self) -> None:

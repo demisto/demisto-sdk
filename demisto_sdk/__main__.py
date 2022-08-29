@@ -2353,7 +2353,7 @@ def create_content_artifacts_v2(marketplace: MarketplaceVersions, output: Path, 
     logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
                   quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
                   log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
-    ContentArtifactManager(marketplace=marketplace, output=output).create_artifacts()
+    ContentArtifactManager(marketplace=marketplace, output=Path(output)).create_artifacts()
 
 @main.result_callback()
 def exit_from_program(result=0, **kwargs):

@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 import docker
 import requests
@@ -13,9 +14,11 @@ NEO4J_ADMIN_IMAGE = 'neo4j/neo4j-admin:4.4.9'
 logger = logging.getLogger('demisto-sdk')
 
 try:
-    run_command('neo4j-admin --version', cwd=REPO_PATH / 'neo4j', is_silenced=True)
+    run_command('neo4j-admin --version', cwd=REPO_PATH, is_silenced=True)
+    logger.info('Using local neo4j-admin')
     IS_NEO4J_ADMIN_AVAILABLE = True
 except Exception:
+    logger.info('Could not find neo4j-admin in path. Using docker instead.')
     IS_NEO4J_ADMIN_AVAILABLE = False
 
 
@@ -65,15 +68,16 @@ def _wait_until_service_is_up():
     s.get('http://localhost:7474')
 
 
-def start_neo4j_service(use_docker: bool = True):
+def start(use_docker: bool = True):
     """Starting the neo4j service
 
     Args:
         use_docker (bool, optional): Whether use docker or run locally. Defaults to True.
     """
     if not use_docker:
-        _neo4j_admin_command('set-initial-password', f'neo4j - admin set - initial - password {NEO4J_PASSWORD}')
-        run_command('neo4j start', cwd=REPO_PATH / 'neo4j', is_silenced=False)
+        Path.mkdir(REPO_PATH / 'neo4j', exist_ok=True, parents=True)
+        _neo4j_admin_command('set-initial-password', f'neo4j-admin set-initial-password {NEO4J_PASSWORD}')
+        run_command('neo4j start', cwd=REPO_PATH, is_silenced=False)
 
     else:
         docker_client = _get_docker_client()
@@ -90,14 +94,14 @@ def start_neo4j_service(use_docker: bool = True):
     _wait_until_service_is_up()
 
 
-def stop_neo4j_service(use_docker: bool):
+def stop(use_docker: bool):
     """Stop the neo4j service
 
     Args:
         use_docker (bool): Whether stop the sercive using docker or not.
     """
     if not use_docker:
-        run_command('neo4j stop', cwd=REPO_PATH / 'neo4j', is_silenced=False)
+        run_command('neo4j stop', cwd=REPO_PATH, is_silenced=False)
     else:
         docker_client = _get_docker_client()
         _stop_neo4j_service_docker(docker_client)
@@ -111,9 +115,9 @@ def _neo4j_admin_command(name: str, command: str):
         command (str): The neo4j admin command to run
     """
     if IS_NEO4J_ADMIN_AVAILABLE:
-        run_command(command, cwd=REPO_PATH / 'neo4j', is_silenced=False)
+        run_command(command, cwd=REPO_PATH, is_silenced=False)
     else:
-        docker_client = docker.from_env()
+        docker_client = _get_docker_client()
         try:
             docker_client.containers.get(f'neo4j-{name}').remove(force=True)
         except Exception as e:
@@ -130,18 +134,18 @@ def _neo4j_admin_command(name: str, command: str):
 def dump(use_docker=True):
     """Dump the content graph to a file
     """
-    stop_neo4j_service(use_docker)
-    dump_path = "/backups/content-graph.dump" if IS_NEO4J_ADMIN_AVAILABLE else REPO_PATH / "neo4" / "content-graph.dump"
+    stop(use_docker)
+    dump_path = "/backups/content-graph.dump" if use_docker else REPO_PATH / "neo4j" / "content-graph.dump"
     command = f'neo4j-admin dump --database=neo4j --to={dump_path}'
     _neo4j_admin_command('dump', command)
-    start_neo4j_service(use_docker)
+    start(use_docker)
 
 
 def load(use_docker=True):
     """Load the content graph from a file
     """
-    stop_neo4j_service(use_docker)
-    dump_path = "/backups/content-graph.dump" if IS_NEO4J_ADMIN_AVAILABLE else REPO_PATH / "neo4" / "content-graph.dump"
+    stop(use_docker)
+    dump_path = "/backups/content-graph.dump" if use_docker else REPO_PATH / "neo4j" / "content-graph.dump"
     command = f'neo4j-admin load --database=neo4j --from={dump_path}'
     _neo4j_admin_command('load', command)
-    start_neo4j_service(use_docker)
+    start(use_docker)

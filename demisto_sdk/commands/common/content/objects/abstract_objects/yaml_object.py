@@ -43,7 +43,7 @@ class YAMLObject(DictionaryBasedObject):
 
         return path
 
-    def _unserialize(self):
+    def _deserialize(self):
         """Load yaml to dictionary"""
         try:
             self._as_dict = yaml.load(self.path)

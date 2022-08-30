@@ -715,7 +715,7 @@ class PlaybookValidator(ContentEntityValidator):
         for transformer in field_output.get('transformers', []):
             for _, arg_info in transformer.get('args', {}).items():
                 if value := arg_info.get('value', {}).get('simple', ''):
-                    if not self.handle_incorrect_reference_value(task_id, value, task_name, arg_info, section_name):
+                    if not self.handle_incorrect_reference_value(task_id, value, task_name, section_name, arg_info):
                         is_valid = False
 
         return is_valid

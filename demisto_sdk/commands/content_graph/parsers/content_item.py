@@ -3,12 +3,14 @@ from abc import ABCMeta, abstractmethod
 from pathlib import Path
 from typing import Dict, Optional, List, Type
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship, UNIFIED_FILES_SUFFIXES, Relationships
 from demisto_sdk.commands.content_graph.parsers import *
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
 
 
 logger = logging.getLogger('demisto-sdk')
+
 
 class NotAContentItem(Exception):
     pass
@@ -58,12 +60,13 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     """
     content_type_to_parser: Dict[ContentType, Type['ContentItemParser']] = {}
 
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
+        self.pack_marketplaces: List[MarketplaceVersions] = pack_marketplaces
         super().__init__(path)
         self.relationships: Relationships = Relationships()
 
     @staticmethod
-    def from_path(path: Path) -> Optional['ContentItemParser']:
+    def from_path(path: Path, pack_marketplaces: List[MarketplaceVersions]) -> Optional['ContentItemParser']:
         """ Tries to parse a content item by its path.
         If during the attempt we detected the file is not a content item, `None` is returned.
 
@@ -76,11 +79,11 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         content_type: ContentType = ContentType.by_folder(path.parts[-2])
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
             try:
-                parser = parser_cls(path)
+                parser = parser_cls(path, pack_marketplaces)
                 logger.info(f'Parsed {parser.node_id}')
                 return parser
             except IncorrectParser as e:
-                return e.correct_parser(path, **e.kwargs)
+                return e.correct_parser(path, pack_marketplaces, **e.kwargs)
             except NotAContentItem:
                 logger.debug(f'Skipping {path}')
                 pass

@@ -1,13 +1,14 @@
 from pathlib import Path
 from typing import List
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
 
 
 class IndicatorTypeParser(JSONContentItemParser, content_type=ContentType.INDICATOR_TYPE):
-    def __init__(self, path: Path) -> None:
-        super().__init__(path)
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
+        super().__init__(path, pack_marketplaces)
         self.connect_to_dependencies()
         self.regex: str = self.json_data.get('regex')
         self.reputation_script_name: str = self.json_data.get('reputationScriptName') or None

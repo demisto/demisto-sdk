@@ -1,17 +1,18 @@
 from pathlib import Path
 from typing import List
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.content_item import NotAContentItem
 from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
 
 
 class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         if 'layoutscontainer' not in path.name:
             raise NotAContentItem
 
-        super().__init__(path)
+        super().__init__(path, pack_marketplaces)
         self.kind: str = self.json_data.get('kind')
         self.tabs: List[str] = self.json_data.get('tabs')
         self.definition_id: str = self.json_data.get('definitionId')

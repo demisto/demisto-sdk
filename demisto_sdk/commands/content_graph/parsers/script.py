@@ -2,6 +2,7 @@ import re
 from pathlib import Path
 from typing import List
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.integration_script import IntegrationScriptParser
 
@@ -10,8 +11,8 @@ EXECUTE_CMD_PATTERN = re.compile(r"execute_?command\(['\"]([a-zA-Z-_]+)['\"].*",
 
 
 class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
-    def __init__(self, path: Path, is_test: bool = False) -> None:
-        super().__init__(path)
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions], is_test: bool = False) -> None:
+        super().__init__(path, pack_marketplaces)
         self.is_test: bool = is_test
         self.docker_image: str = self.yml_data.get('dockerimage', '')
         self.type: str = self.yml_data.get('subtype') or self.yml_data.get('type')

@@ -14,7 +14,7 @@ class BaseContentParser(ABC):
     """
     
     def __init__(self, path: Path) -> None:
-        self.path = path
+        self.path: Path = path
 
     @property
     @abstractmethod

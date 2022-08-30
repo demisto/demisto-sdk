@@ -1,14 +1,15 @@
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 from demisto_sdk.commands.common.tools import field_to_cli_name
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
 
 
 class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
-    def __init__(self, path: Path) -> None:
-        super().__init__(path)
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
+        super().__init__(path, pack_marketplaces)
         self.type = self.json_data.get('type')
         self.definition_id = self.json_data.get('definitionId')
         self.connect_to_dependencies()

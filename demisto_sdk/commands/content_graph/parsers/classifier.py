@@ -1,4 +1,6 @@
 from pathlib import Path
+from typing import List
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.content_item import IncorrectParser
@@ -7,7 +9,7 @@ from demisto_sdk.commands.content_graph.parsers.mapper import MapperParser
 
 
 class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIER):
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         """ Parses the classifier.
 
         Args:
@@ -16,7 +18,7 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIE
         Raises:
             IncorrectParser: When detecting this content item is a mapper.
         """
-        super().__init__(path)
+        super().__init__(path, pack_marketplaces)
 
         self.type = self.json_data.get('type')
         if self.type != 'classification':

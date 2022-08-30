@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Any, Dict, List
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
 from demisto_sdk.commands.content_graph.parsers.integration_script import (
     IntegrationScriptParser,
@@ -9,8 +10,8 @@ from demisto_sdk.commands.content_graph.parsers.integration_script import (
 
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
-    def __init__(self, path: Path) -> None:
-        super().__init__(path)
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
+        super().__init__(path, pack_marketplaces)
         self.script_info: Dict[str, Any] = self.yml_data.get('script', {})
         self.category = self.yml_data['category']
         self.display_name = self.yml_data['display']

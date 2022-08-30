@@ -2189,10 +2189,10 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def incorrect_value_references(task_key, value, task_name):
-        return f"On task: {task_name} with ID: {task_key}, an input with the value: {value} was passed as string, rather than as reference. " \
-            "Change the reference to 'From previous tasks' from 'As value' when referencing a value from the context, " \
-            "or wrap it with ${'<condition>'}"
+    def incorrect_value_references(task_key, value, task_name, section_name):
+        return f"On task: '{task_name}' with ID: '{task_key}', an input with the value: '{value}' was passed as string, rather than as " \
+            f"a reference in the '{section_name}' section. Change the reference to 'From previous tasks' from 'As value'" \
+            " when referencing a value from the context, or wrap it with ${'<condition>'}"
 
     @staticmethod
     @error_code_decorator

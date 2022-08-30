@@ -596,19 +596,19 @@ class PlaybookValidator(ContentEntityValidator):
                 for condition in conditions.get('condition'):
                     for condition_info in condition:
                         if value := condition_info.get('left', {}).get('value', {}).get('simple', ''):
-                            if not self.handle_incorrect_reference_value(task_id, value, task_name, condition_info.get('left', {})):
+                            if not self.handle_incorrect_reference_value(task_id, value, task_name, 'condition', condition_info.get('left', {})):
                                 is_valid = False
 
                         elif value := condition_info.get('left', {}).get('value', {}).get('complex', {}):
-                            if not self.handle_transformers_and_filters(value, task_id, task_name):
+                            if not self.handle_transformers_and_filters(value, task_id, task_name, 'condition'):
                                 is_valid = False
 
                         if value := condition_info.get('right', {}).get('value', {}).get('simple', ''):
-                            if not self.handle_incorrect_reference_value(task_id, value, task_name, condition_info.get('right', {})):
+                            if not self.handle_incorrect_reference_value(task_id, value, task_name, 'condition', condition_info.get('right', {})):
                                 is_valid = False
 
                         elif value := condition_info.get('right', {}).get('value', {}).get('complex', {}):
-                            if not self.handle_transformers_and_filters(value, task_id, task_name):
+                            if not self.handle_transformers_and_filters(value, task_id, task_name, 'condition'):
                                 is_valid = False
 
             for message_key, message_value in task.get('message', {}).items():
@@ -630,11 +630,11 @@ class PlaybookValidator(ContentEntityValidator):
         is_valid = True
         if task.get('type') == 'regular':
             if default_assignee := task.get('defaultassigneecomplex', {}).get('simple', ''):
-                if not self.handle_incorrect_reference_value(task_id, default_assignee, task_name):
+                if not self.handle_incorrect_reference_value(task_id, default_assignee, task_name, 'default assignee'):
                     is_valid = False
 
             elif default_assignee := task.get('defaultassigneecomplex', {}).get('complex', {}):
-                if not self.handle_transformers_and_filters(default_assignee, task_id, task_name):
+                if not self.handle_transformers_and_filters(default_assignee, task_id, task_name, 'default assignee'):
                     is_valid = False
 
             for script_argument in task.get('scriptarguments', {}).values():
@@ -643,7 +643,7 @@ class PlaybookValidator(ContentEntityValidator):
 
             for incident_field in task.get('fieldMapping', []):
                 field_output = incident_field.get('output', {}).get('complex', {})
-                if not self.handle_transformers_and_filters(field_output, task_id, task_name):
+                if not self.handle_transformers_and_filters(field_output, task_id, task_name, 'field mapping'):
                     is_valid = False
 
         return is_valid
@@ -667,11 +667,11 @@ class PlaybookValidator(ContentEntityValidator):
         for form_question in task.get('form', {}).get('questions', []):
             if form_question.get('labelarg'):
                 if value := form_question.get('labelarg', {}).get('simple', ''):
-                    if not self.handle_incorrect_reference_value(task_id, value, task_name, form_question):
+                    if not self.handle_incorrect_reference_value(task_id, value, task_name, 'form question', form_question):
                         is_valid = False
 
                 elif value := form_question.get('labelarg', {}).get('complex', {}):
-                    if not self.handle_transformers_and_filters(value, 'inputs', task_name):
+                    if not self.handle_transformers_and_filters(value, 'inputs', task_name, 'form question'):
                         is_valid = False
 
         return is_valid
@@ -685,16 +685,16 @@ class PlaybookValidator(ContentEntityValidator):
         is_valid = True
         for playbook_input in inputs:
             if value := playbook_input.get('value', {}).get('simple', ''):
-                if not self.handle_incorrect_reference_value('inputs', value, 'inputs', playbook_input):
+                if not self.handle_incorrect_reference_value('inputs', value, 'inputs', 'playbook inputs', playbook_input):
                     is_valid = False
 
             elif complex_value := playbook_input.get('value', {}).get('complex', {}):
-                if not self.handle_transformers_and_filters(complex_value, 'inputs', 'inputs'):
+                if not self.handle_transformers_and_filters(complex_value, 'inputs', 'inputs', 'playbook inputs'):
                     is_valid = False
 
         return is_valid
 
-    def handle_transformers_and_filters(self, field_output: dict, task_id, task_name):
+    def handle_transformers_and_filters(self, field_output: dict, task_id, task_name, section_name):
         """
         Check that When referencing a context value, it is valid, i.e. iscontext: true or surrounded by ${<condition>},
         in a transformers and filters section.
@@ -705,17 +705,17 @@ class PlaybookValidator(ContentEntityValidator):
         for incident_filter in filters:
             for filter_info in incident_filter:
                 if value := filter_info.get('left', {}).get('value', {}).get('simple', ''):
-                    if not self.handle_incorrect_reference_value(task_id, value, task_name, filter_info.get('left', {})):
+                    if not self.handle_incorrect_reference_value(task_id, value, task_name, section_name, filter_info.get('left', {})):
                         is_valid = False
 
                 if value := filter_info.get('right', {}).get('value', {}).get('simple', ''):
-                    if not self.handle_incorrect_reference_value(task_id, value, task_name, filter_info.get('right', {})):
+                    if not self.handle_incorrect_reference_value(task_id, value, task_name, section_name, filter_info.get('right', {})):
                         is_valid = False
 
         for transformer in field_output.get('transformers', []):
             for _, arg_info in transformer.get('args', {}).items():
                 if value := arg_info.get('value', {}).get('simple', ''):
-                    if not self.handle_incorrect_reference_value(task_id, value, task_name, arg_info):
+                    if not self.handle_incorrect_reference_value(task_id, value, task_name, arg_info, section_name):
                         is_valid = False
 
         return is_valid
@@ -728,11 +728,11 @@ class PlaybookValidator(ContentEntityValidator):
         """
         is_valid = True
         if arg_value := script_argument.get('simple', ''):
-            if not self.handle_incorrect_reference_value(task_id, arg_value, task_name):
+            if not self.handle_incorrect_reference_value(task_id, arg_value, task_name, 'script arguments'):
                 is_valid = False
 
         elif arg_value := script_argument.get('complex', {}):
-            if not self.handle_transformers_and_filters(arg_value, task_id, task_name):
+            if not self.handle_transformers_and_filters(arg_value, task_id, task_name, 'script arguments'):
                 is_valid = False
 
         return is_valid
@@ -747,16 +747,16 @@ class PlaybookValidator(ContentEntityValidator):
         if message_key and message_value:
             if isinstance(message_value, dict):
                 if value := message_value.get('simple', ''):
-                    if not self.handle_incorrect_reference_value(task_id, value, task_name):
+                    if not self.handle_incorrect_reference_value(task_id, value, task_name, 'message'):
                         is_valid = False
 
                 elif value := message_value.get('complex', {}):
-                    if not self.handle_transformers_and_filters(value, task_id, task_name):
+                    if not self.handle_transformers_and_filters(value, task_id, task_name, 'message'):
                         is_valid = False
 
         return is_valid
 
-    def handle_incorrect_reference_value(self, task_id, values, task_name, value_info: dict = {}):
+    def handle_incorrect_reference_value(self, task_id, values, task_name, section_name, value_info: dict = {}):
         """
         Check that When referencing a context value, it is valid, i.e. iscontext: true or surrounded by ${<condition>},
         Returns: True if the references are correct
@@ -766,7 +766,7 @@ class PlaybookValidator(ContentEntityValidator):
             if value.startswith('incident.') or value.startswith('inputs.'):
                 if not value_info.get('iscontext', ''):
                     is_valid = False
-                    error_message, error_code = Errors.incorrect_value_references(task_id, value, task_name)
+                    error_message, error_code = Errors.incorrect_value_references(task_id, value, task_name, section_name)
                     self.handle_error(error_message, error_code, file_path=self.file_path)
 
         return is_valid

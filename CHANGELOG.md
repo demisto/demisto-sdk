@@ -3,6 +3,7 @@
 ## Unreleased
 * Fixed an issue in **validate**, where backward-compatibility failures prevented other validations from running.
 * fixed an issue in **validate**, where content-like files under infrastructure paths were not ignored.
+* Added a new check to **validate**, making sure playbook task values are passed as references.
 
 ## 1.7.3
 
@@ -13,7 +14,6 @@
 * Changing the way we are using XSIAM servers api-keys in **test-content** .
 * Added a success message to **postman-codegen**.
 * Added name normalization according to new convention to XSIAM content items
-* Added a new check to **validate**, making sure playbook task values are passed as references.
 
 ## 1.7.2
 

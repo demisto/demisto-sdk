@@ -26,6 +26,7 @@ from demisto_sdk.commands.common.tools import (find_type,
                                                is_external_repository,
                                                print_error, print_success,
                                                print_warning)
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import Neo4jContentGraphInterface
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
 json = JSON_Handler()
@@ -1706,6 +1707,19 @@ def find_dependencies(**kwargs):
     except ValueError as exp:
         print_error(str(exp))
 
+
+@main.command()
+@click.help_option(
+    '-h', '--help'
+)
+@click.option('-mp', '--marketplace', help="Marketplace to use", default=MarketplaceVersions.XSOAR, type=MarketplaceVersions)
+@click.option("-o", "--output-path", help="The destination path for the packs dependencies json file. This argument is "
+                                          "only relevant for when using the '--all-packs-dependecies' flag.",
+              required=False)
+def find_dependencies_v2(marketplace, output_path):
+    from demisto_sdk.commands.find_dependencies.find_dependencies_v2 import PackDependencies
+    with Neo4jContentGraphInterface() as graph:
+        PackDependencies(graph, marketplace, output_path).run()
 
 # ====================== postman-codegen ====================== #
 @main.command()

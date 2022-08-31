@@ -1,4 +1,6 @@
+import json
 import os
+from pathlib import Path
 from typing import Any, Dict
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
@@ -9,13 +11,15 @@ USE_DOCKER = not os.getenv('CI', False)
 
 
 class PackDependencies:
-    def __init__(self, marketplace: MarketplaceVersions, content_graph: ContentGraphInterface) -> None:
-        self.marketplace = marketplace
+    def __init__(self, content_graph: ContentGraphInterface, marketplace: MarketplaceVersions, output_path: Path) -> None:
         self.content_graph = content_graph
+        self.marketplace = marketplace
+        self.output_path = output_path
 
-    def run(self) -> dict:
+    def run(self) -> None:
         self.content_graph.create_pack_dependencies()
-        return self._get_packs_dependencies()
+        with self.output_path.open('w') as f:
+            json.dump(self._get_packs_dependencies(), f, indent=4)
 
     def _get_packs_dependencies(self) -> Dict[str, Any]:
         all_level_dependencies = self.content_graph.get_all_level_dependencies(self.marketplace)

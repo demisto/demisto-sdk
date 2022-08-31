@@ -14,7 +14,6 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         super().__init__(path, pack_marketplaces)
         self.script_info: Dict[str, Any] = self.yml_data.get('script', {})
         self.category = self.yml_data['category']
-        self.display_name = self.yml_data['display']
         self.docker_image = self.script_info.get('dockerimage', '')
         self.is_fetch = self.script_info.get('isfetch', False)
         self.is_feed = self.script_info.get('feed', False)

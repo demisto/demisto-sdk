@@ -1,8 +1,7 @@
 import logging
-import shutil
-from pathlib import Path
-from demisto_sdk.commands.common.constants import MarketplaceVersions
 
+
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.content_graph_builder import \
     ContentGraphBuilder
 from demisto_sdk.commands.content_graph.content_graph_loader import ContentGraphLoader
@@ -21,8 +20,7 @@ def create_content_graph(
     """This function creates a new content graph database in neo4j from the content path
 
     Args:
-        use_docker (bool, optional): Whether run neo4j in docker. Defaults to True.
-        use_existing (bool, optional): Whether use existing service. Defaults to False.
+        content_graph_interface (ContentGraphInterface): The content graph interface.
     """
     content_graph_builder = ContentGraphBuilder(REPO_PATH, content_graph_interface)
     content_graph_builder.create_graph()
@@ -33,6 +31,9 @@ def stop_content_graph(
 ) -> None:
     """
     This function stops the neo4j service if it is running.
+
+    Args:
+        use_docker (bool, optional): Whether or not the service runs with docker.
     """
     neo4j_service.stop(use_docker=use_docker)
 
@@ -44,6 +45,7 @@ def marshal_content_graph(
     """This function marshals the content graph to python models.
 
     Args:
+        content_graph_interface (ContentGraphInterface): The content graph interface.
         marketplace (MarketplaceVersions, optional): The marketplace to use. Defaults to MarketplaceVersions.XSOAR.
     
     Returns:

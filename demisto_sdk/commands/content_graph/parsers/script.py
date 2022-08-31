@@ -29,7 +29,7 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
 
     def connect_to_dependencies(self) -> None:
         """ Creates USES_COMMAND_OR_SCRIPT mandatory relationships with the commands/scripts used.
-        At this stage, we can't determine whether the dependences are commands or scripts.
+        At this stage, we can't determine whether the dependencies are commands or scripts.
         Only when we add the relationships to the database we can detect their actual content types,
         and then they are added as USES relationships.
         """

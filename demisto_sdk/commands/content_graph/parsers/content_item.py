@@ -84,7 +84,11 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
                 logger.info(f'Parsed {parser.node_id}')
                 return parser
             except IncorrectParserException as e:
-                return e.correct_parser(path, pack_marketplaces, **e.kwargs)
+                try:
+                    return e.correct_parser(path, pack_marketplaces, **e.kwargs)
+                except NotAContentItemException:
+                    logger.debug(f'Skipping {path}')
+                    pass
             except NotAContentItemException:
                 logger.debug(f'Skipping {path}')
                 pass

@@ -1006,13 +1006,10 @@ def get_scripts_names(file_path):
     scripts_dir_path = os.path.join(PACKS_DIR, get_pack_name(file_path), SCRIPTS_DIR)
     scripts_names: Set[str] = set()
     if not glob.glob(scripts_dir_path):
-        click.secho(f'no scripts path found')
         return scripts_names
 
     found_scripts: List[str] = os.listdir(scripts_dir_path)
-    if not found_scripts:
-        click.secho(f'no scripts found')
-    else:
+    if found_scripts:
         for script in found_scripts:
             if script.endswith('.md'):
                 continue  # in case the script is in the old version of CommonScripts - JS code, ignore the md file
@@ -1027,7 +1024,6 @@ def get_scripts_names(file_path):
             except FileNotFoundError:
                 # we couldn't load the script as the path is not fit Content convention scripts' names
                 scripts_names.add(script)
-        click.secho(f'scripts names: {scripts_names}')
     return scripts_names
 
 

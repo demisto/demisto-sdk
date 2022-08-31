@@ -14,7 +14,7 @@ logger = logging.getLogger('demisto-sdk')
 class Repository(BaseModel):
     path: Path
     packs: List[Pack]
-
+    
     def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions):
         from multiprocessing.pool import ThreadPool
         logger.info('starting repo dump')

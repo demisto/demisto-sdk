@@ -1,5 +1,6 @@
 
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
@@ -30,7 +31,11 @@ class ContentGraphInterface(ABC):
     @abstractmethod
     def get_all_integrations_with_commands(self):
         pass
-
+    
+    @abstractmethod
+    def get_node_by_path(self, path: Path):
+        pass
+    
     @abstractmethod
     def clean_graph(self):
         pass

@@ -18,7 +18,9 @@ class PackDependencies:
         return self._get_packs_dependencies()
 
     def _get_packs_dependencies(self) -> Dict[str, Any]:
+        all_level_dependencies = self.content_graph.get_all_level_dependencies(self.marketplace)
         first_level_dependencies = self.content_graph.get_first_level_dependencies(self.marketplace)
-        for pack_id in first_level_dependencies:
-            first_level_dependencies[pack_id]['displayedImages'] = list(first_level_dependencies[pack_id].keys())
-        return first_level_dependencies
+        for pack_id in all_level_dependencies:
+            all_level_dependencies[pack_id]['dependencies'] = first_level_dependencies[pack_id]
+            all_level_dependencies[pack_id]['displayedImages'] = list(first_level_dependencies[pack_id].keys())
+        return all_level_dependencies

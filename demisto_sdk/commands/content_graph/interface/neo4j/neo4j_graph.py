@@ -21,6 +21,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     delete_all_graph_nodes,
     get_nodes_by_type,
     search_nodes,
+    get_node_py_path,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
     create_relationships,
@@ -141,6 +142,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             return session.read_transaction(get_relationships_by_type, relationship_type)
 
+    def get_node_by_path(self, path: Path):
+        with self.driver.session() as session:
+            return session.read_transaction(get_node_py_path, path)
+    
     def run_single_query(self, query: str, parameters: Optional[Dict[str, Any]] = None) -> neo4j.Result:
         with self.driver.session() as session:
             tx: neo4j.Transaction = session.begin_transaction()

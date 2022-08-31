@@ -11,35 +11,11 @@ from demisto_sdk.commands.content_graph.common import (
     Relationships
 )
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
-from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser, NotAContentItem
+from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser, NotAContentItemException
+from demisto_sdk.commands.content_graph.parsers.content_items_list import ContentItemsList
 
 
 logger = logging.getLogger('demisto-sdk')
-
-
-class ContentItemsList(list):
-    """ An extension for list - a list of a specific content type.
-
-    Attributes:
-        content_type (ContentTypes): The content types allowed to be included in this list.
-    """
-    def __init__(self, content_type: ContentType):
-        self.content_type: ContentType = content_type
-        super().__init__()
-
-    def append_conditionally(self, content_item: ContentItemParser) -> bool:
-        """ Appends if the content item is in the correct type.
-
-        Args:
-            content_item (ContentItemParser): The content item.
-
-        Returns:
-            bool: True iff the content item was appended.
-        """
-        if isinstance(content_item, ContentItemParser) and content_item.content_type == self.content_type:
-            self.append(content_item)
-            return True
-        return False
 
 
 class PackContentItems:
@@ -79,19 +55,19 @@ class PackContentItems:
 
     def append(self, obj: ContentItemParser) -> None:
         """ Appends a content item by iterating the content item lists
-        until finds the correct list and appends to it.
+        until the correct list is found and appends to it.
 
         Args:
             obj (ContentItemParser): The conten item to append.
 
         Raises:
-            NotAContentItem: If did not find any matching content item list.
+            NotAContentItemException: If did not find any matching content item list.
         """
         for content_item_list in self.iter_lists():
             if content_item_list.append_conditionally(obj):
                 break
         else:
-            raise NotAContentItem
+            raise NotAContentItemException
 
 
 class PackMetadataParser:

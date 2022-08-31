@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.tools import (
 )
 from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
-from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser, NotAContentItem
+from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser, NotAContentItemException
 
 
 logger = logging.getLogger('demisto-sdk')
@@ -68,7 +68,7 @@ class YAMLContentItemParser(ContentItemParser):
         else:
             _, yaml_path = get_yml_paths_in_dir(self.path.as_posix())
         if not yaml_path:
-            raise NotAContentItem
+            raise NotAContentItemException
 
         self.path = Path(yaml_path)
         return get_yaml(self.path.as_posix())

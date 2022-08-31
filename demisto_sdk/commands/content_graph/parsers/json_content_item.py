@@ -5,7 +5,7 @@ from typing import Any, Dict, List
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_files_in_dir, get_json
 from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION
-from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser, NotAContentItem
+from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser, NotAContentItemException
 
 
 logger = logging.getLogger('demisto-sdk')
@@ -53,6 +53,6 @@ class JSONContentItemParser(ContentItemParser):
         if self.path.is_dir():
             json_files_in_dir = get_files_in_dir(self.path.as_posix(), ['json'], False)
             if len(json_files_in_dir) != 1:
-                raise NotAContentItem(f'Directory {self.path} must have a single JSON file.')
+                raise NotAContentItemException(f'Directory {self.path} must have a single JSON file.')
             self.path = Path(json_files_in_dir[0])
         return get_json(self.path.as_posix())

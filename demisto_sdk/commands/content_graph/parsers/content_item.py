@@ -12,11 +12,11 @@ from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentP
 logger = logging.getLogger('demisto-sdk')
 
 
-class NotAContentItem(Exception):
+class NotAContentItemException(Exception):
     pass
 
 
-class IncorrectParser(Exception):
+class IncorrectParserException(Exception):
     def __init__(self, correct_parser: 'ContentItemParser', **kwargs) -> None:
         self.correct_parser = correct_parser
         self.kwargs = kwargs
@@ -36,7 +36,7 @@ class ParserMetaclass(ABCMeta):
             name: The class object name (e.g., IntegrationParser)
             bases: The bases of the class object (e.g., [YAMLContentItemParser, ContentItemParser, BaseContentParser])
             namespace: The namespaces of the class object.
-            content_type (ContentTypes, optional): The type corresponds to the class (e.g., ContentTypes.INTEGRATIONS)
+            content_type (ContentType, optional): The type corresponds to the class (e.g., ContentType.INTEGRATIONS)
 
         Returns:
             ContentItemParser: The parser class.
@@ -52,7 +52,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     """ A content item parser.
 
     Static Attributes:
-        content_type_to_parser (Dict[ContentTypes, Type[ContentItemParser]]): 
+        content_type_to_parser (Dict[ContentType, Type[ContentItemParser]]):
             A mapping between content types and parsers.
     
     Attributes:
@@ -82,9 +82,9 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
                 parser = parser_cls(path, pack_marketplaces)
                 logger.info(f'Parsed {parser.node_id}')
                 return parser
-            except IncorrectParser as e:
+            except IncorrectParserException as e:
                 return e.correct_parser(path, pack_marketplaces, **e.kwargs)
-            except NotAContentItem:
+            except NotAContentItemException:
                 logger.debug(f'Skipping {path}')
                 pass
         return None
@@ -150,7 +150,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         """ Adds a single relationship to the collection of the content item relationships.
 
         Args:
-            relationship (Rel): The relationship type.
+            relationship (Relationship): The relationship type.
             target (str): The identifier of the target content object (e.g, its node_id).
             kwargs: Additional information about the relationship.
         """
@@ -184,7 +184,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
         Args:
             dependency_id (str): The dependency identifier (node_id or object_id).
-            dependency_type (Optional[ContentTypes], optional): The dependency type. Defaults to None.
+            dependency_type (Optional[ContentType], optional): The dependency type. Defaults to None.
             is_mandatory (bool, optional): Whether or not the dependency is mandatory. Defaults to True.
         """
         if dependency_type is None:

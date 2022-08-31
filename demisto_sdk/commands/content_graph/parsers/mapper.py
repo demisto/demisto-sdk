@@ -55,13 +55,17 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
                                 ContentType.INCIDENT_FIELD,
                             )
 
-            else:  # self.type == 'mapping-incoming'
+            elif self.type == 'mapping-incoming':
                 # all the incident fields are the keys of the mapping
                 for incident_field in internal_mapping.keys():
                     self.add_dependency(
                         field_to_cli_name(incident_field),
                         ContentType.INCIDENT_FIELD,
                     )
+            else:
+                raise ValueError(
+                    f'{self.node_id}: Unknown type "{self.type}" - expected "mapping-outgoing" or "mapping-incoming".'
+                )
 
             for internal_mapping in internal_mapping.values():
                 if incident_field_complex := internal_mapping.get('complex', {}):

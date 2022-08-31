@@ -9,7 +9,7 @@ class BaseContentParser(ABC):
 
     Attributes:
         object_id (str): The content object ID.
-        content_type (ContentTypes): The content object type.
+        content_type (ContentType): The content object type.
         node_id (str): The content object node ID.
     """
     

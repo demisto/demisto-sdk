@@ -107,7 +107,7 @@ def script():
         type='python3',
         docker_image='mock:docker',
         tags=[],
-        is_test=False,
+        is_test_script=False,
     )
 
 
@@ -125,7 +125,7 @@ def playbook():
         marketplaces=[MarketplaceVersions.XSOAR],
         description='',
         deprecated=False,
-        is_test=False,
+        is_test_playbook=False,
     )
 
 

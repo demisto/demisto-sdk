@@ -3,7 +3,7 @@ from typing import List
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.content_item import IncorrectParser
+from demisto_sdk.commands.content_graph.parsers.content_item import IncorrectParserException
 from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
 from demisto_sdk.commands.content_graph.parsers.mapper import MapperParser
 
@@ -16,13 +16,13 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIE
             path (Path): The classifier's path.
 
         Raises:
-            IncorrectParser: When detecting this content item is a mapper.
+            IncorrectParserException: When detecting this content item is a mapper.
         """
         super().__init__(path, pack_marketplaces)
 
         self.type = self.json_data.get('type')
         if self.type != 'classification':
-            raise IncorrectParser(correct_parser=MapperParser)
+            raise IncorrectParserException(correct_parser=MapperParser)
 
         self.definition_id = self.json_data.get('definitionId')
         self.connect_to_dependencies()

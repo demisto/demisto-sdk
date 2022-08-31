@@ -8,7 +8,7 @@ from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_FROM_VERS
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship, Relationships
 from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
-from demisto_sdk.commands.content_graph.parsers.content_item import NotAContentItem
+from demisto_sdk.commands.content_graph.parsers.content_item import NotAContentItemException
 from demisto_sdk.commands.content_graph.tests.tests_utils import load_json, load_yaml
 
 
@@ -628,7 +628,7 @@ class TestParsersAndModels:
         from demisto_sdk.commands.content_graph.parsers.layout import LayoutParser
         layout = pack.create_layout('TestLayout')
         layout_path = Path(layout.path)
-        with pytest.raises(NotAContentItem):
+        with pytest.raises(NotAContentItemException):
             LayoutParser(layout_path)
 
     def test_layoutscontainer_parser(self, pack: Pack):

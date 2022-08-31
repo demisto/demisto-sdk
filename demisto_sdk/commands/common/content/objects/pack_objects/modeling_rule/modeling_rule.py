@@ -125,6 +125,16 @@ class ModelingRule(YAMLContentUnifiedObject):
     def rules(self, value):
         self._rules = value
 
+    @property
+    def testdata_path(self) -> Optional[Path]:
+        """Modeling rule related testdata file path.
+
+        Returns:
+            Testdata file path or None if testdata file is not found.
+        """
+        patterns = ["*_testdata.json"]
+        return next(self.path.parent.glob(patterns=patterns, flags=IGNORECASE), None)
+
     def type(self):
         return FileType.MODELING_RULE
 

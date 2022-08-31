@@ -102,7 +102,7 @@ class Downloader:
                  run_format: bool = False, system: bool = False, item_type: str = ''):
         logging.disable(logging.CRITICAL)
         self.output_pack_path = output
-        self.input_files = list(input)
+        self.input_files = [input] if isinstance(input, str) else input
         self.regex = regex
         self.force = force
         self.download_system_item = system

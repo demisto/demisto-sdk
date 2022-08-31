@@ -80,19 +80,34 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         content_type: ContentType = ContentType.by_folder(path.parts[-2])
         if parser_cls := ContentItemParser.content_type_to_parser.get(content_type):
             try:
-                parser = parser_cls(path, pack_marketplaces)
-                logger.info(f'Parsed {parser.node_id}')
-                return parser
+                return ContentItemParser.parse(
+                    parser_cls,
+                    path,
+                    pack_marketplaces,
+                )
             except IncorrectParserException as e:
-                try:
-                    return e.correct_parser(path, pack_marketplaces, **e.kwargs)
-                except NotAContentItemException:
-                    logger.debug(f'Skipping {path}')
-                    pass
-            except NotAContentItemException:
-                logger.debug(f'Skipping {path}')
-                pass
+                return ContentItemParser.parse(
+                    e.correct_parser,
+                    path,
+                    pack_marketplaces,
+                    **e.kwargs
+                )
         return None
+
+    @staticmethod
+    def parse(
+        parser_cls: Type['ContentItemParser'],
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        **kwargs
+    ) -> Optional['ContentItemParser']:
+        try:
+            parser = parser_cls(path, pack_marketplaces, **kwargs)
+            logger.info(f'Parsed {parser.node_id}')
+            return parser
+        except NotAContentItemException:
+            logger.debug(f'Skipping {path}')
+            return None
 
     @property
     @abstractmethod

@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Removed confusing prints from **doc-review** command.
 * Fixed an issue in the **format** command where fail when executed from environment without mdx server available.
 * Added `Added a`, `Added an` to the list of allowed changelog prefixes.
 

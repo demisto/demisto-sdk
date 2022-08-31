@@ -142,6 +142,42 @@ class TestFormattingFromVersionKey:
         base_update.set_fromVersion('5.5.0')
         assert base_update.data.get(base_update.from_version_key) == GENERAL_DEFAULT_FROMVERSION
 
+    OLD_FILE = [{}, {}, {}, {}, {}, {'fromServerVersion': '6.0.0'}]
+    DATA = [{'fromVersion': '6.0.0'}, {'fromServerVersion': '6.0.0'}, {'fromVersion': '6.0.0', 'fromServerVersion': '6.0.0'},
+            {'fromVersion': '6.0.0', 'fromServerVersion': '5.0.0'}, {'fromVersion': '5.5.0', 'fromServerVersion': '6.0.0'}, {}]
+
+    @pytest.mark.parametrize("old_file, data, assume_yes", [(OLD_FILE[0], DATA[0], False), (OLD_FILE[1], DATA[1], False), (OLD_FILE[2], DATA[2], False),
+                                                            (OLD_FILE[3], DATA[3], True), (OLD_FILE[4], DATA[4], False), (OLD_FILE[5], DATA[5], False)])
+    def test_check_server_version(self, mocker, old_file, data, assume_yes):
+        """
+        Given
+            - An old file, data from current file, and a click.confirm result.
+            Case 1: no old file, current file holds fromVersion key only.
+            Case 2: no old file, current file holds fromServerVersion key only.
+            Case 3: no old file, current file holds both fromServerVersion and fromVersion keys with the same value.
+            Case 4: no old file, current file holds both fromServerVersion and fromVersion keys with different value,
+                    assume_yes is True.
+            Case 5: no old file, current file holds both fromServerVersion and fromVersion keys with different value,
+                    assume_yes is False.
+            Case 6: old file holds fromServerVersion key, no current file.
+
+        When
+            - Calling check_server_version method.
+        Then
+            - Ensure that the data holds the correct fromVersion value.
+        """
+        mocker.patch.object(BaseUpdate, '__init__', return_value=None)
+        mocker.patch.object(BaseUpdate, 'ask_user', return_value=assume_yes)
+        base_update = BaseUpdate()
+        base_update.old_file = old_file
+        base_update.assume_yes = assume_yes
+        base_update.data = data
+        base_update.json_from_server_version_key = 'fromServerVersion'
+        base_update.from_version_key = 'fromVersion'
+
+        base_update.check_server_version()
+        assert base_update.data == {'fromVersion': '6.0.0'}
+
 
 @pytest.mark.parametrize("is_old_file, function_validate", [(False, 'run_validation_on_specific_files'),
                          (True, 'run_validation_using_git')])
@@ -159,6 +195,7 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
     mocker.patch.object(BaseUpdate, '__init__', return_value=None)
     base_update = BaseUpdate()
     base_update.no_validate = False
+    base_update.prev_ver = ''
     base_update.output_file = 'output_file_path'
     base_update.validate_manager = ValidateManager
     mocker.patch.object(BaseUpdate, 'is_old_file', return_value=is_old_file)

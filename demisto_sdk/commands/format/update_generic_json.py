@@ -2,17 +2,17 @@ from distutils.version import LooseVersion
 from typing import Optional
 
 import click
-import ujson
 
 from demisto_sdk.commands.common.constants import \
     DEFAULT_CONTENT_ITEM_TO_VERSION
-from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.tools import is_uuid, print_error
 from demisto_sdk.commands.format.format_constants import (
     ARGUMENTS_DEFAULT_VALUES, TO_VERSION_5_9_9)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
 yaml = YAML_Handler()
+json = JSON_Handler()
 
 
 class BaseUpdateJSON(BaseUpdate):
@@ -54,7 +54,7 @@ class BaseUpdateJSON(BaseUpdate):
         if self.source_file != self.output_file:
             click.secho(f'Saving output JSON file to {self.output_file}', fg='white')
         with open(self.output_file, 'w') as file:
-            ujson.dump(
+            json.dump(
                 self.data,
                 file,
                 indent=indent,
@@ -67,6 +67,7 @@ class BaseUpdateJSON(BaseUpdate):
         """Manager function for the generic JSON updates."""
         self.set_version_to_default()
         self.remove_null_fields()
+        self.check_server_version()
         self.remove_unnecessary_keys()
         self.remove_spaces_end_of_id_and_name()
         self.set_fromVersion(default_from_version=default_from_version, file_type=file_type)

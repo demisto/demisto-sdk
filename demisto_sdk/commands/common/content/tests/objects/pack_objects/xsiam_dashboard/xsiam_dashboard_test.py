@@ -15,7 +15,7 @@ def test_objects_factory(pack):
 
 
 def test_prefix(pack):
-    xsiam_dashboard = get_xsiam_dashboard(pack, 'xsiamdashboard-xsiam_dashboard_name')
+    xsiam_dashboard = get_xsiam_dashboard(pack, 'xsiamdashboard-external-xsiam_dashboard_name')
 
     obj = XSIAMDashboard(xsiam_dashboard.xsiam_dashboard_tmp_path)
     assert obj.normalize_file_name() == xsiam_dashboard.xsiam_dashboard_tmp_path.name
@@ -23,4 +23,4 @@ def test_prefix(pack):
     xsiam_dashboard = get_xsiam_dashboard(pack, 'xsiam_dashboard_name')
 
     obj = XSIAMDashboard(xsiam_dashboard.xsiam_dashboard_tmp_path)
-    assert obj.normalize_file_name() == f"xsiamdashboard-{xsiam_dashboard.xsiam_dashboard_tmp_path.name}"
+    assert obj.normalize_file_name() == f"xsiamdashboard-external-{xsiam_dashboard.xsiam_dashboard_tmp_path.name}"

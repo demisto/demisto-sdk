@@ -21,8 +21,6 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator, error_codes)
 from demisto_sdk.commands.common.tools import (get_remote_file,
                                                is_file_path_in_pack)
-from demisto_sdk.commands.format.format_constants import \
-    OLD_FILE_DEFAULT_1_FROMVERSION
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -55,7 +53,7 @@ class StructureValidator(BaseValidator):
         super().__init__(ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          suppress_print=suppress_print, json_file_path=json_file_path, specific_validations=specific_validations)
         self.is_valid = True
-        self.valid_extensions = ['.yml', '.json', '.md', '.png']
+        self.valid_extensions = ['.yml', '.json', '.md', '.png', '.py']
         self.file_path = file_path.replace('\\', '/')
         self.skip_schema_check = skip_schema_check
         self.pykwalify_logs = pykwalify_logs
@@ -92,11 +90,6 @@ class StructureValidator(BaseValidator):
                 self.is_file_id_without_slashes(),
             ]
 
-            if self.old_file:  # In case the file is modified
-                click.secho(f'Validating backwards compatibility for {self.file_path}')
-                answers.append(self.is_id_not_modified())
-                answers.append(self.is_valid_fromversion_on_modified())
-
             return all(answers)
 
         return False
@@ -130,7 +123,7 @@ class StructureValidator(BaseValidator):
         """
         # ignore schema checks for unsupported file types, reputations.json or is skip-schema-check is set.
         if self.scheme_name in [None, FileType.IMAGE, FileType.README, FileType.RELEASE_NOTES, FileType.TEST_PLAYBOOK,
-                                FileType.AUTHOR_IMAGE] \
+                                FileType.AUTHOR_IMAGE, FileType.PYTHON_FILE] \
                 or self.skip_schema_check or (self.scheme_name == FileType.REPUTATION and
                                               os.path.basename(self.file_path) == OLD_REPUTATION):
             return True
@@ -197,54 +190,6 @@ class StructureValidator(BaseValidator):
         file_id = self.get_file_id_from_loaded_file_data(self.current_file)
         if file_id and '/' in file_id:
             error_message, error_code = Errors.file_id_contains_slashes()
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self.is_valid = False
-                return False
-
-        return True
-
-    @error_codes('ST102')
-    def is_id_not_modified(self):
-        # type: () -> bool
-        """Check if the ID of the file has been changed.
-
-
-        Returns:
-            (bool): Whether the file's ID has been modified or not.
-        """
-        if not self.old_file:
-            return True
-
-        old_version_id = self.get_file_id_from_loaded_file_data(self.old_file)
-        new_file_id = self.get_file_id_from_loaded_file_data(self.current_file)
-        if not (new_file_id == old_version_id):
-            error_message, error_code = Errors.file_id_changed(old_version_id, new_file_id)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                return False
-
-        # True - the id has not changed.
-        return True
-
-    @error_codes('ST103')
-    def is_valid_fromversion_on_modified(self):
-        # type: () -> bool
-        """Check that the fromversion property was not changed on existing Content files.
-
-        Returns:
-            (bool): Whether the files' fromversion as been modified or not.
-        """
-        if not self.old_file:
-            return True
-
-        from_version_new = self.current_file.get("fromversion") or self.current_file.get("fromVersion")
-        from_version_old = self.old_file.get("fromversion") or self.old_file.get("fromVersion")
-
-        # if in old file there was no fromversion ,format command will add from version key with 1.0.0
-        if not from_version_old and from_version_new == OLD_FILE_DEFAULT_1_FROMVERSION:
-            return True
-
-        if from_version_old != from_version_new:
-            error_message, error_code = Errors.from_version_modified()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False

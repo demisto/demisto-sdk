@@ -10,7 +10,7 @@ mapping:
     type: seq
     sequence:
     - include: existingEventsFilters_schema
-  fromServerVersion:
+  fromVersion:
     type: str
     required: True
   id:

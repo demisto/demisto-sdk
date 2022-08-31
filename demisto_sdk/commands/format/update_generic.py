@@ -13,11 +13,9 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, get_dict_from_file,
                                                get_max_version,
                                                get_remote_file,
                                                is_file_from_content_repo)
-from demisto_sdk.commands.format.format_constants import (DEFAULT_VERSION,
-                                                          ERROR_RETURN_CODE,
-                                                          OLD_FILE_TYPES,
-                                                          SKIP_RETURN_CODE,
-                                                          SUCCESS_RETURN_CODE)
+from demisto_sdk.commands.format.format_constants import (
+    DEFAULT_VERSION, ERROR_RETURN_CODE, JSON_FROM_SERVER_VERSION_KEY,
+    OLD_FILE_TYPES, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 yaml = YAML_Handler(allow_duplicate_keys=True)
@@ -32,6 +30,7 @@ class BaseUpdate:
             old_file (dict): Data of old file from content repo, if exist.
             schema_path (str): Schema path of file.
             from_version (str): Value of Wanted fromVersion key in file.
+            prev_ver (str): Against which branch to perform diff
             data (dict): Dictionary of loaded file.
             file_type (str): Whether the file is yml or json.
             from_version_key (str): The fromVersion key in file, different between yml and json files.
@@ -45,6 +44,7 @@ class BaseUpdate:
                  output: str = '',
                  path: str = '',
                  from_version: str = '',
+                 prev_ver: str = 'master',
                  no_validate: bool = False,
                  verbose: bool = False,
                  assume_yes: bool = False,
@@ -55,8 +55,9 @@ class BaseUpdate:
         self.output_file = self.set_output_file_path(output)
         self.verbose = verbose
         _, self.relative_content_path = is_file_from_content_repo(self.output_file)
+        self.prev_ver = prev_ver
         self.old_file = self.is_old_file(self.relative_content_path if self.relative_content_path
-                                         else self.output_file, self.verbose)
+                                         else self.output_file, self.prev_ver, self.verbose)
         self.schema_path = path
         self.from_version = from_version
         self.no_validate = no_validate
@@ -75,6 +76,7 @@ class BaseUpdate:
         except Exception:
             raise Exception(F'Provided file {self.source_file} is not a valid file.')
         self.from_version_key = self.set_from_version_key_name()
+        self.json_from_server_version_key = JSON_FROM_SERVER_VERSION_KEY
         self.id_set_file, _ = get_dict_from_file(path=kwargs.get('id_set_path'))  # type: ignore[arg-type]
 
     def set_output_file_path(self, output_file_path) -> str:
@@ -229,11 +231,17 @@ class BaseUpdate:
         click.secho(promote, fg='red')
         return input()
 
-    def ask_user(self):
-        user_answer = self.get_answer(
-            'Either no fromversion is specified in your file, '
-            'or it is lower than the minimal fromversion for this content type.'
-            'Would you like to set it to the default? [Y/n]')
+    def ask_user(self, preserve_from_version_question=False):
+        if preserve_from_version_question:
+            user_answer = self.get_answer(
+                f'Both "{self.from_version_key}" and "{self.json_from_server_version_key}" '
+                'entries were found with different values. '
+                f'Would you like to preserve the value of the "{self.from_version_key}" entry? [Y/n]')
+        else:
+            user_answer = self.get_answer(
+                'Either no fromversion is specified in your file, '
+                'or it is lower than the minimal fromversion for this content type.'
+                'Would you like to set it to the default? [Y/n]')
         if not user_answer or user_answer.lower() in ['y', 'yes']:
             return True
         else:
@@ -296,10 +304,10 @@ class BaseUpdate:
         return None
 
     @staticmethod
-    def is_old_file(path: str, verbose: bool = False) -> dict:
+    def is_old_file(path: str, prev_ver: str, verbose: bool = False) -> dict:
         """Check whether the file is in git repo or new file.  """
         if path:
-            data = get_remote_file(path, suppress_print=not verbose)
+            data = get_remote_file(path, prev_ver, suppress_print=not verbose)
             if not data:
                 return {}
             else:
@@ -332,7 +340,7 @@ class BaseUpdate:
             return SKIP_RETURN_CODE
         else:
             self.validate_manager.file_path = self.output_file
-            if self.is_old_file(self.output_file):
+            if self.is_old_file(self.output_file, self.prev_ver):
                 validation_result = self.validate_manager.run_validation_using_git()
             else:
                 validation_result = self.validate_manager.run_validation_on_specific_files()
@@ -347,3 +355,26 @@ class BaseUpdate:
         if self.old_file:
             diff = dictdiffer.diff(self.old_file, self.data)
             self.data = dictdiffer.patch(diff, self.old_file)
+
+    def check_server_version(self):
+        """Checks for fromServerVersion entry in the file, and changeing it accordingly.
+        """
+        current_from_server_version = self.data.get(self.json_from_server_version_key)
+        current_from_version = self.data.get(self.from_version_key)
+        old_from_server_version = self.old_file.get(self.json_from_server_version_key)
+
+        if old_from_server_version and not current_from_server_version and not current_from_version:
+            self.data[self.from_version_key] = old_from_server_version
+        elif current_from_server_version and not current_from_version:
+            self.data[self.from_version_key] = current_from_server_version
+            self.data.pop(self.json_from_server_version_key)
+        elif current_from_server_version and current_from_version:
+            if current_from_server_version == current_from_version:
+                self.data.pop(self.json_from_server_version_key)
+            else:
+                preserve_from_version = self.ask_user(preserve_from_version_question=True)
+                if preserve_from_version or self.assume_yes:
+                    self.data.pop(self.json_from_server_version_key)
+                else:
+                    self.data[self.from_version_key] = current_from_server_version
+                    self.data.pop(self.json_from_server_version_key)

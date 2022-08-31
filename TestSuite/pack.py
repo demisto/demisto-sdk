@@ -556,7 +556,7 @@ class Pack:
         return File(doc_file_dir / f'{name}.png', self._repo.path)
 
     def create_contributors_file(self, content) -> TextBased:
-        contributors = self._create_text_based('CONTRIBUTORS.md', content)
+        contributors = self._create_text_based('CONTRIBUTORS.json', content)
         self.contributors = contributors
         return contributors
 
@@ -610,6 +610,7 @@ class Pack:
                 'fromversion': 3.3,
                 'tags': 'tag',
                 'rules': '',
+                'schema': '',
             }
         if not rules:
             rules = '[MODEL: dataset="dataset", model="Model", version=0.1]'

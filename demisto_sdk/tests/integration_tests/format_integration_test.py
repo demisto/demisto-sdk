@@ -176,12 +176,14 @@ def test_integration_format_yml_with_no_test_no_interactive_positive(tmp_path: P
 
 
 @pytest.mark.parametrize('source_path,destination_path,formatter,yml_title,file_type', YML_FILES_WITH_TEST_PLAYBOOKS)
-def test_integration_format_configuring_conf_json_no_interactive_positive(tmp_path: PosixPath,
-                                                                          source_path: str,
-                                                                          destination_path: str,
-                                                                          formatter: BaseUpdateYML,
-                                                                          yml_title: str,
-                                                                          file_type: str):
+def test_integration_format_configuring_conf_json_no_interactive_positive(
+        mocker,
+        tmp_path: PosixPath,
+        source_path: str,
+        destination_path: str,
+        formatter: BaseUpdateYML,
+        yml_title: str,
+        file_type: str):
     """
         Given
         - A yml file (integration, playbook or script) with no tests playbooks configured that are not configured
@@ -198,10 +200,10 @@ def test_integration_format_configuring_conf_json_no_interactive_positive(tmp_pa
             added to conf.json for each test playbook configured in the yml under 'tests' key
     """
     # Setting up conf.json
-    conf_json_path = str(tmp_path / 'conf.json')
+    conf_json_path = tmp_path / 'conf.json'
+    mocker.patch('demisto_sdk.commands.format.update_generic_yml.CONF_PATH', conf_json_path)
     with open(conf_json_path, 'w') as file:
         json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
-    BaseUpdateYML.CONF_PATH = conf_json_path
 
     test_playbooks = ['test1', 'test2']
     saved_file_path = str(tmp_path / os.path.basename(destination_path))
@@ -241,10 +243,10 @@ def test_integration_format_configuring_conf_json_positive(mocker,
         -  Ensure message is not prompt in the second time
     """
     # Setting up conf.json
-    conf_json_path = str(tmp_path / 'conf.json')
+    conf_json_path = tmp_path / 'conf.json'
+    mocker.patch('demisto_sdk.commands.format.update_generic_yml.CONF_PATH', conf_json_path)
     with open(conf_json_path, 'w') as file:
         json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
-    BaseUpdateYML.CONF_PATH = conf_json_path
     mocker.patch.object(BaseUpdate, 'set_default_from_version', return_value=None)
 
     test_playbooks = ['test1', 'test2']
@@ -267,12 +269,14 @@ def test_integration_format_configuring_conf_json_positive(mocker,
 
 
 @pytest.mark.parametrize('source_path,destination_path,formatter,yml_title,file_type', YML_FILES_WITH_TEST_PLAYBOOKS)
-def test_integration_format_configuring_conf_json_negative(tmp_path: PosixPath,
-                                                           source_path: str,
-                                                           destination_path: str,
-                                                           formatter: BaseUpdateYML,
-                                                           yml_title: str,
-                                                           file_type: str):
+def test_integration_format_configuring_conf_json_negative(
+        mocker,
+        tmp_path: PosixPath,
+        source_path: str,
+        destination_path: str,
+        formatter: BaseUpdateYML,
+        yml_title: str,
+        file_type: str):
     """
         Given
         - A yml file (integration, playbook or script) with no tests playbooks configured that are not configured
@@ -287,10 +291,11 @@ def test_integration_format_configuring_conf_json_negative(tmp_path: PosixPath,
         -  Ensure conf.json is not modified
     """
     # Setting up conf.json
-    conf_json_path = str(tmp_path / 'conf.json')
+    conf_json_path = tmp_path / 'conf.json'
+    mocker.patch('demisto_sdk.commands.format.update_generic_yml.CONF_PATH', conf_json_path)
+
     with open(conf_json_path, 'w') as file:
         json.dump(CONF_JSON_ORIGINAL_CONTENT, file, indent=4)
-    BaseUpdateYML.CONF_PATH = conf_json_path
 
     saved_file_path = str(tmp_path / os.path.basename(destination_path))
     runner = CliRunner()

@@ -1,8 +1,65 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue in **validate**, where backward-compatibility failures prevented other validations from running.
+* fixed an issue in **validate**, where content-like files under infrastructure paths were not ignored.
+
+## 1.7.3
+
+* Fixed an issue in the **format** command where fail when executed from environment without mdx server available.
+* Added `Added a`, `Added an` to the list of allowed changelog prefixes.
+* Added support for Indicator Types/Reputations in the **upload** command.
+* Fixed an issue when running from a subdirectory of a content repo failed.
+* Changing the way we are using XSIAM servers api-keys in **test-content** .
+* Added a success message to **postman-codegen**.
+* Added name normalization according to new convention to XSIAM content items
+
+## 1.7.2
+
+* Fixed an issue in the **validate** command where incident fields were not found in mappers even when they exist
+* Added an ability to provide list of marketplace names as a param attribute to **validate** and **upload**
+* Added the file type to the error message when it is not supported.
+* Fixed an issue where `contribution_converter` incorrectly mapped _Indicator Field_ objects to the _incidentfield_ directory in contribution zip files.
+* Fixed a bug where **validate** returned error on empty inputs not used in playbooks.
+* Added the `DEMISTO_SDK_CONTENT_PATH` environment variable, implicitly used in various commands.
+* Added link to documentation for error messages regarding use cases and tags.
+
+## 1.7.1
+
+* Fixed an issue where *indicatorTypes* and *betaIntegrations* were not found in the id_set.
+* Updated the default general `fromVersion` value on **format** to `6.5.0`
+* Fixed an issue where the **validate** command did not fail when the integration yml file name was not the same as the folder containing it.
+* Added an option to have **generate-docs** take a Playbooks folder path as input, and generate docs for all playbooks in it.
+* Fixed an issue where the suggestion in case of `IF113` included uppercase letters for the `cliName` parameter.
+* Added new validation to the **validate** command to fail and list all the file paths of files that are using a deprecated integration command / script / playbook.
+* **validate** will no longer fail on playbooks calling subplaybooks that have a higher `fromVersion` value, if  calling the subplaybook has `skipifunavailable=True`.
+* Fixed an issue where relative paths were not accessed correctly.
+* Running any `demisto-sdk` command in a folder with a `.env` file will load it, temporarily overriding existing environment variables.
+* Fixed an issue where **validate** did not properly detect deleted files.
+* Added new validations to the **validate** command to verify that the schema file exists for a modeling rule and that the schema and rules keys are empty in the yml file.
+* Fixed an issue where *find_type* didn't recognize exported incident types.
+* Added a new validation to **validate**, making sure all inputs of a playbook are used.
+* Added a new validation to **validate**, making sure all inputs used in a playbook declared in the input section.
+* The **format** command will now replace the *fromServerVersion* field with *fromVersion*.
+
+## 1.7.0
+
+* Allowed JSON Handlers to accept kwargs, for custoimzing behavior.
+* Fixed an issue where an incorrect error was shown when the `id` of a content item differed from its `name` attribute.
+* Fixed an issue where the `preserve_quotes` in ruamel_handler received an incorrect value @icholy
+* Fixed an issue where ignoring RM110 error code wasn't working and added a validation to **ALLOWED_IGNORE_ERRORS** to validate that all error codes are inserted in the right format.
+* Fixed an issue where the contribution credit text was not added correctly to the pack README.
+* Changed the contribution file implementation from markdown to a list of contributor names. The **create-content-artifact** will use this list to prepare the needed credit message.
+* Added a new validation to the `XSOAR-linter` in the **lint** command for verifying that demisto.log is not used in the code.
+* The **generate-docs** command will now auto-generate the Incident Mirroring section when implemented in an integration.
+* Added support to automatically generate release notes for deprecated items in the **update-release-notes** command.
+* Fixed an issue causing any command to crash when unable to detect local repository properties.
+* Fixed an issue where running in a private gitlab repo caused a warning message to be shown multiple times.
+* Added a new validation to the **validate** command to verify that markdown and python files do not contain words related to copyright section.
+* Fixed an issue where **lint** crashed when provided an input file path (expecting a directory).
 
 ## 1.6.9
+
 * Added a new validation that checks whether a pack should be deprecated.
 * Added a new ability to the **format** command to deprecate a pack.
 * Fixed an issue where the **validate** command sometimes returned a false negative in cases where there are several sub-playbooks with the same ID.

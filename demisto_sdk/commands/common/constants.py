@@ -95,7 +95,7 @@ MARKETPLACE_KEY_PACK_METADATA = 'marketplaces'
 ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
 
 
-class FileType(Enum):
+class FileType(str, Enum):
     INTEGRATION = 'integration'
     SCRIPT = 'script'
     TEST_SCRIPT = 'testscript'
@@ -125,6 +125,7 @@ class FileType(Enum):
     DOC_IMAGE = 'doc_image'
     PYTHON_FILE = 'pythonfile'
     XIF_FILE = 'xiffile'
+    MODELING_RULE_SCHEMA = 'modelingruleschema'
     JAVASCRIPT_FILE = 'javascriptfile'
     POWERSHELL_FILE = 'powershellfile'
     CONF_JSON = 'confjson'
@@ -230,7 +231,6 @@ SIEM_ONLY_ENTITIES = [
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
 
 IGNORED_PACKS_IN_DEPENDENCY_CALC = ['NonSupported', 'Base']  # Packs that are ignored when calculating dependencies
-ALL_PACKS_DEPENDENCIES_DEFAULT_PATH = './all_packs_dependencies.json'
 ALLOWED_EMPTY_PACKS = ['Cortex911']  # Packs that are allowed to be without content items in the id_set
 
 CUSTOM_CONTENT_FILE_ENDINGS = ['yml', 'json']
@@ -258,6 +258,7 @@ CONTENT_ENTITIES_DIRS = [
     LISTS_DIR,
     JOBS_DIR,
     WIZARDS_DIR,
+    MODELING_RULES_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -442,7 +443,6 @@ DOCS_REGEX = r'.*docs.*'
 IMAGE_REGEX = r'.*\.png$'
 DESCRIPTION_REGEX = r'.*\.md'
 SCHEMA_REGEX = 'Tests/schemas/.*.yml'
-CONF_PATH = 'Tests/conf.json'
 
 PACKS_DIR_REGEX = fr'{CAN_START_WITH_DOT_SLASH}{PACKS_DIR}'
 PACK_DIR_REGEX = fr'{PACKS_DIR_REGEX}\/([^\\\/]+)'
@@ -527,6 +527,13 @@ JOB_JSON_REGEX = fr'{JOBS_DIR_REGEX}\/job-([^/]+)\.json'
 
 WIZARD_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{WIZARDS_DIR}'
 WIZARD_JSON_REGEX = fr'{WIZARD_DIR_REGEX}\/wizard-([^/]+)\.json'
+
+# Modeling Rules
+MODELING_RULE_DIR_REGEX = fr'{PACK_DIR_REGEX}\/{MODELING_RULES_DIR}'
+MODELING_RULE_PACKAGE_REGEX = fr'{MODELING_RULE_DIR_REGEX}\/([^\\/]+)'
+MODELING_RULE_YML_REGEX = fr'{MODELING_RULE_PACKAGE_REGEX}\/\2\.yml'
+MODELING_RULE_RULES_REGEX = fr'{MODELING_RULE_PACKAGE_REGEX}\/\2\.xif'
+MODELING_RULE_SCHEMA_REGEX = fr'{MODELING_RULE_PACKAGE_REGEX}\/\2\.json'
 
 RELATIVE_HREF_URL_REGEX = r'(<.*?href\s*=\s*"((?!(?:https?:\/\/)|#|(?:mailto:)).*?)")'
 RELATIVE_MARKDOWN_URL_REGEX = r'(?<![!])(\[.*?\])\(((?!(?:https?:\/\/)|#|(?:mailto:)).*?)\)'
@@ -637,7 +644,7 @@ PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
 PACKS_PACK_IGNORE_FILE_NAME = '.pack-ignore'
 PACKS_PACK_META_FILE_NAME = 'pack_metadata.json'
 PACKS_README_FILE_NAME = 'README.md'
-PACKS_CONTRIBUTORS_FILE_NAME = 'CONTRIBUTORS.md'
+PACKS_CONTRIBUTORS_FILE_NAME = 'CONTRIBUTORS.json'
 AUTHOR_IMAGE_FILE_NAME = 'Author_image.png'
 
 PYTHON_TEST_REGEXES = [
@@ -829,6 +836,11 @@ CHECKED_TYPES_REGEXES = [
     PACKS_SCRIPT_README_REGEX,
     PACKS_SCRIPT_TEST_PLAYBOOK,
 
+    # Modeling Rules
+    MODELING_RULE_YML_REGEX,
+    MODELING_RULE_RULES_REGEX,
+    MODELING_RULE_SCHEMA_REGEX,
+
     PACKS_CLASSIFIER_JSON_REGEX,
     PACKS_CLASSIFIER_JSON_5_9_9_REGEX,
     PACKS_MAPPER_JSON_REGEX,
@@ -867,7 +879,7 @@ PACKAGE_SCRIPTS_REGEXES = [
     PACKS_SCRIPT_YML_REGEX
 ]
 
-PACKAGE_SUPPORTING_DIRECTORIES = [INTEGRATIONS_DIR, SCRIPTS_DIR]
+PACKAGE_SUPPORTING_DIRECTORIES = [INTEGRATIONS_DIR, SCRIPTS_DIR, MODELING_RULES_DIR]
 
 IGNORED_TYPES_REGEXES = [DESCRIPTION_REGEX, IMAGE_REGEX, PIPFILE_REGEX, SCHEMA_REGEX]
 
@@ -1022,6 +1034,11 @@ UNRELEASE_HEADER = '## [Unreleased]\n'  # lgtm[py/regex/duplicate-in-character-c
 CONTENT_RELEASE_TAG_REGEX = r'^\d{2}\.\d{1,2}\.\d'
 RELEASE_NOTES_REGEX = re.escape(UNRELEASE_HEADER) + r'([\s\S]+?)## \[\d{2}\.\d{1,2}\.\d\] - \d{4}-\d{2}-\d{2}'
 
+# pack contributors template
+CONTRIBUTORS_README_TEMPLATE = '\n### Pack Contributors:\n\n---\n{contributors_names}\nContributions are welcome and ' \
+                               'appreciated. For more info, visit our [Contribution Guide](https://xsoar.pan.dev/docs' \
+                               '/contributing/contributing).'
+
 # Beta integration disclaimer
 BETA_INTEGRATION_DISCLAIMER = 'Note: This is a beta Integration,' \
                               ' which lets you implement and test pre-release software. ' \
@@ -1062,6 +1079,7 @@ SCHEMA_TO_REGEX = {
                ],
 
     'report': [PACKS_REPORT_JSON_REGEX],
+    'modelingrule': [MODELING_RULE_YML_REGEX],
     'release-notes': [PACKS_RELEASE_NOTES_REGEX],
     'genericfield': JSON_ALL_GENERIC_FIELDS_REGEXES,
     'generictype': JSON_ALL_GENERIC_TYPES_REGEXES,
@@ -1157,7 +1175,7 @@ FILETYPE_TO_DEFAULT_FROMVERSION = {
     FileType.GENERIC_DEFINITION: '6.5.0',
 }
 # This constant below should always be two versions before the latest server version
-GENERAL_DEFAULT_FROMVERSION = '6.2.0'
+GENERAL_DEFAULT_FROMVERSION = '6.5.0'
 VERSION_5_5_0 = '5.5.0'
 DEFAULT_CONTENT_ITEM_FROM_VERSION = '0.0.0'
 DEFAULT_CONTENT_ITEM_TO_VERSION = '99.99.99'
@@ -1368,8 +1386,6 @@ LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggr
                                      'detectedhosts', 'modified', 'expiration', 'timestamp', 'shortdesc',
                                      'short_description', 'description', 'Tags', 'blocked']
 
-DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
-MP_V2_ID_SET_PATH = "./Tests/id_set_mp_v2.json"
 METADATA_FILE_NAME = 'pack_metadata.json'
 
 CONTEXT_OUTPUT_README_TABLE_HEADER = '| **Path** | **Type** | **Description** |'
@@ -1467,7 +1483,7 @@ class IronBankDockers:
     API_LINK = 'https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Fdemisto%2F'
 
 
-class MarketplaceVersions(Enum):
+class MarketplaceVersions(str, Enum):
     XSOAR = 'xsoar'
     MarketplaceV2 = 'marketplacev2'
 

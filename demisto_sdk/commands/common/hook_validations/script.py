@@ -23,11 +23,12 @@ class ScriptValidator(ContentEntityValidator):
     """
 
     def __init__(self, structure_validator, ignored_errors=None, print_as_warnings=False, skip_docker_check=False,
-                 json_file_path=None, validate_all=False):
+                 json_file_path=None, validate_all=False, deprecation_validator=None):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          skip_docker_check=skip_docker_check,
                          json_file_path=json_file_path)
         self.validate_all = validate_all
+        self.deprecation_validator = deprecation_validator
 
     @error_codes('BA100')
     def is_valid_version(self) -> bool:
@@ -55,6 +56,7 @@ class ScriptValidator(ContentEntityValidator):
             return True
 
         is_breaking_backwards = [
+            super().is_backward_compatible(),
             self.is_context_path_changed(),
             self.is_added_required_args(),
             self.is_arg_changed(),
@@ -62,12 +64,6 @@ class ScriptValidator(ContentEntityValidator):
             self.is_changed_subtype()
         ]
 
-        # Add sane-doc-report exception
-        # Sane-doc-report uses docker and every fix/change requires a docker tag change,
-        # thus it won't be backwards compatible.
-        # All other tests should be False (i.e. no problems)
-        if self.file_path == 'Scripts/SaneDocReport/SaneDocReport.yml':
-            return not any(is_breaking_backwards[1:])
         return not any(is_breaking_backwards)
 
     def is_valid_file(self, validate_rn=True):
@@ -84,6 +80,7 @@ class ScriptValidator(ContentEntityValidator):
             self.is_there_separators_in_names(),
             self.name_not_contain_the_type(),
             self.runas_is_not_dbtrole(),
+            self.is_script_deprecated_and_used(),
         ])
         # check only on added files
         if not self.old_file:
@@ -420,3 +417,24 @@ class ScriptValidator(ContentEntityValidator):
                 self.is_valid = False
                 return False
         return True
+
+    @error_codes('SC107')
+    def is_script_deprecated_and_used(self):
+        """
+        Checks if the script is deprecated and is used in other none-deprcated scripts / playbooks.
+
+        Return:
+            bool: True if the script isn't deprecated
+            or if the script is deprecated but isn't used in any none-deprcated scripts / playbooks,
+            False if the script is deprecated and used in any none-deprcated scripts / playbooks.
+        """
+        is_valid = True
+
+        if self.current_file.get("deprecated"):
+            used_files_list = self.deprecation_validator.validate_script_deprecation(self.current_file.get('name'))
+            if used_files_list:
+                error_message, error_code = Errors.script_is_deprecated_and_used(self.current_file.get("name"), used_files_list)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    is_valid = False
+
+        return is_valid

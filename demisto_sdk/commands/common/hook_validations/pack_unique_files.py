@@ -73,14 +73,9 @@ class PackUniqueFilesValidator(BaseValidator):
     """PackUniqueFilesValidator is designed to validate the correctness of content pack's files structure.
     Existence and validity of this files is essential."""
 
-    git_util = GitUtil(repo=Content.git())
-    main_branch = git_util.handle_prev_ver()[1]
-    if not main_branch.startswith('origin'):
-        main_branch = 'origin/' + main_branch
-
     def __init__(self, pack, pack_path=None, validate_dependencies=False, ignored_errors=None, print_as_warnings=False,
                  should_version_raise=False, id_set_path=None, suppress_print=False, private_repo=False,
-                 skip_id_set_creation=False, prev_ver=main_branch, json_file_path=None, support=None,
+                 skip_id_set_creation=False, prev_ver=None, json_file_path=None, support=None,
                  specific_validations=None):
         """Inits the content pack validator with pack's name, pack's path, and unique files to content packs such as:
         secrets whitelist file, pack-ignore file, pack-meta file and readme file
@@ -100,9 +95,16 @@ class PackUniqueFilesValidator(BaseValidator):
         self.id_set_path = id_set_path
         self.private_repo = private_repo
         self.skip_id_set_creation = skip_id_set_creation
-        self.prev_ver = prev_ver
         self.support = support
         self.metadata_content: Dict = dict()
+
+        if not prev_ver:
+            git_util = GitUtil(repo=Content.git())
+            main_branch = git_util.handle_prev_ver()[1]
+            self.prev_ver = f'origin/{main_branch}' if not main_branch.startswith('origin') else main_branch
+        else:
+            self.prev_ver = prev_ver
+
     # error handling
 
     def _add_error(self, error: Tuple[str, str], file_path: str, warning=False, suggested_fix=None, should_print=False):
@@ -237,7 +239,8 @@ class PackUniqueFilesValidator(BaseValidator):
 
     def validate_pack_readme_images(self):
         readme_file_path = os.path.join(self.pack_path, self.readme_file)
-        readme_validator = ReadMeValidator(readme_file_path, ignored_errors=self.ignored_errors, specific_validations=self.specific_validations)
+        readme_validator = ReadMeValidator(readme_file_path, ignored_errors=self.ignored_errors,
+                                           specific_validations=self.specific_validations)
         errors = readme_validator.check_readme_relative_image_paths(is_pack_readme=True)
         errors += readme_validator.check_readme_absolute_image_paths(is_pack_readme=True)
         if errors:
@@ -248,7 +251,8 @@ class PackUniqueFilesValidator(BaseValidator):
     @error_codes('RM112')
     def validate_pack_readme_relative_urls(self):
         readme_file_path = os.path.join(self.pack_path, self.readme_file)
-        readme_validator = ReadMeValidator(readme_file_path, ignored_errors=self.ignored_errors, specific_validations=self.specific_validations)
+        readme_validator = ReadMeValidator(readme_file_path, ignored_errors=self.ignored_errors,
+                                           specific_validations=self.specific_validations)
         errors = readme_validator.check_readme_relative_url_paths(is_pack_readme=True)
         if errors:
             self._errors.extend(errors)
@@ -671,7 +675,7 @@ class PackUniqueFilesValidator(BaseValidator):
                 click.secho("Running on master branch - skipping price change validation", fg="yellow")
             return None
         try:
-            old_meta_file_content = current_repo.git.show(f'{self.main_branch}:{metadata_file_path}')
+            old_meta_file_content = current_repo.git.show(f'{self.prev_ver}:{metadata_file_path}')
 
         except GitCommandError as e:
             if not self.suppress_print:

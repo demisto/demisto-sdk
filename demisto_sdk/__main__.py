@@ -1,20 +1,24 @@
 # Site packages
+import copy
 import logging
 import os
 import sys
 import tempfile
 from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
-from typing import IO
+from typing import IO, Any, Dict
 
 import click
 import git
 from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (
-    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH, ENV_DEMISTO_SDK_MARKETPLACE,
-    MODELING_RULES_DIR, PARSING_RULES_DIR, FileType, MarketplaceVersions)
+from demisto_sdk.commands.common.constants import (ENV_DEMISTO_SDK_MARKETPLACE,
+                                                   MODELING_RULES_DIR,
+                                                   PARSING_RULES_DIR, FileType,
+                                                   MarketplaceVersions)
+from demisto_sdk.commands.common.content_constant_paths import \
+    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_last_remote_release_version,
@@ -134,7 +138,9 @@ def check_configuration_file(command, args):
 def main(config, version, release_notes):
     config.configuration = Configuration()
     import dotenv
-    dotenv.load_dotenv(Path(os.getcwd()) / '.env')  # Load a .env file from the cwd.
+
+    from demisto_sdk.commands.common.tools import get_content_path
+    dotenv.load_dotenv(Path(get_content_path()) / '.env', override=True)  # Load a .env file from the cwd.
     if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
         try:
             __version__ = get_distribution('demisto-sdk').version
@@ -1390,13 +1396,48 @@ def init(**kwargs):
     "--custom-image-path", help="A custom path to a playbook image. If not stated, a default link will be added to the file.")
 def generate_docs(**kwargs):
     """Generate documentation for integration, playbook or script from yaml file."""
+
+    check_configuration_file('generate-docs', kwargs)
+    input_path_str: str = kwargs.get('input', '')
+    if not (input_path := Path(input_path_str)).exists():
+        print_error(f'input {input_path_str} does not exist')
+        return 1
+
+    if (output_path := kwargs.get('output')) and not Path(output_path).is_dir():
+        print_error(f'Output directory {output_path} is not a directory.')
+        return 1
+
+    if input_path.is_file():
+        if input_path.suffix.lower() != '.yml':
+            print_error(f'input {input_path} is not a valid yml file.')
+            return 1
+        _generate_docs_for_file(kwargs)
+
+    # Add support for input which is a Playbooks directory and not a single yml file
+    elif input_path.is_dir() and input_path.name == 'Playbooks':
+        for yml in input_path.glob('*.yml'):
+            file_kwargs = copy.deepcopy(kwargs)
+            file_kwargs['input'] = str(yml)
+            _generate_docs_for_file(file_kwargs)
+
+    else:
+        print_error(F'Input {input_path} is neither a valid yml file, nor a folder named Playbooks.')
+        return 1
+
+    return 0
+
+
+def _generate_docs_for_file(kwargs: Dict[str, Any]):
+    """Helper function for supporting Playbooks directory as an input and not only a single yml file."""
+
     from demisto_sdk.commands.generate_docs.generate_integration_doc import \
         generate_integration_doc
     from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
         generate_playbook_doc
     from demisto_sdk.commands.generate_docs.generate_script_doc import \
         generate_script_doc
-    check_configuration_file('generate-docs', kwargs)
+
+    # Extract all the necessary arguments
     input_path: str = kwargs.get('input', '')
     output_path = kwargs.get('output')
     command = kwargs.get('command')
@@ -1408,19 +1449,6 @@ def generate_docs(**kwargs):
     old_version: str = kwargs.get('old_version', '')
     skip_breaking_changes: bool = kwargs.get('skip_breaking_changes', False)
     custom_image_path: str = kwargs.get('custom_image_path', '')
-
-    # validate inputs
-    if input_path and not os.path.isfile(input_path):
-        print_error(F'Input file {input_path} was not found.')
-        return 1
-
-    if not input_path.lower().endswith('.yml'):
-        print_error(F'Input {input_path} is not a valid yml file.')
-        return 1
-
-    if output_path and not os.path.isdir(output_path):
-        print_error(F'Output directory {output_path} was not found.')
-        return 1
 
     if command:
         if output_path and (not os.path.isfile(os.path.join(output_path, "README.md"))) \
@@ -1442,8 +1470,8 @@ def generate_docs(**kwargs):
         print_error(F'Input old version {old_version} is not a valid yml file.')
         return 1
 
-    print(f'Start generating {file_type.value} documentation...')
     if file_type == FileType.INTEGRATION:
+        print(f'Generating {file_type.value.lower()} documentation')
         use_cases = kwargs.get('use_cases')
         command_permissions = kwargs.get('command_permissions')
         return generate_integration_doc(input_path=input_path, output=output_path, use_cases=use_cases,
@@ -1453,10 +1481,12 @@ def generate_docs(**kwargs):
                                         old_version=old_version,
                                         skip_breaking_changes=skip_breaking_changes)
     elif file_type == FileType.SCRIPT:
+        print(f'Generating {file_type.value.lower()} documentation')
         return generate_script_doc(input_path=input_path, output=output_path, examples=examples,
                                    permissions=permissions,
                                    limitations=limitations, insecure=insecure, verbose=verbose)
     elif file_type == FileType.PLAYBOOK:
+        print(f'Generating {file_type.value.lower()} documentation')
         return generate_playbook_doc(input_path=input_path, output=output_path, permissions=permissions,
                                      limitations=limitations, verbose=verbose, custom_image_path=custom_image_path)
     else:
@@ -1754,9 +1784,16 @@ def postman_codegen(
         # generate integration yml
         yml_path = postman_config.generate_integration_package(output, is_unified=True)
         if package:
-            yml_splitter = YmlSplitter(configuration=config.configuration, file_type=FileType.INTEGRATION.value,
-                                       input=str(yml_path), output=str(output))
+            yml_splitter = YmlSplitter(
+                configuration=config.configuration,
+                file_type=FileType.INTEGRATION,
+                input=str(yml_path),
+                output=str(output),
+            )
             yml_splitter.extract_to_package_format()
+            print_success(f'Package generated at {str(Path(output).absolute())} successfully')
+        else:
+            print_success(f'Integration generated at {str(yml_path.absolute())} successfully')
 
 
 # ====================== generate-integration ====================== #
@@ -1972,6 +2009,7 @@ def openapi_codegen(**kwargs):
     '--xsiam-machine',
     help='XSIAM machine to use, if it is XSIAM build.')
 @click.option('--xsiam-servers-path', help='Path to secret xsiam server metadata file.')
+@click.option('--xsiam-servers-api-keys-path', help='Path to file with XSIAM Servers api keys.')
 def test_content(**kwargs):
     """Configure instances for the integration needed to run tests_to_run tests.
     Run test module on each integration.

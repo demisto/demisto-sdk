@@ -11,8 +11,9 @@ from mock import patch
 import demisto_sdk.commands.validate.validate_manager
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
-    CONF_PATH, FILETYPE_TO_DEFAULT_FROMVERSION, PACKS_PACK_META_FILE_NAME,
-    TEST_PLAYBOOK, FileType)
+    FILETYPE_TO_DEFAULT_FROMVERSION, PACKS_PACK_META_FILE_NAME, TEST_PLAYBOOK,
+    FileType)
+from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -985,7 +986,7 @@ class TestValidators:
         old_format_files = {f"{git_path()}/demisto_sdk/tests/test_files/script-valid.yml",
                             f"{git_path()}/demisto_sdk/tests/test_files/integration-test.yml"}
         assert not validate_manager.validate_no_old_format(old_format_files)
-        assert handle_error_mock.call_count == 3
+        assert handle_error_mock.call_count == 2
 
     def test_validate_no_old_format_deprecated_content(self, repo):
         """
@@ -1859,7 +1860,7 @@ def test_validate_deleted_files(capsys, file_set, expected_output, expected_resu
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
     if added_files:
         mocker.patch('demisto_sdk.commands.validate.validate_manager._get_file_id', return_value='playbook')
-        mocker.patch('demisto_sdk.commands.validate.validate_manager.get_file', return_value={'id': 'id'})
+        mocker.patch('demisto_sdk.commands.validate.validate_manager.get_remote_file', return_value={'id': 'id'})
 
     result = validate_manager.validate_deleted_files(file_set, added_files)
 
@@ -1872,7 +1873,7 @@ def test_validate_deleted_files(capsys, file_set, expected_output, expected_resu
 def test_validate_contributors_file(repo):
     """
     Given:
-        A simple CONTRIBUTORS.md file (see this https://xsoar.pan.dev/docs/packs/packs-format#contributorsmd)
+        A simple CONTRIBUTORS.js file (see this https://xsoar.pan.dev/docs/packs/packs-format#contributors)
     When:
         Running validation on the new file
     Then:
@@ -1880,9 +1881,7 @@ def test_validate_contributors_file(repo):
     """
 
     pack = repo.create_pack()
-    contributors_file_content = """### Pack Contributors:\n\n---\n- Test UserName\n\n Contributions are welcome and
-    appreciated. For more info, visit our [Contribution Guide](https://xsoar.pan.dev/docs/contributing/contributing)."""
-    contributors_file = pack.create_contributors_file(contributors_file_content)
+    contributors_file = pack.create_contributors_file('["- Test UserName"]')
 
     validate_manager = ValidateManager(check_is_unskipped=False, file_path=contributors_file.path, skip_conf_json=True)
     assert validate_manager.run_validation_on_specific_files()

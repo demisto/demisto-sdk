@@ -66,7 +66,10 @@ class Linter:
         self._req_3 = req_3
         self._req_2 = req_2
         self._content_repo = content_repo
-        self._pack_abs_dir = Path(pack_dir)
+
+        # For covering the case when a path file is sent instead of a directory
+        self._pack_abs_dir = pack_dir if pack_dir.is_dir() else pack_dir.parent
+
         self._pack_name = None
         self.docker_timeout = docker_timeout
         # Docker client init
@@ -225,7 +228,7 @@ class Linter:
             logger.info(f'{log_prompt} - Collecting all docker images to pull')
             self._facts["images"] = [[image, -1] for image in get_all_docker_images(script_obj=script_obj)]
             if os.getenv('GITLAB_CI', False):
-                self._facts["images"] = [f'docker-io.art.code.pan.run/{image}' for image in self._facts["images"]]
+                self._facts["images"] = [[f'docker-io.art.code.pan.run/{image[0]}', -1] for image in self._facts["images"]]
             # Gather environment variables for docker execution
             self._facts["env_vars"] = {
                 "CI": os.getenv("CI", False),

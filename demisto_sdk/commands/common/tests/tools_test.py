@@ -23,11 +23,12 @@ from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS, MarketplaceTagParser, TagParser, arg_to_list,
     compare_context_path_in_yml_and_readme, filter_files_by_type,
-    filter_files_on_pack, filter_packagify_changes, find_type, get_code_lang,
-    get_current_repo, get_dict_from_file, get_display_name,
-    get_entity_id_by_entity_type, get_entity_name_by_entity_type,
-    get_file_displayed_name, get_file_version_suffix_if_exists,
-    get_files_in_dir, get_ignore_pack_skipped_tests, get_item_marketplaces,
+    filter_files_on_pack, filter_packagify_changes, find_type,
+    generate_xsiam_normalized_name, get_code_lang, get_current_repo,
+    get_dict_from_file, get_display_name, get_entity_id_by_entity_type,
+    get_entity_name_by_entity_type, get_file_displayed_name,
+    get_file_version_suffix_if_exists, get_files_in_dir,
+    get_ignore_pack_skipped_tests, get_item_marketplaces,
     get_last_release_version, get_last_remote_release_version,
     get_latest_release_notes_text, get_pack_metadata,
     get_relative_path_from_packs_dir, get_release_note_entries,
@@ -35,25 +36,17 @@ from demisto_sdk.commands.common.tools import (
     get_test_playbook_id, get_to_version, get_yaml, has_remote_configured,
     is_object_in_id_set, is_origin_content_repo, is_pack_path, is_uuid,
     retrieve_file_ending, run_command_os, server_version_compare,
-    to_kebab_case)
-from demisto_sdk.tests.constants_test import (DUMMY_SCRIPT_PATH, IGNORED_PNG,
-                                              INDICATORFIELD_EXTRA_FIELDS,
-                                              SOURCE_FORMAT_INTEGRATION_COPY,
-                                              TEST_PLAYBOOK,
-                                              VALID_BETA_INTEGRATION_PATH,
-                                              VALID_DASHBOARD_PATH,
-                                              VALID_GENERIC_DEFINITION_PATH,
-                                              VALID_GENERIC_FIELD_PATH,
-                                              VALID_GENERIC_MODULE_PATH,
-                                              VALID_GENERIC_TYPE_PATH,
-                                              VALID_INCIDENT_FIELD_PATH,
-                                              VALID_INCIDENT_TYPE_PATH,
-                                              VALID_INTEGRATION_TEST_PATH,
-                                              VALID_LAYOUT_PATH, VALID_MD,
-                                              VALID_PLAYBOOK_ID_PATH,
-                                              VALID_REPUTATION_FILE,
-                                              VALID_SCRIPT_PATH,
-                                              VALID_WIDGET_PATH)
+    string_to_bool, to_kebab_case)
+from demisto_sdk.tests.constants_test import (
+    DUMMY_SCRIPT_PATH, IGNORED_PNG, INDICATORFIELD_EXTRA_FIELDS,
+    SOURCE_FORMAT_INTEGRATION_COPY, TEST_PLAYBOOK, VALID_BETA_INTEGRATION_PATH,
+    VALID_DASHBOARD_PATH, VALID_GENERIC_DEFINITION_PATH,
+    VALID_GENERIC_FIELD_PATH, VALID_GENERIC_MODULE_PATH,
+    VALID_GENERIC_TYPE_PATH, VALID_INCIDENT_FIELD_PATH,
+    VALID_INCIDENT_TYPE_FILE, VALID_INCIDENT_TYPE_FILE__RAW_DOWNLOADED,
+    VALID_INCIDENT_TYPE_PATH, VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_PATH,
+    VALID_MD, VALID_PLAYBOOK_ID_PATH, VALID_REPUTATION_FILE, VALID_SCRIPT_PATH,
+    VALID_WIDGET_PATH)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT, MAPPER, OLD_CLASSIFIER, REPUTATION)
 from TestSuite.file import File
@@ -76,6 +69,13 @@ class TestGenericFunctions:
     def test_get_file(self, file_path, func):
         assert func(file_path)
 
+    @pytest.mark.parametrize('file_name, prefix, result',
+                             [('test.json', 'parsingrule', 'parsingrule-external-test.json'),
+                              ('parsingrule-external-test.json', 'parsingrule', 'parsingrule-external-test.json'),
+                              ('parsingrule-test.json', 'parsingrule', 'parsingrule-external-test.json')])
+    def test_generate_xsiam_normalized_name(self, file_name, prefix, result):
+        assert generate_xsiam_normalized_name(file_name, prefix)
+
     @pytest.mark.parametrize('dir_path', ['demisto_sdk', f'{GIT_ROOT}/demisto_sdk/tests/test_files'])
     def test_get_yml_paths_in_dir(self, dir_path):
         yml_paths, first_yml_path = tools.get_yml_paths_in_dir(dir_path, error_msg='')
@@ -91,7 +91,8 @@ class TestGenericFunctions:
         (VALID_SCRIPT_PATH, True, 'yml'),
         ('test', True, None),
         (None, True, None),
-        ('invalid-path.json', False, None)
+        ('invalid-path.json', False, None),
+        (VALID_INCIDENT_TYPE_FILE__RAW_DOWNLOADED, False, 'json')
     ]
 
     @pytest.mark.parametrize('path, raises_error, _type', data_test_get_dict_from_file)
@@ -1041,6 +1042,26 @@ def test_get_file_displayed_name__image(repo):
         assert display_name == os.path.basename(integration.image.rel_path)
 
 
+INCIDENTS_TYPE_FILES_INPUTS = [(VALID_INCIDENT_TYPE_FILE__RAW_DOWNLOADED, "Access v2"),
+                               (VALID_INCIDENT_TYPE_FILE, "Access v2")]
+
+
+@pytest.mark.parametrize('input_path, expected_name', INCIDENTS_TYPE_FILES_INPUTS)
+def test_get_file_displayed_name__incident_type(input_path: str, expected_name: str):
+    """
+    Given
+    - The path to an incident type file.
+
+    When
+    - Running get_file_displayed_name.
+
+    Then:
+    - Ensure the returned name is the incident type name.
+    """
+
+    assert get_file_displayed_name(input_path) == expected_name
+
+
 def test_get_pack_metadata(repo):
     """
     Given
@@ -1621,6 +1642,12 @@ class TestIsObjectInIDSet:
                 "Script1",
                 "Script2",
             ],
+            "indicatorTypes": [
+                "JARM"
+            ],
+            "integrations": [
+                "Proofpoint Threat Response"
+            ]
         }
     }
 
@@ -1666,6 +1693,26 @@ class TestIsObjectInIDSet:
         """
         assert is_object_in_id_set('Phishing layout', FileType.LAYOUTS_CONTAINER.value, self.PACK_INFO)
         assert not is_object_in_id_set('Phishing', FileType.LAYOUTS_CONTAINER.value, self.PACK_INFO)
+
+    @pytest.mark.parametrize('entity_id, entity_type', [
+        ('JARM', FileType.REPUTATION.value),
+        ('Proofpoint Threat Response', FileType.BETA_INTEGRATION.value)
+    ])
+    def test_convertion_to_id_set_name(self, entity_id, entity_type):
+        """
+        Given:
+            - Pack object with indicatorType(s)
+            - Pack object with beta integration
+
+        When:
+            - Searching for an IndicatorType in the id_set.
+            - Searching for an beta integration in the id_set.
+
+        Then:
+            - make sure the indicator type is found.
+            - make sure the beta integration is found.
+        """
+        assert is_object_in_id_set(entity_id, entity_type, self.PACK_INFO)
 
 
 class TestGetItemMarketplaces:
@@ -1762,7 +1809,8 @@ class TestGetItemMarketplaces:
                 'id': 'PackID2',
             }
         }
-        mocker.patch('demisto_sdk.commands.common.tools.get_mp_types_from_metadata_by_item', return_value=['marketplacev2'])
+        mocker.patch('demisto_sdk.commands.common.tools.get_mp_types_from_metadata_by_item',
+                     return_value=['marketplacev2'])
         marketplaces = get_item_marketplaces('Packs/PackID/Integrations/Integration/Integration.yml',
                                              item_data=item_data, packs=packs)
 
@@ -1918,3 +1966,39 @@ def test_get_display_name(data, answer, tmpdir):
         """
     file = File(tmpdir / 'test_file.json', '', json.dumps(data))
     assert get_display_name(file.path) == answer
+
+
+@pytest.mark.parametrize('value', ('true', 'True'))
+def test_string_to_bool__default_params__true(value: str):
+    assert string_to_bool(value)
+
+
+@pytest.mark.parametrize('value', ('false', 'False'))
+def test_string_to_bool__default_params__false(value: str):
+    assert not string_to_bool(value)
+
+
+@pytest.mark.parametrize('value', ('1', 1, '', ' ', 'כן', None, 'None'))
+def test_string_to_bool__default_params__error(value: str):
+    with pytest.raises(ValueError):
+        string_to_bool(value)
+
+
+@pytest.mark.parametrize('value', ('true', 'True', 'TRUE', 't', 'T', 'yes', 'Yes', 'YES', 'y', 'Y', '1'))
+def test_string_to_bool__all_params_true__true(value: str):
+    assert string_to_bool(value, True, True, True, True, True, True)
+
+
+@pytest.mark.parametrize('value', ('false', 'False', 'FALSE', 'f', 'F', 'no', 'No', 'NO', 'n', 'N', '0'))
+def test_string_to_bool__all_params_true__false(value: str):
+    assert not string_to_bool(value, True, True, True, True, True, True)
+
+
+@pytest.mark.parametrize('value',
+                         ('true', 'True', 'TRUE', 't', 'T', 'yes', 'Yes', 'YES', 'y', 'Y', '1',
+                          'false', 'False', 'FALSE', 'f', 'F', 'no', 'No', 'NO', 'n', 'N', '0',
+                          '', ' ', 1, True, None, 'אולי', 'None')
+                         )
+def test_string_to_bool__all_params_false__error(value: str):
+    with pytest.raises(ValueError):
+        assert string_to_bool(value, False, False, False, False, False, False)

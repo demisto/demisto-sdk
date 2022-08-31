@@ -1,7 +1,8 @@
 import os
 import random
 
-from demisto_sdk.commands.common.constants import DEFAULT_ID_SET_PATH
+from demisto_sdk.commands.common.content_constant_paths import \
+    DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.common.tools import (get_from_version, get_yaml,
                                                open_id_set_file, print_error,
                                                print_warning)
@@ -52,7 +53,7 @@ def generate_script_doc(input_path, examples, output: str = None, permissions: s
 
         # get the script usages by the id set
         if not os.path.isfile(DEFAULT_ID_SET_PATH):
-            id_set_creator = IDSetCreator(output='', print_logs=False)
+            id_set_creator = IDSetCreator(print_logs=False)
             id_set, _, _ = id_set_creator.create_id_set()
         else:
             id_set = open_id_set_file(DEFAULT_ID_SET_PATH)

@@ -1,26 +1,29 @@
 from distutils.version import LooseVersion
-from typing import Any, Dict, List, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 import decorator
 from requests import Response
 
 from demisto_sdk.commands.common.constants import (
-    BETA_INTEGRATION_DISCLAIMER, CONF_PATH, FILETYPE_TO_DEFAULT_FROMVERSION,
-    INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME, FileType)
+    BETA_INTEGRATION_DISCLAIMER, FILETYPE_TO_DEFAULT_FROMVERSION,
+    INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME, FileType,
+    MarketplaceVersions)
+from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 
 FOUND_FILES_AND_ERRORS: list = []
 FOUND_FILES_AND_IGNORED_ERRORS: list = []
 # allowed errors to be ignored in any supported pack (XSOAR/Partner/Community) only if they appear in the .pack-ignore
 ALLOWED_IGNORE_ERRORS = [
-    'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113', 'BA116',
+    'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113', 'BA116', 'BA119',
     'DS107',
     'GF102',
     'IF100', 'IF106', 'IF115', 'IF116',
     'IN109', 'IN110', 'IN122', 'IN124', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145', 'IN153', 'IN154',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
-    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107',
-    'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM 110', 'RM112',
+    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107', 'PB118', 'PB119',
+    'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM110', 'RM112', 'RM113',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
     'IM111',
@@ -59,6 +62,7 @@ ERROR_CODE = {
     "cli_name_and_id_do_not_match": {'code': "BA116", 'ui_applicable': False, 'related_field': 'cliName'},
     "incorrect_from_to_version_format": {'code': "BA117", 'ui_applicable': False, 'related_field': ''},
     "mismatching_from_to_versions": {'code': "BA118", 'ui_applicable': False, 'related_field': ''},
+    "copyright_section_in_python_error": {'code': "BA119", 'ui_applicable': False, 'related_field': ''},
 
     # BC - Backward Compatible
     "breaking_backwards_subtype": {'code': "BC100", 'ui_applicable': False, 'related_field': 'subtype'},
@@ -66,6 +70,8 @@ ERROR_CODE = {
     "breaking_backwards_command": {'code': "BC102", 'ui_applicable': False, 'related_field': 'contextPath'},
     "breaking_backwards_arg_changed": {'code': "BC103", 'ui_applicable': False, 'related_field': 'name'},
     "breaking_backwards_command_arg_changed": {'code': "BC104", 'ui_applicable': False, 'related_field': 'args'},
+    "file_id_changed": {'code': "BC105", 'ui_applicable': False, 'related_field': 'id'},
+    "from_version_modified": {'code': "BC106", 'ui_applicable': False, 'related_field': 'fromversion'},
 
     # CJ - conf.json
     "description_missing_from_conf_json": {'code': "CJ100", 'ui_applicable': False, 'related_field': ''},
@@ -199,7 +205,7 @@ ERROR_CODE = {
     "parameter_missing_from_yml": {'code': "IN121", 'ui_applicable': True, 'related_field': 'configuration'},
     "parameter_missing_for_feed": {'code': "IN122", 'ui_applicable': True, 'related_field': 'configuration'},
     "invalid_version_integration_name": {'code': "IN123", 'ui_applicable': True, 'related_field': 'display'},
-    "found_hidden_param": {'code': "IN124", 'ui_applicable': False, 'related_field': '<parameter-name>.hidden'},
+    "param_not_allowed_to_hide": {'code': "IN124", 'ui_applicable': False, 'related_field': '<parameter-name>.hidden'},
     "no_default_value_in_parameter": {'code': "IN125", 'ui_applicable': False,
                                       'related_field': '<parameter-name>.default'},
     "parameter_missing_from_yml_not_community_contributor": {'code': "IN126", 'ui_applicable': False,
@@ -234,9 +240,13 @@ ERROR_CODE = {
     'empty_outputs_common_paths': {'code': 'IN149', 'ui_applicable': False, 'related_field': 'contextOutput'},
     'invalid_siem_integration_name': {'code': 'IN150', 'ui_applicable': True, 'related_field': 'display'},
     "empty_command_arguments": {'code': 'IN151', 'ui_applicable': False, 'related_field': 'arguments'},
-    'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True, 'related_field': 'defaultvalue'},
-    'not_supported_integration_parameter_url_defaultvalue': {'code': 'IN153', 'ui_applicable': False, 'related_field': 'defaultvalue'},
+    'invalid_defaultvalue_for_checkbox_field': {'code': 'IN152', 'ui_applicable': True,
+                                                'related_field': 'defaultvalue'},
+    'not_supported_integration_parameter_url_defaultvalue': {'code': 'IN153', 'ui_applicable': False,
+                                                             'related_field': 'defaultvalue'},
     'missing_reliability_parameter': {'code': 'IN154', 'ui_applicable': False, 'related_field': 'configuration'},
+    'integration_is_deprecated_and_used': {'code': 'IN155', 'ui_applicable': True, 'related_field': 'deprecated'},
+    'invalid_hidden_attribute_for_param': {'code': 'IN156', 'ui_applicable': False, 'related_field': 'hidden'},
 
     # IT - Incident Types
     "incident_type_integer_field": {'code': "IT100", 'ui_applicable': True, 'related_field': ''},
@@ -247,7 +257,7 @@ ERROR_CODE = {
     "incident_type_non_existent_playbook_id": {'code': "IT104", 'ui_applicable': False, 'related_field': ''},
 
     # LI - Lists
-    "invalid_from_server_version_in_lists": {'code': "LI100", 'ui_applicable': False, 'related_field': 'fromVersion'},
+    "invalid_from_version_in_lists": {'code': "LI100", 'ui_applicable': False, 'related_field': 'fromVersion'},
     "missing_from_version_in_list": {'code': "LI101", 'ui_applicable': False, 'related_field': 'fromVersion'},
 
     # LO - Layouts
@@ -326,10 +336,13 @@ ERROR_CODE = {
     "playbook_tasks_not_quiet_mode": {'code': "PB115", 'ui_applicable': False, 'related_field': 'tasks'},
     "playbook_tasks_continue_on_error": {'code': "PB116", 'ui_applicable': False, 'related_field': 'tasks'},
     "content_entity_is_not_in_id_set": {'code': "PB117", 'ui_applicable': False, 'related_field': ''},
+    "input_key_not_in_tasks": {'code': "PB118", 'ui_applicable': False, 'related_field': ''},
+    "input_used_not_in_input_section": {'code': "PB119", 'ui_applicable': False, 'related_field': ''},
+    "playbook_is_deprecated_and_used": {'code': 'PB120', 'ui_applicable': False, 'related_field': 'deprecated'},
 
     # PP - Pre-Process Rules
-    "invalid_from_server_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
-                                                         'related_field': 'fromServerVersion'},
+    "invalid_from_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
+                                                  'related_field': 'fromVersion'},
     "invalid_incident_field_in_pre_process_rules": {'code': "PP101", 'ui_applicable': False, 'related_field': ''},
     "unknown_fields_in_pre_process_rules": {'code': "PP102", 'ui_applicable': False, 'related_field': ''},
 
@@ -347,6 +360,7 @@ ERROR_CODE = {
     "missing_commands_from_readme": {'code': "RM110", 'ui_applicable': False, 'related_field': ''},
     "error_uninstall_node": {'code': "RM111", 'ui_applicable': False, 'related_field': ''},
     "invalid_readme_relative_url_error": {'code': "RM112", 'ui_applicable': False, 'related_field': ''},
+    "copyright_section_in_readme_error": {'code': "RM113", 'ui_applicable': False, 'related_field': ''},
 
     # RN - Release Notes
     "missing_release_notes": {'code': "RN100", 'ui_applicable': False, 'related_field': ''},
@@ -377,12 +391,11 @@ ERROR_CODE = {
     "is_valid_script_file_path_in_folder": {'code': "SC103", 'ui_applicable': False, 'related_field': ''},
     "incident_in_script_arg": {'code': "SC105", 'ui_applicable': True, 'related_field': 'args.name'},
     "runas_is_dbotrole": {'code': "SC106", 'ui_applicable': False, 'related_field': 'runas'},
+    'script_is_deprecated_and_used': {'code': 'SC107', 'ui_applicable': True, 'related_field': 'deprecated'},
 
     # ST - Structures
     "structure_doesnt_match_scheme": {'code': "ST100", 'ui_applicable': False, 'related_field': ''},
     "file_id_contains_slashes": {'code': "ST101", 'ui_applicable': False, 'related_field': 'id'},
-    "file_id_changed": {'code': "ST102", 'ui_applicable': False, 'related_field': 'id'},
-    "from_version_modified": {'code': "ST103", 'ui_applicable': False, 'related_field': 'fromversion'},
     "wrong_file_extension": {'code': "ST104", 'ui_applicable': False, 'related_field': ''},
     "invalid_file_path": {'code': "ST105", 'ui_applicable': False, 'related_field': ''},
     "invalid_package_structure": {'code': "ST106", 'ui_applicable': False, 'related_field': ''},
@@ -458,7 +471,13 @@ ERROR_CODE = {
         'code': "WZ105",
         'ui_applicable': False,
         'related_field': 'wizard'
-    }
+    },
+
+    # MR - Modeling Rules
+    "modeling_rule_missing_schema_file": {'code': "MR100", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rule_keys_not_empty": {'code': "MR101", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rule_keys_are_missing": {'code': "MR102", 'ui_applicable': False, 'related_field': ''},
+    "invalid_rule_name": {'code': "MR103", 'ui_applicable': False, 'related_field': ''},
 }
 
 
@@ -508,17 +527,19 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def id_should_equal_name(name, file_id):
-        return "The File's name, which is: '{}', should be equal to its ID, which is: '{}'." \
-               " please update the file.".format(name, file_id)
+    def id_should_equal_name(name: str, id_: str, file_path: str):
+        file_name = Path(file_path).name
+        return f"The name attribute of {file_name} (currently {name}) should be identical to its `id` attribute ({id_})"
 
     @staticmethod
     @error_code_decorator
-    def file_type_not_supported():
-        return "The file type is not supported in the validate command.\n" \
+    def file_type_not_supported(file_type: Optional[FileType], file_path: Union[str, Path]):
+        joined_path = '/'.join(Path(file_path).parts[-3:])
+        file_type_str = f'File type {file_type}' if file_type else f'File {joined_path}'
+        return f"{file_type_str} is not supported in the validate command.\n" \
                "The validate command supports: Integrations, Scripts, Playbooks, " \
                "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields, Object types," \
-               " Object modules, Images, Release notes, Layouts, Jobs, Wizards, and Descriptions."
+               " Object modules, Images, Release notes, Layouts, Jobs, Wizards, Descriptions And Modeling Rules."
 
     @staticmethod
     @error_code_decorator
@@ -905,8 +926,33 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def found_hidden_param(parameter_name):
-        return f"Parameter: \"{parameter_name}\" can't be hidden. Please remove this field."
+    def integration_is_deprecated_and_used(integration_name: str, commands_dict: dict):
+        erorr_str = f"{integration_name} integration contains deprecated commands that are being used by other entities:\n"
+        for command_name, command_usage_list in commands_dict.items():
+            current_command_usage = '\n'.join(command_usage_list)
+            erorr_str += f"{command_name} is being used in the following locations:\n{current_command_usage}\n"
+        return erorr_str
+
+    @staticmethod
+    @error_code_decorator
+    def param_not_allowed_to_hide(parameter_name: str):
+        """
+        Note: This error is used when the parameter has `hidden:true` or mentions all marketplaces (equivalent to true)
+        See invalid_hidden_attribute_for_param for invalid value types.
+
+        """
+        return f"Parameter: \"{parameter_name}\" can't be hidden in all marketplaces. " \
+               f"Please either remove the `hidden` attribute, " \
+               f"or replace its value with a list of marketplace names, where you wish it to be hidden."
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_hidden_attribute_for_param(param_name: str, invalid_value: str):
+        marketplace_values = ', '.join(MarketplaceVersions)
+        return f'The `hidden` attribute value ({invalid_value}) for the {param_name} parameter ' \
+               f'must be either a boolean, or a list of marketplace values ' \
+               f'(Possible marketplace values: {marketplace_values}). ' \
+               f'Note that this param is not required, and may be omitted.'
 
     @staticmethod
     @error_code_decorator
@@ -1675,12 +1721,14 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_metadata_non_approved_usecases(non_approved_usecases: set) -> str:
-        return f'The pack metadata contains non approved usecases: {", ".join(non_approved_usecases)}'
+        return f'The pack metadata contains non approved usecases: {", ".join(non_approved_usecases)} ' \
+               f'The list of approved use cases can be found in https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories'
 
     @staticmethod
     @error_code_decorator
     def pack_metadata_non_approved_tags(non_approved_tags: set) -> str:
-        return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}'
+        return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}' \
+               f'The list of approved tags can be found in https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories'
 
     @staticmethod
     @error_code_decorator
@@ -1774,6 +1822,18 @@ class Errors:
     def image_path_error(path, alternative_path):
         return f'Detected following image url:\n{path}\n' \
                f'Which is not the raw link. You probably want to use the following raw image url:\n{alternative_path}'
+
+    @staticmethod
+    @error_code_decorator
+    def copyright_section_in_readme_error(line_nums):
+        return f"Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found " \
+               f"in lines: {line_nums}. Copyright section cannot be part of pack readme."
+
+    @staticmethod
+    @error_code_decorator
+    def copyright_section_in_python_error(line_nums):
+        return f"Invalid keywords related to Copyrights (BSD, MIT, Copyright, proprietary) were found " \
+               f"in lines: {line_nums}. Copyright section cannot be part of script."
 
     @staticmethod
     def pack_readme_image_relative_path_error(path):
@@ -1978,8 +2038,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_from_server_version_in_pre_process_rules(version_field):
-        return f'{version_field} field in Pre Process Rule needs to be at least 6.5.0'
+    def invalid_from_version_in_pre_process_rules():
+        return 'fromVersion field in Pre Process Rule needs to be at least 6.5.0'
 
     @staticmethod
     @error_code_decorator
@@ -1988,8 +2048,8 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def invalid_from_server_version_in_lists(version_field):
-        return f'{version_field} field in a list item needs to be at least 6.5.0'
+    def invalid_from_version_in_lists():
+        return 'fromVersion field in a list item needs to be at least 6.5.0'
 
     @staticmethod
     @error_code_decorator
@@ -2241,8 +2301,8 @@ class Errors:
         return f"To fix the problem, add pack name prefix to the field name. " \
                f"You can use the pack name or one of the prefixes found in the itemPrefix field in the pack_metadata. " \
                f"Example: {pack_prefix} {field_name}.\n" \
-               f"Also make sure to update the field id and cliName accordingly. " \
-               f"Example: cliName: {pack_prefix.replace(' ', '').lower()}{field_name.replace(' ', '')}, "
+               f"Also, make sure to update the field id and cliName accordingly. " \
+               f"Example: cliName: {pack_prefix.replace(' ', '').lower()}{field_name.replace(' ', '').lower()}."
 
     @staticmethod
     @error_code_decorator
@@ -2255,6 +2315,22 @@ class Errors:
         return f"Playbook {main_playbook} uses {entities_names}, which do not exist in the id_set.\n" \
                f"Possible reason for such an error, would be that the name of the entity in the yml file of " \
                f"{main_playbook} is not identical to its name in its own yml file. Or the id_set is not up to date"
+
+    @staticmethod
+    @error_code_decorator
+    def input_key_not_in_tasks(playbook_name: str, inputs: List[str]):
+        return f"Playbook {playbook_name} contains inputs that are not used in any of its tasks: {', '.join(inputs)}"
+
+    @staticmethod
+    @error_code_decorator
+    def input_used_not_in_input_section(playbook_name: str, inputs: List[str]):
+        return f"Playbook {playbook_name} uses inputs that do not appear in the inputs section: {', '.join(inputs)}"
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_is_deprecated_and_used(playbook_name: str, files_list: list):
+        files_list_str = '\n'.join(files_list)
+        return f"{playbook_name} playbook is deprecated and being used by the following entities:\n{files_list_str}"
 
     @staticmethod
     @error_code_decorator
@@ -2287,6 +2363,12 @@ class Errors:
     def runas_is_dbotrole():
         return 'The runas value is DBotRole, it may cause access and exposure of sensitive data. ' \
                'Please consider changing it.'
+
+    @staticmethod
+    @error_code_decorator
+    def script_is_deprecated_and_used(script_name: str, files_list: list):
+        files_list_str = '\n'.join(files_list)
+        return f"{script_name} script is deprecated and being used by the following entities:\n{files_list_str}"
 
     @staticmethod
     @error_code_decorator
@@ -2386,3 +2468,26 @@ class Errors:
                f'The description of the pack in the pack_metadata.json should be one of the following formats:\n' \
                f'1. "Deprecated. Use <PACK_NAME> instead."\n' \
                f'2. "Deprecated. <REASON> No available replacement."'
+
+    @staticmethod
+    @error_code_decorator
+    def modeling_rule_missing_schema_file(file_path: str):
+        return f'The modeling rule {file_path} is missing a schema file.'
+
+    @staticmethod
+    @error_code_decorator
+    def modeling_rule_keys_not_empty():
+        return "Either the 'rules' key or the 'schema' key are not empty, make sure to set the value of these" \
+               " keys to an empty string."
+
+    @staticmethod
+    @error_code_decorator
+    def modeling_rule_keys_are_missing():
+        return "The 'rules' key or the 'schema' key is missing from the modeling rule yml file. " \
+               'Make sure to add them to your yml file with an empty string as value.'
+
+    @staticmethod
+    @error_code_decorator
+    def invalid_rule_name(invalid_files):
+        return f"The following rule file name is invalid {invalid_files} - make sure that the rule name is " \
+               f"the same as the folder containing it."

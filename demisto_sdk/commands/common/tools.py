@@ -171,6 +171,15 @@ SDK_PYPI_VERSION = r'https://pypi.org/pypi/demisto-sdk/json'
 SUFFIX_TO_REMOVE = ('_dev', '_copy')
 
 
+def generate_xsiam_normalized_name(file_name, prefix):
+    if file_name.startswith(f'{prefix}-external-'):
+        return file_name
+    elif file_name.startswith(f'{prefix}-'):
+        return file_name.replace(f'{prefix}-', f'{prefix}-external-')
+    else:
+        return f'{prefix}-external-{file_name}'
+
+
 def set_log_verbose(verbose: bool):
     global LOG_VERBOSE
     LOG_VERBOSE = verbose
@@ -590,9 +599,9 @@ def get_last_remote_release_version():
 def get_file(file_path, type_of_file, clear_cache=False):
     if clear_cache:
         get_file.cache_clear()
-    file_path = Path(file_path)
+    file_path = Path(file_path).absolute()
     data_dictionary = None
-    with open(file_path.expanduser(), mode="r", encoding="utf8") as f:
+    with file_path.open(mode='r', encoding='utf8') as f:
         if type_of_file in file_path.suffix:
             read_file = f.read()
             replaced = read_file.replace("simple: =", "simple: '='")
@@ -1085,7 +1094,7 @@ def filter_files_by_type(file_paths=None, skip_file_types=None) -> set:
 
 
 def pack_name_to_path(pack_name):
-    return os.path.join(PACKS_DIR, pack_name)
+    return os.path.join(get_content_path(), PACKS_DIR, pack_name)
 
 
 def pack_name_to_posix_path(pack_name):
@@ -1093,7 +1102,7 @@ def pack_name_to_posix_path(pack_name):
 
 
 def get_pack_ignore_file_path(pack_name):
-    return os.path.join(PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)
+    return os.path.join(get_content_path(), PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)
 
 
 def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:  # type: ignore
@@ -1272,14 +1281,19 @@ def get_dict_from_file(path: str,
         raises_error - Whether to raise a FileNotFound error if `path` is not a valid file.
 
     Returns:
-        dict representation of the file, and the file_type, either .yml or .json
+        dict representation of the file or of the first item if the file contents are a list with a single dictionary,
+        and the file_type, either .yml or .json
     """
     try:
         if path:
             if path.endswith('.yml'):
                 return get_yaml(path, cache_clear=clear_cache), 'yml'
             elif path.endswith('.json'):
-                return get_json(path, cache_clear=clear_cache), 'json'
+                res = get_json(path, cache_clear=clear_cache)
+                if isinstance(res, list) and len(res) == 1 and isinstance(res[0], dict):
+                    return res[0], 'json'
+                else:
+                    return res, 'json'
             elif path.endswith('.py'):
                 return {}, 'py'
             elif path.endswith('.xif'):
@@ -1311,8 +1325,6 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.RELEASE_NOTES
         elif 'description' in path.name:
             return FileType.DESCRIPTION
-        elif 'CONTRIBUTORS' in path.name:
-            return FileType.CONTRIBUTORS
 
         return FileType.CHANGELOG
 
@@ -1335,6 +1347,8 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.METADATA
         elif path.name.endswith(XSOAR_CONFIG_FILE):
             return FileType.XSOAR_CONFIG
+        elif 'CONTRIBUTORS' in path.name:
+            return FileType.CONTRIBUTORS
 
     elif path.name.endswith('_image.png'):
         if path.name.endswith("Author_image.png"):
@@ -1414,7 +1428,7 @@ def find_type(
             return None
         raise err
 
-    if file_type == 'yml':
+    if file_type == 'yml' or path.lower().endswith('.yml'):
         if 'category' in _dict:
             if _dict.get('beta') and not ignore_sub_categories:
                 return FileType.BETA_INTEGRATION
@@ -1443,7 +1457,10 @@ def find_type(
         if 'global_rule_id' in _dict:
             return FileType.CORRELATION_RULE
 
-    if file_type == 'json':
+    if file_type == 'json' or path.lower().endswith('.json'):
+        if path.lower().endswith('_schema.json'):
+            return FileType.MODELING_RULE_SCHEMA
+
         if 'widgetType' in _dict:
             return FileType.WIDGET
 
@@ -1576,7 +1593,12 @@ def get_content_path() -> str:
         str: Absolute content path
     """
     try:
-        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+        if content_path := os.getenv('DEMISTO_SDK_CONTENT_PATH'):
+            git_repo = git.Repo(content_path)
+            logger.debug(f'Using content path: {content_path}')
+        else:
+            git_repo = git.Repo(Path.cwd(), search_parent_directories=True)
+
         remote_url = git_repo.remote().urls.__next__()
         is_fork_repo = 'content' in remote_url
         is_external_repo = is_external_repository()
@@ -1585,7 +1607,7 @@ def get_content_path() -> str:
             raise git.InvalidGitRepositoryError
         return git_repo.working_dir
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
-        print_error("Please run demisto-sdk in content repository - Aborting!")
+        print_warning("Please run demisto-sdk in content repository!")
     return ''
 
 
@@ -2022,10 +2044,22 @@ def get_all_incident_and_indicator_fields_from_id_set(id_set_file, entity_type):
 def item_type_to_content_items_header(item_type):
     converter = {
         "incidenttype": "incidentType",
-        "indicatortype": "indicatorType",
+        "reputation": "indicatorType",
         "indicatorfield": "indicatorField",
         "incidentfield": "incidentField",
         "layoutscontainer": "layout",
+        "betaintegration": "integration",
+
+        # GOM
+        "genericdefinition": "genericDefinition",
+        "genericfield": "genericField",
+        "genericmodule": "genericModule",
+        "generictype": "genericType",
+
+        # SIEM content
+        "correlationrule": "correlationRule",
+        "modelingrule": "modelingRule",
+        "parsingrule": "parsingRule",
     }
 
     return f'{converter.get(item_type, item_type)}s'
@@ -2113,7 +2147,8 @@ def get_file_displayed_name(file_path):
                        FileType.INDICATOR_FIELD, FileType.LAYOUTS_CONTAINER, FileType.PRE_PROCESS_RULES,
                        FileType.DASHBOARD, FileType.WIDGET,
                        FileType.REPORT, FileType.JOB, FileType.WIZARD]:
-        return get_json(file_path).get('name')
+        res = get_json(file_path)
+        return res.get('name') if isinstance(res, dict) else res[0].get('name')
     elif file_type == FileType.OLD_CLASSIFIER:
         return get_json(file_path).get('brandName')
     elif file_type == FileType.LAYOUT:
@@ -2783,6 +2818,22 @@ def extract_none_deprecated_command_names_from_yml(yml_data: dict) -> list:
     return commands_ls
 
 
+def extract_deprecated_command_names_from_yml(yml_data: dict) -> list:
+    """
+    Go over all the commands in a yml file and return their names.
+    Args:
+        yml_data (dict): the yml content as a dict
+
+    Returns:
+        list: a list of all the commands names
+    """
+    commands_ls = []
+    for command in yml_data.get('script', {}).get('commands', {}):
+        if command.get('deprecated'):
+            commands_ls.append(command.get('name'))
+    return commands_ls
+
+
 def remove_copy_and_dev_suffixes_from_str(field_name: str) -> str:
     for _ in range(field_name.count('_')):
         for suffix in SUFFIX_TO_REMOVE:
@@ -2869,7 +2920,7 @@ def get_invalid_incident_fields_from_mapper(
             if simple := inc_info.get('simple'):
                 if '.' in simple:
                     simple = simple.split('.')[0]
-                if simple not in content_fields:
+                if simple not in content_fields and simple.lower() not in content_fields:
                     non_existent_fields.append(inc_name)
 
     return non_existent_fields
@@ -2910,3 +2961,51 @@ def normalize_field_name(field: str) -> str:
         field (str): the incident/indicator field.
     """
     return field.replace('incident_', '').replace('indicator_', '')
+
+
+def string_to_bool(
+        input_: str,
+        accept_lower_case: bool = True,
+        accept_title: bool = True,
+        accept_upper_case: bool = False,
+        accept_yes_no: bool = False,
+        accept_int: bool = False,
+        accept_single_letter: bool = False,
+) -> Optional[bool]:
+    if not isinstance(input_, str):
+        raise ValueError('cannot convert non-string to bool')
+
+    _considered_true = ['true']
+    _considered_false = ['false']
+
+    for (condition, true_value, false_value) in (
+            (accept_yes_no, 'yes', 'no'),
+            (accept_int, '1', '0')
+    ):
+        if condition:
+            _considered_true.append(true_value)
+            _considered_false.append(false_value)
+
+    considered_true: Set[str] = set()
+    considered_false: Set[str] = set()
+
+    for (condition, func) in (
+            (accept_lower_case, lambda x: x.lower()),
+            (accept_title, lambda x: x.title()),
+            (accept_upper_case, lambda x: x.upper()),
+    ):
+        if condition:
+            considered_true.update(map(func, _considered_true))
+            considered_false.update(map(func, _considered_false))
+
+    if accept_single_letter:
+        considered_true.update(tuple(_[0] for _ in considered_true))  # note this takes considered_true as input
+        considered_false.update(tuple(_[0] for _ in considered_false))
+
+    if input_ in considered_true:
+        return True
+
+    if input_ in considered_false:
+        return False
+
+    raise ValueError(f'cannot convert string {input_} to bool')

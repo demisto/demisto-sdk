@@ -30,7 +30,12 @@ import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 
 
 class Neo4jContentGraphInterface(ContentGraphInterface):
-    def __init__(self, start_service=False, use_docker=True, should_dump=False) -> None:
+    def __init__(
+        self,
+        start_service: bool = False,
+        use_docker: bool = True,
+        should_dump: bool = False,
+    ) -> None:
         self.driver: neo4j.Neo4jDriver = neo4j.GraphDatabase.driver(
             NEO4J_DATABASE_URL,
             auth=(NEO4J_USERNAME, NEO4J_PASSWORD),
@@ -40,10 +45,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         self.should_dump = should_dump
         self.use_docker = use_docker
 
-    def __enter__(self, ) -> 'Neo4jContentGraphInterface':
+    def __enter__(self) -> 'Neo4jContentGraphInterface':
         return self
 
-    def __exit__(self) -> None:
+    def __exit__(self, *args) -> None:
         if self.should_dump:
             neo4j_service.dump(self.use_docker)
         self.driver.close()

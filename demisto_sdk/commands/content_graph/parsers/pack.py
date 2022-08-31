@@ -55,7 +55,7 @@ class PackContentItems:
 
     def append(self, obj: ContentItemParser) -> None:
         """ Appends a content item by iterating the content item lists
-        until the correct list is found and appends to it.
+        until the correct list is found, and appends to it.
 
         Args:
             obj (ContentItemParser): The conten item to append.

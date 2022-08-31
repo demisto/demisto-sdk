@@ -2295,11 +2295,12 @@ def create_content_graph(use_docker: bool = True, use_existing: bool = False, sh
     logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
                   quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
                   log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
-    with Neo4jContentGraphInterface(start_service=not use_existing, should_dump=should_dump, use_docker=use_docker) as content_graph_interface:
-        create_content_graph(
-            content_graph_interface=content_graph_interface,
-            use_existing=use_existing,
-        )
+    with Neo4jContentGraphInterface(
+        start_service=not use_existing,
+        should_dump=should_dump,
+        use_docker=use_docker,
+    ) as content_graph_interface:
+        create_content_graph(content_graph_interface)
 
 
 @main.result_callback()

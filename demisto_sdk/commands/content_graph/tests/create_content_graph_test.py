@@ -107,7 +107,7 @@ def script():
         type='python3',
         docker_image='mock:docker',
         tags=[],
-        is_test_script=False,
+        is_test=False,
     )
 
 
@@ -125,7 +125,7 @@ def playbook():
         marketplaces=[MarketplaceVersions.XSOAR],
         description='',
         deprecated=False,
-        is_test_playbook=False,
+        is_test=False,
     )
 
 
@@ -165,8 +165,8 @@ class TestCreateContentGraph:
         integration = pack.create_integration()
         integration.create_default_integration('TestIntegration')
 
-        with ContentGraphInterface() as interface:
-            create_content_graph(interface, use_existing=False)
+        with ContentGraphInterface(start_service=True) as interface:
+            create_content_graph(interface)
             content_items = interface.get_packs_content_items(marketplace=MarketplaceVersions.XSOAR)
         assert len(content_items) == 1
 
@@ -186,7 +186,7 @@ class TestCreateContentGraph:
         integration.create_default_integration('TestIntegration')
 
         with ContentGraphInterface() as interface:
-            create_content_graph(interface, use_existing=True)
+            create_content_graph(interface)
             content_items = interface.get_packs_content_items(marketplace=MarketplaceVersions.XSOAR)
         assert len(content_items) == 1
 
@@ -265,7 +265,7 @@ class TestCreateContentGraph:
         pack.content_items.script.append(script)
         repository.packs.append(pack)
         with ContentGraphInterface() as interface:
-            create_content_graph(interface, use_existing=True)
+            create_content_graph(interface)
             result = interface.get_relationships_by_type(Relationship.IN_PACK)
             for rel in result:
                 assert rel['source']['name'] in ['SampleIntegration', 'SampleScript']
@@ -347,7 +347,7 @@ class TestCreateContentGraph:
         pack.content_items.integration.append(integration2)
         repository.packs.append(pack)
         with ContentGraphInterface() as interface:
-            create_content_graph(interface, use_existing=True)
+            create_content_graph(interface)
             assert len(interface.get_nodes_by_type(ContentType.INTEGRATION)) == 2
             assert len(interface.get_nodes_by_type(ContentType.COMMAND)) == 1
 
@@ -384,7 +384,7 @@ class TestCreateContentGraph:
         pack.content_items.integration.append(playbook)
         repository.packs.append(pack)
         with ContentGraphInterface() as interface:
-            create_content_graph(interface, use_existing=True)
+            create_content_graph(interface)
             script = interface.get_single_node(node_id=f'{ContentType.SCRIPT}:TestScript')
         assert script.get('not_in_repository')
 
@@ -439,7 +439,7 @@ class TestCreateContentGraph:
         
         with pytest.raises(Exception) as e:
             with ContentGraphInterface() as interface:
-                create_content_graph(interface, use_existing=True)
+                create_content_graph(interface)
         assert 'Duplicates found in graph' in str(e)
 
     def test_create_content_graph_duplicate_integrations_different_marketplaces(
@@ -495,7 +495,7 @@ class TestCreateContentGraph:
         repository.packs.append(pack)
         
         with ContentGraphInterface() as interface:
-            create_content_graph(interface, use_existing=True)
+            create_content_graph(interface)
             assert len(interface.get_nodes_by_type(ContentType.INTEGRATION)) == 2
 
     def test_create_content_graph_duplicate_integrations_different_fromversion(
@@ -552,7 +552,7 @@ class TestCreateContentGraph:
         repository.packs.append(pack)
         
         with ContentGraphInterface() as interface:
-            create_content_graph(interface, use_existing=True)
+            create_content_graph(interface)
             assert len(interface.get_nodes_by_type(ContentType.INTEGRATION)) == 2
 
     def test_stop_content_graph(self):

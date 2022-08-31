@@ -60,6 +60,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = False):
     pack_name = 'foo_' + str(random.randint(1, 1000))
     playbook_name = 'pb_' + str(random.randint(1, 1000))
 
+    print(f'Trying to connect to server., insecure: {insecure}')
     demisto_client = e2e_tests_utils.connect_to_server(insecure=insecure)
     body = [
         {

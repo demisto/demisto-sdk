@@ -1,17 +1,18 @@
 from pathlib import Path
-from typing import List
+from typing import List, Set
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.content_item import NotAContentItem
+from demisto_sdk.commands.content_graph.parsers.content_item import NotAContentItemException
 from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
 
 
 class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         if 'layoutscontainer' not in path.name:
-            raise NotAContentItem
+            raise NotAContentItemException
 
-        super().__init__(path)
+        super().__init__(path, pack_marketplaces)
         self.kind: str = self.json_data.get('kind')
         self.tabs: List[str] = self.json_data.get('tabs')
         self.definition_id: str = self.json_data.get('definitionId')
@@ -33,19 +34,21 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
         """
         if self.group == 'incident':
             dependency_field_type = ContentType.INCIDENT_FIELD
-        else:
+        elif self.group == 'indicator':
             dependency_field_type = ContentType.INDICATOR_FIELD
+        else:
+            raise ValueError(f'{self.node_id}: Unknown group "{self.group}" - Expected "incident" or "indicator".')
 
         for field in self.get_field_ids_recursively():
             self.add_dependency(field, dependency_field_type, is_mandatory=False)
 
-    def get_field_ids_recursively(self) -> List[str]:
+    def get_field_ids_recursively(self) -> Set[str]:
         """ Recursively iterates over the layout json data to extract all fieldId items.
 
         Returns:
-            list of the field IDs.
+            A set of the field IDs.
         """
-        values: List[str] = []
+        values: Set[str] = set()
 
         def get_values(current_object):
             if isinstance(current_object, list):
@@ -55,7 +58,7 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
             elif isinstance(current_object, dict):
                 for key, value in current_object.items():
                     if key == 'fieldId' and isinstance(value, str):
-                        values.append(value)
+                        values.add(value)
                     else:
                         get_values(value)
 

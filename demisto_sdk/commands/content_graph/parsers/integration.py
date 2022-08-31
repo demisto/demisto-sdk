@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Any, Dict, List
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
 from demisto_sdk.commands.content_graph.parsers.integration_script import (
     IntegrationScriptParser,
@@ -9,11 +10,10 @@ from demisto_sdk.commands.content_graph.parsers.integration_script import (
 
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):
-    def __init__(self, path: Path) -> None:
-        super().__init__(path)
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
+        super().__init__(path, pack_marketplaces)
         self.script_info: Dict[str, Any] = self.yml_data.get('script', {})
         self.category = self.yml_data['category']
-        self.display_name = self.yml_data['display']
         self.docker_image = self.script_info.get('dockerimage', '')
         self.is_fetch = self.script_info.get('isfetch', False)
         self.is_feed = self.script_info.get('feed', False)
@@ -61,7 +61,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
 
     def get_code(self) -> str:
         """ Gets the integration code.
-        If the integration is unified, simply takes it from the yml file.
+        If the integration is unified, takes it from the yml file.
         Otherwise, uses the Unifier object to get it.
 
         Returns:

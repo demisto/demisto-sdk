@@ -14,7 +14,6 @@ class Command(BaseModel):
 
 
 class Integration(IntegrationScript):
-    display_name: str = ''
     is_fetch: bool = False
     is_feed: bool = False
     category: str

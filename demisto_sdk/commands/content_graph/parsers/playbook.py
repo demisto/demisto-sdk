@@ -1,7 +1,8 @@
 import networkx
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.update_id_set import (
     BUILT_IN_FIELDS,
     get_fields_by_script_argument,
@@ -13,16 +14,22 @@ from demisto_sdk.commands.content_graph.parsers.yaml_content_item import YAMLCon
 
 LIST_COMMANDS = ['Builtin|||setList', 'Builtin|||getList']
 
+
 class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
-    def __init__(self, path: Path, is_test: bool = False) -> None:
+    def __init__(
+        self,
+        path: Path,
+        pack_marketplaces: List[MarketplaceVersions],
+        is_test_playbook: bool = False,
+    ) -> None:
         """ Builds a directed graph representing the playbook and parses it.
 
         Args:
             path (Path): The playbook path.
-            is_test (bool, optional): Whether this is a test playbook or not. Defaults to False.
+            is_test_playbook (bool, optional): Whether this is a test playbook or not. Defaults to False.
         """
-        super().__init__(path)
-        self.is_test: bool = is_test
+        super().__init__(path, pack_marketplaces)
+        self.is_test: bool = is_test_playbook
         self.graph: networkx.DiGraph = build_tasks_graph(self.yml_data)
         self.connect_to_dependencies()
         self.connect_to_tests()

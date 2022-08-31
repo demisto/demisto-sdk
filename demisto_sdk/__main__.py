@@ -2274,12 +2274,13 @@ def error_code(config, **kwargs):
 
 @main.command(
     name='create-content-graph',
-    help='create content graph'
+    help='create content graph',
+    hidden=True,
 )
 @click.help_option(
     '-h', '--help'
 )
-@click.option('-nd', '--no-use-docker', is_flag=True, help="Use docker to run the content graph")
+@click.option('-ud', '--use-docker', is_flag=True, help="Use docker service to run the content graph")
 @click.option('-us', '--use-existing', is_flag=True, help="Use existing service", default=False)
 @click.option('-sd', '--should-dump', is_flag=True, help="Dump the graph to a file", default=False)
 @click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
@@ -2287,50 +2288,19 @@ def error_code(config, **kwargs):
 @click.option('-q', "--quiet", is_flag=True, help="Quiet output, only output results in the end")
 @click.option("-lp", "--log-path", help="Path to store all levels of logs",
               type=click.Path(resolve_path=True))
-def create_content_graph(no_use_docker, use_existing, should_dump, **kwargs):
+def create_content_graph(use_docker: bool = True, use_existing: bool = False, should_dump: bool = False, **kwargs):
     from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.content_graph.content_graph_commands import create_content_graph
     from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import Neo4jContentGraphInterface
     logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
                   quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
                   log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
-    with Neo4jContentGraphInterface() as content_graph_interface:
-        create_content_graph(
-            content_graph_interface=content_graph_interface,
-            use_docker=not no_use_docker,
-            use_existing=use_existing,
-            should_dump=should_dump
-        )
-
-
-@main.command(
-    name='load-content-graph',
-    help='load content graph'
-)
-@click.help_option(
-    '-h', '--help'
-)
-@click.option('-nd', '--no-use-docker', is_flag=True, help="Use docker to run the content graph", default=False)
-@click.option('-cgp', '--content-graph-path', help="Path to the content graph", default=None, type=click.Path(resolve_path=True))
-@click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
-              type=click.IntRange(0, 3, clamp=True), default=2, show_default=True)
-@click.option('-q', "--quiet", is_flag=True, help="Quiet output, only output results in the end")
-@click.option("-lp", "--log-path", help="Path to store all levels of logs",
-              type=click.Path(resolve_path=True))
-def load_content_graph(no_use_docker: bool, content_graph_path: Path, **kwargs):
-    from demisto_sdk.commands.common.logger import logging_setup
-    from demisto_sdk.commands.content_graph.content_graph_commands import load_content_graph
-    from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import Neo4jContentGraphInterface
-    logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
-                  quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
-                  log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
-
-    with Neo4jContentGraphInterface() as content_graph_interface:
-        load_content_graph(
-            content_graph_interface=content_graph_interface,
-            use_docker=not no_use_docker,
-            content_graph_path=content_graph_path,
-        )
+    with Neo4jContentGraphInterface(
+        start_service=not use_existing,
+        should_dump=should_dump,
+        use_docker=use_docker,
+    ) as content_graph_interface:
+        create_content_graph(content_graph_interface)
 
 
 @main.command(

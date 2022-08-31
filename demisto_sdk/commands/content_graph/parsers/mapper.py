@@ -1,14 +1,15 @@
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 from demisto_sdk.commands.common.tools import field_to_cli_name
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
 
 
 class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
-    def __init__(self, path: Path) -> None:
-        super().__init__(path)
+    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
+        super().__init__(path, pack_marketplaces)
         self.type = self.json_data.get('type')
         self.definition_id = self.json_data.get('definitionId')
         self.connect_to_dependencies()
@@ -54,13 +55,17 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
                                 ContentType.INCIDENT_FIELD,
                             )
 
-            else:  # self.type == 'mapping-incoming'
+            elif self.type == 'mapping-incoming':
                 # all the incident fields are the keys of the mapping
                 for incident_field in internal_mapping.keys():
                     self.add_dependency(
                         field_to_cli_name(incident_field),
                         ContentType.INCIDENT_FIELD,
                     )
+            else:
+                raise ValueError(
+                    f'{self.node_id}: Unknown type "{self.type}" - expected "mapping-outgoing" or "mapping-incoming".'
+                )
 
             for internal_mapping in internal_mapping.values():
                 if incident_field_complex := internal_mapping.get('complex', {}):

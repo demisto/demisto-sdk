@@ -6,7 +6,6 @@ from pydantic import DirectoryPath, Field
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.content_graph.common import ContentType
 
 
 
@@ -16,6 +15,7 @@ class ContentItem(BaseContent):
     name: str
     fromversion: str
     toversion: str
+    display_name: str
     deprecated: bool
     description: Optional[str]
 

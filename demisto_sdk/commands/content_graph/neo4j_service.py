@@ -68,7 +68,7 @@ def _wait_until_service_is_up():
     s.get('http://localhost:7474')
 
 
-def start_neo4j_service(use_docker: bool = True):
+def start(use_docker: bool = True):
     """Starting the neo4j service
 
     Args:
@@ -94,7 +94,7 @@ def start_neo4j_service(use_docker: bool = True):
     _wait_until_service_is_up()
 
 
-def stop_neo4j_service(use_docker: bool):
+def stop(use_docker: bool):
     """Stop the neo4j service
 
     Args:
@@ -134,18 +134,18 @@ def _neo4j_admin_command(name: str, command: str):
 def dump(use_docker=True):
     """Dump the content graph to a file
     """
-    stop_neo4j_service(use_docker)
+    stop(use_docker)
     dump_path = "/backups/content-graph.dump" if use_docker else REPO_PATH / "neo4j" / "content-graph.dump"
     command = f'neo4j-admin dump --database=neo4j --to={dump_path}'
     _neo4j_admin_command('dump', command)
-    start_neo4j_service(use_docker)
+    start(use_docker)
 
 
 def load(use_docker=True):
     """Load the content graph from a file
     """
-    stop_neo4j_service(use_docker)
+    stop(use_docker)
     dump_path = "/backups/content-graph.dump" if use_docker else REPO_PATH / "neo4j" / "content-graph.dump"
     command = f'neo4j-admin load --database=neo4j --from={dump_path}'
     _neo4j_admin_command('load', command)
-    start_neo4j_service(use_docker)
+    start(use_docker)

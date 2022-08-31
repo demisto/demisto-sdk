@@ -13,7 +13,7 @@ logger = logging.getLogger('demisto-sdk')
 
 CREATE_NODES_BY_TYPE_TEMPLATE = """
 UNWIND $data AS node_data
-CREATE (n:{labels}{{id: node_data.id}})
+CREATE (n:{labels}{{object_id: node_data.object_id}})
 SET n += node_data
 RETURN count(n) AS nodes_created
 """

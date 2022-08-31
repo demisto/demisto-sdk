@@ -11,7 +11,6 @@ REL_PROPERTY_EXISTENCE_TEMPLATE = 'CREATE CONSTRAINT IF NOT EXISTS FOR ()-[r:{la
 
 def create_constraints(tx: Transaction) -> None:
     create_nodes_constraints(tx)
-    # create_relationships_constraints(tx)
 
 
 def create_nodes_constraints(tx: Transaction) -> None:

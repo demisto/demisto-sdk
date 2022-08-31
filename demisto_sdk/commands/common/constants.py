@@ -147,6 +147,8 @@ class FileType(str, Enum):
     BUILD_CONFIG_FILE = 'build-config-file'
     PARSING_RULE = 'parsingrule'
     MODELING_RULE = 'modelingrule'
+    MODELING_RULE_TEST_DATA = 'modelingruletestdata'
+    MODELING_RULE_XIF = 'modelingrulexif'
     CORRELATION_RULE = 'correlationrule'
     XSIAM_DASHBOARD = 'xsiamdashboard'
     XSIAM_DASHBOARD_IMAGE = 'xsiamdashboardimage'

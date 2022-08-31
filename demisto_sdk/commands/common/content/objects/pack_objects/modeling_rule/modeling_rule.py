@@ -1,10 +1,11 @@
 import shutil
 import re
+from pprint import pformat
 from typing import List, Optional, Union
 
 import demisto_client
 from packaging.version import Version
-from wcmatch.pathlib import Path
+from wcmatch.pathlib import IGNORECASE, Path
 from pprint import pformat
 
 import demisto_sdk.commands.common.content.errors as exc
@@ -133,7 +134,7 @@ class ModelingRule(YAMLContentUnifiedObject):
             Testdata file path or None if testdata file is not found.
         """
         patterns = ["*_testdata.json"]
-        return next(self.path.parent.glob(patterns=patterns, flags=IGNORECASE), None)
+        return next(self.path.parent.glob(patterns=patterns, flags=IGNORECASE), None)  # type: ignore
 
     def type(self):
         return FileType.MODELING_RULE

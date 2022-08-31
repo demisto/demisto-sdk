@@ -14,12 +14,14 @@ from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (
     API_MODULES_PACK, AUTHOR_IMAGE_FILE_NAME, CONTENT_ENTITIES_DIRS,
-    DEFAULT_CONTENT_ITEM_TO_VERSION, DEFAULT_ID_SET_PATH, GENERIC_FIELDS_DIR,
-    GENERIC_TYPES_DIR, IGNORED_PACK_NAMES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
+    DEFAULT_CONTENT_ITEM_TO_VERSION, GENERIC_FIELDS_DIR, GENERIC_TYPES_DIR,
+    IGNORED_PACK_NAMES, OLDEST_SUPPORTED_VERSION, PACKS_DIR,
     PACKS_PACK_META_FILE_NAME, SKIP_RELEASE_NOTES_FOR_TYPES,
     VALIDATION_USING_GIT_IGNORABLE_DATA, FileType, FileType_ALLOWED_TO_DELETE,
     PathLevel)
 from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.content_constant_paths import \
+    DEFAULT_ID_SET_PATH
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
                                                 FOUND_FILES_AND_IGNORED_ERRORS,
                                                 PRESET_ERROR_TO_CHECK,
@@ -1666,16 +1668,19 @@ class ValidateManager:
 
         # filter files only to relevant files
         filtered_modified, old_format_files, _ = self.filter_to_relevant_files(modified_files)
-        filtered_renamed, _, renamed_files_valid_types = self.filter_to_relevant_files(renamed_files)
+        filtered_renamed, _, valid_types_renamed = self.filter_to_relevant_files(renamed_files)
         filtered_modified = filtered_modified.union(filtered_renamed)
-        filtered_added, new_files_in_old_format, added_files_valid_types = self.filter_to_relevant_files(added_files)
-        old_format_files = old_format_files.union(new_files_in_old_format)
-        valid_types = all([added_files_valid_types, renamed_files_valid_types])
+
+        filtered_added, old_format_added, valid_types_added = self.filter_to_relevant_files(added_files)
+        old_format_files |= old_format_added
+
+        valid_types = all((valid_types_added, valid_types_renamed))
 
         # extract metadata files from the recognised changes
         changed_meta = self.pack_metadata_extraction(modified_files, added_files, renamed_files)
-
-        return filtered_modified, filtered_added, changed_meta, old_format_files, valid_types
+        filtered_changed_meta, old_format_changed, _ = self.filter_to_relevant_files(changed_meta)
+        old_format_files |= old_format_changed
+        return filtered_modified, filtered_added, filtered_changed_meta, old_format_files, valid_types
 
     def pack_metadata_extraction(self, modified_files, added_files, renamed_files):
         """Extract pack metadata files from the modified and added files

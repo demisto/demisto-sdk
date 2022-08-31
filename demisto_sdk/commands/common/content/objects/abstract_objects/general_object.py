@@ -38,8 +38,8 @@ class GeneralObject(object):
         self._modified = modified
 
     @abstractmethod
-    def _unserialize(self):
-        """Implementation for unserializing object - JSON/YAML/TEXT"""
+    def _deserialize(self):
+        """Implementation for deserializing object - JSON/YAML/TEXT"""
         pass
 
     @abstractmethod

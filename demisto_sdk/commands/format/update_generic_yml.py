@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import (ENTITY_TYPE_TO_DIR,
                                                    PLAYBOOK,
                                                    TEST_PLAYBOOKS_DIR,
                                                    FileType)
+from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.tools import (
     _get_file_id, find_type, get_entity_id_by_entity_type,
@@ -35,7 +36,6 @@ class BaseUpdateYML(BaseUpdate):
         'PlaybookYMLFormat': '',
         'TestPlaybookYMLFormat': '',
     }
-    CONF_PATH = "./Tests/conf.json"
 
     def __init__(self,
                  input: str = '',
@@ -61,7 +61,7 @@ class BaseUpdateYML(BaseUpdate):
         Returns:
             The content of the json file
         """
-        with open(self.CONF_PATH) as data_file:
+        with open(CONF_PATH) as data_file:
             return json.load(data_file)
 
     def get_id_and_version_path_object(self):
@@ -205,7 +205,7 @@ class BaseUpdateYML(BaseUpdate):
             conf_json_content = self._load_conf_file()
         except FileNotFoundError:
             if self.verbose:
-                click.secho(f'Unable to find {self.CONF_PATH} - skipping update.', fg='yellow')
+                click.secho(f'Unable to find {CONF_PATH} - skipping update.', fg='yellow')
             return
         conf_json_test_configuration = conf_json_content['tests']
         content_item_id = _get_file_id(file_type, self.data)
@@ -232,7 +232,7 @@ class BaseUpdateYML(BaseUpdate):
 
     def _save_to_conf_json(self, conf_json_content: Dict) -> None:
         """Save formatted JSON data to destination file."""
-        with open(self.CONF_PATH, 'w') as file:
+        with open(CONF_PATH, 'w') as file:
             json.dump(conf_json_content, file, indent=4)
 
     def update_deprecate(self, file_type=None):

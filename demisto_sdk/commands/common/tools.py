@@ -171,6 +171,15 @@ SDK_PYPI_VERSION = r'https://pypi.org/pypi/demisto-sdk/json'
 SUFFIX_TO_REMOVE = ('_dev', '_copy')
 
 
+def generate_xsiam_normalized_name(file_name, prefix):
+    if file_name.startswith(f'{prefix}-external-'):
+        return file_name
+    elif file_name.startswith(f'{prefix}-'):
+        return file_name.replace(f'{prefix}-', f'{prefix}-external-')
+    else:
+        return f'{prefix}-external-{file_name}'
+
+
 def set_log_verbose(verbose: bool):
     global LOG_VERBOSE
     LOG_VERBOSE = verbose
@@ -1085,7 +1094,7 @@ def filter_files_by_type(file_paths=None, skip_file_types=None) -> set:
 
 
 def pack_name_to_path(pack_name):
-    return os.path.join(PACKS_DIR, pack_name)
+    return os.path.join(get_content_path(), PACKS_DIR, pack_name)
 
 
 def pack_name_to_posix_path(pack_name):
@@ -1093,7 +1102,7 @@ def pack_name_to_posix_path(pack_name):
 
 
 def get_pack_ignore_file_path(pack_name):
-    return os.path.join(PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)
+    return os.path.join(get_content_path(), PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)
 
 
 def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:  # type: ignore

@@ -13,7 +13,7 @@ from demisto_sdk.commands.validate.validate_manager import ValidateManager
 # TODO Create a new git Content branch, and work with that branch. And the end: git checkout master, git reset hard
 
 
-def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir, insecure: bool = False):
+def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir):
     # Importing TestSuite classes from Demisto-SDK, as they are excluded when pip installing the SDK.
     e2e_tests_utils.cli(f'mkdir {tmpdir}/git')
     e2e_tests_utils.git_clone_demisto_sdk(destination_folder=f'{tmpdir}/git/demisto-sdk', sdk_git_branch='testsuite-playbook')
@@ -55,12 +55,11 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir, insecure: bool = False)
     Uploader(input=f'{tmpdir}/Packs/{pack_name}/Playbooks/{playbook_name}.yml', insecure=True).upload()
 
 
-def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = False):
+def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
     # TODO Remove the random
     pack_name = 'foo_' + str(random.randint(1, 1000))
     playbook_name = 'pb_' + str(random.randint(1, 1000))
 
-    print(f'Trying to connect to server, insecure: {insecure}')
     demisto_client = e2e_tests_utils.connect_to_server(insecure=insecure)
     body = [
         {

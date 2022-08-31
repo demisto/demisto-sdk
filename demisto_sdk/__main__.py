@@ -2296,7 +2296,7 @@ def error_code(config, **kwargs):
 )
 @click.option('-ud', '--use-docker', is_flag=True, help="Use docker service to run the content graph")
 @click.option('-us', '--use-existing', is_flag=True, help="Use existing service", default=False)
-@click.option('-o', '--output-file', type=click.Path, help="dump file output", default=None)
+@click.option('-o', '--output-file', type=click.Path(), help="dump file output", default=None)
 @click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
               type=click.IntRange(0, 3, clamp=True), default=2, show_default=True)
 @click.option('-q', "--quiet", is_flag=True, help="Quiet output, only output results in the end")

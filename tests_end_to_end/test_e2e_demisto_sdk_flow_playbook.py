@@ -37,7 +37,7 @@ def test_e2e_demisto_sdk_flow_playbook_testsuite(tmpdir, insecure: bool = False)
     e2e_tests_utils.cli(f'mkdir {tmpdir}/Packs/{pack_name}_testsuite')
 
     print(f'Trying to download the updated playbook from {playbook_name} to {tmpdir}/Packs/{pack_name}_testsuite/Playbooks')
-    Downloader(output=f'{tmpdir}/Packs/{pack_name}_testsuite', input=playbook_name, insecure=True).download()
+    Downloader(output=f'{tmpdir}/Packs/{pack_name}_testsuite', input=[playbook_name], insecure=True).download()
     assert path.exists(f'{tmpdir}/Packs/{pack_name}_testsuite/Playbooks/{playbook_name}.yml')
 
     print('Generating docs (creating a readme file)'
@@ -99,7 +99,7 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = False):
     e2e_tests_utils.cli(f'mkdir -p {tmpdir}/Packs/{pack_name}_client')
 
     print(f'Trying to download the updated playbook from {playbook_name} to {tmpdir}/Packs/{pack_name}_client/Playbooks')
-    Downloader(output=f'{tmpdir}/Packs/{pack_name}_client', input=playbook_name, insecure=True).download()
+    Downloader(output=f'{tmpdir}/Packs/{pack_name}_client', input=[playbook_name], insecure=True).download()
     assert path.exists(f'{tmpdir}/Packs/{pack_name}_client/Playbooks/{playbook_name}.yml')
 
     print('Generating docs (creating a readme file)'

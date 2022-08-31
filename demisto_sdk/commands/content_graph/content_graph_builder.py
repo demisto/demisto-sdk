@@ -54,11 +54,12 @@ class ContentGraphBuilder:
         self.nodes: Nodes = Nodes()
         self.relationships: Relationships = Relationships()
         self.repository: Repository = self._create_repository(repo_path)
-
+        logger.info('Collecting nodes and relationships')
         for pack in self.repository.packs:
             self.nodes.update(pack.to_nodes())
             self.relationships.update(pack.relationships)
-
+        logger.info('Finished collecting nodes and relationships')
+        
     def _create_repository(self, path: Path) -> Repository:
         """ Parses the repository and creates a repostitory model.
 

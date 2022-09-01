@@ -15,7 +15,7 @@ def test_objects_factory(pack):
 
 
 def test_prefix(pack):
-    xsiam_report = get_xsiam_report(pack, 'xsiamreport-external-xsiam_report_name')
+    xsiam_report = get_xsiam_report(pack, 'external-xsiamreport-xsiam_report_name')
 
     obj = XSIAMReport(xsiam_report.xsiam_report_tmp_path)
     assert obj.normalize_file_name() == xsiam_report.xsiam_report_tmp_path.name
@@ -23,4 +23,4 @@ def test_prefix(pack):
     xsiam_report = get_xsiam_report(pack, 'xsiam_report_name')
 
     obj = XSIAMReport(xsiam_report.xsiam_report_tmp_path)
-    assert obj.normalize_file_name() == f"xsiamreport-external-{xsiam_report.xsiam_report_tmp_path.name}"
+    assert obj.normalize_file_name() == f"external-xsiamreport-{xsiam_report.xsiam_report_tmp_path.name}"

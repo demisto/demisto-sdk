@@ -171,6 +171,23 @@ class PackRelationshipsVerifier:
 
 
 class TestParsersAndModels:
+    def test_classifier_parser_below_min_marketplace_version(self, pack: Pack):
+        """
+        Given:
+            - A pack with a classifier.
+        When:
+            - Classifier's toversion is 5.9.9.
+            - Creating the content item's parser.
+        Then:
+            - Verify NotAContentItemException is raised, meaning we skip parsing the classifier.
+        """
+        from demisto_sdk.commands.content_graph.parsers.classifier import ClassifierParser
+        classifier = pack.create_classifier('TestClassifier', load_json('classifier.json'))
+        classifier.update({'toVersion': '5.9.9'})
+        classifier_path = Path(classifier.path)
+        with pytest.raises(NotAContentItemException):
+            ClassifierParser(classifier_path, list(MarketplaceVersions))
+
     def test_classifier_parser(self, pack: Pack):
         """
         Given:

@@ -1,9 +1,10 @@
 import logging
 from abc import ABCMeta, abstractmethod
+from packaging.version import Version
 from pathlib import Path
 from typing import Dict, Optional, List, Type
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import MarketplaceVersions, MARKETPLACE_MIN_VERSION
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship, UNIFIED_FILES_SUFFIXES, Relationships
 from demisto_sdk.commands.content_graph.parsers import *
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
@@ -164,6 +165,19 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             bool: True iff the file path is of a content item.
         """
         return ContentItemParser.is_package(path) or ContentItemParser.is_unified_file(path)
+    
+    def should_skip_parsing(self) -> bool:
+        """ Returns true if any of the minimal conditions for parsing is not met.
+
+        Returns:
+            bool: Whether or not this content item should be parsed.
+        """
+        return not all([
+            self.is_above_marketplace_min_version(),
+        ])
+    
+    def is_above_marketplace_min_version(self) -> bool:
+        return Version(self.toversion) >= Version(MARKETPLACE_MIN_VERSION)
 
     def add_relationship(
         self,

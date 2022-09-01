@@ -1,5 +1,4 @@
 import logging
-from packaging.version import Version
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -17,7 +16,7 @@ class JSONContentItemParser(ContentItemParser):
         super().__init__(path, pack_marketplaces)
         self.json_data: Dict[str, Any] = self.get_json()
 
-        if Version(self.toversion) < Version('6.0.0'):
+        if self.should_skip_parsing():
             raise NotAContentItemException
 
     @property

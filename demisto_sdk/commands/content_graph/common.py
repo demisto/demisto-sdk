@@ -132,6 +132,8 @@ class ContentType(str, enum.Enum):
     @staticmethod
     def pack_folders(pack_path: Path) -> Iterator[Path]:
         for content_type in ContentType.content_items():
+            if content_type == ContentType.MAPPER:
+                continue
             pack_folder = pack_path / content_type.as_folder
             if pack_folder.is_dir() and not pack_folder.name.startswith('.'):
                 yield pack_folder

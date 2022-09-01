@@ -29,6 +29,10 @@ class YAMLContentItemParser(ContentItemParser):
         return self.yml_data.get('name')
 
     @property
+    def display_name(self) -> str:
+        return self.name or self.object_id
+
+    @property
     def deprecated(self) -> bool:
         return self.yml_data.get('deprecated', False)
 

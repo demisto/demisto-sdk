@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Dict, Optional, List, Type
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.tools import get_display_name
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship, UNIFIED_FILES_SUFFIXES, Relationships
 from demisto_sdk.commands.content_graph.parsers import *
 from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
@@ -115,8 +114,9 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         pass
 
     @property
+    @abstractmethod
     def display_name(self) -> str:
-        return get_display_name(self.path)
+        pass
 
     @property
     @abstractmethod

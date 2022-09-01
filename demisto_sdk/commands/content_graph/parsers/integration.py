@@ -26,6 +26,10 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.connect_to_api_modules()
         self.connect_to_tests()
 
+    @property
+    def display_name(self) -> str:
+        return self.yml_data.get('display')
+
     def connect_to_commands(self) -> None:
         """ Creates HAS_COMMAND relationships with the integration commands.
         Command's properties are stored in the relationship's data,

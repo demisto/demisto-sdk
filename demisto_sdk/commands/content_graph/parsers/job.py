@@ -17,6 +17,10 @@ class JobParser(JSONContentItemParser, content_type=ContentType.JOB):
         return self.json_data.get('details')
 
     def connect_to_dependencies(self) -> None:
-        # todo: selectedFeeds - it's an *instances* list, not integrations!
+        if playbook := self.json_data.get('selectedFeeds'):
+            raise Exception(
+                'When supported, need to make sure selectedFeeds is a list of integrations '
+                'on server side, because currently it\'s a list of instances.'
+            )
         if playbook := self.json_data.get('playbookId'):
             self.add_dependency(playbook, ContentType.PLAYBOOK)

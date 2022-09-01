@@ -17,16 +17,12 @@ class ContentItemsList(list):
         self.content_type: ContentType = content_type
         super().__init__()
 
-    def append_conditionally(self, content_item: ContentItemParser) -> bool:
+    def append(self, content_item: ContentItemParser) -> None:
         """ Appends if the content item is in the correct type.
 
         Args:
             content_item (ContentItemParser): The content item.
-
-        Returns:
-            bool: True iff the content item was appended.
         """
-        if isinstance(content_item, ContentItemParser) and content_item.content_type == self.content_type:
-            self.append(content_item)
-            return True
-        return False
+        if not isinstance(content_item, ContentItemParser) or content_item.content_type != self.content_type:
+            raise TypeError(f'Expected a ContentItemParser of type {self.content_type}')
+        self.append(content_item)

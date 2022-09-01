@@ -64,8 +64,11 @@ class PackContentItems:
             NotAContentItemException: If did not find any matching content item list.
         """
         for content_item_list in self.iter_lists():
-            if content_item_list.append_conditionally(obj):
+            try:
+                content_item_list.append(obj)
                 break
+            except TypeError:
+                continue
         else:
             raise NotAContentItemException
 

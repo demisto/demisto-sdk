@@ -51,7 +51,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def __exit__(self, *args) -> None:
         if self.output_file:
-            neo4j_service.dump(self.use_docker)
+            neo4j_service.dump(self.output_file, self.use_docker)
         self.driver.close()
 
     def close(self) -> None:

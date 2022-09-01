@@ -16,10 +16,11 @@ class Repository(BaseModel):
     packs: List[Pack]
     
     def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions):
-        from multiprocessing.pool import Pool
+        # TODO understand why multiprocessing is not working
+        from multiprocessing.pool import ThreadPool
         logger.info('starting repo dump')
         start_time = time.time()
-        with Pool() as pool:
+        with ThreadPool() as pool:
             pool.map(lambda pack: pack.dump(dir / pack.name, marketplace), self.packs)
         time_taken = time.time() - start_time
         logger.info(f'ending repo dump. Took {time_taken} seconds')

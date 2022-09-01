@@ -156,8 +156,3 @@ def load(input_path: Path, use_docker=True):
     command = f'neo4j-admin load --database=neo4j --from={dump_path}'
     _neo4j_admin_command('load', command)
     start(use_docker)
-
-import os
-REPO_PATH = Path('/Users/ierukhimovic/dev/demisto/content')
-os.chdir(REPO_PATH)
-load('/Users/ierukhimovic/Downloads/content-graph (2).dump')

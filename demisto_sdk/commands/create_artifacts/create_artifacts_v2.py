@@ -26,7 +26,6 @@ class ContentArtifactManager:
             repo: Repository = marshal_content_graph(
                 content_graph_interface,
                 marketplace=self.marketplace,
-                with_dependencies=True,
             )
         shutil.rmtree(self.output, ignore_errors=True)
         repo.dump(self.output, self.marketplace)

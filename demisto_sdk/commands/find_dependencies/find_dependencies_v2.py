@@ -14,7 +14,7 @@ class PackDependencies:
     def __init__(self, content_graph: ContentGraphInterface, marketplace: MarketplaceVersions, output_path: Path) -> None:
         self.content_graph = content_graph
         self.marketplace = marketplace
-        self.output_path = output_path
+        self.output_path = Path(output_path)
 
     def run(self) -> None:
         self.content_graph.create_pack_dependencies()

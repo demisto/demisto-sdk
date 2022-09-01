@@ -1,5 +1,5 @@
 import shutil
-from typing import Union, List, Optional
+from typing import List, Optional, Union
 
 import demisto_client
 from wcmatch.pathlib import Path

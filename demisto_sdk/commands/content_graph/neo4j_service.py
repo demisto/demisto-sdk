@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+import shutil
 
 import docker
 import requests
@@ -131,21 +132,27 @@ def _neo4j_admin_command(name: str, command: str):
         )
 
 
-def dump(use_docker=True):
+def dump(output_path: Path, use_docker=True):
     """Dump the content graph to a file
     """
     stop(use_docker)
-    dump_path = "/backups/content-graph.dump" if use_docker else REPO_PATH / "neo4j" / "content-graph.dump"
+    dump_path = Path("/backups/content-graph.dump") if use_docker else output_path
     command = f'neo4j-admin dump --database=neo4j --to={dump_path}'
     _neo4j_admin_command('dump', command)
+    if use_docker:
+        shutil.copy(dump_path, output_path)
     start(use_docker)
 
 
-def load(use_docker=True):
+def load(input_path: Path, use_docker=True):
     """Load the content graph from a file
     """
     stop(use_docker)
-    dump_path = "/backups/content-graph.dump" if use_docker else REPO_PATH / "neo4j" / "content-graph.dump"
+    dump_path = Path("/backups/content-graph.dump") if use_docker else input_path
+    if use_docker:
+        Path.mkdir(REPO_PATH / 'neo4j' / 'backups', parents=True, exist_ok=True)
+        shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
+        shutil.copy(input_path, REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump')
     command = f'neo4j-admin load --database=neo4j --from={dump_path}'
     _neo4j_admin_command('load', command)
     start(use_docker)

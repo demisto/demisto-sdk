@@ -1,3 +1,4 @@
+from pathlib import Path
 import neo4j
 from typing import Any, Dict, List, Optional
 from demisto_sdk.commands.common.constants import MarketplaceVersions
@@ -34,7 +35,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         self,
         start_service: bool = False,
         use_docker: bool = True,
-        should_dump: bool = False,
+        output_file: Path = None,
     ) -> None:
         self.driver: neo4j.Neo4jDriver = neo4j.GraphDatabase.driver(
             NEO4J_DATABASE_URL,
@@ -42,14 +43,14 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         )
         if start_service:
             neo4j_service.start(use_docker)
-        self.should_dump = should_dump
+        self.output_file = output_file
         self.use_docker = use_docker
 
     def __enter__(self) -> 'Neo4jContentGraphInterface':
         return self
 
     def __exit__(self, *args) -> None:
-        if self.should_dump:
+        if self.output_file:
             neo4j_service.dump(self.use_docker)
         self.driver.close()
 

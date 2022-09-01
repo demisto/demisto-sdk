@@ -33,7 +33,7 @@ class ContentGraphInterface(ABC):
         pass
     
     @abstractmethod
-    def get_node_by_path(self, path: Path):
+    def get_node_by_path(self, path: Path, marketplace: MarketplaceVersions):
         pass
     
     @abstractmethod
@@ -41,7 +41,7 @@ class ContentGraphInterface(ABC):
         pass
     
     @abstractmethod
-    def get_nodes_by_type(self, content_type: ContentType, marketplace: MarketplaceVersions) -> Any:
+    def get_nodes_by_type(self, content_type: ContentType) -> Any:
         pass
 
     @abstractmethod

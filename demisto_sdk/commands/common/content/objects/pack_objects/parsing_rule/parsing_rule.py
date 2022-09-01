@@ -33,5 +33,8 @@ class ParsingRule(YAMLContentUnifiedObject):
         return FileType.PARSING_RULE
 
     def dump(self, dest_dir: Optional[Union[Path, str]] = None) -> List[Path]:
-        shutil.copyfile(self._path, self.path.replace('external-', ''))
+        created_files: List[Path] = []
+        created_files.extend(super().dump(dest_dir=dest_dir))
+        new_file_path = str(created_files[0])
+        shutil.copyfile(new_file_path, new_file_path.replace('external-', ''))
         return super().dump(dest_dir)

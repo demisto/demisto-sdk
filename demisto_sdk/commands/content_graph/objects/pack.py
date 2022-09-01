@@ -124,7 +124,7 @@ class Pack(BaseContent, PackMetadata):
         metadata['dependencies'] = self.dependencies
         metadata['contentItems'] = {}
         for content_item in self.content_items:
-            if content_item == ContentType.TEST_PLAYBOOK:
+            if content_item.content_type == ContentType.TEST_PLAYBOOK:
                 continue
             try:
                 metadata['contentItems'].setdefault(content_item.content_type.server_name, []).append(content_item.summary())

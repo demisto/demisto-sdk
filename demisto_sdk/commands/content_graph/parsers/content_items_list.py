@@ -23,6 +23,8 @@ class ContentItemsList(list):
         Args:
             content_item (ContentItemParser): The content item.
         """
-        if not isinstance(content_item, ContentItemParser) or content_item.content_type != self.content_type:
-            raise TypeError(f'Expected a ContentItemParser of type {self.content_type}')
-        self.append(content_item)
+        if content_item.content_type != self.content_type:
+            raise TypeError(
+                f'{content_item.node_id}: Expected a ContentItemParser of type {self.content_type}'
+            )
+        super().append(content_item)

@@ -5,6 +5,8 @@
 * Fixed an issue in **validate**, where backward-compatibility failures prevented other validations from running.
 * Fixed an issue in **validate**, where content-like files under infrastructure paths were not ignored.
 * Fixed an issue in the AMI mapping, where server versions were missing.
+* Change the way the normalize name is set for external files.
+* Added dump function to XSIAM pack objects to dulicate the files.
 
 ## 1.7.3
 

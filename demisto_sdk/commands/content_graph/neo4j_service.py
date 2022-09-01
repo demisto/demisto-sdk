@@ -150,7 +150,14 @@ def load(input_path: Path, use_docker=True):
     stop(use_docker)
     dump_path = Path("/backups/content-graph.dump") if use_docker else input_path
     if use_docker:
-        shutil.copy(input_path, dump_path)
+        Path.mkdir(REPO_PATH / 'neo4j' / 'backups', parents=True, exist_ok=True)
+        shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
+        shutil.copy(input_path, REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump')
     command = f'neo4j-admin load --database=neo4j --from={dump_path}'
     _neo4j_admin_command('load', command)
     start(use_docker)
+
+import os
+REPO_PATH = Path('/Users/ierukhimovic/dev/demisto/content')
+os.chdir(REPO_PATH)
+load('/Users/ierukhimovic/Downloads/content-graph (2).dump')

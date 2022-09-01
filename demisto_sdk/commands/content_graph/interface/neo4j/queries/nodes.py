@@ -88,8 +88,9 @@ def get_nodes_by_type(tx: Transaction, content_type: ContentType):
     return run_query(tx, query).data()
 
 
-def get_node_py_path(tx: Transaction, path: Path):
+def get_node_py_path(tx: Transaction, path: Path, marketplace: MarketplaceVersions):
     query = f"""MATCH (node:BaseContent {{path: '{path}'}})
+    WHERE '{marketplace}' IN node.marketplaces
     RETURN node
     """
     return run_query(tx, query).single()['node']

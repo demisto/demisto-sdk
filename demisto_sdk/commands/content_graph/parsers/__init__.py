@@ -2,6 +2,7 @@ from demisto_sdk.commands.content_graph.parsers.classifier import ClassifierPars
 from demisto_sdk.commands.content_graph.parsers.correlation_rule import CorrelationRuleParser
 from demisto_sdk.commands.content_graph.parsers.dashboard import DashboardParser
 from demisto_sdk.commands.content_graph.parsers.generic_definition import GenericDefinitionParser
+from demisto_sdk.commands.content_graph.parsers.generic_field import GenericFieldParser
 from demisto_sdk.commands.content_graph.parsers.generic_module import GenericModuleParser
 from demisto_sdk.commands.content_graph.parsers.generic_type import GenericTypeParser
 from demisto_sdk.commands.content_graph.parsers.incident_field import IncidentFieldParser

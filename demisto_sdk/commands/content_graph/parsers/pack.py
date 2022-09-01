@@ -26,6 +26,7 @@ class PackContentItems:
         self.correlation_rule = ContentItemsList(content_type=ContentType.CORRELATION_RULE)
         self.dashboard = ContentItemsList(content_type=ContentType.DASHBOARD)
         self.generic_definition = ContentItemsList(content_type=ContentType.GENERIC_DEFINITION)
+        self.generic_field = ContentItemsList(content_type=ContentType.GENERIC_FIELD)
         self.generic_module = ContentItemsList(content_type=ContentType.GENERIC_MODULE)
         self.generic_type = ContentItemsList(content_type=ContentType.GENERIC_TYPE)
         self.incident_field = ContentItemsList(content_type=ContentType.INCIDENT_FIELD)

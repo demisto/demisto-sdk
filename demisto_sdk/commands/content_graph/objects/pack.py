@@ -8,6 +8,7 @@ from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
 from demisto_sdk.commands.content_graph.objects.generic_definition import GenericDefinition
+from demisto_sdk.commands.content_graph.objects.generic_field import GenericField
 from demisto_sdk.commands.content_graph.objects.generic_module import GenericModule
 from demisto_sdk.commands.content_graph.objects.generic_type import GenericType
 from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
@@ -37,6 +38,7 @@ class PackContentItems(BaseModel):
     correlation_rule: List[CorrelationRule] = Field([], alias=ContentType.CORRELATION_RULE.value)
     dashboard: List[Dashboard] = Field([], alias=ContentType.DASHBOARD.value)
     generic_definition: List[GenericDefinition] = Field([], alias=ContentType.GENERIC_DEFINITION.value)
+    generic_field: List[GenericField] = Field([], alias=ContentType.GENERIC_FIELD.value)
     generic_module: List[GenericModule] = Field([], alias=ContentType.GENERIC_MODULE.value)
     generic_type: List[GenericType] = Field([], alias=ContentType.GENERIC_TYPE.value)
     incident_field: List[IncidentField] = Field([], alias=ContentType.INCIDENT_FIELD.value)

@@ -20,7 +20,7 @@ def get_all_level_packs_dependencies(tx: Transaction, marketplace: MarketplaceVe
     query = f"""
         MATCH shortestPath((p1:{ContentType.PACK})-[:{Relationship.DEPENDS_ON}*]->(p2:{ContentType.PACK}))
         WHERE id(p1) <> id(p2)
-        AND all(n IN nodes(p) WHERE "{marketplace}" IN n.marketplaces)
+        AND all(n IN nodes(p1) WHERE "{marketplace}" IN n.marketplaces)
         RETURN p1.name as pack_id, p1.file_path as pack_path, collect(p2.name) AS dependencies
     """
     result = run_query(tx, query)

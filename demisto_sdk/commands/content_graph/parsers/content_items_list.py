@@ -17,6 +17,9 @@ class ContentItemsList(list):
         self.content_type: ContentType = content_type
         super().__init__()
 
+    def __eq__(self, __o: object) -> bool:
+        return super().__eq__(__o)
+
     def append(self, content_item: ContentItemParser) -> None:
         """ Appends if the content item is in the correct type.
 

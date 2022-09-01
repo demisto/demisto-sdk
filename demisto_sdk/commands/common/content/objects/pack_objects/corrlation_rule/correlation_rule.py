@@ -1,6 +1,8 @@
-from typing import Union
+import shutil
+from typing import Union, List
 
 import demisto_client
+from cfgv import Optional
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import CORRELATION_RULE, FileType
@@ -30,3 +32,7 @@ class CorrelationRule(YAMLContentObject):
 
     def type(self):
         return FileType.CORRELATION_RULE
+
+    def dump(self, dest_dir: Optional[Union[Path, str]] = None) -> List[Path]:
+        shutil.copyfile(self._path, self.path.replace('external-', ''))
+        return super().dump(dest_dir)

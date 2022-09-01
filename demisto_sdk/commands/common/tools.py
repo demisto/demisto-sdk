@@ -172,12 +172,12 @@ SUFFIX_TO_REMOVE = ('_dev', '_copy')
 
 
 def generate_xsiam_normalized_name(file_name, prefix):
-    if file_name.startswith(f'{prefix}-external-'):
+    if file_name.startswith(f'external-{prefix}-'):
         return file_name
     elif file_name.startswith(f'{prefix}-'):
-        return file_name.replace(f'{prefix}-', f'{prefix}-external-')
+        return file_name.replace(f'{prefix}-', f'external-{prefix}-')
     else:
-        return f'{prefix}-external-{file_name}'
+        return f'external-{prefix}-{file_name}'
 
 
 def set_log_verbose(verbose: bool):

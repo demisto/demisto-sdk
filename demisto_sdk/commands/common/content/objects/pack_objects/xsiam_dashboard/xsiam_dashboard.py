@@ -1,4 +1,5 @@
-from typing import Union
+import shutil
+from typing import Union, Optional, List
 
 import demisto_client
 from wcmatch.pathlib import Path
@@ -30,3 +31,7 @@ class XSIAMDashboard(JSONContentObject):
 
     def type(self):
         return FileType.XSIAM_DASHBOARD
+
+    def dump(self, dest_dir: Optional[Union[Path, str]] = None) -> List[Path]:
+        shutil.copyfile(self._path, self.path.replace('external-', ''))
+        return super().dump(dest_dir)

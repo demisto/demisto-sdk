@@ -1,8 +1,7 @@
 import shutil
-from typing import Union, List
+from typing import Union, List, Optional
 
 import demisto_client
-from cfgv import Optional
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import CORRELATION_RULE, FileType

@@ -37,4 +37,4 @@ class ParsingRule(YAMLContentUnifiedObject):
         created_files.extend(super().dump(dest_dir=dest_dir))
         new_file_path = str(created_files[0])
         shutil.copyfile(new_file_path, new_file_path.replace('external-', ''))
-        return super().dump(dest_dir)
+        return created_files

@@ -9,6 +9,7 @@
 * Fixed an issue in the AMI mapping, where server versions were missing.
 * Change the way the normalize name is set for external files.
 * Added dump function to XSIAM pack objects to dulicate the files.
+* Fixed an issue where the `contribution_converter` did not support changes made to ApiModules.
 
 ## 1.7.3
 

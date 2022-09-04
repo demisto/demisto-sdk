@@ -6,6 +6,7 @@ import subprocess
 import tempfile
 from io import open
 from pathlib import Path
+from typing import Optional
 
 from ruamel.yaml.scalarstring import (PlainScalarString,
                                       SingleQuotedScalarString)
@@ -74,6 +75,7 @@ class YmlSplitter:
         self.autocreate_dir = not no_auto_create_dir
         with open(self.input, 'rb') as yml_file:
             self.yml_data = yaml.load(yml_file)
+        self.api_module_path: Optional[str] = None
 
     def get_output_path(self):
         """Get processed output path
@@ -88,7 +90,7 @@ class YmlSplitter:
             output_path = output_path / pascal_case(code_name)
         return output_path
 
-    def extract_to_package_format(self) -> int:
+    def extract_to_package_format(self, executed_from_contrib_converter: bool = False) -> int:
         """Extracts the self.input yml file into several files according to the XSOAR standard of the package format.
 
         Returns:
@@ -104,7 +106,7 @@ class YmlSplitter:
         output_path.mkdir(parents=True, exist_ok=True)
         base_name = output_path.name if not self.base_name else self.base_name
         code_file = output_path / base_name
-        self.extract_code(code_file)
+        self.extract_code(code_file, executed_from_contrib_converter)
         script = self.yml_data.get('script', {})
         lang_type: str = script.get('type', '') if self.file_type == 'integration' else self.yml_data.get('type')
         self.extract_image("{}/{}_image.png".format(output_path, base_name))
@@ -236,7 +238,7 @@ class YmlSplitter:
                         log_color=LOG_COLORS.GREEN)
         return 0
 
-    def extract_code(self, code_file_path) -> int:
+    def extract_code(self, code_file_path, executed_from_contrib_converter: bool = False) -> int:
         """Extracts the code from the yml_file.
         If code_file_path doesn't contain the proper extension will add it.
 
@@ -270,7 +272,7 @@ class YmlSplitter:
                 if lang_type == TYPE_PWSH:
                     code_file.write(". $PSScriptRoot\\CommonServerPowerShell.ps1\n")
                     self.lines_inserted_at_code_start += 1
-            script = self.replace_imported_code(script)
+            script = self.replace_imported_code(script, executed_from_contrib_converter)
             script = self.replace_section_headers_code(script)
             code_file.write(script)
             if script and script[-1] != '\n':
@@ -367,7 +369,25 @@ class YmlSplitter:
         if self.logging:
             print_color(log_msg, log_color)
 
-    def replace_imported_code(self, script):
+    def update_api_module_contribution(self, lines: list, imported_line: str):
+        """
+            save the api module changes done by the contributor to the api module file before it is replaced in the
+            integration code.
+            :param lines: the integration lines.
+            :param imported_line: the imported line in the code, represents the Api Module used.
+            :return: None
+        """
+        imported_line_arr = imported_line.split(' ')  # example: imported_line = from CorIRApiModule import *
+        updated_lines = lines[4: -3]  # ignore first 4 lines and last 3 line.
+        if len(imported_line_arr) >= 3 and imported_line_arr[0] == 'from' and imported_line_arr[2] == 'import':
+            module_name = imported_line_arr[1]
+            self.api_module_path = os.path.join('./Packs', 'ApiModules', 'Scripts', module_name, module_name + '.py')
+            with open(self.api_module_path, 'w') as f:
+                f.write('from CommonServerPython import *  # noqa: F401\n')
+                f.write('import demistomock as demisto  # noqa: F401\n')
+                f.write('\n'.join(updated_lines))
+
+    def replace_imported_code(self, script, executed_from_contrib_converter: bool = False):
         # this is how we check that generated code exists, and the syntax of the generated code is up to date
         if '### GENERATED CODE ###:' in script and \
                 '### END GENERATED CODE ###' in script:
@@ -376,6 +396,8 @@ class YmlSplitter:
                 code = match.group(1)
                 lines = code.split('\n')
                 imported_line = lines[0][2:]  # the first two chars are not part of the code
+                if executed_from_contrib_converter:
+                    self.update_api_module_contribution(lines, imported_line)
                 self.print_logs(f'Replacing code block with `{imported_line}`', LOG_COLORS.NATIVE)
                 script = script.replace(match.group(), imported_line)
         return script

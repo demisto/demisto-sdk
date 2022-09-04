@@ -1,4 +1,6 @@
 # Changelog
+* Added playbook modification capabilities in **TestSuite**.
+
 
 ## Unreleased
 * Fixed an issue where the **doc-review** command showed irrelevant messages.
@@ -27,8 +29,6 @@
 * Fixed a bug where **validate** returned error on empty inputs not used in playbooks.
 * Added the `DEMISTO_SDK_CONTENT_PATH` environment variable, implicitly used in various commands.
 * Added link to documentation for error messages regarding use cases and tags.
-
-* Added playbook modification capabilities in **TestSuite**.
 
 ## 1.7.1
 

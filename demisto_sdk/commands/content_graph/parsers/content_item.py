@@ -11,7 +11,6 @@ from demisto_sdk.commands.content_graph.common import (UNIFIED_FILES_SUFFIXES,
                                                        ContentType,
                                                        Relationship,
                                                        Relationships)
-from demisto_sdk.commands.content_graph.parsers import *
 from demisto_sdk.commands.content_graph.parsers.base_content import \
     BaseContentParser
 

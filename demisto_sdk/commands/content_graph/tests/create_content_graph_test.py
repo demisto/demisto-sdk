@@ -21,15 +21,14 @@ from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.tests.tests_utils import load_json
 from TestSuite.repo import Repo
 
+# Fixtures for mock content object models
+
 
 @pytest.fixture(autouse=True)
 def setup(mocker, repo: Repo):
     """ Auto-used fixture for setup before every test run """
     mocker.patch.object(content_graph_commands, 'REPO_PATH', Path(repo.path))
     mocker.patch.object(neo4j_service, 'REPO_PATH', Path(repo.path))
-
-
-""" Fixtures for mock content object models """
 
 
 @pytest.fixture
@@ -137,7 +136,7 @@ def playbook():
     )
 
 
-""" HELPERS """
+# HELPERS
 
 
 def mock_relationship(

@@ -430,7 +430,7 @@ class TestParsersAndModels:
         )
         assert model.cli_name == 'cve'
         assert model.field_type == 'shortText'
-        assert model.associated_to_all == False
+        assert not model.associated_to_all
 
     def test_incident_type_parser(self, pack: Pack):
         """
@@ -509,7 +509,7 @@ class TestParsersAndModels:
         )
         assert model.type == 'shortText'
         assert model.cli_name == 'email'
-        assert model.associated_to_all == False
+        assert not model.associated_to_all
 
     def test_indicator_type_parser(self, pack: Pack):
         """

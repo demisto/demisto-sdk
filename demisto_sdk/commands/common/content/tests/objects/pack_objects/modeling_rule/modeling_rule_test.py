@@ -16,13 +16,13 @@ class TestModelingRule:
         assert isinstance(obj, ModelingRule)
 
     def test_prefix(self, pack):
-        modeling_rule = get_modeling_rule(pack, 'modelingrule-external-modeling_rule_name')
+        modeling_rule = get_modeling_rule(pack, 'external-modelingrule-modeling_rule_name')
         obj = ModelingRule(modeling_rule._tmpdir_rule_path)
         assert obj.normalize_file_name() == modeling_rule.yml._tmp_path.name
 
         modeling_rule = get_modeling_rule(pack, 'modeling_rule_name')
         obj = ModelingRule(modeling_rule._tmpdir_rule_path)
-        assert obj.normalize_file_name() == f"modelingrule-external-{modeling_rule.yml._tmp_path.name}"
+        assert obj.normalize_file_name() == f"external-modelingrule-{modeling_rule.yml._tmp_path.name}"
 
     def test_files_detection(self, pack):
         modeling_rule = get_modeling_rule(pack, 'modeling_rule_name')

@@ -77,10 +77,11 @@ def test_e2e_demisto_sdk_flow_playbook_client(tmpdir, insecure: bool = True):
         }
     ]
 
-    header_params = {}
-    header_params['Accept'] = 'application/json'  # noqa: E501
-    header_params['Accept-Encoding'] = 'gzip, deflate, br'
-    header_params['Content-Type'] = 'application/json'
+    header_params = {
+        'Accept': 'application/json',  # noqa: E501
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Content-Type': 'application/json',
+    }
 
     try:
         demisto_client.api_client.call_api(resource_path='/playbook/save', method='POST',

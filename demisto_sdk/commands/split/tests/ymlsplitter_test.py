@@ -406,7 +406,7 @@ def get_dummy_module(name='MicrosoftApiModule', path=None):
     return DUMMY_MODULE.replace('CLASSNAME', class_name)
 
 
-def test_split_api_module_for_contribution(mocker):
+def test_update_api_module_contribution(mocker):
     m = mock_open()
     mock = mocker.patch('demisto_sdk.commands.split.ymlsplitter.open', m)
     mocker.patch.object(IntegrationScriptUnifier, '_get_api_module_code', return_value=get_dummy_module())

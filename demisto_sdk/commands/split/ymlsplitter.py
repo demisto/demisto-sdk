@@ -369,7 +369,14 @@ class YmlSplitter:
         if self.logging:
             print_color(log_msg, log_color)
 
-    def split_api_module_for_contribution(self, lines: list, imported_line: str):
+    def update_api_module_contribution(self, lines: list, imported_line: str):
+        """
+            save the api module changes done by the contributor to the api module file before it is replaced in the
+            integration code.
+            :param lines: the integration lines.
+            :param imported_line: the imported line in the code, represents the Api Module used.
+            :return: None
+        """
         imported_line_arr = imported_line.split(' ')  # example: imported_line = from CorIRApiModule import *
         updated_lines = lines[4: -3]  # ignore first 4 lines and last 3 line.
         if len(imported_line_arr) >= 3 and imported_line_arr[0] == 'from' and imported_line_arr[2] == 'import':
@@ -390,7 +397,7 @@ class YmlSplitter:
                 lines = code.split('\n')
                 imported_line = lines[0][2:]  # the first two chars are not part of the code
                 if executed_from_contrib_converter:
-                    self.split_api_module_for_contribution(lines, imported_line)
+                    self.update_api_module_contribution(lines, imported_line)
                 self.print_logs(f'Replacing code block with `{imported_line}`', LOG_COLORS.NATIVE)
                 script = script.replace(match.group(), imported_line)
         return script

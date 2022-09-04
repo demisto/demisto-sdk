@@ -1,15 +1,20 @@
-from typing import Any, Dict, List
-import pytest
 from pathlib import Path
+from typing import Any, Dict, List
+
+import pytest
+
+import demisto_sdk.commands.content_graph.content_graph_commands as content_graph_commands
+import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
+from demisto_sdk.commands.content_graph.content_graph_commands import (
+    create_content_graph, stop_content_graph)
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import \
     Neo4jContentGraphInterface as ContentGraphInterface
-import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
-import demisto_sdk.commands.content_graph.content_graph_commands as content_graph_commands
-from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.content_graph_commands import create_content_graph, stop_content_graph
-from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
-from demisto_sdk.commands.content_graph.objects.pack import Pack, PackContentItems
+from demisto_sdk.commands.content_graph.objects.integration import (
+    Command, Integration)
+from demisto_sdk.commands.content_graph.objects.pack import (Pack,
+                                                             PackContentItems)
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.repository import Repository
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -439,7 +444,7 @@ class TestCreateContentGraph:
         pack.content_items.integration.append(integration)
         pack.content_items.script.append(integration2)
         repository.packs.append(pack)
-        
+
         with pytest.raises(Exception) as e:
             with ContentGraphInterface() as interface:
                 create_content_graph(interface)
@@ -496,7 +501,7 @@ class TestCreateContentGraph:
         pack.content_items.integration.append(integration)
         pack.content_items.script.append(integration2)
         repository.packs.append(pack)
-        
+
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
             assert len(interface.get_nodes_by_type(ContentType.INTEGRATION)) == 2
@@ -553,7 +558,7 @@ class TestCreateContentGraph:
         pack.content_items.integration.append(integration)
         pack.content_items.script.append(integration2)
         repository.packs.append(pack)
-        
+
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
             assert len(interface.get_nodes_by_type(ContentType.INTEGRATION)) == 2

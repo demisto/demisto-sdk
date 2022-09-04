@@ -1,8 +1,8 @@
 import logging
 
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
-
+from demisto_sdk.commands.content_graph.parsers.content_item import \
+    ContentItemParser
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -13,6 +13,7 @@ class ContentItemsList(list):
     Attributes:
         content_type (ContentType): The content types allowed to be included in this list.
     """
+
     def __init__(self, content_type: ContentType):
         self.content_type: ContentType = content_type
         super().__init__()

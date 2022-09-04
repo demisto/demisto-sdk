@@ -1,16 +1,14 @@
-import networkx
 from pathlib import Path
 from typing import Any, Dict, List
 
+import networkx
+
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.update_id_set import (
-    BUILT_IN_FIELDS,
-    get_fields_by_script_argument,
-    build_tasks_graph
-)
+    BUILT_IN_FIELDS, build_tasks_graph, get_fields_by_script_argument)
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.yaml_content_item import YAMLContentItemParser
-
+from demisto_sdk.commands.content_graph.parsers.yaml_content_item import \
+    YAMLContentItemParser
 
 LIST_COMMANDS = ['Builtin|||setList', 'Builtin|||getList']
 
@@ -37,7 +35,7 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
     @property
     def object_id(self) -> str:
         return self.yml_data.get('id')
-    
+
     def is_mandatory_dependency(self, task_id: str) -> bool:
         try:
             return self.graph.nodes[task_id]['mandatory']

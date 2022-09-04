@@ -3,7 +3,8 @@ from typing import List
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.yaml_content_item import YAMLContentItemParser
+from demisto_sdk.commands.content_graph.parsers.yaml_content_item import \
+    YAMLContentItemParser
 
 
 class CorrelationRuleParser(YAMLContentItemParser, content_type=ContentType.CORRELATION_RULE):

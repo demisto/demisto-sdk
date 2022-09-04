@@ -1,12 +1,12 @@
 import logging
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 import docker
 import requests
-from demisto_sdk.commands.common.tools import run_command
 from requests.adapters import HTTPAdapter, Retry
 
+from demisto_sdk.commands.common.tools import run_command
 from demisto_sdk.commands.content_graph.common import NEO4J_PASSWORD, REPO_PATH
 
 NEO4J_SERVICE_IMAGE = 'neo4j:4.4.9'

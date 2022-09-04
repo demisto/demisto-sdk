@@ -4,9 +4,7 @@ from typing import Any, Dict, List
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
 from demisto_sdk.commands.content_graph.parsers.integration_script import (
-    IntegrationScriptParser,
-    IntegrationScriptUnifier
-)
+    IntegrationScriptParser, IntegrationScriptUnifier)
 
 
 class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGRATION):

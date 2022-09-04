@@ -1,9 +1,10 @@
-from abc import ABC
 import json
-from pydantic import BaseModel, Field
+from abc import ABC
 from typing import Any, Dict, List
-from demisto_sdk.commands.common.constants import MarketplaceVersions
 
+from pydantic import BaseModel, Field
+
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 
 

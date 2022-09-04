@@ -5,15 +5,14 @@ from typing import Any, Dict, Iterator, List, Optional
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.content_graph.common import (
-    ContentType,
-    PACK_METADATA_FILENAME,
-    PACK_CONTRIBUTORS_FILENAME,
-    Relationships
-)
-from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
-from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser, NotAContentItemException
-from demisto_sdk.commands.content_graph.parsers.content_items_list import ContentItemsList
-
+    PACK_CONTRIBUTORS_FILENAME, PACK_METADATA_FILENAME, ContentType,
+    Relationships)
+from demisto_sdk.commands.content_graph.parsers.base_content import \
+    BaseContentParser
+from demisto_sdk.commands.content_graph.parsers.content_item import (
+    ContentItemParser, NotAContentItemException)
+from demisto_sdk.commands.content_graph.parsers.content_items_list import \
+    ContentItemsList
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -21,6 +20,7 @@ logger = logging.getLogger('demisto-sdk')
 class PackContentItems:
     """ A class that holds all pack's content items in lists by their types.
     """
+
     def __init__(self) -> None:
         self.classifier = ContentItemsList(content_type=ContentType.CLASSIFIER)
         self.correlation_rule = ContentItemsList(content_type=ContentType.CORRELATION_RULE)
@@ -77,6 +77,7 @@ class PackContentItems:
 class PackMetadataParser:
     """ A pack metadata parser.
     """
+
     def __init__(self, metadata: Dict[str, Any]) -> None:
         self.name: str = metadata['name']
         self.description: str = metadata['description']
@@ -110,6 +111,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         content_items (PackContentItems): A collection of this pack's content item parsers.
         relationships (Relationships): A collection of the relationships in this pack.
     """
+
     def __init__(self, path: Path) -> None:
         """ Parses a pack and its content items.
 

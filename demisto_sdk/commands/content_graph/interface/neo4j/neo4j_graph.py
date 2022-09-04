@@ -1,33 +1,27 @@
 from pathlib import Path
-import neo4j
 from typing import Any, Dict, List, Optional
-from demisto_sdk.commands.common.constants import MarketplaceVersions
 
-from demisto_sdk.commands.content_graph.common import (
-    ContentType,
-    Relationship,
-    NEO4J_DATABASE_URL,
-    NEO4J_PASSWORD,
-    NEO4J_USERNAME,
-)
-from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import create_indexes
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import create_constraints
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
-    create_nodes,
-    duplicates_exist,
-    get_packs_content_items,
-    get_all_integrations_with_commands,
-    delete_all_graph_nodes,
-    get_nodes_by_type,
-    search_nodes,
-)
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
-    create_relationships,
-    get_relationships_by_type,
-)
+import neo4j
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
+from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.content_graph.common import (NEO4J_DATABASE_URL,
+                                                       NEO4J_PASSWORD,
+                                                       NEO4J_USERNAME,
+                                                       ContentType,
+                                                       Relationship)
+from demisto_sdk.commands.content_graph.interface.graph import \
+    ContentGraphInterface
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import \
+    create_constraints
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import \
+    create_indexes
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
+    create_nodes, delete_all_graph_nodes, duplicates_exist,
+    get_all_integrations_with_commands, get_nodes_by_type,
+    get_packs_content_items, search_nodes)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
+    create_relationships, get_relationships_by_type)
 
 
 class Neo4jContentGraphInterface(ContentGraphInterface):
@@ -65,7 +59,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def create_nodes(self, nodes: Dict[ContentType, List[Dict[str, Any]]]) -> None:
         with self.driver.session() as session:
             session.write_transaction(create_nodes, nodes)
-    
+
     def validate_graph(self) -> None:
         with self.driver.session() as session:
             if session.read_transaction(duplicates_exist):
@@ -78,7 +72,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def get_packs_content_items(self, marketplace: MarketplaceVersions):
         with self.driver.session() as session:
             return session.read_transaction(get_packs_content_items, marketplace)
-    
+
     def get_all_integrations_with_commands(self):
         with self.driver.session() as session:
             return session.read_transaction(get_all_integrations_with_commands)

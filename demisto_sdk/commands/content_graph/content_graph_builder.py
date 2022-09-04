@@ -1,20 +1,17 @@
-
+import logging
 import pickle
-
-from pathlib import Path
 import traceback
+from pathlib import Path
 from typing import Any, List
 
-
-from demisto_sdk.commands.content_graph.common import REPO_PATH, Nodes, Relationships
-from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
-
-from demisto_sdk.commands.content_graph.objects.repository import Repository
-from demisto_sdk.commands.content_graph.parsers.repository import RepositoryParser
-
 from demisto_sdk.commands.common.handlers import JSON_Handler
-
-import logging
+from demisto_sdk.commands.content_graph.common import (REPO_PATH, Nodes,
+                                                       Relationships)
+from demisto_sdk.commands.content_graph.interface.graph import \
+    ContentGraphInterface
+from demisto_sdk.commands.content_graph.objects.repository import Repository
+from demisto_sdk.commands.content_graph.parsers.repository import \
+    RepositoryParser
 
 json = JSON_Handler()
 

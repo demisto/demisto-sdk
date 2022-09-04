@@ -1,6 +1,7 @@
 from pathlib import Path
-from pydantic import BaseModel
 from typing import List
+
+from pydantic import BaseModel
 
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 

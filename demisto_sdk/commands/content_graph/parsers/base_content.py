@@ -12,7 +12,7 @@ class BaseContentParser(ABC):
         content_type (ContentType): The content object type.
         node_id (str): The content object node ID.
     """
-    
+
     def __init__(self, path: Path) -> None:
         self.path: Path = path
 

@@ -3,7 +3,8 @@ from typing import List
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
+from demisto_sdk.commands.content_graph.parsers.json_content_item import \
+    JSONContentItemParser
 
 
 class WidgetParser(JSONContentItemParser, content_type=ContentType.WIDGET):
@@ -13,7 +14,7 @@ class WidgetParser(JSONContentItemParser, content_type=ContentType.WIDGET):
         self.widget_type = self.json_data.get('widgetType')
 
         self.connect_to_dependencies()
-    
+
     def connect_to_dependencies(self) -> None:
         """ Collects the playbook used in the widget as a mandatory dependency.
         """

@@ -3,7 +3,8 @@ from typing import List
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
+from demisto_sdk.commands.content_graph.parsers.json_content_item import \
+    JSONContentItemParser
 
 
 class IndicatorFieldParser(JSONContentItemParser, content_type=ContentType.INDICATOR_FIELD):
@@ -18,7 +19,7 @@ class IndicatorFieldParser(JSONContentItemParser, content_type=ContentType.INDIC
     @property
     def object_id(self) -> str:
         return self.json_data.get('cliName')
-    
+
     def connect_to_dependencies(self) -> None:
         """ Collects indicator types used by the field as optional dependencies, and scripts as mandatory dependencies.
         """

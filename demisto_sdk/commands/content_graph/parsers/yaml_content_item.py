@@ -2,15 +2,13 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Union
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.tools import (
-    get_yaml,
-    get_yml_paths_in_dir
-)
-from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
+    MarketplaceVersions)
+from demisto_sdk.commands.common.tools import get_yaml, get_yml_paths_in_dir
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
-from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser, NotAContentItemException
-
+from demisto_sdk.commands.content_graph.parsers.content_item import (
+    ContentItemParser, NotAContentItemException)
 
 logger = logging.getLogger('demisto-sdk')
 

@@ -22,9 +22,9 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS, MarketplaceTagParser, TagParser, arg_to_list,
-    compare_context_path_in_yml_and_readme, filter_files_by_type,
-    filter_files_on_pack, filter_packagify_changes, find_type,
-    generate_xsiam_normalized_name, get_code_lang, get_current_repo,
+    compare_context_path_in_yml_and_readme, field_to_cli_name,
+    filter_files_by_type, filter_files_on_pack, filter_packagify_changes,
+    find_type, generate_xsiam_normalized_name, get_code_lang, get_current_repo,
     get_dict_from_file, get_display_name, get_entity_id_by_entity_type,
     get_entity_name_by_entity_type, get_file_displayed_name,
     get_file_version_suffix_if_exists, get_files_in_dir,
@@ -36,7 +36,7 @@ from demisto_sdk.commands.common.tools import (
     get_test_playbook_id, get_to_version, get_yaml, has_remote_configured,
     is_object_in_id_set, is_origin_content_repo, is_pack_path, is_uuid,
     retrieve_file_ending, run_command_os, server_version_compare,
-    string_to_bool, to_kebab_case, field_to_cli_name)
+    string_to_bool, to_kebab_case)
 from demisto_sdk.tests.constants_test import (
     DUMMY_SCRIPT_PATH, IGNORED_PNG, INDICATORFIELD_EXTRA_FIELDS,
     SOURCE_FORMAT_INTEGRATION_COPY, TEST_PLAYBOOK, VALID_BETA_INTEGRATION_PATH,

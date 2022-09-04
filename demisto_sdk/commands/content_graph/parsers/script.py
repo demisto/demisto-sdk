@@ -4,8 +4,8 @@ from typing import List, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.integration_script import IntegrationScriptParser
-
+from demisto_sdk.commands.content_graph.parsers.integration_script import \
+    IntegrationScriptParser
 
 EXECUTE_CMD_PATTERN = re.compile(r"execute_?command\(['\"]([a-zA-Z-_]+)['\"].*", re.IGNORECASE)
 

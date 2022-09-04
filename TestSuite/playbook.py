@@ -10,6 +10,9 @@ yaml = YAML_Handler()
 
 
 class Playbook:
+
+    default_assets_dir = 'assets'
+
     def __init__(self, tmpdir: Path, name, repo, is_test_playbook: bool = False):
         # Save entities
         self.name = name
@@ -56,8 +59,23 @@ class Playbook:
             self.build(yml=yml)
 
     def create_default_test_playbook(self, name: str = 'SamplePlaybookTest'):
-        default_test_playbook_dir = 'assets/default_playbook'
-        with open(suite_join_path(default_test_playbook_dir, 'playbook-sample.yml')) as yml_file:
+        with open(suite_join_path(self.default_assets_dir, 'default_playbook/playbook-sample.yml')) as yml_file:
             yml = yaml.load(yml_file)
             yml['id'] = yml['name'] = name
             self.build(yml=yml)
+
+    def add_default_task(self):
+        task = None
+        task_filename = 'default_playbook/tasks/task-sample.yml'
+        with open(suite_join_path(self.default_assets_dir, task_filename)) as task_yml_file:
+            task = yaml.load(task_yml_file)
+        if not task:
+            print('Cannot read task from ' + task_filename + ', not adding task to playbook')
+            return
+
+        original_yml = self.yml.read_dict()
+        tasks = original_yml['tasks']
+        last_task = tasks[next(reversed(tasks))]
+        last_task['nexttasks'] = {'#none#': [task['id']]}
+        tasks.insert(len(tasks), task['id'], task)
+        self.build(yml=original_yml)

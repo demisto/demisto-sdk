@@ -1,4 +1,6 @@
 # Changelog
+* Added playbook modification capabilities in **TestSuite**.
+
 
 ## Unreleased
 * Fixed an issue where the **doc-review** command showed irrelevant messages.

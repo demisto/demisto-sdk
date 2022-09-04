@@ -9,4 +9,4 @@ class Secrets:
         self.write_secrets([])
 
     def write_secrets(self, secrets: list):
-        self._secrets_path.write_text('\n'.join(secrets))
+        self._secrets_path.write_text(data='\n'.join(secrets), encoding=None)

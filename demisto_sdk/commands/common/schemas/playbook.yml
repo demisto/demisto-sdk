@@ -250,6 +250,9 @@ mapping:
               - type: str
           continueonerror:
             type: bool
+          continueonerrortype:
+            type: str
+            enum: ["errorPath", ""]
           reputationcalc:
             type: int
           separatecontext:

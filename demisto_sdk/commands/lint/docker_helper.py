@@ -22,8 +22,10 @@ CAN_MOUNT_FILES = bool(os.getenv('GITLAB_CI', False)) or ((not os.getenv('CIRCLE
 )
 )
 
+
 class DockerException(Exception):
     pass
+
 
 def init_global_docker_client(timeout: int = 60, log_prompt: str = ''):
 

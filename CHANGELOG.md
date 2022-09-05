@@ -10,6 +10,7 @@
 * Added dump function to XSIAM pack objects to dulicate the files.
 * Fixed an issue where the `contribution_converter` did not support changes made to ApiModules.
 * Added playbook modification capabilities in **TestSuite**.
+* Build test prints
 
 ## 1.7.3
 

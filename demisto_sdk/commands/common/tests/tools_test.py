@@ -71,8 +71,8 @@ class TestGenericFunctions:
 
     @pytest.mark.parametrize('file_name, prefix, result',
                              [('test.json', 'parsingrule', 'parsingrule-external-test.json'),
-                              ('parsingrule-external-test.json', 'parsingrule', 'parsingrule-external-test.json'),
-                              ('parsingrule-test.json', 'parsingrule', 'parsingrule-external-test.json')])
+                              ('parsingrule-external-test.json', 'parsingrule', 'external-parsingrule-test.json'),
+                              ('parsingrule-test.json', 'parsingrule', 'external-parsingrule-test.json')])
     def test_generate_xsiam_normalized_name(self, file_name, prefix, result):
         assert generate_xsiam_normalized_name(file_name, prefix)
 

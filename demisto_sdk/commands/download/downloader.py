@@ -97,12 +97,12 @@ class Downloader:
         item_type (str): The items type to download, use just when downloading system items.
     """
 
-    def __init__(self, output: str, input: str, regex: str = '', force: bool = False, insecure: bool = False,
+    def __init__(self, output: str, input: Union[str, List[str]], regex: str = '', force: bool = False, insecure: bool = False,
                  verbose: bool = False, list_files: bool = False, all_custom_content: bool = False,
                  run_format: bool = False, system: bool = False, item_type: str = ''):
         logging.disable(logging.CRITICAL)
         self.output_pack_path = output
-        self.input_files = list(input)
+        self.input_files = [input] if isinstance(input, str) else input
         self.regex = regex
         self.force = force
         self.download_system_item = system

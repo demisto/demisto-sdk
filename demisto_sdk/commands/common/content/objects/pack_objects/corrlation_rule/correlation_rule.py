@@ -36,5 +36,7 @@ class CorrelationRule(YAMLContentObject):
         created_files: List[Path] = []
         created_files.extend(super().dump(dest_dir=dest_dir))
         new_file_path = str(created_files[0])
-        shutil.copyfile(new_file_path, new_file_path.replace('external-', ''))
+        if 'external' in new_file_path:
+            shutil.copyfile(new_file_path, new_file_path.replace('external-', ''))
         return created_files
+

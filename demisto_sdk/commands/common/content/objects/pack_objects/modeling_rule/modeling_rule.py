@@ -15,6 +15,7 @@ class ModelingRule(YAMLContentUnifiedObject):
         super().__init__(path, FileType.MODELING_RULE, MODELING_RULE)
 
     def normalize_file_name(self) -> str:
+        print('*******************************')
         return generate_xsiam_normalized_name(self._path.name, MODELING_RULE)
 
     def upload(self, client: demisto_client):
@@ -35,8 +36,9 @@ class ModelingRule(YAMLContentUnifiedObject):
     def dump(self, dest_dir: Optional[Union[Path, str]] = None) -> List[Path]:
         created_files: List[Path] = []
         created_files.extend(super().dump(dest_dir=dest_dir))
-        print('created_files', created_files)
         new_file_path = str(created_files[0])
-        print('new_file_path', new_file_path)
-        shutil.copyfile(new_file_path, new_file_path.replace('external-', ''))
+        if 'external' in new_file_path:
+            shutil.copyfile(new_file_path, new_file_path.replace('external-', ''))
         return created_files
+
+

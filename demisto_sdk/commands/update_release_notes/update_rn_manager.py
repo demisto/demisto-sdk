@@ -180,7 +180,7 @@ class UpdateReleaseNotesManager:
 
         elif self.changed_packs_from_git:  # update all changed packs
             for pack in self.changed_packs_from_git:
-                if 'APIModules' in pack:  # We already handled Api Modules so we can skip it.
+                if API_MODULES_PACK in pack:  # We already handled Api Modules so we can skip it.
                     continue
                 self.create_pack_release_notes(pack, filtered_modified_files, filtered_added_files, old_format_files)
         else:

@@ -115,31 +115,6 @@ class TestStructureValidator:
         validator = StructureValidator(file_path=path, predefined_scheme='reputation')
         assert validator.is_valid_scheme() is answer
 
-    INPUTS_VALID_FROM_VERSION_MODIFIED = [
-        (VALID_TEST_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH, False),
-        (INVALID_PLAYBOOK_PATH, VALID_PLAYBOOK_ID_PATH, False),
-        (INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH, True)
-    ]
-
-    @pytest.mark.parametrize('path, old_file_path, answer', INPUTS_VALID_FROM_VERSION_MODIFIED)
-    def test_fromversion_update_validation_yml_structure(self, path, old_file_path, answer):
-        validator = StructureValidator(file_path=path)
-        with open(old_file_path) as f:
-            validator.old_file = yaml.load(f)
-            assert validator.is_valid_fromversion_on_modified() is answer
-
-    INPUTS_IS_ID_MODIFIED = [
-        (INVALID_PLAYBOOK_PATH, VALID_PLAYBOOK_ID_PATH, False, "Didn't find the id as updated in file"),
-        (VALID_PLAYBOOK_ID_PATH, VALID_PLAYBOOK_ID_PATH, True, "Found the ID as changed although it is not")
-    ]
-
-    @pytest.mark.parametrize("current_file, old_file, answer, error", INPUTS_IS_ID_MODIFIED)
-    def test_is_id_not_modified(self, current_file, old_file, answer, error):
-        validator = StructureValidator(file_path=current_file)
-        with open(old_file) as f:
-            validator.old_file = yaml.load(f)
-            assert validator.is_id_not_modified() is answer, error
-
     POSITIVE_ERROR = "Didn't find a slash in the ID even though it contains a slash."
     NEGATIVE_ERROR = "found a slash in the ID even though it not contains a slash."
     INPUTS_IS_FILE_WITHOUT_SLASH = [

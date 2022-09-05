@@ -67,7 +67,7 @@ class AgentTool(GeneralObject):
 
         return created_files
 
-    def _unserialize(self):
+    def _deserialize(self):
         """Currently no usage"""
         pass
 

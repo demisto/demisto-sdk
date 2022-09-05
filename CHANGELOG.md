@@ -1,12 +1,25 @@
 # Changelog
+* Added playbook modification capabilities in **TestSuite**.
+
 
 ## Unreleased
+* Fixed an issue where the **doc-review** command showed irrelevant messages.
+* Fixed an issue in **validate**, where backward-compatibility failures prevented other validations from running.
+* Fixed an issue in **validate**, where content-like files under infrastructure paths were not ignored.
+* Fixed an issue in the AMI mapping, where server versions were missing.
+* Change the way the normalize name is set for external files.
+* Added dump function to XSIAM pack objects to dulicate the files.
+* Fixed an issue where the `contribution_converter` did not support changes made to ApiModules.
+
+## 1.7.3
+
 * Fixed an issue in the **format** command where fail when executed from environment without mdx server available.
 * Added `Added a`, `Added an` to the list of allowed changelog prefixes.
 * Added support for Indicator Types/Reputations in the **upload** command.
 * Fixed an issue when running from a subdirectory of a content repo failed.
 * Changing the way we are using XSIAM servers api-keys in **test-content** .
 * Added a success message to **postman-codegen**.
+* Added name normalization according to new convention to XSIAM content items
 
 ## 1.7.2
 

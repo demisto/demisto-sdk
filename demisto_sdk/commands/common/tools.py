@@ -171,6 +171,15 @@ SDK_PYPI_VERSION = r'https://pypi.org/pypi/demisto-sdk/json'
 SUFFIX_TO_REMOVE = ('_dev', '_copy')
 
 
+def generate_xsiam_normalized_name(file_name, prefix):
+    if file_name.startswith(f'external-{prefix}-'):
+        return file_name
+    elif file_name.startswith(f'{prefix}-'):
+        return file_name.replace(f'{prefix}-', f'external-{prefix}-')
+    else:
+        return f'external-{prefix}-{file_name}'
+
+
 def set_log_verbose(verbose: bool):
     global LOG_VERBOSE
     LOG_VERBOSE = verbose
@@ -998,13 +1007,10 @@ def get_scripts_names(file_path):
     scripts_dir_path = os.path.join(PACKS_DIR, get_pack_name(file_path), SCRIPTS_DIR)
     scripts_names: Set[str] = set()
     if not glob.glob(scripts_dir_path):
-        click.secho(f'no scripts path found')
         return scripts_names
 
     found_scripts: List[str] = os.listdir(scripts_dir_path)
-    if not found_scripts:
-        click.secho(f'no scripts found')
-    else:
+    if found_scripts:
         for script in found_scripts:
             if script.endswith('.md'):
                 continue  # in case the script is in the old version of CommonScripts - JS code, ignore the md file
@@ -1019,7 +1025,6 @@ def get_scripts_names(file_path):
             except FileNotFoundError:
                 # we couldn't load the script as the path is not fit Content convention scripts' names
                 scripts_names.add(script)
-        click.secho(f'scripts names: {scripts_names}')
     return scripts_names
 
 
@@ -1085,7 +1090,7 @@ def filter_files_by_type(file_paths=None, skip_file_types=None) -> set:
 
 
 def pack_name_to_path(pack_name):
-    return os.path.join(PACKS_DIR, pack_name)
+    return os.path.join(get_content_path(), PACKS_DIR, pack_name)
 
 
 def pack_name_to_posix_path(pack_name):
@@ -1093,7 +1098,7 @@ def pack_name_to_posix_path(pack_name):
 
 
 def get_pack_ignore_file_path(pack_name):
-    return os.path.join(PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)
+    return os.path.join(get_content_path(), PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)
 
 
 def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:  # type: ignore

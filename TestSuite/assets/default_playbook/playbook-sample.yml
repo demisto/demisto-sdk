@@ -1,6 +1,6 @@
-id: sample playbook
+id: sample pb
 version: -1
-name: sample playbook
+name: sample pb
 description: Sample playbook for testing
 starttaskid: "0"
 tasks:
@@ -47,8 +47,7 @@ tasks:
     scriptarguments:
       index: {}
       key:
-        simple:
-          "ilan"
+        simple: "foo"
       keysToKeep: {}
       subplaybook: {}
     separatecontext: false

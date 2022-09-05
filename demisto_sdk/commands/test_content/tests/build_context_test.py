@@ -50,7 +50,6 @@ def generate_content_conf_json(
         tests: list = None,
         skipped_tests: dict = None,
         skipped_integrations: dict = None,
-        nightly_integrations: list = None,
         unmockable_integrations: dict = None,
         parallel_integrations: list = None,
         docker_thresholds_images: dict = None
@@ -61,7 +60,6 @@ def generate_content_conf_json(
         tests: A dict with a test playbook configuration
         skipped_tests: A dict containing playbook IDs as keys and the reason why it was skipped as value
         skipped_integrations: A list containing integration IDs
-        nightly_integrations: A list containing integration IDs
         unmockable_integrations: A dict containing integration IDs as keys and the reason why it's unmockable as value
         parallel_integrations: A list containing integration IDs
         docker_thresholds_images: A dict containing image name as key and a dict containing docker limitations as value
@@ -74,7 +72,6 @@ def generate_content_conf_json(
         'tests': tests or [],
         'skipped_tests': skipped_tests or {},
         'skipped_integrations': skipped_integrations or {},
-        'nightly_integrations': nightly_integrations or [],
         'unmockable_integrations': unmockable_integrations or {},
         'parallel_integrations': parallel_integrations or [],
         'docker_thresholds': {
@@ -366,34 +363,6 @@ def test_nightly_playbook_skipping(mocker, tmp_path):
                                              filtered_tests_content=filtered_tests,
                                              nightly=True)
     assert 'nightly_playbook' not in build_context.tests_data_keeper.skipped_tests
-
-
-def test_playbook_with_nightly_integration_skipping(mocker, tmp_path):
-    """
-    Given:
-        - A build context with playbook that has a nightly integration
-    When:
-        - Initializing the BuildContext instance
-    Then:
-        - Ensure that the playbook with nightly integration is skipped on non nightly build
-        - Ensure that the playbook with nightly integration is not skipped on nightly build
-    """
-    filtered_tests = ['playbook_with_nightly_integration']
-    tests = [generate_test_configuration(playbook_id='playbook_with_nightly_integration',
-                                         integrations=['nightly_integration'])]
-    content_conf_json = generate_content_conf_json(tests=tests,
-                                                   nightly_integrations=['nightly_integration'])
-    build_context = get_mocked_build_context(mocker,
-                                             tmp_path,
-                                             content_conf_json=content_conf_json,
-                                             filtered_tests_content=filtered_tests)
-    assert 'playbook_with_nightly_integration' in build_context.tests_data_keeper.skipped_tests
-    build_context = get_mocked_build_context(mocker,
-                                             tmp_path,
-                                             content_conf_json=content_conf_json,
-                                             filtered_tests_content=filtered_tests,
-                                             nightly=True)
-    assert 'playbook_with_nightly_integration' not in build_context.tests_data_keeper.skipped_tests
 
 
 def test_playbook_with_version_mismatch_is_skipped(mocker, tmp_path):

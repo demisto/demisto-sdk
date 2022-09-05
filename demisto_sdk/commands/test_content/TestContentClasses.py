@@ -153,7 +153,6 @@ class Conf:
         ]
         self.skipped_tests: Dict[str, str] = conf.get('skipped_tests')  # type: ignore
         self.skipped_integrations: Dict[str, str] = conf.get('skipped_integrations')  # type: ignore
-        self.nightly_integrations: List[str] = conf['nightly_integrations']
         self.unmockable_integrations: Dict[str, str] = conf.get('unmockable_integrations')  # type: ignore
         self.parallel_integrations: List[str] = conf['parallel_integrations']
         self.docker_thresholds = conf.get('docker_thresholds', {}).get('images', {})
@@ -250,14 +249,6 @@ class TestPlaybook:
                         self.build_context.logging_module.warning(
                             f'The integration {integration} is skipped and critical for the test {self}.')
                         skipped_tests_collected[self.configuration.playbook_id] = f'The integration {integration} is skipped'
-                    return True
-
-                # Test has a nightly integration
-                if integration in self.build_context.conf.nightly_integrations and not self.build_context.is_nightly:
-                    self.build_context.logging_module.debug(
-                        f'Skipping {self} because it has a nightly integration {integration} in a non nightly build')
-                    skipped_tests_collected[self.configuration.playbook_id] = \
-                        f'The integration {integration} is a nightly integration'
                     return True
 
             return False

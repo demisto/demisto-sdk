@@ -171,6 +171,15 @@ SDK_PYPI_VERSION = r'https://pypi.org/pypi/demisto-sdk/json'
 SUFFIX_TO_REMOVE = ('_dev', '_copy')
 
 
+def generate_xsiam_normalized_name(file_name, prefix):
+    if file_name.startswith(f'external-{prefix}-'):
+        return file_name
+    elif file_name.startswith(f'{prefix}-'):
+        return file_name.replace(f'{prefix}-', f'external-{prefix}-')
+    else:
+        return f'external-{prefix}-{file_name}'
+
+
 def set_log_verbose(verbose: bool):
     global LOG_VERBOSE
     LOG_VERBOSE = verbose
@@ -998,13 +1007,10 @@ def get_scripts_names(file_path):
     scripts_dir_path = os.path.join(PACKS_DIR, get_pack_name(file_path), SCRIPTS_DIR)
     scripts_names: Set[str] = set()
     if not glob.glob(scripts_dir_path):
-        click.secho(f'no scripts path found')
         return scripts_names
 
     found_scripts: List[str] = os.listdir(scripts_dir_path)
-    if not found_scripts:
-        click.secho(f'no scripts found')
-    else:
+    if found_scripts:
         for script in found_scripts:
             if script.endswith('.md'):
                 continue  # in case the script is in the old version of CommonScripts - JS code, ignore the md file
@@ -1019,7 +1025,6 @@ def get_scripts_names(file_path):
             except FileNotFoundError:
                 # we couldn't load the script as the path is not fit Content convention scripts' names
                 scripts_names.add(script)
-        click.secho(f'scripts names: {scripts_names}')
     return scripts_names
 
 
@@ -1085,7 +1090,7 @@ def filter_files_by_type(file_paths=None, skip_file_types=None) -> set:
 
 
 def pack_name_to_path(pack_name):
-    return os.path.join(PACKS_DIR, pack_name)
+    return os.path.join(get_content_path(), PACKS_DIR, pack_name)
 
 
 def pack_name_to_posix_path(pack_name):
@@ -1093,7 +1098,7 @@ def pack_name_to_posix_path(pack_name):
 
 
 def get_pack_ignore_file_path(pack_name):
-    return os.path.join(PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)
+    return os.path.join(get_content_path(), PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)
 
 
 def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:  # type: ignore
@@ -1584,7 +1589,12 @@ def get_content_path() -> str:
         str: Absolute content path
     """
     try:
-        git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
+        if content_path := os.getenv('DEMISTO_SDK_CONTENT_PATH'):
+            git_repo = git.Repo(content_path)
+            logger.debug(f'Using content path: {content_path}')
+        else:
+            git_repo = git.Repo(Path.cwd(), search_parent_directories=True)
+
         remote_url = git_repo.remote().urls.__next__()
         is_fork_repo = 'content' in remote_url
         is_external_repo = is_external_repository()
@@ -2906,7 +2916,7 @@ def get_invalid_incident_fields_from_mapper(
             if simple := inc_info.get('simple'):
                 if '.' in simple:
                     simple = simple.split('.')[0]
-                if simple not in content_fields:
+                if simple not in content_fields and simple.lower() not in content_fields:
                     non_existent_fields.append(inc_name)
 
     return non_existent_fields
@@ -2947,3 +2957,51 @@ def normalize_field_name(field: str) -> str:
         field (str): the incident/indicator field.
     """
     return field.replace('incident_', '').replace('indicator_', '')
+
+
+def string_to_bool(
+        input_: str,
+        accept_lower_case: bool = True,
+        accept_title: bool = True,
+        accept_upper_case: bool = False,
+        accept_yes_no: bool = False,
+        accept_int: bool = False,
+        accept_single_letter: bool = False,
+) -> Optional[bool]:
+    if not isinstance(input_, str):
+        raise ValueError('cannot convert non-string to bool')
+
+    _considered_true = ['true']
+    _considered_false = ['false']
+
+    for (condition, true_value, false_value) in (
+            (accept_yes_no, 'yes', 'no'),
+            (accept_int, '1', '0')
+    ):
+        if condition:
+            _considered_true.append(true_value)
+            _considered_false.append(false_value)
+
+    considered_true: Set[str] = set()
+    considered_false: Set[str] = set()
+
+    for (condition, func) in (
+            (accept_lower_case, lambda x: x.lower()),
+            (accept_title, lambda x: x.title()),
+            (accept_upper_case, lambda x: x.upper()),
+    ):
+        if condition:
+            considered_true.update(map(func, _considered_true))
+            considered_false.update(map(func, _considered_false))
+
+    if accept_single_letter:
+        considered_true.update(tuple(_[0] for _ in considered_true))  # note this takes considered_true as input
+        considered_false.update(tuple(_[0] for _ in considered_false))
+
+    if input_ in considered_true:
+        return True
+
+    if input_ in considered_false:
+        return False
+
+    raise ValueError(f'cannot convert string {input_} to bool')

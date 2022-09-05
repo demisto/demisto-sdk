@@ -1,0 +1,28 @@
+id: "2"
+taskid: 01234567-a123-4567-0abc-0123456789a0
+type: regular
+task:
+  id: 01234567-a123-4567-0abc-0123456789a0
+  version: -1
+  name: DeleteContext
+  description: Delete field from context
+  scriptName: DeleteContext
+  type: regular
+  iscommand: false
+  brand: ""
+separatecontext: false
+continueonerrortype: ""
+view: |-
+  {
+    "position": {
+      "x": 50,
+      "y": 375
+    }
+  }
+note: false
+timertriggers: []
+ignoreworker: false
+skipunavailable: false
+quietmode: 0
+isoversize: false
+isautoswitchedtoquietmode: false

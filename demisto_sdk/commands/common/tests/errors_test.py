@@ -1,6 +1,7 @@
 import re
 import unittest
 
+from demisto_sdk.commands.common.constants import FileType
 from demisto_sdk.commands.common.errors import Errors
 
 ERROR_CODE_REGEX = re.compile(r'[A-Z]{2}\d{3}')
@@ -98,13 +99,13 @@ class TestErrors(unittest.TestCase):
         When: Returning an error message
         Then: Return error message with the input value as a tuple containing error and error code.
         """
-        error_statement = "The file type is not supported in the validate command.\n" \
+        error_statement = f"File type {FileType.CONF_JSON} is not supported in the validate command.\n" \
                           "The validate command supports: Integrations, Scripts, Playbooks, " \
                           "Incident fields, Incident types, Indicator fields, Indicator types, Objects fields," \
                           " Object types, Object modules, Images, Release notes, Layouts, Jobs, Wizards, " \
                           "Descriptions And Modeling Rules."
         expected_result = (error_statement, "BA102")
-        result = Errors.file_type_not_supported()
+        result = Errors.file_type_not_supported(FileType.CONF_JSON, 'dummy_path')
         assert result == expected_result
 
     def test_invalid_context_output(self):

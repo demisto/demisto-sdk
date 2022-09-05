@@ -195,6 +195,7 @@ def test_initiate_file_validator(mocker, is_old_file, function_validate):
     mocker.patch.object(BaseUpdate, '__init__', return_value=None)
     base_update = BaseUpdate()
     base_update.no_validate = False
+    base_update.prev_ver = ''
     base_update.output_file = 'output_file_path'
     base_update.validate_manager = ValidateManager
     mocker.patch.object(BaseUpdate, 'is_old_file', return_value=is_old_file)

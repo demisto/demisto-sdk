@@ -19,13 +19,14 @@ import networkx
 from demisto_sdk.commands.common.constants import (
     CLASSIFIERS_DIR, COMMON_TYPES_PACK, CORRELATION_RULES_DIR, DASHBOARDS_DIR,
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
-    DEFAULT_ID_SET_PATH, GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR,
-    GENERIC_MODULES_DIR, GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR,
-    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, JOBS_DIR,
-    LAYOUTS_DIR, LISTS_DIR, MAPPERS_DIR, MODELING_RULES_DIR, MP_V2_ID_SET_PATH,
-    PARSING_RULES_DIR, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR,
-    TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR, XSIAM_DASHBOARDS_DIR,
-    XSIAM_REPORTS_DIR, FileType, MarketplaceVersions)
+    GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR,
+    GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
+    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, JOBS_DIR, LAYOUTS_DIR,
+    LISTS_DIR, MAPPERS_DIR, MODELING_RULES_DIR, PARSING_RULES_DIR, REPORTS_DIR,
+    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR,
+    XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, FileType, MarketplaceVersions)
+from demisto_sdk.commands.common.content_constant_paths import (
+    DEFAULT_ID_SET_PATH, MP_V2_ID_SET_PATH)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_current_repo,
@@ -2019,7 +2020,7 @@ def merge_id_sets(first_id_set_dict: dict, second_id_set_dict: dict, print_logs:
     return united_id_set, []
 
 
-def re_create_id_set(id_set_path: Optional[str] = DEFAULT_ID_SET_PATH, pack_to_create=None,  # noqa : C901
+def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_create=None,  # noqa : C901
                      objects_to_create: list = None, print_logs: bool = True, fail_on_duplicates: bool = False,
                      marketplace: str = ''):
     """Re create the id-set

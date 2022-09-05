@@ -95,7 +95,7 @@ MARKETPLACE_KEY_PACK_METADATA = 'marketplaces'
 ENV_DEMISTO_SDK_MARKETPLACE = "DEMISTO_SDK_MARKETPLACE"
 
 
-class FileType(Enum):
+class FileType(str, Enum):
     INTEGRATION = 'integration'
     SCRIPT = 'script'
     TEST_SCRIPT = 'testscript'
@@ -231,7 +231,6 @@ SIEM_ONLY_ENTITIES = [
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
 
 IGNORED_PACKS_IN_DEPENDENCY_CALC = ['NonSupported', 'Base']  # Packs that are ignored when calculating dependencies
-ALL_PACKS_DEPENDENCIES_DEFAULT_PATH = './all_packs_dependencies.json'
 ALLOWED_EMPTY_PACKS = ['Cortex911']  # Packs that are allowed to be without content items in the id_set
 
 CUSTOM_CONTENT_FILE_ENDINGS = ['yml', 'json']
@@ -444,7 +443,6 @@ DOCS_REGEX = r'.*docs.*'
 IMAGE_REGEX = r'.*\.png$'
 DESCRIPTION_REGEX = r'.*\.md'
 SCHEMA_REGEX = 'Tests/schemas/.*.yml'
-CONF_PATH = 'Tests/conf.json'
 
 PACKS_DIR_REGEX = fr'{CAN_START_WITH_DOT_SLASH}{PACKS_DIR}'
 PACK_DIR_REGEX = fr'{PACKS_DIR_REGEX}\/([^\\\/]+)'
@@ -1388,8 +1386,6 @@ LAYOUT_AND_MAPPER_BUILT_IN_FIELDS = ['indicatortype', 'source', 'comment', 'aggr
                                      'detectedhosts', 'modified', 'expiration', 'timestamp', 'shortdesc',
                                      'short_description', 'description', 'Tags', 'blocked']
 
-DEFAULT_ID_SET_PATH = "./Tests/id_set.json"
-MP_V2_ID_SET_PATH = "./Tests/id_set_mp_v2.json"
 METADATA_FILE_NAME = 'pack_metadata.json'
 
 CONTEXT_OUTPUT_README_TABLE_HEADER = '| **Path** | **Type** | **Description** |'
@@ -1487,7 +1483,7 @@ class IronBankDockers:
     API_LINK = 'https://repo1.dso.mil/api/v4/projects/dsop%2Fopensource%2Fpalo-alto-networks%2Fdemisto%2F'
 
 
-class MarketplaceVersions(Enum):
+class MarketplaceVersions(str, Enum):
     XSOAR = 'xsoar'
     MarketplaceV2 = 'marketplacev2'
 

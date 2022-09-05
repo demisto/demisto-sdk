@@ -267,6 +267,29 @@ def test_upload_indicator_field_positive(demisto_client_configure, mocker):
     assert [(indicator_field_name, FileType.INDICATOR_FIELD.value)] == uploader.successfully_uploaded_files
 
 
+def test_upload_reputation_positive(demisto_client_configure, mocker):
+    """
+    Given
+        - A reputation named SampleIndicatorType to upload
+
+    When
+        - Uploading a reputation
+
+    Then
+        - Ensure reputation is uploaded successfully
+        - Ensure success upload message is printed as expected
+    """
+    mocker.patch.object(demisto_client, 'configure', return_value="object")
+
+    reputation_name = "SampleIndicatorType.json"
+    reputation_path = f"{git_path()}/demisto_sdk/tests/test_files/Packs/CortexXDR/IndicatorTypes/{reputation_name}"
+    uploader = Uploader(input=reputation_path, insecure=False, verbose=False)
+    mocker.patch.object(uploader, 'client')
+    uploader.upload()
+
+    assert [(reputation_name, FileType.REPUTATION.value)] == uploader.successfully_uploaded_files
+
+
 def test_upload_report_positive(demisto_client_configure, mocker, repo):
     """
     Given

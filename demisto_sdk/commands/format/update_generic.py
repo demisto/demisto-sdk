@@ -30,6 +30,7 @@ class BaseUpdate:
             old_file (dict): Data of old file from content repo, if exist.
             schema_path (str): Schema path of file.
             from_version (str): Value of Wanted fromVersion key in file.
+            prev_ver (str): Against which branch to perform diff
             data (dict): Dictionary of loaded file.
             file_type (str): Whether the file is yml or json.
             from_version_key (str): The fromVersion key in file, different between yml and json files.
@@ -43,6 +44,7 @@ class BaseUpdate:
                  output: str = '',
                  path: str = '',
                  from_version: str = '',
+                 prev_ver: str = 'master',
                  no_validate: bool = False,
                  verbose: bool = False,
                  assume_yes: bool = False,
@@ -53,8 +55,9 @@ class BaseUpdate:
         self.output_file = self.set_output_file_path(output)
         self.verbose = verbose
         _, self.relative_content_path = is_file_from_content_repo(self.output_file)
+        self.prev_ver = prev_ver
         self.old_file = self.is_old_file(self.relative_content_path if self.relative_content_path
-                                         else self.output_file, self.verbose)
+                                         else self.output_file, self.prev_ver, self.verbose)
         self.schema_path = path
         self.from_version = from_version
         self.no_validate = no_validate
@@ -301,10 +304,10 @@ class BaseUpdate:
         return None
 
     @staticmethod
-    def is_old_file(path: str, verbose: bool = False) -> dict:
+    def is_old_file(path: str, prev_ver: str, verbose: bool = False) -> dict:
         """Check whether the file is in git repo or new file.  """
         if path:
-            data = get_remote_file(path, suppress_print=not verbose)
+            data = get_remote_file(path, prev_ver, suppress_print=not verbose)
             if not data:
                 return {}
             else:
@@ -337,7 +340,7 @@ class BaseUpdate:
             return SKIP_RETURN_CODE
         else:
             self.validate_manager.file_path = self.output_file
-            if self.is_old_file(self.output_file):
+            if self.is_old_file(self.output_file, self.prev_ver):
                 validation_result = self.validate_manager.run_validation_using_git()
             else:
                 validation_result = self.validate_manager.run_validation_on_specific_files()

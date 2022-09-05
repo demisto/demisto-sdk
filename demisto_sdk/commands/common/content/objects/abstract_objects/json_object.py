@@ -42,7 +42,7 @@ class JSONObject(DictionaryBasedObject):
 
         return path
 
-    def _unserialize(self) -> None:
+    def _deserialize(self) -> None:
         """Load json to dictionary"""
         try:
             self._as_dict = json.load(self._path.open())

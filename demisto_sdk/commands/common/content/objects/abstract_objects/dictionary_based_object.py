@@ -14,13 +14,13 @@ class DictionaryBasedObject(GeneralObject):
         self._as_dict: Dict[str, Any] = {}
 
     @abstractmethod
-    def _unserialize(self):
+    def _deserialize(self):
         pass
 
     def to_dict(self) -> dict:
         """Parse object file content to dictionary."""
         if not self._as_dict:
-            self._unserialize()
+            self._deserialize()
 
         return self._as_dict
 

@@ -45,6 +45,7 @@ from .widget.widget import Widget
 from .wizard.wizard import Wizard
 from .xsiam_dashboard.xsiam_dashboard import XSIAMDashboard
 from .xsiam_report.xsiam_report import XSIAMReport
+from .agent_config.agent_config import AgentConfig
 
 __all__ = [name for name, obj in locals().items()
            if not (name.startswith('_') or inspect.ismodule(obj))]

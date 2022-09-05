@@ -45,6 +45,7 @@ XSIAM_DASHBOARDS_DIR = 'XSIAMDashboards'
 XSIAM_REPORTS_DIR = 'XSIAMReports'
 TRIGGER_DIR = 'Triggers'
 WIZARDS_DIR = 'Wizards'
+AGENT_CONFIG_DIR = 'AgentConfigs'
 
 # NAMES OF ENTITIES
 
@@ -87,6 +88,7 @@ XSIAM_DASHBOARD = 'xsiamdashboard'
 XSIAM_REPORT = 'xsiamreport'
 TRIGGER = 'trigger'
 WIZARD = 'wizard'
+AGENT_CONFIG = 'agentconfig'
 
 MARKETPLACE_KEY_PACK_METADATA = 'marketplaces'
 
@@ -153,6 +155,7 @@ class FileType(str, Enum):
     PACK_IGNORE = '.pack-ignore'
     SECRET_IGNORE = '.secrets-ignore'
     DOC_FILE = 'doc_files'
+    AGENT_CONFIG = 'agentconfig'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -1436,6 +1439,7 @@ class ContentItems(Enum):
     XSIAM_REPORTS = 'xsiamreport'
     TRIGGERS = 'trigger',
     WIZARDS = 'wizard',
+    AGENT_CONFIG = 'agentconfig'
 
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {

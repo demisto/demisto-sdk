@@ -22,7 +22,7 @@ from demisto_sdk.commands.common.constants import (
     LAYOUTS_DIR, LISTS_DIR, MODELING_RULES_DIR, PACKS_DIR, PARSING_RULES_DIR,
     PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, REPORTS_DIR,
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR, TRIGGER_DIR, WIDGETS_DIR,
-    WIZARDS_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, ContentItems,
+    WIZARDS_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, AGENT_CONFIG_DIR, ContentItems,
     MarketplaceVersions)
 from demisto_sdk.commands.common.content import (Content, ContentError,
                                                  ContentFactoryError, Pack)
@@ -199,6 +199,7 @@ class ContentItemsHandler:
             ContentItems.XSIAM_REPORTS: [],
             ContentItems.TRIGGERS: [],
             ContentItems.WIZARDS: [],
+            ContentItems.AGENT_CONFIG: [],
         }
         self.content_folder_name_to_func: Dict[str, Callable] = {
             SCRIPTS_DIR: self.add_script_as_content_item,
@@ -227,6 +228,7 @@ class ContentItemsHandler:
             XSIAM_REPORTS_DIR: self.add_xsiam_report_as_content_item,
             TRIGGER_DIR: self.add_trigger_as_content_item,
             WIZARDS_DIR: self.add_wizards_as_content_item,
+            AGENT_CONFIG_DIR: self.add_agent_config_as_content_item,
         }
         self.id_set = id_set
         self.alternate_fields = alternate_fields
@@ -433,6 +435,14 @@ class ContentItemsHandler:
         self.content_items[ContentItems.WIZARDS].append({
             'name': content_object.get('name', ''),
             'description': content_object.get('description', ''),
+        })
+
+    def add_agent_config_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.AGENT_CONFIG].append({
+            'name': content_object.get('name', ''),
+            'os_type': content_object.get('os_type', ''),
+            'profile_type': content_object.get('profile_type', ''),
+            'yaml': content_object.get('yaml', '')
         })
 
 
@@ -814,6 +824,9 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         for trigger in pack.triggers:
             content_items_handler.handle_content_item(trigger)
             pack_report += dump_pack_conditionally(artifact_manager, trigger)
+        for agent_config in pack.agent_configs:
+            content_items_handler.handle_content_item(agent_config)
+            pack_report += dump_pack_conditionally(artifact_manager, agent_config)
 
     for tool in pack.tools:
         object_report = ObjectReport(tool, content_packs=True)

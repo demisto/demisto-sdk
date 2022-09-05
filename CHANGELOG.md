@@ -1,8 +1,11 @@
 # Changelog
-* Added playbook modification capabilities in **TestSuite**.
 
 
 ## Unreleased
+
+
+## 1.7.4
+
 * Fixed an issue where the **doc-review** command showed irrelevant messages.
 * Fixed an issue in **validate**, where backward-compatibility failures prevented other validations from running.
 * Fixed an issue in **validate**, where content-like files under infrastructure paths were not ignored.
@@ -10,6 +13,8 @@
 * Change the way the normalize name is set for external files.
 * Added dump function to XSIAM pack objects to dulicate the files.
 * Fixed an issue where the `contribution_converter` did not support changes made to ApiModules.
+* Added name normalization according to new convention to XSIAM content items
+* Added playbook modification capabilities in **TestSuite**.
 
 ## 1.7.3
 
@@ -19,7 +24,6 @@
 * Fixed an issue when running from a subdirectory of a content repo failed.
 * Changing the way we are using XSIAM servers api-keys in **test-content** .
 * Added a success message to **postman-codegen**.
-* Added name normalization according to new convention to XSIAM content items
 
 ## 1.7.2
 

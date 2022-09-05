@@ -2,13 +2,12 @@
 
 
 ## Unreleased
-
+* Added an error when the docker daemon is unavailable when running **lint**.
 
 ## 1.7.4
 
 * Fixed an issue where the **doc-review** command showed irrelevant messages.
 * Fixed an issue in **validate**, where backward-compatibility failures prevented other validations from running.
-* Added an error when the docker daemon is unavailable when running **lint**.
 * Fixed an issue in **validate**, where content-like files under infrastructure paths were not ignored.
 * Fixed an issue in the AMI mapping, where server versions were missing.
 * Change the way the normalize name is set for external files.

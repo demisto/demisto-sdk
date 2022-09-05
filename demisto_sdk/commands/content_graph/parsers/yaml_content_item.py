@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
@@ -22,11 +22,11 @@ class YAMLContentItemParser(ContentItemParser):
             raise NotAContentItemException
 
     @property
-    def name(self) -> str:
+    def name(self) -> Optional[str]:
         return self.yml_data.get('name')
 
     @property
-    def display_name(self) -> str:
+    def display_name(self) -> Optional[str]:
         return self.name or self.object_id
 
     @property
@@ -34,8 +34,8 @@ class YAMLContentItemParser(ContentItemParser):
         return self.yml_data.get('deprecated', False)
 
     @property
-    def description(self) -> str:
-        return self.yml_data.get('description', '')
+    def description(self) -> Optional[str]:
+        return self.yml_data.get('description')
 
     @property
     def fromversion(self) -> str:

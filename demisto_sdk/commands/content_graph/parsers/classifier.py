@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -30,7 +30,7 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIE
         self.connect_to_dependencies()
 
     @property
-    def name(self) -> str:
+    def name(self) -> Optional[str]:
         return self.json_data.get('name') or self.json_data.get('brandName')
 
     def get_filters_and_transformers_from_complex_value(self, complex_value: dict) -> None:

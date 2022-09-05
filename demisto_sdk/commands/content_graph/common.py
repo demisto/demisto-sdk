@@ -150,7 +150,7 @@ class Relationships(dict):
             self.__setitem__(relationship, [])
         self.__getitem__(relationship).extend(data)
 
-    def update(self, other: 'Relationships') -> None:
+    def update(self, other: 'Relationships') -> None:  # type: ignore
         for relationship, parsed_data in other.items():
             if relationship not in Relationship or not isinstance(parsed_data, list):
                 raise TypeError
@@ -163,7 +163,7 @@ class Nodes(dict):
         for arg in args:
             if not isinstance(arg, dict):
                 raise ValueError(f'Expected a dict: {arg}')
-        self.add_batch(args)
+        self.add_batch(args)  # type: ignore[arg-type]
 
     def add(self, **kwargs):
         content_type: ContentType = ContentType(kwargs.get('content_type'))
@@ -175,7 +175,8 @@ class Nodes(dict):
         for obj in data:
             self.add(**obj)
 
-    def update(self, other: 'Nodes', **kwargs) -> None:
+    def update(self, other: 'Nodes') -> None:  # type: ignore[override]
+        data: Iterator[Dict[str, Any]]
         for content_type, data in other.items():
             if content_type not in ContentType or not isinstance(data, list):
                 raise TypeError

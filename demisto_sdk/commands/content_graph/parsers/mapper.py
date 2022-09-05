@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import field_to_cli_name
@@ -16,7 +16,7 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
         self.connect_to_dependencies()
 
     @property
-    def name(self) -> str:
+    def name(self) -> Optional[str]:
         return self.json_data.get('name') or self.json_data.get('brandName')
 
     def get_filters_and_transformers_from_complex_value(self, complex_value: dict) -> None:

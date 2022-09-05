@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -13,9 +13,9 @@ class XSIAMReportParser(JSONContentItemParser, content_type=ContentType.XSIAM_RE
         self.json_data = self.json_data.get('templates_data', [{}])[0]
 
     @property
-    def name(self) -> str:
-        return self.json_data['report_name']
+    def name(self) -> Optional[str]:
+        return self.json_data.get('report_name')
 
     @property
-    def object_id(self) -> str:
-        return self.json_data['global_id']
+    def object_id(self) -> Optional[str]:
+        return self.json_data.get('global_id')

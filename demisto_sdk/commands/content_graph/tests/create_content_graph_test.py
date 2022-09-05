@@ -18,7 +18,7 @@ from demisto_sdk.commands.content_graph.objects.pack import (Pack,
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.repository import Repository
 from demisto_sdk.commands.content_graph.objects.script import Script
-from demisto_sdk.commands.content_graph.tests.tests_utils import load_json
+from demisto_sdk.commands.content_graph.tests.test_tools import load_json
 from TestSuite.repo import Repo
 
 # Fixtures for mock content object models

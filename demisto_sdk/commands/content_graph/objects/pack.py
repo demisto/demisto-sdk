@@ -111,9 +111,10 @@ class PackMetadata(BaseModel):
     vendor_name: Optional[str] = Field(None, alias='vendorName')
     preview_only: Optional[bool] = Field(None, alias='previewOnly')
 
-    class Config:
-        arbitrary_types_allowed = True
-        orm_mode = True
+    # class Config:
+    #     arbitrary_types_allowed = True  # allows having custom classes for properties in model
+    #     orm_mode = True  # allows using from_orm() method
+    #     allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
 
 
 class Pack(BaseContent, PackMetadata):

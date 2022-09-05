@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -14,7 +14,7 @@ class JobParser(JSONContentItemParser, content_type=ContentType.JOB):
         self.connect_to_dependencies()
 
     @property
-    def description(self) -> str:
+    def description(self) -> Optional[str]:
         return self.json_data.get('details')
 
     def connect_to_dependencies(self) -> None:

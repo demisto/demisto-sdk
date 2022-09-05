@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import networkx
 
@@ -33,7 +33,7 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
         self.connect_to_tests()
 
     @property
-    def object_id(self) -> str:
+    def object_id(self) -> Optional[str]:
         return self.yml_data.get('id')
 
     def is_mandatory_dependency(self, task_id: str) -> bool:

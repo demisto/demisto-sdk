@@ -57,7 +57,7 @@ class ContentGraphBuilder:
             self.relationships.update(pack.relationships)
 
     def _create_repository(self, path: Path) -> Repository:
-        """ Parses the repository and creates a repostitory model.
+        """ Parses the repository and creates a repository model.
 
         Args:
             path (Path): The repository path.

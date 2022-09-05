@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -11,16 +11,16 @@ class IndicatorTypeParser(JSONContentItemParser, content_type=ContentType.INDICA
     def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         super().__init__(path, pack_marketplaces)
         self.connect_to_dependencies()
-        self.regex: str = self.json_data.get('regex')
-        self.reputation_script_name: str = self.json_data.get('reputationScriptName') or None
-        self.enhancement_script_names: List[str] = self.json_data.get('enhancementScriptNames')
+        self.regex = self.json_data.get('regex')
+        self.reputation_script_name = self.json_data.get('reputationScriptName') or None
+        self.enhancement_script_names = self.json_data.get('enhancementScriptNames')
 
     @property
-    def name(self) -> str:
+    def name(self) -> Optional[str]:
         return self.json_data.get('details')
 
     @property
-    def description(self) -> str:
+    def description(self) -> Optional[str]:
         return self.json_data.get('details')
 
     def connect_to_dependencies(self) -> None:

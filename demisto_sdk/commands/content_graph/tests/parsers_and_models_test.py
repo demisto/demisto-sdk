@@ -13,8 +13,8 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
 from demisto_sdk.commands.content_graph.parsers.content_item import \
     NotAContentItemException
-from demisto_sdk.commands.content_graph.tests.tests_utils import (load_json,
-                                                                  load_yaml)
+from demisto_sdk.commands.content_graph.tests.test_tools import (load_json,
+                                                                 load_yaml)
 from TestSuite.pack import Pack
 from TestSuite.repo import Repo
 

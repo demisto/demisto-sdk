@@ -10,11 +10,11 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import \
 class IncidentTypeParser(JSONContentItemParser, content_type=ContentType.INCIDENT_TYPE):
     def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
         super().__init__(path, pack_marketplaces)
-        self.playbook: str = self.json_data.get('playbookId')
-        self.hours: int = self.json_data.get('hours')
-        self.days: int = self.json_data.get('days')
-        self.weeks: int = self.json_data.get('weeks')
-        self.closure_script: str = self.json_data.get('closureScript') or None
+        self.playbook = self.json_data.get('playbookId')
+        self.hours = self.json_data.get('hours')
+        self.days = self.json_data.get('days')
+        self.weeks = self.json_data.get('weeks')
+        self.closure_script = self.json_data.get('closureScript') or None
 
         self.connect_to_dependencies()
 

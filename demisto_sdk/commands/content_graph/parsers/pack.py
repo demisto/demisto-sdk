@@ -111,6 +111,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         content_items (PackContentItems): A collection of this pack's content item parsers.
         relationships (Relationships): A collection of the relationships in this pack.
     """
+    content_type = ContentType.PACK
 
     def __init__(self, path: Path) -> None:
         """ Parses a pack and its content items.
@@ -130,12 +131,8 @@ class PackParser(BaseContentParser, PackMetadataParser):
         logger.info(f'Parsed {self.node_id}')
 
     @property
-    def object_id(self) -> str:
+    def object_id(self) -> Optional[str]:
         return self.path.name
-
-    @property
-    def content_type(self) -> ContentType:
-        return ContentType.PACK
 
     def parse_pack_folders(self) -> None:
         """ Parses all pack content items by iterating its folders.

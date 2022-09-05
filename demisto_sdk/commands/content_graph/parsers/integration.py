@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
@@ -25,7 +25,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.connect_to_tests()
 
     @property
-    def display_name(self) -> str:
+    def display_name(self) -> Optional[str]:
         return self.yml_data.get('display')
 
     def connect_to_commands(self) -> None:
@@ -61,7 +61,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
             if default_incident_type != 'null':
                 self.add_dependency(default_incident_type, ContentType.INCIDENT_TYPE)
 
-    def get_code(self) -> str:
+    def get_code(self) -> Optional[str]:
         """ Gets the integration code.
         If the integration is unified, takes it from the yml file.
         Otherwise, uses the Unifier object to get it.
@@ -71,12 +71,17 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         """
         if self.is_unified or self.script_info.get('script') not in ['-', '']:
             return self.script_info.get('script')
+        if not self.unifier:
+            raise ValueError('Unifier object is not initialized')
         return self.unifier.get_script_or_integration_package_data()[1]
 
-    def connect_to_api_modules(self) -> List[str]:
+    def connect_to_api_modules(self) -> None:
         """ Creates IMPORTS relationships with the API modules used in the integration.
         """
-        api_modules = IntegrationScriptUnifier.check_api_module_imports(self.get_code()).values()
+        code = self.get_code()
+        if not code:
+            raise ValueError('Integration code is not available')
+        api_modules = IntegrationScriptUnifier.check_api_module_imports(code).values()
         for api_module in api_modules:
             api_module_node_id = f'{ContentType.SCRIPT}:{api_module}'
             self.add_relationship(Relationship.IMPORTS, api_module_node_id)

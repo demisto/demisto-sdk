@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
@@ -21,15 +21,15 @@ class JSONContentItemParser(ContentItemParser):
             raise NotAContentItemException
 
     @property
-    def object_id(self) -> str:
-        return self.json_data['id']
+    def object_id(self) -> Optional[str]:
+        return self.json_data.get('id')
 
     @property
-    def name(self) -> str:
+    def name(self) -> Optional[str]:
         return self.json_data.get('name')
 
     @property
-    def display_name(self) -> str:
+    def display_name(self) -> Optional[str]:
         return self.name or self.object_id
 
     @property
@@ -37,8 +37,8 @@ class JSONContentItemParser(ContentItemParser):
         return self.json_data.get('deprecated', False)
 
     @property
-    def description(self) -> str:
-        return self.json_data.get('description', '')
+    def description(self) -> Optional[str]:
+        return self.json_data.get('description')
 
     @property
     def fromversion(self) -> str:

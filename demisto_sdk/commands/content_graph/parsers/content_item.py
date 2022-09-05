@@ -1,7 +1,7 @@
 import logging
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
-from typing import Dict, List, Optional, Type
+from typing import Dict, List, Optional, Type, cast
 
 from packaging.version import Version
 
@@ -11,6 +11,7 @@ from demisto_sdk.commands.content_graph.common import (UNIFIED_FILES_SUFFIXES,
                                                        ContentType,
                                                        Relationship,
                                                        Relationships)
+from demisto_sdk.commands.content_graph.parsers import *  # noqa: F401
 from demisto_sdk.commands.content_graph.parsers.base_content import \
     BaseContentParser
 
@@ -22,7 +23,7 @@ class NotAContentItemException(Exception):
 
 
 class IncorrectParserException(Exception):
-    def __init__(self, correct_parser: 'ContentItemParser', **kwargs) -> None:
+    def __init__(self, correct_parser: Type['ContentItemParser'], **kwargs) -> None:
         self.correct_parser = correct_parser
         self.kwargs = kwargs
         super().__init__()
@@ -46,10 +47,12 @@ class ParserMetaclass(ABCMeta):
         Returns:
             ContentItemParser: The parser class.
         """
-        parser_cls: Type['ContentItemParser'] = super().__new__(cls, name, bases, namespace)
+        super_cls: ParserMetaclass = super().__new__(cls, name, bases, namespace)
+        # for type checking
+        parser_cls: Type['ContentItemParser'] = cast(Type['ContentItemParser'], super_cls)
         if content_type:
             ContentItemParser.content_type_to_parser[content_type] = parser_cls
-            parser_cls.content_type: ContentType = content_type
+            parser_cls.content_type = content_type
         return parser_cls
 
 
@@ -115,12 +118,12 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
     @property
     @abstractmethod
-    def name(self) -> str:
+    def name(self) -> Optional[str]:
         pass
 
     @property
     @abstractmethod
-    def display_name(self) -> str:
+    def display_name(self) -> Optional[str]:
         pass
 
     @property
@@ -130,12 +133,12 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
     @property
     @abstractmethod
-    def description(self) -> str:
+    def description(self) -> Optional[str]:
         pass
 
     @property
     @abstractmethod
-    def marketplaces(self) -> List[str]:
+    def marketplaces(self) -> List[MarketplaceVersions]:
         pass
 
     @property

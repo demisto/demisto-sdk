@@ -15,10 +15,10 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
             raise NotAContentItemException
 
         super().__init__(path, pack_marketplaces)
-        self.kind: str = self.json_data.get('kind')
-        self.tabs: List[str] = self.json_data.get('tabs')
-        self.definition_id: str = self.json_data.get('definitionId')
-        self.group: str = self.json_data.get('group')
+        self.kind = self.json_data.get('kind')
+        self.tabs = self.json_data.get('tabs')
+        self.definition_id = self.json_data.get('definitionId')
+        self.group = self.json_data.get('group')
 
         self.edit: bool = bool(self.json_data.get('edit'))
         self.indicators_details: bool = bool(self.json_data.get('indicatorsDetails'))

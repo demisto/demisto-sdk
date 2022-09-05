@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -12,5 +12,5 @@ class ModelingRuleParser(YAMLContentItemParser, content_type=ContentType.MODELIN
         super().__init__(path, pack_marketplaces)
 
     @property
-    def object_id(self) -> str:
+    def object_id(self) -> Optional[str]:
         return self.yml_data.get('id')

@@ -15,7 +15,6 @@ class ModelingRule(YAMLContentUnifiedObject):
         super().__init__(path, FileType.MODELING_RULE, MODELING_RULE)
 
     def normalize_file_name(self) -> str:
-        print('*******************************')
         return generate_xsiam_normalized_name(self._path.name, MODELING_RULE)
 
     def upload(self, client: demisto_client):

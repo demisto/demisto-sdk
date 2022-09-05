@@ -10,7 +10,7 @@
 * Added dump function to XSIAM pack objects to dulicate the files.
 * Fixed an issue where the `contribution_converter` did not support changes made to ApiModules.
 * Added playbook modification capabilities in **TestSuite**.
-* Hotfix to build
+* Fixed an issue in create-content-artifacts where it will not get a normalize name for the item and it will try to duplicate the same file.
 
 ## 1.7.3
 

@@ -1118,6 +1118,7 @@ class TestZippedPackUpload:
         assert 'Triggers/' in xsiam_pack_files
         assert 'XSIAMDashboards/' in xsiam_pack_files
 
+    @pytest.disable()
     def test_upload_xsiam_pack_to_xsoar(self, mocker):
         """
         Given:

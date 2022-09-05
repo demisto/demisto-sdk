@@ -361,7 +361,9 @@ class TestPlaybook:
             - The created incident or None
         """
         # Preparing the incident request
-        incident_name = f'inc-{self.configuration.playbook_id}--{uuid.uuid4()}'
+
+        incident_name = f'inc-{self.configuration.playbook_id}--build_number:' \
+                        f'{self.build_context.build_number}--{uuid.uuid4()}'
         create_incident_request = demisto_client.demisto_api.CreateIncidentRequest()
         create_incident_request.create_investigation = True
         create_incident_request.playbook_id = self.configuration.playbook_id

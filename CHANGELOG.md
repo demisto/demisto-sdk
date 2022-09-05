@@ -1,8 +1,15 @@
 # Changelog
+* Added playbook modification capabilities in **TestSuite**.
+
 
 ## Unreleased
+* Fixed an issue where the **doc-review** command showed irrelevant messages.
 * Fixed an issue in **validate**, where backward-compatibility failures prevented other validations from running.
-* fixed an issue in **validate**, where content-like files under infrastructure paths were not ignored.
+* Fixed an issue in **validate**, where content-like files under infrastructure paths were not ignored.
+* Fixed an issue in the AMI mapping, where server versions were missing.
+* Change the way the normalize name is set for external files.
+* Added dump function to XSIAM pack objects to dulicate the files.
+* Fixed an issue where the `contribution_converter` did not support changes made to ApiModules.
 * Added a new check to **validate**, making sure playbook task values are passed as references.
 
 ## 1.7.3

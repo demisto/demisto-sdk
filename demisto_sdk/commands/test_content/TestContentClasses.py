@@ -361,7 +361,9 @@ class TestPlaybook:
             - The created incident or None
         """
         # Preparing the incident request
-        incident_name = f'inc-{self.configuration.playbook_id}--{uuid.uuid4()}'
+
+        incident_name = f'inc-{self.configuration.playbook_id}--build_number:' \
+                        f'{self.build_context.build_number}--{uuid.uuid4()}'
         create_incident_request = demisto_client.demisto_api.CreateIncidentRequest()
         create_incident_request.create_investigation = True
         create_incident_request.playbook_id = self.configuration.playbook_id
@@ -782,6 +784,10 @@ class BuildContext:
             'Server 6.0': '6.0.0',
             'Server 6.1': '6.1.0',
             'Server 6.2': '6.2.0',
+            'Server 6.5': '6.5.0',
+            'Server 6.6': '6.6.0',
+            'Server 6.8': '6.8.0',
+            'Server 6.9': '6.9.0',
             'Server Master': default_version,
             'XSIAM Master': default_version
         }

@@ -1,12 +1,17 @@
 import base64
 import os
 from pathlib import Path
+from unittest.mock import mock_open
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
+from demisto_sdk.commands.unify.integration_script_unifier import \
+    IntegrationScriptUnifier
+from demisto_sdk.commands.unify.tests.yml_unifier_test import (DUMMY_MODULE,
+                                                               DUMMY_SCRIPT)
 from TestSuite.test_tools import ChangeCWD
 
 yaml = YAML_Handler()
@@ -394,3 +399,25 @@ urllib3==1.22
         file_data = f.read()
         # check imports are sorted
         assert non_sorted_imports not in file_data
+
+
+def get_dummy_module(name='MicrosoftApiModule', path=None):
+    class_name = {'MicrosoftApiModule': 'MicrosoftClient', 'CrowdStrikeApiModule': 'CrowdStrikeApiClient'}[name]
+    return DUMMY_MODULE.replace('CLASSNAME', class_name)
+
+
+def test_update_api_module_contribution(mocker):
+    m = mock_open()
+    mock = mocker.patch('demisto_sdk.commands.split.ymlsplitter.open', m)
+    mocker.patch.object(IntegrationScriptUnifier, '_get_api_module_code', return_value=get_dummy_module())
+    import_name = 'from MicrosoftApiModule import *  # noqa: E402'
+    module_name = 'MicrosoftApiModule'
+    code = IntegrationScriptUnifier.insert_module_code(DUMMY_SCRIPT, {import_name: module_name})
+    yml_splitter = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/modelingrule-OktaModelingRules.yml',
+                               file_type='modelingrule')
+    yml_splitter.replace_imported_code(code, executed_from_contrib_converter=True)
+    write_calls = mock().write.call_args_list
+    assert f'{write_calls[0].args[0]}{write_calls[1].args[0]}\n{write_calls[2].args[0]}\n' == \
+           f'from CommonServerPython import *  # noqa: F401\n' \
+           f'import demistomock as demisto  # noqa: F401\n' \
+           f'{get_dummy_module()}'

@@ -35,6 +35,8 @@ class ModelingRule(YAMLContentUnifiedObject):
     def dump(self, dest_dir: Optional[Union[Path, str]] = None) -> List[Path]:
         created_files: List[Path] = []
         created_files.extend(super().dump(dest_dir=dest_dir))
+        print('created_files', created_files)
         new_file_path = str(created_files[0])
+        print('new_file_path', new_file_path)
         shutil.copyfile(new_file_path, new_file_path.replace('external-', ''))
         return created_files

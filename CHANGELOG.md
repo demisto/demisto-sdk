@@ -5,7 +5,7 @@
 * Added an error when the docker daemon is unavailable when running **lint**.
 * Removed the validation of a subtype change for scripts in the **validate** command.
 * Fixed an issue where names of XSIAM content items were not normalized properly.
-
+* Fixed an issue where names of other XSIAM content items were not normalized properly.
 ## 1.7.4
 
 * Fixed an issue where the **doc-review** command showed irrelevant messages.

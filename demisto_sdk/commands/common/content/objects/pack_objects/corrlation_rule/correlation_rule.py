@@ -35,6 +35,6 @@ class CorrelationRule(YAMLContentObject):
     def dump(self, dest_dir: Optional[Union[Path, str]] = None) -> List[Path]:
         created_files: List[Path] = []
         created_files.extend(super().dump(dest_dir=dest_dir))
-        new_file_path = str(created_files[0])
-        shutil.copyfile(new_file_path, new_file_path.replace('external-', ''))
+        new_file_path = created_files[0]
+        shutil.copyfile(new_file_path, new_file_path.parent / self.normalize_file_name())
         return created_files

@@ -15,6 +15,7 @@
 * Fixed an issue where the `contribution_converter` did not support changes made to ApiModules.
 * Added name normalization according to new convention to XSIAM content items
 * Added playbook modification capabilities in **TestSuite**.
+* Fixed an issue in create-content-artifacts where it will not get a normalize name for the item and it will try to duplicate the same file.
 
 ## 1.7.3
 

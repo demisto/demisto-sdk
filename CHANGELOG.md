@@ -3,6 +3,7 @@
 
 ## Unreleased
 * Added an error when the docker daemon is unavailable when running **lint**.
+* Fixed the issue with the wrong name in the trigger.
 
 ## 1.7.4
 

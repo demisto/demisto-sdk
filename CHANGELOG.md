@@ -5,7 +5,7 @@
 * Added an error when the docker daemon is unavailable when running **lint**.
 
 ## 1.7.4
- 
+
 * Fixed an issue where the **doc-review** command showed irrelevant messages.
 * Fixed an issue in **validate**, where backward-compatibility failures prevented other validations from running.
 * Fixed an issue in **validate**, where content-like files under infrastructure paths were not ignored.

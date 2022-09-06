@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
     JSONContentObject
 from demisto_sdk.commands.common.tools import generate_xsiam_normalized_name
 
-
+ 
 class Trigger(JSONContentObject):
     def __init__(self, path: Union[Path, str]):
         super().__init__(path, TRIGGER)

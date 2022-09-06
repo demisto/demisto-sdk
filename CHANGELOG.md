@@ -4,7 +4,7 @@
 ## Unreleased
 * Added an error when the docker daemon is unavailable when running **lint**.
 * Removed the validation of a subtype change for scripts in the **validate** command.
-* Fixed the issue with the wrong name in the trigger.
+* Fixed an issue where names of XSIAM content items were not normalized properly.
 
 ## 1.7.4
 

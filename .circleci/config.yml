@@ -161,9 +161,9 @@ jobs:
         - setup_remote_docker:
             version: 20.10.12
         - run:
-            name: Update poetry
+            name: install poetry
             command: |
-              poetry self update
+              sudo curl -sSL https://install.python-poetry.org | python3 -
               poetry --version
         - run:
             name: Install dependencies

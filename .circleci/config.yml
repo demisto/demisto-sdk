@@ -21,10 +21,10 @@ parameters:
     default: v3  # Change this parameter to clear cache.
   global-docker-image:
     type: string
-    default: cimg/python:3.10.4-node
+    default: cimg/python:3.10.6-node
   pythonversion_latest:
     type: string
-    default: "3.10.2"
+    default: "3.10.6"
 
 
 references:
@@ -60,9 +60,16 @@ references:
       - <<: *install_node_ci
 
     install_build_dependencies: &install_build_dependencies
+    
       - python/install-packages: 
                 pkg-manager: "poetry"
                 args: "--extras build"
+                pre-install-steps:
+                  - run:
+                name: Configure poetry
+                command: |
+                  poetry self update
+
     
     requires_all: &requires_all
       requires:

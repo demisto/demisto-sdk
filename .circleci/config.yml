@@ -161,7 +161,7 @@ jobs:
             version: 20.10.12
         - python/install-packages:
             pkg-manager: "poetry"
-            cache-version: << pipeline.parameters.cache-version >>
+            # cache-version: << pipeline.parameters.cache-version >>
             pre-install-steps:
               - run:
                   # this is a workaround until circleci will support poetry 1.2.0

@@ -51,6 +51,7 @@ references:
       - run:
           name: Install Poetry
           command: |
+            echo $HOME
             rm -rf /home/circleci/.poetry/bin/poetry
             sudo curl -sSL https://install.python-poetry.org | python3 -
             # add to $BASH_ENV

@@ -52,6 +52,9 @@ references:
           name: Install Poetry
           command: |
             sudo curl -sSL https://install.python-poetry.org | python3 -
+            # add to $BASH_ENV
+            echo 'export PATH="$HOME/.poetry/bin:$PATH"' >> $BASH_ENV
+            source $BASH_ENV
             poetry --version
 
     install_demisto_sdk: &install_demisto_sdk

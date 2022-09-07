@@ -33,7 +33,7 @@ class ContentGraphLoader:
                 if (content_type := content_item['content_type']) == ContentType.INTEGRATION:
                     content_item['commands'] = integrations_to_commands.get(content_item['object_id'], [])
 
-                content_items_dct.setdefault(content_type, []).append(content_item)
+                content_items_dct.setdefault(content_type.lower(), []).append(content_item)
             pack['content_items'] = content_items_dct
             packs.append(pack)
         return Repository.parse_obj(repository)

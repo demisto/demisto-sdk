@@ -126,7 +126,7 @@ class PackParser(BaseContentParser, PackMetadataParser):
         try:
             self.contributors: List[str] = get_json(path / PACK_CONTRIBUTORS_FILENAME)
         except FileNotFoundError:
-            logger.info(f'No contributors file found in {path}')
+            logger.debug(f'No contributors file found in {path}')
         self.parse_pack_folders()
         logger.info(f'Parsed {self.node_id}')
 

@@ -8,7 +8,7 @@ import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
 from demisto_sdk.commands.content_graph.content_graph_commands import (
-    create_content_graph, stop_content_graph)
+    create_content_graph, marshal_content_graph, stop_content_graph)
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import \
     Neo4jContentGraphInterface as ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.integration import (
@@ -571,4 +571,57 @@ class TestCreateContentGraph:
         Then:
             - Make sure no exception is raised.
         """
+        stop_content_graph()
+
+    def test_dump_content_graph(self, tmp_path: Path, repo: Repo):
+        """
+        Given:
+            - A mocked model of a repository with a pack TestPack, containing an integration.
+        When:
+            - Running create_content_graph().
+        Then:
+            - Make sure the graph is dumped to the correct path.
+        """
+        pack = repo.create_pack('TestPack')
+        pack.pack_metadata.write_json(load_json('pack_metadata.json'))
+        integration = pack.create_integration()
+        integration.create_default_integration('TestIntegration')
+
+        with ContentGraphInterface(start_service=True, output_file=tmp_path / 'content.dump') as interface:
+            create_content_graph(interface)
+
+        assert Path.exists(tmp_path / 'content.dump'), 'Make sure dump file created'
+        stop_content_graph()
+
+    def test_marshal_content_graph(self, tmp_path: Path, repo: Repo):
+        """
+        Given:
+            - A mocked model of a repository with a pack TestPack, containing an integration.
+        When:
+            - Running create_content_graph().
+        Then:
+            - Make sure the graph is dumped to the correct path.
+        """
+        pack = repo.create_pack('TestPack')
+        pack.pack_metadata.write_json(load_json('pack_metadata.json'))
+        integration = pack.create_integration()
+        integration.create_default_integration('TestIntegration')
+        dump_path = tmp_path / 'content.dump'
+        with ContentGraphInterface(start_service=True, output_file=dump_path) as interface:
+            create_content_graph(interface)
+
+        assert Path.exists(dump_path), 'Make sure dump file created'
+        neo4j_service.load(dump_path)
+        repo_model: Repository = marshal_content_graph(interface, MarketplaceVersions.XSOAR)
+        packs = repo_model.packs
+        assert len(packs) == 1
+        pack = packs[0]
+        assert pack.name == 'TestPack'
+        integrations = repo_model.packs[0].content_items.integration
+        integration = integrations[0]
+        assert len(integrations) == 1
+        assert integration.name == 'TestIntegration'
+        commands = integrations.commands
+        assert len(commands) == 1
+        assert commands[0].name == 'test-command'
         stop_content_graph()

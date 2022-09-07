@@ -1,4 +1,5 @@
 import logging
+import os
 import shutil
 from pathlib import Path
 
@@ -8,6 +9,14 @@ from requests.adapters import HTTPAdapter, Retry
 
 from demisto_sdk.commands.common.tools import run_command
 from demisto_sdk.commands.content_graph.common import NEO4J_PASSWORD, REPO_PATH
+
+# this will be used to determine if the system supports mounts
+CAN_MOUNT_FILES = bool(os.getenv('GITLAB_CI', False)) or ((not os.getenv('CIRCLECI', False)) and (
+
+    (not os.getenv('DOCKER_HOST')) or
+    os.getenv('DOCKER_HOST', "").lower().startswith("unix:")
+)
+)
 
 NEO4J_SERVICE_IMAGE = 'neo4j:4.4.9'
 NEO4J_ADMIN_IMAGE = 'neo4j/neo4j-admin:4.4.9'
@@ -51,7 +60,9 @@ def _stop_neo4j_service_docker(docker_client: docker.DockerClient):
         docker_client (docker.DockerClient): The docker client to use
     """
     try:
-        docker_client.containers.get('neo4j-content').remove(force=True)
+        neo4j_docker = docker_client.containers.get('neo4j-content')
+        neo4j_docker.stop()
+        neo4j_docker.remove(force=True)
     except Exception as e:
         logger.info(f'Could not remove neo4j container: {e}')
 
@@ -75,6 +86,7 @@ def start(use_docker: bool = True):
     Args:
         use_docker (bool, optional): Whether use docker or run locally. Defaults to True.
     """
+    use_docker = use_docker or not IS_NEO4J_ADMIN_AVAILABLE
     if not use_docker:
         Path.mkdir(REPO_PATH / 'neo4j', exist_ok=True, parents=True)
         _neo4j_admin_command('set-initial-password', f'neo4j-admin set-initial-password {NEO4J_PASSWORD}')
@@ -101,6 +113,7 @@ def stop(use_docker: bool):
     Args:
         use_docker (bool): Whether stop the sercive using docker or not.
     """
+    use_docker = use_docker or not IS_NEO4J_ADMIN_AVAILABLE
     if not use_docker:
         run_command('neo4j stop', cwd=REPO_PATH, is_silenced=False)
     else:
@@ -122,7 +135,7 @@ def _neo4j_admin_command(name: str, command: str):
         try:
             docker_client.containers.get(f'neo4j-{name}').remove(force=True)
         except Exception as e:
-            logger.info(f'Could not remove neo4j container: {e}')
+            logger.debug(f'Could not remove neo4j container: {e}')
         docker_client.containers.run(
             image=NEO4J_ADMIN_IMAGE,
             name=f'neo4j-{name}',
@@ -135,24 +148,33 @@ def _neo4j_admin_command(name: str, command: str):
 def dump(output_path: Path, use_docker=True):
     """Dump the content graph to a file
     """
+    use_docker = use_docker or not IS_NEO4J_ADMIN_AVAILABLE
     stop(use_docker)
     dump_path = Path("/backups/content-graph.dump") if use_docker else output_path
     command = f'neo4j-admin dump --database=neo4j --to={dump_path}'
+    # The actual path in the host is different than the path in the container
+    real_path = (REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump') if use_docker else output_path
+    real_path.unlink(missing_ok=True)
     _neo4j_admin_command('dump', command)
     if use_docker:
-        shutil.copy(dump_path, output_path)
+        # since we have to save the dump in the container, we need to copy the correct path to the host
+        shutil.copy(real_path, output_path)
     start(use_docker)
 
 
 def load(input_path: Path, use_docker=True):
     """Load the content graph from a file
     """
+    use_docker = use_docker or not IS_NEO4J_ADMIN_AVAILABLE
     stop(use_docker)
     dump_path = Path("/backups/content-graph.dump") if use_docker else input_path
     if use_docker:
+        # remove existing data
         Path.mkdir(REPO_PATH / 'neo4j' / 'backups', parents=True, exist_ok=True)
         shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
+        # copy the dump file to the correct path
         shutil.copy(input_path, REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump')
+    # currently we assume that the data is empty when running without docker
     command = f'neo4j-admin load --database=neo4j --from={dump_path}'
     _neo4j_admin_command('load', command)
     start(use_docker)

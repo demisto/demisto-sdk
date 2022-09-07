@@ -1,10 +1,7 @@
 from pathlib import Path
 from typing import List, Optional
 
-from pydantic import BaseModel, Field
-
-from demisto_sdk.commands.content_graph.common import (ContentType, Nodes,
-                                                       Relationships)
+from demisto_sdk.commands.content_graph.common import Nodes, Relationships
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.correlation_rule import \
@@ -44,36 +41,37 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import \
     XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
+from pydantic import BaseModel, Field
 
 
 class PackContentItems(BaseModel):
-    classifier: List[Classifier] = Field([], alias=ContentType.CLASSIFIER.value)
-    correlation_rule: List[CorrelationRule] = Field([], alias=ContentType.CORRELATION_RULE.value)
-    dashboard: List[Dashboard] = Field([], alias=ContentType.DASHBOARD.value)
-    generic_definition: List[GenericDefinition] = Field([], alias=ContentType.GENERIC_DEFINITION.value)
-    generic_field: List[GenericField] = Field([], alias=ContentType.GENERIC_FIELD.value)
-    generic_module: List[GenericModule] = Field([], alias=ContentType.GENERIC_MODULE.value)
-    generic_type: List[GenericType] = Field([], alias=ContentType.GENERIC_TYPE.value)
-    incident_field: List[IncidentField] = Field([], alias=ContentType.INCIDENT_FIELD.value)
-    incident_type: List[IncidentType] = Field([], alias=ContentType.INCIDENT_TYPE.value)
-    indicator_field: List[IndicatorField] = Field([], alias=ContentType.INDICATOR_FIELD.value)
-    indicator_type: List[IndicatorType] = Field([], alias=ContentType.INDICATOR_TYPE.value)
-    integration: List[Integration] = Field([], alias=ContentType.INTEGRATION.value)
-    job: List[Job] = Field([], alias=ContentType.JOB.value)
-    layout: List[Layout] = Field([], alias=ContentType.LAYOUT.value)
-    list: List[ListObject] = Field([], alias=ContentType.LIST.value)
-    mapper: List[Mapper] = Field([], alias=ContentType.MAPPER.value)
-    modeling_rule: List[ModelingRule] = Field([], alias=ContentType.MODELING_RULE.value)
-    parsing_rule: List[ParsingRule] = Field([], alias=ContentType.PARSING_RULE.value)
-    playbook: List[Playbook] = Field([], alias=ContentType.PLAYBOOK.value)
-    report: List[Report] = Field([], alias=ContentType.REPORT.value)
-    script: List[Script] = Field([], alias=ContentType.SCRIPT.value)
-    test_playbook: List[TestPlaybook] = Field([], alias=ContentType.TEST_PLAYBOOK.value)
-    trigger: List[Trigger] = Field([], alias=ContentType.TRIGGER.value)
-    widget: List[Widget] = Field([], alias=ContentType.WIDGET.value)
-    wizard: List[Wizard] = Field([], alias=ContentType.WIZARD.value)
-    xsiam_dashboard: List[XSIAMDashboard] = Field([], alias=ContentType.XSIAM_DASHBOARD.value)
-    xsiam_report: List[XSIAMReport] = Field([], alias=ContentType.XSIAM_REPORT.value)
+    classifier: List[Classifier] = []
+    correlation_rule: List[CorrelationRule] = []
+    dashboard: List[Dashboard] = []
+    generic_definition: List[GenericDefinition] = []
+    generic_field: List[GenericField] = []
+    generic_module: List[GenericModule] = []
+    generic_type: List[GenericType] = []
+    incident_field: List[IncidentField] = []
+    incident_type: List[IncidentType] = []
+    indicator_field: List[IndicatorField] = []
+    indicator_type: List[IndicatorType] = []
+    integration: List[Integration] = []
+    job: List[Job] = []
+    layout: List[Layout] = []
+    list: List[ListObject] = []
+    mapper: List[Mapper] = []
+    modeling_rule: List[ModelingRule] = []
+    parsing_rule: List[ParsingRule] = []
+    playbook: List[Playbook] = []
+    report: List[Report] = []
+    script: List[Script] = []
+    test_playbook: List[TestPlaybook] = []
+    trigger: List[Trigger] = []
+    widget: List[Widget] = []
+    wizard: List[Wizard] = []
+    xsiam_dashboard: List[XSIAMDashboard] = []
+    xsiam_report: List[XSIAMReport] = []
 
     def __iter__(self):
         """ Defines the iteration of the object. Each iteration yields a single content item.
@@ -110,11 +108,6 @@ class PackMetadata(BaseModel):
     vendor_id: Optional[str] = Field(None, alias='vendorId')
     vendor_name: Optional[str] = Field(None, alias='vendorName')
     preview_only: Optional[bool] = Field(None, alias='previewOnly')
-
-    # class Config:
-    #     arbitrary_types_allowed = True  # allows having custom classes for properties in model
-    #     orm_mode = True  # allows using from_orm() method
-    #     allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
 
 
 class Pack(BaseContent, PackMetadata):

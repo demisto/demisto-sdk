@@ -616,12 +616,12 @@ class TestCreateContentGraph:
         packs = repo_model.packs
         assert len(packs) == 1
         pack = packs[0]
-        assert pack.name == 'TestPack'
+        assert pack.name == 'HelloWorld'
         integrations = repo_model.packs[0].content_items.integration
         integration = integrations[0]
         assert len(integrations) == 1
         assert integration.name == 'TestIntegration'
-        commands = integrations.commands
+        commands = integration.commands
         assert len(commands) == 1
         assert commands[0].name == 'test-command'
         stop_content_graph()

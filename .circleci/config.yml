@@ -157,17 +157,18 @@ jobs:
         - image: cimg/python:<< parameters.pythonversion >>-node
       steps:
         - checkout
-        - setup_remote_docker:
-            version: 20.10.12
         - python/install-packages:
             pkg-manager: "poetry"
-            # cache-version: << pipeline.parameters.cache-version >>
+            cache-version: << pipeline.parameters.cache-version >>
             pre-install-steps:
               - run:
                   # this is a workaround until circleci will support poetry 1.2.0
                   name: Update poetry
                   command: |
                     poetry self update
+
+        - setup_remote_docker:
+            version: 20.10.12
         - <<: *install_node_ci
         - run:
             name: pytest

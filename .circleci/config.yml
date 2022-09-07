@@ -160,17 +160,15 @@ jobs:
         - checkout
         - setup_remote_docker:
             version: 20.10.12
-        - python/install-packages:
-            pkg-manager: "poetry"
-            args: "--extras build"
-            cache-version: << pipeline.parameters.cache-version >>
-            pre-install-steps:
-              - run:
-                  # this is a workaround until circleci will support poetry 1.2.0
-                  name: Update poetry
-                  command: |
-                    poetry self update
-
+        - run:
+            name: Update poetry
+            command: |
+              poetry self update
+              poetry --version
+        - run:
+            name: Install dependencies
+            command: |
+              poetry install
         - <<: *install_node_ci
         - run:
             name: pytest

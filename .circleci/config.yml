@@ -62,6 +62,11 @@ references:
                 name: Update poetry
                 command: |
                   poetry self update
+            - run:
+                name: Check if poetry.toml and poetry.lock are consistent
+                command: |
+                  poetry lock --check
+
       - <<: *install_node_ci
 
     install_build_dependencies: &install_build_dependencies
@@ -75,6 +80,11 @@ references:
                 name: Update poetry
                 command: |
                   poetry self update
+            - run:
+                name: Check if poetry.toml and poetry.lock are consistent
+                command: |
+                  poetry lock --check
+
 
     
     requires_all: &requires_all
@@ -108,6 +118,11 @@ jobs:
                   name: Update poetry
                   command: |
                     poetry self update
+              - run:
+                  name: Check if poetry.toml and poetry.lock are consistent
+                  command: |
+                    poetry lock --check
+
 
 
         - <<: *install_node_ci
@@ -165,6 +180,11 @@ jobs:
                   name: Update poetry
                   command: |
                     poetry self update
+              - run:
+                  name: Check if poetry.toml and poetry.lock are consistent
+                  command: |
+                    poetry lock --check
+
 
 
         - <<: *install_node_ci
@@ -381,6 +401,11 @@ jobs:
               name: Update poetry
               command: |
                 poetry self update
+          - run:
+              name: Check if poetry.toml and poetry.lock are consistent
+              command: |
+                poetry lock --check
+
 
 
       - run:

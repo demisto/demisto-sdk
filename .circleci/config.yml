@@ -54,23 +54,27 @@ references:
           cache-version: << pipeline.parameters.cache-version >>
           pre-install-steps:
             - run:
-                name: update poetry and export demisto-sdk to path
+                name: export demisto-sdk to path
+                command: |
+                  echo 'export PYTHONPATH="${PYTHONPATH}:${HOME}/project"' >> $BASH_ENV
+            - run:
+                # this is a workaround until circleci will have builtin support for poetry 1.2
+                name: Update poetry
                 command: |
                   poetry self update
-                  echo 'export PYTHONPATH="${PYTHONPATH}:${HOME}/project"' >> $BASH_ENV
       - <<: *install_node_ci
 
     install_build_dependencies: &install_build_dependencies
     
       - python/install-packages: 
-                pkg-manager: "poetry"
-                args: "--extras build"
-                pre-install-steps:
-                  - run:
-                      # this is a workaround until circleci will support poetry 1.2.0
-                      name: Update poetry
-                      command: |
-                        poetry self update
+          pkg-manager: "poetry"
+          args: "--extras build"
+          pre-install-steps:
+            - run:
+                # this is a workaround until circleci will support poetry 1.2.0
+                name: Update poetry
+                command: |
+                  poetry self update
 
     
     requires_all: &requires_all
@@ -157,10 +161,10 @@ jobs:
             cache-version: << pipeline.parameters.cache-version >>
             pre-install-steps:
               - run:
-                # this is a workaround until circleci will support poetry 1.2.0
-                name: Update poetry
-                command: |
-                  poetry self update
+                  # this is a workaround until circleci will support poetry 1.2.0
+                  name: Update poetry
+                  command: |
+                    poetry self update
 
 
         - <<: *install_node_ci

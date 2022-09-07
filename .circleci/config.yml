@@ -106,6 +106,7 @@ jobs:
             version: 20.10.12
         - python/install-packages:
             pkg-manager: "poetry"
+            args: []
             cache-version: << pipeline.parameters.cache-version >>
             pre-install-steps:
               - run:
@@ -159,12 +160,9 @@ jobs:
         - checkout
         - setup_remote_docker:
             version: 20.10.12
-        - run:
-            name: update poetry
-            command: |
-              poetry self update
         - python/install-packages:
             pkg-manager: "poetry"
+            args: []
             cache-version: << pipeline.parameters.cache-version >>
             pre-install-steps:
               - run:
@@ -380,6 +378,7 @@ jobs:
       - checkout
       - python/install-packages:
           pkg-manager: "poetry"
+          args: []
           cache-version: << pipeline.parameters.cache-version >>
           pre-install-steps:
           - run:

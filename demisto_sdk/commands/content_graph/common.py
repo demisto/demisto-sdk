@@ -51,7 +51,7 @@ class ContentType(str, enum.Enum):
     INDICATOR_TYPE = 'IndicatorType'
     INTEGRATION = 'Integration'
     JOB = 'Job'
-    LAYOUT = 'Layouts'
+    LAYOUT = 'Layout'
     LIST = 'List'
     MAPPER = 'Mapper'
     MODELING_RULE = 'ModelingRule'

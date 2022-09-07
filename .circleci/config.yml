@@ -8,7 +8,6 @@ orbs:
   node: circleci/node@<< pipeline.parameters.node-orb-version >>
   orb-tools: circleci/orb-tools@10.0
 
-
 parameters:
   python-orb-version:
     type: string
@@ -55,8 +54,10 @@ references:
           cache-version: << pipeline.parameters.cache-version >>
           pre-install-steps:
             - run:
-                name: export demisto-sdk to path
-                command: echo 'export PYTHONPATH="${PYTHONPATH}:${HOME}/project"' >> $BASH_ENV
+                name: update poetry and export demisto-sdk to path
+                command: |
+                  poetry self update
+                  echo 'export PYTHONPATH="${PYTHONPATH}:${HOME}/project"' >> $BASH_ENV
       - <<: *install_node_ci
 
     install_build_dependencies: &install_build_dependencies
@@ -66,7 +67,8 @@ references:
                 args: "--extras build"
                 pre-install-steps:
                   - run:
-                      name: Configure poetry
+                      # this is a workaround until circleci will support poetry 1.2.0
+                      name: Update poetry
                       command: |
                         poetry self update
 
@@ -96,6 +98,14 @@ jobs:
         - python/install-packages:
             pkg-manager: "poetry"
             cache-version: << pipeline.parameters.cache-version >>
+            pre-install-steps:
+              - run:
+                  # this is a workaround until circleci will support poetry 1.2.0
+                  name: Update poetry
+                  command: |
+                    poetry self update
+
+
         - <<: *install_node_ci
         - run:
             name: pytest
@@ -145,6 +155,14 @@ jobs:
         - python/install-packages:
             pkg-manager: "poetry"
             cache-version: << pipeline.parameters.cache-version >>
+            pre-install-steps:
+              - run:
+                # this is a workaround until circleci will support poetry 1.2.0
+                name: Update poetry
+                command: |
+                  poetry self update
+
+
         - <<: *install_node_ci
         - run:
             name: pytest
@@ -353,6 +371,14 @@ jobs:
       - python/install-packages:
           pkg-manager: "poetry"
           cache-version: << pipeline.parameters.cache-version >>
+          pre-install-steps:
+          - run:
+              # this is a workaround until circleci will support poetry 1.2.0
+              name: Update poetry
+              command: |
+                poetry self update
+
+
       - run:
           name: Run Slack Notifier
           command: |

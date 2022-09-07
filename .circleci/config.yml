@@ -7,6 +7,8 @@ orbs:
   python: circleci/python@<< pipeline.parameters.python-orb-version >>
   node: circleci/node@<< pipeline.parameters.node-orb-version >>
   orb-tools: circleci/orb-tools@10.0
+  poetry: talkiq/poetry@3.1.1
+
 
 parameters:
   python-orb-version:

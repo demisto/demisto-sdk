@@ -66,9 +66,9 @@ references:
                 args: "--extras build"
                 pre-install-steps:
                   - run:
-                name: Configure poetry
-                command: |
-                  poetry self update
+                      name: Configure poetry
+                      command: |
+                        poetry self update
 
     
     requires_all: &requires_all

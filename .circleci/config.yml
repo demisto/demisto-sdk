@@ -106,7 +106,7 @@ jobs:
             version: 20.10.12
         - python/install-packages:
             pkg-manager: "poetry"
-            args: ''
+            args: ' '
             cache-version: << pipeline.parameters.cache-version >>
             pre-install-steps:
               - run:
@@ -162,7 +162,7 @@ jobs:
             version: 20.10.12
         - python/install-packages:
             pkg-manager: "poetry"
-            args: ''
+            args: ' '
             cache-version: << pipeline.parameters.cache-version >>
             pre-install-steps:
               - run:
@@ -378,7 +378,7 @@ jobs:
       - checkout
       - python/install-packages:
           pkg-manager: "poetry"
-          args: ''
+          args: ' '
           cache-version: << pipeline.parameters.cache-version >>
           pre-install-steps:
           - run:

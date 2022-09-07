@@ -44,15 +44,17 @@ references:
         - checkout-content
 
     install_neo4j: &install_neo4j
-      name: Install Neo4j
-      command: |
-        echo "deb http://httpredir.debian.org/debian stretch-backports main" | sudo tee -a /etc/apt/sources.list.d/stretch-backports.list
-        sudo apt-get update
-        sudo apt-get install openjdk-11-jre
-        wget -O - https://debian.neo4j.com/neotechnology.gpg.key | sudo apt-key add -
-        echo 'deb https://debian.neo4j.com stable latest' | sudo tee -a /etc/apt/sources.list.d/neo4j.list
-        sudo apt-get update
-        sudo apt-get install neo4j=1:4.4.9
+      run:
+        name: Install Neo4j
+        command: |
+          echo "deb http://httpredir.debian.org/debian stretch-backports main" | sudo tee -a /etc/apt/sources.list.d/stretch-backports.list
+          sudo apt-get update
+          sudo apt-get install openjdk-11-jre
+          wget -O - https://debian.neo4j.com/neotechnology.gpg.key | sudo apt-key add -
+          echo 'deb https://debian.neo4j.com stable latest' | sudo tee -a /etc/apt/sources.list.d/neo4j.list
+          sudo apt-get update
+          sudo apt-get install neo4j=1:4.4.9
+          
     install_node_ci: &install_node_ci
       - node/install-packages:
           cache-version: << pipeline.parameters.cache-version >>

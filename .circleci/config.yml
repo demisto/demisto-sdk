@@ -157,6 +157,12 @@ jobs:
         - image: cimg/python:<< parameters.pythonversion >>-node
       steps:
         - checkout
+        - setup_remote_docker:
+            version: 20.10.12
+        - run:
+            name: update poetry
+            command: |
+              poetry self update
         - python/install-packages:
             pkg-manager: "poetry"
             cache-version: << pipeline.parameters.cache-version >>
@@ -167,8 +173,6 @@ jobs:
                   command: |
                     poetry self update
 
-        - setup_remote_docker:
-            version: 20.10.12
         - <<: *install_node_ci
         - run:
             name: pytest

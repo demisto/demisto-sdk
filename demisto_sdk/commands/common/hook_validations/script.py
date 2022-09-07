@@ -61,7 +61,6 @@ class ScriptValidator(ContentEntityValidator):
             self.is_added_required_args(),
             self.is_arg_changed(),
             self.is_there_duplicates_args(),
-            self.is_changed_subtype()
         ]
 
         return not any(is_breaking_backwards)

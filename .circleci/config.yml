@@ -17,13 +17,13 @@ parameters:
     default: "5.0.1"
   cache-version:
     type: string
-    default: v4  # Change this parameter to clear cache.
+    default: v3  # Change this parameter to clear cache.
   global-docker-image:
     type: string
-    default: cimg/python:3.10.6-node
+    default: cimg/python:3.10.4-node
   pythonversion_latest:
     type: string
-    default: "3.10.6"
+    default: "3.10.2"
 
 
 references:
@@ -47,6 +47,13 @@ references:
       - node/install-packages:
           cache-version: << pipeline.parameters.cache-version >>
 
+    install_poetry: &install_poetry
+      - run:
+          name: Install Poetry
+          command: |
+            sudo curl -sSL https://install.python-poetry.org | python3 -
+            poetry --version
+
     install_demisto_sdk: &install_demisto_sdk
       - python/install-packages:
           pkg-manager: "poetry"
@@ -55,32 +62,13 @@ references:
           pre-install-steps:
             - run:
                 name: export demisto-sdk to path
-                command: |
-                  echo 'export PYTHONPATH="${PYTHONPATH}:${HOME}/project"' >> $BASH_ENV
-            - run:
-                # this is a workaround until circleci will have builtin support for poetry 1.2
-                name: Update poetry
-                command: |
-                  poetry self update
-
+                command: echo 'export PYTHONPATH="${PYTHONPATH}:${HOME}/project"' >> $BASH_ENV
       - <<: *install_node_ci
 
     install_build_dependencies: &install_build_dependencies
       - python/install-packages: 
-          pkg-manager: "poetry"
-          args: "--extras build"
-          pre-install-steps:
-            - run:
-                # this is a workaround until circleci will support poetry 1.2.0
-                name: Update poetry
-                command: |
-                  poetry self update
-            - run:
-                name: Check if poetry.toml and poetry.lock are consistent
-                command: |
-                  poetry lock --check
-
-
+                pkg-manager: "poetry"
+                args: "--extras build"
     
     requires_all: &requires_all
       requires:
@@ -102,18 +90,12 @@ jobs:
       parallelism: 8
       steps:
         - checkout
+        - <<: *install_poetry
         - setup_remote_docker:
             version: 20.10.12
         - python/install-packages:
             pkg-manager: "poetry"
-            args: "--extras build"
             cache-version: << pipeline.parameters.cache-version >>
-            pre-install-steps:
-              - run:
-                  # this is a workaround until circleci will support poetry 1.2.0
-                  name: Update poetry
-                  command: |
-                    poetry self update
         - <<: *install_node_ci
         - run:
             name: pytest
@@ -158,17 +140,12 @@ jobs:
         - image: cimg/python:<< parameters.pythonversion >>-node
       steps:
         - checkout
+        - <<: *install_poetry
         - setup_remote_docker:
             version: 20.10.12
-        - run:
-            name: install poetry
-            command: |
-              sudo curl -sSL https://install.python-poetry.org | python3 -
-              poetry --version
-        - run:
-            name: Install dependencies
-            command: |
-              poetry install
+        - python/install-packages:
+            pkg-manager: "poetry"
+            cache-version: << pipeline.parameters.cache-version >>
         - <<: *install_node_ci
         - run:
             name: pytest
@@ -188,6 +165,7 @@ jobs:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
+        - <<: *install_poetry
         - attach_workspace:
             at: ~/project
         - <<: *install_build_dependencies
@@ -231,6 +209,7 @@ jobs:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
+        - <<: *install_poetry
         - attach_workspace:
             at: ~/project
         - <<: *install_build_dependencies
@@ -275,6 +254,7 @@ jobs:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
+        - <<: *install_poetry
         - <<: *install_demisto_sdk
         - setup_remote_docker:
             version: 20.10.12
@@ -316,6 +296,7 @@ jobs:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
+        - <<: *install_poetry
         - attach_workspace:
             at: ~/project
         - <<: *install_demisto_sdk
@@ -351,6 +332,7 @@ jobs:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
+        - <<: *install_poetry
         - attach_workspace:
             at: ~/project
         - run:
@@ -374,16 +356,10 @@ jobs:
       - image: cimg/python:<< pipeline.parameters.pythonversion_latest >>-node
     steps:
       - checkout
+      - <<: *install_poetry
       - python/install-packages:
           pkg-manager: "poetry"
-          args: "--extras build"
           cache-version: << pipeline.parameters.cache-version >>
-          pre-install-steps:
-          - run:
-              # this is a workaround until circleci will support poetry 1.2.0
-              name: Update poetry
-              command: |
-                poetry self update
       - run:
           name: Run Slack Notifier
           command: |

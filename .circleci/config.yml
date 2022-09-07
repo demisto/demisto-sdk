@@ -51,8 +51,8 @@ references:
       - run:
           name: Install Poetry
           command: |
-            echo $HOME
-            rm -rf /home/circleci/.poetry/bin/poetry
+            # in old images we need to remove existing poetry
+            rm -rf $HOME/.poetry/bin/poetry
             sudo curl -sSL https://install.python-poetry.org | python3 -
             # add to $BASH_ENV
             echo 'export PATH="$HOME/.poetry/bin:$PATH"' >> $BASH_ENV

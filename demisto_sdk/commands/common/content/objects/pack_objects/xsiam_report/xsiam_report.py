@@ -36,5 +36,9 @@ class XSIAMReport(JSONContentObject):
         created_files: List[Path] = []
         created_files.extend(super().dump(dest_dir=dest_dir))
         new_file_path = created_files[0]
-        shutil.copyfile(new_file_path, new_file_path.parent / self.normalize_file_name())
+        if new_file_path.name.startswith('external-'):
+            copy_to_path = str(new_file_path).replace('external-', '')
+        else:
+            copy_to_path = f'{new_file_path.parent}/{self.normalize_file_name()}'
+        shutil.copyfile(new_file_path, copy_to_path)
         return created_files

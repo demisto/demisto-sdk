@@ -62,15 +62,10 @@ references:
                 name: Update poetry
                 command: |
                   poetry self update
-            - run:
-                name: Check if poetry.toml and poetry.lock are consistent
-                command: |
-                  poetry lock --check
 
       - <<: *install_node_ci
 
     install_build_dependencies: &install_build_dependencies
-    
       - python/install-packages: 
           pkg-manager: "poetry"
           args: "--extras build"
@@ -118,13 +113,6 @@ jobs:
                   name: Update poetry
                   command: |
                     poetry self update
-              - run:
-                  name: Check if poetry.toml and poetry.lock are consistent
-                  command: |
-                    poetry lock --check
-
-
-
         - <<: *install_node_ci
         - run:
             name: pytest
@@ -180,13 +168,6 @@ jobs:
                   name: Update poetry
                   command: |
                     poetry self update
-              - run:
-                  name: Check if poetry.toml and poetry.lock are consistent
-                  command: |
-                    poetry lock --check
-
-
-
         - <<: *install_node_ci
         - run:
             name: pytest
@@ -401,13 +382,6 @@ jobs:
               name: Update poetry
               command: |
                 poetry self update
-          - run:
-              name: Check if poetry.toml and poetry.lock are consistent
-              command: |
-                poetry lock --check
-
-
-
       - run:
           name: Run Slack Notifier
           command: |

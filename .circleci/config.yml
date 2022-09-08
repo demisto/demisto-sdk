@@ -52,8 +52,8 @@ references:
           sudo apt-get update
           sudo apt-get install neo4j
           echo $USER
-          sudo chmod 777 /var/log/neo4j
-          sudo chmod 777 /var/lib/neo4j
+          sudo chown -R circleci /var/log/neo4j
+          sudo chmod -R circleci /var/lib/neo4j
 
           # test
           neo4j start --verbose

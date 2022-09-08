@@ -52,7 +52,7 @@ references:
           sudo apt-get update
           sudo apt-get install neo4j
           # test
-          neo4j start
+          neo4j start --verbose
 
     install_node_ci: &install_node_ci
       - node/install-packages:

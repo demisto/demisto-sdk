@@ -17,18 +17,18 @@ parameters:
     default: "5.0.1"
   cache-version:
     type: string
-    default: v3  # Change this parameter to clear cache.
+    default: v4  # Change this parameter to clear cache.
   global-docker-image:
     type: string
-    default: cimg/python:3.10.4-node
+    default: cimg/python:3.10-node
   pythonversion_latest:
     type: string
-    default: "3.10.2"
+    default: "3.10"
 
 
 references:
     version_tag_regex: &version_tag_regex
-      /^v\d+\.\d+\.\d+$/ # version regex vx.x.x (i.e. v1.2.3)
+      /^v\d+\.\d+ # version regex vx.x.x (i.e. v1.2)
 
     filter_tag_only: &filter_tag_only
       tags:
@@ -47,6 +47,15 @@ references:
       - node/install-packages:
           cache-version: << pipeline.parameters.cache-version >>
 
+    install_poetry: &install_poetry
+      - run:
+          name: Install Poetry
+          command: |
+            # in old images we need to remove existing poetry
+            rm -rf $HOME/.poetry/bin/poetry
+            sudo curl -sSL https://install.python-poetry.org | python3 -
+            poetry --version
+
     install_demisto_sdk: &install_demisto_sdk
       - python/install-packages:
           pkg-manager: "poetry"
@@ -60,8 +69,12 @@ references:
 
     install_build_dependencies: &install_build_dependencies
       - python/install-packages: 
-                pkg-manager: "poetry"
-                args: "--extras build"
+          pkg-manager: "poetry"
+          args: "--extras build"
+          pre-install-steps:
+            - run:
+                name: Check if pyproject.toml is consistent with poetry.lock
+                command: poetry lock --check
     
     requires_all: &requires_all
       requires:
@@ -83,6 +96,7 @@ jobs:
       parallelism: 8
       steps:
         - checkout
+        - <<: *install_poetry
         - setup_remote_docker:
             version: 20.10.12
         - python/install-packages:
@@ -132,6 +146,7 @@ jobs:
         - image: cimg/python:<< parameters.pythonversion >>-node
       steps:
         - checkout
+        - <<: *install_poetry
         - setup_remote_docker:
             version: 20.10.12
         - python/install-packages:
@@ -156,6 +171,7 @@ jobs:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
+        - <<: *install_poetry
         - attach_workspace:
             at: ~/project
         - <<: *install_build_dependencies
@@ -199,6 +215,7 @@ jobs:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
+        - <<: *install_poetry
         - attach_workspace:
             at: ~/project
         - <<: *install_build_dependencies
@@ -243,6 +260,7 @@ jobs:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
+        - <<: *install_poetry
         - <<: *install_demisto_sdk
         - setup_remote_docker:
             version: 20.10.12
@@ -284,6 +302,7 @@ jobs:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
+        - <<: *install_poetry
         - attach_workspace:
             at: ~/project
         - <<: *install_demisto_sdk
@@ -319,6 +338,7 @@ jobs:
         - image: << pipeline.parameters.global-docker-image >>
       steps:
         - checkout
+        - <<: *install_poetry
         - attach_workspace:
             at: ~/project
         - run:
@@ -342,6 +362,7 @@ jobs:
       - image: cimg/python:<< pipeline.parameters.pythonversion_latest >>-node
     steps:
       - checkout
+      - <<: *install_poetry
       - python/install-packages:
           pkg-manager: "poetry"
           cache-version: << pipeline.parameters.cache-version >>
@@ -363,13 +384,13 @@ workflows:
           <<: *tag_filter
           matrix:
             parameters:
-              pythonversion: [3.8.12, 3.9.10, 3.10.2]   
+              pythonversion: ["3.8", "3.9", "3.10"]   
           name: run-unit-tests-<< matrix.pythonversion >>
       - run-integration-tests:
           <<: *tag_filter
           matrix:
             parameters:
-              pythonversion: [3.8.12, 3.9.10, 3.10.2]   
+              pythonversion: ["3.8", "3.9", "3.10"]   
           name: run-integration-tests-<< matrix.pythonversion >>
       - validate-files:
           <<: *tag_filter

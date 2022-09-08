@@ -1,5 +1,4 @@
 import logging
-import os
 import shutil
 from pathlib import Path
 
@@ -9,14 +8,6 @@ from requests.adapters import HTTPAdapter, Retry
 
 from demisto_sdk.commands.common.tools import run_command
 from demisto_sdk.commands.content_graph.common import NEO4J_PASSWORD, REPO_PATH
-
-# this will be used to determine if the system supports mounts
-CAN_MOUNT_FILES = bool(os.getenv('GITLAB_CI', False)) or ((not os.getenv('CIRCLECI', False)) and (
-
-    (not os.getenv('DOCKER_HOST')) or
-    os.getenv('DOCKER_HOST', "").lower().startswith("unix:")
-)
-)
 
 NEO4J_SERVICE_IMAGE = 'neo4j:4.4.9'
 NEO4J_ADMIN_IMAGE = 'neo4j/neo4j-admin:4.4.9'

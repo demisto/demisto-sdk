@@ -1,7 +1,10 @@
 from pathlib import Path
 from typing import List, Optional
 
-from demisto_sdk.commands.content_graph.common import ContentType, Nodes, Relationships
+from pydantic import BaseModel, Field
+
+from demisto_sdk.commands.content_graph.common import (ContentType, Nodes,
+                                                       Relationships)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.correlation_rule import \
@@ -41,7 +44,6 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import \
     XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
-from pydantic import BaseModel, Field
 
 
 class PackContentItems(BaseModel):

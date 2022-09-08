@@ -61,10 +61,10 @@ class YAMLContentItemParser(ContentItemParser):
         tests_playbooks: List[str] = self.yml_data.get('tests', [])
         for test_playbook_id in tests_playbooks:
             if 'no test' not in test_playbook_id.lower():
-                tpb_node_id = f'{ContentType.TEST_PLAYBOOK}:{test_playbook_id}'
                 self.add_relationship(
                     Relationship.TESTED_BY,
-                    target=tpb_node_id,
+                    target=test_playbook_id,
+                    target_type=ContentType.TEST_PLAYBOOK,
                 )
 
     def get_yaml(self) -> Dict[str, Union[str, List[str]]]:

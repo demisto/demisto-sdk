@@ -24,13 +24,13 @@ class IndicatorFieldParser(JSONContentItemParser, content_type=ContentType.INDIC
         """ Collects indicator types used by the field as optional dependencies, and scripts as mandatory dependencies.
         """
         for associated_type in set(self.json_data.get('associatedTypes') or []):
-            self.add_dependency(associated_type, ContentType.INDICATOR_TYPE, is_mandatory=False)
+            self.add_dependency_by_name(associated_type, ContentType.INDICATOR_TYPE, is_mandatory=False)
 
         for system_associated_type in set(self.json_data.get('systemAssociatedTypes') or []):
-            self.add_dependency(system_associated_type, ContentType.INDICATOR_TYPE, is_mandatory=False)
+            self.add_dependency_by_name(system_associated_type, ContentType.INDICATOR_TYPE, is_mandatory=False)
 
         if script := self.json_data.get('script'):
-            self.add_dependency(script, ContentType.SCRIPT)
+            self.add_dependency_by_id(script, ContentType.SCRIPT)
 
         if field_calc_script := self.json_data.get('fieldCalcScript'):
-            self.add_dependency(field_calc_script, ContentType.SCRIPT)
+            self.add_dependency_by_id(field_calc_script, ContentType.SCRIPT)

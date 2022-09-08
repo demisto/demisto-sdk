@@ -53,7 +53,7 @@ references:
           sudo apt-get install neo4j
           echo $USER
           sudo chown -R circleci /var/log/neo4j
-          sudo chmod -R circleci /var/lib/neo4j
+          sudo chown -R circleci /var/lib/neo4j
 
           # test
           neo4j start --verbose

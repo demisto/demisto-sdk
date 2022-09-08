@@ -2271,10 +2271,8 @@ def error_code(config, **kwargs):
 
     sys.exit(result)
 
-
+# ====================== create-content-graph ====================== #
 @main.command(
-    name='create-content-graph',
-    help='create content graph',
     hidden=True,
 )
 @click.help_option(
@@ -2291,7 +2289,7 @@ def error_code(config, **kwargs):
 def create_content_graph(use_docker: bool = False, use_existing: bool = False, output_file: Path = None, **kwargs):
     from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.content_graph.content_graph_commands import \
-        create_content_graph
+        create_content_graph as create_content_graph_command
     from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import \
         Neo4jContentGraphInterface
     logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
@@ -2302,7 +2300,7 @@ def create_content_graph(use_docker: bool = False, use_existing: bool = False, o
         output_file=output_file,
         use_docker=use_docker,
     ) as content_graph_interface:
-        create_content_graph(content_graph_interface)
+        create_content_graph_command(content_graph_interface)
 
 
 @main.result_callback()

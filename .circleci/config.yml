@@ -51,10 +51,9 @@ references:
           echo "deb [signed-by=/usr/share/keyrings/neo4j.gpg] https://debian.neo4j.com stable latest" | sudo tee -a /etc/apt/sources.list.d/neo4j.list
           sudo apt-get update
           sudo apt-get install neo4j
-          echo $USER
           sudo chown -R circleci /var/log/neo4j
           sudo chown -R circleci /var/lib/neo4j
-          
+
     install_node_ci: &install_node_ci
       - node/install-packages:
           cache-version: << pipeline.parameters.cache-version >>

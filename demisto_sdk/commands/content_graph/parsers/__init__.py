@@ -1,4 +1,31 @@
-# flake8: noqa: F401
+__all__ = ['ClassifierParser',
+           'CorrelationRuleParser',
+           'DashboardParser',
+           'GenericDefinitionParser',
+           'GenericFieldParser',
+           'GenericModuleParser',
+           'GenericTypeParser',
+           'GenericTypeParser',
+           'IncidentFieldParser',
+           'IncidentTypeParser',
+           'IndicatorFieldParser',
+           'IndicatorTypeParser',
+           'IntegrationParser',
+           'JobParser',
+           'LayoutParser',
+           'ListParser',
+           'MapperParser',
+           'ModelingRuleParser',
+           'ParsingRuleParser',
+           'PlaybookParser',
+           'ReportParser',
+           'ScriptParser',
+           'TestPlaybookParser',
+           'TriggerParser',
+           'WidgetParser',
+           'WizardParser',
+           'XSIAMDashboardParser',
+           'XSIAMReportParser']
 
 from demisto_sdk.commands.content_graph.parsers.classifier import \
     ClassifierParser

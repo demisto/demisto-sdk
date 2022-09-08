@@ -1,12 +1,10 @@
 import logging
-import pickle
 import traceback
 from pathlib import Path
-from typing import Any, List
+from typing import List
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.content_graph.common import (REPO_PATH, Nodes,
-                                                       Relationships)
+from demisto_sdk.commands.content_graph.common import Nodes, Relationships
 from demisto_sdk.commands.content_graph.interface.graph import \
     ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.repository import Repository
@@ -16,22 +14,7 @@ from demisto_sdk.commands.content_graph.parsers.repository import \
 json = JSON_Handler()
 
 
-REPO_PARSER_PKL_PATH = REPO_PATH / 'repo_parser.pkl'
-
 logger = logging.getLogger('demisto-sdk')
-
-
-def load_pickle(url: str) -> Any:
-    try:
-        with open(url, 'rb') as file:
-            return pickle.load(file)
-    except Exception:
-        return None
-
-
-def dump_pickle(url: str, data: Any) -> None:
-    with open(url, 'wb') as file:
-        file.write(pickle.dumps(data))
 
 
 class ContentGraphBuilder:
@@ -65,14 +48,11 @@ class ContentGraphBuilder:
         Returns:
             Repository: The repository model.
         """
-        repository_parser: RepositoryParser = load_pickle(REPO_PARSER_PKL_PATH.as_posix())
-        if not repository_parser:
-            try:
-                repository_parser = RepositoryParser(path)
-                dump_pickle(REPO_PARSER_PKL_PATH.as_posix(), repository_parser)
-            except Exception:
-                logger.error(traceback.format_exc())
-                raise
+        try:
+            repository_parser = RepositoryParser(path)
+        except Exception:
+            logger.error(traceback.format_exc())
+            raise
         return Repository.from_orm(repository_parser)
 
     def create_graph(self) -> None:

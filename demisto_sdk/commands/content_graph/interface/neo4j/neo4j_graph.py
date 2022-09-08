@@ -28,7 +28,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def __init__(
         self,
         start_service: bool = False,
-        use_docker: bool = True,
+        use_docker: bool = False,
         output_file: Path = None,
     ) -> None:
         self.driver: neo4j.Neo4jDriver = neo4j.GraphDatabase.driver(

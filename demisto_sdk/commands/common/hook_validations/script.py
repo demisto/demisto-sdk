@@ -56,7 +56,7 @@ class ScriptValidator(ContentEntityValidator):
             return True
 
         is_breaking_backwards = [
-            super().is_backward_compatible(),
+            not super().is_backward_compatible(),
             self.is_context_path_changed(),
             self.is_added_required_args(),
             self.is_arg_changed(),

@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import subprocess
@@ -11,6 +12,9 @@ from typing import Callable, List, Optional, Set
 from urllib.parse import urlparse
 
 import click
+import docker
+import docker.errors
+import docker.models.containers
 import requests
 from git import InvalidGitRepositoryError
 from requests.adapters import HTTPAdapter
@@ -30,6 +34,8 @@ from demisto_sdk.commands.common.tools import (
     compare_context_path_in_yml_and_readme, get_content_path,
     get_url_with_retries, get_yaml, get_yml_paths_in_dir, print_warning,
     run_command_os)
+from demisto_sdk.commands.lint.docker_helper import Docker
+from demisto_sdk.commands.lint.helpers import stream_docker_container_output
 
 json = JSON_Handler()
 
@@ -53,6 +59,41 @@ REQUIRED_MDX_PACKS = ['@mdx-js/mdx', 'fs-extra', 'commander']
 PACKS_TO_IGNORE = ['HelloWorld', 'HelloWorldPremium']
 
 DEFAULT_SENTENCES = ['getting started and learn how to build an integration']
+
+logger = logging.getLogger('demisto-sdk')
+
+
+@lru_cache(None)
+def are_modules_installed_for_verify(content_path: str) -> bool:
+    """ Check the following:
+        1. npm packages installed - see packs var for specific pack details.
+        2. node interperter exists.
+    Returns:
+        bool: True If all req ok else False
+    """
+    missing_module = []
+    valid = True
+    # Check node exist
+    stdout, stderr, exit_code = run_command_os('node -v', cwd=content_path)
+    if exit_code:
+        print_warning(f'There is no node installed on the machine, Test Skipped, error - {stderr}, {stdout}')
+        valid = False
+    else:
+        # Check npm modules exsits
+        stdout, stderr, exit_code = run_command_os(f'npm ls --json {" ".join(REQUIRED_MDX_PACKS)}',
+                                                   cwd=content_path)
+        if exit_code:  # all are missinig
+            missing_module.extend(REQUIRED_MDX_PACKS)
+        else:
+            deps = json.loads(stdout).get('dependencies', {})
+            for pack in REQUIRED_MDX_PACKS:
+                if pack not in deps:
+                    missing_module.append(pack)
+    if missing_module:
+        valid = False
+        print_warning(f"The npm modules: {missing_module} are not installed. Use "
+                      f"'npm install' to install all required node dependencies")
+    return valid
 
 
 @dataclass(frozen=True)
@@ -195,8 +236,8 @@ class ReadMeValidator(BaseValidator):
     def is_mdx_file(self) -> bool:
         html = self.is_html_doc()
         valid = os.environ.get('DEMISTO_README_VALIDATION') or os.environ.get(
-            'CI') or self.are_modules_installed_for_verify(self.content_path)
-        if valid and not html:
+            'CI') or are_modules_installed_for_verify(self.content_path)
+        if valid and not html:  # todo fix this logic
             # add to env var the directory of node modules
             os.environ['NODE_PATH'] = str(self.node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
             if os.getenv('DEMISTO_MDX_CMD_VERIFY'):
@@ -220,39 +261,6 @@ class ReadMeValidator(BaseValidator):
         # remove html comments
         txt = re.sub(r'<\!--.*?-->', '', txt, flags=re.DOTALL)
         return txt
-
-    @staticmethod
-    @lru_cache(None)
-    def are_modules_installed_for_verify(content_path: str) -> bool:
-        """ Check the following:
-            1. npm packages installed - see packs var for specific pack details.
-            2. node interperter exists.
-        Returns:
-            bool: True If all req ok else False
-        """
-        missing_module = []
-        valid = True
-        # Check node exist
-        stdout, stderr, exit_code = run_command_os('node -v', cwd=content_path)
-        if exit_code:
-            print_warning(f'There is no node installed on the machine, Test Skipped, error - {stderr}, {stdout}')
-            valid = False
-        else:
-            # Check npm modules exsits
-            stdout, stderr, exit_code = run_command_os(f'npm ls --json {" ".join(REQUIRED_MDX_PACKS)}',
-                                                       cwd=content_path)
-            if exit_code:  # all are missinig
-                missing_module.extend(REQUIRED_MDX_PACKS)
-            else:
-                deps = json.loads(stdout).get('dependencies', {})
-                for pack in REQUIRED_MDX_PACKS:
-                    if pack not in deps:
-                        missing_module.append(pack)
-        if missing_module:
-            valid = False
-            print_warning(f"The npm modules: {missing_module} are not installed, Readme mdx validation skipped. Use "
-                          f"'npm install' to install all required node dependencies")
-        return valid
 
     def is_html_doc(self) -> bool:
         if self.readme_content.startswith(NO_HTML):
@@ -657,7 +665,8 @@ class ReadMeValidator(BaseValidator):
             True if related words does not exist in the README content, and False if it does.
         """
         is_valid = True
-        invalid_lines = self.check_readme_content_contain_text(text_list=['BSD', 'MIT', 'Copyright', 'proprietary'], to_split=True)
+        invalid_lines = self.check_readme_content_contain_text(text_list=['BSD', 'MIT', 'Copyright', 'proprietary'],
+                                                               to_split=True)
 
         if invalid_lines:
             error_message, error_code = Errors.copyright_section_in_readme_error(invalid_lines)
@@ -667,25 +676,54 @@ class ReadMeValidator(BaseValidator):
         return is_valid
 
     @staticmethod
+    def start_server_on_host(handle_error: Optional[Callable] = None, file_path: Optional[str] = None):
+        if not ReadMeValidator._MDX_SERVER_PROCESS:
+            mdx_parse_server = Path(__file__).parent.parent / 'mdx-parse-server.js'
+            ReadMeValidator._MDX_SERVER_PROCESS = subprocess.Popen(['node', str(mdx_parse_server)],
+                                                                   stdout=subprocess.PIPE, text=True)
+            line = ReadMeValidator._MDX_SERVER_PROCESS.stdout.readline()  # type: ignore
+            if 'MDX server is listening on port' not in line:
+                ReadMeValidator.stop_mdx_server()
+                error_message, error_code = Errors.error_starting_mdx_server(line=line)
+                if handle_error and file_path:
+                    if handle_error(error_message, error_code, file_path=file_path):
+                        return False
+
+                else:
+                    raise Exception(error_message)
+        return True
+
+    @staticmethod
+    def start_server_in_docker():
+        image_name = 'devdemisto/demisto-sdk-dependencies:1.0.0.33871'
+        Docker.pull_image(image_name)
+        script_name = 'mdx-parse-server.js'
+        mdx_parse_server = Path(__file__).parent.parent / script_name
+        container: docker.models.containers.Container = Docker.create_container(
+            name="demisto-dependencies",
+            image=image_name,
+            command=['node', str(mdx_parse_server)],
+            user=f"{os.getuid()}:4000",
+            files_to_push=[(mdx_parse_server, str(mdx_parse_server))],
+            auto_remove=True,
+            ports={'6161/tcp': 6161}
+
+        )
+        container.start()
+        status = container.status
+        stream_docker_container_output(container.logs(stream=True))
+
+        return status == 'running'
+
+    @staticmethod
     @contextmanager
     def start_mdx_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None):
-        with ReadMeValidator._MDX_SERVER_LOCK:
-            if not ReadMeValidator._MDX_SERVER_PROCESS:
-                mdx_parse_server = Path(__file__).parent.parent / 'mdx-parse-server.js'
-                ReadMeValidator._MDX_SERVER_PROCESS = subprocess.Popen(['node', str(mdx_parse_server)],
-                                                                       stdout=subprocess.PIPE, text=True)
-                line = ReadMeValidator._MDX_SERVER_PROCESS.stdout.readline()  # type: ignore
-                if 'MDX server is listening on port' not in line:
-                    ReadMeValidator.stop_mdx_server()
-                    error_message, error_code = Errors.error_starting_mdx_server(line=line)
-                    if handle_error and file_path:
-                        if handle_error(error_message, error_code, file_path=file_path):
-                            return False
-
-                    else:
-                        raise Exception(error_message)
         try:
-            yield True
+            with ReadMeValidator._MDX_SERVER_LOCK:
+                if are_modules_installed_for_verify(get_content_path()):
+                    yield ReadMeValidator.start_server_on_host(handle_error, file_path)
+                else:
+                    yield ReadMeValidator.start_server_in_docker()
         finally:
             ReadMeValidator.stop_mdx_server()
 

@@ -51,6 +51,10 @@ def test_is_file_valid(mocker, current, answer):
         assert not ReadMeValidator._MDX_SERVER_PROCESS
 
 
+def test_judahtest():
+    ReadMeValidator.start_server_in_docker()
+
+
 @pytest.mark.parametrize("current, answer", README_INPUTS)
 def test_is_file_valid_mdx_server(mocker, current, answer):
     ReadMeValidator.add_node_env_vars()

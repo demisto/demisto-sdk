@@ -104,6 +104,7 @@ We assume that test playbooks contain the `test` word in their name.
 
 ### Not Supported
 Integrations / Scripts written in JavaScript.
+A playbook that starts with the word 'Test', it would be downloaded as a test playbook.
 
 ### Examples
 ```

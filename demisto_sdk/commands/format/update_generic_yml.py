@@ -12,7 +12,7 @@ from demisto_sdk.commands.common.constants import (ENTITY_TYPE_TO_DIR,
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.tools import (
-    _get_file_id, find_type, get_entity_id_by_entity_type,
+    get_id, find_type, get_entity_id_by_entity_type,
     get_not_registered_tests, get_scripts_and_commands_from_yml_data, get_yaml,
     is_uuid, listdir_fullpath)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
@@ -208,7 +208,7 @@ class BaseUpdateYML(BaseUpdate):
                 click.secho(f'Unable to find {CONF_PATH} - skipping update.', fg='yellow')
             return
         conf_json_test_configuration = conf_json_content['tests']
-        content_item_id = _get_file_id(file_type, self.data)
+        content_item_id = get_id(self.data)
         not_registered_tests = get_not_registered_tests(conf_json_test_configuration,
                                                         content_item_id,
                                                         file_type,

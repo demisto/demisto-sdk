@@ -22,7 +22,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator, error_codes)
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
+from demisto_sdk.commands.common.tools import (get_id, find_type,
                                                get_file_displayed_name,
                                                is_test_config_match,
                                                run_command)
@@ -223,7 +223,7 @@ class ContentEntityValidator(BaseValidator):
             bool. Whether the id attribute is equal to the name attribute.
         """
 
-        id_ = _get_file_id(file_type, self.current_file)
+        id_ = get_id(self.current_file)
         name = self.current_file.get('name', '')
         if id_ != name:
             error_message, error_code = Errors.id_should_equal_name(name, id_, self.file_path)
@@ -258,7 +258,7 @@ class ContentEntityValidator(BaseValidator):
         if not isinstance(file_type, str):
             file_type = file_type.value  # type: ignore
 
-        content_item_id = _get_file_id(file_type, self.current_file)
+        content_item_id = get_id(self.current_file)
 
         # Test playbook case
         if file_type == 'testplaybook':

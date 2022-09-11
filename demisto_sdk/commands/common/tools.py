@@ -1814,21 +1814,24 @@ def get_not_registered_tests(conf_json_tests: list, content_item_id: str, file_t
     return not_registered_tests
 
 
-def _get_file_id(file_type: str, file_content: Dict):
+def get_id(file_content: dict) -> str:
     """
-    Gets the ID of a content item according to it's type
-    Args:
-        file_type: The type of the content item
-        file_content: The content of the content item
-
+    Gets the ID of a content item according to its type
     Returns:
         The file's content ID
     """
-    if file_type in ID_IN_ROOT:
-        return file_content.get('id', '')
-    elif file_type in ID_IN_COMMONFIELDS:
+    if 'commonfields' in file_content:
         return file_content.get('commonfields', {}).get('id')
-    return file_content.get('trigger_id', '')
+    elif 'dashboards_data' in file_content:
+        return file_content.get('dashboards_data', [{}])[0].get('global_id')
+    elif 'templates_data' in file_content:
+        return file_content.get('templates_data', [{}])[0].get('global_id')
+    elif 'global_rule_id' in file_content:
+        return file_content.get('global_rule_id')
+    elif 'trigger_id' in file_content:
+        return file_content.get('trigger_id')
+
+    return file_content.get('id')
 
 
 def is_path_of_integration_directory(path: str) -> bool:
@@ -2511,7 +2514,8 @@ def get_current_repo() -> Tuple[str, str, str]:
         return "Unknown source", '', ''
 
 
-def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None, item_type: str = None) -> List:
+def get_item_marketplaces(item_path: str, item_data: Dict = None, packs: Dict[str, Dict] = None,
+                          item_type: str = None) -> List:
     """
     Return the supporting marketplaces of the item.
 
@@ -2883,7 +2887,7 @@ def get_display_name(file_path, file_data={}) -> str:
 
 
 def get_invalid_incident_fields_from_mapper(
-    mapper_incident_fields: Dict[str, Dict], mapping_type: str, content_fields: List
+        mapper_incident_fields: Dict[str, Dict], mapping_type: str, content_fields: List
 ) -> List[str]:
     """
     Get a list of incident fields which are not part of the content items (not part of id_json) from a specific

@@ -246,3 +246,5 @@ view: |-
       }
     }
   }
+tests:
+  - test playbook

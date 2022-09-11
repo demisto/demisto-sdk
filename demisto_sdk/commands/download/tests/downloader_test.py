@@ -123,7 +123,7 @@ class Environment:
         ]}
         self.PLAYBOOK_PACK_OBJECT = {'DummyPlaybook': [
             {'name': 'DummyPlaybook', 'id': 'DummyPlaybook',
-             'path': self.PLAYBOOK_INSTANCE_PATH, 'file_ending': 'yml'}
+             'path': self.PLAYBOOK_INSTANCE_PATH, 'file_ending': 'yml', 'tests': "test playbook"}
         ]}
         self.LAYOUT_PACK_OBJECT = {'Hello World Alert': [
             {'name': 'Hello World Alert', 'id': 'Hello World Alert', 'path': self.LAYOUT_INSTANCE_PATH,

@@ -1,5 +1,5 @@
 # Changelog
-
+* Fixed an issue in the **download** command, where some playbooks were downloaded as test playbooks.
 
 ## Unreleased
 * Added an error when the docker daemon is unavailable when running **lint**.

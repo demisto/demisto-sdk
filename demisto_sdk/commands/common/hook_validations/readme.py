@@ -698,14 +698,16 @@ class ReadMeValidator(BaseValidator):
         image_name = 'devdemisto/demisto-sdk-dependencies:1.0.0.33871'
         Docker.pull_image(image_name)
         script_name = 'mdx-parse-server.js'
+        location_in_docker = f'/content/{script_name}'
         mdx_parse_server = Path(__file__).parent.parent / script_name
         container: docker.models.containers.Container = Docker.create_container(
             name="demisto-dependencies",
             image=image_name,
-            command=['node', str(mdx_parse_server)],
+            command=['node', location_in_docker],
             user=f"{os.getuid()}:4000",
-            files_to_push=[(mdx_parse_server, str(mdx_parse_server))],
+            files_to_push=[(mdx_parse_server, location_in_docker)],
             auto_remove=True,
+            detach=True,
             ports={'6161/tcp': 6161}
 
         )

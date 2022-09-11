@@ -123,7 +123,7 @@ class Environment:
         ]}
         self.PLAYBOOK_PACK_OBJECT = {'DummyPlaybook': [
             {'name': 'DummyPlaybook', 'id': 'DummyPlaybook',
-             'path': self.PLAYBOOK_INSTANCE_PATH, 'file_ending': 'yml', 'tests': "test playbook"}
+             'path': self.PLAYBOOK_INSTANCE_PATH, 'file_ending': 'yml'}
         ]}
         self.LAYOUT_PACK_OBJECT = {'Hello World Alert': [
             {'name': 'Hello World Alert', 'id': 'Hello World Alert', 'path': self.LAYOUT_INSTANCE_PATH,
@@ -203,8 +203,11 @@ class TestHelperMethods:
 
     @pytest.mark.parametrize('data, file_type, entity', [
         ({'name': 'test-pb'}, 'playbook', TEST_PLAYBOOKS_DIR),
-        ({'name': 'playbook_testing', 'tests': 'test_playbook'}, 'playbook', PLAYBOOKS_DIR),
-        ({'name': 'playbook_testing'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'playbook_testing'}, 'playbook', PLAYBOOKS_DIR),
+        ({'name': 'playbook_test'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'playbookTest'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'Testplaybook'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'Test-playbook'}, 'playbook', TEST_PLAYBOOKS_DIR),
         ({}, 'integration', INTEGRATIONS_DIR)
     ])
     def test_file_type_to_entity(self, data, file_type, entity):

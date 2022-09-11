@@ -603,9 +603,8 @@ class Downloader:
         :return: The file entity, for example: Integrations
         """
         if file_type and file_type == 'playbook':
-            # name: str = get_entity_name_by_entity_type(file_data, PLAYBOOKS_DIR)
-            if 'tests' not in file_data:
-                # if name and any(test in name for test in ['Test', '_test', '-test', '_Test', '-Test']):
+            name: str = get_entity_name_by_entity_type(file_data, PLAYBOOKS_DIR)
+            if re.match('\btest\b', name.lower()) or name.endswith("Test") or name.startswith("Test"):
                 return TEST_PLAYBOOKS_DIR
         return ENTITY_TYPE_TO_DIR.get(file_type, '')
 

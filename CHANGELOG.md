@@ -1,8 +1,14 @@
 # Changelog
-* Added playbook modification capabilities in **TestSuite**.
 
 
 ## Unreleased
+* Added an error when the docker daemon is unavailable when running **lint**.
+* Removed the validation of a subtype change for scripts in the **validate** command.
+* Fixed an issue where names of XSIAM content items were not normalized properly.
+* Fixed an issue where names of other XSIAM content items were not normalized properly.
+
+## 1.7.4
+
 * Fixed an issue where the **doc-review** command showed irrelevant messages.
 * Fixed an issue in **validate**, where backward-compatibility failures prevented other validations from running.
 * Fixed an issue in **validate**, where content-like files under infrastructure paths were not ignored.
@@ -10,6 +16,9 @@
 * Change the way the normalize name is set for external files.
 * Added dump function to XSIAM pack objects to dulicate the files.
 * Fixed an issue where the `contribution_converter` did not support changes made to ApiModules.
+* Added name normalization according to new convention to XSIAM content items
+* Added playbook modification capabilities in **TestSuite**.
+* Fixed an issue in create-content-artifacts where it will not get a normalize name for the item and it will try to duplicate the same file.
 
 ## 1.7.3
 
@@ -19,7 +28,6 @@
 * Fixed an issue when running from a subdirectory of a content repo failed.
 * Changing the way we are using XSIAM servers api-keys in **test-content** .
 * Added a success message to **postman-codegen**.
-* Added name normalization according to new convention to XSIAM content items
 
 ## 1.7.2
 

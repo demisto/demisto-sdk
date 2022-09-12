@@ -16,7 +16,7 @@ NEO4J_ADMIN_IMAGE = 'neo4j/neo4j-admin:4.4.9'
 logger = logging.getLogger('demisto-sdk')
 
 
-def run_command(command: str):
+def run_command(command: str, ignore_error=False):
     """Run command in shell
 
     Args:
@@ -24,7 +24,7 @@ def run_command(command: str):
     """
     output, err = subprocess.Popen(shlex.split(command), cwd=REPO_PATH,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-    if err:
+    if not ignore_error and err:
         raise ValueError(err)
     return output
 

@@ -54,11 +54,6 @@ references:
           sudo chown -R circleci /var/log/neo4j
           sudo chown -R circleci /var/lib/neo4j
 
-          neo4j start
-          sleep 10
-          neo4j stop
-
-
     install_node_ci: &install_node_ci
       - node/install-packages:
           cache-version: << pipeline.parameters.cache-version >>

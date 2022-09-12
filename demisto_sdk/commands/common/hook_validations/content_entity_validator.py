@@ -72,12 +72,12 @@ class ContentEntityValidator(BaseValidator):
 
         click.secho(f'Validating backwards compatibility for {self.file_path}')
 
-        is_bc_broke = [
+        is_backward_compatible = [
             self.is_id_not_modified(),
             self.is_valid_fromversion_on_modified(),
         ]
 
-        return not any(is_bc_broke)
+        return all(is_backward_compatible)
 
     def is_valid_generic_object_file(self):
         tests = [

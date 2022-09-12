@@ -52,6 +52,8 @@ def _stop_neo4j_service_docker(docker_client: docker.DockerClient):
     """
     try:
         neo4j_docker = docker_client.containers.get('neo4j-content')
+        if not neo4j_docker:
+            return
         neo4j_docker.stop()
         neo4j_docker.remove(force=True)
     except Exception as e:
@@ -128,9 +130,11 @@ def _neo4j_admin_command(name: str, command: str):
     else:
         docker_client = _get_docker_client()
         try:
-            docker_client.containers.get(f'neo4j-{name}').remove(force=True)
+            neo4j_container = docker_client.containers.get(f'neo4j-{name}')
+            if neo4j_container:
+                neo4j_container.remove(force=True)
         except Exception as e:
-            logger.debug(f'Could not remove neo4j container: {e}')
+            logger.info(f'Could not remove neo4j container: {e}')
         docker_client.containers.run(
             image=NEO4J_ADMIN_IMAGE,
             name=f'neo4j-{name}',

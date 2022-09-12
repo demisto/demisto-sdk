@@ -71,13 +71,17 @@ def _wait_until_service_is_up():
     s.get('http://localhost:7474')
 
 
+def _should_use_docker(use_docker: bool) -> bool:
+    return use_docker or not IS_NEO4J_ADMIN_AVAILABLE
+
+
 def start(use_docker: bool = True):
     """Starting the neo4j service
 
     Args:
         use_docker (bool, optional): Whether use docker or run locally. Defaults to True.
     """
-    use_docker = use_docker or not IS_NEO4J_ADMIN_AVAILABLE
+    use_docker = _should_use_docker(use_docker)
     if not use_docker:
         Path.mkdir(REPO_PATH / 'neo4j', exist_ok=True, parents=True)
         _neo4j_admin_command('set-initial-password', f'neo4j-admin set-initial-password {NEO4J_PASSWORD}')
@@ -104,7 +108,7 @@ def stop(use_docker: bool):
     Args:
         use_docker (bool): Whether stop the sercive using docker or not.
     """
-    use_docker = use_docker or not IS_NEO4J_ADMIN_AVAILABLE
+    use_docker = _should_use_docker(use_docker)
     if not use_docker:
         run_command('neo4j stop', cwd=REPO_PATH, is_silenced=False)
     else:
@@ -139,7 +143,7 @@ def _neo4j_admin_command(name: str, command: str):
 def dump(output_path: Path, use_docker=True):
     """Dump the content graph to a file
     """
-    use_docker = use_docker or not IS_NEO4J_ADMIN_AVAILABLE
+    use_docker = _should_use_docker(use_docker)
     stop(use_docker)
     dump_path = Path("/backups/content-graph.dump") if use_docker else output_path
     command = f'neo4j-admin dump --database=neo4j --to={dump_path}'
@@ -156,7 +160,7 @@ def dump(output_path: Path, use_docker=True):
 def load(input_path: Path, use_docker=True):
     """Load the content graph from a file
     """
-    use_docker = use_docker or not IS_NEO4J_ADMIN_AVAILABLE
+    use_docker = _should_use_docker(use_docker)
     stop(use_docker)
     dump_path = Path("/backups/content-graph.dump") if use_docker else input_path
     if use_docker:

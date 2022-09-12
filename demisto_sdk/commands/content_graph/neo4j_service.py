@@ -113,7 +113,7 @@ def stop(use_docker: bool):
     """
     use_docker = _should_use_docker(use_docker)
     if not use_docker:
-        run_command('neo4j stop', cwd=REPO_PATH, is_silenced=False)
+        run_command('neo4j stop', cwd=REPO_PATH, is_silenced=True)
         # wait for neo4j to stop
     else:
         docker_client = _get_docker_client()

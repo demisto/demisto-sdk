@@ -1,6 +1,7 @@
 import logging
 import shutil
 from pathlib import Path
+import time
 
 import docker
 import requests
@@ -113,6 +114,10 @@ def stop(use_docker: bool):
     use_docker = _should_use_docker(use_docker)
     if not use_docker:
         run_command('neo4j stop', cwd=REPO_PATH, is_silenced=False)
+        # wait for neo4j to stop
+        while run_command('neo4j status', cwd=REPO_PATH, is_silenced=True):
+            logger.info('Still waiting for neo4j to stop')
+            time.sleep(1)
     else:
         docker_client = _get_docker_client()
         _stop_neo4j_service_docker(docker_client)

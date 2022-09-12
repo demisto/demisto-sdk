@@ -1317,7 +1317,7 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.RELEASE_NOTES
         elif 'description' in path.name:
             return FileType.DESCRIPTION
-        elif path.name == 'CHANGELOG.md':
+        elif path.name.endswith('CHANGELOG.md'):
             return FileType.CHANGELOG
 
     if path.suffix == '.json':

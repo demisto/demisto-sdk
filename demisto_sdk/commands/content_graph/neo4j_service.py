@@ -141,7 +141,7 @@ def _neo4j_admin_command(name: str, command: str):
         command (str): The neo4j admin command to run
     """
     if IS_NEO4J_ADMIN_AVAILABLE:
-        run_command(command)
+        run_command(command, ignore_error=True)
     else:
         docker_client = _get_docker_client()
         try:

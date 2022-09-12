@@ -226,17 +226,18 @@ class Downloader:
                 if extracted_file:
                     string_to_write = extracted_file.read().decode('utf-8')
 
-                    # if playbook, we should download the file via direct REST API
-                    # because there are props like scriptName, that playbook from custom content bundle don't contain
                     is_playbook_downloaded = False
 
-                    if re.search('playbook-.*\.yml', member.name):
+                    if not self.list_files and re.search('playbook-.*\.yml', member.name):
+                        # if playbook and not list-file flag, we should download the file via direct REST API
+                        # because there are props like scriptName, that playbook from custom content bundle don't contain
+
                         file_yaml_object = yaml.load(string_to_write)
                         playbook_id = file_yaml_object.get('id')
                         playbook_name = file_yaml_object.get('name')
                         if playbook_id and playbook_name:
-                            # if playbook_name not in self.input_files:
-                            #     continue
+                            if playbook_name not in self.input_files:
+                                continue
 
                             # this will make sure that we save the downloaded files in the custom cotent temp dir
                             self.client.api_client.configuration.temp_folder_path = self.custom_content_temp_dir

@@ -319,18 +319,18 @@ def test_are_fromversion_and_toversion_in_correct_format(mocker, current_file, f
 
 
 INPUTS_VALID_FROM_VERSION_MODIFIED = [
-    (VALID_TEST_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH, False),
-    (INVALID_PLAYBOOK_PATH, VALID_PLAYBOOK_ID_PATH, False),
-    (INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH, True)
+    (VALID_TEST_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH, False, 'Valid from version marked as invalid'),
+    (INVALID_PLAYBOOK_PATH, VALID_PLAYBOOK_ID_PATH, False, 'Invalid from version marked as valid.'),
+    (INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH, True, 'From version did not changed but marked as changed.')
 ]
 
 
-@pytest.mark.parametrize('path, old_file_path, answer', INPUTS_VALID_FROM_VERSION_MODIFIED)
-def test_fromversion_update_validation_yml_structure(path, old_file_path, answer):
+@pytest.mark.parametrize('path, old_file_path, answer, error', INPUTS_VALID_FROM_VERSION_MODIFIED)
+def test_fromversion_update_validation_yml_structure(path, old_file_path, answer, error):
     validator = ContentEntityValidator(StructureValidator(file_path=path))
     with open(old_file_path) as f:
         validator.old_file = yaml.load(f)
-        assert validator.is_valid_fromversion_on_modified() is answer
+        assert validator.is_valid_fromversion_on_modified() is answer, error
 
 
 INPUTS_IS_ID_MODIFIED = [
@@ -345,3 +345,13 @@ def test_is_id_not_modified(current_file, old_file, answer, error):
     with open(old_file) as f:
         validator.old_file = yaml.load(f)
         assert validator.is_id_not_modified() is answer, error
+
+
+@pytest.mark.parametrize("current_file, old_file, answer, error",
+                         INPUTS_VALID_FROM_VERSION_MODIFIED + INPUTS_IS_ID_MODIFIED
+                         )
+def test_is_backward_compatible(current_file, old_file, answer, error):
+    validator = ContentEntityValidator(StructureValidator(file_path=current_file))
+    with open(old_file) as f:
+        validator.old_file = yaml.load(f)
+        assert validator.is_backward_compatible() is answer, error

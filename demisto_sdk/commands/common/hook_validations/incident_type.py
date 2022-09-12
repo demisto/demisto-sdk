@@ -26,7 +26,7 @@ class IncidentTypeValidator(ContentEntityValidator):
 
         is_bc_broke = any(
             [
-                super().is_backward_compatible(),
+                not super().is_backward_compatible(),
                 self.is_changed_from_version()
             ]
         )

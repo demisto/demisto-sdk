@@ -2,13 +2,19 @@ import glob
 import io
 import os
 import sys
+import time
 
 import pytest
+import requests
 import requests_mock
+from requests.adapters import HTTPAdapter
+from urllib3 import Retry
 
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.common.MDXServer import DEMISTO_DEPS_DOCKER_NAME
+from demisto_sdk.commands.lint.docker_helper import init_global_docker_client
 from TestSuite.test_tools import ChangeCWD
 
 VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
@@ -51,8 +57,26 @@ def test_is_file_valid(mocker, current, answer):
         assert not ReadMeValidator._MDX_SERVER_PROCESS
 
 
-def test_judahtest():
-    ReadMeValidator.start_server_in_docker()
+def test_server_up_and_down():
+    def container_is_up():
+        return any(container.name == DEMISTO_DEPS_DOCKER_NAME
+                   for container in init_global_docker_client().containers.list())
+
+    with ReadMeValidator.start_server_in_docker():
+        assert container_is_up()
+        session = requests.Session()
+        retry = Retry(total=2)
+        adapter = HTTPAdapter(max_retries=retry)
+        session.mount('http://', adapter)
+        response = session.request(
+            'POST',
+            'http://localhost:6161',
+            data='## Hello',
+            timeout=20
+        )
+
+        assert response.status_code == 200
+    assert not container_is_up()  # did this fail? Maybe we need to force garbage collection in this test
 
 
 @pytest.mark.parametrize("current, answer", README_INPUTS)
@@ -94,7 +118,8 @@ def test_relative_url_not_valid():
     captured_output = io.StringIO()
     sys.stdout = captured_output  # redirect stdout.
     absolute_urls = ["https://www.good.co.il", "https://example.com", "https://github.com/demisto/content/blob/123",
-                     "github.com/demisto/content/blob/123/Packs/FeedOffice365/doc_files/test.png", "https://hreftesting.com"]
+                     "github.com/demisto/content/blob/123/Packs/FeedOffice365/doc_files/test.png",
+                     "https://hreftesting.com"]
     relative_urls = ["relative1.com", "www.relative2.com", "hreftesting.com", "www.hreftesting.com"]
     readme_validator = ReadMeValidator(INVALID_MD)
     result = readme_validator.verify_readme_relative_urls()

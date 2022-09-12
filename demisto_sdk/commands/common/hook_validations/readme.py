@@ -12,9 +12,6 @@ from typing import Callable, List, Optional, Set
 from urllib.parse import urlparse
 
 import click
-import docker
-import docker.errors
-import docker.models.containers
 import requests
 from git import InvalidGitRepositoryError
 from requests.adapters import HTTPAdapter
@@ -30,6 +27,7 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator, error_codes)
+from demisto_sdk.commands.common.MDXServer import DockerMDXServer
 from demisto_sdk.commands.common.tools import (
     compare_context_path_in_yml_and_readme, get_content_path,
     get_url_with_retries, get_yaml, get_yml_paths_in_dir, print_warning,
@@ -694,32 +692,12 @@ class ReadMeValidator(BaseValidator):
         return True
 
     @staticmethod
-    def start_server_in_docker():
-        image_name = 'devdemisto/demisto-sdk-dependencies:1.0.0.33871'
-        Docker.pull_image(image_name)
-        script_name = 'mdx-parse-server.js'
-        location_in_docker = f'/content/{script_name}'
-        mdx_parse_server = Path(__file__).parent.parent / script_name
-        container: docker.models.containers.Container = Docker.create_container(
-            name="demisto-dependencies",
-            image=image_name,
-            command=['node', location_in_docker],
-            user=f"{os.getuid()}:4000",
-            files_to_push=[(mdx_parse_server, location_in_docker)],
-            auto_remove=True,
-            detach=True,
-            ports={'6161/tcp': 6161}
-
-        )
-        container.start()
-        status = container.status
-        stream_docker_container_output(container.logs(stream=True))
-
-        return status == 'running'
+    def start_server_in_docker():  # todo why is this here?
+        return DockerMDXServer()
 
     @staticmethod
     @contextmanager
-    def start_mdx_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None):
+    def start_mdx_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None):  # todo make normal class
         try:
             with ReadMeValidator._MDX_SERVER_LOCK:
                 if are_modules_installed_for_verify(get_content_path()):

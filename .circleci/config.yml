@@ -54,6 +54,9 @@ references:
           sudo chown -R circleci /var/log/neo4j
           sudo chown -R circleci /var/lib/neo4j
 
+          # check
+          neo4j start
+
     install_node_ci: &install_node_ci
       - node/install-packages:
           cache-version: << pipeline.parameters.cache-version >>
@@ -117,7 +120,7 @@ jobs:
         - <<: *install_node_ci
         - run:
             name: pytest
-            no_output_timeout: 15m
+            no_output_timeout: 20m
             command: |
               shopt -u globstar
 

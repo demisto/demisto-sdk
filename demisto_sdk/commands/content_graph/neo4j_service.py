@@ -16,7 +16,7 @@ NEO4J_ADMIN_IMAGE = 'neo4j/neo4j-admin:4.4.9'
 logger = logging.getLogger('demisto-sdk')
 
 
-def run_command(command: str, ignore_error=False):
+def run_command(command: str):
     """Run command in shell
 
     Args:
@@ -24,7 +24,7 @@ def run_command(command: str, ignore_error=False):
     """
     output, err = subprocess.Popen(shlex.split(command), cwd=REPO_PATH,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-    if not ignore_error and err:
+    if err:
         raise ValueError(err)
     return output
 
@@ -101,7 +101,6 @@ def start(use_docker: bool = True):
     use_docker = _should_use_docker(use_docker)
     if not use_docker:
         Path.mkdir(REPO_PATH / 'neo4j', exist_ok=True, parents=True)
-        _neo4j_admin_command('set-initial-password', f'neo4j-admin set-initial-password {NEO4J_PASSWORD}')
         run_command('neo4j start')
 
     else:

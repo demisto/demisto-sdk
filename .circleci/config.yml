@@ -57,7 +57,6 @@ references:
           neo4j start
           sleep 10
           neo4j stop
-          neo4j status
 
 
     install_node_ci: &install_node_ci

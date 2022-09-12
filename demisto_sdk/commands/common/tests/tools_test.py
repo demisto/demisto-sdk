@@ -2012,7 +2012,7 @@ def test_string_to_bool__all_params_false__error(value: str):
     ('Packs/myPack/ReleaseNotes/1_0_0.md', FileType.RELEASE_NOTES),
     ('Packs/myPack/ReleaseNotes/1_0_0.json', FileType.RELEASE_NOTES_CONFIG),
     ('Packs/myPack/Lists/list.json', FileType.LISTS),
-    ('Packs/myPack/Jobs/list.json', FileType.JOB),
+    ('Packs/myPack/Jobs/job.json', FileType.JOB),
     (f'Packs/myPack/{INDICATOR_TYPES_DIR}/indicator.json', FileType.REPUTATION),
     (f'Packs/myPack/{XSIAM_DASHBOARDS_DIR}/dashboard.json', FileType.XSIAM_DASHBOARD),
     (f'Packs/myPack/{XSIAM_REPORTS_DIR}/report.json', FileType.XSIAM_REPORT),

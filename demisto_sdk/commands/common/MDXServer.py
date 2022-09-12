@@ -34,9 +34,10 @@ class DockerMDXServer:
         )
         self._container = container
         container.start()
-        if 'MDX server is listening on port' not in str(next(container.logs(stream=True)).decode('utf-8')):
+        if 'MDX server is listening on port' not in (str(next(container.logs(stream=True)).decode('utf-8'))):
             self._container.stop()
             logging.info('Docker server was not started correctly')
+            logging.info(f'docker logs: {container.logs().decode("utf-8")}')
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._container.stop()

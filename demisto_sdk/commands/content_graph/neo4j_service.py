@@ -1,13 +1,12 @@
 import logging
-import shlex
 import shutil
 from pathlib import Path
-import subprocess
 
 import docker
 import requests
 from requests.adapters import HTTPAdapter, Retry
 
+from demisto_sdk.commands.common.tools import run_command
 from demisto_sdk.commands.content_graph.common import NEO4J_PASSWORD, REPO_PATH
 
 NEO4J_SERVICE_IMAGE = 'neo4j:4.4.9'
@@ -15,22 +14,8 @@ NEO4J_ADMIN_IMAGE = 'neo4j/neo4j-admin:4.4.9'
 
 logger = logging.getLogger('demisto-sdk')
 
-
-def run_command(command: str):
-    """Run command in shell
-
-    Args:
-        command (str): The neo4j command to run
-    """
-    output, err = subprocess.Popen(shlex.split(command), cwd=REPO_PATH,
-                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-    if err:
-        raise ValueError(err)
-    return output
-
-
 try:
-    run_command('neo4j-admin --version')
+    run_command('neo4j-admin --version', cwd=REPO_PATH, is_silenced=True)
     logger.info('Using local neo4j-admin')
     IS_NEO4J_ADMIN_AVAILABLE = True
 except Exception:
@@ -101,7 +86,8 @@ def start(use_docker: bool = True):
     use_docker = _should_use_docker(use_docker)
     if not use_docker:
         Path.mkdir(REPO_PATH / 'neo4j', exist_ok=True, parents=True)
-        run_command('neo4j start')
+        _neo4j_admin_command('set-initial-password', f'neo4j-admin set-initial-password {NEO4J_PASSWORD}')
+        run_command('neo4j start', cwd=REPO_PATH, is_silenced=False)
 
     else:
         docker_client = _get_docker_client()
@@ -126,7 +112,7 @@ def stop(use_docker: bool):
     """
     use_docker = _should_use_docker(use_docker)
     if not use_docker:
-        run_command('neo4j stop')
+        run_command('neo4j stop', cwd=REPO_PATH, is_silenced=False)
     else:
         docker_client = _get_docker_client()
         _stop_neo4j_service_docker(docker_client)
@@ -140,7 +126,7 @@ def _neo4j_admin_command(name: str, command: str):
         command (str): The neo4j admin command to run
     """
     if IS_NEO4J_ADMIN_AVAILABLE:
-        run_command(command, ignore_error=True)
+        run_command(command, cwd=REPO_PATH, is_silenced=False)
     else:
         docker_client = _get_docker_client()
         try:

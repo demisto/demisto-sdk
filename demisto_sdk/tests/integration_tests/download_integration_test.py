@@ -11,17 +11,31 @@ DOWNLOAD_COMMAND = "download"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
 
 
+def match_request_text(client, url, method, response_type='text'):
+    if url == '/content/bundle':
+        with open('demisto_sdk/tests/test_files/download_command/demisto_api_response', 'r') as f:
+            api_response = f.read()
+
+        return (api_response, None, None)
+    elif url.startswith('/playbook') and url.endswith('/yaml'):
+        filename = url.replace('/playbook/', '').replace('/yaml', '')
+        # with open(f'demisto_sdk/tests/test_files/download_command/playbook-{filename}.yml', 'w') as f2:
+        #     f2.write(string_to_write)
+        with open(f'demisto_sdk/tests/test_files/download_command/playbook-{filename}.yml', 'r') as f2:
+            with open(client.api_client.configuration.temp_folder_path + '/' + filename + '.yml', mode='w') as f3:
+                f3.write(f2.read())
+
+
 @pytest.fixture
 def demisto_client(mocker):
     mocker.patch(
         "demisto_sdk.commands.download.downloader.demisto_client",
         return_valure="object"
     )
-    with open('demisto_sdk/tests/test_files/download_command/demisto_api_response', 'r') as f:
-        api_response = f.read()
+    
     mocker.patch(
         "demisto_sdk.commands.download.downloader.demisto_client.generic_request_func",
-        return_value=(api_response, None, None)
+        side_effect=match_request_text
     )
 
 
@@ -37,6 +51,7 @@ def test_integration_download_no_force(demisto_client, tmp_path):
     - Ensure no download has been made.
     - Ensure force msg is printed.
     """
+    # mocker.patch.object(demisto_client, 'generic_request_func', return_value={'status_code': 200})
     env = Environment(tmp_path)
     pack_path = join(DEMISTO_SDK_PATH, env.PACK_INSTANCE_PATH)
     runner = CliRunner(mix_stderr=False)

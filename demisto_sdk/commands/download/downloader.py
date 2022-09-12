@@ -220,36 +220,36 @@ class Downloader:
             for member in tar.getmembers():
                 file_name: str = self.update_file_prefix(member.name.strip('/'))
                 file_path: str = os.path.join(self.custom_content_temp_dir, file_name)
+                
+                extracted_file = tar.extractfile(member)
+                # File might empty
+                if extracted_file:
+                    string_to_write = extracted_file.read().decode('utf-8')
 
-                with open(file_path, 'w') as file:
-                    extracted_file = tar.extractfile(member)
-                    # File might empty
-                    if extracted_file:
-                        string_to_write = extracted_file.read().decode('utf-8')
+                    # if playbook, we should download the file via direct REST API
+                    # because there are props like scriptName, that playbook from custom content bundle don't contain
+                    is_playbook_downloaded = False
 
-                        # if playbook, we should download the file via direct REST API
-                        # because there are props like scriptName, that playbook from custom content bundle don't contain
-                        is_playbook_downloaded = False
+                    if re.search('playbook-.*\.yml', member.name):
+                        file_yaml_object = yaml.load(string_to_write)
+                        playbook_id = file_yaml_object.get('id')
+                        playbook_name = file_yaml_object.get('name')
+                        if playbook_id and playbook_name:
+                            # if playbook_name not in self.input_files:
+                            #     continue
 
-                        if re.search('playbook-.*\.yml', member.name):
-                            file_yaml_object = yaml.load(string_to_write)
-                            playbook_id = file_yaml_object.get('id')
-                            playbook_name = file_yaml_object.get('name')
-                            if playbook_id and playbook_name:
-                                if playbook_name not in self.input_files:
-                                    continue
-
-                                # this will make sure that we save the downloaded files in the custom cotent temp dir
-                                self.client.api_client.configuration.temp_folder_path = self.custom_content_temp_dir
-                                demisto_client.generic_request_func(self.client, f'/playbook/{playbook_id}/yaml', 'GET', response_type='file')
-                                self.client.api_client.configuration.temp_folder_path = None
-                                
-                                is_playbook_downloaded = True
-                                
-                        if not is_playbook_downloaded:
-                            file.write(string_to_write)
-                    else:
-                        raise FileNotFoundError(f'Could not extract files from tar file: {file_path}')
+                            # this will make sure that we save the downloaded files in the custom cotent temp dir
+                            self.client.api_client.configuration.temp_folder_path = self.custom_content_temp_dir
+                            demisto_client.generic_request_func(self.client, f'/playbook/{playbook_id}/yaml', 'GET', response_type='file')
+                            self.client.api_client.configuration.temp_folder_path = None
+                            
+                            is_playbook_downloaded = True
+                            
+                    if not is_playbook_downloaded:
+                        file = open(file_path, 'w')
+                        file.write(string_to_write)
+                else:
+                    raise FileNotFoundError(f'Could not extract files from tar file: {file_path}')
 
             return True
 

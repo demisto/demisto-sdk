@@ -1,0 +1,82 @@
+description: This is playbook that will handle the alerts coming from Hello World
+  service
+id: Handle Hello World Alert Test
+inputs:
+- description: ""
+  key: AlertID
+  playbookInputQuery: null
+  required: false
+  value:
+    simple: ${incident.helloworldid}
+name: Handle Hello World Alert Test
+outputs: []
+starttaskid: "0"
+tasks:
+  "0":
+    id: "0"
+    ignoreworker: false
+    nexttasks:
+      '#none#':
+      - "1"
+    note: false
+    quietmode: 0
+    separatecontext: false
+    skipunavailable: false
+    task:
+      brand: ""
+      id: c5e6e884-0b93-447f-8f06-cbb5be2d9802
+      iscommand: false
+      name: ""
+      version: -1
+    taskid: c5e6e884-0b93-447f-8f06-cbb5be2d9802
+    timertriggers: []
+    type: start
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 50
+        }
+      }
+  "1":
+    id: "1"
+    ignoreworker: false
+    note: false
+    quietmode: 0
+    scriptarguments:
+      alert_id:
+        simple: ${inputs.AlertID}
+    separatecontext: false
+    skipunavailable: false
+    task:
+      brand: ""
+      description: Retrieve alert by id
+      id: 9aacf494-b838-4f52-8c64-9d97d8b9cbc5
+      iscommand: true
+      name: Get alert details
+      script: '|||helloworld-get-alert'
+      type: regular
+      version: -1
+    taskid: 9aacf494-b838-4f52-8c64-9d97d8b9cbc5
+    timertriggers: []
+    type: regular
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 195
+        }
+      }
+version: -1
+view: |-
+  {
+    "linkLabelsPosition": {},
+    "paper": {
+      "dimensions": {
+        "height": 240,
+        "width": 380,
+        "x": 50,
+        "y": 50
+      }
+    }
+  }

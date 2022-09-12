@@ -2017,7 +2017,7 @@ def test_string_to_bool__all_params_false__error(value: str):
     (f'Packs/myPack/{XSIAM_DASHBOARDS_DIR}/dashboard.json', FileType.XSIAM_DASHBOARD),
     (f'Packs/myPack/{XSIAM_REPORTS_DIR}/report.json', FileType.XSIAM_REPORT),
     (f'Packs/myPack/{TRIGGER_DIR}/trigger.json', FileType.TRIGGER),
-    (f'Packs/myPack/pack_metadata.json', FileType.METADATA),
+    ('Packs/myPack/pack_metadata.json', FileType.METADATA),
     (XSOAR_CONFIG_FILE, FileType.XSOAR_CONFIG),
     ('CONTRIBUTORS.json', FileType.CONTRIBUTORS),
     ('Packs/myPack/Author_image.png', FileType.AUTHOR_IMAGE),
@@ -2034,7 +2034,8 @@ def test_string_to_bool__all_params_false__error(value: str):
     (f'Packs/myPack/{PACK_IGNORE}', FileType.PACK_IGNORE),
     (f'Packs/myPack/{FileType.SECRET_IGNORE}', FileType.SECRET_IGNORE),
     (f'Packs/myPack/{DOC_FILES_DIR}/foo.md', FileType.DOC_FILE),
-    (f'Packs/myPack/some_random_file', None),
+    ('Packs/myPack/some_random_file', None),
+    ('some_random_file_not_under_Packs', None),
 ))
 def test_find_type_by_path(path: Path, expected_type: Optional[FileType]):
     assert find_type_by_path(path) == expected_type

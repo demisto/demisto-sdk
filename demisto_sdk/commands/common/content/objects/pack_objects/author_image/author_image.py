@@ -8,4 +8,4 @@ from demisto_sdk.commands.common.content.objects.abstract_objects import \
 
 class AuthorImage(TextObject):
     def __init__(self, path: Union[Path, str]):
-        super().__init__(path)
+        super().__init__(path, file_name_prefix='external-xsiamdashboard')

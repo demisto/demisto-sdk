@@ -8,8 +8,8 @@ from .general_object import GeneralObject
 
 
 class TextObject(GeneralObject):
-    def __init__(self, path: Union[Path, str]):
-        super().__init__(path)
+    def __init__(self, path: Union[Path, str], file_name_prefix=''):
+        super().__init__(path, file_name_prefix)
         self._text = ""
 
     @staticmethod

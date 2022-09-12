@@ -36,7 +36,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             auth=(NEO4J_USERNAME, NEO4J_PASSWORD),
         )
         if start_service:
+            print('starting neo4j service')  # TODO remove test
             neo4j_service.start(use_docker)
+            print('started neo4j service')  # TODO remove test
+
         self.output_file = output_file
         self.use_docker = use_docker
 

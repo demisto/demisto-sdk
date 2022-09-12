@@ -71,6 +71,7 @@ references:
       - python/install-packages: 
           pkg-manager: "poetry"
           args: "--extras build"
+          cache-version: << pipeline.parameters.cache-version >>
           pre-install-steps:
             - run:
                 name: Check if pyproject.toml is consistent with poetry.lock

@@ -22,7 +22,7 @@ def run_command(command: str):
     Args:
         command (str): The neo4j command to run
     """
-    output, err = subprocess.Popen(shlex.split(command), cwd=REPO_PATH, shell=True,
+    output, err = subprocess.Popen(shlex.split(command), cwd=REPO_PATH,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     if err:
         raise ValueError(err)

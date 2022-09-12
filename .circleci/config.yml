@@ -109,7 +109,6 @@ jobs:
       parallelism: 8
       steps:
         - checkout
-        - <<: *install_neo4j
         - <<: *install_poetry
         - setup_remote_docker:
             version: 20.10.12
@@ -131,6 +130,8 @@ jobs:
               TEST_FILES=$(circleci tests glob "**/*_test.py")
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/init\/templates\S*\.py//g')
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/tests\/integration_tests\S*\.py//g')
+              TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/content_graph\/tests\S*\.py//g')
+
               TEST_FILES=$(echo "$TEST_FILES" | circleci tests split --split-by=timings)
 
               mkdir test-results
@@ -160,6 +161,7 @@ jobs:
         - image: cimg/python:<< parameters.pythonversion >>-node
       steps:
         - checkout
+        - <<: *install_neo4j
         - <<: *install_poetry
         - setup_remote_docker:
             version: 20.10.12
@@ -178,6 +180,18 @@ jobs:
               poetry run pytest -v --junitxml=integration-test-results/junit.xml $TEST_FILES
         - store_test_results:
             path: integration-test-results
+        - run:
+            name: pytest
+            no_output_timeout: 15m
+            command: |
+              shopt -u globstar
+              TEST_FILES=$(circleci tests glob "demisto_sdk/commands/content_graph/tests/*_test.py")
+
+              mkdir integration-test-results
+              poetry run pytest -v --junitxml=graph-test-results/junit.xml $TEST_FILES
+        - store_test_results:
+            path: graph-test-results
+
 
 
   precommit-checks:

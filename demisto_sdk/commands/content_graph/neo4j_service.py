@@ -1,4 +1,5 @@
 import logging
+import shlex
 import shutil
 from pathlib import Path
 import subprocess
@@ -16,7 +17,7 @@ NEO4J_ADMIN_IMAGE = 'neo4j/neo4j-admin:4.4.9'
 logger = logging.getLogger('demisto-sdk')
 
 try:
-    output, err = subprocess.Popen('neo4j-admin --version', cwd=REPO_PATH, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    output, err = subprocess.Popen(shlex.split('neo4j-admin --version'), cwd=REPO_PATH, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     if err:
         raise ValueError(err)
     logger.info('Using local neo4j-admin')
@@ -90,7 +91,7 @@ def start(use_docker: bool = True):
     if not use_docker:
         Path.mkdir(REPO_PATH / 'neo4j', exist_ok=True, parents=True)
         _neo4j_admin_command('set-initial-password', f'neo4j-admin set-initial-password {NEO4J_PASSWORD}')
-        subprocess.Popen('neo4j start', cwd=REPO_PATH, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+        subprocess.Popen(shlex.split('neo4j start'), cwd=REPO_PATH, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
 
     else:
         docker_client = _get_docker_client()
@@ -115,7 +116,7 @@ def stop(use_docker: bool):
     """
     use_docker = _should_use_docker(use_docker)
     if not use_docker:
-        subprocess.Popen('neo4j start', cwd=REPO_PATH, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+        subprocess.Popen(shlex.split('neo4j start'), cwd=REPO_PATH, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
     else:
         docker_client = _get_docker_client()
         _stop_neo4j_service_docker(docker_client)

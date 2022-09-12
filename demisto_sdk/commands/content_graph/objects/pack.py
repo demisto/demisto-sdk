@@ -47,7 +47,7 @@ from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
 
 
 class PackContentItems(BaseModel):
-    # The alias is there for marshalling purposes
+    # The alias is for marshalling purposes
     classifier: List[Classifier] = Field([], alias=ContentType.CLASSIFIER.value)
     correlation_rule: List[CorrelationRule] = Field([], alias=ContentType.CORRELATION_RULE.value)
     dashboard: List[Dashboard] = Field([], alias=ContentType.DASHBOARD.value)

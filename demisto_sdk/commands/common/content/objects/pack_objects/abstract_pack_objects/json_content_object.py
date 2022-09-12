@@ -6,14 +6,14 @@ from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION)
-from demisto_sdk.commands.common.content.objects.abstract_objects import (
-    JSONObject, TextObject)
-from demisto_sdk.commands.common.content.objects.pack_objects.author_image.author_image import \
-    AuthorImage
+from demisto_sdk.commands.common.content.objects.abstract_objects import \
+    JSONObject
 from demisto_sdk.commands.common.content.objects.pack_objects.change_log.change_log import \
     ChangeLog
 from demisto_sdk.commands.common.content.objects.pack_objects.readme.readme import \
     Readme
+from demisto_sdk.commands.common.content.objects.pack_objects.xsiam_dashboard_image.xsiam_dashboard_image import \
+    XSIAMDashboardImage
 from demisto_sdk.commands.common.tools import get_json
 
 
@@ -28,7 +28,7 @@ class JSONContentObject(JSONObject):
         super().__init__(self._fix_path(path), file_name_prefix)
         self._readme: Optional[Readme] = None
         self._change_log: Optional[ChangeLog] = None
-        self._image_file: Optional[AuthorImage] = None
+        self._image_file: Optional[XSIAMDashboardImage] = None
 
     @property
     def changelog(self) -> Optional[ChangeLog]:
@@ -62,7 +62,7 @@ class JSONContentObject(JSONObject):
         return self._readme
 
     @property
-    def image_path(self) -> Optional[TextObject]:
+    def image_path(self) -> Optional[XSIAMDashboardImage]:
         """YAML related unit-test path.
 
         Returns:
@@ -71,7 +71,7 @@ class JSONContentObject(JSONObject):
         if not self._image_file:
             image_file = next(self._path.parent.glob(patterns=fr"{re.escape(self.path.stem)}.png"), None)
             if image_file:
-                self._image_file = AuthorImage(image_file)
+                self._image_file = XSIAMDashboardImage(image_file)
         return self._image_file
 
     @property

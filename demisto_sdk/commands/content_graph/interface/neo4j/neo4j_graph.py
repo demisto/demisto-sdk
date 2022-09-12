@@ -36,9 +36,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             auth=(NEO4J_USERNAME, NEO4J_PASSWORD),
         )
         if start_service:
-            print('starting neo4j service')  # TODO remove test
             neo4j_service.start(use_docker)
-            print('started neo4j service')  # TODO remove test
 
         self.output_file = output_file
         self.use_docker = use_docker
@@ -48,7 +46,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def __exit__(self, *args) -> None:
         if self.output_file:
+            print('dumping graph to file')
             neo4j_service.dump(self.output_file, self.use_docker)
+            print('dumped graph to file')
         self.driver.close()
 
     def close(self) -> None:

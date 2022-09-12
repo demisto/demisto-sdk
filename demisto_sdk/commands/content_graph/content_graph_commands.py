@@ -27,7 +27,7 @@ def create_content_graph(
 
 
 def stop_content_graph(
-    use_docker: bool = True,
+    use_docker: bool = False,
 ) -> None:
     """
     This function stops the neo4j service if it is running.

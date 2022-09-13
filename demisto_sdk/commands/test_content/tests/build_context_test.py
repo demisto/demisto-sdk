@@ -365,6 +365,27 @@ def test_nightly_playbook_skipping(mocker, tmp_path):
     assert 'nightly_playbook' not in build_context.tests_data_keeper.skipped_tests
 
 
+def test_playbook_with_integration(mocker, tmp_path):
+    """
+    Given:
+        - A build context with playbook that has an integration
+    When:
+        - Initializing the BuildContext instance
+    Then:
+        - Ensure that the playbook with the integration is not skipped on nightly build
+    """
+    filtered_tests = ['playbook_with_integration']
+    tests = [generate_test_configuration(playbook_id='playbook_with_integration',
+                                         integrations=['integration'])]
+    content_conf_json = generate_content_conf_json(tests=tests)
+    build_context = get_mocked_build_context(mocker,
+                                             tmp_path,
+                                             content_conf_json=content_conf_json,
+                                             filtered_tests_content=filtered_tests,
+                                             nightly=True)
+    assert 'playbook_with_integration' not in build_context.tests_data_keeper.skipped_tests
+
+
 def test_playbook_with_version_mismatch_is_skipped(mocker, tmp_path):
     """
     Given:

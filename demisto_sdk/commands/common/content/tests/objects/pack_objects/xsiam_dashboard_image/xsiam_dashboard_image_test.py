@@ -1,5 +1,5 @@
 from demisto_sdk.commands.common.constants import PACKS_DIR
-from demisto_sdk.commands.common.content.objects.pack_objects import \
+from demisto_sdk.commands.common.content.objects.pack_objects.xsiam_dashboard_image.xsiam_dashboard_image import \
     XSIAMDashboardImage
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object

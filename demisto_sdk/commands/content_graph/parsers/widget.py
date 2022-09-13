@@ -18,12 +18,6 @@ class WidgetParser(JSONContentItemParser, content_type=ContentType.WIDGET):
     def connect_to_dependencies(self) -> None:
         """ Collects the playbook used in the widget as a mandatory dependency.
         """
-<<<<<<< HEAD
         if self.data_type == 'scripts':
             if script := self.json_data.get('query'):
                 self.add_dependency_by_id(script, ContentType.SCRIPT)
-=======
-        if self.data_type:
-            if script := self.json_data.get('query'):
-                self.add_dependency(script, ContentType.SCRIPT)
->>>>>>> 093d4bb0ea69fdb6e9dd9e8880dc670c15c03165

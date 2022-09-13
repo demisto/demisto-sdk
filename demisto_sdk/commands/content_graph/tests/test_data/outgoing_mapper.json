@@ -1,0 +1,50 @@
+{
+    "description": "",
+    "feed": false,
+    "id": "Azure DevOps Outgoing Mapper",
+    "mapping": {
+        "Azure DevOps": {
+            "dontMapEventToLabels": true,
+            "internalMapping": {
+                "description": {
+                    "complex": null,
+                    "simple": "description"
+                },
+                "project": {
+                    "complex": {
+                        "accessor": "",
+                        "filters": [],
+                        "root": "azuredevopsprojectname",
+                        "transformers": [
+                            {
+                                "args": {
+                                    "input_values": {
+                                        "isContext": false,
+                                        "value": {
+                                            "complex": null,
+                                            "simple": "1 - Very low,2 - Low,3 - Medium,4 - High,5 - Very high,6 - Major"
+                                        }
+                                    },
+                                    "mapped_values": {
+                                        "isContext": false,
+                                        "value": {
+                                            "complex": null,
+                                            "simple": "1,2,3,4,5,6"
+                                        }
+                                    }
+                                },
+                                "operator": "MapValuesTransformer"
+                            }
+                        ]
+                    },
+                    "simple": ""
+                }
+
+            }
+        }
+    },
+    "name": "Azure DevOps Outgoing Mapper",
+    "type": "mapping-outgoing",
+    "version": -1,
+    "fromVersion": "6.0.0"
+}

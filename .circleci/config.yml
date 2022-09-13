@@ -109,7 +109,6 @@ jobs:
       parallelism: 8
       steps:
         - checkout
-        - <<: *install_neo4j
         - <<: *install_poetry
         - setup_remote_docker:
             version: 20.10.12

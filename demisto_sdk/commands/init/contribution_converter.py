@@ -549,7 +549,7 @@ class ContributionConverter:
         print_color('entered execute_update_rn', LOG_COLORS.NATIVE)
         rn_mng = UpdateReleaseNotesManager(user_input=self.dir_name, update_type=self.update_type, )
         rn_mng.manage_rn_update()
-        print_color(f'rn_path {rn_mng.rn_path[0]}', LOG_COLORS.NATIVE)
+        print_color(f'rn_path {rn_mng.rn_path}', LOG_COLORS.NATIVE)
         self.replace_RN_template_with_value(rn_mng.rn_path[0])
 
     def format_user_input(self) -> Dict[str, str]:

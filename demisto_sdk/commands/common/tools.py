@@ -38,9 +38,10 @@ from demisto_sdk.commands.common.constants import (
     INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
     INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
     MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME, MODELING_RULES_DIR,
-    OFFICIAL_CONTENT_ID_SET_PATH, PACK_METADATA_IRON_BANK_TAG,
-    PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
-    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
+    NON_LETTERS_OR_NUMBERS_PATTERN, OFFICIAL_CONTENT_ID_SET_PATH,
+    PACK_METADATA_IRON_BANK_TAG, PACKAGE_SUPPORTING_DIRECTORIES,
+    PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX,
+    PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PARSING_RULES_DIR, PLAYBOOKS_DIR,
     PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
     SCRIPTS_DIR, SIEM_ONLY_ENTITIES, TEST_PLAYBOOKS_DIR, TRIGGER_DIR,
@@ -1303,15 +1304,11 @@ def get_dict_from_file(path: str,
 
 @lru_cache()
 def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
-    """Find docstring by file path only
+    """Find FileType value of a path, without accessing the file.
     This function is here as we want to implement lru_cache and we can do it on `find_type`
     as dict is not hashable.
 
-    Args:
-        path: Path to find its file type. Defaults to ''.
-
-    Returns:
-        FileType: The file type if found. else None;
+    It's also theoretically faster, as files are not opened.
     """
     path = Path(path)
     if path.suffix == '.md':
@@ -1321,15 +1318,15 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.RELEASE_NOTES
         elif 'description' in path.name:
             return FileType.DESCRIPTION
-
-        return FileType.CHANGELOG
+        elif path.name.endswith('CHANGELOG.md'):
+            return FileType.CHANGELOG
 
     if path.suffix == '.json':
         if RELEASE_NOTES_DIR in path.parts:
             return FileType.RELEASE_NOTES_CONFIG
         elif LISTS_DIR in os.path.dirname(path):
             return FileType.LISTS
-        elif JOBS_DIR in path.parts:
+        elif path.parent.name == JOBS_DIR:
             return FileType.JOB
         elif INDICATOR_TYPES_DIR in path.parts:
             return FileType.REPUTATION
@@ -1347,11 +1344,11 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.CONTRIBUTORS
 
     elif path.name.endswith('_image.png'):
-        if path.name.endswith("Author_image.png"):
+        if path.name.endswith('Author_image.png'):
             return FileType.AUTHOR_IMAGE
         return FileType.IMAGE
 
-    elif path.suffix == ".png" and DOC_FILES_DIR in path.parts:
+    elif path.suffix == '.png' and DOC_FILES_DIR in path.parts:
         return FileType.DOC_IMAGE
 
     elif path.suffix == '.ps1':
@@ -1366,13 +1363,22 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
     elif path.suffix == '.xif':
         return FileType.XIF_FILE
 
-    elif path.suffix == '.yml' and (path.parts[0] in {'.circleci', '.gitlab'}):
-        return FileType.BUILD_CONFIG_FILE
+    elif path.suffix == '.yml':
+        if path.parts[0] in {'.circleci', '.gitlab'}:
+            return FileType.BUILD_CONFIG_FILE
 
-    elif path.name == FileType.PACK_IGNORE.value:
+        elif path.parent.name == SCRIPTS_DIR and path.name.startswith('script-'):
+            # Packs/myPack/Scripts/script-myScript.yml
+            return FileType.SCRIPT
+
+        elif path.parent.parent.name == SCRIPTS_DIR and path.name == f'{path.parent.name}.yml':
+            # Packs/myPack/Scripts/myScript/myScript.yml
+            return FileType.SCRIPT
+
+    elif path.name == FileType.PACK_IGNORE:
         return FileType.PACK_IGNORE
 
-    elif path.name == FileType.SECRET_IGNORE.value:
+    elif path.name == FileType.SECRET_IGNORE:
         return FileType.SECRET_IGNORE
 
     elif path.parent.name == DOC_FILES_DIR:
@@ -3005,3 +3011,19 @@ def string_to_bool(
         return False
 
     raise ValueError(f'cannot convert string {input_} to bool')
+
+
+def field_to_cli_name(field_name: str) -> str:
+    """
+    Returns the CLI name of an incident/indicator field by removing non letters/numbers
+    characters and lowering capitalized letters.
+
+    Input Example:
+        field = Employee Number
+    Output:
+        employeenumber
+
+    Args:
+        field_name (str): the incident/indicator field name.
+    """
+    return re.sub(NON_LETTERS_OR_NUMBERS_PATTERN, '', field_name).lower()

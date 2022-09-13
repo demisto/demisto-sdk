@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Find changed files that require changelog update
-        uses: tj-actions/changed-files@v18.6
+        uses: tj-actions/changed-files@v29.0.5
         id: need-changelog
         with:
           files: |
@@ -17,7 +17,7 @@ jobs:
             pyproject.toml
 
       - name: Check whether CHANGELOG.md has been modified
-        uses: tj-actions/changed-files@v18.6
+        uses: tj-actions/changed-files@v29.0.5
         id: changelog-status
         with:
           files: CHANGELOG.md
@@ -26,6 +26,6 @@ jobs:
         if: |
           steps.need-changelog.outputs.any_changed == 'true' &&
           steps.changelog-status.outputs.any_modified == 'false'
-        uses: actions/github-script@v3
+        uses: actions/github-script@v6
         with:
           script: core.setFailed("The PR includes a change of a file that requires a CHANGELOG.md update, but the changelog was not modified.")

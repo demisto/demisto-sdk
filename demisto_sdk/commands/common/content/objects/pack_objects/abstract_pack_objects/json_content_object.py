@@ -12,8 +12,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects.change_log.change_
     ChangeLog
 from demisto_sdk.commands.common.content.objects.pack_objects.readme.readme import \
     Readme
-from demisto_sdk.commands.common.content.objects.pack_objects.xsiam_dashboard_image.xsiam_dashboard_image import \
-    XSIAMDashboardImage
 from demisto_sdk.commands.common.tools import get_json
 
 
@@ -28,7 +26,6 @@ class JSONContentObject(JSONObject):
         super().__init__(self._fix_path(path), file_name_prefix)
         self._readme: Optional[Readme] = None
         self._change_log: Optional[ChangeLog] = None
-        self._image_file: Optional[XSIAMDashboardImage] = None
 
     @property
     def changelog(self) -> Optional[ChangeLog]:
@@ -62,19 +59,6 @@ class JSONContentObject(JSONObject):
         return self._readme
 
     @property
-    def image_path(self) -> Optional[XSIAMDashboardImage]:
-        """YAML related unit-test path.
-
-        Returns:
-            Unit-test path or None if unit-test not found.
-        """
-        if not self._image_file:
-            image_file = next(self._path.parent.glob(patterns=fr"{re.escape(self.path.stem)}.png"), None)
-            if image_file:
-                self._image_file = XSIAMDashboardImage(image_file)
-        return self._image_file
-
-    @property
     def from_version(self) -> Union[Version, LegacyVersion]:
         """Object from_version attribute.
 
@@ -101,14 +85,13 @@ class JSONContentObject(JSONObject):
         return parse(self.get('toVersion', DEFAULT_CONTENT_ITEM_TO_VERSION))
 
     def dump(self, dest_dir: Optional[Union[str, Path]] = None, change_log: Optional[bool] = False,
-             readme: Optional[bool] = False, image: Optional[bool] = False) -> List[Path]:
+             readme: Optional[bool] = False) -> List[Path]:
         """Dump JSONContentObject.
 
         Args:
             dest_dir: Destination directory.
             change_log: True if to dump also related CHANGELOG.md.
             readme: True if to dump also related README.md.
-            image: True if to dump also related image file.
 
         Returns:
             List[Path]: Path of new created files.
@@ -124,10 +107,6 @@ class JSONContentObject(JSONObject):
         # Dump readme if requested and available
         if readme and self.readme:
             created_files.extend(self.readme.dump(dest_dir))
-        # Dump image if available
-        if self.image_path:
-            created_files.extend(self.image_path.dump(dest_dir))
-
         return created_files
 
     def is_file_structure_list(self) -> bool:

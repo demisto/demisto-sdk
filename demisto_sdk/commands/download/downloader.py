@@ -228,7 +228,7 @@ class Downloader:
 
                     is_playbook_downloaded = False
 
-                    if not self.list_files and re.search('playbook-.*\.yml', member.name):
+                    if not self.list_files and re.search(r'playbook-.*\.yml', member.name):
                         # if playbook and not list-file flag, we should download the file via direct REST API
                         # because there are props like scriptName, that playbook from custom content bundle don't contain
 

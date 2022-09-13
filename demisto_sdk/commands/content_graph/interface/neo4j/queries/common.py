@@ -23,7 +23,7 @@ def intersects(arr1: str, arr2: str) -> str:
 
 
 def node_map(properties: Dict[str, Any]) -> str:
-    return f'{{{",".join([f"{k}: {v}" for k, v in properties.items()])}}}'
+    return f'{{{", ".join([f"{k}: {v}" for k, v in properties.items()])}}}'
 
 
 def run_query(tx: Transaction, query: str, **kwargs: Dict[str, Any]) -> Result:

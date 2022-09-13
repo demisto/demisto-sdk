@@ -35,7 +35,7 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def description(self) -> Optional[str]:
-        return self.yml_data.get('description')
+        return self.yml_data.get('description', '').replace('\\', '')
 
     @property
     def fromversion(self) -> str:

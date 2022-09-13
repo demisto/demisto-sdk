@@ -22,7 +22,7 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, capital_case,
                                                get_child_directories,
                                                get_child_files,
                                                get_content_path,
-                                               get_display_name)
+                                               get_display_name, print_color)
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.generate_docs.generate_integration_doc import \
     generate_integration_doc
@@ -546,8 +546,10 @@ class ContributionConverter:
         and create a release-note file using the release-notes text.
 
         """
+        print_color('entered execute_update_rn', LOG_COLORS.NATIVE)
         rn_mng = UpdateReleaseNotesManager(user_input=self.dir_name, update_type=self.update_type, )
         rn_mng.manage_rn_update()
+        print_color(f'rn_path {rn_mng.rn_path[0]}', LOG_COLORS.NATIVE)
         self.replace_RN_template_with_value(rn_mng.rn_path[0])
 
     def format_user_input(self) -> Dict[str, str]:
@@ -592,13 +594,18 @@ class ContributionConverter:
         template_text = '%%UPDATE_RN%%'
 
         rn_per_content_item = self.format_user_input()
-
+        print_color(f'rn_per_content_item {rn_per_content_item}', LOG_COLORS.NATIVE)
         with open(rn_path, 'r+') as rn_file:
             lines = rn_file.readlines()
+            print_color(f'lines {lines}', LOG_COLORS.NATIVE)
             for index in range(len(lines)):
+                print_color(f'index {index}', LOG_COLORS.NATIVE)
+                print_color(f'template_text in lines[index] {template_text in lines[index]}', LOG_COLORS.NATIVE)
                 if template_text in lines[index]:
                     template_entity = lines[index - 1].lstrip(entity_identifier).rstrip('\n')
+                    print_color(f'template_entity {template_entity}', LOG_COLORS.NATIVE)
                     curr_content_items = rn_per_content_item.get(template_entity)
+                    print_color(f'curr_content_items {curr_content_items}', LOG_COLORS.NATIVE)
                     if curr_content_items:
                         lines[index] = curr_content_items
 

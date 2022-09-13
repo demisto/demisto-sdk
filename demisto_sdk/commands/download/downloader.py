@@ -240,11 +240,12 @@ class Downloader:
                                 continue
 
                             # this will make sure that we save the downloaded files in the custom cotent temp dir
-                            self.client.api_client.configuration.temp_folder_path = self.custom_content_temp_dir
-                            demisto_client.generic_request_func(self.client, f'/playbook/{playbook_id}/yaml', 'GET', response_type='file')
-                            self.client.api_client.configuration.temp_folder_path = None
+                            if self.client.api_client and self.client.api_client.configuration:
+                                self.client.api_client.configuration.temp_folder_path = self.custom_content_temp_dir
+                                demisto_client.generic_request_func(self.client, f'/playbook/{playbook_id}/yaml', 'GET', response_type='file')
+                                self.client.api_client.configuration.temp_folder_path = None
                             
-                            is_playbook_downloaded = True
+                                is_playbook_downloaded = True
                             
                     if not is_playbook_downloaded:
                         file = open(file_path, 'w')

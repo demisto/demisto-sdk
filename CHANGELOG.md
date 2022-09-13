@@ -1,11 +1,13 @@
 # Changelog
+* Added playbook modification capabilities in **TestSuite**.
+* Added a new command **create-content-graph**.
 * Fixed an issue in the **download** command, where some playbooks were downloaded as test playbooks.
 
 ## Unreleased
 * Added an error when the docker daemon is unavailable when running **lint**.
 * Removed the validation of a subtype change for scripts in the **validate** command.
 * Fixed an issue where names of XSIAM content items were not normalized properly.
-* Fixed an issue where names of other XSIAM content items were not normalized properly.
+* Fixed an issue where script yml files were not properly identified by `find_type`.
 
 ## 1.7.4
 

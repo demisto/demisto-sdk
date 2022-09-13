@@ -32,7 +32,7 @@ def demisto_client(mocker):
         "demisto_sdk.commands.download.downloader.demisto_client",
         return_valure="object"
     )
-    
+
     mocker.patch(
         "demisto_sdk.commands.download.downloader.demisto_client.generic_request_func",
         side_effect=match_request_text

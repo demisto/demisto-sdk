@@ -604,8 +604,8 @@ class Downloader:
         """
         if file_type and file_type == 'playbook':
             name: str = get_entity_name_by_entity_type(file_data, PLAYBOOKS_DIR)
-            if re.match(r'\btest\b', name.lower()) or name.endswith(("Test", "_test", "_Test")) \
-                    or name.startswith(("Test", "Test_", "test_")):
+            if name.endswith(("Test", "_test", "_Test", "-test", "-Test")) \
+                    or name.startswith(("Test", "Test_", "test_", "Test-", "test-")):
                 return TEST_PLAYBOOKS_DIR
         return ENTITY_TYPE_TO_DIR.get(file_type, '')
 

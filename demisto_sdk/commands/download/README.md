@@ -85,13 +85,10 @@ Integrations, Scripts and Playbooks directories that does not contain a yml file
 All other folders that do not contain a json file, will be overwritten automatically.
 For clarity, the given pack should be consistent with Content hierarchy structure with no rouge files present.
 
-We assume that test playbooks contain the `test` word in their name, in the following formats:
-- TestPlaybookName
-- PlaybookNameTest
-- test-playbook_name
-- test_playbook_name
-- playbook_name-test
-- playbook_name_test
+The SDK assumes the following playbooks as type TestPlaybook:
+- Playbooks whose name starts with either `Test`, `Test_`, `test_`, `Test-`, or `test-` 
+- Playbooks whose name ends with either `Test`,`_test` or `-test`.
+
 
 ### Supported File Types
 * Integrations

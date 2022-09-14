@@ -1351,6 +1351,9 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
     elif path.suffix == '.png' and DOC_FILES_DIR in path.parts:
         return FileType.DOC_IMAGE
 
+    elif path.suffix == '.png' and XSIAM_DASHBOARDS_DIR in path.parts:
+        return FileType.XSIAM_DASHBOARD
+
     elif path.suffix == '.ps1':
         return FileType.POWERSHELL_FILE
 

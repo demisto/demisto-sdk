@@ -29,6 +29,7 @@ class XSIAMDashboard(JSONContentObject):
             image_file = next(self._path.parent.glob(patterns=fr"{re.escape(self.path.stem)}.png"), None)
             if image_file:
                 self._image_file = XSIAMDashboardImage(image_file)
+
         return self._image_file
 
     def normalize_file_name(self) -> str:
@@ -52,6 +53,7 @@ class XSIAMDashboard(JSONContentObject):
     def dump(self, dest_dir: Optional[Union[Path, str]] = None) -> List[Path]:
         created_files: List[Path] = []
         created_files.extend(super().dump(dest_dir=dest_dir))
+
         # Dump image if available
         if self.image_path:
             created_files.extend(self.image_path.dump(dest_dir))

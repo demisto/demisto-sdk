@@ -91,7 +91,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         **properties
     ) -> Any:
         with self.driver.session() as session:
-            return session.read_transaction(content_type, **properties)
+            return session.read_transaction(search_nodes, content_type, **properties)
 
     def get_single_node(
         self,

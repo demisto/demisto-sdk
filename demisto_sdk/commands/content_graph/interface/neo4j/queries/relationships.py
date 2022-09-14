@@ -5,7 +5,7 @@ from neo4j import Transaction
 
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
-    labels_of, run_query, node_map)
+    labels_of, node_map, run_query)
 
 
 def build_source_properties() -> str:

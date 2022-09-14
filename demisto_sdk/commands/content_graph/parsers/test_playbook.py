@@ -8,7 +8,6 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
 from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
 
-
 NON_CIRCLE_TESTS_DIRECTORY = 'NonCircleTests'
 
 

@@ -1,6 +1,7 @@
 # Changelog
 * Added playbook modification capabilities in **TestSuite**.
 * Added a new command **create-content-graph**.
+* Improved content items parsing in the **create-content-graph** command.
 
 
 ## Unreleased

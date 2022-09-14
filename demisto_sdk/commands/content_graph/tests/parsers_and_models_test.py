@@ -777,7 +777,8 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
-        from demisto_sdk.commands.content_graph.objects.list import List as ListObject
+        from demisto_sdk.commands.content_graph.objects.list import \
+            List as ListObject
         from demisto_sdk.commands.content_graph.parsers.list import ListParser
         list_ = pack.create_list('TestList', load_json('list.json'))
         list_path = Path(list_.path)

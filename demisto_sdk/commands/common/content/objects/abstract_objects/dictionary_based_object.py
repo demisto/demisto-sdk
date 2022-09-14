@@ -75,8 +75,6 @@ class DictionaryBasedObject(GeneralObject):
             return as_dict.get('global_rule_id')
         elif 'trigger_id' in as_dict.keys():
             return as_dict.get('trigger_id')
-        elif 'agent_config' in as_dict.keys():
-            return ','.join([i.get('id') for i in as_dict.get('agent_config', [{}])])
         else:
             return as_dict.get('id')
 

@@ -2,6 +2,7 @@
 import copy
 import logging
 import os
+import shutil
 import sys
 import tempfile
 from configparser import ConfigParser, MissingSectionHeaderError
@@ -957,7 +958,7 @@ def upload(**kwargs):
             marketplace = MarketplaceVersions.XSOAR.value
         os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
 
-        output_zip_path = keep_zip or tempfile.TemporaryDirectory()
+        output_zip_path = keep_zip or tempfile.mkdtemp()
         packs_unifier = PacksZipper(pack_paths=pack_path, output=output_zip_path,
                                     content_version='0.0.0', zip_all=True, quiet_mode=True, marketplace=marketplace)
         packs_zip_path, pack_names = packs_unifier.zip_packs()
@@ -970,7 +971,7 @@ def upload(**kwargs):
     check_configuration_file('upload', kwargs)
     upload_result = Uploader(**kwargs).upload()
     if (is_zip or config_file_path) and not keep_zip:
-        output_zip_path.cleanup()
+        shutil.rmtree(output_zip_path, ignore_errors=True)
     return upload_result
 
 

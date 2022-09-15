@@ -86,7 +86,7 @@ All other folders that do not contain a json file, will be overwritten automatic
 For clarity, the given pack should be consistent with Content hierarchy structure with no rouge files present.
 
 The SDK assumes the following playbooks as type TestPlaybook:
-- Playbooks whose name starts with either `Test`, `Test_`, `test_`, `Test-`, or `test-` 
+- Playbooks whose name starts with either `Test`, `Test_`, `test_`, `Test-`, or `test-`
 - Playbooks whose name ends with either `Test`,`_test` or `-test`.
 
 

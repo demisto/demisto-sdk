@@ -111,7 +111,8 @@ class Downloader:
             run_format: bool = False,
             system: bool = False,
             item_type: str = '',
-            no_code_formatting: bool = False):
+            no_code_formatting: bool = False,
+    ):
         logging.disable(logging.CRITICAL)
         self.output_pack_path = output
         self.input_files = [input] if isinstance(input, str) else input

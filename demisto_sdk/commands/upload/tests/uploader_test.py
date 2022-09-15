@@ -1,10 +1,10 @@
 import inspect
-from pathlib import Path
 import re
 import shutil
 import zipfile
 from functools import wraps
 from io import BytesIO
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import click

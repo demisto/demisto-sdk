@@ -958,7 +958,7 @@ def upload(**kwargs):
         os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
 
         output_zip_path = keep_zip or tempfile.TemporaryDirectory()
-        packs_unifier = PacksZipper(pack_paths=pack_path, output=str(output_zip_path),
+        packs_unifier = PacksZipper(pack_paths=pack_path, output=output_zip_path,
                                     content_version='0.0.0', zip_all=True, quiet_mode=True, marketplace=marketplace)
         packs_zip_path, pack_names = packs_unifier.zip_packs()
         if packs_zip_path is None and not kwargs.get('detached_files'):

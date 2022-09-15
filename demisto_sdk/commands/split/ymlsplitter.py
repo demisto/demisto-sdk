@@ -47,16 +47,27 @@ class YmlSplitter:
         base_name (str): the base name of all extracted files
         no_readme (bool): whether to extract readme
         no_pipenv (boo): whether to create pipenv
-        basic_fmt (bool): whether to perform basic formatting on the code, i.e. autopep8 and isort
+        no_code_formatting (bool): whether to avoid basic formatting on the code, i.e. autopep8 and isort
         file_type (str): yml file type (integration/script/modeling or parsing rule)
         configuration (Configuration): Configuration object
         lines_inserted_at_code_start (int): the amount of lines inserted at the beginning of the code file
     """
 
-    def __init__(self, input: str, output: str = '', file_type: str = '', no_demisto_mock: bool = False,
-                 no_common_server: bool = False, no_auto_create_dir: bool = False, configuration: Configuration = None,
-                 base_name: str = '', no_readme: bool = False, no_pipenv: bool = False,
-                 no_logging: bool = False, no_basic_fmt: bool = False, new_module_file: bool = False):
+    def __init__(
+            self,
+            input: str,
+            output: str = '',
+            file_type: str = ''
+            , no_demisto_mock: bool = False,
+            no_common_server: bool = False,
+            no_auto_create_dir: bool = False,
+            configuration: Configuration = None,
+            base_name: str = '',
+            no_readme: bool = False,
+            no_pipenv: bool = False,
+            no_logging: bool = False,
+            no_code_formatting: bool = False,
+    ):
         self.input = Path(input).resolve()
         self.output = (Path(output) if output else Path(self.input.parent)).resolve()
         self.demisto_mock = not no_demisto_mock
@@ -66,13 +77,10 @@ class YmlSplitter:
         self.readme = not no_readme
         self.pipenv = not no_pipenv
         self.logging = not no_logging
-        self.basic_fmt = not no_basic_fmt
+        self.run_code_formatting: bool = not no_code_formatting
         self.lines_inserted_at_code_start = 0
-        if configuration is None:
-            self.config = Configuration()
-        else:
-            self.config = configuration
-        self.autocreate_dir = not no_auto_create_dir
+        self.config = configuration or Configuration()
+        self.auto_create_dir = not no_auto_create_dir
         with open(self.input, 'rb') as yml_file:
             self.yml_data = yaml.load(yml_file)
         self.api_module_path: Optional[str] = None
@@ -81,7 +89,7 @@ class YmlSplitter:
         """Get processed output path
         """
         output_path = Path(self.output)
-        if self.autocreate_dir and output_path.name in {'Integrations', 'Scripts', 'ModelingRules', 'ParsingRules'}:
+        if self.auto_create_dir and output_path.name in {'Integrations', 'Scripts', 'ModelingRules', 'ParsingRules'}:
             code_name = self.yml_data.get("name")
             if not code_name:
                 raise ValueError(f'Failed determining Integration/Script/ModelingRule/ParsingRule name '
@@ -160,7 +168,7 @@ class YmlSplitter:
 
             # Python code formatting and dev env setup
             if code_type == TYPE_PYTHON:
-                if self.basic_fmt:
+                if self.run_code_formatting:
                     self.print_logs("Running autopep8 on file: {} ...".format(code_file), log_color=LOG_COLORS.NATIVE)
                     try:
                         subprocess.call(["autopep8", "-i", "--max-line-length", "130", code_file])
@@ -170,7 +178,7 @@ class YmlSplitter:
                                         "Then run: autopep8 -i {}".format(code_file), LOG_COLORS.YELLOW)
                 if self.pipenv:
                     try:
-                        if self.basic_fmt:
+                        if self.run_code_formatting:
                             self.print_logs("Running isort on file: {} ...".format(code_file), LOG_COLORS.NATIVE)
                             try:
                                 subprocess.call(["isort", code_file])

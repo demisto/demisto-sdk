@@ -95,11 +95,23 @@ class Downloader:
         pack_content (dict): The pack content that maps the pack
         system (bool): whether to download system items
         item_type (str): The items type to download, use just when downloading system items.
+        no_code_formatting (bool): whether to NOT format code files, using isort and autopep8. Use it to preserve order of imports.
     """
 
-    def __init__(self, output: str, input: Union[str, List[str]], regex: str = '', force: bool = False, insecure: bool = False,
-                 verbose: bool = False, list_files: bool = False, all_custom_content: bool = False,
-                 run_format: bool = False, system: bool = False, item_type: str = ''):
+    def __init__(
+            self,
+            output: str,
+            input: Union[str, List[str]],
+            regex: str = '',
+            force: bool = False,
+            insecure: bool = False,
+            verbose: bool = False,
+            list_files: bool = False,
+            all_custom_content: bool = False,
+            run_format: bool = False,
+            system: bool = False,
+            item_type: str = '',
+            no_code_formatting: bool = False):
         logging.disable(logging.CRITICAL)
         self.output_pack_path = output
         self.input_files = [input] if isinstance(input, str) else input
@@ -121,6 +133,7 @@ class Downloader:
         self.pack_content: Dict[str, list] = {entity: list() for entity in CONTENT_ENTITIES_DIRS}
         self.num_merged_files = 0
         self.num_added_files = 0
+        self.no_code_formatting = no_code_formatting
 
     def download(self) -> int:
         """
@@ -796,7 +809,8 @@ class Downloader:
         dir_output_path = os.path.join(dir_output_path, dir_name)
 
         extractor = YmlSplitter(input=file_path, output=dir_output_path, file_type=file_type, base_name=dir_name,
-                                no_auto_create_dir=True, no_logging=not self.log_verbose, no_pipenv=True)
+                                no_auto_create_dir=True, no_logging=not self.log_verbose, no_pipenv=True,
+                                no_code_formatting=self.no_code_formatting)
         extractor.extract_to_package_format()
 
         for file_path in get_child_files(dir_output_path):

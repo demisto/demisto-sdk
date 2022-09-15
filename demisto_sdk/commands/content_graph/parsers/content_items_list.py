@@ -1,8 +1,8 @@
 import logging
 
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser
-
+from demisto_sdk.commands.content_graph.parsers.content_item import \
+    ContentItemParser
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -17,16 +17,17 @@ class ContentItemsList(list):
         self.content_type: ContentType = content_type
         super().__init__()
 
-    def append_conditionally(self, content_item: ContentItemParser) -> bool:
+    def __eq__(self, __o: object) -> bool:
+        return super().__eq__(__o)
+
+    def append(self, content_item: ContentItemParser) -> None:
         """ Appends if the content item is in the correct type.
 
         Args:
             content_item (ContentItemParser): The content item.
-
-        Returns:
-            bool: True iff the content item was appended.
         """
-        if isinstance(content_item, ContentItemParser) and content_item.content_type == self.content_type:
-            self.append(content_item)
-            return True
-        return False
+        if content_item.content_type != self.content_type:
+            raise TypeError(
+                f'{content_item.node_id}: Expected a ContentItemParser of type {self.content_type}'
+            )
+        super().append(content_item)

@@ -1,17 +1,14 @@
 import logging
-from packaging.version import Version
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.tools import (
-    get_yaml,
-    get_yml_paths_in_dir
-)
-from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
+    MarketplaceVersions)
+from demisto_sdk.commands.common.tools import get_yaml, get_yml_paths_in_dir
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
-from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser, NotAContentItemException
-
+from demisto_sdk.commands.content_graph.parsers.content_item import (
+    ContentItemParser, NotAContentItemException)
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -21,15 +18,15 @@ class YAMLContentItemParser(ContentItemParser):
         super().__init__(path, pack_marketplaces)
         self.yml_data: Dict[str, Any] = self.get_yaml()
 
-        if Version(self.toversion) < Version('6.0.0'):
+        if self.should_skip_parsing():
             raise NotAContentItemException
 
     @property
-    def name(self) -> str:
+    def name(self) -> Optional[str]:
         return self.yml_data.get('name')
 
     @property
-    def display_name(self) -> str:
+    def display_name(self) -> Optional[str]:
         return self.name or self.object_id
 
     @property
@@ -37,8 +34,8 @@ class YAMLContentItemParser(ContentItemParser):
         return self.yml_data.get('deprecated', False)
 
     @property
-    def description(self) -> str:
-        return self.yml_data.get('description', '')
+    def description(self) -> Optional[str]:
+        return self.yml_data.get('description')
 
     @property
     def fromversion(self) -> str:

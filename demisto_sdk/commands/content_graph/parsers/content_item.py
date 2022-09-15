@@ -1,13 +1,18 @@
 import logging
 from abc import ABCMeta, abstractmethod
 from pathlib import Path
-from typing import Dict, Optional, List, Type
+from typing import Dict, List, Optional, Type, cast
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import ContentType, Relationship, UNIFIED_FILES_SUFFIXES, Relationships
-from demisto_sdk.commands.content_graph.parsers import *
-from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
+from packaging.version import Version
 
+from demisto_sdk.commands.common.constants import (MARKETPLACE_MIN_VERSION,
+                                                   MarketplaceVersions)
+from demisto_sdk.commands.content_graph.common import (UNIFIED_FILES_SUFFIXES,
+                                                       ContentType,
+                                                       Relationship,
+                                                       Relationships)
+from demisto_sdk.commands.content_graph.parsers.base_content import \
+    BaseContentParser
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -17,7 +22,7 @@ class NotAContentItemException(Exception):
 
 
 class IncorrectParserException(Exception):
-    def __init__(self, correct_parser: 'ContentItemParser', **kwargs) -> None:
+    def __init__(self, correct_parser: Type['ContentItemParser'], **kwargs) -> None:
         self.correct_parser = correct_parser
         self.kwargs = kwargs
         super().__init__()
@@ -28,7 +33,6 @@ class ParserMetaclass(ABCMeta):
         """ This method is called before every creation of a ContentItemParser *class* (NOT class instances!).
         If `content_type` is passed as an argument of the class, we add a mapping between the content type
         and the parser class object.
-        
         After all the parser classes are created, `content_type_to_parser` has a full mapping between content types
         and parsers, and only then we are ready to determine which parser class to use based on a content item's type.
 
@@ -41,10 +45,12 @@ class ParserMetaclass(ABCMeta):
         Returns:
             ContentItemParser: The parser class.
         """
-        parser_cls: Type['ContentItemParser'] = super().__new__(cls, name, bases, namespace)
+        super_cls: ParserMetaclass = super().__new__(cls, name, bases, namespace)
+        # for type checking
+        parser_cls: Type['ContentItemParser'] = cast(Type['ContentItemParser'], super_cls)
         if content_type:
             ContentItemParser.content_type_to_parser[content_type] = parser_cls
-            parser_cls.content_type: ContentType = content_type
+            parser_cls.content_type = content_type
         return parser_cls
 
 
@@ -54,7 +60,6 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
     Static Attributes:
         content_type_to_parser (Dict[ContentType, Type[ContentItemParser]]):
             A mapping between content types and parsers.
-    
     Attributes:
         relationships (Relationships): The relationships collections of the content item.
     """
@@ -110,12 +115,12 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
     @property
     @abstractmethod
-    def name(self) -> str:
+    def name(self) -> Optional[str]:
         pass
 
     @property
     @abstractmethod
-    def display_name(self) -> str:
+    def display_name(self) -> Optional[str]:
         pass
 
     @property
@@ -125,12 +130,12 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
     @property
     @abstractmethod
-    def description(self) -> str:
+    def description(self) -> Optional[str]:
         pass
 
     @property
     @abstractmethod
-    def marketplaces(self) -> List[str]:
+    def marketplaces(self) -> List[MarketplaceVersions]:
         pass
 
     @property
@@ -164,6 +169,19 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             bool: True iff the file path is of a content item.
         """
         return ContentItemParser.is_package(path) or ContentItemParser.is_unified_file(path)
+
+    def should_skip_parsing(self) -> bool:
+        """ Returns true if any of the minimal conditions for parsing is not met.
+
+        Returns:
+            bool: Whether or not this content item should be parsed.
+        """
+        return not all([
+            self.is_above_marketplace_min_version(),
+        ])
+
+    def is_above_marketplace_min_version(self) -> bool:
+        return Version(self.toversion) >= Version(MARKETPLACE_MIN_VERSION)
 
     def add_relationship(
         self,

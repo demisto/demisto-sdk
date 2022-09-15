@@ -1,13 +1,13 @@
 import logging
-from packaging.version import Version
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.constants import (
+    DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
+    MarketplaceVersions)
 from demisto_sdk.commands.common.tools import get_files_in_dir, get_json
-from demisto_sdk.commands.common.constants import DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION
-from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser, NotAContentItemException
-
+from demisto_sdk.commands.content_graph.parsers.content_item import (
+    ContentItemParser, NotAContentItemException)
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -17,19 +17,19 @@ class JSONContentItemParser(ContentItemParser):
         super().__init__(path, pack_marketplaces)
         self.json_data: Dict[str, Any] = self.get_json()
 
-        if Version(self.toversion) < Version('6.0.0'):
+        if self.should_skip_parsing():
             raise NotAContentItemException
 
     @property
-    def object_id(self) -> str:
-        return self.json_data['id']
+    def object_id(self) -> Optional[str]:
+        return self.json_data.get('id')
 
     @property
-    def name(self) -> str:
+    def name(self) -> Optional[str]:
         return self.json_data.get('name')
 
     @property
-    def display_name(self) -> str:
+    def display_name(self) -> Optional[str]:
         return self.name or self.object_id
 
     @property
@@ -37,8 +37,8 @@ class JSONContentItemParser(ContentItemParser):
         return self.json_data.get('deprecated', False)
 
     @property
-    def description(self) -> str:
-        return self.json_data.get('description', '')
+    def description(self) -> Optional[str]:
+        return self.json_data.get('description')
 
     @property
     def fromversion(self) -> str:

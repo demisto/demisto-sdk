@@ -1,12 +1,12 @@
-
 from pathlib import Path
 from typing import List
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.content_item import IncorrectParserException
-from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
+from demisto_sdk.commands.content_graph.parsers.content_item import \
+    IncorrectParserException
 from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
+from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
 
 
 class TestPlaybookParser(PlaybookParser, content_type=ContentType.TEST_PLAYBOOK):
@@ -23,4 +23,3 @@ class TestPlaybookParser(PlaybookParser, content_type=ContentType.TEST_PLAYBOOK)
 
         if self.yml_data.get('script'):
             raise IncorrectParserException(correct_parser=ScriptParser, is_test_script=True)
-

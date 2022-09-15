@@ -5,15 +5,14 @@ from typing import Any, Dict, Iterator, List, Optional
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_json
 from demisto_sdk.commands.content_graph.common import (
-    ContentType,
-    PACK_METADATA_FILENAME,
-    PACK_CONTRIBUTORS_FILENAME,
-    Relationships
-)
-from demisto_sdk.commands.content_graph.parsers.base_content import BaseContentParser
-from demisto_sdk.commands.content_graph.parsers.content_item import ContentItemParser, NotAContentItemException
-from demisto_sdk.commands.content_graph.parsers.content_items_list import ContentItemsList
-
+    PACK_CONTRIBUTORS_FILENAME, PACK_METADATA_FILENAME, ContentType,
+    Relationships)
+from demisto_sdk.commands.content_graph.parsers.base_content import \
+    BaseContentParser
+from demisto_sdk.commands.content_graph.parsers.content_item import (
+    ContentItemParser, NotAContentItemException)
+from demisto_sdk.commands.content_graph.parsers.content_items_list import \
+    ContentItemsList
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -26,6 +25,7 @@ class PackContentItems:
         self.correlation_rule = ContentItemsList(content_type=ContentType.CORRELATION_RULE)
         self.dashboard = ContentItemsList(content_type=ContentType.DASHBOARD)
         self.generic_definition = ContentItemsList(content_type=ContentType.GENERIC_DEFINITION)
+        self.generic_field = ContentItemsList(content_type=ContentType.GENERIC_FIELD)
         self.generic_module = ContentItemsList(content_type=ContentType.GENERIC_MODULE)
         self.generic_type = ContentItemsList(content_type=ContentType.GENERIC_TYPE)
         self.incident_field = ContentItemsList(content_type=ContentType.INCIDENT_FIELD)
@@ -64,8 +64,11 @@ class PackContentItems:
             NotAContentItemException: If did not find any matching content item list.
         """
         for content_item_list in self.iter_lists():
-            if content_item_list.append_conditionally(obj):
+            try:
+                content_item_list.append(obj)
                 break
+            except TypeError:
+                continue
         else:
             raise NotAContentItemException
 
@@ -106,6 +109,8 @@ class PackParser(BaseContentParser, PackMetadataParser):
         content_items (PackContentItems): A collection of this pack's content item parsers.
         relationships (Relationships): A collection of the relationships in this pack.
     """
+    content_type = ContentType.PACK
+
     def __init__(self, path: Path) -> None:
         """ Parses a pack and its content items.
 
@@ -119,17 +124,13 @@ class PackParser(BaseContentParser, PackMetadataParser):
         try:
             self.contributors: List[str] = get_json(path / PACK_CONTRIBUTORS_FILENAME)
         except FileNotFoundError:
-            logger.info(f'No contributors file found in {path}')
+            logger.debug(f'No contributors file found in {path}')
         self.parse_pack_folders()
         logger.info(f'Parsed {self.node_id}')
 
     @property
-    def object_id(self) -> str:
+    def object_id(self) -> Optional[str]:
         return self.path.name
-
-    @property
-    def content_type(self) -> ContentType:
-        return ContentType.PACK
 
     def parse_pack_folders(self) -> None:
         """ Parses all pack content items by iterating its folders.

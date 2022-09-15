@@ -10,12 +10,8 @@ from demisto_sdk.commands.content_graph.objects.repository import Repository
 
 class ContentGraphLoader:
 
-    def __init__(
-            self,
-            marketplace: MarketplaceVersions,
-            content_graph: ContentGraphInterface,
-    ) -> None:
-        """_summary_
+    def __init__(self, marketplace: MarketplaceVersions, content_graph: ContentGraphInterface) -> None:
+        """ Initiates a ContentGraphLoader class instance.
 
         Args:
             marketplace (MarketplaceVersions): The marketplace version.

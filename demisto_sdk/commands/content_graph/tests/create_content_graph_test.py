@@ -1,20 +1,27 @@
-from typing import Any, Dict, List
-import pytest
 from pathlib import Path
+from typing import Any, Dict, List
+
+import pytest
+
+import demisto_sdk.commands.content_graph.content_graph_commands as content_graph_commands
+import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
+from demisto_sdk.commands.content_graph.content_graph_commands import (
+    create_content_graph, marshal_content_graph, stop_content_graph)
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import \
     Neo4jContentGraphInterface as ContentGraphInterface
-import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
-import demisto_sdk.commands.content_graph.content_graph_commands as content_graph_commands
-from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.content_graph_commands import create_content_graph, stop_content_graph
-from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
-from demisto_sdk.commands.content_graph.objects.pack import Pack, PackContentItems
+from demisto_sdk.commands.content_graph.objects.integration import (
+    Command, Integration)
+from demisto_sdk.commands.content_graph.objects.pack import (Pack,
+                                                             PackContentItems)
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.repository import Repository
 from demisto_sdk.commands.content_graph.objects.script import Script
-from demisto_sdk.commands.content_graph.tests.tests_utils import load_json
+from demisto_sdk.commands.content_graph.tests.test_tools import load_json
 from TestSuite.repo import Repo
+
+# Fixtures for mock content object models
 
 
 @pytest.fixture(autouse=True)
@@ -22,9 +29,6 @@ def setup(mocker, repo: Repo):
     """ Auto-used fixture for setup before every test run """
     mocker.patch.object(content_graph_commands, 'REPO_PATH', Path(repo.path))
     mocker.patch.object(neo4j_service, 'REPO_PATH', Path(repo.path))
-
-
-""" Fixtures for mock content object models """
 
 
 @pytest.fixture
@@ -132,7 +136,7 @@ def playbook():
     )
 
 
-""" HELPERS """
+# HELPERS
 
 
 def mock_relationship(
@@ -439,7 +443,6 @@ class TestCreateContentGraph:
         pack.content_items.integration.append(integration)
         pack.content_items.script.append(integration2)
         repository.packs.append(pack)
-        
         with pytest.raises(Exception) as e:
             with ContentGraphInterface() as interface:
                 create_content_graph(interface)
@@ -496,7 +499,6 @@ class TestCreateContentGraph:
         pack.content_items.integration.append(integration)
         pack.content_items.script.append(integration2)
         repository.packs.append(pack)
-        
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
             assert len(interface.get_nodes_by_type(ContentType.INTEGRATION)) == 2
@@ -553,7 +555,6 @@ class TestCreateContentGraph:
         pack.content_items.integration.append(integration)
         pack.content_items.script.append(integration2)
         repository.packs.append(pack)
-        
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
             assert len(interface.get_nodes_by_type(ContentType.INTEGRATION)) == 2
@@ -567,4 +568,57 @@ class TestCreateContentGraph:
         Then:
             - Make sure no exception is raised.
         """
+        stop_content_graph()
+
+    def test_dump_content_graph(self, tmp_path: Path, repo: Repo):
+        """
+        Given:
+            - A mocked model of a repository with a pack TestPack, containing an integration.
+        When:
+            - Running create_content_graph().
+        Then:
+            - Make sure the graph is dumped to the correct path.
+        """
+        pack = repo.create_pack('TestPack')
+        pack.pack_metadata.write_json(load_json('pack_metadata.json'))
+        integration = pack.create_integration()
+        integration.create_default_integration('TestIntegration')
+
+        with ContentGraphInterface(start_service=True, output_file=tmp_path / 'content.dump') as interface:
+            create_content_graph(interface)
+
+        assert Path.exists(tmp_path / 'content.dump'), 'Make sure dump file created'
+        stop_content_graph()
+
+    def test_marshal_content_graph(self, tmp_path: Path, repo: Repo):
+        """
+        Given:
+            - A mocked model of a repository with a pack TestPack, containing an integration.
+        When:
+            - Running create_content_graph().
+        Then:
+            - Make sure the graph is dumped to the correct path.
+        """
+        pack = repo.create_pack('TestPack')
+        pack.pack_metadata.write_json(load_json('pack_metadata.json'))
+        integration = pack.create_integration()
+        integration.create_default_integration('TestIntegration')
+        dump_path = tmp_path / 'content.dump'
+        with ContentGraphInterface(start_service=True, output_file=dump_path) as interface:
+            create_content_graph(interface)
+
+        assert Path.exists(dump_path), 'Make sure dump file created'
+        neo4j_service.load(dump_path)
+        repo_model: Repository = marshal_content_graph(interface, MarketplaceVersions.XSOAR)
+        packs = repo_model.packs
+        assert len(packs) == 1
+        pack = packs[0]
+        assert pack.name == 'HelloWorld'
+        integrations = repo_model.packs[0].content_items.integration
+        integration = integrations[0]
+        assert len(integrations) == 1
+        assert integration.name == 'TestIntegration'
+        commands = integration.commands
+        assert len(commands) == 1
+        assert commands[0].name == 'test-command'
         stop_content_graph()

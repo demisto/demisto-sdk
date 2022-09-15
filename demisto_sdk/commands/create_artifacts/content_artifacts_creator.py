@@ -1143,6 +1143,8 @@ def zip_packs(artifact_manager: ArtifactsManager):
     """Zip packs directories"""
     with ProcessPoolHandler(artifact_manager) as pool:
         for pack_name, pack in artifact_manager.packs.items():
+            if artifact_manager.pack_names != ['all'] and pack_name not in artifact_manager.pack_names:
+                continue
             dumped_pack_dir = os.path.join(artifact_manager.content_packs_path, pack.id)
             zip_path = os.path.join(artifact_manager.content_uploadable_zips_path, pack.id)
 

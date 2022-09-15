@@ -2286,9 +2286,8 @@ def error_code(config, **kwargs):
     sys.exit(result)
 
 
+# ====================== create-content-graph ====================== #
 @main.command(
-    name='create-content-graph',
-    help='create content graph',
     hidden=True,
 )
 @click.help_option(
@@ -2304,8 +2303,10 @@ def error_code(config, **kwargs):
               type=click.Path(resolve_path=True))
 def create_content_graph(use_docker: bool = False, use_existing: bool = False, output_file: Path = None, **kwargs):
     from demisto_sdk.commands.common.logger import logging_setup
-    from demisto_sdk.commands.content_graph.content_graph_commands import create_content_graph
-    from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import Neo4jContentGraphInterface
+    from demisto_sdk.commands.content_graph.content_graph_commands import \
+        create_content_graph as create_content_graph_command
+    from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import \
+        Neo4jContentGraphInterface
     logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
                   quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
                   log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
@@ -2314,30 +2315,8 @@ def create_content_graph(use_docker: bool = False, use_existing: bool = False, o
         output_file=output_file,
         use_docker=use_docker,
     ) as content_graph_interface:
-        create_content_graph(content_graph_interface)
+        create_content_graph_command(content_graph_interface)
 
-
-@main.command(
-    name='create-content-artifacts-v2',
-    help='Create content artifacts using graph'
-)
-@click.help_option(
-    '-h', '--help'
-)
-@click.option('-mp', '--marketplace', help="Marketplace to use", default=MarketplaceVersions.XSOAR, type=MarketplaceVersions)
-@click.option('-o', '--output', help="Path to save the output zip file", default=None, type=click.Path(resolve_path=True))
-@click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
-              type=click.IntRange(0, 3, clamp=True), default=2, show_default=True)
-@click.option('-q', "--quiet", is_flag=True, help="Quiet output, only output results in the end")
-@click.option("-lp", "--log-path", help="Path to store all levels of logs",
-              type=click.Path(resolve_path=True))
-def create_content_artifacts_v2(marketplace: MarketplaceVersions, output: Path, **kwargs):
-    from demisto_sdk.commands.common.logger import logging_setup
-    from demisto_sdk.commands.create_artifacts.create_artifacts_v2 import ContentArtifactManager
-    logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
-                  quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
-                  log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
-    ContentArtifactManager(marketplace=marketplace, output=Path(output)).create_artifacts()
 
 @main.result_callback()
 def exit_from_program(result=0, **kwargs):

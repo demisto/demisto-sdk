@@ -1,10 +1,11 @@
 import logging
-from neo4j import Transaction
 from typing import Any, Dict, List
 
-from demisto_sdk.commands.content_graph.common import ContentType, Relationship
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query, labels_of
+from neo4j import Transaction
 
+from demisto_sdk.commands.content_graph.common import ContentType, Relationship
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
+    labels_of, run_query)
 
 HAS_COMMAND_RELATIONSHIPS_QUERY = f"""
 UNWIND $data AS rel_data
@@ -28,7 +29,7 @@ ON CREATE
         cmd.marketplaces = rel_data.source_marketplaces,
         cmd.name = rel_data.name
 
-// Otherwize, add the integration's marketplaces to its marketplaces property 
+// Otherwize, add the integration's marketplaces to its marketplaces property
 ON MATCH
     SET cmd.marketplaces = REDUCE(
         marketplaces = cmd.marketplaces, mp IN rel_data.source_marketplaces |

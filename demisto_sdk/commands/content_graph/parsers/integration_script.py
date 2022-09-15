@@ -1,9 +1,10 @@
 from abc import abstractmethod
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.parsers.yaml_content_item import YAMLContentItemParser
+from demisto_sdk.commands.content_graph.parsers.yaml_content_item import \
+    YAMLContentItemParser
 from demisto_sdk.commands.unify.integration_script_unifier import \
     IntegrationScriptUnifier
 
@@ -17,9 +18,9 @@ class IntegrationScriptParser(YAMLContentItemParser):
         super().__init__(path, pack_marketplaces)
 
     @property
-    def object_id(self) -> str:
+    def object_id(self) -> Optional[str]:
         return self.yml_data.get('commonfields', {}).get('id')
 
     @abstractmethod
-    def get_code(self) -> str:
+    def get_code(self) -> Optional[str]:
         pass

@@ -1,9 +1,10 @@
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
+from demisto_sdk.commands.content_graph.parsers.json_content_item import \
+    JSONContentItemParser
 
 
 class IncidentFieldParser(JSONContentItemParser, content_type=ContentType.INCIDENT_FIELD):
@@ -16,7 +17,7 @@ class IncidentFieldParser(JSONContentItemParser, content_type=ContentType.INCIDE
         self.connect_to_dependencies()
 
     @property
-    def object_id(self) -> str:
+    def object_id(self) -> Optional[str]:
         return self.json_data.get('cliName')
 
     def connect_to_dependencies(self) -> None:
@@ -33,5 +34,3 @@ class IncidentFieldParser(JSONContentItemParser, content_type=ContentType.INCIDE
 
         if field_calc_script := self.json_data.get('fieldCalcScript'):
             self.add_dependency(field_calc_script, ContentType.SCRIPT)
-
-

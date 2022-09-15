@@ -3,8 +3,10 @@ from typing import List, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
-from demisto_sdk.commands.content_graph.parsers.content_item import NotAContentItemException
-from demisto_sdk.commands.content_graph.parsers.json_content_item import JSONContentItemParser
+from demisto_sdk.commands.content_graph.parsers.content_item import \
+    NotAContentItemException
+from demisto_sdk.commands.content_graph.parsers.json_content_item import \
+    JSONContentItemParser
 
 
 class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
@@ -13,10 +15,10 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
             raise NotAContentItemException
 
         super().__init__(path, pack_marketplaces)
-        self.kind: str = self.json_data.get('kind')
-        self.tabs: List[str] = self.json_data.get('tabs')
-        self.definition_id: str = self.json_data.get('definitionId')
-        self.group: str = self.json_data.get('group')
+        self.kind = self.json_data.get('kind')
+        self.tabs = self.json_data.get('tabs')
+        self.definition_id = self.json_data.get('definitionId')
+        self.group = self.json_data.get('group')
 
         self.edit: bool = bool(self.json_data.get('edit'))
         self.indicators_details: bool = bool(self.json_data.get('indicatorsDetails'))

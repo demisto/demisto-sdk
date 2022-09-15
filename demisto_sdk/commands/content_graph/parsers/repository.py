@@ -1,12 +1,9 @@
-
-
 import multiprocessing
 from pathlib import Path
 from typing import Iterator, List
+
 from demisto_sdk.commands.content_graph.common import PACKS_FOLDER
-
 from demisto_sdk.commands.content_graph.parsers.pack import PackParser
-
 
 IGNORED_PACKS_FOR_PARSING = ['NonSupported']
 
@@ -26,7 +23,6 @@ class RepositoryParser:
         self.path: Path = path
         pool = multiprocessing.Pool()
         self.packs: List[PackParser] = list(pool.map(PackParser, self.iter_packs()))
-    
     def iter_packs(self) -> Iterator[Path]:
         """ Iterates all packs in the repository.
 

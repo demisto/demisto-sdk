@@ -1,12 +1,12 @@
 import logging
-from pathlib import Path
 import shutil
+from pathlib import Path
 
 import docker
 import requests
-from demisto_sdk.commands.common.tools import run_command
 from requests.adapters import HTTPAdapter, Retry
 
+from demisto_sdk.commands.common.tools import run_command
 from demisto_sdk.commands.content_graph.common import NEO4J_PASSWORD, REPO_PATH
 
 NEO4J_SERVICE_IMAGE = 'neo4j:4.4.9'
@@ -51,7 +51,11 @@ def _stop_neo4j_service_docker(docker_client: docker.DockerClient):
         docker_client (docker.DockerClient): The docker client to use
     """
     try:
-        docker_client.containers.get('neo4j-content').remove(force=True)
+        neo4j_docker = docker_client.containers.get('neo4j-content')
+        if not neo4j_docker:
+            return
+        neo4j_docker.stop()
+        neo4j_docker.remove(force=True)
     except Exception as e:
         logger.info(f'Could not remove neo4j container: {e}')
 
@@ -69,12 +73,17 @@ def _wait_until_service_is_up():
     s.get('http://localhost:7474')
 
 
+def _should_use_docker(use_docker: bool) -> bool:
+    return use_docker or not IS_NEO4J_ADMIN_AVAILABLE
+
+
 def start(use_docker: bool = True):
     """Starting the neo4j service
 
     Args:
         use_docker (bool, optional): Whether use docker or run locally. Defaults to True.
     """
+    use_docker = _should_use_docker(use_docker)
     if not use_docker:
         Path.mkdir(REPO_PATH / 'neo4j', exist_ok=True, parents=True)
         _neo4j_admin_command('set-initial-password', f'neo4j-admin set-initial-password {NEO4J_PASSWORD}')
@@ -101,6 +110,7 @@ def stop(use_docker: bool):
     Args:
         use_docker (bool): Whether stop the sercive using docker or not.
     """
+    use_docker = _should_use_docker(use_docker)
     if not use_docker:
         run_command('neo4j stop', cwd=REPO_PATH, is_silenced=False)
     else:
@@ -120,7 +130,9 @@ def _neo4j_admin_command(name: str, command: str):
     else:
         docker_client = _get_docker_client()
         try:
-            docker_client.containers.get(f'neo4j-{name}').remove(force=True)
+            neo4j_container = docker_client.containers.get(f'neo4j-{name}')
+            if neo4j_container:
+                neo4j_container.remove(force=True)
         except Exception as e:
             logger.info(f'Could not remove neo4j container: {e}')
         docker_client.containers.run(
@@ -135,24 +147,33 @@ def _neo4j_admin_command(name: str, command: str):
 def dump(output_path: Path, use_docker=True):
     """Dump the content graph to a file
     """
+    use_docker = _should_use_docker(use_docker)
     stop(use_docker)
     dump_path = Path("/backups/content-graph.dump") if use_docker else output_path
     command = f'neo4j-admin dump --database=neo4j --to={dump_path}'
+    # The actual path in the host is different than the path in the container
+    real_path = (REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump') if use_docker else output_path
+    real_path.unlink(missing_ok=True)
     _neo4j_admin_command('dump', command)
     if use_docker:
-        shutil.copy(dump_path, output_path)
+        # since we have to save the dump in the container, we need to copy the correct path to the host
+        shutil.copy(real_path, output_path)
     start(use_docker)
 
 
 def load(input_path: Path, use_docker=True):
     """Load the content graph from a file
     """
+    use_docker = _should_use_docker(use_docker)
     stop(use_docker)
     dump_path = Path("/backups/content-graph.dump") if use_docker else input_path
     if use_docker:
+        # remove existing data
         Path.mkdir(REPO_PATH / 'neo4j' / 'backups', parents=True, exist_ok=True)
         shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
+        # copy the dump file to the correct path
         shutil.copy(input_path, REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump')
+    # currently we assume that the data is empty when running without docker
     command = f'neo4j-admin load --database=neo4j --from={dump_path}'
     _neo4j_admin_command('load', command)
     start(use_docker)

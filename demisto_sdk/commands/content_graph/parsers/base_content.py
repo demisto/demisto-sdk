@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Optional
 
 from demisto_sdk.commands.content_graph.common import ContentType
 
@@ -12,18 +13,15 @@ class BaseContentParser(ABC):
         content_type (ContentType): The content object type.
         node_id (str): The content object node ID.
     """
-    
+    content_type: ContentType
+
     def __init__(self, path: Path) -> None:
         self.path: Path = path
 
     @property
     @abstractmethod
-    def object_id(self) -> str:
+    def object_id(self) -> Optional[str]:
         pass
-
-    @property
-    def content_type(self) -> ContentType:
-        raise NotImplementedError
 
     @property
     def node_id(self) -> str:

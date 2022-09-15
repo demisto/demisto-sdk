@@ -1,7 +1,7 @@
 # Changelog
 * Added playbook modification capabilities in **TestSuite**.
 * Added a new command **create-content-graph**.
-
+* Fixed an issue in the **upload** command, where the temporary zip would not clean up properly.
 
 ## Unreleased
 * Added an error when the docker daemon is unavailable when running **lint**.

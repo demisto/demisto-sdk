@@ -201,7 +201,8 @@ class ValidateManager:
         self.new_packs = set()
         self.skipped_file_types = (FileType.CHANGELOG,
                                    FileType.DOC_IMAGE,
-                                   FileType.MODELING_RULE_SCHEMA)
+                                   FileType.MODELING_RULE_SCHEMA,
+                                   FileType.XSIAM_DASHBOARD_IMAGE,)
 
         self.is_external_repo = is_external_repo
         if is_external_repo:

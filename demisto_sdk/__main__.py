@@ -940,7 +940,8 @@ def upload(**kwargs):
     from demisto_sdk.commands.zip_packs.packs_zipper import (EX_FAIL,
                                                              PacksZipper)
     keep_zip = kwargs.pop('keep_zip')
-    if kwargs['zip'] or kwargs['input_config_file']:
+    is_zip = kwargs.pop('zip')
+    if is_zip or kwargs['input_config_file']:
         if kwargs.pop('zip', False):
             pack_path = kwargs['input']
             kwargs.pop('input_config_file')
@@ -973,7 +974,7 @@ def upload(**kwargs):
 
     check_configuration_file('upload', kwargs)
     upload_result = Uploader(**kwargs).upload()
-    if not keep_zip:
+    if is_zip and not keep_zip:
         output_zip_path.cleanup()
     return upload_result
 

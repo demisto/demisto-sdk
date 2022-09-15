@@ -1,5 +1,6 @@
 import inspect
 import re
+import shutil
 import zipfile
 from functools import wraps
 from io import BytesIO
@@ -1127,6 +1128,7 @@ class TestZippedPackUpload:
         Then:
             - Make sure XSIAM entities are not in the zip we want to upload
         """
+        mocker.patch.object(shutil, 'rmtree')
         # prepare
         mock_api_client(mocker)
         mocker.patch.object(Uploader, 'zipped_pack_uploader')

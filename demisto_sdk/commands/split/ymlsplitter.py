@@ -57,8 +57,8 @@ class YmlSplitter:
             self,
             input: str,
             output: str = '',
-            file_type: str = ''
-            , no_demisto_mock: bool = False,
+            file_type: str = '',
+            no_demisto_mock: bool = False,
             no_common_server: bool = False,
             no_auto_create_dir: bool = False,
             configuration: Configuration = None,

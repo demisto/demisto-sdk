@@ -16,14 +16,13 @@ def match_request_text(client, url, method, response_type='text'):
         with open('demisto_sdk/tests/test_files/download_command/demisto_api_response', 'r') as f:
             api_response = f.read()
 
-        return (api_response, None, None)
+        return (api_response, 200, None)
     elif url.startswith('/playbook') and url.endswith('/yaml'):
         filename = url.replace('/playbook/', '').replace('/yaml', '')
-        # with open(f'demisto_sdk/tests/test_files/download_command/playbook-{filename}.yml', 'w') as f2:
-        #     f2.write(string_to_write)
         with open(f'demisto_sdk/tests/test_files/download_command/playbook-{filename}.yml', 'r') as f2:
-            with open(client.api_client.configuration.temp_folder_path + '/' + filename + '.yml', mode='w') as f3:
-                f3.write(f2.read())
+            api_response = f2.read()
+
+            return (api_response, 200, None)
 
 
 @pytest.fixture
@@ -51,7 +50,6 @@ def test_integration_download_no_force(demisto_client, tmp_path):
     - Ensure no download has been made.
     - Ensure force msg is printed.
     """
-    # mocker.patch.object(demisto_client, 'generic_request_func', return_value={'status_code': 200})
     env = Environment(tmp_path)
     pack_path = join(DEMISTO_SDK_PATH, env.PACK_INSTANCE_PATH)
     runner = CliRunner(mix_stderr=False)

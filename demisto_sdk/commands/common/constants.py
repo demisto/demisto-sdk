@@ -149,6 +149,7 @@ class FileType(str, Enum):
     MODELING_RULE = 'modelingrule'
     CORRELATION_RULE = 'correlationrule'
     XSIAM_DASHBOARD = 'xsiamdashboard'
+    XSIAM_DASHBOARD_IMAGE = 'xsiamdashboardimage'
     XSIAM_REPORT = 'xsiamreport'
     TRIGGER = 'trigger'
     WIZARD = 'wizard'

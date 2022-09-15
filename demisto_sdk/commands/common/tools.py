@@ -46,7 +46,7 @@ from demisto_sdk.commands.common.constants import (
     PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
     SCRIPTS_DIR, SIEM_ONLY_ENTITIES, TEST_PLAYBOOKS_DIR, TRIGGER_DIR,
     TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSIAM_DASHBOARDS_DIR,
-    XSIAM_REPORTS_DIR, XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys,
+    XSIAM_REPORTS_DIR, XSOAR_CONFIG_FILE, AGENT_CONFIG_DIR, FileType, FileTypeToIDSetKeys,
     IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
                                                             GitProvider)
@@ -1342,6 +1342,8 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.XSOAR_CONFIG
         elif 'CONTRIBUTORS' in path.name:
             return FileType.CONTRIBUTORS
+        elif AGENT_CONFIG_DIR in path.parts:
+            return FileType.AGENT_CONFIG
 
     elif path.name.endswith('_image.png'):
         if path.name.endswith('Author_image.png'):

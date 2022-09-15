@@ -1530,6 +1530,9 @@ def find_type(
         if 'trigger_id' in _dict:
             return FileType.TRIGGER
 
+        if 'profile_type' in _dict and 'yml' in _dict:
+            return FileType.AGENT_CONFIG
+
         # When using it for all files validation- sometimes 'id' can be integer
         if 'id' in _dict:
             if isinstance(_dict['id'], str):

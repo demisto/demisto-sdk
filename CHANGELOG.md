@@ -8,6 +8,7 @@
 * Removed the validation of a subtype change for scripts in the **validate** command.
 * Fixed an issue where names of XSIAM content items were not normalized properly.
 * Fixed an issue where script yml files were not properly identified by `find_type`.
+* Added support for XSIAM Dashboard preview image.
 
 ## 1.7.4
 

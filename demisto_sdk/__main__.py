@@ -968,7 +968,6 @@ def upload(**kwargs):
         kwargs['input'] = packs_zip_path
         kwargs['pack_names'] = pack_names
     else:
-        kwargs.pop('zip')
         kwargs.pop('input_config_file')
         kwargs.pop('xsiam', None)
 

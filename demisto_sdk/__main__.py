@@ -940,19 +940,18 @@ def upload(**kwargs):
     from demisto_sdk.commands.zip_packs.packs_zipper import (EX_FAIL,
                                                              PacksZipper)
     keep_zip = kwargs.pop('keep_zip')
-    is_zip = kwargs.pop('zip')
-    if is_zip or kwargs['input_config_file']:
-        if kwargs.pop('zip', False):
+    is_zip = kwargs.pop('zip', False)
+    config_file_path = kwargs.pop('input_config_file')
+    is_xsiam = kwargs.pop('xsiam', False)
+    if is_zip or config_file_path:
+        if is_zip:
             pack_path = kwargs['input']
-            kwargs.pop('input_config_file')
 
         else:
-            config_file_path = kwargs['input_config_file']
             config_file_to_parse = ConfigFileParser(config_file_path=config_file_path)
             pack_path = config_file_to_parse.parse_file()
             kwargs['detached_files'] = True
-            kwargs.pop('input_config_file')
-        if kwargs.pop('xsiam', False):
+        if is_xsiam:
             marketplace = MarketplaceVersions.MarketplaceV2.value
         else:
             marketplace = MarketplaceVersions.XSOAR.value
@@ -967,13 +966,10 @@ def upload(**kwargs):
 
         kwargs['input'] = packs_zip_path
         kwargs['pack_names'] = pack_names
-    else:
-        kwargs.pop('input_config_file')
-        kwargs.pop('xsiam', None)
 
     check_configuration_file('upload', kwargs)
     upload_result = Uploader(**kwargs).upload()
-    if is_zip and not keep_zip:
+    if (is_zip or config_file_path) and not keep_zip:
         output_zip_path.cleanup()
     return upload_result
 

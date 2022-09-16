@@ -227,7 +227,6 @@ class Downloader:
                 return ast.literal_eval(api_resp[0]).decode('utf-8')
 
         return playbook_string
-                
 
     def fetch_custom_content(self) -> bool:
         """

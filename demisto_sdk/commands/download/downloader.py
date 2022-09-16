@@ -206,7 +206,7 @@ class Downloader:
     def download_playbook_yaml(self, playbook_string) -> str:
         """
         Downloads the playbook yaml via XSOAR REST API.
-        We should download the file via direct REST API because there are props like scriptName, 
+        We should download the file via direct REST API because there are props like scriptName,
         that playbook from custom content bundle don't contain.
 
         If download will fail, then we will return the original playbook_string we received (probably from the bundle)
@@ -223,7 +223,7 @@ class Downloader:
                 status_code = api_resp[1]
                 if status_code < 200 and status_code >= 300:
                     return playbook_string
-                
+
                 return ast.literal_eval(api_resp[0]).decode('utf-8')
 
         return playbook_string

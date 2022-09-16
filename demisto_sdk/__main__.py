@@ -1011,6 +1011,10 @@ def upload(**kwargs):
                                "Automation, Classifier, Mapper]",
     type=click.Choice(['IncidentType', 'IndicatorType', 'Field', 'Layout', 'Playbook', 'Automation', 'Classifier',
                        'Mapper'], case_sensitive=False))
+@click.option(
+    "--no-code-formatting", help="Use this flag to avoid running Autopep8 and isort on Python files.",
+    is_flag=True, default=False
+)
 def download(**kwargs):
     """Download custom content from Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.

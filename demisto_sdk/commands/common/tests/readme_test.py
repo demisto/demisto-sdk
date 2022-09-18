@@ -11,10 +11,13 @@ from requests.adapters import HTTPAdapter
 from urllib3 import Retry
 
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator, are_modules_installed_for_verify
+from demisto_sdk.commands.common.hook_validations.readme import (
+    ReadMeValidator, is_docker_available)
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.MDXServer import DEMISTO_DEPS_DOCKER_NAME, DockerMDXServer, LocalMDXServer, \
-    _MDX_SERVER_PROCESS
+from demisto_sdk.commands.common.MDXServer import (_MDX_SERVER_PROCESS,
+                                                   DEMISTO_DEPS_DOCKER_NAME,
+                                                   DockerMDXServer,
+                                                   LocalMDXServer)
 from demisto_sdk.commands.lint.docker_helper import init_global_docker_client
 from TestSuite.test_tools import ChangeCWD
 
@@ -41,7 +44,7 @@ MDX_SKIP_NPM_MESSAGE = 'Required npm modules are not installed. To run this test
 @pytest.mark.parametrize("current, answer", README_INPUTS)
 def test_is_file_valid(mocker, current, answer):
     readme_validator = ReadMeValidator(current)
-    valid = are_modules_installed_for_verify(readme_validator.content_path)
+    valid = ReadMeValidator.are_modules_installed_for_verify(readme_validator.content_path)
     if not valid:
         pytest.skip('skipping mdx test. ' + MDX_SKIP_NPM_MESSAGE)
         return
@@ -72,7 +75,7 @@ def test_docker_server_up_and_down():
 def test_local_server_up_and_down():
     ReadMeValidator.add_node_env_vars()
     readme_validator = ReadMeValidator(VALID_MD)
-    valid = are_modules_installed_for_verify(readme_validator.content_path)
+    valid = ReadMeValidator.are_modules_installed_for_verify(readme_validator.content_path)
     if not valid:
         pytest.skip('skipping mdx server test. ' + MDX_SKIP_NPM_MESSAGE)
         return
@@ -103,15 +106,24 @@ def assert_successful_mdx_call():
 @pytest.mark.parametrize("current, answer", README_INPUTS)
 def test_is_file_valid_mdx_server(mocker, current, answer):
     ReadMeValidator.add_node_env_vars()
-    with ReadMeValidator.start_mdx_server():
-        readme_validator = ReadMeValidator(current)
-        valid = are_modules_installed_for_verify(readme_validator.content_path)
-        if not valid:
-            pytest.skip('skipping mdx server test. ' + MDX_SKIP_NPM_MESSAGE)
-            return
-        mocker.patch.dict(os.environ, {'DEMISTO_README_VALIDATION': 'yes'})
-        assert readme_validator.is_valid_file() is answer
-        assert ReadMeValidator._MDX_SERVER_PROCESS is not None
+    readme_validator = ReadMeValidator(current)
+    valid = ReadMeValidator.are_modules_installed_for_verify(readme_validator.content_path)
+    if not valid:
+        pytest.skip('skipping mdx server test. ' + MDX_SKIP_NPM_MESSAGE)
+        return
+    mocker.patch.dict(os.environ, {'DEMISTO_README_VALIDATION': 'yes'})
+    assert readme_validator.is_valid_file() is answer
+
+
+@pytest.mark.parametrize("current, answer", README_INPUTS)
+def test_is_file_valid_docker_mdx_server(mocker, current, answer):
+    readme_validator = ReadMeValidator(current)
+    valid = is_docker_available()
+    mocker.patch.object(ReadMeValidator, 'are_modules_installed_for_verify', return_value=False)
+    if not valid:
+        pytest.skip('skipping mdx server docker test. ' + MDX_SKIP_NPM_MESSAGE)
+        return
+    assert readme_validator.is_valid_file() is answer
 
 
 def test_are_modules_installed_for_verify_false_res(tmp_path):
@@ -119,7 +131,7 @@ def test_are_modules_installed_for_verify_false_res(tmp_path):
     with open(r, 'w') as f:
         f.write('Test readme')
     # modules will be missing in tmp_path
-    assert not are_modules_installed_for_verify(tmp_path)
+    assert not ReadMeValidator.are_modules_installed_for_verify(tmp_path)
 
 
 def test_relative_url_not_valid():

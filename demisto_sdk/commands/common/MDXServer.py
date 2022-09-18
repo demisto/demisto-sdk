@@ -1,12 +1,9 @@
-from abc import abstractmethod
-
-import subprocess
-
-from typing import Optional
-
 import logging
 import os
+import subprocess
+from abc import abstractmethod
 from pathlib import Path
+from typing import Optional
 
 import docker
 import docker.errors
@@ -50,6 +47,7 @@ class DockerMDXServer:
             logging.info(f'docker logs: {container.logs().decode("utf-8")}')
         else:
             self.started_successfully = True
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         logging.info('Stopping mdx docker server')
@@ -71,6 +69,7 @@ class LocalMDXServer:
                 self.terminate()
             else:
                 self.started_successfully = True
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.terminate()

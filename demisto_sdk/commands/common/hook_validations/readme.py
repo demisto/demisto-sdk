@@ -28,12 +28,14 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator, error_codes)
-from demisto_sdk.commands.common.MDXServer import DockerMDXServer, LocalMDXServer
+from demisto_sdk.commands.common.MDXServer import (DockerMDXServer,
+                                                   LocalMDXServer)
 from demisto_sdk.commands.common.tools import (
     compare_context_path_in_yml_and_readme, get_content_path,
     get_url_with_retries, get_yaml, get_yml_paths_in_dir, print_warning,
     run_command_os)
-from demisto_sdk.commands.lint.docker_helper import Docker, init_global_docker_client
+from demisto_sdk.commands.lint.docker_helper import (Docker,
+                                                     init_global_docker_client)
 from demisto_sdk.commands.lint.helpers import stream_docker_container_output
 
 json = JSON_Handler()
@@ -70,39 +72,6 @@ def is_docker_available():
         return True
     except Exception:
         return False
-
-
-@lru_cache(None)
-def are_modules_installed_for_verify(content_path: str) -> bool:
-    """ Check the following:
-        1. npm packages installed - see packs var for specific pack details.
-        2. node interperter exists.
-    Returns:
-        bool: True If all req ok else False
-    """
-    missing_module = []
-    valid = True
-    # Check node exist
-    stdout, stderr, exit_code = run_command_os('node -v', cwd=content_path)
-    if exit_code:
-        print_warning(f'There is no node installed on the machine, Test Skipped, error - {stderr}, {stdout}')
-        valid = False
-    else:
-        # Check npm modules exsits
-        stdout, stderr, exit_code = run_command_os(f'npm ls --json {" ".join(REQUIRED_MDX_PACKS)}',
-                                                   cwd=content_path)
-        if exit_code:  # all are missinig
-            missing_module.extend(REQUIRED_MDX_PACKS)
-        else:
-            deps = json.loads(stdout).get('dependencies', {})
-            for pack in REQUIRED_MDX_PACKS:
-                if pack not in deps:
-                    missing_module.append(pack)
-    if missing_module:
-        valid = False
-        print_warning(f"The npm modules: {missing_module} are not installed. Use "
-                      f"'npm install' to install all required node dependencies")
-    return valid
 
 
 @dataclass(frozen=True)
@@ -247,7 +216,7 @@ class ReadMeValidator(BaseValidator):
     def is_mdx_file(self) -> bool:
         html = self.is_html_doc()
         valid = os.environ.get('DEMISTO_README_VALIDATION') or os.environ.get(
-            'CI') or are_modules_installed_for_verify(self.content_path) or is_docker_available()
+            'CI') or ReadMeValidator.are_modules_installed_for_verify(self.content_path) or is_docker_available()
         if valid and not html:
             # add to env var the directory of node modules
             os.environ['NODE_PATH'] = str(self.node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
@@ -280,7 +249,7 @@ class ReadMeValidator(BaseValidator):
             return True
         # use some heuristics to try to figure out if this is html
         return self.readme_content.startswith('<p>') or self.readme_content.startswith('<!DOCTYPE html>') or \
-               ('<thead>' in self.readme_content and '<tbody>' in self.readme_content)
+            ('<thead>' in self.readme_content and '<tbody>' in self.readme_content)
 
     @error_codes('RM101')
     def is_image_path_valid(self) -> bool:
@@ -349,6 +318,39 @@ class ReadMeValidator(BaseValidator):
                     error_list.append(formatted_error)
 
         return error_list
+
+    @staticmethod
+    @lru_cache(None)
+    def are_modules_installed_for_verify(content_path: str) -> bool:
+        """ Check the following:
+            1. npm packages installed - see packs var for specific pack details.
+            2. node interperter exists.
+        Returns:
+            bool: True If all req ok else False
+        """
+        missing_module = []
+        valid = True
+        # Check node exist
+        stdout, stderr, exit_code = run_command_os('node -v', cwd=content_path)
+        if exit_code:
+            print_warning(f'There is no node installed on the machine, Test Skipped, error - {stderr}, {stdout}')
+            valid = False
+        else:
+            # Check npm modules exsits
+            stdout, stderr, exit_code = run_command_os(f'npm ls --json {" ".join(REQUIRED_MDX_PACKS)}',
+                                                       cwd=content_path)
+            if exit_code:  # all are missinig
+                missing_module.extend(REQUIRED_MDX_PACKS)
+            else:
+                deps = json.loads(stdout).get('dependencies', {})
+                for pack in REQUIRED_MDX_PACKS:
+                    if pack not in deps:
+                        missing_module.append(pack)
+        if missing_module:
+            valid = False
+            print_warning(f"The npm modules: {missing_module} are not installed. Use "
+                          f"'npm install' to install all required node dependencies")
+        return valid
 
     def check_readme_relative_image_paths(self, is_pack_readme: bool = False) -> list:
         """ Validate readme images relative paths.
@@ -689,7 +691,7 @@ class ReadMeValidator(BaseValidator):
     @staticmethod
     def start_mdx_server():
         with ReadMeValidator._MDX_SERVER_LOCK:
-            if are_modules_installed_for_verify(get_content_path()):
+            if ReadMeValidator.are_modules_installed_for_verify(get_content_path()):
                 return LocalMDXServer()
             else:
                 return DockerMDXServer()

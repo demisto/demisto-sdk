@@ -25,7 +25,8 @@ def server_script_path():
 class DockerMDXServer:
     def __enter__(self):
         global _RUNNING_CONTAINER_IMAGE
-        if not _RUNNING_CONTAINER_IMAGE:
+        if not _RUNNING_CONTAINER_IMAGE:  # type: ignore
+            logging.info('Starting docker mdx server')
             image_name = 'devdemisto/demisto-sdk-dependencies:1.0.0.33871'
             Docker.pull_image(image_name)
             if running_container := init_global_docker_client() \
@@ -44,7 +45,7 @@ class DockerMDXServer:
             )
             container.start()
             if 'MDX server is listening on port' not in (str(next(container.logs(stream=True)).decode('utf-8'))):
-                self._container.stop()
+                self._container.stop()  # type: ignore
                 logging.error('Docker for MDX server was not started correctly')
                 logging.error(f'docker logs:\n{container.logs().decode("utf-8")}')
                 return
@@ -58,7 +59,7 @@ class DockerMDXServer:
         global _RUNNING_CONTAINER_IMAGE
         if hasattr(self, '_container'):
             logging.info('Stopping mdx docker server')
-            self._container.stop()
+            self._container.stop()  # type: ignore
             _RUNNING_CONTAINER_IMAGE = None
         else:
             logging.info("not stop container as it wasn't started here")

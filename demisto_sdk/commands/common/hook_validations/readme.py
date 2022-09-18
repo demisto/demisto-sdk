@@ -696,7 +696,7 @@ class ReadMeValidator(BaseValidator):
                 return DockerMDXServer()
 
             class NullContextManager(object):
-                def __init__(self, dummy_resource=None):
+                def __init__(self):
                     pass
 
                 def __enter__(self):

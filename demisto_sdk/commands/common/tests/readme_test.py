@@ -11,8 +11,7 @@ from requests.adapters import HTTPAdapter
 from urllib3 import Retry
 
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.hook_validations.readme import (
-    ReadMeValidator, is_docker_available)
+from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.MDXServer import (_MDX_SERVER_PROCESS,
                                                    DEMISTO_DEPS_DOCKER_NAME,
@@ -66,7 +65,8 @@ def test_docker_server_up_and_down():
         return any(container.name == DEMISTO_DEPS_DOCKER_NAME
                    for container in init_global_docker_client().containers.list())
 
-    with DockerMDXServer():
+    with DockerMDXServer() as server:
+        assert server.is_started()
         assert container_is_up()
         assert_successful_mdx_call()
     assert not container_is_up()
@@ -83,7 +83,8 @@ def test_local_server_up_and_down():
     def server_is_up():
         return _MDX_SERVER_PROCESS
 
-    with LocalMDXServer():
+    with LocalMDXServer() as server:
+        assert server.is_started()
         assert server_is_up()
         assert_successful_mdx_call()
     assert not server_is_up()
@@ -118,7 +119,7 @@ def test_is_file_valid_mdx_server(mocker, current, answer):
 @pytest.mark.parametrize("current, answer", README_INPUTS)
 def test_is_file_valid_docker_mdx_server(mocker, current, answer):
     readme_validator = ReadMeValidator(current)
-    valid = is_docker_available()
+    valid = ReadMeValidator.is_docker_available()
     mocker.patch.object(ReadMeValidator, 'are_modules_installed_for_verify', return_value=False)
     if not valid:
         pytest.skip('skipping mdx server docker test. ' + MDX_SKIP_NPM_MESSAGE)

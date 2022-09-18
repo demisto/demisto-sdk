@@ -62,16 +62,6 @@ PACKS_TO_IGNORE = ['HelloWorld', 'HelloWorldPremium']
 DEFAULT_SENTENCES = ['getting started and learn how to build an integration']
 
 
-@lru_cache(None)
-def is_docker_available():
-    try:
-        docker_client: docker.DockerClient = init_global_docker_client(log_prompt='LintManager')
-        docker_client.ping()
-        return True
-    except Exception:
-        return False
-
-
 @dataclass(frozen=True)
 class ReadmeUrl:
     """Url links found in README files.
@@ -214,7 +204,8 @@ class ReadMeValidator(BaseValidator):
     def is_mdx_file(self) -> bool:
         html = self.is_html_doc()
         valid = os.environ.get('DEMISTO_README_VALIDATION') or os.environ.get(
-            'CI') or ReadMeValidator.are_modules_installed_for_verify(self.content_path) or is_docker_available()
+            'CI') or ReadMeValidator.are_modules_installed_for_verify(self.content_path) or \
+            ReadMeValidator.is_docker_available()
         if valid and not html:
             # add to env var the directory of node modules
             os.environ['NODE_PATH'] = str(self.node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
@@ -316,6 +307,16 @@ class ReadMeValidator(BaseValidator):
                     error_list.append(formatted_error)
 
         return error_list
+
+    @staticmethod
+    @lru_cache(None)
+    def is_docker_available():
+        try:
+            docker_client: docker.DockerClient = init_global_docker_client(log_prompt='LintManager')
+            docker_client.ping()
+            return True
+        except Exception:
+            return False
 
     @staticmethod
     @lru_cache(None)

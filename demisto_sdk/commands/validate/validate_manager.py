@@ -79,8 +79,7 @@ from demisto_sdk.commands.common.hook_validations.pre_process_rule import \
     PreProcessRuleValidator
 from demisto_sdk.commands.common.hook_validations.python_file import \
     PythonFileValidator
-from demisto_sdk.commands.common.hook_validations.readme import (
-    ReadMeValidator, is_docker_available)
+from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.hook_validations.release_notes import \
     ReleaseNotesValidator
 from demisto_sdk.commands.common.hook_validations.release_notes_config import \
@@ -147,7 +146,7 @@ class ValidateManager:
         self.check_is_unskipped = check_is_unskipped
         self.conf_json_data = {}
         self.run_with_multiprocessing = multiprocessing
-        self.is_possible_validate_readme = self.is_node_exist() or is_docker_available()
+        self.is_possible_validate_readme = self.is_node_exist() or ReadMeValidator.is_docker_available()
 
         if json_file_path:
             self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \
@@ -628,7 +627,8 @@ class ValidateManager:
                                      file_path=file_path):
                     return False
             if not self.validate_all:
-                if not ReadMeValidator.are_modules_installed_for_verify(get_content_path()) and not is_docker_available():  # shows warning message
+                if not ReadMeValidator.are_modules_installed_for_verify(get_content_path()) and not \
+                        ReadMeValidator.is_docker_available():  # shows warning message
                     return True
                 ReadMeValidator.add_node_env_vars()
                 with ReadMeValidator.start_mdx_server():

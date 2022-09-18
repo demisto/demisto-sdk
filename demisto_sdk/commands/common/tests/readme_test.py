@@ -13,8 +13,7 @@ from urllib3 import Retry
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.MDXServer import (_MDX_SERVER_PROCESS,
-                                                   DEMISTO_DEPS_DOCKER_NAME,
+from demisto_sdk.commands.common.MDXServer import (DEMISTO_DEPS_DOCKER_NAME,
                                                    DockerMDXServer,
                                                    LocalMDXServer)
 from demisto_sdk.commands.lint.docker_helper import init_global_docker_client
@@ -92,14 +91,9 @@ def test_local_server_up_and_down():
         pytest.skip('skipping mdx server test. ' + MDX_SKIP_NPM_MESSAGE)
         return
 
-    def server_is_up():
-        return _MDX_SERVER_PROCESS
-
     with LocalMDXServer() as server:
         assert server.is_started()
-        assert server_is_up()
         assert_successful_mdx_call()
-    assert not server_is_up()
 
 
 def assert_successful_mdx_call():

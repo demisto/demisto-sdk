@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where the **upload** command did not work with the CommonServerUserPython package.
 
 ## Unreleased
 * Added playbook modification capabilities in **TestSuite**.

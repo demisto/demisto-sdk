@@ -564,6 +564,7 @@ class ContributionConverter:
             Dict: Key is content item name, value is release note entry
         """
         entity_identifier = '##### '
+        new_entity_identifier = "##### new: "
         content_item_type_identifier = '#### '
         rn_per_content_item: dict = defaultdict(str)
         entity_name = 'NonEntityRelated'
@@ -576,6 +577,8 @@ class ContributionConverter:
                 entity_name = line.lstrip(entity_identifier)
                 if items_path.get(entity_name):
                     entity_name = get_display_name(items_path.get(entity_name))
+                elif line.startswith(new_entity_identifier):
+                    entity_name = line.lstrip(new_entity_identifier)
             elif not line.startswith(content_item_type_identifier):
                 rn_per_content_item[entity_name] = rn_per_content_item[entity_name] + line + '\n'
         return rn_per_content_item

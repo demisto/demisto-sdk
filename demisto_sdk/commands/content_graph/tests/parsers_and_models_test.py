@@ -947,6 +947,7 @@ class TestParsersAndModels:
         Then:
             - Verify all relationships of the content item are collected.
             - Verify the generic content item properties are parsed correctly.
+              In particular, make sure redundant backslashes are removed from the playbook's description.
             - Verify the specific properties of the content item are parsed correctly.
         """
         from demisto_sdk.commands.content_graph.objects.playbook import \
@@ -955,6 +956,7 @@ class TestParsersAndModels:
             PlaybookParser
         playbook = pack.create_playbook()
         playbook.create_default_playbook(name='sample')
+        playbook.yml.update({'description': 'test\\ test2\\\n \\ test3'})
         playbook_path = Path(playbook.path)
         parser = PlaybookParser(playbook_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
@@ -971,6 +973,7 @@ class TestParsersAndModels:
             expected_content_type=ContentType.PLAYBOOK,
             expected_fromversion='5.0.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+            expected_description='test test2 test3'
         )
         assert not model.is_test
 

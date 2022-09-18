@@ -14,6 +14,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         self.category = self.yml_data['category']
         self.docker_image = self.script_info.get('dockerimage', '')
         self.is_fetch = self.script_info.get('isfetch', False)
+        self.is_fetch_events = self.script_info.get('isfetchevents', False)
         self.is_feed = self.script_info.get('feed', False)
         self.type = self.script_info.get('subtype') or self.script_info.get('type')
         if self.type == 'python':
@@ -37,9 +38,10 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
             self.add_relationship(
                 Relationship.HAS_COMMAND,
                 target=command_data.get('name'),
+                target_type=ContentType.COMMAND,
                 name=command_data.get('name'),
                 deprecated=command_data.get('deprecated', False) or self.deprecated,
-                description=command_data.get('description')
+                description=command_data.get('description'),
             )
 
     def connect_to_dependencies(self) -> None:
@@ -47,23 +49,23 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         """
         if default_classifier := self.yml_data.get('defaultclassifier'):
             if default_classifier != 'null':
-                self.add_dependency(default_classifier, ContentType.CLASSIFIER)
+                self.add_dependency_by_id(default_classifier, ContentType.CLASSIFIER, is_mandatory=False)
 
         if default_mapper_in := self.yml_data.get('defaultmapperin'):
             if default_mapper_in != 'null':
-                self.add_dependency(default_mapper_in, ContentType.MAPPER)
+                self.add_dependency_by_id(default_mapper_in, ContentType.MAPPER, is_mandatory=False)
 
         if default_mapper_out := self.yml_data.get('defaultmapperout'):
             if default_mapper_out != 'null':
-                self.add_dependency(default_mapper_out, ContentType.MAPPER)
+                self.add_dependency_by_id(default_mapper_out, ContentType.MAPPER, is_mandatory=False)
 
         if default_incident_type := self.yml_data.get('defaultIncidentType'):
             if default_incident_type != 'null':
-                self.add_dependency(default_incident_type, ContentType.INCIDENT_TYPE)
+                self.add_dependency_by_id(default_incident_type, ContentType.INCIDENT_TYPE, is_mandatory=False)
 
     def get_code(self) -> Optional[str]:
         """ Gets the integration code.
-        If the integration is unified, take it from the yml file.
+        If the integration is unified, then it is taken from the yml file.
         Otherwise, uses the Unifier object to get it.
 
         Returns:
@@ -83,5 +85,4 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
             raise ValueError('Integration code is not available')
         api_modules = IntegrationScriptUnifier.check_api_module_imports(code).values()
         for api_module in api_modules:
-            api_module_node_id = f'{ContentType.SCRIPT}:{api_module}'
-            self.add_relationship(Relationship.IMPORTS, api_module_node_id)
+            self.add_relationship(Relationship.IMPORTS, api_module, ContentType.SCRIPT)

@@ -1,7 +1,7 @@
 # Changelog
 * Added playbook modification capabilities in **TestSuite**.
 * Added a new command **create-content-graph**.
-* Fixed an issue where the **upload** command did not work with pack of CommonServerUserPython pack.
+* Fixed an issue where the **upload** command did not work with the CommonServerUserPython package.
 
 
 ## Unreleased

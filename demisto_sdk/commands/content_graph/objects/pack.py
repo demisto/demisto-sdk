@@ -107,21 +107,15 @@ class PackMetadata(BaseModel):
     vendor_name: Optional[str] = Field(None, alias='vendorName')
     preview_only: Optional[bool] = Field(None, alias='previewOnly')
 
-    class Config:
-        arbitrary_types_allowed = True
-        orm_mode = True
-
 
 class Pack(BaseContent, PackMetadata):
     path: Path
     contributors: Optional[List[str]] = None
     content_items: PackContentItems = Field(alias='contentItems', exclude=True)
     relationships: Relationships = Field(Relationships(), exclude=True)
-    dependencies: dict = Field({}, exclude=True)
 
     def dump_metadata(self, path: Path) -> None:
         metadata = self.dict(exclude={'path', 'node_id', 'content_type'})
-        metadata['dependencies'] = self.dependencies
         metadata['contentItems'] = {}
         for content_item in self.content_items:
             if content_item.content_type == ContentType.TEST_PLAYBOOK:
@@ -161,11 +155,11 @@ class Pack(BaseContent, PackMetadata):
         try:
             shutil.copytree(self.path / 'ReleaseNotes', path / 'ReleaseNotes')
         except FileNotFoundError:
-            print(f'No such file {self.path / "ReleaseNotes"}')
+            logger.info(f'No such file {self.path / "ReleaseNotes"}')
         try:
             shutil.copy(self.path / 'Author_image.png', path / 'Author_image.png')
         except FileNotFoundError:
-            print(f'No such file {self.path / "Author_image.png"}')
+            logger.info(f'No such file {self.path / "Author_image.png"}')
 
     def to_nodes(self) -> Nodes:
         return Nodes(self.to_dict(), *[content_item.to_dict() for content_item in self.content_items])

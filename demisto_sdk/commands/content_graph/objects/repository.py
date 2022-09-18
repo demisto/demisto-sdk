@@ -29,10 +29,7 @@ class Repository(BaseModel):
         shutil.make_archive(str(dir.parent / 'content_packs'), 'zip', dir)
 
         shutil.rmtree(dir)
-
-        # save everything in zip
-        # sign zip
-
+                
     class Config:
         orm_mode = True
         allow_population_by_field_name = True

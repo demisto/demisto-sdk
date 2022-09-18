@@ -12,7 +12,7 @@ logger = logging.getLogger('demisto-sdk')
 class IntegrationScript(ContentItem):
     type: str
     docker_image: Optional[str]
-    description: str
+    description: Optional[str]
 
     def dump(self, dir: Path, marketplace: MarketplaceVersions) -> None:
         # demisto-sdk unify self.path -> path

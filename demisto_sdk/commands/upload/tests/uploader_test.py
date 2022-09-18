@@ -1,8 +1,10 @@
 import inspect
 import re
+import shutil
 import zipfile
 from functools import wraps
 from io import BytesIO
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import click
@@ -1117,8 +1119,8 @@ class TestZippedPackUpload:
     #
     #     assert 'Triggers/' in xsiam_pack_files
     #     assert 'XSIAMDashboards/' in xsiam_pack_files
-
-    def test_upload_xsiam_pack_to_xsoar(self, mocker):
+    @pytest.mark.parametrize(argnames='is_cleanup', argvalues=[True, False])
+    def test_upload_xsiam_pack_to_xsoar(self, mocker, is_cleanup):
         """
         Given:
             - XSIAM pack to upload to XSOAR
@@ -1127,6 +1129,8 @@ class TestZippedPackUpload:
         Then:
             - Make sure XSIAM entities are not in the zip we want to upload
         """
+        if not is_cleanup:
+            mocker.patch.object(shutil, 'rmtree')
         # prepare
         mock_api_client(mocker)
         mocker.patch.object(Uploader, 'zipped_pack_uploader')
@@ -1135,9 +1139,10 @@ class TestZippedPackUpload:
         click.Context(command=upload).invoke(upload, input=TEST_XSIAM_PACK, xsiam=False, zip=True)
 
         zip_file_path = Uploader.zipped_pack_uploader.call_args[1]['path']
-
         assert 'uploadable_packs.zip' in zip_file_path
-
+        if is_cleanup:
+            assert not Path.exists(Path(zip_file_path)), 'zip should be cleaned up'
+            return
         with zipfile.ZipFile(zip_file_path, "r") as zfile:
             for name in zfile.namelist():
                 if re.search(r'\.zip$', name) is not None:

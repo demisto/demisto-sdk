@@ -11,17 +11,30 @@ DOWNLOAD_COMMAND = "download"
 DEMISTO_SDK_PATH = join(git_path(), "demisto_sdk")
 
 
+def match_request_text(client, url, method, response_type='text'):
+    if url == '/content/bundle':
+        with open('demisto_sdk/tests/test_files/download_command/demisto_api_response', 'r') as f:
+            api_response = f.read()
+
+        return (api_response, 200, None)
+    elif url.startswith('/playbook') and url.endswith('/yaml'):
+        filename = url.replace('/playbook/', '').replace('/yaml', '')
+        with open(f'demisto_sdk/tests/test_files/download_command/playbook-{filename}.yml', 'r') as f2:
+            api_response = f2.read()
+
+            return (api_response, 200, None)
+
+
 @pytest.fixture
 def demisto_client(mocker):
     mocker.patch(
         "demisto_sdk.commands.download.downloader.demisto_client",
         return_valure="object"
     )
-    with open('demisto_sdk/tests/test_files/download_command/demisto_api_response', 'r') as f:
-        api_response = f.read()
+
     mocker.patch(
         "demisto_sdk.commands.download.downloader.demisto_client.generic_request_func",
-        return_value=(api_response, None, None)
+        side_effect=match_request_text
     )
 
 

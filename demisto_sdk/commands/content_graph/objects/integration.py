@@ -1,9 +1,7 @@
+from pydantic import BaseModel, Field
 from typing import List
 
-from pydantic import BaseModel, Field
-
-from demisto_sdk.commands.content_graph.objects.integration_script import \
-    IntegrationScript
+from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 
 
 class Command(BaseModel):
@@ -20,3 +18,14 @@ class Integration(IntegrationScript):
     is_feed: bool = False
     category: str
     commands: List[Command] = Field([], exclude=True)  # todo: override exclusion when loading from database
+
+    def included_in_metadata(self):
+        return {'name': True,
+                'description': True,
+                'category': True,
+                'commands':
+                {
+                    'name': True,
+                    'description': True
+                }
+                }

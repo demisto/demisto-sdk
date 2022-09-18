@@ -1,10 +1,9 @@
+from abc import ABC, abstractmethod
 import json
-from abc import ABC
+from pydantic import BaseModel, DirectoryPath, Field
 from typing import Any, Dict, List
-
-from pydantic import BaseModel, Field
-
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+
 from demisto_sdk.commands.content_graph.common import ContentType
 
 
@@ -21,3 +20,7 @@ class BaseContent(ABC, BaseModel):
 
     def to_dict(self) -> Dict[str, Any]:
         return json.loads(self.json())
+
+    @abstractmethod
+    def dump(self, path: DirectoryPath, marketplace: MarketplaceVersions) -> None:
+        pass

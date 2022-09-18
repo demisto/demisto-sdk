@@ -1,12 +1,12 @@
 import logging
-from typing import Any, Dict, List, Optional
-
+from pathlib import Path
 from neo4j import Transaction
-
+from typing import Any, Dict, List, Optional
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
-    intersects, run_query, versioned)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query, versioned, intersects
+
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -86,6 +86,14 @@ def get_nodes_by_type(tx: Transaction, content_type: ContentType):
     MATCH (node:{content_type}) return node
     """
     return run_query(tx, query).data()
+
+
+def get_node_py_path(tx: Transaction, path: Path, marketplace: MarketplaceVersions):
+    query = f"""MATCH (node:BaseContent {{path: '{path}'}})
+    WHERE '{marketplace}' IN node.marketplaces
+    RETURN node
+    """
+    return run_query(tx, query).single()['node']
 
 
 def search_nodes(

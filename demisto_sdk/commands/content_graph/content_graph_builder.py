@@ -61,7 +61,7 @@ class ContentGraphBuilder:
         self.content_graph.create_indexes_and_constraints()
         self.content_graph.create_nodes(self.nodes)
         self.content_graph.create_relationships(self.relationships)
-        self.content_graph.validate_graph()
+        # self.content_graph.validate_graph()
 
     def delete_modified_packs_from_graph(self, packs: List[str]) -> None:
         pass

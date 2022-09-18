@@ -15,6 +15,7 @@ from demisto_sdk.commands.lint.docker_helper import (Docker,
 DEMISTO_DEPS_DOCKER_NAME = "demisto-dependencies"
 _SERVER_SCRIPT_NAME = 'mdx-parse-server.js'
 _MDX_SERVER_PROCESS: Optional[subprocess.Popen] = None
+_RUNNING_CONTAINER_IMAGE = None
 
 
 def server_script_path():
@@ -23,35 +24,44 @@ def server_script_path():
 
 class DockerMDXServer:
     def __enter__(self):
-        image_name = 'devdemisto/demisto-sdk-dependencies:1.0.0.33871'
-        Docker.pull_image(image_name)
-        if running_container := init_global_docker_client() \
-                .containers.list(filters={'name': DEMISTO_DEPS_DOCKER_NAME}):
-            running_container[0].stop()
-        location_in_docker = f'/content/{_SERVER_SCRIPT_NAME}'
-        container: docker.models.containers.Container = Docker.create_container(
-            name=DEMISTO_DEPS_DOCKER_NAME,
-            image=image_name,
-            command=['node', location_in_docker],
-            user=f"{os.getuid()}:4000",
-            files_to_push=[(server_script_path(), location_in_docker)],
-            auto_remove=True,
-            ports={'6161/tcp': ('localhost', 6161)}
+        global _RUNNING_CONTAINER_IMAGE
+        if not _RUNNING_CONTAINER_IMAGE:
+            image_name = 'devdemisto/demisto-sdk-dependencies:1.0.0.33871'
+            Docker.pull_image(image_name)
+            if running_container := init_global_docker_client() \
+                    .containers.list(filters={'name': DEMISTO_DEPS_DOCKER_NAME}):
+                running_container[0].stop()
+            location_in_docker = f'/content/{_SERVER_SCRIPT_NAME}'
+            container: docker.models.containers.Container = Docker.create_container(
+                name=DEMISTO_DEPS_DOCKER_NAME,
+                image=image_name,
+                command=['node', location_in_docker],
+                user=f"{os.getuid()}:4000",
+                files_to_push=[(server_script_path(), location_in_docker)],
+                auto_remove=True,
+                ports={'6161/tcp': ('localhost', 6161)}
 
-        )
-        self._container = container
-        container.start()
-        if 'MDX server is listening on port' not in (str(next(container.logs(stream=True)).decode('utf-8'))):
-            self._container.stop()
-            logging.error('Docker for MDX server was not started correctly')
-            logging.error(f'docker logs:\n{container.logs().decode("utf-8")}')
-        else:
-            self.started_successfully = True
+            )
+            container.start()
+            if 'MDX server is listening on port' not in (str(next(container.logs(stream=True)).decode('utf-8'))):
+                self._container.stop()
+                logging.error('Docker for MDX server was not started correctly')
+                logging.error(f'docker logs:\n{container.logs().decode("utf-8")}')
+                return
+            self._container = container
+            _RUNNING_CONTAINER_IMAGE = container.id
+
+        self.started_successfully = True
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        logging.info('Stopping mdx docker server')
-        self._container.stop()
+        global _RUNNING_CONTAINER_IMAGE
+        if hasattr(self, '_container'):
+            logging.info('Stopping mdx docker server')
+            self._container.stop()
+            _RUNNING_CONTAINER_IMAGE = None
+        else:
+            logging.info("not stop container as it wasn't started here")
 
     def is_started(self):
         return self.started_successfully
@@ -66,18 +76,20 @@ class LocalMDXServer:
                                                    stdout=subprocess.PIPE, text=True)
             line = _MDX_SERVER_PROCESS.stdout.readline()  # type: ignore
             if 'MDX server is listening on port' not in line:
+                logging.error(f'MDX local server couldnt be started: {line}')
                 self.terminate()
+                return self
             else:
-                self.started_successfully = True
+                self.owning_obj = True
+        self.started_successfully = True
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.terminate()
 
-    @staticmethod
-    def terminate():
+    def terminate(self):
         global _MDX_SERVER_PROCESS
-        if _MDX_SERVER_PROCESS:
+        if _MDX_SERVER_PROCESS and hasattr(self, 'owning_obj'):
             _MDX_SERVER_PROCESS.terminate()
             _MDX_SERVER_PROCESS = None
 

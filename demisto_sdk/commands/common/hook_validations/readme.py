@@ -61,8 +61,6 @@ PACKS_TO_IGNORE = ['HelloWorld', 'HelloWorldPremium']
 
 DEFAULT_SENTENCES = ['getting started and learn how to build an integration']
 
-logger = logging.getLogger('demisto-sdk')
-
 
 @lru_cache(None)
 def is_docker_available():

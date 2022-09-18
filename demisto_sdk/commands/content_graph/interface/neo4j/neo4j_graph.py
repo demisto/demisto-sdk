@@ -24,7 +24,6 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
     create_relationships, get_relationships_by_type)
 
-
 logger = logging.getLogger('demisto-sdk')
 
 

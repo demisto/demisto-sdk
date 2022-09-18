@@ -12,6 +12,7 @@ from typing import Callable, List, Optional, Set
 from urllib.parse import urlparse
 
 import click
+import docker
 import requests
 from git import InvalidGitRepositoryError
 from requests.adapters import HTTPAdapter
@@ -27,12 +28,12 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator, error_codes)
-from demisto_sdk.commands.common.MDXServer import DockerMDXServer
+from demisto_sdk.commands.common.MDXServer import DockerMDXServer, LocalMDXServer
 from demisto_sdk.commands.common.tools import (
     compare_context_path_in_yml_and_readme, get_content_path,
     get_url_with_retries, get_yaml, get_yml_paths_in_dir, print_warning,
     run_command_os)
-from demisto_sdk.commands.lint.docker_helper import Docker
+from demisto_sdk.commands.lint.docker_helper import Docker, init_global_docker_client
 from demisto_sdk.commands.lint.helpers import stream_docker_container_output
 
 json = JSON_Handler()
@@ -59,6 +60,16 @@ PACKS_TO_IGNORE = ['HelloWorld', 'HelloWorldPremium']
 DEFAULT_SENTENCES = ['getting started and learn how to build an integration']
 
 logger = logging.getLogger('demisto-sdk')
+
+
+@lru_cache(None)
+def is_docker_available():
+    try:
+        docker_client: docker.DockerClient = init_global_docker_client(log_prompt='LintManager')
+        docker_client.ping()
+        return True
+    except Exception:
+        return False
 
 
 @lru_cache(None)
@@ -210,32 +221,34 @@ class ReadMeValidator(BaseValidator):
 
     def mdx_verify_server(self) -> bool:
         if not ReadMeValidator._MDX_SERVER_PROCESS:
-            server_started = ReadMeValidator.start_mdx_server(handle_error=self.handle_error,
-                                                              file_path=str(self.file_path))
-            if not server_started:
-                return False
-        readme_content = self.fix_mdx()
-        retry = Retry(total=2)
-        adapter = HTTPAdapter(max_retries=retry)
-        session = requests.Session()
-        session.mount('http://', adapter)
-        response = session.request(
-            'POST',
-            'http://localhost:6161',
-            data=readme_content.encode('utf-8'),
-            timeout=20
-        )
-        if response.status_code != 200:
-            error_message, error_code = Errors.readme_error(response.text)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                return False
+            with ReadMeValidator.start_mdx_server() as server:
+                if not server.is_started():
+                    error_message, error_code = Errors.error_starting_mdx_server()
+                    if self.handle_error and self.file_path:
+                        if self.handle_error(error_message, error_code, file_path=self.file_path):
+                            return False
+                readme_content = self.fix_mdx()
+                retry = Retry(total=2)
+                adapter = HTTPAdapter(max_retries=retry)
+                session = requests.Session()
+                session.mount('http://', adapter)
+                response = session.request(
+                    'POST',
+                    'http://localhost:6161',
+                    data=readme_content.encode('utf-8'),
+                    timeout=20
+                )
+                if response.status_code != 200:
+                    error_message, error_code = Errors.readme_error(response.text)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        return False
         return True
 
     def is_mdx_file(self) -> bool:
         html = self.is_html_doc()
         valid = os.environ.get('DEMISTO_README_VALIDATION') or os.environ.get(
-            'CI') or are_modules_installed_for_verify(self.content_path)
-        if valid and not html:  # todo fix this logic
+            'CI') or are_modules_installed_for_verify(self.content_path) or is_docker_available()
+        if valid and not html:
             # add to env var the directory of node modules
             os.environ['NODE_PATH'] = str(self.node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
             if os.getenv('DEMISTO_MDX_CMD_VERIFY'):
@@ -267,7 +280,7 @@ class ReadMeValidator(BaseValidator):
             return True
         # use some heuristics to try to figure out if this is html
         return self.readme_content.startswith('<p>') or self.readme_content.startswith('<!DOCTYPE html>') or \
-            ('<thead>' in self.readme_content and '<tbody>' in self.readme_content)
+               ('<thead>' in self.readme_content and '<tbody>' in self.readme_content)
 
     @error_codes('RM101')
     def is_image_path_valid(self) -> bool:
@@ -674,50 +687,18 @@ class ReadMeValidator(BaseValidator):
         return is_valid
 
     @staticmethod
-    def start_server_on_host(handle_error: Optional[Callable] = None, file_path: Optional[str] = None):
-        if not ReadMeValidator._MDX_SERVER_PROCESS:
-            mdx_parse_server = Path(__file__).parent.parent / 'mdx-parse-server.js'
-            ReadMeValidator._MDX_SERVER_PROCESS = subprocess.Popen(['node', str(mdx_parse_server)],
-                                                                   stdout=subprocess.PIPE, text=True)
-            line = ReadMeValidator._MDX_SERVER_PROCESS.stdout.readline()  # type: ignore
-            if 'MDX server is listening on port' not in line:
-                ReadMeValidator.stop_mdx_server()
-                error_message, error_code = Errors.error_starting_mdx_server(line=line)
-                if handle_error and file_path:
-                    if handle_error(error_message, error_code, file_path=file_path):
-                        return False
-
-                else:
-                    raise Exception(error_message)
-        return True
-
-    @staticmethod
-    def start_server_in_docker():  # todo why is this here?
-        return DockerMDXServer()
-
-    @staticmethod
-    @contextmanager
-    def start_mdx_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None):  # todo make normal class
-        try:
-            with ReadMeValidator._MDX_SERVER_LOCK:
-                if are_modules_installed_for_verify(get_content_path()):
-                    yield ReadMeValidator.start_server_on_host(handle_error, file_path)
-                else:
-                    yield ReadMeValidator.start_server_in_docker()
-        finally:
-            ReadMeValidator.stop_mdx_server()
+    def start_mdx_server():
+        with ReadMeValidator._MDX_SERVER_LOCK:
+            if are_modules_installed_for_verify(get_content_path()):
+                return LocalMDXServer()
+            else:
+                return DockerMDXServer()
 
     @staticmethod
     def add_node_env_vars():
         content_path = get_content_path()
         node_modules_path = content_path / Path('node_modules')
         os.environ['NODE_PATH'] = str(node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
-
-    @staticmethod
-    def stop_mdx_server():
-        if ReadMeValidator._MDX_SERVER_PROCESS:
-            ReadMeValidator._MDX_SERVER_PROCESS.terminate()
-            ReadMeValidator._MDX_SERVER_PROCESS = None
 
     @staticmethod
     def _get_error_lists():

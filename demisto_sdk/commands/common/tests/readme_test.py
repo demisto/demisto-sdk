@@ -11,9 +11,10 @@ from requests.adapters import HTTPAdapter
 from urllib3 import Retry
 
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
+from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator, are_modules_installed_for_verify
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.MDXServer import DEMISTO_DEPS_DOCKER_NAME
+from demisto_sdk.commands.common.MDXServer import DEMISTO_DEPS_DOCKER_NAME, DockerMDXServer, LocalMDXServer, \
+    _MDX_SERVER_PROCESS
 from demisto_sdk.commands.lint.docker_helper import init_global_docker_client
 from TestSuite.test_tools import ChangeCWD
 
@@ -40,7 +41,7 @@ MDX_SKIP_NPM_MESSAGE = 'Required npm modules are not installed. To run this test
 @pytest.mark.parametrize("current, answer", README_INPUTS)
 def test_is_file_valid(mocker, current, answer):
     readme_validator = ReadMeValidator(current)
-    valid = readme_validator.are_modules_installed_for_verify(readme_validator.content_path)
+    valid = are_modules_installed_for_verify(readme_validator.content_path)
     if not valid:
         pytest.skip('skipping mdx test. ' + MDX_SKIP_NPM_MESSAGE)
         return
@@ -57,26 +58,46 @@ def test_is_file_valid(mocker, current, answer):
         assert not ReadMeValidator._MDX_SERVER_PROCESS
 
 
-def test_server_up_and_down():
+def test_docker_server_up_and_down():
     def container_is_up():
         return any(container.name == DEMISTO_DEPS_DOCKER_NAME
                    for container in init_global_docker_client().containers.list())
 
-    with ReadMeValidator.start_server_in_docker():
+    with DockerMDXServer():
         assert container_is_up()
-        session = requests.Session()
-        retry = Retry(total=2)
-        adapter = HTTPAdapter(max_retries=retry)
-        session.mount('http://', adapter)
-        response = session.request(
-            'POST',
-            'http://localhost:6161',
-            data='## Hello',
-            timeout=20
-        )
+        assert_successful_mdx_call()
+    assert not container_is_up()
 
-        assert response.status_code == 200
-    assert not container_is_up()  # did this fail? Maybe we need to force garbage collection in this test
+
+def test_local_server_up_and_down():
+    ReadMeValidator.add_node_env_vars()
+    readme_validator = ReadMeValidator(VALID_MD)
+    valid = are_modules_installed_for_verify(readme_validator.content_path)
+    if not valid:
+        pytest.skip('skipping mdx server test. ' + MDX_SKIP_NPM_MESSAGE)
+        return
+
+    def server_is_up():
+        return _MDX_SERVER_PROCESS
+
+    with LocalMDXServer():
+        assert server_is_up()
+        assert_successful_mdx_call()
+    assert not server_is_up()
+
+
+def assert_successful_mdx_call():
+    session = requests.Session()
+    retry = Retry(total=2)
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    response = session.request(
+        'POST',
+        'http://localhost:6161',
+        data='## Hello',
+        timeout=20
+    )
+    assert response.status_code == 200
 
 
 @pytest.mark.parametrize("current, answer", README_INPUTS)
@@ -84,7 +105,7 @@ def test_is_file_valid_mdx_server(mocker, current, answer):
     ReadMeValidator.add_node_env_vars()
     with ReadMeValidator.start_mdx_server():
         readme_validator = ReadMeValidator(current)
-        valid = readme_validator.are_modules_installed_for_verify(readme_validator.content_path)
+        valid = are_modules_installed_for_verify(readme_validator.content_path)
         if not valid:
             pytest.skip('skipping mdx server test. ' + MDX_SKIP_NPM_MESSAGE)
             return
@@ -97,9 +118,8 @@ def test_are_modules_installed_for_verify_false_res(tmp_path):
     r = str(tmp_path / "README.md")
     with open(r, 'w') as f:
         f.write('Test readme')
-    readme_validator = ReadMeValidator(r)
     # modules will be missing in tmp_path
-    assert not readme_validator.are_modules_installed_for_verify(tmp_path)
+    assert not are_modules_installed_for_verify(tmp_path)
 
 
 def test_relative_url_not_valid():

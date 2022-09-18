@@ -235,7 +235,7 @@ class Downloader:
             if self.client and self.client.api_client and self.client.api_client.configuration:
                 api_resp = demisto_client.generic_request_func(self.client, f'/playbook/{playbook_id}/yaml', 'GET')
                 status_code = api_resp[1]
-                if status_code < 200 and status_code >= 300:
+                if status_code < 200 or status_code >= 300:
                     return playbook_string
 
                 return ast.literal_eval(api_resp[0]).decode('utf-8')

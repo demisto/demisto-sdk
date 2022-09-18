@@ -692,8 +692,23 @@ class ReadMeValidator(BaseValidator):
         with ReadMeValidator._MDX_SERVER_LOCK:
             if ReadMeValidator.are_modules_installed_for_verify(get_content_path()):
                 return LocalMDXServer()
-            else:
+            elif ReadMeValidator.is_docker_available():
                 return DockerMDXServer()
+
+            class NullContextManager(object):
+                def __init__(self, dummy_resource=None):
+                    pass
+
+                def __enter__(self):
+                    return self
+
+                def __exit__(self, *args):
+                    pass
+
+                def is_started(self):
+                    return False
+
+            return NullContextManager()
 
     @staticmethod
     def add_node_env_vars():

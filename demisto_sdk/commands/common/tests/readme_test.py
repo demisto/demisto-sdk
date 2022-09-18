@@ -60,7 +60,19 @@ def test_is_file_valid(mocker, current, answer):
         assert not ReadMeValidator._MDX_SERVER_PROCESS
 
 
+def test_no_node_no_docker(mocker):
+    mocker.patch.object(ReadMeValidator, 'is_docker_available', return_value=False)
+    mocker.patch.object(ReadMeValidator, 'are_modules_installed_for_verify', return_value=False)
+    with ReadMeValidator.start_mdx_server() as server:
+        assert not server.is_started()
+
+
 def test_docker_server_up_and_down():
+    valid = ReadMeValidator.is_docker_available()
+    if not valid:
+        pytest.skip('skipping docker server docker test. ' + 'Docker is not available')
+        return
+
     def container_is_up():
         return any(container.name == DEMISTO_DEPS_DOCKER_NAME
                    for container in init_global_docker_client().containers.list())

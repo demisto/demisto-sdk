@@ -30,54 +30,94 @@ def content_items_to_node_ids(content_items_dict: Dict[ContentType, List[str]]) 
 
 class RelationshipsVerifier:
     @staticmethod
-    def verify_relationships_by_type(
+    def verify_uses(
         relationships: Relationships,
         relationship_type: Relationship,
-        expected_targets: Dict[ContentType, List[str]],
+        expected_targets: Dict[str, ContentType],
     ) -> None:
-        target_node_ids = {
-            relationship.get('target')
+        targets = {
+            relationship.get('target'): relationship.get('target_type')
             for relationship in relationships.get(relationship_type, [])
         }
-        assert target_node_ids == content_items_to_node_ids(expected_targets)
+        assert targets == expected_targets
 
     @staticmethod
     def verify_command_executions(
         relationships: Relationships,
         expected_commands: List[str],
     ) -> None:
-        target_node_ids = {
+        targets = {
             relationship.get('target')
             for relationship in relationships.get(Relationship.USES_COMMAND_OR_SCRIPT, [])
         }
-        expected_target_node_ids = {command for command in expected_commands}
-        assert target_node_ids == expected_target_node_ids
+        expected_targets = {command for command in expected_commands}
+        assert targets == expected_targets
+
+    @staticmethod
+    def verify_playbook_executions(
+        relationships: Relationships,
+        expected_playbooks: List[str],
+    ) -> None:
+        targets = {
+            relationship.get('target')
+            for relationship in relationships.get(Relationship.USES_PLAYBOOK, [])
+        }
+        expected_targets = {playbook for playbook in expected_playbooks}
+        assert targets == expected_targets
 
     @staticmethod
     def verify_integration_commands(
         relationships: Relationships,
         expected_commands: List[str],
     ) -> None:
-        target_node_ids = {
+        targets = {
             relationship.get('target')
             for relationship in relationships.get(Relationship.HAS_COMMAND, [])
         }
-        expected_target_node_ids = set(expected_commands)
-        assert target_node_ids == expected_target_node_ids
+        expected_targets = set(expected_commands)
+        assert targets == expected_targets
+
+    @staticmethod
+    def verify_tests(
+        relationships: Relationships,
+        expected_tests: List[str],
+    ) -> None:
+        targets = {
+            relationship.get('target')
+            for relationship in relationships.get(Relationship.TESTED_BY, [])
+        }
+        expected_targets = set(expected_tests)
+        assert targets == expected_targets
+
+    @staticmethod
+    def verify_imports(
+        relationships: Relationships,
+        expected_imports: List[str],
+    ) -> None:
+        targets = {
+            relationship.get('target')
+            for relationship in relationships.get(Relationship.IMPORTS, [])
+        }
+        expected_targets = set(expected_imports)
+        assert targets == expected_targets
 
     @staticmethod
     def run(
         relationships: Relationships,
-        dependencies: Dict[ContentType, List[str]] = {},
+        dependency_ids: Dict[str, ContentType] = {},
+        dependency_names: Dict[str, ContentType] = {},
         commands_or_scripts_executions: List[str] = [],
-        tests: Dict[ContentType, List[str]] = {},
-        imports: Dict[ContentType, List[str]] = {},
+        playbook_executions: List[str] = [],
+        tests: List[str] = [],
+        imports: List[str] = [],
         integration_commands: List[str] = [],
     ) -> None:
-        RelationshipsVerifier.verify_relationships_by_type(relationships, Relationship.USES, dependencies)
-        RelationshipsVerifier.verify_relationships_by_type(relationships, Relationship.TESTED_BY, tests)
-        RelationshipsVerifier.verify_relationships_by_type(relationships, Relationship.IMPORTS, imports)
+        RelationshipsVerifier.verify_uses(relationships, Relationship.USES_BY_ID, dependency_ids)
+        RelationshipsVerifier.verify_uses(relationships, Relationship.USES_BY_NAME, dependency_names)
+        RelationshipsVerifier.verify_tests(relationships, tests)
+        RelationshipsVerifier.verify_imports(relationships, imports)
         RelationshipsVerifier.verify_command_executions(relationships, commands_or_scripts_executions)
+        RelationshipsVerifier.verify_playbook_executions(relationships, playbook_executions)
         RelationshipsVerifier.verify_integration_commands(relationships, integration_commands)
 
 
@@ -132,7 +172,7 @@ class PackModelVerifier:
         expected_vendor_name: Optional[str] = None,
         expected_preview_only: Optional[bool] = None,
         expected_marketplaces: Optional[List[MarketplaceVersions]] = None,
-        expected_content_items: Dict[ContentType, List[str]] = {},
+        expected_content_items: Dict[str, ContentType] = {},
     ) -> None:
         assert model.content_type == ContentType.PACK
         assert expected_id is None or model.object_id == expected_id
@@ -160,21 +200,24 @@ class PackModelVerifier:
         assert expected_preview_only is None or model.preview_only == expected_preview_only
         assert expected_marketplaces is None or model.marketplaces == expected_marketplaces
 
-        content_items_node_ids = {content_item.node_id for content_item in model.content_items}
-        assert content_items_node_ids == content_items_to_node_ids(expected_content_items)
+        content_items = {
+            content_item.object_id: content_item.content_type
+            for content_item in model.content_items
+        }
+        assert content_items == expected_content_items
 
 
 class PackRelationshipsVerifier:
     @staticmethod
     def run(
         relationships: Relationships,
-        expected_content_items: Dict[ContentType, List[str]] = {},
+        expected_content_items: Dict[str, ContentType] = {},
     ) -> None:
-        content_items_node_ids = {
-            relationship.get('source')
+        content_items = {
+            relationship.get('source_id'): relationship.get('source_type')
             for relationship in relationships.get(Relationship.IN_PACK, [])
         }
-        assert content_items_node_ids == content_items_to_node_ids(expected_content_items)
+        assert content_items == expected_content_items
 
 
 class TestParsersAndModels:
@@ -216,9 +259,12 @@ class TestParsersAndModels:
         parser = ClassifierParser(classifier_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
-            dependencies={
-                ContentType.INCIDENT_TYPE: ['Github', 'DevSecOps New Git PR'],
-                ContentType.SCRIPT: ['isEqualString', 'isNotEmpty', 'getField'],
+            dependency_ids={
+                'Github': ContentType.INCIDENT_TYPE,
+                'DevSecOps New Git PR': ContentType.INCIDENT_TYPE,
+                'isEqualString': ContentType.SCRIPT,
+                'isNotEmpty': ContentType.SCRIPT,
+                'getField': ContentType.SCRIPT,
             }
         )
         model = Classifier.from_orm(parser)
@@ -284,8 +330,9 @@ class TestParsersAndModels:
         parser = DashboardParser(dashboard_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
-            dependencies={
-                ContentType.SCRIPT: ['DetectionsCount', 'DetectionsData'],
+            dependency_ids={
+                'DetectionsCount': ContentType.SCRIPT,
+                'DetectionsData': ContentType.SCRIPT,
             },
         )
         model = Dashboard.from_orm(parser)
@@ -380,7 +427,7 @@ class TestParsersAndModels:
         parser = GenericTypeParser(generic_type_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
-            dependencies={ContentType.LAYOUT: ['Malware Report']},
+            dependency_ids={'Malware Report': ContentType.LAYOUT},
         )
         model = GenericType.from_orm(parser)
         ContentItemModelVerifier.run(
@@ -414,8 +461,9 @@ class TestParsersAndModels:
         parser = IncidentFieldParser(incident_field_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
-            dependencies={
-                ContentType.INCIDENT_TYPE: ['Vulnerability', 'Malware'],
+            dependency_names={
+                'Vulnerability': ContentType.INCIDENT_TYPE,
+                'Malware': ContentType.INCIDENT_TYPE,
             },
         )
         model = IncidentField.from_orm(parser)
@@ -452,9 +500,9 @@ class TestParsersAndModels:
         parser = IncidentTypeParser(incident_type_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
-            dependencies={
-                ContentType.LAYOUT: ['Traps'],
-                ContentType.PLAYBOOK: ['Palo Alto Networks - Endpoint Malware Investigation']
+            dependency_ids={
+                'Traps': ContentType.LAYOUT,
+                'Palo Alto Networks - Endpoint Malware Investigation': ContentType.PLAYBOOK,
             },
         )
         model = IncidentType.from_orm(parser)
@@ -493,8 +541,8 @@ class TestParsersAndModels:
         parser = IndicatorFieldParser(indicator_field_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
-            dependencies={
-                ContentType.INDICATOR_TYPE: ['User Profile'],
+            dependency_names={
+                'User Profile': ContentType.INDICATOR_TYPE,
             },
         )
         model = IndicatorField.from_orm(parser)
@@ -531,10 +579,10 @@ class TestParsersAndModels:
         parser = IndicatorTypeParser(indicator_type_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
-            dependencies={
-                ContentType.SCRIPT: ['URLReputation'],
-                ContentType.COMMAND: ['url'],
-                ContentType.LAYOUT: ['urlRep'],
+            dependency_ids={
+                'URLReputation': ContentType.SCRIPT,
+                'url': ContentType.COMMAND,
+                'urlRep': ContentType.LAYOUT,
             },
         )
         model = IndicatorType.from_orm(parser)
@@ -575,12 +623,8 @@ class TestParsersAndModels:
         RelationshipsVerifier.run(
             parser.relationships,
             integration_commands=['test-command'],
-            imports={
-                ContentType.SCRIPT: ['MicrosoftApiModule']
-            },
-            tests={
-                ContentType.TEST_PLAYBOOK: ['test_playbook']
-            },
+            imports=['MicrosoftApiModule'],
+            tests=['test_playbook'],
         )
         model = Integration.from_orm(parser)
         ContentItemModelVerifier.run(
@@ -648,8 +692,8 @@ class TestParsersAndModels:
         parser = JobParser(job_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
-            dependencies={
-                ContentType.PLAYBOOK: ['job-TestJob_playbook'],
+            dependency_ids={
+                'job-TestJob_playbook': ContentType.PLAYBOOK,
             },
         )
         model = Job.from_orm(parser)
@@ -700,17 +744,15 @@ class TestParsersAndModels:
         parser = LayoutParser(layout_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
-            dependencies={
-                ContentType.INCIDENT_FIELD: [
-                    'xdrdevicecontrolviolations',
-                    'type',
-                    'dbotsource',
-                    'sourceinstance',
-                    'severity',
-                    'playbookid',
-                    'sourcebrand',
-                    'owner',
-                ],
+            dependency_ids={
+                'xdrdevicecontrolviolations': ContentType.INCIDENT_FIELD,
+                'type': ContentType.INCIDENT_FIELD,
+                'dbotsource': ContentType.INCIDENT_FIELD,
+                'sourceinstance': ContentType.INCIDENT_FIELD,
+                'severity': ContentType.INCIDENT_FIELD,
+                'playbookid': ContentType.INCIDENT_FIELD,
+                'sourcebrand': ContentType.INCIDENT_FIELD,
+                'owner': ContentType.INCIDENT_FIELD,
             },
         )
         model = Layout.from_orm(parser)
@@ -735,13 +777,14 @@ class TestParsersAndModels:
             - Verify the generic content item properties are parsed correctly.
             - Verify the specific properties of the content item are parsed correctly.
         """
-        from demisto_sdk.commands.content_graph.objects.list import List
+        from demisto_sdk.commands.content_graph.objects.list import \
+            List as ListObject
         from demisto_sdk.commands.content_graph.parsers.list import ListParser
         list_ = pack.create_list('TestList', load_json('list.json'))
         list_path = Path(list_.path)
         parser = ListParser(list_path, list(MarketplaceVersions))
         assert not parser.relationships
-        model = List.from_orm(parser)
+        model = ListObject.from_orm(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id='checked integrations',
@@ -773,11 +816,15 @@ class TestParsersAndModels:
         parser = MapperParser(mapper_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
-            dependencies={
-                ContentType.INCIDENT_TYPE: ['DevSecOps New Git PR'],
-                ContentType.INCIDENT_FIELD: ['devsecopsrepositoryname', 'devsecopsrepositoryorganization'],
-                ContentType.SCRIPT: ['substringTo'],
+            dependency_ids={
+                'substringTo': ContentType.SCRIPT,
+            },
+            dependency_names={
+                'DevSecOps New Git PR': ContentType.INCIDENT_TYPE,
+                'DevSecOps Repository Name': ContentType.INCIDENT_FIELD,
+                'DevSecOps Repository Organization': ContentType.INCIDENT_FIELD,
             }
+
         )
         model = Mapper.from_orm(parser)
         ContentItemModelVerifier.run(
@@ -811,11 +858,14 @@ class TestParsersAndModels:
         parser = MapperParser(mapper_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
-            dependencies={
-                ContentType.INCIDENT_TYPE: ['Azure DevOps'],
-                ContentType.INCIDENT_FIELD: ['description', 'azuredevopsprojectname'],
-                ContentType.SCRIPT: ['MapValuesTransformer'],
-            }
+            dependency_ids={
+                'description': ContentType.INCIDENT_FIELD,
+                'azuredevopsprojectname': ContentType.INCIDENT_FIELD,
+                'MapValuesTransformer': ContentType.SCRIPT,
+            },
+            dependency_names={
+                'Azure DevOps': ContentType.INCIDENT_TYPE,
+            },
         )
         model = Mapper.from_orm(parser)
         ContentItemModelVerifier.run(
@@ -897,6 +947,7 @@ class TestParsersAndModels:
         Then:
             - Verify all relationships of the content item are collected.
             - Verify the generic content item properties are parsed correctly.
+              In particular, make sure redundant backslashes are removed from the playbook's description.
             - Verify the specific properties of the content item are parsed correctly.
         """
         from demisto_sdk.commands.content_graph.objects.playbook import \
@@ -905,12 +956,13 @@ class TestParsersAndModels:
             PlaybookParser
         playbook = pack.create_playbook()
         playbook.create_default_playbook(name='sample')
+        playbook.yml.update({'description': 'test\\ test2\\\n \\ test3'})
         playbook_path = Path(playbook.path)
         parser = PlaybookParser(playbook_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
-            dependencies={
-                ContentType.SCRIPT: ['DeleteContext']
+            dependency_ids={
+                'DeleteContext': ContentType.SCRIPT,
             },
         )
         model = Playbook.from_orm(parser)
@@ -921,6 +973,7 @@ class TestParsersAndModels:
             expected_content_type=ContentType.PLAYBOOK,
             expected_fromversion='5.0.0',
             expected_toversion=DEFAULT_CONTENT_ITEM_TO_VERSION,
+            expected_description='test test2 test3'
         )
         assert not model.is_test
 
@@ -943,8 +996,9 @@ class TestParsersAndModels:
         parser = ReportParser(report_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
-            dependencies={
-                ContentType.SCRIPT: ['ProofpointTAPMostAttackedUsers', 'ProofpointTapTopClickers'],
+            dependency_ids={
+                'ProofpointTAPMostAttackedUsers': ContentType.SCRIPT,
+                'ProofpointTapTopClickers': ContentType.SCRIPT,
             }
         )
         model = Report.from_orm(parser)
@@ -1016,8 +1070,8 @@ class TestParsersAndModels:
         parser = TestPlaybookParser(test_playbook_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
-            dependencies={
-                ContentType.SCRIPT: ['DeleteContext']
+            dependency_ids={
+                'DeleteContext': ContentType.SCRIPT,
             },
         )
         model = TestPlaybook.from_orm(parser)
@@ -1050,8 +1104,8 @@ class TestParsersAndModels:
         parser = TriggerParser(trigger_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
-            dependencies={
-                ContentType.PLAYBOOK: ['NGFW Scan'],
+            dependency_ids={
+                'NGFW Scan': ContentType.PLAYBOOK,
             }
         )
         model = Trigger.from_orm(parser)
@@ -1084,8 +1138,8 @@ class TestParsersAndModels:
         parser = WidgetParser(widget_path, list(MarketplaceVersions))
         RelationshipsVerifier.run(
             parser.relationships,
-            dependencies={
-                ContentType.SCRIPT: ['FeedIntegrationErrorWidget'],
+            dependency_ids={
+                'FeedIntegrationErrorWidget': ContentType.SCRIPT,
             }
         )
         model = Widget.from_orm(parser)
@@ -1222,11 +1276,11 @@ class TestParsersAndModels:
         pack_path = Path(pack.path)
         parser = PackParser(pack_path)
         expected_content_items = {
-            ContentType.CLASSIFIER: ['Github_Classifier_v1'],
-            ContentType.INCIDENT_FIELD: ['cve'],
-            ContentType.INCIDENT_TYPE: ['Traps'],
-            ContentType.INDICATOR_FIELD: ['email'],
-            ContentType.INDICATOR_TYPE: ['urlRep'],
+            'Github_Classifier_v1': ContentType.CLASSIFIER,
+            'cve': ContentType.INCIDENT_FIELD,
+            'Traps': ContentType.INCIDENT_TYPE,
+            'email': ContentType.INDICATOR_FIELD,
+            'urlRep': ContentType.INDICATOR_TYPE,
         }
         PackRelationshipsVerifier.run(
             parser.relationships,

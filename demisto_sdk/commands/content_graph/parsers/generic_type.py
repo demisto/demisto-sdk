@@ -18,4 +18,4 @@ class GenericTypeParser(JSONContentItemParser, content_type=ContentType.GENERIC_
         """ Collects the layouts used in the generic type as mandatory dependencies.
         """
         if layout := self.json_data.get('layout'):
-            self.add_dependency(layout, ContentType.LAYOUT)
+            self.add_dependency_by_id(layout, ContentType.LAYOUT)

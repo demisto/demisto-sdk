@@ -25,4 +25,4 @@ class TriggerParser(JSONContentItemParser, content_type=ContentType.TRIGGER):
         """ Collects the playbook used in the trigger as a mandatory dependency.
         """
         if playbook := self.json_data.get('playbook_id'):
-            self.add_dependency(playbook, ContentType.PLAYBOOK)
+            self.add_dependency_by_id(playbook, ContentType.PLAYBOOK)

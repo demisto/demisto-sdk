@@ -141,16 +141,20 @@ def playbook():
 
 def mock_relationship(
     source: str,
+    source_type: ContentType,
     target: str,
+    target_type: ContentType,
     source_fromversion: str = '5.0.0',
     source_marketplaces: List[str] = [MarketplaceVersions.XSOAR],
     **kwargs
 ) -> Dict[str, Any]:
     rel = {
-        'source': source,
+        'source_id': source,
+        'source_type': source_type,
         'source_fromversion': source_fromversion,
         'source_marketplaces': source_marketplaces,
         'target': target,
+        'target_type': target_type,
     }
     rel.update(kwargs)
     return rel
@@ -221,18 +225,24 @@ class TestCreateContentGraph:
         relationships = {
             Relationship.IN_PACK: [
                 mock_relationship(
-                    f'{ContentType.INTEGRATION}:SampleIntegration',
-                    f'{ContentType.PACK}:SamplePack'
+                    'SampleIntegration',
+                    ContentType.INTEGRATION,
+                    'SamplePack',
+                    ContentType.PACK,
                 ),
                 mock_relationship(
-                    f'{ContentType.SCRIPT}:SampleScript',
-                    f'{ContentType.PACK}:SamplePack'
+                    'SampleScript',
+                    ContentType.SCRIPT,
+                    'SamplePack',
+                    ContentType.PACK,
                 ),
             ],
             Relationship.HAS_COMMAND: [
                 mock_relationship(
-                    f'{ContentType.INTEGRATION}:SampleIntegration',
+                    'SampleIntegration',
+                    ContentType.INTEGRATION,
                     'test-command',
+                    ContentType.COMMAND,
                     name='test-command',
                     description='',
                     deprecated=False,
@@ -240,30 +250,34 @@ class TestCreateContentGraph:
             ],
             Relationship.IMPORTS: [
                 mock_relationship(
-                    f'{ContentType.INTEGRATION}:SampleIntegration',
-                    f'{ContentType.SCRIPT}:TestApiModule'
+                    'SampleIntegration',
+                    ContentType.INTEGRATION,
+                    'TestApiModule',
+                    ContentType.SCRIPT,
                 )
             ],
             Relationship.TESTED_BY: [
                 mock_relationship(
-                    f'{ContentType.INTEGRATION}:SampleIntegration',
-                    f'{ContentType.TEST_PLAYBOOK}:SampleTestPlaybook'
+                    'SampleIntegration',
+                    ContentType.INTEGRATION,
+                    'SampleTestPlaybook',
+                    ContentType.TEST_PLAYBOOK,
                 )
             ],
-            Relationship.USES: [
+            Relationship.USES_BY_ID: [
                 mock_relationship(
-                    f'{ContentType.INTEGRATION}:SampleIntegration',
-                    f'{ContentType.CLASSIFIER}:SampleClassifier'
+                    'SampleIntegration',
+                    ContentType.INTEGRATION,
+                    'SampleClassifier',
+                    ContentType.CLASSIFIER,
                 ),
-                mock_relationship(
-                    f'{ContentType.INTEGRATION}:SampleIntegration',
-                    f'{ContentType.CLASSIFIER}:SampleClassifier'
-                )
             ],
             Relationship.USES_COMMAND_OR_SCRIPT: [
                 mock_relationship(
-                    f'{ContentType.SCRIPT}:SampleScript',
-                    'SampleScript2'
+                    'SampleScript',
+                    ContentType.SCRIPT,
+                    'SampleScript2',
+                    ContentType.COMMAND_OR_SCRIPT,
                 )
             ],
         }
@@ -286,7 +300,7 @@ class TestCreateContentGraph:
             result = interface.get_relationships_by_type(Relationship.USES)
             for rel in result:
                 if rel['source']['name'] == 'SampleIntegration':
-                    assert rel['target']['node_id'] == f'{ContentType.CLASSIFIER}:SampleClassifier'
+                    assert rel['target']['object_id'] == 'SampleClassifier'
                 elif rel['source']['name'] == 'SampleScript':
                     assert rel['target']['object_id'] == 'SampleScript2'
                 else:
@@ -295,12 +309,12 @@ class TestCreateContentGraph:
             result = interface.get_relationships_by_type(Relationship.TESTED_BY)
             for rel in result:
                 assert rel['source']['name'] == 'SampleIntegration'
-                assert rel['target']['node_id'] == f'{ContentType.TEST_PLAYBOOK}:SampleTestPlaybook'
+                assert rel['target']['object_id'] == 'SampleTestPlaybook'
 
             result = interface.get_relationships_by_type(Relationship.IMPORTS)
             for rel in result:
                 assert rel['source']['name'] == 'SampleIntegration'
-                assert rel['target']['node_id'] == f'{ContentType.SCRIPT}:TestApiModule'
+                assert rel['target']['object_id'] == 'TestApiModule'
 
     def test_create_content_graph_two_integrations_with_same_command(
         self,
@@ -324,25 +338,33 @@ class TestCreateContentGraph:
         relationships = {
             Relationship.IN_PACK: [
                 mock_relationship(
-                    f'{ContentType.INTEGRATION}:SampleIntegration',
-                    f'{ContentType.PACK}:SamplePack'
+                    'SampleIntegration',
+                    ContentType.INTEGRATION,
+                    'SamplePack',
+                    ContentType.PACK,
                 ),
                 mock_relationship(
-                    f'{ContentType.INTEGRATION}:SampleIntegration2',
-                    f'{ContentType.PACK}:SamplePack'
+                    'SampleIntegration2',
+                    ContentType.INTEGRATION,
+                    'SamplePack',
+                    ContentType.PACK,
                 ),
             ],
             Relationship.HAS_COMMAND: [
                 mock_relationship(
-                    f'{ContentType.INTEGRATION}:SampleIntegration',
+                    'SampleIntegration',
+                    ContentType.INTEGRATION,
                     'test-command',
+                    ContentType.COMMAND,
                     name='test-command',
                     description='',
                     deprecated=False,
                 ),
                 mock_relationship(
-                    f'{ContentType.INTEGRATION}:SampleIntegration2',
+                    'SampleIntegration2',
+                    ContentType.INTEGRATION,
                     'test-command',
+                    ContentType.COMMAND,
                     name='test-command',
                     description='',
                     deprecated=False,
@@ -355,7 +377,8 @@ class TestCreateContentGraph:
         repository.packs.append(pack)
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
-            assert len(interface.get_nodes_by_type(ContentType.INTEGRATION)) == 2
+            assert interface.search_nodes(object_id='SampleIntegration')
+            assert interface.search_nodes(object_id='SampleIntegration2')
             assert len(interface.get_nodes_by_type(ContentType.COMMAND)) == 1
 
     def test_create_content_graph_playbook_uses_script_not_in_repository(
@@ -376,23 +399,27 @@ class TestCreateContentGraph:
         relationships = {
             Relationship.IN_PACK: [
                 mock_relationship(
-                    f'{ContentType.PLAYBOOK}:SamplePlaybook',
-                    f'{ContentType.PACK}:SamplePack'
+                    'SamplePlaybook',
+                    ContentType.PLAYBOOK,
+                    'SamplePack',
+                    ContentType.PACK,
                 ),
             ],
-            Relationship.USES: [
+            Relationship.USES_BY_ID: [
                 mock_relationship(
-                    f'{ContentType.PLAYBOOK}:SamplePlaybook',
-                    f'{ContentType.SCRIPT}:TestScript'
+                    'SamplePlaybook',
+                    ContentType.PLAYBOOK,
+                    'TestScript',
+                    ContentType.SCRIPT,
                 ),
             ],
         }
         pack.relationships = relationships
-        pack.content_items.integration.append(playbook)
+        pack.content_items.playbook.append(playbook)
         repository.packs.append(pack)
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
-            script = interface.get_single_node(node_id=f'{ContentType.SCRIPT}:TestScript')
+            script = interface.get_single_node(object_id='TestScript')
         assert script.get('not_in_repository')
 
     def test_create_content_graph_duplicate_integrations(
@@ -414,25 +441,33 @@ class TestCreateContentGraph:
         relationships = {
             Relationship.IN_PACK: [
                 mock_relationship(
-                    f'{ContentType.INTEGRATION}:SampleIntegration',
-                    f'{ContentType.PACK}:SamplePack'
+                    'SampleIntegration',
+                    ContentType.INTEGRATION,
+                    'SamplePack',
+                    ContentType.PACK,
                 ),
                 mock_relationship(
-                    f'{ContentType.INTEGRATION}:SampleIntegration',
-                    f'{ContentType.PACK}:SamplePack'
+                    'SampleIntegration',
+                    ContentType.INTEGRATION,
+                    'SamplePack',
+                    ContentType.PACK,
                 ),
             ],
             Relationship.HAS_COMMAND: [
                 mock_relationship(
-                    f'{ContentType.INTEGRATION}:SampleIntegration',
+                    'SampleIntegration',
+                    ContentType.INTEGRATION,
                     'test-command',
+                    ContentType.COMMAND,
                     name='test-command',
                     description='',
                     deprecated=False,
                 ),
                 mock_relationship(
-                    f'{ContentType.INTEGRATION}:SampleIntegration',
+                    'SampleIntegration',
+                    ContentType.INTEGRATION,
                     'test-command',
+                    ContentType.COMMAND,
                     name='test-command',
                     description='',
                     deprecated=False,
@@ -441,7 +476,7 @@ class TestCreateContentGraph:
         }
         pack.relationships = relationships
         pack.content_items.integration.append(integration)
-        pack.content_items.script.append(integration2)
+        pack.content_items.integration.append(integration2)
         repository.packs.append(pack)
         with pytest.raises(Exception) as e:
             with ContentGraphInterface() as interface:
@@ -468,26 +503,34 @@ class TestCreateContentGraph:
         relationships = {
             Relationship.IN_PACK: [
                 mock_relationship(
-                    f'{ContentType.INTEGRATION}:SampleIntegration',
-                    f'{ContentType.PACK}:SamplePack'
+                    'SampleIntegration',
+                    ContentType.INTEGRATION,
+                    'SamplePack',
+                    ContentType.PACK,
                 ),
                 mock_relationship(
-                    f'{ContentType.INTEGRATION}:SampleIntegration',
-                    f'{ContentType.PACK}:SamplePack',
+                    'SampleIntegration',
+                    ContentType.INTEGRATION,
+                    'SamplePack',
+                    ContentType.PACK,
                     source_marketplaces=[MarketplaceVersions.MarketplaceV2]
                 ),
             ],
             Relationship.HAS_COMMAND: [
                 mock_relationship(
-                    f'{ContentType.INTEGRATION}:SampleIntegration',
+                    'SampleIntegration',
+                    ContentType.INTEGRATION,
                     'test-command',
+                    ContentType.COMMAND,
                     name='test-command',
                     description='',
                     deprecated=False,
                 ),
                 mock_relationship(
-                    f'{ContentType.INTEGRATION}:SampleIntegration',
+                    'SampleIntegration',
+                    ContentType.INTEGRATION,
                     'test-command',
+                    ContentType.COMMAND,
                     name='test-command',
                     description='',
                     deprecated=False,
@@ -497,11 +540,11 @@ class TestCreateContentGraph:
         }
         pack.relationships = relationships
         pack.content_items.integration.append(integration)
-        pack.content_items.script.append(integration2)
+        pack.content_items.integration.append(integration2)
         repository.packs.append(pack)
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
-            assert len(interface.get_nodes_by_type(ContentType.INTEGRATION)) == 2
+            assert len(interface.search_nodes(object_id='SampleIntegration')) == 2
 
     def test_create_content_graph_duplicate_integrations_different_fromversion(
         self,
@@ -524,26 +567,34 @@ class TestCreateContentGraph:
         relationships = {
             Relationship.IN_PACK: [
                 mock_relationship(
-                    f'{ContentType.INTEGRATION}:SampleIntegration',
-                    f'{ContentType.PACK}:SamplePack'
+                    'SampleIntegration',
+                    ContentType.INTEGRATION,
+                    'SamplePack',
+                    ContentType.PACK,
                 ),
                 mock_relationship(
-                    f'{ContentType.INTEGRATION}:SampleIntegration',
-                    f'{ContentType.PACK}:SamplePack',
+                    'SampleIntegration',
+                    ContentType.INTEGRATION,
+                    'SamplePack',
+                    ContentType.PACK,
                     source_fromversion='6.0.2'
                 ),
             ],
             Relationship.HAS_COMMAND: [
                 mock_relationship(
-                    f'{ContentType.INTEGRATION}:SampleIntegration',
+                    'SampleIntegration',
+                    ContentType.INTEGRATION,
                     'test-command',
+                    ContentType.COMMAND,
                     name='test-command',
                     description='',
                     deprecated=False,
                 ),
                 mock_relationship(
-                    f'{ContentType.INTEGRATION}:SampleIntegration',
+                    'SampleIntegration',
+                    ContentType.INTEGRATION,
                     'test-command',
+                    ContentType.COMMAND,
                     name='test-command',
                     description='',
                     deprecated=False,
@@ -553,11 +604,30 @@ class TestCreateContentGraph:
         }
         pack.relationships = relationships
         pack.content_items.integration.append(integration)
-        pack.content_items.script.append(integration2)
+        pack.content_items.integration.append(integration2)
         repository.packs.append(pack)
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
-            assert len(interface.get_nodes_by_type(ContentType.INTEGRATION)) == 2
+            assert len(interface.search_nodes(object_id='SampleIntegration')) == 2
+
+    def test_create_content_graph_empty_repository(
+        self,
+        repository: Repository,
+    ):
+        """
+        Given:
+            - A mocked model of an empty repository.
+        When:
+            - Running create_content_graph().
+        Then:
+            - Make sure the graph contains server items.
+            - Make sure all nodes in the graph are server items.
+        """
+        with ContentGraphInterface() as interface:
+            create_content_graph(interface)
+            result = interface.search_nodes()
+            assert len(result) > 0
+            assert all(entry['node']['is_server_item'] is True for entry in result)
 
     def test_stop_content_graph(self):
         """

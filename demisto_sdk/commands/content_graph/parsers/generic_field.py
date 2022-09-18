@@ -18,7 +18,7 @@ class GenericFieldParser(JSONContentItemParser, content_type=ContentType.GENERIC
         """ Collects the generic types associated to the generic field as optional dependencies.
         """
         for associated_type in set(self.json_data.get('associatedTypes') or []):
-            self.add_dependency(associated_type, ContentType.GENERIC_TYPE, is_mandatory=False)
+            self.add_dependency_by_id(associated_type, ContentType.GENERIC_TYPE, is_mandatory=False)
 
         for system_associated_type in set(self.json_data.get('systemAssociatedTypes') or []):
-            self.add_dependency(system_associated_type, ContentType.GENERIC_TYPE, is_mandatory=False)
+            self.add_dependency_by_id(system_associated_type, ContentType.GENERIC_TYPE, is_mandatory=False)

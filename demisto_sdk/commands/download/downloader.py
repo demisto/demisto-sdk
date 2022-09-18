@@ -95,11 +95,24 @@ class Downloader:
         pack_content (dict): The pack content that maps the pack
         system (bool): whether to download system items
         item_type (str): The items type to download, use just when downloading system items.
+        no_code_formatting (bool): whether to NOT format code files, using isort and autopep8. Use it to preserve order of imports.
     """
 
-    def __init__(self, output: str, input: Union[str, List[str]], regex: str = '', force: bool = False, insecure: bool = False,
-                 verbose: bool = False, list_files: bool = False, all_custom_content: bool = False,
-                 run_format: bool = False, system: bool = False, item_type: str = ''):
+    def __init__(
+            self,
+            output: str,
+            input: Union[str, List[str]],
+            regex: str = '',
+            force: bool = False,
+            insecure: bool = False,
+            verbose: bool = False,
+            list_files: bool = False,
+            all_custom_content: bool = False,
+            run_format: bool = False,
+            system: bool = False,
+            item_type: str = '',
+            no_code_formatting: bool = False,
+    ):
         logging.disable(logging.CRITICAL)
         self.output_pack_path = output
         self.input_files = [input] if isinstance(input, str) else input
@@ -121,6 +134,7 @@ class Downloader:
         self.pack_content: Dict[str, list] = {entity: list() for entity in CONTENT_ENTITIES_DIRS}
         self.num_merged_files = 0
         self.num_added_files = 0
+        self.no_code_formatting = no_code_formatting
 
     def download(self) -> int:
         """
@@ -203,6 +217,31 @@ class Downloader:
                     LOG_COLORS.RED)
         print_color(f'Exception raised when fetching custom content:\n{e}', LOG_COLORS.NATIVE)
 
+    def download_playbook_yaml(self, playbook_string) -> str:
+        """
+        Downloads the playbook yaml via XSOAR REST API.
+        We should download the file via direct REST API because there are props like scriptName,
+        that playbook from custom content bundle don't contain.
+
+        If download will fail, then we will return the original playbook_string we received (probably from the bundle)
+        """
+        file_yaml_object = yaml.load(playbook_string)
+        playbook_id = file_yaml_object.get('id')
+        playbook_name = file_yaml_object.get('name')
+        if playbook_id and playbook_name and (playbook_name in self.input_files or self.all_custom_content):
+            # download the playbook yaml in case playbook name appears in the input_files or --all-custom-content flag is true
+
+            # this will make sure that we save the downloaded files in the custom cotent temp dir
+            if self.client and self.client.api_client and self.client.api_client.configuration:
+                api_resp = demisto_client.generic_request_func(self.client, f'/playbook/{playbook_id}/yaml', 'GET')
+                status_code = api_resp[1]
+                if status_code < 200 or status_code >= 300:
+                    return playbook_string
+
+                return ast.literal_eval(api_resp[0]).decode('utf-8')
+
+        return playbook_string
+
     def fetch_custom_content(self) -> bool:
         """
         Fetches the custom content from Demisto into a temporary dir.
@@ -220,14 +259,22 @@ class Downloader:
             for member in tar.getmembers():
                 file_name: str = self.update_file_prefix(member.name.strip('/'))
                 file_path: str = os.path.join(self.custom_content_temp_dir, file_name)
-                with open(file_path, 'w') as file:
-                    extracted_file = tar.extractfile(member)
-                    # File might empty
-                    if extracted_file:
-                        string_to_write = extracted_file.read().decode('utf-8')
+
+                extracted_file = tar.extractfile(member)
+                # File might empty
+                if extracted_file:
+                    string_to_write = extracted_file.read().decode('utf-8')
+
+                    if not self.list_files and re.search(r'playbook-.*\.yml', member.name):
+                        # if the content item is playbook and list-file flag is true, we should download the file via direct REST API
+                        # because there are props like scriptName, that playbook from custom content bundle don't contain
+
+                        string_to_write = self.download_playbook_yaml(string_to_write)
+
+                    with open(file_path, 'w') as file:
                         file.write(string_to_write)
-                    else:
-                        raise FileNotFoundError(f'Could not extract files from tar file: {file_path}')
+                else:
+                    raise FileNotFoundError(f'Could not extract files from tar file: {file_path}')
 
             return True
 
@@ -796,7 +843,8 @@ class Downloader:
         dir_output_path = os.path.join(dir_output_path, dir_name)
 
         extractor = YmlSplitter(input=file_path, output=dir_output_path, file_type=file_type, base_name=dir_name,
-                                no_auto_create_dir=True, no_logging=not self.log_verbose, no_pipenv=True)
+                                no_auto_create_dir=True, no_logging=not self.log_verbose, no_pipenv=True,
+                                no_code_formatting=self.no_code_formatting)
         extractor.extract_to_package_format()
 
         for file_path in get_child_files(dir_output_path):

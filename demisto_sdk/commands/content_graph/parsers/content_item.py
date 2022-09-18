@@ -187,6 +187,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         self,
         relationship: Relationship,
         target: str,
+        target_type: ContentType,
         **kwargs,
     ) -> None:
         """ Adds a single relationship to the collection of the content item relationships.
@@ -198,46 +199,79 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         """
         self.relationships.add(
             relationship,
-            source=self.node_id,
+            source_id=self.object_id,
+            source_type=self.content_type,
             source_fromversion=self.fromversion,
             source_marketplaces=self.marketplaces,
             target=target,
+            target_type=target_type,
             **kwargs
         )
 
-    def add_to_pack(self, pack: str) -> None:
+    def add_to_pack(self, pack_id: Optional[str]) -> None:
         """ Creates an IN_PACK relationship between the content item and its pack.
 
         Args:
-            pack (str): The pack node_id.
+            pack_id (Optional[str]): The pack id.
         """
-        self.add_relationship(Relationship.IN_PACK, pack)
+        if not pack_id:
+            raise ValueError(f'{self.node_id}: pack ID must have a value.')
+        self.add_relationship(Relationship.IN_PACK, pack_id, ContentType.PACK)
 
-    def add_dependency(
+    def add_dependency_by_id(
         self,
         dependency_id: str,
-        dependency_type: Optional[ContentType] = None,
+        dependency_type: ContentType,
         is_mandatory: bool = True
     ) -> None:
-        """ Creates a USES relationship between the content item and a given dependency.
-
-        If the dependency type is unknown (happens only when the content item is a script and the
-        dependency is a command or script) a USES_COMMAND_OR_SCRIPT relationship is created.
+        """ Creates a USES_BY_ID relationship between the content item and a given dependency.
 
         Args:
-            dependency_id (str): The dependency identifier (node_id or object_id).
-            dependency_type (Optional[ContentType], optional): The dependency type. Defaults to None.
+            dependency_id (str): The dependency id.
+            dependency_type (ContentType): The dependency content type.
             is_mandatory (bool, optional): Whether or not the dependency is mandatory. Defaults to True.
         """
-        if dependency_type is None:
-            relationship = Relationship.USES_COMMAND_OR_SCRIPT
-            target = dependency_id
-        else:
-            relationship = Relationship.USES
-            target = f'{dependency_type}:{dependency_id}'
-
         self.add_relationship(
-            relationship,
-            target=target,
+            Relationship.USES_BY_ID,
+            target=dependency_id,
+            target_type=dependency_type,
+            mandatorily=is_mandatory,
+        )
+
+    def add_dependency_by_name(
+        self,
+        dependency_name: str,
+        dependency_type: ContentType,
+        is_mandatory: bool = True
+    ) -> None:
+        """ Creates a USES_BY_NAME relationship between the content item and a given dependency.
+
+        Args:
+            dependency_name (str): The dependency name.
+            dependency_type (ContentType): The dependency content type.
+            is_mandatory (bool, optional): Whether or not the dependency is mandatory. Defaults to True.
+        """
+        self.add_relationship(
+            Relationship.USES_BY_NAME,
+            target=dependency_name,
+            target_type=dependency_type,
+            mandatorily=is_mandatory,
+        )
+
+    def add_command_or_script_dependency(
+        self,
+        dependency_id: str,
+        is_mandatory: bool = True
+    ) -> None:
+        """ Creates a USES_COMMAND_OR_SCRIPT relationship between the content item and a given dependency.
+
+        Args:
+            dependency_id (str): The dependency id.
+            is_mandatory (bool, optional): Whether or not the dependency is mandatory. Defaults to True.
+        """
+        self.add_relationship(
+            Relationship.USES_COMMAND_OR_SCRIPT,
+            target=dependency_id,
+            target_type=ContentType.COMMAND_OR_SCRIPT,
             mandatorily=is_mandatory,
         )

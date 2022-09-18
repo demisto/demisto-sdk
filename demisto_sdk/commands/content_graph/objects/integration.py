@@ -15,6 +15,7 @@ class Command(BaseModel):
 
 class Integration(IntegrationScript):
     is_fetch: bool = False
+    is_fetch_events: bool = False
     is_feed: bool = False
     category: str
     commands: List[Command] = Field([], exclude=True)  # todo: override exclusion when loading from database

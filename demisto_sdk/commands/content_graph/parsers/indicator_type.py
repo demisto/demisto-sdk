@@ -33,10 +33,10 @@ class IndicatorTypeParser(JSONContentItemParser, content_type=ContentType.INDICA
                 associated_scripts = [associated_scripts] if not isinstance(associated_scripts, list) \
                     else associated_scripts
                 for script in associated_scripts:
-                    self.add_dependency(script, ContentType.SCRIPT, is_mandatory=False)
+                    self.add_dependency_by_id(script, ContentType.SCRIPT, is_mandatory=False)
 
         if reputation_command := self.json_data.get('reputationCommand'):
-            self.add_dependency(reputation_command, ContentType.COMMAND, is_mandatory=False)
+            self.add_dependency_by_id(reputation_command, ContentType.COMMAND, is_mandatory=False)
 
         if layout := self.json_data.get('layout'):
-            self.add_dependency(layout, ContentType.LAYOUT)
+            self.add_dependency_by_id(layout, ContentType.LAYOUT)

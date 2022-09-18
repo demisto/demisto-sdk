@@ -39,7 +39,7 @@ class ScriptParser(IntegrationScriptParser, content_type=ContentType.SCRIPT):
 
     def get_code(self) -> Optional[str]:
         """ Gets the script code.
-        If the script is unified, takes it from the yml file.
+        If the script is unified, it is taken from the yml file.
         Otherwise, uses the Unifier object to get it.
 
         Returns:

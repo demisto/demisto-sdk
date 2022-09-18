@@ -65,7 +65,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
 
     def get_code(self) -> Optional[str]:
         """ Gets the integration code.
-        If the integration is unified, takes it from the yml file.
+        If the integration is unified, then it is taken from the yml file.
         Otherwise, uses the Unifier object to get it.
 
         Returns:

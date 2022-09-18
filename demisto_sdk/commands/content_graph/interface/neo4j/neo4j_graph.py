@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -24,6 +25,9 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
     create_relationships, get_relationships_by_type)
 
 
+logger = logging.getLogger('demisto-sdk')
+
+
 class Neo4jContentGraphInterface(ContentGraphInterface):
     def __init__(
         self,
@@ -46,6 +50,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def __exit__(self, *args) -> None:
         if self.output_file:
             neo4j_service.dump(self.output_file, self.use_docker)
+            logger.info(f'Dumped graph to file: {self.output_file}')
         self.driver.close()
 
     def close(self) -> None:

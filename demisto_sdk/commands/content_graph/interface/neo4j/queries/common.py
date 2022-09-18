@@ -23,6 +23,7 @@ def intersects(arr1: str, arr2: str) -> str:
 
 
 def node_map(properties: Dict[str, Any]) -> str:
+    """ Returns a string representation of a map in neo4j format. """
     return f'{{{", ".join([f"{k}: {v}" for k, v in properties.items()])}}}'
 
 

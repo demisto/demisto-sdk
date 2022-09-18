@@ -134,8 +134,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         return {
             row['pack_id']: {
                 'allLevelDependencies': row['dependencies'],
-                'fullPath': row['pack_path'],
-                'path': Path(*Path(row['pack_path']).parts[-2:]).as_posix(),
+                'fullPath': row['path'],
+                'path': Path(*Path(row['path']).parts[-2:]).as_posix(),
             } for row in result
         }
         

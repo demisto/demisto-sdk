@@ -53,10 +53,6 @@ class UpdateReleaseNotesManager:
 
         # Find which files were changed from git
         modified_files, added_files, old_format_files = self.get_git_changed_files()
-        print_color(f'modified_files {modified_files}', LOG_COLORS.NATIVE)
-        print_color(f'added_files {added_files}', LOG_COLORS.NATIVE)
-        print_color(f'old_format_files {old_format_files}', LOG_COLORS.NATIVE)
-
         self.changed_packs_from_git = get_pack_names_from_files(modified_files).union(
             get_pack_names_from_files(added_files)).union(get_pack_names_from_files(old_format_files))
         # Check whether the packs have some existing RNs already (created manually or by the command)
@@ -175,8 +171,6 @@ class UpdateReleaseNotesManager:
                 added_files: A set of added files
                 old_format_files: A set of old formatted files
         """
-        print_color('entered create_release_notes', LOG_COLORS.NATIVE)
-
         # Certain file types do not require release notes update
         filtered_modified_files = filter_files_by_type(modified_files, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
         filtered_added_files = filter_files_by_type(added_files, skip_file_types=SKIP_RELEASE_NOTES_FOR_TYPES)
@@ -203,8 +197,6 @@ class UpdateReleaseNotesManager:
                 filtered_added_files: A set of filtered added files
                 old_format_files: A set of old formatted files
         """
-        print_color('entered create_pack_release_notes', LOG_COLORS.NATIVE)
-
         existing_rn_version = self.get_existing_rn(pack)
         if existing_rn_version is None:  # New release notes file already found for the pack
             raise RuntimeError(f"New release notes file already found for {pack}. "
@@ -213,9 +205,6 @@ class UpdateReleaseNotesManager:
         pack_modified = filter_files_on_pack(pack, filtered_modified_files)
         pack_added = filter_files_on_pack(pack, filtered_added_files)
         pack_old = filter_files_on_pack(pack, old_format_files)
-        print_color(f'pack_modified {pack_modified}', LOG_COLORS.NATIVE)
-        print_color(f'pack_added {pack_added}', LOG_COLORS.NATIVE)
-        print_color(f'pack_old {pack_old}', LOG_COLORS.NATIVE)
 
         # Checks if update is required
         if pack_modified or pack_added or pack_old or self.is_force:
@@ -227,8 +216,6 @@ class UpdateReleaseNotesManager:
                                       text=self.text, is_force=self.is_force,
                                       existing_rn_version_path=existing_rn_version, is_bc=self.is_bc)
             updated = update_pack_rn.execute_update()
-            print_color(f'updated {updated}', LOG_COLORS.NATIVE)
-
             self.rn_path.append(update_pack_rn.rn_path)
 
             # If new release notes were created add it to the total number of packs that were updated.

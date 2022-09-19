@@ -184,8 +184,6 @@ class UpdateRN:
             :return
                 Whether the RN was updated successfully or not
         """
-        print_color("Entered execute_update", LOG_COLORS.GREEN)
-
         if self.pack in IGNORED_PACK_NAMES:
             print_warning(f"Release notes are not required for the {self.pack} pack since this pack"
                           f" is not versioned.")
@@ -193,8 +191,6 @@ class UpdateRN:
 
         new_version, new_metadata = self.get_new_version_and_metadata()
         rn_path = self.get_release_notes_path(new_version)
-        print_color(f"rn_path {rn_path}", LOG_COLORS.GREEN)
-
         self.check_rn_dir(rn_path)
         self.rn_path = rn_path
         self.find_added_pack_files()

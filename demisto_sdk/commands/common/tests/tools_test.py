@@ -25,10 +25,10 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS, MarketplaceTagParser, TagParser, arg_to_list,
-    compare_context_path_in_yml_and_readme, filter_files_by_type,
-    filter_files_on_pack, filter_packagify_changes, find_type,
-    find_type_by_path, generate_xsiam_normalized_name, get_code_lang,
-    get_current_repo, get_dict_from_file, get_display_name,
+    compare_context_path_in_yml_and_readme, field_to_cli_name,
+    filter_files_by_type, filter_files_on_pack, filter_packagify_changes,
+    find_type, find_type_by_path, generate_xsiam_normalized_name,
+    get_code_lang, get_current_repo, get_dict_from_file, get_display_name,
     get_entity_id_by_entity_type, get_entity_name_by_entity_type,
     get_file_displayed_name, get_file_version_suffix_if_exists,
     get_files_in_dir, get_ignore_pack_skipped_tests, get_item_marketplaces,
@@ -2015,6 +2015,7 @@ def test_string_to_bool__all_params_false__error(value: str):
     ('Packs/myPack/Jobs/job.json', FileType.JOB),
     (f'Packs/myPack/{INDICATOR_TYPES_DIR}/indicator.json', FileType.REPUTATION),
     (f'Packs/myPack/{XSIAM_DASHBOARDS_DIR}/dashboard.json', FileType.XSIAM_DASHBOARD),
+    (f'Packs/myPack/{XSIAM_DASHBOARDS_DIR}/dashboard.png', FileType.XSIAM_DASHBOARD_IMAGE),
     (f'Packs/myPack/{XSIAM_REPORTS_DIR}/report.json', FileType.XSIAM_REPORT),
     (f'Packs/myPack/{TRIGGER_DIR}/trigger.json', FileType.TRIGGER),
     ('Packs/myPack/pack_metadata.json', FileType.METADATA),
@@ -2039,3 +2040,14 @@ def test_string_to_bool__all_params_false__error(value: str):
 ))
 def test_find_type_by_path(path: Path, expected_type: Optional[FileType]):
     assert find_type_by_path(path) == expected_type
+
+
+@pytest.mark.parametrize('value, expected', [
+    ('Employee Number', 'employeenumber'),
+    ('Employee_Number', 'employeenumber'),
+    ('Employee & Number', 'employeenumber'),
+    ('Employee, Number?', 'employeenumber'),
+    ('Employee Number!!!', 'employeenumber'),
+])
+def test_field_to_cliname(value: str, expected: str):
+    assert field_to_cli_name(value) == expected

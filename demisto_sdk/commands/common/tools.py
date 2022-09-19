@@ -38,9 +38,10 @@ from demisto_sdk.commands.common.constants import (
     INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
     INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
     MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME, MODELING_RULES_DIR,
-    OFFICIAL_CONTENT_ID_SET_PATH, PACK_METADATA_IRON_BANK_TAG,
-    PACKAGE_SUPPORTING_DIRECTORIES, PACKAGE_YML_FILE_REGEX, PACKS_DIR,
-    PACKS_DIR_REGEX, PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
+    NON_LETTERS_OR_NUMBERS_PATTERN, OFFICIAL_CONTENT_ID_SET_PATH,
+    PACK_METADATA_IRON_BANK_TAG, PACKAGE_SUPPORTING_DIRECTORIES,
+    PACKAGE_YML_FILE_REGEX, PACKS_DIR, PACKS_DIR_REGEX,
+    PACKS_PACK_IGNORE_FILE_NAME, PACKS_PACK_META_FILE_NAME,
     PACKS_README_FILE_NAME, PARSING_RULES_DIR, PLAYBOOKS_DIR,
     PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
     SCRIPTS_DIR, SIEM_ONLY_ENTITIES, TEST_PLAYBOOKS_DIR, TRIGGER_DIR,
@@ -1349,6 +1350,9 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
 
     elif path.suffix == '.png' and DOC_FILES_DIR in path.parts:
         return FileType.DOC_IMAGE
+
+    elif path.suffix == '.png' and XSIAM_DASHBOARDS_DIR in path.parts:
+        return FileType.XSIAM_DASHBOARD_IMAGE
 
     elif path.suffix == '.ps1':
         return FileType.POWERSHELL_FILE
@@ -3010,3 +3014,19 @@ def string_to_bool(
         return False
 
     raise ValueError(f'cannot convert string {input_} to bool')
+
+
+def field_to_cli_name(field_name: str) -> str:
+    """
+    Returns the CLI name of an incident/indicator field by removing non letters/numbers
+    characters and lowering capitalized letters.
+
+    Input Example:
+        field = Employee Number
+    Output:
+        employeenumber
+
+    Args:
+        field_name (str): the incident/indicator field name.
+    """
+    return re.sub(NON_LETTERS_OR_NUMBERS_PATTERN, '', field_name).lower()

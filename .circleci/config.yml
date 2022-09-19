@@ -28,7 +28,7 @@ parameters:
 
 references:
     version_tag_regex: &version_tag_regex
-      /^v\d+\.\d+ # version regex vx.x.x (i.e. v1.2)
+      /^v\d+\.\d+\.\d+$/ # version regex vx.x.x (i.e. v1.2.3)
 
     filter_tag_only: &filter_tag_only
       tags:
@@ -42,6 +42,18 @@ references:
     reqs_content_checkout: &reqs_content_checkout
       requires:
         - checkout-content
+
+    install_neo4j: &install_neo4j
+      run:
+        name: Install Neo4j
+        command: |
+          curl -fsSL https://debian.neo4j.com/neotechnology.gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/neo4j.gpg
+          echo "deb [signed-by=/usr/share/keyrings/neo4j.gpg] https://debian.neo4j.com stable latest" | sudo tee -a /etc/apt/sources.list.d/neo4j.list
+          sudo apt-get update
+          sudo apt-get install neo4j
+          sudo chown -R circleci /var/log/neo4j
+          sudo chown -R circleci /var/lib/neo4j
+          neo4j-admin set-initial-password test
 
     install_node_ci: &install_node_ci
       - node/install-packages:
@@ -118,6 +130,8 @@ jobs:
               TEST_FILES=$(circleci tests glob "**/*_test.py")
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/init\/templates\S*\.py//g')
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/tests\/integration_tests\S*\.py//g')
+              TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/content_graph\/tests\S*\.py//g')
+
               TEST_FILES=$(echo "$TEST_FILES" | circleci tests split --split-by=timings)
 
               mkdir test-results
@@ -147,6 +161,7 @@ jobs:
         - image: cimg/python:<< parameters.pythonversion >>-node
       steps:
         - checkout
+        - <<: *install_neo4j
         - <<: *install_poetry
         - setup_remote_docker:
             version: 20.10.12
@@ -155,7 +170,18 @@ jobs:
             cache-version: << pipeline.parameters.cache-version >>
         - <<: *install_node_ci
         - run:
-            name: pytest
+            name: pytest - graph
+            no_output_timeout: 15m
+            command: |
+              shopt -u globstar
+              TEST_FILES=$(circleci tests glob "demisto_sdk/commands/content_graph/tests/*_test.py")
+
+              mkdir graph-test-results
+              poetry run pytest -v --junitxml=graph-test-results/junit.xml $TEST_FILES
+        - store_test_results:
+            path: graph-test-results        
+        - run:
+            name: pytest - integrations
             no_output_timeout: 15m
             command: |
               shopt -u globstar
@@ -165,6 +191,7 @@ jobs:
               poetry run pytest -v --junitxml=integration-test-results/junit.xml $TEST_FILES
         - store_test_results:
             path: integration-test-results
+
 
 
   precommit-checks:

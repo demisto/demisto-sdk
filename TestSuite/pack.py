@@ -7,7 +7,8 @@ from demisto_sdk.commands.common.constants import (CORRELATION_RULES_DIR,
                                                    PARSING_RULES_DIR,
                                                    TRIGGER_DIR,
                                                    XSIAM_DASHBOARDS_DIR,
-                                                   XSIAM_REPORTS_DIR)
+                                                   XSIAM_REPORTS_DIR,
+                                                   AGENT_CONFIG_DIR)
 from TestSuite.correlation_rule import CorrelationRule
 from TestSuite.file import File
 from TestSuite.integration import Integration
@@ -24,6 +25,7 @@ from TestSuite.wizard import Wizard
 from TestSuite.xsiam_dashboard import XSIAMDashboard
 from TestSuite.xsiam_report import XSIAMReport
 from TestSuite.yml import YAML
+from TestSuite.agent_config import AgentConfig
 
 
 class Pack:
@@ -79,6 +81,7 @@ class Pack:
         self.xsiam_reports: List[JSONBased] = list()
         self.triggers: List[JSONBased] = list()
         self.wizards: List[Wizard] = list()
+        self.agent_configs: List[AgentConfig] = list()
 
         # Create base pack
         self._pack_path = packs_dir / self.name
@@ -165,6 +168,9 @@ class Pack:
 
         self._triggers_path = self._pack_path / TRIGGER_DIR
         self._triggers_path.mkdir()
+
+        self._agent_configs_path = self._pack_path / AGENT_CONFIG_DIR
+        self._agent_configs_path.mkdir()
 
         self.secrets = Secrets(self._pack_path)
 
@@ -650,3 +656,8 @@ class Pack:
         trigger = Trigger(name, self._triggers_path, content)
         self.triggers.append(trigger)
         return trigger
+
+    def create_agent_config(self, name, content: dict = {}) -> Trigger:
+        agent_config = AgentConfig(name, self._agent_configs_path, content)
+        self.agent_configs.append(agent_config)
+        return agent_config

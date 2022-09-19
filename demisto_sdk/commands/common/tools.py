@@ -2070,6 +2070,7 @@ def item_type_to_content_items_header(item_type):
         "correlationrule": "correlationRule",
         "modelingrule": "modelingRule",
         "parsingrule": "parsingRule",
+        "agentconfig": "agentConfig"
     }
 
     return f'{converter.get(item_type, item_type)}s'

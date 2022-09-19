@@ -50,7 +50,7 @@ ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Cla
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'GenericTypes', 'GenericFields', 'GenericModules',
                    'GenericDefinitions', 'Lists', 'Jobs', 'ParsingRules', 'ModelingRules',
-                   'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'Wizards']
+                   'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'Wizards', 'AgentConfigs']
 
 CONTENT_MP_V2_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                           'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',

@@ -593,6 +593,7 @@ class ContributionConverter:
         template_text = '%%UPDATE_RN%%'
 
         rn_per_content_item = self.format_user_input()
+
         with open(rn_path, 'r+') as rn_file:
             lines = rn_file.readlines()
             for index in range(len(lines)):

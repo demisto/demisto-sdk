@@ -8,6 +8,11 @@ from demisto_sdk.commands.content_graph.common import ContentType, Relationship
 
 
 class ContentGraphInterface(ABC):
+    
+    @abstractmethod
+    def is_graph_alive(self):
+        pass
+    
     @abstractmethod
     def create_indexes_and_constraints(self) -> None:
         pass

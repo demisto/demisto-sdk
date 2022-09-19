@@ -68,6 +68,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def close(self) -> None:
         self.driver.close()
 
+    def is_graph_alive(self):
+        return neo4j_service.is_alive()
+    
     def create_indexes_and_constraints(self) -> None:
         with self.driver.session() as session:
             session.write_transaction(create_indexes)

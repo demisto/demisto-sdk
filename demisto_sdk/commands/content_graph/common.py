@@ -8,6 +8,7 @@ REPO_PATH = Path(get_content_path())
 
 NEO4J_ADMIN_DOCKER = ''
 
+NEO4J_DATABASE_HTTP = os.getenv('DEMISTO_SDK_NEO4J_DATABASE_HTTP', 'http://localhost:7474')
 NEO4J_DATABASE_URL = os.getenv('DEMISTO_SDK_NEO4J_DATABASE_URL', 'bolt://localhost:7687')
 NEO4J_USERNAME = os.getenv('DEMISTO_SDK_NEO4J_USERNAME', 'neo4j')
 NEO4J_PASSWORD = os.getenv('DEMISTO_SDK_NEO4J_PASSWORD', 'test')

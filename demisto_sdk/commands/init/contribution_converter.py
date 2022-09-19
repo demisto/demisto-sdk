@@ -564,7 +564,6 @@ class ContributionConverter:
             Dict: Key is content item name, value is release note entry
         """
         entity_identifier = '##### '
-        new_entity_identifier = "##### new: "
         content_item_type_identifier = '#### '
         rn_per_content_item: dict = defaultdict(str)
         entity_name = 'NonEntityRelated'
@@ -577,8 +576,6 @@ class ContributionConverter:
                 entity_name = line.lstrip(entity_identifier)
                 if items_path.get(entity_name):
                     entity_name = get_display_name(items_path.get(entity_name))
-                elif line.startswith(new_entity_identifier):
-                    entity_name = line.lstrip(new_entity_identifier)
             elif not line.startswith(content_item_type_identifier):
                 rn_per_content_item[entity_name] = rn_per_content_item[entity_name] + line + '\n'
         return rn_per_content_item
@@ -594,6 +591,7 @@ class ContributionConverter:
             rn_path: path to the rn file created.
         """
         entity_identifier = '##### '
+        new_entity_identifier = "##### New: "
         template_text = '%%UPDATE_RN%%'
 
         rn_per_content_item = self.format_user_input()
@@ -605,7 +603,11 @@ class ContributionConverter:
                 print_color(f'index {index}', LOG_COLORS.NATIVE)
                 print_color(f'template_text in lines[index] {template_text in lines[index]}', LOG_COLORS.NATIVE)
                 if template_text in lines[index]:
-                    template_entity = lines[index - 1].lstrip(entity_identifier).rstrip('\n')
+                    previous_line = lines[index - 1]
+                    if previous_line.startswith(new_entity_identifier):
+                        template_entity = previous_line.lstrip(new_entity_identifier).rstrip('\n')
+                    else:
+                        template_entity = previous_line.lstrip(entity_identifier).rstrip('\n')
                     print_color(f'template_entity {template_entity}', LOG_COLORS.NATIVE)
                     curr_content_items = rn_per_content_item.get(template_entity)
                     print_color(f'curr_content_items {curr_content_items}', LOG_COLORS.NATIVE)

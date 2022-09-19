@@ -22,7 +22,7 @@ class Repository(BaseModel):
         logger.info('starting repo dump')
         start_time = time.time()
         with ProcessPoolExecutor() as executer:
-            {executer.submit(pack.dump, dir / pack.name, marketplace): pack for pack in self.packs}
+            {executer.submit(pack.dump, dir / pack.path.name, marketplace): pack for pack in self.packs}
         time_taken = time.time() - start_time
         logger.info(f'ending repo dump. Took {time_taken} seconds')
 

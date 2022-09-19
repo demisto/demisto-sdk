@@ -203,6 +203,18 @@ class TestHelperMethods:
 
     @pytest.mark.parametrize('data, file_type, entity', [
         ({'name': 'test-pb'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'playbook_testing'}, 'playbook', PLAYBOOKS_DIR),
+        ({'name': 'playbook_test'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'playbookTest'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'Testplaybook'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'Test-playbook'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'playbook_Test'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'playbook-test'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'playbook-Test'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'Test123'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'test_123'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'test-123'}, 'playbook', TEST_PLAYBOOKS_DIR),
+        ({'name': 'Test_123'}, 'playbook', TEST_PLAYBOOKS_DIR),
         ({}, 'integration', INTEGRATIONS_DIR)
     ])
     def test_file_type_to_entity(self, data, file_type, entity):

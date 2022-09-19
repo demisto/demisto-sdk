@@ -602,15 +602,13 @@ class ContributionConverter:
             for index in range(len(lines)):
                 print_color(f'index {index}', LOG_COLORS.NATIVE)
                 print_color(f'template_text in lines[index] {template_text in lines[index]}', LOG_COLORS.NATIVE)
-                if template_text in lines[index]:
-                    previous_line = lines[index - 1]
+                previous_line = lines[index - 1] if index > 0 else ""
+                if template_text in lines[index] or previous_line.startswith(new_entity_identifier):
                     if previous_line.startswith(new_entity_identifier):
                         template_entity = previous_line.lstrip(new_entity_identifier).rstrip('\n')
                     else:
                         template_entity = previous_line.lstrip(entity_identifier).rstrip('\n')
-                    print_color(f'template_entity {template_entity}', LOG_COLORS.NATIVE)
                     curr_content_items = rn_per_content_item.get(template_entity)
-                    print_color(f'curr_content_items {curr_content_items}', LOG_COLORS.NATIVE)
                     if curr_content_items:
                         lines[index] = curr_content_items
 

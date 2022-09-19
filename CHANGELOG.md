@@ -1,6 +1,6 @@
 # Changelog
 
-## unreleased
+## Unreleased
 
 ## 1.7.5
 

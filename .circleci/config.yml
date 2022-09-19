@@ -28,7 +28,7 @@ parameters:
 
 references:
     version_tag_regex: &version_tag_regex
-      /^v\d+\.\d+ # version regex vx.x.x (i.e. v1.2)
+      /^v\d+\.\d+\.\d+$/ # version regex vx.x.x (i.e. v1.2.3)
 
     filter_tag_only: &filter_tag_only
       tags:

@@ -1,8 +1,11 @@
 # Changelog
+
+## unreleased
+
+## 1.7.5
+
 * Fixed an issue where the **upload** command did not work with the CommonServerUserPython package.
 * Fixed an issue in the **download** command, where some playbooks were downloaded as test playbooks.
-
-## Unreleased
 * Added playbook modification capabilities in **TestSuite**.
 * Added a new command **create-content-graph**.
 * Fixed an issue in the **upload** command, where the temporary zip would not clean up properly.

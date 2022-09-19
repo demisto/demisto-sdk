@@ -160,6 +160,7 @@ class Pack(BaseContent, PackMetadata):
             shutil.copy(self.path / 'Author_image.png', path / 'Author_image.png')
         except FileNotFoundError:
             logger.info(f'No such file {self.path / "Author_image.png"}')
-
+        logger.info(f'Dumped pack {self.name}. Files: {list(path.iterdir())}')
+        
     def to_nodes(self) -> Nodes:
         return Nodes(self.to_dict(), *[content_item.to_dict() for content_item in self.content_items])

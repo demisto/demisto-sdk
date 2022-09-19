@@ -15,7 +15,7 @@ from demisto_sdk.commands.lint.docker_helper import (Docker,
 DEMISTO_DEPS_DOCKER_NAME = "demisto-dependencies"
 _SERVER_SCRIPT_NAME = 'mdx-parse-server.js'
 _MDX_SERVER_PROCESS: Optional[subprocess.Popen] = None
-_RUNNING_CONTAINER_IMAGE = None
+_RUNNING_CONTAINER_IMAGE: Optional[docker.models.containers.Container] = None
 
 
 def server_script_path():
@@ -43,23 +43,26 @@ class DockerMDXServer:
                 ports={'6161/tcp': ('localhost', 6161)}
 
             )
+            self.owning_obj = True
             container.start()
             if 'MDX server is listening on port' not in (str(next(container.logs(stream=True)).decode('utf-8'))):
-                self._container.stop()  # type: ignore
+                self.stop_docker_container()
                 logging.error('Docker for MDX server was not started correctly')
                 logging.error(f'docker logs:\n{container.logs().decode("utf-8")}')
                 return
-            self._container = container
-            _RUNNING_CONTAINER_IMAGE = container.id
+            _RUNNING_CONTAINER_IMAGE = container
 
         self.started_successfully = True
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stop_docker_container()
+
+    def stop_docker_container(self):
         global _RUNNING_CONTAINER_IMAGE
-        if hasattr(self, '_container'):
+        if _RUNNING_CONTAINER_IMAGE and hasattr(self, 'owning_obj'):
             logging.info('Stopping mdx docker server')
-            self._container.stop()  # type: ignore
+            _RUNNING_CONTAINER_IMAGE.stop()  # type: ignore
             _RUNNING_CONTAINER_IMAGE = None
         else:
             logging.info("not stop container as it wasn't started here")

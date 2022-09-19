@@ -180,10 +180,8 @@ class ReadMeValidator(BaseValidator):
         if not ReadMeValidator._MDX_SERVER_PROCESS:
             with ReadMeValidator.start_mdx_server() as server:
                 if not server.is_started():
-                    error_message, error_code = Errors.error_starting_mdx_server()
-                    if self.handle_error and self.file_path:
-                        if self.handle_error(error_message, error_code, file_path=self.file_path):
-                            return False
+                    return False
+
                 readme_content = self.fix_mdx()
                 retry = Retry(total=2)
                 adapter = HTTPAdapter(max_retries=retry)

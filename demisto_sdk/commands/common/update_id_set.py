@@ -2710,7 +2710,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
                                                                            FileType.AGENT_CONFIG),
-                                                                       data_extraction_func=get_agent_config_data(),
+                                                                       data_extraction_func=get_agent_config_data,
                                                                        ),
                                                                get_general_paths(AGENT_CONFIG_DIR,
                                                                                  pack_to_create)):

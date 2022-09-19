@@ -58,7 +58,7 @@ class MapperValidator(ContentEntityValidator):
         """Check whether the Mapper is backward compatible or not, update the _is_valid field to determine that"""
 
         answers = [
-            super().is_backward_compatible(),
+            not super().is_backward_compatible(),
             self.is_field_mapping_removed(),
         ]
         return not any(answers)

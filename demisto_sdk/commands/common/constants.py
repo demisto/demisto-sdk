@@ -147,6 +147,7 @@ class FileType(str, Enum):
     MODELING_RULE = 'modelingrule'
     CORRELATION_RULE = 'correlationrule'
     XSIAM_DASHBOARD = 'xsiamdashboard'
+    XSIAM_DASHBOARD_IMAGE = 'xsiamdashboardimage'
     XSIAM_REPORT = 'xsiamreport'
     TRIGGER = 'trigger'
     WIZARD = 'wizard'
@@ -443,6 +444,9 @@ DOCS_REGEX = r'.*docs.*'
 IMAGE_REGEX = r'.*\.png$'
 DESCRIPTION_REGEX = r'.*\.md'
 SCHEMA_REGEX = 'Tests/schemas/.*.yml'
+
+# regex pattern used to convert incident/indicator fields to their CLI names
+NON_LETTERS_OR_NUMBERS_PATTERN = re.compile(r'[^a-zA-Z0-9]')
 
 PACKS_DIR_REGEX = fr'{CAN_START_WITH_DOT_SLASH}{PACKS_DIR}'
 PACK_DIR_REGEX = fr'{PACKS_DIR_REGEX}\/([^\\\/]+)'

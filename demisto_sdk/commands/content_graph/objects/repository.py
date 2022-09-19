@@ -1,3 +1,4 @@
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 import shutil
 from pydantic import BaseModel, DirectoryPath
@@ -17,11 +18,11 @@ class Repository(BaseModel):
     
     def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions):
         # TODO understand why multiprocessing is not working
-        from multiprocessing.pool import ThreadPool
+    
         logger.info('starting repo dump')
         start_time = time.time()
-        with ThreadPool() as pool:
-            pool.map(lambda pack: pack.dump(dir / pack.name, marketplace), self.packs)
+        with ProcessPoolExecutor() as executer:
+            {executer.submit(pack.dump, dir / pack.name, marketplace): pack for pack in self.packs}
         time_taken = time.time() - start_time
         logger.info(f'ending repo dump. Took {time_taken} seconds')
 

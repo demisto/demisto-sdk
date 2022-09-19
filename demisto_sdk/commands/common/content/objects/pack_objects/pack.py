@@ -273,7 +273,7 @@ class Pack:
                                                           suffix="json")
 
     @property
-    def agent_configs(self) -> Iterator[Trigger]:
+    def agent_configs(self) -> Iterator[AgentConfig]:
         return self._content_files_list_generator_factory(dir_name=AGENT_CONFIG_DIR,
                                                           suffix="json")
 

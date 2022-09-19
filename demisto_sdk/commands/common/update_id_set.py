@@ -24,7 +24,7 @@ from demisto_sdk.commands.common.constants import (
     INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, JOBS_DIR, LAYOUTS_DIR,
     LISTS_DIR, MAPPERS_DIR, MODELING_RULES_DIR, PARSING_RULES_DIR, REPORTS_DIR,
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR,
-    XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, FileType, MarketplaceVersions)
+    XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, FileType, MarketplaceVersions, AGENT_CONFIG_DIR)
 from demisto_sdk.commands.common.content_constant_paths import (
     DEFAULT_ID_SET_PATH, MP_V2_ID_SET_PATH)
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -55,12 +55,12 @@ ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Cla
 CONTENT_MP_V2_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                           'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                           'Layouts', 'Mappers', 'Packs', 'Lists', 'ParsingRules', 'ModelingRules',
-                          'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers']
+                          'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'AgentConfigs']
 
 ID_SET_MP_V2_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                          'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                          'Layouts', 'Mappers', 'Lists', 'ParsingRules', 'ModelingRules',
-                         'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers']
+                         'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'AgentConfigs']
 
 BUILT_IN_FIELDS = [
     "name",
@@ -1298,6 +1298,23 @@ def get_correlation_rule_data(path: str, packs: Dict[str, Dict] = None):
     return {id_: data}
 
 
+def get_agent_config_data(path: str, packs: Dict[str, Dict] = None):
+    json_data = get_json(path)
+
+    id_ = json_data.get('id')
+    name = json_data.get('name')
+    display_name = get_display_name(path, json_data)
+    fromversion = json_data.get('fromVersion')
+    toversion = json_data.get('toVersion')
+    pack = get_pack_name(path)
+    marketplaces = [MarketplaceVersions.MarketplaceV2.value]
+
+    data = create_common_entity_data(path=path, name=name, display_name=display_name, to_version=toversion,
+                                     from_version=fromversion, pack=pack, marketplaces=marketplaces)
+
+    return {id_: data}
+
+
 def get_depends_on(data_dict):
     depends_on = data_dict.get('dependson', {}).get('must', [])
     depends_on_list = list({cmd.split('|')[-1] for cmd in depends_on})
@@ -1604,6 +1621,7 @@ def process_general_items(file_path: str, packs: Dict[str, Dict], marketplace: s
     * XSIAMDashboards
     * XSIAMReports
     * Triggers
+    * AgentConfigs
 
     Args:
         file_path: The file path from an item folder
@@ -2115,6 +2133,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
     xsiam_reports_list = []
     triggers_list = []
     wizards_list = []
+    agent_configs_list = []
     packs_dict: Dict[str, Dict] = {}
     excluded_items_by_pack: Dict[str, set] = {}
     excluded_items_by_type: Dict[str, set] = {}
@@ -2683,6 +2702,28 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
+        if 'AgentConfigs' in objects_to_create:
+            print_color("\nStarting iteration over AgentConfigs", LOG_COLORS.GREEN)
+            for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
+                                                                       packs=packs_dict,
+                                                                       marketplace=marketplace,
+                                                                       print_logs=print_logs,
+                                                                       expected_file_types=(
+                                                                           FileType.AGENT_CONFIG),
+                                                                       data_extraction_func=get_agent_config_data(),
+                                                                       ),
+                                                               get_general_paths(AGENT_CONFIG_DIR,
+                                                                                 pack_to_create)):
+                for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
+                    if data.get('pack'):
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('agentConfigs',
+                                                                                               []).append(_id)
+                agent_configs_list.extend(arr)
+                update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
+                                           excluded_items_from_iteration)
+
+        progress_bar.update(1)
+
     new_ids_dict = OrderedDict()
     # we sort each time the whole set in case someone manually changed something
     # it shouldn't take too much time
@@ -2707,6 +2748,8 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
     new_ids_dict['Triggers'] = sort(triggers_list)
     new_ids_dict['Wizards'] = sort(wizards_list)
     new_ids_dict['Packs'] = packs_dict
+    new_ids_dict['AgentConfigs'] = sort(agent_configs_list)
+
 
     if marketplace != MarketplaceVersions.MarketplaceV2.value:
         new_ids_dict['GenericTypes'] = sort(generic_types_list)

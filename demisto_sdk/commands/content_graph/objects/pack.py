@@ -146,21 +146,25 @@ class Pack(BaseContent, PackMetadata):
                 logger.error(f'Failed dumping readme: {e}')
 
     def dump(self, path: Path, marketplace: MarketplaceVersions):
-        path.mkdir(exist_ok=True, parents=True)
-        for content_item in self.content_items:
-            content_item.dump(path / content_item.content_type.as_folder, marketplace)
-        self.dump_metadata(path / 'metadata.json')
-        self.dump_readme(path / 'README.md', marketplace)
-        shutil.copy(self.path / PACK_METADATA_FILENAME, path / PACK_METADATA_FILENAME)
         try:
-            shutil.copytree(self.path / 'ReleaseNotes', path / 'ReleaseNotes')
-        except FileNotFoundError:
-            logger.info(f'No such file {self.path / "ReleaseNotes"}')
-        try:
-            shutil.copy(self.path / 'Author_image.png', path / 'Author_image.png')
-        except FileNotFoundError:
-            logger.info(f'No such file {self.path / "Author_image.png"}')
-        logger.info(f'Dumped pack {self.name}. Files: {list(path.iterdir())}')
+            path.mkdir(exist_ok=True, parents=True)
+            for content_item in self.content_items:
+                content_item.dump(path / content_item.content_type.as_folder, marketplace)
+            self.dump_metadata(path / 'metadata.json')
+            self.dump_readme(path / 'README.md', marketplace)
+            shutil.copy(self.path / PACK_METADATA_FILENAME, path / PACK_METADATA_FILENAME)
+            try:
+                shutil.copytree(self.path / 'ReleaseNotes', path / 'ReleaseNotes')
+            except FileNotFoundError:
+                logger.info(f'No such file {self.path / "ReleaseNotes"}')
+            try:
+                shutil.copy(self.path / 'Author_image.png', path / 'Author_image.png')
+            except FileNotFoundError:
+                logger.info(f'No such file {self.path / "Author_image.png"}')
+            logger.info(f'Dumped pack {self.name}. Files: {list(path.iterdir())}')
+        except Exception as e:
+            logger.error(f'Failed dumping pack {self.name}: {e}')
+            raise
         
     def to_nodes(self) -> Nodes:
         return Nodes(self.to_dict(), *[content_item.to_dict() for content_item in self.content_items])

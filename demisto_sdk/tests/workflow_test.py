@@ -318,7 +318,7 @@ def rename_incident_field(content_repo: ContentGitRepo, monkeypatch: MonkeyPatch
     modify_entity,
     rename_incident_field
 ])
-def test_workflow_by_sequence(function: Callable, monkeypatch: MonkeyPatch):
+def test_workflow_by_sequence(function: Callable, monkeypatch: MonkeyPatch, mocker):
     """
     Pytest will execute tests in parallel. This function ensures the tests will run by sequence.
     Args:

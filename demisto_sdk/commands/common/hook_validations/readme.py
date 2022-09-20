@@ -307,7 +307,7 @@ class ReadMeValidator(BaseValidator):
     @lru_cache(None)
     def is_docker_available():
         try:
-            docker_client: docker.DockerClient = init_global_docker_client(log_prompt='LintManager')
+            docker_client: docker.DockerClient = init_global_docker_client(log_prompt='DockerPing')
             docker_client.ping()
             return True
         except Exception:

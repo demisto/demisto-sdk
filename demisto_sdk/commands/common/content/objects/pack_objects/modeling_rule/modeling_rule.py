@@ -22,6 +22,8 @@ class MRule:
     def __init__(self, rule_text: str):
         self.rule_text = rule_text
         self._dataset = ""
+        self._vendor = ""
+        self._product = ""
         self._datamodel = ""
         self._fields: List[str] = []
 
@@ -73,6 +75,32 @@ class MRule:
     @fields.setter
     def fields(self, value):
         self._fields = value
+
+    @property
+    def vendor(self):
+        if not self._vendor:
+            try:
+                self.vendor, self.product = self.dataset.split('_')[:2]
+            except ValueError:
+                pass
+        return self._vendor
+
+    @vendor.setter
+    def vendor(self, value):
+        self._vendor = value
+
+    @property
+    def product(self):
+        if not self._product:
+            try:
+                self.vendor, self.product = self.dataset.split('_')[:2]
+            except ValueError:
+                pass
+        return self._product
+
+    @product.setter
+    def product(self, value):
+        self._product = value
 
     def __repr__(self) -> str:
         return pformat(

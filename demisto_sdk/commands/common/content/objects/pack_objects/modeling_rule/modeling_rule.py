@@ -110,7 +110,10 @@ class ModelingRule(YAMLContentUnifiedObject):
             _rules = []
             rule_initialization_errs = []
             try:
-                rules_text = self.get('rules', '')
+                if self.rules_path:
+                    rules_text = self.rules_path.read_text()
+                else:
+                    rules_text = self.get('rules', '')
                 matches = self.MODEL_RULE_REGEX.finditer(rules_text)
                 for match in matches:
                     _rules.append(MRule(match.group()))

@@ -55,14 +55,7 @@ def test_is_file_valid(mocker, current, answer):
               status_code=200, text="Test3")
         mocker.patch.dict(os.environ, {'DEMISTO_README_VALIDATION': 'yes', 'DEMISTO_MDX_CMD_VERIFY': 'yes'})
         assert readme_validator.is_valid_file() is answer
-        assert not ReadMeValidator._MDX_SERVER_PROCESS
-
-
-def test_no_node_no_docker(mocker):
-    mocker.patch.object(ReadMeValidator, 'is_docker_available', return_value=False)
-    mocker.patch.object(ReadMeValidator, 'are_modules_installed_for_verify', return_value=False)
-    with ReadMeValidator.start_mdx_server() as server:
-        assert not server.is_started()
+        assert not demisto_sdk.commands.common.MDXServer._MDX_SERVER_PROCESS
 
 
 def test_local_server_up_and_down():
@@ -74,8 +67,10 @@ def test_local_server_up_and_down():
         return
 
     with LocalMDXServer() as server:
+        assert demisto_sdk.commands.common.MDXServer._MDX_SERVER_PROCESS
         assert server.is_started()
         assert_successful_mdx_call()
+    assert not demisto_sdk.commands.common.MDXServer._MDX_SERVER_PROCESS
 
 
 def assert_successful_mdx_call():
@@ -105,6 +100,11 @@ def test_is_file_valid_mdx_server(mocker, current, answer):
 
 
 def test_local_server_reentrant():
+    readme_validator = ReadMeValidator(INVALID_MD)
+    valid = ReadMeValidator.are_modules_installed_for_verify(readme_validator.content_path)
+    if not valid:
+        pytest.skip('skipping mdx server test. ' + MDX_SKIP_NPM_MESSAGE)
+        return
     with LocalMDXServer():
         with LocalMDXServer():
             assert demisto_sdk.commands.common.MDXServer._MDX_SERVER_PROCESS

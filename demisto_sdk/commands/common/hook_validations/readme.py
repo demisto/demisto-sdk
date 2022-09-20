@@ -125,7 +125,6 @@ class ReadMeValidator(BaseValidator):
     """
 
     # Static var to hold the mdx server process
-    _MDX_SERVER_PROCESS: Optional[subprocess.Popen] = None
     _MDX_SERVER_LOCK = Lock()
     MINIMUM_README_LENGTH = 30
 
@@ -177,26 +176,24 @@ class ReadMeValidator(BaseValidator):
         return True
 
     def mdx_verify_server(self) -> bool:
-        if not ReadMeValidator._MDX_SERVER_PROCESS:
-            with ReadMeValidator.start_mdx_server() as server:
-                if not server.is_started():
+        with ReadMeValidator.start_mdx_server(self.handle_error, str(self.file_path)) as server:
+            if not server.is_started():
+                return False
+            readme_content = self.fix_mdx()
+            retry = Retry(total=2)
+            adapter = HTTPAdapter(max_retries=retry)
+            session = requests.Session()
+            session.mount('http://', adapter)
+            response = session.request(
+                'POST',
+                'http://localhost:6161',
+                data=readme_content.encode('utf-8'),
+                timeout=20
+            )
+            if response.status_code != 200:
+                error_message, error_code = Errors.readme_error(response.text)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
                     return False
-
-                readme_content = self.fix_mdx()
-                retry = Retry(total=2)
-                adapter = HTTPAdapter(max_retries=retry)
-                session = requests.Session()
-                session.mount('http://', adapter)
-                response = session.request(
-                    'POST',
-                    'http://localhost:6161',
-                    data=readme_content.encode('utf-8'),
-                    timeout=20
-                )
-                if response.status_code != 200:
-                    error_message, error_code = Errors.readme_error(response.text)
-                    if self.handle_error(error_message, error_code, file_path=self.file_path):
-                        return False
         return True
 
     def is_mdx_file(self) -> bool:
@@ -686,27 +683,12 @@ class ReadMeValidator(BaseValidator):
         return is_valid
 
     @staticmethod
-    def start_mdx_server():
+    def start_mdx_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None):
         with ReadMeValidator._MDX_SERVER_LOCK:
             if ReadMeValidator.are_modules_installed_for_verify(get_content_path()):
-                return LocalMDXServer()
+                return LocalMDXServer(handle_error, file_path)
             elif ReadMeValidator.is_docker_available():
-                return DockerMDXServer()
-
-            class NullContextManager(object):
-                def __init__(self):
-                    pass
-
-                def __enter__(self):
-                    return self
-
-                def __exit__(self, *args):
-                    pass
-
-                def is_started(self):
-                    return False
-
-            return NullContextManager()
+                return DockerMDXServer(handle_error, file_path)
 
     @staticmethod
     def add_node_env_vars():

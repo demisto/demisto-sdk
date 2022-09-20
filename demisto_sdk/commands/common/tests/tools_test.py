@@ -3,7 +3,7 @@ import json
 import os
 import shutil
 from pathlib import Path
-from typing import List, Union
+from typing import List, Optional, Union
 
 import git
 import pytest
@@ -11,24 +11,27 @@ import requests
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
-    DEFAULT_CONTENT_ITEM_TO_VERSION, DOC_FILES_DIR, INTEGRATIONS_DIR,
-    LAYOUTS_DIR, METADATA_FILE_NAME, PACKS_DIR, PACKS_PACK_IGNORE_FILE_NAME,
-    PLAYBOOKS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, FileType,
-    MarketplaceVersions)
+    DEFAULT_CONTENT_ITEM_TO_VERSION, DOC_FILES_DIR, INDICATOR_TYPES_DIR,
+    INTEGRATIONS_DIR, LAYOUTS_DIR, METADATA_FILE_NAME, PACKS_DIR,
+    PACKS_PACK_IGNORE_FILE_NAME, PLAYBOOKS_DIR, SCRIPTS_DIR,
+    TEST_PLAYBOOKS_DIR, TRIGGER_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR,
+    XSOAR_CONFIG_FILE, FileType, MarketplaceVersions)
 from demisto_sdk.commands.common.content import Content
+from demisto_sdk.commands.common.content.tests.objects.pack_objects.pack_ignore.pack_ignore_test import \
+    PACK_IGNORE
 from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
                                                             GitCredentials)
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import (
     LOG_COLORS, MarketplaceTagParser, TagParser, arg_to_list,
-    compare_context_path_in_yml_and_readme, filter_files_by_type,
-    filter_files_on_pack, filter_packagify_changes, find_type,
-    generate_xsiam_normalized_name, get_code_lang, get_current_repo,
-    get_dict_from_file, get_display_name, get_entity_id_by_entity_type,
-    get_entity_name_by_entity_type, get_file_displayed_name,
-    get_file_version_suffix_if_exists, get_files_in_dir,
-    get_ignore_pack_skipped_tests, get_item_marketplaces,
+    compare_context_path_in_yml_and_readme, field_to_cli_name,
+    filter_files_by_type, filter_files_on_pack, filter_packagify_changes,
+    find_type, find_type_by_path, generate_xsiam_normalized_name,
+    get_code_lang, get_current_repo, get_dict_from_file, get_display_name,
+    get_entity_id_by_entity_type, get_entity_name_by_entity_type,
+    get_file_displayed_name, get_file_version_suffix_if_exists,
+    get_files_in_dir, get_ignore_pack_skipped_tests, get_item_marketplaces,
     get_last_release_version, get_last_remote_release_version,
     get_latest_release_notes_text, get_pack_metadata,
     get_relative_path_from_packs_dir, get_release_note_entries,
@@ -2002,3 +2005,49 @@ def test_string_to_bool__all_params_true__false(value: str):
 def test_string_to_bool__all_params_false__error(value: str):
     with pytest.raises(ValueError):
         assert string_to_bool(value, False, False, False, False, False, False)
+
+
+@pytest.mark.parametrize('path,expected_type', (
+    ('Packs/myPack/Scripts/README.md', FileType.README),
+    ('Packs/myPack/ReleaseNotes/1_0_0.md', FileType.RELEASE_NOTES),
+    ('Packs/myPack/ReleaseNotes/1_0_0.json', FileType.RELEASE_NOTES_CONFIG),
+    ('Packs/myPack/Lists/list.json', FileType.LISTS),
+    ('Packs/myPack/Jobs/job.json', FileType.JOB),
+    (f'Packs/myPack/{INDICATOR_TYPES_DIR}/indicator.json', FileType.REPUTATION),
+    (f'Packs/myPack/{XSIAM_DASHBOARDS_DIR}/dashboard.json', FileType.XSIAM_DASHBOARD),
+    (f'Packs/myPack/{XSIAM_DASHBOARDS_DIR}/dashboard.png', FileType.XSIAM_DASHBOARD_IMAGE),
+    (f'Packs/myPack/{XSIAM_REPORTS_DIR}/report.json', FileType.XSIAM_REPORT),
+    (f'Packs/myPack/{TRIGGER_DIR}/trigger.json', FileType.TRIGGER),
+    ('Packs/myPack/pack_metadata.json', FileType.METADATA),
+    (XSOAR_CONFIG_FILE, FileType.XSOAR_CONFIG),
+    ('CONTRIBUTORS.json', FileType.CONTRIBUTORS),
+    ('Packs/myPack/Author_image.png', FileType.AUTHOR_IMAGE),
+    (f'{DOC_FILES_DIR}/image.png', FileType.DOC_IMAGE),
+    ('Packs/myPack/Integrations/myIntegration/some_image.png', FileType.IMAGE),
+    ('Packs/myPack/Integrations/myIntegration/myIntegration.ps1', FileType.POWERSHELL_FILE),
+    ('Packs/myPack/Integrations/myIntegration/myIntegration.py', FileType.PYTHON_FILE),
+    ('Packs/myPack/Integrations/myIntegration/myIntegration.js', FileType.JAVASCRIPT_FILE),
+    ('Packs/myPack/Integrations/myIntegration/myIntegration.xif', FileType.XIF_FILE),
+    ('.gitlab/some_file.yml', FileType.BUILD_CONFIG_FILE),
+    ('.circleci/some_file.yml', FileType.BUILD_CONFIG_FILE),
+    ('Packs/myPack/Scripts/myScript/myScript.yml', FileType.SCRIPT),
+    ('Packs/myPack/Scripts/script-myScript.yml', FileType.SCRIPT),
+    (f'Packs/myPack/{PACK_IGNORE}', FileType.PACK_IGNORE),
+    (f'Packs/myPack/{FileType.SECRET_IGNORE}', FileType.SECRET_IGNORE),
+    (f'Packs/myPack/{DOC_FILES_DIR}/foo.md', FileType.DOC_FILE),
+    ('Packs/myPack/some_random_file', None),
+    ('some_random_file_not_under_Packs', None),
+))
+def test_find_type_by_path(path: Path, expected_type: Optional[FileType]):
+    assert find_type_by_path(path) == expected_type
+
+
+@pytest.mark.parametrize('value, expected', [
+    ('Employee Number', 'employeenumber'),
+    ('Employee_Number', 'employeenumber'),
+    ('Employee & Number', 'employeenumber'),
+    ('Employee, Number?', 'employeenumber'),
+    ('Employee Number!!!', 'employeenumber'),
+])
+def test_field_to_cliname(value: str, expected: str):
+    assert field_to_cli_name(value) == expected

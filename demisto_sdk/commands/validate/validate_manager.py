@@ -107,7 +107,7 @@ from demisto_sdk.commands.common.tools import (
     get_api_module_integrations_set, get_content_path, get_file,
     get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
     get_relative_path_from_packs_dir, get_remote_file, get_yaml,
-    open_id_set_file, run_command_os)
+    open_id_set_file, print_warning, run_command_os)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 SKIPPED_FILES = ['CommonServerPython.py', 'CommonServerUserPython.py', 'demistomock.py']

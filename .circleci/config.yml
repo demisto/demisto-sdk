@@ -58,6 +58,12 @@ references:
     install_node_ci: &install_node_ci
       - node/install-packages:
           cache-version: << pipeline.parameters.cache-version >>
+      - run:
+          name: I HATE EVERYTHING
+          command: |
+            npm list
+            npm ci
+            npm list
 
     install_poetry: &install_poetry
       - run:

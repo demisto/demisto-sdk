@@ -58,12 +58,6 @@ references:
     install_node_ci: &install_node_ci
       - node/install-packages:
           cache-version: << pipeline.parameters.cache-version >>
-      - run:
-          name: I HATE EVERYTHING
-          command: |
-            npm list
-            npm ci
-            npm list
 
     install_poetry: &install_poetry
       - run:
@@ -122,6 +116,12 @@ jobs:
             pkg-manager: "poetry"
             cache-version: << pipeline.parameters.cache-version >>
         - <<: *install_node_ci
+        - run:
+            name: I HATE EVERYTHING
+            command: |
+              npm list
+              npm ci
+              npm list
         - run:
             name: pytest
             no_output_timeout: 15m

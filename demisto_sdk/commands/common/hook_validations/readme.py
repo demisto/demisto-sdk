@@ -671,8 +671,7 @@ class ReadMeValidator(BaseValidator):
             True if related words does not exist in the README content, and False if it does.
         """
         is_valid = True
-        invalid_lines = self.check_readme_content_contain_text(text_list=['BSD', 'MIT', 'Copyright', 'proprietary'],
-                                                               to_split=True)
+        invalid_lines = self.check_readme_content_contain_text(text_list=['BSD', 'MIT', 'Copyright', 'proprietary'], to_split=True)
 
         if invalid_lines:
             error_message, error_code = Errors.copyright_section_in_readme_error(invalid_lines)

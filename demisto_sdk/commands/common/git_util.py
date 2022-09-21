@@ -461,7 +461,7 @@ class GitUtil:
             else:
                 branch = self.find_primary_branch(repo=self.repo)
                 if not branch:
-                    raise Exception("Unable to find main or master branch from current working directory - aborting.")
+                    pass
         return remote, branch
 
     def get_current_git_branch_or_hash(self) -> str:

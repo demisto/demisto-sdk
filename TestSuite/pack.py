@@ -657,7 +657,7 @@ class Pack:
         self.triggers.append(trigger)
         return trigger
 
-    def create_agent_config(self, name, content: dict = {}) -> Trigger:
-        agent_config = AgentConfig(name, self._agent_configs_path, content)
+    def create_agent_config(self, name, json_content: dict = {}, yaml_content: dict = {}) -> AgentConfig:
+        agent_config = AgentConfig(name, self._agent_configs_path, json_content, yaml_content)
         self.agent_configs.append(agent_config)
         return agent_config

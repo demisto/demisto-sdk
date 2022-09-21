@@ -221,6 +221,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.PARSING_RULE.value: PARSING_RULES_DIR,
     FileType.MODELING_RULE.value: MODELING_RULES_DIR,
     FileType.WIZARD.value: WIZARDS_DIR,
+    FileType.AGENT_CONFIG.value: AGENT_CONFIG_DIR
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -645,6 +646,7 @@ INTEGRATION_PREFIX = 'integration'
 SCRIPT_PREFIX = 'script'
 PARSING_RULE_PREFIX = 'parsingrule'
 MODELING_RULE_PREFIX = 'modelingrule'
+AGENT_CONFIG_PREFIX = 'agentconfig'
 
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
@@ -1110,6 +1112,7 @@ DIR_TO_PREFIX = {
     'Scripts': SCRIPT_PREFIX,
     'ModelingRules': MODELING_RULE_PREFIX,
     'ParsingRules': PARSING_RULE_PREFIX,
+    'AgentConfigs': AGENT_CONFIG_PREFIX
 }
 
 ENTITY_NAME_SEPARATORS = [' ', '_', '-']

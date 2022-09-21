@@ -632,7 +632,7 @@ class ValidateManager:
                         ReadMeValidator.is_docker_available():  # shows warning message
                     return True
                 ReadMeValidator.add_node_env_vars()
-                with ReadMeValidator.start_mdx_server():
+                with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):
                     return self.validate_readme(file_path, pack_error_ignore_list)
             return self.validate_readme(file_path, pack_error_ignore_list)
 

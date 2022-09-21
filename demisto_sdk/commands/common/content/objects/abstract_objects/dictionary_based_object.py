@@ -75,7 +75,7 @@ class DictionaryBasedObject(GeneralObject):
             return as_dict.get('global_rule_id')
         elif 'trigger_id' in as_dict.keys():
             return as_dict.get('trigger_id')
-        elif 'content_global_id' in as_dict.keys() and 'profile_type' in as_dict.keys() and 'yaml_template' in as_dict.keys():
+        elif 'content_global_id' in as_dict.keys():
             return as_dict.get('content_global_id')
         else:
             return as_dict.get('id')

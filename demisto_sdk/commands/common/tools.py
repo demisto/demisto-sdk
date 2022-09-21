@@ -1464,6 +1464,9 @@ def find_type(
         if 'global_rule_id' in _dict:
             return FileType.CORRELATION_RULE
 
+        if 'content_global_id' in _dict:
+            return FileType.AGENT_CONFIG
+
     if file_type == 'json' or path.lower().endswith('.json'):
         if path.lower().endswith('_schema.json'):
             return FileType.MODELING_RULE_SCHEMA

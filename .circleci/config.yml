@@ -175,7 +175,14 @@ jobs:
         - python/install-packages:
             pkg-manager: "poetry"
             cache-version: << pipeline.parameters.cache-version >>
+
         - <<: *install_node_ci
+        - run:
+            name: I HATE EVERYTHING
+            command: |
+              cd content
+              npm ci
+              npm list
         - run:
             name: pytest - graph
             no_output_timeout: 15m

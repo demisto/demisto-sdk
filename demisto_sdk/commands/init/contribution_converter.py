@@ -599,6 +599,8 @@ class ContributionConverter:
             for index in range(len(lines)):
                 previous_line = lines[index - 1] if index > 0 else ""
                 if template_text in lines[index] or previous_line.startswith(new_entity_identifier):
+                    # when contributing a new entity to existing pack, the release notes will look something like that:
+                    # "##### New: entity name". The following code will extract the entity name in each case.
                     if previous_line.startswith(new_entity_identifier):
                         template_entity = previous_line.lstrip(new_entity_identifier).rstrip('\n')
                     else:

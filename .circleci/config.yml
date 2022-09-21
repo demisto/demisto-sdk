@@ -119,7 +119,7 @@ jobs:
         - run:
             name: I HATE EVERYTHING
             command: |
-              npm list
+              cd content
               npm ci
               npm list
         - run:
@@ -270,7 +270,6 @@ jobs:
             name: I HATE EVERYTHING
             command: |
               cd content
-              npm list
               npm ci
               npm list
         - run:

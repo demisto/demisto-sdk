@@ -180,7 +180,6 @@ jobs:
         - run:
             name: I HATE EVERYTHING
             command: |
-              cd content
               npm ci
               npm list
         - run:

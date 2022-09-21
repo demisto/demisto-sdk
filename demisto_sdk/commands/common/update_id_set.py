@@ -1301,7 +1301,7 @@ def get_correlation_rule_data(path: str, packs: Dict[str, Dict] = None):
 def get_agent_config_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
 
-    id_ = json_data.get('id')
+    id_ = json_data.get('content_global_id')
     name = json_data.get('name')
     display_name = get_display_name(path, json_data)
     fromversion = json_data.get('fromVersion')

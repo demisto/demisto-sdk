@@ -257,6 +257,7 @@ jobs:
         - run:
             name: I HATE EVERYTHING
             command: |
+              cd content
               npm list
               npm ci
               npm list

@@ -1,9 +1,7 @@
 import logging
 import os
 import subprocess
-from abc import abstractmethod
 from contextlib import contextmanager
-from multiprocessing import Value
 from pathlib import Path
 from typing import Callable, Optional
 
@@ -28,7 +26,6 @@ def server_script_path():
     return Path(__file__).parent.parent / 'common' / _SERVER_SCRIPT_NAME
 
 
-@staticmethod
 @contextmanager
 def start_docker_MDX_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None):
     logging.info('Starting docker mdx server')
@@ -71,7 +68,6 @@ def stop_docker_container(container):
         container.stop()  # type: ignore
 
 
-@staticmethod
 @contextmanager
 def start_local_MDX_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None):
     process = subprocess.Popen(['node', str(server_script_path())], stdout=subprocess.PIPE, text=True)

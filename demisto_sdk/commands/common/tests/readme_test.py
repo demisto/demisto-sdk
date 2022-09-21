@@ -15,7 +15,7 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.MDXServer import (DEMISTO_DEPS_DOCKER_NAME,
-                                                   LocalMDXServer)
+                                                   start_local_MDX_server)
 from TestSuite.test_tools import ChangeCWD
 
 VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'
@@ -66,11 +66,9 @@ def test_local_server_up_and_down():
         pytest.skip('skipping mdx server test. ' + MDX_SKIP_NPM_MESSAGE)
         return
 
-    with LocalMDXServer() as server:
-        assert demisto_sdk.commands.common.MDXServer._MDX_SERVER_PROCESS
-        assert server.is_started()
+    with start_local_MDX_server() as started:
+        assert started
         assert_successful_mdx_call()
-    assert not demisto_sdk.commands.common.MDXServer._MDX_SERVER_PROCESS
 
 
 def assert_successful_mdx_call():
@@ -105,14 +103,10 @@ def test_local_server_reentrant():
     if not valid:
         pytest.skip('skipping mdx server test. ' + MDX_SKIP_NPM_MESSAGE)
         return
-    with LocalMDXServer():
-        with LocalMDXServer():
-            assert demisto_sdk.commands.common.MDXServer._MDX_SERVER_PROCESS
+    with start_local_MDX_server():
+        if start_local_MDX_server():
             assert_successful_mdx_call()
-            assert demisto_sdk.commands.common.MDXServer._MDX_SERVER_PROCESS
-
         assert_successful_mdx_call()
-    assert not demisto_sdk.commands.common.MDXServer._MDX_SERVER_PROCESS
 
 
 def test_are_modules_installed_for_verify_false_res(tmp_path):

@@ -28,15 +28,13 @@ from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator, error_codes)
-from demisto_sdk.commands.common.MDXServer import (DockerMDXServer,
-                                                   LocalMDXServer)
+from demisto_sdk.commands.common.MDXServer import (start_docker_MDX_server,
+                                                   start_local_MDX_server)
 from demisto_sdk.commands.common.tools import (
     compare_context_path_in_yml_and_readme, get_content_path,
     get_url_with_retries, get_yaml, get_yml_paths_in_dir, print_warning,
     run_command_os)
-from demisto_sdk.commands.lint.docker_helper import (Docker,
-                                                     init_global_docker_client)
-from demisto_sdk.commands.lint.helpers import stream_docker_container_output
+from demisto_sdk.commands.lint.docker_helper import init_global_docker_client
 
 json = JSON_Handler()
 
@@ -176,24 +174,25 @@ class ReadMeValidator(BaseValidator):
         return True
 
     def mdx_verify_server(self) -> bool:
-        with ReadMeValidator.start_mdx_server(self.handle_error, str(self.file_path)) as server:
-            if not server.is_started():
+        server_started = ReadMeValidator.start_mdx_server(handle_error=self.handle_error,
+                                                          file_path=str(self.file_path))
+        if not server_started:
+            return False
+        readme_content = self.fix_mdx()
+        retry = Retry(total=2)
+        adapter = HTTPAdapter(max_retries=retry)
+        session = requests.Session()
+        session.mount('http://', adapter)
+        response = session.request(
+            'POST',
+            'http://localhost:6161',
+            data=readme_content.encode('utf-8'),
+            timeout=20
+        )
+        if response.status_code != 200:
+            error_message, error_code = Errors.readme_error(response.text)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
-            readme_content = self.fix_mdx()
-            retry = Retry(total=2)
-            adapter = HTTPAdapter(max_retries=retry)
-            session = requests.Session()
-            session.mount('http://', adapter)
-            response = session.request(
-                'POST',
-                'http://localhost:6161',
-                data=readme_content.encode('utf-8'),
-                timeout=20
-            )
-            if response.status_code != 200:
-                error_message, error_code = Errors.readme_error(response.text)
-                if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    return False
         return True
 
     def is_mdx_file(self) -> bool:
@@ -686,9 +685,9 @@ class ReadMeValidator(BaseValidator):
     def start_mdx_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None):
         with ReadMeValidator._MDX_SERVER_LOCK:
             if ReadMeValidator.are_modules_installed_for_verify(get_content_path()):
-                return LocalMDXServer(handle_error, file_path)
+                return start_local_MDX_server(handle_error, file_path)
             elif ReadMeValidator.is_docker_available():
-                return DockerMDXServer(handle_error, file_path)
+                return start_docker_MDX_server(handle_error, file_path)
 
             class NullContextManager(object):
                 def __init__(self):

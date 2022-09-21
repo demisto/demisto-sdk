@@ -255,6 +255,12 @@ jobs:
         - <<: *install_build_dependencies
         - <<: *install_node_ci
         - run:
+            name: I HATE EVERYTHING
+            command: |
+              npm list
+              npm ci
+              npm list
+        - run:
             name: Set Up & Create Id Set
             when: always
             environment:

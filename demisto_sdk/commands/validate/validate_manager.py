@@ -381,7 +381,7 @@ class ValidateManager:
 
         ReadMeValidator.add_node_env_vars()
         if self.is_possible_validate_readme:
-            with ReadMeValidator.start_mdx_server():
+            with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):
                 return self.validate_packs(all_packs, all_packs_valid, count, num_of_packs)
         else:
             return self.validate_packs(all_packs, all_packs_valid, count, num_of_packs)

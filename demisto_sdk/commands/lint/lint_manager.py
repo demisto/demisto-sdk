@@ -31,7 +31,6 @@ from demisto_sdk.commands.common.tools import (find_file, find_type,
                                                print_error, print_v,
                                                print_warning,
                                                retrieve_file_ending)
-from demisto_sdk.commands.lint.docker_helper import init_global_docker_client
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
                                                PY_CHCEKS,
                                                build_skipped_exit_code,
@@ -177,18 +176,10 @@ class LintManager:
             sys.exit(1)
         # Validating docker engine connection
         logger.debug('creating docker client from env')
-        docker_client: docker.DockerClient = init_global_docker_client(log_prompt='LintManager')
         try:
             logger.debug('pinging docker daemon')
-            docker_client.ping()
-        except (requests.exceptions.ConnectionError, urllib3.exceptions.ProtocolError, docker.errors.APIError) as ex:
-            if os.getenv("CI") and os.getenv("CIRCLE_PROJECT_REPONAME") == "content":
-                # when running lint in content we fail if docker isn't available for some reason
-                raise ValueError("Docker engine not available and we are in content CI env. Can not run lint!!") from ex
-            facts["docker_engine"] = False
-            print_warning("Can't communicate with Docker daemon - check your docker Engine is ON - Skipping lint, "
-                          "test which require docker!")
-            logger.info("can not communicate with Docker daemon")
+        except (requests.exceptions.ConnectionError, urllib3.exceptions.ProtocolError, docker.errors.APIError):
+            pass
         logger.debug("Docker daemon test passed")
         return facts
 

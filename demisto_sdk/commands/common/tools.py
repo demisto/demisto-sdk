@@ -1535,7 +1535,7 @@ def find_type(
         if 'trigger_id' in _dict:
             return FileType.TRIGGER
 
-        if 'profile_type' in _dict and 'yml' in _dict:
+        if 'profile_type' in _dict and 'yaml_template' in _dict:
             return FileType.AGENT_CONFIG
 
         # When using it for all files validation- sometimes 'id' can be integer

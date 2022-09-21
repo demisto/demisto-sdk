@@ -180,7 +180,7 @@ def test_create_id_set_flow(repo, mocker):
     assert set(id_set_content.keys()) == set(ID_SET_ENTITIES + ['Packs'])  # the test is not checking the right entities
     for id_set_entity in ID_SET_ENTITIES:
         if id_set_entity in ['ParsingRules', 'ModelingRules', 'CorrelationRules',
-                             'XSIAMDashboards', 'XSIAMReports', 'Triggers']:
+                             'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'AgentConfigs']:
             continue
         entity_content_in_id_set = id_set_content.get(id_set_entity)
         assert entity_content_in_id_set, f'ID set for {id_set_entity} is empty'

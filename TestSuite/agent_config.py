@@ -17,8 +17,9 @@ class AgentConfig(JSONBased):
 
     def create_default_agent_config(self):
         self.write_json({
-            'id': self.name,
-            'name': self.name,
-            'profile_type': 'profile_type_test',
-            'yaml': 'yaml_test'
+            "content_global_id": self.name,
+            "name": self.name,
+            "os_type": "os_type_test",
+            "profile_type": "profile_type_test",
+            "yaml_template": 'yaml_test'
         })

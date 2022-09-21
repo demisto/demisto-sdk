@@ -3082,10 +3082,12 @@ class TestAgentConfigs:
             - Verify result as expeted.
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
-        agent_config = pack.create_agent_config("agent_config_name", {"id": "agent_config_id",
+        agent_config = pack.create_agent_config("agent_config_name", {"content_global_id": "agent_config_id",
                                                                       "name": "agent_config_name",
-                                                                      "profile_type": 'profile_type_test',
-                                                                      "yaml": "yaml_test"})
+                                                                      "os_type": "os_type_test",
+                                                                      "profile_type": "profile_type_test",
+                                                                      "yaml_template": 'yaml_test'
+                                                                      })
         res = process_general_items(agent_config.path, {pack.name: {}},
                                     MarketplaceVersions.MarketplaceV2.value, True, (FileType.AGENT_CONFIG,),
                                     get_agent_config_data)

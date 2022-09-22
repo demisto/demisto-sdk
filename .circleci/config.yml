@@ -260,11 +260,8 @@ jobs:
         - attach_workspace:
             at: ~/project
         - <<: *install_build_dependencies
-        - run:
-            name: cd content
-            command: |
-              cd content
         - <<: *install_node_ci
+            app-dir: content
         - run:
             name: Set Up & Create Id Set
             when: always
@@ -272,6 +269,7 @@ jobs:
               CI_COMMIT_BRANCH: "master"
             command: |
               source $(poetry env info --path)/bin/activate
+              cd content
               demisto-sdk -v
               demisto-sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
         - run:

@@ -114,9 +114,9 @@ class TestModule:
     @staticmethod
     def get_client_init_args(client_ast: ast_mod.ClassDef):
         global logger
-        for statement in client_ast.body:
-            if 'name' in statement._fields and statement.name == '__init__':
-                return statement.args.args
+        for func in client_ast.body:
+            if func.name == '__init__':
+                return func.args.args
         logger.debug('No init function was found in Client class.')
         return None
 

@@ -72,7 +72,7 @@ class ContentGitRepo:
         else:
             logging.debug('Cloning content repo')
             self.run_command("git clone --depth 1 https://github.com/demisto/content.git", cwd=tmpdir)
-        self.run_command(f'cd {self.content} && npm install')
+        self.run_command(f'npm install')
 
     def __del__(self):
         """

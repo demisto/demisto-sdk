@@ -157,6 +157,7 @@ class FileType(str, Enum):
     SECRET_IGNORE = '.secrets-ignore'
     DOC_FILE = 'doc_files'
     AGENT_CONFIG = 'agentconfig'
+    AGENT_CONFIG_YML = 'agentconfig'
 
 
 RN_HEADER_BY_FILE_TYPE = {

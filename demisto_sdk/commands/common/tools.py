@@ -1381,7 +1381,7 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.SCRIPT
 
         elif 'AgentConfigs' in path.parts:
-            return FileType.AGENT_CONFIG
+            return FileType.AGENT_CONFIG_YML
 
     elif path.name == FileType.PACK_IGNORE:
         return FileType.PACK_IGNORE

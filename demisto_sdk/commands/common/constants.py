@@ -149,6 +149,7 @@ class FileType(str, Enum):
     XSIAM_DASHBOARD = 'xsiamdashboard'
     XSIAM_DASHBOARD_IMAGE = 'xsiamdashboardimage'
     XSIAM_REPORT = 'xsiamreport'
+    XSIAM_REPORT_IMAGE = 'xsiamreportimage'
     TRIGGER = 'trigger'
     WIZARD = 'wizard'
     PACK_IGNORE = '.pack-ignore'

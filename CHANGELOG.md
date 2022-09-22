@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Added support for XSIAM Report preview image.
+
 ## 1.7.5
 
 * Fixed an issue where the **upload** command did not work with the CommonServerUserPython package.

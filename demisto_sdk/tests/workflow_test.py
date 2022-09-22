@@ -341,6 +341,5 @@ def test_workflow_by_sequence(function: Callable, monkeypatch: MonkeyPatch):
             * lint -g --no-test
             * validate -g
     """
-    ReadMeValidator.add_node_env_vars()
     global content_git_repo
     function(content_git_repo, monkeypatch)

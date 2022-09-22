@@ -1639,6 +1639,7 @@ def process_general_items(file_path: str, packs: Dict[str, Dict], marketplace: s
     try:
         if os.path.isfile(file_path):
             item_type = find_type(file_path)
+            print(f"BINAT 1: file_path = {file_path}, item_type = {item_type}")
             if item_type in expected_file_types:
                 if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs, item_type=item_type):
                     return [], excluded_items_from_id_set

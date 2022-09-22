@@ -1422,6 +1422,7 @@ def find_type(
         FileType: string representing of the content file type, None otherwise.
     """
     type_by_path = find_type_by_path(path)
+    print(f"BINAT: path = {path}, type_by_path = {type_by_path}")
     if type_by_path:
         return type_by_path
     try:

@@ -2,7 +2,6 @@ import glob
 import io
 import os
 import sys
-import time
 
 import pytest
 import requests
@@ -14,8 +13,7 @@ import demisto_sdk
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.MDXServer import (DEMISTO_DEPS_DOCKER_NAME,
-                                                   start_local_MDX_server)
+from demisto_sdk.commands.common.MDXServer import start_local_MDX_server
 from TestSuite.test_tools import ChangeCWD
 
 VALID_MD = f'{git_path()}/demisto_sdk/tests/test_files/README-valid.md'

@@ -10,4 +10,4 @@ XSIAM_REPORT_IMAGE_FILE = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / 'XSIAMRep
 
 def test_prefix():
     obj = XSIAMReportImage(XSIAM_REPORT_IMAGE_FILE)
-    assert obj.normalize_file_name() == f'external-xsiamreport-{XSIAM_REPORT_IMAGE_FILE.name}'
+    assert obj.normalize_file_name() == f'{XSIAM_REPORT_IMAGE_FILE.name}'

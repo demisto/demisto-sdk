@@ -10,4 +10,4 @@ XSIAM_DASHBOARD_IMAGE_FILE = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / 'XSIAM
 
 def test_prefix():
     obj = XSIAMDashboardImage(XSIAM_DASHBOARD_IMAGE_FILE)
-    assert obj.normalize_file_name() == f'external-xsiamdashboard-{XSIAM_DASHBOARD_IMAGE_FILE.name}'
+    assert obj.normalize_file_name() == f'{XSIAM_DASHBOARD_IMAGE_FILE.name}'

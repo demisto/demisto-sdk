@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Fixed parsing of initialization arguments of client classes in the **generate-unit-tests** command.
+
 ## 1.7.5
 
 * Fixed an issue where the **upload** command did not work with the CommonServerUserPython package.

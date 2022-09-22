@@ -131,7 +131,6 @@ jobs:
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/init\/templates\S*\.py//g')
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/tests\/integration_tests\S*\.py//g')
               TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto_sdk\/commands\/content_graph\/tests\S*\.py//g')
-              TEST_FILES=$(echo "$TEST_FILES" | sed -E 's/\S*demisto-sdk\/tests\/workflow_test.py//g')
 
               TEST_FILES=$(echo "$TEST_FILES" | circleci tests split --split-by=timings)
 
@@ -180,19 +179,8 @@ jobs:
 
               mkdir graph-test-results
               poetry run pytest -v --junitxml=graph-test-results/junit.xml $TEST_FILES
-        - run:
-            name: pytest - workflow
-            no_output_timeout: 15m
-            command: |
-              shopt -u globstar
-              TEST_FILES=$(circleci tests glob "demisto_sdk/tests/workflow_test.py")
-
-              mkdir workflow-test-results
-              poetry run pytest -v --junitxml=workflow-test-results/junit.xml $TEST_FILES
         - store_test_results:
             path: graph-test-results
-        - store_test_results:
-            path: workflow-test-results
         - run:
             name: pytest - integrations
             no_output_timeout: 15m

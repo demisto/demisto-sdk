@@ -1602,7 +1602,7 @@ def process_layoutscontainers(file_path: str, packs: Dict[str, Dict], marketplac
 
 
 def process_general_items(file_path: str, packs: Dict[str, Dict], marketplace: str, print_logs: bool,
-                          expected_file_types: Tuple[FileType], data_extraction_func: Callable) -> Tuple[list, dict]:
+                          expected_file_types: Tuple[FileType], data_extraction_func: Callable, suffix: str = 'yml') -> Tuple[list, dict]:
     """
     Process a general item file.
     expected file in one of the following:
@@ -1639,7 +1639,6 @@ def process_general_items(file_path: str, packs: Dict[str, Dict], marketplace: s
     try:
         if os.path.isfile(file_path):
             item_type = find_type(file_path)
-            print(f"BINAT 1: file_path = {file_path}, item_type = {item_type}")
             if item_type in expected_file_types:
                 if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs, item_type=item_type):
                     return [], excluded_items_from_id_set
@@ -1648,7 +1647,7 @@ def process_general_items(file_path: str, packs: Dict[str, Dict], marketplace: s
                 res.append(data_extraction_func(file_path, packs=packs))
         else:
             package_name = os.path.basename(file_path)
-            file_path = os.path.join(file_path, '{}.yml'.format(package_name))
+            file_path = os.path.join(file_path, f'{package_name}.{suffix}')
             item_type = find_type(file_path)
             if os.path.isfile(file_path) and item_type in expected_file_types:
                 if should_skip_item_by_mp(file_path, marketplace, excluded_items_from_id_set, packs=packs, print_logs=print_logs, item_type=item_type):
@@ -2712,6 +2711,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
                                                                        expected_file_types=(
                                                                            FileType.AGENT_CONFIG),
                                                                        data_extraction_func=get_agent_config_data,
+                                                                       suffix='json'
                                                                        ),
                                                                get_general_paths(AGENT_CONFIG_DIR,
                                                                                  pack_to_create)):

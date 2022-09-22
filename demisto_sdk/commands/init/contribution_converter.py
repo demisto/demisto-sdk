@@ -589,6 +589,7 @@ class ContributionConverter:
             rn_path: path to the rn file created.
         """
         entity_identifier = '##### '
+        new_entity_identifier = "##### New: "
         template_text = '%%UPDATE_RN%%'
 
         rn_per_content_item = self.format_user_input()
@@ -596,8 +597,14 @@ class ContributionConverter:
         with open(rn_path, 'r+') as rn_file:
             lines = rn_file.readlines()
             for index in range(len(lines)):
-                if template_text in lines[index]:
-                    template_entity = lines[index - 1].lstrip(entity_identifier).rstrip('\n')
+                previous_line = lines[index - 1] if index > 0 else ""
+                if template_text in lines[index] or previous_line.startswith(new_entity_identifier):
+                    # when contributing a new entity to existing pack, the release notes will look something like that:
+                    # "##### New: entity name". The following code will extract the entity name in each case.
+                    if previous_line.startswith(new_entity_identifier):
+                        template_entity = previous_line.lstrip(new_entity_identifier).rstrip('\n')
+                    else:
+                        template_entity = previous_line.lstrip(entity_identifier).rstrip('\n')
                     curr_content_items = rn_per_content_item.get(template_entity)
                     if curr_content_items:
                         lines[index] = curr_content_items

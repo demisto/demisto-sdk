@@ -72,7 +72,6 @@ class ContentGitRepo:
         else:
             logging.debug('Cloning content repo')
             self.run_command("git clone --depth 1 https://github.com/demisto/content.git", cwd=tmpdir)
-        self.run_command(f'npm install')
 
     def __del__(self):
         """
@@ -204,6 +203,7 @@ def function_setup():
         content_git_repo = ContentGitRepo()
     # Function setup
     content_git_repo.git_cleanup()
+    content_git_repo.run_command("npm install")
     content_git_repo.create_branch()
 
 

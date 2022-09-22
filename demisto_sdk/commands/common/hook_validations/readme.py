@@ -326,7 +326,7 @@ class ReadMeValidator(BaseValidator):
         # Check node exist
         stdout, stderr, exit_code = run_command_os('node -v', cwd=content_path)
         if exit_code:
-            print_warning(f'There is no node installed on the machine, Test Skipped, error - {stderr}, {stdout}')
+            print_warning(f'There is no node installed on the machine, error - {stderr}, {stdout}')
             valid = False
         else:
             # Check npm modules exsits

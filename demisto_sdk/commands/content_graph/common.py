@@ -95,6 +95,8 @@ class ContentType(str, enum.Enum):
             return 'layoutscontainer'
         elif self == ContentType.PREPROCESS_RULE:
             return 'pre-process-rule'
+        elif self == ContentType.TEST_PLAYBOOK:
+            return ContentType.PLAYBOOK.server_name
         return self.lower()
 
     @staticmethod

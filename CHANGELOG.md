@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Added the capability to run the MDX server in a docker container for environments without node.
+
 ## 1.7.5
 
 * Fixed an issue where the **upload** command did not work with the CommonServerUserPython package.

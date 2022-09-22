@@ -1380,6 +1380,9 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             # Packs/myPack/Scripts/myScript/myScript.yml
             return FileType.SCRIPT
 
+        elif 'AgentConfigs' in path.parts:
+            return FileType.AGENT_CONFIG
+
     elif path.name == FileType.PACK_IGNORE:
         return FileType.PACK_IGNORE
 
@@ -1463,9 +1466,6 @@ def find_type(
 
         if 'global_rule_id' in _dict:
             return FileType.CORRELATION_RULE
-
-        if 'content_global_id' in _dict:
-            return FileType.AGENT_CONFIG
 
     if file_type == 'json' or path.lower().endswith('.json'):
         if path.lower().endswith('_schema.json'):

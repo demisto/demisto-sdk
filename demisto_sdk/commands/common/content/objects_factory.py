@@ -101,6 +101,8 @@ def path_to_pack_object(path: Union[Path, str]) -> GeneralObject:
     # File name start with doc-*
     if not object_type and path.name.startswith('doc-'):
         object_type = Documentation
+    if not object_type and 'AgentConfigs' in path.parts:
+        object_type = AgentConfig
     # find_type handling
     if not object_type:
         file_type = find_type(str(path))

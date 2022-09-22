@@ -117,12 +117,6 @@ jobs:
             cache-version: << pipeline.parameters.cache-version >>
         - <<: *install_node_ci
         - run:
-            name: I HATE EVERYTHING
-            command: |
-              cd content
-              npm ci
-              npm list
-        - run:
             name: pytest
             no_output_timeout: 15m
             command: |
@@ -177,11 +171,6 @@ jobs:
             cache-version: << pipeline.parameters.cache-version >>
 
         - <<: *install_node_ci
-        - run:
-            name: I HATE EVERYTHING
-            command: |
-              npm ci
-              npm list
         - run:
             name: pytest - graph
             no_output_timeout: 15m
@@ -271,13 +260,11 @@ jobs:
         - attach_workspace:
             at: ~/project
         - <<: *install_build_dependencies
-        - <<: *install_node_ci
         - run:
-            name: I HATE EVERYTHING
+            name: cd content
             command: |
               cd content
-              npm ci
-              npm list
+        - <<: *install_node_ci
         - run:
             name: Set Up & Create Id Set
             when: always
@@ -285,7 +272,6 @@ jobs:
               CI_COMMIT_BRANCH: "master"
             command: |
               source $(poetry env info --path)/bin/activate
-              cd content
               demisto-sdk -v
               demisto-sdk create-id-set -o ./Tests/id_set.json --fail-duplicates
         - run:

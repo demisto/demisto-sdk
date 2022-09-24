@@ -3090,7 +3090,7 @@ class TestAgentConfigs:
                                                                       })
         res = process_general_items(agent_config.path, {pack.name: {}},
                                     MarketplaceVersions.MarketplaceV2.value, True, (FileType.AGENT_CONFIG,),
-                                    get_agent_config_data)
+                                    get_agent_config_data, 'json')
 
         captured = capsys.readouterr()
         agent_config_result = res[0][0]['agent_config_id']

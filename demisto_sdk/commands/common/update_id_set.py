@@ -1630,6 +1630,7 @@ def process_general_items(file_path: str, packs: Dict[str, Dict], marketplace: s
         print_logs: Whether to print logs to stdout
         expected_file_types: specific file type to parse, will ignore the rest
         data_extraction_func: a function that given a file path will return an id-set data dict.
+        suffix: specific suffix of the desired file.
 
     Returns:
         a list of item data, a dict of excluded items from the id set

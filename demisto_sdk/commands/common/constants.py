@@ -231,7 +231,8 @@ SIEM_ONLY_ENTITIES = [
     FileType.CORRELATION_RULE.value,
     FileType.XSIAM_DASHBOARD.value,
     FileType.XSIAM_REPORT.value,
-    FileType.TRIGGER.value
+    FileType.TRIGGER.value,
+    FileType.AGENT_CONFIG.value,
 ]
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
@@ -265,6 +266,7 @@ CONTENT_ENTITIES_DIRS = [
     JOBS_DIR,
     WIZARDS_DIR,
     MODELING_RULES_DIR,
+    AGENT_CONFIG_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -284,6 +286,7 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
     LISTS_DIR,
     JOBS_DIR,
     WIZARDS_DIR,
+    AGENT_CONFIG_DIR,
 ]
 
 DEFAULT_IMAGE_PREFIX = 'data:image/png;base64,'

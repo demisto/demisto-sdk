@@ -2,6 +2,7 @@
 import copy
 import logging
 import os
+import shutil
 import sys
 import tempfile
 from configparser import ConfigParser, MissingSectionHeaderError
@@ -939,24 +940,25 @@ def upload(**kwargs):
     from demisto_sdk.commands.upload.uploader import ConfigFileParser, Uploader
     from demisto_sdk.commands.zip_packs.packs_zipper import (EX_FAIL,
                                                              PacksZipper)
-    if kwargs['zip'] or kwargs['input_config_file']:
-        if kwargs.pop('zip', False):
+    keep_zip = kwargs.pop('keep_zip')
+    is_zip = kwargs.pop('zip', False)
+    config_file_path = kwargs.pop('input_config_file')
+    is_xsiam = kwargs.pop('xsiam', False)
+    if is_zip or config_file_path:
+        if is_zip:
             pack_path = kwargs['input']
-            kwargs.pop('input_config_file')
 
         else:
-            config_file_path = kwargs['input_config_file']
             config_file_to_parse = ConfigFileParser(config_file_path=config_file_path)
             pack_path = config_file_to_parse.parse_file()
             kwargs['detached_files'] = True
-            kwargs.pop('input_config_file')
-        if kwargs.pop('xsiam', False):
+        if is_xsiam:
             marketplace = MarketplaceVersions.MarketplaceV2.value
         else:
             marketplace = MarketplaceVersions.XSOAR.value
         os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
 
-        output_zip_path = kwargs.pop('keep_zip') or tempfile.gettempdir()
+        output_zip_path = keep_zip or tempfile.mkdtemp()
         packs_unifier = PacksZipper(pack_paths=pack_path, output=output_zip_path,
                                     content_version='0.0.0', zip_all=True, quiet_mode=True, marketplace=marketplace)
         packs_zip_path, pack_names = packs_unifier.zip_packs()
@@ -965,14 +967,12 @@ def upload(**kwargs):
 
         kwargs['input'] = packs_zip_path
         kwargs['pack_names'] = pack_names
-    else:
-        kwargs.pop('zip')
-        kwargs.pop('keep_zip')
-        kwargs.pop('input_config_file')
-        kwargs.pop('xsiam', None)
 
     check_configuration_file('upload', kwargs)
-    return Uploader(**kwargs).upload()
+    upload_result = Uploader(**kwargs).upload()
+    if (is_zip or config_file_path) and not keep_zip:
+        shutil.rmtree(output_zip_path, ignore_errors=True)
+    return upload_result
 
 
 # ====================== download ====================== #
@@ -1011,6 +1011,10 @@ def upload(**kwargs):
                                "Automation, Classifier, Mapper]",
     type=click.Choice(['IncidentType', 'IndicatorType', 'Field', 'Layout', 'Playbook', 'Automation', 'Classifier',
                        'Mapper'], case_sensitive=False))
+@click.option(
+    "--no-code-formatting", help="Use this flag to avoid running Autopep8 and isort on Python files.",
+    is_flag=True, default=False
+)
 def download(**kwargs):
     """Download custom content from Demisto instance.
     DEMISTO_BASE_URL environment variable should contain the Demisto server base URL.
@@ -2270,6 +2274,38 @@ def error_code(config, **kwargs):
     result = generate_error_code_information(kwargs.get('input'))
 
     sys.exit(result)
+
+
+# ====================== create-content-graph ====================== #
+@main.command(
+    hidden=True,
+)
+@click.help_option(
+    '-h', '--help'
+)
+@click.option('-ud', '--use-docker', is_flag=True, help="Use docker service to run the content graph")
+@click.option('-us', '--use-existing', is_flag=True, help="Use existing service", default=False)
+@click.option('-o', '--output-file', type=click.Path(), help="dump file output", default=None)
+@click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
+              type=click.IntRange(0, 3, clamp=True), default=2, show_default=True)
+@click.option('-q', "--quiet", is_flag=True, help="Quiet output, only output results in the end")
+@click.option("-lp", "--log-path", help="Path to store all levels of logs",
+              type=click.Path(resolve_path=True))
+def create_content_graph(use_docker: bool = False, use_existing: bool = False, output_file: Path = None, **kwargs):
+    from demisto_sdk.commands.common.logger import logging_setup
+    from demisto_sdk.commands.content_graph.content_graph_commands import \
+        create_content_graph as create_content_graph_command
+    from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import \
+        Neo4jContentGraphInterface
+    logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
+                  quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
+                  log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
+    with Neo4jContentGraphInterface(
+        start_service=not use_existing,
+        output_file=output_file,
+        use_docker=use_docker,
+    ) as content_graph_interface:
+        create_content_graph_command(content_graph_interface)
 
 
 @main.result_callback()

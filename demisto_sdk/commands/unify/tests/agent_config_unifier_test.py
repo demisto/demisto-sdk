@@ -1,8 +1,8 @@
 import json
 import os
 
-from demisto_sdk.commands.unify.agent_config_unifier import AgentConfigUnifier
 from demisto_sdk.commands.common.legacy_git_tools import git_path
+from demisto_sdk.commands.unify.agent_config_unifier import AgentConfigUnifier
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
 
@@ -19,12 +19,15 @@ def test_unify_agent_config():
     Then
     - Ensure Unify agent config works
     """
-    input_path_script = TESTS_DIR + '/test_files/Packs/DummyPack/AgentConfigs/DummyAgentConfig'
-    unifier = AgentConfigUnifier(input_path_script)
+    input_path = TESTS_DIR + '/test_files/Packs/DummyPack/AgentConfigs/DummyAgentConfig'
+    output_path = TESTS_DIR + '/test_files/Packs/DummyPack/AgentConfigs/'
+
+    unifier = AgentConfigUnifier(input=input_path, output=output_path)
     json_files = unifier.unify()
 
+    expected_json_path = TESTS_DIR + '/test_files/Packs/DummyPack/AgentConfigs/agentconfig-DummyAgentConfig.json'
     export_json_path = json_files[0]
-    expected_json_path = TESTS_DIR + '/test_files/Packs/DummyPack/AgentConfigs/DummyAgentConfig/agentconfig-DummyAgentConfig.json'
+
     assert export_json_path == expected_json_path
 
     expected_json_file = {'content_global_id': '1',

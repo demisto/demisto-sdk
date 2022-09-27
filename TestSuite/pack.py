@@ -1,14 +1,15 @@
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from demisto_sdk.commands.common.constants import (CORRELATION_RULES_DIR,
+from demisto_sdk.commands.common.constants import (AGENT_CONFIG_DIR,
+                                                   CORRELATION_RULES_DIR,
                                                    DEFAULT_IMAGE_BASE64,
                                                    MODELING_RULES_DIR,
                                                    PARSING_RULES_DIR,
                                                    TRIGGER_DIR,
                                                    XSIAM_DASHBOARDS_DIR,
-                                                   XSIAM_REPORTS_DIR,
-                                                   AGENT_CONFIG_DIR)
+                                                   XSIAM_REPORTS_DIR)
+from TestSuite.agent_config import AgentConfig
 from TestSuite.correlation_rule import CorrelationRule
 from TestSuite.file import File
 from TestSuite.integration import Integration
@@ -25,7 +26,6 @@ from TestSuite.wizard import Wizard
 from TestSuite.xsiam_dashboard import XSIAMDashboard
 from TestSuite.xsiam_report import XSIAMReport
 from TestSuite.yml import YAML
-from TestSuite.agent_config import AgentConfig
 
 
 class Pack:

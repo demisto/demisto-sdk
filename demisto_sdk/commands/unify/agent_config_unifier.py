@@ -2,14 +2,13 @@ import base64
 import json
 import os
 import sys
+from pathlib import Path
+
 import click
 
-from pathlib import Path
-from typing import Optional
-
 from demisto_sdk.commands.common.constants import DIR_TO_PREFIX
-from demisto_sdk.commands.common.tools import get_yml_paths_in_dir, print_error
 from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.tools import get_yml_paths_in_dir, print_error
 
 UNSUPPORTED_INPUT_ERR_MSG = 'Unsupported input. Please provide: Path to directory of an Agent Config.'
 
@@ -18,8 +17,8 @@ class AgentConfigUnifier:
     def __init__(
         self,
         input: str,
-        output: Optional[Path] = None,
-        dir_name: Optional[str] = 'AgentConfigs',
+        output: Path = None,
+        dir_name: str = 'AgentConfigs',
     ):
         self.input_agent_config = input
 
@@ -56,7 +55,7 @@ class AgentConfigUnifier:
 
         return [str(self.dest_path)]
 
-    def _set_dest_path(self, file_name_suffix: Optional[str] = None,):
+    def _set_dest_path(self, file_name_suffix: str = None,):
         """Sets the target (destination) output path for the unified JSON"""
         package_dir_name = os.path.basename(self.package_path)
         output_filename = '{}-{}.json'.format(DIR_TO_PREFIX[self.dir_name], package_dir_name)

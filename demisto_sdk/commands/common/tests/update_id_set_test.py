@@ -16,8 +16,9 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
     add_item_to_exclusion_dict, does_dict_have_alternative_key,
-    find_duplicates, get_classifier_data, get_correlation_rule_data,
-    get_dashboard_data, get_fields_by_script_argument,
+    find_duplicates, get_agent_config_data, get_classifier_data,
+    get_correlation_rule_data, get_dashboard_data,
+    get_fields_by_script_argument,
     get_filters_and_transformers_from_complex_value,
     get_filters_and_transformers_from_playbook, get_general_data,
     get_generic_field_data, get_generic_module_data, get_generic_type_data,
@@ -29,7 +30,7 @@ from demisto_sdk.commands.common.update_id_set import (
     get_xsiam_report_data, has_duplicate, merge_id_sets, process_general_items,
     process_incident_fields, process_integration, process_jobs,
     process_layoutscontainers, process_script, process_wizards,
-    re_create_id_set, should_skip_item_by_mp, get_agent_config_data)
+    re_create_id_set, should_skip_item_by_mp)
 from TestSuite.utils import IsEqualFunctions
 
 json = JSON_Handler()

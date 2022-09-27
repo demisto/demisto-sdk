@@ -1,11 +1,14 @@
 from typing import List, Optional, Union
-from wcmatch.pathlib import Path
 
 import demisto_client
+from wcmatch.pathlib import Path
 
 import demisto_sdk.commands.common.content.errors as exc
-from demisto_sdk.commands.common.constants import AGENT_CONFIG, FileType, ENTITY_TYPE_TO_DIR
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import JSONContentObject
+from demisto_sdk.commands.common.constants import (AGENT_CONFIG,
+                                                   ENTITY_TYPE_TO_DIR,
+                                                   FileType)
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
+    JSONContentObject
 from demisto_sdk.commands.common.tools import generate_xsiam_normalized_name
 from demisto_sdk.commands.unify.agent_config_unifier import AgentConfigUnifier
 
@@ -32,7 +35,7 @@ class AgentConfig(JSONContentObject):
     def type(self):
         return FileType.AGENT_CONFIG
 
-    def _unify(self, dest_dir: Path) -> List[Path]:
+    def _unify(self, dest_dir: Path = None) -> List[Path]:
         """Unify AgentConfig in destination dir.
 
         Args:
@@ -41,7 +44,7 @@ class AgentConfig(JSONContentObject):
         Returns:
             List[Path]: List of new created files.
         """
-        # Directory configuration - Integrations or Scripts
+
         unify_dir = ENTITY_TYPE_TO_DIR[FileType.AGENT_CONFIG.value]
 
         # Unify step
@@ -55,6 +58,30 @@ class AgentConfig(JSONContentObject):
 
         return [Path(path) for path in created_files]
 
+    def _create_target_dump_dir(self, dest_dir: Optional[Union[Path, str]] = None) -> Path:
+        """Create destination directory, Destination must be valid directory, If not specified dump in
+         path of origin object.
+
+        Args:
+            dest_dir: destination directory to dump object.
+
+        Returns:
+            Path: Destionaion directory.
+
+        Raises:
+            DumpContentObjectError: If not valid directory path - not directory or not exists.
+        """
+        if dest_dir:
+            dest_dir = Path(dest_dir)
+            if dest_dir.exists() and not Path(dest_dir).is_dir():
+                raise exc.ContentDumpError(self, self._path, "Destiantion is not valid directory path")
+            else:
+                dest_dir.mkdir(parents=True, exist_ok=True)
+        else:
+            dest_dir = self._path.parent
+
+        return dest_dir
+
     def dump(self, dest_dir: Optional[Union[Path, str]] = None, unify: bool = True) -> List[Path]:
         """
         Dump AgentConfig.
@@ -66,8 +93,9 @@ class AgentConfig(JSONContentObject):
         Returns:
             List[Path]: Path of new created files.
         """
-        created_files: List[Path] = []
+        dest_dir = self._create_target_dump_dir(dest_dir)
 
+        created_files: List[Path] = []
         # Handling case where object is not unified and dump should be unify.
         if unify:
             # Unify in dest dir.

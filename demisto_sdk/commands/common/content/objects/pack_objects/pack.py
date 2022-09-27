@@ -8,24 +8,25 @@ import regex
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
-    CLASSIFIERS_DIR, CONNECTIONS_DIR, CORRELATION_RULES_DIR, DASHBOARDS_DIR,
-    DEPRECATED_DESC_REGEX, DEPRECATED_NO_REPLACE_DESC_REGEX, DOC_FILES_DIR,
-    GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR,
-    GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR,
-    LAYOUTS_DIR, LISTS_DIR, MODELING_RULES_DIR, PACK_NAME_DEPRECATED_REGEX,
-    PACK_VERIFY_KEY, PARSING_RULES_DIR, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
-    RELEASE_NOTES_DIR, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR,
-    TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR, XSIAM_DASHBOARDS_DIR,
-    XSIAM_REPORTS_DIR, AGENT_CONFIG_DIR, FileType)
+    AGENT_CONFIG_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, CORRELATION_RULES_DIR,
+    DASHBOARDS_DIR, DEPRECATED_DESC_REGEX, DEPRECATED_NO_REPLACE_DESC_REGEX,
+    DOC_FILES_DIR, GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR,
+    GENERIC_MODULES_DIR, GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR,
+    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
+    INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR, MODELING_RULES_DIR,
+    PACK_NAME_DEPRECATED_REGEX, PACK_VERIFY_KEY, PARSING_RULES_DIR,
+    PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, REPORTS_DIR,
+    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR, TRIGGER_DIR, WIDGETS_DIR,
+    WIZARDS_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, FileType)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
-    AgentTool, AuthorImage, Classifier, ClassifierMapper, Connection,
-    Contributors, CorrelationRule, Dashboard, DocFile, GenericDefinition,
-    GenericField, GenericModule, GenericType, IncidentField, IncidentType,
-    IndicatorField, IndicatorType, Integration, Job, LayoutObject, Lists,
-    ModelingRule, OldClassifier, PackIgnore, PackMetaData, ParsingRule,
-    Playbook, PreProcessRule, Readme, ReleaseNote, ReleaseNoteConfig, Report,
-    Script, SecretIgnore, Trigger, Widget, Wizard, XSIAMDashboard, XSIAMReport, AgentConfig)
+    AgentConfig, AgentTool, AuthorImage, Classifier, ClassifierMapper,
+    Connection, Contributors, CorrelationRule, Dashboard, DocFile,
+    GenericDefinition, GenericField, GenericModule, GenericType, IncidentField,
+    IncidentType, IndicatorField, IndicatorType, Integration, Job,
+    LayoutObject, Lists, ModelingRule, OldClassifier, PackIgnore, PackMetaData,
+    ParsingRule, Playbook, PreProcessRule, Readme, ReleaseNote,
+    ReleaseNoteConfig, Report, Script, SecretIgnore, Trigger, Widget, Wizard,
+    XSIAMDashboard, XSIAMReport)
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
 from demisto_sdk.commands.common.tools import (get_demisto_version,

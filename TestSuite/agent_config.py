@@ -30,4 +30,3 @@ class AgentConfig(JSONBased, YAML):
         self.write_dict({
             'test': 'agent config yaml test'
         })
-

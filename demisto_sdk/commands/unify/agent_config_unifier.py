@@ -74,6 +74,6 @@ class AgentConfigUnifier(YAMLUnifier):
             output_data['yaml_template'] = base64.b64encode(yaml_template_file.read().encode(encoding)).decode(encoding)
 
     def _output_json(self, file_data):
-        with open(self.dest_path, mode='w') as dest_file:  # type: ignore
+        with open(self.dest_path, mode='w+') as dest_file:  # type: ignore
             json.dump(file_data, dest_file)
 

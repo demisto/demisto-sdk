@@ -35,4 +35,4 @@ def test_unify_agent_config():
     with open(expected_json_path, 'r') as real_file:
         assert expected_json_file == json.load(real_file)
 
-    #os.remove(expected_json_path)
+    os.remove(expected_json_path)

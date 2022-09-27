@@ -2,7 +2,6 @@ from demisto_sdk.commands.common.content.objects.pack_objects import \
     AgentConfig
 from demisto_sdk.commands.common.content.objects_factory import \
     path_to_pack_object
-from demisto_sdk.commands.common.tools import get_yaml
 
 
 def get_agent_config(pack, name):

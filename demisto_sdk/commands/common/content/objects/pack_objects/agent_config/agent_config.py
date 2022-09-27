@@ -46,7 +46,7 @@ class AgentConfig(JSONContentObject):
         unify_dir = ENTITY_TYPE_TO_DIR[FileType.AGENT_CONFIG.value]
 
         # Unify step
-        unifier = AgentConfigUnifier(input=str(self.path.parent), output=dest_dir, dir_name=unify_dir, force=True)
+        unifier = AgentConfigUnifier(input=str(self.path.parent), output=dest_dir, dir_name=unify_dir)
 
         created_files: List[str] = unifier.unify()
 

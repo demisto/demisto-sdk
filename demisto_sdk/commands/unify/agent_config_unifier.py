@@ -3,36 +3,49 @@ import copy
 import io
 import json
 import os
-from collections import defaultdict
+import sys
+import click
+
 from pathlib import Path
 from typing import Optional
 
-import click
-from ruamel.yaml.scalarstring import FoldedScalarString
+from demisto_sdk.commands.common.constants import DIR_TO_PREFIX
+from demisto_sdk.commands.common.tools import get_yml_paths_in_dir, print_error
+from demisto_sdk.commands.common.errors import Errors
 
-from demisto_sdk.commands.common.constants import SAMPLES_DIR, DIR_TO_PREFIX
-from demisto_sdk.commands.unify.yaml_unifier import YAMLUnifier
+UNSUPPORTED_INPUT_ERR_MSG = 'Unsupported input. Please provide: Path to directory of an Agent Config.'
 
 
-class AgentConfigUnifier(YAMLUnifier):
+class AgentConfigUnifier:
     def __init__(
         self,
         input: str,
-        output: Optional[str] = None,
-        force: bool = False,
+        output: Optional[Path] = None,
         dir_name: Optional[str] = 'AgentConfigs',
-        marketplace: Optional[str] = None,
     ):
         self.input_agent_config = input
 
-        super().__init__(
-            input=input,
-            output=output,
-            force=force,
-            marketplace=marketplace
-        )
+        directory_name = ''
+        input = os.path.abspath(input)
+        if not os.path.isdir(input):
+            print_error(UNSUPPORTED_INPUT_ERR_MSG)
+            sys.exit(1)
+        for optional_dir_name in DIR_TO_PREFIX:
+            if optional_dir_name in input:
+                directory_name = optional_dir_name
+
+        if not directory_name:
+            print_error(UNSUPPORTED_INPUT_ERR_MSG)
+
         if dir_name:
             self.dir_name = dir_name
+
+        self.package_path = input
+        self.package_path = self.package_path.rstrip(os.sep)
+
+        _, self.yml_path = get_yml_paths_in_dir(self.package_path, Errors.no_yml_file(self.package_path))
+
+        self.dest_path = os.path.abspath(output) if output else None
 
     def unify(self):
         click.echo(f'Unifiying {self.package_path}...')

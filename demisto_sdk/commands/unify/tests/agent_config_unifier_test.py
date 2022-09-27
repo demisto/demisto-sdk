@@ -25,7 +25,7 @@ def test_unify_agent_config():
     unifier = AgentConfigUnifier(input=input_path, output=output_path)
     json_files = unifier.unify()
 
-    expected_json_path = TESTS_DIR + '/test_files/Packs/DummyPack/AgentConfigs/agentconfig-DummyAgentConfig.json'
+    expected_json_path = TESTS_DIR + '/test_files/Packs/DummyPack/AgentConfigs/external-agentconfig-DummyAgentConfig.json'
     export_json_path = json_files[0]
 
     assert export_json_path == expected_json_path

@@ -27,21 +27,3 @@ class TestAgentConfig:
         agent_config = get_agent_config(pack, 'agent_config_name')
         obj = AgentConfig(agent_config.agent_config_tmp_path)
         assert obj.path == agent_config.agent_config_tmp_path
-
-    # def test_unify_agent_config(self, pack):
-    #     """
-    #     Given:
-    #     agent config:
-    #     - yml file
-    #     - json file
-    #     When:
-    #      - we want to unify all files to one unified json file.
-    #
-    #      Then:
-    #      - Ensure the json was unified successfully.
-    #     """
-    #     agent_config = get_agent_config(pack, 'agent_config_name')
-    #     obj = AgentConfig(agent_config.agent_config_tmp_path)
-    #     unify_obj = get_yaml(obj._unify(agent_config.agent_config_tmp_path.parent)[0])
-    #     assert unify_obj['schema'] == '{\n    "test_audit_raw": {\n        "name": {\n            "type": "string",\n' \
-    #                                   '            "is_array": false\n        }\n    }\n}'

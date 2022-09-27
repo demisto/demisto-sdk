@@ -45,20 +45,20 @@ class AgentConfigUnifier:
         self.dest_path = os.path.abspath(output) if output else None
 
     def unify(self):
-        click.echo(f'Unifiying {self.package_path}...')
+        click.echo(f'Unifying {self.package_path}...')
         self._set_dest_path()
         output_data = {}
         output_data = self._insert_agent_config()
         self._insert_yaml_template(output_data)
         self._output_json(file_data=output_data)
-        click.secho(f'Successfully created unifyed JSON in {self.dest_path}', fg="green")
+        click.secho(f'Successfully created unified JSON in {self.dest_path}', fg="green")
 
         return [str(self.dest_path)]
 
     def _set_dest_path(self, file_name_suffix: str = None,):
         """Sets the target (destination) output path for the unified JSON"""
         package_dir_name = os.path.basename(self.package_path)
-        output_filename = '{}-{}.json'.format(DIR_TO_PREFIX[self.dir_name], package_dir_name)
+        output_filename = '{}-{}-{}.json'.format('external', DIR_TO_PREFIX[self.dir_name], package_dir_name)
 
         if file_name_suffix:
             # append suffix to output file name
@@ -86,4 +86,3 @@ class AgentConfigUnifier:
     def _output_json(self, file_data):
         with open(self.dest_path, mode='w+') as dest_file:  # type: ignore
             json.dump(file_data, dest_file)
-

@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Added the capability to run the MDX server in a docker container for environments without node.
+* Fixed parsing of initialization arguments of client classes in the **generate-unit-tests** command.
 
 ## 1.7.5
 

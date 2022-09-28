@@ -203,7 +203,10 @@ class ValidateManager:
                                    FileType.DOC_IMAGE,
                                    FileType.MODELING_RULE_SCHEMA,
                                    FileType.XSIAM_DASHBOARD_IMAGE,
-                                   FileType.XSIAM_REPORT_IMAGE,)
+                                   FileType.XSIAM_REPORT_IMAGE,
+                                   FileType.XSIAM_DASHBOARD_IMAGE,
+                                   FileType.AGENT_CONFIG_YML,
+                                   FileType.AGENT_CONFIG,)
 
         self.is_external_repo = is_external_repo
         if is_external_repo:

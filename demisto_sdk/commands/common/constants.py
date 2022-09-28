@@ -45,6 +45,7 @@ XSIAM_DASHBOARDS_DIR = 'XSIAMDashboards'
 XSIAM_REPORTS_DIR = 'XSIAMReports'
 TRIGGER_DIR = 'Triggers'
 WIZARDS_DIR = 'Wizards'
+AGENT_CONFIG_DIR = 'AgentConfigs'
 
 # NAMES OF ENTITIES
 
@@ -87,6 +88,7 @@ XSIAM_DASHBOARD = 'xsiamdashboard'
 XSIAM_REPORT = 'xsiamreport'
 TRIGGER = 'trigger'
 WIZARD = 'wizard'
+AGENT_CONFIG = 'agentconfig'
 
 MARKETPLACE_KEY_PACK_METADATA = 'marketplaces'
 
@@ -155,6 +157,8 @@ class FileType(str, Enum):
     PACK_IGNORE = '.pack-ignore'
     SECRET_IGNORE = '.secrets-ignore'
     DOC_FILE = 'doc_files'
+    AGENT_CONFIG = 'agentconfig'
+    AGENT_CONFIG_YML = 'agentconfigyml'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -219,6 +223,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.PARSING_RULE.value: PARSING_RULES_DIR,
     FileType.MODELING_RULE.value: MODELING_RULES_DIR,
     FileType.WIZARD.value: WIZARDS_DIR,
+    FileType.AGENT_CONFIG.value: AGENT_CONFIG_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -227,7 +232,8 @@ SIEM_ONLY_ENTITIES = [
     FileType.CORRELATION_RULE.value,
     FileType.XSIAM_DASHBOARD.value,
     FileType.XSIAM_REPORT.value,
-    FileType.TRIGGER.value
+    FileType.TRIGGER.value,
+    FileType.AGENT_CONFIG.value,
 ]
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
@@ -261,6 +267,7 @@ CONTENT_ENTITIES_DIRS = [
     JOBS_DIR,
     WIZARDS_DIR,
     MODELING_RULES_DIR,
+    AGENT_CONFIG_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -643,6 +650,7 @@ INTEGRATION_PREFIX = 'integration'
 SCRIPT_PREFIX = 'script'
 PARSING_RULE_PREFIX = 'parsingrule'
 MODELING_RULE_PREFIX = 'modelingrule'
+AGENT_CONFIG_PREFIX = 'agentconfig'
 
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
@@ -1108,6 +1116,7 @@ DIR_TO_PREFIX = {
     'Scripts': SCRIPT_PREFIX,
     'ModelingRules': MODELING_RULE_PREFIX,
     'ParsingRules': PARSING_RULE_PREFIX,
+    'AgentConfigs': AGENT_CONFIG_PREFIX,
 }
 
 ENTITY_NAME_SEPARATORS = [' ', '_', '-']
@@ -1441,6 +1450,7 @@ class ContentItems(Enum):
     XSIAM_REPORTS = 'xsiamreport'
     TRIGGERS = 'trigger',
     WIZARDS = 'wizard',
+    AGENT_CONFIG = 'agentconfig'
 
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {
@@ -1466,6 +1476,7 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     XSIAM_REPORTS_DIR,
     TRIGGER_DIR,
     WIZARDS_DIR,
+    AGENT_CONFIG_DIR,
 }
 
 

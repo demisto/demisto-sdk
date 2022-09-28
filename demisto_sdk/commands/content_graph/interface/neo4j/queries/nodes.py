@@ -4,7 +4,9 @@ from typing import Any, Dict, List, Optional
 from neo4j import Transaction
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import ContentType, Relationship
+from demisto_sdk.commands.content_graph.common import (SERVER_CONTENT_ITEMS,
+                                                       ContentType,
+                                                       Relationship)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     intersects, run_query, versioned)
 
@@ -39,6 +41,23 @@ def create_nodes(
 ) -> None:
     for content_type, data in nodes.items():
         create_nodes_by_type(tx, content_type, data)
+    for content_type, content_items in SERVER_CONTENT_ITEMS.items():
+        create_server_nodes_by_type(tx, content_type, content_items)
+
+
+def create_server_nodes_by_type(
+    tx: Transaction,
+    content_type: ContentType,
+    content_items: List[str],
+) -> None:
+    should_have_lowercase_id: bool = content_type in [ContentType.INCIDENT_FIELD, ContentType.INDICATOR_FIELD]
+    data = [{
+        'name': content_item,
+        'object_id': content_item.lower() if should_have_lowercase_id else content_item,
+        'content_type': content_type,
+        'is_server_item': True,
+    } for content_item in content_items]
+    create_nodes_by_type(tx, content_type, data)
 
 
 def duplicates_exist(tx) -> bool:

@@ -22,6 +22,11 @@ def intersects(arr1: str, arr2: str) -> str:
     return f'any(elem IN {arr1} WHERE elem IN {arr2})'
 
 
+def node_map(properties: Dict[str, Any]) -> str:
+    """ Returns a string representation of a map in neo4j format. """
+    return f'{{{", ".join([f"{k}: {v}" for k, v in properties.items()])}}}'
+
+
 def run_query(tx: Transaction, query: str, **kwargs: Dict[str, Any]) -> Result:
     try:
         start_time: datetime = datetime.now()

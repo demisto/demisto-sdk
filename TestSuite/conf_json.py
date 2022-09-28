@@ -19,7 +19,6 @@ class ConfJSON:
             tests: Optional[List[str]] = None,
             skipped_tests: Optional[List[str]] = None,
             skipped_integrations: Optional[List[str]] = None,
-            nightly_integrations: Optional[List[str]] = None,
             unmockable_integrations: Optional[List[str]] = None,
             docker_thresholds: Optional[dict] = None
     ):
@@ -29,8 +28,6 @@ class ConfJSON:
             skipped_tests = None
         if skipped_integrations is None:
             skipped_integrations = []
-        if nightly_integrations is None:
-            nightly_integrations = []
         if unmockable_integrations is None:
             unmockable_integrations = []
         if docker_thresholds is None:
@@ -39,7 +36,6 @@ class ConfJSON:
             'tests': tests,
             'skipped_tests': skipped_tests,
             'skipped_integrations': skipped_integrations,
-            'nightly_integrations': nightly_integrations,
             'unmockable_integrations': unmockable_integrations,
             'docker_thresholds': docker_thresholds
         }), None)

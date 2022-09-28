@@ -6,7 +6,7 @@ import networkx
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.update_id_set import (
     BUILT_IN_FIELDS, build_tasks_graph, get_fields_by_script_argument)
-from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.common import ContentType, Relationship
 from demisto_sdk.commands.content_graph.parsers.yaml_content_item import \
     YAMLContentItemParser
 
@@ -51,7 +51,12 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
             is_mandatory (bool): Whether or not the dependency is mandatory.
         """
         if playbook := task.get('task', {}).get('playbookName'):
-            self.add_dependency(playbook, ContentType.PLAYBOOK, is_mandatory)
+            self.add_relationship(
+                Relationship.USES_PLAYBOOK,
+                target=playbook,
+                target_type=ContentType.PLAYBOOK,
+                mandatorily=is_mandatory,
+            )
 
     def handle_script_task(self, task: Dict[str, Any], is_mandatory: bool) -> None:
         """ Collects a script dependency.
@@ -61,7 +66,7 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
             is_mandatory (bool): Whether or not the dependency is mandatory.
         """
         if script := task.get('task', {}).get('scriptName'):
-            self.add_dependency(script, ContentType.SCRIPT, is_mandatory)
+            self.add_dependency_by_id(script, ContentType.SCRIPT, is_mandatory)
 
     def handle_command_task(self, task: Dict[str, Any], is_mandatory: bool) -> None:
         """ Collects dependencies in a commands task.
@@ -73,36 +78,37 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
         if command := task.get('task', {}).get('script'):
             if 'setIncident' in command:
                 for incident_field in get_fields_by_script_argument(task):
-                    self.add_dependency(incident_field, ContentType.INCIDENT_FIELD, is_mandatory)
+                    self.add_dependency_by_id(incident_field, ContentType.INCIDENT_FIELD, is_mandatory)
 
             elif 'setIndicator' in command:
                 for incident_field in get_fields_by_script_argument(task):
-                    self.add_dependency(incident_field, ContentType.INDICATOR_FIELD, is_mandatory)
+                    self.add_dependency_by_id(incident_field, ContentType.INDICATOR_FIELD, is_mandatory)
 
             elif command in LIST_COMMANDS:
-                if list := task.get('scriptarguments', {}).get('listName', {}).get('simple'):
-                    self.add_dependency(list, ContentType.LIST, is_mandatory)
+                # if list := task.get('scriptarguments', {}).get('listName', {}).get('simple'):
+                #     self.add_dependency_by_id(list, ContentType.LIST, is_mandatory)
+                pass  # TODO: CIAC-4017
 
             elif 'Builtin' not in command:
                 if '|' not in command:
-                    self.add_dependency(command, ContentType.COMMAND, is_mandatory)
+                    self.add_command_or_script_dependency(command, is_mandatory)
                 else:
                     integration, *_, command = command.split('|')
                     if integration:
-                        self.add_dependency(integration, ContentType.INTEGRATION, is_mandatory)
+                        self.add_dependency_by_id(integration, ContentType.INTEGRATION, is_mandatory)
                     else:
-                        self.add_dependency(command, ContentType.COMMAND, is_mandatory)
+                        self.add_dependency_by_id(command, ContentType.COMMAND, is_mandatory)
 
     def add_complex_input_filters_and_transformers(self, complex_input: Dict[str, Any], is_mandatory: bool) -> None:
         for filter in complex_input.get('filters', []):
             if filter:
-                operator = filter[0].get('operator')
-                self.add_dependency(operator, ContentType.SCRIPT, is_mandatory)
+                operator = filter[0].get('operator').split('.')[-1]
+                self.add_dependency_by_id(operator, ContentType.SCRIPT, is_mandatory)
 
         for transformer in complex_input.get('transformers', []):
             if transformer:
-                operator = transformer.get('operator')
-                self.add_dependency(operator, ContentType.SCRIPT, is_mandatory)
+                operator = transformer.get('operator').split('.')[-1]
+                self.add_dependency_by_id(operator, ContentType.SCRIPT, is_mandatory)
 
     def handle_task_filter_and_transformer_scripts(self, task: Dict[str, Any], is_mandatory: bool) -> None:
         """ Collects filters/transformers in a task as dependencies.
@@ -128,7 +134,7 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
         if field_mapping := task.get('task', {}).get('fieldMapping'):
             for incident_field in field_mapping:
                 if incident_field not in BUILT_IN_FIELDS:
-                    self.add_dependency(incident_field, ContentType.INCIDENT_FIELD, is_mandatory)
+                    self.add_dependency_by_id(incident_field, ContentType.INCIDENT_FIELD, is_mandatory)
 
     def connect_to_dependencies(self) -> None:
         """ Collects content items used by the playbook as dependencies.

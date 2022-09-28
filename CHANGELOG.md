@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Fixed an issue where 'lists' was considered a file type instead of 'list'.
 * Fixed parsing of initialization arguments of client classes in the **generate-unit-tests** command.
 * Added support for AgentConfig content item in the **upload**, **create-id-set**, **find-dependecies**, **unify** and **create-content-artifacts** commands.
 

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+* Fixed parsing of initialization arguments of client classes in the **generate-unit-tests** command.
 * Added support for XSIAM Report preview image.
 
 ## 1.7.5

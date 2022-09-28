@@ -1,10 +1,12 @@
 from pathlib import Path
 
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from TestSuite.json_based import JSONBased
-from TestSuite.yml import YAML
+
+yaml = YAML_Handler()
 
 
-class AgentConfig(JSONBased, YAML):
+class AgentConfig(JSONBased):
     def __init__(self, name: str, agent_config_dir_path: Path, json_content: dict = None, yaml_content: dict = None):
         self.agent_config_tmp_path = agent_config_dir_path / f"{name}.json"
         self.agent_config_yml_tmp_path = agent_config_dir_path / f"{name}.yml"
@@ -16,6 +18,9 @@ class AgentConfig(JSONBased, YAML):
         self._tmp_path = self.agent_config_tmp_path
         super().__init__(agent_config_dir_path, name, '')
         self.write_json(json_content) if json_content else self.create_default_agent_config_json()
+
+    def write_dict(self, yml: dict):
+        yaml.dump(yml, self._tmp_path.open('w+'))
 
     def create_default_agent_config_json(self):
         self.write_json({

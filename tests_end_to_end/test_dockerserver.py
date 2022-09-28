@@ -1,4 +1,3 @@
-import pytest
 import requests
 from requests.sessions import HTTPAdapter
 from urllib3 import Retry

@@ -182,7 +182,7 @@ class ReadMeValidator(BaseValidator):
         session.mount('http://', adapter)
         response = session.request(
             'POST',
-            'http://docker:6161',
+            'http://localhost:6161',
             data=readme_content.encode('utf-8'),
             timeout=20
         )

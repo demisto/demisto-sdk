@@ -41,7 +41,7 @@ def start_docker_MDX_server(handle_error: Optional[Callable] = None, file_path: 
         user=f"{os.getuid()}:4000",
         files_to_push=[(server_script_path(), location_in_docker)],
         auto_remove=True,
-        ports={'6161/tcp': ('localhost', 6161)}
+        ports={'6161/tcp': 6161}
 
     )
     container.start()

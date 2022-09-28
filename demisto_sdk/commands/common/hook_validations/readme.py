@@ -684,21 +684,7 @@ class ReadMeValidator(BaseValidator):
                 return start_local_MDX_server(handle_error, file_path)
             elif ReadMeValidator.is_docker_available():
                 return start_docker_MDX_server(handle_error, file_path)
-
-            class NullContextManager(object):
-                def __init__(self):
-                    pass
-
-                def __enter__(self):
-                    return self
-
-                def __exit__(self, *args):
-                    pass
-
-                def is_started(self):
-                    return False
-
-            return NullContextManager()
+        return False
 
     @staticmethod
     def add_node_env_vars():

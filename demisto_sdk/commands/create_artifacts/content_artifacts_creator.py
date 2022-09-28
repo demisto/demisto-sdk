@@ -14,16 +14,16 @@ from pebble import ProcessFuture, ProcessPool
 from wcmatch.pathlib import BRACE, EXTMATCH, NEGATE, NODIR, SPLIT, Path
 
 from demisto_sdk.commands.common.constants import (
-    BASE_PACK, CLASSIFIERS_DIR, CONTENT_ITEMS_DISPLAY_FOLDERS,
-    CORRELATION_RULES_DIR, DASHBOARDS_DIR, DOCUMENTATION_DIR,
-    GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR,
-    GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR,
-    INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR,
-    LAYOUTS_DIR, LISTS_DIR, MODELING_RULES_DIR, PACKS_DIR, PARSING_RULES_DIR,
-    PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, REPORTS_DIR,
-    SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR, TRIGGER_DIR, WIDGETS_DIR,
-    WIZARDS_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, ContentItems,
-    MarketplaceVersions)
+    AGENT_CONFIG_DIR, BASE_PACK, CLASSIFIERS_DIR,
+    CONTENT_ITEMS_DISPLAY_FOLDERS, CORRELATION_RULES_DIR, DASHBOARDS_DIR,
+    DOCUMENTATION_DIR, GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR,
+    GENERIC_MODULES_DIR, GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR,
+    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
+    INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR, MODELING_RULES_DIR,
+    PACKS_DIR, PARSING_RULES_DIR, PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR,
+    RELEASE_NOTES_DIR, REPORTS_DIR, SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR,
+    TRIGGER_DIR, WIDGETS_DIR, WIZARDS_DIR, XSIAM_DASHBOARDS_DIR,
+    XSIAM_REPORTS_DIR, ContentItems, MarketplaceVersions)
 from demisto_sdk.commands.common.content import (Content, ContentError,
                                                  ContentFactoryError, Pack)
 from demisto_sdk.commands.common.content.objects.abstract_objects.text_object import \
@@ -199,6 +199,7 @@ class ContentItemsHandler:
             ContentItems.XSIAM_REPORTS: [],
             ContentItems.TRIGGERS: [],
             ContentItems.WIZARDS: [],
+            ContentItems.AGENT_CONFIG: [],
         }
         self.content_folder_name_to_func: Dict[str, Callable] = {
             SCRIPTS_DIR: self.add_script_as_content_item,
@@ -227,6 +228,7 @@ class ContentItemsHandler:
             XSIAM_REPORTS_DIR: self.add_xsiam_report_as_content_item,
             TRIGGER_DIR: self.add_trigger_as_content_item,
             WIZARDS_DIR: self.add_wizards_as_content_item,
+            AGENT_CONFIG_DIR: self.add_agent_config_as_content_item,
         }
         self.id_set = id_set
         self.alternate_fields = alternate_fields
@@ -433,6 +435,14 @@ class ContentItemsHandler:
         self.content_items[ContentItems.WIZARDS].append({
             'name': content_object.get('name', ''),
             'description': content_object.get('description', ''),
+        })
+
+    def add_agent_config_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.AGENT_CONFIG].append({
+            'name': content_object.get('name', ''),
+            'os_type': content_object.get('os_type', ''),
+            'profile_type': content_object.get('profile_type', ''),
+            'yaml_template': content_object.get('yaml_template', '')
         })
 
 
@@ -795,6 +805,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         for widget in pack.widgets:
             content_items_handler.handle_content_item(widget)
             pack_report += dump_pack_conditionally(artifact_manager, widget)
+
     elif artifact_manager.marketplace == MarketplaceVersions.MarketplaceV2.value:
         for parsing_rule in pack.parsing_rules:
             content_items_handler.handle_content_item(parsing_rule)
@@ -814,6 +825,9 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         for trigger in pack.triggers:
             content_items_handler.handle_content_item(trigger)
             pack_report += dump_pack_conditionally(artifact_manager, trigger)
+        for agent_config in pack.agent_configs:
+            content_items_handler.handle_content_item(agent_config)
+            pack_report += dump_pack_conditionally(artifact_manager, agent_config)
 
     for tool in pack.tools:
         object_report = ObjectReport(tool, content_packs=True)
@@ -1058,7 +1072,8 @@ def calc_relative_packs_dir(artifact_manager: ArtifactsManager, content_object: 
     if ((INTEGRATIONS_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != INTEGRATIONS_DIR) or
             (SCRIPTS_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != SCRIPTS_DIR) or
             (PARSING_RULES_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != PARSING_RULES_DIR) or
-            (MODELING_RULES_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != MODELING_RULES_DIR)):
+            (MODELING_RULES_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != MODELING_RULES_DIR) or
+            (AGENT_CONFIG_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != AGENT_CONFIG_DIR)):
         relative_pack_path = relative_pack_path.parent.parent
     else:
         relative_pack_path = relative_pack_path.parent

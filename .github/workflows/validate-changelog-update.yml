@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Find changed files that require changelog update
-        uses: tj-actions/changed-files@v29.0.7
+        uses: tj-actions/changed-files@v31.0.1
         id: need-changelog
         with:
           files: |
@@ -17,7 +17,7 @@ jobs:
             pyproject.toml
 
       - name: Check whether CHANGELOG.md has been modified
-        uses: tj-actions/changed-files@v29.0.7
+        uses: tj-actions/changed-files@v31.0.1
         id: changelog-status
         with:
           files: CHANGELOG.md

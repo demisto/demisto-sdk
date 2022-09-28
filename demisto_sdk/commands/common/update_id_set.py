@@ -1305,8 +1305,8 @@ def get_agent_config_data(path: str, packs: Dict[str, Dict] = None):
     id_ = json_data.get('content_global_id')
     name = json_data.get('name')
     display_name = get_display_name(path, json_data)
-    fromversion = json_data.get('fromVersion')
-    toversion = json_data.get('toVersion')
+    fromversion = json_data.get('from_xdr_version')
+    toversion = json_data.get('to_xdr_version')
     pack = get_pack_name(path)
     marketplaces = [MarketplaceVersions.MarketplaceV2.value]
 

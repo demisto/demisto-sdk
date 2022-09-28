@@ -222,7 +222,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.PARSING_RULE.value: PARSING_RULES_DIR,
     FileType.MODELING_RULE.value: MODELING_RULES_DIR,
     FileType.WIZARD.value: WIZARDS_DIR,
-    FileType.AGENT_CONFIG.value: AGENT_CONFIG_DIR
+    FileType.AGENT_CONFIG.value: AGENT_CONFIG_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -286,7 +286,6 @@ CONTENT_ENTITY_UPLOAD_ORDER = [
     LISTS_DIR,
     JOBS_DIR,
     WIZARDS_DIR,
-    AGENT_CONFIG_DIR,
 ]
 
 DEFAULT_IMAGE_PREFIX = 'data:image/png;base64,'
@@ -1116,7 +1115,7 @@ DIR_TO_PREFIX = {
     'Scripts': SCRIPT_PREFIX,
     'ModelingRules': MODELING_RULE_PREFIX,
     'ParsingRules': PARSING_RULE_PREFIX,
-    'AgentConfigs': AGENT_CONFIG_PREFIX
+    'AgentConfigs': AGENT_CONFIG_PREFIX,
 }
 
 ENTITY_NAME_SEPARATORS = [' ', '_', '-']

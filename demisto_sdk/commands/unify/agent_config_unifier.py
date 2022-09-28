@@ -8,9 +8,7 @@ import click
 
 from demisto_sdk.commands.common.constants import DIR_TO_PREFIX
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.tools import get_yml_paths_in_dir, print_error
-
-UNSUPPORTED_INPUT_ERR_MSG = 'Unsupported input. Please provide: Path to directory of an Agent Config.'
+from demisto_sdk.commands.common.tools import get_yml_paths_in_dir
 
 
 class AgentConfigUnifier:
@@ -22,23 +20,11 @@ class AgentConfigUnifier:
     ):
         self.input_agent_config = input
 
-        directory_name = ''
-        input = os.path.abspath(input)
-        if not os.path.isdir(input):
-            print_error(UNSUPPORTED_INPUT_ERR_MSG)
-            sys.exit(1)
-        for optional_dir_name in DIR_TO_PREFIX:
-            if optional_dir_name in input:
-                directory_name = optional_dir_name
-
-        if not directory_name:
-            print_error(UNSUPPORTED_INPUT_ERR_MSG)
-
         if dir_name:
             self.dir_name = dir_name
 
-        self.package_path = input
-        self.package_path = self.package_path.rstrip(os.sep)
+        input = os.path.abspath(input)
+        self.package_path = input.rstrip(os.sep)
 
         _, self.yml_path = get_yml_paths_in_dir(self.package_path, Errors.no_yml_file(self.package_path))
 
@@ -47,7 +33,6 @@ class AgentConfigUnifier:
     def unify(self):
         click.echo(f'Unifying {self.package_path}...')
         self._set_dest_path()
-        output_data = {}
         output_data = self._insert_agent_config()
         self._insert_yaml_template(output_data)
         self._output_json(file_data=output_data)

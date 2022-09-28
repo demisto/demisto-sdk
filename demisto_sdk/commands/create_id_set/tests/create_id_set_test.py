@@ -177,7 +177,7 @@ def test_create_id_set_flow(repo, mocker):
 
     id_set_content = repo.id_set.read_json_as_dict()
     assert not IsEqualFunctions.is_dicts_equal(id_set_content, {})
-    assert set(id_set_content.keys()) == set(ID_SET_ENTITIES + ['Packs'])  # the test is not checking the right entities
+    assert set(id_set_content.keys()) == set(ID_SET_ENTITIES + ['Packs'])
     for id_set_entity in ID_SET_ENTITIES:
         if id_set_entity in ['ParsingRules', 'ModelingRules', 'CorrelationRules',
                              'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'AgentConfigs']:

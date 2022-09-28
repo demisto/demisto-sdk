@@ -5,7 +5,7 @@ from TestSuite.yml import YAML
 
 
 class AgentConfig(JSONBased, YAML):
-    def __init__(self, name: str, agent_config_dir_path: Path, json_content: dict = {}, yaml_content: dict = {}):
+    def __init__(self, name: str, agent_config_dir_path: Path, json_content: dict = None, yaml_content: dict = None):
         self.agent_config_tmp_path = agent_config_dir_path / f"{name}.json"
         self.agent_config_yml_tmp_path = agent_config_dir_path / f"{name}.yml"
         self.name = name

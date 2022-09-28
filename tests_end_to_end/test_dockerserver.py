@@ -31,7 +31,7 @@ def assert_not_successful_mdx_call():
     session.mount('http://', adapter)
     response = session.request(
         'POST',
-        'http://localhost:6161',
+        'http://docker:6161',
         data='<div> Hello',
         timeout=20
     )

@@ -49,7 +49,7 @@ from demisto_sdk.tests.constants_test import (
     VALID_INCIDENT_TYPE_FILE, VALID_INCIDENT_TYPE_FILE__RAW_DOWNLOADED,
     VALID_INCIDENT_TYPE_PATH, VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_PATH,
     VALID_MD, VALID_PLAYBOOK_ID_PATH, VALID_REPUTATION_FILE, VALID_SCRIPT_PATH,
-    VALID_WIDGET_PATH)
+    VALID_WIDGET_PATH, INVALID_MODELING_RULES_SCHEMA_FILE)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
     LAYOUT, MAPPER, OLD_CLASSIFIER, REPUTATION)
 from TestSuite.file import File
@@ -221,7 +221,8 @@ class TestGenericFunctions:
         ({VALID_INCIDENT_FIELD_PATH, VALID_PLAYBOOK_ID_PATH}, [FileType.PLAYBOOK], {VALID_INCIDENT_FIELD_PATH}),
         ({VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH}, [],
          {VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH}),
-        (set(), [FileType.PLAYBOOK], set())
+        (set(), [FileType.PLAYBOOK], set()),
+        ({INVALID_MODELING_RULES_SCHEMA_FILE}, [FileType.MODELING_RULE_SCHEMA], [])
     ]
 
     @pytest.mark.parametrize('files, types, output', for_test_filter_files_by_type)

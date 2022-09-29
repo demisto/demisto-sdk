@@ -3,6 +3,7 @@
 ## Unreleased
 * Fixed parsing of initialization arguments of client classes in the **generate-unit-tests** command.
 * Added support for AgentConfig content item in the **upload**, **create-id-set**, **find-dependecies**, **unify** and **create-content-artifacts** commands.
+* Added support for XSIAM Report preview image.
 * Added a new check to **validate**, making sure playbook task values are passed as references.
 
 ## 1.7.5

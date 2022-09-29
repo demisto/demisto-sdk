@@ -5,9 +5,9 @@ from demisto_sdk.commands.common.tools import src_root
 
 TEST_DATA = src_root() / 'tests' / 'test_files'
 TEST_CONTENT_REPO = TEST_DATA / 'content_slim'
-XSIAM_DASHBOARD_IMAGE_FILE = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / 'MyDashboard.png'
+XSIAM_DASHBOARD_IMAGE_FILE = TEST_CONTENT_REPO / PACKS_DIR / 'Sample01' / 'XSIAMDashboards' / 'MyDashboard_image.png'
 
 
 def test_prefix():
     obj = XSIAMDashboardImage(XSIAM_DASHBOARD_IMAGE_FILE)
-    assert obj.normalize_file_name() == f'external-xsiamdashboard-{XSIAM_DASHBOARD_IMAGE_FILE.name}'
+    assert obj.normalize_file_name() == f'{XSIAM_DASHBOARD_IMAGE_FILE.name}'

@@ -26,6 +26,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
     create_relationships,
+    get_all_content_item_tests,
     get_relationships_by_type,
 )
 
@@ -70,7 +71,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def is_graph_alive(self):
         return neo4j_service.is_alive()
-    
+
     def create_indexes_and_constraints(self) -> None:
         with self.driver.session() as session:
             session.write_transaction(create_indexes)
@@ -127,7 +128,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             create_pack_dependencies(tx)
             tx.commit()
             tx.close()
-    
+
     def get_all_level_dependencies(self, marketplace: MarketplaceVersions) -> Dict[str, Any]:
         with self.driver.session() as session:
             tx: neo4j.Transaction = session.begin_transaction()
@@ -141,7 +142,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 'path': Path(*Path(row['pack_path']).parts[-2:]).as_posix(),
             } for row in result
         }
-        
+
     def get_first_level_dependencies(self, marketplace: MarketplaceVersions) -> Dict[str, Dict[str, Any]]:
         with self.driver.session() as session:
             tx: neo4j.Transaction = session.begin_transaction()
@@ -165,7 +166,11 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def get_node_by_path(self, path: Path, marketplace: MarketplaceVersions) -> Any:
         with self.driver.session() as session:
             return session.read_transaction(get_node_py_path, path, marketplace)
-    
+
+    def get_all_content_item_tests(self, marketplace: MarketplaceVersions):
+        with self.driver.session() as session:
+            return session.read_transaction(get_all_content_item_tests, marketplace)
+
     def run_single_query(self, query: str, parameters: Optional[Dict[str, Any]] = None) -> neo4j.Result:
         with self.driver.session() as session:
             tx: neo4j.Transaction = session.begin_transaction()

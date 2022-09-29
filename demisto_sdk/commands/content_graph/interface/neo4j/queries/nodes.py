@@ -97,7 +97,7 @@ def get_all_integrations_with_commands(
     WITH i, {{name: c.name, description: r.description, deprecated: r.deprecated}} AS command_data
     RETURN i.object_id AS integration_id, collect(command_data) AS commands
     """
-    return run_query(tx, query).data()
+    return {data.get('integration_id'): data.get('commands') for data in run_query(tx, query).data()}
 
 
 def get_nodes_by_type(tx: Transaction, content_type: ContentType):

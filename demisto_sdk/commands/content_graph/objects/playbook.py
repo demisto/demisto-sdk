@@ -1,4 +1,6 @@
-from typing import Set
+from typing import List, Optional, Set
+
+from pydantic import Field
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 

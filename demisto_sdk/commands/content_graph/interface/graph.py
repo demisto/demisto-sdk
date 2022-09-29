@@ -82,5 +82,9 @@ class ContentGraphInterface(ABC):
         pass
     
     @abstractmethod
+    def get_all_content_item_tests(self, marketplace: MarketplaceVersions):
+        pass
+        
+    @abstractmethod
     def run_single_query(self, query: str, **kwargs) -> Any:
         pass

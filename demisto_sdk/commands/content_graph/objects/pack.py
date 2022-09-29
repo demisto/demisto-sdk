@@ -3,7 +3,7 @@ import shutil
 from pydantic import BaseModel, Field
 from typing import Any, Generator, List, Optional
 from demisto_sdk.commands.common.constants import CONTRIBUTORS_README_TEMPLATE, MarketplaceVersions
-from demisto_sdk.commands.common.tools import get_json, get_mp_tag_parser
+from demisto_sdk.commands.common.tools import get_mp_tag_parser
 
 from demisto_sdk.commands.content_graph.common import PACK_METADATA_FILENAME, ContentType, Nodes, Relationships
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
@@ -71,7 +71,7 @@ class PackContentItems(BaseModel):
     xsiam_dashboard: List[XSIAMDashboard] = Field([], alias=ContentType.XSIAM_DASHBOARD.value)
     xsiam_report: List[XSIAMReport] = Field([], alias=ContentType.XSIAM_REPORT.value)
 
-    def __iter__(self) -> Generator[ContentItem, Any, Any]:
+    def __iter__(self) -> Generator[ContentItem, Any, Any]:  # type: ignore[override]
         """ Defines the iteration of the object. Each iteration yields a single content item.
         """
         for content_items in vars(self).values():
@@ -165,6 +165,6 @@ class Pack(BaseContent, PackMetadata):
         except Exception as e:
             logger.error(f'Failed dumping pack {self.name}: {e}')
             raise
-        
+
     def to_nodes(self) -> Nodes:
         return Nodes(self.to_dict(), *[content_item.to_dict() for content_item in self.content_items])

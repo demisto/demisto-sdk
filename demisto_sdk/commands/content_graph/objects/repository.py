@@ -1,8 +1,9 @@
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 import shutil
-from pydantic import BaseModel, DirectoryPath
-from typing import List
+from pydantic import BaseModel, DirectoryPath, Field
+from typing import Dict, List, Optional
+
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 from demisto_sdk.commands.content_graph.objects.pack import Pack

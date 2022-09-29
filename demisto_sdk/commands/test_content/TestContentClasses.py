@@ -2229,32 +2229,35 @@ class ServerContext:
         Server check which integration sent a new alert, if the request was sent manually and not from integration it
         sets "sourceBrand" header to be "Manual". XSIAM Server looks for a correlation rule for such sourceBrand,
         and if there is no such correlation rule, no alert will be created.
-        If there is a correlation rule for "Manual" integration the allert will be created.
+        If there is a correlation rule for "Manual" integration the alert will be created.
 
         If this step fails please create an integration with id and name "Manual", set isFetch: true for such
         integration and make sure that the corresponding correlation rule is created.
         """
         body = {
-            'query': 'id:"Manual"'
+            'query': 'id:"Manual"',
         }
         try:
-            res_raw = demisto_client.generic_request_func(self=self.client, method='POST',
-                                                          path='/settings/integration/search',
-                                                          body=body)
+            res_raw = demisto_client.generic_request_func(
+                self=self.client,
+                method='POST',
+                path='/settings/integration/search',
+                body=body,
+            )
             res = ast.literal_eval(res_raw[0])
+            if int(res_raw[1]) != 200:
+                self.build_context.logging_module.error(
+                    f'Failed to get integrations configuration with status code: {res_raw[1]}')
+                return
+
+            all_configurations = res['configurations']
+            for instance in all_configurations:
+                if instance.get('id') == "Manual":
+                    self.build_context.logging_module.info('Server is able to create manual alerts '
+                                                           '("Manual" integration exists).')
+                    return
         except ApiException:
             self.build_context.logging_module.exception('Failed to get integrations configuration.')
-        if int(res_raw[1]) != 200:
-            self.build_context.logging_module.error(
-                f'Failed to get integrations configuration with status code: {res_raw[1]}')
-            return
-
-        all_configurations = res['configurations']
-        for instance in all_configurations:
-            if instance.get('id') == "Manual":
-                self.build_context.logging_module.info('Server is able to create manual alerts '
-                                                       '("Manual" integration exists).')
-                return
 
         self.build_context.logging_module.warning('No "Manual" integration found in XSIAM instance. '
                                                   'Adding it in order to create Manual Correlation Rule.')
@@ -2278,15 +2281,19 @@ class ServerContext:
         }
 
         try:
-            res_raw_integration = demisto_client.generic_request_func(self=self.client, method='PUT',
-                                                                      path='/settings/integration-conf',
-                                                                      body=manual_integration)
+            res_raw_integration = demisto_client.generic_request_func(
+                self=self.client,
+                method='PUT',
+                path='/settings/integration-conf',
+                body=manual_integration,
+            )
+            if int(res_raw_integration[1]) != 200:
+                self.build_context.logging_module.error(
+                    f'Failed to get integrations configuration with status code: {res_raw_integration[1]}')
+
         except ApiException:
             self.build_context.logging_module.exception('No "Manual" integration found in XSIAM instance. '
                                                         'Please add it in order to create Manual Correlation Rule.')
-        if int(res_raw_integration[1]) != 200:
-            self.build_context.logging_module.error(
-                f'Failed to get integrations configuration with status code: {res_raw_integration[1]}')
 
 
 def replace_external_playbook_configuration(client: DefaultApi, external_playbook_configuration: dict,

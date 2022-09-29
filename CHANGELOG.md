@@ -12,6 +12,7 @@
 * Removed nightly integrations filtering when deciding if a test should run.
 * Added support for XSIAM Dashboard preview image.
 * Added the `--no-code-formatting` flag to the **download** command, allowing to skip autopep8 and isort.
+* Fixed an issue in the **update-release-notes** command, where generating release notes for modeling rules schema file caused exception.
 
 ## 1.7.4
 

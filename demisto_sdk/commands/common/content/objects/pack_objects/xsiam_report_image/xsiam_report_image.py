@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.content.objects.abstract_objects import \
     GeneralObject
 
 
-class XSIAMDashboardImage(GeneralObject):
+class XSIAMReportImage(GeneralObject):
     def __init__(self, path: Union[Path, str]):
         super().__init__(path)
 
@@ -33,6 +33,6 @@ class XSIAMDashboardImage(GeneralObject):
         """
         path = Path(path)
         if not (path.exists() and path.is_file()):
-            raise exc.ContentInitializeError(XSIAMDashboardImage, path)
+            raise exc.ContentInitializeError(XSIAMReportImage, path)
 
         return path

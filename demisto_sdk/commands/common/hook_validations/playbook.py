@@ -51,7 +51,7 @@ class PlaybookValidator(ContentEntityValidator):
             self.is_script_id_valid(id_set_file),
             self._is_id_uuid(),
             self._is_taskid_equals_id(),
-            self._is_correct_value_references_interface(),
+            # self._is_correct_value_references_interface(),
             self.verify_condition_tasks_has_else_path(),
             self.name_not_contain_the_type(),
             self.is_valid_with_indicators_input(),

@@ -77,7 +77,7 @@ from demisto_sdk.tests.constants_test import (
     VALID_ONE_LINE_CHANGELOG_PATH, VALID_ONE_LINE_LIST_CHANGELOG_PATH,
     VALID_PACK, VALID_PLAYBOOK_CONDITION, VALID_REPUTATION_PATH,
     VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
-    WIDGET_TARGET, MODELING_RULES_SCHEMA_FILE)
+    WIDGET_TARGET, MODELING_RULES_SCHEMA_FILE, MODELING_RULES_YML_FILE)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
 from TestSuite.pack import Pack
@@ -1921,10 +1921,19 @@ def test_image_error(capsys):
 
 
 def test_check_file_relevance_and_format_path(mocker):
+    """
+
+    Given: A modeling rules schema file that was changed.
+
+    When: Updating release notes
+
+    Then: Update the file path to point the modeling rules yml file.
+
+    """
     mocker.patch.object(ValidateManager, 'ignore_files_irrelevant_for_validation', return_value=False)
     mocker.patch.object(ValidateManager, 'is_old_file_format', return_value=False)
     validate_manager = ValidateManager()
     file_path, old_path, _ = validate_manager.check_file_relevance_and_format_path(MODELING_RULES_SCHEMA_FILE,
                                                                                    MODELING_RULES_SCHEMA_FILE,
                                                                                    set())
-    assert file_path == old_path == MODELING_RULES_SCHEMA_FILE.replace('_schema', '').replace('.json', '.yml')
+    assert file_path == old_path == MODELING_RULES_YML_FILE

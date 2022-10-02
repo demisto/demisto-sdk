@@ -202,7 +202,11 @@ class ValidateManager:
         self.skipped_file_types = (FileType.CHANGELOG,
                                    FileType.DOC_IMAGE,
                                    FileType.MODELING_RULE_SCHEMA,
-                                   FileType.XSIAM_DASHBOARD_IMAGE,)
+                                   FileType.XSIAM_DASHBOARD_IMAGE,
+                                   FileType.XSIAM_REPORT_IMAGE,
+                                   FileType.XSIAM_DASHBOARD_IMAGE,
+                                   FileType.AGENT_CONFIG_YML,
+                                   FileType.AGENT_CONFIG,)
 
         self.is_external_repo = is_external_repo
         if is_external_repo:
@@ -1744,7 +1748,7 @@ class ValidateManager:
             - true if the file type is supported, false otherwise
         """
         irrelevant_file_output = '', '', True
-        if file_path.split(os.path.sep)[0] in ('.gitlab', '.circleci', '.github', '.devcontainer'):
+        if file_path.split(os.path.sep)[0] in ('.gitlab', '.circleci', '.github', '.devcontainer', '.vscode'):
             return irrelevant_file_output
 
         file_type = find_type(file_path)

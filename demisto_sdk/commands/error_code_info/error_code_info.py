@@ -1,9 +1,10 @@
-from inspect import signature
+import inspect
+from typing import Any, Optional, Union, get_args, get_origin
 
 import click
 from colorama import Fore
 
-from demisto_sdk.commands.common import errors
+from demisto_sdk.commands.common import constants, errors
 
 TEMPLATE = '''
 Error Code: {code}
@@ -14,7 +15,29 @@ Message:
 '''
 
 
-def print_error_information(func_name, error_data, func, sig):
+TYPE_FILLER_MAPPING = {
+    int: 1337,
+    bool: True,
+    dict: {'key1': 'value1', 'key2': 'value2'},
+    list: ['element1', 'element2'],
+    constants.FileType: constants.FileType.INTEGRATION,
+}
+
+
+def print_error_information(func_name, error_data, func, sig: inspect.Signature):
+    parameters = {}
+    for param in sig.parameters.values():
+        value: Any = f'<{param.name}>'
+        if param.default is not inspect.Parameter.empty:
+            value = param.default
+        if param.annotation is not inspect.Parameter.empty:
+            param_type = param.annotation
+            if get_origin(param.annotation) in [Union, Optional]:
+                param_type = get_args(param.annotation)[0]
+            if param_type is not str:
+                value = TYPE_FILLER_MAPPING.get(param_type) or param_type()
+        parameters[param.name] = value
+
     click.secho(f'{Fore.GREEN}## Error Code Info ##{Fore.RESET}')
     click.secho(TEMPLATE.format(
         code=error_data['code'],
@@ -39,7 +62,7 @@ def generate_error_code_information(error_code):
         return 1
 
     func = getattr(errors.Errors, func_name)
-    sig = signature(func)
+    sig = inspect.signature(func)
 
     print_error_information(func_name, error_data, func, sig)
     return 0

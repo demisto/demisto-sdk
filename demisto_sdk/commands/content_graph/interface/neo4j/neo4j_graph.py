@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 import neo4j
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 from demisto_sdk.commands.content_graph.common import (
@@ -17,12 +17,10 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints impo
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     create_nodes,
     duplicates_exist,
-    get_packs_content_items,
-    get_all_integrations_with_commands,
+    get_packs,
+    _get_all_integrations_with_commands,
     delete_all_graph_nodes,
-    get_nodes_by_type,
     search_nodes,
-    get_node_py_path,
 )
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
     create_relationships,
@@ -35,8 +33,13 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies imp
     get_all_level_packs_dependencies,
     create_pack_dependencies
 )
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.objects.integration import Command
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
+from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -52,7 +55,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             NEO4J_DATABASE_URL,
             auth=(NEO4J_USERNAME, NEO4J_PASSWORD),
         )
-        if start_service:
+        if start_service or not neo4j_service.is_alive:
             neo4j_service.start(use_docker)
         self.output_file = output_file
         self.use_docker = use_docker
@@ -90,37 +93,31 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             session.write_transaction(create_relationships, relationships)
 
-    def get_packs_content_items(self, marketplace: MarketplaceVersions):
+    def get_packs(self, marketplace: MarketplaceVersions, pack_id: Optional[str] = None) -> List[Pack]:
         with self.driver.session() as session:
-            return session.read_transaction(get_packs_content_items, marketplace)
-
-    def get_all_integrations_with_commands(self):
-        with self.driver.session() as session:
-            return session.read_transaction(get_all_integrations_with_commands)
+            return session.read_transaction(get_packs, marketplace, pack_id)
 
     def clean_graph(self):
         with self.driver.session() as session:
             session.write_transaction(delete_all_graph_nodes)
 
-    def get_nodes_by_type(self, content_type: ContentType) -> Any:
-        with self.driver.session() as session:
-            return session.read_transaction(get_nodes_by_type, content_type)
-
     def search_nodes(
         self,
+        marketplace: MarketplaceVersions,
         content_type: Optional[ContentType] = None,
         **properties
-    ) -> Any:
+    ) -> List[BaseContent]:
         with self.driver.session() as session:
-            return session.read_transaction(search_nodes, content_type, **properties)
+            return session.read_transaction(search_nodes, marketplace, content_type, **properties)
 
     def get_single_node(
         self,
+        marketplace: MarketplaceVersions,
         content_type: Optional[ContentType] = None,
         **properties
-    ) -> Any:
+    ) -> BaseContent:
         with self.driver.session() as session:
-            return session.read_transaction(search_nodes, content_type, single_result=True, **properties)
+            return session.read_transaction(search_nodes, marketplace, content_type, single_result=True, **properties)
 
     def create_pack_dependencies(self):
         with self.driver.session() as session:
@@ -163,11 +160,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             return session.read_transaction(get_relationships_by_type, relationship_type)
 
-    def get_node_by_path(self, path: Path, marketplace: MarketplaceVersions) -> Any:
-        with self.driver.session() as session:
-            return session.read_transaction(get_node_py_path, path, marketplace)
-
-    def get_all_content_item_tests(self, marketplace: MarketplaceVersions):
+    def get_all_content_item_tests(self, marketplace: MarketplaceVersions) -> Dict[ContentItem, List[TestPlaybook]]:
         with self.driver.session() as session:
             return session.read_transaction(get_all_content_item_tests, marketplace)
 

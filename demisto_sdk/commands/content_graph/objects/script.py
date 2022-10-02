@@ -1,11 +1,12 @@
 from pathlib import Path
 from typing import List, Set
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.content_graph.common import ContentType
 
 from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 
 
-class Script(IntegrationScript):
+class Script(IntegrationScript, content_type=ContentType.SCRIPT):
     tags: List[str]
     is_test: bool
 

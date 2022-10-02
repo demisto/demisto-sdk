@@ -70,7 +70,7 @@ class ContentType(str, enum.Enum):
     XSIAM_DASHBOARD = 'XSIAMDashboard'
     XSIAM_REPORT = 'XSIAMReport'
     WIZARD = 'Wizard'
-
+    
     @property
     def labels(self) -> List[str]:
         labels: Set[str] = {ContentType.BASE_CONTENT.value, self.value}
@@ -98,7 +98,7 @@ class ContentType(str, enum.Enum):
         elif self == ContentType.TEST_PLAYBOOK:
             return ContentType.PLAYBOOK.server_name
         return self.lower()
-
+    
     @staticmethod
     def prefixes() -> List[str]:
         return [c.server_name for c in ContentType] + ['indicatorfield']

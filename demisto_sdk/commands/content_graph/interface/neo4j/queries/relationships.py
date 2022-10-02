@@ -5,7 +5,9 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
-    labels_of, node_map, run_query)
+    labels_of, node_map, run_query, serialize_node)
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 
 
 def build_source_properties() -> str:
@@ -193,13 +195,16 @@ def get_relationships_by_type(tx: Transaction, rel: Relationship):
     query = f"""
     MATCH (source)-[rel:{rel}]->(target) return source, rel, target
     """
-    return run_query(tx, query).data()
+    return [{'source': serialize_node(item.get('source')),
+             'rel': item.get('rel'),  # TODO serialize relationship as well
+             'target': serialize_node(item.get('target'))} for item in run_query(tx, query).data()]
 
 
-def get_all_content_item_tests(tx: Transaction, marketplace: MarketplaceVersions):
+def get_all_content_item_tests(tx: Transaction, marketplace: MarketplaceVersions) -> Dict[ContentItem, List[TestPlaybook]]:
     query = f"""
     MATCH (p:{ContentType.TEST_PLAYBOOK})-[:{Relationship.USES}*]->(c:{ContentType.BASE_CONTENT})
     WHERE '{marketplace}' in p.marketplaces AND '{marketplace}' in c.marketplaces
     RETURN c as content_item, collect(p) as playbooks
     """
-    return {item.get('content_item'): item.get('playbooks') for item in run_query(tx, query).data()}
+    return {ContentItem.parse_obj(item.get('content_item')): [TestPlaybook.parse_obj(playbook) for playbook in item.get('playbooks', [])]
+            for item in run_query(tx, query).data()}

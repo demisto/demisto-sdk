@@ -1,8 +1,7 @@
 from concurrent.futures import ProcessPoolExecutor
-from pathlib import Path
 import shutil
-from pydantic import BaseModel, DirectoryPath, Field
-from typing import Dict, List, Optional
+from pydantic import BaseModel, DirectoryPath
+from typing import List
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
@@ -14,7 +13,7 @@ logger = logging.getLogger('demisto-sdk')
 
 
 class Repository(BaseModel):
-    path: Path
+    path: DirectoryPath
     packs: List[Pack]
     
     def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions):

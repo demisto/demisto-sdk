@@ -1,12 +1,10 @@
 import logging
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
-from pydantic import Field
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
-from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
 
 logger = logging.getLogger('demisto-sdk')
@@ -21,7 +19,7 @@ class IntegrationScript(ContentItem):
         # demisto-sdk unify self.path -> path
         dir.mkdir(exist_ok=True, parents=True)
         try:
-            IntegrationScriptUnifier(input=self.path.parent, output=str(dir), marketplace=marketplace).unify()
+            IntegrationScriptUnifier(input=str(self.path.parent), output=str(dir), marketplace=marketplace).unify()
         except Exception as e:
             logger.info(f'Failed to unify {self.path} to {dir}, probably already unified')
             logger.debug(e)

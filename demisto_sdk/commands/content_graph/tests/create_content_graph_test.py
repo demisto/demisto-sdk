@@ -178,7 +178,7 @@ class TestCreateContentGraph:
 
         with ContentGraphInterface(start_service=True) as interface:
             create_content_graph(interface)
-            content_items = interface.get_packs_content_items(marketplace=MarketplaceVersions.XSOAR)
+            content_items = interface.get_packs(marketplace=MarketplaceVersions.XSOAR)
         assert len(content_items) == 1
 
     def test_create_content_graph_end_to_end_with_existing_service(self, repo: Repo):
@@ -198,7 +198,7 @@ class TestCreateContentGraph:
 
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
-            content_items = interface.get_packs_content_items(marketplace=MarketplaceVersions.XSOAR)
+            content_items = interface.get_packs(marketplace=MarketplaceVersions.XSOAR)
         assert len(content_items) == 1
 
     def test_create_content_graph_single_pack(

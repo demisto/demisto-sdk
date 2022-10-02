@@ -108,7 +108,7 @@ class PackMetadata(BaseModel):
     preview_only: Optional[bool] = Field(None, alias='previewOnly')
 
 
-class Pack(BaseContent, PackMetadata):
+class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):
     path: Path
     contributors: Optional[List[str]] = None
     content_items: PackContentItems = Field(alias='contentItems', exclude=True)

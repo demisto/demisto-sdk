@@ -7,7 +7,10 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import (SERVER_CONTENT_ITEMS,
                                                        ContentType,
                                                        Relationship)
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query, versioned, intersects
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import serialize_node, run_query, versioned, intersects
+from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.objects.integration import Command
 
 
 logger = logging.getLogger('demisto-sdk')
@@ -77,19 +80,34 @@ def create_nodes_by_type(
     logger.info(f'Created {nodes_count} nodes of type {content_type}.')
 
 
-def get_packs_content_items(
+def get_packs(
     tx: Transaction,
     marketplace: MarketplaceVersions,
-):
+    pack_id: Optional[str] = None,
+) -> List[Pack]:
+    pack_id = f'{{object_id: "{pack_id}"}}' if pack_id else ''
     query = f"""
-    MATCH (p:{ContentType.PACK})<-[:{Relationship.IN_PACK}]-(c:{ContentType.BASE_CONTENT})
+    MATCH (p:{ContentType.PACK}{pack_id})<-[:{Relationship.IN_PACK}]-(c:{ContentType.BASE_CONTENT})
     WHERE '{marketplace}' IN p.marketplaces
     RETURN p AS pack, collect(c) AS content_items
     """
-    return run_query(tx, query).data()
+    packs: List[Pack] = []
+    integrations_to_commands = _get_all_integrations_with_commands(tx)
+    for item in run_query(tx, query).data():
+        pack = item.get('pack')
+        content_items = item.get('content_items')
+        content_items_dct: Dict[str, Any] = {}
+        for content_item in content_items:
+            content_item_id = content_item['object_id']
+            if (content_type := content_item['content_type']) == ContentType.INTEGRATION:
+                content_item['commands'] = integrations_to_commands.get(content_item_id, [])
+            content_items_dct.setdefault(content_type, []).append(content_item)
+        pack['content_items'] = content_items_dct
+        packs.append(Pack.parse_obj(pack))
+    return packs
 
 
-def get_all_integrations_with_commands(
+def _get_all_integrations_with_commands(
     tx: Transaction
 ):
     query = f"""
@@ -97,26 +115,12 @@ def get_all_integrations_with_commands(
     WITH i, {{name: c.name, description: r.description, deprecated: r.deprecated}} AS command_data
     RETURN i.object_id AS integration_id, collect(command_data) AS commands
     """
-    return {data.get('integration_id'): data.get('commands') for data in run_query(tx, query).data()}
-
-
-def get_nodes_by_type(tx: Transaction, content_type: ContentType):
-    query = f"""
-    MATCH (node:{content_type}) return node
-    """
-    return run_query(tx, query).data()
-
-
-def get_node_py_path(tx: Transaction, path: Path, marketplace: MarketplaceVersions):
-    query = f"""MATCH (node:BaseContent {{path: '{path}'}})
-    WHERE '{marketplace}' IN node.marketplaces
-    RETURN node
-    """
-    return run_query(tx, query).single()['node']
+    return {data.get('integration_id'): data.get('commands', []) for data in run_query(tx, query).data()}
 
 
 def search_nodes(
     tx: Transaction,
+    marketplace: MarketplaceVersions,
     content_type: Optional[ContentType] = None,
     single_result: bool = False,
     **properties
@@ -126,12 +130,20 @@ def search_nodes(
     content_type_str = f':{content_type}' if content_type else ''
     params_str = ', '.join(f'{k}: "{v}"' for k, v in properties.items())
     params_str = f'{{{params_str}}}' if params_str else ''
+        
     query = f"""
-    MATCH (node{content_type_str}{params_str}) return node
+    MATCH (node{content_type_str}{params_str})
+    WHERE '{marketplace}' IN node.marketplaces
+    RETURN node
     """
-    if single_result:
-        return run_query(tx, query).single()['node']
-    return run_query(tx, query).data()
+    data = run_query(tx, query).data()
+    integration_to_commands = None
+    if ContentType.INTEGRATION in {node.get('content_type') for node in data}:
+        integration_to_commands = _get_all_integrations_with_commands(tx)
+    serialized_data = [serialize_node(node, integration_to_commands) for node in data]
+    if single_result and serialized_data:
+        return serialized_data[0]
+    return serialized_data
 
 
 def delete_all_graph_nodes(

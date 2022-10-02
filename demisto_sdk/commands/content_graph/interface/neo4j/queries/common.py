@@ -1,15 +1,34 @@
 from datetime import datetime
 import traceback
 from neo4j import Transaction, Result
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 
 from demisto_sdk.commands.content_graph.common import ContentType
 
 import logging
 
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.base_content import content_type_to_model
+
 
 logger = logging.getLogger('demisto-sdk')
+
+
+class NoModelException(Exception):
+    pass
+
+
+def serialize_node(node: dict, integration_to_commands: Optional[Dict[str, Any]] = None) -> BaseContent:
+    content_type = node.get('content_type')
+    if not content_type:
+        raise NoModelException('No content type in the node')
+    model = content_type_to_model.get(content_type)
+    if not model:
+        raise NoModelException(f'No model for {content_type}')
+    if integration_to_commands and content_type == ContentType.INTEGRATION and (object_id := node.get('object_id')):
+        node['commands'] = integration_to_commands.get(object_id)
+    return model.parse_obj(node)
 
 
 def labels_of(content_type: ContentType) -> str:

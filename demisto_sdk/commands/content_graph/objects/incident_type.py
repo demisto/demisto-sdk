@@ -1,10 +1,11 @@
 from pydantic import Field
-from typing import List, Optional, Set
+from typing import Optional, Set
+from demisto_sdk.commands.content_graph.common import ContentType
 
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
-class IncidentType(ContentItem):
+class IncidentType(ContentItem, content_type=ContentType.INCIDENT_TYPE):
     playbook: Optional[str]
     hours: int
     days: int

@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List
+from demisto_sdk.commands.content_graph.common import ContentType
 
 from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 
@@ -13,7 +14,7 @@ class Command(BaseModel):
         orm_mode = True
 
 
-class Integration(IntegrationScript):
+class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):
     is_fetch: bool = False
     is_fetch_events: bool = False
     is_feed: bool = False

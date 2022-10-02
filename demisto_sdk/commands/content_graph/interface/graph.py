@@ -5,14 +5,18 @@ from typing import Any, Dict, List, Optional
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
+from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.objects.integration import Command
+from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 
 
 class ContentGraphInterface(ABC):
-    
+
     @abstractmethod
     def is_graph_alive(self):
         pass
-    
+
     @abstractmethod
     def create_indexes_and_constraints(self) -> None:
         pass
@@ -28,30 +32,19 @@ class ContentGraphInterface(ABC):
     @abstractmethod
     def validate_graph(self) -> None:
         pass
-    
+
     @abstractmethod
-    def get_packs_content_items(self, marketplace: MarketplaceVersions):
+    def get_packs(self, marketplace: MarketplaceVersions, pack_id: Optional[str] = None) -> List[Pack]:
         pass
 
     @abstractmethod
-    def get_all_integrations_with_commands(self):
-        pass
-    
-    @abstractmethod
-    def get_node_by_path(self, path: Path, marketplace: MarketplaceVersions):
-        pass
-    
-    @abstractmethod
     def clean_graph(self):
-        pass
-    
-    @abstractmethod
-    def get_nodes_by_type(self, content_type: ContentType) -> Any:
         pass
 
     @abstractmethod
     def search_nodes(
         self,
+        marketplace: MarketplaceVersions,
         content_type: Optional[ContentType] = None,
         **properties,
     ) -> Any:
@@ -60,6 +53,7 @@ class ContentGraphInterface(ABC):
     @abstractmethod
     def get_single_node(
         self,
+        marketplace: MarketplaceVersions,
         content_type: Optional[ContentType] = None,
         **properties,
     ) -> Any:
@@ -68,23 +62,23 @@ class ContentGraphInterface(ABC):
     @abstractmethod
     def get_relationships_by_type(self, relationship: Relationship) -> Any:
         pass
-    
+
     @abstractmethod
     def get_all_level_dependencies(self, marketplace: MarketplaceVersions) -> Dict[str, Any]:
         pass
-    
+
     @abstractmethod
     def get_first_level_dependencies(self, marketplace: MarketplaceVersions) -> Dict[str, Dict[str, Any]]:
         pass
-    
+
     @abstractmethod
     def create_pack_dependencies(self):
         pass
-    
+
     @abstractmethod
-    def get_all_content_item_tests(self, marketplace: MarketplaceVersions):
+    def get_all_content_item_tests(self, marketplace: MarketplaceVersions) -> Dict[ContentItem, List[TestPlaybook]]:
         pass
-        
+
     @abstractmethod
     def run_single_query(self, query: str, **kwargs) -> Any:
         pass

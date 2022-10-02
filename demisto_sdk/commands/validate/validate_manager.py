@@ -1770,7 +1770,6 @@ class ValidateManager:
 
                 if old_path:
                     old_path = old_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml')
-
             else:
                 return irrelevant_file_output
 

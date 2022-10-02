@@ -188,6 +188,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.JOB: 'Jobs',
     FileType.PARSING_RULE: 'Parsing Rules',
     FileType.MODELING_RULE: 'Modeling Rules',
+    FileType.MODELING_RULE_SCHEMA: 'Modeling Rules Schema',
     FileType.CORRELATION_RULE: 'Correlation Rules',
     FileType.XSIAM_DASHBOARD: 'XSIAM Dashboards',
     FileType.XSIAM_REPORT: 'XSIAM Reports',

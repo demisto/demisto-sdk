@@ -67,17 +67,17 @@ from demisto_sdk.tests.constants_test import (
     INVALID_PLAYBOOK_CONDITION_2, INVALID_PLAYBOOK_ID_PATH,
     INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
     INVALID_REPUTATION_PATH, INVALID_SCRIPT_PATH, INVALID_WIDGET_PATH,
-    LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET, MODELING_RULES_SCHEMA_FILE,
-    PLAYBOOK_TARGET, SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET,
-    VALID_BETA_INTEGRATION, VALID_BETA_PLAYBOOK_PATH, VALID_DASHBOARD_PATH,
-    VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH,
-    VALID_INDICATOR_FIELD_PATH, VALID_INTEGRATION_ID_PATH,
-    VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_CONTAINER_PATH,
-    VALID_LAYOUT_PATH, VALID_MD, VALID_MULTI_LINE_CHANGELOG_PATH,
-    VALID_MULTI_LINE_LIST_CHANGELOG_PATH, VALID_ONE_LINE_CHANGELOG_PATH,
-    VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_PACK, VALID_PLAYBOOK_CONDITION,
-    VALID_REPUTATION_PATH, VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH,
-    VALID_WIDGET_PATH, WIDGET_TARGET)
+    LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET, PLAYBOOK_TARGET,
+    SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET, VALID_BETA_INTEGRATION,
+    VALID_BETA_PLAYBOOK_PATH, VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH,
+    VALID_INCIDENT_TYPE_PATH, VALID_INDICATOR_FIELD_PATH,
+    VALID_INTEGRATION_ID_PATH, VALID_INTEGRATION_TEST_PATH,
+    VALID_LAYOUT_CONTAINER_PATH, VALID_LAYOUT_PATH, VALID_MD,
+    VALID_MULTI_LINE_CHANGELOG_PATH, VALID_MULTI_LINE_LIST_CHANGELOG_PATH,
+    VALID_ONE_LINE_CHANGELOG_PATH, VALID_ONE_LINE_LIST_CHANGELOG_PATH,
+    VALID_PACK, VALID_PLAYBOOK_CONDITION, VALID_REPUTATION_PATH,
+    VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
+    WIDGET_TARGET, MODELING_RULES_SCHEMA_FILE)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
 from TestSuite.pack import Pack
@@ -696,8 +696,7 @@ class TestValidators:
                              "LI101"]
         error_list = validate_manager.create_ignored_errors_list(errors_to_exclude)
         assert {"BA101", "BA102", "BA103", "BA104", "BA105", "BA106", "BA107", "BA108", "BA109",
-                "BA110", 'BA111', "BA112", "BA113", "BA114", "BA115", "BC101", "BC102", "BC103", "BC104"}.issubset(
-            error_list)
+                "BA110", 'BA111', "BA112", "BA113", "BA114", "BA115", "BC101", "BC102", "BC103", "BC104"}.issubset(error_list)
 
     def test_added_files_type_using_function(self, repo, mocker):
         """
@@ -1507,8 +1506,7 @@ def test_check_file_relevance_and_format_path_non_formatted_relevant_file(mocker
     mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=FileType.INTEGRATION)
     mocker.patch.object(validator_obj, 'is_old_file_format', return_value=False)
     input_file_path = 'Packs/PackName/Integrations/IntegrationName/IntegrationName.yml'
-    assert validator_obj.check_file_relevance_and_format_path(input_file_path, None, set()) == (
-        input_file_path, '', True)
+    assert validator_obj.check_file_relevance_and_format_path(input_file_path, None, set()) == (input_file_path, '', True)
 
 
 @pytest.mark.parametrize('input_file_path',
@@ -1586,8 +1584,7 @@ def test_check_file_relevance_and_format_path_type_missing_file(mocker):
     validator_obj = ValidateManager(is_external_repo=True, check_is_unskipped=False)
     mocked_handler = mocker.patch.object(validator_obj, 'handle_error', return_value=False)
     mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=None)
-    assert validator_obj.check_file_relevance_and_format_path("Packs/type_missing_filename", None, set()) == (
-        '', '', False)
+    assert validator_obj.check_file_relevance_and_format_path("Packs/type_missing_filename", None, set()) == ('', '', False)
     mocked_handler.assert_called()
 
 
@@ -1632,8 +1629,7 @@ def test_check_file_relevance_and_format_path_file_to_format(mocker, input_file_
     validator_obj = ValidateManager(is_external_repo=True, check_is_unskipped=False)
     mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=file_type)
     mocker.patch.object(validator_obj, 'is_old_file_format', return_value=False)
-    assert validator_obj.check_file_relevance_and_format_path(input_file_path, None, set()) == (
-        'Packs/some_file.yml', '', True)
+    assert validator_obj.check_file_relevance_and_format_path(input_file_path, None, set()) == ('Packs/some_file.yml', '', True)
 
 
 @pytest.mark.parametrize('input_file_path, old_file_path, file_type',
@@ -1658,7 +1654,7 @@ def test_check_file_relevance_and_format_path_file_to_format_with_old_path(mocke
     validator_obj = ValidateManager(is_external_repo=True, check_is_unskipped=False)
     mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=file_type)
     mocker.patch.object(validator_obj, 'is_old_file_format', return_value=False)
-    assert validator_obj.check_file_relevance_and_format_path(input_file_path, old_file_path, set()) == \
+    assert validator_obj.check_file_relevance_and_format_path(input_file_path, old_file_path, set()) ==\
         ('Packs/some_file.yml', 'Packs/old_file_path.yml', True)
 
 
@@ -1677,8 +1673,7 @@ def test_check_file_relevance_and_format_path_old_format_file(mocker):
     mocker.patch('demisto_sdk.commands.validate.validate_manager.find_type', return_value=FileType.INTEGRATION)
     mocker.patch.object(validator_obj, 'is_old_file_format', return_value=True)
     old_format_files: set = set()
-    assert validator_obj.check_file_relevance_and_format_path('Packs/some_test.yml', None, old_format_files) == (
-        '', '', True)
+    assert validator_obj.check_file_relevance_and_format_path('Packs/some_test.yml', None, old_format_files) == ('', '', True)
     assert old_format_files == {'Packs/some_test.yml'}
 
 
@@ -1851,8 +1846,7 @@ def test_job_unexpected_field_values_in_non_feed_job(repo, capsys,
                           (set(), "", True, set()),
                           ({'Packs/Integration/doc_files/image.png'}, "", True, set()),
                           ({'Packs/Integration/Playbooks/mock_playbook.yml'}, "", True, {'renamed_mock_playbook.yml'}),
-                          ({Path('Packs/Integration/Playbooks/mock_playbook.yml')}, "", True,
-                           {Path('renamed_mock_playbook.yml')}),
+                          ({Path('Packs/Integration/Playbooks/mock_playbook.yml')}, "", True, {Path('renamed_mock_playbook.yml')}),
                           (({'non_content_item.txt'}, "[BA115]", False, set()))))
 def test_validate_deleted_files(capsys, file_set, expected_output, expected_result, added_files, mocker):
     """

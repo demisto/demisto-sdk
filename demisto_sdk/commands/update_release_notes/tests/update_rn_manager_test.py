@@ -2,7 +2,6 @@ import pytest
 
 from demisto_sdk.commands.update_release_notes.update_rn_manager import \
     UpdateReleaseNotesManager
-from demisto_sdk.tests.constants_test import MODELING_RULES_SCHEMA_FILE
 
 
 class TestUpdateRNManager:
@@ -188,13 +187,3 @@ class TestUpdateRNManager:
         mng = UpdateReleaseNotesManager()
         mng.manage_rn_update()
         create_release_notes_mock.assert_called_with({'Packs/test1', 'Packs/test2'}, set(), set())
-
-    def test_filter_to_relevant_files(self):
-        from demisto_sdk.commands.update_release_notes.update_rn_manager import \
-            UpdateReleaseNotesManager
-        from demisto_sdk.commands.validate.validate_manager import \
-            ValidateManager
-        mng = UpdateReleaseNotesManager()
-        vld = ValidateManager()
-        filtered_set, _, _ = mng.filter_to_relevant_files({MODELING_RULES_SCHEMA_FILE}, vld)
-        assert len(filtered_set) == 0

@@ -83,11 +83,12 @@ def create_nodes_by_type(
 def get_packs(
     tx: Transaction,
     marketplace: MarketplaceVersions,
-    pack_id: Optional[str] = None,
+    **properties,
 ) -> List[Pack]:
-    pack_id = f'{{object_id: "{pack_id}"}}' if pack_id else ''
+    params_str = ', '.join(f'{k}: "{v}"' for k, v in properties.items())
+    params_str = f'{{{params_str}}}' if params_str else ''
     query = f"""
-    MATCH (p:{ContentType.PACK}{pack_id})<-[:{Relationship.IN_PACK}]-(c:{ContentType.BASE_CONTENT})
+    MATCH (p:{ContentType.PACK}{params_str})<-[:{Relationship.IN_PACK}]-(c:{ContentType.BASE_CONTENT})
     WHERE '{marketplace}' IN p.marketplaces
     RETURN p AS pack, collect(c) AS content_items
     """

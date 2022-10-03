@@ -93,9 +93,12 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             session.write_transaction(create_relationships, relationships)
 
-    def get_packs(self, marketplace: MarketplaceVersions, pack_id: Optional[str] = None) -> List[Pack]:
+    def get_packs(self,
+                  marketplace: MarketplaceVersions,
+                  **properties,
+    ) -> List[Pack]:
         with self.driver.session() as session:
-            return session.read_transaction(get_packs, marketplace, pack_id)
+            return session.read_transaction(get_packs, marketplace, **properties)
 
     def clean_graph(self):
         with self.driver.session() as session:
@@ -105,7 +108,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         self,
         marketplace: MarketplaceVersions,
         content_type: Optional[ContentType] = None,
-        **properties
+        **properties,
     ) -> List[BaseContent]:
         with self.driver.session() as session:
             return session.read_transaction(search_nodes, marketplace, content_type, **properties)

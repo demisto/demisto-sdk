@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.integration import Command
@@ -34,7 +35,9 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def get_packs(self, marketplace: MarketplaceVersions, pack_id: Optional[str] = None) -> List[Pack]:
+    def get_packs(self,
+                  marketplace: MarketplaceVersions,
+                  **properties) -> List[Pack]:
         pass
 
     @abstractmethod
@@ -47,7 +50,7 @@ class ContentGraphInterface(ABC):
         marketplace: MarketplaceVersions,
         content_type: Optional[ContentType] = None,
         **properties,
-    ) -> Any:
+    ) -> List[BaseContent]:
         pass
 
     @abstractmethod
@@ -56,7 +59,7 @@ class ContentGraphInterface(ABC):
         marketplace: MarketplaceVersions,
         content_type: Optional[ContentType] = None,
         **properties,
-    ) -> Any:
+    ) -> BaseContent:
         pass
 
     @abstractmethod

@@ -163,7 +163,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             return session.read_transaction(get_relationships_by_type, relationship_type)
 
-    def get_all_content_item_tests(self, marketplace: MarketplaceVersions) -> Dict[ContentItem, List[TestPlaybook]]:
+    def get_all_content_item_tests(self, marketplace: MarketplaceVersions) -> Dict[str, List[TestPlaybook]]:
         with self.driver.session() as session:
             return session.read_transaction(get_all_content_item_tests, marketplace)
 

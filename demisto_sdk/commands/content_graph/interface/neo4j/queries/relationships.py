@@ -200,11 +200,11 @@ def get_relationships_by_type(tx: Transaction, rel: Relationship):
              'target': serialize_node(item.get('target'))} for item in run_query(tx, query).data()]
 
 
-def get_all_content_item_tests(tx: Transaction, marketplace: MarketplaceVersions) -> Dict[ContentItem, List[TestPlaybook]]:
+def get_all_content_item_tests(tx: Transaction, marketplace: MarketplaceVersions) -> Dict[str, List[TestPlaybook]]:
     query = f"""
     MATCH (p:{ContentType.TEST_PLAYBOOK})-[:{Relationship.USES}*4]->(c:{ContentType.BASE_CONTENT})
     WHERE '{marketplace}' in p.marketplaces AND '{marketplace}' in c.marketplaces
     RETURN c as content_item, collect(p) as playbooks
     """
-    return {serialize_node(item.get('content_item')): [TestPlaybook.parse_obj(playbook) for playbook in item.get('playbooks', [])]
+    return {item.get('content_item').get('object_id'): [TestPlaybook.parse_obj(playbook) for playbook in item.get('playbooks', [])]
             for item in run_query(tx, query).data()}

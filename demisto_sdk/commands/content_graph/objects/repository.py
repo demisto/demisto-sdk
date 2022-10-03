@@ -32,13 +32,11 @@ class Repository(BaseModel):
         if marketplace == MarketplaceVersions.MarketplaceV2:
             # glob for all files in dir recursively      
             for filepath in glob.iglob(f'{dir}/**', recursive=True):
-                if not Path(filepath).is_file() or 'ReleaseNotes' in filepath:
+                file_path = Path(filepath)
+                if not file_path.is_file() or 'ReleaseNotes' in file_path.parts:
                     continue
-                with open(filepath) as file:
-                    s = file.read()
-                s = s.replace('Cortex XSOAR', os.getenv('PRODUCT_NAME', 'Cortex XSOAR'))
-                with open(filepath, "w") as file:
-                    file.write(s)
+                logger.info(f'Replacing {file_path}')
+                file_path.write_text(file_path.read_text().replace('Cortex XSOAR', os.getenv('PRODUCT_NAME', 'Cortex XSOAR')))
 
         # zip all packs
         shutil.make_archive(str(dir.parent / 'content_packs'), 'zip', dir)

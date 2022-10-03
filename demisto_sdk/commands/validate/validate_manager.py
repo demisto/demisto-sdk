@@ -202,7 +202,11 @@ class ValidateManager:
         self.skipped_file_types = (FileType.CHANGELOG,
                                    FileType.DOC_IMAGE,
                                    FileType.MODELING_RULE_SCHEMA,
-                                   FileType.XSIAM_DASHBOARD_IMAGE,)
+                                   FileType.XSIAM_DASHBOARD_IMAGE,
+                                   FileType.XSIAM_REPORT_IMAGE,
+                                   FileType.XSIAM_DASHBOARD_IMAGE,
+                                   FileType.AGENT_CONFIG_YML,
+                                   FileType.AGENT_CONFIG,)
 
         self.is_external_repo = is_external_repo
         if is_external_repo:
@@ -1772,6 +1776,13 @@ class ValidateManager:
                     old_path = old_path.replace('.py', '.yml').replace('.ps1', '.yml').replace('.js', '.yml')
             else:
                 return irrelevant_file_output
+
+        # redirect schema file when updating release notes
+        if file_type == FileType.MODELING_RULE_SCHEMA:
+            file_path = file_path.replace('_schema', '').replace('.json', '.yml')
+
+            if old_path:
+                old_path = old_path.replace('_schema', '').replace('.json', '.yml')
 
         # check for old file format
         if self.is_old_file_format(file_path, file_type):

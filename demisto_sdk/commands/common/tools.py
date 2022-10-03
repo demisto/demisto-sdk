@@ -31,8 +31,8 @@ from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
 
 from demisto_sdk.commands.common.constants import (
-    ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
-    DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
+    AGENT_CONFIG_DIR, ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK,
+    CLASSIFIERS_DIR, DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
     DOC_FILES_DIR, ENV_DEMISTO_SDK_MARKETPLACE, ID_IN_COMMONFIELDS, ID_IN_ROOT,
     INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
@@ -1342,17 +1342,20 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.XSOAR_CONFIG
         elif 'CONTRIBUTORS' in path.name:
             return FileType.CONTRIBUTORS
+        elif AGENT_CONFIG_DIR in path.parts:
+            return FileType.AGENT_CONFIG
 
     elif path.name.endswith('_image.png'):
         if path.name.endswith('Author_image.png'):
             return FileType.AUTHOR_IMAGE
+        elif XSIAM_DASHBOARDS_DIR in path.parts:
+            return FileType.XSIAM_DASHBOARD_IMAGE
+        elif XSIAM_REPORTS_DIR in path.parts:
+            return FileType.XSIAM_REPORT_IMAGE
         return FileType.IMAGE
 
     elif path.suffix == '.png' and DOC_FILES_DIR in path.parts:
         return FileType.DOC_IMAGE
-
-    elif path.suffix == '.png' and XSIAM_DASHBOARDS_DIR in path.parts:
-        return FileType.XSIAM_DASHBOARD_IMAGE
 
     elif path.suffix == '.ps1':
         return FileType.POWERSHELL_FILE
@@ -1377,6 +1380,9 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
         elif path.parent.parent.name == SCRIPTS_DIR and path.name == f'{path.parent.name}.yml':
             # Packs/myPack/Scripts/myScript/myScript.yml
             return FileType.SCRIPT
+
+        elif AGENT_CONFIG_DIR in path.parts:
+            return FileType.AGENT_CONFIG_YML
 
     elif path.name == FileType.PACK_IGNORE:
         return FileType.PACK_IGNORE
@@ -1532,6 +1538,9 @@ def find_type(
 
         if 'trigger_id' in _dict:
             return FileType.TRIGGER
+
+        if 'profile_type' in _dict and 'yaml_template' in _dict:
+            return FileType.AGENT_CONFIG
 
         # When using it for all files validation- sometimes 'id' can be integer
         if 'id' in _dict:
@@ -2065,6 +2074,7 @@ def item_type_to_content_items_header(item_type):
         "correlationrule": "correlationRule",
         "modelingrule": "modelingRule",
         "parsingrule": "parsingRule",
+        "agentconfig": "agentConfig"
     }
 
     return f'{converter.get(item_type, item_type)}s'

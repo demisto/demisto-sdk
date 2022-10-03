@@ -27,8 +27,12 @@ class Repository(BaseModel):
             {executer.submit(pack.dump, dir / pack.path.name, marketplace): pack for pack in self.packs}
         time_taken = time.time() - start_time
         logger.info(f'ending repo dump. Took {time_taken} seconds')
+        # if mpv2 we need to replace XSOAR to PRODUCT_NAME
         if marketplace == MarketplaceVersions.MarketplaceV2:
-            for filepath in glob.iglob('./**/*', recursive=True):
+            # glob for all files in dir recursively      
+            for filepath in glob.iglob(f'{dir}/**', recursive=True):
+                if 'ReleaseNotes' in filepath:
+                    continue
                 with open(filepath) as file:
                     s = file.read()
                 s = s.replace('Cortex XSOAR', os.getenv('PRODUCT_NAME', 'Cortex XSOAR'))

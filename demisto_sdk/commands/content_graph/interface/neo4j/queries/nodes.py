@@ -141,7 +141,7 @@ def search_nodes(
     integration_to_commands = None
     if ContentType.INTEGRATION in {node.get('content_type') for node in data}:
         integration_to_commands = _get_all_integrations_with_commands(tx)
-    serialized_data = [serialize_node(node, integration_to_commands) for node in data]
+    serialized_data = [serialize_node(node.get('node'), integration_to_commands) for node in data]
     if single_result and serialized_data:
         return serialized_data[0]
     return serialized_data

@@ -136,7 +136,8 @@ class Uploader:
             if not self.path:
                 return SUCCESS_RETURN_CODE
         host = self.client.api_client.configuration.host
-        click.secho(f"Uploading {self.path} ... to the host = {host}")
+        click.secho(f'The host you are uploading to: {host}')
+        click.secho(f"Uploading {self.path} ...")
         if self.path is None or not os.path.exists(self.path):
             click.secho(f'Error: Given input path: {self.path} does not exist', fg='bright_red')
             return ERROR_RETURN_CODE

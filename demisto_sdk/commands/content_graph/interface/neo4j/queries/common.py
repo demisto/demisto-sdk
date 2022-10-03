@@ -22,7 +22,7 @@ class NoModelException(Exception):
 def serialize_node(node: dict, integration_to_commands: Optional[Dict[str, Any]] = None) -> BaseContent:
     content_type = node.get('content_type')
     if not content_type:
-        raise NoModelException('No content type in the node')
+        raise NoModelException(f'No content type in the node {node}')
     model = content_type_to_model.get(content_type)
     if not model:
         raise NoModelException(f'No model for {content_type}')

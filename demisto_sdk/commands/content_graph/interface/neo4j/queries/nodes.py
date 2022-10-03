@@ -89,7 +89,7 @@ def get_packs(
     params_str = f'{{{params_str}}}' if params_str else ''
     query = f"""
     MATCH (p:{ContentType.PACK}{params_str})<-[:{Relationship.IN_PACK}]-(c:{ContentType.BASE_CONTENT})
-    WHERE '{marketplace}' IN p.marketplaces
+    WHERE '{marketplace}' IN p.marketplaces AND '{marketplace}' IN c.marketplaces
     RETURN p AS pack, collect(c) AS content_items
     """
     packs: List[Pack] = []

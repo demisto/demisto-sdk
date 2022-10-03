@@ -1,4 +1,6 @@
 from concurrent.futures import ProcessPoolExecutor
+import glob
+import os
 import shutil
 from pydantic import BaseModel, DirectoryPath
 from typing import List
@@ -25,6 +27,13 @@ class Repository(BaseModel):
             {executer.submit(pack.dump, dir / pack.path.name, marketplace): pack for pack in self.packs}
         time_taken = time.time() - start_time
         logger.info(f'ending repo dump. Took {time_taken} seconds')
+        if marketplace == MarketplaceVersions.MarketplaceV2:
+            for filepath in glob.iglob('./**/*', recursive=True):
+                with open(filepath) as file:
+                    s = file.read()
+                s = s.replace('Cortex XSOAR', os.getenv('PRODUCT_NAME', 'Cortex XSOAR'))
+                with open(filepath, "w") as file:
+                    file.write(s)
 
         # zip all packs
         shutil.make_archive(str(dir.parent / 'content_packs'), 'zip', dir)

@@ -1,6 +1,7 @@
 from concurrent.futures import ProcessPoolExecutor
 import glob
 import os
+from pathlib import Path
 import shutil
 from pydantic import BaseModel, DirectoryPath
 from typing import List
@@ -31,7 +32,7 @@ class Repository(BaseModel):
         if marketplace == MarketplaceVersions.MarketplaceV2:
             # glob for all files in dir recursively      
             for filepath in glob.iglob(f'{dir}/**', recursive=True):
-                if 'ReleaseNotes' in filepath:
+                if not Path(filepath).is_file() or 'ReleaseNotes' in filepath:
                     continue
                 with open(filepath) as file:
                     s = file.read()

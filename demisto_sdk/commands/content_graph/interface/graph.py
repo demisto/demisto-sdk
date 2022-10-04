@@ -79,7 +79,7 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def get_all_content_item_tests(self, marketplace: MarketplaceVersions) -> Dict[str, List[TestPlaybook]]:
+    def get_all_content_item_tests(self, marketplace: MarketplaceVersions, content_type: ContentType) -> Dict[str, List[TestPlaybook]]:
         pass
 
     @abstractmethod

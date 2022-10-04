@@ -163,9 +163,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             return session.read_transaction(get_relationships_by_type, relationship_type)
 
-    def get_all_content_item_tests(self, marketplace: MarketplaceVersions) -> Dict[str, List[TestPlaybook]]:
+    def get_all_content_item_tests(self, marketplace: MarketplaceVersions, content_type: ContentType) -> Dict[str, List[TestPlaybook]]:
         with self.driver.session() as session:
-            return session.read_transaction(get_all_content_item_tests, marketplace)
+            return session.read_transaction(get_all_content_item_tests, marketplace, content_type)
 
     def run_single_query(self, query: str, parameters: Optional[Dict[str, Any]] = None) -> neo4j.Result:
         with self.driver.session() as session:

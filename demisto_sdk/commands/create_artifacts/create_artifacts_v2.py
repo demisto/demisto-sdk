@@ -13,12 +13,14 @@ class ContentArtifactManager:
 
     def __init__(self,
                  marketplace: MarketplaceVersions,
-                 output: Path) -> None:
+                 output: Path,
+                 no_zip: bool) -> None:
         self.marketplace = marketplace
         if not output:
             output = REPO_PATH / 'artifacts'
         self.output: Path = output / marketplace.value
         self.output.mkdir(parents=True, exist_ok=True)
+        self.no_zip = no_zip
 
     def create_artifacts(self) -> None:
         # TODO add dependencies to marshal when it's fixed
@@ -28,4 +30,4 @@ class ContentArtifactManager:
                 marketplace=self.marketplace,
             )
         shutil.rmtree(self.output, ignore_errors=True)
-        repo.dump(self.output, self.marketplace)
+        repo.dump(self.output, self.marketplace, self.no_zip)

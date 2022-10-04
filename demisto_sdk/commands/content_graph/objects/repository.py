@@ -19,7 +19,7 @@ class Repository(BaseModel):
     path: DirectoryPath
     packs: List[Pack]
     
-    def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions):
+    def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions, no_zip: bool = False):
         # TODO understand why multiprocessing is not working
     
         logger.info('starting repo dump')
@@ -28,20 +28,11 @@ class Repository(BaseModel):
             {executer.submit(pack.dump, dir / pack.path.name, marketplace): pack for pack in self.packs}
         time_taken = time.time() - start_time
         logger.info(f'ending repo dump. Took {time_taken} seconds')
-        # if mpv2 we need to replace XSOAR to PRODUCT_NAME
-        if marketplace == MarketplaceVersions.MarketplaceV2:
-            # glob for all files in dir recursively      
-            for filepath in glob.iglob(f'{dir}/**', recursive=True):
-                file_path = Path(filepath)
-                if not file_path.is_file() or 'ReleaseNotes' in file_path.parts:
-                    continue
-                logger.info(f'Replacing {file_path}')
-                file_path.write_text(file_path.read_text().replace('Cortex XSOAR', os.getenv('PRODUCT_NAME', 'Cortex XSOAR')))
 
-        # zip all packs
-        shutil.make_archive(str(dir.parent / 'content_packs'), 'zip', dir)
+        if not no_zip:
+            shutil.make_archive(str(dir.parent / 'content_packs'), 'zip', dir)
 
-        shutil.rmtree(dir)
+            shutil.rmtree(dir)
                 
     class Config:
         orm_mode = True

@@ -18,7 +18,7 @@ class ContentArtifactManager:
         self.marketplace = marketplace
         if not output:
             output = REPO_PATH / 'artifacts'
-        self.output: Path = output / marketplace.value
+        self.output: Path = output / marketplace.value / 'content-packs'
         self.output.mkdir(parents=True, exist_ok=True)
         self.no_zip = no_zip
 

@@ -31,8 +31,9 @@ class Repository(BaseModel):
 
         if not no_zip:
             shutil.make_archive(str(dir.parent / 'content_packs'), 'zip', dir)
-
             shutil.rmtree(dir)
+        else:
+            shutil.move(str(dir), dir.parent / 'content-packs')
                 
     class Config:
         orm_mode = True

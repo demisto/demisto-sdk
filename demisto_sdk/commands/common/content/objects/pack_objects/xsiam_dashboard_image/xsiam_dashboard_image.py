@@ -3,10 +3,8 @@ from typing import Union
 from wcmatch.pathlib import Path
 
 import demisto_sdk.commands.common.content.errors as exc
-from demisto_sdk.commands.common.constants import XSIAM_DASHBOARD
 from demisto_sdk.commands.common.content.objects.abstract_objects import \
     GeneralObject
-from demisto_sdk.commands.common.tools import generate_xsiam_normalized_name
 
 
 class XSIAMDashboardImage(GeneralObject):
@@ -38,6 +36,3 @@ class XSIAMDashboardImage(GeneralObject):
             raise exc.ContentInitializeError(XSIAMDashboardImage, path)
 
         return path
-
-    def normalize_file_name(self) -> str:
-        return generate_xsiam_normalized_name(self._path.name, XSIAM_DASHBOARD)

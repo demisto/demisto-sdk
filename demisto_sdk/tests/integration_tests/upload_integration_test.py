@@ -45,14 +45,14 @@ def test_integration_upload_pack_positive(demisto_client):
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(main, [UPLOAD_CMD, "-i", pack_path, "--insecure"])
     assert result.exit_code == 0
-    assert '\nSUCCESSFUL UPLOADS:' in click.secho.call_args_list[3][0][0]
-    assert "│ FeedAzure.yml                              │ integration   │" in click.secho.call_args_list[4][0][0]
-    assert "│ FeedAzure_test.yml                         │ playbook      │" in click.secho.call_args_list[4][0][0]
-    assert "│ just_a_test_script.yml                     │ testscript    │" in click.secho.call_args_list[4][0][0]
-    assert "│ playbook-FeedAzure_test_copy_no_prefix.yml │ testplaybook  │" in click.secho.call_args_list[4][0][0]
-    assert "│ script-prefixed_automation.yml             │ testscript    │" in click.secho.call_args_list[4][0][0]
-    assert "│ FeedAzure_test.yml                         │ testplaybook  │" in click.secho.call_args_list[4][0][0]
-    assert "│ incidentfield-city.json                    │ incidentfield │" in click.secho.call_args_list[4][0][0]
+    assert '\nSUCCESSFUL UPLOADS:' in click.secho.call_args_list[4][0][0]
+    assert "│ FeedAzure.yml                              │ integration   │" in click.secho.call_args_list[5][0][0]
+    assert "│ FeedAzure_test.yml                         │ playbook      │" in click.secho.call_args_list[5][0][0]
+    assert "│ just_a_test_script.yml                     │ testscript    │" in click.secho.call_args_list[5][0][0]
+    assert "│ playbook-FeedAzure_test_copy_no_prefix.yml │ testplaybook  │" in click.secho.call_args_list[5][0][0]
+    assert "│ script-prefixed_automation.yml             │ testscript    │" in click.secho.call_args_list[5][0][0]
+    assert "│ FeedAzure_test.yml                         │ testplaybook  │" in click.secho.call_args_list[5][0][0]
+    assert "│ incidentfield-city.json                    │ incidentfield │" in click.secho.call_args_list[5][0][0]
 
     assert not result.stderr
 
@@ -101,7 +101,7 @@ Error: Given input path: {str(invalid_scripts_dir)} is not uploadable. Input pat
   1. Pack
   2. A content entity directory that is inside a pack. For example: an Integrations directory or a Layouts directory
   3. Valid file that can be imported to Cortex XSOAR manually. For example a playbook: helloWorld.yml""" in\
-        click.secho.call_args_list[1][0][0]
+        click.secho.call_args_list[2][0][0]
     assert not result.stderr
 
 

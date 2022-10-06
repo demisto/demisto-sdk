@@ -1116,11 +1116,11 @@ python-versions = "*"
 
 [[package]]
 name = "neo4j"
-version = "4.4.8"
+version = "5.0.1"
 description = "Neo4j Bolt driver for Python"
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
 pytz = "*"
@@ -2312,7 +2312,7 @@ build = ["gsutil"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "f7cb18af4e21154bfe247fef50d6a0c7478efe61145ea9cf65303359efd3fb1a"
+content-hash = "4ca69dda09f948d974c776914c29e93addc8ee57207c07bced68f662785ea953"
 
 [metadata.files]
 aiohttp = [
@@ -3292,7 +3292,7 @@ mypy-extensions = [
     {file = "mypy_extensions-0.4.3.tar.gz", hash = "sha256:2d82818f5bb3e369420cb3c4060a7970edba416647068eb4c5343488a6c604a8"},
 ]
 neo4j = [
-    {file = "neo4j-4.4.8.tar.gz", hash = "sha256:504076a11a7fcf98a348f1f7cb677104ccf85365ef1fe84a4f1fd330659104ae"},
+    {file = "neo4j-5.0.1.tar.gz", hash = "sha256:2330d1b8295b6afb39f23a001f5b0aecae6ca5895cc5b7af3413e326bbd1979c"},
 ]
 networkx = [
     {file = "networkx-2.8.7-py3-none-any.whl", hash = "sha256:15cdf7f7c157637107ea690cabbc488018f8256fa28242aed0fb24c93c03a06d"},

@@ -6,8 +6,10 @@ from typing import Optional
 DATE_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
 
-def logging_setup(verbose: int, quiet: Optional[bool] = False,
-                  log_path: Optional[str] = None) -> logging.Logger:
+def logging_setup(
+    verbose: int, quiet: Optional[bool] = False,
+    log_path: Optional[str] = None, log_file_name: str = 'lint_debug_log.log'
+) -> logging.Logger:
     """ Init logger object for logging in demisto-sdk
         For more info - https://docs.python.org/3/library/logging.html
 
@@ -15,6 +17,7 @@ def logging_setup(verbose: int, quiet: Optional[bool] = False,
         verbose(int) verosity level - 1-3
         quiet(bool): Whether to output a quiet response.
         log_path(str): Path to save log of all levels
+        log_file_name(str): Basename of file to save logs to. Defaults to "lint_debug_log.log".
 
     Returns:
         logging.Logger: logger object
@@ -56,7 +59,7 @@ def logging_setup(verbose: int, quiet: Optional[bool] = False,
 
     # Setting debug log file if in circleci
     if log_path:
-        file_handler = logging.FileHandler(filename=os.path.join(log_path, 'lint_debug_log.log'))
+        file_handler = logging.FileHandler(filename=os.path.join(log_path, log_file_name))
         file_handler.setFormatter(
             logging.Formatter('[%(asctime)s] - [%(threadName)s] - [%(levelname)s] - %(message)s'))
         file_handler.name = 'file-handler'

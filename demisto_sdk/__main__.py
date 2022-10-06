@@ -3,8 +3,11 @@ import copy
 import logging
 import os
 import sys
+import tempfile
+import typer
+from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
-from typing import IO, Any, Dict
+from typing import IO, Any, Dict, Optional
 
 import click
 import git
@@ -2216,6 +2219,127 @@ def create_content_graph(
 @main.result_callback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)
+
+
+app = typer.Typer()
+
+
+# ====================== test-modeling-rule ====================== #
+
+def tenant_config_cb(ctx: typer.Context, param: typer.CallbackParam, value: Optional[str]):
+    if ctx.resilient_parsing:
+        return
+    if param.value_is_missing(value):
+        err_str = (f'{param.name} must be set either via the environment variable '
+                   f'"{param.envvar}" or passed explicitly when running the command')
+        raise typer.BadParameter(err_str)
+    return value
+
+
+@app.command(
+    name='test-modeling-rule',
+    hidden=True,
+    help='Test a modeling rule against an XSIAM tenant.',
+)
+def test_modeling_rule(
+    input: list[Path] = typer.Argument(
+        ...,
+        exists=True,
+        dir_okay=True,
+        resolve_path=True,
+        show_default=False,
+        help='The path to a directory of a modeling rule. May pass multiple paths to test multiple modeling rules.'
+    ),
+    pre_clean: bool = typer.Option(
+        False,
+        '-b', '--clean-before',
+        is_flag=True,
+        help='Whether to remove all installed packs before testing.',
+        rich_help_panel='Execution Behavior'
+    ),
+    post_clean: bool = typer.Option(
+        False,
+        '-a', '--clean-after',
+        is_flag=True,
+        help='Whether to clean the test dataset that was created.',
+        rich_help_panel='Execution Behavior'
+    ),
+    fail_missing: bool = typer.Option(
+        False,
+        '-f', '--fail-missing',
+        is_flag=True,
+        help='Whether to raise an exception if test data is not present for a modeling rule.',
+        rich_help_panel='Execution Behavior'
+    ),
+    xsiam_url: Optional[str] = typer.Option(
+        None,
+        envvar='DEMISTO_BASE_URL',
+        help='The base url to the xsiam tenant.',
+        rich_help_panel='XSIAM Tenant Configuration',
+        show_default=False,
+        callback=tenant_config_cb
+    ),
+    api_key: Optional[str] = typer.Option(
+        None,
+        envvar='DEMISTO_API_KEY',
+        help='The api key for the xsiam tenant.',
+        rich_help_panel='XSIAM Tenant Configuration',
+        show_default=False,
+        callback=tenant_config_cb
+    ),
+    auth_id: Optional[str] = typer.Option(
+        None,
+        envvar='XSIAM_AUTH_ID',
+        help='The auth id associated with the xsiam api key being used.',
+        rich_help_panel='XSIAM Tenant Configuration',
+        show_default=False,
+        callback=tenant_config_cb
+    ),
+    verbosity: int = typer.Option(
+        0,
+        '-v', '--verbose',
+        count=True,
+        clamp=True,
+        max=3,
+        show_default=True,
+        help='Verbosity level -v / -vv / .. / -vvv',
+        rich_help_panel='Logging Configuration'
+    ),
+    quiet: bool = typer.Option(
+        True,
+        help='Quiet output, only output results in the end.',
+        rich_help_panel='Logging Configuration',
+    ),
+    log_path: Path = typer.Option(
+        None,
+        '-lp', '--log-path',
+        resolve_path=True,
+        show_default=False,
+        help='Path of directory in which you would like to store all levels of logs.',
+        rich_help_panel='Logging Configuration'
+    ),
+    log_file_name: str = typer.Option(
+        'test-modeling-rule.log',
+        '-ln', '--log-name',
+        resolve_path=True,
+        help='The file name (including extension) where log output should be saved to.',
+        rich_help_panel='Logging Configuration'
+    )
+):
+    from demisto_sdk.commands.common.logger import logging_setup
+    from demisto_sdk.commands.test_content.modeling_rule import test_modeling_rules
+    logging_setup(
+        verbose=verbosity,  # type: ignore[arg-type]
+        quiet=quiet,  # type: ignore[arg-type]
+        log_path=log_path,  # type: ignore[arg-type]
+        log_file_name=log_file_name
+    )
+    test_modeling_rules(input, pre_clean, post_clean, fail_missing, xsiam_url, api_key, auth_id)
+
+
+typer_click_object = typer.main.get_command(app)
+
+main.add_command(typer_click_object, 'test-modeling-rule')
 
 
 if __name__ == '__main__':

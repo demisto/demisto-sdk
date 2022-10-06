@@ -1,11 +1,12 @@
 import logging
-from neo4j import Transaction, Result
 from typing import Dict, Set
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions, REPUTATION_COMMAND_NAMES
+from demisto_sdk.commands.common.constants import (REPUTATION_COMMAND_NAMES,
+                                                   MarketplaceVersions)
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query
-
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import \
+    run_query
+from neo4j import Result, Transaction
 
 REPUTATION_COMMANDS_NODE_IDS = [f'{ContentType.COMMAND}:{cmd}' for cmd in REPUTATION_COMMAND_NAMES]
 IGNORED_CONTENT_ITEMS_IN_DEPENDENCY_CALC = REPUTATION_COMMANDS_NODE_IDS
@@ -121,4 +122,3 @@ def create_depends_on_relationships(tx: Transaction) -> None:
     result = run_query(tx, query).single()
     depends_on_count: int = result['depends_on_relationships']
     logger.info(f'Merged {depends_on_count} DEPENDS_ON relationships between {depends_on_count} packs.')
-

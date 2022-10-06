@@ -1,43 +1,56 @@
-from pathlib import Path
+import logging
 import shutil
-from pydantic import BaseModel, Field
+from pathlib import Path
 from typing import Any, Generator, List, Optional
-from demisto_sdk.commands.common.constants import CONTRIBUTORS_README_TEMPLATE, MarketplaceVersions
-from demisto_sdk.commands.common.tools import get_mp_tag_parser
 
-from demisto_sdk.commands.content_graph.common import PACK_METADATA_FILENAME, ContentType, Nodes, Relationships
+from pydantic import BaseModel, Field
+
+from demisto_sdk.commands.common.constants import (
+    CONTRIBUTORS_README_TEMPLATE, MarketplaceVersions)
+from demisto_sdk.commands.common.handlers import JSON_Handler
+from demisto_sdk.commands.common.tools import get_mp_tag_parser
+from demisto_sdk.commands.content_graph.common import (PACK_METADATA_FILENAME,
+                                                       ContentType, Nodes,
+                                                       Relationships)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
-from demisto_sdk.commands.content_graph.objects.correlation_rule import CorrelationRule
+from demisto_sdk.commands.content_graph.objects.correlation_rule import \
+    CorrelationRule
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
-from demisto_sdk.commands.content_graph.objects.generic_definition import GenericDefinition
-from demisto_sdk.commands.content_graph.objects.generic_module import GenericModule
+from demisto_sdk.commands.content_graph.objects.generic_definition import \
+    GenericDefinition
+from demisto_sdk.commands.content_graph.objects.generic_module import \
+    GenericModule
 from demisto_sdk.commands.content_graph.objects.generic_type import GenericType
-from demisto_sdk.commands.content_graph.objects.incident_field import IncidentField
-from demisto_sdk.commands.content_graph.objects.incident_type import IncidentType
-from demisto_sdk.commands.content_graph.objects.indicator_field import IndicatorField
-from demisto_sdk.commands.content_graph.objects.indicator_type import IndicatorType
+from demisto_sdk.commands.content_graph.objects.incident_field import \
+    IncidentField
+from demisto_sdk.commands.content_graph.objects.incident_type import \
+    IncidentType
+from demisto_sdk.commands.content_graph.objects.indicator_field import \
+    IndicatorField
+from demisto_sdk.commands.content_graph.objects.indicator_type import \
+    IndicatorType
 from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.job import Job
 from demisto_sdk.commands.content_graph.objects.layout import Layout
 from demisto_sdk.commands.content_graph.objects.list import List as ListObject
 from demisto_sdk.commands.content_graph.objects.mapper import Mapper
-from demisto_sdk.commands.content_graph.objects.modeling_rule import ModelingRule
+from demisto_sdk.commands.content_graph.objects.modeling_rule import \
+    ModelingRule
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.report import Report
 from demisto_sdk.commands.content_graph.objects.script import Script
-from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
+from demisto_sdk.commands.content_graph.objects.test_playbook import \
+    TestPlaybook
 from demisto_sdk.commands.content_graph.objects.trigger import Trigger
 from demisto_sdk.commands.content_graph.objects.widget import Widget
 from demisto_sdk.commands.content_graph.objects.wizard import Wizard
-from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import XSIAMDashboard
+from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import \
+    XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
 
-import logging
-
-from demisto_sdk.commands.common.handlers import JSON_Handler
 json = JSON_Handler()
 
 logger = logging.getLogger('demisto-sdk')

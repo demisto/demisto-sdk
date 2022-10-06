@@ -1,45 +1,36 @@
 import logging
 from pathlib import Path
-import neo4j
 from typing import Any, Dict, List, Optional, Union
-from demisto_sdk.commands.common.constants import MarketplaceVersions
-
-from demisto_sdk.commands.content_graph.common import (
-    ContentType,
-    Relationship,
-    NEO4J_DATABASE_URL,
-    NEO4J_PASSWORD,
-    NEO4J_USERNAME,
-)
-from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import create_indexes
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import create_constraints
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
-    create_nodes,
-    duplicates_exist,
-    get_packs,
-    _get_all_integrations_with_commands,
-    delete_all_graph_nodes,
-    search_nodes,
-)
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
-    create_relationships,
-    get_all_content_item_tests,
-    get_relationships_by_type,
-)
-
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
-    get_first_level_dependencies,
-    get_all_level_packs_dependencies,
-    create_pack_dependencies
-)
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
-from demisto_sdk.commands.content_graph.objects.integration import Command
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
-from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
+import neo4j
+from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.content_graph.common import (NEO4J_DATABASE_URL,
+                                                       NEO4J_PASSWORD,
+                                                       NEO4J_USERNAME,
+                                                       ContentType,
+                                                       Relationship)
+from demisto_sdk.commands.content_graph.interface.graph import \
+    ContentGraphInterface
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import \
+    create_constraints
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
+    create_pack_dependencies, get_all_level_packs_dependencies,
+    get_first_level_dependencies)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import \
+    create_indexes
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
+    _get_all_integrations_with_commands, create_nodes, delete_all_graph_nodes,
+    duplicates_exist, get_packs, search_nodes)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
+    create_relationships, get_all_content_item_tests,
+    get_relationships_by_type)
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.objects.integration import Command
+from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.objects.test_playbook import \
+    TestPlaybook
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -96,7 +87,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def get_packs(self,
                   marketplace: MarketplaceVersions,
                   **properties,
-    ) -> List[Pack]:
+                  ) -> List[Pack]:
         with self.driver.session() as session:
             return session.read_transaction(get_packs, marketplace, **properties)
 

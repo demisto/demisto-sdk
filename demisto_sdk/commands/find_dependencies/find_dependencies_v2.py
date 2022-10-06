@@ -2,10 +2,10 @@ import json
 import os
 from pathlib import Path
 from typing import Any, Dict
+
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-
-from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
-
+from demisto_sdk.commands.content_graph.interface.graph import \
+    ContentGraphInterface
 
 USE_DOCKER = not os.getenv('CI', False)
 

@@ -1,11 +1,12 @@
-from abc import ABC, abstractmethod
 import json
-from pydantic import BaseModel, DirectoryPath, Field
+from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Type, cast
-from demisto_sdk.commands.common.constants import MarketplaceVersions
 
-from demisto_sdk.commands.content_graph.common import ContentType
+from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
+
+from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.content_graph.common import ContentType
 
 content_type_to_model: Dict[ContentType, Type['BaseContent']] = {}
 

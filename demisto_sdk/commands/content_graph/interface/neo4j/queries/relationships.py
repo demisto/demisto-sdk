@@ -1,13 +1,14 @@
 import logging
-from neo4j import Transaction
 from typing import Any, Dict, List
-from demisto_sdk.commands.common.constants import MarketplaceVersions
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     labels_of, node_map, run_query, serialize_node)
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
-from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
+from demisto_sdk.commands.content_graph.objects.test_playbook import \
+    TestPlaybook
+from neo4j import Transaction
 
 
 def build_source_properties() -> str:

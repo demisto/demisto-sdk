@@ -1,18 +1,15 @@
 import shutil
-from typing import List, Optional, Set
 from pathlib import Path
+from typing import Dict, List, Optional, Set, Type, cast
 
 from pydantic import DirectoryPath
+from pydantic.main import ModelMetaclass
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from pydantic.main import ModelMetaclass
-from typing import Dict, Type, cast
 
 content_type_to_model: Dict[ContentType, Type['ContentItem']] = {}
-
-
 
 
 class ContentItem(BaseContent):

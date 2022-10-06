@@ -1,11 +1,12 @@
-from pathlib import Path
 import shutil
+from pathlib import Path
+
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import REPO_PATH
-from demisto_sdk.commands.content_graph.content_graph_commands import (
-    marshal_content_graph,
-)
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import Neo4jContentGraphInterface
+from demisto_sdk.commands.content_graph.content_graph_commands import \
+    marshal_content_graph
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import \
+    Neo4jContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.repository import Repository
 
 

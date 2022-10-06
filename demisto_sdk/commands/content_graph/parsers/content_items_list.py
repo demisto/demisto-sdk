@@ -13,6 +13,7 @@ class ContentItemsList(list):
     Attributes:
         content_type (ContentType): The content types allowed to be included in this list.
     """
+
     def __init__(self, content_type: ContentType):
         self.content_type: ContentType = content_type
         super().__init__()

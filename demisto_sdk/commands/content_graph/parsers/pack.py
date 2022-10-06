@@ -20,6 +20,7 @@ logger = logging.getLogger('demisto-sdk')
 class PackContentItems:
     """ A class that holds all pack's content items in lists by their types.
     """
+
     def __init__(self) -> None:
         self.classifier = ContentItemsList(content_type=ContentType.CLASSIFIER)
         self.correlation_rule = ContentItemsList(content_type=ContentType.CORRELATION_RULE)
@@ -76,6 +77,7 @@ class PackContentItems:
 class PackMetadataParser:
     """ A pack metadata parser.
     """
+
     def __init__(self, metadata: Dict[str, Any]) -> None:
         self.name: str = metadata['name']
         self.description: str = metadata['description']

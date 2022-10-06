@@ -1,10 +1,12 @@
-from pydantic import Field
 from typing import List, Optional, Set
+
+from pydantic import Field
+
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
-class Layout(ContentItem, content_item=ContentType.LAYOUT):
+class Layout(ContentItem, content_type=ContentType.LAYOUT):
     kind: Optional[str]
     tabs: Optional[List[str]]
     definition_id: Optional[str] = Field(alias='definitionId')

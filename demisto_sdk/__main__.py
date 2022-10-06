@@ -27,7 +27,8 @@ from demisto_sdk.commands.common.tools import (find_type,
                                                is_external_repository,
                                                print_error, print_success,
                                                print_warning)
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import Neo4jContentGraphInterface
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import \
+    Neo4jContentGraphInterface
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
 json = JSON_Handler()
@@ -1721,11 +1722,14 @@ def find_dependencies(**kwargs):
                                           "only relevant for when using the '--all-packs-dependecies' flag.",
               required=False)
 def find_dependencies_v2(marketplace, output_path):
-    from demisto_sdk.commands.find_dependencies.find_dependencies_v2 import PackDependencies
+    from demisto_sdk.commands.find_dependencies.find_dependencies_v2 import \
+        PackDependencies
     with Neo4jContentGraphInterface() as graph:
         PackDependencies(graph, marketplace, output_path).run()
 
 # ====================== postman-codegen ====================== #
+
+
 @main.command()
 @click.help_option(
     '-h', '--help'
@@ -2339,14 +2343,14 @@ def create_content_graph(use_docker: bool = False, use_existing: bool = False, o
               type=click.Path(resolve_path=True))
 def create_content_artifacts_v2(marketplace: MarketplaceVersions, output: Path, no_zip: bool, **kwargs):
     from demisto_sdk.commands.common.logger import logging_setup
-    from demisto_sdk.commands.create_artifacts.create_artifacts_v2 import ContentArtifactManager
+    from demisto_sdk.commands.create_artifacts.create_artifacts_v2 import \
+        ContentArtifactManager
     logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
                   quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
                   log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
     ContentArtifactManager(marketplace=marketplace, output=Path(output), no_zip=no_zip).create_artifacts()
 
 
-    
 @main.result_callback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)

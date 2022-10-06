@@ -1,16 +1,16 @@
-from concurrent.futures import ProcessPoolExecutor
 import glob
+import logging
 import os
-from pathlib import Path
 import shutil
-from pydantic import BaseModel, DirectoryPath
+import time
+from concurrent.futures import ProcessPoolExecutor
+from pathlib import Path
 from typing import List
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
+from pydantic import BaseModel, DirectoryPath
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-import time
-import logging
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -18,10 +18,10 @@ logger = logging.getLogger('demisto-sdk')
 class Repository(BaseModel):
     path: DirectoryPath
     packs: List[Pack]
-    
+
     def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions, no_zip: bool = False):
         # TODO understand why multiprocessing is not working
-    
+
         logger.info('starting repo dump')
         start_time = time.time()
         with ProcessPoolExecutor() as executer:
@@ -34,7 +34,7 @@ class Repository(BaseModel):
             shutil.rmtree(dir)
         else:
             shutil.move(str(dir), dir.parent / 'content_packs')
-                
+
     class Config:
         orm_mode = True
         allow_population_by_field_name = True

@@ -1,16 +1,12 @@
-from datetime import datetime
+import logging
 import traceback
-from neo4j import Transaction, Result
+from datetime import datetime
 from typing import Any, Dict, Optional
 
-
 from demisto_sdk.commands.content_graph.common import ContentType
-
-import logging
-
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.content_graph.objects.base_content import content_type_to_model
-
+from demisto_sdk.commands.content_graph.objects.base_content import (
+    BaseContent, content_type_to_model)
+from neo4j import Result, Transaction
 
 logger = logging.getLogger('demisto-sdk')
 

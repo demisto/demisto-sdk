@@ -1,8 +1,7 @@
-from neo4j import Transaction
-
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query
-
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import \
+    run_query
+from neo4j import Transaction
 
 NODE_PROPERTY_UNIQUENESS_TEMPLATE = 'CREATE CONSTRAINT IF NOT EXISTS FOR (n:{label}) REQUIRE n.{prop} IS UNIQUE'
 NODE_PROPERTY_EXISTENCE_TEMPLATE = 'CREATE CONSTRAINT IF NOT EXISTS FOR (n:{label}) REQUIRE n.{prop} IS NOT NULL'

@@ -28,7 +28,7 @@ from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.tools import (
-    _get_file_id, compare_context_path_in_yml_and_readme,
+    get_id, compare_context_path_in_yml_and_readme,
     extract_deprecated_command_names_from_yml,
     extract_none_deprecated_command_names_from_yml, get_core_pack_list,
     get_file_version_suffix_if_exists, get_files_in_dir, get_item_marketplaces,
@@ -199,7 +199,7 @@ class IntegrationValidator(ContentEntityValidator):
     def is_unskipped_integration(self, conf_json_data):
         """Validated the integration testing is not skipped."""
         skipped_integrations = conf_json_data.get('skipped_integrations', {})
-        integration_id = _get_file_id(self.current_file)
+        integration_id = get_id(self.current_file)
         if skipped_integrations and integration_id in skipped_integrations:
             skip_comment = skipped_integrations[integration_id]
             error_message, error_code = Errors.integration_is_skipped(integration_id, skip_comment)

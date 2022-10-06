@@ -34,7 +34,7 @@ from demisto_sdk.commands.common.tools import (find_type,
                                                get_child_directories,
                                                get_demisto_version, get_file,
                                                get_parent_directory_name,
-                                               print_v)
+                                               print_v, get_id)
 
 json = JSON_Handler()
 
@@ -478,8 +478,7 @@ class ItemDetacher:
             if os.path.isfile(file_path) and self.is_valid_file_for_detach(file_path):
                 file_type = self.find_item_type_to_detach(file_path)
                 file_data = get_file(file_path, file_type)
-                file_id = file_data.get('id')
-                if file_id:
+                if file_id := get_id(file_data):
                     detach_files_list.append({'file_id': file_id, 'file_type': file_type, 'file_path': file_path})
         return detach_files_list
 

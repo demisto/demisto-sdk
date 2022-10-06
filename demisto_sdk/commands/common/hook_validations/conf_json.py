@@ -6,7 +6,7 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator, error_codes)
-from demisto_sdk.commands.common.tools import _get_file_id, get_pack_name
+from demisto_sdk.commands.common.tools import get_id, get_pack_name
 
 json = JSON_Handler()
 
@@ -85,7 +85,7 @@ class ConfJsonValidator(BaseValidator):
 
     def is_valid_file_in_conf_json(self, current_file, file_type, file_path):
         """Check if the file is valid in the conf.json"""
-        entity_id = _get_file_id(current_file)
+        entity_id = get_id(current_file)
         if file_type in {FileType.INTEGRATION, FileType.BETA_INTEGRATION}:
             return self.integration_has_unskipped_test_playbook(current_file, entity_id, file_path)
         if file_type == FileType.SCRIPT:

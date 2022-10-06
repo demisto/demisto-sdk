@@ -22,7 +22,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator, error_codes)
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from demisto_sdk.commands.common.tools import (_get_file_id, find_type,
+from demisto_sdk.commands.common.tools import (get_id, find_type,
                                                get_file_displayed_name,
                                                is_test_config_match,
                                                run_command)
@@ -101,9 +101,9 @@ class ContentEntityValidator(BaseValidator):
         if not self.old_file:
             return True
 
-        old_version_id = self.structure_validator.get_file_id_from_loaded_file_data(self.old_file)
-        new_file_id = self.structure_validator.get_file_id_from_loaded_file_data(self.current_file)
-        if not (new_file_id == old_version_id):
+        old_version_id = get_id(self.old_file)
+        new_file_id = get_id(self.current_file)
+        if new_file_id != old_version_id:
             error_message, error_code = Errors.file_id_changed(old_version_id, new_file_id)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 return False
@@ -223,7 +223,7 @@ class ContentEntityValidator(BaseValidator):
             bool. Whether the id attribute is equal to the name attribute.
         """
 
-        id_ = _get_file_id(self.current_file)
+        id_ = get_id(self.current_file)
         name = self.current_file.get('name', '')
         if id_ != name:
             error_message, error_code = Errors.id_should_equal_name(name, id_, self.file_path)
@@ -258,7 +258,7 @@ class ContentEntityValidator(BaseValidator):
         if not isinstance(file_type, str):
             file_type = file_type.value  # type: ignore
 
-        content_item_id = _get_file_id(self.current_file)
+        content_item_id = get_id(self.current_file)
 
         # Test playbook case
         if file_type == 'testplaybook':
@@ -448,7 +448,7 @@ class ContentEntityValidator(BaseValidator):
          Returns:
             bool. Whether the file's id ends with spaces
         """
-        file_id = self.structure_validator.get_file_id_from_loaded_file_data(self.current_file)
+        file_id = get_id(self.current_file)
         if file_id and file_id != file_id.strip():
             error_message, error_code = Errors.spaces_in_the_end_of_id(file_id)
             if self.handle_error(

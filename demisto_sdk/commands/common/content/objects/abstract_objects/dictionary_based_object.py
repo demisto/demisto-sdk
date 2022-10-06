@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional, Union
 from wcmatch.pathlib import Path
 
 import demisto_sdk.commands.common.content.errors as exc
-from demisto_sdk.commands.common.tools import _get_file_id
+from demisto_sdk.commands.common.tools import get_id
 
 from .general_object import GeneralObject
 
@@ -65,7 +65,7 @@ class DictionaryBasedObject(GeneralObject):
         return value
 
     def get_id(self):
-        return _get_file_id(self.to_dict())
+        return get_id(self.to_dict())
 
     def __contains__(self, item):
         return item in self._as_dict

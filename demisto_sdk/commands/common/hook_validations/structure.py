@@ -20,7 +20,7 @@ from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator, error_codes)
 from demisto_sdk.commands.common.tools import (get_remote_file,
-                                               is_file_path_in_pack)
+                                               is_file_path_in_pack, get_id)
 
 json = JSON_Handler()
 yaml = YAML_Handler()
@@ -153,32 +153,6 @@ class StructureValidator(BaseValidator):
                     return False
         return True
 
-    @staticmethod
-    def get_file_id_from_loaded_file_data(loaded_file_data):
-        # type: (dict) -> Optional[str]
-        """Gets a dict and extracting its `id` field
-
-        Args:
-            loaded_file_data: Data to find dict
-
-        Returns:
-            (str or None): file ID if exists.
-        """
-        try:
-            file_id = loaded_file_data.get('id')
-            if not file_id:
-                # In integrations/scripts, the id is under 'commonfields'.
-                file_id = loaded_file_data.get('commonfields', {}).get('id', '')
-            if not file_id:
-                # In layout, the id is under 'layout'.
-                file_id = loaded_file_data.get('layout', {}).get('id', '')
-            if not file_id:
-                file_id = loaded_file_data.get('trigger_id')
-
-            return file_id
-        except AttributeError:
-            return None
-
     @error_codes('ST101')
     def is_file_id_without_slashes(self):
         # type: () -> bool
@@ -187,8 +161,7 @@ class StructureValidator(BaseValidator):
         Returns:
             bool. Whether the file's ID contains slashes or not.
         """
-        file_id = self.get_file_id_from_loaded_file_data(self.current_file)
-        if file_id and '/' in file_id:
+        if (file_id := get_id(self.current_file)) and '/' in file_id:
             error_message, error_code = Errors.file_id_contains_slashes()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False

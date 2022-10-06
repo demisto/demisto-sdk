@@ -27,12 +27,11 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_child_directories,
                                                get_child_files, get_code_lang,
                                                get_dict_from_file,
-                                               get_entity_id_by_entity_type,
                                                get_entity_name_by_entity_type,
                                                get_files_in_dir, get_json,
                                                get_yaml, get_yml_paths_in_dir,
                                                print_color,
-                                               retrieve_file_ending)
+                                               retrieve_file_ending, get_id)
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
@@ -527,7 +526,7 @@ class Downloader:
             if os.path.isfile(entity_instance_path) and retrieve_file_ending(entity_instance_path) == 'json':
                 main_file_data = get_json(entity_instance_path)
 
-        main_id = get_entity_id_by_entity_type(main_file_data, content_entity)
+        main_id = get_id(main_file_data)
         main_name = get_entity_name_by_entity_type(main_file_data, content_entity)
 
         return main_id, main_name
@@ -620,7 +619,7 @@ class Downloader:
             file_type = file_type.value
 
         file_entity = self.file_type_to_entity(file_data, file_type)  # For example: Integrations
-        file_id: str = get_entity_id_by_entity_type(file_data, file_entity)
+        file_id: str = get_id(file_data)
         file_name: str = get_entity_name_by_entity_type(file_data, file_entity)
 
         if not file_name:

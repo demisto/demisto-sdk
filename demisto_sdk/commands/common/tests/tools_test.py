@@ -29,7 +29,7 @@ from demisto_sdk.commands.common.tools import (
     filter_files_by_type, filter_files_on_pack, filter_packagify_changes,
     find_type, find_type_by_path, generate_xsiam_normalized_name,
     get_code_lang, get_current_repo, get_dict_from_file, get_display_name,
-    get_entity_id_by_entity_type, get_entity_name_by_entity_type,
+    get_entity_name_by_entity_type,
     get_file_displayed_name, get_file_version_suffix_if_exists,
     get_files_in_dir, get_ignore_pack_skipped_tests, get_item_marketplaces,
     get_last_release_version, get_last_remote_release_version,
@@ -478,9 +478,6 @@ class TestReleaseVersion:
 class TestEntityAttributes:
     @pytest.mark.parametrize('data, entity', [({'commonfields': {'id': 1}}, INTEGRATIONS_DIR),
                                               ({'typeId': 1}, LAYOUTS_DIR), ({'id': 1}, PLAYBOOKS_DIR)])
-    def test_get_entity_id_by_entity_type(self, data, entity):
-        assert get_entity_id_by_entity_type(data, entity) == 1
-
     @pytest.mark.parametrize('data, entity', [({'typeId': 'wow'}, LAYOUTS_DIR),
                                               ({'name': 'wow'}, LAYOUTS_DIR),
                                               ({'name': 'wow'}, PLAYBOOKS_DIR)])

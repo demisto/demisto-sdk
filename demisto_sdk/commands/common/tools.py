@@ -666,23 +666,15 @@ def get_api_module_ids(file_list) -> Set:
 
 
 def get_entity_id_by_entity_type(data: dict, content_entity: str):
+    # this is left here to prevent sudden-deprecation-chaos by other scripts importing it
+    # see https://github.com/demisto/demisto-sdk/pull/2345#discussion_r968060746
     """
     Returns the id of the content entity given its entity type
     :param data: The data of the file
     :param content_entity: The content entity type
     :return: The file id
     """
-    try:
-        if content_entity in (INTEGRATIONS_DIR, SCRIPTS_DIR):
-            return data.get('commonfields', {}).get('id', '')
-        elif content_entity == LAYOUTS_DIR:
-            return data.get('typeId', '')
-        else:
-            return data.get('id', '')
-
-    except AttributeError:
-        raise ValueError(f"Could not retrieve id from file of type {content_entity} - make sure the file structure is "
-                         f"valid")
+    return get_id(data)
 
 
 def get_entity_name_by_entity_type(data: dict, content_entity: str):
@@ -1832,7 +1824,13 @@ def get_not_registered_tests(conf_json_tests: list, content_item_id: str, file_t
     return not_registered_tests
 
 
-def _get_file_id(file_content: dict) -> str:
+def _get_file_id(file_type: str, file_content: dict):
+    # this is left here to prevent sudden-deprecation-chaos by other scripts importing it
+    # see https://github.com/demisto/demisto-sdk/pull/2345#discussion_r968060746
+    return get_id(file_content)
+
+
+def get_id(file_content: dict) -> str:
     """
     Gets the ID of a content item according to its type
     Returns:
@@ -1845,7 +1843,7 @@ def _get_file_id(file_content: dict) -> str:
         if key in file_content:
             file_content.get(key, [{}])[0].get('global_id')
 
-    for key in 'global_rule_id', 'trigger_id', 'content_global_id', 'id':  # id is the default
+    for key in 'global_rule_id', 'trigger_id', 'content_global_id', 'typeId', 'id':  # id is the default
         if key in file_content:
             return file_content.get(key)
 
@@ -2722,11 +2720,11 @@ def get_scripts_and_commands_from_yml_data(data, file_type):
                     elif inner_task.get('scriptName'):
                         scripts_and_pbs.append(inner_task.get('scriptName'))
         if file_type == FileType.PLAYBOOK:
-            playbook_id = get_entity_id_by_entity_type(data, PLAYBOOKS_DIR)
+            playbook_id = get_id(data)
             scripts_and_pbs.append(playbook_id)
 
     if file_type == FileType.SCRIPT:
-        script_id = get_entity_id_by_entity_type(data, SCRIPTS_DIR)
+        script_id = get_id(data)
         scripts_and_pbs = [script_id]
         if data.get('dependson'):
             commands = data.get('dependson').get('must', [])

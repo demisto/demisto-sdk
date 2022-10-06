@@ -1850,7 +1850,8 @@ def get_id(file_content: dict) -> str:
     name_postfix = ''
     if name := file_content.get("name"):
         name_postfix = f'({name=})'
-    raise ValueError(f'could not find the id for this file{name_postfix}')
+    logger.warning(f'could not find the id for this file{name_postfix}')
+    return ''
 
 
 def is_path_of_integration_directory(path: str) -> bool:

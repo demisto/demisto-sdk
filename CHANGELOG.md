@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-
+* Created `get_id` under **tools**, to serve as the single source of truth for getting the id of a dict-based content item, removing other (partial, duplicate) functions.
 
 ## 1.7.6
 

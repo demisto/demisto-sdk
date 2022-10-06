@@ -10,9 +10,6 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 
 
-content_type_to_model: Dict[ContentType, Type['ContentItem']] = {}
-
-
 class ContentItem(BaseContent):
     path: Path
     marketplaces: List[MarketplaceVersions]
@@ -22,7 +19,7 @@ class ContentItem(BaseContent):
     display_name: str
     deprecated: bool
     description: Optional[str]
-
+    
     def summary(self) -> dict:
         return self.dict(include=self.included_in_metadata(), by_alias=True)
 

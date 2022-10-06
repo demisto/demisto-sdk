@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
@@ -79,7 +79,15 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def get_all_content_item_tests(self, marketplace: MarketplaceVersions, content_type: ContentType) -> Dict[str, List[TestPlaybook]]:
+    def get_relationship_between_items(
+        self,
+        marketplace: MarketplaceVersions,
+        relationship_type: Relationship,
+        content_type1: ContentType = ContentType.BASE_CONTENT,
+        content_type2: ContentType = ContentType.BASE_CONTENT,
+        recursive: bool = False,
+        **properties,
+    ) -> List[Tuple[BaseContent, dict, List[BaseContent]]]:
         pass
 
     @abstractmethod

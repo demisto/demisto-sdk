@@ -1,14 +1,16 @@
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Tuple
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     labels_of, node_map, run_query, serialize_node)
-from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.test_playbook import \
     TestPlaybook
 from neo4j import Transaction
+
+RECURSION_LEVEL = 7
 
 
 def build_source_properties() -> str:
@@ -199,13 +201,27 @@ def get_relationships_by_type(tx: Transaction, rel: Relationship):
     return [{'source': serialize_node(item.get('source')),
              'rel': item.get('rel'),  # TODO serialize relationship as well
              'target': serialize_node(item.get('target'))} for item in run_query(tx, query).data()]
+    
 
-
-def get_all_content_item_tests(tx: Transaction, marketplace: MarketplaceVersions, content_type: ContentType) -> Dict[str, List[TestPlaybook]]:
+def get_relationship_between_items(
+    tx: Transaction,
+    marketplace: MarketplaceVersions,
+    relationship_type: Relationship,
+    content_type1: ContentType,
+    content_type2: ContentType,
+    recursive: bool,
+    **properties,
+) -> List[Tuple[BaseContent, dict, List[BaseContent]]]:
+    params_str = ', '.join(f'{k}: "{v}"' for k, v in properties.items())
+    params_str = f'{{{params_str}}}' if params_str else ''
+    recursion_str = f'*{RECURSION_LEVEL}' if recursive else ''
     query = f"""
-    MATCH (p:{ContentType.TEST_PLAYBOOK})-[:{Relationship.USES}*4]->(c:{content_type})
-    WHERE '{marketplace}' in p.marketplaces AND '{marketplace}' in c.marketplaces
-    RETURN c as content_item, collect(p) as playbooks
+    MATCH (c1:{content_type1}{params_str})-[r:{relationship_type}{recursion_str}]->(c2:{content_type2})
+    WHERE '{marketplace}' in c1.marketplaces AND '{marketplace}' in c2.marketplaces
+    RETURN c1 as content_item, r as rel_data, collect(c2) as content_items
     """
-    return {item.get('content_item').get('object_id'): [TestPlaybook.parse_obj(playbook) for playbook in item.get('playbooks', [])]
-            for item in run_query(tx, query).data()}
+    return [
+        (serialize_node(item.get('content_item')),
+         item.get('rel_data'),
+         [serialize_node(content_item) for content_item in item.get('content_items')])
+        for item in run_query(tx, query).data()]

@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 import neo4j
@@ -23,7 +23,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     _get_all_integrations_with_commands, create_nodes, delete_all_graph_nodes,
     duplicates_exist, get_packs, search_nodes)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
-    create_relationships, get_all_content_item_tests,
+    create_relationships, get_all_content_item_tests, get_relationship_between_items,
     get_relationships_by_type)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -150,13 +150,21 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             } for row in result
         }
 
+    def get_relationship_between_items(
+        self,
+        marketplace: MarketplaceVersions,
+        relationship_type: Relationship,
+        content_type1: ContentType = ContentType.BASE_CONTENT,
+        content_type2: ContentType = ContentType.BASE_CONTENT,
+        recursive: bool = False,
+        **properties,
+    ) -> List[Tuple[BaseContent, dict, List[BaseContent]]]:
+        with self.driver.session() as session:
+            return session.read_transaction(get_relationship_between_items, marketplace, relationship_type, content_type1, content_type2, recursive, **properties)
+
     def get_relationships_by_type(self, relationship_type: Relationship) -> Any:
         with self.driver.session() as session:
             return session.read_transaction(get_relationships_by_type, relationship_type)
-
-    def get_all_content_item_tests(self, marketplace: MarketplaceVersions, content_type: ContentType) -> Dict[str, List[TestPlaybook]]:
-        with self.driver.session() as session:
-            return session.read_transaction(get_all_content_item_tests, marketplace, content_type)
 
     def run_single_query(self, query: str, parameters: Optional[Dict[str, Any]] = None) -> neo4j.Result:
         with self.driver.session() as session:

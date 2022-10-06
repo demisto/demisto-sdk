@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-* Fixed an issue where the **upload** command did not work when playbook contains regex starting with '=' character.
+* Fixed an issue where the **upload** failed on playbooks containing a value that starts with `=`.
 
 ## 1.7.6
 

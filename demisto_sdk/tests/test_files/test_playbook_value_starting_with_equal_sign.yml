@@ -30,7 +30,8 @@ tasks:
               keys: {}
               regex:
                 value:
-                  simple: =
+                  simple: 
+                    =
     separatecontext: false
     view: |-
       {

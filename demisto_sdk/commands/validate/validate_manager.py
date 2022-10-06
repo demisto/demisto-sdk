@@ -103,7 +103,7 @@ from demisto_sdk.commands.common.hook_validations.xsiam_report import \
 from demisto_sdk.commands.common.hook_validations.xsoar_config_json import \
     XSOARConfigJsonValidator
 from demisto_sdk.commands.common.tools import (
-    get_id, find_type, get_api_module_ids,
+    _get_file_id, find_type, get_api_module_ids,
     get_api_module_integrations_set, get_content_path, get_file,
     get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
     get_relative_path_from_packs_dir, get_remote_file, get_yaml,
@@ -1380,13 +1380,13 @@ class ValidateManager:
             deleted_file_path = str(deleted_file_path)
             deleted_file_dict = get_remote_file(deleted_file_path, tag='master')  # for detecting deleted files
             if deleted_file_type := find_type(deleted_file_path, deleted_file_dict):
-                deleted_file_id = get_id(deleted_file_dict)
+                deleted_file_id = _get_file_id(deleted_file_dict)
                 if deleted_file_id:
                     for file in added_files:
                         file = str(file)
                         file_type = find_type(file)
                         file_dict = get_file(file, file_type.value)
-                        if deleted_file_id == get_id(file_dict):
+                        if deleted_file_id == _get_file_id(file_dict):
                             return True
         return False
 

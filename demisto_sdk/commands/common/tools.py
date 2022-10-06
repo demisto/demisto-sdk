@@ -1832,7 +1832,7 @@ def get_not_registered_tests(conf_json_tests: list, content_item_id: str, file_t
     return not_registered_tests
 
 
-def get_id(file_content: dict) -> str:
+def _get_file_id(file_content: dict) -> str:
     """
     Gets the ID of a content item according to its type
     Returns:

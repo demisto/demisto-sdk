@@ -31,6 +31,8 @@ class PackDependencies:
             first_level_pack_ids = list(first_level_packs.keys())
             displayed_images = []
             for pack_first_level_id in first_level_pack_ids:
+                if pack_first_level_id not in packs:
+                    continue
                 displayed_images.extend(
                     [integration.object_id for integration in packs[pack_first_level_id].content_items.integration]
                 )

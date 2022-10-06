@@ -1851,6 +1851,7 @@ def get_id(file_content: dict) -> str:
     if name := file_content.get("name"):
         name_postfix = f'({name=})'
     logger.warning(f'could not find the id for this file{name_postfix}')
+
     return ''
 
 

@@ -207,8 +207,8 @@ def get_relationship_between_items(
     tx: Transaction,
     marketplace: MarketplaceVersions,
     relationship_type: Relationship,
-    content_type1: ContentType,
-    content_type2: ContentType,
+    content_type_from: ContentType,
+    content_type_to: ContentType,
     recursive: bool,
     **properties,
 ) -> List[Tuple[BaseContent, dict, List[BaseContent]]]:
@@ -216,12 +216,12 @@ def get_relationship_between_items(
     params_str = f'{{{params_str}}}' if params_str else ''
     recursion_str = f'*{RECURSION_LEVEL}' if recursive else ''
     query = f"""
-    MATCH (c1:{content_type1}{params_str})-[r:{relationship_type}{recursion_str}]->(c2:{content_type2})
+    MATCH (c1:{content_type_from}{params_str})-[r:{relationship_type}{recursion_str}]->(c2:{content_type_to})
     WHERE '{marketplace}' in c1.marketplaces AND '{marketplace}' in c2.marketplaces
-    RETURN c1 as content_item, r as rel_data, collect(c2) as content_items
+    RETURN c1 as content_item_from, r as rel_data, collect(c2) as content_items_to
     """
     return [
-        (serialize_node(item.get('content_item')),
+        (serialize_node(item.get('content_item_from')),
          item.get('rel_data'),
-         [serialize_node(content_item) for content_item in item.get('content_items')])
+         [serialize_node(content_item) for content_item in item.get('content_items_to', [])])
         for item in run_query(tx, query).data()]

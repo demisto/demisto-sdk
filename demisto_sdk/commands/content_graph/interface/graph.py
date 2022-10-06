@@ -83,8 +83,8 @@ class ContentGraphInterface(ABC):
         self,
         marketplace: MarketplaceVersions,
         relationship_type: Relationship,
-        content_type1: ContentType = ContentType.BASE_CONTENT,
-        content_type2: ContentType = ContentType.BASE_CONTENT,
+        content_type_from: ContentType = ContentType.BASE_CONTENT,
+        content_type_to: ContentType = ContentType.BASE_CONTENT,
         recursive: bool = False,
         **properties,
     ) -> List[Tuple[BaseContent, dict, List[BaseContent]]]:

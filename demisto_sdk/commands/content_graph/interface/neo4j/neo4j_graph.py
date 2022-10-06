@@ -154,13 +154,21 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         self,
         marketplace: MarketplaceVersions,
         relationship_type: Relationship,
-        content_type1: ContentType = ContentType.BASE_CONTENT,
-        content_type2: ContentType = ContentType.BASE_CONTENT,
+        content_type_from: ContentType = ContentType.BASE_CONTENT,
+        content_type_to: ContentType = ContentType.BASE_CONTENT,
         recursive: bool = False,
         **properties,
     ) -> List[Tuple[BaseContent, dict, List[BaseContent]]]:
         with self.driver.session() as session:
-            return session.read_transaction(get_relationship_between_items, marketplace, relationship_type, content_type1, content_type2, recursive, **properties)
+            return session.read_transaction(
+                get_relationship_between_items,
+                marketplace,
+                relationship_type,
+                content_type_from,
+                content_type_to,
+                recursive,
+                **properties,
+            )
 
     def get_relationships_by_type(self, relationship_type: Relationship) -> Any:
         with self.driver.session() as session:

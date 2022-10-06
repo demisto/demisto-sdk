@@ -24,7 +24,7 @@ class PackDependencies:
     def _get_packs_dependencies(self) -> Dict[str, Any]:
         all_level_dependencies = self.content_graph.get_all_level_dependencies(self.marketplace)
         first_level_dependencies = self.content_graph.get_first_level_dependencies(self.marketplace)
-        packs = {pack.object_id: pack for pack in self.content_graph.get_packs(self.marketplace)}
+        packs = {pack.name: pack for pack in self.content_graph.get_packs(self.marketplace)}
         for pack_id in all_level_dependencies:
             first_level_packs = first_level_dependencies[pack_id]
             all_level_dependencies[pack_id]['dependencies'] = first_level_packs

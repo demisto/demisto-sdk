@@ -1,8 +1,10 @@
 import inspect
 import re
+import shutil
 import zipfile
 from functools import wraps
 from io import BytesIO
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import click
@@ -331,7 +333,19 @@ def test_upload_incident_type_correct_file_change(demisto_client_configure, mock
             DATA = f.read()
         return
 
+    class ConfigurationMock:
+        host = 'host'
+
     class demisto_client_mocker():
+
+        class ConfigurationMock:
+            host = 'host'
+
+        class ApiClientMock:
+            configuration = ConfigurationMock()
+
+        api_client = ApiClientMock()
+
         def import_incident_fields(self, file):
             pass
 
@@ -367,7 +381,18 @@ def test_upload_incident_field_correct_file_change(demisto_client_configure, moc
             DATA = f.read()
         return
 
+    class ConfigurationMock:
+        host = 'host'
+
     class demisto_client_mocker():
+        class ConfigurationMock:
+            host = 'host'
+
+        class ApiClientMock:
+            configuration = ConfigurationMock()
+
+        api_client = ApiClientMock()
+
         def import_incident_fields(self, file):
             pass
 
@@ -486,7 +511,21 @@ def test_upload_pack(demisto_client_configure, mocker):
 
 
 def test_upload_invalid_path(demisto_client_configure, mocker):
-    mocker.patch.object(demisto_client, 'configure', return_value="object")
+    class ConfigurationMock:
+        host = 'host'
+
+    class demisto_client_mocker():
+        class ConfigurationMock:
+            host = 'host'
+
+        class ApiClientMock:
+            configuration = ConfigurationMock()
+
+        api_client = ApiClientMock()
+
+        def import_incident_fields(self, file):
+            pass
+    mocker.patch.object(demisto_client, 'configure', return_value=demisto_client_mocker())
     script_dir_path = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_not_exists/Scripts/'
     script_dir_uploader = Uploader(input=script_dir_path, insecure=False, verbose=False)
     assert script_dir_uploader.upload() == 1
@@ -1117,8 +1156,8 @@ class TestZippedPackUpload:
     #
     #     assert 'Triggers/' in xsiam_pack_files
     #     assert 'XSIAMDashboards/' in xsiam_pack_files
-
-    def test_upload_xsiam_pack_to_xsoar(self, mocker):
+    @pytest.mark.parametrize(argnames='is_cleanup', argvalues=[True, False])
+    def test_upload_xsiam_pack_to_xsoar(self, mocker, is_cleanup):
         """
         Given:
             - XSIAM pack to upload to XSOAR
@@ -1127,6 +1166,8 @@ class TestZippedPackUpload:
         Then:
             - Make sure XSIAM entities are not in the zip we want to upload
         """
+        if not is_cleanup:
+            mocker.patch.object(shutil, 'rmtree')
         # prepare
         mock_api_client(mocker)
         mocker.patch.object(Uploader, 'zipped_pack_uploader')
@@ -1135,9 +1176,10 @@ class TestZippedPackUpload:
         click.Context(command=upload).invoke(upload, input=TEST_XSIAM_PACK, xsiam=False, zip=True)
 
         zip_file_path = Uploader.zipped_pack_uploader.call_args[1]['path']
-
         assert 'uploadable_packs.zip' in zip_file_path
-
+        if is_cleanup:
+            assert not Path.exists(Path(zip_file_path)), 'zip should be cleaned up'
+            return
         with zipfile.ZipFile(zip_file_path, "r") as zfile:
             for name in zfile.namelist():
                 if re.search(r'\.zip$', name) is not None:

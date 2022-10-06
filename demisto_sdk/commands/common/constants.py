@@ -45,6 +45,7 @@ XSIAM_DASHBOARDS_DIR = 'XSIAMDashboards'
 XSIAM_REPORTS_DIR = 'XSIAMReports'
 TRIGGER_DIR = 'Triggers'
 WIZARDS_DIR = 'Wizards'
+AGENT_CONFIG_DIR = 'AgentConfigs'
 
 # NAMES OF ENTITIES
 
@@ -87,6 +88,7 @@ XSIAM_DASHBOARD = 'xsiamdashboard'
 XSIAM_REPORT = 'xsiamreport'
 TRIGGER = 'trigger'
 WIZARD = 'wizard'
+AGENT_CONFIG = 'agentconfig'
 
 MARKETPLACE_KEY_PACK_METADATA = 'marketplaces'
 
@@ -147,12 +149,16 @@ class FileType(str, Enum):
     MODELING_RULE = 'modelingrule'
     CORRELATION_RULE = 'correlationrule'
     XSIAM_DASHBOARD = 'xsiamdashboard'
+    XSIAM_DASHBOARD_IMAGE = 'xsiamdashboardimage'
     XSIAM_REPORT = 'xsiamreport'
+    XSIAM_REPORT_IMAGE = 'xsiamreportimage'
     TRIGGER = 'trigger'
     WIZARD = 'wizard'
     PACK_IGNORE = '.pack-ignore'
     SECRET_IGNORE = '.secrets-ignore'
     DOC_FILE = 'doc_files'
+    AGENT_CONFIG = 'agentconfig'
+    AGENT_CONFIG_YML = 'agentconfigyml'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -182,6 +188,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.JOB: 'Jobs',
     FileType.PARSING_RULE: 'Parsing Rules',
     FileType.MODELING_RULE: 'Modeling Rules',
+    FileType.MODELING_RULE_SCHEMA: 'Modeling Rules Schema',
     FileType.CORRELATION_RULE: 'Correlation Rules',
     FileType.XSIAM_DASHBOARD: 'XSIAM Dashboards',
     FileType.XSIAM_REPORT: 'XSIAM Reports',
@@ -217,6 +224,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.PARSING_RULE.value: PARSING_RULES_DIR,
     FileType.MODELING_RULE.value: MODELING_RULES_DIR,
     FileType.WIZARD.value: WIZARDS_DIR,
+    FileType.AGENT_CONFIG.value: AGENT_CONFIG_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -225,7 +233,8 @@ SIEM_ONLY_ENTITIES = [
     FileType.CORRELATION_RULE.value,
     FileType.XSIAM_DASHBOARD.value,
     FileType.XSIAM_REPORT.value,
-    FileType.TRIGGER.value
+    FileType.TRIGGER.value,
+    FileType.AGENT_CONFIG.value,
 ]
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
@@ -259,6 +268,7 @@ CONTENT_ENTITIES_DIRS = [
     JOBS_DIR,
     WIZARDS_DIR,
     MODELING_RULES_DIR,
+    AGENT_CONFIG_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -443,6 +453,9 @@ DOCS_REGEX = r'.*docs.*'
 IMAGE_REGEX = r'.*\.png$'
 DESCRIPTION_REGEX = r'.*\.md'
 SCHEMA_REGEX = 'Tests/schemas/.*.yml'
+
+# regex pattern used to convert incident/indicator fields to their CLI names
+NON_LETTERS_OR_NUMBERS_PATTERN = re.compile(r'[^a-zA-Z0-9]')
 
 PACKS_DIR_REGEX = fr'{CAN_START_WITH_DOT_SLASH}{PACKS_DIR}'
 PACK_DIR_REGEX = fr'{PACKS_DIR_REGEX}\/([^\\\/]+)'
@@ -638,6 +651,7 @@ INTEGRATION_PREFIX = 'integration'
 SCRIPT_PREFIX = 'script'
 PARSING_RULE_PREFIX = 'parsingrule'
 MODELING_RULE_PREFIX = 'modelingrule'
+AGENT_CONFIG_PREFIX = 'agentconfig'
 
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
@@ -1103,6 +1117,7 @@ DIR_TO_PREFIX = {
     'Scripts': SCRIPT_PREFIX,
     'ModelingRules': MODELING_RULE_PREFIX,
     'ParsingRules': PARSING_RULE_PREFIX,
+    'AgentConfigs': AGENT_CONFIG_PREFIX,
 }
 
 ENTITY_NAME_SEPARATORS = [' ', '_', '-']
@@ -1436,6 +1451,7 @@ class ContentItems(Enum):
     XSIAM_REPORTS = 'xsiamreport'
     TRIGGERS = 'trigger',
     WIZARDS = 'wizard',
+    AGENT_CONFIG = 'agentconfig'
 
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {
@@ -1461,6 +1477,7 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     XSIAM_REPORTS_DIR,
     TRIGGER_DIR,
     WIZARDS_DIR,
+    AGENT_CONFIG_DIR,
 }
 
 

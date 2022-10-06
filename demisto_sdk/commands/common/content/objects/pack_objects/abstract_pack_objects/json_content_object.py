@@ -101,13 +101,12 @@ class JSONContentObject(JSONObject):
         """
         created_files: List[Path] = []
         created_files.extend(super().dump(dest_dir=dest_dir))
-        # Dump changelog if requested and availble
+        # Dump changelog if requested and available
         if change_log and self.changelog:
             created_files.extend(self.changelog.dump(dest_dir))
-        # Dump readme if requested and availble
+        # Dump readme if requested and available
         if readme and self.readme:
             created_files.extend(self.readme.dump(dest_dir))
-
         return created_files
 
     def is_file_structure_list(self) -> bool:

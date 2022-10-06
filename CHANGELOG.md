@@ -1,11 +1,31 @@
 # Changelog
 
-
 ## Unreleased
+
+
+## 1.7.6
+
+* Fixed parsing of initialization arguments of client classes in the **generate-unit-tests** command.
+* Added support for AgentConfig content item in the **upload**, **create-id-set**, **find-dependecies**, **unify** and **create-content-artifacts** commands.
+* Added support for XSIAM Report preview image.
+
+## 1.7.5
+
+* Fixed an issue where the **upload** command did not work with the CommonServerUserPython package.
+* Fixed an issue in the **download** command, where some playbooks were downloaded as test playbooks.
+* Added playbook modification capabilities in **TestSuite**.
+* Added a new command **create-content-graph**.
+* Fixed an issue in the **upload** command, where the temporary zip would not clean up properly.
+* Improved content items parsing in the **create-content-graph** command.
 * Added an error when the docker daemon is unavailable when running **lint**.
 * Removed the validation of a subtype change for scripts in the **validate** command.
 * Fixed an issue where names of XSIAM content items were not normalized properly.
-* Fixed an issue where names of other XSIAM content items were not normalized properly.
+* Fixed an issue where the **download** command was downloading playbooks with **script** (id) and not **scriptName**.
+* Fixed an issue where script yml files were not properly identified by `find_type`.
+* Removed nightly integrations filtering when deciding if a test should run.
+* Added support for XSIAM Dashboard preview image.
+* Added the `--no-code-formatting` flag to the **download** command, allowing to skip autopep8 and isort.
+* Fixed an issue in the **update-release-notes** command, where generating release notes for modeling rules schema file caused exception.
 
 ## 1.7.4
 

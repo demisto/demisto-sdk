@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-
+* Fixed an issue where the **upload** failed on playbooks containing a value that starts with `=`.
 
 ## 1.7.6
 

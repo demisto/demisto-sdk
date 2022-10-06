@@ -26,8 +26,14 @@ class PackDependencies:
         first_level_dependencies = self.content_graph.get_first_level_dependencies(self.marketplace)
         packs = {pack.object_id: pack for pack in self.content_graph.get_packs(self.marketplace)}
         for pack_id in all_level_dependencies:
-            all_level_dependencies[pack_id]['dependencies'] = first_level_dependencies[pack_id]
-            all_level_dependencies[pack_id]['displayedImages'] = [
-                integration.object_id for integration in packs[first_level_dependencies[pack_id]].content_items.integration
-            ]
+            first_level_packs = first_level_dependencies[pack_id]
+            all_level_dependencies[pack_id]['dependencies'] = first_level_packs
+            first_level_pack_ids = list(first_level_packs.keys())
+            displayed_images = []
+            for pack_first_level_id in first_level_pack_ids:
+                displayed_images.extend(
+                    [integration.object_id for integration in packs[pack_first_level_id].content_items.integration]
+                )
+            all_level_dependencies[pack_id]['displayedImages'] = displayed_images
+
         return all_level_dependencies

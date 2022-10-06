@@ -1840,16 +1840,14 @@ def get_id(file_content: dict) -> str:
     """
     if 'commonfields' in file_content:
         return file_content.get('commonfields', {}).get('id')
-    elif 'dashboards_data' in file_content:
-        return file_content.get('dashboards_data', [{}])[0].get('global_id')
-    elif 'templates_data' in file_content:
-        return file_content.get('templates_data', [{}])[0].get('global_id')
-    elif 'global_rule_id' in file_content:
-        return file_content.get('global_rule_id')
-    elif 'trigger_id' in file_content:
-        return file_content.get('trigger_id')
 
-    return file_content.get('id')
+    for key in 'dashboards_data', 'templates_data':
+        if key in file_content:
+            file_content.get(key, [{}])[0].get('global_id')
+
+    for key in 'global_rule_id', 'trigger_id', 'content_global_id', 'id':  # id is the default
+        if key in file_content:
+            return file_content.get(key)
 
 
 def is_path_of_integration_directory(path: str) -> bool:

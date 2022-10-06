@@ -65,6 +65,7 @@ class TestGenericFunctions:
     PATH_TO_HERE = f'{GIT_ROOT}/demisto_sdk/tests/test_files/'
     FILE_PATHS = [
         (os.path.join(PATH_TO_HERE, 'fake_integration.yml'), tools.get_yaml),
+        (os.path.join(PATH_TO_HERE, 'test_fake_playbook.yml'), tools.get_yaml),
         (os.path.join(PATH_TO_HERE, 'fake_json.json'), tools.get_json)
     ]
 

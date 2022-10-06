@@ -20,10 +20,10 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies imp
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import \
     create_indexes
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
-    _get_all_integrations_with_commands, create_nodes, delete_all_graph_nodes,
+    create_nodes, delete_all_graph_nodes,
     duplicates_exist, get_packs, search_nodes)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
-    create_relationships, get_all_content_item_tests, get_relationship_between_items,
+    create_relationships, get_relationship_between_items,
     get_relationships_by_type)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem

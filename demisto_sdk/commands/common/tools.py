@@ -34,9 +34,9 @@ from demisto_sdk.commands.common.constants import (
     AGENT_CONFIG_DIR, ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK,
     CLASSIFIERS_DIR, DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
-    DOC_FILES_DIR, ENV_DEMISTO_SDK_MARKETPLACE, ID_IN_COMMONFIELDS, ID_IN_ROOT,
-    INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
-    INDICATOR_TYPES_DIR, INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
+    DOC_FILES_DIR, ENV_DEMISTO_SDK_MARKETPLACE, INCIDENT_FIELDS_DIR,
+    INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR, INDICATOR_TYPES_DIR,
+    INTEGRATIONS_DIR, JOBS_DIR, LAYOUTS_DIR, LISTS_DIR,
     MARKETPLACE_KEY_PACK_METADATA, METADATA_FILE_NAME, MODELING_RULES_DIR,
     NON_LETTERS_OR_NUMBERS_PATTERN, OFFICIAL_CONTENT_ID_SET_PATH,
     PACK_METADATA_IRON_BANK_TAG, PACKAGE_SUPPORTING_DIRECTORIES,
@@ -1837,15 +1837,20 @@ def get_id(file_content: dict) -> str:
         The file's content ID
     """
     if 'commonfields' in file_content:
-        return file_content.get('commonfields', {}).get('id')
+        return file_content.get('commonfields', {}).get('id')  # type:ignore[return-value]
 
     for key in 'dashboards_data', 'templates_data':
         if key in file_content:
-            file_content.get(key, [{}])[0].get('global_id')
+            return file_content.get(key, [{}])[0].get('global_id')  # type:ignore[return-value]
 
     for key in 'global_rule_id', 'trigger_id', 'content_global_id', 'typeId', 'id':  # id is the default
         if key in file_content:
-            return file_content.get(key)
+            return file_content.get(key)  # type:ignore[return-value]
+
+    name_postfix = ''
+    if name := file_content.get("name"):
+        name_postfix = f'({name=})'
+    raise ValueError(f'could not find the id for this file{name_postfix}')
 
 
 def is_path_of_integration_directory(path: str) -> bool:

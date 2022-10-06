@@ -28,10 +28,11 @@ from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_child_files, get_code_lang,
                                                get_dict_from_file,
                                                get_entity_name_by_entity_type,
-                                               get_files_in_dir, get_json,
-                                               get_yaml, get_yml_paths_in_dir,
+                                               get_files_in_dir, get_id,
+                                               get_json, get_yaml,
+                                               get_yml_paths_in_dir,
                                                print_color,
-                                               retrieve_file_ending, get_id)
+                                               retrieve_file_ending)
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 

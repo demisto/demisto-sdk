@@ -33,8 +33,9 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (find_type,
                                                get_child_directories,
                                                get_demisto_version, get_file,
+                                               get_id,
                                                get_parent_directory_name,
-                                               print_v, get_id)
+                                               print_v)
 
 json = JSON_Handler()
 

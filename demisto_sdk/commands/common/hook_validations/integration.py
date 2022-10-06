@@ -28,12 +28,12 @@ from demisto_sdk.commands.common.hook_validations.docker import \
     DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
 from demisto_sdk.commands.common.tools import (
-    get_id, compare_context_path_in_yml_and_readme,
+    compare_context_path_in_yml_and_readme,
     extract_deprecated_command_names_from_yml,
     extract_none_deprecated_command_names_from_yml, get_core_pack_list,
-    get_file_version_suffix_if_exists, get_files_in_dir, get_item_marketplaces,
-    get_pack_name, is_iron_bank_pack, print_error, server_version_compare,
-    string_to_bool)
+    get_file_version_suffix_if_exists, get_files_in_dir, get_id,
+    get_item_marketplaces, get_pack_name, is_iron_bank_pack, print_error,
+    server_version_compare, string_to_bool)
 
 json = JSON_Handler()
 yaml = YAML_Handler()

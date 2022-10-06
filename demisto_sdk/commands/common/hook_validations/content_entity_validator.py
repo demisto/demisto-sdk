@@ -22,8 +22,8 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator, error_codes)
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
-from demisto_sdk.commands.common.tools import (get_id, find_type,
-                                               get_file_displayed_name,
+from demisto_sdk.commands.common.tools import (find_type,
+                                               get_file_displayed_name, get_id,
                                                is_test_config_match,
                                                run_command)
 from demisto_sdk.commands.format.format_constants import \

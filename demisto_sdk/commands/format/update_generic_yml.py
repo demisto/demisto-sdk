@@ -3,8 +3,7 @@ from typing import Dict, List, Optional
 
 import click
 
-from demisto_sdk.commands.common.constants import (ENTITY_TYPE_TO_DIR,
-                                                   INTEGRATION,
+from demisto_sdk.commands.common.constants import (INTEGRATION,
                                                    NO_TESTS_DEPRECATED,
                                                    PLAYBOOK,
                                                    TEST_PLAYBOOKS_DIR,
@@ -12,9 +11,9 @@ from demisto_sdk.commands.common.constants import (ENTITY_TYPE_TO_DIR,
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.tools import (
-    get_id, find_type,
-    get_not_registered_tests, get_scripts_and_commands_from_yml_data, get_yaml,
-    is_uuid, listdir_fullpath)
+    find_type, get_id, get_not_registered_tests,
+    get_scripts_and_commands_from_yml_data, get_yaml, is_uuid,
+    listdir_fullpath)
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 
 json = JSON_Handler()

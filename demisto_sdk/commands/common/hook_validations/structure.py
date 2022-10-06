@@ -19,8 +19,8 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.base_validator import (
     BaseValidator, error_codes)
-from demisto_sdk.commands.common.tools import (get_remote_file,
-                                               is_file_path_in_pack, get_id)
+from demisto_sdk.commands.common.tools import (get_id, get_remote_file,
+                                               is_file_path_in_pack)
 
 json = JSON_Handler()
 yaml = YAML_Handler()

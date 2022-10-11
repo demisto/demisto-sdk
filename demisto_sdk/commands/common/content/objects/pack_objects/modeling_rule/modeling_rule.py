@@ -1,5 +1,5 @@
-import shutil
 import re
+import shutil
 from pprint import pformat
 from typing import List, Optional, Union
 

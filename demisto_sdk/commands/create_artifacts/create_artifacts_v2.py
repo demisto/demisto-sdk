@@ -41,5 +41,4 @@ class ContentArtifactManager:
                     self.output / 'packs_dependencies.json', repo
                 ).run()
 
-        shutil.rmtree(self.output, ignore_errors=True)
         repo.dump(self.output / 'content_packs', self.marketplace, self.zip)

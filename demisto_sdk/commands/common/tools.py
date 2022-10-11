@@ -3040,3 +3040,42 @@ def field_to_cli_name(field_name: str) -> str:
         field_name (str): the incident/indicator field name.
     """
     return re.sub(NON_LETTERS_OR_NUMBERS_PATTERN, '', field_name).lower()
+
+
+def get_demisto_tenants(host: str, headers: Dict, verify_ssl: bool = False) -> List:
+    """Get a list of demisto tenant accounts from the Main Server.
+    Arguments should be pulled from an `demisto_client.configure()` instance.
+
+    Args:
+        host (str): The host from the demisto_client configurations.
+        headers (Dict): The HTTP Headers used for the request. Should contain any Authorization information.
+        verify_ssl (bool, optional): Determines if the request should verify SSL certs. Defaults to False.
+
+    Raises:
+        HTTPError: Raised if the request was redirected to a custom 404 error page.
+
+    Returns:
+        List: A list of Demisto tenant accounts.
+    """
+    # Verify that the configured client is not targeting a tenant host.
+    if "/acc_" in host:
+        logger.warning(
+            f"Host {host} contains the path to a tenant account."
+            "Please ensure the main server is being used for the base URL."
+        )
+    resp = requests.get(
+        f"https://{host}/accounts",
+        headers=headers,
+        verify=verify_ssl
+    )
+    # The `/accounts` endpoint will redirect to a soft 404 error page if not called on the Main Server.
+    # Status code will report 200, so we check the URL instead.
+    if "/#/404" in resp.url:
+        raise HTTPError(
+            "Soft 404 error page. "
+            f"Host {host} is not the main server in a Multi-tenant environment.",
+            response=resp
+        )
+    # Parse string response as a Python dictionary
+    accounts_data = json.loads(resp.text)
+    return accounts_data

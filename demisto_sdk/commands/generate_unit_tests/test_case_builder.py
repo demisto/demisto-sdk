@@ -328,7 +328,7 @@ class TestCase:
                 for local_var in self.func.locals:
                     var = self.func.locals.get(local_var)
                     if hasattr(var, 'func') and str(var.func) == 'CommandResults':
-                        return var 
+                        return var
         return None
 
     def call_command_ast_builder(self):

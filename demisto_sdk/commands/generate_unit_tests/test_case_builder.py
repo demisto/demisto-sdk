@@ -323,6 +323,12 @@ class TestCase:
         for node in self.func.return_nodes:
             if hasattr(node, 'value') and hasattr(node.value, 'func') and str(node.value.func) == 'CommandResults':
                 return node.value
+        if hasattr(self.func.returns, 'id') and str(self.func.returns) == 'CommandResults':
+            if hasattr(self.func, 'locals'):
+                for local_var in self.func.locals:
+                    var = self.func.locals.get(local_var)
+                    if hasattr(var, 'func') and str(var.func) == 'CommandResults':
+                        return var
         return None
 
     def call_command_ast_builder(self):

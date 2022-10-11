@@ -7,7 +7,7 @@ import tempfile
 import typer
 from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
-from typing import IO, Any, Dict, Optional
+from typing import IO, Any, Dict, List, Optional
 
 import click
 import git
@@ -2242,7 +2242,7 @@ def tenant_config_cb(ctx: typer.Context, param: typer.CallbackParam, value: Opti
     help='Test a modeling rule against an XSIAM tenant.',
 )
 def test_modeling_rule(
-    input: list[Path] = typer.Argument(
+    input: List[Path] = typer.Argument(
         ...,
         exists=True,
         dir_okay=True,

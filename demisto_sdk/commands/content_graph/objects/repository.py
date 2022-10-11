@@ -19,7 +19,7 @@ class Repository(BaseModel):
     path: DirectoryPath
     packs: List[Pack]
 
-    def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions, no_zip: bool = False):
+    def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions, zip: bool = True):
         # TODO understand why multiprocessing is not working
 
         logger.info('starting repo dump')
@@ -29,11 +29,9 @@ class Repository(BaseModel):
         time_taken = time.time() - start_time
         logger.info(f'ending repo dump. Took {time_taken} seconds')
 
-        if not no_zip:
+        if zip:
             shutil.make_archive(str(dir.parent / 'content_packs'), 'zip', dir)
             shutil.rmtree(dir)
-        else:
-            shutil.move(str(dir), dir.parent / 'content_packs')
 
     class Config:
         orm_mode = True

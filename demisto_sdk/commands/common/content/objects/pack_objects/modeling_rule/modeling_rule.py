@@ -22,6 +22,9 @@ class MRule:
                                             r"model\s*=\s*\"?(?P<datamodel>\w+)\"?\]")
     RULE_HEADER_NEW_REGEX = re.compile(r"\[MODEL:\s*dataset\s*=\s*\"?(?P<dataset>\w+)\"?\s*\]")
     RULE_FIELDS_REGEX = re.compile(r"XDM\.[\w\.]+(?=\s*?=\s*?\w+)", flags=re.IGNORECASE)
+    RULE_FILTER_REGEX = re.compile(
+        r"^\s*filter\s*(?P<condition>(?!.*(\||alter)).+$(\s*(^\s*(?!\||alter).+$))*)", flags=re.M
+    )
 
     def __init__(self, rule_text: str):
         self.rule_text = rule_text
@@ -30,6 +33,7 @@ class MRule:
         self._product = ""
         self._datamodel = ""
         self._fields: List[str] = []
+        self._filter_condition = ""
 
     @property
     def dataset(self) -> str:
@@ -109,9 +113,27 @@ class MRule:
     def product(self, value):
         self._product = value
 
+    @property
+    def filter_condition(self):
+        if not self._filter_condition:
+            match = re.match(self.RULE_FILTER_REGEX, self.rule_text)
+            if match:
+                self.filter_condition = match.groupdict().get('condition', '')
+        return self._filter_condition
+
+    @filter_condition.setter
+    def filter_condition(self, value):
+        self._filter_condition = value
+
     def __repr__(self) -> str:
         return pformat(
-            {"datamodel": self.datamodel, "dataset": self.dataset, "fields": self.fields, "rule_text": self.rule_text}
+            {
+                "datamodel": self.datamodel,
+                "dataset": self.dataset,
+                "fields": self.fields,
+                "filter_condition": self.filter_condition,
+                "rule_text": self.rule_text
+            }
         )
 
 

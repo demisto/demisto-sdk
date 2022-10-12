@@ -384,10 +384,15 @@ class LintManager:
                     pkg_status = future.result()
                     logger.info(f'Got lint results for {pkg_status["pkg"]}')
                     pkgs_status[pkg_status["pkg"]] = pkg_status
-                    if pkg_status["exit_code"]:
+                    if pkg_status["exit_code"]:                            
                         for check, code in EXIT_CODES.items():
                             if pkg_status["exit_code"] & code:
                                 lint_status[f"fail_packs_{check}"].append(pkg_status["pkg"])
+                        
+                        if self._all_packs and pkg_status['mypy_errors']:
+                            # do not fail mypy errors in nightly, but report them
+                            continue
+                        
                         if not return_exit_code & pkg_status["exit_code"]:
                             return_exit_code += pkg_status["exit_code"]
                     if pkg_status["warning_code"]:

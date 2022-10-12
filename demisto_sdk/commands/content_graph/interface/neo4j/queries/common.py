@@ -3,9 +3,8 @@ import traceback
 from datetime import datetime
 from typing import Any, Dict
 
-from neo4j import Result, Transaction
-
 from demisto_sdk.commands.content_graph.common import ContentType
+from neo4j import Result, Transaction
 
 logger = logging.getLogger('demisto-sdk')
 

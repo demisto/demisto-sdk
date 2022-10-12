@@ -1,14 +1,13 @@
 import logging
 from typing import Any, Dict, List, Optional
 
-from neo4j import Transaction
-
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import (SERVER_CONTENT_ITEMS,
                                                        ContentType,
                                                        Relationship)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     intersects, run_query, versioned)
+from neo4j import Transaction
 
 logger = logging.getLogger('demisto-sdk')
 

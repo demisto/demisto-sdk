@@ -217,6 +217,11 @@ jobs:
             command: |
               poetry run pre-commit --version
               poetry run pre-commit run -a
+        - run:
+            name: mypy
+            command: |
+              poetry run mypy --version
+              poetry run mypy .
         - save_cache:
             key: v1-pc-cache-{{ checksum "pre-commit-cache-key.txt" }}
             paths:

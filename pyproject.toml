@@ -120,6 +120,15 @@ slack-sdk = "^3.17.0"
 [tool.poetry.extras]
 build = ["gsutil"]
 
+[tool.mypy]
+check_untyped_defs = true
+python_version = "3.8"
+show_error_codes = true
+follow_imports = "silent"
+pretty = true
+allow_redefinition = true
+exclude = "tests/.*|demisto_sdk/commands/init/templates/.*"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"

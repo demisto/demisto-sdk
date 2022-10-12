@@ -16,8 +16,12 @@ from demisto_sdk.commands.common.tools import generate_xsiam_normalized_name
 
 
 class MRule:
-    RULE_HEADER_REGEX = r"\[MODEL:\sdataset=(?P<dataset>\w+)(?=,\smodel=(?P<datamodel>\w+)])"
-    RULE_FIELDS_REGEX = r"XDM\.[\w\.]+(?=\s*?=\s*?\w+)"
+    RULE_HEADER_REGEX = re.compile(r"\[MODEL:\s*model\s*=\s*\"?(?P<datamodel>\w+)\"?\s*,?\s*"
+                                   r"dataset\s*=\s*\"?(?P<dataset>\w+)\"?\]")
+    RULE_HEADER_REGEX_REVERSED = re.compile(r"\[MODEL:\s*dataset\s*=\s*\"?(?P<dataset>\w+)\"?\s*,?\s*"
+                                            r"model\s*=\s*\"?(?P<datamodel>\w+)\"?\]")
+    RULE_HEADER_NEW_REGEX = re.compile(r"\[MODEL:\s*dataset\s*=\s*\"?(?P<dataset>\w+)\"?\s*\]")
+    RULE_FIELDS_REGEX = re.compile(r"XDM\.[\w\.]+(?=\s*?=\s*?\w+)", flags=re.IGNORECASE)
 
     def __init__(self, rule_text: str):
         self.rule_text = rule_text
@@ -30,7 +34,9 @@ class MRule:
     @property
     def dataset(self) -> str:
         if not self._dataset:
-            match = re.match(self.RULE_HEADER_REGEX, self.rule_text)
+            match = re.match(self.RULE_HEADER_REGEX, self.rule_text) or \
+                re.match(self.RULE_HEADER_REGEX_REVERSED, self.rule_text) or \
+                re.match(self.RULE_HEADER_NEW_REGEX, self.rule_text)
             if match:
                 self.dataset = match.groupdict().get('dataset', '')
                 if not self._dataset:
@@ -48,7 +54,8 @@ class MRule:
     @property
     def datamodel(self) -> str:
         if not self._datamodel:
-            match = re.match(self.RULE_HEADER_REGEX, self.rule_text)
+            match = re.match(self.RULE_HEADER_REGEX, self.rule_text) or \
+                re.match(self.RULE_HEADER_REGEX_REVERSED, self.rule_text)
             if match:
                 self.datamodel = match.groupdict().get('datamodel', '')
                 if not self._datamodel:
@@ -110,7 +117,7 @@ class MRule:
 
 class ModelingRule(YAMLContentUnifiedObject):
     MODEL_RULE_REGEX = re.compile(
-        r"(?P<header>\[MODEL:\sdataset=\w+,\smodel=\w+])\s(^(?!.*(?P=header)).+$\n)+", flags=re.MULTILINE
+        r"(?P<header>\[MODEL:[\w\W]*\])\s(^(?!.*(?P=header)).+$\n)+", flags=re.M
     )
 
     def __init__(self, path: Union[Path, str]):

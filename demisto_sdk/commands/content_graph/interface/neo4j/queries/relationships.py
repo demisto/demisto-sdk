@@ -1,10 +1,11 @@
 import logging
 from typing import Any, Dict, List
 
+from neo4j import Transaction
+
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     labels_of, node_map, run_query)
-from neo4j import Transaction
 
 
 def build_source_properties() -> str:

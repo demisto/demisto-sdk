@@ -2,8 +2,9 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 import neo4j
+
+import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import (NEO4J_DATABASE_URL,
                                                        NEO4J_PASSWORD,

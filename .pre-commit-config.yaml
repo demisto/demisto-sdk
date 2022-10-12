@@ -26,6 +26,8 @@ repos:
       rev: 5.10.1
       hooks:
           - id: isort
+            args: [--atomic]
+            types: [python]
             verbose: true
             exclude: demisto_sdk/commands/init/templates/.*
     - repo: https://github.com/asottile/pyupgrade

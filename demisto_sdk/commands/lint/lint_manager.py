@@ -843,7 +843,7 @@ class LintManager:
             for warning in warnings:
                 print(f"{Colors.Fg.orange}{wrapper_fail_pack.fill(warning)}{Colors.reset}")
             failed = failed.union(failed_mypy)
-            
+
         if failed:
             print("Failed packages:")
         for fail_pack in failed:

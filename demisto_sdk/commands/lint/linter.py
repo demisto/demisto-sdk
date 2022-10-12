@@ -247,7 +247,6 @@ class Linter:
                     logger.info(f"{self._pack_name} - Facts - {image[0]} - Python {py_num}")
                     if not self._facts["python_version"]:
                         self._facts["python_version"] = py_num
-
                 # Checking whatever *test* exists in package
                 self._facts["test"] = True if next(self._pack_abs_dir.glob([r'test_*.py', r'*_test.py']),
                                                    None) else False
@@ -305,7 +304,7 @@ class Linter:
         self._split_lint_files()
 
         self._linter_to_commands()
-
+        
         return False
 
     def _linter_to_commands(self):
@@ -368,7 +367,8 @@ class Linter:
                 elif lint_check == "bandit" and not no_bandit:
                     exit_code, output = self._run_bandit(lint_files=self._facts["lint_files"])
 
-                elif lint_check == "mypy" and not no_mypy:
+                elif lint_check == "mypy" and not no_mypy and self._facts['python_version'] == '3':
+                    # mypy does not support python2 now
                     exit_code, output = self._run_mypy(py_num=self._facts["python_version"],
                                                        lint_files=self._facts["lint_files"])
 

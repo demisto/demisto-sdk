@@ -389,7 +389,7 @@ class LintManager:
                             if pkg_status["exit_code"] & code:
                                 lint_status[f"fail_packs_{check}"].append(pkg_status["pkg"])
 
-                        if self._all_packs and pkg_status['mypy_errors']:
+                        if self._all_packs and pkg_status["exit_code"] == EXIT_CODES["mypy"]:
                             # do not fail mypy errors in nightly, but report them
                             continue
 
@@ -547,6 +547,12 @@ class LintManager:
             no_coverage(bool): Do NOT create coverage report.
 
      """
+        if not no_coverage:
+            if coverage_report:
+                generate_coverage_report(html=True, xml=True, cov_dir=coverage_report)
+            else:
+                generate_coverage_report()
+
         self.report_pass_lint_checks(return_exit_code=return_exit_code,
                                      skipped_code=skipped_code,
                                      pkgs_type=pkgs_type)
@@ -563,11 +569,6 @@ class LintManager:
         self.report_failed_image_creation(return_exit_code=return_exit_code,
                                           pkgs_status=pkgs_status,
                                           lint_status=lint_status)
-        if not no_coverage:
-            if coverage_report:
-                generate_coverage_report(html=True, xml=True, cov_dir=coverage_report)
-            else:
-                generate_coverage_report()
 
         self.report_summary(pkg=self._pkgs, pkgs_status=pkgs_status, lint_status=lint_status, all_packs=self._all_packs)
         self.create_json_output()
@@ -815,12 +816,15 @@ class LintManager:
         # intersection of all warnings packages
         warnings: Set[str] = set()
 
+        failed_mypy: Set[str] = set()
         # each pack is checked for warnings and failures . A certain pack can appear in both failed packages and
         # warnings packages.
         for key in lint_status:
-            if key.startswith('fail'):
+            if 'mypy' in key:
+                failed_mypy.union(lint_status[key])
+            elif key.startswith('fail'):
                 failed = failed.union(lint_status[key])
-            if key.startswith('warning'):
+            elif key.startswith('warning'):
                 warnings = warnings.union(lint_status[key])
         num_passed = len([pack for pack, result in pkgs_status.items() if result.get('exit_code') == 0])
         # Log unit-tests summary
@@ -838,10 +842,16 @@ class LintManager:
                 print("Warning packages:")
             for warning in warnings:
                 print(f"{Colors.Fg.orange}{wrapper_fail_pack.fill(warning)}{Colors.reset}")
-
+            failed = failed.union(failed_mypy)
+            
         if failed:
             print("Failed packages:")
         for fail_pack in failed:
+            print(f"{Colors.Fg.red}{wrapper_fail_pack.fill(fail_pack)}{Colors.reset}")
+
+        if all_packs and failed_mypy:
+            print("Failed packages (mypy, not failing build):")
+        for fail_pack in failed_mypy:
             print(f"{Colors.Fg.red}{wrapper_fail_pack.fill(fail_pack)}{Colors.reset}")
 
     @staticmethod

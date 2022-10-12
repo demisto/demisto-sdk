@@ -102,7 +102,8 @@ class TestRunLintInHost:
             "test": False,
             "version_two": False,
             "lint_files": lint_files,
-            "additional_requirements": []
+            "additional_requirements": [],
+            "python_version": "3.10",
         })
         mocker.patch.object(linter_obj, '_run_bandit')
         linter_obj._run_bandit.return_value = (0b0, '')
@@ -139,7 +140,8 @@ class TestRunLintInHost:
             "test": False,
             "version_two": False,
             "lint_files": lint_files,
-            "additional_requirements": []
+            "additional_requirements": [],
+            "python_version": "3,7",
         })
         mocker.patch.object(linter_obj, '_run_xsoar_linter')
         linter_obj._run_xsoar_linter.return_value = (0b1, 'Error')
@@ -173,14 +175,14 @@ class TestRunLintInHost:
             "test": False,
             "version_two": False,
             "lint_files": lint_files,
-            "additional_requirements": []
+            "additional_requirements": [],
+            "python_version": "3.7",
         })
         mocker.patch.object(linter_obj, '_run_xsoar_linter')
         linter_obj._run_xsoar_linter.return_value = (0b1, 'Error')
         mocker.patch.object(linter_obj, '_run_bandit')
         linter_obj._run_bandit.return_value = (0b1, 'Error')
         mocker.patch.object(linter_obj, '_run_mypy')
-        linter_obj._run_mypy.return_value = (0b1, 'Error')
         linter_obj._run_lint_in_host(
             no_bandit=False,
             no_xsoar_linter=False,
@@ -201,7 +203,8 @@ class TestRunLintInHost:
             "test": False,
             "version_two": False,
             "lint_files": [],
-            "additional_requirements": []
+            "additional_requirements": [],
+            "python_version": "3.7",
         })
         mocker.patch.object(linter_obj, '_run_bandit')
         mocker.patch.object(linter_obj, '_run_xsoar_linter')

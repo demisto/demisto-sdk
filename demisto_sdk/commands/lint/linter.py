@@ -304,7 +304,7 @@ class Linter:
         self._split_lint_files()
 
         self._linter_to_commands()
-        
+
         return False
 
     def _linter_to_commands(self):
@@ -367,7 +367,7 @@ class Linter:
                 elif lint_check == "bandit" and not no_bandit:
                     exit_code, output = self._run_bandit(lint_files=self._facts["lint_files"])
 
-                elif lint_check == "mypy" and not no_mypy and self._facts['python_version'] == '3':
+                elif lint_check == "mypy" and not no_mypy and self._facts['python_version'][0] == '3':
                     # mypy does not support python2 now
                     exit_code, output = self._run_mypy(py_num=self._facts["python_version"],
                                                        lint_files=self._facts["lint_files"])

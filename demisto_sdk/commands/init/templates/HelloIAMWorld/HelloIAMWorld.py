@@ -3,8 +3,10 @@ import traceback
 import demistomock as demisto
 from CommonServerPython import *
 
+import urllib3
+
 # Disable insecure warnings
-requests.packages.urllib3.disable_warnings()
+urllib3.disable_warnings()
 
 
 ERROR_CODES_TO_SKIP = [

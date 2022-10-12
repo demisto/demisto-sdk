@@ -183,6 +183,7 @@ class TestRunLintInHost:
         mocker.patch.object(linter_obj, '_run_bandit')
         linter_obj._run_bandit.return_value = (0b1, 'Error')
         mocker.patch.object(linter_obj, '_run_mypy')
+        linter_obj._run_mypy.return_value = (0b1, 'Error')
         linter_obj._run_lint_in_host(
             no_bandit=False,
             no_xsoar_linter=False,

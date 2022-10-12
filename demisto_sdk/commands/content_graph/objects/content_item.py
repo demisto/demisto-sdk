@@ -1,11 +1,11 @@
 import shutil
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Type
+from typing import List, Optional, Set
 
 from pydantic import DirectoryPath
-from demisto_sdk.commands.common.tools import get_pack_name
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import get_pack_name
 from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 
@@ -19,7 +19,7 @@ class ContentItem(BaseContent):
     display_name: str
     deprecated: bool
     description: Optional[str]
-    
+
     def summary(self) -> dict:
         return self.dict(include=self.included_in_metadata(), by_alias=True)
 

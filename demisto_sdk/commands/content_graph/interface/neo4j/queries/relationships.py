@@ -1,13 +1,11 @@
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     labels_of, node_map, run_query, serialize_node)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.content_graph.objects.test_playbook import \
-    TestPlaybook
 from neo4j import Transaction
 
 RECURSION_LEVEL = 7
@@ -201,7 +199,7 @@ def get_relationships_by_type(tx: Transaction, rel: Relationship):
     return [{'source': serialize_node(item.get('source')),
              'rel': item.get('rel'),  # TODO serialize relationship as well
              'target': serialize_node(item.get('target'))} for item in run_query(tx, query).data()]
-    
+
 
 def get_relationship_between_items(
     tx: Transaction,

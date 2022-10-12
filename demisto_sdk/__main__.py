@@ -1,6 +1,5 @@
 # Site packages
 import copy
-from email.policy import default
 import logging
 import os
 import shutil

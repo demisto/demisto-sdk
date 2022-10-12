@@ -27,7 +27,7 @@ class ContentModelMetaclass(ModelMetaclass):
             content_type (ContentType, optional): The type corresponds to the class (e.g., ContentType.INTEGRATIONS)
 
         Returns:
-            ContentItem: The model class.
+            BaseContent: The model class.
         """
         super_cls: ContentModelMetaclass = super().__new__(cls, name, bases, namespace)
         # for type checking

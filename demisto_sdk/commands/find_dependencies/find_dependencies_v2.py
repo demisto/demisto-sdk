@@ -4,7 +4,8 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.content_graph_commands import marshal_content_graph
+from demisto_sdk.commands.content_graph.content_graph_commands import \
+    marshal_content_graph
 from demisto_sdk.commands.content_graph.interface.graph import \
     ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.repository import Repository

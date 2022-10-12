@@ -1,14 +1,10 @@
-from typing import Any, Dict, List
+from typing import List
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_content_path
-from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.interface.graph import \
     ContentGraphInterface
-from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
-from demisto_sdk.commands.content_graph.objects.integration import Integration
-from demisto_sdk.commands.content_graph.objects.pack import (Pack,
-                                                             PackContentItems)
+from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.repository import Repository
 
 

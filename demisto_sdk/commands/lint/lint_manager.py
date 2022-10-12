@@ -556,9 +556,6 @@ class LintManager:
         self.report_pass_lint_checks(return_exit_code=return_exit_code,
                                      skipped_code=skipped_code,
                                      pkgs_type=pkgs_type)
-        self.report_failed_lint_checks(return_exit_code=return_exit_code,
-                                       pkgs_status=pkgs_status,
-                                       lint_status=lint_status)
         self.report_warning_lint_checks(return_warning_code=return_warning_code,
                                         pkgs_status=pkgs_status,
                                         lint_status=lint_status,
@@ -566,6 +563,10 @@ class LintManager:
         self.report_unit_tests(return_exit_code=return_exit_code,
                                pkgs_status=pkgs_status,
                                lint_status=lint_status)
+        self.report_failed_lint_checks(return_exit_code=return_exit_code,
+                                       pkgs_status=pkgs_status,
+                                       lint_status=lint_status)
+
         self.report_failed_image_creation(return_exit_code=return_exit_code,
                                           pkgs_status=pkgs_status,
                                           lint_status=lint_status)

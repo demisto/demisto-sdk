@@ -2295,6 +2295,34 @@ def test_modeling_rule(
         show_default=False,
         callback=tenant_config_cb
     ),
+    project_id: Optional[str] = typer.Option(
+        None,
+        '-p', '--project-id',
+        help=(
+            'The google cloud project id associated with the XSIAM tenant. If not passed explicitly, the command will '
+            'use the default project configured by the gcloud cli utility on the local machine. Assumes the gcloud cli'
+            ' utility is installed and configured. To configure the project locally using gcloud, prior to command '
+            'execution, run "gcloud config set project your-project-id".'
+        ),
+        rich_help_panel='XSIAM Tenant Configuration',
+        show_default=False
+    ),
+    service_account: Optional[Path] = typer.Option(
+        None,
+        '-s', '--service-account',
+        exists=True,
+        file_okay=True,
+        resolve_path=True,
+        help=(
+            'The service account to use for interacting with the tenant\'s associated google cloud project. The passed'
+            ' value should be the path to a service account json file. If not passed explicitly, the default account '
+            'configured with the gloud cli utility on the local machine will be used. Assumes the gcloud cli utility '
+            'is installed and configured. To authenticate locally using gcloud, prior to command execution, run '
+            '"gcloud beta auth application-default login".'
+        ),
+        rich_help_panel='XSIAM Tenant Configuration',
+        show_default=False
+    ),
     verbosity: int = typer.Option(
         0,
         '-v', '--verbose',
@@ -2330,12 +2358,16 @@ def test_modeling_rule(
     from demisto_sdk.commands.test_content.modeling_rule import \
         test_modeling_rules
     logging_setup(
-        verbose=verbosity,  # type: ignore[arg-type]
-        quiet=quiet,  # type: ignore[arg-type]
+        verbose=verbosity,
+        quiet=quiet,
         log_path=log_path,  # type: ignore[arg-type]
         log_file_name=log_file_name
     )
-    test_modeling_rules(input, pre_clean, post_clean, fail_missing, xsiam_url, api_key, auth_id)
+    test_modeling_rules(
+        input, pre_clean, post_clean, fail_missing,
+        xsiam_url, api_key, auth_id,  # type: ignore[arg-type] since if they are not set to str values an error occurs
+        project_id, service_account
+    )
 
 
 typer_click_object = typer.main.get_command(app)

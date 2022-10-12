@@ -815,16 +815,12 @@ class LintManager:
 
         # intersection of all warnings packages
         warnings: Set[str] = set()
-
-        failed_mypy: Set[str] = set()
         # each pack is checked for warnings and failures . A certain pack can appear in both failed packages and
         # warnings packages.
         for key in lint_status:
-            if 'mypy' in key:
-                failed_mypy.union(lint_status[key])
-            elif key.startswith('fail'):
+            if key.startswith('fail'):
                 failed = failed.union(lint_status[key])
-            elif key.startswith('warning'):
+            if key.startswith('warning'):
                 warnings = warnings.union(lint_status[key])
         num_passed = len([pack for pack, result in pkgs_status.items() if result.get('exit_code') == 0])
         # Log unit-tests summary
@@ -842,17 +838,17 @@ class LintManager:
                 print("Warning packages:")
             for warning in warnings:
                 print(f"{Colors.Fg.orange}{wrapper_fail_pack.fill(warning)}{Colors.reset}")
-            failed = failed.union(failed_mypy)
 
         if failed:
             print("Failed packages:")
         for fail_pack in failed:
             print(f"{Colors.Fg.red}{wrapper_fail_pack.fill(fail_pack)}{Colors.reset}")
 
-        if all_packs and failed_mypy:
+        if all_packs:
+            failed_mypy = [pack for pack, result in pkgs_status.items() if result.get('exit_code') == EXIT_CODES['mypy']]
             print("Failed packages (mypy, not failing build):")
-        for fail_pack in failed_mypy:
-            print(f"{Colors.Fg.red}{wrapper_fail_pack.fill(fail_pack)}{Colors.reset}")
+            for fail_pack in failed_mypy:
+                print(f"{Colors.Fg.red}{wrapper_fail_pack.fill(fail_pack)}{Colors.reset}")
 
     @staticmethod
     def _create_failed_packs_report(lint_status: dict, path: str):

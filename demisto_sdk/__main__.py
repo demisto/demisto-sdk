@@ -7,6 +7,7 @@ import shutil
 import sys
 import tempfile
 from configparser import ConfigParser, MissingSectionHeaderError
+from contextlib import contextmanager
 from pathlib import Path
 from typing import IO, Any, Dict
 
@@ -38,6 +39,10 @@ json = JSON_Handler()
 # Third party packages
 
 # Common tools
+
+
+class TenantEnvNotFound(Exception):
+    ...
 
 
 class PathsParamType(click.Path):
@@ -93,6 +98,25 @@ class DemistoSDK:
         dotenv.load_dotenv(Path(get_content_path()) / '.env', override=True)  # Load a .env file from the cwd.
         # Load info from config file
         self.configuration = Configuration()
+
+    @contextmanager
+    def load_tenant_env(self, name: str):
+        """Loads the envvars form the tenant specific .env file.
+        Once exited, the envvars from the original .env file are restored.
+
+        Args:
+            name (str): Name of the tenant.
+
+        Raises:
+            TenantEnvNotFound: Raised whenever the tenant's .env file was not found.
+        """
+        if not (Path(get_content_path()) / f".envs/.env-{name}").exists():
+            raise TenantEnvNotFound(Path(get_content_path()) / f".envs/.env-{name}")
+        try:
+            dotenv.load_dotenv(Path(get_content_path()) / f".env-{name}", override=True)
+            yield
+        finally:
+            dotenv.load_dotenv(Path(get_content_path()) / ".env", override=True)
 
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)

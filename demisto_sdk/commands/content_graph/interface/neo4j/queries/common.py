@@ -44,6 +44,13 @@ def node_map(properties: Dict[str, Any]) -> str:
     return f'{{{", ".join([f"{k}: {v}" for k, v in properties.items()])}}}'
 
 
+def to_neo4j_map(properties: dict) -> str:
+    properties = {k: f'"{v}"' if isinstance(v, str) else v for k, v in properties.items()}
+    params_str = ', '.join(f'{k}: {v}' for k, v in properties.items())
+    params_str = f'{{{params_str}}}' if params_str else ''
+    return params_str
+
+
 def run_query(tx: Transaction, query: str, **kwargs: Dict[str, Any]) -> Result:
     try:
         start_time: datetime = datetime.now()

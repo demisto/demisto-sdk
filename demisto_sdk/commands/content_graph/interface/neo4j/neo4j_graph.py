@@ -2,6 +2,8 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from neo4j import GraphDatabase, Neo4jDriver, Result, Transaction
+
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import (NEO4J_DATABASE_URL,
@@ -22,10 +24,9 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     create_nodes, delete_all_graph_nodes, duplicates_exist, get_packs,
     search_nodes)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
-    create_relationships, get_relationship_between_items)
+    create_relationships, get_connected_nodes_by_relationship_type)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from neo4j import GraphDatabase, Neo4jDriver, Result, Transaction
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -145,7 +146,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             } for row in result
         }
 
-    def get_relationship_between_items(
+    def get_connected_nodes_by_relationship_type(
         self,
         marketplace: MarketplaceVersions,
         relationship_type: Relationship,
@@ -156,7 +157,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     ) -> List[Tuple[BaseContent, dict, List[BaseContent]]]:
         with self.driver.session() as session:
             return session.read_transaction(
-                get_relationship_between_items,
+                get_connected_nodes_by_relationship_type,
                 marketplace,
                 relationship_type,
                 content_type_from,

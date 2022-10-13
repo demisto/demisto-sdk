@@ -6,7 +6,7 @@ from demisto_sdk.commands.content_graph.common import (SERVER_CONTENT_ITEMS,
                                                        ContentType,
                                                        Relationship)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
-    intersects, run_query, serialize_node, versioned)
+    intersects, run_query, serialize_node, to_neo4j_map, versioned)
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from neo4j import Transaction
 
@@ -82,8 +82,7 @@ def get_packs(
     marketplace: MarketplaceVersions,
     **properties,
 ) -> List[Pack]:
-    params_str = ', '.join(f'{k}: "{v}"' for k, v in properties.items())
-    params_str = f'{{{params_str}}}' if params_str else ''
+    params_str = to_neo4j_map(properties)
     query = f"""
     MATCH (p:{ContentType.PACK}{params_str})<-[:{Relationship.IN_PACK}]-(c:{ContentType.BASE_CONTENT})
     WHERE '{marketplace}' IN p.marketplaces AND '{marketplace}' IN c.marketplaces

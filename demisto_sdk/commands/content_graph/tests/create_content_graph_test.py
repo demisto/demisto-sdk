@@ -161,7 +161,7 @@ def mock_relationship(
 
 
 class TestCreateContentGraph:
-    
+
     def _test_create_content_graph_end_to_end(self, repo: Repo, start_service: bool):
         pack = repo.create_pack('TestPack')
         pack.pack_metadata.write_json(load_json('pack_metadata.json'))
@@ -171,7 +171,7 @@ class TestCreateContentGraph:
         with ContentGraphInterface(start_service=start_service) as interface:
             create_content_graph(interface)
             packs = interface.get_packs(marketplace=MarketplaceVersions.XSOAR)
-            
+
         assert len(packs) == 1
         returned_pack = packs[0]
         assert returned_pack.object_id == 'TestPack'
@@ -195,7 +195,7 @@ class TestCreateContentGraph:
             - Make sure there is a single integration in the query response.
         """
         self._test_create_content_graph_end_to_end(repo, start_service=True)
-        
+
     def test_create_content_graph_end_to_end_with_existing_service(self, repo: Repo):
         """
         Given:
@@ -207,7 +207,7 @@ class TestCreateContentGraph:
             - Make sure there is a single integration in the query response.
         """
         self._test_create_content_graph_end_to_end(repo, start_service=False)
-        
+
     def test_create_content_graph_single_pack(
         self,
         repository: Repository,
@@ -294,10 +294,11 @@ class TestCreateContentGraph:
         repository.packs.append(pack)
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
-            result = interface.get_relationships_by_type(Relationship.IN_PACK)
-            for rel in result:
-                assert rel['source']['name'] in ['SampleIntegration', 'SampleScript']
-                assert rel['target']['name'] == 'SamplePack'
+            result = interface.get_connected_nodes_by_relationship_type(
+                marketplace=MarketplaceVersions.XSOAR,
+                relationship_type=Relationship.IN_PACK,
+            )
+            assert len(result) == 1
 
             result = interface.get_relationships_by_type(Relationship.HAS_COMMAND)
             for rel in result:

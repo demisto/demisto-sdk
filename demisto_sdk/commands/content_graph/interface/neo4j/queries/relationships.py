@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Tuple
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
-    labels_of, node_map, run_query, serialize_node)
+    labels_of, node_map, run_query, serialize_node, to_neo4j_map)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from neo4j import Transaction
 
@@ -192,7 +192,7 @@ def create_relationships_by_type(
     logger.info(f'Merged {merged_relationships_count} relationships of type {relationship}.')
     
 
-def get_relationship_between_items(
+def get_connected_nodes_by_relationship_type(
     tx: Transaction,
     marketplace: MarketplaceVersions,
     relationship_type: Relationship,
@@ -201,8 +201,7 @@ def get_relationship_between_items(
     recursive: bool,
     **properties,
 ) -> List[Tuple[BaseContent, dict, List[BaseContent]]]:
-    params_str = ', '.join(f'{k}: "{v}"' for k, v in properties.items())
-    params_str = f'{{{params_str}}}' if params_str else ''
+    params_str = to_neo4j_map(properties)
     recursion_str = f'*{RECURSION_LEVEL}' if recursive else ''
     query = f"""
     MATCH (c1:{content_type_from}{params_str})-[r:{relationship_type}{recursion_str}]->(c2:{content_type_to})
@@ -214,3 +213,4 @@ def get_relationship_between_items(
          item.get('rel_data'),
          [serialize_node(content_item) for content_item in item.get('content_items_to', [])])
         for item in run_query(tx, query).data()]
+

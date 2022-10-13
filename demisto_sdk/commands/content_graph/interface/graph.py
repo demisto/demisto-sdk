@@ -70,7 +70,7 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def get_relationship_between_items(
+    def get_connected_nodes_by_relationship_type(
         self,
         marketplace: MarketplaceVersions,
         relationship_type: Relationship,

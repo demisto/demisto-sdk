@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import IO, Any, Dict
 
 import click
+import dotenv
 import git
 from pkg_resources import DistributionNotFound, get_distribution
 
@@ -21,7 +22,7 @@ from demisto_sdk.commands.common.constants import (ENV_DEMISTO_SDK_MARKETPLACE,
 from demisto_sdk.commands.common.content_constant_paths import \
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (find_type,
+from demisto_sdk.commands.common.tools import (find_type, get_content_path,
                                                get_last_remote_release_version,
                                                get_release_note_entries,
                                                is_external_repository,
@@ -157,9 +158,6 @@ def check_configuration_file(command, args):
 @pass_config
 def main(config, version, release_notes):
     config.configuration = Configuration()
-    import dotenv
-
-    from demisto_sdk.commands.common.tools import get_content_path
     dotenv.load_dotenv(Path(get_content_path()) / '.env', override=True)  # Load a .env file from the cwd.
     if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
         try:

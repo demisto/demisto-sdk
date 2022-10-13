@@ -58,10 +58,6 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def get_relationships_by_type(self, relationship: Relationship) -> Any:
-        pass
-
-    @abstractmethod
     def get_all_level_dependencies(self, marketplace: MarketplaceVersions) -> Dict[str, Any]:
         pass
 

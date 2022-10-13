@@ -87,18 +87,18 @@ def start(use_docker: bool = True):
     """
     use_docker = _should_use_docker(use_docker)
     if not use_docker:
-        Path.mkdir(REPO_PATH / 'neo4j', exist_ok=True, parents=True)
         _neo4j_admin_command('set-initial-password', f'neo4j-admin set-initial-password {NEO4J_PASSWORD}')
         run_command('neo4j start', cwd=REPO_PATH, is_silenced=False)
 
     else:
+        Path.mkdir(REPO_PATH / 'neo4j-data', exist_ok=True, parents=True)
         docker_client = _get_docker_client()
         _stop_neo4j_service_docker(docker_client)
         docker_client.containers.run(
             image=NEO4J_SERVICE_IMAGE,
             name='neo4j-content',
             ports={'7474/tcp': 7474, '7687/tcp': 7687, '7473/tcp': 7473},
-            volumes=[f'{REPO_PATH / "neo4j" / "data"}:/data'],
+            volumes=[f'{REPO_PATH / "neo4j-data" / "data"}:/data'],
             detach=True,
             environment={'NEO4J_AUTH': f'neo4j/{NEO4J_PASSWORD}'},
         )
@@ -141,7 +141,7 @@ def _neo4j_admin_command(name: str, command: str):
             image=NEO4J_ADMIN_IMAGE,
             name=f'neo4j-{name}',
             remove=True,
-            volumes=[f'{REPO_PATH}/neo4j/data:/data', f'{REPO_PATH}/neo4j/backups:/backups'],
+            volumes=[f'{REPO_PATH}/neo4j-data/data:/data', f'{REPO_PATH}/neo4j-data/backups:/backups'],
             command=command,
         )
 
@@ -154,7 +154,7 @@ def dump(output_path: Path, use_docker=True):
     dump_path = Path("/backups/content-graph.dump") if use_docker else output_path
     command = f'neo4j-admin dump --database=neo4j --to={dump_path}'
     # The actual path in the host is different than the path in the container
-    real_path = (REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump') if use_docker else output_path
+    real_path = (REPO_PATH / 'neo4j-data' / 'backups' / 'content-graph.dump') if use_docker else output_path
     real_path.unlink(missing_ok=True)
     _neo4j_admin_command('dump', command)
     if use_docker:
@@ -171,8 +171,8 @@ def load(input_path: Path, use_docker=True):
     dump_path = Path("/backups/content-graph.dump") if use_docker else input_path
     if use_docker:
         # remove existing data
-        Path.mkdir(REPO_PATH / 'neo4j' / 'backups', parents=True, exist_ok=True)
-        shutil.rmtree(REPO_PATH / 'neo4j' / 'data', ignore_errors=True)
+        Path.mkdir(REPO_PATH / 'neo4j-data' / 'backups', parents=True, exist_ok=True)
+        shutil.rmtree(REPO_PATH / 'neo4j-data' / 'data', ignore_errors=True)
         # copy the dump file to the correct path
         shutil.copy(input_path, REPO_PATH / 'neo4j' / 'backups' / 'content-graph.dump')
     # currently we assume that the data is empty when running without docker

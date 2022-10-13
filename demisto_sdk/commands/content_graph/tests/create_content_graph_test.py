@@ -161,6 +161,29 @@ def mock_relationship(
 
 
 class TestCreateContentGraph:
+    
+    def _test_create_content_graph_end_to_end(self, repo: Repo, start_service: bool):
+        pack = repo.create_pack('TestPack')
+        pack.pack_metadata.write_json(load_json('pack_metadata.json'))
+        integration = pack.create_integration()
+        integration.create_default_integration('TestIntegration', ['test-command1', 'test-command2'])
+
+        with ContentGraphInterface(start_service=start_service) as interface:
+            create_content_graph(interface)
+            packs = interface.get_packs(marketplace=MarketplaceVersions.XSOAR)
+            
+        assert len(packs) == 1
+        returned_pack = packs[0]
+        assert returned_pack.object_id == 'TestPack'
+        # make sure that data from pack_metadata.json updated
+        assert returned_pack.name == 'HelloWorld'
+        assert returned_pack.support == 'community'
+        integrations = packs[0].content_items.integration
+        assert len(integrations) == 1
+        returned_integration = integrations[0]
+        assert returned_integration.name == 'TestIntegration'
+        assert set((command.name for command in returned_integration.commands)) == {'test-command', 'test-command1', 'test-command2'}
+
     def test_create_content_graph_end_to_end_with_new_service(self, repo: Repo):
         """
         Given:
@@ -171,16 +194,8 @@ class TestCreateContentGraph:
             - Make sure the service remains available by querying for all content items in the graph.
             - Make sure there is a single integration in the query response.
         """
-        pack = repo.create_pack('TestPack')
-        pack.pack_metadata.write_json(load_json('pack_metadata.json'))
-        integration = pack.create_integration()
-        integration.create_default_integration('TestIntegration')
-
-        with ContentGraphInterface(start_service=True) as interface:
-            create_content_graph(interface)
-            content_items = interface.get_packs(marketplace=MarketplaceVersions.XSOAR)
-        assert len(content_items) == 1
-
+        self._test_create_content_graph_end_to_end(repo, start_service=True)
+        
     def test_create_content_graph_end_to_end_with_existing_service(self, repo: Repo):
         """
         Given:
@@ -191,16 +206,8 @@ class TestCreateContentGraph:
             - Make sure the service remains available by querying for all content items in the graph.
             - Make sure there is a single integration in the query response.
         """
-        pack = repo.create_pack('TestPack')
-        pack.pack_metadata.write_json(load_json('pack_metadata.json'))
-        integration = pack.create_integration()
-        integration.create_default_integration('TestIntegration')
-
-        with ContentGraphInterface() as interface:
-            create_content_graph(interface)
-            content_items = interface.get_packs(marketplace=MarketplaceVersions.XSOAR)
-        assert len(content_items) == 1
-
+        self._test_create_content_graph_end_to_end(repo, start_service=False)
+        
     def test_create_content_graph_single_pack(
         self,
         repository: Repository,

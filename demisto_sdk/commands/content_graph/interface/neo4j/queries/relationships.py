@@ -190,16 +190,7 @@ def create_relationships_by_type(
     result = run_query(tx, query, data=data).single()
     merged_relationships_count: int = result['relationships_merged']
     logger.info(f'Merged {merged_relationships_count} relationships of type {relationship}.')
-
-
-def get_relationships_by_type(tx: Transaction, rel: Relationship):
-    query = f"""
-    MATCH (source)-[rel:{rel}]->(target) return source, rel, target
-    """
-    return [{'source': serialize_node(item.get('source')),
-             'rel': item.get('rel'),  # TODO serialize relationship as well
-             'target': serialize_node(item.get('target'))} for item in run_query(tx, query).data()]
-
+    
 
 def get_relationship_between_items(
     tx: Transaction,

@@ -22,8 +22,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     create_nodes, delete_all_graph_nodes, duplicates_exist, get_packs,
     search_nodes)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
-    create_relationships, get_relationship_between_items,
-    get_relationships_by_type)
+    create_relationships, get_relationship_between_items)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from neo4j import GraphDatabase, Neo4jDriver, Result, Transaction
@@ -42,7 +41,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             NEO4J_DATABASE_URL,
             auth=(NEO4J_USERNAME, NEO4J_PASSWORD),
         )
-        if start_service or not neo4j_service.is_alive:
+        if start_service or not neo4j_service.is_alive():
             neo4j_service.start(use_docker)
         self.output_file = output_file
         self.use_docker = use_docker
@@ -165,10 +164,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 recursive,
                 **properties,
             )
-
-    def get_relationships_by_type(self, relationship_type: Relationship) -> Any:
-        with self.driver.session() as session:
-            return session.read_transaction(get_relationships_by_type, relationship_type)
 
     def run_single_query(self, query: str, parameters: Optional[Dict[str, Any]] = None) -> Result:
         with self.driver.session() as session:

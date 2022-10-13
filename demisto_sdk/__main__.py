@@ -1,5 +1,6 @@
 # Site packages
 import copy
+import io
 import logging
 import os
 import shutil
@@ -161,6 +162,15 @@ def check_configuration_file(command, args):
 @pass_config
 def main(config, version, release_notes, **kwargs):
     check_configuration_file('demisto-sdk', kwargs)
+    # Override .env file with CLI options
+    if kwargs.get('server'):
+        dotenv.load_dotenv(stream=io.StringIO(f"DEMISTO_BASE_URL={kwargs.get('server')}"), override=True)
+    if kwargs.get('api_key'):
+        dotenv.load_dotenv(stream=io.StringIO(f"DEMISTO_API_KEY={kwargs.get('api_key')}"), override=True)
+    # Add tenant information to passable config
+    if kwargs.get('tenants'):
+        config.tenants = kwargs.get('tenants')
+    config.multi_tenant = kwargs.get('multi_tenant')
     if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
         try:
             __version__ = get_distribution('demisto-sdk').version

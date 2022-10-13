@@ -390,13 +390,13 @@ class LintManager:
                                 lint_status[f"fail_packs_{check}"].append(pkg_status["pkg"])
 
                         if not return_exit_code & pkg_status["exit_code"]:
-                            return_exit_code += pkg_status["exit_code"]
+                            return_exit_code |= pkg_status["exit_code"]
                     if pkg_status["warning_code"]:
                         for check, code in EXIT_CODES.items():
                             if pkg_status["warning_code"] & code:
                                 lint_status[f"warning_packs_{check}"].append(pkg_status["pkg"])
                         if not return_warning_code & pkg_status["warning_code"]:
-                            return_warning_code += pkg_status["warning_code"]
+                            return_warning_code |= pkg_status["warning_code"]
                     if pkg_status["pack_type"] not in pkgs_type:
                         pkgs_type.append(pkg_status["pack_type"])
                 logger.info('Finished all futures')
@@ -851,13 +851,6 @@ class LintManager:
             print("Failed packages:")
         for fail_pack in failed:
             print(f"{Colors.Fg.red}{wrapper_fail_pack.fill(fail_pack)}{Colors.reset}")
-
-        # if all_packs:
-        #     failed_build = [pack for pack, result in pkgs_status.items() if result.get('exit_code') != EXIT_CODES['mypy'] and result.get('exit_code') != 0]
-        #     if failed_build:
-        #         print("Failed packages (failing build):")
-        #     for fail_pack in failed_build:
-        #         print(f"{Colors.Fg.red}{wrapper_fail_pack.fill(fail_pack)}{Colors.reset}")
 
     @staticmethod
     def _create_failed_packs_report(lint_status: dict, path: str):

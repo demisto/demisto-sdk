@@ -113,7 +113,7 @@ class IntegrationScriptUnifier(YAMLUnifier):
             else:  # no value for dockerimage45 remove the dockerimage entry
                 del yml_unified45['dockerimage']
 
-            output_path45 = re.sub(r'\.yml$', '_45.yml', self.dest_path)  # type: ignore[type-var]
+            output_path45 = re.sub(r'\.yml$', '_45.yml', self.dest_path)  # type: ignore[arg-type]
             output_map = {
                 self.dest_path: yml_unified,
                 output_path45: yml_unified45,

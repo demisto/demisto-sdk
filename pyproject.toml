@@ -29,7 +29,7 @@ sort_by_size = true
 python = "^3.8"
 autopep8 = "^1.6.0"
 bandit = "^1.7.4"
-mypy = "^0.942"
+mypy = "^0.982"
 pylint = "2.12.2"
 vulture = "^2.3"
 flake8 = "^4.0.1"
@@ -103,6 +103,10 @@ types-futures = "^3.3.8"
 paramiko = "^2.11.0"
 neo4j = "^4.4.5"
 pydantic = "^1.9.2"
+types-decorator = "^5.1.8"
+types-mock = "^4.0.15"
+types-setuptools = "^65.4.0.0"
+types-ujson = "^5.5.0"
 
 [tool.poetry.dev-dependencies]
 mitmproxy = "^8.0.0"
@@ -119,6 +123,16 @@ slack-sdk = "^3.17.0"
 
 [tool.poetry.extras]
 build = ["gsutil"]
+
+[tool.mypy]
+check_untyped_defs = true
+ignore_missing_imports = true
+python_version = "3.8"
+show_error_codes = true
+follow_imports = "silent"
+pretty = true
+allow_redefinition = true
+exclude = "tests/.*|demisto_sdk/commands/init/templates/.*"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

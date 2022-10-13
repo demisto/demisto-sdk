@@ -169,7 +169,7 @@ class UpdateRN:
                 The content of the rn
         """
         if self.existing_rn_version_path:
-            self.should_delete_existing_rn = self.existing_rn_version_path != rn_path
+            self.should_delete_existing_rn = os.path.abspath(self.existing_rn_version_path) != rn_path
             try:
                 with open(self.existing_rn_version_path, 'r') as f:
                     return f.read()

@@ -847,7 +847,8 @@ class LintManager:
 
         if all_packs:
             failed_build = [pack for pack, result in pkgs_status.items() if result.get('exit_code') != EXIT_CODES['mypy'] and result.get('exit_code') != 0]
-            print("Failed packages (failing nightly):")
+            if failed_build:
+                print("Failed packages (failing build):")
             for fail_pack in failed_build:
                 print(f"{Colors.Fg.red}{wrapper_fail_pack.fill(fail_pack)}{Colors.reset}")
 

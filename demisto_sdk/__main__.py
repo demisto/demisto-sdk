@@ -137,6 +137,23 @@ def check_configuration_file(command, args):
     '-rn', '--release-notes', help='Get the release notes of the current demisto-sdk version.',
     is_flag=True, default=False, show_default=True
 )
+@click.option(
+    '--multi-tenant', help='Determines if the subcommand should run for each tenant.',
+    is_flag=True, default=False, show_default=True
+)
+@click.option(
+    '--server', help='The Demisto server used for the demisto_client.',
+)
+@click.option(
+    '--api-key', help='The Demisto server API key used for the demisto_client.',
+)
+@click.option(
+    '--tenant',
+    'tenants',
+    type=str,
+    multiple=True,
+    help='Tenant names that should be used when running subcommands.',
+)
 @pass_config
 def main(config, version, release_notes):
     config.configuration = Configuration()

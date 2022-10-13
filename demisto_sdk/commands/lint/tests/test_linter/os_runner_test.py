@@ -141,7 +141,7 @@ class TestRunLintInHost:
             "version_two": False,
             "lint_files": lint_files,
             "additional_requirements": [],
-            "python_version": "3,7",
+            "python_version": "3.7",
         })
         mocker.patch.object(linter_obj, '_run_xsoar_linter')
         linter_obj._run_xsoar_linter.return_value = (0b1, 'Error')

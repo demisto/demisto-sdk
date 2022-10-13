@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue where the **upload** failed on playbooks containing a value that starts with `=`.
+* Fixed an issue where the **generate-unit-tests** failed to generate assertions, and generate unit tests when command names does not match method name.
 * Created `get_id` under **tools**, to serve as the single source of truth for getting the id of a dict-based content item, removing other (partial, duplicate) functions.
 
 ## 1.7.6

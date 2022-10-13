@@ -605,7 +605,7 @@ def get_file(file_path, type_of_file, clear_cache=False):
     with file_path.open(mode='r', encoding='utf8') as f:
         if type_of_file in file_path.suffix:
             read_file = f.read()
-            replaced = read_file.replace("simple: =", "simple: '='")
+            replaced = re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', read_file)
             # revert str to stream for loader
             stream = io.StringIO(replaced)
             try:

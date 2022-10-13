@@ -33,7 +33,7 @@ from demisto_sdk.commands.common.tools import (find_file, find_type,
                                                retrieve_file_ending)
 from demisto_sdk.commands.lint.docker_helper import init_global_docker_client
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
-                                               PY_CHCEKS,
+                                               PY_CHCEKS, SUCCESS,
                                                build_skipped_exit_code,
                                                generate_coverage_report,
                                                get_test_modules)
@@ -389,10 +389,6 @@ class LintManager:
                             if pkg_status["exit_code"] & code:
                                 lint_status[f"fail_packs_{check}"].append(pkg_status["pkg"])
 
-                        if self._all_packs and pkg_status["exit_code"] == EXIT_CODES["mypy"]:
-                            # do not fail mypy errors in nightly, but report them
-                            continue
-
                         if not return_exit_code & pkg_status["exit_code"]:
                             return_exit_code += pkg_status["exit_code"]
                     if pkg_status["warning_code"]:
@@ -528,7 +524,11 @@ class LintManager:
         # check if there were any errors during lint run , if so set to FAIL as some error codes are bigger
         # then 512 and will not cause failure on the exit code.
         if return_exit_code:
-            return_exit_code = FAIL
+            # allow all_packs to fail on mypy
+            if self._all_packs and return_exit_code == EXIT_CODES['mypy']:
+                return_exit_code = SUCCESS
+            else:
+                return_exit_code = FAIL
         return return_exit_code
 
     def _report_results(self, lint_status: dict, pkgs_status: dict, return_exit_code: int, return_warning_code: int,

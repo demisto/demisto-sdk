@@ -623,7 +623,7 @@ class LintManager:
                         'type': 'error',
                         'messages': pkgs_status[fail_pack][f"{check}_errors"]
                     })
-
+        
         for check in ["pylint", "pwsh_analyze", "pwsh_test"]:
             check_str = check.capitalize().replace('_', ' ')
             if EXIT_CODES[check] & return_exit_code:
@@ -819,11 +819,18 @@ class LintManager:
         # each pack is checked for warnings and failures . A certain pack can appear in both failed packages and
         # warnings packages.
         for key in lint_status:
+            # ignore mypy errors in all_packs report
+            if all_packs and 'mypy' in key:
+                continue
+
             if key.startswith('fail'):
                 failed = failed.union(lint_status[key])
             if key.startswith('warning'):
                 warnings = warnings.union(lint_status[key])
-        num_passed = len([pack for pack, result in pkgs_status.items() if result.get('exit_code') == 0])
+        if all_packs:
+            num_passed = len([pack for pack, result in pkgs_status.items() if result.get('exit_code') == 0 or result.get('exit_code') == EXIT_CODES['mypy']])
+        else:
+            num_passed = len([pack for pack, result in pkgs_status.items() if result.get('exit_code') == 0])
         # Log unit-tests summary
         sentence = " Summary "
         print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
@@ -845,12 +852,12 @@ class LintManager:
         for fail_pack in failed:
             print(f"{Colors.Fg.red}{wrapper_fail_pack.fill(fail_pack)}{Colors.reset}")
 
-        if all_packs:
-            failed_build = [pack for pack, result in pkgs_status.items() if result.get('exit_code') != EXIT_CODES['mypy'] and result.get('exit_code') != 0]
-            if failed_build:
-                print("Failed packages (failing build):")
-            for fail_pack in failed_build:
-                print(f"{Colors.Fg.red}{wrapper_fail_pack.fill(fail_pack)}{Colors.reset}")
+        # if all_packs:
+        #     failed_build = [pack for pack, result in pkgs_status.items() if result.get('exit_code') != EXIT_CODES['mypy'] and result.get('exit_code') != 0]
+        #     if failed_build:
+        #         print("Failed packages (failing build):")
+        #     for fail_pack in failed_build:
+        #         print(f"{Colors.Fg.red}{wrapper_fail_pack.fill(fail_pack)}{Colors.reset}")
 
     @staticmethod
     def _create_failed_packs_report(lint_status: dict, path: str):

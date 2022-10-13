@@ -159,7 +159,8 @@ def check_configuration_file(command, args):
     help='Tenant names that should be used when running subcommands.',
 )
 @pass_config
-def main(config, version, release_notes):
+def main(config, version, release_notes, **kwargs):
+    check_configuration_file('demisto-sdk', kwargs)
     if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
         try:
             __version__ = get_distribution('demisto-sdk').version

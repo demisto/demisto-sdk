@@ -599,7 +599,7 @@ class ValidateManager:
         # conf.json validation
         valid_in_conf = True
         if self.check_is_unskipped and file_type in {FileType.INTEGRATION, FileType.SCRIPT, FileType.BETA_INTEGRATION}:
-            if not self.conf_json_validator.is_valid_file_in_conf_json(structure_validator.current_file, file_type,
+            if not self.conf_json_validator.is_valid_file_in_conf_json(structure_validator.current_file_data, file_type,
                                                                        file_path):
                 valid_in_conf = False
 

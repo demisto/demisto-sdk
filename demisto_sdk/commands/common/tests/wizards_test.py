@@ -12,7 +12,7 @@ json = JSON_Handler()
 def get_validator(current_file=None, old_file=None, file_path="Packs/exists"):
     with patch.object(StructureValidator, '__init__', lambda a, b: None):
         structure = StructureValidator("")
-        structure.current_file = current_file
+        structure.current_file_data = current_file
         structure.old_file = old_file
         structure.file_path = file_path
         structure.is_valid = True

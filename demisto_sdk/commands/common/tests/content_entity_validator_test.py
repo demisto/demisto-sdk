@@ -39,7 +39,7 @@ def test_yml_has_test_key(file_path, schema, expected):
     """
     structure_validator = StructureValidator(file_path, predefined_scheme=schema)
     validator = ContentEntityValidator(structure_validator)
-    tests = structure_validator.current_file.get('tests')
+    tests = structure_validator.current_file_data.get('tests')
     assert validator.yml_has_test_key(tests, schema) == expected
 
 
@@ -152,7 +152,7 @@ def test_get_not_registered_tests(file_path, schema, conf_json_data, content_ite
         -  Ensure the method 'get_not_registered_tests' return all test playbooks that are not configured
     """
     structure_validator = StructureValidator(file_path, predefined_scheme=schema)
-    tests = structure_validator.current_file.get('tests')
+    tests = structure_validator.current_file_data.get('tests')
     assert get_not_registered_tests(conf_json_data, content_item_id, schema, tests) == expected
 
 
@@ -303,7 +303,7 @@ def test_are_fromversion_and_toversion_in_correct_format(mocker, current_file, f
     structure.is_valid = True
     structure.scheme_name = 'playbook'
     structure.file_path = file_path
-    structure.current_file = current_file
+    structure.current_file_data = current_file
     structure.old_file = None
     structure.prev_ver = 'master'
     structure.branch_name = ''

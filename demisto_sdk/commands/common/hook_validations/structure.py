@@ -35,7 +35,7 @@ class StructureValidator(BaseValidator):
                              after running is_file_valid.
             scheme_name (str): Name of the yaml scheme need to validate.
             file_type (str): equal to scheme_name if there's a scheme.
-            current_file (dict): loaded json.
+            current_file_data (dict): loaded json.
             old_file: (dict) loaded file from git.
             fromversion (bool): Set True if fromversion was changed on file.
         """
@@ -66,7 +66,7 @@ class StructureValidator(BaseValidator):
         self.prev_ver = tag
         self.branch_name = branch_name
         self.file_type = self.get_file_type()
-        self.current_file = self.load_data_from_file()
+        self.current_file_data = self.load_data_from_file()
         self.fromversion = fromversion
         # If it is a newly added file or if it is a file outside the pack then we will not search for an old file
         if is_new_file or not is_file_path_in_pack(self.file_path):
@@ -161,7 +161,7 @@ class StructureValidator(BaseValidator):
         Returns:
             bool. Whether the file's ID contains slashes or not.
         """
-        if (file_id := get_id(self.current_file)) and '/' in file_id:
+        if (file_id := get_id(self.current_file_data)) and '/' in file_id:
             error_message, error_code = Errors.file_id_contains_slashes()
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
@@ -394,7 +394,7 @@ class StructureValidator(BaseValidator):
         Returns:
             str: a string indicating a path to the pykwalify error.
         """
-        curr = self.current_file
+        curr = self.current_file_data
         key_list = []
         for single_path in error_path:
             if isinstance(curr, list):

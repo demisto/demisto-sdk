@@ -66,7 +66,7 @@ class TestFieldValidator:
         import sys
         with patch.object(StructureValidator, '__init__', lambda a, b: None):
             structure = StructureValidator("")
-            structure.current_file = current_file
+            structure.current_file_data = current_file
             structure.old_file = None
             structure.file_path = "random_path"
             structure.is_valid = True
@@ -110,7 +110,7 @@ class TestFieldValidator:
     def test_is_valid_content_flag_sanity(self, current_file, answer):
         with patch.object(StructureValidator, '__init__', lambda a, b: None):
             structure = StructureValidator("")
-            structure.current_file = current_file
+            structure.current_file_data = current_file
             structure.old_file = None
             structure.file_path = "random_path"
             structure.is_valid = True
@@ -140,7 +140,7 @@ class TestFieldValidator:
     def test_is_valid_system_flag_sanity(self, current_file, answer):
         with patch.object(StructureValidator, '__init__', lambda a, b: None):
             structure = StructureValidator("")
-            structure.current_file = current_file
+            structure.current_file_data = current_file
             structure.old_file = None
             structure.file_path = "random_path"
             structure.is_valid = True
@@ -162,7 +162,7 @@ class TestFieldValidator:
         with patch.object(StructureValidator, '__init__', lambda a, b: None):
             current_file = {"cliName": cliname, "group": group}
             structure = StructureValidator("")
-            structure.current_file = current_file
+            structure.current_file_data = current_file
             structure.old_file = None
             structure.file_path = "random_path"
             structure.is_valid = True
@@ -184,7 +184,7 @@ class TestFieldValidator:
         with patch.object(StructureValidator, '__init__', lambda a, b: None):
             current_file = {"cliName": cliname, "group": group}
             structure = StructureValidator("")
-            structure.current_file = current_file
+            structure.current_file_data = current_file
             structure.old_file = None
             structure.file_path = "random_path"
             structure.is_valid = True
@@ -208,7 +208,7 @@ class TestFieldValidator:
         with patch.object(StructureValidator, '__init__', lambda a, b: None):
             current_file = {'id': _id, 'cliName': cliname}
             structure = StructureValidator("")
-            structure.current_file = current_file
+            structure.current_file_data = current_file
             structure.old_file = None
             structure.file_path = "random_path"
             structure.is_valid = True
@@ -230,7 +230,7 @@ class TestFieldValidator:
         with patch.object(StructureValidator, '__init__', lambda a, b: None):
             current_file = {'id': _id, 'cliName': cliname}
             structure = StructureValidator("")
-            structure.current_file = current_file
+            structure.current_file_data = current_file
             structure.old_file = None
             structure.file_path = "random_path"
             structure.is_valid = True
@@ -251,7 +251,7 @@ class TestFieldValidator:
         with patch.object(StructureValidator, '__init__', lambda a, b: None):
             current_file = {"cliName": cliname}
             structure = StructureValidator("")
-            structure.current_file = current_file
+            structure.current_file_data = current_file
             structure.old_file = None
             structure.file_path = "random_path"
             structure.is_valid = True
@@ -274,7 +274,7 @@ class TestFieldValidator:
         with patch.object(StructureValidator, '__init__', lambda a, b: None):
             current_file = {"cliName": cliname}
             structure = StructureValidator("")
-            structure.current_file = current_file
+            structure.current_file_data = current_file
             structure.old_file = None
             structure.file_path = "random_path"
             structure.is_valid = True
@@ -296,7 +296,7 @@ class TestFieldValidator:
         current_file = {'id': _id, 'cliName': cliname, 'group': group}
         with patch.object(StructureValidator, '__init__', lambda a, b: None):
             structure = StructureValidator("")
-            structure.current_file = current_file
+            structure.current_file_data = current_file
             structure.old_file = None
             structure.file_path = "random_path"
             structure.is_valid = True
@@ -312,7 +312,7 @@ class TestFieldValidator:
         current_file = {"cliName": cliname, "group": group}
         with patch.object(StructureValidator, '__init__', lambda a, b: None):
             structure = StructureValidator("")
-            structure.current_file = current_file
+            structure.current_file_data = current_file
             structure.old_file = None
             structure.file_path = "random_path"
             structure.is_valid = True
@@ -332,7 +332,7 @@ class TestFieldValidator:
     @pytest.mark.parametrize('version, is_valid', data_is_valid_version)
     def test_is_valid_version(self, version, is_valid):
         structure = StructureValidator("")
-        structure.current_file = {"version": version}
+        structure.current_file_data = {"version": version}
         validator = FieldBaseValidator(structure, set(), set())
         assert validator.is_valid_version() == is_valid, f'is_valid_version({version}) returns {not is_valid}.'
 
@@ -353,7 +353,7 @@ class TestFieldValidator:
     def test_is_changed_from_version(self, current_from_version, old_from_version, answer):
         structure = StructureValidator("")
         structure.old_file = old_from_version
-        structure.current_file = current_from_version
+        structure.current_file_data = current_from_version
         validator = FieldBaseValidator(structure, set(), set())
         assert validator.is_changed_from_version() is answer
         structure.quiet_bc = True
@@ -367,7 +367,7 @@ class TestFieldValidator:
     @pytest.mark.parametrize('required, is_valid', data_required)
     def test_is_valid_required(self, required, is_valid):
         structure = StructureValidator("")
-        structure.current_file = {"required": required}
+        structure.current_file_data = {"required": required}
         validator = FieldBaseValidator(structure, set(), set())
         assert validator.is_valid_required() == is_valid, f'is_valid_required({required})' \
                                                           f' returns {not is_valid}.'
@@ -387,7 +387,7 @@ class TestFieldValidator:
     @pytest.mark.parametrize('current_type, old_type, is_valid', data_is_changed_type)
     def test_is_changed_type(self, current_type, old_type, is_valid):
         structure = StructureValidator("")
-        structure.current_file = {"type": current_type}
+        structure.current_file_data = {"type": current_type}
         structure.old_file = {"type": old_type}
         validator = FieldBaseValidator(structure, set(), set())
         assert validator.is_changed_type() == is_valid, f'is_changed_type({current_type}, {old_type})' \
@@ -433,7 +433,7 @@ class TestFieldValidator:
             field_base_validator
         with patch.object(StructureValidator, '__init__', lambda a, b: None):
             structure = StructureValidator("")
-            structure.current_file = current_file
+            structure.current_file_data = current_file
             structure.old_file = None
             structure.file_path = "random_path"
             structure.is_valid = True

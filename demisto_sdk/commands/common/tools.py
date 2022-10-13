@@ -1848,9 +1848,9 @@ def get_id(file_content: dict) -> str:
             return file_content.get(key)  # type:ignore[return-value]
 
     name_postfix = ''
-    if name := file_content.get("name"):
+    if isinstance(file_content, dict) and (name := file_content.get("name")):
         name_postfix = f'({name=})'
-    logger.warning(f'could not find the id for this file{name_postfix}')
+    logger.warning(f'could not find the id for this file{name_postfix}, using a blank string instead')
 
     return ''
 

@@ -44,7 +44,7 @@ class ContentEntityValidator(BaseValidator):
                          suppress_print=suppress_print, json_file_path=json_file_path,
                          specific_validations=structure_validator.specific_validations)
         self.structure_validator = structure_validator
-        self.current_file = structure_validator.current_file
+        self.current_file = structure_validator.current_file_data
         self.old_file = structure_validator.old_file
         self.file_path = structure_validator.file_path
         self.is_valid = structure_validator.is_valid

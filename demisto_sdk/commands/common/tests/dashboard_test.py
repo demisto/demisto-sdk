@@ -16,7 +16,7 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
         structure.is_valid = True
         structure.scheme_name = 'dashboard'
         structure.file_path = file_path
-        structure.current_file = current_file
+        structure.current_file_data = current_file
         structure.old_file = old_file
         structure.prev_ver = 'master'
         structure.branch_name = ''
@@ -34,7 +34,7 @@ data_is_valid_version = [
 @pytest.mark.parametrize('version, is_valid', data_is_valid_version)
 def test_is_valid_version(version, is_valid):
     structure = StructureValidator("")
-    structure.current_file = {"version": version}
+    structure.current_file_data = {"version": version}
     validator = DashboardValidator(structure)
     assert validator.is_valid_version() == is_valid, f'is_valid_version({version}) returns {not is_valid}.'
 
@@ -49,7 +49,7 @@ data_is_id_equal_name = [
 @pytest.mark.parametrize('id_, name, is_valid', data_is_id_equal_name)
 def test_is_id_equal_name(id_, name, is_valid):
     structure = StructureValidator("")
-    structure.current_file = {"id": id_, "name": name}
+    structure.current_file_data = {"id": id_, "name": name}
     validator = DashboardValidator(structure)
     assert validator.is_id_equals_name() == is_valid, f'is_id_equal_name returns {not is_valid}.'
 

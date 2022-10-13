@@ -30,7 +30,7 @@ class IncidentFieldValidator(FieldBaseValidator):
 
     def __init__(self, structure_validator, ignored_errors=False,
                  print_as_warnings=False, json_file_path=None, **kwargs):
-        prohibited_cli_names: Set[str] = self.EVIDENCE_PROHIBITED_CLI_NAMES if structure_validator.current_file.get(
+        prohibited_cli_names: Set[str] = self.EVIDENCE_PROHIBITED_CLI_NAMES if structure_validator.current_file_data.get(
             'group') == self.EVIDENCE_GROUP_ID else self.INCIDENT_PROHIBITED_CLI_NAMES
         super().__init__(structure_validator, self.FIELD_TYPES, prohibited_cli_names, ignored_errors,
                          print_as_warnings, json_file_path=json_file_path, **kwargs)

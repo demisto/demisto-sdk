@@ -26,7 +26,7 @@ def mock_structure(file_path=None, current_file=None, old_file=None):
         structure.scheme_name = 'list'
         structure.file_path = file_path
         file = open(file_path, "r")
-        structure.current_file = json.loads(file.read())
+        structure.current_file_data = json.loads(file.read())
         file.close()
         structure.old_file = old_file
         structure.prev_ver = 'master'

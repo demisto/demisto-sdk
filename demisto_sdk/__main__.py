@@ -88,7 +88,10 @@ class DemistoSDK:
     """
 
     def __init__(self):
-        self.configuration = None
+        # Load base envvars from .env
+        dotenv.load_dotenv(Path(get_content_path()) / '.env', override=True)  # Load a .env file from the cwd.
+        # Load info from config file
+        self.configuration = Configuration()
 
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
@@ -157,8 +160,6 @@ def check_configuration_file(command, args):
 )
 @pass_config
 def main(config, version, release_notes):
-    config.configuration = Configuration()
-    dotenv.load_dotenv(Path(get_content_path()) / '.env', override=True)  # Load a .env file from the cwd.
     if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
         try:
             __version__ = get_distribution('demisto-sdk').version

@@ -623,7 +623,7 @@ class LintManager:
                         'type': 'error',
                         'messages': pkgs_status[fail_pack][f"{check}_errors"]
                     })
-        
+
         for check in ["pylint", "pwsh_analyze", "pwsh_test"]:
             check_str = check.capitalize().replace('_', ' ')
             if EXIT_CODES[check] & return_exit_code:

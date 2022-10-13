@@ -247,7 +247,7 @@ class Linter:
                     logger.info(f"{self._pack_name} - Facts - {image[0]} - Python {py_num}")
                     if not self._facts["python_version"]:
                         self._facts["python_version"] = py_num
-                        
+
                 # Checking whatever *test* exists in package
                 self._facts["test"] = True if next(self._pack_abs_dir.glob([r'test_*.py', r'*_test.py']),
                                                    None) else False

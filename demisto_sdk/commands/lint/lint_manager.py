@@ -390,13 +390,13 @@ class LintManager:
                                 lint_status[f"fail_packs_{check}"].append(pkg_status["pkg"])
 
                         if not return_exit_code & pkg_status["exit_code"]:
-                            return_exit_code |= pkg_status["exit_code"]
+                            return_exit_code += pkg_status["exit_code"]
                     if pkg_status["warning_code"]:
                         for check, code in EXIT_CODES.items():
                             if pkg_status["warning_code"] & code:
                                 lint_status[f"warning_packs_{check}"].append(pkg_status["pkg"])
                         if not return_warning_code & pkg_status["warning_code"]:
-                            return_warning_code |= pkg_status["warning_code"]
+                            return_warning_code += pkg_status["warning_code"]
                     if pkg_status["pack_type"] not in pkgs_type:
                         pkgs_type.append(pkg_status["pack_type"])
                 logger.info('Finished all futures')

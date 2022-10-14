@@ -357,7 +357,7 @@ class Downloader:
             self.handle_max_retry_error(e)
             return False
         except Exception as e:
-            print_color(f'Exception raised when fetching custom content:\n{e}', LOG_COLORS.NATIVE)
+            print_color(f'Exception raised when fetching system content:\n{e}', LOG_COLORS.NATIVE)
             return False
 
     def get_custom_content_objects(self) -> List[dict]:

@@ -338,7 +338,7 @@ class Downloader:
                 api_response = demisto_client.generic_request_func(self.client, endpoint, req_type, body=req_body)
                 system_items_list = ast.literal_eval(api_response[0])
 
-            self.arrange_response(system_items_list)
+            system_items_list = self.arrange_response(system_items_list)
 
             for item in system_items_list:  # type: ignore
                 file_name: str = self.build_file_name(item)

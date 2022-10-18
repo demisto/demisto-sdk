@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+* Fixed an issue  in the **download** command, where an exception would be raised when downloading system playbooks.
 * Fixed an issue where the **upload** failed on playbooks containing a value that starts with `=`.
 * Fixed an issue where the **generate-unit-tests** failed to generate assertions, and generate unit tests when command names does not match method name.
 ## 1.7.6

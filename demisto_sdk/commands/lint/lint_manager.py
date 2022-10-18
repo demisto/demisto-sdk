@@ -874,7 +874,7 @@ class LintManager:
         """
         failed_ut: set = set()
         for key in lint_status:
-            if key.startswith('fail') and 'mypy' not in key:  # TODO remove when mypy is functioning
+            if key.startswith('fail') and 'mypy' not in key:  # TODO remove this when reduce the number of failed `mypy` packages.
                 failed_ut = failed_ut.union(lint_status[key])
         if path and failed_ut:
             file_path = Path(path) / "failed_lint_report.txt"

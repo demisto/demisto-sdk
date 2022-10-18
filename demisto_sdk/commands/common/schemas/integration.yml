@@ -102,7 +102,7 @@ mapping:
       commands:
         type: seq
         sequence:
-        - type: str
+        - include: command_schema
       runonce:
         type: bool
       subtype:
@@ -121,7 +121,7 @@ mapping:
   videos:
     type: seq
     sequence:
-      - include: command_schema
+      - type: str
   versionedfields:
     type: any
   defaultEnabled:

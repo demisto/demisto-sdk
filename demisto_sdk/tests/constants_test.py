@@ -10,6 +10,8 @@ VALID_PLAYBOOK_ARCSIGHT_ADD_DOMAIN_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_fi
 INVALID_INTEGRATION_NO_TESTS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/non-valid-integration-no-test-playbooks.yml'
 INVALID_INTEGRATION_NON_CONFIGURED_TESTS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/' \
                                            f'non-valid-integration-test-not-configured.yml'
+INVALID_INTEGRATION_SOME_CONFIGURED_TESTS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/' \
+    f'non-valid-integration-test-some-configured.yml'
 TEST_PLAYBOOK = f'{GIT_ROOT}/demisto_sdk/tests/test_files/playbook-TestPlaybooks.yml'
 
 VALID_PYTHON_INTEGRATION_TEST_PATH = f"{GIT_ROOT}/demisto_sdk/tests/test_files/integration_test.py"

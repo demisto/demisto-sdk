@@ -333,7 +333,19 @@ def test_upload_incident_type_correct_file_change(demisto_client_configure, mock
             DATA = f.read()
         return
 
+    class ConfigurationMock:
+        host = 'host'
+
     class demisto_client_mocker():
+
+        class ConfigurationMock:
+            host = 'host'
+
+        class ApiClientMock:
+            configuration = ConfigurationMock()
+
+        api_client = ApiClientMock()
+
         def import_incident_fields(self, file):
             pass
 
@@ -369,7 +381,18 @@ def test_upload_incident_field_correct_file_change(demisto_client_configure, moc
             DATA = f.read()
         return
 
+    class ConfigurationMock:
+        host = 'host'
+
     class demisto_client_mocker():
+        class ConfigurationMock:
+            host = 'host'
+
+        class ApiClientMock:
+            configuration = ConfigurationMock()
+
+        api_client = ApiClientMock()
+
         def import_incident_fields(self, file):
             pass
 
@@ -488,7 +511,21 @@ def test_upload_pack(demisto_client_configure, mocker):
 
 
 def test_upload_invalid_path(demisto_client_configure, mocker):
-    mocker.patch.object(demisto_client, 'configure', return_value="object")
+    class ConfigurationMock:
+        host = 'host'
+
+    class demisto_client_mocker():
+        class ConfigurationMock:
+            host = 'host'
+
+        class ApiClientMock:
+            configuration = ConfigurationMock()
+
+        api_client = ApiClientMock()
+
+        def import_incident_fields(self, file):
+            pass
+    mocker.patch.object(demisto_client, 'configure', return_value=demisto_client_mocker())
     script_dir_path = f'{git_path()}/demisto_sdk/tests/test_files/content_repo_not_exists/Scripts/'
     script_dir_uploader = Uploader(input=script_dir_path, insecure=False, verbose=False)
     assert script_dir_uploader.upload() == 1

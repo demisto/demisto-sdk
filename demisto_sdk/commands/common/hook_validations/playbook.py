@@ -581,7 +581,7 @@ class PlaybookValidator(ContentEntityValidator):
             ]
             answers.extend(tasks_check)
 
-        answers.extend(self.handle_playbook_inputs(self.current_file.get('inputs', [])))
+        answers.append(self.handle_playbook_inputs(self.current_file.get('inputs', [])))
         return all(answers)
 
     def handle_condition_task(self, task, task_id, task_name):

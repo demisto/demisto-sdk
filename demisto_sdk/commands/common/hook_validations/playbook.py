@@ -51,7 +51,7 @@ class PlaybookValidator(ContentEntityValidator):
             self.is_script_id_valid(id_set_file),
             self._is_id_uuid(),
             self._is_taskid_equals_id(),
-            # self._is_correct_value_references_interface(),
+            self._is_correct_value_references_interface(),
             self.verify_condition_tasks_has_else_path(),
             self.name_not_contain_the_type(),
             self.is_valid_with_indicators_input(),
@@ -581,7 +581,7 @@ class PlaybookValidator(ContentEntityValidator):
             ]
             answers.extend(tasks_check)
 
-        answers.append(self.handle_playbook_inputs(self.current_file.get('inputs', [])))
+        answers.extend(self.handle_playbook_inputs(self.current_file.get('inputs', [])))
         return all(answers)
 
     def handle_condition_task(self, task, task_id, task_name):
@@ -762,12 +762,14 @@ class PlaybookValidator(ContentEntityValidator):
         Returns: True if the references are correct
         """
         is_valid = True
-        for value in values.split(','):
+        split_values = values.split(',')
+        for value in split_values:
             if value.startswith('incident.') or value.startswith('inputs.'):
                 if not value_info.get('iscontext', ''):
-                    is_valid = False
                     error_message, error_code = Errors.incorrect_value_references(task_id, value, task_name, section_name)
-                    self.handle_error(error_message, error_code, file_path=self.file_path)
+                    if self.handle_error(error_message, error_code, file_path=self.file_path):
+                        self.is_valid = False
+                        is_valid = False
 
         return is_valid
 

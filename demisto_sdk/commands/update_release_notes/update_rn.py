@@ -170,7 +170,8 @@ class UpdateRN:
         """
         if self.existing_rn_version_path:
             existing_rn_abs_path = Path(self.existing_rn_version_path).absolute()
-            self.should_delete_existing_rn = str(existing_rn_abs_path) != rn_path
+            rn_path_abs_path = Path(rn_path).absolute()
+            self.should_delete_existing_rn = str(existing_rn_abs_path) != str(rn_path_abs_path)
             try:
                 return existing_rn_abs_path.read_text()
             except Exception as e:

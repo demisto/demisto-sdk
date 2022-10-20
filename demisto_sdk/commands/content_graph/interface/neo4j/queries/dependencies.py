@@ -17,28 +17,28 @@ MAX_DEPTH = 7
 logger = logging.getLogger('demisto-sdk')
 
 
-def get_all_level_packs_dependencies(tx: Transaction, marketplace: MarketplaceVersions) -> Result:
-    query = f"""
-        MATCH path = (shortestPath((p1:{ContentType.PACK})-[:{Relationship.DEPENDS_ON}*..7]->(p2:{ContentType.PACK})))
-        WHERE id(p1) <> id(p2)
-        AND all(n IN nodes(path) WHERE "{marketplace}" IN n.marketplaces)
-        RETURN p1.name as pack_id, p1.path as pack_path, collect(p2.name) AS dependencies
-    """
-    result = run_query(tx, query)
-    logger.info('Found dependencies.')
-    return result
+# def get_all_level_packs_dependencies(tx: Transaction, marketplace: MarketplaceVersions) -> Result:
+#     query = f"""
+#         MATCH path = (shortestPath((p1:{ContentType.PACK})-[:{Relationship.DEPENDS_ON}*..7]->(p2:{ContentType.PACK})))
+#         WHERE id(p1) <> id(p2)
+#         AND all(n IN nodes(path) WHERE "{marketplace}" IN n.marketplaces)
+#         RETURN p1.name as pack_id, p1.path as pack_path, collect(p2.name) AS dependencies
+#     """
+#     result = run_query(tx, query)
+#     logger.info('Found dependencies.')
+#     return result
 
 
-def get_first_level_dependencies(tx: Transaction, marketplace: MarketplaceVersions) -> Result:
-    query = f"""
-        MATCH (p1:{ContentType.PACK})-[r:{Relationship.DEPENDS_ON}]->(p2:{ContentType.PACK})
-        WHERE "{marketplace}" IN p1.marketplaces
-        WITH p1, collect({{dependency_id: p2.name, mandatory: r.mandatorily, display_name: p2.name}}) as dependencies
-        RETURN p1.name AS pack_id, dependencies
-    """
-    result = run_query(tx, query)
-    logger.info('Found first level dependencies.')
-    return result
+# def get_first_level_dependencies(tx: Transaction, marketplace: MarketplaceVersions) -> Result:
+#     query = f"""
+#         MATCH (p1:{ContentType.PACK})-[r:{Relationship.DEPENDS_ON}]->(p2:{ContentType.PACK})
+#         WHERE "{marketplace}" IN p1.marketplaces
+#         WITH p1, collect({{dependency_id: p2.name, mandatory: r.mandatorily, display_name: p2.name}}) as dependencies
+#         RETURN p1.name AS pack_id, dependencies
+#     """
+#     result = run_query(tx, query)
+#     logger.info('Found first level dependencies.')
+#     return result
 
 
 def create_pack_dependencies(tx: Transaction) -> None:

@@ -4,14 +4,10 @@ from typing import Any, Dict, List, Optional, Tuple
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType, Relationship
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.content_graph.objects.pack import Pack
 
 
 class ContentGraphInterface(ABC):
-
-    @abstractmethod
-    def is_graph_alive(self):
-        pass
+    _id_to_model: Dict[int, BaseContent] = {}
 
     @abstractmethod
     def create_indexes_and_constraints(self) -> None:
@@ -30,12 +26,6 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def get_packs(self,
-                  marketplace: MarketplaceVersions,
-                  **properties) -> List[Pack]:
-        pass
-
-    @abstractmethod
     def clean_graph(self):
         pass
 
@@ -46,23 +36,6 @@ class ContentGraphInterface(ABC):
         content_type: Optional[ContentType] = None,
         **properties,
     ) -> List[BaseContent]:
-        pass
-
-    @abstractmethod
-    def get_single_node(
-        self,
-        marketplace: MarketplaceVersions,
-        content_type: Optional[ContentType] = None,
-        **properties,
-    ) -> BaseContent:
-        pass
-
-    @abstractmethod
-    def get_all_level_dependencies(self, marketplace: MarketplaceVersions) -> Dict[str, Any]:
-        pass
-
-    @abstractmethod
-    def get_first_level_dependencies(self, marketplace: MarketplaceVersions) -> Dict[str, Dict[str, Any]]:
         pass
 
     @abstractmethod

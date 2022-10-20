@@ -16,12 +16,11 @@ from demisto_sdk.commands.content_graph.interface.graph import \
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import \
     create_constraints
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
-    create_pack_dependencies, get_all_level_packs_dependencies,
-    get_first_level_dependencies)
+    create_pack_dependencies)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import \
     create_indexes
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
-    create_nodes, delete_all_graph_nodes, duplicates_exist, get_packs,
+    create_nodes, delete_all_graph_nodes, duplicates_exist,
     search_nodes)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
     create_relationships, get_connected_nodes_by_relationship_type)
@@ -32,6 +31,7 @@ logger = logging.getLogger('demisto-sdk')
 
 
 class Neo4jContentGraphInterface(ContentGraphInterface):
+
     def __init__(
         self,
         start_service: bool = False,
@@ -59,9 +59,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def close(self) -> None:
         self.driver.close()
 
-    def is_graph_alive(self):
-        return neo4j_service.is_alive()
-
     def create_indexes_and_constraints(self) -> None:
         with self.driver.session() as session:
             session.write_transaction(create_indexes)
@@ -80,13 +77,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             session.write_transaction(create_relationships, relationships)
 
-    def get_packs(self,
-                  marketplace: MarketplaceVersions,
-                  **properties,
-                  ) -> List[Pack]:
-        with self.driver.session() as session:
-            return session.read_transaction(get_packs, marketplace, **properties)
-
     def clean_graph(self):
         with self.driver.session() as session:
             session.write_transaction(delete_all_graph_nodes)
@@ -100,15 +90,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             return session.read_transaction(search_nodes, marketplace, content_type, **properties)
 
-    def get_single_node(
-        self,
-        marketplace: MarketplaceVersions,
-        content_type: Optional[ContentType] = None,
-        **properties
-    ) -> BaseContent:
-        with self.driver.session() as session:
-            return session.read_transaction(search_nodes, marketplace, content_type, single_result=True, **properties)
-
     def create_pack_dependencies(self):
         with self.driver.session() as session:
             tx: Transaction = session.begin_transaction()
@@ -116,35 +97,35 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             tx.commit()
             tx.close()
 
-    def get_all_level_dependencies(self, marketplace: MarketplaceVersions) -> Dict[str, Any]:
-        with self.driver.session() as session:
-            tx: Transaction = session.begin_transaction()
-            result = get_all_level_packs_dependencies(tx, marketplace).data()
-            tx.commit()
-            tx.close()
-        return {
-            row['pack_id']: {
-                'allLevelDependencies': row['dependencies'],
-                'fullPath': row['pack_path'],
-                'path': Path(*Path(row['pack_path']).parts[-2:]).as_posix(),
-            } for row in result
-        }
+    # def get_all_level_dependencies(self, marketplace: MarketplaceVersions) -> Dict[str, Any]:
+    #     with self.driver.session() as session:
+    #         tx: Transaction = session.begin_transaction()
+    #         result = get_all_level_packs_dependencies(tx, marketplace).data()
+    #         tx.commit()
+    #         tx.close()
+    #     return {
+    #         row['pack_id']: {
+    #             'allLevelDependencies': row['dependencies'],
+    #             'fullPath': row['pack_path'],
+    #             'path': Path(*Path(row['pack_path']).parts[-2:]).as_posix(),
+    #         } for row in result
+    #     }
 
-    def get_first_level_dependencies(self, marketplace: MarketplaceVersions) -> Dict[str, Dict[str, Any]]:
-        with self.driver.session() as session:
-            tx: Transaction = session.begin_transaction()
-            result = get_first_level_dependencies(tx, marketplace).data()
-            tx.commit()
-            tx.close()
-        return {
-            row['pack_id']: {
-                dependency['dependency_id']: {
-                    'mandatory': dependency['mandatory'],
-                    'display_name': dependency['display_name'],
-                }
-                for dependency in row['dependencies']
-            } for row in result
-        }
+    # def get_first_level_dependencies(self, marketplace: MarketplaceVersions) -> Dict[str, Dict[str, Any]]:
+    #     with self.driver.session() as session:
+    #         tx: Transaction = session.begin_transaction()
+    #         result = get_first_level_dependencies(tx, marketplace).data()
+    #         tx.commit()
+    #         tx.close()
+    #     return {
+    #         row['pack_id']: {
+    #             dependency['dependency_id']: {
+    #                 'mandatory': dependency['mandatory'],
+    #                 'display_name': dependency['display_name'],
+    #             }
+    #             for dependency in row['dependencies']
+    #         } for row in result
+    #     }
 
     def get_connected_nodes_by_relationship_type(
         self,

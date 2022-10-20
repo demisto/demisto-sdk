@@ -40,6 +40,7 @@ class ContentModelMetaclass(ModelMetaclass):
 
 class BaseContent(ABC, BaseModel, metaclass=ContentModelMetaclass):
     object_id: str = Field(alias='id')
+    element_id: int = Field(None, exclude=True)  # This is the unique id from the database
     content_type: ContentType
     marketplaces: List[MarketplaceVersions]
     node_id: str
@@ -50,6 +51,14 @@ class BaseContent(ABC, BaseModel, metaclass=ContentModelMetaclass):
         allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
 
     def to_dict(self) -> Dict[str, Any]:
+        """
+        This returns a JSON dictionary representation of the class.
+        We use it instead of `self.dict()` because sometimes we need only the primitive values.
+
+        Returns:
+            Dict[str, Any]: _description_
+        """         
+        
         return json.loads(self.json())
 
     @abstractmethod

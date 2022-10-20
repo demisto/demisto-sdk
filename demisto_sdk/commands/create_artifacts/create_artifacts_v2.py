@@ -15,14 +15,14 @@ class ContentArtifactManager:
 
     def __init__(self,
                  marketplace: MarketplaceVersions,
-                 output: Path,
+                 artifacts_path: Path,
                  zip: bool,
                  dependencies: bool,
                  ) -> None:
         self.marketplace = marketplace
-        if not output:
-            output = REPO_PATH / 'artifacts'
-        self.output: Path = output
+        if not artifacts_path:
+            artifacts_path = REPO_PATH / 'artifacts'
+        self.output: Path = artifacts_path
         self.output.mkdir(parents=True, exist_ok=True)
         self.zip = zip
         self.dependencies = dependencies

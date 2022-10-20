@@ -21,7 +21,7 @@ PACK_CONTRIBUTORS_FILENAME = 'CONTRIBUTORS.json'
 UNIFIED_FILES_SUFFIXES = ['.yml', '.json']
 
 
-class Relationship(enum.Enum):
+class Relationship(str, enum.Enum):
     DEPENDS_ON = 'DEPENDS_ON'
     HAS_COMMAND = 'HAS_COMMAND'
     IMPORTS = 'IMPORTS'
@@ -32,10 +32,6 @@ class Relationship(enum.Enum):
     USES_BY_NAME = 'USES_BY_NAME'
     USES_COMMAND_OR_SCRIPT = 'USES_COMMAND_OR_SCRIPT'
     USES_PLAYBOOK = 'USES_PLAYBOOK'
-
-    def __str__(self):
-        return self.value
-
 
 class ContentType(str, enum.Enum):
     BASE_CONTENT = 'BaseContent'

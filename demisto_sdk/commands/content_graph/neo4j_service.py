@@ -71,8 +71,8 @@ def _wait_until_service_is_up():
         total=10,
         backoff_factor=0.1
     )
-    s.mount('http://localhost', HTTPAdapter(max_retries=retries))
-    s.get('http://localhost:7474')
+    s.mount(NEO4J_DATABASE_HTTP, HTTPAdapter(max_retries=retries))
+    s.get(NEO4J_DATABASE_HTTP)
 
 
 def _should_use_docker(use_docker: bool) -> bool:

@@ -3,6 +3,9 @@ from typing import List
 import pytest
 
 from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import \
+    Neo4jContentGraphInterface as ContentGraphInterface
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 
 
 class TestNeo4jQueries:
@@ -44,3 +47,13 @@ class TestNeo4jQueries:
             'object_id': 'rel_data.source_id',
             'content_type': 'rel_data.source_type',
         }) == '{object_id: rel_data.source_id, content_type: rel_data.source_type}'
+
+
+class TestNeo4jInterface:
+
+    def test_search_packs(self):
+        with ContentGraphInterface() as interface:
+            packs = interface.search_nodes(
+                marketplace='xsoar',
+                content_type=ContentType.PACK)
+            print(packs)

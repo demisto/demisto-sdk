@@ -1,3 +1,4 @@
+from collections import defaultdict
 import logging
 from typing import Any, Dict, List, Tuple
 
@@ -204,13 +205,8 @@ def get_connected_nodes_by_relationship_type(
     params_str = to_neo4j_map(properties)
     recursion_str = f'*{RECURSION_LEVEL}' if recursive else ''
     query = f"""
-    MATCH (c1:{content_type_from}{params_str})-[r:{relationship_type}{recursion_str}]->(c2:{content_type_to})
-    WHERE '{marketplace}' in c1.marketplaces AND '{marketplace}' in c2.marketplaces
-    RETURN c1 as content_item_from, r as rel_data, collect(c2) as content_items_to
+    MATCH (n:{content_type_from}{params_str}) - [r:{relationship_type}{recursion_str}] -> (k:{content_type_to})
+    WHERE '{marketplace}' IN n.marketplaces AND '{marketplace}' IN '{marketplace}'
+    RETURN id(n) as n_element_id, collect(r) as rel, collect(id(k)) as k_element_ids
     """
-    return [
-        (serialize_node(item.get('content_item_from')),
-         item.get('rel_data'),
-         [serialize_node(content_item) for content_item in item.get('content_items_to', [])])
-        for item in run_query(tx, query).data()]
-
+    data = run_query(tx, query).data()

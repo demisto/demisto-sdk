@@ -21,7 +21,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):
     is_fetch_events: bool = False
     is_feed: bool = False
     category: str
-    commands: List[Command] = Field([], exclude=True)  # todo: override exclusion when loading from database
+    commands: List[Command] = Field([], exclude=True)
 
     def included_in_metadata(self):
         return {'name': True,

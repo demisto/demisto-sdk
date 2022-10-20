@@ -4,8 +4,8 @@ import pathlib
 import shutil
 from collections import Counter
 from copy import deepcopy
-from typing import Dict, Optional
 from pathlib import Path
+from typing import Dict, Optional
 
 import mock
 import pytest

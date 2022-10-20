@@ -338,7 +338,7 @@ class Downloader:
                 api_response = demisto_client.generic_request_func(self.client, endpoint, req_type, body=req_body)
                 system_items_list = ast.literal_eval(api_response[0])
 
-            self.arrange_response(system_items_list)
+            system_items_list = self.arrange_response(system_items_list)
 
             for item in system_items_list:  # type: ignore
                 file_name: str = self.build_file_name(item)
@@ -357,7 +357,7 @@ class Downloader:
             self.handle_max_retry_error(e)
             return False
         except Exception as e:
-            print_color(f'Exception raised when fetching custom content:\n{e}', LOG_COLORS.NATIVE)
+            print_color(f'Exception raised when fetching system content:\n{e}', LOG_COLORS.NATIVE)
             return False
 
     def get_custom_content_objects(self) -> List[dict]:

@@ -59,8 +59,7 @@ from demisto_sdk.tests.constants_test import (
     INVALID_BETA_INTEGRATION, INVALID_DASHBOARD_PATH,
     INVALID_IGNORED_UNIFIED_INTEGRATION, INVALID_INCIDENT_FIELD_PATH,
     INVALID_INTEGRATION_ID_PATH, INVALID_INTEGRATION_NO_TESTS,
-    INVALID_INTEGRATION_NON_CONFIGURED_TESTS,
-    INVALID_INTEGRATION_SOME_CONFIGURED_TESTS, INVALID_LAYOUT_CONTAINER_PATH,
+    INVALID_INTEGRATION_NON_CONFIGURED_TESTS, INVALID_LAYOUT_CONTAINER_PATH,
     INVALID_LAYOUT_PATH, INVALID_MULTI_LINE_1_CHANGELOG_PATH,
     INVALID_MULTI_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_1_CHANGELOG_PATH,
     INVALID_ONE_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
@@ -613,16 +612,10 @@ class TestValidators:
         result = validate_manager.validate_no_duplicated_release_notes(added_files)
         assert result is expected
 
-    ARE_TEST_CONFIGURED_TEST_INPUT = [
-        (VALID_INTEGRATION_TEST_PATH, 'integration', True),
-        (INVALID_INTEGRATION_NO_TESTS, 'integration', False),
-        (INVALID_INTEGRATION_NON_CONFIGURED_TESTS, 'integration', False),
-        (INVALID_INTEGRATION_SOME_CONFIGURED_TESTS, 'integration', False),
+    @pytest.mark.parametrize('file_path, file_type, expected', [
         (TEST_PLAYBOOK, 'testplaybook', False)
-    ]
-
-    @pytest.mark.parametrize('file_path, file_type, expected', ARE_TEST_CONFIGURED_TEST_INPUT)
-    def test_are_tests_configured(self, file_path: str, file_type: str, expected: bool):
+    ])
+    def test_are_tests_configured_testplaybook(self, file_path: str, file_type: str, expected: bool):
         """
             Given
             - A content item
@@ -636,6 +629,46 @@ class TestValidators:
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type)
         validator = IntegrationValidator(structure_validator)
         assert validator.are_tests_configured() == expected
+
+    ARE_TEST_CONFIGURED_TEST_INPUT = [
+        pytest.param({'tests': ['PagerDuty Test']}, 'PagerDuty v2', True,
+                     id='well configured'),
+        pytest.param({}, 'PagerDuty v3', False,
+                     id='tests section missing from yml'),
+        pytest.param({'tests': ['Non configured test']}, 'PagerDuty v4', False,
+                     id='integration id is not in conf.json'),
+        pytest.param({'tests': ['PagerDuty Test', 'Non configured test']}, 'PagerDuty v2', False,
+                     id='only some of the tests are in conf.json'),
+        pytest.param({'tests': ['Non configured test']}, 'PagerDuty v2', False,
+                     id='yml tests mismatch conf.json tests')
+    ]
+
+    @pytest.mark.parametrize('configured_tests, integration_id, expected', ARE_TEST_CONFIGURED_TEST_INPUT)
+    def test_are_tests_configured_integration(self, repo, integration_id, configured_tests: str, expected: bool):
+        """
+            Given
+            - A content item
+
+            When
+            - Checking if the item has tests configured
+
+            Then
+            -  validator return the correct answer accordingly
+        """
+
+        with ChangeCWD(repo.path):
+            pack = repo.create_pack('Pack')
+            yml_dict = {'commonfields': {'id': integration_id}}
+            yml_dict.update(configured_tests)
+            integration = pack.create_integration(name=integration_id, yml=yml_dict)
+            repo.conf.write_json(tests=[{
+                "integrations": "PagerDuty v2",
+                "playbookID": "PagerDuty Test"
+            }])
+            integration_yml_path = os.path.join(integration.path, integration.name + '.yml')
+            structure_validator = StructureValidator(integration_yml_path, predefined_scheme='integration')
+            validator = IntegrationValidator(structure_validator)
+            assert validator.are_tests_configured() == expected
 
     def test_unified_files_ignored(self):
         """

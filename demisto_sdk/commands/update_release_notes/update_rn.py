@@ -694,7 +694,7 @@ class UpdateRN:
                         new_rn = ''.join(rn_parts) + new_rn_part
             else:
                 self.existing_rn_changed = True
-                if _header_by_type in new_rn:
+                if _header_by_type and _header_by_type in new_rn:
                     rn_parts = new_rn.split(_header_by_type)
                     new_rn_part = rn_desc
                     if len(rn_parts) > 1:

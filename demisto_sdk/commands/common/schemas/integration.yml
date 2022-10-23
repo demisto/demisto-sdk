@@ -118,6 +118,10 @@ mapping:
     type: bool
   hidden:
     type: bool
+  videos:
+    type: seq
+    sequence:
+      - type: str
   versionedfields:
     type: any
   defaultEnabled:

@@ -47,12 +47,13 @@ references:
       run:
         name: Install Neo4j
         command: |
-          sudo apt-get purge openjdk-\* icedtea-\* icedtea6-\*
           curl -fsSL https://debian.neo4j.com/neotechnology.gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/neo4j.gpg
           echo "deb [signed-by=/usr/share/keyrings/neo4j.gpg] https://debian.neo4j.com stable latest" | sudo tee -a /etc/apt/sources.list.d/neo4j.list
           sudo apt-get update
           sudo apt-get install openjdk-11-jre neo4j
-          update-java-alternatives --list 
+          update-java-alternatives --list
+          sudo update-java-alternatives --jre --set java-1.11.0-openjdk-amd64
+
           sudo chown -R circleci /var/log/neo4j
           sudo chown -R circleci /var/lib/neo4j
           neo4j-admin set-initial-password test

@@ -277,7 +277,11 @@ class ContentEntityValidator(BaseValidator):
 
         # Integration case
         elif file_type == 'integration':
-            is_configured_test = False
+            # Not stated no tests explicitly and has not tests in yml.
+            is_configured_test = any(
+                test_config for test_config in conf_json_tests if is_test_config_match(test_config,
+                                                                                       integration_id=content_item_id))
+
             unconfigured_test_playbook_ids = []
 
             if test_playbooks:

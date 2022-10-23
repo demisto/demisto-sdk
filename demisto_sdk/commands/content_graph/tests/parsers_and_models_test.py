@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.constants import (
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
     MarketplaceVersions)
 from demisto_sdk.commands.content_graph.common import (ContentType,
-                                                       Relationship,
+                                                       RelationshipType,
                                                        Relationships)
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
@@ -32,7 +32,7 @@ class RelationshipsVerifier:
     @staticmethod
     def verify_uses(
         relationships: Relationships,
-        relationship_type: Relationship,
+        relationship_type: RelationshipType,
         expected_targets: Dict[str, ContentType],
     ) -> None:
         targets = {
@@ -48,7 +48,7 @@ class RelationshipsVerifier:
     ) -> None:
         targets = {
             relationship.get('target')
-            for relationship in relationships.get(Relationship.USES_COMMAND_OR_SCRIPT, [])
+            for relationship in relationships.get(RelationshipType.USES_COMMAND_OR_SCRIPT, [])
         }
         expected_targets = {command for command in expected_commands}
         assert targets == expected_targets
@@ -60,7 +60,7 @@ class RelationshipsVerifier:
     ) -> None:
         targets = {
             relationship.get('target')
-            for relationship in relationships.get(Relationship.USES_PLAYBOOK, [])
+            for relationship in relationships.get(RelationshipType.USES_PLAYBOOK, [])
         }
         expected_targets = {playbook for playbook in expected_playbooks}
         assert targets == expected_targets
@@ -72,7 +72,7 @@ class RelationshipsVerifier:
     ) -> None:
         targets = {
             relationship.get('target')
-            for relationship in relationships.get(Relationship.HAS_COMMAND, [])
+            for relationship in relationships.get(RelationshipType.HAS_COMMAND, [])
         }
         expected_targets = set(expected_commands)
         assert targets == expected_targets
@@ -84,7 +84,7 @@ class RelationshipsVerifier:
     ) -> None:
         targets = {
             relationship.get('target')
-            for relationship in relationships.get(Relationship.TESTED_BY, [])
+            for relationship in relationships.get(RelationshipType.TESTED_BY, [])
         }
         expected_targets = set(expected_tests)
         assert targets == expected_targets
@@ -96,7 +96,7 @@ class RelationshipsVerifier:
     ) -> None:
         targets = {
             relationship.get('target')
-            for relationship in relationships.get(Relationship.IMPORTS, [])
+            for relationship in relationships.get(RelationshipType.IMPORTS, [])
         }
         expected_targets = set(expected_imports)
         assert targets == expected_targets
@@ -112,8 +112,8 @@ class RelationshipsVerifier:
         imports: List[str] = [],
         integration_commands: List[str] = [],
     ) -> None:
-        RelationshipsVerifier.verify_uses(relationships, Relationship.USES_BY_ID, dependency_ids)
-        RelationshipsVerifier.verify_uses(relationships, Relationship.USES_BY_NAME, dependency_names)
+        RelationshipsVerifier.verify_uses(relationships, RelationshipType.USES_BY_ID, dependency_ids)
+        RelationshipsVerifier.verify_uses(relationships, RelationshipType.USES_BY_NAME, dependency_names)
         RelationshipsVerifier.verify_tests(relationships, tests)
         RelationshipsVerifier.verify_imports(relationships, imports)
         RelationshipsVerifier.verify_command_executions(relationships, commands_or_scripts_executions)
@@ -215,7 +215,7 @@ class PackRelationshipsVerifier:
     ) -> None:
         content_items = {
             relationship.get('source_id'): relationship.get('source_type')
-            for relationship in relationships.get(Relationship.IN_PACK, [])
+            for relationship in relationships.get(RelationshipType.IN_PACK, [])
         }
         assert content_items == expected_content_items
 

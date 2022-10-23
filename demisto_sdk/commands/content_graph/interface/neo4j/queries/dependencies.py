@@ -3,7 +3,7 @@ from typing import Dict, Set
 
 from demisto_sdk.commands.common.constants import (REPUTATION_COMMAND_NAMES,
                                                    MarketplaceVersions)
-from demisto_sdk.commands.content_graph.common import ContentType, Relationship
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import \
     run_query
 from neo4j import Result, Transaction
@@ -54,7 +54,7 @@ def fix_marketplaces_properties(tx: Transaction) -> None:
 
 def inherit_content_items_marketplaces_property_from_packs(tx: Transaction) -> None:
     query = f"""
-        MATCH (content_item:{ContentType.BASE_CONTENT})-[:{Relationship.IN_PACK}]->(pack)
+        MATCH (content_item:{ContentType.BASE_CONTENT})-[:{RelationshipType.IN_PACK}]->(pack)
         WHERE content_item.marketplaces = []
         WITH content_item, pack
         SET content_item.marketplaces = pack.marketplaces
@@ -76,7 +76,7 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
     """
     query = f"""
         MATCH (content_item:{ContentType.BASE_CONTENT})
-                -[r:{Relationship.USES}*..{MAX_DEPTH}{{mandatorily: true}}]->
+                -[r:{RelationshipType.USES}*..{MAX_DEPTH}{{mandatorily: true}}]->
                     (dependency:{ContentType.BASE_CONTENT})
         WHERE
             "{marketplace}" IN content_item.marketplaces
@@ -102,8 +102,8 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
 
 def create_depends_on_relationships(tx: Transaction) -> None:
     query = f"""
-        MATCH (pack_a:{ContentType.BASE_CONTENT})<-[:{Relationship.IN_PACK}]-(a)
-            -[r:{Relationship.USES}]->(b)-[:{Relationship.IN_PACK}]->(pack_b:{ContentType.BASE_CONTENT})
+        MATCH (pack_a:{ContentType.BASE_CONTENT})<-[:{RelationshipType.IN_PACK}]-(a)
+            -[r:{RelationshipType.USES}]->(b)-[:{RelationshipType.IN_PACK}]->(pack_b:{ContentType.BASE_CONTENT})
         WHERE ANY(marketplace IN pack_a.marketplaces WHERE marketplace IN pack_b.marketplaces)
         AND id(pack_a) <> id(pack_b)
         AND NOT pack_a.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}

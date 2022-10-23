@@ -1,14 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import ContentType, Relationship
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 
 
 class ContentGraphInterface(ABC):
-    _id_to_model: Dict[int, BaseContent] = {}
-
     @abstractmethod
     def create_indexes_and_constraints(self) -> None:
         pass
@@ -18,7 +16,7 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def create_relationships(self, relationships: Dict[Relationship, List[Dict[str, Any]]]) -> None:
+    def create_relationships(self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]) -> None:
         pass
 
     @abstractmethod
@@ -30,28 +28,18 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def search_nodes(
+    def match(
         self,
         marketplace: MarketplaceVersions,
         content_type: Optional[ContentType] = None,
+        filter_list: Optional[Iterable[int]] = None,
+        is_nested: bool = False,
         **properties,
     ) -> List[BaseContent]:
         pass
 
     @abstractmethod
     def create_pack_dependencies(self):
-        pass
-
-    @abstractmethod
-    def get_connected_nodes_by_relationship_type(
-        self,
-        marketplace: MarketplaceVersions,
-        relationship_type: Relationship,
-        content_type_from: ContentType = ContentType.BASE_CONTENT,
-        content_type_to: ContentType = ContentType.BASE_CONTENT,
-        recursive: bool = False,
-        **properties,
-    ) -> List[Tuple[BaseContent, dict, List[BaseContent]]]:
         pass
 
     @abstractmethod

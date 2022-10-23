@@ -109,3 +109,6 @@ node_modules
 
 # VS Code Extensions
 .demisto-sdk-report
+
+# Certificates
+*.crt

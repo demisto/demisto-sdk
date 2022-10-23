@@ -1,33 +1,39 @@
 from collections import defaultdict
 import logging
-from typing import Any, Dict, List, Tuple
-
+from typing import Any, Dict, List, Optional, Tuple
+from itertools import chain
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import ContentType, Relationship
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
-    labels_of, node_map, run_query, serialize_node, to_neo4j_map)
+    labels_of,
+    node_map,
+    run_query,
+    to_neo4j_map,
+)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from neo4j import Transaction
 
-RECURSION_LEVEL = 7
+RECURSION_LEVEL = 4
 
 
 def build_source_properties() -> str:
-    return node_map({
-        'object_id': 'rel_data.source_id',
-        'content_type': 'rel_data.source_type',
-        'fromversion': 'rel_data.source_fromversion',
-        'marketplaces': 'rel_data.source_marketplaces',
-    })
+    return node_map(
+        {
+            "object_id": "rel_data.source_id",
+            "content_type": "rel_data.source_type",
+            "fromversion": "rel_data.source_fromversion",
+            "marketplaces": "rel_data.source_marketplaces",
+        }
+    )
 
 
 def build_target_properties(
-    identifier: str = 'object_id',
+    identifier: str = "object_id",
     with_content_type: bool = False,
 ) -> str:
-    properties = {identifier: 'rel_data.target'}
+    properties = {identifier: "rel_data.target"}
     if with_content_type:
-        properties['content_type'] = 'rel_data.target_type'
+        properties["content_type"] = "rel_data.target_type"
     return node_map(properties)
 
 
@@ -53,7 +59,7 @@ ON MATCH
     )
 
 // Create the relationship
-MERGE (integration)-[r:{Relationship.HAS_COMMAND}{{
+MERGE (integration)-[r:{RelationshipType.HAS_COMMAND}{{
     deprecated: rel_data.deprecated,
     description: rel_data.description
 }}]->(cmd)
@@ -64,7 +70,7 @@ RETURN count(r) AS relationships_merged
 
 def build_uses_relationships_query(
     target_type: ContentType = ContentType.BASE_CONTENT,
-    target_identifier: str = 'object_id',
+    target_identifier: str = "object_id",
     with_target_type: bool = True,
 ) -> str:
     return f"""
@@ -83,7 +89,7 @@ ON CREATE
     SET dependency.not_in_repository = true
 
 // Get or create the relationship and set its "mandatorily" field based on relationship data
-MERGE (content_item)-[r:{Relationship.USES}]->(dependency)
+MERGE (content_item)-[r:{RelationshipType.USES}]->(dependency)
 ON CREATE
     SET r.mandatorily = rel_data.mandatorily
 ON MATCH
@@ -102,7 +108,7 @@ MATCH (content_item:{ContentType.BASE_CONTENT}{build_source_properties()})
 MATCH (pack:{ContentType.PACK}{build_target_properties()})
 
 // Get/create the relationship
-MERGE (content_item)-[r:{Relationship.IN_PACK}]->(pack)
+MERGE (content_item)-[r:{RelationshipType.IN_PACK}]->(pack)
 RETURN count(r) AS relationships_merged
 """
 
@@ -122,12 +128,12 @@ ON CREATE
     SET tpb.not_in_repository = true
 
 // Get/create the relationship
-MERGE (content_item)-[r:{Relationship.TESTED_BY}]->(tpb)
+MERGE (content_item)-[r:{RelationshipType.TESTED_BY}]->(tpb)
 RETURN count(r) AS relationships_merged
 """
 
 
-def build_default_relationships_query(relationship: Relationship) -> str:
+def build_default_relationships_query(relationship: RelationshipType) -> str:
     return f"""
     UNWIND $data AS rel_data
     MATCH (source:{ContentType.BASE_CONTENT}{build_source_properties()})
@@ -139,16 +145,16 @@ def build_default_relationships_query(relationship: Relationship) -> str:
 """
 
 
-logger = logging.getLogger('demisto-sdk')
+logger = logging.getLogger("demisto-sdk")
 
 
 def create_relationships(
     tx: Transaction,
-    relationships: Dict[Relationship, List[Dict[str, Any]]],
+    relationships: Dict[RelationshipType, List[Dict[str, Any]]],
 ) -> None:
-    if relationships.get(Relationship.HAS_COMMAND):
-        data = relationships.pop(Relationship.HAS_COMMAND)
-        create_relationships_by_type(tx, Relationship.HAS_COMMAND, data)
+    if relationships.get(RelationshipType.HAS_COMMAND):
+        data = relationships.pop(RelationshipType.HAS_COMMAND)
+        create_relationships_by_type(tx, RelationshipType.HAS_COMMAND, data)
 
     for relationship, data in relationships.items():
         create_relationships_by_type(tx, relationship, data)
@@ -156,57 +162,72 @@ def create_relationships(
 
 def create_relationships_by_type(
     tx: Transaction,
-    relationship: Relationship,
+    relationship: RelationshipType,
     data: List[Dict[str, Any]],
 ) -> None:
-    if relationship == Relationship.HAS_COMMAND:
+    if relationship == RelationshipType.HAS_COMMAND:
         query = build_has_command_relationships_query()
-    elif relationship == Relationship.USES_BY_ID:
+    elif relationship == RelationshipType.USES_BY_ID:
         query = build_uses_relationships_query(
-            target_identifier='object_id',
+            target_identifier="object_id",
         )
-    elif relationship == Relationship.USES_BY_NAME:
+    elif relationship == RelationshipType.USES_BY_NAME:
         query = build_uses_relationships_query(
-            target_identifier='name',
+            target_identifier="name",
         )
-    elif relationship == Relationship.USES_COMMAND_OR_SCRIPT:
+    elif relationship == RelationshipType.USES_COMMAND_OR_SCRIPT:
         query = build_uses_relationships_query(
             target_type=ContentType.COMMAND_OR_SCRIPT,
-            target_identifier='object_id',
+            target_identifier="object_id",
             with_target_type=False,
         )
-    elif relationship == Relationship.USES_PLAYBOOK:
+    elif relationship == RelationshipType.USES_PLAYBOOK:
         query = build_uses_relationships_query(
             target_type=ContentType.PLAYBOOK,
-            target_identifier='name',
+            target_identifier="name",
             with_target_type=False,
         )
-    elif relationship == Relationship.IN_PACK:
+    elif relationship == RelationshipType.IN_PACK:
         query = build_in_pack_relationships_query()
-    elif relationship == Relationship.TESTED_BY:
+    elif relationship == RelationshipType.TESTED_BY:
         query = build_tested_by_relationships_query()
     else:
         query = build_default_relationships_query(relationship)
 
     result = run_query(tx, query, data=data).single()
-    merged_relationships_count: int = result['relationships_merged']
-    logger.info(f'Merged {merged_relationships_count} relationships of type {relationship}.')
-    
+    merged_relationships_count: int = result["relationships_merged"]
+    logger.info(f"Merged {merged_relationships_count} relationships of type {relationship}.")
+
 
 def get_connected_nodes_by_relationship_type(
     tx: Transaction,
     marketplace: MarketplaceVersions,
-    relationship_type: Relationship,
+    relationship_type: Optional[RelationshipType],
     content_type_from: ContentType,
     content_type_to: ContentType,
     recursive: bool,
     **properties,
-) -> List[Tuple[BaseContent, dict, List[BaseContent]]]:
+) -> List[Tuple[dict, List[dict], List[dict]]]:
     params_str = to_neo4j_map(properties)
-    recursion_str = f'*{RECURSION_LEVEL}' if recursive else ''
+    recursion_str = f"*..{RECURSION_LEVEL}" if recursive else ""
+    relationship_type = relationship_type or ""
     query = f"""
     MATCH (n:{content_type_from}{params_str}) - [r:{relationship_type}{recursion_str}] -> (k:{content_type_to})
-    WHERE '{marketplace}' IN n.marketplaces AND '{marketplace}' IN '{marketplace}'
-    RETURN id(n) as n_element_id, collect(r) as rel, collect(id(k)) as k_element_ids
+    WHERE '{marketplace}' IN n.marketplaces AND '{marketplace}' IN k.marketplaces
+    RETURN n as n, collect(r) as rels, collect(k) as ks
     """
-    data = run_query(tx, query).data()
+    if recursive:
+        result = []
+        for item in run_query(tx, query):
+            rels = item.get('rels')
+            if any(isinstance(el, list) for el in rels):
+                rels = list(chain.from_iterable(rels))
+            
+            ks = item.get('ks')
+            if any(isinstance(el, list) for el in ks):
+                ks = list(chain.from_iterable(ks))
+            
+            result.append((item.get('n'), rels, ks))
+        return result
+
+    return [(item.get("n"), item.get("rels"), item.get("ks")) for item in run_query(tx, query)]

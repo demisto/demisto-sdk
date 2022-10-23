@@ -23,11 +23,5 @@ class ContentGraphLoader:
         self.content_graph = content_graph
 
     def load(self) -> Repository:
-        packs: List[Pack] = self.content_graph.search_nodes(self.marketplace, content_type=ContentType.PACK)
-        id_to_obj: Dict[int, BaseContent] = {}
-        for pack in packs:
-            id_to_obj[pack.element_id] = pack
-            for content_item in pack.content_items:
-                id_to_obj[content_item.element_id] = content_item
-        self.content_graph._id_to_obj = id_to_obj
+        packs: List[Pack] = self.content_graph.match(self.marketplace, content_type=ContentType.PACK)
         return Repository(path=get_content_path(), packs=packs)

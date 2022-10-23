@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import ContentType, Relationship
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.parsers.integration_script import (
     IntegrationScriptParser, IntegrationScriptUnifier)
 
@@ -36,7 +36,7 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
         """
         for command_data in self.script_info.get('commands', []):
             self.add_relationship(
-                Relationship.HAS_COMMAND,
+                RelationshipType.HAS_COMMAND,
                 target=command_data.get('name'),
                 target_type=ContentType.COMMAND,
                 name=command_data.get('name'),
@@ -85,4 +85,4 @@ class IntegrationParser(IntegrationScriptParser, content_type=ContentType.INTEGR
             raise ValueError('Integration code is not available')
         api_modules = IntegrationScriptUnifier.check_api_module_imports(code).values()
         for api_module in api_modules:
-            self.add_relationship(Relationship.IMPORTS, api_module, ContentType.SCRIPT)
+            self.add_relationship(RelationshipType.IMPORTS, api_module, ContentType.SCRIPT)

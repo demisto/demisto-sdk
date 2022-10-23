@@ -6,15 +6,14 @@ import pytest
 import demisto_sdk.commands.content_graph.content_graph_commands as content_graph_commands
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import ContentType, Relationship
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.content_graph_commands import (
     create_content_graph, marshal_content_graph, stop_content_graph)
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import \
     Neo4jContentGraphInterface as ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.integration import (
     Command, Integration)
-from demisto_sdk.commands.content_graph.objects.pack import (Pack,
-                                                             PackContentItems)
+from demisto_sdk.commands.content_graph.objects.pack import Pack 
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.repository import Repository
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -69,7 +68,7 @@ def pack():
         categories=[],
         useCases=[],
         keywords=[],
-        contentItems=PackContentItems(),
+        contentItems=[],
     )
 
 
@@ -230,7 +229,7 @@ class TestCreateContentGraph:
             - Make sure the graph has all the corresponding nodes and relationships.
         """
         relationships = {
-            Relationship.IN_PACK: [
+            RelationshipType.IN_PACK: [
                 mock_relationship(
                     'SampleIntegration',
                     ContentType.INTEGRATION,
@@ -244,7 +243,7 @@ class TestCreateContentGraph:
                     ContentType.PACK,
                 ),
             ],
-            Relationship.HAS_COMMAND: [
+            RelationshipType.HAS_COMMAND: [
                 mock_relationship(
                     'SampleIntegration',
                     ContentType.INTEGRATION,
@@ -255,7 +254,7 @@ class TestCreateContentGraph:
                     deprecated=False,
                 )
             ],
-            Relationship.IMPORTS: [
+            RelationshipType.IMPORTS: [
                 mock_relationship(
                     'SampleIntegration',
                     ContentType.INTEGRATION,
@@ -263,7 +262,7 @@ class TestCreateContentGraph:
                     ContentType.SCRIPT,
                 )
             ],
-            Relationship.TESTED_BY: [
+            RelationshipType.TESTED_BY: [
                 mock_relationship(
                     'SampleIntegration',
                     ContentType.INTEGRATION,
@@ -271,7 +270,7 @@ class TestCreateContentGraph:
                     ContentType.TEST_PLAYBOOK,
                 )
             ],
-            Relationship.USES_BY_ID: [
+            RelationshipType.USES_BY_ID: [
                 mock_relationship(
                     'SampleIntegration',
                     ContentType.INTEGRATION,
@@ -279,7 +278,7 @@ class TestCreateContentGraph:
                     ContentType.CLASSIFIER,
                 ),
             ],
-            Relationship.USES_COMMAND_OR_SCRIPT: [
+            RelationshipType.USES_COMMAND_OR_SCRIPT: [
                 mock_relationship(
                     'SampleScript',
                     ContentType.SCRIPT,
@@ -296,16 +295,16 @@ class TestCreateContentGraph:
             create_content_graph(interface)
             result = interface.get_connected_nodes_by_relationship_type(
                 marketplace=MarketplaceVersions.XSOAR,
-                relationship_type=Relationship.IN_PACK,
+                relationship_type=RelationshipType.IN_PACK,
             )
             assert len(result) == 1
 
-            result = interface.get_relationships_by_type(Relationship.HAS_COMMAND)
+            result = interface.get_relationships_by_type(RelationshipType.HAS_COMMAND)
             for rel in result:
                 assert rel['source']['name'] == 'SampleIntegration'
                 assert rel['target']['name'] == 'test-command'
 
-            result = interface.get_relationships_by_type(Relationship.USES)
+            result = interface.get_relationships_by_type(RelationshipType.USES)
             for rel in result:
                 if rel['source']['name'] == 'SampleIntegration':
                     assert rel['target']['object_id'] == 'SampleClassifier'
@@ -314,12 +313,12 @@ class TestCreateContentGraph:
                 else:
                     assert False  # there is no else case
 
-            result = interface.get_relationships_by_type(Relationship.TESTED_BY)
+            result = interface.get_relationships_by_type(RelationshipType.TESTED_BY)
             for rel in result:
                 assert rel['source']['name'] == 'SampleIntegration'
                 assert rel['target']['object_id'] == 'SampleTestPlaybook'
 
-            result = interface.get_relationships_by_type(Relationship.IMPORTS)
+            result = interface.get_relationships_by_type(RelationshipType.IMPORTS)
             for rel in result:
                 assert rel['source']['name'] == 'SampleIntegration'
                 assert rel['target']['object_id'] == 'TestApiModule'
@@ -344,7 +343,7 @@ class TestCreateContentGraph:
         integration2.node_id = f'{ContentType.INTEGRATION}:{integration2.object_id}'
 
         relationships = {
-            Relationship.IN_PACK: [
+            RelationshipType.IN_PACK: [
                 mock_relationship(
                     'SampleIntegration',
                     ContentType.INTEGRATION,
@@ -358,7 +357,7 @@ class TestCreateContentGraph:
                     ContentType.PACK,
                 ),
             ],
-            Relationship.HAS_COMMAND: [
+            RelationshipType.HAS_COMMAND: [
                 mock_relationship(
                     'SampleIntegration',
                     ContentType.INTEGRATION,
@@ -385,8 +384,8 @@ class TestCreateContentGraph:
         repository.packs.append(pack)
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
-            assert interface.search_nodes(object_id='SampleIntegration')
-            assert interface.search_nodes(object_id='SampleIntegration2')
+            assert interface.match(object_id='SampleIntegration')
+            assert interface.match(object_id='SampleIntegration2')
             assert len(interface.get_nodes_by_type(ContentType.COMMAND)) == 1
 
     def test_create_content_graph_playbook_uses_script_not_in_repository(
@@ -405,7 +404,7 @@ class TestCreateContentGraph:
             - Make sure the script has the boolean property "not_in_repository".
         """
         relationships = {
-            Relationship.IN_PACK: [
+            RelationshipType.IN_PACK: [
                 mock_relationship(
                     'SamplePlaybook',
                     ContentType.PLAYBOOK,
@@ -413,7 +412,7 @@ class TestCreateContentGraph:
                     ContentType.PACK,
                 ),
             ],
-            Relationship.USES_BY_ID: [
+            RelationshipType.USES_BY_ID: [
                 mock_relationship(
                     'SamplePlaybook',
                     ContentType.PLAYBOOK,
@@ -447,7 +446,7 @@ class TestCreateContentGraph:
         """
         integration2 = integration.copy()
         relationships = {
-            Relationship.IN_PACK: [
+            RelationshipType.IN_PACK: [
                 mock_relationship(
                     'SampleIntegration',
                     ContentType.INTEGRATION,
@@ -461,7 +460,7 @@ class TestCreateContentGraph:
                     ContentType.PACK,
                 ),
             ],
-            Relationship.HAS_COMMAND: [
+            RelationshipType.HAS_COMMAND: [
                 mock_relationship(
                     'SampleIntegration',
                     ContentType.INTEGRATION,
@@ -509,7 +508,7 @@ class TestCreateContentGraph:
         integration2 = integration.copy()
         integration2.marketplaces = [MarketplaceVersions.MarketplaceV2]
         relationships = {
-            Relationship.IN_PACK: [
+            RelationshipType.IN_PACK: [
                 mock_relationship(
                     'SampleIntegration',
                     ContentType.INTEGRATION,
@@ -524,7 +523,7 @@ class TestCreateContentGraph:
                     source_marketplaces=[MarketplaceVersions.MarketplaceV2]
                 ),
             ],
-            Relationship.HAS_COMMAND: [
+            RelationshipType.HAS_COMMAND: [
                 mock_relationship(
                     'SampleIntegration',
                     ContentType.INTEGRATION,
@@ -552,7 +551,7 @@ class TestCreateContentGraph:
         repository.packs.append(pack)
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
-            assert len(interface.search_nodes(object_id='SampleIntegration')) == 2
+            assert len(interface.match(object_id='SampleIntegration')) == 2
 
     def test_create_content_graph_duplicate_integrations_different_fromversion(
         self,
@@ -573,7 +572,7 @@ class TestCreateContentGraph:
         integration.toversion = '6.0.0'
         integration2.fromversion = '6.0.2'
         relationships = {
-            Relationship.IN_PACK: [
+            RelationshipType.IN_PACK: [
                 mock_relationship(
                     'SampleIntegration',
                     ContentType.INTEGRATION,
@@ -588,7 +587,7 @@ class TestCreateContentGraph:
                     source_fromversion='6.0.2'
                 ),
             ],
-            Relationship.HAS_COMMAND: [
+            RelationshipType.HAS_COMMAND: [
                 mock_relationship(
                     'SampleIntegration',
                     ContentType.INTEGRATION,
@@ -616,7 +615,7 @@ class TestCreateContentGraph:
         repository.packs.append(pack)
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
-            assert len(interface.search_nodes(object_id='SampleIntegration')) == 2
+            assert len(interface.match(object_id='SampleIntegration')) == 2
 
     def test_create_content_graph_empty_repository(
         self,
@@ -633,7 +632,7 @@ class TestCreateContentGraph:
         """
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
-            result = interface.search_nodes()
+            result = interface.match()
             assert len(result) > 0
             assert all(entry['node']['is_server_item'] is True for entry in result)
 

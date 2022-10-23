@@ -21,7 +21,7 @@ PACK_CONTRIBUTORS_FILENAME = 'CONTRIBUTORS.json'
 UNIFIED_FILES_SUFFIXES = ['.yml', '.json']
 
 
-class Relationship(str, enum.Enum):
+class RelationshipType(str, enum.Enum):
     DEPENDS_ON = 'DEPENDS_ON'
     HAS_COMMAND = 'HAS_COMMAND'
     IMPORTS = 'IMPORTS'
@@ -32,6 +32,7 @@ class Relationship(str, enum.Enum):
     USES_BY_NAME = 'USES_BY_NAME'
     USES_COMMAND_OR_SCRIPT = 'USES_COMMAND_OR_SCRIPT'
     USES_PLAYBOOK = 'USES_PLAYBOOK'
+
 
 class ContentType(str, enum.Enum):
     BASE_CONTENT = 'BaseContent'
@@ -97,7 +98,7 @@ class ContentType(str, enum.Enum):
         return self.lower()
 
     @staticmethod
-    def prefixes() -> List[str]:
+    def server_names() -> List[str]:
         return [c.server_name for c in ContentType] + ['indicatorfield']
 
     @classmethod
@@ -142,19 +143,19 @@ class ContentType(str, enum.Enum):
 
 
 class Relationships(dict):
-    def add(self, relationship: Relationship, **kwargs):
+    def add(self, relationship: RelationshipType, **kwargs):
         if relationship not in self.keys():
             self.__setitem__(relationship, [])
         self.__getitem__(relationship).append(kwargs)
 
-    def add_batch(self, relationship: Relationship, data: List[Dict[str, Any]]):
+    def add_batch(self, relationship: RelationshipType, data: List[Dict[str, Any]]):
         if relationship not in self.keys():
             self.__setitem__(relationship, [])
         self.__getitem__(relationship).extend(data)
 
     def update(self, other: 'Relationships') -> None:  # type: ignore
         for relationship, parsed_data in other.items():
-            if relationship not in Relationship or not isinstance(parsed_data, list):
+            if relationship not in RelationshipType or not isinstance(parsed_data, list):
                 raise TypeError
             self.add_batch(relationship, parsed_data)
 

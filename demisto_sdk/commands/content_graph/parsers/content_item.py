@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.constants import (MARKETPLACE_MIN_VERSION,
                                                    MarketplaceVersions)
 from demisto_sdk.commands.content_graph.common import (UNIFIED_FILES_SUFFIXES,
                                                        ContentType,
-                                                       Relationship,
+                                                       RelationshipType,
                                                        Relationships)
 from demisto_sdk.commands.content_graph.parsers.base_content import \
     BaseContentParser
@@ -185,7 +185,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
 
     def add_relationship(
         self,
-        relationship: Relationship,
+        relationship: RelationshipType,
         target: str,
         target_type: ContentType,
         **kwargs,
@@ -216,7 +216,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         """
         if not pack_id:
             raise ValueError(f'{self.node_id}: pack ID must have a value.')
-        self.add_relationship(Relationship.IN_PACK, pack_id, ContentType.PACK)
+        self.add_relationship(RelationshipType.IN_PACK, pack_id, ContentType.PACK)
 
     def add_dependency_by_id(
         self,
@@ -232,7 +232,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             is_mandatory (bool, optional): Whether or not the dependency is mandatory. Defaults to True.
         """
         self.add_relationship(
-            Relationship.USES_BY_ID,
+            RelationshipType.USES_BY_ID,
             target=dependency_id,
             target_type=dependency_type,
             mandatorily=is_mandatory,
@@ -252,7 +252,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             is_mandatory (bool, optional): Whether or not the dependency is mandatory. Defaults to True.
         """
         self.add_relationship(
-            Relationship.USES_BY_NAME,
+            RelationshipType.USES_BY_NAME,
             target=dependency_name,
             target_type=dependency_type,
             mandatorily=is_mandatory,
@@ -270,7 +270,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             is_mandatory (bool, optional): Whether or not the dependency is mandatory. Defaults to True.
         """
         self.add_relationship(
-            Relationship.USES_COMMAND_OR_SCRIPT,
+            RelationshipType.USES_COMMAND_OR_SCRIPT,
             target=dependency_id,
             target_type=ContentType.COMMAND_OR_SCRIPT,
             mandatorily=is_mandatory,

@@ -1,6 +1,6 @@
 from typing import List
 
-from demisto_sdk.commands.content_graph.common import ContentType, Relationship
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import \
     run_query
 from neo4j import Transaction
@@ -23,8 +23,8 @@ def create_indexes(tx: Transaction) -> None:
         if content_type != ContentType.COMMAND:
             for index_option in NODE_INDEX_OPTIONS:
                 create_single_node_index(tx, content_type, index_option)
-    create_single_relationship_index(tx, Relationship.USES, ['mandatorily'])
-    create_single_relationship_index(tx, Relationship.HAS_COMMAND, ['deprecated', 'description'])
+    create_single_relationship_index(tx, RelationshipType.USES, ['mandatorily'])
+    create_single_relationship_index(tx, RelationshipType.HAS_COMMAND, ['deprecated', 'description'])
 
 
 def create_single_node_index(
@@ -39,7 +39,7 @@ def create_single_node_index(
 
 def create_single_relationship_index(
     tx: Transaction,
-    rel: Relationship,
+    rel: RelationshipType,
     indexed_properties: List[str],
 ) -> None:
     properties = ', '.join([f'r.{p}' for p in indexed_properties])

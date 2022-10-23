@@ -277,9 +277,17 @@ class ContentEntityValidator(BaseValidator):
 
         # Integration case
         elif file_type == 'integration':
-            is_configured_test = any(
-                test_config for test_config in conf_json_tests if is_test_config_match(test_config,
-                                                                                       integration_id=content_item_id))
+            is_configured_test = False
+
+            if test_playbooks:
+                configured_tests = []
+                for test_playbook in test_playbooks:
+                    configured_tests.append(
+                        any(test_config for test_config in conf_json_tests if
+                            is_test_config_match(test_config, test_playbook_id=test_playbook,
+                                                 integration_id=content_item_id)))
+                is_configured_test = all(configured_tests)
+
             if not is_configured_test:
                 missing_test_playbook_configurations = json.dumps(
                     {'integrations': content_item_id, 'playbookID': '<TestPlaybook ID>'},

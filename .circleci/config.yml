@@ -118,6 +118,10 @@ jobs:
             cache-version: << pipeline.parameters.cache-version >>
         - <<: *install_node_ci
         - run:
+            name: Run Pytest collection
+            command: |
+              poetry run pytest --collect-only .
+        - run:
             name: pytest
             no_output_timeout: 15m
             command: |

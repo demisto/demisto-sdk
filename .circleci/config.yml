@@ -53,8 +53,7 @@ references:
           sudo apt-get install openjdk-11-jre neo4j
           sudo chown -R circleci /var/log/neo4j
           sudo chown -R circleci /var/lib/neo4j
-          neo4j-admin --expand-commands
-          neo4j-admin set-initial-password neo4j
+          neo4j-admin server set-initial-password neo4j
 
     install_node_ci: &install_node_ci
       - node/install-packages:

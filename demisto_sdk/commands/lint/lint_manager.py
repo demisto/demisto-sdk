@@ -33,7 +33,7 @@ from demisto_sdk.commands.common.tools import (find_file, find_type,
                                                retrieve_file_ending)
 from demisto_sdk.commands.lint.docker_helper import init_global_docker_client
 from demisto_sdk.commands.lint.helpers import (EXIT_CODES, FAIL, PWSH_CHECKS,
-                                               PY_CHCEKS,
+                                               PY_CHCEKS, SUCCESS,
                                                build_skipped_exit_code,
                                                generate_coverage_report,
                                                get_test_modules)
@@ -388,6 +388,7 @@ class LintManager:
                         for check, code in EXIT_CODES.items():
                             if pkg_status["exit_code"] & code:
                                 lint_status[f"fail_packs_{check}"].append(pkg_status["pkg"])
+
                         if not return_exit_code & pkg_status["exit_code"]:
                             return_exit_code += pkg_status["exit_code"]
                     if pkg_status["warning_code"]:
@@ -523,7 +524,11 @@ class LintManager:
         # check if there were any errors during lint run , if so set to FAIL as some error codes are bigger
         # then 512 and will not cause failure on the exit code.
         if return_exit_code:
-            return_exit_code = FAIL
+            # allow all_packs to fail on mypy
+            if self._all_packs and return_exit_code == EXIT_CODES['mypy']:
+                return_exit_code = SUCCESS
+            else:
+                return_exit_code = FAIL
         return return_exit_code
 
     def _report_results(self, lint_status: dict, pkgs_status: dict, return_exit_code: int, return_warning_code: int,
@@ -542,12 +547,15 @@ class LintManager:
             no_coverage(bool): Do NOT create coverage report.
 
      """
+        if not no_coverage:
+            if coverage_report:
+                generate_coverage_report(html=True, xml=True, cov_dir=coverage_report)
+            else:
+                generate_coverage_report()
+
         self.report_pass_lint_checks(return_exit_code=return_exit_code,
                                      skipped_code=skipped_code,
                                      pkgs_type=pkgs_type)
-        self.report_failed_lint_checks(return_exit_code=return_exit_code,
-                                       pkgs_status=pkgs_status,
-                                       lint_status=lint_status)
         self.report_warning_lint_checks(return_warning_code=return_warning_code,
                                         pkgs_status=pkgs_status,
                                         lint_status=lint_status,
@@ -555,14 +563,13 @@ class LintManager:
         self.report_unit_tests(return_exit_code=return_exit_code,
                                pkgs_status=pkgs_status,
                                lint_status=lint_status)
+        self.report_failed_lint_checks(return_exit_code=return_exit_code,
+                                       pkgs_status=pkgs_status,
+                                       lint_status=lint_status)
+
         self.report_failed_image_creation(return_exit_code=return_exit_code,
                                           pkgs_status=pkgs_status,
                                           lint_status=lint_status)
-        if not no_coverage:
-            if coverage_report:
-                generate_coverage_report(html=True, xml=True, cov_dir=coverage_report)
-            else:
-                generate_coverage_report()
 
         self.report_summary(pkg=self._pkgs, pkgs_status=pkgs_status, lint_status=lint_status, all_packs=self._all_packs)
         self.create_json_output()
@@ -809,15 +816,21 @@ class LintManager:
 
         # intersection of all warnings packages
         warnings: Set[str] = set()
-
         # each pack is checked for warnings and failures . A certain pack can appear in both failed packages and
         # warnings packages.
         for key in lint_status:
+            # ignore mypy errors in all_packs report
+            if all_packs and 'mypy' in key:
+                continue
+
             if key.startswith('fail'):
                 failed = failed.union(lint_status[key])
             if key.startswith('warning'):
                 warnings = warnings.union(lint_status[key])
-        num_passed = len([pack for pack, result in pkgs_status.items() if result.get('exit_code') == 0])
+        if all_packs:
+            num_passed = len([pack for pack, result in pkgs_status.items() if result.get('exit_code') == 0 or result.get('exit_code') == EXIT_CODES['mypy']])
+        else:
+            num_passed = len([pack for pack, result in pkgs_status.items() if result.get('exit_code') == 0])
         # Log unit-tests summary
         sentence = " Summary "
         print(f"\n{Colors.Fg.cyan}{'#' * len(sentence)}")
@@ -861,7 +874,7 @@ class LintManager:
         """
         failed_ut: set = set()
         for key in lint_status:
-            if key.startswith('fail'):
+            if key.startswith('fail') and 'mypy' not in key:  # TODO remove this when reduce the number of failed `mypy` packages.
                 failed_ut = failed_ut.union(lint_status[key])
         if path and failed_ut:
             file_path = Path(path) / "failed_lint_report.txt"

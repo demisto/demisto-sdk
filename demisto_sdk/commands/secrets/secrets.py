@@ -468,8 +468,8 @@ class SecretsValidator(object):
     def remove_false_positives(line):
         false_positive = re.search(r'([^\s]*[(\[{].*[)\]}][^\s]*)', line)
         if false_positive:
-            false_positive = false_positive.group(1)
-            line = line.replace(false_positive, '')
+            false_positive_result = false_positive.group(1)
+            line = line.replace(false_positive_result, '')
         return line
 
     @staticmethod

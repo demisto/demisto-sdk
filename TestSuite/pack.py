@@ -579,7 +579,7 @@ class Pack:
             yml = {
                 'id': 'parsing-rule',
                 'name': 'Parsing Rule',
-                'fromversion': 3.3,
+                'fromversion': '6.8.0',
                 'tags': 'tag',
                 'rules': '',
                 'samples': '',
@@ -613,7 +613,7 @@ class Pack:
             yml = {
                 'id': 'modeling-rule',
                 'name': 'Modeling Rule',
-                'fromversion': 3.3,
+                'fromversion': '6.8.0',
                 'tags': 'tag',
                 'rules': '',
                 'schema': '',

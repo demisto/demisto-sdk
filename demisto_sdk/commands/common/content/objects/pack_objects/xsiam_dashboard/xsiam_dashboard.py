@@ -26,7 +26,7 @@ class XSIAMDashboard(JSONContentObject):
             Image path or None if image not found.
         """
         if not self._image_file:
-            image_file = next(self._path.parent.glob(patterns=fr"{re.escape(self.path.stem)}.png"), None)
+            image_file = next(self._path.parent.glob(patterns=fr"{re.escape(self.path.stem)}_image.png"), None)
             if image_file:
                 self._image_file = XSIAMDashboardImage(image_file)
 

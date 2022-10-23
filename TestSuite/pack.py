@@ -1,13 +1,15 @@
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from demisto_sdk.commands.common.constants import (CORRELATION_RULES_DIR,
+from demisto_sdk.commands.common.constants import (AGENT_CONFIG_DIR,
+                                                   CORRELATION_RULES_DIR,
                                                    DEFAULT_IMAGE_BASE64,
                                                    MODELING_RULES_DIR,
                                                    PARSING_RULES_DIR,
                                                    TRIGGER_DIR,
                                                    XSIAM_DASHBOARDS_DIR,
                                                    XSIAM_REPORTS_DIR)
+from TestSuite.agent_config import AgentConfig
 from TestSuite.correlation_rule import CorrelationRule
 from TestSuite.file import File
 from TestSuite.integration import Integration
@@ -79,6 +81,7 @@ class Pack:
         self.xsiam_reports: List[JSONBased] = list()
         self.triggers: List[JSONBased] = list()
         self.wizards: List[Wizard] = list()
+        self.agent_configs: List[AgentConfig] = list()
 
         # Create base pack
         self._pack_path = packs_dir / self.name
@@ -165,6 +168,9 @@ class Pack:
 
         self._triggers_path = self._pack_path / TRIGGER_DIR
         self._triggers_path.mkdir()
+
+        self._agent_configs_path = self._pack_path / AGENT_CONFIG_DIR
+        self._agent_configs_path.mkdir()
 
         self.secrets = Secrets(self._pack_path)
 
@@ -631,22 +637,27 @@ class Pack:
         self.modeling_rules.append(rule)
         return rule
 
-    def create_correlation_rule(self, name, content: dict = {}) -> CorrelationRule:
+    def create_correlation_rule(self, name, content: dict = None) -> CorrelationRule:
         correlation_rule = CorrelationRule(name, self._correlation_rules_path, self.repo_path, content)
         self.correlation_rules.append(correlation_rule)
         return correlation_rule
 
-    def create_xsiam_dashboard(self, name, content: dict = {}) -> XSIAMDashboard:
+    def create_xsiam_dashboard(self, name, content: dict = None) -> XSIAMDashboard:
         xsiam_dashboard = XSIAMDashboard(name, self._xsiam_dashboards_path, content)
         self.xsiam_dashboards.append(xsiam_dashboard)
         return xsiam_dashboard
 
-    def create_xsiam_report(self, name, content: dict = {}) -> XSIAMReport:
+    def create_xsiam_report(self, name, content: dict = None) -> XSIAMReport:
         xsiam_report = XSIAMReport(name, self._xsiam_reports_path, content)
         self.xsiam_reports.append(xsiam_report)
         return xsiam_report
 
-    def create_trigger(self, name, content: dict = {}) -> Trigger:
+    def create_trigger(self, name, content: dict = None) -> Trigger:
         trigger = Trigger(name, self._triggers_path, content)
         self.triggers.append(trigger)
         return trigger
+
+    def create_agent_config(self, name, json_content: dict = None, yaml_content: dict = None) -> AgentConfig:
+        agent_config = AgentConfig(name, self._agent_configs_path, json_content, yaml_content)
+        self.agent_configs.append(agent_config)
+        return agent_config

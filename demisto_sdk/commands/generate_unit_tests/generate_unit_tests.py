@@ -91,10 +91,13 @@ class UnitTestsGenerator:
         """
         Parses command_examples into dictionary of command name and arguments.
         """
+        display_commands = []
         for command in self.command_examples:
             command_line = command.split(' ')
             command_name = self.command_name_transformer(command_line[0])
+            command_name_without_vendor = command_name.split('_', 1)[1]
             command_dict = {}
+            display_commands.append(command_name)
             for arg in command_line[1:]:
                 key = arg.split('=')[0]
                 value = arg.split('=')[1]
@@ -102,10 +105,14 @@ class UnitTestsGenerator:
                 command_dict.update({key: value})
             if command_name in self.commands_to_generate:
                 self.commands_to_generate.get(command_name).append(command_dict)
+            elif command_name_without_vendor in self.commands_to_generate:
+                self.commands_to_generate.get(command_name_without_vendor).append(command_dict)
             else:
                 self.commands_to_generate.update({command_name: [command_dict]})
+                self.commands_to_generate.update({command_name_without_vendor: [command_dict]})
+
         click.echo('Unit tests will be generated for the following commands:')
-        click.echo('\n'.join(self.commands_to_generate.keys()))
+        click.echo('\n'.join(display_commands))
 
     def run_commands(self):
         """

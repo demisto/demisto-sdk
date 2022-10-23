@@ -20,4 +20,4 @@ class DashboardParser(JSONContentItemParser, content_type=ContentType.DASHBOARD)
             widget_data = layout.get('widget')
             if widget_data.get('dataType') == 'scripts':
                 if script_name := widget_data.get('query'):
-                    self.add_dependency(script_name, ContentType.SCRIPT, is_mandatory=False)
+                    self.add_dependency_by_id(script_name, ContentType.SCRIPT, is_mandatory=False)

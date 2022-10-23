@@ -47,13 +47,11 @@ references:
       run:
         name: Install Neo4j
         command: |
-          echo "deb http://httpredir.debian.org/debian stretch-backports main" | sudo tee -a /etc/apt/sources.list.d/stretch-backports.list
-
-          wget -O - https://debian.neo4j.com/neotechnology.gpg.key | sudo apt-key add -
+          curl -fsSL https://debian.neo4j.com/neotechnology.gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/neo4j.gpg
           echo "deb [signed-by=/usr/share/keyrings/neo4j.gpg] https://debian.neo4j.com stable latest" | sudo tee -a /etc/apt/sources.list.d/neo4j.list
           sudo apt-get update
           apt list -a neo4j
-          sudo apt-get install openjdk-11-jre neo4j
+          sudo apt-get install neo4j
           sudo chown -R circleci /var/log/neo4j
           sudo chown -R circleci /var/lib/neo4j
           neo4j-admin set-initial-password test

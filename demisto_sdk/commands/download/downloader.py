@@ -3,6 +3,7 @@ import io
 import logging
 import os
 import re
+import sys
 import shutil
 import tarfile
 from tempfile import mkdtemp
@@ -247,32 +248,51 @@ class Downloader:
         Fetches the custom content from Demisto into a temporary dir.
         :return: True if fetched successfully, False otherwise
         """
+        print(f'tarfile encoding is {tarfile.ENCODING}')
+
         try:
             verify = (not self.insecure) if self.insecure else None  # set to None so demisto_client will use env var DEMISTO_VERIFY_SSL
             self.client = demisto_client.configure(verify_ssl=verify)
+            print('1) making api call to /content/bundle')
             api_response: tuple = demisto_client.generic_request_func(self.client, '/content/bundle', 'GET')
+            print(f'{api_response=}')
             body: bytes = ast.literal_eval(api_response[0])
+            print('2) converted to bytes')
             io_bytes = io.BytesIO(body)
+            print('3) converted to io.BytesIO')
+
             # Demisto's custom content file is of type tar.gz
             tar = tarfile.open(fileobj=io_bytes, mode='r')
-
+            print('4) opened tar file')
             for member in tar.getmembers():
                 file_name: str = self.update_file_prefix(member.name.strip('/'))
+                print(f'5) updated file prefix to {file_name}')
                 file_path: str = os.path.join(self.custom_content_temp_dir, file_name)
+                print(f'6) {file_path=}')
 
                 extracted_file = tar.extractfile(member)
                 # File might empty
                 if extracted_file:
+                    print("7) reading from binary")
                     string_to_write = extracted_file.read().decode('utf-8')
 
                     if not self.list_files and re.search(r'playbook-.*\.yml', member.name):
                         # if the content item is playbook and list-file flag is true, we should download the file via direct REST API
                         # because there are props like scriptName, that playbook from custom content bundle don't contain
-
+                        print('7a) downloading playbook')
                         string_to_write = self.download_playbook_yaml(string_to_write)
 
-                    with open(file_path, 'w') as file:
-                        file.write(string_to_write)
+                    try:
+                        print('7b) trying to write with default encoding')
+                        with open(file_path, 'w') as file:
+                            file.write(string_to_write)
+                            print('8) success\n')
+
+                    except Exception as e:
+                        print(f'encountered exception {type(e)}: {e}')
+                        print('trying to write with encoding=utf8')
+                        with open(file_path, 'w', encoding='utf8') as file:
+                            file.write(string_to_write)
                 else:
                     raise FileNotFoundError(f'Could not extract files from tar file: {file_path}')
 

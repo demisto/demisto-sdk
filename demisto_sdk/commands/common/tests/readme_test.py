@@ -135,6 +135,13 @@ def test_are_modules_installed_for_verify_false_res(tmp_path):
     assert not ReadMeValidator.are_modules_installed_for_verify(tmp_path)
 
 
+def test_air_gapped_env(tmp_path):
+    r = str(tmp_path / "README.md")
+    with open(r, 'w') as f:
+        f.write('Test readme')
+    ReadMeValidator.is_valid_file()
+
+
 def test_relative_url_not_valid():
     """
     Given

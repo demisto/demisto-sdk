@@ -194,9 +194,7 @@ class ReadMeValidator(BaseValidator):
 
     def is_mdx_file(self) -> bool:
         html = self.is_html_doc()
-        valid = os.environ.get('DEMISTO_README_VALIDATION') or os.environ.get(
-            'CI') or ReadMeValidator.are_modules_installed_for_verify(self.content_path) or \
-            ReadMeValidator.is_docker_available()
+        valid = self.should_run_mdx_validation()
         if valid and not html:
             # add to env var the directory of node modules
             os.environ['NODE_PATH'] = str(self.node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
@@ -205,6 +203,11 @@ class ReadMeValidator(BaseValidator):
             else:
                 return self.mdx_verify_server()
         return True
+
+    def should_run_mdx_validation(self):
+        return os.environ.get('DEMISTO_README_VALIDATION') or os.environ.get(
+            'CI') or ReadMeValidator.are_modules_installed_for_verify(self.content_path) or \
+            ReadMeValidator.is_docker_available()
 
     def fix_mdx(self) -> str:
         txt = self.readme_content

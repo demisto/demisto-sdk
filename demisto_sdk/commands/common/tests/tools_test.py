@@ -65,6 +65,7 @@ class TestGenericFunctions:
     PATH_TO_HERE = f'{GIT_ROOT}/demisto_sdk/tests/test_files/'
     FILE_PATHS = [
         (os.path.join(PATH_TO_HERE, 'fake_integration.yml'), tools.get_yaml),
+        (os.path.join(PATH_TO_HERE, 'test_playbook_value_starting_with_equal_sign.yml'), tools.get_yaml),
         (os.path.join(PATH_TO_HERE, 'fake_json.json'), tools.get_json)
     ]
 
@@ -2015,8 +2016,9 @@ def test_string_to_bool__all_params_false__error(value: str):
     ('Packs/myPack/Jobs/job.json', FileType.JOB),
     (f'Packs/myPack/{INDICATOR_TYPES_DIR}/indicator.json', FileType.REPUTATION),
     (f'Packs/myPack/{XSIAM_DASHBOARDS_DIR}/dashboard.json', FileType.XSIAM_DASHBOARD),
-    (f'Packs/myPack/{XSIAM_DASHBOARDS_DIR}/dashboard.png', FileType.XSIAM_DASHBOARD_IMAGE),
+    (f'Packs/myPack/{XSIAM_DASHBOARDS_DIR}/dashboard_image.png', FileType.XSIAM_DASHBOARD_IMAGE),
     (f'Packs/myPack/{XSIAM_REPORTS_DIR}/report.json', FileType.XSIAM_REPORT),
+    (f'Packs/myPack/{XSIAM_REPORTS_DIR}/report_image.png', FileType.XSIAM_REPORT_IMAGE),
     (f'Packs/myPack/{TRIGGER_DIR}/trigger.json', FileType.TRIGGER),
     ('Packs/myPack/pack_metadata.json', FileType.METADATA),
     (XSOAR_CONFIG_FILE, FileType.XSOAR_CONFIG),

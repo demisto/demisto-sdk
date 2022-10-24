@@ -67,17 +67,17 @@ from demisto_sdk.tests.constants_test import (
     INVALID_PLAYBOOK_CONDITION_2, INVALID_PLAYBOOK_ID_PATH,
     INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
     INVALID_REPUTATION_PATH, INVALID_SCRIPT_PATH, INVALID_WIDGET_PATH,
-    LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET, PLAYBOOK_TARGET,
-    SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET, VALID_BETA_INTEGRATION,
-    VALID_BETA_PLAYBOOK_PATH, VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH,
-    VALID_INCIDENT_TYPE_PATH, VALID_INDICATOR_FIELD_PATH,
-    VALID_INTEGRATION_ID_PATH, VALID_INTEGRATION_TEST_PATH,
-    VALID_LAYOUT_CONTAINER_PATH, VALID_LAYOUT_PATH, VALID_MD,
-    VALID_MULTI_LINE_CHANGELOG_PATH, VALID_MULTI_LINE_LIST_CHANGELOG_PATH,
-    VALID_ONE_LINE_CHANGELOG_PATH, VALID_ONE_LINE_LIST_CHANGELOG_PATH,
-    VALID_PACK, VALID_PLAYBOOK_CONDITION, VALID_REPUTATION_PATH,
-    VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
-    WIDGET_TARGET)
+    LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET, MODELING_RULES_SCHEMA_FILE,
+    MODELING_RULES_YML_FILE, PLAYBOOK_TARGET, SCRIPT_RELEASE_NOTES_TARGET,
+    SCRIPT_TARGET, VALID_BETA_INTEGRATION, VALID_BETA_PLAYBOOK_PATH,
+    VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH,
+    VALID_INDICATOR_FIELD_PATH, VALID_INTEGRATION_ID_PATH,
+    VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_CONTAINER_PATH,
+    VALID_LAYOUT_PATH, VALID_MD, VALID_MULTI_LINE_CHANGELOG_PATH,
+    VALID_MULTI_LINE_LIST_CHANGELOG_PATH, VALID_ONE_LINE_CHANGELOG_PATH,
+    VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_PACK, VALID_PLAYBOOK_CONDITION,
+    VALID_REPUTATION_PATH, VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH,
+    VALID_WIDGET_PATH, WIDGET_TARGET)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
 from TestSuite.pack import Pack
@@ -986,7 +986,7 @@ class TestValidators:
         old_format_files = {f"{git_path()}/demisto_sdk/tests/test_files/script-valid.yml",
                             f"{git_path()}/demisto_sdk/tests/test_files/integration-test.yml"}
         assert not validate_manager.validate_no_old_format(old_format_files)
-        assert handle_error_mock.call_count == 2
+        assert handle_error_mock.call_count == 3
 
     def test_validate_no_old_format_deprecated_content(self, repo):
         """
@@ -1918,3 +1918,22 @@ def test_image_error(capsys):
     expected_string, expected_code = Errors.invalid_image_name_or_location()
     assert expected_string in stdout
     assert expected_code in stdout
+
+
+def test_check_file_relevance_and_format_path(mocker):
+    """
+
+    Given: A modeling rules schema file that was changed.
+
+    When: Updating release notes
+
+    Then: Update the file path to point the modeling rules yml file.
+
+    """
+    mocker.patch.object(ValidateManager, 'ignore_files_irrelevant_for_validation', return_value=False)
+    mocker.patch.object(ValidateManager, 'is_old_file_format', return_value=False)
+    validate_manager = ValidateManager()
+    file_path, old_path, _ = validate_manager.check_file_relevance_and_format_path(MODELING_RULES_SCHEMA_FILE,
+                                                                                   MODELING_RULES_SCHEMA_FILE,
+                                                                                   set())
+    assert file_path == old_path == MODELING_RULES_YML_FILE

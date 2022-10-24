@@ -10,7 +10,7 @@ from demisto_sdk.commands.content_graph.common import (ContentType,
                                                        RelationshipType,
                                                        Relationships)
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
-from demisto_sdk.commands.content_graph.objects.pack import Pack as PackModel
+from demisto_sdk.commands.content_graph.objects.pack import BasePack as PackModel
 from demisto_sdk.commands.content_graph.parsers.content_item import \
     NotAContentItemException
 from demisto_sdk.commands.content_graph.tests.test_tools import (load_json,
@@ -611,7 +611,7 @@ class TestParsersAndModels:
             - Verify the specific properties of the content item are parsed correctly.
         """
         from demisto_sdk.commands.content_graph.objects.integration import \
-            Integration
+            BaseIntegration
         from demisto_sdk.commands.content_graph.parsers.integration import \
             IntegrationParser
         integration = pack.create_integration()
@@ -626,7 +626,7 @@ class TestParsersAndModels:
             imports=['MicrosoftApiModule'],
             tests=['test_playbook'],
         )
-        model = Integration.from_orm(parser)
+        model = BaseIntegration.from_orm(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id='TestIntegration',
@@ -648,7 +648,7 @@ class TestParsersAndModels:
             - Verify the specific properties of the content item are parsed correctly.
         """
         from demisto_sdk.commands.content_graph.objects.integration import \
-            Integration
+            BaseIntegration
         from demisto_sdk.commands.content_graph.parsers.integration import \
             IntegrationParser
         integration = pack.create_integration(yml=load_yaml('unified_integration.yml'))
@@ -658,7 +658,7 @@ class TestParsersAndModels:
             parser.relationships,
             integration_commands=['malwr-submit', 'malwr-status', 'malwr-result', 'malwr-detonate'],
         )
-        model = Integration.from_orm(parser)
+        model = BaseIntegration.from_orm(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id='malwr',
@@ -1264,7 +1264,7 @@ class TestParsersAndModels:
             - Verify the pack is modeled correctly.
         """
         from demisto_sdk.commands.content_graph.objects.pack import \
-            Pack as PackModel
+            BasePack as PackModel
         from demisto_sdk.commands.content_graph.parsers.pack import PackParser
         pack = repo.create_pack('HelloWorld')
         pack.pack_metadata.write_json(load_json('pack_metadata.json'))

@@ -26,8 +26,10 @@ __all__ = ['Pack',
            'Widget',
            'Wizard',
            'XSIAMDashboard',
-           'XSIAMReport']
+           'XSIAMReport',
+           'RelationshipData']
 
+from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.correlation_rule import \
     CorrelationRule

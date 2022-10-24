@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.common.tools import get_content_path
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.repository import Repository
 
 
 class ContentGraphInterface(ABC):
@@ -37,6 +39,12 @@ class ContentGraphInterface(ABC):
         **properties,
     ) -> List[BaseContent]:
         pass
+
+    def marshal_graph(self, marketplace: MarketplaceVersions, dependencies: bool):
+        if dependencies:
+            self.create_pack_dependencies()
+        packs = self.match(marketplace, content_type=ContentType.PACK)
+        return Repository(path=get_content_path(), packs=packs)
 
     @abstractmethod
     def create_pack_dependencies(self):

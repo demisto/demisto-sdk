@@ -10,10 +10,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     run_query,
     to_neo4j_map,
 )
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from neo4j import Transaction
-
-RECURSION_LEVEL = 4
 
 
 def build_source_properties() -> str:
@@ -197,37 +194,3 @@ def create_relationships_by_type(
     result = run_query(tx, query, data=data).single()
     merged_relationships_count: int = result["relationships_merged"]
     logger.info(f"Merged {merged_relationships_count} relationships of type {relationship}.")
-
-
-def get_connected_nodes_by_relationship_type(
-    tx: Transaction,
-    marketplace: MarketplaceVersions,
-    relationship_type: Optional[RelationshipType],
-    content_type_from: ContentType,
-    content_type_to: ContentType,
-    recursive: bool,
-    **properties,
-) -> List[Tuple[dict, List[dict], List[dict]]]:
-    params_str = to_neo4j_map(properties)
-    recursion_str = f"*..{RECURSION_LEVEL}" if recursive else ""
-    relationship_type = relationship_type or ""
-    query = f"""
-    MATCH (n:{content_type_from}{params_str}) - [r:{relationship_type}{recursion_str}] -> (k:{content_type_to})
-    WHERE '{marketplace}' IN n.marketplaces AND '{marketplace}' IN k.marketplaces
-    RETURN n as n, collect(r) as rels, collect(k) as ks
-    """
-    if recursive:
-        result = []
-        for item in run_query(tx, query):
-            rels = item.get('rels')
-            if any(isinstance(el, list) for el in rels):
-                rels = list(chain.from_iterable(rels))
-            
-            ks = item.get('ks')
-            if any(isinstance(el, list) for el in ks):
-                ks = list(chain.from_iterable(ks))
-            
-            result.append((item.get('n'), rels, ks))
-        return result
-
-    return [(item.get("n"), item.get("rels"), item.get("ks")) for item in run_query(tx, query)]

@@ -1,7 +1,11 @@
-from typing import List
-from uuid import uuid4
+from typing import List, TYPE_CHECKING, Optional
 
-from pydantic import BaseModel, Field
+if TYPE_CHECKING:
+    # avoid circular imports
+    from demisto_sdk.commands.content_graph.objects.pack import BasePack
+
+
+from pydantic import BaseModel, Field, validator
 
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
@@ -9,7 +13,6 @@ from demisto_sdk.commands.content_graph.objects.integration_script import Integr
 
 class BaseCommand(BaseModel):
     name: str
-    element_id: int = Field(default_factory=uuid4)
 
     class Config:
         orm_mode = True
@@ -21,29 +24,68 @@ class Command(BaseCommand):
     description: str
 
 
-class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):
+class BaseIntegration(IntegrationScript):
     is_fetch: bool = False
     is_fetch_events: bool = False
     is_feed: bool = False
     category: str
 
+    
     @property
-    def commands(self):
-        return [
+    def in_pack(self) -> Optional["BasePack"]:
+        for r in self.relationships_data:
+            if r.relationship_type == RelationshipType.IN_PACK:
+                return r.related_to  # type: ignore[return-value]
+        return None
+                
+    # @property
+    # def commands(self):
+    #     return [
+    #         Command(
+    #             # the related to has to be a command
+    #             name=r.related_to.name,  # type: ignore[union-attr]
+    #             deprecated=r.deprecated,
+    #             description=r.description,
+    #         )
+    #         for r in self.relationshipss
+    #         if not r.is_nested and r.relationship_type == RelationshipType.HAS_COMMAND
+    #     ]
+
+    def to_integration_with_commands(self) -> "Integration":
+
+        commands = [
             Command(
                 # the related to has to be a command
                 name=r.related_to.name,  # type: ignore[union-attr]
                 deprecated=r.deprecated,
                 description=r.description,
             )
-            for r in self.relationshipss
+            for r in self.relationships_data
             if not r.is_nested and r.relationship_type == RelationshipType.HAS_COMMAND
         ]
-
+        return Integration(**self.dict(), commands=commands)
+    
     def included_in_metadata(self):
-        return {"name", "description", "category", "commands"}
+        return {"name", "description", "category"}  # move back
 
-    def summary(self) -> dict:
-        summary = super().summary()
-        summary["commands"] = [{"name": command.name, "description": command.description} for command in self.commands]
-        return summary
+    # def summary(self) -> dict:
+    #     summary = super().summary()
+    #     summary["commands"] = [{"name": command.name, "description": command.description} for command in self.commands]
+    #     return summary
+
+
+class Integration(BaseIntegration, content_type=ContentType.INTEGRATION):
+    commands: List[Command] = Field([], exclude=True)  # todo: override exclusion when loading from database
+
+    def set_commands(self):
+        commands = [
+            Command(
+                # the related to has to be a command
+                name=r.related_to.name,  # type: ignore[union-attr]
+                deprecated=r.deprecated,
+                description=r.description,
+            )
+            for r in self.relationships_data
+            if not r.is_nested and r.relationship_type == RelationshipType.HAS_COMMAND
+        ]
+        self.commands = commands

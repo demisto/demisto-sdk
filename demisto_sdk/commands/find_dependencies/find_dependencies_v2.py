@@ -9,7 +9,7 @@ from demisto_sdk.commands.content_graph.content_graph_commands import \
 from demisto_sdk.commands.content_graph.interface.graph import \
     ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.repository import Repository
-from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.objects.pack import BasePack
 
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 
@@ -33,14 +33,14 @@ class PackDependencies:
             json.dump(self._get_packs_dependencies(), f, indent=4)
 
     def _get_packs_dependencies(self) -> Dict[str, Any]:
-        all_level_dependencies: List[Tuple[Pack, dict, List[Pack]]] = self.content_graph.get_connected_nodes_by_relationship_type(
+        all_level_dependencies: List[Tuple[BasePack, dict, List[BasePack]]] = self.content_graph.get_connected_nodes_by_relationship_type(
             marketplace=self.marketplace,
             relationship_type=RelationshipType.DEPENDS_ON,
             content_type_from=ContentType.PACK,
             content_type_to=ContentType.PACK,
             recursive=True,
         )
-        first_level_dependencies: List[Tuple[Pack, dict, List[Pack]]] = self.content_graph.get_connected_nodes_by_relationship_type(
+        first_level_dependencies: List[Tuple[BasePack, dict, List[BasePack]]] = self.content_graph.get_connected_nodes_by_relationship_type(
             marketplace=self.marketplace,
             relationship_type=RelationshipType.DEPENDS_ON,
             content_type_from=ContentType.PACK,

@@ -11,8 +11,8 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     versioned,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.content_graph.objects.integration import Integration
+from demisto_sdk.commands.content_graph.objects.pack import BasePack
+from demisto_sdk.commands.content_graph.objects.integration import BaseIntegration
 
 from neo4j import Transaction, graph
 

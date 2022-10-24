@@ -30,15 +30,19 @@ class ContentArtifactManager:
     def create_artifacts(self) -> None:
         # TODO add dependencies to marshal when it's fixed
         with Neo4jContentGraphInterface() as content_graph_interface:
+            if self.dependencies:
+                content_graph_interface.create_pack_dependencies()
+
             repo: Repository = marshal_content_graph(
                 content_graph_interface,
                 marketplace=self.marketplace,
+                dependencies=self.dependencies,
             )
             if self.dependencies:
                 PackDependencies(
                     content_graph_interface,
                     self.marketplace,
-                    self.output / 'packs_dependencies.json', repo
+                    self.output / 'packs_dependencies.json',
                 ).run()
 
         repo.dump(self.output / 'content_packs', self.marketplace, self.zip)

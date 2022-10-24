@@ -11,6 +11,7 @@ from demisto_sdk.commands.content_graph.common import (UNIFIED_FILES_SUFFIXES,
                                                        ContentType,
                                                        RelationshipType,
                                                        Relationships)
+from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 from demisto_sdk.commands.content_graph.parsers.base_content import \
     BaseContentParser
 
@@ -69,6 +70,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
         self.pack_marketplaces: List[MarketplaceVersions] = pack_marketplaces
         super().__init__(path)
         self.relationships: Relationships = Relationships()
+        self.relationship_data = []
 
     @staticmethod
     def from_path(path: Path, pack_marketplaces: List[MarketplaceVersions]) -> Optional['ContentItemParser']:
@@ -207,7 +209,7 @@ class ContentItemParser(BaseContentParser, metaclass=ParserMetaclass):
             target_type=target_type,
             **kwargs
         )
-
+        
     def add_to_pack(self, pack_id: Optional[str]) -> None:
         """ Creates an IN_PACK relationship between the content item and its pack.
 

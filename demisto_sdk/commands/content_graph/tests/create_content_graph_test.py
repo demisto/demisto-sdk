@@ -12,8 +12,8 @@ from demisto_sdk.commands.content_graph.content_graph_commands import (
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import \
     Neo4jContentGraphInterface as ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.integration import (
-    Command, Integration)
-from demisto_sdk.commands.content_graph.objects.pack import Pack 
+    Command, BaseIntegration)
+from demisto_sdk.commands.content_graph.objects.pack import BasePack 
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
 from demisto_sdk.commands.content_graph.objects.repository import Repository
 from demisto_sdk.commands.content_graph.objects.script import Script
@@ -46,7 +46,7 @@ def repository(mocker):
 @pytest.fixture
 def pack():
     pack_name = 'SamplePack'
-    return Pack(
+    return BasePack(
         object_id=pack_name,
         content_type=ContentType.PACK,
         node_id=f'{ContentType.PACK}:{pack_name}',
@@ -75,7 +75,7 @@ def pack():
 @pytest.fixture
 def integration():
     integration_name = 'SampleIntegration'
-    return Integration(
+    return BaseIntegration(
         id=integration_name,
         content_type=ContentType.INTEGRATION,
         node_id=f'{ContentType.INTEGRATION}:{integration_name}',
@@ -169,7 +169,8 @@ class TestCreateContentGraph:
 
         with ContentGraphInterface(start_service=start_service) as interface:
             create_content_graph(interface)
-            packs = interface.get_packs(marketplace=MarketplaceVersions.XSOAR)
+            packs = interface.match(marketplace=MarketplaceVersions.XSOAR,
+                                    content_type=ContentType.PACK)
 
         assert len(packs) == 1
         returned_pack = packs[0]
@@ -210,8 +211,8 @@ class TestCreateContentGraph:
     def test_create_content_graph_single_pack(
         self,
         repository: Repository,
-        pack: Pack,
-        integration: Integration,
+        pack: BasePack,
+        integration: BaseIntegration,
         script: Script,
     ):
         """
@@ -326,8 +327,8 @@ class TestCreateContentGraph:
     def test_create_content_graph_two_integrations_with_same_command(
         self,
         repository: Repository,
-        pack: Pack,
-        integration: Integration,
+        pack: BasePack,
+        integration: BaseIntegration,
     ):
         """
         Given:
@@ -391,7 +392,7 @@ class TestCreateContentGraph:
     def test_create_content_graph_playbook_uses_script_not_in_repository(
         self,
         repository: Repository,
-        pack: Pack,
+        pack: BasePack,
         playbook: Playbook,
     ):
         """
@@ -432,8 +433,8 @@ class TestCreateContentGraph:
     def test_create_content_graph_duplicate_integrations(
         self,
         repository: Repository,
-        pack: Pack,
-        integration: Integration,
+        pack: BasePack,
+        integration: BaseIntegration,
     ):
         """
         Given:
@@ -493,8 +494,8 @@ class TestCreateContentGraph:
     def test_create_content_graph_duplicate_integrations_different_marketplaces(
         self,
         repository: Repository,
-        pack: Pack,
-        integration: Integration,
+        pack: BasePack,
+        integration: BaseIntegration,
     ):
         """
         Given:
@@ -556,8 +557,8 @@ class TestCreateContentGraph:
     def test_create_content_graph_duplicate_integrations_different_fromversion(
         self,
         repository: Repository,
-        pack: Pack,
-        integration: Integration,
+        pack: BasePack,
+        integration: BaseIntegration,
     ):
         """
         Given:

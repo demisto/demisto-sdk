@@ -13,7 +13,6 @@ from demisto_sdk.commands.content_graph.objects.repository import Repository
 
 logger = logging.getLogger('demisto-sdk')
 
-
 def create_content_graph(
     content_graph_interface: ContentGraphInterface,
 ) -> None:
@@ -41,6 +40,7 @@ def stop_content_graph(
 def marshal_content_graph(
     content_graph_interface: ContentGraphInterface,
     marketplace: MarketplaceVersions = MarketplaceVersions.XSOAR,
+    dependencies: bool = False,
 ) -> Repository:
     """This function marshals the content graph to python models.
 
@@ -52,5 +52,4 @@ def marshal_content_graph(
         Repository: The repository model loaded from the content graph.
 
     """
-    content_graph_loader = ContentGraphLoader(marketplace, content_graph_interface)
-    return content_graph_loader.load()
+    return ContentGraphLoader(marketplace, content_graph_interface, dependencies).load()

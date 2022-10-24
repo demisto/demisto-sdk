@@ -16,7 +16,6 @@ json = JSON_Handler()
 
 logger = logging.getLogger('demisto-sdk')
 
-
 class ContentGraphBuilder:
     def __init__(self, repo_path: Path, content_graph: ContentGraphInterface, clean_graph: bool = True) -> None:
         """ Given a repo path and graph DB interface:

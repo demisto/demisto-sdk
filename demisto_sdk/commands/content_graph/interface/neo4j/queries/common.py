@@ -10,7 +10,7 @@ from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent, content_type_to_model)
 from neo4j import Result, Transaction
 
-from demisto_sdk.commands.content_graph.objects.pack import Pack
+from demisto_sdk.commands.content_graph.objects.pack import BasePack
 
 logger = logging.getLogger('demisto-sdk')
 

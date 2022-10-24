@@ -23,11 +23,29 @@ _RUNNING_CONTAINER_IMAGE: Optional[docker.models.containers.Container] = None
 
 
 def server_script_path():
+    """ The path to the script that runs the mdxserver
+
+    Returns: Path to the script
+
+    """
     return Path(__file__).parent.parent / 'common' / _SERVER_SCRIPT_NAME
 
 
 @contextmanager
 def start_docker_MDX_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None):
+    """
+        This function will start a docker container running a node server listening on port 6161.
+        The container will erase itself after exit.
+        If there's a running server already with the same name it will be stopped before starting a new one.
+
+    Args:
+        handle_error: handle_error function
+        file_path: path of the content item
+
+    Returns:
+        A context manager
+
+    """
     logging.info('Starting docker mdx server')
     Docker.pull_image(DEPENDENCIES_DOCKER)
     if running_container := init_global_docker_client() \
@@ -70,6 +88,16 @@ def stop_docker_container(container):
 
 @contextmanager
 def start_local_MDX_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None):
+    """
+        This function will start a node server on the local machine and listen on port 6161
+    Args:
+        handle_error: handle_error function
+        file_path: path of the content item
+
+    Returns:
+        A context manager
+
+    """
     process = subprocess.Popen(['node', str(server_script_path())], stdout=subprocess.PIPE, text=True)
     line = process.stdout.readline()  # type: ignore
     if EXPECTED_SUCCESS_MESSAGE not in line:

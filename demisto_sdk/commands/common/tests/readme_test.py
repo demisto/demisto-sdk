@@ -57,6 +57,16 @@ def test_is_file_valid(mocker, current, answer):
 
 
 def test_local_server_up_and_down():
+    """
+    Given:
+        - node dependencies installed
+        - a valid file for mdx
+    When:
+        starting a local server with an mdx server
+    Then:
+        - The server is started successfully.
+        - The call is successful.
+    """
     ReadMeValidator.add_node_env_vars()
     readme_validator = ReadMeValidator(VALID_MD)
     valid = ReadMeValidator.are_modules_installed_for_verify(readme_validator.content_path)
@@ -96,7 +106,16 @@ def test_is_file_valid_mdx_server(mocker, current, answer):
         assert readme_validator.is_valid_file() is answer
 
 
-def test_local_server_reentrant():
+def test_local_server_is_up():
+    """
+    Given:
+        A valid file for mdx
+    When:
+        starting a local server and checking if up inside the context
+    Then:
+        - The if statement passes
+        - The api call succeeds
+    """
     readme_validator = ReadMeValidator(INVALID_MD)
     valid = ReadMeValidator.are_modules_installed_for_verify(readme_validator.content_path)
     if not valid:

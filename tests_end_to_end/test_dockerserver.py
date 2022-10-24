@@ -6,6 +6,8 @@ from demisto_sdk.commands.common.MDXServer import (DEMISTO_DEPS_DOCKER_NAME,
                                                    start_docker_MDX_server)
 from demisto_sdk.commands.lint.docker_helper import init_global_docker_client
 
+SERVER_DNS = 'docker'  # switch to localhost for testing locally
+
 
 def assert_successful_mdx_call():
     session = requests.Session()
@@ -14,7 +16,7 @@ def assert_successful_mdx_call():
     session.mount('http://', adapter)
     response = session.request(
         'POST',
-        'http://docker:6161',
+        f'http://{SERVER_DNS}:6161',
         data='## Hello',
         timeout=20
     )
@@ -28,7 +30,7 @@ def assert_not_successful_mdx_call():
     session.mount('http://', adapter)
     response = session.request(
         'POST',
-        'http://docker:6161',
+        f'http://{SERVER_DNS}:6161',
         data='<div> Hello',
         timeout=20
     )
@@ -41,6 +43,15 @@ def container_is_up():
 
 
 def test_is_file_not_valid():
+    """
+    Given:
+        A non-valid file for mdx
+    When:
+        starting a docker server with an mdx server
+    Then:
+        - The server is started successfully.
+        - The api call fails
+    """
     with start_docker_MDX_server() as boolean:
         assert boolean
         assert container_is_up()
@@ -48,17 +59,39 @@ def test_is_file_not_valid():
     assert not container_is_up()
 
 
-def test_docker_server_reentrant():
+def test_docker_server_is_up():
+    """
+    Given:
+        A valid file for mdx
+    When:
+        starting a docker server and checking if up inside the context
+    Then:
+        - The if statement passes
+        - The api call succeeds
+        - The server is torn down successfully
+    """
     with start_docker_MDX_server():
         if start_docker_MDX_server():
             assert container_is_up()
             assert_successful_mdx_call()
+        else:
+            assert False
         assert_successful_mdx_call()
         assert container_is_up()
     assert not container_is_up()
 
 
 def test_docker_server_up_and_down():
+    """
+    Given:
+        A valid file for mdx
+    When:
+        starting a docker server and making an http call
+    Then:
+        - The server is brought up successfully
+        - The api call succeeds
+        - The server is torn down successfully
+    """
     with start_docker_MDX_server() as boolean:
         assert boolean
         assert container_is_up()

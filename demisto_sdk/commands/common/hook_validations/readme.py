@@ -302,6 +302,11 @@ class ReadMeValidator(BaseValidator):
     @staticmethod
     @lru_cache(None)
     def is_docker_available():
+        """ Pings the docker daemon to check if it is available
+
+        Returns:
+            bool: True if the daemon is accessible
+        """
         try:
             docker_client: docker.DockerClient = init_global_docker_client(log_prompt='DockerPing')
             docker_client.ping()
@@ -679,6 +684,16 @@ class ReadMeValidator(BaseValidator):
 
     @staticmethod
     def start_mdx_server(handle_error: Optional[Callable] = None, file_path: Optional[str] = None):
+        """
+        This function will either start a local server or a server in docker depending on the dependencies installed
+        Args:
+            handle_error:
+            file_path:
+
+        Returns:
+            A ContextManager
+
+        """
         with ReadMeValidator._MDX_SERVER_LOCK:
             if ReadMeValidator.are_modules_installed_for_verify(get_content_path()):
                 return start_local_MDX_server(handle_error, file_path)

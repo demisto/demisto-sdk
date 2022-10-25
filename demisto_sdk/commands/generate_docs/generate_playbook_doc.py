@@ -225,7 +225,10 @@ def get_input_data(input_section: Dict) -> str:
     if default_value:
         complex_field = default_value.get('complex')
         if complex_field:
-            return f"{complex_field.get('root')}.{complex_field.get('accessor')}"
+            if complex_field.get('accessor'):
+                return f"{complex_field.get('root')}.{complex_field.get('accessor')}"
+            else:
+                return f"{complex_field.get('root')}"
         return default_value.get('simple')
 
     return ''

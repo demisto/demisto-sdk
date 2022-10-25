@@ -7,8 +7,8 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
 class Widget(ContentItem, content_type=ContentType.WIDGET):
-    widget_type: str = Field(alias='widgetType')
-    data_type: Optional[str] = Field(alias='dataType')
+    widget_type: str = Field(alias="widgetType")
+    data_type: Optional[str] = Field(alias="dataType")
 
     def included_in_metadata(self) -> Set[str]:
-        return {'name', 'dataType', 'widgetType'}
+        return {"name", "dataType", "widgetType"}

@@ -12,8 +12,10 @@ class ParsingRule(ContentItem, content_type=ContentType.PARSING_RULE):
     pass
 
     def included_in_metadata(self) -> Set[str]:
-        return {'name', 'description'}
+        return {"name", "description"}
 
     def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:
         dir.mkdir(exist_ok=True, parents=True)
-        RuleUnifier(input=str(self.path.parent), output=str(dir), marketplace=marketplace).unify()
+        RuleUnifier(
+            input=str(self.path.parent), output=str(dir), marketplace=marketplace
+        ).unify()

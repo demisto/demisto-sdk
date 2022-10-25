@@ -1,20 +1,24 @@
 import logging
 from typing import Dict, Set
 
+from neo4j import Transaction
+
 from demisto_sdk.commands.common.constants import (REPUTATION_COMMAND_NAMES,
                                                    MarketplaceVersions)
-from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.common import (ContentType,
+                                                       RelationshipType)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import \
     run_query
-from neo4j import Result, Transaction
 
-REPUTATION_COMMANDS_NODE_IDS = [f'{ContentType.COMMAND}:{cmd}' for cmd in REPUTATION_COMMAND_NAMES]
+REPUTATION_COMMANDS_NODE_IDS = [
+    f"{ContentType.COMMAND}:{cmd}" for cmd in REPUTATION_COMMAND_NAMES
+]
 IGNORED_CONTENT_ITEMS_IN_DEPENDENCY_CALC = REPUTATION_COMMANDS_NODE_IDS
-IGNORED_PACKS_IN_DEPENDENCY_CALC = ['NonSupported', 'Base', 'ApiModules']
+IGNORED_PACKS_IN_DEPENDENCY_CALC = ["NonSupported", "Base", "ApiModules"]
 
 MAX_DEPTH = 7
 
-logger = logging.getLogger('demisto-sdk')
+logger = logging.getLogger("demisto-sdk")
 
 
 # def get_all_level_packs_dependencies(tx: Transaction, marketplace: MarketplaceVersions) -> Result:
@@ -61,8 +65,8 @@ def inherit_content_items_marketplaces_property_from_packs(tx: Transaction) -> N
         RETURN count(content_item) AS updated
     """
     result = run_query(tx, query).single()
-    updated_count: int = result['updated']
-    logger.info(f'Updated marketplaces properties of {updated_count} content items.')
+    updated_count: int = result["updated"]
+    logger.info(f"Updated marketplaces properties of {updated_count} content items.")
 
 
 def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
@@ -96,8 +100,10 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
     result = run_query(tx, query)
     outputs: Dict[str, Set[str]] = {}
     for row in result:
-        outputs.setdefault(row['excluded_content_item'], set()).add(row['reason'])
-    logger.info(f'Removed {marketplace} from marketplaces for {len(outputs.keys())} content items.')
+        outputs.setdefault(row["excluded_content_item"], set()).add(row["reason"])
+    logger.info(
+        f"Removed {marketplace} from marketplaces for {len(outputs.keys())} content items."
+    )
 
 
 def create_depends_on_relationships(tx: Transaction) -> None:
@@ -120,5 +126,7 @@ def create_depends_on_relationships(tx: Transaction) -> None:
         RETURN count(dep) AS depends_on_relationships
     """
     result = run_query(tx, query).single()
-    depends_on_count: int = result['depends_on_relationships']
-    logger.info(f'Merged {depends_on_count} DEPENDS_ON relationships between {depends_on_count} packs.')
+    depends_on_count: int = result["depends_on_relationships"]
+    logger.info(
+        f"Merged {depends_on_count} DEPENDS_ON relationships between {depends_on_count} packs."
+    )

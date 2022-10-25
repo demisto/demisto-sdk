@@ -19,6 +19,11 @@ exclude = ["TestSuite/**", "*/tests/*", "tests"]
 [tool.poetry.scripts]
 demisto-sdk = "demisto_sdk.__main__:main"
 
+[tool.poetry.group.dev.dependencies]
+pycln = "^2.1.1"
+black = "^22.10.0"
+ipykernel = "^6.16.1"
+
 [tool.vulture]
 exclude = ["*/tests/*"]
 min_confidence = 80

@@ -24,13 +24,13 @@ class ContentItem(BaseContent):
         return self.dict(include=self.included_in_metadata(), by_alias=True)
 
     def included_in_metadata(self) -> Set[str]:
-        raise NotImplementedError('Should be implemented in subclasses')
+        raise NotImplementedError("Should be implemented in subclasses")
 
     def normalize_file_name(self, name: str) -> str:
-        for prefix in ContentType.prefixes():
-            name = name.replace(f'{prefix}-', '')
+        for prefix in ContentType.server_names():
+            name = name.replace(f"{prefix}-", "")
 
-        return f'{self.content_type.server_name}-{name}'
+        return f"{self.content_type.server_name}-{name}"
 
     def dump(self, dir: DirectoryPath, _: MarketplaceVersions) -> None:
         dir.mkdir(exist_ok=True, parents=True)
@@ -38,6 +38,6 @@ class ContentItem(BaseContent):
 
     def to_id_set_entity(self) -> dict:
         id_set_entity = self.dict()
-        id_set_entity['file_path'] = str(self.path)
-        id_set_entity['pack'] = get_pack_name(self.path)
+        id_set_entity["file_path"] = str(self.path)
+        id_set_entity["pack"] = get_pack_name(self.path)
         return id_set_entity

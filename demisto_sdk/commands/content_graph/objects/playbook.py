@@ -8,4 +8,4 @@ class Playbook(ContentItem, content_type=ContentType.PLAYBOOK):
     is_test: bool
 
     def included_in_metadata(self) -> Set[str]:
-        return {'name', 'description'}
+        return {"name", "description"}

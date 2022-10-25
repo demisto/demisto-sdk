@@ -1,35 +1,36 @@
-__all__ = ['Pack',
-           'Classifier',
-           'CorrelationRule',
-           'Dashboard',
-           'GenericDefinition',
-           'GenericField',
-           'GenericModule',
-           'GenericType',
-           'GenericType',
-           'IncidentField',
-           'IncidentType',
-           'IndicatorField',
-           'IndicatorType',
-           'Integration',
-           'Job',
-           'Layout',
-           'List',
-           'Mapper',
-           'ModelingRule',
-           'ParsingRule',
-           'Playbook',
-           'Report',
-           'Script',
-           'TestPlaybook',
-           'Trigger',
-           'Widget',
-           'Wizard',
-           'XSIAMDashboard',
-           'XSIAMReport',
-           'RelationshipData']
+__all__ = [
+    "Pack",
+    "Classifier",
+    "CorrelationRule",
+    "Dashboard",
+    "GenericDefinition",
+    "GenericField",
+    "GenericModule",
+    "GenericType",
+    "GenericType",
+    "IncidentField",
+    "IncidentType",
+    "IndicatorField",
+    "IndicatorType",
+    "Integration",
+    "Job",
+    "Layout",
+    "List",
+    "Mapper",
+    "ModelingRule",
+    "ParsingRule",
+    "Playbook",
+    "Report",
+    "Script",
+    "TestPlaybook",
+    "Trigger",
+    "Widget",
+    "Wizard",
+    "XSIAMDashboard",
+    "XSIAMReport",
+    "RelationshipData",
+]
 
-from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
 from demisto_sdk.commands.content_graph.objects.correlation_rule import \
     CorrelationRule
@@ -59,6 +60,8 @@ from demisto_sdk.commands.content_graph.objects.modeling_rule import \
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.parsing_rule import ParsingRule
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
+from demisto_sdk.commands.content_graph.objects.relationship import \
+    RelationshipData
 from demisto_sdk.commands.content_graph.objects.report import Report
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.test_playbook import \

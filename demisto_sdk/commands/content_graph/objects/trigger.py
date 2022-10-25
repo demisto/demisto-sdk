@@ -8,4 +8,4 @@ class Trigger(ContentItem, content_type=ContentType.TRIGGER):
     pass
 
     def included_in_metadata(self) -> Set[str]:
-        return {'name', 'description'}
+        return {"name", "description"}

@@ -8,4 +8,4 @@ class TestPlaybook(Playbook, content_type=ContentType.TEST_PLAYBOOK):
     pass
 
     def included_in_metadata(self) -> Set[str]:
-        raise NotImplementedError('TestPlaybooks not included in metadata')
+        raise NotImplementedError("TestPlaybooks not included in metadata")

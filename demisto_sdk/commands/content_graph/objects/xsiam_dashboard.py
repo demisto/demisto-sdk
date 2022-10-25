@@ -8,4 +8,4 @@ class XSIAMDashboard(ContentItem, content_type=ContentType.XSIAM_DASHBOARD):
     pass
 
     def included_in_metadata(self) -> Set[str]:
-        return {'name', 'description'}
+        return {"name", "description"}

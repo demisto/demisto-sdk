@@ -1,35 +1,35 @@
 import logging
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
+
 from neo4j import GraphDatabase, Neo4jDriver, Result, Transaction, graph
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import (
-    NEO4J_DATABASE_URL,
-    NEO4J_PASSWORD,
-    NEO4J_USERNAME,
-    ContentType,
-    RelationshipType,
-)
-from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import create_constraints
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import create_pack_dependencies
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import create_indexes
+from demisto_sdk.commands.content_graph.common import (NEO4J_DATABASE_URL,
+                                                       NEO4J_PASSWORD,
+                                                       NEO4J_USERNAME,
+                                                       ContentType,
+                                                       RelationshipType)
+from demisto_sdk.commands.content_graph.interface.graph import \
+    ContentGraphInterface
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import \
+    create_constraints
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import \
+    create_pack_dependencies
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import \
+    create_indexes
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
-    create_nodes,
-    delete_all_graph_nodes,
-    duplicates_exist,
-    match,
-)
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import (
+    _match, create_nodes, delete_all_graph_nodes, duplicates_exist)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import \
     create_relationships
-)
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent, ServerContent, content_type_to_model
-from demisto_sdk.commands.content_graph.objects.integration import BaseCommand, Integration
+from demisto_sdk.commands.content_graph.objects.base_content import (
+    BaseContent, ServerContent, content_type_to_model)
+from demisto_sdk.commands.content_graph.objects.integration import (
+    BaseCommand, Integration)
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
-
+from demisto_sdk.commands.content_graph.objects.relationship import \
+    RelationshipData
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -70,7 +70,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def close(self) -> None:
         self.driver.close()
 
-    def _serialize_to_obj(self, nodes: Union[dict, Iterable[graph.Node]]) -> None:
+    def _serialize_nodes(self, nodes: Union[dict, Iterable[graph.Node]]) -> None:
         for node in nodes:
             # the dictionary should have the `element_id` field!
             element_id = node.element_id
@@ -92,10 +92,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 obj = model.parse_obj(node)
                 Neo4jContentGraphInterface._id_to_obj[element_id] = obj
 
-    def _serialize_nodes(self, nodes: Iterable[graph.Node]) -> None:
-        nodes = {node for node in nodes if node.element_id not in Neo4jContentGraphInterface._id_to_obj}
-        self._serialize_to_obj(nodes)
-
     def create_indexes_and_constraints(self) -> None:
         with self.driver.session() as session:
             session.execute_write(create_indexes)
@@ -110,7 +106,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             if session.execute_read(duplicates_exist):
                 raise Exception("Duplicates found in graph.")
 
-    def create_relationships(self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]) -> None:
+    def create_relationships(
+        self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]
+    ) -> None:
         with self.driver.session() as session:
             session.execute_write(create_relationships, relationships)
 
@@ -122,13 +120,21 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         self,
         marketplace: MarketplaceVersions,
         content_type: Optional[ContentType] = None,
-        filter_list: Optional[Iterable[int]] = None,
+        filter_list: Optional[
+            Iterable[int]
+        ] = None,  # todo - warning if item of filtered not exsists
         is_nested: bool = False,
         **properties,
     ) -> List[BaseContent]:
+        """
+        match('xsoar', content_type=INTEGRATION)
+        """
+
         with self.driver.session() as session:
-            result: List[Tuple[graph.Node, List[graph.Relationship], List[graph.Node]]] = session.execute_read(
-                match, marketplace, content_type, filter_list, is_nested, **properties
+            result: List[
+                Tuple[graph.Node, List[graph.Relationship], List[graph.Node]]
+            ] = session.execute_read(
+                _match, marketplace, content_type, filter_list, is_nested, **properties
             )
             nodes_set = set()
             content_items_nodes = set()
@@ -146,7 +152,11 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
             final_result = []
             for node_from, rels, nodes_to in result:
-                obj = self._add_relationship(node_from, rels, nodes_to)
+                obj: BaseContent = cast(
+                    BaseContent,
+                    Neo4jContentGraphInterface._id_to_obj[node_from.element_id],
+                )
+                self._add_relationship(obj, node_from, rels, nodes_to)
                 if isinstance(obj, Pack):
                     obj.set_content_items()
                 if isinstance(obj, Integration):
@@ -157,27 +167,31 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             if content_items_nodes:
                 self.match(
                     marketplace,
-                    ContentType.INTEGRATION,
-                    content_items_nodes,
+                    filter_list=content_items_nodes,
                 )
             return final_result
 
-    def _add_relationship(self, node_from: graph.Node, rels: List[graph.Relationship], nodes_to: List[graph.Node]):
+    def _add_relationship(
+        self,
+        obj: Union[BaseContent, BaseCommand],
+        node_from: graph.Node,
+        rels: List[graph.Relationship],
+        nodes_to: List[graph.Node],
+    ) -> None:
         # Command cannot be the start node of relationship
-        obj: BaseContent = cast(BaseContent, Neo4jContentGraphInterface._id_to_obj[node_from.element_id])
-        rel = [
+        rel = {
             RelationshipData(
                 relationship_type=rel.type,
                 source=Neo4jContentGraphInterface._id_to_obj[rel.start_node.element_id],
                 target=Neo4jContentGraphInterface._id_to_obj[rel.end_node.element_id],
                 related_to=Neo4jContentGraphInterface._id_to_obj[node_to.element_id],
-                is_nested=rel.start_node.element_id != node_from.element_id and rel.end_node.element_id != node_from.element_id,
+                is_nested=rel.start_node.element_id != node_from.element_id and
+                rel.end_node.element_id != node_from.element_id,
                 **rel,
             )
             for node_to, rel in zip(nodes_to, rels)
-        ]
-        obj.relationships_data.extend(rel)
-        return obj
+        }
+        obj.relationships_data.update(rel)
 
     def create_pack_dependencies(self):
         with self.driver.session() as session:
@@ -213,7 +227,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     #         } for row in result
     #     }
 
-    def run_single_query(self, query: str, parameters: Optional[Dict[str, Any]] = None) -> Result:
+    def run_single_query(
+        self, query: str, parameters: Optional[Dict[str, Any]] = None
+    ) -> Result:
         with self.driver.session() as session:
             tx: Transaction = session.begin_transaction()
             result = tx.run(query, parameters)

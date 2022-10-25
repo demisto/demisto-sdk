@@ -12,7 +12,7 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):
     is_test: bool
 
     def included_in_metadata(self) -> Set[str]:
-        return {'name', 'description', 'tags'}
+        return {"name", "description", "tags"}
 
     def dump(self, dir: Path, marketplace: MarketplaceVersions) -> None:
         if self.is_test:

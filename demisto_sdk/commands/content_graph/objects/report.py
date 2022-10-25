@@ -8,4 +8,4 @@ class Report(ContentItem, content_type=ContentType.REPORT):
     pass
 
     def include_in_metadata(self) -> Set[str]:
-        return {'name', 'description'}
+        return {"name", "description"}

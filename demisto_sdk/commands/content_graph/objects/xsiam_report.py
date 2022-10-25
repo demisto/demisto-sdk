@@ -8,4 +8,4 @@ class XSIAMReport(ContentItem, content_type=ContentType.XSIAM_REPORT):
     pass
 
     def included_in_metadata(self) -> Set[str]:
-        return {'name', 'description'}
+        return {"name", "description"}

@@ -14,11 +14,17 @@ from demisto_sdk.commands.content_graph.parsers.repository import \
 json = JSON_Handler()
 
 
-logger = logging.getLogger('demisto-sdk')
+logger = logging.getLogger("demisto-sdk")
+
 
 class ContentGraphBuilder:
-    def __init__(self, repo_path: Path, content_graph: ContentGraphInterface, clean_graph: bool = True) -> None:
-        """ Given a repo path and graph DB interface:
+    def __init__(
+        self,
+        repo_path: Path,
+        content_graph: ContentGraphInterface,
+        clean_graph: bool = True,
+    ) -> None:
+        """Given a repo path and graph DB interface:
         1. Creates a repository model
         2. Collects all nodes and relationships from the model
 
@@ -39,7 +45,7 @@ class ContentGraphBuilder:
             self.relationships.update(pack.relationships)
 
     def _create_repository(self, path: Path) -> Repository:
-        """ Parses the repository and creates a repository model.
+        """Parses the repository and creates a repository model.
 
         Args:
             path (Path): The repository path.
@@ -55,8 +61,7 @@ class ContentGraphBuilder:
         return Repository.from_orm(repository_parser)
 
     def create_graph(self) -> None:
-        """ Runs DB queries using the collected nodes and relationships to create the content graph.
-        """
+        """Runs DB queries using the collected nodes and relationships to create the content graph."""
         self.content_graph.create_indexes_and_constraints()
         self.content_graph.create_nodes(self.nodes)
         self.content_graph.create_relationships(self.relationships)

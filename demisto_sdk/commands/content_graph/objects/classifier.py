@@ -6,9 +6,9 @@ from demisto_sdk.commands.content_graph.common import ContentType
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 
 
-class Classifier(ContentItem, content_type=ContentType.CLASSIFIER):
+class Classifier(ContentItem, content_type=ContentType.CLASSIFIER):  # type: ignore[call-arg]
     type: Optional[str]
-    definition_id: Optional[str] = Field(alias='definitionId')
+    definition_id: Optional[str] = Field(alias="definitionId")
 
     def included_in_metadata(self) -> Set[str]:
-        return {'name', 'description'}
+        return {"name", "description"}

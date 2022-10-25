@@ -1,20 +1,14 @@
-from itertools import chain
 import logging
+from itertools import chain
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import SERVER_CONTENT_ITEMS, ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
-    intersects,
-    run_query,
-    to_neo4j_map,
-    versioned,
-)
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.content_graph.objects.pack import BasePack
-from demisto_sdk.commands.content_graph.objects.integration import BaseIntegration
-
 from neo4j import Transaction, graph
+
+from demisto_sdk.commands.common.constants import MarketplaceVersions
+from demisto_sdk.commands.content_graph.common import (SERVER_CONTENT_ITEMS,
+                                                       ContentType)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
+    intersects, run_query, to_neo4j_map, versioned)
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -57,11 +51,16 @@ def create_server_nodes_by_type(
     content_type: ContentType,
     content_items: List[str],
 ) -> None:
-    should_have_lowercase_id: bool = content_type in [ContentType.INCIDENT_FIELD, ContentType.INDICATOR_FIELD]
+    should_have_lowercase_id: bool = content_type in [
+        ContentType.INCIDENT_FIELD,
+        ContentType.INDICATOR_FIELD,
+    ]
     data = [
         {
             "name": content_item,
-            "object_id": content_item.lower() if should_have_lowercase_id else content_item,
+            "object_id": content_item.lower()
+            if should_have_lowercase_id
+            else content_item,
             "content_type": content_type,
             "is_server_item": True,
         }
@@ -87,7 +86,7 @@ def create_nodes_by_type(
     logger.info(f"Created {nodes_count} nodes of type {content_type}.")
 
 
-def match(
+def _match(
     tx: Transaction,
     marketplace: MarketplaceVersions,
     content_type: Optional[ContentType],
@@ -106,16 +105,18 @@ def match(
     RETURN n, collect(r) as rels, collect(k) as ks
     """
     result = []
-    for item in run_query(tx, query, filter_list=list(filter_list) if filter_list else None):
-        rels = item.get('rels')
+    for item in run_query(
+        tx, query, filter_list=list(filter_list) if filter_list else None
+    ):
+        rels = item.get("rels")
         if any(isinstance(el, list) for el in rels):
             rels = list(chain.from_iterable(rels))
 
-        ks = item.get('ks')
+        ks = item.get("ks")
         if any(isinstance(el, list) for el in ks):
             ks = list(chain.from_iterable(ks))
 
-        result.append((item.get('n'), rels, ks))
+        result.append((item.get("n"), rels, ks))
     return result
 
 

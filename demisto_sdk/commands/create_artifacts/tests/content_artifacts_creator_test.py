@@ -232,13 +232,12 @@ def test_contains_modeling_rule():
     with temp_dir() as temp:
         packs_zipper = PacksZipper(pack_paths=str(TEST_DATA / PACKS_DIR / 'TestModelingRule'),
                                    output=temp,
-                                   content_version='6.0.0',
+                                   content_version='6.8.0',
                                    marketplace=MarketplaceVersions.MarketplaceV2.value,
                                    zip_all=False)
         packs_zipper.zip_packs()
         pack_metadata = packs_zipper.artifacts_manager.packs['TestModelingRule'].metadata
-        assert 'modelingrule' in pack_metadata.content_items
-        assert pack_metadata.content_items['modelingrule'] == ['okta_okta_raw']
+        assert pack_metadata.content_items['modelingrule'][0].get('datasets') == ['okta_okta_raw']
 
 
 def test_create_content_artifacts(mock_git):

@@ -18,6 +18,7 @@ class IntegrationScript(ContentItem):
     def dump(self, dir: Path, marketplace: MarketplaceVersions) -> None:
         # demisto-sdk unify self.path -> path
         dir.mkdir(exist_ok=True, parents=True)
+        # check if already unifi
         try:
             IntegrationScriptUnifier(
                 input=str(self.path.parent), output=str(dir), marketplace=marketplace

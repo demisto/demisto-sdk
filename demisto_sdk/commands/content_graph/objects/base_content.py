@@ -1,6 +1,6 @@
 import json
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, List, Set, Type, Union, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Set, Type, Union, cast
 
 from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
@@ -51,7 +51,7 @@ class ContentModelMetaclass(ModelMetaclass):
 
 class BaseContent(ABC, BaseModel, metaclass=ContentModelMetaclass):
     object_id: str = Field(alias="id")
-    content_type: ContentType
+    content_type: ClassVar[ContentType] = Field(include=True)
     marketplaces: List[MarketplaceVersions] = list(
         MarketplaceVersions
     )  # TODO check if default
@@ -61,9 +61,7 @@ class BaseContent(ABC, BaseModel, metaclass=ContentModelMetaclass):
     )  # too much data in the repr
 
     class Config:
-        arbitrary_types_allowed = (
-            True  # allows having custom classes for properties in model
-        )
+        arbitrary_types_allowed = True  # allows having custom classes for properties in model
         orm_mode = True  # allows using from_orm() method
         allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
 
@@ -92,7 +90,9 @@ class BaseContent(ABC, BaseModel, metaclass=ContentModelMetaclass):
             Dict[str, Any]: _description_
         """
 
-        return json.loads(self.json())
+        json_dct = json.loads(self.json())
+        json_dct['content_type'] = self.content_type
+        return json_dct
 
     @abstractmethod
     def dump(self, path: DirectoryPath, marketplace: MarketplaceVersions) -> None:

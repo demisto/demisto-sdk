@@ -118,7 +118,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def match(
         self,
-        marketplace: MarketplaceVersions,
+        marketplace: MarketplaceVersions = None,
         content_type: Optional[ContentType] = None,
         filter_list: Optional[
             Iterable[int]
@@ -129,7 +129,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         """
         match('xsoar', content_type=INTEGRATION)
         """
-
         with self.driver.session() as session:
             result: List[
                 Tuple[graph.Node, List[graph.Relationship], List[graph.Node]]

@@ -88,8 +88,8 @@ def create_nodes_by_type(
 
 def _match(
     tx: Transaction,
-    marketplace: MarketplaceVersions,
-    content_type: Optional[ContentType],
+    marketplace: MarketplaceVersions = None,
+    content_type: Optional[ContentType] = None,
     filter_list: Optional[Iterable[int]] = None,
     is_nested: bool = False,
     **properties,
@@ -98,10 +98,19 @@ def _match(
 
     content_type_str = f":{content_type}" if content_type else ""
     nesting_str = f"*..{NESTING_LEVEL}" if is_nested else ""
+    where = []
+    if marketplace or filter_list:
+        where.append("WHERE")
+        if filter_list:
+            where.append("id(n) IN $filter_list")
+        if filter_list and marketplace:
+            where.append("AND")
+        if marketplace:
+            where.append(f"'{marketplace}' IN n.marketplaces AND '{marketplace}' IN k.marketplaces")
 
     query = f"""
     MATCH (n{content_type_str}{params_str}) - [r{nesting_str}] - (k)
-    WHERE {"id(n) IN $filter_list AND" if filter_list else ""} '{marketplace}' IN n.marketplaces AND '{marketplace}' IN k.marketplaces
+    {" ".join(where)}
     RETURN n, collect(r) as rels, collect(k) as ks
     """
     result = []

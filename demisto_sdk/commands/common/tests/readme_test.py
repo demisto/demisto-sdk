@@ -566,4 +566,4 @@ def test_check_readme_relative_image_paths(mocker):
               status_code=200, text="Test3")
         formatted_errors = readme_validator.check_readme_relative_image_paths()
 
-    assert len(formatted_errors) == 0
+    assert not formatted_errors

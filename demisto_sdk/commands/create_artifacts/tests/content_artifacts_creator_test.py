@@ -5,8 +5,9 @@ from pathlib import Path, PosixPath
 from shutil import copyfile, copytree, rmtree
 
 import pytest
-
-from demisto_sdk.commands.common.constants import PACKS_DIR, TEST_PLAYBOOKS_DIR, MarketplaceVersions
+from demisto_sdk.commands.common.constants import (PACKS_DIR,
+                                                   TEST_PLAYBOOKS_DIR,
+                                                   MarketplaceVersions)
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import src_root

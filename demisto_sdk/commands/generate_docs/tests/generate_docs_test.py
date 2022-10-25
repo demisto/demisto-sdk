@@ -669,10 +669,9 @@ class TestAppendOrReplaceCommandInDocs:
     command = 'dxl-send-event'
     old_doc = open(positive_test_data_file).read()
     new_docs = "\n<NEW DOCS>\n"
-    new_command = '\n### dxl-send-event-new-one\n***\nSends the specified event to the DXL fabric.'
-    '\n\n\n##### Base Command\n\n`dxl-send-event-new-one`\n##### Input\n\n| **Argument Name** | **Description** | **Required** |\n'
-    '| --- | --- | --- |\n| topic | The topic for which to publish the message. | Required |\n| payload | The event payload. | Required |'
-    '\n\n\n##### Context Output\n\nThere is no context output for this command.\n\n##### Command Example\n``` ```\n\n##### Human Readable Output\n'
+    new_command = '\n### dxl-send-event-new-one\n***\nSends the specified event to the DXL fabric.\n##### Base Command\n`dxl-send-event-new-one`'
+    '\n##### Input\n| **Argument Name** | **Description** | **Required** |\n| --- | --- | --- |\n| topic | The topic for which to publish the message. '
+    '| Required |\n| payload | The event payload. | Required |\n##### Context Output\nThere is no context output for this command.'
     positive_inputs = [
         (old_doc, new_docs + new_command),
         (old_doc + "\n## Known Limitation", new_docs + new_command + "\n## Known Limitation"),

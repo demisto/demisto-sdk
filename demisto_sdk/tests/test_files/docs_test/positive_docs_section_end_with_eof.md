@@ -20,18 +20,7 @@ There is no context output for this command.
 
 ##### Command Example
 ``` ```
-
 ##### Human Readable Output
-
-
-##### Context Output
-
-There is no context output for this command.
-
-##### Command Example
-``` ```
-##### Human Readable Output
-
 ### dxl-send-event-new-one
 ***
 Sends the specified event to the DXL fabric.

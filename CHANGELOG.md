@@ -5,6 +5,7 @@
 * Fixed an issue in the **download** command, where an exception would be raised when downloading system playbooks.
 * Fixed an issue where the **upload** failed on playbooks containing a value that starts with `=`.
 * Fixed an issue where the **generate-unit-tests** failed to generate assertions, and generate unit tests when command names does not match method name.
+* Updated **create-content-artifacts** command to add the _datasets_ fields for modeling rules in packs' metadata.json files.
 ## 1.7.6
 
 * Fixed parsing of initialization arguments of client classes in the **generate-unit-tests** command.

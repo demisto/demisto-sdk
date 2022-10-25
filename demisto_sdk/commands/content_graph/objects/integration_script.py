@@ -1,11 +1,13 @@
 import logging
 from pathlib import Path
 from typing import Optional
-
+from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.unify.integration_script_unifier import \
     IntegrationScriptUnifier
+
+yaml = YAML_Handler()
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -15,17 +17,22 @@ class IntegrationScript(ContentItem):
     docker_image: Optional[str]
     description: Optional[str]
 
+    def is_unified(self) -> bool:
+        with open(self.path) as f:
+            package_yml = yaml.load(f)
+        return (script := package_yml.get("script", {}).get("script")) and script != "-" 
+    
     def dump(self, dir: Path, marketplace: MarketplaceVersions) -> None:
-        # demisto-sdk unify self.path -> path
+        if self.is_unified():
+            super().dump(dir, marketplace)
+            return
         dir.mkdir(exist_ok=True, parents=True)
-        # check if already unifi
         try:
             IntegrationScriptUnifier(
                 input=str(self.path.parent), output=str(dir), marketplace=marketplace
             ).unify()
         except Exception as e:
-            logger.info(
-                f"Failed to unify {self.path} to {dir}, probably already unified"
+            logger.debug(
+                f"Failed to unify {self.path} to {dir}, probably already unified. Error message: {e}"
             )
-            logger.debug(e)
             super().dump(dir, marketplace)

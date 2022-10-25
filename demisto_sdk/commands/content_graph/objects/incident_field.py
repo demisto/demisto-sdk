@@ -11,5 +11,5 @@ class IncidentField(ContentItem, content_type=ContentType.INCIDENT_FIELD):  # ty
     field_type: str = Field(alias="type")
     associated_to_all: bool = Field(False, alias="associatedToAll")
 
-    def included_in_metadata(self) -> Set[str]:
+    def metadata_fields(self) -> Set[str]:
         return {"name", "type", "description"}

@@ -10,5 +10,5 @@ class Widget(ContentItem, content_type=ContentType.WIDGET):
     widget_type: str = Field(alias="widgetType")
     data_type: Optional[str] = Field(alias="dataType")
 
-    def included_in_metadata(self) -> Set[str]:
+    def metadata_fields(self) -> Set[str]:
         return {"name", "dataType", "widgetType"}

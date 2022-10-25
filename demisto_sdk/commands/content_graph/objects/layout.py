@@ -20,5 +20,5 @@ class Layout(ContentItem, content_type=ContentType.LAYOUT):  # type: ignore[call
     details_v2: bool
     mobile: bool
 
-    def included_in_metadata(self) -> Set[str]:
+    def metadata_fields(self) -> Set[str]:
         return {"name", "description"}

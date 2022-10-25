@@ -12,15 +12,13 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 logger = logging.getLogger("demisto-sdk")
 
 
-class Repository(BaseModel):
+class ContentDTO(BaseModel):
     path: DirectoryPath
     packs: List[Pack]
 
     def dump(
         self, dir: DirectoryPath, marketplace: MarketplaceVersions, zip: bool = True
     ):
-        # TODO understand why multiprocessing is not working
-
         logger.info("starting repo dump")
         start_time = time.time()
         with ProcessPoolExecutor() as executer:

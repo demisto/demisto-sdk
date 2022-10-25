@@ -11,7 +11,7 @@ from demisto_sdk.commands.unify.rule_unifier import RuleUnifier
 class ParsingRule(ContentItem, content_type=ContentType.PARSING_RULE):
     pass
 
-    def included_in_metadata(self) -> Set[str]:
+    def metadata_fields(self) -> Set[str]:
         return {"name", "description"}
 
     def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:

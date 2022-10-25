@@ -14,5 +14,5 @@ class IndicatorType(ContentItem, content_type=ContentType.INDICATOR_TYPE):  # ty
         alias="enhancementScriptNames"
     )
 
-    def included_in_metadata(self) -> Set[str]:
+    def metadata_fields(self) -> Set[str]:
         return {"details", "reputationScriptName", "enhancementScriptNames"}

@@ -174,8 +174,6 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         metadata = self.dict(exclude={"path", "node_id", "content_type"})
         metadata["contentItems"] = {}
         for content_item in self.content_items:
-            if content_item.content_type == ContentType.TEST_PLAYBOOK:
-                continue
             try:
                 metadata["contentItems"].setdefault(
                     content_item.content_type.server_name, []

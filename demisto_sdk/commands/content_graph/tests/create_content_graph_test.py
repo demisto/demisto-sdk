@@ -17,7 +17,7 @@ from demisto_sdk.commands.content_graph.objects.integration import (
     Command, Integration)
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.playbook import Playbook
-from demisto_sdk.commands.content_graph.objects.repository import Repository
+from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.content_graph.objects.script import Script
 from demisto_sdk.commands.content_graph.objects.test_playbook import \
     TestPlaybook
@@ -36,7 +36,7 @@ def setup(mocker, repo: Repo):
 
 @pytest.fixture
 def repository(mocker):
-    repository = Repository(
+    repository = ContentDTO(
         path=Path(),
         packs=[],
     )
@@ -268,7 +268,7 @@ class TestCreateContentGraph:
 
     def test_create_content_graph_single_pack(
         self,
-        repository: Repository,
+        repository: ContentDTO,
     ):
         """
         Given:
@@ -393,7 +393,7 @@ class TestCreateContentGraph:
 
     def test_create_content_graph_two_integrations_with_same_command(
         self,
-        repository: Repository,
+        repository: ContentDTO,
     ):
         """
         Given:
@@ -458,7 +458,7 @@ class TestCreateContentGraph:
 
     def test_create_content_graph_playbook_uses_script_not_in_repository(
         self,
-        repository: Repository,
+        repository: ContentDTO,
     ):
         """
         Given:
@@ -498,7 +498,7 @@ class TestCreateContentGraph:
 
     def test_create_content_graph_duplicate_integrations(
         self,
-        repository: Repository,
+        repository: ContentDTO,
     ):
         """
         Given:
@@ -560,7 +560,7 @@ class TestCreateContentGraph:
 
     def test_create_content_graph_duplicate_integrations_different_marketplaces(
         self,
-        repository: Repository,
+        repository: ContentDTO,
     ):
         """
         Given:
@@ -626,7 +626,7 @@ class TestCreateContentGraph:
 
     def test_create_content_graph_duplicate_integrations_different_fromversion(
         self,
-        repository: Repository,
+        repository: ContentDTO,
     ):
         """
         Given:
@@ -690,7 +690,7 @@ class TestCreateContentGraph:
 
     def test_create_content_graph_empty_repository(
         self,
-        repository: Repository,
+        repository: ContentDTO,
     ):
         """
         Given:

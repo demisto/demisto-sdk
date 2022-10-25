@@ -12,5 +12,5 @@ class Mapper(ContentItem, content_type=ContentType.MAPPER):  # type: ignore[call
         alias="definitionId"
     )  # TODO decide if this should be optional or not
 
-    def included_in_metadata(self) -> Set[str]:
+    def metadata_fields(self) -> Set[str]:
         return {"name", "description"}

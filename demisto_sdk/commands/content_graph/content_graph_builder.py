@@ -7,7 +7,7 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.content_graph.common import Nodes, Relationships
 from demisto_sdk.commands.content_graph.interface.graph import \
     ContentGraphInterface
-from demisto_sdk.commands.content_graph.objects.repository import Repository
+from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 from demisto_sdk.commands.content_graph.parsers.repository import \
     RepositoryParser
 
@@ -38,13 +38,13 @@ class ContentGraphBuilder:
             self.content_graph.clean_graph()
         self.nodes: Nodes = Nodes()
         self.relationships: Relationships = Relationships()
-        self.repository: Repository = self._create_repository(repo_path)
+        self.repository: ContentDTO = self._create_repository(repo_path)
 
         for pack in self.repository.packs:
             self.nodes.update(pack.to_nodes())
             self.relationships.update(pack.relationships)
 
-    def _create_repository(self, path: Path) -> Repository:
+    def _create_repository(self, path: Path) -> ContentDTO:
         """Parses the repository and creates a repository model.
 
         Args:
@@ -58,14 +58,13 @@ class ContentGraphBuilder:
         except Exception:
             logger.error(traceback.format_exc())
             raise
-        return Repository.from_orm(repository_parser)
+        return ContentDTO.from_orm(repository_parser)
 
     def create_graph(self) -> None:
         """Runs DB queries using the collected nodes and relationships to create the content graph."""
         self.content_graph.create_indexes_and_constraints()
         self.content_graph.create_nodes(self.nodes)
         self.content_graph.create_relationships(self.relationships)
-        # self.content_graph.validate_graph()
 
     def delete_modified_packs_from_graph(self, packs: List[str]) -> None:
         pass

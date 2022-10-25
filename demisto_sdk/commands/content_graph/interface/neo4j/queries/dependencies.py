@@ -51,6 +51,12 @@ def create_pack_dependencies(tx: Transaction) -> None:
 
 
 def fix_marketplaces_properties(tx: Transaction) -> None:
+    """
+    Currently the content repo does not hold valid marketplaces attributes, so we fix it with the graph.
+
+    Args:
+        tx (Transaction): neo4j transaction
+    """
     inherit_content_items_marketplaces_property_from_packs(tx)
     for marketplace in MarketplaceVersions:
         update_marketplaces_property(tx, marketplace.value)

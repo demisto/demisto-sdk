@@ -9,5 +9,5 @@ class Wizard(ContentItem, content_type=ContentType.WIZARD):  # type: ignore[call
     integrations: List[str]
     playbooks: List[str]
 
-    def included_in_metadata(self) -> Set[str]:
+    def metadata_fields(self) -> Set[str]:
         return {"name", "description"}

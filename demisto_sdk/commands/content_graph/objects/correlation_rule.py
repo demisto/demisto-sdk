@@ -7,5 +7,5 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 class CorrelationRule(ContentItem, content_type=ContentType.CORRELATION_RULE):  # type: ignore[call-arg]
     pass
 
-    def included_in_metadata(self) -> Set[str]:
+    def metadata_fields(self) -> Set[str]:
         return {"name", "description"}

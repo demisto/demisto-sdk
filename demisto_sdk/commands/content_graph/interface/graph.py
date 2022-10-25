@@ -6,7 +6,7 @@ from demisto_sdk.commands.common.tools import get_content_path
 from demisto_sdk.commands.content_graph.common import (ContentType,
                                                        RelationshipType)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.content_graph.objects.repository import Repository
+from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
 
 class ContentGraphInterface(ABC):
@@ -47,7 +47,7 @@ class ContentGraphInterface(ABC):
         if dependencies:
             self.create_pack_dependencies()
         packs = self.match(marketplace, content_type=ContentType.PACK)
-        return Repository(path=get_content_path(), packs=packs)
+        return ContentDTO(path=get_content_path(), packs=packs)
 
     @abstractmethod
     def create_pack_dependencies(self):

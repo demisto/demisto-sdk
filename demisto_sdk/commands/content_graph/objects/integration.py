@@ -2,9 +2,7 @@ from typing import TYPE_CHECKING, List, Optional, Set
 
 if TYPE_CHECKING:
     # avoid circular imports
-    from demisto_sdk.commands.content_graph.objects.pack import Pack
     from demisto_sdk.commands.content_graph.objects.script import Script
-
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
 from pydantic import BaseModel, Field, validator
@@ -44,13 +42,6 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     commands: List[Command] = Field([], exclude=True)
 
     @property
-    def in_pack(self) -> Optional["Pack"]:
-        for r in self.relationships_data:
-            if r.relationship_type == RelationshipType.IN_PACK:
-                return r.related_to  # type: ignore[return-value]
-        return None
-
-    @property
     def imports(self) -> Optional["Script"]:
         for r in self.relationships_data:
             if r.relationship_type == RelationshipType.IMPORTS:
@@ -70,7 +61,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         ]
         self.commands = commands
 
-    def included_in_metadata(self):
+    def metadata_fields(self):
         return {
             "name": True,
             "description": True,

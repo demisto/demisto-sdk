@@ -1438,7 +1438,7 @@ class TestParsersAndModels:
             - Verify the repository is modeled correctly.
         """
         from demisto_sdk.commands.content_graph.objects.repository import \
-            Repository
+            ContentDTO
         from demisto_sdk.commands.content_graph.parsers.repository import \
             RepositoryParser
 
@@ -1447,6 +1447,6 @@ class TestParsersAndModels:
         pack2 = repo.create_pack("sample2")
         pack2.pack_metadata.write_json(load_json("pack_metadata.json"))
         parser = RepositoryParser(Path(repo.path))
-        model = Repository.from_orm(parser)
+        model = ContentDTO.from_orm(parser)
         pack_ids = {pack.object_id for pack in model.packs}
         assert pack_ids == {"sample1", "sample2"}

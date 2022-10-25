@@ -38,9 +38,9 @@ class ContentGraphBuilder:
             self.content_graph.clean_graph()
         self.nodes: Nodes = Nodes()
         self.relationships: Relationships = Relationships()
-        self.repository: ContentDTO = self._create_repository(repo_path)
+        self.content_dto: ContentDTO = self._create_repository(repo_path)
 
-        for pack in self.repository.packs:
+        for pack in self.content_dto.packs:
             self.nodes.update(pack.to_nodes())
             self.relationships.update(pack.relationships)
 

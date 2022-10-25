@@ -404,7 +404,8 @@ class ContentItemsHandler:
     def add_modeling_rule_as_content_item(self, content_object: ContentObject):
         self.content_items[ContentItems.MODELING_RULES].append({
             'name': content_object.get('name', ''),
-            'description': content_object.get('description', '')
+            'description': content_object.get('description', ''),
+            'datasets': list(content_object.get('schema', {}).keys()),
         })
 
     def add_correlation_rule_as_content_item(self, content_object: ContentObject):

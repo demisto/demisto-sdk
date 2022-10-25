@@ -230,7 +230,7 @@ def test_contains_modeling_rule():
     cca.logger = logging_setup(0)
 
     with temp_dir() as temp:
-        packs_zipper = PacksZipper(pack_paths=str(TEST_DATA / 'TestModelingRule'),
+        packs_zipper = PacksZipper(pack_paths=str(TEST_DATA / PACKS_DIR / 'TestModelingRule'),
                                    output=temp,
                                    content_version='6.0.0',
                                    marketplace=MarketplaceVersions.MarketplaceV2.value,

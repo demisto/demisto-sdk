@@ -541,6 +541,19 @@ def test_verify_readme_image_paths(mocker):
 
 
 def test_check_readme_relative_image_paths(mocker):
+    """
+
+    Given
+        - A README file (not pack README) with invalid relative image
+         paths and invalid absolute image paths in it.
+    When
+        - Run validate on README file and ignoring RM108 error
+    Then
+        - Ensure:
+            - Validation pass.
+            - nothing is printed as error.
+
+    """
     readme_validator = ReadMeValidator(IMAGES_MD, ignored_errors={IMAGES_MD: 'RM108'})
     mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='branch_name')
     with requests_mock.Mocker() as m:

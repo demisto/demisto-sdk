@@ -21,7 +21,7 @@ ALLOWED_IGNORE_ERRORS = [
     'IN109', 'IN110', 'IN122', 'IN124', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145', 'IN153', 'IN154',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
-    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107', 'PB118', 'PB119',
+    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107', 'PB118', 'PB119', 'PB121',
     'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM110', 'RM112', 'RM113',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
@@ -339,6 +339,7 @@ ERROR_CODE = {
     "input_key_not_in_tasks": {'code': "PB118", 'ui_applicable': False, 'related_field': ''},
     "input_used_not_in_input_section": {'code': "PB119", 'ui_applicable': False, 'related_field': ''},
     "playbook_is_deprecated_and_used": {'code': 'PB120', 'ui_applicable': False, 'related_field': 'deprecated'},
+    "incorrect_value_references": {'code': "PB121", 'ui_applicable': False, 'related_field': 'taskid'},
 
     # PP - Pre-Process Rules
     "invalid_from_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
@@ -2184,6 +2185,13 @@ class Errors:
     def taskid_different_from_id(task_key, id_, taskid):
         return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id_}, " \
                f"must be with equal value. "
+
+    @staticmethod
+    @error_code_decorator
+    def incorrect_value_references(task_key, value, task_name, section_name):
+        return f"On task: '{task_name}' with ID: '{task_key}', an input with the value: '{value}' was passed as string, rather than as " \
+            f"a reference in the '{section_name}' section. Change the reference to 'From previous tasks' from 'As value'" \
+            " , or change the value to ${" + value + "}."
 
     @staticmethod
     @error_code_decorator

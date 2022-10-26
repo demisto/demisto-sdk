@@ -7,6 +7,7 @@
 * Fixed an issue where the **generate-unit-tests** failed to generate assertions, and generate unit tests when command names does not match method name.
 * Added a new check to **validate**, making sure playbook task values are passed as references.
 * Fixed an issue where the **update-release-notes** deleted existing release notes, now appending to it instead.
+* Renamed 'Agent Config' to 'XDRC Templates'.
 
 ## 1.7.6
 

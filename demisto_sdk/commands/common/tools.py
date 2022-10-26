@@ -190,8 +190,10 @@ def get_log_verbose() -> bool:
     return LOG_VERBOSE
 
 
-def get_mp_tag_parser():
+def get_mp_tag_parser(marketplace: Optional[MarketplaceVersions] = None):
     global MARKETPLACE_TAG_PARSER
+    if marketplace:
+        return marketplace
     if MARKETPLACE_TAG_PARSER is None:
         MARKETPLACE_TAG_PARSER = MarketplaceTagParser(
             os.getenv(ENV_DEMISTO_SDK_MARKETPLACE, MarketplaceVersions.XSOAR.value))

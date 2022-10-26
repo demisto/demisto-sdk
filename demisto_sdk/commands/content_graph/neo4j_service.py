@@ -185,4 +185,9 @@ def load(input_path: Path, use_docker=True):
 
 
 def is_alive():
-    return requests.get(NEO4J_DATABASE_HTTP).ok
+    try:
+        return requests.get(NEO4J_DATABASE_HTTP, timeout=10).ok
+    except requests.exceptions.RequestException:
+        return False
+        
+    

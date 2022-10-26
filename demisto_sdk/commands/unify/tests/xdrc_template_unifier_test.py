@@ -2,7 +2,8 @@ import json
 import os
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.unify.xdrc_template_unifier import XDRCTemplateUnifier
+from demisto_sdk.commands.unify.xdrc_template_unifier import \
+    XDRCTemplateUnifier
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
 

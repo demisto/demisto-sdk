@@ -16,9 +16,8 @@ from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.update_id_set import (
     add_item_to_exclusion_dict, does_dict_have_alternative_key,
-    find_duplicates, get_xdrc_template_data, get_classifier_data,
-    get_correlation_rule_data, get_dashboard_data,
-    get_fields_by_script_argument,
+    find_duplicates, get_classifier_data, get_correlation_rule_data,
+    get_dashboard_data, get_fields_by_script_argument,
     get_filters_and_transformers_from_complex_value,
     get_filters_and_transformers_from_playbook, get_general_data,
     get_generic_field_data, get_generic_module_data, get_generic_type_data,
@@ -26,11 +25,11 @@ from demisto_sdk.commands.common.update_id_set import (
     get_indicator_type_data, get_layout_data, get_mapper_data,
     get_modeling_rule_data, get_pack_metadata_data, get_parsing_rule_data,
     get_playbook_data, get_report_data, get_script_data, get_trigger_data,
-    get_values_for_keys_recursively, get_widget_data, get_xsiam_dashboard_data,
-    get_xsiam_report_data, has_duplicate, merge_id_sets, process_general_items,
-    process_incident_fields, process_integration, process_jobs,
-    process_layoutscontainers, process_script, process_wizards,
-    re_create_id_set, should_skip_item_by_mp)
+    get_values_for_keys_recursively, get_widget_data, get_xdrc_template_data,
+    get_xsiam_dashboard_data, get_xsiam_report_data, has_duplicate,
+    merge_id_sets, process_general_items, process_incident_fields,
+    process_integration, process_jobs, process_layoutscontainers,
+    process_script, process_wizards, re_create_id_set, should_skip_item_by_mp)
 from TestSuite.utils import IsEqualFunctions
 
 json = JSON_Handler()
@@ -3084,11 +3083,11 @@ class TestXDRCTemplates:
         """
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)
         xdrc_template = pack.create_xdrc_template("xdrc_template_name", {"content_global_id": "xdrc_template_id",
-                                                                      "name": "xdrc_template_name",
-                                                                      "os_type": "os_type_test",
-                                                                      "profile_type": "profile_type_test",
-                                                                      "yaml_template": 'yaml_test'
-                                                                      })
+                                                                         "name": "xdrc_template_name",
+                                                                         "os_type": "os_type_test",
+                                                                         "profile_type": "profile_type_test",
+                                                                         "yaml_template": 'yaml_test'
+                                                                         })
         res = process_general_items(xdrc_template.path, {pack.name: {}},
                                     MarketplaceVersions.MarketplaceV2.value, True, (FileType.XDRC_TEMPLATE,),
                                     get_xdrc_template_data, 'json')

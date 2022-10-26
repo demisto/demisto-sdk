@@ -1,15 +1,14 @@
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from demisto_sdk.commands.common.constants import (XDRC_TEMPLATE_DIR,
-                                                   CORRELATION_RULES_DIR,
+from demisto_sdk.commands.common.constants import (CORRELATION_RULES_DIR,
                                                    DEFAULT_IMAGE_BASE64,
                                                    MODELING_RULES_DIR,
                                                    PARSING_RULES_DIR,
                                                    TRIGGER_DIR,
+                                                   XDRC_TEMPLATE_DIR,
                                                    XSIAM_DASHBOARDS_DIR,
                                                    XSIAM_REPORTS_DIR)
-from TestSuite.xdrc_template import XDRCTemplate
 from TestSuite.correlation_rule import CorrelationRule
 from TestSuite.file import File
 from TestSuite.integration import Integration
@@ -23,6 +22,7 @@ from TestSuite.test_tools import suite_join_path
 from TestSuite.text_based import TextBased
 from TestSuite.trigger import Trigger
 from TestSuite.wizard import Wizard
+from TestSuite.xdrc_template import XDRCTemplate
 from TestSuite.xsiam_dashboard import XSIAMDashboard
 from TestSuite.xsiam_report import XSIAMReport
 from TestSuite.yml import YAML

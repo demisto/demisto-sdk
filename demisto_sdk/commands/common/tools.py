@@ -31,8 +31,8 @@ from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
 
 from demisto_sdk.commands.common.constants import (
-    XDRC_TEMPLATE_DIR, ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK,
-    CLASSIFIERS_DIR, DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
+    ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
+    DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
     DOC_FILES_DIR, ENV_DEMISTO_SDK_MARKETPLACE, ID_IN_COMMONFIELDS, ID_IN_ROOT,
     INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
@@ -45,9 +45,9 @@ from demisto_sdk.commands.common.constants import (
     PACKS_README_FILE_NAME, PARSING_RULES_DIR, PLAYBOOKS_DIR,
     PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
     SCRIPTS_DIR, SIEM_ONLY_ENTITIES, TEST_PLAYBOOKS_DIR, TRIGGER_DIR,
-    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSIAM_DASHBOARDS_DIR,
-    XSIAM_REPORTS_DIR, XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys,
-    IdSetKeys, MarketplaceVersions, urljoin)
+    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XDRC_TEMPLATE_DIR,
+    XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, XSOAR_CONFIG_FILE, FileType,
+    FileTypeToIDSetKeys, IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
                                                             GitProvider)
 from demisto_sdk.commands.common.git_util import GitUtil

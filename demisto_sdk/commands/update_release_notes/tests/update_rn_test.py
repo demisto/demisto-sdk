@@ -4,6 +4,7 @@ import pathlib
 import shutil
 from collections import Counter
 from copy import deepcopy
+from pathlib import Path
 from typing import Dict, Optional
 
 import mock
@@ -1743,3 +1744,21 @@ def test_get_deprecated_comment_from_desc():
     assert get_deprecated_comment_from_desc(original_desc) == ''
     assert get_deprecated_comment_from_desc(deprecate_with_replacement) == "Use Cortex XDR v2 instead"
     assert get_deprecated_comment_from_desc(deprecate_without_replacement) == "No available replacement"
+
+
+def test_handle_existing_rn_version_path(mocker, repo):
+    """
+    Given:
+        - Release notes update when there is an existing file.
+    When:
+        - Calling handle_existing_rn_version_path function
+    Then:
+        Ensure the function does not sets should delete existing rn property to True when paths are identical.
+    """
+    pack = repo.create_pack('test')
+    mocker.patch.object(Path, 'absolute', return_value=f'{str(pack.path)}/ReleaseNotes/1_0_1.md')
+    pack.create_release_notes(version='1_0_1')
+    client = UpdateRN(pack_path=str(pack.path), update_type='revision', modified_files_in_pack=set(), added_files=set())
+    client.existing_rn_version_path = 'ReleaseNotes/1_0_1.md'
+    client.handle_existing_rn_version_path(f'{str(pack.path)}/ReleaseNotes/1_0_1.md')
+    assert not client.should_delete_existing_rn

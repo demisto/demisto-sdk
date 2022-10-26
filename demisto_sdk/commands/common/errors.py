@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import decorator
 from requests import Response
+
 from demisto_sdk.commands.common.constants import (
     BETA_INTEGRATION_DISCLAIMER, FILETYPE_TO_DEFAULT_FROMVERSION,
     INTEGRATION_CATEGORIES, PACK_METADATA_DESC, PACK_METADATA_NAME, FileType,
@@ -2475,7 +2476,7 @@ class Errors:
                f'The description of the pack in the pack_metadata.json should be one of the following formats:\n' \
                f'1. "Deprecated. Use <PACK_NAME> instead."\n' \
                f'2. "Deprecated. <REASON> No available replacement."'
-               
+
     @staticmethod
     @error_code_decorator
     def categories_field_does_not_match_standard(approved_list):

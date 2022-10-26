@@ -336,9 +336,9 @@ class TestPackMetadataValidator:
         pack, should_pack_be_deprecated = deprecated_pack
         validator = PackUniqueFilesValidator(pack.path)
         assert validator.should_pack_be_deprecated() == should_pack_be_deprecated
-      
+
     VALID_CATEGORIES_LIST = ["Endpoint", "File Integrity Management"]
-    
+
     @pytest.mark.parametrize("metadata_content, expected_results, valid_list_mock",
                              [({"categories": ["Endpoint"]}, True, VALID_CATEGORIES_LIST),
                               ({"categories": ["Analytics & SIEMM"]}, False, VALID_CATEGORIES_LIST),

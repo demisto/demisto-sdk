@@ -854,7 +854,7 @@ class PackUniqueFilesValidator(BaseValidator):
             if self._add_error(Errors.categories_field_does_not_match_standard(approved_list), self.pack_meta_file):
                 return False
         return True
-    
+
     def validate_categories_approved(self, categories, approved_list):
         """
         Check that the pack categories contain only approved categories.
@@ -862,7 +862,7 @@ class PackUniqueFilesValidator(BaseValidator):
         Args:
             categories (list): the list of the pack's categories.
             approved_list (list): the predefined approved categories list.
-        
+
         Returns:
             bool: True if all the pack categories is from the approved list. Otherwise, return False.
         """

@@ -1,3 +1,4 @@
+from collections import defaultdict
 import logging
 import shutil
 from itertools import groupby
@@ -164,9 +165,9 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             for r in self.relationships_data
             if r.relationship_type == RelationshipType.IN_PACK and r.related_to == r.source
         ]
-        content_item_dct = {}
-        for content_type, group in groupby(content_items, lambda c: c.content_type):  # type: ignore[union-attr]
-            content_item_dct[content_type] = list(group)
+        content_item_dct = defaultdict(list)
+        for c in content_items:
+            content_item_dct[c.content_type].append(c)
 
         self.content_items = PackContentItems.parse_obj(content_item_dct)
 

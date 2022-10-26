@@ -204,6 +204,11 @@ def find_model_for_id(packs: List[Pack], source_id: str):
 
 
 def create_mini_content(repository: ContentDTO):
+    """Created a content repo with three packs and relationships§
+
+    Args:
+        repository (ContentDTO): the content dto to populate
+    """
     relationships = {
         RelationshipType.IN_PACK: [
             mock_relationship(
@@ -273,10 +278,7 @@ def create_mini_content(repository: ContentDTO):
         ],
         RelationshipType.USES_BY_ID: [
             mock_relationship(
-                "TestApiModule",
-                ContentType.SCRIPT,
-                "SampleScript2",
-                ContentType.SCRIPT,
+                "TestApiModule", ContentType.SCRIPT, "SampleScript2", ContentType.SCRIPT, mandatorily=True
             ),
         ],
     }
@@ -313,7 +315,10 @@ def create_mini_content(repository: ContentDTO):
 
 
 class TestCreateContentGraph:
-    def _test_create_content_graph_end_to_end(self, repo: Repo, start_service: bool):
+    def _test_create_content_graph_end_to_end(self, repo: Repo, start_service: bool, tmp_path: Path):
+        import demisto_sdk.commands.content_graph.objects.repository as repo_module
+
+        repo_module.USE_FUTURE = False
         pack = repo.create_pack("TestPack")
         pack.pack_metadata.write_json(load_json("pack_metadata.json"))
         integration = pack.create_integration()
@@ -333,7 +338,7 @@ class TestCreateContentGraph:
                 content_type=ContentType.INTEGRATION,
             )
             all_content_items = interface.search(marketplace=MarketplaceVersions.XSOAR)
-            repo = interface.marshal_graph(MarketplaceVersions.XSOAR, True)
+            content_cto = interface.marshal_graph(MarketplaceVersions.XSOAR)
         assert len(packs) == 1
         assert len(integrations) == 1
         assert len(all_content_items) == 8
@@ -354,7 +359,14 @@ class TestCreateContentGraph:
         returned_scripts = {script.object_id for script in packs[0].content_items.script}
         assert returned_scripts == {"SampleScript", "TestApiModule"}
 
-    def test_create_content_graph_end_to_end_with_new_service(self, repo: Repo):
+        content_cto.dump(tmp_path, MarketplaceVersions.XSOAR, zip=False)
+        assert Path.exists(tmp_path / "TestPack")
+        assert Path.exists(tmp_path / "TestPack" / "metadata.json")
+        assert Path.exists(tmp_path / "TestPack" / "Integrations" / "integration-integration_0.yml")
+        assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-script0.yml")
+        assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-script1.yml")
+
+    def test_create_content_graph_end_to_end_with_new_service(self, repo: Repo, tmp_path: Path):
         """
         Given:
             - A repository with a pack TestPack, containing an integration TestIntegration.
@@ -364,9 +376,9 @@ class TestCreateContentGraph:
             - Make sure the service remains available by querying for all content items in the graph.
             - Make sure there is a single integration in the query response.
         """
-        self._test_create_content_graph_end_to_end(repo, start_service=True)
+        self._test_create_content_graph_end_to_end(repo, start_service=True, tmp_path=tmp_path)
 
-    def test_create_content_graph_end_to_end_with_existing_service(self, repo: Repo):
+    def test_create_content_graph_end_to_end_with_existing_service(self, repo: Repo, tmp_path: Path):
         """
         Given:
             - A repository with a pack TestPack, containing an integration TestIntegration.
@@ -376,7 +388,7 @@ class TestCreateContentGraph:
             - Make sure the service remains available by querying for all content items in the graph.
             - Make sure there is a single integration in the query response.
         """
-        self._test_create_content_graph_end_to_end(repo, start_service=False)
+        self._test_create_content_graph_end_to_end(repo, start_service=False, tmp_path=tmp_path)
 
     def test_create_content_graph_relationships(
         self,
@@ -417,12 +429,14 @@ class TestCreateContentGraph:
                             assert content_item_source.tested_by[0].object_id == content_item_target.object_id
                 assert packs[0].depends_on[0] == packs[1]
                 assert packs[1].depends_on[0] == packs[2]
-            
+
             # now with all levels
-            packs = interface.search(MarketplaceVersions.XSOAR, content_type=ContentType.PACK, all_level_relationships=True)
+            packs = interface.search(
+                MarketplaceVersions.XSOAR, content_type=ContentType.PACK, all_level_relationships=True
+            )
             depends_on_pack1 = packs[0].depends_on
-            assert pack[1] in depends_on_pack1
-            assert pack[2] in depends_on_pack1
+            assert packs[1] in depends_on_pack1
+            assert packs[2] in depends_on_pack1
 
     def test_create_content_graph_two_integrations_with_same_command(
         self,
@@ -722,7 +736,6 @@ class TestCreateContentGraph:
 
     def test_create_content_graph_empty_repository(
         self,
-        repository: ContentDTO,
     ):
         """
         Given:
@@ -736,6 +749,21 @@ class TestCreateContentGraph:
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
             assert not interface.search()
+
+    def test_dest_dump_zips(self, mocker, tmp_path: Path, repository: ContentDTO):
+        import demisto_sdk.commands.content_graph.objects.repository as repository_module
+        from concurrent.futures import ThreadPoolExecutor
+
+        mocker.patch.object(repository_module, "ProcessPoolExecutor", ThreadPoolExecutor)
+        create_mini_content(repository)
+
+        with ContentGraphInterface() as interface:
+            create_content_graph(interface)
+            content_dto = interface.marshal_graph(MarketplaceVersions.XSOAR)
+            content_dto.dump(tmp_path, MarketplaceVersions.XSOAR, zip=False)
+        assert Path.exists(tmp_path / "dummypath")
+        # with open(tmp_path, "rb") as f:
+        #     pass
 
     def test_stop_content_graph(self):
         """

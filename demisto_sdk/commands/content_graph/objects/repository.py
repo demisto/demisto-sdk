@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 import shutil
 import time
 from concurrent.futures import ProcessPoolExecutor
@@ -12,9 +13,11 @@ from demisto_sdk.commands.content_graph.objects.pack import Pack
 
 logger = logging.getLogger("demisto-sdk")
 
+USE_FUTURE = True  # toggle this for better debugging
+
 
 class ContentDTO(BaseModel):
-    path: DirectoryPath = get_content_path()
+    path: DirectoryPath = Path(get_content_path())
     packs: List[Pack]
 
     def dump(
@@ -22,11 +25,14 @@ class ContentDTO(BaseModel):
     ):
         logger.info("starting repo dump")
         start_time = time.time()
-        with ProcessPoolExecutor() as executer:
-            {
-                executer.submit(pack.dump, dir / pack.path.name, marketplace): pack
-                for pack in self.packs
-            }
+        if USE_FUTURE:
+            with ProcessPoolExecutor() as executer:
+                for pack in self.packs:
+                    executer.submit(pack.dump, dir / pack.path.name, marketplace)
+        else:
+            for pack in self.packs:
+                pack.dump(dir / pack.path.name, marketplace)
+
         time_taken = time.time() - start_time
         logger.info(f"ending repo dump. Took {time_taken} seconds")
 

@@ -59,7 +59,7 @@ class ContentGraphInterface(ABC):
 
     def marshal_graph(
         self, marketplace: MarketplaceVersions, all_level_relationships: bool = False
-    ):
+    ) -> ContentDTO:
         packs = self.search(
             marketplace, content_type=ContentType.PACK, all_level_relationships=all_level_relationships
         )

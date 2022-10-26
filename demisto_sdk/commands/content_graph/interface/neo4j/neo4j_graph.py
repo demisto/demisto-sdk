@@ -40,7 +40,7 @@ class NoModelException(Exception):
 class Neo4jContentGraphInterface(ContentGraphInterface):
 
     # this is used to save cache of packs and integrations which queried
-    _id_to_obj: Dict[str, Union[BaseContent, Command]] = {}
+    _id_to_obj: Dict[int, Union[BaseContent, Command]] = {}
 
     def __init__(
         self,
@@ -79,7 +79,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             NoModelException: If no model found to parse on
         """
         for node in nodes:
-            element_id = node.element_id
+            element_id = node.id
             if element_id in Neo4jContentGraphInterface._id_to_obj:
                 continue
             content_type = node.get("content_type")
@@ -109,7 +109,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         """
         final_result = []
         for res in result:
-            obj = Neo4jContentGraphInterface._id_to_obj[res.node_from.element_id]
+            obj = Neo4jContentGraphInterface._id_to_obj[res.node_from.id]
             self._add_relationships(obj, res.node_from, res.relationships, res.nodes_to)
             if isinstance(obj, Pack):
                 obj.set_content_items()
@@ -138,7 +138,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             if res.node_from.get("content_type") == ContentType.PACK:
                 content_items_nodes.update(
                     {
-                        int(node_to.element_id)
+                        int(node_to.id)
                         for rel, node_to in zip(res.relationships, res.nodes_to)
                         if rel.type == RelationshipType.IN_PACK
                     }
@@ -165,10 +165,10 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         relationships = {
             RelationshipData(
                 relationship_type=rel.type,
-                source=Neo4jContentGraphInterface._id_to_obj[rel.start_node.element_id],
-                target=Neo4jContentGraphInterface._id_to_obj[rel.end_node.element_id],
-                related_to=Neo4jContentGraphInterface._id_to_obj[node_to.element_id],
-                is_direct=rel.start_node.element_id == node_from.element_id or rel.end_node.element_id == node_from.element_id,
+                source=Neo4jContentGraphInterface._id_to_obj[rel.start_node.id],
+                target=Neo4jContentGraphInterface._id_to_obj[rel.end_node.id],
+                related_to=Neo4jContentGraphInterface._id_to_obj[node_to.id],
+                is_direct=rel.start_node.id == node_from.id or rel.end_node.id == node_from.id,
                 **rel,
             )
             for node_to, rel in zip(nodes_to, relationships)
@@ -177,25 +177,25 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         
     def create_indexes_and_constraints(self) -> None:
         with self.driver.session() as session:
-            session.execute_write(create_indexes)
-            session.execute_write(create_constraints)
+            session.write_transaction(create_indexes)
+            session.write_transaction(create_constraints)
 
     def create_nodes(self, nodes: Dict[ContentType, List[Dict[str, Any]]]) -> None:
         with self.driver.session() as session:
-            session.execute_write(create_nodes, nodes)
+            session.write_transaction(create_nodes, nodes)
 
     def validate_graph(self) -> None:
         with self.driver.session() as session:
-            if session.execute_read(duplicates_exist):
+            if session.read_transaction(duplicates_exist):
                 raise Exception("Duplicates found in graph.")
 
     def create_relationships(self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]) -> None:
         with self.driver.session() as session:
-            session.execute_write(create_relationships, relationships)
+            session.write_transaction(create_relationships, relationships)
 
     def clean_graph(self):
         with self.driver.session() as session:
-            session.execute_write(delete_all_graph_nodes)
+            session.write_transaction(delete_all_graph_nodes)
 
     def search(
         self,
@@ -204,13 +204,13 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         filter_list: Optional[Iterable[int]] = None,
         all_level_relationships: bool = False,
         **properties,
-    ) -> List[BaseContent]:
+    ) -> List[Union[BaseContent, Command]]:
         super().search()
         with self.driver.session() as session:
-            result: List[Neo4jResult] = session.execute_read(
+            result: List[Neo4jResult] = session.read_transaction(
                 _match, marketplace, content_type, filter_list, all_level_relationships, **properties
             )
-            content_items_nodes = set()
+            content_items_nodes: Set[graph.Node] = set()
             nodes_set = self._get_nodes_set_from_result(result, content_items_nodes)
             self._add_to_mapping(nodes_set)
 
@@ -225,7 +225,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def create_pack_dependencies(self):
         with self.driver.session() as session:
-            session.execute_write(create_pack_dependencies)
+            session.write_transaction(create_pack_dependencies)
         super().create_pack_dependencies()
             
     def run_single_query(self, query: str, **kwargs) -> Any:

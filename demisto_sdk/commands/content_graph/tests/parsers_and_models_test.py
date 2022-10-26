@@ -675,7 +675,7 @@ class TestParsersAndModels:
             - Verify the specific properties of the content item are parsed correctly.
         """
         from demisto_sdk.commands.content_graph.objects.integration import \
-            BaseIntegration
+            Integration
         from demisto_sdk.commands.content_graph.parsers.integration import \
             IntegrationParser
 
@@ -691,7 +691,7 @@ class TestParsersAndModels:
             imports=["MicrosoftApiModule"],
             tests=["test_playbook"],
         )
-        model = BaseIntegration.from_orm(parser)
+        model = Integration.from_orm(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="TestIntegration",
@@ -713,7 +713,7 @@ class TestParsersAndModels:
             - Verify the specific properties of the content item are parsed correctly.
         """
         from demisto_sdk.commands.content_graph.objects.integration import \
-            BaseIntegration
+            Integration
         from demisto_sdk.commands.content_graph.parsers.integration import \
             IntegrationParser
 
@@ -729,7 +729,7 @@ class TestParsersAndModels:
                 "malwr-detonate",
             ],
         )
-        model = BaseIntegration.from_orm(parser)
+        model = Integration.from_orm(parser)
         ContentItemModelVerifier.run(
             model,
             expected_id="malwr",
@@ -1380,7 +1380,7 @@ class TestParsersAndModels:
             - Verify the pack is modeled correctly.
         """
         from demisto_sdk.commands.content_graph.objects.pack import \
-            BasePack as PackModel
+            Pack as PackModel
         from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 
         pack = repo.create_pack("HelloWorld")

@@ -8,6 +8,7 @@
 * Updated **create-content-artifacts** command to add the _datasets_ fields for modeling rules in packs' metadata.json files.
 * Added a new check to **validate**, making sure playbook task values are passed as references.
 * Fixed an issue where the **update-release-notes** deleted existing release notes, now appending to it instead.
+* Fixed an issue where **validate** printed blank space in case of validation failed and ignored.
 
 ## 1.7.6
 

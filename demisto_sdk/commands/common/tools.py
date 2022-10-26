@@ -114,9 +114,7 @@ class MarketplaceTagParser:
     XSIAM_INLINE_PREFIX = '<~XSIAM>'
     XSIAM_INLINE_SUFFIX = '</~XSIAM>'
 
-    def __init__(self, marketplace: str = None):
-        if not marketplace:
-            marketplace = os.getenv(ENV_DEMISTO_SDK_MARKETPLACE, MarketplaceVersions.XSOAR.value)
+    def __init__(self, marketplace: str = MarketplaceVersions.XSOAR.value):
         self.marketplace = marketplace
         self._xsoar_parser = TagParser(
             tag_prefix=self.XSOAR_PREFIX,
@@ -192,10 +190,11 @@ def get_log_verbose() -> bool:
     return LOG_VERBOSE
 
 
-def get_mp_tag_parser(marketplace: MarketplaceVersions = None):
+def get_mp_tag_parser():
     global MARKETPLACE_TAG_PARSER
     if MARKETPLACE_TAG_PARSER is None:
-        MARKETPLACE_TAG_PARSER = MarketplaceTagParser(marketplace)
+        MARKETPLACE_TAG_PARSER = MarketplaceTagParser(
+            os.getenv(ENV_DEMISTO_SDK_MARKETPLACE, MarketplaceVersions.XSOAR.value))
     return MARKETPLACE_TAG_PARSER
 
 
@@ -276,16 +275,18 @@ def run_command(command, is_silenced=True, exit_on_error=True, cwd=None):
         string. The output of the command you are trying to execute.
     """
     if is_silenced:
-        p = Popen(shlex.split(command), stdout=PIPE, stderr=PIPE, universal_newlines=True, cwd=cwd)
+        p = Popen(command.split(), stdout=PIPE, stderr=PIPE, universal_newlines=True, cwd=cwd)
     else:
-        p = Popen(shlex.split(command), cwd=cwd)  # type: ignore
+        p = Popen(command.split(), cwd=cwd)  # type: ignore
 
     output, err = p.communicate()
     if err:
         if exit_on_error:
             print_error('Failed to run command {}\nerror details:\n{}'.format(command, err))
             sys.exit(1)
-        raise Exception('Failed to run command {}\nerror details:\n{}'.format(command, err))
+        else:
+            raise RuntimeError('Failed to run command {}\nerror details:\n{}'.format(command, err))
+
     return output
 
 

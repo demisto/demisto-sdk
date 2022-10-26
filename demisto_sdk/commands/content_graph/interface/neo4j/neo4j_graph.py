@@ -1,35 +1,34 @@
 import logging
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union, cast
+from typing import Any, Dict, Iterable, List, Optional, Set, Union
 
-from neo4j import GraphDatabase, Neo4jDriver, Result, Transaction, graph
+from neo4j import GraphDatabase, Neo4jDriver, graph
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import (NEO4J_DATABASE_URL,
-                                                       NEO4J_PASSWORD,
-                                                       NEO4J_USERNAME,
-                                                       ContentType,
-                                                       RelationshipType)
-from demisto_sdk.commands.content_graph.interface.graph import \
-    ContentGraphInterface
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import \
-    create_constraints
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import \
-    create_pack_dependencies
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import \
-    create_indexes
+from demisto_sdk.commands.content_graph.common import (
+    NEO4J_DATABASE_URL,
+    NEO4J_PASSWORD,
+    NEO4J_USERNAME,
+    ContentType,
+    Neo4jResult,
+    RelationshipType,
+)
+from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import create_constraints
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import create_pack_dependencies
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import create_indexes
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
-    _match, create_nodes, delete_all_graph_nodes, duplicates_exist)
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import \
-    create_relationships
-from demisto_sdk.commands.content_graph.objects.base_content import (
-    BaseContent, ServerContent, content_type_to_model)
-from demisto_sdk.commands.content_graph.objects.integration import (
-    BaseCommand, Integration)
+    _match,
+    create_nodes,
+    delete_all_graph_nodes,
+    duplicates_exist,
+)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import create_relationships
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent, ServerContent, content_type_to_model
+from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.content_graph.objects.relationship import \
-    RelationshipData
+from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -41,7 +40,7 @@ class NoModelException(Exception):
 class Neo4jContentGraphInterface(ContentGraphInterface):
 
     # this is used to save cache of packs and integrations which queried
-    _id_to_obj: Dict[str, Union[BaseContent, BaseCommand]] = {}
+    _id_to_obj: Dict[str, Union[BaseContent, Command]] = {}
 
     def __init__(
         self,
@@ -70,9 +69,16 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def close(self) -> None:
         self.driver.close()
 
-    def _serialize_nodes(self, nodes: Union[dict, Iterable[graph.Node]]) -> None:
+    def _add_to_mapping(self, nodes: Iterable[graph.Node]) -> None:
+        """Parses nodes to content objects and adds it to mapping
+
+        Args:
+            nodes (Iterable[graph.Node]): List of nodes to parse
+
+        Raises:
+            NoModelException: If no model found to parse on
+        """
         for node in nodes:
-            # the dictionary should have the `element_id` field!
             element_id = node.element_id
             if element_id in Neo4jContentGraphInterface._id_to_obj:
                 continue
@@ -82,7 +88,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 Neo4jContentGraphInterface._id_to_obj[element_id] = server_content
 
             elif content_type == ContentType.COMMAND:
-                command = BaseCommand.parse_obj(node)
+                command = Command.parse_obj(node)
                 Neo4jContentGraphInterface._id_to_obj[element_id] = command
 
             else:
@@ -91,7 +97,84 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                     raise NoModelException(f"No model for {content_type}")
                 obj = model.parse_obj(node)
                 Neo4jContentGraphInterface._id_to_obj[element_id] = obj
+                
+    def _add_relationships_to_objects(self, result: List[Neo4jResult]) -> List[Union[BaseContent, Command]]:
+        """This adds relationships to given object
 
+        Args:
+            result (List[Neo4jResult]): Result from neo4j query
+
+        Returns:
+            List[Union[BaseContent, Command]]: The objects to return with relationships
+        """
+        final_result = []
+        for res in result:
+            obj = Neo4jContentGraphInterface._id_to_obj[res.node_from.element_id]
+            self._add_relationships(obj, res.node_from, res.relationships, res.nodes_to)
+            if isinstance(obj, Pack):
+                obj.set_content_items()
+            if isinstance(obj, Integration):
+                obj.set_commands()
+
+            final_result.append(obj)
+        return final_result
+
+    def _get_nodes_set_from_result(
+        self, result: List[Neo4jResult], content_items_nodes: Set[graph.Node]
+    ) -> Set[graph.Node]:
+        """
+        Generate a nodes set of all the nodes in the neo4j result.
+
+        Args:
+            result (List[Neo4JResult]): result from noe4j query
+            content_items_nodes (Set[graph.Node]): the content items nodes of pack
+
+        Returns:
+            Set[graph.Node]): A set of all nodes that returned by query
+        """
+        nodes_set = set()
+        for res in result:
+            nodes_set.update(set(res.nodes_to) | {res.node_from})
+            if res.node_from.get("content_type") == ContentType.PACK:
+                content_items_nodes.update(
+                    {
+                        int(node_to.element_id)
+                        for rel, node_to in zip(res.relationships, res.nodes_to)
+                        if rel.type == RelationshipType.IN_PACK
+                    }
+                )
+
+        return nodes_set
+
+    def _add_relationships(
+        self,
+        obj: Union[BaseContent, Command],
+        node_from: graph.Node,
+        relationships: List[graph.Relationship],
+        nodes_to: List[graph.Node],
+    ) -> None:
+        """
+        Adds relationship to content object
+
+        Args:
+            obj (Union[BaseContent, Command]): Object to add relationship to
+            node_from (graph.Node): The source node
+            relationships (List[graph.Relationship]): The list of relationships from the source
+            nodes_to (List[graph.Node]): The list of nodes of the target
+        """
+        relationships = {
+            RelationshipData(
+                relationship_type=rel.type,
+                source=Neo4jContentGraphInterface._id_to_obj[rel.start_node.element_id],
+                target=Neo4jContentGraphInterface._id_to_obj[rel.end_node.element_id],
+                related_to=Neo4jContentGraphInterface._id_to_obj[node_to.element_id],
+                is_direct=rel.start_node.element_id == node_from.element_id or rel.end_node.element_id == node_from.element_id,
+                **rel,
+            )
+            for node_to, rel in zip(nodes_to, relationships)
+        }
+        obj.relationships_data.update(relationships)
+        
     def create_indexes_and_constraints(self) -> None:
         with self.driver.session() as session:
             session.execute_write(create_indexes)
@@ -106,9 +189,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             if session.execute_read(duplicates_exist):
                 raise Exception("Duplicates found in graph.")
 
-    def create_relationships(
-        self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]
-    ) -> None:
+    def create_relationships(self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]) -> None:
         with self.driver.session() as session:
             session.execute_write(create_relationships, relationships)
 
@@ -116,122 +197,44 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             session.execute_write(delete_all_graph_nodes)
 
-    def match(
+    def search(
         self,
         marketplace: MarketplaceVersions = None,
         content_type: Optional[ContentType] = None,
-        filter_list: Optional[
-            Iterable[int]
-        ] = None,  # todo - warning if item of filtered not exsists
-        is_nested: bool = False,
+        filter_list: Optional[Iterable[int]] = None,
+        all_level_relationships: bool = False,
         **properties,
     ) -> List[BaseContent]:
-        """
-        match('xsoar', content_type=INTEGRATION)
-        """
+        super().search()
         with self.driver.session() as session:
-            result: List[
-                Tuple[graph.Node, List[graph.Relationship], List[graph.Node]]
-            ] = session.execute_read(
-                _match, marketplace, content_type, filter_list, is_nested, **properties
+            result: List[Neo4jResult] = session.execute_read(
+                _match, marketplace, content_type, filter_list, all_level_relationships, **properties
             )
-            nodes_set = set()
             content_items_nodes = set()
-            for node_from, rels, nodes_to in result:
-                nodes_set.update(set(nodes_to) | {node_from})
-                if node_from.get("content_type") == ContentType.PACK:
-                    content_items_nodes.update(
-                        {
-                            int(node_to.element_id)
-                            for rel, node_to in zip(rels, nodes_to)
-                            if rel.type == RelationshipType.IN_PACK
-                        }
-                    )
-            self._serialize_nodes(nodes_set)
+            nodes_set = self._get_nodes_set_from_result(result, content_items_nodes)
+            self._add_to_mapping(nodes_set)
 
-            final_result = []
-            for node_from, rels, nodes_to in result:
-                obj: BaseContent = cast(
-                    BaseContent,
-                    Neo4jContentGraphInterface._id_to_obj[node_from.element_id],
-                )
-                self._add_relationship(obj, node_from, rels, nodes_to)
-                if isinstance(obj, Pack):
-                    obj.set_content_items()
-                if isinstance(obj, Integration):
-                    obj.set_commands()
-
-                final_result.append(obj)
+            final_result = self._add_relationships_to_objects(result)
 
             if content_items_nodes:
-                self.match(
+                self.search(
                     marketplace,
                     filter_list=content_items_nodes,
                 )
             return final_result
 
-    def _add_relationship(
-        self,
-        obj: Union[BaseContent, BaseCommand],
-        node_from: graph.Node,
-        rels: List[graph.Relationship],
-        nodes_to: List[graph.Node],
-    ) -> None:
-        # Command cannot be the start node of relationship
-        rel = {
-            RelationshipData(
-                relationship_type=rel.type,
-                source=Neo4jContentGraphInterface._id_to_obj[rel.start_node.element_id],
-                target=Neo4jContentGraphInterface._id_to_obj[rel.end_node.element_id],
-                related_to=Neo4jContentGraphInterface._id_to_obj[node_to.element_id],
-                is_nested=rel.start_node.element_id != node_from.element_id and
-                rel.end_node.element_id != node_from.element_id,
-                **rel,
-            )
-            for node_to, rel in zip(nodes_to, rels)
-        }
-        obj.relationships_data.update(rel)
-
     def create_pack_dependencies(self):
         with self.driver.session() as session:
             session.execute_write(create_pack_dependencies)
-
-    # def get_all_level_dependencies(self, marketplace: MarketplaceVersions) -> Dict[str, Any]:
-    #     with self.driver.session() as session:
-    #         tx: Transaction = session.begin_transaction()
-    #         result = get_all_level_packs_dependencies(tx, marketplace).data()
-    #         tx.commit()
-    #         tx.close()
-    #     return {
-    #         row['pack_id']: {
-    #             'allLevelDependencies': row['dependencies'],
-    #             'fullPath': row['pack_path'],
-    #             'path': Path(*Path(row['pack_path']).parts[-2:]).as_posix(),
-    #         } for row in result
-    #     }
-
-    # def get_first_level_dependencies(self, marketplace: MarketplaceVersions) -> Dict[str, Dict[str, Any]]:
-    #     with self.driver.session() as session:
-    #         tx: Transaction = session.begin_transaction()
-    #         result = get_first_level_dependencies(tx, marketplace).data()
-    #         tx.commit()
-    #         tx.close()
-    #     return {
-    #         row['pack_id']: {
-    #             dependency['dependency_id']: {
-    #                 'mandatory': dependency['mandatory'],
-    #                 'display_name': dependency['display_name'],
-    #             }
-    #             for dependency in row['dependencies']
-    #         } for row in result
-    #     }
-
-    def run_single_query(
-        self, query: str, parameters: Optional[Dict[str, Any]] = None
-    ) -> Result:
+        super().create_pack_dependencies()
+            
+    def run_single_query(self, query: str, **kwargs) -> Any:
         with self.driver.session() as session:
-            tx: Transaction = session.begin_transaction()
-            result = tx.run(query, parameters)
-            tx.commit()
-            tx.close()
-        return result
+            try:
+                tx = session.begin_transaction()
+                tx.run(tx, query, **kwargs)
+                tx.commit()
+                tx.close()
+            except Exception as e:
+                logger.error(f"Error when running query: {e}")
+                raise e

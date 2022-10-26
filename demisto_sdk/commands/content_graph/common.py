@@ -1,20 +1,18 @@
 import enum
 import os
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Set
+from typing import Any, Dict, Iterator, List, Set, NamedTuple
 
 from demisto_sdk.commands.common.tools import get_content_path
+
+from neo4j import graph
 
 REPO_PATH = Path(get_content_path())
 
 NEO4J_ADMIN_DOCKER = ""
 
-NEO4J_DATABASE_HTTP = os.getenv(
-    "DEMISTO_SDK_NEO4J_DATABASE_HTTP", "http://localhost:7474"
-)
-NEO4J_DATABASE_URL = os.getenv(
-    "DEMISTO_SDK_NEO4J_DATABASE_URL", "bolt://localhost:7687"
-)
+NEO4J_DATABASE_HTTP = os.getenv("DEMISTO_SDK_NEO4J_DATABASE_HTTP", "http://localhost:7474")
+NEO4J_DATABASE_URL = os.getenv("DEMISTO_SDK_NEO4J_DATABASE_URL", "bolt://localhost:7687")
 NEO4J_USERNAME = os.getenv("DEMISTO_SDK_NEO4J_USERNAME", "neo4j")
 NEO4J_PASSWORD = os.getenv("DEMISTO_SDK_NEO4J_PASSWORD", "test")
 
@@ -23,6 +21,12 @@ PACKS_FOLDER = "Packs"
 PACK_METADATA_FILENAME = "pack_metadata.json"
 PACK_CONTRIBUTORS_FILENAME = "CONTRIBUTORS.json"
 UNIFIED_FILES_SUFFIXES = [".yml", ".json"]
+
+
+class Neo4jResult(NamedTuple):
+    node_from: graph.Node
+    relationships: List[graph.Relationship]
+    nodes_to: List[graph.Node]
 
 
 class RelationshipType(str, enum.Enum):
@@ -130,10 +134,7 @@ class ContentType(str, enum.Enum):
         for content_type in ContentType:
             if content_type in ContentType.abstract_types():
                 continue
-            if (
-                not include_non_content_items and
-                content_type in ContentType.non_content_items()
-            ):
+            if not include_non_content_items and content_type in ContentType.non_content_items():
                 continue
             yield content_type
 
@@ -164,9 +165,7 @@ class Relationships(dict):
 
     def update(self, other: "Relationships") -> None:  # type: ignore
         for relationship, parsed_data in other.items():
-            if relationship not in RelationshipType or not isinstance(
-                parsed_data, list
-            ):
+            if relationship not in RelationshipType or not isinstance(parsed_data, list):
                 raise TypeError
             self.add_batch(relationship, parsed_data)
 

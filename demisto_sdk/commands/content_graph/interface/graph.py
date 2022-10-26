@@ -1,15 +1,16 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Union
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.tools import get_content_path
-from demisto_sdk.commands.content_graph.common import (ContentType,
-                                                       RelationshipType)
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.integration import Command
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
 
 class ContentGraphInterface(ABC):
+    _with_dependencies = False
+    
     @abstractmethod
     def create_indexes_and_constraints(self) -> None:
         pass
@@ -19,9 +20,7 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def create_relationships(
-        self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]
-    ) -> None:
+    def create_relationships(self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]) -> None:
         pass
 
     @abstractmethod
@@ -33,25 +32,42 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def match(
+    def search(
         self,
-        marketplace: MarketplaceVersions,
+        marketplace: MarketplaceVersions = None,
         content_type: Optional[ContentType] = None,
         filter_list: Optional[Iterable[int]] = None,
-        is_nested: bool = False,
+        all_level_relationships: bool = False,
         **properties,
-    ) -> List[BaseContent]:
-        pass
+    ) -> List[Union[BaseContent, Command]]:
+        """
+        This searches the database for content items and returns a list of them, including their relationships
 
-    def marshal_graph(self, marketplace: MarketplaceVersions, dependencies: bool):
-        if dependencies:
+        Args:
+            marketplace (MarketplaceVersions, optional): Marketplace to search by. Defaults to None.
+            content_type (Optional[ContentType], optional): The content_type to filter. Defaults to None.
+            filter_list (Optional[Iterable[int]], optional): A list of unique IDs to filter. Defaults to None.
+            all_levels_relationships (bool, optional): Whether to search for all level relationships. Defaults to False.
+            **properties: A key, value filter for the search. For example: `search(object_id="QRadar")`.
+
+        Returns:
+            List[Union[BaseContent, Command]]: The search results
+        """
+        # First we want to create pack dependencies if they are not availibles
+        if not ContentGraphInterface._with_dependencies:
             self.create_pack_dependencies()
-        packs = self.match(marketplace, content_type=ContentType.PACK)
-        return ContentDTO(path=get_content_path(), packs=packs)
+
+    def marshal_graph(
+        self, marketplace: MarketplaceVersions, all_level_relationships: bool = False
+    ):
+        packs = self.search(
+            marketplace, content_type=ContentType.PACK, all_level_relationships=all_level_relationships
+        )
+        return ContentDTO(packs=packs)
 
     @abstractmethod
     def create_pack_dependencies(self):
-        pass
+        ContentGraphInterface._with_dependencies = True
 
     @abstractmethod
     def run_single_query(self, query: str, **kwargs) -> Any:

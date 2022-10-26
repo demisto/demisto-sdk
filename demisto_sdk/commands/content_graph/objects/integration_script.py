@@ -1,6 +1,8 @@
 import logging
 from pathlib import Path
 from typing import Optional
+
+from pydantic import Field
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -16,14 +18,10 @@ class IntegrationScript(ContentItem):
     type: str
     docker_image: Optional[str]
     description: Optional[str]
-
-    def is_unified(self) -> bool:
-        with open(self.path) as f:
-            package_yml = yaml.load(f)
-        return (script := package_yml.get("script", {}).get("script")) and script != "-" 
+    is_unified: bool = Field(False, exclude=True)
     
     def dump(self, dir: Path, marketplace: MarketplaceVersions) -> None:
-        if self.is_unified():
+        if self.is_unified:
             super().dump(dir, marketplace)
             return
         dir.mkdir(exist_ok=True, parents=True)

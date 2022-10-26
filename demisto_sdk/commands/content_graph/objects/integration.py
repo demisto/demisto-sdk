@@ -7,18 +7,17 @@ if TYPE_CHECKING:
 
 from pydantic import BaseModel, Field, validator
 
-from demisto_sdk.commands.content_graph.common import (ContentType,
-                                                       RelationshipType)
-from demisto_sdk.commands.content_graph.objects.integration_script import \
-    IntegrationScript
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 
 
-class BaseCommand(BaseModel):
+class Command(BaseModel):
     name: str
     object_id: str = ""  # objects sets up in the validator
-    relationships_data: Set["RelationshipData"] = Field(
-        set(), exclude=True, repr=False
-    )  # too much data in the repr
+    deprecated: bool = False
+    description: str = ""
+
+    relationships_data: Set["RelationshipData"] = Field(set(), exclude=True, repr=False)  # too much data in the repr
 
     @validator("object_id", always=True)
     def validate_object_id(cls, v, values):
@@ -26,12 +25,6 @@ class BaseCommand(BaseModel):
 
     class Config:
         orm_mode = True
-
-
-class Command(BaseCommand):
-    name: str
-    deprecated: bool = False
-    description: str
 
 
 class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # type: ignore[call-arg]
@@ -42,11 +35,12 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     commands: List[Command] = Field([], exclude=True)
 
     @property
-    def imports(self) -> Optional["Script"]:
-        for r in self.relationships_data:
-            if r.relationship_type == RelationshipType.IMPORTS:
-                return r.related_to  # type: ignore[return-value]
-        return None
+    def imports(self) -> List["Script"]:
+        return [
+            r.related_to
+            for r in self.relationships_data
+            if r.relationship_type == RelationshipType.IMPORTS and r.related_to == r.target
+        ]
 
     def set_commands(self):
         commands = [
@@ -57,7 +51,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                 description=r.description,
             )
             for r in self.relationships_data
-            if not r.is_nested and r.relationship_type == RelationshipType.HAS_COMMAND
+            if r.is_direct and r.relationship_type == RelationshipType.HAS_COMMAND
         ]
         self.commands = commands
 

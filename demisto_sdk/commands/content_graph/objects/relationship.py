@@ -8,17 +8,17 @@ else:
 
 from demisto_sdk.commands.content_graph.common import RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.content_graph.objects.integration import BaseCommand
+from demisto_sdk.commands.content_graph.objects.integration import Command
 
 
 @dataclass
 class RelationshipData:
     relationship_type: RelationshipType
-    source: Union[BaseContent, BaseCommand]
-    target: Union[BaseContent, BaseCommand]
+    source: Union[BaseContent, Command]
+    target: Union[BaseContent, Command]
 
-    related_to: Union[BaseContent, BaseCommand]
-    is_nested: bool = False
+    related_to: Union[BaseContent, Command]
+    is_direct: bool = True
 
     mandatorily: bool = False
     description: Optional[str] = None

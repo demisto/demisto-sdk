@@ -155,7 +155,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         return [
             r.related_to
             for r in self.relationships_data
-            if r.relationship_type == RelationshipType.DEPENDS_ON
+            if r.relationship_type == RelationshipType.DEPENDS_ON and r.related_to == r.target
         ]
 
     def set_content_items(self):

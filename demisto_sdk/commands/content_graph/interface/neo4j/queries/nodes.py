@@ -5,10 +5,13 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 from neo4j import Transaction, graph
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import (SERVER_CONTENT_ITEMS,
-                                                       ContentType)
+from demisto_sdk.commands.content_graph.common import SERVER_CONTENT_ITEMS, ContentType, Neo4jResult
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
-    intersects, run_query, to_neo4j_map, versioned)
+    intersects,
+    run_query,
+    to_neo4j_map,
+    versioned,
+)
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -58,9 +61,7 @@ def create_server_nodes_by_type(
     data = [
         {
             "name": content_item,
-            "object_id": content_item.lower()
-            if should_have_lowercase_id
-            else content_item,
+            "object_id": content_item.lower() if should_have_lowercase_id else content_item,
             "content_type": content_type,
             "is_server_item": True,
         }
@@ -102,30 +103,28 @@ def _match(
     if marketplace or filter_list:
         where.append("WHERE")
         if filter_list:
-            where.append("id(n) IN $filter_list")
+            where.append("id(node_from) IN $filter_list")
         if filter_list and marketplace:
             where.append("AND")
         if marketplace:
-            where.append(f"'{marketplace}' IN n.marketplaces AND '{marketplace}' IN k.marketplaces")
+            where.append(f"'{marketplace}' IN node_from.marketplaces AND '{marketplace}' IN node_to.marketplaces")
 
     query = f"""
-    MATCH (n{content_type_str}{params_str}) - [r{nesting_str}] - (k)
+    MATCH (node_from{content_type_str}{params_str}) - [relationship{nesting_str}] - (node_to)
     {" ".join(where)}
-    RETURN n, collect(r) as rels, collect(k) as ks
+    RETURN node_from, collect(relationship) as relationships, collect(node_to) as nodes_to
     """
     result = []
-    for item in run_query(
-        tx, query, filter_list=list(filter_list) if filter_list else None
-    ):
-        rels = item.get("rels")
-        if any(isinstance(el, list) for el in rels):
-            rels = list(chain.from_iterable(rels))
+    for item in run_query(tx, query, filter_list=list(filter_list) if filter_list else None):
+        relationships = item.get("relationships")
+        if any(isinstance(el, list) for el in relationships):
+            relationships = list(chain.from_iterable(relationships))
 
-        ks = item.get("ks")
-        if any(isinstance(el, list) for el in ks):
-            ks = list(chain.from_iterable(ks))
+        nodes_to = item.get("nodes_to")
+        if any(isinstance(el, list) for el in nodes_to):
+            nodes_to = list(chain.from_iterable(nodes_to))
 
-        result.append((item.get("n"), rels, ks))
+        result.append(Neo4jResult(node_from=item.get("node_from"), relationships=relationships, nodes_to=nodes_to))
     return result
 
 

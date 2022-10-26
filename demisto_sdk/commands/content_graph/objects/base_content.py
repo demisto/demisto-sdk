@@ -11,7 +11,7 @@ from demisto_sdk.commands.content_graph.common import (ContentType,
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.integration import \
-        BaseCommand
+        Command
     from demisto_sdk.commands.content_graph.objects.relationship import \
         RelationshipData
     from demisto_sdk.commands.content_graph.objects.test_playbook import \
@@ -66,11 +66,11 @@ class BaseContent(ABC, BaseModel, metaclass=ContentModelMetaclass):
         allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
 
     @property
-    def uses(self) -> List[Union["BaseContent", "BaseCommand"]]:
+    def uses(self) -> List[Union["BaseContent", "Command"]]:
         return [
             r.related_to
             for r in self.relationships_data
-            if r.relationship_type == RelationshipType.USES
+            if r.relationship_type == RelationshipType.USES and r.related_to == r.target
         ]
 
     @property
@@ -78,7 +78,7 @@ class BaseContent(ABC, BaseModel, metaclass=ContentModelMetaclass):
         return [
             r.related_to
             for r in self.relationships_data
-            if r.relationship_type == RelationshipType.TESTED_BY
+            if r.relationship_type == RelationshipType.TESTED_BY and r.related_to == r.target
         ]
 
     def to_dict(self) -> Dict[str, Any]:

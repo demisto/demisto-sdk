@@ -6,7 +6,7 @@ from demisto_sdk.commands.common.constants import OLD_INDICATOR_TYPE, FileType
 from demisto_sdk.commands.common.content.objects.abstract_objects.general_object import \
     GeneralObject
 from demisto_sdk.commands.common.content.objects.pack_objects import (
-    AgentConfig, AgentTool, AuthorImage, ChangeLog, Classifier,
+    XDRCTemplate, AgentTool, AuthorImage, ChangeLog, Classifier,
     ClassifierMapper, Connection, Contributors, CorrelationRule, Dashboard,
     DocFile, GenericDefinition, GenericField, GenericModule, GenericType,
     IncidentField, IncidentType, IndicatorField, IndicatorType, Integration,
@@ -64,7 +64,7 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.XSIAM_REPORT: XSIAMReport,
     FileType.TRIGGER: Trigger,
     FileType.WIZARD: Wizard,
-    FileType.AGENT_CONFIG: AgentConfig,
+    FileType.XDRC_TEMPLATE: XDRCTemplate,
 }
 
 TYPE_CONVERSION_BY_FILE_NAME = {

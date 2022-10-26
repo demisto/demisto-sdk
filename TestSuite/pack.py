@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from demisto_sdk.commands.common.constants import (AGENT_CONFIG_DIR,
+from demisto_sdk.commands.common.constants import (XDRC_TEMPLATE_DIR,
                                                    CORRELATION_RULES_DIR,
                                                    DEFAULT_IMAGE_BASE64,
                                                    MODELING_RULES_DIR,
@@ -9,7 +9,7 @@ from demisto_sdk.commands.common.constants import (AGENT_CONFIG_DIR,
                                                    TRIGGER_DIR,
                                                    XSIAM_DASHBOARDS_DIR,
                                                    XSIAM_REPORTS_DIR)
-from TestSuite.agent_config import AgentConfig
+from TestSuite.xdrc_template import XDRCTemplate
 from TestSuite.correlation_rule import CorrelationRule
 from TestSuite.file import File
 from TestSuite.integration import Integration
@@ -81,7 +81,7 @@ class Pack:
         self.xsiam_reports: List[JSONBased] = list()
         self.triggers: List[JSONBased] = list()
         self.wizards: List[Wizard] = list()
-        self.agent_configs: List[AgentConfig] = list()
+        self.xdrc_templates: List[XDRCTemplate] = list()
 
         # Create base pack
         self._pack_path = packs_dir / self.name
@@ -169,8 +169,8 @@ class Pack:
         self._triggers_path = self._pack_path / TRIGGER_DIR
         self._triggers_path.mkdir()
 
-        self._agent_configs_path = self._pack_path / AGENT_CONFIG_DIR
-        self._agent_configs_path.mkdir()
+        self._xdrc_templates_path = self._pack_path / XDRC_TEMPLATE_DIR
+        self._xdrc_templates_path.mkdir()
 
         self.secrets = Secrets(self._pack_path)
 
@@ -657,7 +657,7 @@ class Pack:
         self.triggers.append(trigger)
         return trigger
 
-    def create_agent_config(self, name, json_content: dict = None, yaml_content: dict = None) -> AgentConfig:
-        agent_config = AgentConfig(name, self._agent_configs_path, json_content, yaml_content)
-        self.agent_configs.append(agent_config)
-        return agent_config
+    def create_xdrc_template(self, name, json_content: dict = None, yaml_content: dict = None) -> XDRCTemplate:
+        xdrc_template = XDRCTemplate(name, self._xdrc_templates_path, json_content, yaml_content)
+        self.xdrc_templates.append(xdrc_template)
+        return xdrc_template

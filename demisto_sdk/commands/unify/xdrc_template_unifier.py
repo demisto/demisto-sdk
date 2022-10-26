@@ -17,7 +17,7 @@ class XDRCTemplateUnifier:
         output: Path = None,
         dir_name: str = 'XDRCTemplates',
     ):
-        self.input_agent_config = input
+        self.input_xdrc_template = input
 
         if dir_name:
             self.dir_name = dir_name
@@ -32,7 +32,7 @@ class XDRCTemplateUnifier:
     def unify(self):
         click.echo(f'Unifying {self.package_path}...')
         self._set_dest_path()
-        output_data = self._insert_agent_config()
+        output_data = self._insert_xdrc_template()
         self._insert_yaml_template(output_data)
         self._output_json(file_data=output_data)
         click.secho(f'Successfully created unified JSON in {self.dest_path}', fg="green")
@@ -53,13 +53,13 @@ class XDRCTemplateUnifier:
         else:
             self.dest_path = os.path.join(self.package_path, output_filename)
 
-    def _insert_agent_config(self):
-        agent_config_path = Path(self.yml_path).with_suffix('.json')
+    def _insert_xdrc_template(self):
+        xdrc_template_path = Path(self.yml_path).with_suffix('.json')
 
-        with open(agent_config_path) as agent_config_file:
-            agent_config = json.load(agent_config_file)
+        with open(xdrc_template_path) as xdrc_template_file:
+            xdrc_template = json.load(xdrc_template_file)
 
-        return agent_config
+        return xdrc_template
 
     def _insert_yaml_template(self, output_data):
         yaml_template_path = Path(self.yml_path)

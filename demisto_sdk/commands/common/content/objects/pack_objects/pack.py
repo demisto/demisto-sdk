@@ -8,7 +8,7 @@ import regex
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (
-    AGENT_CONFIG_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, CORRELATION_RULES_DIR,
+    XDRC_TEMPLATE_DIR, CLASSIFIERS_DIR, CONNECTIONS_DIR, CORRELATION_RULES_DIR,
     DASHBOARDS_DIR, DEPRECATED_DESC_REGEX, DEPRECATED_NO_REPLACE_DESC_REGEX,
     DOC_FILES_DIR, GENERIC_DEFINITIONS_DIR, GENERIC_FIELDS_DIR,
     GENERIC_MODULES_DIR, GENERIC_TYPES_DIR, INCIDENT_FIELDS_DIR,
@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.constants import (
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR, TRIGGER_DIR, WIDGETS_DIR,
     WIZARDS_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, FileType)
 from demisto_sdk.commands.common.content.objects.pack_objects import (
-    AgentConfig, AgentTool, AuthorImage, Classifier, ClassifierMapper,
+    XDRCTemplate, AgentTool, AuthorImage, Classifier, ClassifierMapper,
     Connection, Contributors, CorrelationRule, Dashboard, DocFile,
     GenericDefinition, GenericField, GenericModule, GenericType, IncidentField,
     IncidentType, IndicatorField, IndicatorType, Integration, Job,
@@ -274,8 +274,8 @@ class Pack:
                                                           suffix="json")
 
     @property
-    def agent_configs(self) -> Iterator[AgentConfig]:
-        return self._content_files_list_generator_factory(dir_name=AGENT_CONFIG_DIR,
+    def xdrc_templates(self) -> Iterator[XDRCTemplate]:
+        return self._content_files_list_generator_factory(dir_name=XDRC_TEMPLATE_DIR,
                                                           suffix="json")
 
     @property

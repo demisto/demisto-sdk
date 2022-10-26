@@ -2,30 +2,30 @@ import json
 import os
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.unify.agent_config_unifier import AgentConfigUnifier
+from demisto_sdk.commands.unify.xdrc_template_unifier import XDRCTemplateUnifier
 
 TESTS_DIR = f'{git_path()}/demisto_sdk/tests'
 
 
-def test_unify_agent_config():
+def test_unify_xdrc_template():
     """
     Given
-    - Dummy Agent Config.
+    - Dummy XDRC Template.
     - No output path.
 
     When
     - Running Unify on it.
 
     Then
-    - Ensure Unify agent config works
+    - Ensure Unify xdrc template works
     """
-    input_path = TESTS_DIR + '/test_files/Packs/DummyPack/AgentConfigs/DummyAgentConfig'
-    output_path = TESTS_DIR + '/test_files/Packs/DummyPack/AgentConfigs/'
+    input_path = TESTS_DIR + '/test_files/Packs/DummyPack/XDRCTemplates/DummyXDRCTemplate'
+    output_path = TESTS_DIR + '/test_files/Packs/DummyPack/XDRCTemplates/'
 
-    unifier = AgentConfigUnifier(input=input_path, output=output_path)
+    unifier = XDRCTemplateUnifier(input=input_path, output=output_path)
     json_files = unifier.unify()
 
-    expected_json_path = TESTS_DIR + '/test_files/Packs/DummyPack/AgentConfigs/external-agentconfig-DummyAgentConfig.json'
+    expected_json_path = TESTS_DIR + '/test_files/Packs/DummyPack/XDRCTemplates/external-xdrctemplate-DummyXDRCTemplate.json'
     export_json_path = json_files[0]
 
     assert export_json_path == expected_json_path

@@ -17,7 +17,7 @@ import click
 import networkx
 
 from demisto_sdk.commands.common.constants import (
-    AGENT_CONFIG_DIR, CLASSIFIERS_DIR, COMMON_TYPES_PACK,
+    XDRC_TEMPLATE_DIR, CLASSIFIERS_DIR, COMMON_TYPES_PACK,
     CORRELATION_RULES_DIR, DASHBOARDS_DIR, DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEFAULT_CONTENT_ITEM_TO_VERSION, GENERIC_DEFINITIONS_DIR,
     GENERIC_FIELDS_DIR, GENERIC_MODULES_DIR, GENERIC_TYPES_DIR,
@@ -51,17 +51,17 @@ ID_SET_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Cla
                    'Dashboards', 'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                    'Layouts', 'Reports', 'Widgets', 'Mappers', 'GenericTypes', 'GenericFields', 'GenericModules',
                    'GenericDefinitions', 'Lists', 'Jobs', 'ParsingRules', 'ModelingRules',
-                   'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'Wizards', 'AgentConfigs']
+                   'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'Wizards', 'XDRCTemplates']
 
 CONTENT_MP_V2_ENTITIES = ['Integrations', 'Scripts', 'Playbooks', 'TestPlaybooks', 'Classifiers',
                           'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                           'Layouts', 'Mappers', 'Packs', 'Lists', 'ParsingRules', 'ModelingRules',
-                          'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'AgentConfigs']
+                          'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'XDRCTemplates']
 
 ID_SET_MP_V2_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks', 'Classifiers',
                          'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                          'Layouts', 'Mappers', 'Lists', 'ParsingRules', 'ModelingRules',
-                         'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'AgentConfigs']
+                         'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'XDRCTemplates']
 
 BUILT_IN_FIELDS = [
     "name",
@@ -1299,7 +1299,7 @@ def get_correlation_rule_data(path: str, packs: Dict[str, Dict] = None):
     return {id_: data}
 
 
-def get_agent_config_data(path: str, packs: Dict[str, Dict] = None):
+def get_xdrc_template_data(path: str, packs: Dict[str, Dict] = None):
     json_data = get_json(path)
 
     id_ = json_data.get('content_global_id')
@@ -1622,7 +1622,7 @@ def process_general_items(file_path: str, packs: Dict[str, Dict], marketplace: s
     * XSIAMDashboards
     * XSIAMReports
     * Triggers
-    * AgentConfigs
+    * XDRCTemplates
 
     Args:
         file_path: The file path from an item folder
@@ -2135,7 +2135,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
     xsiam_reports_list = []
     triggers_list = []
     wizards_list = []
-    agent_configs_list = []
+    xdrc_templates_list = []
     packs_dict: Dict[str, Dict] = {}
     excluded_items_by_pack: Dict[str, set] = {}
     excluded_items_by_type: Dict[str, set] = {}
@@ -2704,24 +2704,24 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'AgentConfigs' in objects_to_create:
-            print_color("\nStarting iteration over AgentConfigs", LOG_COLORS.GREEN)
+        if 'XDRCTemplates' in objects_to_create:
+            print_color("\nStarting iteration over XDRCTemplates", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
                                                                        packs=packs_dict,
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
                                                                        expected_file_types=(
-                                                                           FileType.AGENT_CONFIG),
-                                                                       data_extraction_func=get_agent_config_data,
+                                                                           FileType.XDRC_TEMPLATE),
+                                                                       data_extraction_func=get_xdrc_template_data,
                                                                        suffix='json'
                                                                        ),
-                                                               get_general_paths(AGENT_CONFIG_DIR,
+                                                               get_general_paths(XDRC_TEMPLATE_DIR,
                                                                                  pack_to_create)):
                 for _id, data in (arr[0].items() if arr and isinstance(arr, list) else {}):
                     if data.get('pack'):
-                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('agentConfigs',
+                        packs_dict[data.get('pack')].setdefault('ContentItems', {}).setdefault('XDRCTemplates',
                                                                                                []).append(_id)
-                agent_configs_list.extend(arr)
+                xdrc_templates_list.extend(arr)
                 update_excluded_items_dict(excluded_items_by_pack, excluded_items_by_type,
                                            excluded_items_from_iteration)
 
@@ -2751,7 +2751,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
     new_ids_dict['Triggers'] = sort(triggers_list)
     new_ids_dict['Wizards'] = sort(wizards_list)
     new_ids_dict['Packs'] = packs_dict
-    new_ids_dict['AgentConfigs'] = sort(agent_configs_list)
+    new_ids_dict['XDRCTemplates'] = sort(xdrc_templates_list)
 
     if marketplace != MarketplaceVersions.MarketplaceV2.value:
         new_ids_dict['GenericTypes'] = sort(generic_types_list)

@@ -338,6 +338,7 @@ class PackUniqueFilesValidator(BaseValidator):
             self._is_price_changed(),
             self._is_valid_support_type(),
             self.is_right_usage_of_usecase_tag(),
+            self.is_categories_field_match_standard(),
             not self.should_pack_be_deprecated()
         ]):
             if self.should_version_raise:
@@ -837,3 +838,35 @@ class PackUniqueFilesValidator(BaseValidator):
                 suggested_fix=Errors.suggest_fix(file_path=self._get_pack_file_path(self.pack_meta_file))
             )
         return False
+
+    @error_codes('PA133')
+    def is_categories_field_match_standard(self):
+        # type: () -> bool
+        """
+        Check that the pack category is in the schema.
+
+        Returns:
+            bool: True if pack contain only one category and the category is from the approved list. Otherwise, return False.
+        """
+        categories = self._read_metadata_content().get('categories', [])
+        approved_list = tools.get_current_categories()
+        if not len(categories) == 1 or not self.validate_categories_approved(categories, approved_list):
+            if self._add_error(Errors.categories_field_does_not_match_standard(approved_list), self.pack_meta_file):
+                return False
+        return True
+    
+    def validate_categories_approved(self, categories, approved_list):
+        """
+        Check that the pack categories contain only approved categories.
+
+        Args:
+            categories (list): the list of the pack's categories.
+            approved_list (list): the predefined approved categories list.
+        
+        Returns:
+            bool: True if all the pack categories is from the approved list. Otherwise, return False.
+        """
+        for category in categories:
+            if category not in approved_list:
+                return False
+        return True

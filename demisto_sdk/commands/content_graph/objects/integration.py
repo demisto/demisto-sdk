@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, List, Optional, Set
+from typing import TYPE_CHECKING, List, Set
 
 if TYPE_CHECKING:
     # avoid circular imports
@@ -7,8 +7,10 @@ if TYPE_CHECKING:
 
 from pydantic import BaseModel, Field, validator
 
-from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
+from demisto_sdk.commands.content_graph.common import (ContentType,
+                                                       RelationshipType)
+from demisto_sdk.commands.content_graph.objects.integration_script import \
+    IntegrationScript
 
 
 class Command(BaseModel):

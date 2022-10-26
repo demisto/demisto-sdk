@@ -1,11 +1,11 @@
 import enum
 import os
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Set, NamedTuple
-
-from demisto_sdk.commands.common.tools import get_content_path
+from typing import Any, Dict, Iterator, List, NamedTuple, Set
 
 from neo4j import graph
+
+from demisto_sdk.commands.common.tools import get_content_path
 
 REPO_PATH = Path(get_content_path())
 

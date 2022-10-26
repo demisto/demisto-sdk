@@ -1,6 +1,6 @@
 import shutil
 from pathlib import Path
-from typing import List, Optional, Set, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional, Set
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -8,7 +8,8 @@ if TYPE_CHECKING:
 from pydantic import DirectoryPath
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.common import (ContentType,
+                                                       RelationshipType)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 
 
@@ -21,7 +22,7 @@ class ContentItem(BaseContent):
     display_name: str
     deprecated: bool
     description: Optional[str]
-    
+
     @property
     def in_pack(self) -> Optional["Pack"]:
         for r in self.relationships_data:
@@ -39,13 +40,13 @@ class ContentItem(BaseContent):
         """
         This will add the server prefix of the content item to its name
         In addition it will remove the existing server_names of the name.
-        
+
         Args:
             name (str): content item name.
         Returns:
-            str: The normalized name.        
+            str: The normalized name.
         """
-        
+
         for prefix in ContentType.server_names():
             name = name.replace(f"{prefix}-", "")
 
@@ -57,7 +58,7 @@ class ContentItem(BaseContent):
 
     def to_id_set_entity(self) -> dict:
         """
-        Tranfrom the model to content item id_set.
+        Transform the model to content item id_set.
         This is temporarily until the content graph is fully merged.
 
         Returns:
@@ -65,5 +66,5 @@ class ContentItem(BaseContent):
         """
         id_set_entity = self.dict()
         id_set_entity["file_path"] = str(self.path)
-        id_set_entity["pack"] = self.in_pack.name
+        id_set_entity["pack"] = self.in_pack.name  # type: ignore[union-attr]
         return id_set_entity

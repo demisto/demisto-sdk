@@ -6,29 +6,31 @@ from neo4j import GraphDatabase, Neo4jDriver, graph
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import (
-    NEO4J_DATABASE_URL,
-    NEO4J_PASSWORD,
-    NEO4J_USERNAME,
-    ContentType,
-    Neo4jResult,
-    RelationshipType,
-)
-from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import create_constraints
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import create_pack_dependencies
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import create_indexes
+from demisto_sdk.commands.content_graph.common import (NEO4J_DATABASE_URL,
+                                                       NEO4J_PASSWORD,
+                                                       NEO4J_USERNAME,
+                                                       ContentType,
+                                                       Neo4jResult,
+                                                       RelationshipType)
+from demisto_sdk.commands.content_graph.interface.graph import \
+    ContentGraphInterface
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import \
+    create_constraints
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import \
+    create_pack_dependencies
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import \
+    create_indexes
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
-    _match,
-    create_nodes,
-    delete_all_graph_nodes,
-    duplicates_exist,
-)
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import create_relationships
-from demisto_sdk.commands.content_graph.objects.base_content import BaseContent, ServerContent, content_type_to_model
-from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
+    _match, create_nodes, delete_all_graph_nodes, duplicates_exist)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import \
+    create_relationships
+from demisto_sdk.commands.content_graph.objects.base_content import (
+    BaseContent, ServerContent, content_type_to_model)
+from demisto_sdk.commands.content_graph.objects.integration import (
+    Command, Integration)
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
+from demisto_sdk.commands.content_graph.objects.relationship import \
+    RelationshipData
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -97,7 +99,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                     raise NoModelException(f"No model for {content_type}")
                 obj = model.parse_obj(node)
                 Neo4jContentGraphInterface._id_to_obj[element_id] = obj
-                
+
     def _add_relationships_to_objects(self, result: List[Neo4jResult]) -> List[Union[BaseContent, Command]]:
         """This adds relationships to given object
 
@@ -174,7 +176,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             for node_to, rel in zip(nodes_to, relationships)
         }
         obj.relationships_data.update(relationships)
-        
+
     def create_indexes_and_constraints(self) -> None:
         with self.driver.session() as session:
             session.write_transaction(create_indexes)
@@ -227,7 +229,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             session.write_transaction(create_pack_dependencies)
         super().create_pack_dependencies()
-            
+
     def run_single_query(self, query: str, **kwargs) -> Any:
         with self.driver.session() as session:
             try:

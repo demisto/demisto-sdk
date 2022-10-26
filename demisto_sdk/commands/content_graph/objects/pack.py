@@ -1,9 +1,8 @@
-from collections import defaultdict
 import logging
 import shutil
-from itertools import groupby
+from collections import defaultdict
 from pathlib import Path
-from typing import List, Optional, Generator, Any
+from typing import Any, Generator, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -17,6 +16,7 @@ from demisto_sdk.commands.content_graph.common import (PACK_METADATA_FILENAME,
                                                        RelationshipType)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.classifier import Classifier
+from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.content_graph.objects.correlation_rule import \
     CorrelationRule
 from demisto_sdk.commands.content_graph.objects.dashboard import Dashboard
@@ -54,9 +54,6 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import \
     XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
-
-from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
-
 
 logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()
@@ -142,7 +139,7 @@ class PackMetadata(BaseModel):
     preview_only: Optional[bool] = Field(None, alias="previewOnly")
 
 
-class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: ignore[call-arg] 
+class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: ignore[call-arg]
     path: Path
     contributors: Optional[List[str]] = None
     relationships: Relationships = Field(Relationships(), exclude=True)

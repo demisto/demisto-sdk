@@ -2,7 +2,8 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Iterable, List, Optional, Union
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.common import (ContentType,
+                                                       RelationshipType)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration import Command
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
@@ -10,7 +11,7 @@ from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
 class ContentGraphInterface(ABC):
     _with_dependencies = False
-    
+
     @abstractmethod
     def create_indexes_and_constraints(self) -> None:
         pass

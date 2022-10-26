@@ -1,6 +1,7 @@
 import json
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Set, Type, Union, cast
+from typing import (TYPE_CHECKING, Any, ClassVar, Dict, List, Set, Type, Union,
+                    cast)
 
 from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
@@ -10,8 +11,7 @@ from demisto_sdk.commands.content_graph.common import (ContentType,
                                                        RelationshipType)
 
 if TYPE_CHECKING:
-    from demisto_sdk.commands.content_graph.objects.integration import \
-        Command
+    from demisto_sdk.commands.content_graph.objects.integration import Command
     from demisto_sdk.commands.content_graph.objects.relationship import \
         RelationshipData
     from demisto_sdk.commands.content_graph.objects.test_playbook import \

@@ -9,7 +9,6 @@ from demisto_sdk.commands.unify.rule_unifier import RuleUnifier
 
 
 class ModelingRule(ContentItem, content_type=ContentType.MODELING_RULE):  # type: ignore[call-arg]
-    pass
 
     def metadata_fields(self) -> Set[str]:
         return {"name", "description"}

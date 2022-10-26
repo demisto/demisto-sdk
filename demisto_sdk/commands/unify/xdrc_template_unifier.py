@@ -10,12 +10,12 @@ from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.tools import get_yml_paths_in_dir
 
 
-class AgentConfigUnifier:
+class XDRCTemplateUnifier:
     def __init__(
         self,
         input: str,
         output: Path = None,
-        dir_name: str = 'AgentConfigs',
+        dir_name: str = 'XDRCTemplates',
     ):
         self.input_agent_config = input
 

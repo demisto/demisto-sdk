@@ -4,7 +4,7 @@ import demisto_client
 from wcmatch.pathlib import Path
 
 import demisto_sdk.commands.common.content.errors as exc
-from demisto_sdk.commands.common.constants import (AGENT_CONFIG,
+from demisto_sdk.commands.common.constants import (XDRC_TEMPLATE,
                                                    ENTITY_TYPE_TO_DIR,
                                                    FileType)
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
@@ -15,10 +15,10 @@ from demisto_sdk.commands.unify.agent_config_unifier import AgentConfigUnifier
 
 class AgentConfig(JSONContentObject):
     def __init__(self, path: Union[Path, str]):
-        super().__init__(path, AGENT_CONFIG)
+        super().__init__(path, XDRC_TEMPLATE)
 
     def normalize_file_name(self) -> str:
-        return generate_xsiam_normalized_name(self._path.name, AGENT_CONFIG)
+        return generate_xsiam_normalized_name(self._path.name, XDRC_TEMPLATE)
 
     def upload(self, client: demisto_client):
         """
@@ -33,7 +33,7 @@ class AgentConfig(JSONContentObject):
         pass
 
     def type(self):
-        return FileType.AGENT_CONFIG
+        return FileType.XDRC_TEMPLATE
 
     def _unify(self, dest_dir: Path = None) -> List[Path]:
         """Unify AgentConfig in destination dir.
@@ -45,7 +45,7 @@ class AgentConfig(JSONContentObject):
             List[Path]: List of new created files.
         """
 
-        unify_dir = ENTITY_TYPE_TO_DIR[FileType.AGENT_CONFIG.value]
+        unify_dir = ENTITY_TYPE_TO_DIR[FileType.XDRC_TEMPLATE.value]
 
         # Unify step
         unifier = AgentConfigUnifier(input=str(self.path.parent), output=dest_dir, dir_name=unify_dir)

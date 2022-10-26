@@ -6,7 +6,7 @@ from TestSuite.json_based import JSONBased
 yaml = YAML_Handler()
 
 
-class AgentConfig(JSONBased):
+class XDRCTemplate(JSONBased):
     def __init__(self, name: str, agent_config_dir_path: Path, json_content: dict = None, yaml_content: dict = None):
         self.agent_config_tmp_path = agent_config_dir_path / f"{name}.json"
         self.agent_config_yml_tmp_path = agent_config_dir_path / f"{name}.yml"

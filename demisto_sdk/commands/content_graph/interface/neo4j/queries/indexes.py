@@ -9,6 +9,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import \
 
 CREATE_NODE_INDEX_TEMPLATE = "CREATE INDEX IF NOT EXISTS FOR (n:{label}) ON ({props})"
 NODE_INDEX_OPTIONS = [
+    ["id"],
     ["node_id"],
     ["content_type"],
     ["marketplaces"],

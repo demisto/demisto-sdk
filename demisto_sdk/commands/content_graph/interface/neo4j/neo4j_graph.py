@@ -85,7 +85,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             if element_id in Neo4jContentGraphInterface._id_to_obj:
                 continue
             content_type = node.get("content_type")
-            if node.get("not_in_repository"):
+            if node.get("not_in_repository") or node.get("is_server_item"):
                 server_content = ServerContent.parse_obj(node)
                 Neo4jContentGraphInterface._id_to_obj[element_id] = server_content
 
@@ -112,10 +112,11 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         final_result = []
         for res in result:
             obj = Neo4jContentGraphInterface._id_to_obj[res.node_from.id]
-            self._add_relationships(obj, res.node_from, res.relationships, res.nodes_to)
-            if isinstance(obj, Pack):
+            if not obj.relationships_data:
+                self._add_relationships(obj, res.node_from, res.relationships, res.nodes_to)
+            if isinstance(obj, Pack) and not obj.content_items:
                 obj.set_content_items()
-            if isinstance(obj, Integration):
+            if isinstance(obj, Integration) and not obj.commands:
                 obj.set_commands()
 
             final_result.append(obj)
@@ -141,8 +142,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 content_items_nodes.update(
                     {
                         int(node_to.id)
-                        for rel, node_to in zip(res.relationships, res.nodes_to)
-                        if rel.type == RelationshipType.IN_PACK
+                        for _, node_to in zip(res.relationships, res.nodes_to)
                     }
                 )
 
@@ -205,6 +205,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         content_type: Optional[ContentType] = None,
         filter_list: Optional[Iterable[int]] = None,
         all_level_relationships: bool = False,
+        level: int = 0,
         **properties,
     ) -> List[Union[BaseContent, Command]]:
         super().search()
@@ -215,13 +216,13 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             content_items_nodes: Set[graph.Node] = set()
             nodes_set = self._get_nodes_set_from_result(result, content_items_nodes)
             self._add_to_mapping(nodes_set)
-
             final_result = self._add_relationships_to_objects(result)
-
-            if content_items_nodes:
+            if content_items_nodes and level < 2:
+                # limit recursion level is 2, because worst case is `Pack`, and there are two levels until the command
                 self.search(
                     marketplace,
                     filter_list=content_items_nodes,
+                    level=level + 1,
                 )
             return final_result
 

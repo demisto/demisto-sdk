@@ -100,8 +100,9 @@ class BaseContent(ABC, BaseModel, metaclass=ContentModelMetaclass):
 
 
 class ServerContent(BaseContent):
-    not_in_repository: bool
+    not_in_repository: bool = True
     node_id: str = ""  # just because it's missing from the db
+    object_id: str = ""
 
     def dump(self, _, __):
         ...

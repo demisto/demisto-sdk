@@ -54,9 +54,10 @@ class ContentGraphInterface(ABC):
         Returns:
             List[Union[BaseContent, Command]]: The search results
         """
-        # First we want to create pack dependencies if they are not availibles
+        # First we want to create pack dependencies if they are not availible
         if not ContentGraphInterface._with_dependencies:
             self.create_pack_dependencies()
+        return []
 
     def marshal_graph(
         self, marketplace: MarketplaceVersions, all_level_relationships: bool = False

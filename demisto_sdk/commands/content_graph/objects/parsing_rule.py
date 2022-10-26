@@ -8,7 +8,7 @@ from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
 from demisto_sdk.commands.unify.rule_unifier import RuleUnifier
 
 
-class ParsingRule(ContentItem, content_type=ContentType.PARSING_RULE):
+class ParsingRule(ContentItem, content_type=ContentType.PARSING_RULE):  # type: ignore[call-arg]
     pass
 
     def metadata_fields(self) -> Set[str]:

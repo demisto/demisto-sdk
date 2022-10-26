@@ -1,0 +1,51 @@
+name: Okta Modeling Rule
+id: okta_modeling_rule
+fromversion: 6.8.0
+tags: okta
+rules: >
+  [MODEL: dataset=okta_okta_raw, model=Audit]
+
+  filter eventType in ("app.ad.api.user_import.account_locked","app.app_instance.csr.generate")
+
+  | alter outcome_result = json_extract_scalar(outcome, "$.result")
+
+  | alter XDM.Audit.identity.uuid = json_extract_scalar(actor, "$.id"),
+          XDM.Audit.identity.type = json_extract_scalar(actor, "$.type"),
+  	XDM.Audit.identity.name = json_extract_scalar(client, "$.geographicalContext.city"),
+
+  	XDM.Audit.cloud_zone = json_extract_scalar(client, "$.zone"),
+
+  	XDM.Audit.triggeredby.ipv4 = json_extract_scalar(client,"$.ipAddress"),
+
+  	XDM.Audit.operation_type = eventType,
+
+  	XDM.Audit.outcome = if(outcome_result="SUCCESS", "SUCCESS", outcome_result="FAILURE", "FAILED", outcome_result="ALLOW", "SUCCESS", outcome_result="DENY", "FAILED", outcome_result="CHALLENGE", "PARTIAL", "UNKNOWN"),
+
+  	XDM.Audit.reason = json_extract_scalar(outcome, "$.reason"),
+      XDM.Audit.audited_resource.id = arraystring (arraymap (json_extract_array (`target`,"$."), json_extract_scalar ("@element", "$.alternateId")),","),
+  XDM.Audit.audited_resource.type = arraystring (arraymap (json_extract_array (`target`,"$."), json_extract_scalar ("@element", "$.type")),",");
+
+
+
+  [MODEL: dataset=okta_okta_raw, model=Auth]
+
+  filter eventType  in ("app.access_request.approver.approve")
+
+  | alter outcome_result = json_extract_scalar(outcome, "$.result")
+
+  | alter  XDM_Auth_Client_host_device_type = json_extract_scalar(Client, "$.device"),
+          XDM.Auth.Client.ipv4 = json_extract_scalar(Client, "$.ipAddress"),
+          XDM.Auth.Target.host.device_category = arraystring (arraymap (json_extract_array (`target`,"$."), json_extract_scalar ("@element", "$.type")),",");
+schema: >-
+  {
+      "okta_okta_raw": {
+          "client": {
+              "type": "string",
+              "is_array": false
+          },
+          "eventType": {
+              "type": "string",
+              "is_array": false
+          }
+      }
+  }

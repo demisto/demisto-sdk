@@ -12,6 +12,8 @@ from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.integration import \
+    IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
 from demisto_sdk.commands.common.tools import (get_dict_from_file,
@@ -1115,6 +1117,7 @@ class TestFormatWithoutAddTestsFlag:
         integration.yml.update({'fromversion': '5.5.0'})
         integration_path = integration.yml.path
         mocker.patch.object(BaseUpdate, 'set_default_from_version', return_value=None)
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
 
         result = runner.invoke(main, [FORMAT_CMD, '-i', integration_path, '-at'])
         prompt = f'The file {integration_path} has no test playbooks configured.' \
@@ -1124,7 +1127,7 @@ class TestFormatWithoutAddTestsFlag:
         assert prompt in result.output
         assert message not in result.output
 
-    def test_format_integrations_folder(self, pack):
+    def test_format_integrations_folder(self, mocker, pack):
         """
             Given
             - An integration folder.
@@ -1142,6 +1145,7 @@ class TestFormatWithoutAddTestsFlag:
         integration = pack.create_integration()
         integration.create_default_integration()
         integration_path = integration.yml.path
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
         result = runner.invoke(main, [FORMAT_CMD, '-i', integration_path], input='Y')
         prompt = f'The file {integration_path} has no test playbooks configured.' \
                  f' Do you want to configure it with "No tests"?'

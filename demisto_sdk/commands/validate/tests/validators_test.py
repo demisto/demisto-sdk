@@ -404,6 +404,7 @@ class TestValidators:
         mocker.patch.object(IntegrationValidator, 'is_docker_image_valid', return_value=True)
         mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
                             return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
         mocker.patch.object(DescriptionValidator, 'is_valid_description_name', return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
@@ -443,8 +444,9 @@ class TestValidators:
         mocker.patch.object(ImageValidator, 'is_valid', return_value=True)
         mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
                             return_value=True)
-        mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
 
+        mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
         validate_manager = ValidateManager(file_path=file_path, skip_conf_json=True)
         assert not validate_manager.run_validation_on_specific_files()
 
@@ -479,6 +481,8 @@ class TestValidators:
             Pack
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         mocker.patch.object(Pack, 'should_be_deprecated', return_value=False)
+        mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
+                     return_value=["Analytics & SIEM"])
         # mocking should_be_deprecated must be done because the get_dict_from_file is being mocked.
         # should_be_deprecated relies on finding the correct file content from get_dict_from_file function.
         validate_manager = ValidateManager(skip_conf_json=True)
@@ -521,7 +525,8 @@ class TestValidators:
         id_set_path = os.path.normpath(
             os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
-
+        mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
+                     return_value=["Analytics & SIEM"])
         mocker.patch.object(Pack, 'should_be_deprecated', return_value=False)
         # mocking should_be_deprecated must be done because the get_dict_from_file is being mocked.
         # should_be_deprecated relies on finding the correct file type from get_dict_from_file function.
@@ -1377,6 +1382,8 @@ def test_run_validation_using_git_on_only_metadata_changed(mocker, pack: Pack, p
                         return_value=(set(), set(), {pack.pack_metadata.path}, set(), True))
     mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
     mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
+    mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
+                 return_value=["Data Enrichment & Threat Intelligence"])
     validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
     with ChangeCWD(pack.repo_path):
         res = validate_manager.run_validation_using_git()

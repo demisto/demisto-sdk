@@ -342,7 +342,6 @@ class TestPackMetadataValidator:
     @pytest.mark.parametrize("metadata_content, expected_results, valid_list_mock",
                              [({"categories": ["Endpoint"]}, True, VALID_CATEGORIES_LIST),
                               ({"categories": ["Analytics & SIEMM"]}, False, VALID_CATEGORIES_LIST),
-                              ({"categories": ["Analytics & SIEMM"]}, False, VALID_CATEGORIES_LIST),
                               ({"categories": ["Endpoint", "File Integrity Management"]}, False, VALID_CATEGORIES_LIST),
                               ({"categories": ["Analytics & SIEMM", "random category"]}, False, VALID_CATEGORIES_LIST),
                               ({"categories": ["Analytics & SIEMM", "Endpoint"]}, False, VALID_CATEGORIES_LIST)])

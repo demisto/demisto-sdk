@@ -9,7 +9,8 @@ from demisto_sdk.commands.common.hook_validations.playbook import \
 from demisto_sdk.commands.common.hook_validations.structure import \
     StructureValidator
 from demisto_sdk.tests.constants_test import (
-    CONTENT_REPO_EXAMPLE_ROOT, INVALID_PLAYBOOK_INPUTS_USE,
+    CONTENT_REPO_EXAMPLE_ROOT, CORRECT_PLAYBOOK_REFERENCE_USE,
+    INCORRECT_PLAYBOOK_REFERENCE_USE, INVALID_PLAYBOOK_INPUTS_USE,
     INVALID_PLAYBOOK_UNHANDLED_CONDITION,
     INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION, VALID_PLAYBOOK_INPUTS_USE)
 from TestSuite.test_tools import ChangeCWD
@@ -351,6 +352,11 @@ class TestPlaybookValidator:
         (PLAYBOOK_JSON_ID_NOT_EQUAL_TO_TASKID, False)
     ]
 
+    IS_CORRECT_VALUE_REFERENCE = [
+        (INCORRECT_PLAYBOOK_REFERENCE_USE, False),
+        (CORRECT_PLAYBOOK_REFERENCE_USE, True)
+    ]
+
     DEPRECATED_VALID = {"deprecated": True, "description": "Deprecated. Use the XXXX playbook instead."}
     DEPRECATED_VALID2 = {"deprecated": True, "description": "Deprecated. Feodo Tracker no longer supports this feed "
                                                             "No available replacement."}
@@ -542,6 +548,25 @@ class TestPlaybookValidator:
         structure = mock_structure("", playbook_json)
         validator = PlaybookValidator(structure)
         validator._is_taskid_equals_id() is expected_result
+
+    @pytest.mark.parametrize("playbook_path, expected_result", IS_CORRECT_VALUE_REFERENCE)
+    def test_is_correct_value_references(self, playbook_path, expected_result):
+        """
+        Given
+        - A playbook.
+
+        When
+        - The playbook include taskid and inside task that has conditions with correct value reference.
+        - The playbook include taskid and inside task that has conditions with incorrect value reference.
+
+        Then
+        - Ensure validation passes if the the reference is from previous task and not as value.
+        - Ensure validation failes if the the reference is as value task and not from previous task.
+        """
+
+        structure = StructureValidator(file_path=playbook_path)
+        validator = PlaybookValidator(structure)
+        validator._is_correct_value_references_interface() is expected_result
 
     @pytest.mark.parametrize("current, answer", DEPRECATED_INPUTS)
     def test_is_valid_deprecated_playbook(self, current, answer):

@@ -7,7 +7,7 @@ import time
 from concurrent.futures import as_completed
 from contextlib import contextmanager
 from shutil import make_archive, rmtree
-from typing import Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
@@ -30,11 +30,14 @@ from demisto_sdk.commands.common.content.objects.abstract_objects.text_object im
     TextObject
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     JSONContentObject, Script, YAMLContentObject, YAMLContentUnifiedObject)
+from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (alternate_item_fields,
                                                arg_to_list, open_id_set_file,
                                                should_alternate_field_by_item)
 
 from .artifacts_report import ArtifactsReport, ObjectReport
+
+json = JSON_Handler()
 
 ####################
 # Global variables #
@@ -402,9 +405,11 @@ class ContentItemsHandler:
         })
 
     def add_modeling_rule_as_content_item(self, content_object: ContentObject):
+        schema: Dict[str, Any] = json.loads(content_object.get('schema', '{}'))
         self.content_items[ContentItems.MODELING_RULES].append({
             'name': content_object.get('name', ''),
-            'description': content_object.get('description', '')
+            'description': content_object.get('description', ''),
+            'datasets': list(schema.keys()),
         })
 
     def add_correlation_rule_as_content_item(self, content_object: ContentObject):

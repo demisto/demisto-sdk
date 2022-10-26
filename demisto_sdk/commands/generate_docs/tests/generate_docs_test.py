@@ -282,6 +282,10 @@ def test_get_inputs():
             'Default Value': 'johnnydepp@gmail.com', 'Required': 'Required'
         },
         {
+            'Name': 'InputC', 'Description': '',
+            'Default Value': 'No_Accessor', 'Required': 'Optional'
+        },
+        {
             'Name': 'Indicator Query',
             'Description': 'Indicators matching the indicator query will be used as playbook input',
             'Default Value': expected_query, 'Required': 'Optional'
@@ -331,16 +335,19 @@ def test_get_input_data_simple():
     assert _value == 'johnnydepp@gmail.com'
 
 
-def test_get_input_data_complex():
+@pytest.mark.parametrize('index, expected_result',
+                         [(0, 'File.Name'),
+                          (2, 'No_Accessor')])
+def test_get_input_data_complex(index, expected_result):
     from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
         get_input_data
     playbook = get_yaml(TEST_PLAYBOOK_PATH)
 
-    sample_input = playbook.get('inputs')[0]
+    sample_input = playbook.get('inputs')[index]
 
     _value = get_input_data(sample_input)
 
-    assert _value == 'File.Name'
+    assert _value == expected_result
 
 
 @pytest.mark.parametrize('playbook_name, custom_image_path, expected_result',

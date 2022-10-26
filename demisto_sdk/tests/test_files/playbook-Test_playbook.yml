@@ -176,6 +176,12 @@ inputs:
     simple: johnnydepp@gmail.com
   required: true
   description: This is input b
+- key: InputC
+  value:
+    complex:
+      root: No_Accessor
+  required: false
+  description: ""
 - key: ""
   value: {}
   required: false

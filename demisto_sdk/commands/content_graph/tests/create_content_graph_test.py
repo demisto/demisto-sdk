@@ -313,7 +313,7 @@ def create_mini_content(repository: ContentDTO):
 
 
 class TestCreateContentGraph:
-    def _test_create_content_graph_end_to_end(self, repo: Repo, start_service: bool, tmp_path: Path):
+    def _test_create_content_graph_end_to_end(self, repo: Repo, start_service: bool):
         pack = repo.create_pack("TestPack")
         pack.pack_metadata.write_json(load_json("pack_metadata.json"))
         integration = pack.create_integration()
@@ -354,7 +354,7 @@ class TestCreateContentGraph:
         returned_scripts = {script.object_id for script in packs[0].content_items.script}
         assert returned_scripts == {"SampleScript", "TestApiModule"}
 
-    def test_create_content_graph_end_to_end_with_new_service(self, repo: Repo, tmp_path: Path):
+    def test_create_content_graph_end_to_end_with_new_service(self, repo: Repo):
         """
         Given:
             - A repository with a pack TestPack, containing an integration TestIntegration.
@@ -364,9 +364,9 @@ class TestCreateContentGraph:
             - Make sure the service remains available by querying for all content items in the graph.
             - Make sure there is a single integration in the query response.
         """
-        self._test_create_content_graph_end_to_end(repo, start_service=True, tmp_path=tmp_path)
+        self._test_create_content_graph_end_to_end(repo, start_service=True)
 
-    def test_create_content_graph_end_to_end_with_existing_service(self, repo: Repo, tmp_path: Path):
+    def test_create_content_graph_end_to_end_with_existing_service(self, repo: Repo):
         """
         Given:
             - A repository with a pack TestPack, containing an integration TestIntegration.
@@ -376,7 +376,7 @@ class TestCreateContentGraph:
             - Make sure the service remains available by querying for all content items in the graph.
             - Make sure there is a single integration in the query response.
         """
-        self._test_create_content_graph_end_to_end(repo, start_service=False, tmp_path=tmp_path)
+        self._test_create_content_graph_end_to_end(repo, start_service=False)
 
     def test_create_content_graph_relationships(
         self,
@@ -415,6 +415,14 @@ class TestCreateContentGraph:
                             assert content_item_source.uses[0].object_id == content_item_target.object_id
                         if relationship_type == RelationshipType.TESTED_BY:
                             assert content_item_source.tested_by[0].object_id == content_item_target.object_id
+                assert packs[0].depends_on[0] == packs[1]
+                assert packs[1].depends_on[0] == packs[2]
+            
+            # now with all levels
+            packs = interface.search(MarketplaceVersions.XSOAR, content_type=ContentType.PACK, all_level_relationships=True)
+            depends_on_pack1 = packs[0].depends_on
+            assert pack[1] in depends_on_pack1
+            assert pack[2] in depends_on_pack1
 
     def test_create_content_graph_two_integrations_with_same_command(
         self,

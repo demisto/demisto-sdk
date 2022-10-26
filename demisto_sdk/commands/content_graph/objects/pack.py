@@ -162,7 +162,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         content_items = [
             r.related_to
             for r in self.relationships_data
-            if r.relationship_type == RelationshipType.IN_PACK
+            if r.relationship_type == RelationshipType.IN_PACK and r.related_to == r.source
         ]
         content_item_dct = {}
         for content_type, group in groupby(content_items, lambda c: c.content_type):  # type: ignore[union-attr]

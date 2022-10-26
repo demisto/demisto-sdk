@@ -19,11 +19,6 @@ exclude = ["TestSuite/**", "*/tests/*", "tests"]
 [tool.poetry.scripts]
 demisto-sdk = "demisto_sdk.__main__:main"
 
-[tool.poetry.group.dev.dependencies]
-pycln = "^2.1.1"
-black = "^22.10.0"
-ipykernel = "^6.16.1"
-
 [tool.vulture]
 exclude = ["*/tests/*"]
 min_confidence = 80
@@ -125,6 +120,10 @@ pytest-subprocess = "^1.4.1"
 requests-mock = "^1.9.3"
 Deprecated = "^1.2.13"
 slack-sdk = "^3.17.0"
+pycln = "^2.1.1"
+black = "^22.10.0"
+ipykernel = "^6.16.1"
+
 
 [tool.poetry.extras]
 build = ["gsutil"]

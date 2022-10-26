@@ -47,9 +47,10 @@ references:
       run:
         name: Install Neo4j
         command: |
-          curl -fsSL https://debian.neo4j.com/neotechnology.gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/neo4j.gpg
-          echo "deb [signed-by=/usr/share/keyrings/neo4j.gpg] https://debian.neo4j.com stable latest" | sudo tee -a /etc/apt/sources.list.d/neo4j.list
+          wget -O - https://debian.neo4j.com/neotechnology.gpg.key | sudo apt-key add -
+          echo 'deb https://debian.neo4j.com stable 4.4' | sudo tee /etc/apt/sources.list.d/neo4j.list
           sudo apt-get update
+          apt list -a neo4j
           sudo apt-get install neo4j
           sudo chown -R circleci /var/log/neo4j
           sudo chown -R circleci /var/lib/neo4j
@@ -116,6 +117,10 @@ jobs:
             pkg-manager: "poetry"
             cache-version: << pipeline.parameters.cache-version >>
         - <<: *install_node_ci
+        - run:
+            name: Run Pytest collection
+            command: |
+              poetry run pytest --collect-only .
         - run:
             name: pytest
             no_output_timeout: 15m
@@ -208,7 +213,6 @@ jobs:
             command: |
               cp .pre-commit-config.yaml pre-commit-cache-key.txt
               poetry run python --version --version >> pre-commit-cache-key.txt
-              cat poetry.lock >> pre-commit-cache-key.txt
         - restore_cache:
             keys:
             - v1-pc-cache-{{ checksum "pre-commit-cache-key.txt" }}

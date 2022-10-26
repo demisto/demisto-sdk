@@ -169,10 +169,11 @@ class UpdateRN:
                 The content of the rn
         """
         if self.existing_rn_version_path:
-            self.should_delete_existing_rn = self.existing_rn_version_path != rn_path
+            existing_rn_abs_path = Path(self.existing_rn_version_path).absolute()
+            rn_path_abs_path = Path(rn_path).absolute()
+            self.should_delete_existing_rn = str(existing_rn_abs_path) != str(rn_path_abs_path)
             try:
-                with open(self.existing_rn_version_path, 'r') as f:
-                    return f.read()
+                return existing_rn_abs_path.read_text()
             except Exception as e:
                 print_error(f'Failed to load the previous release notes file content: {e}')
         return ''
@@ -694,7 +695,7 @@ class UpdateRN:
                         new_rn = ''.join(rn_parts) + new_rn_part
             else:
                 self.existing_rn_changed = True
-                if _header_by_type in new_rn:
+                if _header_by_type and _header_by_type in new_rn:
                     rn_parts = new_rn.split(_header_by_type)
                     new_rn_part = rn_desc
                     if len(rn_parts) > 1:

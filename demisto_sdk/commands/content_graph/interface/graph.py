@@ -56,7 +56,7 @@ class ContentGraphInterface(ABC):
         """
         if not marketplace and all_level_dependencies:
             raise ValueError("Cannot search for all level dependencies without a marketplace")
-        if not ContentGraphInterface._with_dependencies
+        if not ContentGraphInterface._with_dependencies:
             self.create_pack_dependencies()
         return []
 

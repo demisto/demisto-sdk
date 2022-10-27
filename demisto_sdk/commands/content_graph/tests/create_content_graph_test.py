@@ -33,6 +33,7 @@ def setup(mocker, repo: Repo):
     mocker.patch.object(content_graph_commands, "REPO_PATH", Path(repo.path))
     mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
 
+
 @pytest.fixture
 def repository(mocker):
     repository = ContentDTO(

@@ -61,10 +61,20 @@ class ContentGraphInterface(ABC):
         return []
 
     def marshal_graph(
-        self, marketplace: MarketplaceVersions
+        self, marketplace: MarketplaceVersions, all_level_dependencies: bool = False
     ) -> ContentDTO:
+        """
+        This marshals the graph into a ContentDTO object
+
+        Args:
+            marketplace (MarketplaceVersions): The marketplace to filter on
+            all_level_dependencies (bool, optional): Whether to marshal all level dependencies. Defaults to False.
+
+        Returns:
+            ContentDTO: Marshalled object.
+        """
         packs = self.search(
-            marketplace, content_type=ContentType.PACK
+            marketplace, content_type=ContentType.PACK, all_level_dependencies=all_level_dependencies,
         )
         return ContentDTO(packs=packs)
 

@@ -38,12 +38,10 @@ def append_or_replace_command_in_docs(old_docs: str, new_doc_section: str, comma
     regexp = DOCS_COMMAND_SECTION_REGEX.format(command_name + "\n")
     # Read doc content
     errs = list()
-    list_of_commands_to_replace = re.findall(regexp, old_docs, flags=re.DOTALL)
-    if list_of_commands_to_replace:
+    if re.findall(regexp, old_docs, flags=re.DOTALL):
         new_docs = re.sub(regexp, new_doc_section, old_docs, flags=re.DOTALL)
         print_color('New command docs has been replaced in README.md.', LOG_COLORS.GREEN)
     else:
-
         if command_name in old_docs:
             errs.append(f'Could not replace the command `{command_name}` in the file although it'
                         f' is presented in the file.'

@@ -442,6 +442,7 @@ class TestMergeExistingFile:
             downloader.num_merged_files = 0
             downloader.num_added_files = 0
             downloader.log_verbose = False
+            downloader.no_code_formatting = False
             downloader.merge_and_extract_existing_file(env.INTEGRATION_CUSTOM_CONTENT_OBJECT)
             stdout, _ = capsys.readouterr()
             assert 'Merged' in stdout
@@ -475,6 +476,7 @@ class TestMergeExistingFile:
             downloader.num_merged_files = 0
             downloader.num_added_files = 0
             downloader.log_verbose = False
+            downloader.no_code_formatting = False
             downloader.merge_and_extract_existing_file(env.INTEGRATION_CUSTOM_CONTENT_OBJECT)
             paths = [file['path'] for file in env.INTEGRATION_PACK_OBJECT['Test Integration']]
             for path in paths:

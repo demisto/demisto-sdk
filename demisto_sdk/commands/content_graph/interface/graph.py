@@ -11,7 +11,7 @@ from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
 class ContentGraphInterface(ABC):
     _with_dependencies = False
-    
+
     @abstractmethod
     def create_indexes_and_constraints(self) -> None:
         pass

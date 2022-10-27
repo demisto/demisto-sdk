@@ -21,6 +21,8 @@ class RelationshipData:
     is_direct: bool = True
 
     mandatorily: bool = False
+
+    # HAS_COMMAND relationship properties
     description: Optional[str] = None
     deprecated: bool = False
 

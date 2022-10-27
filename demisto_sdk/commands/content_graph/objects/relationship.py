@@ -20,7 +20,10 @@ class RelationshipData:
     related_to: Union[BaseContent, Command]
     is_direct: bool = True
 
+    # USES relationship properties
     mandatorily: bool = False
+
+    # HAS_COMMAND relationship properties
     description: Optional[str] = None
     deprecated: bool = False
 

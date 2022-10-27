@@ -30,7 +30,7 @@ class ContentGraphInterface(ABC):
 
     @abstractmethod
     def clean_graph(self):
-        pass
+        ContentGraphInterface._with_dependencies = False
 
     @abstractmethod
     def search(

@@ -72,7 +72,7 @@ class BaseContent(ABC, BaseModel, metaclass=ContentModelMetaclass):
             for r in self.relationships_data
             if r.relationship_type == RelationshipType.USES and r.related_to == r.target
         ]
-    
+
     @property
     def uses_mandatorily(self) -> List[Union["BaseContent", "Command"]]:
         return [
@@ -80,7 +80,6 @@ class BaseContent(ABC, BaseModel, metaclass=ContentModelMetaclass):
             for r in self.relationships_data
             if r.mandatorily and r.relationship_type == RelationshipType.USES and r.related_to == r.target
         ]
-
 
     @property
     def tested_by(self) -> List["TestPlaybook"]:

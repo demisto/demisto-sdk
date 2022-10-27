@@ -211,6 +211,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def clean_graph(self):
         with self.driver.session() as session:
             session.write_transaction(delete_all_graph_nodes)
+        Neo4jContentGraphInterface._id_to_obj = {}
         super().clean_graph()
 
     def search(

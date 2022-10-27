@@ -32,9 +32,6 @@ def setup(mocker, repo: Repo):
     """Auto-used fixture for setup before every test run"""
     mocker.patch.object(content_graph_commands, "REPO_PATH", Path(repo.path))
     mocker.patch.object(neo4j_service, "REPO_PATH", Path(repo.path))
-    ContentGraphInterface._id_to_obj = {}  # reset the cache between tests
-    ContentGraphInterface._with_dependencies = False  # reset the cache between tests
-
 
 @pytest.fixture
 def repository(mocker):

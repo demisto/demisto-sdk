@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from demisto_sdk.commands.common.constants import (
     CONTRIBUTORS_README_TEMPLATE, MarketplaceVersions)
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (MarketplaceTagParser)
+from demisto_sdk.commands.common.tools import MarketplaceTagParser
 from demisto_sdk.commands.content_graph.common import (PACK_METADATA_FILENAME,
                                                        ContentType, Nodes,
                                                        Relationships,
@@ -56,7 +56,8 @@ from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import \
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
 
 if TYPE_CHECKING:
-    from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
+    from demisto_sdk.commands.content_graph.objects.relationship import \
+        RelationshipData
 
 logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()

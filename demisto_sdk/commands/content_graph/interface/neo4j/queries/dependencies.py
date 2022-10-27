@@ -1,14 +1,14 @@
 import logging
-from typing import Dict, Set
+from typing import Dict, List, Set
 
 from neo4j import Transaction
 
 from demisto_sdk.commands.common.constants import (REPUTATION_COMMAND_NAMES,
                                                    MarketplaceVersions)
-from demisto_sdk.commands.content_graph.common import (ContentType,
+from demisto_sdk.commands.content_graph.common import (ContentType, Neo4jResult,
                                                        RelationshipType)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import \
-    run_query
+    (run_query, to_neo4j_map)
 
 REPUTATION_COMMANDS_NODE_IDS = [
     f"{ContentType.COMMAND}:{cmd}" for cmd in REPUTATION_COMMAND_NAMES
@@ -19,6 +19,25 @@ IGNORED_PACKS_IN_DEPENDENCY_CALC = ["NonSupported", "Base", "ApiModules"]
 MAX_DEPTH = 7
 
 logger = logging.getLogger("demisto-sdk")
+
+
+def get_all_level_packs_dependencies(
+    tx: Transaction,
+    marketplace: MarketplaceVersions,
+    filter_list: List[int] = None,
+    **properties,
+) -> List[Neo4jResult]:
+    params_str = to_neo4j_map(properties)
+
+    query = f"""
+        MATCH path = (shortestPath((p1:{ContentType.PACK}{params_str})-[r:{RelationshipType.DEPENDS_ON}*..7]->(p2:{ContentType.PACK})))
+        WHERE id(p1) <> id(p2) {"AND id(p1) IN $filter_list " if filter_list else ""}
+        AND all(n IN nodes(path) WHERE "{marketplace}" IN n.marketplaces)
+        RETURN p1 as pack, collect(r) as relationships, collect(p2) AS dependencies
+    """
+    result = run_query(tx, query, filter_list=list(filter_list) if filter_list else None)
+    logger.info('Found dependencies.')
+    return [Neo4jResult(node_from=item.get("pack"), nodes_to=item.get("dependencies"), relationships=item.get("relationships")) for item in result]
 
 
 def create_pack_dependencies(tx: Transaction) -> None:

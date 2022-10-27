@@ -5,11 +5,13 @@ from typing import Any, Dict, Iterable, List, Optional
 from neo4j import Transaction
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import (SERVER_CONTENT_ITEMS,
-                                                       ContentType,
-                                                       Neo4jResult)
+from demisto_sdk.commands.content_graph.common import SERVER_CONTENT_ITEMS, ContentType, Neo4jResult, RelationshipType
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
-    intersects, run_query, to_neo4j_map, versioned)
+    intersects,
+    run_query,
+    to_neo4j_map,
+    versioned,
+)
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -90,13 +92,11 @@ def _match(
     marketplace: MarketplaceVersions = None,
     content_type: Optional[ContentType] = None,
     filter_list: Optional[Iterable[int]] = None,
-    is_nested: bool = False,
     **properties,
 ) -> List[Neo4jResult]:
     params_str = to_neo4j_map(properties)
 
     content_type_str = f":{content_type}" if content_type else ""
-    nesting_str = f"*..{NESTING_LEVEL}" if is_nested else ""
     where = []
     if marketplace or filter_list:
         where.append("WHERE")
@@ -108,22 +108,14 @@ def _match(
             where.append(f"'{marketplace}' IN node_from.marketplaces AND '{marketplace}' IN node_to.marketplaces")
 
     query = f"""
-    MATCH (node_from{content_type_str}{params_str}) - [relationship{nesting_str}] - (node_to)
+    MATCH (node_from{content_type_str}{params_str}) - [relationship] - (node_to)
     {" ".join(where)}
     RETURN node_from, collect(relationship) as relationships, collect(node_to) as nodes_to
     """
-    result = []
-    for item in run_query(tx, query, filter_list=list(filter_list) if filter_list else None):
-        relationships = item.get("relationships")
-        if any(isinstance(el, list) for el in relationships):
-            relationships = list(chain.from_iterable(relationships))
-
-        nodes_to = item.get("nodes_to")
-        if any(isinstance(el, list) for el in nodes_to):
-            nodes_to = list(chain.from_iterable(nodes_to))
-
-        result.append(Neo4jResult(node_from=item.get("node_from"), relationships=relationships, nodes_to=nodes_to))
-    return result
+    return [
+        Neo4jResult(node_from=item.get("node_from"), relationships=item.get("relationships"), nodes_to=item.get("nodes_to"))
+        for item in run_query(tx, query, filter_list=list(filter_list) if filter_list else None)
+    ]
 
 
 def delete_all_graph_nodes(tx: Transaction) -> None:

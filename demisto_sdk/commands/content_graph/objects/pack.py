@@ -147,6 +147,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
     content_items: PackContentItems = Field(
         PackContentItems(), alias="contentItems", exclude=True
     )
+    
+    all_level_dependencies: List["Pack"] = Field([], exclude=True, repr=False)
 
     @property
     def depends_on(self) -> List["Pack"]:

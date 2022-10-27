@@ -38,7 +38,7 @@ class ContentGraphInterface(ABC):
         marketplace: MarketplaceVersions = None,
         content_type: Optional[ContentType] = None,
         filter_list: Optional[Iterable[int]] = None,
-        all_level_relationships: bool = False,
+        all_level_dependencies: bool = False,
         **properties,
     ) -> List[Union[BaseContent, Command]]:
         """
@@ -48,22 +48,24 @@ class ContentGraphInterface(ABC):
             marketplace (MarketplaceVersions, optional): Marketplace to search by. Defaults to None.
             content_type (Optional[ContentType], optional): The content_type to filter. Defaults to None.
             filter_list (Optional[Iterable[int]], optional): A list of unique IDs to filter. Defaults to None.
-            all_levels_relationships (bool, optional): Whether to search for all level relationships. Defaults to False.
+            all_level_dependencies (bool, optional): Whether to return all level dependencies. Defaults to False.
             **properties: A key, value filter for the search. For example: `search(object_id="QRadar")`.
 
         Returns:
             List[Union[BaseContent, Command]]: The search results
         """
+        if not marketplace and all_level_dependencies:
+            raise ValueError("Cannot search for all level dependencies without a marketplace")
         # First we want to create pack dependencies if they are not availible
         if not ContentGraphInterface._with_dependencies:
             self.create_pack_dependencies()
         return []
 
     def marshal_graph(
-        self, marketplace: MarketplaceVersions, all_level_relationships: bool = False
+        self, marketplace: MarketplaceVersions
     ) -> ContentDTO:
         packs = self.search(
-            marketplace, content_type=ContentType.PACK, all_level_relationships=all_level_relationships
+            marketplace, content_type=ContentType.PACK
         )
         return ContentDTO(packs=packs)
 

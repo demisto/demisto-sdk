@@ -435,9 +435,8 @@ class TestCreateContentGraph:
 
             # now with all levels
             packs = interface.search(
-                MarketplaceVersions.XSOAR, content_type=ContentType.PACK, all_level_relationships=True
-            )
-            depends_on_pack1 = packs[0].depends_on
+                MarketplaceVersions.XSOAR, content_type=ContentType.PACK, all_level_dependencies=True)
+            depends_on_pack1 = packs[0].all_level_dependencies
             assert packs[1] in depends_on_pack1
             assert packs[2] in depends_on_pack1
 
@@ -752,22 +751,6 @@ class TestCreateContentGraph:
         with ContentGraphInterface() as interface:
             create_content_graph(interface)
             assert not interface.search()
-
-    def test_dest_dump_zips(self, mocker, tmp_path: Path, repository: ContentDTO):
-        from concurrent.futures import ThreadPoolExecutor
-
-        import demisto_sdk.commands.content_graph.objects.repository as repository_module
-
-        mocker.patch.object(repository_module, "ProcessPoolExecutor", ThreadPoolExecutor)
-        create_mini_content(repository)
-
-        with ContentGraphInterface() as interface:
-            create_content_graph(interface)
-            content_dto = interface.marshal_graph(MarketplaceVersions.XSOAR)
-            content_dto.dump(tmp_path, MarketplaceVersions.XSOAR, zip=False)
-        assert Path.exists(tmp_path / "dummypath")
-        # with open(tmp_path, "rb") as f:
-        #     pass
 
     def test_stop_content_graph(self):
         """

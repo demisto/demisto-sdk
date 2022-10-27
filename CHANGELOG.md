@@ -6,7 +6,6 @@
 * Fixed an issue where the **upload** failed on playbooks containing a value that starts with `=`.
 * Fixed an issue where the **generate-unit-tests** failed to generate assertions, and generate unit tests when command names does not match method name.
 * Fixed an issue where the **download** command did not honor the `--no-code-formatting` flag properly. @maxgubler
-* Updated **create-content-artifacts** command to add the _datasets_ fields for modeling rules in packs' metadata.json files.
 * Added a new check to **validate**, making sure playbook task values are passed as references.
 * Fixed an issue where the **update-release-notes** deleted existing release notes, now appending to it instead.
 * Fixed an issue where **validate** printed blank space in case of validation failed and ignored.

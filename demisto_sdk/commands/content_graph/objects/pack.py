@@ -9,7 +9,8 @@ from pydantic import BaseModel, Field
 from demisto_sdk.commands.common.constants import (
     CONTRIBUTORS_README_TEMPLATE, MarketplaceVersions)
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import MarketplaceTagParser, get_mp_tag_parser
+from demisto_sdk.commands.common.tools import (MarketplaceTagParser,
+                                               get_mp_tag_parser)
 from demisto_sdk.commands.content_graph.common import (PACK_METADATA_FILENAME,
                                                        ContentType, Nodes,
                                                        Relationships,

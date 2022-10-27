@@ -1,6 +1,6 @@
 import json
 from abc import ABC, abstractmethod
-from typing import (TYPE_CHECKING, Any, ClassVar, Dict, List, Set, Type, cast)
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Set, Type, cast
 
 from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass

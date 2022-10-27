@@ -189,5 +189,3 @@ def is_alive():
         return requests.get(NEO4J_DATABASE_HTTP, timeout=10).ok
     except requests.exceptions.RequestException:
         return False
-        
-    

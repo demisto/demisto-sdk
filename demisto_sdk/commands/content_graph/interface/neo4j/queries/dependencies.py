@@ -5,10 +5,11 @@ from neo4j import Transaction
 
 from demisto_sdk.commands.common.constants import (REPUTATION_COMMAND_NAMES,
                                                    MarketplaceVersions)
-from demisto_sdk.commands.content_graph.common import (ContentType, Neo4jResult,
+from demisto_sdk.commands.content_graph.common import (ContentType,
+                                                       Neo4jResult,
                                                        RelationshipType)
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import \
-    (run_query, to_neo4j_map)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
+    run_query, to_neo4j_map)
 
 REPUTATION_COMMANDS_NODE_IDS = [
     f"{ContentType.COMMAND}:{cmd}" for cmd in REPUTATION_COMMAND_NAMES

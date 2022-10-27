@@ -431,6 +431,7 @@ class TestCreateContentGraph:
                             assert content_item_source.uses[0].object_id == content_item_target.object_id
                         if relationship_type == RelationshipType.TESTED_BY:
                             assert content_item_source.tested_by[0].object_id == content_item_target.object_id
+            print(packs)
             assert packs[0].depends_on[0] == packs[1]
             assert packs[1].depends_on[0] == packs[2]
 

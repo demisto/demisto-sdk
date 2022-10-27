@@ -26,6 +26,7 @@ def get_all_level_packs_dependencies(
     tx: Transaction,
     marketplace: MarketplaceVersions,
     filter_list: List[int] = None,
+    mandatorily: bool = False,
     **properties,
 ) -> List[Neo4jResult]:
     params_str = to_neo4j_map(properties)
@@ -34,6 +35,7 @@ def get_all_level_packs_dependencies(
         MATCH path = (shortestPath((p1:{ContentType.PACK}{params_str})-[r:{RelationshipType.DEPENDS_ON}*..7]->(p2:{ContentType.PACK})))
         WHERE id(p1) <> id(p2) {"AND id(p1) IN $filter_list " if filter_list else ""}
         AND all(n IN nodes(path) WHERE "{marketplace}" IN n.marketplaces)
+        {"AND all(r IN relationships(path) WHERE r.mandatorily = true)" if mandatorily else ""}
         RETURN p1 as pack, collect(r) as relationships, collect(p2) AS dependencies
     """
     result = run_query(tx, query, filter_list=list(filter_list) if filter_list else None)

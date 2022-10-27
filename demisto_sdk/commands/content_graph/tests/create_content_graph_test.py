@@ -260,6 +260,7 @@ def create_mini_content(repository: ContentDTO):
                 ContentType.INTEGRATION,
                 "SampleClassifier",
                 ContentType.CLASSIFIER,
+                mandatorily=True,
             ),
         ],
     }

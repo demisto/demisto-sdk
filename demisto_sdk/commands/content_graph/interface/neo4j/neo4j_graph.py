@@ -173,7 +173,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def _add_all_level_dependencies(self, session: Session, marketplace: MarketplaceVersions, pack_nodes):
         dependencies: List[Neo4jResult] = session.read_transaction(
-            get_all_level_packs_dependencies, marketplace, pack_nodes
+            get_all_level_packs_dependencies, marketplace, pack_nodes, True
         )
         content_items_nodes: Set[graph.Node] = set()
         nodes_set = self._get_nodes_set_from_result(dependencies, set(), content_items_nodes)

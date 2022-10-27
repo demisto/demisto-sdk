@@ -31,7 +31,7 @@ class ContentItem(BaseContent):
             if r.relationship_type == RelationshipType.IN_PACK:
                 return r.related_to  # type: ignore[return-value]
         return None
-    
+
     @property
     def uses(self) -> List[Union["BaseContent", "Command"]]:
         return [

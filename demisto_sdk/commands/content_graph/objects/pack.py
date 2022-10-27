@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from demisto_sdk.commands.common.constants import (
     CONTRIBUTORS_README_TEMPLATE, MarketplaceVersions)
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import get_mp_tag_parser
+from demisto_sdk.commands.common.tools import MarketplaceTagParser, get_mp_tag_parser
 from demisto_sdk.commands.content_graph.common import (PACK_METADATA_FILENAME,
                                                        ContentType, Nodes,
                                                        Relationships,
@@ -197,7 +197,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         with open(path, "r+") as f:
             try:
                 text = f.read()
-                parsed_text = get_mp_tag_parser(marketplace).parse_text(text)
+                parsed_text = MarketplaceTagParser(marketplace).parse_text(text)
                 if len(text) != len(parsed_text):
                     f.seek(0)
                     f.write(parsed_text)

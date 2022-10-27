@@ -10,7 +10,8 @@ from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
 
 class ContentGraphInterface(ABC):
-
+    _with_dependencies = False
+    
     @abstractmethod
     def create_indexes_and_constraints(self) -> None:
         pass
@@ -55,7 +56,8 @@ class ContentGraphInterface(ABC):
         """
         if not marketplace and all_level_dependencies:
             raise ValueError("Cannot search for all level dependencies without a marketplace")
-        self.create_pack_dependencies()
+        if not ContentGraphInterface._with_dependencies
+            self.create_pack_dependencies()
         return []
 
     def marshal_graph(
@@ -68,7 +70,7 @@ class ContentGraphInterface(ABC):
 
     @abstractmethod
     def create_pack_dependencies(self):
-        pass
+        ContentGraphInterface._with_dependencies = True
 
     @abstractmethod
     def run_single_query(self, query: str, **kwargs) -> Any:

@@ -57,8 +57,7 @@ class ContentGraphInterface(ABC):
         if not marketplace and all_level_dependencies:
             raise ValueError("Cannot search for all level dependencies without a marketplace")
         # First we want to create pack dependencies if they are not availible
-        if not ContentGraphInterface._with_dependencies:
-            self.create_pack_dependencies()
+        self.create_pack_dependencies()
         return []
 
     def marshal_graph(

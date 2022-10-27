@@ -6,7 +6,9 @@ from shutil import copyfile, copytree, rmtree
 
 import pytest
 
-from demisto_sdk.commands.common.constants import PACKS_DIR, TEST_PLAYBOOKS_DIR
+from demisto_sdk.commands.common.constants import (PACKS_DIR,
+                                                   TEST_PLAYBOOKS_DIR,
+                                                   MarketplaceVersions)
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.logger import logging_setup
 from demisto_sdk.commands.common.tools import src_root
@@ -211,6 +213,33 @@ def test_contains_indicator_type():
                 "enhancementScriptNames": []
             }
         ]
+
+
+def test_contains_modeling_rule():
+    """
+    Given
+    - A pack with a modeling rule.
+
+    When
+    - Running zip-packs on it.
+
+    Then
+    - Ensure the zipped modeling rule information in the pack metadata includes the datasets.
+    """
+    import demisto_sdk.commands.create_artifacts.content_artifacts_creator as cca
+    from demisto_sdk.commands.zip_packs.packs_zipper import PacksZipper
+
+    cca.logger = logging_setup(0)
+
+    with temp_dir() as temp:
+        packs_zipper = PacksZipper(pack_paths=str(TEST_DATA / PACKS_DIR / 'TestModelingRule'),
+                                   output=temp,
+                                   content_version='6.8.0',
+                                   marketplace=MarketplaceVersions.MarketplaceV2.value,
+                                   zip_all=False)
+        packs_zipper.zip_packs()
+        pack_metadata = packs_zipper.artifacts_manager.packs['TestModelingRule'].metadata
+        assert pack_metadata.content_items['modelingrule'][0].get('datasets') == ['okta_okta_raw']
 
 
 def test_create_content_artifacts(mock_git):

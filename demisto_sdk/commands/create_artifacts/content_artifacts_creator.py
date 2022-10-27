@@ -405,6 +405,7 @@ class ContentItemsHandler:
         })
 
     def add_modeling_rule_as_content_item(self, content_object: ContentObject):
+        print(f"schema = {content_object.get('schema', '{}')}")
         schema: Dict[str, Any] = json.loads(content_object.get('schema', '{}'))
         self.content_items[ContentItems.MODELING_RULES].append({
             'name': content_object.get('name', ''),

@@ -5,8 +5,11 @@
 * Fixed an issue in the **download** command, where an exception would be raised when downloading system playbooks.
 * Fixed an issue where the **upload** failed on playbooks containing a value that starts with `=`.
 * Fixed an issue where the **generate-unit-tests** failed to generate assertions, and generate unit tests when command names does not match method name.
+* Updated **create-content-artifacts** command to add the _datasets_ fields for modeling rules in packs' metadata.json files.
+* Added a new check to **validate**, making sure playbook task values are passed as references.
+* Fixed an issue where the **update-release-notes** deleted existing release notes, now appending to it instead.
+* Fixed an issue where **validate** printed blank space in case of validation failed and ignored.
 * Fixed an issue where **generate-docs** with `-c` argument updated sections of the incorrect commands.
-
 ## 1.7.6
 
 * Fixed parsing of initialization arguments of client classes in the **generate-unit-tests** command.

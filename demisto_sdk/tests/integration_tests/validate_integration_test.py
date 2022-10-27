@@ -3459,6 +3459,7 @@ class TestValidationUsingGit:
         mocker.patch.object(tools, 'is_external_repository', return_value=False)
         mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
         mocker.patch.object(ValidateManager, 'setup_prev_ver', return_value='origin/master')
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
 
         mocker.patch.object(PackDependencies, 'find_dependencies', return_value={})
         mocker.patch.object(PackUniqueFilesValidator, 'validate_pack_meta_file', return_value=True)

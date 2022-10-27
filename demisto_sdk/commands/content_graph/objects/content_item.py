@@ -1,9 +1,11 @@
 import shutil
 from pathlib import Path
-from typing import TYPE_CHECKING, List, Optional, Set
+from typing import TYPE_CHECKING, List, Optional, Set, Union
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.pack import Pack
+    from demisto_sdk.commands.content_graph.objects.integration import Command
+    from demisto_sdk.commands.content_graph.objects.test_playbook import TestPlaybook
 
 from pydantic import DirectoryPath
 
@@ -29,6 +31,30 @@ class ContentItem(BaseContent):
             if r.relationship_type == RelationshipType.IN_PACK:
                 return r.related_to  # type: ignore[return-value]
         return None
+    
+    @property
+    def uses(self) -> List[Union["BaseContent", "Command"]]:
+        return [
+            r.related_to
+            for r in self.relationships_data
+            if r.relationship_type == RelationshipType.USES and r.related_to == r.target
+        ]
+
+    @property
+    def uses_mandatorily(self) -> List[Union["BaseContent", "Command"]]:
+        return [
+            r.related_to
+            for r in self.relationships_data
+            if r.mandatorily and r.relationship_type == RelationshipType.USES and r.related_to == r.target
+        ]
+
+    @property
+    def tested_by(self) -> List["TestPlaybook"]:
+        return [
+            r.related_to  # type: ignore[misc]
+            for r in self.relationships_data
+            if r.relationship_type == RelationshipType.TESTED_BY and r.related_to == r.target
+        ]
 
     def summary(self) -> dict:
         return self.dict(include=self.metadata_fields(), by_alias=True)

@@ -1,21 +1,16 @@
 import json
 from abc import ABC, abstractmethod
-from typing import (TYPE_CHECKING, Any, ClassVar, Dict, List, Set, Type, Union,
-                    cast)
+from typing import (TYPE_CHECKING, Any, ClassVar, Dict, List, Set, Type, cast)
 
 from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import (ContentType,
-                                                       RelationshipType)
+from demisto_sdk.commands.content_graph.common import ContentType
 
 if TYPE_CHECKING:
-    from demisto_sdk.commands.content_graph.objects.integration import Command
     from demisto_sdk.commands.content_graph.objects.relationship import \
         RelationshipData
-    from demisto_sdk.commands.content_graph.objects.test_playbook import \
-        TestPlaybook
 
 content_type_to_model: Dict[ContentType, Type["BaseContent"]] = {}
 
@@ -64,30 +59,6 @@ class BaseContent(ABC, BaseModel, metaclass=ContentModelMetaclass):
         arbitrary_types_allowed = True  # allows having custom classes for properties in model
         orm_mode = True  # allows using from_orm() method
         allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
-
-    @property
-    def uses(self) -> List[Union["BaseContent", "Command"]]:
-        return [
-            r.related_to
-            for r in self.relationships_data
-            if r.relationship_type == RelationshipType.USES and r.related_to == r.target
-        ]
-
-    @property
-    def uses_mandatorily(self) -> List[Union["BaseContent", "Command"]]:
-        return [
-            r.related_to
-            for r in self.relationships_data
-            if r.mandatorily and r.relationship_type == RelationshipType.USES and r.related_to == r.target
-        ]
-
-    @property
-    def tested_by(self) -> List["TestPlaybook"]:
-        return [
-            r.related_to
-            for r in self.relationships_data
-            if r.relationship_type == RelationshipType.TESTED_BY and r.related_to == r.target
-        ]
 
     def to_dict(self) -> Dict[str, Any]:
         """

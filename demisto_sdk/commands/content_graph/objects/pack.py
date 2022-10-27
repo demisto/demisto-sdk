@@ -2,15 +2,14 @@ import logging
 import shutil
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Generator, List, Optional
+from typing import TYPE_CHECKING, Any, Generator, List, Optional
 
 from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (
     CONTRIBUTORS_README_TEMPLATE, MarketplaceVersions)
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (MarketplaceTagParser,
-                                               get_mp_tag_parser)
+from demisto_sdk.commands.common.tools import (MarketplaceTagParser)
 from demisto_sdk.commands.content_graph.common import (PACK_METADATA_FILENAME,
                                                        ContentType, Nodes,
                                                        Relationships,
@@ -55,6 +54,9 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import \
     XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
+
+if TYPE_CHECKING:
+    from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
 logger = logging.getLogger("demisto-sdk")
 json = JSON_Handler()
@@ -149,12 +151,10 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         PackContentItems(), alias="contentItems", exclude=True
     )
 
-    all_level_dependencies: List["Pack"] = Field([], exclude=True, repr=False)
-
     @property
-    def depends_on(self) -> List["Pack"]:
+    def depends_on(self) -> List["RelationshipData"]:
         return [
-            r.related_to
+            r
             for r in self.relationships_data
             if r.relationship_type == RelationshipType.DEPENDS_ON and r.related_to == r.target
         ]

@@ -172,11 +172,11 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         obj.relationships_data.update(relationships)
 
     def _add_all_level_dependencies(self, session: Session, marketplace: MarketplaceVersions, pack_nodes):
-        dependencies: List[Neo4jResult] = session.read_transaction(
+        mandatorily_dependencies: List[Neo4jResult] = session.read_transaction(
             get_all_level_packs_dependencies, marketplace, pack_nodes, True
         )
         content_items_nodes: Set[graph.Node] = set()
-        nodes_set = self._get_nodes_set_from_result(dependencies, set(), content_items_nodes)
+        nodes_set = self._get_nodes_set_from_result(mandatorily_dependencies, set(), content_items_nodes)
         self._add_to_mapping(nodes_set)
         if content_items_nodes:
             self.search(
@@ -184,11 +184,20 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 filter_list=content_items_nodes,
             )
 
-        for pack in dependencies:
+        for pack in mandatorily_dependencies:
             obj: Pack = cast(Pack, Neo4jContentGraphInterface._id_to_obj[pack.node_from.id])
-            obj.all_level_dependencies = [
-                cast(Pack, Neo4jContentGraphInterface._id_to_obj[node_to.id]) for node_to in pack.nodes_to
-            ]
+            for node_to in pack.nodes_to:
+                target = Neo4jContentGraphInterface._id_to_obj[node_to.id]
+                rel = RelationshipData(
+                    RelationshipType.DEPENDS_ON,
+                    source=obj,
+                    related_to=target,
+                    target=target,
+                    mandatorily=True,
+                    is_direct=False,
+                )
+                if rel not in obj.relationships_data:
+                    obj.relationships_data.add(rel)
 
     def create_indexes_and_constraints(self) -> None:
         with self.driver.session() as session:

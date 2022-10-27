@@ -428,17 +428,17 @@ class TestCreateContentGraph:
                         if relationship_type == RelationshipType.IMPORTS:
                             assert content_item_source.imports[0].object_id == content_item_target.object_id
                         if relationship_type == RelationshipType.USES_BY_ID:
-                            assert content_item_source.uses[0].object_id == content_item_target.object_id
+                            assert content_item_source.uses[0].related_to.object_id == content_item_target.object_id
                         if relationship_type == RelationshipType.TESTED_BY:
                             assert content_item_source.tested_by[0].object_id == content_item_target.object_id
             print(packs)
-            assert packs[0].depends_on[0] == packs[1]
-            assert packs[1].depends_on[0] == packs[2]
+            assert packs[0].depends_on[0].related_to == packs[1]
+            assert packs[1].depends_on[0].related_to == packs[2]
 
             # now with all levels
             packs = interface.search(
                 MarketplaceVersions.XSOAR, content_type=ContentType.PACK, all_level_dependencies=True)
-            depends_on_pack1 = packs[0].all_level_dependencies
+            depends_on_pack1 = [r.related_to for r in packs[0].depends_on]
             assert packs[1] in depends_on_pack1
             assert packs[2] in depends_on_pack1
 

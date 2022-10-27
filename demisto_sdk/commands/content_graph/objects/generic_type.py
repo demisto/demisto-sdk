@@ -11,6 +11,3 @@ class GenericType(ContentItem, content_type=ContentType.GENERIC_TYPE):  # type: 
 
     def metadata_fields(self) -> Set[str]:
         return {"name", "details"}
-
-
-# TODO no generic_field, no pre-proccess rule

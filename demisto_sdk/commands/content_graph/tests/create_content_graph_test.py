@@ -438,10 +438,16 @@ class TestCreateContentGraph:
             # now with all levels
             packs = interface.search(
                 MarketplaceVersions.XSOAR, content_type=ContentType.PACK, all_level_dependencies=True)
-            depends_on_pack1 = [r.related_to for r in packs[0].depends_on]
-            assert packs[1] in depends_on_pack1
-            assert packs[2] in depends_on_pack1
-
+            depends_on_pack1 = [r for r in packs[0].depends_on]
+            assert depends_on_pack1
+            for depends in depends_on_pack1:
+                if depends.related_to == packs[1]:
+                    assert depends.is_direct
+                elif depends.related_to == packs[2]:
+                    assert not depends.is_direct
+                else:
+                    assert False
+                    
     def test_create_content_graph_two_integrations_with_same_command(
         self,
         repository: ContentDTO,

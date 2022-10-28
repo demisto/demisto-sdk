@@ -17,11 +17,12 @@ class RelationshipData:
     source: Union[BaseContent, Command]
     target: Union[BaseContent, Command]
 
-    related_to: Union[BaseContent, Command]  # this is the attribute we're interested in when querying
+    # this is the attribute we're interested in when querying
+    related_to: Union[BaseContent, Command]
 
     is_direct: bool = True
 
-    # USES relationship properties
+    # USES, DEPENDS_ON relationship properties
     mandatorily: bool = False
 
     # HAS_COMMAND relationship properties
@@ -29,6 +30,11 @@ class RelationshipData:
     deprecated: bool = False
 
     def __hash__(self):
+        """This is the unique identifier of the relationship"""
         return hash(
             (self.source.object_id, self.target.object_id, self.relationship_type)
         )
+    
+    def __eq__(self, __o: object) -> bool:
+        """This is needed to check if the relationship already exists"""
+        return hash(self) == hash(__o)

@@ -3,12 +3,14 @@
 ## Unreleased
 
 ## 1.7.7
-
 * Fixed an issue where paybooks **generate-docs** didn't parse complex input values when no accessor field is given correctly.
 * Fixed an issue in the **download** command, where an exception would be raised when downloading system playbooks.
 * Fixed an issue where the **upload** failed on playbooks containing a value that starts with `=`.
 * Fixed an issue where the **generate-unit-tests** failed to generate assertions, and generate unit tests when command names does not match method name.
+* Fixed an issue where the **download** command did not honor the `--no-code-formatting` flag properly. @maxgubler
 * Added a new check to **validate**, making sure playbook task values are passed as references.
+* Fixed an issue where the **update-release-notes** deleted existing release notes, now appending to it instead.
+* Fixed an issue where **validate** printed blank space in case of validation failed and ignored.
 
 ## 1.7.6
 

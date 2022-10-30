@@ -414,4 +414,4 @@ class YmlSplitter:
         """
         remove the auto-generated section headers if they exist.
         """
-        return re.sub(r"register_module_line\('.+', '(?:start|end)', __line__\(\)\)\n", '', script)
+        return re.sub(r"register_module_line\('.+', '(?:start|end)', __line__\(\)\)(\n|$)", '', script)

@@ -1,8 +1,8 @@
 import base64
 import os
 from pathlib import Path
+import shutil
 from unittest.mock import mock_open
-
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
@@ -227,9 +227,13 @@ def test_extract_image(tmpdir):
         image = base64.b64encode(image_data).decode('utf-8')
         assert image == DEFAULT_IMAGE_BASE64
 
-
-def test_extract_code(tmpdir):
-    extractor = YmlSplitter(input=f'{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml',
+@pytest.mark.parametrize('newline_at_end', (True, False))
+def test_extract_code(tmpdir, repo):
+    temp_integration_file = Path(tmpdir, 'integration-zoom-temp-copy.yml')
+    
+    shutil.copyfile(f'{git_path()}/demisto_sdk/tests/test_files/integration-Zoom.yml', str(temp_integration_file))
+    
+    extractor = YmlSplitter(input=str(temp_integration_file),
                             output=str(tmpdir.join('temp_code.py')), file_type='integration')
 
     extractor.extract_code(extractor.output)

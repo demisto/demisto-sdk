@@ -30,17 +30,16 @@ class RelationshipData:
     description: Optional[str] = None
     deprecated: bool = False
     
-    def __post_init__(self):
-        self.source_id = self.source.object_id
-        self.target_id = self.target.object_id
+    # def __post_init__(self):
+    #     self.source_id = self.source.object_id
+    #     self.target_id = self.target.object_id
 
     def __hash__(self):
         """This is the unique identifier of the relationship"""
         return hash(
-            (self.source_id, self.target_id, self.relationship_type)
+            (self.source.object_id, self.target.object_id, self.relationship_type)
         )
         
-
     def __eq__(self, __o: object) -> bool:
         """This is needed to check if the relationship already exists"""
         return hash(self) == hash(__o)

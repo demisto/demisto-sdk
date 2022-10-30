@@ -30,18 +30,15 @@ class RelationshipData:
     description: Optional[str] = None
     deprecated: bool = False
     
-    # used for unique id when pickling in multiprocessing
-    id: str = uuid4().hex
-
+    def __post__init__(self):
+        self.source_id = self.source.object_id
+        self.target_id = self.target.object_id
 
     def __hash__(self):
         """This is the unique identifier of the relationship"""
-        try:
-            return hash(
-                (self.source.object_id, self.target.object_id, self.relationship_type)
-            )
-        except AttributeError:
-            return hash(self.id)
+        return hash(
+            (self.source_id, self.target_id, self.relationship_type)
+        )
         
 
     def __eq__(self, __o: object) -> bool:

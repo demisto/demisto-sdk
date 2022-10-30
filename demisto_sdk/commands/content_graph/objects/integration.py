@@ -39,16 +39,16 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     @property
     def imports(self) -> List["Script"]:
         return [
-            r.related_to
+            r.content_item
             for r in self.relationships_data
-            if r.relationship_type == RelationshipType.IMPORTS and r.related_to == r.target
+            if r.relationship_type == RelationshipType.IMPORTS and r.content_item == r.target
         ]
 
     def set_commands(self):
         commands = [
             Command(
                 # the related to has to be a command
-                name=r.related_to.name,  # type: ignore[union-attr]
+                name=r.content_item.name,  # type: ignore[union-attr]
                 deprecated=r.deprecated,
                 description=r.description,
             )

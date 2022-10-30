@@ -29,7 +29,7 @@ class ContentItem(BaseContent):
     def in_pack(self) -> Optional["Pack"]:
         for r in self.relationships_data:
             if r.relationship_type == RelationshipType.IN_PACK:
-                return r.related_to  # type: ignore[return-value]
+                return r.content_item  # type: ignore[return-value]
         return None
 
     @property
@@ -37,15 +37,15 @@ class ContentItem(BaseContent):
         return [
             r
             for r in self.relationships_data
-            if r.relationship_type == RelationshipType.USES and r.related_to == r.target
+            if r.relationship_type == RelationshipType.USES and r.content_item == r.target
         ]
 
     @property
     def tested_by(self) -> List["TestPlaybook"]:
         return [
-            r.related_to  # type: ignore[misc]
+            r.content_item  # type: ignore[misc]
             for r in self.relationships_data
-            if r.relationship_type == RelationshipType.TESTED_BY and r.related_to == r.target
+            if r.relationship_type == RelationshipType.TESTED_BY and r.content_item == r.target
         ]
 
     def summary(self) -> dict:

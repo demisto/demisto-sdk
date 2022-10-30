@@ -18,7 +18,7 @@ class RelationshipData:
     target: Union[BaseContent, Command]
 
     # this is the attribute we're interested in when querying
-    related_to: Union[BaseContent, Command]
+    content_item: Union[BaseContent, Command]
 
     is_direct: bool = True
 

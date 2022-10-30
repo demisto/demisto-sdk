@@ -163,7 +163,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 relationship_type=rel.type,
                 source=Neo4jContentGraphInterface._id_to_obj[rel.start_node.id],
                 target=Neo4jContentGraphInterface._id_to_obj[rel.end_node.id],
-                related_to=Neo4jContentGraphInterface._id_to_obj[node_to.id],
+                content_item=Neo4jContentGraphInterface._id_to_obj[node_to.id],
                 is_direct=True,
                 **rel,
             )
@@ -191,7 +191,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 rel = RelationshipData(
                     RelationshipType.DEPENDS_ON,
                     source=obj,
-                    related_to=target,
+                    content_item=target,
                     target=target,
                     mandatorily=True,
                     is_direct=False,

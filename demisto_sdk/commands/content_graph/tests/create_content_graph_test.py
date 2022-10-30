@@ -428,12 +428,11 @@ class TestCreateContentGraph:
                         if relationship_type == RelationshipType.IMPORTS:
                             assert content_item_source.imports[0].object_id == content_item_target.object_id
                         if relationship_type == RelationshipType.USES_BY_ID:
-                            assert content_item_source.uses[0].related_to.object_id == content_item_target.object_id
+                            assert content_item_source.uses[0].content_item.object_id == content_item_target.object_id
                         if relationship_type == RelationshipType.TESTED_BY:
                             assert content_item_source.tested_by[0].object_id == content_item_target.object_id
-            print(packs)
-            assert packs[0].depends_on[0].related_to == packs[1]
-            assert packs[1].depends_on[0].related_to == packs[2]
+            assert packs[0].depends_on[0].content_item == packs[1]
+            assert packs[1].depends_on[0].content_item == packs[2]
 
             # now with all levels
             packs = interface.search(
@@ -441,9 +440,9 @@ class TestCreateContentGraph:
             depends_on_pack1 = [r for r in packs[0].depends_on]
             assert depends_on_pack1
             for depends in depends_on_pack1:
-                if depends.related_to == packs[1]:
+                if depends.content_item == packs[1]:
                     assert depends.is_direct
-                elif depends.related_to == packs[2]:
+                elif depends.content_item == packs[2]:
                     assert not depends.is_direct
                 else:
                     assert False

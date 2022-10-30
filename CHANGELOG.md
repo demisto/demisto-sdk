@@ -11,6 +11,7 @@
 * Added a new check to **validate**, making sure playbook task values are passed as references.
 * Fixed an issue where the **update-release-notes** deleted existing release notes, now appending to it instead.
 * Fixed an issue where **validate** printed blank space in case of validation failed and ignored.
+* Renamed 'Agent Config' to 'XDRC Templates'.
 
 ## 1.7.6
 

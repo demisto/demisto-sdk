@@ -4,6 +4,8 @@ from typing import Optional
 
 from pydantic import Field
 
+import contextlib
+
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.content_graph.objects.content_item import ContentItem
@@ -27,9 +29,10 @@ class IntegrationScript(ContentItem):
             return
         dir.mkdir(exist_ok=True, parents=True)
         try:
-            IntegrationScriptUnifier(
-                input=str(self.path.parent), output=str(dir), marketplace=marketplace
-            ).unify()
+            with contextlib.redirect_stdout(None):  # suppress prints
+                IntegrationScriptUnifier(
+                    input=str(self.path.parent), output=str(dir), marketplace=marketplace
+                ).unify()
         except Exception as e:
             logger.debug(
                 f"Failed to unify {self.path} to {dir}, probably already unified. Error message: {e}"

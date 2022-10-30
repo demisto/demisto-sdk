@@ -10,16 +10,20 @@ from demisto_sdk.commands.unify.integration_script_unifier import \
 
 
 class IntegrationScriptParser(YAMLContentItemParser):
-    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
+    def __init__(
+        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+    ) -> None:
         self.is_unified = YAMLContentItemParser.is_unified_file(path)
         # IntegrationScriptUnifier must accept a directory path
-        self.unifier = None if self.is_unified else IntegrationScriptUnifier(path.as_posix())
+        self.unifier = (
+            None if self.is_unified else IntegrationScriptUnifier(path.as_posix())
+        )
         # after super().__init__(), self.path will be the integration's yml path
         super().__init__(path, pack_marketplaces)
 
     @property
     def object_id(self) -> Optional[str]:
-        return self.yml_data.get('commonfields', {}).get('id')
+        return self.yml_data.get("commonfields", {}).get("id")
 
     @abstractmethod
     def get_code(self) -> Optional[str]:

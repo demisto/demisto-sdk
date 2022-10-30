@@ -446,7 +446,7 @@ class TestCreateContentGraph:
                     assert not depends.is_direct
                 else:
                     assert False
-                    
+
     def test_create_content_graph_two_integrations_with_same_command(
         self,
         repository: ContentDTO,

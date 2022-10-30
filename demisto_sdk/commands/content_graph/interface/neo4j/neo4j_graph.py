@@ -6,31 +6,32 @@ from neo4j import GraphDatabase, Neo4jDriver, Session, graph
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import (NEO4J_DATABASE_URL,
-                                                       NEO4J_PASSWORD,
-                                                       NEO4J_USERNAME,
-                                                       ContentType,
-                                                       Neo4jResult,
-                                                       RelationshipType)
-from demisto_sdk.commands.content_graph.interface.graph import \
-    ContentGraphInterface
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import \
-    create_constraints
+from demisto_sdk.commands.content_graph.common import (
+    NEO4J_DATABASE_URL,
+    NEO4J_PASSWORD,
+    NEO4J_USERNAME,
+    ContentType,
+    Neo4jResult,
+    RelationshipType,
+)
+from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import create_constraints
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
-    create_pack_dependencies, get_all_level_packs_dependencies)
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import \
-    create_indexes
+    create_pack_dependencies,
+    get_all_level_packs_dependencies,
+)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import create_indexes
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
-    _match, create_nodes, delete_all_graph_nodes, duplicates_exist)
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import \
-    create_relationships
-from demisto_sdk.commands.content_graph.objects.base_content import (
-    BaseContent, ServerContent, content_type_to_model)
-from demisto_sdk.commands.content_graph.objects.integration import (
-    Command, Integration)
+    _match,
+    create_nodes,
+    delete_all_graph_nodes,
+    duplicates_exist,
+)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import create_relationships
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent, ServerContent, content_type_to_model
+from demisto_sdk.commands.content_graph.objects.integration import Command, Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
-from demisto_sdk.commands.content_graph.objects.relationship import \
-    RelationshipData
+from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
 logger = logging.getLogger("demisto-sdk")
 
@@ -199,6 +200,38 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 if rel not in obj.relationships_data:
                     obj.relationships_data.add(rel)
 
+    def _search(
+        self,
+        marketplace: MarketplaceVersions = None,
+        content_type: Optional[ContentType] = None,
+        filter_list: Optional[Iterable[int]] = None,
+        all_level_dependencies: bool = False,
+        level: int = 0,
+        **properties,
+    ) -> List[Union[BaseContent, Command]]:
+        super().search()
+        with self.driver.session() as session:
+            result: List[Neo4jResult] = session.read_transaction(
+                _match, marketplace, content_type, filter_list, **properties
+            )
+            content_items_nodes: Set[graph.Node] = set()
+            pack_nodes: Set[graph.Node] = set()
+            nodes_set = self._get_nodes_set_from_result(result, pack_nodes, content_items_nodes)
+            self._add_to_mapping(nodes_set)
+
+            if content_items_nodes and level < 2:
+                # limit recursion level is 2, because worst case is `Pack`, and there are two levels until the command
+                self._search(
+                    marketplace,
+                    filter_list=content_items_nodes,
+                    level=level + 1,
+                )
+
+            final_result = self._add_relationships_to_objects(result)
+            if all_level_dependencies and pack_nodes and marketplace:
+                self._add_all_level_dependencies(session, marketplace, pack_nodes)
+            return final_result
+
     def create_indexes_and_constraints(self) -> None:
         with self.driver.session() as session:
             session.write_transaction(create_indexes)
@@ -229,31 +262,9 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         content_type: Optional[ContentType] = None,
         filter_list: Optional[Iterable[int]] = None,
         all_level_dependencies: bool = False,
-        level: int = 0,
         **properties,
     ) -> List[Union[BaseContent, Command]]:
-        super().search()
-        with self.driver.session() as session:
-            result: List[Neo4jResult] = session.read_transaction(
-                _match, marketplace, content_type, filter_list, **properties
-            )
-            content_items_nodes: Set[graph.Node] = set()
-            pack_nodes: Set[graph.Node] = set()
-            nodes_set = self._get_nodes_set_from_result(result, pack_nodes, content_items_nodes)
-            self._add_to_mapping(nodes_set)
-
-            if content_items_nodes and level < 2:
-                # limit recursion level is 2, because worst case is `Pack`, and there are two levels until the command
-                self.search(
-                    marketplace,
-                    filter_list=content_items_nodes,
-                    level=level + 1,
-                )
-
-            final_result = self._add_relationships_to_objects(result)
-            if all_level_dependencies and pack_nodes and marketplace:
-                self._add_all_level_dependencies(session, marketplace, pack_nodes)
-            return final_result
+        return self._search(marketplace, content_type, filter_list, all_level_dependencies, 0, **properties)
 
     def create_pack_dependencies(self):
         with self.driver.session() as session:

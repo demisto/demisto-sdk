@@ -28,11 +28,15 @@ class ContentDTO(BaseModel):
         logger.info("starting repo dump")
         start_time = time.time()
         if USE_FUTURE:
-            futures = []
-            with ProcessPoolExecutor() as executer:
-                for pack in self.packs:
-                    futures.append(executer.submit(pack.dump, dir / pack.path.name, marketplace))
-                wait(futures)
+            import multiprocessing
+            packs = [(pack, marketplace) for pack in self.packs]
+            with multiprocessing.Pool() as p:
+                p.map(Pack.dump, packs)
+            # futures = []
+            # with ProcessPoolExecutor() as executer:
+            #     for pack in self.packs:
+            #         futures.append(executer.submit(pack.dump, dir / pack.path.name, marketplace))
+            #     wait(futures)
         else:
             for pack in self.packs:
                 pack.dump(dir / pack.path.name, marketplace)

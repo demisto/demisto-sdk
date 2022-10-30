@@ -2,7 +2,7 @@ import logging
 from os import mkdir
 import shutil
 import time
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, wait
 from pathlib import Path
 from typing import List
 
@@ -28,9 +28,11 @@ class ContentDTO(BaseModel):
         logger.info("starting repo dump")
         start_time = time.time()
         if USE_FUTURE:
+            futures = []
             with ProcessPoolExecutor() as executer:
                 for pack in self.packs:
-                    executer.submit(pack.dump, dir / pack.path.name, marketplace)
+                    futures.append(executer.submit(pack.dump, dir / pack.path.name, marketplace))
+                wait(futures)
         else:
             for pack in self.packs:
                 pack.dump(dir / pack.path.name, marketplace)

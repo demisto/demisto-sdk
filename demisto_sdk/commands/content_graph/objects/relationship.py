@@ -30,7 +30,7 @@ class RelationshipData:
     description: Optional[str] = None
     deprecated: bool = False
     
-    def __post__init__(self):
+    def __post_init__(self):
         self.source_id = self.source.object_id
         self.target_id = self.target.object_id
 

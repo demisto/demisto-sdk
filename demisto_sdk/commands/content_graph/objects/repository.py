@@ -1,4 +1,5 @@
 import logging
+from os import mkdir
 import shutil
 import time
 from concurrent.futures import ProcessPoolExecutor
@@ -23,6 +24,7 @@ class ContentDTO(BaseModel):
     def dump(
         self, dir: DirectoryPath, marketplace: MarketplaceVersions, zip: bool = True
     ):
+        dir.mkdir(parents=True, exist_ok=True)
         logger.info("starting repo dump")
         start_time = time.time()
         if USE_FUTURE:

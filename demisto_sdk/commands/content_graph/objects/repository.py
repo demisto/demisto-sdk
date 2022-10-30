@@ -1,8 +1,7 @@
 import logging
-from os import mkdir
 import shutil
 import time
-from concurrent.futures import ProcessPoolExecutor, wait
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import List
 
@@ -33,10 +32,10 @@ class ContentDTO(BaseModel):
             # with multiprocessing.Pool() as p:
             #     p.map(Pack.dump, packs)
             futures = []
-            with ProcessPoolExecutor() as executer:
+            with ThreadPoolExecutor() as executer:
                 for pack in self.packs:
                     futures.append(executer.submit(pack.dump, dir / pack.path.name, marketplace))
-                # wait(futures)
+            
         else:
             for pack in self.packs:
                 pack.dump(dir / pack.path.name, marketplace)

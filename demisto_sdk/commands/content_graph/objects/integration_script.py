@@ -29,10 +29,9 @@ class IntegrationScript(ContentItem):
             return
         dir.mkdir(exist_ok=True, parents=True)
         try:
-            with contextlib.redirect_stdout(None):  # suppress prints
-                IntegrationScriptUnifier(
-                    input=str(self.path.parent), output=str(dir), marketplace=marketplace
-                ).unify()
+            IntegrationScriptUnifier(
+                input=str(self.path.parent), output=str(dir), marketplace=marketplace, force=True
+            ).unify()
         except Exception as e:
             logger.debug(
                 f"Failed to unify {self.path} to {dir}, probably already unified. Error message: {e}"

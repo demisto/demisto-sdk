@@ -208,7 +208,11 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         level: int = 0,
         **properties,
     ) -> List[Union[BaseContent, Command]]:
-        super().search()
+        """
+        This is the implementation for the search function.
+
+        The `level` argument is an extra argument provided to limit the recursion level.
+        """
         with self.driver.session() as session:
             result: List[Neo4jResult] = session.read_transaction(
                 _match, marketplace, content_type, filter_list, **properties
@@ -263,6 +267,20 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         all_level_dependencies: bool = False,
         **properties,
     ) -> List[Union[BaseContent, Command]]:
+        """
+        This searches the database for content items and returns a list of them, including their relationships
+
+        Args:
+            marketplace (MarketplaceVersions, optional): Marketplace to search by. Defaults to None.
+            content_type (Optional[ContentType], optional): The content_type to filter. Defaults to None.
+            filter_list (Optional[Iterable[int]], optional): A list of unique IDs to filter. Defaults to None.
+            all_level_dependencies (bool, optional): Whether to return all level dependencies. Defaults to False.
+            **properties: A key, value filter for the search. For example: `search(object_id="QRadar")`.
+
+        Returns:
+            List[Union[BaseContent, Command]]: The search results
+        """
+        super().search()
         return self._search(marketplace, content_type, filter_list, all_level_dependencies, 0, **properties)
 
     def create_pack_dependencies(self):

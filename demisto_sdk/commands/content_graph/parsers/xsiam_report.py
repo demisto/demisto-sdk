@@ -8,14 +8,16 @@ from demisto_sdk.commands.content_graph.parsers.json_content_item import \
 
 
 class XSIAMReportParser(JSONContentItemParser, content_type=ContentType.XSIAM_REPORT):
-    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
+    def __init__(
+        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+    ) -> None:
         super().__init__(path, pack_marketplaces)
-        self.json_data: Dict[str, Any] = self.json_data.get('templates_data', [{}])[0]
+        self.json_data: Dict[str, Any] = self.json_data.get("templates_data", [{}])[0]
 
     @property
     def name(self) -> Optional[str]:
-        return self.json_data.get('report_name')
+        return self.json_data.get("report_name")
 
     @property
     def object_id(self) -> Optional[str]:
-        return self.json_data.get('global_id')
+        return self.json_data.get("global_id")

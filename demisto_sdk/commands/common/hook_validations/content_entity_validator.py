@@ -277,13 +277,37 @@ class ContentEntityValidator(BaseValidator):
 
         # Integration case
         elif file_type == 'integration':
+            # Not stated no tests explicitly and has not tests in yml.
             is_configured_test = any(
                 test_config for test_config in conf_json_tests if is_test_config_match(test_config,
                                                                                        integration_id=content_item_id))
+
+            unconfigured_test_playbook_ids = []
+
+            if test_playbooks:
+                configured_tests = []
+                for test_playbook in test_playbooks:
+                    test_config_matches = []
+                    for test_config in conf_json_tests:
+                        test_config_matches.append(is_test_config_match(test_config,
+                                                                        test_playbook_id=test_playbook,
+                                                                        integration_id=content_item_id))
+                    found_match = any(test_config_matches)
+                    configured_tests.append(found_match)
+                    if not found_match:
+                        unconfigured_test_playbook_ids.append(test_playbook)
+
+                is_configured_test = all(configured_tests)
+
             if not is_configured_test:
                 missing_test_playbook_configurations = json.dumps(
                     {'integrations': content_item_id, 'playbookID': '<TestPlaybook ID>'},
                     indent=4)
+                if unconfigured_test_playbook_ids:
+                    missing_test_playbook_configurations = json.dumps(
+                        [{'integrations': content_item_id, 'playbookID': test_playbook_id}
+                         for test_playbook_id in unconfigured_test_playbook_ids], indent=4)
+
                 no_tests_key = yaml.dumps({'tests': ['No tests']})
                 error_message, error_code = Errors.integration_not_registered(self.file_path,
                                                                               missing_test_playbook_configurations,

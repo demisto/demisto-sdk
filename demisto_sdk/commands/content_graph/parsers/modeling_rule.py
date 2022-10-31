@@ -8,9 +8,11 @@ from demisto_sdk.commands.content_graph.parsers.yaml_content_item import \
 
 
 class ModelingRuleParser(YAMLContentItemParser, content_type=ContentType.MODELING_RULE):
-    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
+    def __init__(
+        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+    ) -> None:
         super().__init__(path, pack_marketplaces)
 
     @property
     def object_id(self) -> Optional[str]:
-        return self.yml_data.get('id')
+        return self.yml_data.get("id")

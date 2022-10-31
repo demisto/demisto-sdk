@@ -19,7 +19,7 @@ class Command(BaseModel):
     deprecated: bool = False
     description: str = ""
 
-    _relationships_data: Set["RelationshipData"] = Field(set(), exclude=True, repr=False)  # too much data in the repr
+    _relationships_data: Set["RelationshipData"] = set()
 
     @validator("object_id", always=True)
     def validate_object_id(cls, v, values):

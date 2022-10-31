@@ -51,9 +51,7 @@ class BaseContent(ABC, BaseModel, metaclass=ContentModelMetaclass):
         MarketplaceVersions
     )  # TODO check if default
     node_id: str
-    _relationships_data: Set["RelationshipData"] = Field(
-        set(), exclude=True, repr=False
-    )  # too much data in the repr
+    _relationships_data: Set["RelationshipData"] = set()
 
     class Config:
         arbitrary_types_allowed = True  # allows having custom classes for properties in model

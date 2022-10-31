@@ -1,5 +1,6 @@
 # Changelog
 * Fixed an issue where the **zip-packs** command did not work with the CommonServerUserPython and CommonServerUserPowerShell package.
+* Fixed an issue where **validate** failed to recognize integration tests that were missing from config.json
 
 ## Unreleased
 

@@ -7,8 +7,6 @@ from typing import List
 
 from pydantic import BaseModel, DirectoryPath
 
-from joblib import Parallel, delayed
-
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.tools import get_content_path
 from demisto_sdk.commands.content_graph.objects.pack import Pack
@@ -29,10 +27,9 @@ class ContentDTO(BaseModel):
         logger.info("starting repo dump")
         start_time = time.time()
         if USE_FUTURE:
-            Parallel()(delayed(pack.dump)(dir / pack.path.name, marketplace) for pack in self.packs)
-            # with ThreadPoolExecutor() as executer:
-            #     for pack in self.packs:
-            #         futures.append(executer.submit(pack.dump, dir / pack.path.name, marketplace))
+            with ThreadPoolExecutor() as executer:
+                for pack in self.packs:
+                    executer.submit(pack.dump, dir / pack.path.name, marketplace)
             
         else:
             for pack in self.packs:

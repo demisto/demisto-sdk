@@ -957,14 +957,18 @@ def upload(**kwargs):
         os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
 
         output_zip_path = kwargs.pop('keep_zip') or tempfile.gettempdir()
-        packs_unifier = PacksZipper(pack_paths=pack_path, output=output_zip_path,
-                                    content_version='0.0.0', zip_all=True, quiet_mode=True, marketplace=marketplace)
-        packs_zip_path, pack_names = packs_unifier.zip_packs()
-        if packs_zip_path is None and not kwargs.get('detached_files'):
-            return EX_FAIL
+        if pack_path.endswith('.zip'):
+            packs_zip_path = pack_path
+            pack_names = ['AlibabaActionTrail']
+        else:
+            packs_unifier = PacksZipper(pack_paths=pack_path, output=output_zip_path,
+                                        content_version='0.0.0', zip_all=True, quiet_mode=True, marketplace=marketplace)
+            packs_zip_path, pack_names = packs_unifier.zip_packs()
+            if packs_zip_path is None and not kwargs.get('detached_files'):
+                return EX_FAIL
 
-        kwargs['input'] = packs_zip_path
-        kwargs['pack_names'] = pack_names
+            kwargs['input'] = packs_zip_path
+            kwargs['pack_names'] = pack_names
     else:
         kwargs.pop('zip')
         kwargs.pop('keep_zip')

@@ -84,7 +84,7 @@ class Integration:
             yml['name'] = yml['commonfields']['id'] = name
             if commands:
                 for command in commands:
-                    yml['script']['commands'].append({'name': command})
+                    yml['script']['commands'].append({'name': command, 'description': f'{command}-description'})
         with open(suite_join_path(default_integration_dir, 'sample_image.png'), 'rb') as image_file:
             image = image_file.read()
         with open(suite_join_path(default_integration_dir, 'CHANGELOG.md')) as changelog_file:

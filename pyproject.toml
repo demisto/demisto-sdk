@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demisto-sdk"
-version = "1.7.6"
+version = "1.7.7"
 description = "\"A Python library for the Demisto SDK\""
 authors = ["Demisto"]
 license = "MIT"
@@ -87,7 +87,7 @@ types-python-dateutil = "^2.8.10"
 types-pyvmomi = "^7.0.6"
 types-tabulate = "^0.8.6"
 types-paramiko = "^2.8.17"
-types-emoji = "^1.2.7"
+types-emoji = ">=1.2.7,<3.0.0"
 types-ipaddress = "^1.0.8"
 types-chardet = ">=4.0.3,<6.0.0"
 types-six = "^1.16.12"
@@ -101,7 +101,7 @@ types-filelock = "^3.2.5"
 types-Markdown = "^3.3.21"
 types-futures = "^3.3.8"
 paramiko = "^2.11.0"
-neo4j = "^4.4.5"
+neo4j = "^4.4.8"
 pydantic = "^1.9.2"
 types-decorator = "^5.1.8"
 types-mock = "^4.0.15"
@@ -120,6 +120,10 @@ pytest-subprocess = "^1.4.1"
 requests-mock = "^1.9.3"
 Deprecated = "^1.2.13"
 slack-sdk = "^3.17.0"
+pycln = "^2.1.1"
+black = "^22.10.0"
+ipykernel = "^6.16.1"
+
 
 [tool.poetry.extras]
 build = ["gsutil"]

@@ -44,7 +44,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     def imports(self) -> List["Script"]:
         return [
             r.content_item
-            for r in self.relationships_data
+            for r in self._relationships_data
             if r.relationship_type == RelationshipType.IMPORTS and r.content_item == r.target
         ]
 
@@ -56,7 +56,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                 deprecated=r.deprecated,
                 description=r.description,
             )
-            for r in self.relationships_data
+            for r in self._relationships_data
             if r.is_direct and r.relationship_type == RelationshipType.HAS_COMMAND
         ]
         self.commands = commands

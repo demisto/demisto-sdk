@@ -37,20 +37,3 @@ class RelationshipData(BaseModel):
     def __eq__(self, __o: object) -> bool:
         """This is needed to check if the relationship already exists"""
         return hash(self) == hash(__o)
-    
-    def __getstate__(self):
-        state = {"id": self.id}
-
-       # remove unpicklable entries
-        del state['f']
-        return state
-
-    def __setstate__(self, state):
-        """Used for deserializing"""
-        # restore the state which was picklable
-        self.__dict__.update(state)
-        
-        # restore unpicklable entries
-        f = open(self.filename)
-        self.f = f
-

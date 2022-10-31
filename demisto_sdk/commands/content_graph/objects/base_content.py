@@ -51,7 +51,7 @@ class BaseContent(ABC, BaseModel, metaclass=ContentModelMetaclass):
         MarketplaceVersions
     )  # TODO check if default
     node_id: str
-    _relationships_data: Set["RelationshipData"] = set()
+    _relationships_data: Set["RelationshipData"] = Field(set(), exclude=True, repr=False)
 
     class Config:
         arbitrary_types_allowed = True  # allows having custom classes for properties in model
@@ -61,7 +61,7 @@ class BaseContent(ABC, BaseModel, metaclass=ContentModelMetaclass):
     def add_relationships(self, relationships: Set["RelationshipData"]):
         """Adds relationships to the model"""
         self._relationships_data.update(relationships)
-
+        
     def to_dict(self) -> Dict[str, Any]:
         """
         This returns a JSON dictionary representation of the class.

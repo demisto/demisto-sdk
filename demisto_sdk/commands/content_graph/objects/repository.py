@@ -1,4 +1,4 @@
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 import logging
 import shutil
 import time
@@ -28,7 +28,7 @@ class ContentDTO(BaseModel):
         logger.info("starting repo dump")
         start_time = time.time()
         if USE_FUTURE:
-            with ProcessPoolExecutor() as executer:
+            with ThreadPoolExecutor() as executer:  # multiprocessing doesn't work 
                 for pack in self.packs:
                     executer.submit(pack.dump, dir / pack.path.name, marketplace)
             

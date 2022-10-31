@@ -197,7 +197,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                     mandatorily=True,
                     is_direct=False,
                 )
-                obj.relationships.add(rel)
+                relationships.add(rel)
             obj.add_relationships(relationships)
 
     def _search(

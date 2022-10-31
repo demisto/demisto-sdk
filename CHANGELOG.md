@@ -1,5 +1,4 @@
 # Changelog
-* Fixed an issue where the **zip-packs** command did not work with the CommonServerUserPython and CommonServerUserPowerShell package.
 
 ## Unreleased
 
@@ -13,6 +12,7 @@
 * Fixed an issue where the **update-release-notes** deleted existing release notes, now appending to it instead.
 * Fixed an issue where **validate** printed blank space in case of validation failed and ignored.
 * Renamed 'Agent Config' to 'XDRC Templates'.
+* Fixed an issue where the **zip-packs** command did not work with the CommonServerUserPython and CommonServerUserPowerShell package.
 
 ## 1.7.6
 

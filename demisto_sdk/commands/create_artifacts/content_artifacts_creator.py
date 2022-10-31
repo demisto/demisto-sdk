@@ -22,8 +22,8 @@ from demisto_sdk.commands.common.constants import (
     LAYOUTS_DIR, LISTS_DIR, MODELING_RULES_DIR, PACKS_DIR, PARSING_RULES_DIR,
     PLAYBOOKS_DIR, PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, REPORTS_DIR,
     SCRIPTS_DIR, TEST_PLAYBOOKS_DIR, TOOLS_DIR, TRIGGER_DIR, WIDGETS_DIR,
-    WIZARDS_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, ContentItems,
-    MarketplaceVersions)
+    WIZARDS_DIR, XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR,
+    ContentItems, MarketplaceVersions)
 from demisto_sdk.commands.common.content import (Content, ContentError,
                                                  ContentFactoryError, Pack)
 from demisto_sdk.commands.common.content.objects.abstract_objects.text_object import \
@@ -199,6 +199,7 @@ class ContentItemsHandler:
             ContentItems.XSIAM_REPORTS: [],
             ContentItems.TRIGGERS: [],
             ContentItems.WIZARDS: [],
+            ContentItems.XDRC_TEMPLATE: [],
         }
         self.content_folder_name_to_func: Dict[str, Callable] = {
             SCRIPTS_DIR: self.add_script_as_content_item,
@@ -227,6 +228,7 @@ class ContentItemsHandler:
             XSIAM_REPORTS_DIR: self.add_xsiam_report_as_content_item,
             TRIGGER_DIR: self.add_trigger_as_content_item,
             WIZARDS_DIR: self.add_wizards_as_content_item,
+            XDRC_TEMPLATE_DIR: self.add_xdrc_template_as_content_item,
         }
         self.id_set = id_set
         self.alternate_fields = alternate_fields
@@ -433,6 +435,14 @@ class ContentItemsHandler:
         self.content_items[ContentItems.WIZARDS].append({
             'name': content_object.get('name', ''),
             'description': content_object.get('description', ''),
+        })
+
+    def add_xdrc_template_as_content_item(self, content_object: ContentObject):
+        self.content_items[ContentItems.XDRC_TEMPLATE].append({
+            'name': content_object.get('name', ''),
+            'os_type': content_object.get('os_type', ''),
+            'profile_type': content_object.get('profile_type', ''),
+            'yaml_template': content_object.get('yaml_template', '')
         })
 
 
@@ -795,6 +805,7 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         for widget in pack.widgets:
             content_items_handler.handle_content_item(widget)
             pack_report += dump_pack_conditionally(artifact_manager, widget)
+
     elif artifact_manager.marketplace == MarketplaceVersions.MarketplaceV2.value:
         for parsing_rule in pack.parsing_rules:
             content_items_handler.handle_content_item(parsing_rule)
@@ -814,6 +825,9 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
         for trigger in pack.triggers:
             content_items_handler.handle_content_item(trigger)
             pack_report += dump_pack_conditionally(artifact_manager, trigger)
+        for xdrc_template in pack.xdrc_templates:
+            content_items_handler.handle_content_item(xdrc_template)
+            pack_report += dump_pack_conditionally(artifact_manager, xdrc_template)
 
     for tool in pack.tools:
         object_report = ObjectReport(tool, content_packs=True)
@@ -1058,7 +1072,8 @@ def calc_relative_packs_dir(artifact_manager: ArtifactsManager, content_object: 
     if ((INTEGRATIONS_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != INTEGRATIONS_DIR) or
             (SCRIPTS_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != SCRIPTS_DIR) or
             (PARSING_RULES_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != PARSING_RULES_DIR) or
-            (MODELING_RULES_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != MODELING_RULES_DIR)):
+            (MODELING_RULES_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != MODELING_RULES_DIR) or
+            (XDRC_TEMPLATE_DIR in relative_pack_path.parts and relative_pack_path.parts[-2] != XDRC_TEMPLATE_DIR)):
         relative_pack_path = relative_pack_path.parent.parent
     else:
         relative_pack_path = relative_pack_path.parent

@@ -13,7 +13,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects import (
     LayoutsContainer, Lists, ModelingRule, OldClassifier, OldIndicatorType,
     PackIgnore, PackMetaData, ParsingRule, Playbook, PreProcessRule, Readme,
     ReleaseNote, ReleaseNoteConfig, Report, Script, SecretIgnore, Trigger,
-    Widget, Wizard, XSIAMDashboard, XSIAMReport)
+    Widget, Wizard, XDRCTemplate, XSIAMDashboard, XSIAMReport)
 from demisto_sdk.commands.common.content.objects.root_objects import \
     Documentation
 from demisto_sdk.commands.common.tools import find_type
@@ -64,6 +64,7 @@ TYPE_CONVERSION_BY_FileType = {
     FileType.XSIAM_REPORT: XSIAMReport,
     FileType.TRIGGER: Trigger,
     FileType.WIZARD: Wizard,
+    FileType.XDRC_TEMPLATE: XDRCTemplate,
 }
 
 TYPE_CONVERSION_BY_FILE_NAME = {

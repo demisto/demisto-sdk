@@ -32,6 +32,10 @@ mapping:
     'Forensics & Malware Analysis', 'IT Services', 'Data Enrichment & Threat Intelligence',
      'Authentication', 'Database', 'Deception', 'Email Gateway', 'Identity and Access Management','File Integrity Management']
     required: true
+  sectionOrder:
+    type: seq
+    sequence:
+    - type: str
   fromversion:
     type: str
   toversion:
@@ -114,6 +118,10 @@ mapping:
     type: bool
   hidden:
     type: bool
+  videos:
+    type: seq
+    sequence:
+      - type: str
   versionedfields:
     type: any
   defaultEnabled:
@@ -139,6 +147,10 @@ schema;configuration_schema:
   mapping:
     display:
       type: str
+    section:
+      type: str
+    advanced:
+      type: bool
     defaultvalue:
       type: any
     name:

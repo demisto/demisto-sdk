@@ -153,7 +153,6 @@ class Conf:
         ]
         self.skipped_tests: Dict[str, str] = conf.get('skipped_tests')  # type: ignore
         self.skipped_integrations: Dict[str, str] = conf.get('skipped_integrations')  # type: ignore
-        self.nightly_integrations: List[str] = conf['nightly_integrations']
         self.unmockable_integrations: Dict[str, str] = conf.get('unmockable_integrations')  # type: ignore
         self.parallel_integrations: List[str] = conf['parallel_integrations']
         self.docker_thresholds = conf.get('docker_thresholds', {}).get('images', {})
@@ -188,67 +187,77 @@ class TestPlaybook:
 
     def should_test_run(self):
         skipped_tests_collected = self.build_context.tests_data_keeper.skipped_tests
-        # If There are a list of filtered tests and the playbook is not in them
-        if not self.build_context.filtered_tests or self.configuration.playbook_id not in self.build_context.filtered_tests:
-            self.build_context.logging_module.debug(f'Skipping {self} because it\'s not in filtered tests')
-            skipped_tests_collected[self.configuration.playbook_id] = 'not in filtered tests'
-            return False
-        # nightly test in a non nightly build
-        if self.configuration.nightly_test and not self.build_context.is_nightly:
-            log_message = f'Skipping {self} because it\'s a nightly test in a non nightly build'
-            if self.configuration.playbook_id in self.build_context.filtered_tests:
-                self.build_context.logging_module.warning(log_message)
-            else:
-                self.build_context.logging_module.debug(log_message)
-            skipped_tests_collected[self.configuration.playbook_id] = \
-                'nightly test in a non nightly build'
+
+        def in_filtered_tests():
+            """
+            Checks if there are a list of filtered tests that the playbook is in them.
+            """
+            if not self.build_context.filtered_tests or self.configuration.playbook_id not in self.build_context.filtered_tests:
+                self.build_context.logging_module.debug(f'Skipping {self} because it\'s not in filtered tests')
+                skipped_tests_collected[self.configuration.playbook_id] = 'not in filtered tests'
+                return False
+            return True
+
+        def nightly_test_in_non_nightly_build():
+            """
+            Checks if we are on a build which is not nightly, and the test should run only on nightly builds.
+            """
+            if self.configuration.nightly_test and not self.build_context.is_nightly:
+                log_message = f'Skipping {self} because it\'s a nightly test in a non nightly build'
+                if self.configuration.playbook_id in self.build_context.filtered_tests:
+                    self.build_context.logging_module.warning(log_message)
+                else:
+                    self.build_context.logging_module.debug(log_message)
+                skipped_tests_collected[self.configuration.playbook_id] = 'nightly test in a non nightly build'
+                return True
             return False
 
-        # skipped test
-        if self.configuration.playbook_id in self.build_context.conf.skipped_tests:
-            # If the playbook supposed to run according to the filters but it's skipped - warning log
-            if self.configuration.playbook_id in self.build_context.filtered_tests:
-                self.build_context.logging_module.warning(f'Skipping test {self} because it\'s in skipped test list')
-            else:
-                self.build_context.logging_module.debug(f'Skipping test {self} because it\'s in skipped test list')
-            reason = self.build_context.conf.skipped_tests[self.configuration.playbook_id]
-            skipped_tests_collected[self.configuration.playbook_id] = reason
+        def skipped_test():
+            if self.configuration.playbook_id in self.build_context.conf.skipped_tests:
+                if self.configuration.playbook_id in self.build_context.filtered_tests:
+                    # Add warning log, as the playbook is supposed to run according to the filters, but it's skipped
+                    self.build_context.logging_module.warning(f'Skipping test {self} because it\'s in skipped test list')
+                else:
+                    self.build_context.logging_module.debug(f'Skipping test {self} because it\'s in skipped test list')
+                reason = self.build_context.conf.skipped_tests[self.configuration.playbook_id]
+                skipped_tests_collected[self.configuration.playbook_id] = reason
+                return True
             return False
-        # Version mismatch
-        if not (LooseVersion(self.configuration.from_version) <= LooseVersion(
-                self.build_context.server_numeric_version) <= LooseVersion(self.configuration.to_version)):
-            self.build_context.logging_module.warning(
-                f'Test {self} ignored due to version mismatch '
-                f'(test versions: {self.configuration.from_version}-{self.configuration.to_version})\n')
-            skipped_tests_collected[self.configuration.playbook_id] = \
-                f'(test versions: {self.configuration.from_version}-{self.configuration.to_version})'
-            return False
-        # Test has skipped integration
-        for integration in self.configuration.test_integrations:
-            # So now we know that the test is in the filtered tests
-            if integration in self.build_context.conf.skipped_integrations:
-                self.build_context.logging_module.debug(
-                    f'Skipping {self} because it has a skipped integration {integration}')
-                # The playbook should be run but has a skipped integration
-                if self.build_context.filtered_tests and self.configuration.playbook_id in self.build_context.filtered_tests:
-                    # Adding the playbook ID to playbook_skipped_integration so that we can send a PR comment about it
-                    skip_reason = self.build_context.conf.skipped_integrations[integration]
-                    self.build_context.tests_data_keeper.playbook_skipped_integration.add(
-                        f'{self.configuration.playbook_id} - reason: {skip_reason}')
-                    self.build_context.logging_module.warning(
-                        f'The integration {integration} is skipped and critical for the test {self}.')
-                    skipped_tests_collected[self.configuration.playbook_id] = \
-                        f'The integration {integration} is skipped'
-                return False
-            # Test has a nightly integration
-            if integration in self.build_context.conf.nightly_integrations and not self.build_context.is_nightly:
-                self.build_context.logging_module.debug(
-                    f'Skipping {self} because it has a nightly integration {integration} in a non nightly build')
+
+        def version_mismatch():
+            if not (LooseVersion(self.configuration.from_version) <= LooseVersion(
+                    self.build_context.server_numeric_version) <= LooseVersion(self.configuration.to_version)):
+                self.build_context.logging_module.warning(
+                    f'Test {self} ignored due to version mismatch '
+                    f'(test versions: {self.configuration.from_version}-{self.configuration.to_version})\n')
                 skipped_tests_collected[self.configuration.playbook_id] = \
-                    f'The integration {integration} is a nightly integration'
-                return False
+                    f'(test versions: {self.configuration.from_version}-{self.configuration.to_version})'
+                return True
+            return False
 
-        return True
+        def test_has_skipped_integration():
+            for integration in self.configuration.test_integrations:
+                # So now we know that the test is in the filtered tests
+                if integration in self.build_context.conf.skipped_integrations:
+                    self.build_context.logging_module.debug(f'Skipping {self} because it has a skipped integration {integration}')
+                    # The playbook should be run but has a skipped integration
+                    if self.build_context.filtered_tests and self.configuration.playbook_id in self.build_context.filtered_tests:
+                        # Adding the playbook ID to playbook_skipped_integration so that we can send a PR comment about it
+                        skip_reason = self.build_context.conf.skipped_integrations[integration]
+                        self.build_context.tests_data_keeper.playbook_skipped_integration.add(
+                            f'{self.configuration.playbook_id} - reason: {skip_reason}')
+                        self.build_context.logging_module.warning(
+                            f'The integration {integration} is skipped and critical for the test {self}.')
+                        skipped_tests_collected[self.configuration.playbook_id] = f'The integration {integration} is skipped'
+                    return True
+
+            return False
+
+        return in_filtered_tests() and \
+            not nightly_test_in_non_nightly_build() and \
+            not skipped_test() and \
+            not version_mismatch() and \
+            not test_has_skipped_integration()
 
     def run_test_module_on_integrations(self, client: DefaultApi) -> bool:
         """
@@ -789,6 +798,7 @@ class BuildContext:
             'Server 6.8': '6.8.0',
             'Server 6.9': '6.9.0',
             'Server Master': default_version,
+            'XSIAM 1.2': '6.9.0',
             'XSIAM Master': default_version
         }
         server_numeric_version = server_version_mapping.get(self.server_version, default_version)
@@ -2220,32 +2230,35 @@ class ServerContext:
         Server check which integration sent a new alert, if the request was sent manually and not from integration it
         sets "sourceBrand" header to be "Manual". XSIAM Server looks for a correlation rule for such sourceBrand,
         and if there is no such correlation rule, no alert will be created.
-        If there is a correlation rule for "Manual" integration the allert will be created.
+        If there is a correlation rule for "Manual" integration the alert will be created.
 
         If this step fails please create an integration with id and name "Manual", set isFetch: true for such
         integration and make sure that the corresponding correlation rule is created.
         """
         body = {
-            'query': 'id:"Manual"'
+            'query': 'id:"Manual"',
         }
         try:
-            res_raw = demisto_client.generic_request_func(self=self.client, method='POST',
-                                                          path='/settings/integration/search',
-                                                          body=body)
+            res_raw = demisto_client.generic_request_func(
+                self=self.client,
+                method='POST',
+                path='/settings/integration/search',
+                body=body,
+            )
             res = ast.literal_eval(res_raw[0])
+            if int(res_raw[1]) != 200:
+                self.build_context.logging_module.error(
+                    f'Failed to get integrations configuration with status code: {res_raw[1]}')
+                return
+
+            all_configurations = res['configurations']
+            for instance in all_configurations:
+                if instance.get('id') == "Manual":
+                    self.build_context.logging_module.info('Server is able to create manual alerts '
+                                                           '("Manual" integration exists).')
+                    return
         except ApiException:
             self.build_context.logging_module.exception('Failed to get integrations configuration.')
-        if int(res_raw[1]) != 200:
-            self.build_context.logging_module.error(
-                f'Failed to get integrations configuration with status code: {res_raw[1]}')
-            return
-
-        all_configurations = res['configurations']
-        for instance in all_configurations:
-            if instance.get('id') == "Manual":
-                self.build_context.logging_module.info('Server is able to create manual alerts '
-                                                       '("Manual" integration exists).')
-                return
 
         self.build_context.logging_module.warning('No "Manual" integration found in XSIAM instance. '
                                                   'Adding it in order to create Manual Correlation Rule.')
@@ -2269,15 +2282,19 @@ class ServerContext:
         }
 
         try:
-            res_raw_integration = demisto_client.generic_request_func(self=self.client, method='PUT',
-                                                                      path='/settings/integration-conf',
-                                                                      body=manual_integration)
+            res_raw_integration = demisto_client.generic_request_func(
+                self=self.client,
+                method='PUT',
+                path='/settings/integration-conf',
+                body=manual_integration,
+            )
+            if int(res_raw_integration[1]) != 200:
+                self.build_context.logging_module.error(
+                    f'Failed to get integrations configuration with status code: {res_raw_integration[1]}')
+
         except ApiException:
             self.build_context.logging_module.exception('No "Manual" integration found in XSIAM instance. '
                                                         'Please add it in order to create Manual Correlation Rule.')
-        if int(res_raw_integration[1]) != 200:
-            self.build_context.logging_module.error(
-                f'Failed to get integrations configuration with status code: {res_raw_integration[1]}')
 
 
 def replace_external_playbook_configuration(client: DefaultApi, external_playbook_configuration: dict,

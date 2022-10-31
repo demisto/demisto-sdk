@@ -32,7 +32,7 @@ ACCEPTED_FILE_STATUSES = ['m', 'a']
 SKIPPED_FILES = {
     'secrets_white_list', 'id_set.json', 'conf.json', 'Pipfile', 'secrets-ignore', 'ami_builds.json',
     'secrets_test.py', 'secrets.py', 'constants.py', 'core.py', 'pack_metadata.json',
-    'dev-requirements-py2.txt', 'dev-requirements-py3.txt'
+    'dev-requirements-py2.txt', 'dev-requirements-py3.txt', '.vscode/extensions.json', '.devcontainer/devcontainer.json',
 }
 TEXT_FILE_TYPES = {'.yml', '.py', '.json', '.md', '.txt', '.sh', '.ini', '.eml', '', '.csv', '.js', '.pdf', '.html',
                    '.ps1'}
@@ -468,8 +468,8 @@ class SecretsValidator(object):
     def remove_false_positives(line):
         false_positive = re.search(r'([^\s]*[(\[{].*[)\]}][^\s]*)', line)
         if false_positive:
-            false_positive = false_positive.group(1)
-            line = line.replace(false_positive, '')
+            false_positive_result = false_positive.group(1)
+            line = line.replace(false_positive_result, '')
         return line
 
     @staticmethod

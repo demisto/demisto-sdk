@@ -113,7 +113,7 @@ class IntegrationScriptUnifier(YAMLUnifier):
             else:  # no value for dockerimage45 remove the dockerimage entry
                 del yml_unified45['dockerimage']
 
-            output_path45 = re.sub(r'\.yml$', '_45.yml', self.dest_path)  # type: ignore[type-var]
+            output_path45 = re.sub(r'\.yml$', '_45.yml', self.dest_path)  # type: ignore[arg-type]
             output_map = {
                 self.dest_path: yml_unified,
                 output_path45: yml_unified45,
@@ -259,15 +259,21 @@ class IntegrationScriptUnifier(YAMLUnifier):
             self.package_path = self.package_path[:-1]  # remove the last / as we use os.path.join
         if self.package_path.endswith(os.path.join('Scripts', 'CommonServerPython')):
             return os.path.join(self.package_path, 'CommonServerPython.py')
+        if self.package_path.endswith(os.path.join('Scripts', 'CommonServerUserPython')):
+            return os.path.join(self.package_path, 'CommonServerUserPython.py')
         if self.package_path.endswith(os.path.join('Scripts', 'CommonServerPowerShell')):
             return os.path.join(self.package_path, 'CommonServerPowerShell.ps1')
+        if self.package_path.endswith(os.path.join('Scripts', 'CommonServerUserPowerShell')):
+            return os.path.join(self.package_path, 'CommonServerUserPowerShell.ps1')
         if self.package_path.endswith('ApiModule'):
             return os.path.join(self.package_path, os.path.basename(os.path.normpath(self.package_path)) + '.py')
 
-        script_path = list(filter(lambda x: not re.search(ignore_regex, x, flags=re.IGNORECASE),
-                                  sorted(glob.glob(os.path.join(self.package_path, '*' + script_type)))))[0]
-
-        return script_path
+        script_path_list = list(filter(lambda x: not re.search(ignore_regex, x, flags=re.IGNORECASE),
+                                       sorted(glob.glob(os.path.join(self.package_path, '*' + script_type)))))
+        if script_path_list:
+            return script_path_list[0]
+        else:
+            raise Exception("the provided code file is not supported")
 
     def insert_script_to_yml(self, script_type, yml_unified, yml_data):
         script_path = self.get_code_file(script_type)

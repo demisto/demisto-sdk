@@ -67,17 +67,17 @@ from demisto_sdk.tests.constants_test import (
     INVALID_PLAYBOOK_CONDITION_2, INVALID_PLAYBOOK_ID_PATH,
     INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
     INVALID_REPUTATION_PATH, INVALID_SCRIPT_PATH, INVALID_WIDGET_PATH,
-    LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET, PLAYBOOK_TARGET,
-    SCRIPT_RELEASE_NOTES_TARGET, SCRIPT_TARGET, VALID_BETA_INTEGRATION,
-    VALID_BETA_PLAYBOOK_PATH, VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH,
-    VALID_INCIDENT_TYPE_PATH, VALID_INDICATOR_FIELD_PATH,
-    VALID_INTEGRATION_ID_PATH, VALID_INTEGRATION_TEST_PATH,
-    VALID_LAYOUT_CONTAINER_PATH, VALID_LAYOUT_PATH, VALID_MD,
-    VALID_MULTI_LINE_CHANGELOG_PATH, VALID_MULTI_LINE_LIST_CHANGELOG_PATH,
-    VALID_ONE_LINE_CHANGELOG_PATH, VALID_ONE_LINE_LIST_CHANGELOG_PATH,
-    VALID_PACK, VALID_PLAYBOOK_CONDITION, VALID_REPUTATION_PATH,
-    VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH, VALID_WIDGET_PATH,
-    WIDGET_TARGET)
+    LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET, MODELING_RULES_SCHEMA_FILE,
+    MODELING_RULES_YML_FILE, PLAYBOOK_TARGET, SCRIPT_RELEASE_NOTES_TARGET,
+    SCRIPT_TARGET, VALID_BETA_INTEGRATION, VALID_BETA_PLAYBOOK_PATH,
+    VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH,
+    VALID_INDICATOR_FIELD_PATH, VALID_INTEGRATION_ID_PATH,
+    VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_CONTAINER_PATH,
+    VALID_LAYOUT_PATH, VALID_MD, VALID_MULTI_LINE_CHANGELOG_PATH,
+    VALID_MULTI_LINE_LIST_CHANGELOG_PATH, VALID_ONE_LINE_CHANGELOG_PATH,
+    VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_PACK, VALID_PLAYBOOK_CONDITION,
+    VALID_REPUTATION_PATH, VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH,
+    VALID_WIDGET_PATH, WIDGET_TARGET)
 from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
     INCIDENT_FIELD
 from TestSuite.pack import Pack
@@ -612,15 +612,10 @@ class TestValidators:
         result = validate_manager.validate_no_duplicated_release_notes(added_files)
         assert result is expected
 
-    ARE_TEST_CONFIGURED_TEST_INPUT = [
-        (VALID_INTEGRATION_TEST_PATH, 'integration', True),
-        (INVALID_INTEGRATION_NO_TESTS, 'integration', False),
-        (INVALID_INTEGRATION_NON_CONFIGURED_TESTS, 'integration', False),
+    @pytest.mark.parametrize('file_path, file_type, expected', [
         (TEST_PLAYBOOK, 'testplaybook', False)
-    ]
-
-    @pytest.mark.parametrize('file_path, file_type, expected', ARE_TEST_CONFIGURED_TEST_INPUT)
-    def test_are_tests_configured(self, file_path: str, file_type: str, expected: bool):
+    ])
+    def test_are_tests_configured_testplaybook(self, file_path: str, file_type: str, expected: bool):
         """
             Given
             - A content item
@@ -634,6 +629,48 @@ class TestValidators:
         structure_validator = StructureValidator(file_path, predefined_scheme=file_type)
         validator = IntegrationValidator(structure_validator)
         assert validator.are_tests_configured() == expected
+
+    ARE_TEST_CONFIGURED_TEST_INPUT = [
+        pytest.param({'tests': ['PagerDuty Test']}, 'PagerDuty v2', True,
+                     id='well configured'),
+        pytest.param({}, 'PagerDuty v3', False,
+                     id='tests section missing from yml and conf.json'),
+        pytest.param({}, 'PagerDuty v2', True,
+                     id='tests section missing from yml but in conf.json'),
+        pytest.param({'tests': ['Non configured test']}, 'PagerDuty v4', False,
+                     id='integration id is not in conf.json'),
+        pytest.param({'tests': ['PagerDuty Test', 'Non configured test']}, 'PagerDuty v2', False,
+                     id='only some of the tests are in conf.json'),
+        pytest.param({'tests': ['Non configured test']}, 'PagerDuty v2', False,
+                     id='yml tests mismatch conf.json tests')
+    ]
+
+    @pytest.mark.parametrize('configured_tests, integration_id, expected', ARE_TEST_CONFIGURED_TEST_INPUT)
+    def test_are_tests_configured_integration(self, repo, integration_id, configured_tests: str, expected: bool):
+        """
+            Given
+            - A content item
+
+            When
+            - Checking if the item has tests configured
+
+            Then
+            -  validator return the correct answer accordingly
+        """
+
+        with ChangeCWD(repo.path):
+            pack = repo.create_pack('Pack')
+            yml_dict = {'commonfields': {'id': integration_id}}
+            yml_dict.update(configured_tests)
+            integration = pack.create_integration(name=integration_id, yml=yml_dict)
+            repo.conf.write_json(tests=[{
+                "integrations": "PagerDuty v2",
+                "playbookID": "PagerDuty Test"
+            }])
+            integration_yml_path = os.path.join(integration.path, integration.name + '.yml')
+            structure_validator = StructureValidator(integration_yml_path, predefined_scheme='integration')
+            validator = IntegrationValidator(structure_validator)
+            assert validator.are_tests_configured() == expected
 
     def test_unified_files_ignored(self):
         """
@@ -986,7 +1023,7 @@ class TestValidators:
         old_format_files = {f"{git_path()}/demisto_sdk/tests/test_files/script-valid.yml",
                             f"{git_path()}/demisto_sdk/tests/test_files/integration-test.yml"}
         assert not validate_manager.validate_no_old_format(old_format_files)
-        assert handle_error_mock.call_count == 2
+        assert handle_error_mock.call_count == 3
 
     def test_validate_no_old_format_deprecated_content(self, repo):
         """
@@ -1918,3 +1955,22 @@ def test_image_error(capsys):
     expected_string, expected_code = Errors.invalid_image_name_or_location()
     assert expected_string in stdout
     assert expected_code in stdout
+
+
+def test_check_file_relevance_and_format_path(mocker):
+    """
+
+    Given: A modeling rules schema file that was changed.
+
+    When: Updating release notes
+
+    Then: Update the file path to point the modeling rules yml file.
+
+    """
+    mocker.patch.object(ValidateManager, 'ignore_files_irrelevant_for_validation', return_value=False)
+    mocker.patch.object(ValidateManager, 'is_old_file_format', return_value=False)
+    validate_manager = ValidateManager()
+    file_path, old_path, _ = validate_manager.check_file_relevance_and_format_path(MODELING_RULES_SCHEMA_FILE,
+                                                                                   MODELING_RULES_SCHEMA_FILE,
+                                                                                   set())
+    assert file_path == old_path == MODELING_RULES_YML_FILE

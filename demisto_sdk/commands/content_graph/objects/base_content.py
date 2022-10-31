@@ -60,7 +60,7 @@ class BaseContent(ABC, BaseModel, metaclass=ContentModelMetaclass):
     
     def add_relationships(self, relationships: Set["RelationshipData"]):
         """Adds relationships to the model"""
-        self._relationships_data.update(relationships)
+        self.relationships_data.update(relationships)
         
     def to_dict(self) -> Dict[str, Any]:
         """

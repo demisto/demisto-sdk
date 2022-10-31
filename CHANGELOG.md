@@ -1,4 +1,5 @@
 # Changelog
+* Fixed an issue where **validate** failed to recognize integration tests that were missing from config.json
 
 ## Unreleased
 

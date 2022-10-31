@@ -19,11 +19,15 @@ class Command(BaseModel):
     deprecated: bool = False
     description: str = ""
 
-    relationships_data: Set["RelationshipData"] = Field(set(), exclude=True, repr=False)  # too much data in the repr
+    _relationships_data: Set["RelationshipData"] = Field(set(), exclude=True, repr=False)  # too much data in the repr
 
     @validator("object_id", always=True)
     def validate_object_id(cls, v, values):
         return values["name"]
+    
+    def add_relationships(self, relationships: Set["RelationshipData"]):
+        """Adds relationships to the model"""
+        self._relationships_data.update(relationships)
 
     class Config:
         orm_mode = True

@@ -169,7 +169,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             )
             for node_to, rel in zip(nodes_to, relationships)
         }
-        obj.relationships_data.update(relationships)
+        obj._relationships_data.update(relationships)
 
     def _add_all_level_dependencies(self, session: Session, marketplace: MarketplaceVersions, pack_nodes):
         mandatorily_dependencies: List[Neo4jResult] = session.read_transaction(

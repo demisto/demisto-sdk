@@ -51,7 +51,7 @@ class BaseContent(ABC, BaseModel, metaclass=ContentModelMetaclass):
         MarketplaceVersions
     )  # TODO check if default
     node_id: str
-    relationships_data: Set["RelationshipData"] = Field(
+    _relationships_data: Set["RelationshipData"] = Field(
         set(), exclude=True, repr=False
     )  # too much data in the repr
 
@@ -59,6 +59,10 @@ class BaseContent(ABC, BaseModel, metaclass=ContentModelMetaclass):
         arbitrary_types_allowed = True  # allows having custom classes for properties in model
         orm_mode = True  # allows using from_orm() method
         allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
+    
+    def add_relationships(self, relationships: Set["RelationshipData"]):
+        """Adds relationships to the model"""
+        self._relationships_data.update(relationships)
 
     def to_dict(self) -> Dict[str, Any]:
         """

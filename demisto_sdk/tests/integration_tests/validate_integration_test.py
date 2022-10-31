@@ -986,7 +986,7 @@ class TestPackValidation:
         mocker.patch.object(ContentEntityValidator, 'validate_readme_exists', return_value=True)
         mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_usecases',
                      return_value=[])
-        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_tags',
+        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_approved_tags',
                      return_value=[])
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", VALID_PACK_PATH, "--no-conf-json",
@@ -1014,7 +1014,7 @@ class TestPackValidation:
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_usecases',
                      return_value=[])
-        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_tags',
+        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_approved_tags',
                      return_value=[])
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", AZURE_FEED_PACK_PATH, "--no-conf-json",

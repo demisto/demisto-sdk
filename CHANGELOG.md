@@ -2,6 +2,8 @@
 * Fixed an issue where the **zip-packs** command did not work with the CommonServerUserPython and CommonServerUserPowerShell package.
 
 ## Unreleased
+
+## 1.7.7
 * Fixed an issue where paybooks **generate-docs** didn't parse complex input values when no accessor field is given correctly.
 * Fixed an issue in the **download** command, where an exception would be raised when downloading system playbooks.
 * Fixed an issue where the **upload** failed on playbooks containing a value that starts with `=`.

@@ -169,7 +169,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             )
             for node_to, rel in zip(nodes_to, relationships)
         }
-        obj._relationships_data.update(relationships)
+        obj.add_relationships(relationships)
 
     def _add_all_level_dependencies(self, session: Session, marketplace: MarketplaceVersions, pack_nodes):
         mandatorily_dependencies: List[Neo4jResult] = session.read_transaction(
@@ -186,6 +186,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
         for pack in mandatorily_dependencies:
             obj: Pack = cast(Pack, Neo4jContentGraphInterface._id_to_obj[pack.node_from.id])
+            relationships = set()
             for node_to in pack.nodes_to:
                 target = Neo4jContentGraphInterface._id_to_obj[node_to.id]
                 rel = RelationshipData(
@@ -196,8 +197,8 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                     mandatorily=True,
                     is_direct=False,
                 )
-                if rel not in obj.relationships_data:
-                    obj.relationships_data.add(rel)
+                obj.relationships.add(rel)
+            obj.add_relationships(relationships)
 
     def _search(
         self,

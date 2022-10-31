@@ -1,7 +1,7 @@
 import logging
 import shutil
 import time
-from concurrent.futures import ThreadPoolExecutor
+# from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import List
 
@@ -27,9 +27,12 @@ class ContentDTO(BaseModel):
         logger.info("starting repo dump")
         start_time = time.time()
         if USE_FUTURE:
-            with ThreadPoolExecutor() as executer:
-                for pack in self.packs:
-                    executer.submit(pack.dump, dir / pack.path.name, marketplace)
+            import multiprocessing
+            packs = [(pack, dir / pack.path.name, marketplace) for pack in self.packs]
+            multiprocessing.Pool().starmap(Pack.dump, packs)
+            # with ThreadPoolExecutor() as executer:
+            #     for pack in self.packs:
+            #         executer.submit(pack.dump, dir / pack.path.name, marketplace)
             
         else:
             for pack in self.packs:

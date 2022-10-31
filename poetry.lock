@@ -1512,11 +1512,11 @@ python-versions = ">=2.6"
 
 [[package]]
 name = "pebble"
-version = "4.6.3"
+version = "5.0.2"
 description = "Threading and multiprocessing eye-candy."
 category = "main"
 optional = false
-python-versions = "*"
+python-versions = ">=3.6"
 
 [[package]]
 name = "pexpect"
@@ -2765,7 +2765,7 @@ build = ["gsutil"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "92715b7affc94eb5af90686c536982390302466b83241ff9bf683bd4ebe0caa3"
+content-hash = "ad608fed375dcf013543ea1666a427eb0bd5d9c8b58bb4462ea923454e36b978"
 
 [metadata.files]
 aiohttp = [
@@ -3904,8 +3904,8 @@ pbr = [
     {file = "pbr-5.11.0.tar.gz", hash = "sha256:b97bc6695b2aff02144133c2e7399d5885223d42b7912ffaec2ca3898e673bfe"},
 ]
 pebble = [
-    {file = "Pebble-4.6.3-py2.py3-none-any.whl", hash = "sha256:46e02767b239a29b8150466514fabb5c6632bea8c9b7456dfdb715f4636fc8a3"},
-    {file = "Pebble-4.6.3.tar.gz", hash = "sha256:694e1105db888f3576b8f00662f90b057cf3780e6f8b7f57955a568008d0f497"},
+    {file = "Pebble-5.0.2-py3-none-any.whl", hash = "sha256:61b2dfd52b1a8c083b4e6cf3e0f1ff2e8a430a6283c53969a7057a1c91bed3cd"},
+    {file = "Pebble-5.0.2.tar.gz", hash = "sha256:9c58c03eaf920c31287444c6fef39dc53baeac9de221ead104f5c9b48e8bd587"},
 ]
 pexpect = [
     {file = "pexpect-4.8.0-py2.py3-none-any.whl", hash = "sha256:0b48a55dcb3c05f3329815901ea4fc1537514d6ba867a152b581d69ae3710937"},

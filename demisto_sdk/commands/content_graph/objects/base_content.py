@@ -58,6 +58,14 @@ class BaseContent(ABC, BaseModel, metaclass=ContentModelMetaclass):
         orm_mode = True  # allows using from_orm() method
         allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
     
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        del state["relationships_data"]
+        return state
+
+    def __setstate__(self, state) -> None:
+        self.__dict__.update(state)
+    
     def add_relationships(self, relationships: Set["RelationshipData"]):
         """Adds relationships to the model"""
         self.relationships_data.update(relationships)

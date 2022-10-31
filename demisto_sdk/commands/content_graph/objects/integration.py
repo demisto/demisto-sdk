@@ -25,6 +25,14 @@ class Command(BaseModel):
     def validate_object_id(cls, v, values):
         return values["name"]
     
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        del state["relationships_data"]
+        return state
+
+    def __setstate__(self, state) -> None:
+        self.__dict__.update(state)
+
     def add_relationships(self, relationships: Set["RelationshipData"]):
         """Adds relationships to the model"""
         self.relationships_data.update(relationships)

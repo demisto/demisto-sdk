@@ -28,9 +28,13 @@ class ContentDTO(BaseModel):
         logger.info("starting repo dump")
         start_time = time.time()
         if USE_FUTURE:
-            with ThreadPoolExecutor() as executer:  # multiprocessing doesn't work 
-                for pack in self.packs:
-                    executer.submit(pack.dump, dir / pack.path.name, marketplace)
+            from multiprocessing import Pool
+            packs = [(pack, dir / pack.path.name, marketplace) for pack in self.packs]
+            Pool().starmap(Pack.dump, packs)
+            
+            # with ThreadPoolExecutor() as executer:  # multiprocessing doesn't work 
+            #     for pack in self.packs:
+            #         executer.submit(pack.dump, dir / pack.path.name, marketplace)
             
         else:
             for pack in self.packs:

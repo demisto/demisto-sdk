@@ -112,14 +112,13 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
 
 def create_depends_on_relationships(tx: Transaction) -> None:
     query = f"""
-        MATCH path = (shortestPath((pack_a:{ContentType.BASE_CONTENT})<-[:{RelationshipType.IN_PACK}]-(a)
-            -[r:{RelationshipType.USES}*..{MAX_DEPTH}]->(b)-[:{RelationshipType.IN_PACK}]->(pack_b:{ContentType.BASE_CONTENT})))
+        MATCH (pack_a:{ContentType.BASE_CONTENT})<-[:{RelationshipType.IN_PACK}]-(a)
+            -[r:{RelationshipType.USES}]->(b)-[:{RelationshipType.IN_PACK}]->(pack_b:{ContentType.BASE_CONTENT})
         WHERE ANY(marketplace IN pack_a.marketplaces WHERE marketplace IN pack_b.marketplaces)
         AND id(pack_a) <> id(pack_b)
         AND NOT pack_a.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
         AND NOT pack_b.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
         AND NOT b.node_id IN {IGNORED_CONTENT_ITEMS_IN_DEPENDENCY_CALC}
-        AND ALL(n IN nodes(path) WHERE n.content_type <> "{ContentType.TEST_PLAYBOOK}")
         WITH r, pack_a, pack_b
         MERGE (pack_a)-[dep:DEPENDS_ON]->(pack_b)
         WITH dep, r, REDUCE(

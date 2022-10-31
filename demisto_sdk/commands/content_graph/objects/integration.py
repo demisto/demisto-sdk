@@ -19,7 +19,7 @@ class Command(BaseModel):
     deprecated: bool = False
     description: str = ""
 
-    _relationships_data: Set["RelationshipData"] = set()
+    relationships_data: Set["RelationshipData"] = Field(set(), exclude=True, repr=False)
 
     @validator("object_id", always=True)
     def validate_object_id(cls, v, values):
@@ -27,7 +27,7 @@ class Command(BaseModel):
     
     def add_relationships(self, relationships: Set["RelationshipData"]):
         """Adds relationships to the model"""
-        self._relationships_data.update(relationships)
+        self.relationships_data.update(relationships)
 
     class Config:
         orm_mode = True
@@ -44,7 +44,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     def imports(self) -> List["Script"]:
         return [
             r.content_item
-            for r in self._relationships_data
+            for r in self.relationships_data
             if r.relationship_type == RelationshipType.IMPORTS and r.content_item == r.target
         ]
 
@@ -56,7 +56,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                 deprecated=r.deprecated,
                 description=r.description,
             )
-            for r in self._relationships_data
+            for r in self.relationships_data
             if r.is_direct and r.relationship_type == RelationshipType.HAS_COMMAND
         ]
         self.commands = commands

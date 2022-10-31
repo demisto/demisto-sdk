@@ -23,9 +23,9 @@ class IntegrationScript(ContentItem):
     description: Optional[str]
     is_unified: bool = Field(False, exclude=True)
 
-    def dump_zip(self, dir: Path, marketplace: MarketplaceVersions) -> None:
+    def dump(self, dir: Path, marketplace: MarketplaceVersions) -> None:
         if self.is_unified:
-            super().dump_zip(dir, marketplace)
+            super().dump(dir, marketplace)
             return
         dir.mkdir(exist_ok=True, parents=True)
         try:
@@ -36,4 +36,4 @@ class IntegrationScript(ContentItem):
             logger.debug(
                 f"Failed to unify {self.path} to {dir}, probably already unified. Error message: {e}"
             )
-            super().dump_zip(dir, marketplace)
+            super().dump(dir, marketplace)

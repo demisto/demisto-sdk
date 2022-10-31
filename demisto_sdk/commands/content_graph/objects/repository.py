@@ -1,7 +1,7 @@
+from concurrent.futures import ProcessPoolExecutor
 import logging
 import shutil
 import time
-# from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import List
 
@@ -24,19 +24,17 @@ class ContentDTO(BaseModel):
         self, dir: DirectoryPath, marketplace: MarketplaceVersions, zip: bool = True
     ):
         dir.mkdir(parents=True, exist_ok=True)
+        Pack.__fields__.pop("relationships_data")
         logger.info("starting repo dump")
         start_time = time.time()
         if USE_FUTURE:
-            import multiprocessing
-            packs = [(pack, dir / pack.path.name, marketplace) for pack in self.packs]
-            multiprocessing.Pool().starmap(Pack.dump_zip, packs)
-            # with ThreadPoolExecutor() as executer:
-            #     for pack in self.packs:
-            #         executer.submit(pack.dump, dir / pack.path.name, marketplace)
+            with ProcessPoolExecutor() as executer:
+                for pack in self.packs:
+                    executer.submit(pack.dump, dir / pack.path.name, marketplace)
             
         else:
             for pack in self.packs:
-                pack.dump_zip(dir / pack.path.name, marketplace)
+                pack.dump(dir / pack.path.name, marketplace)
 
         time_taken = time.time() - start_time
         logger.info(f"ending repo dump. Took {time_taken} seconds")

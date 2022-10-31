@@ -14,7 +14,7 @@ class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignor
     def metadata_fields(self) -> Set[str]:
         return {"name", "description", "tags"}
 
-    def dump_zip(self, dir: Path, marketplace: MarketplaceVersions) -> None:
+    def dump(self, dir: Path, marketplace: MarketplaceVersions) -> None:
         if self.is_test:
             return
-        return super().dump_zip(dir, marketplace)
+        return super().dump(dir, marketplace)

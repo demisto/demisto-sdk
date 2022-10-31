@@ -51,7 +51,7 @@ class BaseContent(ABC, BaseModel, metaclass=ContentModelMetaclass):
         MarketplaceVersions
     )  # TODO check if default
     node_id: str
-    _relationships_data: Set["RelationshipData"] = Field(set(), exclude=True, repr=False)
+    relationships_data: Set["RelationshipData"] = Field(set(), exclude=True, repr=False)
 
     class Config:
         arbitrary_types_allowed = True  # allows having custom classes for properties in model
@@ -76,7 +76,7 @@ class BaseContent(ABC, BaseModel, metaclass=ContentModelMetaclass):
         return json_dct
 
     @abstractmethod
-    def dump_zip(self, path: DirectoryPath, marketplace: MarketplaceVersions) -> None:
+    def dump(self, path: DirectoryPath, marketplace: MarketplaceVersions) -> None:
         pass
 
 

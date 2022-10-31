@@ -13,7 +13,7 @@ class ParsingRule(ContentItem, content_type=ContentType.PARSING_RULE):  # type: 
     def metadata_fields(self) -> Set[str]:
         return {"name", "description"}
 
-    def dump_zip(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:
+    def dump(self, dir: DirectoryPath, marketplace: MarketplaceVersions) -> None:
         dir.mkdir(exist_ok=True, parents=True)
         RuleUnifier(
             input=str(self.path.parent), output=str(dir), marketplace=marketplace

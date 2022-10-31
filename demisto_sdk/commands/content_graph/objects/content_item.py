@@ -27,7 +27,7 @@ class ContentItem(BaseContent):
 
     @property
     def in_pack(self) -> Optional["Pack"]:
-        for r in self._relationships_data:
+        for r in self.relationships_data:
             if r.relationship_type == RelationshipType.IN_PACK:
                 return r.content_item  # type: ignore[return-value]
         return None
@@ -36,7 +36,7 @@ class ContentItem(BaseContent):
     def uses(self) -> List["RelationshipData"]:
         return [
             r
-            for r in self._relationships_data
+            for r in self.relationships_data
             if r.relationship_type == RelationshipType.USES and r.content_item == r.target
         ]
 
@@ -44,7 +44,7 @@ class ContentItem(BaseContent):
     def tested_by(self) -> List["TestPlaybook"]:
         return [
             r.content_item  # type: ignore[misc]
-            for r in self._relationships_data
+            for r in self.relationships_data
             if r.relationship_type == RelationshipType.TESTED_BY and r.content_item == r.target
         ]
 
@@ -70,7 +70,7 @@ class ContentItem(BaseContent):
 
         return f"{self.content_type.server_name}-{name}"
 
-    def dump_zip(self, dir: DirectoryPath, _: MarketplaceVersions) -> None:
+    def dump(self, dir: DirectoryPath, _: MarketplaceVersions) -> None:
         dir.mkdir(exist_ok=True, parents=True)
         shutil.copy(self.path, dir / self.normalize_file_name(self.path.name))
 

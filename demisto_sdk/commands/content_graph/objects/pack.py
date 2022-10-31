@@ -156,14 +156,14 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
     def depends_on(self) -> List["RelationshipData"]:
         return [
             r
-            for r in self._relationships_data
+            for r in self.relationships_data
             if r.relationship_type == RelationshipType.DEPENDS_ON and r.content_item == r.target
         ]
 
     def set_content_items(self):
         content_items = [
             r.content_item
-            for r in self._relationships_data
+            for r in self.relationships_data
             if r.relationship_type == RelationshipType.IN_PACK and r.content_item == r.source
         ]
         content_item_dct = defaultdict(list)
@@ -207,11 +207,11 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             except Exception as e:
                 logger.error(f"Failed dumping readme: {e}")
 
-    def dump_zip(self, path: Path, marketplace: MarketplaceVersions):
+    def dump(self, path: Path, marketplace: MarketplaceVersions):
         try:
             path.mkdir(exist_ok=True, parents=True)
             for content_item in self.content_items:
-                content_item.dump_zip(
+                content_item.dump(
                     path / content_item.content_type.as_folder, marketplace
                 )
             self.dump_metadata(path / "metadata.json")

@@ -189,7 +189,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             for node_to in pack.nodes_to:
                 target = Neo4jContentGraphInterface._id_to_obj[node_to.id]
                 rel = RelationshipData(
-                    RelationshipType.DEPENDS_ON,
+                    relationship_type=RelationshipType.DEPENDS_ON,
                     source=obj,
                     content_item=target,
                     target=target,

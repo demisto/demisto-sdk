@@ -29,7 +29,7 @@ class ContentDTO(BaseModel):
         logger.info("starting repo dump")
         start_time = time.time()
         if USE_FUTURE:
-            Parallel()(delayed(pack.dump(dir / pack.path.name, marketplace) for pack in self.packs))
+            Parallel()(delayed(pack.dump)(dir / pack.path.name, marketplace) for pack in self.packs)
             # with ThreadPoolExecutor() as executer:
             #     for pack in self.packs:
             #         futures.append(executer.submit(pack.dump, dir / pack.path.name, marketplace))

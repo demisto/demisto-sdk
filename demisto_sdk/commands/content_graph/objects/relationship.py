@@ -1,19 +1,11 @@
-from typing import TYPE_CHECKING, Optional, Union
-from uuid import uuid4
-
-if TYPE_CHECKING:
-    # pydantic dataclass uses the same API as the official dataclass
-    from dataclasses import dataclass
-else:
-    from pydantic.dataclasses import dataclass
-
+from typing import Optional, Union
+from pydantic import BaseModel
 from demisto_sdk.commands.content_graph.common import RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.integration import Command
 
 
-@dataclass
-class RelationshipData:
+class RelationshipData(BaseModel):
     relationship_type: RelationshipType
     source: Union[BaseContent, Command]
     target: Union[BaseContent, Command]
@@ -30,10 +22,6 @@ class RelationshipData:
     description: Optional[str] = None
     deprecated: bool = False
     
-    # def __post_init__(self):
-    #     self.source_id = self.source.object_id
-    #     self.target_id = self.target.object_id
-
     def __hash__(self):
         """This is the unique identifier of the relationship"""
         return hash(

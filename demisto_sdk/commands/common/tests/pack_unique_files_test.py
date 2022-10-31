@@ -331,9 +331,11 @@ class TestPackUniqueFilesValidator:
                 assert 'The pack metadata contains non approved usecases:' in self.validator.get_errors()
 
     @pytest.mark.parametrize('tags, is_valid, branch_tags', [
-        ([], True, []),
-        (['Machine Learning', 'Spam'], True, ['Machine Learning', 'Spam']),
-        (['NonApprovedTag', 'GDPR'], False, ['GDPR']),
+        ([], True, {'common': [], "xsoar": [], "xsiam": []}),
+        (['Machine Learning', 'Spam'], True, {'common': ['Machine Learning', 'Spam'], "xsoar": [], "xsiam": []}),
+        (['NonApprovedTag', 'GDPR'], False, {'common': ['GDPR'], "xsoar": [], "xsiam": []}),
+        (['xsiam:Data Source'], True, {'common': [], "xsoar": [], "xsiam": ['Data Source']}),
+        (['xsiam:NonApprovedTag', 'Spam'], False, {'common': ['Spam'], "xsoar": [], "xsiam": ['Data Source']})
     ])
     def test_is_approved_tags(self, repo, tags, is_valid, branch_tags, mocker):
         """
@@ -341,6 +343,8 @@ class TestPackUniqueFilesValidator:
             - Case A: Pack without tags
             - Case B: Pack with approved tags (Machine Learning and Spam)
             - Case C: Pack with non-approved tags (NonApprovedTag) and approved tags (GDPR)
+            - Case D: Pack with approved xsiam tags (Data Source)
+            - Case E: Pack with non-approved xsiam tags (NonApprovedTag) and approved common tag (spam)
         When:
             - Validating approved tags
 
@@ -348,6 +352,9 @@ class TestPackUniqueFilesValidator:
             - Case A: Ensure validation passes as there are no tags to verify
             - Case B: Ensure validation passes as both tags are approved
             - Case C: Ensure validation fails as it contains a non-approved tags (NonApprovedTag)
+                      Verify expected error is printed
+            - Case D: Ensure validation passes as tag is approved
+            - Case E: Ensure validation fails as it contains a non-approved xsiam tags (NonApprovedTag)
                       Verify expected error is printed
         """
         self.restart_validator()

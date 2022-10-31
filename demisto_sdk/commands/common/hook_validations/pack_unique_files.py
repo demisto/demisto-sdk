@@ -600,9 +600,8 @@ class PackUniqueFilesValidator(BaseValidator):
 
         non_approved_tags = set()
         try:
-            pack_meta_file_content = self._read_metadata_content()
-            current_tags = tools.get_current_tags()
-            non_approved_tags = set(pack_meta_file_content[PACK_METADATA_TAGS]) - set(current_tags)
+            common_tags, xsoar_tags, xsiam_tags = self.filter_by_marketplace()
+            non_approved_tags = self.check_not_approved_tags(common_tags, xsoar_tags, xsiam_tags)
             if non_approved_tags:
                 if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
                     return False
@@ -610,6 +609,31 @@ class PackUniqueFilesValidator(BaseValidator):
             if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
                 return False
         return True
+
+    def filter_by_marketplace(self):
+        """Filtering pack_metadata tags by marketplace"""
+        pack_meta_file_content = self._read_metadata_content()
+        common_tags, xsoar_tags, xsiam_tags = [], [], []
+        for tag in pack_meta_file_content.get('tags', []):
+            if ':' in tag:
+                tag_data = tag.split(':')
+                if tag_data[0] == 'xsoar':
+                    xsoar_tags.append(tag_data[1])
+                else:
+                    xsiam_tags.append(tag_data[1])
+            else:
+                common_tags.append(tag)
+
+        return common_tags, xsoar_tags, xsiam_tags
+
+    def check_not_approved_tags(self, common_tags, xsoar_tags, xsiam_tags):
+        non_approved_tags = set()
+        approved_tags = tools.get_approved_tags()
+        non_approved_tags = set(common_tags) - set(approved_tags.get('common', []))
+        non_approved_tags |= set(xsoar_tags) - set(approved_tags.get('xsoar', []))
+        non_approved_tags |= set(xsiam_tags) - set(approved_tags.get('xsiam', []))
+
+        return non_approved_tags
 
     @error_codes('RN106,PA131')
     def _is_right_version(self):

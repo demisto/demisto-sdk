@@ -76,7 +76,7 @@ class BaseContent(ABC, BaseModel, metaclass=ContentModelMetaclass):
         return json_dct
 
     @abstractmethod
-    def dump(self, path: DirectoryPath, marketplace: MarketplaceVersions) -> None:
+    def dump_zip(self, path: DirectoryPath, marketplace: MarketplaceVersions) -> None:
         pass
 
 

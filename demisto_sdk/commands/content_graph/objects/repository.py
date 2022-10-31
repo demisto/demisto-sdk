@@ -29,14 +29,14 @@ class ContentDTO(BaseModel):
         if USE_FUTURE:
             import multiprocessing
             packs = [(pack, dir / pack.path.name, marketplace) for pack in self.packs]
-            multiprocessing.Pool().starmap(Pack.dump, packs)
+            multiprocessing.Pool().starmap(Pack.dump_zip, packs)
             # with ThreadPoolExecutor() as executer:
             #     for pack in self.packs:
             #         executer.submit(pack.dump, dir / pack.path.name, marketplace)
             
         else:
             for pack in self.packs:
-                pack.dump(dir / pack.path.name, marketplace)
+                pack.dump_zip(dir / pack.path.name, marketplace)
 
         time_taken = time.time() - start_time
         logger.info(f"ending repo dump. Took {time_taken} seconds")

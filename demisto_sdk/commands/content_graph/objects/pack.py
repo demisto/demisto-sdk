@@ -214,11 +214,11 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
             except Exception as e:
                 logger.error(f"Failed dumping readme: {e}")
 
-    def dump(self, path: Path, marketplace: MarketplaceVersions):
+    def dump_zip(self, path: Path, marketplace: MarketplaceVersions):
         try:
             path.mkdir(exist_ok=True, parents=True)
             for content_item in self.content_items:
-                content_item.dump(
+                content_item.dump_zip(
                     path / content_item.content_type.as_folder, marketplace
                 )
             self.dump_metadata(path / "metadata.json")

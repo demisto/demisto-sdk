@@ -70,7 +70,7 @@ class ContentItem(BaseContent):
 
         return f"{self.content_type.server_name}-{name}"
 
-    def dump(self, dir: DirectoryPath, _: MarketplaceVersions) -> None:
+    def dump_zip(self, dir: DirectoryPath, _: MarketplaceVersions) -> None:
         dir.mkdir(exist_ok=True, parents=True)
         shutil.copy(self.path, dir / self.normalize_file_name(self.path.name))
 

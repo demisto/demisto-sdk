@@ -23,7 +23,7 @@ class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[ca
     node_id: str = ""
     object_id: str = Field("", alias="id")
 
-    @validator("id", always=True)
+    @validator("object_id", always=True)
     def validate_id(cls, value, values):
         if value:
             return value

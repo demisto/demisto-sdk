@@ -1,44 +1,35 @@
-from typing import TYPE_CHECKING, List, Set
+from typing import TYPE_CHECKING, List
+
+from demisto_sdk.commands.content_graph.objects.base_content import ContentModel
 
 if TYPE_CHECKING:
     # avoid circular imports
     from demisto_sdk.commands.content_graph.objects.script import Script
-    from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
-from pydantic import BaseModel, Field, validator
+from pydantic import Field, validator
 
-from demisto_sdk.commands.content_graph.common import (ContentType,
-                                                       RelationshipType)
-from demisto_sdk.commands.content_graph.objects.integration_script import \
-    IntegrationScript
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 
 
-class Command(BaseModel):
+class Command(ContentModel, content_type=ContentType.COMMAND):
     name: str
-    object_id: str = ""  # objects sets up in the validator
+
+    # From HAS_COMMAND relationship
     deprecated: bool = False
     description: str = ""
 
-    relationships_data: Set["RelationshipData"] = Field(set(), exclude=True, repr=False)
-
     @validator("object_id", always=True)
     def validate_object_id(cls, v, values):
+        if v:
+            return v
         return values["name"]
-    
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        del state["relationships_data"]
-        return state
 
-    def __setstate__(self, state) -> None:
-        self.__dict__.update(state)
-
-    def add_relationships(self, relationships: Set["RelationshipData"]):
-        """Adds relationships to the model"""
-        self.relationships_data.update(relationships)
-
-    class Config:
-        orm_mode = True
+    @validator("node_id", always=True)
+    def validate_node_id(cls, v, values):
+        if v:
+            return v
+        return f"Command:{values['name']}"
 
 
 class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # type: ignore[call-arg]
@@ -51,7 +42,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     @property
     def imports(self) -> List["Script"]:
         return [
-            r.content_item
+            r.content_item  # type: ignore[misc]
             for r in self.relationships_data
             if r.relationship_type == RelationshipType.IMPORTS and r.content_item == r.target
         ]

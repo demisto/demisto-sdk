@@ -14,3 +14,6 @@ class GenericDefinitionParser(
         self, path: Path, pack_marketplaces: List[MarketplaceVersions]
     ) -> None:
         super().__init__(path, pack_marketplaces)
+    
+    def marketplaces(self) -> List[MarketplaceVersions]:
+        return [MarketplaceVersions.XSOAR]

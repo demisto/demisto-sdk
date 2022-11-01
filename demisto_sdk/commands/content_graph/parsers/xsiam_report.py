@@ -21,3 +21,6 @@ class XSIAMReportParser(JSONContentItemParser, content_type=ContentType.XSIAM_RE
     @property
     def object_id(self) -> Optional[str]:
         return self.json_data.get("global_id")
+
+    def marketplaces(self) -> List[MarketplaceVersions]:
+        return [MarketplaceVersions.MarketplaceV2]

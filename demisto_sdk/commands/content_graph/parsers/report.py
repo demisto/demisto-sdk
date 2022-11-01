@@ -14,6 +14,9 @@ class ReportParser(JSONContentItemParser, content_type=ContentType.REPORT):
         super().__init__(path, pack_marketplaces)
 
         self.connect_to_dependencies()
+    
+    def marketplaces(self) -> List[MarketplaceVersions]:
+        return [MarketplaceVersions.XSOAR]
 
     def connect_to_dependencies(self) -> None:
         """Collects scripts used in the report as optional dependencies."""

@@ -17,6 +17,9 @@ class WidgetParser(JSONContentItemParser, content_type=ContentType.WIDGET):
 
         self.connect_to_dependencies()
 
+    def marketplaces(self) -> List[MarketplaceVersions]:
+        return [MarketplaceVersions.XSOAR]
+    
     def connect_to_dependencies(self) -> None:
         """Collects the playbook used in the widget as a mandatory dependency."""
         if self.data_type == "scripts":

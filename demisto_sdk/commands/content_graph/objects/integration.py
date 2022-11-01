@@ -18,6 +18,9 @@ class Command(BaseContent, content_type=ContentType.COMMAND):
     # From HAS_COMMAND relationship
     deprecated: bool = False
     description: str = ""
+    
+    def dump(self, *args) -> None:
+        raise NotImplementedError()
 
 
 class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # type: ignore[call-arg]

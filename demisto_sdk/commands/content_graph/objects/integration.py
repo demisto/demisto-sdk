@@ -21,7 +21,16 @@ class Command(BaseContent, content_type=ContentType.COMMAND):
     
     # missing attribute in DB
     node_id: str = ""
+    object_id: str = Field("", alias="id")
     
+    
+    @validator("id", always=True)
+    def validate_node_id(cls, value, values):
+        if value:
+            return value
+        return values.get('name')
+
+
     @validator("node_id", always=True)
     def validate_node_id(cls, value, values):
         if value:
@@ -52,6 +61,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             Command(
                 # the related to has to be a command
                 name=r.content_item.name,  # type: ignore[union-attr]
+                marketplaces=r.content_item.marketplaces
                 deprecated=r.deprecated,
                 description=r.description,
             )

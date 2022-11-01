@@ -18,6 +18,10 @@ class Command(ContentModel, content_type=ContentType.COMMAND):
     # From HAS_COMMAND relationship
     deprecated: bool = False
     description: str = ""
+    
+    # Required by parent but not exist in DB
+    object_id: str = Field("", alias="id")
+    node_id: str = ""
 
     @validator("object_id", always=True)
     def validate_object_id(cls, v, values):

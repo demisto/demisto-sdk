@@ -18,25 +18,23 @@ class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[ca
     # From HAS_COMMAND relationship
     deprecated: bool = False
     description: str = ""
-    
+
     # missing attribute in DB
     node_id: str = ""
     object_id: str = Field("", alias="id")
-    
-    
+
     @validator("id", always=True)
-    def validate_node_id(cls, value, values):
+    def validate_id(cls, value, values):
         if value:
             return value
-        return values.get('name')
-
+        return values.get("name")
 
     @validator("node_id", always=True)
     def validate_node_id(cls, value, values):
         if value:
             return value
         return f"{ContentType.COMMAND}:{values.get('name')}"
-        
+
     def dump(self, *args) -> None:
         raise NotImplementedError()
 

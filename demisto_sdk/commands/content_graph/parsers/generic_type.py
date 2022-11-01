@@ -16,6 +16,7 @@ class GenericTypeParser(JSONContentItemParser, content_type=ContentType.GENERIC_
 
         self.connect_to_dependencies()
 
+    @property
     def marketplaces(self) -> List[MarketplaceVersions]:
         return [MarketplaceVersions.XSOAR]
     

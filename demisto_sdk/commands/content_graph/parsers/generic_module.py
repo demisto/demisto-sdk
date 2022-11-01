@@ -16,5 +16,6 @@ class GenericModuleParser(
         super().__init__(path, pack_marketplaces)
         self.definition_ids = self.json_data.get("definitionIds")
     
+    @property
     def marketplaces(self) -> List[MarketplaceVersions]:
         return [MarketplaceVersions.XSOAR]

@@ -15,7 +15,8 @@ class WizardParser(JSONContentItemParser, content_type=ContentType.WIZARD):
         self.packs: List[str] = self.get_packs()
         self.integrations: List[str] = self.get_integrations()
         self.playbooks: List[str] = self.get_playbooks()
-
+    
+    @property
     def marketplaces(self) -> List[MarketplaceVersions]:
         return [MarketplaceVersions.XSOAR]
     

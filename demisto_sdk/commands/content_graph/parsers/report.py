@@ -15,6 +15,7 @@ class ReportParser(JSONContentItemParser, content_type=ContentType.REPORT):
 
         self.connect_to_dependencies()
     
+    @property
     def marketplaces(self) -> List[MarketplaceVersions]:
         return [MarketplaceVersions.XSOAR]
 

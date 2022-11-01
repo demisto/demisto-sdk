@@ -17,6 +17,7 @@ class WidgetParser(JSONContentItemParser, content_type=ContentType.WIDGET):
 
         self.connect_to_dependencies()
 
+    @property
     def marketplaces(self) -> List[MarketplaceVersions]:
         return [MarketplaceVersions.XSOAR]
     

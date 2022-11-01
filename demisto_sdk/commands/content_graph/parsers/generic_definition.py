@@ -15,5 +15,6 @@ class GenericDefinitionParser(
     ) -> None:
         super().__init__(path, pack_marketplaces)
     
+    @property
     def marketplaces(self) -> List[MarketplaceVersions]:
         return [MarketplaceVersions.XSOAR]

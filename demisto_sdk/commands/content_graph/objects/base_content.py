@@ -11,10 +11,10 @@ from demisto_sdk.commands.content_graph.common import ContentType
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
-content_type_to_model: Dict[ContentType, Type["ContentModel"]] = {}
+content_type_to_model: Dict[ContentType, Type["BaseContent"]] = {}
 
 
-class ContentModelMetaclass(ModelMetaclass):
+class BaseContentMetaclass(ModelMetaclass):
     def __new__(cls, name, bases, namespace, content_type: ContentType = None, **kwargs):
         """This method is called before every creation of a ContentItem *class* (NOT class instances!).
         If `content_type` is passed as an argument of the class, we add a mapping between the content type
@@ -32,20 +32,27 @@ class ContentModelMetaclass(ModelMetaclass):
         Returns:
             BaseContent: The model class.
         """
-        super_cls: ContentModelMetaclass = super().__new__(cls, name, bases, namespace)
+        super_cls: BaseContentMetaclass = super().__new__(cls, name, bases, namespace)
         # for type checking
-        model_cls: Type["ContentModel"] = cast(Type["ContentModel"], super_cls)
+        model_cls: Type["BaseContent"] = cast(Type["BaseContent"], super_cls)
         if content_type:
             content_type_to_model[content_type] = model_cls
             model_cls.content_type = content_type
         return model_cls
 
 
-class ContentModel(ABC, BaseModel, metaclass=ContentModelMetaclass):
+class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     object_id: str = Field(alias="id")
     content_type: ClassVar[ContentType] = Field(include=True)
     node_id: str
+    marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
+
     relationships_data: Set["RelationshipData"] = Field(set(), exclude=True, repr=False)
+
+    class Config:
+        arbitrary_types_allowed = True  # allows having custom classes for properties in model
+        orm_mode = True  # allows using from_orm() method
+        allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
 
     def __getstate__(self):
         """Needed to for the object to be pickled correctly (to use multiprocessing)"""
@@ -62,18 +69,6 @@ class ContentModel(ABC, BaseModel, metaclass=ContentModelMetaclass):
     def add_relationships(self, relationships: Set["RelationshipData"]):
         """Adds relationships to the model"""
         self.relationships_data.update(relationships)
-
-    class Config:
-        orm_mode = True
-
-
-class BaseContent(ContentModel, ABC):
-    marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
-
-    class Config:
-        arbitrary_types_allowed = True  # allows having custom classes for properties in model
-        orm_mode = True  # allows using from_orm() method
-        allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
 
     def to_dict(self) -> Dict[str, Any]:
         """

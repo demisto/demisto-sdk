@@ -4,7 +4,7 @@ from typing import Any, Dict, Iterable, List, Optional
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import (ContentType,
                                                        RelationshipType)
-from demisto_sdk.commands.content_graph.objects.base_content import ContentModel
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
 
@@ -39,7 +39,7 @@ class ContentGraphInterface(ABC):
         filter_list: Optional[Iterable[int]] = None,
         all_level_dependencies: bool = False,
         **properties,
-    ) -> List[ContentModel]:
+    ) -> List[BaseContent]:
         """
         This searches the database for content items and returns a list of them, including their relationships
 
@@ -51,7 +51,7 @@ class ContentGraphInterface(ABC):
             **properties: A key, value filter for the search. For example: `search(object_id="QRadar")`.
 
         Returns:
-            List[ContentModel]: The search results
+            List[BaseContent]: The search results
         """
         if not marketplace and all_level_dependencies:
             raise ValueError("Cannot search for all level dependencies without a marketplace")

@@ -1,39 +1,23 @@
 from typing import TYPE_CHECKING, List
 
-from demisto_sdk.commands.content_graph.objects.base_content import ContentModel
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
 
 if TYPE_CHECKING:
     # avoid circular imports
     from demisto_sdk.commands.content_graph.objects.script import Script
 
-from pydantic import Field, validator
+from pydantic import Field
 
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 
 
-class Command(ContentModel, content_type=ContentType.COMMAND):
+class Command(BaseContent, content_type=ContentType.COMMAND):
     name: str
 
     # From HAS_COMMAND relationship
     deprecated: bool = False
     description: str = ""
-    
-    # Required by parent but not exist in DB
-    object_id: str = Field("", alias="id")
-    node_id: str = ""
-
-    @validator("id", always=True)
-    def validate_object_id(cls, v, values):
-        if v:
-            return v
-        return values["name"]
-
-    @validator("node_id", always=True)
-    def validate_node_id(cls, v, values):
-        if v:
-            return v
-        return f"Command:{values['name']}"
 
 
 class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # type: ignore[call-arg]

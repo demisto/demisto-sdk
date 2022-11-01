@@ -23,7 +23,7 @@ class Command(ContentModel, content_type=ContentType.COMMAND):
     object_id: str = Field("", alias="id")
     node_id: str = ""
 
-    @validator("object_id", always=True)
+    @validator("id", always=True)
     def validate_object_id(cls, v, values):
         if v:
             return v

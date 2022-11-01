@@ -8,8 +8,10 @@ if TYPE_CHECKING:
 
 from pydantic import Field, validator
 
-from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
-from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
+from demisto_sdk.commands.content_graph.common import (ContentType,
+                                                       RelationshipType)
+from demisto_sdk.commands.content_graph.objects.integration_script import \
+    IntegrationScript
 
 
 class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[call-arg]

@@ -19,7 +19,7 @@ class GenericFieldParser(JSONContentItemParser, content_type=ContentType.GENERIC
     @property
     def marketplaces(self) -> List[MarketplaceVersions]:
         return [MarketplaceVersions.XSOAR]
-    
+
     def connect_to_dependencies(self) -> None:
         """Collects the generic types associated to the generic field as optional dependencies."""
         for associated_type in set(self.json_data.get("associatedTypes") or []):

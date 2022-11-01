@@ -12,7 +12,7 @@ from demisto_sdk.commands.content_graph.common import ContentType, RelationshipT
 from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
 
 
-class Command(BaseContent, content_type=ContentType.COMMAND):
+class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[call-arg]
     name: str
 
     # From HAS_COMMAND relationship
@@ -61,7 +61,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
             Command(
                 # the related to has to be a command
                 name=r.content_item.name,  # type: ignore[union-attr]
-                marketplaces=r.content_item.marketplaces
+                marketplaces=r.content_item.marketplaces,
                 deprecated=r.deprecated,
                 description=r.description,
             )

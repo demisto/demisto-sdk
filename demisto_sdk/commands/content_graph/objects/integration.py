@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     # avoid circular imports
     from demisto_sdk.commands.content_graph.objects.script import Script
 
-from pydantic import Field
+from pydantic import Field, validator
 
 from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.objects.integration_script import IntegrationScript
@@ -19,6 +19,12 @@ class Command(BaseContent, content_type=ContentType.COMMAND):
     deprecated: bool = False
     description: str = ""
     
+    @validator("node_id", always=True)
+    def validate_node_id(cls, value, values):
+        if value:
+            return value
+        return f"{ContentType.COMMAND}:{values.get('name')}"
+        
     def dump(self, *args) -> None:
         raise NotImplementedError()
 

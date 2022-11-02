@@ -102,6 +102,7 @@ MATCH (pack:{ContentType.PACK}{build_target_properties()})
 
 // Get/create the relationship
 MERGE (content_item)-[r:{RelationshipType.IN_PACK}]->(pack)
+MERGE (content_item)<-[r:{RelationshipType.HAS_CONTENT_ITEM}]-(pack)
 RETURN count(r) AS relationships_merged
 """
 

@@ -174,7 +174,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         nodes_set = self._get_nodes_set_from_result(mandatorily_dependencies, set(), content_items_nodes)
         self._add_to_mapping(nodes_set)
         if content_items_nodes:
-            self.search(
+            self._search(
                 marketplace,
                 filter_list=content_items_nodes,
             )

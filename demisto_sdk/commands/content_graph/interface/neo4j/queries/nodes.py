@@ -105,7 +105,7 @@ def _match(
             where.append(f"'{marketplace}' IN node_from.marketplaces AND '{marketplace}' IN node_to.marketplaces")
 
     query = f"""
-    MATCH (node_from{content_type_str}{params_str}) - [relationship] - (node_to)
+    MATCH (node_from{content_type_str}{params_str}) - [relationship] -> (node_to)
     {" ".join(where)}
     RETURN node_from, collect(relationship) as relationships, collect(node_to) as nodes_to
     """

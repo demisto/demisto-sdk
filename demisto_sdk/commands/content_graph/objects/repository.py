@@ -24,13 +24,11 @@ class ContentDTO(BaseModel):
         self, dir: DirectoryPath, marketplace: MarketplaceVersions, zip: bool = True
     ):
         dir.mkdir(parents=True, exist_ok=True)
-        Pack.__fields__.pop("relationships_data")
         logger.info("starting repo dump")
         start_time = time.time()
         if USE_FUTURE:
-            packs = [(pack, dir / pack.path.name, marketplace) for pack in self.packs]
             with Pool() as pool:
-                pool.starmap(Pack.dump, packs)
+                pool.starmap(Pack.dump, ((pack, dir / pack.path.name, marketplace) for pack in self.packs))
 
         else:
             for pack in self.packs:

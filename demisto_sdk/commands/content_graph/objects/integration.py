@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     # avoid circular imports
     from demisto_sdk.commands.content_graph.objects.script import Script
 
-from pydantic import Field, validator
+from pydantic import Field
 
 from demisto_sdk.commands.content_graph.common import (ContentType,
                                                        RelationshipType)
@@ -32,7 +32,7 @@ class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[ca
             for r in self.relationships_data
             if r.relationship_type == RelationshipType.HAS_COMMAND and r.content_item == r.source
         ]
-    
+
     def dump(self, *args) -> None:
         raise NotImplementedError()
 

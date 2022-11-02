@@ -21,22 +21,18 @@ class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[ca
     deprecated: bool = False
     description: str = ""
 
-    # missing attribute in DB
+    # missing attributes in DB
     node_id: str = ""
     object_id: str = Field("", alias="id")
 
-    @validator("object_id", always=True)
-    def validate_id(cls, value, values):
-        if value:
-            return value
-        return values.get("name")
-
-    @validator("node_id", always=True)
-    def validate_node_id(cls, value, values):
-        if value:
-            return value
-        return f"{ContentType.COMMAND}:{values.get('name')}"
-
+    @property
+    def integrations(self) -> List["Integration"]:
+        return [
+            r.content_item  # type: ignore[misc]
+            for r in self.relationships_data
+            if r.relationship_type == RelationshipType.HAS_COMMAND and r.content_item == r.source
+        ]
+    
     def dump(self, *args) -> None:
         raise NotImplementedError()
 
@@ -60,13 +56,13 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
         commands = [
             Command(
                 # the related to has to be a command
-                name=r.content_item.name,  # type: ignore[union-attr]
-                marketplaces=r.content_item.marketplaces,
+                name=r.content_item.name,  # type: ignore[union-attr,attr-defined]
+                marketplaces=self.marketplaces,
                 deprecated=r.deprecated,
                 description=r.description,
             )
             for r in self.relationships_data
-            if r.is_direct and r.relationship_type == RelationshipType.HAS_COMMAND
+            if r.relationship_type == RelationshipType.HAS_COMMAND
         ]
         self.commands = commands
 

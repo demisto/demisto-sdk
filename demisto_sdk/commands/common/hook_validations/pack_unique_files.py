@@ -627,7 +627,6 @@ class PackUniqueFilesValidator(BaseValidator):
         return common_tags, xsoar_tags, xsiam_tags
 
     def check_not_approved_tags(self, common_tags, xsoar_tags, xsiam_tags):
-        non_approved_tags = set()
         approved_tags = tools.get_approved_tags()
         non_approved_tags = set(common_tags) - set(approved_tags.get('common', []))
         non_approved_tags |= set(xsoar_tags) - set(approved_tags.get('xsoar', []))

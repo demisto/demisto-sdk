@@ -47,7 +47,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     content_type: ClassVar[ContentType] = Field(include=True)
     node_id: str
     marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
-    
+
     relationships_data: Set["RelationshipData"] = Field(set(), exclude=True, repr=False)
 
     class Config:

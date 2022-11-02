@@ -119,8 +119,8 @@ def create_depends_on_relationships(tx: Transaction) -> None:
         AND NOT pack_a.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
         AND NOT pack_b.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
         AND NOT b.node_id IN {IGNORED_CONTENT_ITEMS_IN_DEPENDENCY_CALC}
-        AND a.content_type <> "{ContentType.TEST_PLAYBOOK}"
-        AND b.content_type <> "{ContentType.TEST_PLAYBOOK}"
+        AND a.is_test <> true
+        AND b.is_test <> true
         WITH r, pack_a, pack_b
         MERGE (pack_a)-[dep:DEPENDS_ON]->(pack_b)
         WITH dep, r, REDUCE(

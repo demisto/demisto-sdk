@@ -1,11 +1,10 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import (ContentType,
                                                        RelationshipType)
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.content_graph.objects.integration import Command
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
 
@@ -40,7 +39,7 @@ class ContentGraphInterface(ABC):
         filter_list: Optional[Iterable[int]] = None,
         all_level_dependencies: bool = False,
         **properties,
-    ) -> List[Union[BaseContent, Command]]:
+    ) -> List[BaseContent]:
         """
         This searches the database for content items and returns a list of them, including their relationships
 
@@ -52,7 +51,7 @@ class ContentGraphInterface(ABC):
             **properties: A key, value filter for the search. For example: `search(object_id="QRadar")`.
 
         Returns:
-            List[Union[BaseContent, Command]]: The search results
+            List[BaseContent]: The search results
         """
         if not marketplace and all_level_dependencies:
             raise ValueError("Cannot search for all level dependencies without a marketplace")
@@ -80,7 +79,7 @@ class ContentGraphInterface(ABC):
 
     @abstractmethod
     def create_pack_dependencies(self):
-        ContentGraphInterface._calculate_dependencies = True
+        ContentGraphInterface._calculate_dependencies = False
 
     @abstractmethod
     def run_single_query(self, query: str, **kwargs) -> Any:

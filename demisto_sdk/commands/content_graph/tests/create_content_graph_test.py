@@ -201,7 +201,7 @@ def find_model_for_id(packs: List[Pack], source_id: str):
                 return content_item
             if isinstance(content_item, Integration):
                 for command in content_item.commands:
-                    if command.object_id == source_id:
+                    if command.name == source_id:
                         return command
     return None
 

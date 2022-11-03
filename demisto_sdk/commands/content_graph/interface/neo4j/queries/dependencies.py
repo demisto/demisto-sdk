@@ -119,7 +119,7 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
     MATCH (content_item:{ContentType.BASE_CONTENT})-[r:{RelationshipType.USES}]->(command:{ContentType.COMMAND})
     OPTIONAL MATCH (command)<-[rcmd:HAS_COMMAND]-(integration:{ContentType.INTEGRATION})
     // AND rcmd.deprecated = false  # TODO check if we want to include deprecated commands
-    AND NOT command.object_id IN {list(GENERIC_COMMANDS_NAMES)}
+    WHERE NOT command.object_id IN {list(GENERIC_COMMANDS_NAMES)}
     MERGE (content_item)-[u:{RelationshipType.USES}]->(integration)
     SET u.mandatorily = r.mandatorily OR u.mandatorily
     RETURN count(u) as uses_relationships

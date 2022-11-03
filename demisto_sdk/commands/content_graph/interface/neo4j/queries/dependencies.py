@@ -118,9 +118,9 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
     query = f"""
     MATCH (content_item:{ContentType.BASE_CONTENT})-[r:{RelationshipType.USES}]->(command:{ContentType.COMMAND})
     WHERE ANY(marketplace IN content_item.marketplaces WHERE marketplace IN command.marketplaces)
-    OPTIONAL MATCH (command)<-[:HAS_COMMAND]-(integration:{ContentType.INTEGRATION})
+    OPTIONAL MATCH (command)<-[rcmd:HAS_COMMAND]-(integration:{ContentType.INTEGRATION})
     WHERE ANY(marketplace IN command.marketplaces WHERE marketplace IN integration.marketplaces)
-    AND command.deprecated = false
+    AND rcmd.deprecated = false
     MERGE (n)-[u:{RelationshipType.USES}]->(i)
     SET u.mandatorily = r.mandatorily
     RETURN count(u) as uses_relationships
@@ -148,7 +148,7 @@ def create_depends_on_relationships(tx: Transaction) -> None:
             CASE WHEN mp IN pack_b.marketplaces THEN marketplaces + mp ELSE marketplaces END
         ) AS common_marketplaces
         SET dep.marketplaces = common_marketplaces,
-            dep.mandatorily = r.mandatorily
+            dep.mandatorily = r.mandatorily OR dep.mandatorily
         RETURN count(dep) AS depends_on_relationships
     """
     result = run_query(tx, query).single()

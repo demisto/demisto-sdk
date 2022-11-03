@@ -11,9 +11,7 @@ from demisto_sdk.commands.content_graph.common import (ContentType,
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     run_query, to_neo4j_map)
 
-REPUTATION_COMMANDS_NODE_IDS = [
-    f"{ContentType.COMMAND}:{cmd}" for cmd in REPUTATION_COMMAND_NAMES
-]
+REPUTATION_COMMANDS_NODE_IDS = [f"{ContentType.COMMAND}:{cmd}" for cmd in REPUTATION_COMMAND_NAMES]
 IGNORED_CONTENT_ITEMS_IN_DEPENDENCY_CALC = REPUTATION_COMMANDS_NODE_IDS
 IGNORED_PACKS_IN_DEPENDENCY_CALC = ["NonSupported", "Base", "ApiModules"]
 
@@ -39,12 +37,18 @@ def get_all_level_packs_dependencies(
         RETURN p1 as pack, collect(r) as relationships, collect(p2) AS dependencies
     """
     result = run_query(tx, query, filter_list=list(filter_list) if filter_list else None)
-    logger.info('Found dependencies.')
-    return [Neo4jResult(node_from=item.get("pack"), nodes_to=item.get("dependencies"), relationships=item.get("relationships")) for item in result]
+    logger.info("Found dependencies.")
+    return [
+        Neo4jResult(
+            node_from=item.get("pack"), nodes_to=item.get("dependencies"), relationships=item.get("relationships")
+        )
+        for item in result
+    ]
 
 
 def create_pack_dependencies(tx: Transaction) -> None:
     fix_marketplaces_properties(tx)
+    create_uses_for_integrations(tx)
     create_depends_on_relationships(tx)
 
 
@@ -105,9 +109,22 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
     outputs: Dict[str, Set[str]] = {}
     for row in result:
         outputs.setdefault(row["excluded_content_item"], set()).add(row["reason"])
-    logger.info(
-        f"Removed {marketplace} from marketplaces for {len(outputs.keys())} content items."
-    )
+    logger.info(f"Removed {marketplace} from marketplaces for {len(outputs.keys())} content items.")
+
+
+def create_uses_for_integrations(tx: Transaction) -> None:
+    query = f"""
+    MATCH (content_item:{ContentType.BASE_CONTENT})-[r:{RelationshipType.USES}]->(command:{ContentType.COMMAND})
+    WHERE ANY(marketplace IN content_item.marketplaces WHERE marketplace IN command.marketplaces)
+    OPTIONAL MATCH (command)<-[:HAS_COMMAND]-(integration:{ContentType.INTEGRATION})
+    WHERE ANY(marketplace IN command.marketplaces WHERE marketplace IN integration.marketplaces)
+    MERGE (n)-[u:{RelationshipType.USES}]->(i)
+    SET u.mandatorily = r.mandatorily
+    RETURN count(u) as uses_relationships
+    """
+    result = run_query(tx, query).single()
+    uses_count = result["uses_relationships"]
+    logger.info(f"Merged {uses_count} USES relationships based on commands.")
 
 
 def create_depends_on_relationships(tx: Transaction) -> None:
@@ -133,6 +150,4 @@ def create_depends_on_relationships(tx: Transaction) -> None:
     """
     result = run_query(tx, query).single()
     depends_on_count: int = result["depends_on_relationships"]
-    logger.info(
-        f"Merged {depends_on_count} DEPENDS_ON relationships between {depends_on_count} packs."
-    )
+    logger.info(f"Merged {depends_on_count} DEPENDS_ON relationships between {depends_on_count} packs.")

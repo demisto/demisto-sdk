@@ -1,7 +1,6 @@
 from typing import Optional, Union
-from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from demisto_sdk.commands.content_graph.common import RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent

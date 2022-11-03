@@ -11,7 +11,9 @@ from demisto_sdk.commands.content_graph.common import (ContentType,
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import (
     run_query, to_neo4j_map)
 
-REPUTATION_COMMANDS_NODE_IDS = [f"{ContentType.COMMAND}:{cmd}" for cmd in REPUTATION_COMMAND_NAMES]
+REPUTATION_COMMANDS_NODE_IDS = [
+    f"{ContentType.COMMAND}:{cmd}" for cmd in REPUTATION_COMMAND_NAMES
+]
 IGNORED_CONTENT_ITEMS_IN_DEPENDENCY_CALC = REPUTATION_COMMANDS_NODE_IDS
 IGNORED_PACKS_IN_DEPENDENCY_CALC = ["NonSupported", "Base", "ApiModules"]
 

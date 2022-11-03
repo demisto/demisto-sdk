@@ -56,10 +56,6 @@ MERGE (integration)-[r:{RelationshipType.HAS_COMMAND}{{
     deprecated: rel_data.deprecated,
     description: rel_data.description
 }}]->(cmd)
-MERGE (integration)<-[r:{RelationshipType.IN_INTEGRATION}{{
-    deprecated: rel_data.deprecated,
-    description: rel_data.description
-}}]-(cmd)
 
 RETURN count(r) AS relationships_merged
 """
@@ -106,7 +102,6 @@ MATCH (pack:{ContentType.PACK}{build_target_properties()})
 
 // Get/create the relationship
 MERGE (content_item)-[r:{RelationshipType.IN_PACK}]->(pack)
-MERGE (content_item)<-[r:{RelationshipType.HAS_CONTENT_ITEM}]-(pack)
 RETURN count(r) AS relationships_merged
 """
 

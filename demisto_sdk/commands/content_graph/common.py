@@ -34,8 +34,6 @@ class RelationshipType(str, enum.Enum):
     HAS_COMMAND = "HAS_COMMAND"
     IMPORTS = "IMPORTS"
     IN_PACK = "IN_PACK"
-    IN_INTEGRATION = "IN_INTEGRATION"
-    HAS_CONTENT_ITEM = "HAS_CONTENT_ITEM"
     TESTED_BY = "TESTED_BY"
     USES = "USES"
     USES_BY_ID = "USES_BY_ID"

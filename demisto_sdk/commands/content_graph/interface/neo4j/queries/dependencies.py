@@ -117,12 +117,10 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
 def update_uses_for_integration_commands(tx: Transaction) -> None:
     query = f"""
     MATCH (content_item:{ContentType.BASE_CONTENT})-[r:{RelationshipType.USES}]->(command:{ContentType.COMMAND})
-    WHERE ANY(marketplace IN content_item.marketplaces WHERE marketplace IN command.marketplaces)
     OPTIONAL MATCH (command)<-[rcmd:HAS_COMMAND]-(integration:{ContentType.INTEGRATION})
-    WHERE ANY(marketplace IN command.marketplaces WHERE marketplace IN integration.marketplaces)
     // AND rcmd.deprecated = false  # TODO check if we want to include deprecated commands
     AND NOT command.object_id IN {list(GENERIC_COMMANDS_NAMES)}
-    MERGE (n)-[u:{RelationshipType.USES}]->(i)
+    MERGE (content_item)-[u:{RelationshipType.USES}]->(integration)
     SET u.mandatorily = r.mandatorily
     RETURN count(u) as uses_relationships
     """

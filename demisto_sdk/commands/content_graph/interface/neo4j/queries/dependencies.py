@@ -121,7 +121,7 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
     OPTIONAL MATCH (command)<-[rcmd:HAS_COMMAND]-(integration:{ContentType.INTEGRATION})
     WHERE ANY(marketplace IN command.marketplaces WHERE marketplace IN integration.marketplaces)
     // AND rcmd.deprecated = false  # TODO check if we want to include deprecated commands
-    AND NOT command.name IN {list(GENERIC_COMMANDS_NAMES)}
+    AND NOT command.object_id IN {list(GENERIC_COMMANDS_NAMES)}
     MERGE (n)-[u:{RelationshipType.USES}]->(i)
     SET u.mandatorily = r.mandatorily
     RETURN count(u) as uses_relationships

@@ -30,7 +30,7 @@ class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[ca
         return [
             r.content_item  # type: ignore[misc]
             for r in self.relationships_data
-            if r.relationship_type == RelationshipType.HAS_COMMAND and r.content_item == r.source
+            if r.relationship_type == RelationshipType.IN_INTEGRATION
         ]
 
     def dump(self, *args) -> None:

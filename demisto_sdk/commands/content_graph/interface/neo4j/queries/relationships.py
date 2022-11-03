@@ -56,6 +56,10 @@ MERGE (integration)-[r:{RelationshipType.HAS_COMMAND}{{
     deprecated: rel_data.deprecated,
     description: rel_data.description
 }}]->(cmd)
+MERGE (integration)<-[r:{RelationshipType.IN_INTEGRATION}{{
+    deprecated: rel_data.deprecated,
+    description: rel_data.description
+}}]-(cmd)
 
 RETURN count(r) AS relationships_merged
 """

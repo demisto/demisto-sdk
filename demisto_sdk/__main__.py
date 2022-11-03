@@ -2308,6 +2308,52 @@ def create_content_graph(use_docker: bool = False, use_existing: bool = False, o
         create_content_graph_command(content_graph_interface)
 
 
+# ====================== update-content-graph ====================== #
+@main.command(
+    hidden=True,
+)
+@click.help_option(
+    '-h', '--help'
+)
+@click.option('-ud', '--use-docker', is_flag=True, help="Use docker service to run the content graph")
+@click.option('-us', '--use-existing', is_flag=True, help="Use existing service", default=False)
+@click.option('-p', '--packs', help="A comma-separated list of packs to update", default=None)
+@click.option('-i', '--import-path', type=click.Path(exists=True), multiple=True, default=None,
+              help="Path to a directory with graph data to import (from external repositories). "
+                   "Can be provided multiple times.")
+@click.option('-o', '--output-file', type=click.Path(), help="dump file output", default=None)
+@click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
+              type=click.IntRange(0, 3, clamp=True), default=2, show_default=True)
+@click.option('-q', "--quiet", is_flag=True, help="Quiet output, only output results in the end")
+@click.option("-lp", "--log-path", help="Path to store all levels of logs",
+              type=click.Path(resolve_path=True))
+def update_content_graph(use_docker: bool = False, use_existing: bool = False, output_file: Path = None, **kwargs):
+    from demisto_sdk.commands.common.logger import logging_setup
+    from demisto_sdk.commands.content_graph.content_graph_commands import \
+        update_content_graph as update_content_graph_command
+    from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import \
+        Neo4jContentGraphInterface
+    logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
+                  quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
+                  log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
+
+    import_paths = list(kwargs.get('import_path', [])) if not isinstance(kwargs.get('import_path'), str) else \
+        [kwargs.get('import_path')]
+    import_paths = [Path(p) for p in import_paths]
+    packs = [] if not kwargs.get('packs') else kwargs.get('packs', '').split(',')
+
+    with Neo4jContentGraphInterface(
+        start_service=not use_existing,
+        output_file=output_file,
+        use_docker=use_docker,
+    ) as content_graph_interface:
+        update_content_graph_command(
+            content_graph_interface,
+            external_import_paths=import_paths,
+            packs_to_update=packs,
+        )
+
+
 @main.result_callback()
 def exit_from_program(result=0, **kwargs):
     sys.exit(result)

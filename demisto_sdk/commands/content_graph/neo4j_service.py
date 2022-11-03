@@ -96,9 +96,21 @@ def start(use_docker: bool = True):
             image=NEO4J_SERVICE_IMAGE,
             name="neo4j-content",
             ports={"7474/tcp": 7474, "7687/tcp": 7687, "7473/tcp": 7473},
-            volumes=[f'{REPO_PATH / "neo4j-data" / "data"}:/data'],
+            volumes=[
+                f'{REPO_PATH / "neo4j-data" / "data"}:/data',
+                f'{REPO_PATH / "neo4j-data" / "import"}:/var/lib/neo4j/import',
+                f'{REPO_PATH / "neo4j-data" / "plugins"}:/plugins'
+            ],
             detach=True,
-            environment={"NEO4J_AUTH": f"neo4j/{NEO4J_PASSWORD}"},
+            environment={
+                "NEO4J_AUTH": f"neo4j/{NEO4J_PASSWORD}",
+                "NEO4J_apoc_export_file_enabled": "true",
+                "NEO4J_apoc_import_file_enabled": "true",
+                "NEO4J_apoc_import_file_use__neo4j__config": "true",
+                # "NEO4JLABS_PLUGINS": '["apoc"]',
+                "NEO4J_dbms_security_procedures_unrestricted": "apoc.*",
+                "NEO4J_dbms_security_procedures_whitelist": "apoc.*",
+            },
         )
     # health check to make sure that neo4j is up
     _wait_until_service_is_up()
@@ -141,6 +153,7 @@ def _neo4j_admin_command(name: str, command: str):
             remove=True,
             volumes=[
                 f"{REPO_PATH}/neo4j-data/data:/data",
+                f"{REPO_PATH}/neo4j-data/import:/var/lib/neo4j/import",
                 f"{REPO_PATH}/neo4j-data/backups:/backups",
             ],
             command=command,

@@ -48,7 +48,7 @@ def get_all_level_packs_dependencies(
 
 def create_pack_dependencies(tx: Transaction) -> None:
     fix_marketplaces_properties(tx)
-    create_uses_for_integrations(tx)
+    update_uses_for_integration_commands(tx)
     create_depends_on_relationships(tx)
 
 
@@ -112,7 +112,7 @@ def update_marketplaces_property(tx: Transaction, marketplace: str) -> None:
     logger.info(f"Removed {marketplace} from marketplaces for {len(outputs.keys())} content items.")
 
 
-def create_uses_for_integrations(tx: Transaction) -> None:
+def update_uses_for_integration_commands(tx: Transaction) -> None:
     query = f"""
     MATCH (content_item:{ContentType.BASE_CONTENT})-[r:{RelationshipType.USES}]->(command:{ContentType.COMMAND})
     WHERE ANY(marketplace IN content_item.marketplaces WHERE marketplace IN command.marketplaces)

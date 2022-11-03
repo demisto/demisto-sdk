@@ -120,6 +120,7 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
     WHERE ANY(marketplace IN content_item.marketplaces WHERE marketplace IN command.marketplaces)
     OPTIONAL MATCH (command)<-[:HAS_COMMAND]-(integration:{ContentType.INTEGRATION})
     WHERE ANY(marketplace IN command.marketplaces WHERE marketplace IN integration.marketplaces)
+    AND command.deprecated = false
     MERGE (n)-[u:{RelationshipType.USES}]->(i)
     SET u.mandatorily = r.mandatorily
     RETURN count(u) as uses_relationships

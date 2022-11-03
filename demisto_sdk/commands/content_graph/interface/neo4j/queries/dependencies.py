@@ -3,7 +3,7 @@ from typing import Dict, List, Set
 
 from neo4j import Transaction
 
-from demisto_sdk.commands.common.constants import (REPUTATION_COMMAND_NAMES,
+from demisto_sdk.commands.common.constants import (GENERIC_COMMANDS_NAMES, REPUTATION_COMMAND_NAMES,
                                                    MarketplaceVersions)
 from demisto_sdk.commands.content_graph.common import (ContentType,
                                                        Neo4jResult,
@@ -120,7 +120,8 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
     WHERE ANY(marketplace IN content_item.marketplaces WHERE marketplace IN command.marketplaces)
     OPTIONAL MATCH (command)<-[rcmd:HAS_COMMAND]-(integration:{ContentType.INTEGRATION})
     WHERE ANY(marketplace IN command.marketplaces WHERE marketplace IN integration.marketplaces)
-    AND rcmd.deprecated = false
+    // AND rcmd.deprecated = false  # TODO check if we want to include deprecated commands
+    AND NOT command.name IN {list(GENERIC_COMMANDS_NAMES)}
     MERGE (n)-[u:{RelationshipType.USES}]->(i)
     SET u.mandatorily = r.mandatorily
     RETURN count(u) as uses_relationships

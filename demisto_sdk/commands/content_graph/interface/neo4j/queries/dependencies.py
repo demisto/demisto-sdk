@@ -30,7 +30,7 @@ def get_all_level_packs_dependencies(
     params_str = to_neo4j_map(properties)
 
     query = f"""
-        MATCH path = (shortestPath((p1:{ContentType.PACK}{params_str})-[r:{RelationshipType.DEPENDS_ON}*..7]->(p2:{ContentType.PACK})))
+        MATCH path = (shortestPath((p1:{ContentType.PACK}{params_str})-[r:{RelationshipType.DEPENDS_ON}*..{MAX_DEPTH}]->(p2:{ContentType.PACK})))
         WHERE id(p1) <> id(p2) {"AND id(p1) IN $filter_list " if filter_list else ""}
         AND all(n IN nodes(path) WHERE "{marketplace}" IN n.marketplaces)
         {"AND all(r IN relationships(path) WHERE r.mandatorily = true)" if mandatorily else ""}

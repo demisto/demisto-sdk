@@ -121,7 +121,7 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
     // AND rcmd.deprecated = false  # TODO check if we want to include deprecated commands
     AND NOT command.object_id IN {list(GENERIC_COMMANDS_NAMES)}
     MERGE (content_item)-[u:{RelationshipType.USES}]->(integration)
-    SET u.mandatorily = r.mandatorily
+    SET u.mandatorily = r.mandatorily OR u.mandatorily
     RETURN count(u) as uses_relationships
     """
     result = run_query(tx, query).single()

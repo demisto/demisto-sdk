@@ -1,13 +1,14 @@
-from collections import defaultdict
 import json
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Set, Type, cast
 
 from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.common import (ContentType,
+                                                       RelationshipType)
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import \

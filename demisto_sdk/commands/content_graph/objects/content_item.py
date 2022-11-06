@@ -28,7 +28,10 @@ class ContentItem(BaseContent):
 
     @property
     def in_pack(self) -> Optional["Pack"]:
-        return next(iter(self.relationships_data[RelationshipType.IN_PACK])).content_item  # type: ignore[return-value]
+        in_pack = self.relationships_data[RelationshipType.IN_PACK])
+        if not in_pack:
+            return None
+        return next(iter(in_pack)).content_item  # type: ignore[return-value]
 
     @property
     def uses(self) -> List["RelationshipData"]:

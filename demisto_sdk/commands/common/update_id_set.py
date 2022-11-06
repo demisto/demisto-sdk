@@ -2207,7 +2207,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         if 'Scripts' in objects_to_create:
             print_color("\nStarting iteration over Scripts", LOG_COLORS.GREEN)
-            for arr, excluded_items_from_iteration in pool.map(partial(process_script,  #todo: failed here
+            for arr, excluded_items_from_iteration in pool.map(partial(process_script,
                                                                        packs=packs_dict,
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,

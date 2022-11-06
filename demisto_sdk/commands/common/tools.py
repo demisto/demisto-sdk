@@ -26,6 +26,7 @@ import git
 import giturlparse
 import requests
 import urllib3
+from bs4 import UnicodeDammit
 from packaging.version import parse
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
@@ -57,11 +58,11 @@ json = JSON_Handler()
 
 logger = logging.getLogger("demisto-sdk")
 yaml = YAML_Handler()
+dammit = UnicodeDammit()
 
 urllib3.disable_warnings()
 
-# initialize color palette
-colorama.init()
+colorama.init()  # initialize color palette
 
 
 class LOG_COLORS:
@@ -596,28 +597,50 @@ def get_last_remote_release_version():
     return ''
 
 
+def _read_file(file_path: Path) -> str:
+    """returns the body of a text-based file, after reading it as UTF8, or trying to guess its encoding.
+
+    Args:
+        file_path (Path): file to read
+
+    Returns:
+        str: file contents
+    """
+    try:
+        return file_path.read_text(encoding='utf8')
+
+    except UnicodeDecodeError:
+        try:
+            encoding = dammit(file_path.read_bytes()).original_encoding
+            print(f"guess: encoding is {encoding}")
+            return file_path.read_text(encoding=encoding)
+
+        except UnicodeDecodeError:
+            logger.error(f"could not auto-detect encoding for file {file_path} (guess was {encoding})")
+
+
 @lru_cache()
-def get_file(file_path, type_of_file, clear_cache=False):
+def get_file(file_path: Union[str, Path], type_of_file: str, clear_cache: bool = False):
     if clear_cache:
         get_file.cache_clear()
     file_path = Path(file_path).absolute()
     data_dictionary = None
-    with file_path.open(mode='r', encoding='utf8') as f:
-        if type_of_file in file_path.suffix:
-            read_file = f.read()
-            replaced = re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', read_file)
-            # revert str to stream for loader
-            stream = io.StringIO(replaced)
-            try:
-                if type_of_file in ('yml', '.yml'):
-                    data_dictionary = yaml.load(stream)
 
-                else:
-                    data_dictionary = json.load(stream)
+    if type_of_file in file_path.suffix:  # e.g. 'yml' in '.yml'
+        read_file = _read_file(file_path)
+        replaced = re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', read_file)
+        stream = io.StringIO(replaced)  # convert str to stream for loader
 
-            except Exception as e:
-                raise ValueError(
-                    "{} has a structure issue of file type {}. Error was: {}".format(file_path, type_of_file, str(e)))
+        try:
+            if type_of_file in ('yml', '.yml'):
+                data_dictionary = yaml.load(stream)
+            else:
+                data_dictionary = json.load(stream)
+
+        except Exception as e:
+            raise ValueError("{} has a structure issue of file type {}. Error was: {}"
+                             .format(file_path, type_of_file, str(e)))
+
     if isinstance(data_dictionary, (dict, list)):
         return data_dictionary
     return {}

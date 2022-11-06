@@ -27,7 +27,7 @@ from demisto_sdk.commands.common.constants import (
     XDRC_TEMPLATE_DIR, XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, FileType,
     MarketplaceVersions)
 from demisto_sdk.commands.common.content_constant_paths import (
-    DEFAULT_ID_SET_PATH, MP_V2_ID_SET_PATH)
+    DEFAULT_ID_SET_PATH, MP_V2_ID_SET_PATH, XPANSE_ID_SET_PATH)
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
                                                get_current_repo,
@@ -62,6 +62,11 @@ ID_SET_MP_V2_ENTITIES = ['integrations', 'scripts', 'playbooks', 'TestPlaybooks'
                          'IncidentFields', 'IncidentTypes', 'IndicatorFields', 'IndicatorTypes',
                          'Layouts', 'Mappers', 'Lists', 'ParsingRules', 'ModelingRules',
                          'CorrelationRules', 'XSIAMDashboards', 'XSIAMReports', 'Triggers', 'XDRCTemplates']
+
+CONTENT_XPANSE_ENTITIES = ['Packs', 'Integrations', 'Scripts', 'Playbooks', 'IncidentFields']
+
+ID_SET_XPANSE_ENTITIES = ['integrations', 'scripts', 'playbooks', 'IncidentFields']
+
 
 BUILT_IN_FIELDS = [
     "name",
@@ -2060,12 +2065,16 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
     if id_set_path == "":
         if marketplace == MarketplaceVersions.MarketplaceV2.value:
             id_set_path = MP_V2_ID_SET_PATH
+        elif marketplace == MarketplaceVersions.XPANSE.value:
+            id_set_path = XPANSE_ID_SET_PATH
         else:
             id_set_path = DEFAULT_ID_SET_PATH
 
     if not objects_to_create:
         if marketplace == MarketplaceVersions.MarketplaceV2.value:
             objects_to_create = CONTENT_MP_V2_ENTITIES
+        elif marketplace == MarketplaceVersions.XPANSE.value:
+            objects_to_create = CONTENT_XPANSE_ENTITIES
         else:
             objects_to_create = CONTENT_ENTITIES
 
@@ -2198,7 +2207,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         if 'Scripts' in objects_to_create:
             print_color("\nStarting iteration over Scripts", LOG_COLORS.GREEN)
-            for arr, excluded_items_from_iteration in pool.map(partial(process_script,
+            for arr, excluded_items_from_iteration in pool.map(partial(process_script,  #todo: failed here
                                                                        packs=packs_dict,
                                                                        marketplace=marketplace,
                                                                        print_logs=print_logs,
@@ -2784,7 +2793,12 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 def find_duplicates(id_set, print_logs, marketplace):
     lists_to_return = []
 
-    entities = ID_SET_ENTITIES if marketplace != 'marketplacev2' else ID_SET_MP_V2_ENTITIES
+    if marketplace == MarketplaceVersions.MarketplaceV2.value:
+        entities = ID_SET_MP_V2_ENTITIES
+    elif marketplace == MarketplaceVersions.XPANSE.value:
+        entities = ID_SET_XPANSE_ENTITIES
+    else:
+        entities = ID_SET_ENTITIES
 
     for object_type in entities:
         if print_logs:

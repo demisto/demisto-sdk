@@ -3,7 +3,8 @@ from typing import Dict, List, Set
 
 from neo4j import Transaction
 
-from demisto_sdk.commands.common.constants import (GENERIC_COMMANDS_NAMES, REPUTATION_COMMAND_NAMES,
+from demisto_sdk.commands.common.constants import (GENERIC_COMMANDS_NAMES,
+                                                   REPUTATION_COMMAND_NAMES,
                                                    MarketplaceVersions)
 from demisto_sdk.commands.content_graph.common import (ContentType,
                                                        Neo4jResult,

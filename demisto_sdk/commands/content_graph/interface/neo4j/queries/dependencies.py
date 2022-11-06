@@ -121,7 +121,7 @@ def update_uses_for_integration_commands(tx: Transaction) -> None:
     MATCH (command)<-[rcmd:{RelationshipType.HAS_COMMAND}]-(integration:{ContentType.INTEGRATION})
     WHERE NOT command.object_id IN {list(GENERIC_COMMANDS_NAMES)}
     MERGE (content_item)-[u:USES]->(integration)
-    SET u.mandatorily = r.mandatorily
+    SET u.mandatorily = r.mandatorily OR u.mandatorily
     RETURN count(u) as uses_relationships
     """
     result = run_query(tx, query).single()

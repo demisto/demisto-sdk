@@ -44,7 +44,7 @@ class ContentItem(BaseContent):
         """
         This returns the content items which this content item uses.
         In addition, we can tell if it's a mandatorily use or not.
-            
+
         Returns:
             List[RelationshipData]:
                 RelationshipData:
@@ -74,7 +74,7 @@ class ContentItem(BaseContent):
         This returns the test playbooks which the content item is tested by.
 
         Returns:
-            List[TestPlaybook]: List of TestPlaybook model
+            List[TestPlaybook]: List of TestPlaybook models.
         """
         return [
             r.content_item  # type: ignore[misc]

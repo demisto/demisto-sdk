@@ -157,7 +157,7 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         """
         This returns the packs which this content item depends on.
         In addition, we can tell if it's a mandatorily dependency or not.
-            
+
         Returns:
             List[RelationshipData]:
                 RelationshipData:

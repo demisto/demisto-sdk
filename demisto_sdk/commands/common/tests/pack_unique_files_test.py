@@ -331,11 +331,11 @@ class TestPackUniqueFilesValidator:
                 assert 'The pack metadata contains non approved usecases:' in self.validator.get_errors()
 
     @pytest.mark.parametrize('tags, is_valid, branch_tags', [
-        ([], True, {'common': [], "xsoar": [], "xsiam": []}),
-        (['Machine Learning', 'Spam'], True, {'common': ['Machine Learning', 'Spam'], "xsoar": [], "xsiam": []}),
-        (['NonApprovedTag', 'GDPR'], False, {'common': ['GDPR'], "xsoar": [], "xsiam": []}),
-        (['xsiam:Data Source'], True, {'common': [], "xsoar": [], "xsiam": ['Data Source']}),
-        (['xsiam:NonApprovedTag', 'Spam'], False, {'common': ['Spam'], "xsoar": [], "xsiam": ['Data Source']})
+        ([], True, {'common': [], "xsoar": [], "marketplacev2": []}),
+        (['Machine Learning', 'Spam'], True, {'common': ['Machine Learning', 'Spam'], "xsoar": [], "marketplacev2": []}),
+        (['NonApprovedTag', 'GDPR'], False, {'common': ['GDPR'], "xsoar": [], "marketplacev2": []}),
+        (['marketplacev2:Data Source'], True, {'common': [], "xsoar": [], "marketplacev2": ['Data Source']}),
+        (['marketplacev2:NonApprovedTag', 'Spam'], False, {'common': ['Spam'], "xsoar": [], "marketplacev2": ['Data Source']})
     ])
     def test_is_approved_tags(self, repo, tags, is_valid, branch_tags, mocker):
         """
@@ -373,6 +373,34 @@ class TestPackUniqueFilesValidator:
             assert self.validator._is_approved_tags() == is_valid
             if not is_valid:
                 assert 'The pack metadata contains non approved tags:' in self.validator.get_errors()
+
+    @pytest.mark.parametrize('tags, is_valid', [
+        (['marketplacev2:Data Source'], True),
+        (['xsoar,NonApprovedTagPrefix:tag'], False)])
+    def test_is_approved_tag_prefix(self, repo, tags, is_valid, mocker):
+        """
+        Given:
+            - Pack metadata with tags
+        When:
+            - Runing the _is_approved_tag_prefixes validation
+        Then:
+            - Validating the expected result
+        """
+        self.restart_validator()
+        pack_name = 'PackName'
+        pack = repo.create_pack(pack_name)
+        pack.pack_metadata.write_json({
+            PACK_METADATA_USE_CASES: [],
+            PACK_METADATA_SUPPORT: XSOAR_SUPPORT,
+            PACK_METADATA_TAGS: tags,
+        })
+        mocker.patch.object(tools, 'is_external_repository', return_value=False)
+        self.validator.pack_path = pack.path
+
+        with ChangeCWD(repo.path):
+            assert self.validator._is_approved_tag_prefixes() == is_valid
+            if not is_valid:
+                assert 'The pack metadata contains tag with non approved prefix:' in self.validator.get_errors()
 
     @pytest.mark.parametrize('pack_content, tags, is_valid', [
         ("none", [], True),

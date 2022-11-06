@@ -314,6 +314,7 @@ ERROR_CODE = {
     "wrong_version_format": {'code': "PA130", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_version_diff_from_rn": {'code': "PA131", 'ui_applicable': False, 'related_field': ''},
     "pack_should_be_deprecated": {'code': "PA132", 'ui_applicable': False, 'related_field': ''},
+    "pack_metadata_non_approved_tag_prefix": {'code': "PA133", 'ui_applicable': False, 'related_field': ''},
 
     # PB - Playbooks
     "playbook_cant_have_rolename": {'code': "PB100", 'ui_applicable': True, 'related_field': 'rolename'},
@@ -1731,6 +1732,12 @@ class Errors:
         return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}' \
                'The list of approved tags for each marketplace can be found in' \
                'https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_non_approved_tag_prefix(tag, approved_prefixes: set) -> str:
+        return f'The pack metadata contains a tag with non approved prefix: {tag}.' \
+               f'The approved prefixes are: {", ".join(approved_prefixes)}. '
 
     @staticmethod
     @error_code_decorator

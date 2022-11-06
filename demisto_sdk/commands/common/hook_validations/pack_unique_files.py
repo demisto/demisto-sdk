@@ -25,7 +25,7 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACK_METADATA_SUPPORT, PACK_METADATA_TAGS, PACK_METADATA_URL,
     PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
-    PACKS_WHITELIST_FILE_NAME, VERSION_REGEX)
+    PACKS_WHITELIST_FILE_NAME, VERSION_REGEX, MarketplaceVersions)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.errors import Errors
@@ -335,6 +335,7 @@ class PackUniqueFilesValidator(BaseValidator):
             self._is_approved_usecases(),
             self._is_right_version(),
             self._is_approved_tags(),
+            self._is_approved_tag_prefixes(),
             self._is_price_changed(),
             self._is_valid_support_type(),
             self.is_right_usage_of_usecase_tag(),
@@ -600,8 +601,8 @@ class PackUniqueFilesValidator(BaseValidator):
 
         non_approved_tags = set()
         try:
-            common_tags, xsoar_tags, xsiam_tags = self.filter_by_marketplace()
-            non_approved_tags = self.check_not_approved_tags(common_tags, xsoar_tags, xsiam_tags)
+            common_tags, xsoar_tags, marketplacev2_tags = self.filter_by_marketplace()
+            non_approved_tags = self.check_not_approved_tags(common_tags, xsoar_tags, marketplacev2_tags)
             if non_approved_tags:
                 if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
                     return False
@@ -610,27 +611,51 @@ class PackUniqueFilesValidator(BaseValidator):
                 return False
         return True
 
-    def filter_by_marketplace(self):
-        """Filtering pack_metadata tags by marketplace"""
+    @error_codes('PA133')
+    def _is_approved_tag_prefixes(self) -> bool:
+        """Checks whether the tags in the pack metadata are approved
+
+        Return:
+            bool: True if the tags are approved, otherwise False
+        """
+        if tools.is_external_repository():
+            return True
+
+        is_valid = True
+        approved_prefixes = {x.value for x in list(MarketplaceVersions)}
         pack_meta_file_content = self._read_metadata_content()
-        common_tags, xsoar_tags, xsiam_tags = [], [], []
         for tag in pack_meta_file_content.get('tags', []):
             if ':' in tag:
                 tag_data = tag.split(':')
-                if tag_data[0] == 'xsoar':
+                marketplaces = tag_data[0].split(',')
+                for marketplace in marketplaces:
+                    if marketplace not in approved_prefixes:
+                        if self._add_error(Errors.pack_metadata_non_approved_tag_prefix(tag, approved_prefixes), self.pack_meta_file):
+                            is_valid = False
+
+        return is_valid
+
+    def filter_by_marketplace(self):
+        """Filtering pack_metadata tags by marketplace"""
+        pack_meta_file_content = self._read_metadata_content()
+        common_tags, xsoar_tags, marketplacev2_tags = [], [], []
+        for tag in pack_meta_file_content.get('tags', []):
+            if ':' in tag:
+                tag_data = tag.split(':')
+                if 'xsoar' in tag_data[0]:
                     xsoar_tags.append(tag_data[1])
-                else:
-                    xsiam_tags.append(tag_data[1])
+                if 'marketplacev2' in tag_data[0]:
+                    marketplacev2_tags.append(tag_data[1])
             else:
                 common_tags.append(tag)
 
-        return common_tags, xsoar_tags, xsiam_tags
+        return common_tags, xsoar_tags, marketplacev2_tags
 
-    def check_not_approved_tags(self, common_tags, xsoar_tags, xsiam_tags):
+    def check_not_approved_tags(self, common_tags, xsoar_tags, marketplacev2_tags):
         approved_tags = tools.get_approved_tags()
         non_approved_tags = set(common_tags) - set(approved_tags.get('common', []))
         non_approved_tags |= set(xsoar_tags) - set(approved_tags.get('xsoar', []))
-        non_approved_tags |= set(xsiam_tags) - set(approved_tags.get('xsiam', []))
+        non_approved_tags |= set(marketplacev2_tags) - set(approved_tags.get('marketplacev2', []))
 
         return non_approved_tags
 

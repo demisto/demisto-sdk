@@ -24,6 +24,7 @@ class ContentItem(BaseContent):
     display_name: str
     deprecated: bool
     description: Optional[str]
+    is_test: bool = False
 
     @property
     def in_pack(self) -> Optional["Pack"]:

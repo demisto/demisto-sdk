@@ -17,5 +17,9 @@ class XSIAMDashboardParser(
         self.json_data: Dict[str, Any] = self.json_data.get("dashboards_data", [{}])[0]
 
     @property
+    def marketplaces(self) -> List[MarketplaceVersions]:
+        return [MarketplaceVersions.MarketplaceV2]
+
+    @property
     def object_id(self) -> Optional[str]:
         return self.json_data.get("global_id")

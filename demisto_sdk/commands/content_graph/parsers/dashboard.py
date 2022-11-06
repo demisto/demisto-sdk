@@ -15,6 +15,10 @@ class DashboardParser(JSONContentItemParser, content_type=ContentType.DASHBOARD)
 
         self.connect_to_dependencies()
 
+    @property
+    def marketplaces(self) -> List[MarketplaceVersions]:
+        return [MarketplaceVersions.XSOAR]
+
     def connect_to_dependencies(self) -> None:
         """Collects the scripts used in the dashboard as optional dependencies."""
         for layout in self.json_data.get("layout", []):

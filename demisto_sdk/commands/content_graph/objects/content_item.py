@@ -28,25 +28,25 @@ class ContentItem(BaseContent):
 
     @property
     def in_pack(self) -> Optional["Pack"]:
-        for r in self.relationships_data:
-            if r.relationship_type == RelationshipType.IN_PACK:
-                return r.content_item  # type: ignore[return-value]
-        return None
+        in_pack = self.relationships_data[RelationshipType.IN_PACK]
+        if not in_pack:
+            return None
+        return next(iter(in_pack)).content_item  # type: ignore[return-value]
 
     @property
     def uses(self) -> List["RelationshipData"]:
         return [
             r
-            for r in self.relationships_data
-            if r.relationship_type == RelationshipType.USES and r.content_item == r.target
+            for r in self.relationships_data[RelationshipType.USES]
+            if r.content_item == r.target
         ]
 
     @property
     def tested_by(self) -> List["TestPlaybook"]:
         return [
             r.content_item  # type: ignore[misc]
-            for r in self.relationships_data
-            if r.relationship_type == RelationshipType.TESTED_BY and r.content_item == r.target
+            for r in self.relationships_data[RelationshipType.TESTED_BY]
+            if r.content_item == r.target
         ]
 
     def summary(self) -> dict:
@@ -85,5 +85,5 @@ class ContentItem(BaseContent):
         """
         id_set_entity = self.dict()
         id_set_entity["file_path"] = str(self.path)
-        id_set_entity["pack"] = self.in_pack.name  # type: ignore[union-attr]
+        id_set_entity["pack"] = self.in_pack.object_id  # type: ignore[union-attr]
         return id_set_entity

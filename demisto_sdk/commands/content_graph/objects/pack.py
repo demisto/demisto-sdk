@@ -156,15 +156,15 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
     def depends_on(self) -> List["RelationshipData"]:
         return [
             r
-            for r in self.relationships_data
-            if r.relationship_type == RelationshipType.DEPENDS_ON and r.content_item == r.target
+            for r in self.relationships_data[RelationshipType.DEPENDS_ON]
+            if r.content_item == r.target
         ]
 
     def set_content_items(self):
         content_items = [
             r.content_item
-            for r in self.relationships_data
-            if r.relationship_type == RelationshipType.IN_PACK and r.content_item == r.source
+            for r in self.relationships_data[RelationshipType.IN_PACK]
+            if r.content_item == r.source
         ]
         content_item_dct = defaultdict(list)
         for c in content_items:

@@ -29,8 +29,8 @@ class Command(BaseContent, content_type=ContentType.COMMAND):  # type: ignore[ca
     def integrations(self) -> List["Integration"]:
         return [
             r.content_item  # type: ignore[misc]
-            for r in self.relationships_data
-            if r.relationship_type == RelationshipType.HAS_COMMAND and r.content_item == r.source
+            for r in self.relationships_data[RelationshipType.HAS_COMMAND]
+            if r.content_item == r.source
         ]
 
     def dump(self, *args) -> None:
@@ -48,8 +48,8 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
     def imports(self) -> List["Script"]:
         return [
             r.content_item  # type: ignore[misc]
-            for r in self.relationships_data
-            if r.relationship_type == RelationshipType.IMPORTS and r.content_item == r.target
+            for r in self.relationships_data[RelationshipType.IMPORTS]
+            if r.content_item == r.target
         ]
 
     def set_commands(self):
@@ -61,8 +61,7 @@ class Integration(IntegrationScript, content_type=ContentType.INTEGRATION):  # t
                 deprecated=r.deprecated,
                 description=r.description,
             )
-            for r in self.relationships_data
-            if r.relationship_type == RelationshipType.HAS_COMMAND
+            for r in self.relationships_data[RelationshipType.HAS_COMMAND]
         ]
         self.commands = commands
 

@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Set, cast
+from typing import Any, Dict, Iterable, List, Optional, Set
 
 from neo4j import GraphDatabase, Neo4jDriver, Session, graph
 
@@ -153,18 +153,17 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             relationships (List[graph.Relationship]): The list of relationships from the source
             nodes_to (List[graph.Node]): The list of nodes of the target
         """
-        relationships = {
-            RelationshipData(
-                relationship_type=rel.type,
-                source=Neo4jContentGraphInterface._id_to_obj[rel.start_node.id],
-                target=Neo4jContentGraphInterface._id_to_obj[rel.end_node.id],
-                content_item=Neo4jContentGraphInterface._id_to_obj[node_to.id],
-                is_direct=True,
-                **rel,
+        for node_to, rel in zip(nodes_to, relationships):
+            obj.relationships_data[rel.type].add(
+                RelationshipData(
+                    relationship_type=rel.type,
+                    source=Neo4jContentGraphInterface._id_to_obj[rel.start_node.id],
+                    target=Neo4jContentGraphInterface._id_to_obj[rel.end_node.id],
+                    content_item=Neo4jContentGraphInterface._id_to_obj[node_to.id],
+                    is_direct=True,
+                    **rel,
+                )
             )
-            for node_to, rel in zip(nodes_to, relationships)
-        }
-        obj.add_relationships(relationships)
 
     def _add_all_level_dependencies(self, session: Session, marketplace: MarketplaceVersions, pack_nodes):
         mandatorily_dependencies: List[Neo4jResult] = session.read_transaction(
@@ -174,26 +173,25 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         nodes_set = self._get_nodes_set_from_result(mandatorily_dependencies, set(), content_items_nodes)
         self._add_to_mapping(nodes_set)
         if content_items_nodes:
-            self.search(
+            self._search(
                 marketplace,
                 filter_list=content_items_nodes,
             )
 
         for pack in mandatorily_dependencies:
-            obj: Pack = cast(Pack, Neo4jContentGraphInterface._id_to_obj[pack.node_from.id])
-            relationships = set()
+            obj = Neo4jContentGraphInterface._id_to_obj[pack.node_from.id]
             for node_to in pack.nodes_to:
                 target = Neo4jContentGraphInterface._id_to_obj[node_to.id]
-                rel = RelationshipData(
-                    relationship_type=RelationshipType.DEPENDS_ON,
-                    source=obj,
-                    content_item=target,
-                    target=target,
-                    mandatorily=True,
-                    is_direct=False,
+                obj.relationships_data[RelationshipType.DEPENDS_ON].add(
+                    RelationshipData(
+                        relationship_type=RelationshipType.DEPENDS_ON,
+                        source=obj,
+                        content_item=target,
+                        target=target,
+                        mandatorily=True,
+                        is_direct=False,
+                    )
                 )
-                relationships.add(rel)
-            obj.add_relationships(relationships)
 
     def _search(
         self,

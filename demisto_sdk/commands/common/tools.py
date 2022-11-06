@@ -58,7 +58,6 @@ json = JSON_Handler()
 
 logger = logging.getLogger("demisto-sdk")
 yaml = YAML_Handler()
-dammit = UnicodeDammit()
 
 urllib3.disable_warnings()
 
@@ -611,7 +610,7 @@ def _read_file(file_path: Path) -> str:
 
     except UnicodeDecodeError:
         try:
-            encoding = dammit(file_path.read_bytes()).original_encoding
+            encoding = UnicodeDammit(file_path.read_bytes()).original_encoding
             print(f"guess: encoding is {encoding}")
             return file_path.read_text(encoding=encoding)
 

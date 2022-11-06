@@ -727,40 +727,14 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     content_items_handler = ContentItemsHandler(artifact_manager.id_set, artifact_manager.alternate_fields)
     is_feed_pack = False
 
-    for classifier in pack.classifiers:
-        content_items_handler.handle_content_item(classifier)
-        pack_report += dump_pack_conditionally(artifact_manager, classifier)
-    for connection in pack.connections:
-        pack_report += dump_pack_conditionally(artifact_manager, connection)
+    # dump all content items for all existing marketplaces (xsoar, marpetplacev2, xpanse)
     for incident_field in pack.incident_fields:
         content_items_handler.handle_content_item(incident_field)
         pack_report += dump_pack_conditionally(artifact_manager, incident_field)
-    for incident_type in pack.incident_types:
-        content_items_handler.handle_content_item(incident_type)
-        pack_report += dump_pack_conditionally(artifact_manager, incident_type)
-    for indicator_field in pack.indicator_fields:
-        content_items_handler.handle_content_item(indicator_field)
-        pack_report += dump_pack_conditionally(artifact_manager, indicator_field)
-    for indicator_type in pack.indicator_types:
-        # list of indicator types in one file (i.e. old format) instead of one per file aren't supported from 6.0.0 server version
-        if indicator_type.is_file_structure_list():
-            logger.error(f'Indicator type "{indicator_type.path.name}" file holds a list and therefore is not supported.')
-        else:
-            content_items_handler.handle_content_item(indicator_type)
-            pack_report += dump_pack_conditionally(artifact_manager, indicator_type)
     for integration in pack.integrations:
         content_items_handler.handle_content_item(integration)
         is_feed_pack = is_feed_pack or integration.is_feed
         pack_report += dump_pack_conditionally(artifact_manager, integration)
-    for job in pack.jobs:
-        content_items_handler.handle_content_item(job)
-        pack_report += dump_pack_conditionally(artifact_manager, job)
-    for layout in pack.layouts:
-        content_items_handler.handle_content_item(layout)
-        pack_report += dump_pack_conditionally(artifact_manager, layout)
-    for list_item in pack.lists:
-        content_items_handler.handle_content_item(list_item)
-        pack_report += dump_pack_conditionally(artifact_manager, list_item)
     for playbook in pack.playbooks:
         content_items_handler.handle_content_item(playbook)
         is_feed_pack = is_feed_pack or playbook.get('name', '').startswith('TIM')
@@ -768,17 +742,49 @@ def dump_pack(artifact_manager: ArtifactsManager, pack: Pack) -> ArtifactsReport
     for script in pack.scripts:
         content_items_handler.handle_content_item(script)
         pack_report += dump_pack_conditionally(artifact_manager, script)
-    for test_playbook in pack.test_playbooks:
-        pack_report += dump_pack_conditionally(artifact_manager, test_playbook)
     for release_note in pack.release_notes:
         pack_report += ObjectReport(release_note, content_packs=True)
         release_note.dump(artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR)
     for release_note_config in pack.release_notes_config:
         pack_report += ObjectReport(release_note_config, content_packs=True)
         release_note_config.dump(artifact_manager.content_packs_path / pack.id / RELEASE_NOTES_DIR)
-    for wizard in pack.wizards:
-        content_items_handler.handle_content_item(wizard)
-        pack_report += dump_pack_conditionally(artifact_manager, wizard)
+
+    # dump only xsoar and marketplacev2 content items
+    if artifact_manager.marketplace in [MarketplaceVersions.XSOAR.value, MarketplaceVersions.MarketplaceV2.value]:
+        for classifier in pack.classifiers:
+            content_items_handler.handle_content_item(classifier)
+            pack_report += dump_pack_conditionally(artifact_manager, classifier)
+        for connection in pack.connections:
+            pack_report += dump_pack_conditionally(artifact_manager, connection)
+        for incident_type in pack.incident_types:
+            content_items_handler.handle_content_item(incident_type)
+            pack_report += dump_pack_conditionally(artifact_manager, incident_type)
+        for indicator_field in pack.indicator_fields:
+            content_items_handler.handle_content_item(indicator_field)
+            pack_report += dump_pack_conditionally(artifact_manager, indicator_field)
+        for indicator_type in pack.indicator_types:
+            # list of indicator types in one file (i.e. old format) instead of one per file aren't supported
+            # from 6.0.0 server version
+            if indicator_type.is_file_structure_list():
+                logger.error(
+                    f'Indicator type "{indicator_type.path.name}" file holds a list and therefore is not supported.')
+            else:
+                content_items_handler.handle_content_item(indicator_type)
+                pack_report += dump_pack_conditionally(artifact_manager, indicator_type)
+        for job in pack.jobs:
+            content_items_handler.handle_content_item(job)
+            pack_report += dump_pack_conditionally(artifact_manager, job)
+        for layout in pack.layouts:
+            content_items_handler.handle_content_item(layout)
+            pack_report += dump_pack_conditionally(artifact_manager, layout)
+        for list_item in pack.lists:
+            content_items_handler.handle_content_item(list_item)
+            pack_report += dump_pack_conditionally(artifact_manager, list_item)
+        for test_playbook in pack.test_playbooks:
+            pack_report += dump_pack_conditionally(artifact_manager, test_playbook)
+        for wizard in pack.wizards:
+            content_items_handler.handle_content_item(wizard)
+            pack_report += dump_pack_conditionally(artifact_manager, wizard)
 
     if artifact_manager.marketplace == MarketplaceVersions.XSOAR.value:
         for dashboard in pack.dashboards:

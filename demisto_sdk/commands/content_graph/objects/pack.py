@@ -154,6 +154,27 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
 
     @property
     def depends_on(self) -> List["RelationshipData"]:
+        """
+        This returns the packs which this content item depends on.
+        In addition, we can tell if it's a mandatorily dependency or not.
+
+        Returns:
+            List[RelationshipData]:
+                RelationshipData:
+                    relationship_type: RelationshipType
+                    source: BaseContent
+                    target: BaseContent
+
+                    # this is the attribute we're interested in when querying
+                    content_item: BaseContent
+
+                    # Whether the relationship between items is direct or not
+                    is_direct: bool
+
+                    # Whether using the command mandatorily (or optional)
+                    mandatorily: bool = False
+
+        """
         return [
             r
             for r in self.relationships_data[RelationshipType.DEPENDS_ON]

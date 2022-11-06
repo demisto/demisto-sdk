@@ -569,7 +569,7 @@ def validate(config, **kwargs):
 @click.option('-mp', '--marketplace', help='The marketplace the artifacts are created for, that '
                                            'determines which artifacts are created for each pack. '
                                            'Default is the XSOAR marketplace, that has all of the packs '
-                                           'artifacts.', default='xsoar', type=click.Choice(['xsoar', 'marketplacev2', 'v2']))
+                                           'artifacts.', default='xsoar', type=click.Choice(['xsoar', 'marketplacev2', 'v2', 'xpanse']))
 @click.option('-fbi', '--filter-by-id-set', is_flag=True,
               help='Whether to use the id set as content items guide, meaning only include in the packs the '
                    'content items that appear in the id set.', default=False, hidden=True)

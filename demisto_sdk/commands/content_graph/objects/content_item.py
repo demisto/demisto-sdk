@@ -28,6 +28,12 @@ class ContentItem(BaseContent):
 
     @property
     def in_pack(self) -> Optional["Pack"]:
+        """
+        This returns the Pack which the content item is in.
+
+        Returns:
+            Pack: Pack model.
+        """
         in_pack = self.relationships_data[RelationshipType.IN_PACK]
         if not in_pack:
             return None
@@ -35,6 +41,27 @@ class ContentItem(BaseContent):
 
     @property
     def uses(self) -> List["RelationshipData"]:
+        """
+        This returns the content items which this content item uses.
+        In addition, we can tell if it's a mandatorily use or not.
+            
+        Returns:
+            List[RelationshipData]:
+                RelationshipData:
+                    relationship_type: RelationshipType
+                    source: BaseContent
+                    target: BaseContent
+
+                    # this is the attribute we're interested in when querying
+                    content_item: BaseContent
+
+                    # Whether the relationship between items is direct or not
+                    is_direct: bool
+
+                    # Whether using the command mandatorily (or optional)
+                    mandatorily: bool = False
+
+        """
         return [
             r
             for r in self.relationships_data[RelationshipType.USES]
@@ -43,6 +70,12 @@ class ContentItem(BaseContent):
 
     @property
     def tested_by(self) -> List["TestPlaybook"]:
+        """
+        This returns the test playbooks which the content item is tested by.
+
+        Returns:
+            List[TestPlaybook]: List of TestPlaybook model
+        """
         return [
             r.content_item  # type: ignore[misc]
             for r in self.relationships_data[RelationshipType.TESTED_BY]

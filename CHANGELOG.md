@@ -2,7 +2,7 @@
 * Fixed an issue where **validate** failed to recognize integration tests that were missing from config.json
 
 ## Unreleased
-* Added support for different marketplace tags
+* Added support for marketplace-specific tags.
 
 ## 1.7.7
 * Fixed an issue where paybooks **generate-docs** didn't parse complex input values when no accessor field is given correctly.

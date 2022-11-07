@@ -137,7 +137,6 @@ def create_depends_on_relationships(tx: Transaction) -> None:
         AND id(pack_a) <> id(pack_b)
         AND NOT pack_a.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
         AND NOT pack_b.name IN {IGNORED_PACKS_IN_DEPENDENCY_CALC}
-        AND NOT b.node_id IN {IGNORED_CONTENT_ITEMS_IN_DEPENDENCY_CALC}
         AND a.is_test <> true
         AND b.is_test <> true
         WITH r, pack_a, pack_b

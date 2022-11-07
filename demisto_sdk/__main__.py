@@ -112,13 +112,13 @@ class DemistoSDK:
         Raises:
             TenantEnvNotFound: Raised whenever the tenant's .env file was not found.
         """
-        if not (Path(get_content_path()) / f".envs/.env-{name}").exists():
-            raise TenantEnvNotFound(Path(get_content_path()) / f".envs/.env-{name}")
+        if not Path(f".envs/.env-{name}").exists():
+            raise TenantEnvNotFound(Path(f".envs/.env-{name}"))
         try:
-            dotenv.load_dotenv(Path(get_content_path()) / f".env-{name}", override=True)
+            dotenv.load_dotenv(f".envs/.env-{name}", override=True)
             yield
         finally:
-            dotenv.load_dotenv(Path(get_content_path()) / ".env", override=True)
+            dotenv.load_dotenv(".env", override=True)
 
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)

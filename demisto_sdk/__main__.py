@@ -195,6 +195,8 @@ def main(config, version, release_notes, **kwargs):
         dotenv.load_dotenv(stream=io.StringIO(f"DEMISTO_API_KEY={kwargs.get('api_key')}"), override=True)
     # Add tenant information to passable config
     if kwargs.get('tenants'):
+        if isinstance(kwargs.get('tenants'), str):
+            kwargs['tenants'] = kwargs.get('tenants', '').split(',')
         config.tenants = kwargs.get('tenants')
     config.multi_tenant = kwargs.get('multi_tenant')
     if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version

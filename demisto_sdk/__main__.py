@@ -98,6 +98,8 @@ class DemistoSDK:
         dotenv.load_dotenv(Path(get_content_path()) / '.env', override=True)  # Load a .env file from the cwd.
         # Load info from config file
         self.configuration = Configuration()
+        self.tenants = None
+        self.multi_tenant = False
 
     @contextmanager
     def load_tenant_env(self, name: str):

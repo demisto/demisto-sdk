@@ -2312,9 +2312,7 @@ def create_content_graph(
         output_file=Path(output_file) if output_file else None,
         use_docker=use_docker,
     ) as content_graph_interface:
-        create_content_graph_command(content_graph_interface)
-        if dependencies:
-            content_graph_interface.create_pack_dependencies()
+        create_content_graph_command(content_graph_interface, dependencies)
 
 
 @main.result_callback()

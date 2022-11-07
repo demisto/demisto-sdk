@@ -1,11 +1,16 @@
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import ContentType, Relationship
+from demisto_sdk.commands.content_graph.common import (ContentType,
+                                                       RelationshipType)
+from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
+from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
 
 class ContentGraphInterface(ABC):
+    _calculate_dependencies = True
+
     @abstractmethod
     def create_indexes_and_constraints(self) -> None:
         pass
@@ -15,7 +20,7 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def create_relationships(self, relationships: Dict[Relationship, List[Dict[str, Any]]]) -> None:
+    def create_relationships(self, relationships: Dict[RelationshipType, List[Dict[str, Any]]]) -> None:
         pass
 
     @abstractmethod
@@ -23,40 +28,58 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def get_packs_content_items(self, marketplace: MarketplaceVersions):
-        pass
-
-    @abstractmethod
-    def get_all_integrations_with_commands(self):
-        pass
-
-    @abstractmethod
     def clean_graph(self):
-        pass
+        ContentGraphInterface._calculate_dependencies = True
 
     @abstractmethod
-    def get_nodes_by_type(self, content_type: ContentType) -> Any:
-        pass
-
-    @abstractmethod
-    def search_nodes(
+    def search(
         self,
+        marketplace: MarketplaceVersions = None,
         content_type: Optional[ContentType] = None,
+        filter_list: Optional[Iterable[int]] = None,
+        all_level_dependencies: bool = False,
         **properties,
-    ) -> Any:
-        pass
+    ) -> List[BaseContent]:
+        """
+        This searches the database for content items and returns a list of them, including their relationships
+
+        Args:
+            marketplace (MarketplaceVersions, optional): Marketplace to search by. Defaults to None.
+            content_type (Optional[ContentType], optional): The content_type to filter. Defaults to None.
+            filter_list (Optional[Iterable[int]], optional): A list of unique IDs to filter. Defaults to None.
+            all_level_dependencies (bool, optional): Whether to return all level dependencies. Defaults to False.
+            **properties: A key, value filter for the search. For example: `search(object_id="QRadar")`.
+
+        Returns:
+            List[BaseContent]: The search results
+        """
+        if not marketplace and all_level_dependencies:
+            raise ValueError("Cannot search for all level dependencies without a marketplace")
+        if ContentGraphInterface._calculate_dependencies:
+            self.create_pack_dependencies()
+        return []
+
+    def marshal_graph(
+        self, marketplace: MarketplaceVersions, all_level_dependencies: bool = False
+    ) -> ContentDTO:
+        """
+        This marshals the graph into a ContentDTO object
+
+        Args:
+            marketplace (MarketplaceVersions): The marketplace to filter on
+            all_level_dependencies (bool, optional): Whether to marshal all level dependencies. Defaults to False.
+
+        Returns:
+            ContentDTO: Marshalled object.
+        """
+        packs = self.search(
+            marketplace, content_type=ContentType.PACK, all_level_dependencies=all_level_dependencies,
+        )
+        return ContentDTO(packs=packs)
 
     @abstractmethod
-    def get_single_node(
-        self,
-        content_type: Optional[ContentType] = None,
-        **properties,
-    ) -> Any:
-        pass
-
-    @abstractmethod
-    def get_relationships_by_type(self, relationship: Relationship) -> Any:
-        pass
+    def create_pack_dependencies(self):
+        ContentGraphInterface._calculate_dependencies = False
 
     @abstractmethod
     def run_single_query(self, query: str, **kwargs) -> Any:

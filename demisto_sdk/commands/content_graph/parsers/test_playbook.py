@@ -8,12 +8,14 @@ from demisto_sdk.commands.content_graph.parsers.content_item import (
 from demisto_sdk.commands.content_graph.parsers.playbook import PlaybookParser
 from demisto_sdk.commands.content_graph.parsers.script import ScriptParser
 
-NON_CIRCLE_TESTS_DIRECTORY = 'NonCircleTests'
+NON_CIRCLE_TESTS_DIRECTORY = "NonCircleTests"
 
 
 class TestPlaybookParser(PlaybookParser, content_type=ContentType.TEST_PLAYBOOK):
-    def __init__(self, path: Path, pack_marketplaces: List[MarketplaceVersions]) -> None:
-        """ Parses the test playbook.
+    def __init__(
+        self, path: Path, pack_marketplaces: List[MarketplaceVersions]
+    ) -> None:
+        """Parses the test playbook.
 
         Args:
             path (Path): The test playbook's path.
@@ -27,5 +29,7 @@ class TestPlaybookParser(PlaybookParser, content_type=ContentType.TEST_PLAYBOOK)
 
         super().__init__(path, pack_marketplaces, is_test_playbook=True)
 
-        if self.yml_data.get('script'):
-            raise IncorrectParserException(correct_parser=ScriptParser, is_test_script=True)
+        if self.yml_data.get("script"):
+            raise IncorrectParserException(
+                correct_parser=ScriptParser, is_test_script=True
+            )

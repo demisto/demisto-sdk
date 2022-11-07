@@ -1,10 +1,10 @@
-from packaging.version import parse
 import logging
 import shutil
 from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Generator, List, Optional
 
+from packaging.version import parse
 from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (

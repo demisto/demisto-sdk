@@ -6,7 +6,7 @@ import sys
 import tempfile
 from configparser import ConfigParser, MissingSectionHeaderError
 from pathlib import Path
-from typing import IO, Any, Dict, List, Optional
+from typing import IO, Any, Dict
 
 import click
 import git
@@ -22,8 +22,7 @@ from demisto_sdk.commands.common.tools import (find_type, get_last_remote_releas
                                                is_external_repository, print_error, print_success, print_warning)
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import Neo4jContentGraphInterface
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
-from demisto_sdk.commands.upload.upload import upload_content_entity
-from demisto_sdk.utils.utils import check_configuration_file
+from demisto_sdk.commands.test_content.test_modeling_rule import test_modeling_rule, init_test_data
 
 json = JSON_Handler()
 
@@ -111,7 +110,8 @@ def main(config, version, release_notes):
             __version__ = get_distribution('demisto-sdk').version
         except DistributionNotFound:
             __version__ = 'dev'
-            print_warning('Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.')
+            print_warning(
+                'Cound not find the version of the demisto-sdk. This usually happens when running in a development environment.')
         else:
             last_release = get_last_remote_release_version()
             print_warning(f'You are using demisto-sdk {__version__}.')
@@ -245,9 +245,8 @@ def extract_code(config, **kwargs):
 @click.help_option(
     '-h', '--help'
 )
-@click.option(
-    "-i", "--input", help="The directory path to the files or path to the file to unify", required=True, type=click.Path(dir_okay=True)
-)
+@click.option("-i", "--input", help="The directory path to the files or path to the file to unify", required=True,
+              type=click.Path(dir_okay=True))
 @click.option(
     "-o", "--output", help="The output dir to write the unified yml to", required=False
 )
@@ -532,7 +531,8 @@ def validate(config, **kwargs):
               help='Whether to use the id set as content items guide, meaning only include in the packs the '
                    'content items that appear in the id set.', default=False, hidden=True)
 @click.option('-af', '--alternate-fields', is_flag=True,
-              help='Use the alternative fields if such are present in the yml or json of the content item.', default=False, hidden=True)
+              help='Use the alternative fields if such are present in the yml or json of the content item.',
+              default=False, hidden=True)
 def create_content_artifacts(**kwargs) -> int:
     """Generating the following artifacts:
        1. content_new - Contains all content objects of type json,yaml (from_version < 6.0.0)
@@ -646,7 +646,8 @@ def secrets(config, **kwargs):
                                             "--check-dependent-api-module flag.",
               type=click.Path(resolve_path=True),
               default='Tests/id_set.json')
-@click.option("-cdam", "--check-dependent-api-module", is_flag=True, help="Run unit tests and lint on all packages that "
+@click.option("-cdam", "--check-dependent-api-module", is_flag=True,
+              help="Run unit tests and lint on all packages that "
               "are dependent on the found "
               "modified api modules.", default=False)
 @click.option("--time-measurements-dir", help="Specify directory for the time measurements report file",
@@ -1250,10 +1251,9 @@ def generate_test_playbook(**kwargs):
     "-t", "--template", help="Create an Integration/Script based on a specific template.\n"
                              "Integration template options: HelloWorld, HelloIAMWorld, FeedHelloWorld.\n"
                              "Script template options: HelloWorldScript")
-@click.option(
-    "-a", "--author-image", help="Path of the file 'Author_image.png'. \n "
-                                 "Image will be presented in marketplace under PUBLISHER section. File should be up to 4kb and dimensions of 120x50"
-)
+@click.option("-a", "--author-image",
+              help="Path of the file 'Author_image.png'. \n "
+              "Image will be presented in marketplace under PUBLISHER section. File should be up to 4kb and dimensions of 120x50")
 @click.option(
     '--demisto_mock', is_flag=True,
     help="Copy the demistomock. Relevant for initialization of Scripts and Integrations within a Pack.")
@@ -1314,8 +1314,8 @@ def init(**kwargs):
     "--old-version", help="Path of the old integration version yml file.")
 @click.option(
     "--skip-breaking-changes", is_flag=True, help="Skip generating of breaking changes section.")
-@click.option(
-    "--custom-image-path", help="A custom path to a playbook image. If not stated, a default link will be added to the file.")
+@click.option("--custom-image-path",
+              help="A custom path to a playbook image. If not stated, a default link will be added to the file.")
 def generate_docs(**kwargs):
     """Generate documentation for integration, playbook or script from yaml file."""
 
@@ -2221,158 +2221,13 @@ def exit_from_program(result=0, **kwargs):
     sys.exit(result)
 
 
-app = typer.Typer()
-
-
-# ====================== test-modeling-rule ====================== #
-
-def tenant_config_cb(ctx: typer.Context, param: typer.CallbackParam, value: Optional[str]):
-    if ctx.resilient_parsing:
-        return
-    if param.value_is_missing(value):
-        err_str = (f'{param.name} must be set either via the environment variable '
-                   f'"{param.envvar}" or passed explicitly when running the command')
-        raise typer.BadParameter(err_str)
-    return value
-
-
-@app.command(
-    name='test-modeling-rule',
-    hidden=True,
-    help='Test a modeling rule against an XSIAM tenant.',
-)
-def test_modeling_rule(
-    input: List[Path] = typer.Argument(
-        ...,
-        exists=True,
-        dir_okay=True,
-        resolve_path=True,
-        show_default=False,
-        help='The path to a directory of a modeling rule. May pass multiple paths to test multiple modeling rules.'
-    ),
-    pre_clean: bool = typer.Option(
-        False,
-        '-b', '--clean-before',
-        is_flag=True,
-        help='Whether to remove all installed packs before testing.',
-        rich_help_panel='Execution Behavior'
-    ),
-    post_clean: bool = typer.Option(
-        False,
-        '-a', '--clean-after',
-        is_flag=True,
-        help='Whether to clean the test dataset that was created.',
-        rich_help_panel='Execution Behavior'
-    ),
-    fail_missing: bool = typer.Option(
-        False,
-        '-f', '--fail-missing',
-        is_flag=True,
-        help='Whether to raise an exception if test data is not present for a modeling rule.',
-        rich_help_panel='Execution Behavior'
-    ),
-    xsiam_url: Optional[str] = typer.Option(
-        None,
-        envvar='DEMISTO_BASE_URL',
-        help='The base url to the xsiam tenant.',
-        rich_help_panel='XSIAM Tenant Configuration',
-        show_default=False,
-        callback=tenant_config_cb
-    ),
-    api_key: Optional[str] = typer.Option(
-        None,
-        envvar='DEMISTO_API_KEY',
-        help='The api key for the xsiam tenant.',
-        rich_help_panel='XSIAM Tenant Configuration',
-        show_default=False,
-        callback=tenant_config_cb
-    ),
-    auth_id: Optional[str] = typer.Option(
-        None,
-        envvar='XSIAM_AUTH_ID',
-        help='The auth id associated with the xsiam api key being used.',
-        rich_help_panel='XSIAM Tenant Configuration',
-        show_default=False,
-        callback=tenant_config_cb
-    ),
-    project_id: Optional[str] = typer.Option(
-        None,
-        '-p', '--project-id',
-        help=(
-            'The google cloud project id associated with the XSIAM tenant. If not passed explicitly, the command will '
-            'use the default project configured by the gcloud cli utility on the local machine. Assumes the gcloud cli'
-            ' utility is installed and configured. To configure the project locally using gcloud, prior to command '
-            'execution, run "gcloud config set project your-project-id".'
-        ),
-        rich_help_panel='XSIAM Tenant Configuration',
-        show_default=False
-    ),
-    service_account: Optional[Path] = typer.Option(
-        None,
-        '-s', '--service-account',
-        exists=True,
-        file_okay=True,
-        resolve_path=True,
-        help=(
-            'The service account to use for interacting with the tenant\'s associated google cloud project. The passed'
-            ' value should be the path to a service account json file. If not passed explicitly, the default account '
-            'configured with the gloud cli utility on the local machine will be used. Assumes the gcloud cli utility '
-            'is installed and configured. To authenticate locally using gcloud, prior to command execution, run '
-            '"gcloud beta auth application-default login".'
-        ),
-        rich_help_panel='XSIAM Tenant Configuration',
-        show_default=False
-    ),
-    verbosity: int = typer.Option(
-        0,
-        '-v', '--verbose',
-        count=True,
-        clamp=True,
-        max=3,
-        show_default=True,
-        help='Verbosity level -v / -vv / .. / -vvv',
-        rich_help_panel='Logging Configuration'
-    ),
-    quiet: bool = typer.Option(
-        True,
-        help='Quiet output, only output results in the end.',
-        rich_help_panel='Logging Configuration',
-    ),
-    log_path: Path = typer.Option(
-        None,
-        '-lp', '--log-path',
-        resolve_path=True,
-        show_default=False,
-        help='Path of directory in which you would like to store all levels of logs.',
-        rich_help_panel='Logging Configuration'
-    ),
-    log_file_name: str = typer.Option(
-        'test-modeling-rule.log',
-        '-ln', '--log-name',
-        resolve_path=True,
-        help='The file name (including extension) where log output should be saved to.',
-        rich_help_panel='Logging Configuration'
-    )
-):
-    from demisto_sdk.commands.common.logger import logging_setup
-    from demisto_sdk.commands.test_content.modeling_rule import \
-        test_modeling_rules
-    logging_setup(
-        verbose=verbosity,
-        quiet=quiet,
-        log_path=log_path,  # type: ignore[arg-type]
-        log_file_name=log_file_name
-    )
-    test_modeling_rules(
-        input, pre_clean, post_clean, fail_missing,
-        xsiam_url, api_key, auth_id,  # type: ignore[arg-type] since if they are not set to str values an error occurs
-        project_id, service_account
-    )
+app = typer.Typer(name='modeling-rules', hidden=True, no_args_is_help=True)
+app.command('test', no_args_is_help=True)(test_modeling_rule.test_modeling_rule)
+app.command('init-test-data', no_args_is_help=True)(init_test_data.init_test_data)
 
 
 typer_click_object = typer.main.get_command(app)
-
-main.add_command(typer_click_object, 'test-modeling-rule')
+main.add_command(typer_click_object, 'modeling-rules')
 
 
 if __name__ == '__main__':

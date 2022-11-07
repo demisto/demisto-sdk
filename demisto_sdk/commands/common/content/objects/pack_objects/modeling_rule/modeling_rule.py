@@ -141,6 +141,7 @@ class ModelingRule(YAMLContentUnifiedObject):
     MODEL_RULE_REGEX = re.compile(
         r"(?P<header>\[MODEL:[\w\W]*\])\s(^(?!.*(?P=header)).+$\n)+", flags=re.M
     )
+    TESTDATA_FILE_SUFFIX = '_testdata.json'
 
     def __init__(self, path: Union[Path, str]):
         super().__init__(path, FileType.MODELING_RULE, MODELING_RULE)
@@ -193,7 +194,7 @@ class ModelingRule(YAMLContentUnifiedObject):
         Returns:
             Testdata file path or None if testdata file is not found.
         """
-        patterns = ["*_testdata.json"]
+        patterns = [f"*{self.TESTDATA_FILE_SUFFIX}"]
         return next(self.path.parent.glob(patterns=patterns, flags=IGNORECASE), None)  # type: ignore
 
     def type(self):

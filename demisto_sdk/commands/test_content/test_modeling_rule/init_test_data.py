@@ -8,11 +8,7 @@ from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData, Ev
 app = typer.Typer()
 
 
-@app.command(
-    name='init-test-data',
-    hidden=True,
-    help='Initializes a test data file for a modeling rule.',
-)
+@app.command(no_args_is_help=True)
 def init_test_data(
     input: List[Path] = typer.Argument(
         ...,
@@ -31,6 +27,9 @@ def init_test_data(
         help='The number of events to initialize the test data file for.',
     )
 ):
+    """
+    Initializes a test data file for a modeling rule
+    """
     errors = []
     mr_content_entities = [ModelingRule(fp.as_posix()) for fp in input]
     try:

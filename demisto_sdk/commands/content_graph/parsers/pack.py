@@ -97,7 +97,7 @@ class PackMetadataParser:
             "certified" if self.support.lower() in ["xsoar", "partner"] else ""
         )
         self.hidden: bool = metadata.get("hidden", False)
-        self.server_min_version: str = metadata.get("serverMinVersion", "0.0.0")
+        self.server_min_version: str = metadata.get("serverMinVersion", "")
         self.current_version: str = metadata["currentVersion"]
         self.tags: List[str] = metadata["tags"]
         self.categories: List[str] = metadata["categories"]

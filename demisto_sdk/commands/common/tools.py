@@ -31,8 +31,8 @@ from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
 
 from demisto_sdk.commands.common.constants import (
-    AGENT_CONFIG_DIR, ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK,
-    CLASSIFIERS_DIR, DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
+    ALL_FILES_VALIDATION_IGNORE_WHITELIST, API_MODULES_PACK, CLASSIFIERS_DIR,
+    DASHBOARDS_DIR, DEF_DOCKER, DEF_DOCKER_PWSH,
     DEFAULT_CONTENT_ITEM_FROM_VERSION, DEFAULT_CONTENT_ITEM_TO_VERSION,
     DOC_FILES_DIR, ENV_DEMISTO_SDK_MARKETPLACE, ID_IN_COMMONFIELDS, ID_IN_ROOT,
     INCIDENT_FIELDS_DIR, INCIDENT_TYPES_DIR, INDICATOR_FIELDS_DIR,
@@ -45,9 +45,9 @@ from demisto_sdk.commands.common.constants import (
     PACKS_README_FILE_NAME, PARSING_RULES_DIR, PLAYBOOKS_DIR,
     PRE_PROCESS_RULES_DIR, RELEASE_NOTES_DIR, RELEASE_NOTES_REGEX, REPORTS_DIR,
     SCRIPTS_DIR, SIEM_ONLY_ENTITIES, TEST_PLAYBOOKS_DIR, TRIGGER_DIR,
-    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XSIAM_DASHBOARDS_DIR,
-    XSIAM_REPORTS_DIR, XSOAR_CONFIG_FILE, FileType, FileTypeToIDSetKeys,
-    IdSetKeys, MarketplaceVersions, urljoin)
+    TYPE_PWSH, UNRELEASE_HEADER, UUID_REGEX, WIDGETS_DIR, XDRC_TEMPLATE_DIR,
+    XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR, XSOAR_CONFIG_FILE, FileType,
+    FileTypeToIDSetKeys, IdSetKeys, MarketplaceVersions, urljoin)
 from demisto_sdk.commands.common.git_content_config import (GitContentConfig,
                                                             GitProvider)
 from demisto_sdk.commands.common.git_util import GitUtil
@@ -1342,8 +1342,8 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             return FileType.XSOAR_CONFIG
         elif 'CONTRIBUTORS' in path.name:
             return FileType.CONTRIBUTORS
-        elif AGENT_CONFIG_DIR in path.parts:
-            return FileType.AGENT_CONFIG
+        elif XDRC_TEMPLATE_DIR in path.parts:
+            return FileType.XDRC_TEMPLATE
 
     elif path.name.endswith('_image.png'):
         if path.name.endswith('Author_image.png'):
@@ -1381,8 +1381,8 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
             # Packs/myPack/Scripts/myScript/myScript.yml
             return FileType.SCRIPT
 
-        elif AGENT_CONFIG_DIR in path.parts:
-            return FileType.AGENT_CONFIG_YML
+        elif XDRC_TEMPLATE_DIR in path.parts:
+            return FileType.XDRC_TEMPLATE_YML
 
     elif path.name == FileType.PACK_IGNORE:
         return FileType.PACK_IGNORE
@@ -1540,7 +1540,7 @@ def find_type(
             return FileType.TRIGGER
 
         if 'profile_type' in _dict and 'yaml_template' in _dict:
-            return FileType.AGENT_CONFIG
+            return FileType.XDRC_TEMPLATE
 
         # When using it for all files validation- sometimes 'id' can be integer
         if 'id' in _dict:
@@ -2074,7 +2074,7 @@ def item_type_to_content_items_header(item_type):
         "correlationrule": "correlationRule",
         "modelingrule": "modelingRule",
         "parsingrule": "parsingRule",
-        "agentconfig": "agentConfig"
+        "xdrctemplate": "XDRCTemplate"
     }
 
     return f'{converter.get(item_type, item_type)}s'

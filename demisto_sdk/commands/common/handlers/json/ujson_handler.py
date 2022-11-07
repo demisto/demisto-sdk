@@ -23,7 +23,7 @@ class UJSON_Handler(XSOAR_Handler):
         try:
             return ujson.loads(s)
         except ValueError as e:
-            raise JSONDecodeError(e)
+            raise JSONDecodeError(f"input: {s}, error: {e}")  # type: ignore
 
     def load(self, fp: IO[str]):
         try:

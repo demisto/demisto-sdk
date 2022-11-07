@@ -2,6 +2,7 @@
 * Fixed an issue where **validate** failed to recognize integration tests that were missing from config.json
 
 ## Unreleased
+* Added IF113 error code to **ALLOWED_IGNORE_ERRORS**.
 
 ## 1.7.7
 * Fixed an issue where paybooks **generate-docs** didn't parse complex input values when no accessor field is given correctly.

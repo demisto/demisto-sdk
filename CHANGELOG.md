@@ -1,5 +1,4 @@
 # Changelog
-* Fixed an issue where **generate-docs** with `-c` argument updated sections of the incorrect commands.
 
 ## Unreleased
 * Fixed an issue where paybooks **generate-docs** didn't parse complex input values when no accessor field is given correctly.
@@ -10,6 +9,7 @@
 * Added a new check to **validate**, making sure playbook task values are passed as references.
 * Fixed an issue where the **update-release-notes** deleted existing release notes, now appending to it instead.
 * Fixed an issue where **validate** printed blank space in case of validation failed and ignored.
+* Fixed an issue where **generate-docs** with `-c` argument updated sections of the incorrect commands.
 
 ## 1.7.6
 

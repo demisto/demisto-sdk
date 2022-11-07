@@ -1,6 +1,6 @@
 # Changelog
 * Fixed an issue where **validate** failed to recognize integration tests that were missing from config.json
-
+* Added support for **xpanse** marketplace in **create-id-set** and **create-content-artifacts** commands.
 ## Unreleased
 
 ## 1.7.7

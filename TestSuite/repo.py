@@ -290,4 +290,3 @@ class Repo:
             file_content = json.dumps(DUMMY_METADATA)
         with open(file_path, 'w') as f:
             f.write(file_content)
-

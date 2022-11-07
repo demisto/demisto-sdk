@@ -3,9 +3,11 @@ import shutil
 from collections import OrderedDict
 from tempfile import mkdtemp
 
+from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.common.update_id_set import ID_SET_ENTITIES
+from demisto_sdk.commands.common.update_id_set import (ID_SET_ENTITIES,
+                                                       ID_SET_XPANSE_ENTITIES)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 from TestSuite.test_tools import ChangeCWD
 from TestSuite.utils import IsEqualFunctions
@@ -30,7 +32,8 @@ METADATA = {
     "keywords": [],
     "marketplaces": [
         "xsoar",
-        "marketplacev2"
+        "marketplacev2",
+        "xpanse"
     ]
 }
 
@@ -202,6 +205,39 @@ def test_create_id_set_flow(repo, mocker):
             factor = 3
 
         assert len(entity_content_in_id_set) == factor * number_of_packs_to_create
+
+
+def test_create_id_set_flow_xpanse(repo, mocker):
+    """
+    Given
+        create-id-set sdk command, content repo that contains xpanse packs.
+    When
+        running create id set on the repo, with xpanse marketplace arg.
+    Then
+
+    """
+    # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
+    mocker.patch.dict(os.environ, {'DEMISTO_SDK_ID_SET_REFRESH_INTERVAL': '-1'})
+    number_of_packs_to_create = 10
+    repo.setup_content_repo(number_of_packs=number_of_packs_to_create, marketplaces=[MarketplaceVersions.XPANSE.value])
+
+    with ChangeCWD(repo.path):
+        id_set_creator = IDSetCreator(output=repo.id_set.path, marketplace='xpanse',
+                                      print_logs=False)
+        id_set_creator.create_id_set()
+
+    id_set_content = repo.id_set.read_json_as_dict()
+    assert not IsEqualFunctions.is_dicts_equal(id_set_content, {})
+    assert set(id_set_content.keys()) == set(ID_SET_ENTITIES + ['Packs'])
+    for id_set_entity in ID_SET_ENTITIES:
+        if id_set_entity not in ID_SET_XPANSE_ENTITIES:
+            assert not id_set_content.get(id_set_entity)
+        else:
+            entity_content_in_id_set = id_set_content.get(id_set_entity)
+            if id_set_entity == 'playbooks':
+                assert len(entity_content_in_id_set) == 3 * number_of_packs_to_create
+            else:
+                assert len(entity_content_in_id_set) == number_of_packs_to_create
 
 
 def setup_id_set():

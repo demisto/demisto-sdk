@@ -1,12 +1,14 @@
 import json
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Set, Type, cast
 
 from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.common import (ContentType,
+                                                       RelationshipType)
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import \
@@ -48,7 +50,7 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     node_id: str
     marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
 
-    relationships_data: Set["RelationshipData"] = Field(set(), exclude=True, repr=False)
+    relationships_data: Dict[RelationshipType, Set["RelationshipData"]] = Field(defaultdict(set), exclude=True, repr=False)
 
     class Config:
         arbitrary_types_allowed = True  # allows having custom classes for properties in model
@@ -66,10 +68,6 @@ class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     def __setstate__(self, state) -> None:
         """Needed to for the object to be pickled correctly (to use multiprocessing)"""
         self.__dict__.update(state)
-
-    def add_relationships(self, relationships: Set["RelationshipData"]):
-        """Adds relationships to the model"""
-        self.relationships_data.update(relationships)
 
     def to_dict(self) -> Dict[str, Any]:
         """

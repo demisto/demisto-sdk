@@ -9,7 +9,6 @@ from demisto_sdk.commands.content_graph.objects.integration_script import \
 
 class Script(IntegrationScript, content_type=ContentType.SCRIPT):  # type: ignore[call-arg]
     tags: List[str]
-    is_test: bool
 
     def metadata_fields(self) -> Set[str]:
         return {"name", "description", "tags"}

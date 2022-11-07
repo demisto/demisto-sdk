@@ -1,20 +1,18 @@
-from typing import Optional, Union
-from uuid import uuid4
+from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from demisto_sdk.commands.content_graph.common import RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.content_graph.objects.integration import Command
 
 
 class RelationshipData(BaseModel):
     relationship_type: RelationshipType
-    source: Union[BaseContent, Command]
-    target: Union[BaseContent, Command]
+    source: BaseContent
+    target: BaseContent
 
     # this is the attribute we're interested in when querying
-    content_item: Union[BaseContent, Command]
+    content_item: BaseContent
 
     is_direct: bool = True
 
@@ -25,16 +23,12 @@ class RelationshipData(BaseModel):
     description: Optional[str] = None
     deprecated: bool = False
 
-    id: str = Field(default_factory=uuid4)
-
     def __hash__(self):
         """This is the unique identifier of the relationship"""
-        try:
-            return hash(
-                (self.source.object_id, self.target.object_id, self.relationship_type)
-            )
-        except AttributeError:
-            return hash(self.id)
+        return hash(
+            (self.source.object_id, self.target.object_id, self.relationship_type,
+             self.source.content_type, self.target.content_type)
+        )
 
     def __eq__(self, __o: object) -> bool:
         """This is needed to check if the relationship already exists"""

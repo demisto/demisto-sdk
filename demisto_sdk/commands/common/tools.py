@@ -2407,6 +2407,10 @@ def get_approved_tags() -> dict:
     """
     if not is_external_repository():
         approved_tags_json, _ = get_dict_from_file('Tests/Marketplace/approved_tags.json')
+        if isinstance(approved_tags_json.get('approved_list'), list):
+            print_warning('You are using a deprecated version of the file aproved_tags.json, consider using the script blabla to update it')
+            return {'common': approved_tags_json.get('approved_list'), 'xsoar': [], 'marketplacev2': []}
+
         return approved_tags_json.get('approved_list', {})
     return {}
 

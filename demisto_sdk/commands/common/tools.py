@@ -615,7 +615,8 @@ def _read_file(file_path: Path) -> str:
             return file_path.read_text(encoding=encoding)
 
         except UnicodeDecodeError:
-            logger.error(f"could not auto-detect encoding for file {file_path} (guess was {encoding})")
+            print(f"could not auto-detect encoding for file {file_path} (guess was {encoding})")
+            raise
 
 
 @lru_cache()

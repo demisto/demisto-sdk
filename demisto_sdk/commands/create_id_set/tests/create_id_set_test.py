@@ -150,7 +150,7 @@ class TestIDSetCreator:
 
         """
         pack = repo.create_pack()
-        repo.add_pack_metadata_file(pack.path, json.dumps(METADATA))
+        pack.pack_metadata.write_json(METADATA)
 
         import demisto_sdk.commands.common.update_id_set as uis
         mocker.patch.object(uis, 'should_skip_item_by_mp', return_value=False)

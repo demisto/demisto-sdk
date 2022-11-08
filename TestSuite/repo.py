@@ -1,8 +1,3 @@
-"""
-
-"""
-import copy
-import json
 import os
 import shutil
 from pathlib import Path
@@ -12,26 +7,6 @@ from TestSuite.conf_json import ConfJSON
 from TestSuite.global_secrets import GlobalSecrets
 from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
-
-DUMMY_METADATA = {
-    "name": "DummyPack",
-    "description": "",
-    "support": "xsoar",
-    "currentVersion": "1.0.9",
-    "author": "Cortex XSOAR",
-    "url": "https://www.paloaltonetworks.com/cortex",
-    "email": "",
-    "created": "2020-04-14T00:00:00Z",
-    "categories": [
-        "Data Enrichment & Threat Intelligence"
-    ],
-    "tags": [],
-    "useCases": [],
-    "keywords": [],
-    "marketplaces": [
-        "xsoar", "marketplacev2", "xpanse"
-    ]
-}
 
 
 class Repo:
@@ -99,7 +74,7 @@ class Repo:
     def __del__(self):
         shutil.rmtree(self.path, ignore_errors=True)
 
-    def setup_one_pack(self, name, marketplaces: list = None) -> Pack:
+    def setup_one_pack(self, name, marketplaces: List[str] = None) -> Pack:
         """Sets up a new pack in the repo, and includes one per each content entity.
 
         Args:
@@ -111,12 +86,7 @@ class Repo:
 
         """
         pack = self.create_pack(name)
-        if marketplaces:
-            metadata = copy.deepcopy(DUMMY_METADATA)
-            metadata["marketplaces"] = marketplaces
-            self.add_pack_metadata_file(pack_path=pack.path, file_content=json.dumps(metadata))
-        if not marketplaces:
-            marketplaces = ['xsoar']
+        pack.pack_metadata.update({'marketplaces': marketplaces or ["xsoar"]})
 
         script = pack.create_script(f'{name}_script')
         script.create_default_script()
@@ -281,12 +251,5 @@ class Repo:
 
     def make_file(self, file_name: str, file_content: str):
         file_path = os.path.join(self.path, file_name)
-        with open(file_path, 'w') as f:
-            f.write(file_content)
-
-    def add_pack_metadata_file(self, pack_path, file_content=None):
-        file_path = os.path.join(pack_path, 'pack_metadata.json')
-        if not file_content:
-            file_content = json.dumps(DUMMY_METADATA)
         with open(file_path, 'w') as f:
             f.write(file_content)

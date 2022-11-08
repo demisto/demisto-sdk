@@ -35,7 +35,7 @@ def append_or_replace_command_in_docs(old_docs: str, new_doc_section: str, comma
     Returns:
         str: The whole documentation.
     """
-    regexp = DOCS_COMMAND_SECTION_REGEX.format(command_name)
+    regexp = DOCS_COMMAND_SECTION_REGEX.format(command_name + "\n")
     # Read doc content
     errs = list()
     if re.findall(regexp, old_docs, flags=re.DOTALL):

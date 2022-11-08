@@ -16,3 +16,6 @@ poetry.lock @dorschw
 
 # Pytest.ini
 pytest.ini @dorschw
+
+# Content graph
+demisto_sdk/commands/content_graph/** @dantavori @ilaner

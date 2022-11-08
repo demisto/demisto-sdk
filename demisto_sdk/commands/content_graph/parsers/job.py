@@ -16,6 +16,10 @@ class JobParser(JSONContentItemParser, content_type=ContentType.JOB):
         self.connect_to_dependencies()
 
     @property
+    def marketplaces(self) -> List[MarketplaceVersions]:
+        return [MarketplaceVersions.XSOAR]
+
+    @property
     def description(self) -> Optional[str]:
         return self.json_data.get("details")
 

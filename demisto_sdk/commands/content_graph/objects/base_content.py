@@ -1,12 +1,14 @@
 import json
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from typing import TYPE_CHECKING, Any, ClassVar, Dict, List, Set, Type, cast
 
 from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import ContentType
+from demisto_sdk.commands.content_graph.common import (ContentType,
+                                                       RelationshipType)
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import \
@@ -15,10 +17,8 @@ if TYPE_CHECKING:
 content_type_to_model: Dict[ContentType, Type["BaseContent"]] = {}
 
 
-class ContentModelMetaclass(ModelMetaclass):
-    def __new__(
-        cls, name, bases, namespace, content_type: ContentType = None, **kwargs
-    ):
+class BaseContentMetaclass(ModelMetaclass):
+    def __new__(cls, name, bases, namespace, content_type: ContentType = None, **kwargs):
         """This method is called before every creation of a ContentItem *class* (NOT class instances!).
         If `content_type` is passed as an argument of the class, we add a mapping between the content type
         and the model class object.
@@ -35,7 +35,7 @@ class ContentModelMetaclass(ModelMetaclass):
         Returns:
             BaseContent: The model class.
         """
-        super_cls: ContentModelMetaclass = super().__new__(cls, name, bases, namespace)
+        super_cls: BaseContentMetaclass = super().__new__(cls, name, bases, namespace)
         # for type checking
         model_cls: Type["BaseContent"] = cast(Type["BaseContent"], super_cls)
         if content_type:
@@ -44,21 +44,30 @@ class ContentModelMetaclass(ModelMetaclass):
         return model_cls
 
 
-class BaseContent(ABC, BaseModel, metaclass=ContentModelMetaclass):
+class BaseContent(ABC, BaseModel, metaclass=BaseContentMetaclass):
     object_id: str = Field(alias="id")
     content_type: ClassVar[ContentType] = Field(include=True)
-    marketplaces: List[MarketplaceVersions] = list(
-        MarketplaceVersions
-    )  # TODO check if default
     node_id: str
-    relationships_data: Set["RelationshipData"] = Field(
-        set(), exclude=True, repr=False
-    )  # too much data in the repr
+    marketplaces: List[MarketplaceVersions] = list(MarketplaceVersions)
+
+    relationships_data: Dict[RelationshipType, Set["RelationshipData"]] = Field(defaultdict(set), exclude=True, repr=False)
 
     class Config:
         arbitrary_types_allowed = True  # allows having custom classes for properties in model
         orm_mode = True  # allows using from_orm() method
         allow_population_by_field_name = True  # when loading from orm, ignores the aliases and uses the property name
+
+    def __getstate__(self):
+        """Needed to for the object to be pickled correctly (to use multiprocessing)"""
+        state = self.__dict__.copy()
+
+        # This object cannot be pickled
+        del state["relationships_data"]
+        return state
+
+    def __setstate__(self, state) -> None:
+        """Needed to for the object to be pickled correctly (to use multiprocessing)"""
+        self.__dict__.update(state)
 
     def to_dict(self) -> Dict[str, Any]:
         """
@@ -70,7 +79,7 @@ class BaseContent(ABC, BaseModel, metaclass=ContentModelMetaclass):
         """
 
         json_dct = json.loads(self.json())
-        json_dct['content_type'] = self.content_type
+        json_dct["content_type"] = self.content_type
         return json_dct
 
     @abstractmethod

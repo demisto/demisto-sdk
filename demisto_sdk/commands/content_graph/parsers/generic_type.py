@@ -16,6 +16,10 @@ class GenericTypeParser(JSONContentItemParser, content_type=ContentType.GENERIC_
 
         self.connect_to_dependencies()
 
+    @property
+    def marketplaces(self) -> List[MarketplaceVersions]:
+        return [MarketplaceVersions.XSOAR]
+
     def connect_to_dependencies(self) -> None:
         """Collects the layouts used in the generic type as mandatory dependencies."""
         if layout := self.json_data.get("layout"):

@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Set, Union, cast
+from typing import Any, Dict, Iterable, List, Optional, Set
 
 from neo4j import GraphDatabase, Neo4jDriver, Session, graph
 
@@ -26,8 +26,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships im
     create_relationships
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent, ServerContent, content_type_to_model)
-from demisto_sdk.commands.content_graph.objects.integration import (
-    Command, Integration)
+from demisto_sdk.commands.content_graph.objects.integration import Integration
 from demisto_sdk.commands.content_graph.objects.pack import Pack
 from demisto_sdk.commands.content_graph.objects.relationship import \
     RelationshipData
@@ -42,7 +41,7 @@ class NoModelException(Exception):
 class Neo4jContentGraphInterface(ContentGraphInterface):
 
     # this is used to save cache of packs and integrations which queried
-    _id_to_obj: Dict[int, Union[BaseContent, Command]] = {}
+    _id_to_obj: Dict[int, BaseContent] = {}
 
     def __init__(
         self,
@@ -89,10 +88,6 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 server_content = ServerContent.parse_obj(node)
                 Neo4jContentGraphInterface._id_to_obj[element_id] = server_content
 
-            elif content_type == ContentType.COMMAND:
-                command = Command.parse_obj(node)
-                Neo4jContentGraphInterface._id_to_obj[element_id] = command
-
             else:
                 model = content_type_to_model.get(content_type)
                 if not model:
@@ -100,14 +95,14 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
                 obj = model.parse_obj(node)
                 Neo4jContentGraphInterface._id_to_obj[element_id] = obj
 
-    def _add_relationships_to_objects(self, result: List[Neo4jResult]) -> List[Union[BaseContent, Command]]:
+    def _add_relationships_to_objects(self, result: List[Neo4jResult]) -> List[BaseContent]:
         """This adds relationships to given object
 
         Args:
             result (List[Neo4jResult]): Result from neo4j query
 
         Returns:
-            List[Union[BaseContent, Command]]: The objects to return with relationships
+            List[BaseContent]: The objects to return with relationships
         """
         final_result = []
         for res in result:
@@ -145,7 +140,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
 
     def _add_relationships(
         self,
-        obj: Union[BaseContent, Command],
+        obj: BaseContent,
         relationships: List[graph.Relationship],
         nodes_to: List[graph.Node],
     ) -> None:
@@ -153,23 +148,22 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Adds relationship to content object
 
         Args:
-            obj (Union[BaseContent, Command]): Object to add relationship to
+            obj (BaseContent): Object to add relationship to
             node_from (graph.Node): The source node
             relationships (List[graph.Relationship]): The list of relationships from the source
             nodes_to (List[graph.Node]): The list of nodes of the target
         """
-        relationships = {
-            RelationshipData(
-                relationship_type=rel.type,
-                source=Neo4jContentGraphInterface._id_to_obj[rel.start_node.id],
-                target=Neo4jContentGraphInterface._id_to_obj[rel.end_node.id],
-                content_item=Neo4jContentGraphInterface._id_to_obj[node_to.id],
-                is_direct=True,
-                **rel,
+        for node_to, rel in zip(nodes_to, relationships):
+            obj.relationships_data[rel.type].add(
+                RelationshipData(
+                    relationship_type=rel.type,
+                    source=Neo4jContentGraphInterface._id_to_obj[rel.start_node.id],
+                    target=Neo4jContentGraphInterface._id_to_obj[rel.end_node.id],
+                    content_item=Neo4jContentGraphInterface._id_to_obj[node_to.id],
+                    is_direct=True,
+                    **rel,
+                )
             )
-            for node_to, rel in zip(nodes_to, relationships)
-        }
-        obj.relationships_data.update(relationships)
 
     def _add_all_level_dependencies(self, session: Session, marketplace: MarketplaceVersions, pack_nodes):
         mandatorily_dependencies: List[Neo4jResult] = session.read_transaction(
@@ -179,25 +173,25 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         nodes_set = self._get_nodes_set_from_result(mandatorily_dependencies, set(), content_items_nodes)
         self._add_to_mapping(nodes_set)
         if content_items_nodes:
-            self.search(
+            self._search(
                 marketplace,
                 filter_list=content_items_nodes,
             )
 
         for pack in mandatorily_dependencies:
-            obj: Pack = cast(Pack, Neo4jContentGraphInterface._id_to_obj[pack.node_from.id])
+            obj = Neo4jContentGraphInterface._id_to_obj[pack.node_from.id]
             for node_to in pack.nodes_to:
                 target = Neo4jContentGraphInterface._id_to_obj[node_to.id]
-                rel = RelationshipData(
-                    RelationshipType.DEPENDS_ON,
-                    source=obj,
-                    content_item=target,
-                    target=target,
-                    mandatorily=True,
-                    is_direct=False,
+                obj.relationships_data[RelationshipType.DEPENDS_ON].add(
+                    RelationshipData(
+                        relationship_type=RelationshipType.DEPENDS_ON,
+                        source=obj,
+                        content_item=target,
+                        target=target,
+                        mandatorily=True,
+                        is_direct=False,
+                    )
                 )
-                if rel not in obj.relationships_data:
-                    obj.relationships_data.add(rel)
 
     def _search(
         self,
@@ -207,7 +201,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         all_level_dependencies: bool = False,
         level: int = 0,
         **properties,
-    ) -> List[Union[BaseContent, Command]]:
+    ) -> List[BaseContent]:
         """
         This is the implementation for the search function.
 
@@ -266,7 +260,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         filter_list: Optional[Iterable[int]] = None,
         all_level_dependencies: bool = False,
         **properties,
-    ) -> List[Union[BaseContent, Command]]:
+    ) -> List[BaseContent]:
         """
         This searches the database for content items and returns a list of them, including their relationships
 
@@ -278,7 +272,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             **properties: A key, value filter for the search. For example: `search(object_id="QRadar")`.
 
         Returns:
-            List[Union[BaseContent, Command]]: The search results
+            List[BaseContent]: The search results
         """
         super().search()
         return self._search(marketplace, content_type, filter_list, all_level_dependencies, 0, **properties)

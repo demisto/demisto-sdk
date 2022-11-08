@@ -23,42 +23,17 @@ This commands parses all content packs under the repository, including their rel
 ![Parsers](images/parsers.png) ![Models](images/models.png)
 
 #### Arguments
-* **-nd, --no-use-docker**
+* **-ud, --use-docker**
 
-    Do not use docker to create the content graph.
-
-* **-us, --use-existing**
-
-    Use existing service.
-
-* **-v, --verbose**
-
-    Verbosity level -v / -vv / .. / -vvv.
-
-* **-q, --quite**
-
-    Quiet output, only output results in the end.
-
-* **-lp, --log-path**
-
-    Path to store all levels of logs.
-
-
-### load-content-graph
-**Loads a content graph from a given dump file.**
-
-#### Arguments
-* **-nd, --no-use-docker**
-
-    Do not use docker to create the content graph.
-
-* **-cgp, --content-graph-path**
-
-    Path to the content graph dump file.
+    Use docker to create the content graph.
 
 * **-us, --use-existing**
 
     Use existing service.
+
+* **-d, --dependencies**
+
+    Whether dependencies should be included in the graph.
 
 * **-v, --verbose**
 

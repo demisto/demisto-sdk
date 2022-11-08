@@ -1,24 +1,18 @@
-from typing import TYPE_CHECKING, Optional, Union
+from typing import Optional
 
-if TYPE_CHECKING:
-    # pydantic dataclass uses the same API as the official dataclass
-    from dataclasses import dataclass
-else:
-    from pydantic.dataclasses import dataclass
+from pydantic import BaseModel
 
 from demisto_sdk.commands.content_graph.common import RelationshipType
 from demisto_sdk.commands.content_graph.objects.base_content import BaseContent
-from demisto_sdk.commands.content_graph.objects.integration import Command
 
 
-@dataclass
-class RelationshipData:
+class RelationshipData(BaseModel):
     relationship_type: RelationshipType
-    source: Union[BaseContent, Command]
-    target: Union[BaseContent, Command]
+    source: BaseContent
+    target: BaseContent
 
     # this is the attribute we're interested in when querying
-    content_item: Union[BaseContent, Command]
+    content_item: BaseContent
 
     is_direct: bool = True
 
@@ -32,7 +26,8 @@ class RelationshipData:
     def __hash__(self):
         """This is the unique identifier of the relationship"""
         return hash(
-            (self.source.object_id, self.target.object_id, self.relationship_type)
+            (self.source.object_id, self.target.object_id, self.relationship_type,
+             self.source.content_type, self.target.content_type)
         )
 
     def __eq__(self, __o: object) -> bool:

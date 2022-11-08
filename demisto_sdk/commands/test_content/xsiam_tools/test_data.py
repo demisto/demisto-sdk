@@ -37,3 +37,4 @@ class TestData(BaseModel):
             if not k.casefold().startswith('xdm.'):
                 err = "The expected values mapping keys are expected to start with 'xdm.' (case insensitive)"
                 raise ValueError(err)
+        return v

@@ -21,9 +21,9 @@ class TestData(BaseModel):
     def validate(cls, values):
         if len(values['data']) != len(values['expected_values']):
             raise ValueError("The number of data and expected values must match")
-        elif not all(
+        elif any(
             [
-                d.test_data_event_id == e.test_data_event_id for d, e in
+                d.test_data_event_id != e.test_data_event_id for d, e in
                 zip(values['data'], values['expected_values'])
             ]
         ):

@@ -4,6 +4,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Generator, List, Optional
 
+from packaging.version import parse
 from pydantic import BaseModel, Field
 
 from demisto_sdk.commands.common.constants import (
@@ -182,8 +183,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         ]
 
     def set_content_items(self):
-        content_items = [
-            r.content_item
+        content_items: List[ContentItem] = [
+            r.content_item  # type: ignore[misc]
             for r in self.relationships_data[RelationshipType.IN_PACK]
             if r.content_item == r.source
         ]
@@ -191,6 +192,8 @@ class Pack(BaseContent, PackMetadata, content_type=ContentType.PACK):  # type: i
         for c in content_items:
             content_item_dct[c.content_type].append(c)
 
+        # If there is no server_min_version, set it to the maximum of its content items fromversion
+        self.server_min_version = self.server_min_version or str(max(parse(content_item.fromversion) for content_item in content_items))
         self.content_items = PackContentItems.parse_obj(content_item_dct)
 
     def dump_metadata(self, path: Path) -> None:

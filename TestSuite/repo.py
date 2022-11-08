@@ -8,7 +8,7 @@ from TestSuite.global_secrets import GlobalSecrets
 from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
 
-
+DEFAULT_MARKETPLACES = ["xsoar"]
 class Repo:
     """A class that mocks a content repo
 
@@ -74,7 +74,7 @@ class Repo:
     def __del__(self):
         shutil.rmtree(self.path, ignore_errors=True)
 
-    def setup_one_pack(self, name, marketplaces: List[str] = ["xsoar"]) -> Pack:
+    def setup_one_pack(self, name, marketplaces: List[str] = DEFAULT_MARKETPLACES) -> Pack:
         """Sets up a new pack in the repo, and includes one per each content entity.
 
         Args:
@@ -221,12 +221,12 @@ class Repo:
             print('parsing done')
         return pack
 
-    def setup_content_repo(self, number_of_packs, marketplaces: list = None):
+    def setup_content_repo(self, number_of_packs, marketplaces: List[str] = DEFAULT_MARKETPLACES):
         """Creates a fully constructed content repository, where packs names will pack_<index>.
 
         Args:
             number_of_packs (int): Amount of packs to be created in the repo.
-            marketplaces (list): List of the marketplaces to setup the packs.
+            marketplaces (List[str]): List of the marketplaces to setup the packs.
 
         """
         for i in range(number_of_packs):

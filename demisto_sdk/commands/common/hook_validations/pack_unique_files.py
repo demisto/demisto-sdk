@@ -8,7 +8,7 @@ import re
 from datetime import datetime
 from distutils.version import LooseVersion
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, Set, Tuple
 
 import click
 from dateutil import parser
@@ -602,7 +602,7 @@ class PackUniqueFilesValidator(BaseValidator):
         non_approved_tags = set()
         try:
             common_tags, xsoar_tags, marketplacev2_tags = self.filter_by_marketplace()
-            non_approved_tags = self.check_not_approved_tags(common_tags, xsoar_tags, marketplacev2_tags)
+            non_approved_tags = self.extract_non_approved_tags(common_tags, xsoar_tags, marketplacev2_tags)
             if non_approved_tags:
                 if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
                     return False
@@ -651,7 +651,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return common_tags, xsoar_tags, marketplacev2_tags
 
-    def check_not_approved_tags(self, common_tags, xsoar_tags, marketplacev2_tags):
+    def extract_non_approved_tags(self, common_tags, xsoar_tags, marketplacev2_tags) -> Set[str]:
         approved_tags = tools.get_approved_tags()
         non_approved_tags = set(common_tags) - set(approved_tags.get('common', []))
         non_approved_tags |= set(xsoar_tags) - set(approved_tags.get('xsoar', []))

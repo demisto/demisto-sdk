@@ -2399,7 +2399,7 @@ def get_current_usecases() -> list:
     return []
 
 
-def get_approved_tags() -> dict:
+def get_approved_tags() -> Dict[str, List[str]]:
     """Gets approved list of tags from current branch (only in content repo).
 
     Returns:
@@ -2408,8 +2408,9 @@ def get_approved_tags() -> dict:
     if not is_external_repository():
         approved_tags_json, _ = get_dict_from_file('Tests/Marketplace/approved_tags.json')
         if isinstance(approved_tags_json.get('approved_list'), list):
-            print_warning('You are using a deprecated version of the file aproved_tags.json, consider using the script blabla to update it')
-            return {'common': approved_tags_json.get('approved_list'), 'xsoar': [], 'marketplacev2': []}
+            print_warning('You are using a deprecated version of the file aproved_tags.json, consider pulling from master'
+                          ' or using the script "update_repo.sh" to update it')
+            return {'common': approved_tags_json.get('approved_list', []), 'xsoar': [], 'marketplacev2': []}
 
         return approved_tags_json.get('approved_list', {})
     return {}

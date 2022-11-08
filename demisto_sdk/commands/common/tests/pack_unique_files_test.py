@@ -400,7 +400,7 @@ class TestPackUniqueFilesValidator:
         with ChangeCWD(repo.path):
             assert self.validator._is_approved_tag_prefixes() == is_valid
             if not is_valid:
-                assert 'The pack metadata contains tag with non approved prefix:' in self.validator.get_errors()
+                assert 'The pack metadata contains a tag with not approved prefix:' in self.validator.get_errors()
 
     @pytest.mark.parametrize('pack_content, tags, is_valid', [
         ("none", [], True),

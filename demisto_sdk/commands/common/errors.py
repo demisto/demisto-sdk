@@ -1729,14 +1729,14 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_metadata_non_approved_tags(non_approved_tags: set) -> str:
-        return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}' \
-               'The list of approved tags for each marketplace can be found in' \
+        return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}. ' \
+               'The list of approved tags for each marketplace can be found on' \
                'https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories'
 
     @staticmethod
     @error_code_decorator
     def pack_metadata_non_approved_tag_prefix(tag, approved_prefixes: set) -> str:
-        return f'The pack metadata contains a tag with non approved prefix: {tag}.' \
+        return f'The pack metadata contains a tag with not approved prefix: {tag}.' \
                f' The approved prefixes are: {", ".join(approved_prefixes)}.'
 
     @staticmethod

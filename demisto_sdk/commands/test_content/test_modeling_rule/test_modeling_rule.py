@@ -1,14 +1,51 @@
 import typer
 from typing import Optional, List
 from pathlib import Path
+from rich import print as printr
+from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import ModelingRule
+from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data
 
 
 app = typer.Typer()
 
 
-def test_modeling_rules(mrule_dirs: List[Path],
-                        xsiam_url: str, api_key: str, auth_id: str, xsiam_token: str):
-    ...
+def test_modeling_rules(
+        mrule_dirs: List[Path],
+        xsiam_url: str, api_key: str, auth_id: str, xsiam_token: str, interactive: bool, ctx: typer.Context):
+    printr(f'[cyan]modeling rules directories to test: {mrule_dirs}[/cyan]')
+    for mrule_dir in mrule_dirs:
+        printr(f'[cyan]Testing modeling rule in: {mrule_dir}[/cyan]')
+        mr_entity = ModelingRule(mrule_dir.as_posix())
+        if not mr_entity.testdata_path:
+            printr(f'[yellow]No test data file found for {mrule_dir}[/yellow]')
+            if interactive:
+                generate = typer.confirm(f'Would you like to generate a test data file for {mrule_dir}?')
+                if generate:
+                    printr(f'[cyan]Generating test data file for {mrule_dir}[/cyan]')
+                    init_td = app.command()(init_test_data.init_test_data)
+                    init_td([mrule_dir], 1)
+                    if mr_entity.testdata_path:
+                        printr(f'[green]Test data file generated for {mrule_dir}[/green]')
+                        printr(f'[cyan]Please complete the test data file at {mr_entity.testdata_path} '
+                               'with test event(s) data and expected outputs and then rerun '
+                               f'[italic]{ctx.command_path} {mrule_dir}[/italic][/cyan]')
+                        typer.Exit()
+                    else:
+                        printr(f'[red]Failed to generate test data file for {mrule_dir}[/red]')
+                        typer.Exit(1)
+                else:
+                    printr(f'[yellow]Skipping test data file generation for {mrule_dir}[/yellow]')
+                    printr(
+                        f'[yellow]Please create a test data file for {mrule_dir}'
+                        f' and then rerun [italic]{ctx.command_path} {mrule_dir}[/italic][/yellow]'
+                    )
+                    typer.Abort()
+            else:
+                printr(f'[yellow]Please create a test data file for {mrule_dir}'
+                       f' and then rerun [italic]{ctx.command_path} {mrule_dir}[/italic][/yellow]')
+        else:
+            printr(f'[cyan]Test data found: Commence testing modeling rule: {mrule_dir}[/cyan]')
+            ...
 
 
 # ====================== test-modeling-rule ====================== #
@@ -26,6 +63,7 @@ def tenant_config_cb(ctx: typer.Context, param: typer.CallbackParam, value: Opti
 
 @app.command(no_args_is_help=True)
 def test_modeling_rule(
+    ctx: typer.Context,
     input: List[Path] = typer.Argument(
         ...,
         exists=True,
@@ -95,6 +133,14 @@ def test_modeling_rule(
         resolve_path=True,
         help='The file name (including extension) where log output should be saved to.',
         rich_help_panel='Logging Configuration'
+    ),
+    interactive: bool = typer.Option(
+        True,
+        '--interactive/--non-interactive', '-i/-ni',
+        help=('Interactive mode, will prompt the user if they want to generate test '
+              'data templates if none exists for the passed modeling rules.'),
+        rich_help_panel='Interactive Configuration',
+        hidden=True
     )
 ):
     """
@@ -109,7 +155,9 @@ def test_modeling_rule(
     )
     test_modeling_rules(
         input,
-        xsiam_url, api_key, auth_id, xsiam_token  # type: ignore[arg-type] since if they are not set to str values an error occurs
+        xsiam_url, api_key,  # type: ignore[arg-type] since if they are not set to str values an error occurs
+        auth_id, xsiam_token,  # type: ignore[arg-type] since if they are not set to str values an error occurs
+        interactive, ctx
     )
 
 

@@ -1151,7 +1151,7 @@ BANG_COMMAND_ARGS_MAPPING_DICT: Dict[str, dict] = {
 
 ENDPOINT_FLEXIBLE_REQUIRED_ARGS = ["ip", "id", "hostname"]
 
-GENERIC_COMMANDS_NAMES = BANG_COMMAND_NAMES.union({'send-mail', 'send-notification', 'cve-latest', 'cve-search', 'search'})
+GENERIC_COMMANDS_NAMES = BANG_COMMAND_NAMES.union({'send-mail', 'send-notification', 'cve-latest', 'cve-search'})
 
 DBOT_SCORES_DICT = {
     'DBotScore.Indicator': 'The indicator that was tested.',

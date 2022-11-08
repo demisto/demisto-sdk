@@ -50,7 +50,7 @@ EX_SUCCESS = 0
 EX_FAIL = 1
 
 XSOAR_MARKETPLACE_ITEMS_TO_DUMP = [FileType.CLASSIFIER, FileType.CONNECTION, FileType.INCIDENT_FIELD,
-                                   FileType.INCIDENT_TYPE, FileType.INCIDENT_FIELD, FileType.INDICATOR_TYPE,
+                                   FileType.INCIDENT_TYPE, FileType.INDICATOR_FIELD, FileType.INDICATOR_TYPE,
                                    FileType.INTEGRATION, FileType.JOB, FileType.LAYOUT, FileType.LISTS,
                                    FileType.PLAYBOOK, FileType.SCRIPT, FileType.TEST_PLAYBOOK, FileType.RELEASE_NOTES,
                                    FileType.RELEASE_NOTES_CONFIG, FileType.WIZARD,
@@ -59,7 +59,7 @@ XSOAR_MARKETPLACE_ITEMS_TO_DUMP = [FileType.CLASSIFIER, FileType.CONNECTION, Fil
                                    FileType.PRE_PROCESS_RULES, FileType.REPORT, FileType.WIDGET, FileType.TOOL,
                                    FileType.PACK_METADATA, FileType.README, FileType.AUTHOR_IMAGE]
 XSIAM_MARKETPLACE_ITEMS_TO_DUMP = [FileType.CLASSIFIER, FileType.CONNECTION, FileType.INCIDENT_FIELD,
-                                   FileType.INCIDENT_TYPE, FileType.INCIDENT_FIELD, FileType.INDICATOR_TYPE,
+                                   FileType.INCIDENT_TYPE, FileType.INDICATOR_FIELD, FileType.INDICATOR_TYPE,
                                    FileType.INTEGRATION, FileType.JOB, FileType.LAYOUT, FileType.LISTS,
                                    FileType.PLAYBOOK, FileType.SCRIPT, FileType.TEST_PLAYBOOK, FileType.RELEASE_NOTES,
                                    FileType.RELEASE_NOTES_CONFIG, FileType.WIZARD,

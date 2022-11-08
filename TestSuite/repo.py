@@ -74,7 +74,7 @@ class Repo:
     def __del__(self):
         shutil.rmtree(self.path, ignore_errors=True)
 
-    def setup_one_pack(self, name, marketplaces: List[str] = None) -> Pack:
+    def setup_one_pack(self, name, marketplaces: List[str] = ["xsoar"]) -> Pack:
         """Sets up a new pack in the repo, and includes one per each content entity.
 
         Args:
@@ -86,7 +86,7 @@ class Repo:
 
         """
         pack = self.create_pack(name)
-        pack.pack_metadata.update({'marketplaces': marketplaces or ["xsoar"]})
+        pack.pack_metadata.update({'marketplaces': marketplaces})
 
         script = pack.create_script(f'{name}_script')
         script.create_default_script()

@@ -159,6 +159,9 @@ class FileType(str, Enum):
     DOC_FILE = 'doc_files'
     XDRC_TEMPLATE = 'xdrctemplate'
     XDRC_TEMPLATE_YML = 'xdrctemplateyml'
+    INDICATOR_TYPE = 'indicatortype'
+    TOOL = 'tools'
+    PACK_METADATA = 'packmetadata'
 
 
 RN_HEADER_BY_FILE_TYPE = {

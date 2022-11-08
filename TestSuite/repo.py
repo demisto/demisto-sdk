@@ -9,6 +9,8 @@ from TestSuite.json_based import JSONBased
 from TestSuite.pack import Pack
 
 DEFAULT_MARKETPLACES = ["xsoar"]
+
+
 class Repo:
     """A class that mocks a content repo
 

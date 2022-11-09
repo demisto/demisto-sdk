@@ -57,7 +57,7 @@ XSOAR_MARKETPLACE_ITEMS_TO_DUMP = [FileType.CLASSIFIER, FileType.CONNECTION, Fil
                                    FileType.DASHBOARD, FileType.GENERIC_DEFINITION, FileType.GENERIC_MODULE,
                                    FileType.GENERIC_TYPE, FileType.GENERIC_FIELD,
                                    FileType.PRE_PROCESS_RULES, FileType.REPORT, FileType.WIDGET, FileType.TOOL,
-                                   FileType.PACK_METADATA, FileType.README, FileType.AUTHOR_IMAGE]
+                                   FileType.PACK_METADATA, FileType.METADATA, FileType.README, FileType.AUTHOR_IMAGE]
 XSIAM_MARKETPLACE_ITEMS_TO_DUMP = [FileType.CLASSIFIER, FileType.CONNECTION, FileType.INCIDENT_FIELD,
                                    FileType.INCIDENT_TYPE, FileType.INDICATOR_FIELD, FileType.INDICATOR_TYPE,
                                    FileType.INTEGRATION, FileType.JOB, FileType.LAYOUT, FileType.LISTS,
@@ -66,10 +66,10 @@ XSIAM_MARKETPLACE_ITEMS_TO_DUMP = [FileType.CLASSIFIER, FileType.CONNECTION, Fil
                                    FileType.PARSING_RULE, FileType.MODELING_RULE, FileType.CORRELATION_RULE,
                                    FileType.XSIAM_DASHBOARD, FileType.XSIAM_REPORT, FileType.TRIGGER,
                                    FileType.XDRC_TEMPLATE, FileType.TOOL,
-                                   FileType.PACK_METADATA, FileType.README, FileType.AUTHOR_IMAGE]
+                                   FileType.PACK_METADATA, FileType.METADATA, FileType.README, FileType.AUTHOR_IMAGE]
 XPANSE_MARKETPLACE_ITEMS_TO_DUMP = [FileType.INCIDENT_FIELD, FileType.INTEGRATION, FileType.PLAYBOOK, FileType.SCRIPT,
                                     FileType.RELEASE_NOTES, FileType.RELEASE_NOTES_CONFIG, FileType.PACK_METADATA,
-                                    FileType.README, FileType.AUTHOR_IMAGE]
+                                    FileType.METADATA, FileType.README, FileType.AUTHOR_IMAGE]
 
 MARKETPLACE_TO_ITEMS_MAPPING = {
     MarketplaceVersions.XSOAR.value: XSOAR_MARKETPLACE_ITEMS_TO_DUMP,

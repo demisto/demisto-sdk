@@ -1,6 +1,7 @@
 import pytest
 from click.testing import CliRunner
 from demisto_client.demisto_api import DefaultApi
+from demisto_client.demisto_api.models.entry import Entry
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common.legacy_git_tools import git_path
@@ -67,7 +68,7 @@ def test_json_to_outputs_flag(mocker, set_environment_variables):
     """
     # mocks to allow the command to run locally
     mocker.patch.object(Runner, '_get_playground_id', return_value='pg_id')
-    mocker.patch.object(Runner, '_run_query', return_value=['123'])
+    mocker.patch.object(DefaultApi, 'investigation_add_entries_sync', return_value=[Entry(id="123", type=16)])
     # mock to get test log file
     mocker.patch.object(DefaultApi, 'download_file', return_value=DEBUG_FILE_PATH)
     # mock to set prefix instead of getting it from input
@@ -93,7 +94,7 @@ def test_json_to_outputs_flag_fail_no_prefix(mocker, set_environment_variables):
     """
     # mocks to allow the command to run locally
     mocker.patch.object(Runner, '_get_playground_id', return_value='pg_id')
-    mocker.patch.object(Runner, '_run_query', return_value=['123'])
+    mocker.patch.object(DefaultApi, 'investigation_add_entries_sync', return_value=[Entry(id="123")])
     # mock to get test log file
     mocker.patch.object(DefaultApi, 'download_file', return_value=DEBUG_FILE_PATH)
     # mock to set prefix instead of getting it from input

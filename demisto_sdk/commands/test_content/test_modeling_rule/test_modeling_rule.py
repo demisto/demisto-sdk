@@ -1,51 +1,176 @@
 import typer
-from typing import Optional, List
+from typing import Optional, List, Union
 from pathlib import Path
 from rich import print as printr
-from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import ModelingRule
+from rich.console import Console
+from rich.syntax import Syntax
+from rich.panel import Panel
+from rich.theme import Theme
+from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import ModelingRule, MRule
 from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data
+from demisto_sdk.commands.test_content.xsiam_tools.xsiam_interface import XsiamApiClient, XsiamApiClientConfig
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
+    YAMLContentObject
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
+    JSONContentObject
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_unify_content_object import \
+    YAMLContentUnifiedObject
+from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
+
+
+custom_theme = Theme({
+    "info": "cyan",
+    "info_h1": "cyan underline",
+    "warning": "yellow",
+    "error": "red",
+    "danger": "bold red",
+    "success": "green",
+    "em": "italic"
+})
+console = Console()
 
 
 app = typer.Typer()
 
 
-def test_modeling_rules(
-        mrule_dirs: List[Path],
-        xsiam_url: str, api_key: str, auth_id: str, xsiam_token: str, interactive: bool, ctx: typer.Context):
-    printr(f'[cyan]modeling rules directories to test: {mrule_dirs}[/cyan]')
-    for mrule_dir in mrule_dirs:
-        printr(f'[cyan]Testing modeling rule in: {mrule_dir}[/cyan]')
-        mr_entity = ModelingRule(mrule_dir.as_posix())
-        if not mr_entity.testdata_path:
-            printr(f'[yellow]No test data file found for {mrule_dir}[/yellow]')
-            if interactive:
-                generate = typer.confirm(f'Would you like to generate a test data file for {mrule_dir}?')
-                if generate:
-                    printr(f'[cyan]Generating test data file for {mrule_dir}[/cyan]')
-                    init_td = app.command()(init_test_data.init_test_data)
-                    init_td([mrule_dir], 1)
-                    if mr_entity.testdata_path:
-                        printr(f'[green]Test data file generated for {mrule_dir}[/green]')
-                        printr(f'[cyan]Please complete the test data file at {mr_entity.testdata_path} '
-                               'with test event(s) data and expected outputs and then rerun '
-                               f'[italic]{ctx.command_path} {mrule_dir}[/italic][/cyan]')
-                        typer.Exit()
-                    else:
-                        printr(f'[red]Failed to generate test data file for {mrule_dir}[/red]')
-                        typer.Exit(1)
+ContentEntity = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject]
+
+
+def verify_results(results: List[dict], test_data: init_test_data.TestData):
+    if len(results) != len(test_data.data):
+        raise ValueError(f'Expected {len(test_data.data)} results, got {len(results)}')
+    printr(results)
+    for result in results:
+        for key, val in result.items():
+            matching_keyvals = [e.mapping.get(key) for e in test_data.expected_values]
+            assert val in matching_keyvals, f'Expected value {val} not found in expected values {matching_keyvals}'
+
+
+def generate_xql_query(rule: MRule, count: int = 1, version: str = '1') -> str:
+    if version != '1':
+        raise NotImplementedError('Only version 1 is supported')
+    # fields = ', '.join([f'{f}' for f in rule.fields])
+    # query = f'datamodel = {rule.datamodel} dataset in({rule.dataset}) | fields {fields} | limit {count}'
+    query = f'dataset in ({rule.dataset}) | limit {count}'
+    return query
+
+
+def validate_mappings(xsiam_client: XsiamApiClient, mr: ModelingRule, test_data: init_test_data.TestData):
+    with console.status('[info]Validating mappings...[/info]'):
+        count = len(test_data.data)
+        for rule in mr.rules:
+            query = generate_xql_query(rule, count)
+            console.log(query)
+            execution_id = xsiam_client.start_xql_query(query)
+            results = xsiam_client.get_xql_query_result(execution_id)
+            verify_results(results, test_data)
+    console.print('[success]Mappings validated successfully[/success]')
+
+
+def push_test_data_to_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule, test_data: init_test_data.TestData):
+    events_test_data = [e.event_data for e in test_data.data]
+    console.print('[info]Pushing test data to tenant...[/info]')
+    xsiam_client.add_create_dataset(events_test_data, mr.rules[0].product, mr.rules[0].vendor)
+    console.print('[success]Test data pushed successfully[/success]')
+
+
+def get_containing_pack(content_entity: ContentEntity) -> Pack:
+    """Get pack object that contains the content entity.
+    Args:
+        content_entity: Content entity object.
+    Returns:
+        Pack: Pack object that contains the content entity.
+    """
+    pack_path = content_entity.path
+    while pack_path.parent.name != 'Packs':
+        pack_path = pack_path.parent
+    return Pack(pack_path)
+
+
+# def verify_pack_exists_on_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule):
+#     printr('[info]Verifying pack installed on tenant[/info]')
+#     identified_pack = get_containing_pack(mr)
+#     printr(xsiam_client.installed_packs)
+#     found_pack = xsiam_client.installed_packs.get(identified_pack.id)
+#     if found_pack:
+#         printr(f'[info]Found pack on tenant:\n{found_pack}[/info]')
+#     else:
+#         printr(f'[error]Pack {identified_pack.id} was not found on tenant[/error]')
+#         printr('[error]Please install or upload the pack to the tenant and try again[/error]')
+#         printr(Panel(Syntax(f'demisto-sdk upload -i {identified_pack.path}', "bash")))
+#         typer.Exit(1)
+
+
+def test_rule(mr: ModelingRule, xsiam_url: str, api_key: str, auth_id: str, xsiam_token: str):
+    # initialize xsiam client
+    xsiam_client_cfg = XsiamApiClientConfig(
+        xsiam_url=xsiam_url, api_key=api_key, auth_id=auth_id, xsiam_token=xsiam_token
+    )
+    xsiam_client = XsiamApiClient(xsiam_client_cfg)
+    # verify_pack_exists_on_tenant(xsiam_client, mr)
+    test_data = init_test_data.TestData.parse_file(mr.testdata_path.as_posix())
+    push_test_data_to_tenant(xsiam_client, mr, test_data)
+    validate_mappings(xsiam_client, mr, test_data)
+
+
+def check_test_data_event_data_exists(test_data_path: Path) -> List[str]:
+    missing_event_data = []
+    test_data = init_test_data.TestData.parse_file(test_data_path)
+    for event_log in test_data.data:
+        if not event_log.event_data:
+            missing_event_data.append(event_log.test_data_event_id)
+    return missing_event_data
+
+
+def validate_modeling_rule(
+        mrule_dir: Path,
+        xsiam_url: str, api_key: str, auth_id: str, xsiam_token: str, interactive: bool, ctx: typer.Context
+):
+    console.rule("[info]Test Modeling Rule[/info]")
+    printr(f'[info]<<<< {mrule_dir} >>>>[/info]')
+    mr_entity = ModelingRule(mrule_dir.as_posix())
+    execd_cmd = Panel(Syntax(f'{ctx.command_path} {mrule_dir}', "bash"))
+    if not mr_entity.testdata_path:
+        printr(f'[warning]No test data file found for {mrule_dir}[/warning]')
+        if interactive:
+            generate = typer.confirm(f'Would you like to generate a test data file for {mrule_dir}?')
+            if generate:
+                printr('[info_h1]Generate Test Data File[/info_h1]')
+                init_td = app.command()(init_test_data.init_test_data)
+                events_count = typer.prompt(
+                    'For how many events would you like to generate templates?', type=int, default=1, show_default=True
+                )
+                init_td([mrule_dir], events_count)
+                if mr_entity.testdata_path:
+                    printr(f'[success]Test data file generated for {mrule_dir}[/success]')
+                    printr(f'[info]Please complete the test data file at {mr_entity.testdata_path} '
+                           'with test event(s) data and expected outputs and then rerun,')
+                    printr(execd_cmd)
+                    typer.Exit()
                 else:
-                    printr(f'[yellow]Skipping test data file generation for {mrule_dir}[/yellow]')
-                    printr(
-                        f'[yellow]Please create a test data file for {mrule_dir}'
-                        f' and then rerun [italic]{ctx.command_path} {mrule_dir}[/italic][/yellow]'
-                    )
-                    typer.Abort()
+                    printr(f'[error]Failed to generate test data file for {mrule_dir}[/error]')
+                    typer.Exit(1)
             else:
-                printr(f'[yellow]Please create a test data file for {mrule_dir}'
-                       f' and then rerun [italic]{ctx.command_path} {mrule_dir}[/italic][/yellow]')
+                printr(f'[warning]Skipping test data file generation for {mrule_dir}[/warning]')
+                printr(f'[warning]Please create a test data file for {mrule_dir} and then rerun,[/warning]')
+                printr(execd_cmd)
+                typer.Abort()
         else:
-            printr(f'[cyan]Test data found: Commence testing modeling rule: {mrule_dir}[/cyan]')
-            ...
+            printr(f'[warning]Please create a test data file for {mrule_dir} and then rerun,[/warning]')
+            printr(execd_cmd)
+    else:
+        printr(f'[info]Test data file found at {mr_entity.testdata_path}[/info]')
+        printr('[info]Checking that event data was added to the test data file[/info]')
+        missing_event_data = check_test_data_event_data_exists(mr_entity.testdata_path)
+        if missing_event_data:
+            printr('[warning]Event log test data is missing for the following ids:[/warning]')
+            for test_data_event_id in missing_event_data:
+                printr(f'[warning] - {test_data_event_id}[/warning]')
+            printr(f'[info]Please complete the test data file at {mr_entity.testdata_path} '
+                   'with test event(s) data and expected outputs and then rerun,')
+            printr(execd_cmd)
+            typer.Exit(1)
+        test_rule(mr_entity, xsiam_url, api_key, auth_id, xsiam_token)
 
 
 # ====================== test-modeling-rule ====================== #
@@ -153,12 +278,14 @@ def test_modeling_rule(
         log_path=log_path,  # type: ignore[arg-type]
         log_file_name=log_file_name
     )
-    test_modeling_rules(
-        input,
-        xsiam_url, api_key,  # type: ignore[arg-type] since if they are not set to str values an error occurs
-        auth_id, xsiam_token,  # type: ignore[arg-type] since if they are not set to str values an error occurs
-        interactive, ctx
-    )
+    printr(f'[cyan]modeling rules directories to test: {input}[/cyan]')
+    for mrule_dir in input:
+        validate_modeling_rule(
+            mrule_dir,
+            xsiam_url, api_key,  # type: ignore[arg-type] since if they are not set to str values an error occurs
+            auth_id, xsiam_token,  # type: ignore[arg-type] since if they are not set to str values an error occurs
+            interactive, ctx
+        )
 
 
 if __name__ == '__main__':

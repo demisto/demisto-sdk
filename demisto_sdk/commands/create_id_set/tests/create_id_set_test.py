@@ -33,7 +33,7 @@ METADATA = {
     "marketplaces": [
         "xsoar",
         "marketplacev2",
-        "xpanse"
+        "xpanse",
     ]
 }
 

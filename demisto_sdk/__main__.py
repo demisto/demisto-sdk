@@ -141,7 +141,7 @@ def check_configuration_file(command, args):
                         if args[key] is False and config[command][key] in true_synonyms:
                             args[key] = True
 
-                        elif args[key] is None and config[command][key] is not None:
+                        elif not args[key] and config[command][key] is not None:
                             args[key] = config[command][key]
 
                     # if the key does not exist in the current args, add it

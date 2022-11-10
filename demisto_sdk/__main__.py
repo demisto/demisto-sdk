@@ -156,7 +156,10 @@ def check_configuration_file(command, args):
             pass
 
 
-@click.group(invoke_without_command=True, no_args_is_help=True, context_settings=dict(max_content_width=100), )
+CONTEXT_SETTINGS = {"auto_envvar_prefix": "DEMISTO", "max_content_width": 100}
+
+
+@click.group(invoke_without_command=True, no_args_is_help=True, context_settings=CONTEXT_SETTINGS)
 @click.help_option(
     '-h', '--help'
 )

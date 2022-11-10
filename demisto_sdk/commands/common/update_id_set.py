@@ -2149,8 +2149,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
 
-    with click.progressbar(length=len(objects_to_create), label="Creating id-set") as progress_bar:     # type:
-        # ignore[arg-type]
+    with click.progressbar(length=len(objects_to_create), label="Creating id-set") as progress_bar:     # type: ignore[arg-type]
 
         if 'Packs' in objects_to_create:    # type: ignore[operator]
             print_color("\nStarting iteration over Packs", LOG_COLORS.GREEN)

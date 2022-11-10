@@ -263,6 +263,8 @@ class IntegrationScriptUnifier(YAMLUnifier):
             return os.path.join(self.package_path, 'CommonServerUserPython.py')
         if self.package_path.endswith(os.path.join('Scripts', 'CommonServerPowerShell')):
             return os.path.join(self.package_path, 'CommonServerPowerShell.ps1')
+        if self.package_path.endswith(os.path.join('Scripts', 'CommonServerUserPowerShell')):
+            return os.path.join(self.package_path, 'CommonServerUserPowerShell.ps1')
         if self.package_path.endswith('ApiModule'):
             return os.path.join(self.package_path, os.path.basename(os.path.normpath(self.package_path)) + '.py')
 

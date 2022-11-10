@@ -111,6 +111,9 @@ VALID_PLAYBOOK_INPUTS_USE = f'{GIT_ROOT}/demisto_sdk/tests/test_files/playbook_v
 MODELING_RULES_SCHEMA_FILE = f'{GIT_ROOT}/demisto_sdk/tests/test_files/modeling_rules_schema.json'
 MODELING_RULES_YML_FILE = f'{GIT_ROOT}/demisto_sdk/tests/test_files/modeling_rules.yml'
 
+INCORRECT_PLAYBOOK_REFERENCE_USE = f'{GIT_ROOT}/demisto_sdk/tests/test_files/incorrect_playbook_reference_use.yml'
+CORRECT_PLAYBOOK_REFERENCE_USE = f'{GIT_ROOT}/demisto_sdk/tests/test_files/correct_playbook_reference_use.yml'
+
 SCRIPT_WITH_TEST_PLAYBOOKS = f'{GIT_ROOT}/demisto_sdk/tests/test_files/format_script_with_test_playbooks.yml'
 INDICATORFIELD_EXTRA_FIELDS = f"{GIT_ROOT}/demisto_sdk/tests/test_files/indicatorfield-extra-fields.json"
 INDICATORFIELD_EXACT_SCHEME = f"{GIT_ROOT}/demisto_sdk/tests/test_files/indicator-field-exact-scheme.json"

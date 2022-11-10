@@ -229,7 +229,8 @@ class UpdateReleaseNotesManager:
         else:
             print_warning(f'Either no changes were found in {pack} pack '
                           f'or the changes found should not be documented in the release notes file.\n'
-                          f'If relevant changes were made, please commit the changes and rerun the command.')
+                          f'If relevant changes were made, please commit the changes and rerun the command.\n'
+                          f'hint: Make sure you are in the main path of the repo')
 
     def get_existing_rn(self, pack) -> Optional[str]:
         """ Gets the existing rn of the pack is exists.

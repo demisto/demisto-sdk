@@ -5,9 +5,11 @@ import shutil
 from pathlib import Path
 from typing import List, Optional, Union
 
+import demisto_client
 import git
 import pytest
 import requests
+from requests.exceptions import HTTPError
 
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
@@ -28,10 +30,11 @@ from demisto_sdk.commands.common.tools import (
     compare_context_path_in_yml_and_readme, field_to_cli_name,
     filter_files_by_type, filter_files_on_pack, filter_packagify_changes,
     find_type, find_type_by_path, generate_xsiam_normalized_name,
-    get_code_lang, get_current_repo, get_dict_from_file, get_display_name,
-    get_entity_id_by_entity_type, get_entity_name_by_entity_type,
-    get_file_displayed_name, get_file_version_suffix_if_exists,
-    get_files_in_dir, get_ignore_pack_skipped_tests, get_item_marketplaces,
+    get_code_lang, get_current_repo, get_demisto_tenants, get_dict_from_file,
+    get_display_name, get_entity_id_by_entity_type,
+    get_entity_name_by_entity_type, get_file_displayed_name,
+    get_file_version_suffix_if_exists, get_files_in_dir,
+    get_ignore_pack_skipped_tests, get_item_marketplaces,
     get_last_release_version, get_last_remote_release_version,
     get_latest_release_notes_text, get_pack_metadata,
     get_relative_path_from_packs_dir, get_release_note_entries,
@@ -2053,3 +2056,16 @@ def test_find_type_by_path(path: Path, expected_type: Optional[FileType]):
 ])
 def test_field_to_cliname(value: str, expected: str):
     assert field_to_cli_name(value) == expected
+
+
+@pytest.mark.parametrize('host, tenants, expected', [
+    pytest.param('example.com', ['tenant1', 'tenant2'], 2, id="Multi tenant server",),
+    pytest.param('example.com/acc_tenant1', ['tenant1'], 0, marks=pytest.mark.xfail(raises=HTTPError), id="Using tenant URL",),
+    pytest.param('example.com', [], 0, marks=pytest.mark.xfail(raises=HTTPError), id="Standalone server",),
+])
+def test_get_demisto_tenants(host, tenants, expected, monkeypatch, demisto_tenants_request):
+    monkeypatch.setenv("DEMISTO_BASE_URL", host)
+    client = demisto_client.configure()
+    config = client.api_client.configuration
+    demisto_tenants_request(host, tenants)
+    assert len(get_demisto_tenants(config.host, config.api_key, verify_ssl=config.verify_ssl)) == expected

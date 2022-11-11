@@ -9,12 +9,14 @@ import tempfile
 from configparser import ConfigParser, MissingSectionHeaderError
 from contextlib import contextmanager
 from pathlib import Path
-from typing import IO, Any, Dict
+from typing import IO, Any, Dict, List
 
 import click
+import demisto_client
 import dotenv
 import git
 from pkg_resources import DistributionNotFound, get_distribution
+from requests.exceptions import HTTPError
 
 from demisto_sdk.commands.common.configuration import Configuration
 from demisto_sdk.commands.common.constants import (ENV_DEMISTO_SDK_MARKETPLACE,
@@ -25,6 +27,7 @@ from demisto_sdk.commands.common.content_constant_paths import \
     ALL_PACKS_DEPENDENCIES_DEFAULT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.common.tools import (find_type, get_content_path,
+                                               get_demisto_tenants,
                                                get_last_remote_release_version,
                                                get_release_note_entries,
                                                is_external_repository,
@@ -35,6 +38,7 @@ from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import \
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
 json = JSON_Handler()
+logger = logging.getLogger(__name__)
 
 # Third party packages
 
@@ -98,8 +102,10 @@ class DemistoSDK:
         dotenv.load_dotenv(Path(get_content_path()) / '.env', override=True)  # Load a .env file from the cwd.
         # Load info from config file
         self.configuration = Configuration()
-        self.tenants = None
-        self.multi_tenant = False
+        self.tenants = []
+        self.server_type = "single"
+        self.host_only = False
+        self.all_tenants = False
 
     @contextmanager
     def load_tenant_env(self, name: str):
@@ -110,15 +116,46 @@ class DemistoSDK:
             name (str): Name of the tenant.
 
         Raises:
-            TenantEnvNotFound: Raised whenever the tenant's .env file was not found.
+            FileNotFoundError: Raised whenever the tenant's .env file was not found.
         """
         if not Path(f".envs/.env-{name}").exists():
-            raise TenantEnvNotFound(Path(f".envs/.env-{name}"))
+            raise FileNotFoundError(Path(f".envs/.env-{name}"))
         try:
             dotenv.load_dotenv(f".envs/.env-{name}", override=True)
             yield
         finally:
             dotenv.load_dotenv(".env", override=True)
+
+    def get_tenants(self, force: bool = False) -> List[str]:
+        """Retrieves the list of tenants from the demisto server.
+
+        Args:
+            force (bool, optional): If True, a new list of tenants will be retrieved from the server
+            even if tenants have already defined. Defaults to False.
+
+        Returns:
+            List[str]: A list of tenant names.
+        """
+        if self.tenants and not force:
+            return self.tenants
+
+        client = demisto_client.configure()
+        config = client.api_client.configuration
+        try:
+            tenants = get_demisto_tenants(config.host, config.api_key, verify_ssl=config.verify_ssl)
+            return [tenant.get("displayName") for tenant in tenants]
+        except HTTPError:
+            logger.debug("Unable to get demisto tenants. Host must be a single instance or a tenant.")
+
+        return self.tenants
+
+    def get_server_type(self) -> str:
+        """Determines if the Demisto server is a `single` or `multi-tenant` server.
+
+        Returns:
+            str: Either `multi-tenant` or `single`
+        """
+        return "multi-tenant" if self.get_tenants() else "single"
 
 
 pass_config = click.make_pass_decorator(DemistoSDK, ensure=True)
@@ -172,14 +209,14 @@ CONTEXT_SETTINGS = {"auto_envvar_prefix": "DEMISTO", "max_content_width": 100}
     is_flag=True, default=False, show_default=True
 )
 @click.option(
-    '--multi-tenant', help='Determines if the subcommand should run for each tenant.',
-    is_flag=True, default=False, show_default=True
-)
-@click.option(
-    '--server', help='The Demisto server used for the demisto_client.',
+    '--base-url', help='The Demisto server used for the demisto_client.',
 )
 @click.option(
     '--api-key', help='The Demisto server API key used for the demisto_client.',
+)
+@click.option(
+    '--server-type', help='The server type of the Demisto server.',
+    type=click.Choice(["multi-tenant", "single"]),
 )
 @click.option(
     '--tenant',
@@ -188,20 +225,48 @@ CONTEXT_SETTINGS = {"auto_envvar_prefix": "DEMISTO", "max_content_width": 100}
     multiple=True,
     help='Tenant names that should be used when running subcommands.',
 )
+@click.option(
+    '--host-only',
+    is_flag=True,
+    default=False,
+    help='If set, subcommands will only be executed on the demisto host instead of its tenants.'
+)
+@click.option(
+    '--all-tenants',
+    is_flag=True,
+    default=False,
+    help='If set, subcommands be executed for all tenants belonging to the demisto host.'
+)
+@click.option(
+    '--skip-server-check',
+    is_flag=True,
+    default=False,
+    help='If set, the base command will not try to resolve the server_type of the demisto host.',
+    hidden=True
+)
 @pass_config
-def main(config, version, release_notes, **kwargs):
+def main(config: "DemistoSDK", version, release_notes, host_only: bool, all_tenants: bool, **kwargs):
     check_configuration_file('demisto-sdk', kwargs)
-    # Override .env file with CLI options
-    if kwargs.get('server'):
+    # Override Demisto client envvars with CLI options
+    if kwargs.get('base_url') and kwargs.get('base_url') != os.getenv('DEMISTO_BASE_URL'):
         dotenv.load_dotenv(stream=io.StringIO(f"DEMISTO_BASE_URL={kwargs.get('server')}"), override=True)
-    if kwargs.get('api_key'):
+    if kwargs.get('api_key') and kwargs.get('api_key') != os.getenv('DEMISTO_API_KEY'):
         dotenv.load_dotenv(stream=io.StringIO(f"DEMISTO_API_KEY={kwargs.get('api_key')}"), override=True)
-    # Add tenant information to passable config
-    if kwargs.get('tenants'):
+    if not kwargs.get('server_type') and not kwargs.get('skip_server_check'):
+        print_warning("Unable to determine server_type. Checking with configured demisto host.")
+        config.server_type = config.get_server_type()
+    config.host_only = host_only
+    config.all_tenants = all_tenants
+    # Get all tenants are gathered from server if required
+    if config.all_tenants:
+        config.tenants = config.get_tenants(force=True)
+    # Only use specified tenants (via CLI or conf file) for the command
+    elif kwargs.get('tenants'):
+        # Tenants stored within conf file are stored as a comma separated string
         if isinstance(kwargs.get('tenants'), str):
             kwargs['tenants'] = kwargs.get('tenants', '').split(',')
-        config.tenants = kwargs.get('tenants')
-    config.multi_tenant = kwargs.get('multi_tenant')
+        config.tenants = kwargs.get('tenants', [])
+
     if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
         try:
             __version__ = get_distribution('demisto-sdk').version

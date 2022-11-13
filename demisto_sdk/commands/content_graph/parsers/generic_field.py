@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List
+from typing import List, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -17,8 +17,8 @@ class GenericFieldParser(JSONContentItemParser, content_type=ContentType.GENERIC
         self.connect_to_dependencies()
 
     @property
-    def marketplaces(self) -> List[MarketplaceVersions]:
-        return [MarketplaceVersions.XSOAR]
+    def supported_marketplaces(self) -> Set[MarketplaceVersions]:
+        return {MarketplaceVersions.XSOAR}
 
     def connect_to_dependencies(self) -> None:
         """Collects the generic types associated to the generic field as optional dependencies."""

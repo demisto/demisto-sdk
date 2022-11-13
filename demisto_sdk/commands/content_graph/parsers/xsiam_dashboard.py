@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -17,8 +17,8 @@ class XSIAMDashboardParser(
         self.json_data: Dict[str, Any] = self.json_data.get("dashboards_data", [{}])[0]
 
     @property
-    def marketplaces(self) -> List[MarketplaceVersions]:
-        return [MarketplaceVersions.MarketplaceV2]
+    def supported_marketplaces(self) -> Set[MarketplaceVersions]:
+        return {MarketplaceVersions.MarketplaceV2}
 
     @property
     def object_id(self) -> Optional[str]:

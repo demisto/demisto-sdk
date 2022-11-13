@@ -56,12 +56,11 @@ class YAMLContentItemParser(ContentItemParser):
 
     @property
     def marketplaces(self) -> List[MarketplaceVersions]:
-        if marketplaces := [
+        if file_marketplaces := [
             MarketplaceVersions(mp) for mp in self.yml_data.get("marketplaces", [])
         ]:
-            return marketplaces
-        return self.pack_marketplaces
-        # todo: return list(set(self.pack_marketplaces) & self.supported_marketplaes), remove marketplace & json content
+            return file_marketplaces
+        return list(set(self.pack_marketplaces) & self.supported_marketplaces)
 
     def connect_to_tests(self) -> None:
         """Iterates over the test playbooks registered to this content item,

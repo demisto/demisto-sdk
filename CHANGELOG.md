@@ -1,6 +1,6 @@
 # Changelog
 * Fixed an issue where **validate** failed to recognize integration tests that were missing from config.json
-
+* Added support for **xpanse** marketplace in **create-id-set** and **create-content-artifacts** commands.
 ## Unreleased
 * Fixed an issue where **generate-docs** with `-c` argument updated sections of the incorrect commands.
 * Added IF113 error code to **ALLOWED_IGNORE_ERRORS**.

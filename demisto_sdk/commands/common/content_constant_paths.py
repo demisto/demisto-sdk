@@ -10,3 +10,4 @@ CONF_PATH = CONTENT_PATH / 'Tests' / 'conf.json'
 
 DEFAULT_ID_SET_PATH = CONTENT_PATH / 'Tests' / 'id_set.json'
 MP_V2_ID_SET_PATH = CONTENT_PATH / 'Tests' / 'id_set_mp_v2.json'
+XPANSE_ID_SET_PATH = CONTENT_PATH / 'Tests' / 'id_set_xpanse.json'

@@ -2,7 +2,7 @@ import typer
 from typing import Optional, List, Union
 from pathlib import Path
 from rich import print as printr
-from rich.console import Console
+from rich.console import Console, Group
 from rich.syntax import Syntax
 from rich.panel import Panel
 from rich.theme import Theme
@@ -42,8 +42,11 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
     printr(results)
     for result in results:
         for key, val in result.items():
-            matching_keyvals = [e.mapping.get(key) for e in test_data.expected_values]
-            assert val in matching_keyvals, f'Expected value {val} not found in expected values {matching_keyvals}'
+            matching_keyvals = [e.mapping.get(key) for e in test_data.expected_values if e.mapping.get(key)]
+            if matching_keyvals:
+                assert val in matching_keyvals, f'Expected value {val} not found in expected values {matching_keyvals}'
+            else:
+                printr(f'No mapping for {key} - skipping checking match')
 
 
 def generate_xql_query(rule: MRule, count: int = 1, version: str = '1') -> str:
@@ -52,6 +55,7 @@ def generate_xql_query(rule: MRule, count: int = 1, version: str = '1') -> str:
     # fields = ', '.join([f'{f}' for f in rule.fields])
     # query = f'datamodel = {rule.datamodel} dataset in({rule.dataset}) | fields {fields} | limit {count}'
     query = f'dataset in ({rule.dataset}) | limit {count}'
+    # query = f'datamodel = {rule.datamodel} dataset in({rule.dataset} ) | join (dataset in({rule.dataset} )) as inner _time = _time | filter test_data_event_id = ""'
     return query
 
 
@@ -69,15 +73,21 @@ def validate_mappings(xsiam_client: XsiamApiClient, mr: ModelingRule, test_data:
 
 def push_test_data_to_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule, test_data: init_test_data.TestData):
     events_test_data = [e.event_data for e in test_data.data]
+    for i, event_log in enumerate(test_data.data):
+        if isinstance(event_log.event_data, dict):
+            events_test_data[i] = {**event_log.event_data, "test_data_event_id": str(event_log.test_data_event_id)}
+    # printr(events_test_data)
     console.print('[info]Pushing test data to tenant...[/info]')
-    xsiam_client.add_create_dataset(events_test_data, mr.rules[0].product, mr.rules[0].vendor)
+    xsiam_client.add_create_dataset(events_test_data, mr.rules[0].vendor, mr.rules[0].product)
     console.print('[success]Test data pushed successfully[/success]')
 
 
 def get_containing_pack(content_entity: ContentEntity) -> Pack:
     """Get pack object that contains the content entity.
+
     Args:
         content_entity: Content entity object.
+
     Returns:
         Pack: Pack object that contains the content entity.
     """
@@ -87,27 +97,67 @@ def get_containing_pack(content_entity: ContentEntity) -> Pack:
     return Pack(pack_path)
 
 
-# def verify_pack_exists_on_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule):
-#     printr('[info]Verifying pack installed on tenant[/info]')
-#     identified_pack = get_containing_pack(mr)
-#     printr(xsiam_client.installed_packs)
-#     found_pack = xsiam_client.installed_packs.get(identified_pack.id)
-#     if found_pack:
-#         printr(f'[info]Found pack on tenant:\n{found_pack}[/info]')
-#     else:
-#         printr(f'[error]Pack {identified_pack.id} was not found on tenant[/error]')
-#         printr('[error]Please install or upload the pack to the tenant and try again[/error]')
-#         printr(Panel(Syntax(f'demisto-sdk upload -i {identified_pack.path}', "bash")))
-#         typer.Exit(1)
+def verify_pack_exists_on_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule, interactive: bool):
+    printr('[info]Verifying pack installed on tenant[/info]')
+    identified_pack = get_containing_pack(mr)
+    installed_packs = xsiam_client.installed_packs
+    found_pack = None
+    for pack in installed_packs:
+        if identified_pack.id == pack.get('id'):
+            found_pack = pack
+            break
+    if found_pack:
+        printr(f'[info]Found pack on tenant:\n{found_pack}[/info]')
+    else:
+        printr(f'[error]Pack {identified_pack.id} was not found on tenant[/error]')
+        # TODO: add option to interactively install pack
+        # upload_result = 0
+        # if interactive:
+        #     upload = typer.confirm(f'Would you like to upload {identified_pack.id} to the tenant?')
+        #     if upload:
+        #         printr(f'[info_h1]Upload "{identified_pack.id}"[/info_h1]')
+        #         # implement correct invocation of upload command
+        #         upload_result = upload_cmd(zip=True, xsiam=True, input=identified_pack.path)
+        #         if upload_result != 0:
+        #             printr(f'[error]Failed to upload pack {identified_pack.id} to tenant[/error]')
+        # if not interactive or not upload_result == 0:
+        #     printr('[error]Please install or upload the pack to the tenant and try again[/error]')
+        #     cmd_group = Group(
+        #         Syntax(f'demisto-sdk upload -z -x -i {identified_pack.path}', "bash"),
+        #         Syntax(f'demisto-sdk modeling-rules test {mr.path}', "bash")
+        #     )
+        #     printr(Panel(cmd_group))
+        #     raise typer.Exit(1)
+        # ## different way?
+        # upload_result = 0
+        # if interactive:
+        #     upload = typer.confirm(f'Would you like to upload {identified_pack.id} to the tenant?')
+        #     if upload:
+        #         printr(f'[info_h1]Upload "{identified_pack.id}"[/info_h1]')
+        #         # implement correct invocation of upload command
+        #         # upload_result = upload_cmd(zip=True, xsiam=True, input=identified_pack.path)
+        #         try:
+        #             xsiam_client.upload_packs(identified_pack.path)
+        #         except requests.exceptions.HTTPError as err:
+        #             printr(f'[error]Failed to upload pack {identified_pack.id} to tenant: {err}[/error]')
+        #             upload_result = 1
+        # if not interactive or not upload_result == 0:
+        printr('[error]Please install or upload the pack to the tenant and try again[/error]')
+        cmd_group = Group(
+            Syntax(f'demisto-sdk upload -z -x -i {identified_pack.path}', "bash"),
+            Syntax(f'demisto-sdk modeling-rules test {mr.path.parent}', "bash")
+        )
+        printr(Panel(cmd_group))
+        raise typer.Exit(1)
 
 
-def test_rule(mr: ModelingRule, xsiam_url: str, api_key: str, auth_id: str, xsiam_token: str):
+def test_rule(mr: ModelingRule, xsiam_url: str, api_key: str, auth_id: str, xsiam_token: str, interactive: bool):
     # initialize xsiam client
     xsiam_client_cfg = XsiamApiClientConfig(
         xsiam_url=xsiam_url, api_key=api_key, auth_id=auth_id, xsiam_token=xsiam_token
     )
     xsiam_client = XsiamApiClient(xsiam_client_cfg)
-    # verify_pack_exists_on_tenant(xsiam_client, mr)
+    verify_pack_exists_on_tenant(xsiam_client, mr, interactive)
     test_data = init_test_data.TestData.parse_file(mr.testdata_path.as_posix())
     push_test_data_to_tenant(xsiam_client, mr, test_data)
     validate_mappings(xsiam_client, mr, test_data)
@@ -146,15 +196,15 @@ def validate_modeling_rule(
                     printr(f'[info]Please complete the test data file at {mr_entity.testdata_path} '
                            'with test event(s) data and expected outputs and then rerun,')
                     printr(execd_cmd)
-                    typer.Exit()
+                    raise typer.Exit()
                 else:
                     printr(f'[error]Failed to generate test data file for {mrule_dir}[/error]')
-                    typer.Exit(1)
+                    raise typer.Exit(1)
             else:
                 printr(f'[warning]Skipping test data file generation for {mrule_dir}[/warning]')
                 printr(f'[warning]Please create a test data file for {mrule_dir} and then rerun,[/warning]')
                 printr(execd_cmd)
-                typer.Abort()
+                raise typer.Abort()
         else:
             printr(f'[warning]Please create a test data file for {mrule_dir} and then rerun,[/warning]')
             printr(execd_cmd)
@@ -169,8 +219,8 @@ def validate_modeling_rule(
             printr(f'[info]Please complete the test data file at {mr_entity.testdata_path} '
                    'with test event(s) data and expected outputs and then rerun,')
             printr(execd_cmd)
-            typer.Exit(1)
-        test_rule(mr_entity, xsiam_url, api_key, auth_id, xsiam_token)
+            raise typer.Exit(1)
+        test_rule(mr_entity, xsiam_url, api_key, auth_id, xsiam_token, interactive)
 
 
 # ====================== test-modeling-rule ====================== #

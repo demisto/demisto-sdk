@@ -762,7 +762,7 @@ class PlaybookValidator(ContentEntityValidator):
         Returns: True if the references are correct
         """
         is_valid = True
-        split_values = values.split(',') if isinstance(values, str) else []
+        split_values = values.split(',') if isinstance(values, str) else ()
         for value in split_values:
             if value.startswith('incident.') or value.startswith('inputs.'):
                 if not value_info.get('iscontext', ''):

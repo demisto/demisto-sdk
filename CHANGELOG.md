@@ -3,6 +3,8 @@
 
 ## Unreleased
 * Added a validation that enforces predefined categories on MP Packs & integration yml files, the validation also ensures that each pack has only one category.
+* Fixed an issue where **generate-docs** with `-c` argument updated sections of the incorrect commands.
+* Added IF113 error code to **ALLOWED_IGNORE_ERRORS**.
 
 ## 1.7.7
 * Fixed an issue where paybooks **generate-docs** didn't parse complex input values when no accessor field is given correctly.

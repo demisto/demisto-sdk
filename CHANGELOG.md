@@ -4,7 +4,7 @@
 ## Unreleased
 * Fixed an issue where **generate-docs** with `-c` argument updated sections of the incorrect commands.
 * Added IF113 error code to **ALLOWED_IGNORE_ERRORS**.
-* Fixed an issue where the **validate** failed on playbooks containing input values that is not str type.
+* Fixed an issue where **validate** failed on playbooks with non-string input values.
 
 ## 1.7.7
 * Fixed an issue where paybooks **generate-docs** didn't parse complex input values when no accessor field is given correctly.

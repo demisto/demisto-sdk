@@ -61,7 +61,6 @@ class YAMLContentItemParser(ContentItemParser):
         ]:
             return marketplaces
         return self.pack_marketplaces
-        # todo: return list(set(self.pack_marketplaces) & self.supported_marketplaes), remove marketplace & json content
 
     def connect_to_tests(self) -> None:
         """Iterates over the test playbooks registered to this content item,

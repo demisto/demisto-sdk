@@ -2069,10 +2069,12 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
         }.get(marketplace, DEFAULT_ID_SET_PATH)
 
     if not objects_to_create:
-        objects_to_create = {
-            MarketplaceVersions.MarketplaceV2.value: CONTENT_MP_V2_ENTITIES,
-            MarketplaceVersions.XPANSE.value: CONTENT_XPANSE_ENTITIES,
-        }.get(marketplace, CONTENT_ENTITIES)
+        if marketplace == MarketplaceVersions.MarketplaceV2.value:
+            objects_to_create = CONTENT_MP_V2_ENTITIES
+        elif marketplace == MarketplaceVersions.XPANSE.value:
+            objects_to_create = CONTENT_XPANSE_ENTITIES
+        else:
+            objects_to_create = CONTENT_ENTITIES
 
     if id_set_path and os.path.exists(id_set_path):
         try:
@@ -2149,9 +2151,9 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
     print_color("Starting the creation of the id_set", LOG_COLORS.GREEN)
 
-    with click.progressbar(length=len(objects_to_create), label="Creating id-set") as progress_bar:     # type: ignore[arg-type]
+    with click.progressbar(length=len(objects_to_create), label="Creating id-set") as progress_bar:
 
-        if 'Packs' in objects_to_create:    # type: ignore[operator]
+        if 'Packs' in objects_to_create:
             print_color("\nStarting iteration over Packs", LOG_COLORS.GREEN)
             for pack_data in pool.map(partial(get_pack_metadata_data,
                                               print_logs=print_logs,
@@ -2162,7 +2164,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'Integrations' in objects_to_create:     # type: ignore[operator]
+        if 'Integrations' in objects_to_create:
             print_color("\nStarting iteration over Integrations", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_integration,
                                                                        packs=packs_dict,
@@ -2181,7 +2183,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'Playbooks' in objects_to_create:    # type: ignore[operator]
+        if 'Playbooks' in objects_to_create:
             print_color("\nStarting iteration over Playbooks", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
                                                                        packs=packs_dict,
@@ -2201,7 +2203,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'Scripts' in objects_to_create:  # type: ignore[operator]
+        if 'Scripts' in objects_to_create:
             print_color("\nStarting iteration over Scripts", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_script,
                                                                        packs=packs_dict,
@@ -2219,7 +2221,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'TestPlaybooks' in objects_to_create:    # type: ignore[operator]
+        if 'TestPlaybooks' in objects_to_create:
             print_color("\nStarting iteration over TestPlaybooks", LOG_COLORS.GREEN)
             for pair in pool.map(partial(process_test_playbook_path,
                                          packs=packs_dict,
@@ -2234,7 +2236,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'Classifiers' in objects_to_create:  # type: ignore[operator]
+        if 'Classifiers' in objects_to_create:
             print_color("\nStarting iteration over Classifiers", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
                                                                        packs=packs_dict,
@@ -2256,7 +2258,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'Dashboards' in objects_to_create:   # type: ignore[operator]
+        if 'Dashboards' in objects_to_create:
             print_color("\nStarting iteration over Dashboards", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
                                                                        packs=packs_dict,
@@ -2276,7 +2278,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'IncidentTypes' in objects_to_create:    # type: ignore[operator]
+        if 'IncidentTypes' in objects_to_create:
             print_color("\nStarting iteration over Incident Types", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
                                                                        packs=packs_dict,
@@ -2297,7 +2299,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
         progress_bar.update(1)
 
         # Has to be called after 'IncidentTypes' is called
-        if 'IncidentFields' in objects_to_create:   # type: ignore[operator]
+        if 'IncidentFields' in objects_to_create:
             print_color("\nStarting iteration over Incident Fields", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_incident_fields,
                                                                        packs=packs_dict,
@@ -2316,7 +2318,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'IndicatorFields' in objects_to_create:  # type: ignore[operator]
+        if 'IndicatorFields' in objects_to_create:
             print_color("\nStarting iteration over Indicator Fields", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
                                                                        packs=packs_dict,
@@ -2337,7 +2339,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
         progress_bar.update(1)
 
         # Has to be called after 'Integrations' is called
-        if 'IndicatorTypes' in objects_to_create:   # type: ignore[operator]
+        if 'IndicatorTypes' in objects_to_create:
             print_color("\nStarting iteration over Indicator Types", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_indicator_types,
                                                                        packs=packs_dict,
@@ -2356,7 +2358,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'Layouts' in objects_to_create:  # type: ignore[operator]
+        if 'Layouts' in objects_to_create:
             print_color("\nStarting iteration over Layouts", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
                                                                        packs=packs_dict,
@@ -2386,7 +2388,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'Reports' in objects_to_create:  # type: ignore[operator]
+        if 'Reports' in objects_to_create:
             print_color("\nStarting iteration over Reports", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
                                                                        packs=packs_dict,
@@ -2406,7 +2408,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'Widgets' in objects_to_create:  # type: ignore[operator]
+        if 'Widgets' in objects_to_create:
             print_color("\nStarting iteration over Widgets", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
                                                                        packs=packs_dict,
@@ -2426,7 +2428,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'Mappers' in objects_to_create:  # type: ignore[operator]
+        if 'Mappers' in objects_to_create:
             print_color("\nStarting iteration over Mappers", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
                                                                        packs=packs_dict,
@@ -2446,7 +2448,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'Lists' in objects_to_create:    # type: ignore[operator]
+        if 'Lists' in objects_to_create:
             print_color("\nStarting iteration over Lists", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
                                                                        packs=packs_dict,
@@ -2465,7 +2467,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'GenericDefinitions' in objects_to_create:   # type: ignore[operator]
+        if 'GenericDefinitions' in objects_to_create:
             print_color("\nStarting iteration over Generic Definitions", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
                                                                        packs=packs_dict,
@@ -2487,7 +2489,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'GenericModules' in objects_to_create:   # type: ignore[operator]
+        if 'GenericModules' in objects_to_create:
             print_color("\nStarting iteration over Generic Modules", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
                                                                        packs=packs_dict,
@@ -2507,7 +2509,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'GenericTypes' in objects_to_create:  # type: ignore[operator]
+        if 'GenericTypes' in objects_to_create:
             print_color("\nStarting iteration over Generic Types", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_generic_items,
                                                                        packs=packs_dict,
@@ -2527,7 +2529,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
         progress_bar.update(1)
 
         # Has to be called after 'GenericTypes' is called
-        if 'GenericFields' in objects_to_create:    # type: ignore[operator]
+        if 'GenericFields' in objects_to_create:
             print_color("\nStarting iteration over Generic Fields", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_generic_items,
                                                                        packs=packs_dict,
@@ -2547,7 +2549,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'Jobs' in objects_to_create:  # type: ignore[operator]
+        if 'Jobs' in objects_to_create:
             print_color("\nStarting iteration over Jobs", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_jobs,
                                         packs=packs_dict,
@@ -2562,7 +2564,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'ParsingRules' in objects_to_create:  # type: ignore[operator]
+        if 'ParsingRules' in objects_to_create:
             print_color("\nStarting iteration over Parsing Rules", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
                                                                        packs=packs_dict,
@@ -2584,7 +2586,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'ModelingRules' in objects_to_create:    # type: ignore[operator]
+        if 'ModelingRules' in objects_to_create:
             print_color("\nStarting iteration over Modeling Rules", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
                                                                        packs=packs_dict,
@@ -2606,7 +2608,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'CorrelationRules' in objects_to_create:  # type: ignore[operator]
+        if 'CorrelationRules' in objects_to_create:
             print_color("\nStarting iteration over Correlation Rules", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
                                                                        packs=packs_dict,
@@ -2628,7 +2630,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'XSIAMDashboards' in objects_to_create:  # type: ignore[operator]
+        if 'XSIAMDashboards' in objects_to_create:
             print_color("\nStarting iteration over XSIAMDashboards", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
                                                                        packs=packs_dict,
@@ -2650,7 +2652,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'XSIAMReports' in objects_to_create:  # type: ignore[operator]
+        if 'XSIAMReports' in objects_to_create:
             print_color("\nStarting iteration over XSIAMReports", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
                                                                        packs=packs_dict,
@@ -2672,7 +2674,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'Triggers' in objects_to_create:  # type: ignore[operator]
+        if 'Triggers' in objects_to_create:
             print_color("\nStarting iteration over Triggers", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
                                                                        packs=packs_dict,
@@ -2694,7 +2696,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'Wizards' in objects_to_create:  # type: ignore[operator]
+        if 'Wizards' in objects_to_create:
             print_color("\nStarting iteration over Wizards", LOG_COLORS.GREEN)
             for arr in pool.map(partial(process_wizards,
                                         packs=packs_dict,
@@ -2709,7 +2711,7 @@ def re_create_id_set(id_set_path: Optional[Path] = DEFAULT_ID_SET_PATH, pack_to_
 
         progress_bar.update(1)
 
-        if 'XDRCTemplates' in objects_to_create:    # type: ignore[operator]
+        if 'XDRCTemplates' in objects_to_create:
             print_color("\nStarting iteration over XDRCTemplates", LOG_COLORS.GREEN)
             for arr, excluded_items_from_iteration in pool.map(partial(process_general_items,
                                                                        packs=packs_dict,

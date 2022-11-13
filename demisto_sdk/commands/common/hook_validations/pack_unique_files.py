@@ -652,7 +652,7 @@ class PackUniqueFilesValidator(BaseValidator):
         return common_tags, xsoar_tags, marketplacev2_tags
 
     def extract_non_approved_tags(self, common_tags, xsoar_tags, marketplacev2_tags) -> Set[str]:
-        approved_tags = tools.get_approved_tags()
+        approved_tags = tools.get_approved_tags_from_branch()
         non_approved_tags = set(common_tags) - set(approved_tags.get('common', []))
         non_approved_tags |= set(xsoar_tags) - set(approved_tags.get('xsoar', []))
         non_approved_tags |= set(marketplacev2_tags) - set(approved_tags.get('marketplacev2', []))

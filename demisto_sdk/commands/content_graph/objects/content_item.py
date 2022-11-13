@@ -24,28 +24,62 @@ class ContentItem(BaseContent):
     display_name: str
     deprecated: bool
     description: Optional[str]
+    is_test: bool = False
 
     @property
     def in_pack(self) -> Optional["Pack"]:
-        for r in self.relationships_data:
-            if r.relationship_type == RelationshipType.IN_PACK:
-                return r.content_item  # type: ignore[return-value]
-        return None
+        """
+        This returns the Pack which the content item is in.
+
+        Returns:
+            Pack: Pack model.
+        """
+        in_pack = self.relationships_data[RelationshipType.IN_PACK]
+        if not in_pack:
+            return None
+        return next(iter(in_pack)).content_item  # type: ignore[return-value]
 
     @property
     def uses(self) -> List["RelationshipData"]:
+        """
+        This returns the content items which this content item uses.
+        In addition, we can tell if it's a mandatorily use or not.
+
+        Returns:
+            List[RelationshipData]:
+                RelationshipData:
+                    relationship_type: RelationshipType
+                    source: BaseContent
+                    target: BaseContent
+
+                    # this is the attribute we're interested in when querying
+                    content_item: BaseContent
+
+                    # Whether the relationship between items is direct or not
+                    is_direct: bool
+
+                    # Whether using the command mandatorily (or optional)
+                    mandatorily: bool = False
+
+        """
         return [
             r
-            for r in self.relationships_data
-            if r.relationship_type == RelationshipType.USES and r.content_item == r.target
+            for r in self.relationships_data[RelationshipType.USES]
+            if r.content_item == r.target
         ]
 
     @property
     def tested_by(self) -> List["TestPlaybook"]:
+        """
+        This returns the test playbooks which the content item is tested by.
+
+        Returns:
+            List[TestPlaybook]: List of TestPlaybook models.
+        """
         return [
             r.content_item  # type: ignore[misc]
-            for r in self.relationships_data
-            if r.relationship_type == RelationshipType.TESTED_BY and r.content_item == r.target
+            for r in self.relationships_data[RelationshipType.TESTED_BY]
+            if r.content_item == r.target
         ]
 
     def summary(self) -> dict:
@@ -84,5 +118,5 @@ class ContentItem(BaseContent):
         """
         id_set_entity = self.dict()
         id_set_entity["file_path"] = str(self.path)
-        id_set_entity["pack"] = self.in_pack.name  # type: ignore[union-attr]
+        id_set_entity["pack"] = self.in_pack.object_id  # type: ignore[union-attr]
         return id_set_entity

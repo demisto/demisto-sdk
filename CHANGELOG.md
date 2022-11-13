@@ -1,7 +1,11 @@
 # Changelog
-* Fixed an issue where the **zip-packs** command did not work with the CommonServerUserPython and CommonServerUserPowerShell package.
-
+* Fixed an issue where **validate** failed to recognize integration tests that were missing from config.json
+* Added support for **xpanse** marketplace in **create-id-set** and **create-content-artifacts** commands.
 ## Unreleased
+* Fixed an issue where **generate-docs** with `-c` argument updated sections of the incorrect commands.
+* Added IF113 error code to **ALLOWED_IGNORE_ERRORS**.
+
+## 1.7.7
 * Fixed an issue where paybooks **generate-docs** didn't parse complex input values when no accessor field is given correctly.
 * Fixed an issue in the **download** command, where an exception would be raised when downloading system playbooks.
 * Fixed an issue where the **upload** failed on playbooks containing a value that starts with `=`.
@@ -11,6 +15,7 @@
 * Fixed an issue where the **update-release-notes** deleted existing release notes, now appending to it instead.
 * Fixed an issue where **validate** printed blank space in case of validation failed and ignored.
 * Renamed 'Agent Config' to 'XDRC Templates'.
+* Fixed an issue where the **zip-packs** command did not work with the CommonServerUserPython and CommonServerUserPowerShell package.
 
 ## 1.7.6
 

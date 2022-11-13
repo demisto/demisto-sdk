@@ -28,7 +28,7 @@ class IntegrationScript(ContentItem):
         dir.mkdir(exist_ok=True, parents=True)
         try:
             IntegrationScriptUnifier(
-                input=str(self.path.parent), output=str(dir), marketplace=marketplace
+                input=str(self.path.parent), output=str(dir), marketplace=marketplace, force=True
             ).unify()
         except Exception as e:
             logger.debug(

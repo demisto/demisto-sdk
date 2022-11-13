@@ -642,9 +642,10 @@ class PackUniqueFilesValidator(BaseValidator):
         for tag in pack_meta_file_content.get('tags', []):
             if ':' in tag:
                 tag_data = tag.split(':')
-                if 'xsoar' in tag_data[0]:
+                tag_marketplaces = tag_data[0].split(',')
+                if MarketplaceVersions.XSOAR in tag_marketplaces:
                     xsoar_tags.append(tag_data[1])
-                if 'marketplacev2' in tag_data[0]:
+                if MarketplaceVersions.MarketplaceV2 in tag_marketplaces:
                     marketplacev2_tags.append(tag_data[1])
             else:
                 common_tags.append(tag)

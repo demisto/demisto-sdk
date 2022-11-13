@@ -67,7 +67,8 @@ XSIAM_MARKETPLACE_ITEMS_TO_DUMP = [FileType.CLASSIFIER, FileType.CONNECTION, Fil
                                    FileType.XSIAM_DASHBOARD, FileType.XSIAM_REPORT, FileType.TRIGGER,
                                    FileType.XDRC_TEMPLATE, FileType.TOOL,
                                    FileType.PACK_METADATA, FileType.METADATA, FileType.README, FileType.AUTHOR_IMAGE]
-XPANSE_MARKETPLACE_ITEMS_TO_DUMP = [FileType.INCIDENT_FIELD, FileType.INTEGRATION, FileType.PLAYBOOK, FileType.SCRIPT,
+XPANSE_MARKETPLACE_ITEMS_TO_DUMP = [FileType.INCIDENT_FIELD, FileType.INCIDENT_TYPE, FileType.INTEGRATION,
+                                    FileType.PLAYBOOK, FileType.SCRIPT,
                                     FileType.RELEASE_NOTES, FileType.RELEASE_NOTES_CONFIG, FileType.PACK_METADATA,
                                     FileType.METADATA, FileType.README, FileType.AUTHOR_IMAGE]
 

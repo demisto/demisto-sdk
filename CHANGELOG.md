@@ -4,7 +4,7 @@
 ## Unreleased
 * Fixed an issue where **generate-docs** with `-c` argument updated sections of the incorrect commands.
 * Added IF113 error code to **ALLOWED_IGNORE_ERRORS**.
-* Added environment variable `DEMISTO_SDK_IGNORE_CONTENT_WARNING` to ignore warning to run on content repository.
+* Added the `DEMISTO_SDK_IGNORE_CONTENT_WARNING` environment variable, to allow suppressing warnings when commands are not run under a content repo folder.
 
 ## 1.7.7
 * Fixed an issue where paybooks **generate-docs** didn't parse complex input values when no accessor field is given correctly.

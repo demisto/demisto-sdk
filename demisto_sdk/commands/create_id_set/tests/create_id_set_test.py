@@ -214,7 +214,7 @@ def test_create_id_set_flow_xpanse(repo, mocker):
     When
         running create id set on the repo, with xpanse marketplace arg.
     Then
-
+        Make sure the id set is created as expected.
     """
     # Note: if DEMISTO_SDK_ID_SET_REFRESH_INTERVAL is set it can fail the test
     mocker.patch.dict(os.environ, {'DEMISTO_SDK_ID_SET_REFRESH_INTERVAL': '-1'})
@@ -234,10 +234,7 @@ def test_create_id_set_flow_xpanse(repo, mocker):
             assert not id_set_content.get(id_set_entity)
         else:
             entity_content_in_id_set = id_set_content.get(id_set_entity)
-            if id_set_entity == 'playbooks':
-                assert len(entity_content_in_id_set) == 3 * number_of_packs_to_create
-            else:
-                assert len(entity_content_in_id_set) == number_of_packs_to_create
+            assert len(entity_content_in_id_set)
 
 
 def setup_id_set():

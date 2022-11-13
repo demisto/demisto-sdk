@@ -5,6 +5,8 @@ from pydantic import BaseModel, Field, root_validator, validator
 
 class EventLog(BaseModel):
     test_data_event_id: UUID = Field(default_factory=uuid4)
+    vendor: Optional[str] = None
+    product: Optional[str] = None
     event_data: Optional[Union[str, Dict[str, Any]]] = {}
 
 

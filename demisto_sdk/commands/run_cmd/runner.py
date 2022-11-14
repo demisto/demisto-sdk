@@ -56,30 +56,10 @@ class Runner:
         """
         playground_id = self._get_playground_id()
 
-        log_ids = []
-        update_entry = {
-            'investigationId': playground_id,
-            'data': self.query
-        }
         try:
-            entries = self.client.investigation_add_entries_sync(update_entry=update_entry)
-            if not entries:
-                raise DemistoRunTimeError('Command did not run, make sure it was written correctly.')
-            for entry in entries:
-                # answer should have entries with `contents` - the readable output of the command
-                if entry.parent_content:
-                    print_color('### Command:', LOG_COLORS.YELLOW)
-                if entry.contents:
-                    print_color('## Readable Output', LOG_COLORS.YELLOW)
-                    if entry.type == self.ERROR_ENTRY_TYPE:
-                        print_error(f'{entry.contents}\n')
-                    else:
-                        print(f'{entry.contents}\n')
-                # and entries with `file_id`s defined, that is the fileID of the debug log file
-                if entry.type == self.DEBUG_FILE_ENTRY_TYPE:
-                    log_ids.append(entry.id)
-
+            log_ids = self._run_query(playground_id)
         except DemistoRunTimeError as err:
+            log_ids = None
             print_error(str(err))
 
         if self.debug:
@@ -91,7 +71,7 @@ class Runner:
         if self.json2outputs:
             if not self.prefix:
                 print_error("A prefix for the outputs is needed for this command. Please provide one")
-                raise DemistoRunTimeError
+                return 1
             else:
                 raw_output_json = self._return_context_dict_from_log(log_ids)
                 if raw_output_json:
@@ -106,9 +86,7 @@ class Runner:
                         json_to_outputs(command, json=file_path, prefix=self.prefix)
                 else:
                     print_error("Could not extract raw output as JSON from command")
-                    raise DemistoRunTimeError
-
-        return entries
+                    return 1
 
     def _get_playground_id(self):
         """Retrieves Playground ID from the remote Demisto instance.
@@ -141,6 +119,43 @@ class Runner:
         print_v(f'Playground ID: {result}', self.log_verbose)
 
         return result
+
+    def _run_query(self, playground_id: str):
+        """Runs a query on Demisto instance and prints the output.
+
+        Args:
+            playground_id: The investigation ID of the playground.
+
+        Returns:
+            list. A list of the log IDs if debug mode is on, otherwise an empty list.
+        """
+        update_entry = {
+            'investigationId': playground_id,
+            'data': self.query
+        }
+
+        answer = self.client.investigation_add_entries_sync(update_entry=update_entry)
+        if not answer:
+            raise DemistoRunTimeError('Command did not run, make sure it was written correctly.')
+
+        log_ids = []
+
+        for entry in answer:
+            # answer should have entries with `contents` - the readable output of the command
+            if entry.parent_content:
+                print_color('### Command:', LOG_COLORS.YELLOW)
+            if entry.contents:
+                print_color('## Readable Output', LOG_COLORS.YELLOW)
+                if entry.type == self.ERROR_ENTRY_TYPE:
+                    print_error(f'{entry.contents}\n')
+                else:
+                    print(f'{entry.contents}\n')
+
+            # and entries with `file_id`s defined, that is the fileID of the debug log file
+            if entry.type == self.DEBUG_FILE_ENTRY_TYPE:
+                log_ids.append(entry.id)
+
+        return log_ids
 
     def _export_debug_log(self, log_ids: list):
         """Retrieve & export debug mode log files

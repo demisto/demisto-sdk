@@ -1730,7 +1730,7 @@ class Errors:
     @error_code_decorator
     def pack_metadata_non_approved_tags(non_approved_tags: set) -> str:
         return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}. ' \
-               'The list of approved tags for each marketplace can be found on' \
+               'The list of approved tags for each marketplace can be found on ' \
                'https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories'
 
     @staticmethod

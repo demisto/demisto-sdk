@@ -617,19 +617,17 @@ class PackUniqueFilesValidator(BaseValidator):
     @error_codes('PA120')
     def _is_approved_tags(self) -> bool:
         """Checks whether the tags in the pack metadata are approved
-
         Return:
              bool: True if the tags are approved, otherwise False
         """
         if tools.is_external_repository():
             return True
 
+        is_valid_tag_prefixes = True
         non_approved_tags = set()
         marketplaces = [x.value for x in list(MarketplaceVersions)]
         try:
             pack_tags, is_valid_tag_prefixes = self.filter_by_marketplace(marketplaces)
-            if not is_valid_tag_prefixes:
-                return False
             non_approved_tags = self.extract_non_approved_tags(pack_tags, marketplaces)
             if non_approved_tags:
                 if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
@@ -637,7 +635,8 @@ class PackUniqueFilesValidator(BaseValidator):
         except (ValueError, TypeError):
             if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
                 return False
-        return True
+
+        return is_valid_tag_prefixes
 
     def filter_by_marketplace(self, marketplaces):
         """Filtering pack_metadata tags by marketplace"""
@@ -648,20 +647,24 @@ class PackUniqueFilesValidator(BaseValidator):
             pack_tags[marketplace] = []
         pack_tags['common'] = []
 
-        try:
-            for tag in pack_meta_file_content.get('tags', []):
-                if ':' in tag:
-                    tag_data = tag.split(':')
-                    tag_marketplaces = tag_data[0].split(',')
+        is_valid = True
+        for tag in pack_meta_file_content.get('tags', []):
+            if ':' in tag:
+                tag_data = tag.split(':')
+                tag_marketplaces = tag_data[0].split(',')
+
+                try:
                     for tag_marketplace in tag_marketplaces:
                         pack_tags[tag_marketplace].append(tag_data[1])
-                else:
-                    pack_tags['common'].append(tag)
-        except KeyError:
-            print_warning('You have non-approved tag prefix in the pack metadata tags, cannot validate tags until it is fixed.')
-            return {}, False
+                except KeyError:
+                    print_warning('You have non-approved tag prefix in the pack metadata tags, cannot validate all tags until it is fixed.'
+                                  f' Valid tag prefixes are: { ", ".join(marketplaces)}.')
+                    is_valid = False
 
-        return pack_tags, True
+            else:
+                pack_tags['common'].append(tag)
+
+        return pack_tags, is_valid
 
     def extract_non_approved_tags(self, pack_tags, marketplaces) -> Set[str]:
         approved_tags = tools.get_approved_tags_from_branch()
@@ -674,7 +677,7 @@ class PackUniqueFilesValidator(BaseValidator):
 
     @error_codes('RN106,PA131')
     def _is_right_version(self):
-        """Checks whether the currentVersion field in the pack metadata match the version of the latest release note.
+        """Checks whether the currentVersion field in the pack metadata matches the version of the latest release note.
 
         Return:
              bool: True if the versions are match, otherwise False

@@ -7,6 +7,7 @@ class EventLog(BaseModel):
     test_data_event_id: UUID = Field(default_factory=uuid4)
     vendor: Optional[str] = None
     product: Optional[str] = None
+    dataset: Optional[str] = None
     event_data: Optional[Union[str, Dict[str, Any]]] = {}
 
 

@@ -47,6 +47,7 @@ def init_test_data(
                 all_mr_entity_fields = all_mr_entity_fields.union(mr.fields)
 
             default_event_mapping = dict.fromkeys(all_mr_entity_fields)
+            default_dataset = mr_entity.rules[0].dataset
             default_vendor = mr_entity.rules[0].vendor
             default_product = mr_entity.rules[0].product
             test_data_file = mr_entity.testdata_path
@@ -58,6 +59,8 @@ def init_test_data(
                         event_log.vendor = default_vendor
                     if not event_log.product:
                         event_log.product = default_product
+                    if not event_log.dataset:
+                        event_log.dataset = default_dataset
                 for expected in test_data.expected_values:
                     new_mapping = default_event_mapping.copy()
 
@@ -76,7 +79,7 @@ def init_test_data(
                     # create the missing templated data and add it to the test data
                     templated_event_data_to_add = [
                         EventLog(
-                            vendor=default_vendor, product=default_product
+                            vendor=default_vendor, product=default_product, dataset=default_dataset
                         ) for _ in range(count - len(test_data.data))
                     ]
                     templated_expected_values_to_add = [
@@ -92,8 +95,14 @@ def init_test_data(
             else:
                 printr(f'[cyan]Creating test data file for: {mr_entity.path}[/cyan]')
                 test_data = TestData(
-                    data=[EventLog(vendor=default_vendor, product=default_product) for _ in range(count)],
-                    expected_values=[ExpectedOutputs(mapping=default_event_mapping) for _ in range(count)],
+                    data=[
+                        EventLog(
+                            vendor=default_vendor, product=default_product, dataset=default_dataset
+                        ) for _ in range(count)
+                    ],
+                    expected_values=[
+                        ExpectedOutputs(mapping=default_event_mapping) for _ in range(count)
+                    ]
                 )
                 test_data_file = mr_entity.path.parent / f'{mr_entity.path.parent.stem}{mr_entity.TESTDATA_FILE_SUFFIX}'
             test_data_file.write_text(test_data.json(indent=4))

@@ -2065,6 +2065,7 @@ def test_field_to_cliname(value: str, expected: str):
 ])
 def test_get_demisto_tenants(host, tenants, expected, monkeypatch, demisto_tenants_request):
     monkeypatch.setenv("DEMISTO_BASE_URL", host)
+    monkeypatch.setenv("DEMISTO_API_KEY", "foobar")
     client = demisto_client.configure()
     config = client.api_client.configuration
     demisto_tenants_request(host, tenants)

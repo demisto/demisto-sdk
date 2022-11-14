@@ -2300,18 +2300,6 @@ def get_approved_usecases() -> list:
     ).get('approved_list', [])
 
 
-def get_approved_tags() -> list:
-    """Gets approved list of tags from content master
-
-    Returns:
-        List of approved tags
-    """
-    return get_remote_file(
-        'Tests/Marketplace/approved_tags.json',
-        git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
-    ).get('approved_list', [])
-
-
 def get_pack_metadata(file_path: str) -> dict:
     """ Get the pack_metadata dict, of the pack containing the given file path.
 
@@ -2412,16 +2400,21 @@ def get_current_usecases() -> list:
     return []
 
 
-def get_current_tags() -> list:
+def get_approved_tags_from_branch() -> Dict[str, List[str]]:
     """Gets approved list of tags from current branch (only in content repo).
 
     Returns:
-        List of approved tags from current branch
+        Dict of approved tags from current branch
     """
     if not is_external_repository():
         approved_tags_json, _ = get_dict_from_file('Tests/Marketplace/approved_tags.json')
-        return approved_tags_json.get('approved_list', [])
-    return []
+        if isinstance(approved_tags_json.get('approved_list'), list):
+            print_warning('You are using a deprecated version of the file aproved_tags.json, consider pulling from master'
+                          ' to update it.')
+            return {'common': approved_tags_json.get('approved_list', []), 'xsoar': [], 'marketplacev2': [], 'xpanse': []}
+
+        return approved_tags_json.get('approved_list', {})
+    return {}
 
 
 @contextmanager

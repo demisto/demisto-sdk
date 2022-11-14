@@ -10,6 +10,7 @@
 * Added support for **xpanse** marketplace in **create-id-set** and **create-content-artifacts** commands.
 * Fixed an issue where **split** failed on yml files.
 * Added support for marketplace-specific tags.
+* Fixed an issue where **download** would not run `isort`. @maxgubler
 
 ## 1.7.7
 * Fixed an issue where paybooks **generate-docs** didn't parse complex input values when no accessor field is given correctly.

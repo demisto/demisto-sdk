@@ -1,11 +1,13 @@
 import typer
-from typing import Optional, List, Union
+from typing import Any, Dict, Optional, List, Union
 from pathlib import Path
 from rich import print as printr
 from rich.console import Console, Group
 from rich.syntax import Syntax
 from rich.panel import Panel
+from rich.table import Table
 from rich.theme import Theme
+from time import sleep
 from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import ModelingRule, MRule
 from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data
 from demisto_sdk.commands.test_content.xsiam_tools.xsiam_interface import XsiamApiClient, XsiamApiClientConfig
@@ -36,39 +38,64 @@ app = typer.Typer()
 ContentEntity = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentObject]
 
 
+def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> Table:
+    table = Table('Model Field', 'Expected Value', 'Received Value')
+    for key, val in expected.items():
+        table.add_row(key, str(val), str(received.get(key)))
+    return table
+
+
 def verify_results(results: List[dict], test_data: init_test_data.TestData):
+    if not len(results):
+        err = ('[error]No results were returned by the query - it\'s possible there is a syntax'
+               ' error with your modeling rule and that it did not install properly on the tenant[/error]')
+        printr(err)
+        raise typer.Exit(1)
     if len(results) != len(test_data.data):
         raise ValueError(f'Expected {len(test_data.data)} results, got {len(results)}')
-    printr(results)
-    for result in results:
-        for key, val in result.items():
-            matching_keyvals = [e.mapping.get(key) for e in test_data.expected_values if e.mapping.get(key)]
-            if matching_keyvals:
-                assert val in matching_keyvals, f'Expected value {val} not found in expected values {matching_keyvals}'
-            else:
-                printr(f'No mapping for {key} - skipping checking match')
+    for i, result in enumerate(results):
+        printr(f'\n[cyan underline]Result {i + 1}[/cyan underline]')
+        # get mapping for the given query result
+        td_event_id = result.pop(f'{test_data.data[0].dataset}.test_data_event_id')
+        mapping = None
+        for e in test_data.expected_values:
+            if str(e.test_data_event_id) == td_event_id:
+                mapping = e.mapping
+                break
+
+        printr(create_table(mapping, result))
+
+        if mapping:
+            for key, val in mapping.items():
+                if not val:
+                    # TODO: Make this a debugging statement
+                    printr(f'[cyan]No mapping for {key} - skipping checking match[/cyan]')
+                else:
+                    printr(f'[cyan]Checking for key {key}:\n - expected: {val}\n - received: {result.get(key)}[/cyan]')
+                    assert result.get(key) == val, f'Expected {val} to equal {result.get(key)}'
+        else:
+            printr(
+                f'[red]No matching mapping found for test_data_event_id={td_event_id} in test_data {test_data}[/red]'
+            )
+            raise typer.Exit(1)
 
 
-def generate_xql_query(rule: MRule, count: int = 1, version: str = '1') -> str:
-    if version != '1':
-        raise NotImplementedError('Only version 1 is supported')
-    # fields = ', '.join([f'{f}' for f in rule.fields])
-    # query = f'datamodel = {rule.datamodel} dataset in({rule.dataset}) | fields {fields} | limit {count}'
-    query = f'dataset in ({rule.dataset}) | limit {count}'
-    # query = f'datamodel = {rule.datamodel} dataset in({rule.dataset} ) | join (dataset in({rule.dataset} )) as inner _time = _time | filter test_data_event_id = ""'
+def generate_xql_query(rule: MRule, test_data_event_ids: List[str]) -> str:
+    fields = ', '.join([f'{f}' for f in rule.fields])
+    td_event_ids = ', '.join([f'"{td_event_id}"' for td_event_id in test_data_event_ids])
+    query = f'datamodel dataset in({rule.dataset}) | filter {rule.dataset}.test_data_event_id in({td_event_ids}) | dedup {rule.dataset}.test_data_event_id by desc _insert_time | fields {rule.dataset}.test_data_event_id, {fields}'
     return query
 
 
 def validate_mappings(xsiam_client: XsiamApiClient, mr: ModelingRule, test_data: init_test_data.TestData):
     with console.status('[info]Validating mappings...[/info]'):
-        count = len(test_data.data)
         for rule in mr.rules:
-            query = generate_xql_query(rule, count)
+            query = generate_xql_query(rule, [str(d.test_data_event_id) for d in test_data.data])
             console.log(query)
             execution_id = xsiam_client.start_xql_query(query)
             results = xsiam_client.get_xql_query_result(execution_id)
             verify_results(results, test_data)
-    console.print('[success]Mappings validated successfully[/success]')
+    console.print('[green]Mappings validated successfully[/green]')
 
 
 def push_test_data_to_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule, test_data: init_test_data.TestData):
@@ -160,6 +187,7 @@ def test_rule(mr: ModelingRule, xsiam_url: str, api_key: str, auth_id: str, xsia
     verify_pack_exists_on_tenant(xsiam_client, mr, interactive)
     test_data = init_test_data.TestData.parse_file(mr.testdata_path.as_posix())
     push_test_data_to_tenant(xsiam_client, mr, test_data)
+    sleep(5)
     validate_mappings(xsiam_client, mr, test_data)
 
 

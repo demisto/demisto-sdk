@@ -240,7 +240,7 @@ CONTEXT_SETTINGS = {"auto_envvar_prefix": "DEMISTO", "max_content_width": 100}
 @click.option(
     '--skip-server-check',
     is_flag=True,
-    default=False,
+    default=True,
     help='If set, the base command will not try to resolve the server_type of the demisto host.',
     hidden=True
 )

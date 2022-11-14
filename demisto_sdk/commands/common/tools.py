@@ -2410,7 +2410,7 @@ def get_approved_tags_from_branch() -> Dict[str, List[str]]:
         if isinstance(approved_tags_json.get('approved_list'), list):
             print_warning('You are using a deprecated version of the file aproved_tags.json, consider pulling from master'
                           ' to update it.')
-            return {'common': approved_tags_json.get('approved_list', []), 'xsoar': [], 'marketplacev2': []}
+            return {'common': approved_tags_json.get('approved_list', []), 'xsoar': [], 'marketplacev2': [], 'xpanse': []}
 
         return approved_tags_json.get('approved_list', {})
     return {}

@@ -8,7 +8,7 @@ import re
 from datetime import datetime
 from distutils.version import LooseVersion
 from pathlib import Path
-from typing import Dict, Set, Tuple
+from typing import Dict, List, Set, Tuple
 
 import click
 from dateutil import parser
@@ -36,7 +36,8 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.tools import (get_core_pack_list, get_json,
                                                get_remote_file,
-                                               pack_name_to_path)
+                                               pack_name_to_path,
+                                               print_warning)
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 
@@ -334,8 +335,8 @@ class PackUniqueFilesValidator(BaseValidator):
             self._is_valid_contributor_pack_support_details(),
             self._is_approved_usecases(),
             self._is_right_version(),
-            self._is_approved_tags(),
             self._is_approved_tag_prefixes(),
+            self._is_approved_tags(),
             self._is_price_changed(),
             self._is_valid_support_type(),
             self.is_right_usage_of_usecase_tag(),
@@ -589,28 +590,6 @@ class PackUniqueFilesValidator(BaseValidator):
             return False
         return True
 
-    @error_codes('PA120')
-    def _is_approved_tags(self) -> bool:
-        """Checks whether the tags in the pack metadata are approved
-
-        Return:
-             bool: True if the tags are approved, otherwise False
-        """
-        if tools.is_external_repository():
-            return True
-
-        non_approved_tags = set()
-        try:
-            common_tags, xsoar_tags, marketplacev2_tags = self.filter_by_marketplace()
-            non_approved_tags = self.extract_non_approved_tags(common_tags, xsoar_tags, marketplacev2_tags)
-            if non_approved_tags:
-                if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
-                    return False
-        except (ValueError, TypeError):
-            if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
-                return False
-        return True
-
     @error_codes('PA133')
     def _is_approved_tag_prefixes(self) -> bool:
         """Checks whether the tags in the pack metadata are approved
@@ -635,28 +614,61 @@ class PackUniqueFilesValidator(BaseValidator):
 
         return is_valid
 
-    def filter_by_marketplace(self):
+    @error_codes('PA120')
+    def _is_approved_tags(self) -> bool:
+        """Checks whether the tags in the pack metadata are approved
+
+        Return:
+             bool: True if the tags are approved, otherwise False
+        """
+        if tools.is_external_repository():
+            return True
+
+        non_approved_tags = set()
+        marketplaces = [x.value for x in list(MarketplaceVersions)]
+        try:
+            pack_tags, is_valid_tag_prefixes = self.filter_by_marketplace(marketplaces)
+            if not is_valid_tag_prefixes:
+                return False
+            non_approved_tags = self.extract_non_approved_tags(pack_tags, marketplaces)
+            if non_approved_tags:
+                if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
+                    return False
+        except (ValueError, TypeError):
+            if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
+                return False
+        return True
+
+    def filter_by_marketplace(self, marketplaces):
         """Filtering pack_metadata tags by marketplace"""
         pack_meta_file_content = self._read_metadata_content()
-        common_tags, xsoar_tags, marketplacev2_tags = [], [], []
-        for tag in pack_meta_file_content.get('tags', []):
-            if ':' in tag:
-                tag_data = tag.split(':')
-                tag_marketplaces = tag_data[0].split(',')
-                if MarketplaceVersions.XSOAR in tag_marketplaces:
-                    xsoar_tags.append(tag_data[1])
-                if MarketplaceVersions.MarketplaceV2 in tag_marketplaces:
-                    marketplacev2_tags.append(tag_data[1])
-            else:
-                common_tags.append(tag)
 
-        return common_tags, xsoar_tags, marketplacev2_tags
+        pack_tags: Dict[str, List[str]] = {}
+        for marketplace in marketplaces:
+            pack_tags[marketplace] = []
+        pack_tags['common'] = []
 
-    def extract_non_approved_tags(self, common_tags, xsoar_tags, marketplacev2_tags) -> Set[str]:
+        try:
+            for tag in pack_meta_file_content.get('tags', []):
+                if ':' in tag:
+                    tag_data = tag.split(':')
+                    tag_marketplaces = tag_data[0].split(',')
+                    for tag_marketplace in tag_marketplaces:
+                        pack_tags[tag_marketplace].append(tag_data[1])
+                else:
+                    pack_tags['common'].append(tag)
+        except (KeyError):
+            print_warning('You have non-approved tag prefix in the pack metadata tags, cannot validate tags until it is fixed.')
+            return {}, False
+
+        return pack_tags, True
+
+    def extract_non_approved_tags(self, pack_tags, marketplaces) -> Set[str]:
         approved_tags = tools.get_approved_tags_from_branch()
-        non_approved_tags = set(common_tags) - set(approved_tags.get('common', []))
-        non_approved_tags |= set(xsoar_tags) - set(approved_tags.get('xsoar', []))
-        non_approved_tags |= set(marketplacev2_tags) - set(approved_tags.get('marketplacev2', []))
+
+        non_approved_tags = set(pack_tags.get('common', [])) - set(approved_tags.get('common', []))
+        for marketplace in marketplaces:
+            non_approved_tags |= set(pack_tags.get(marketplace, [])) - set(approved_tags.get(marketplace, []))
 
         return non_approved_tags
 

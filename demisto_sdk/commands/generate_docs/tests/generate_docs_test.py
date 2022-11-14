@@ -282,6 +282,10 @@ def test_get_inputs():
             'Default Value': 'johnnydepp@gmail.com', 'Required': 'Required'
         },
         {
+            'Name': 'InputC', 'Description': '',
+            'Default Value': 'No_Accessor', 'Required': 'Optional'
+        },
+        {
             'Name': 'Indicator Query',
             'Description': 'Indicators matching the indicator query will be used as playbook input',
             'Default Value': expected_query, 'Required': 'Optional'
@@ -331,16 +335,19 @@ def test_get_input_data_simple():
     assert _value == 'johnnydepp@gmail.com'
 
 
-def test_get_input_data_complex():
+@pytest.mark.parametrize('index, expected_result',
+                         [(0, 'File.Name'),
+                          (2, 'No_Accessor')])
+def test_get_input_data_complex(index, expected_result):
     from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
         get_input_data
     playbook = get_yaml(TEST_PLAYBOOK_PATH)
 
-    sample_input = playbook.get('inputs')[0]
+    sample_input = playbook.get('inputs')[index]
 
     _value = get_input_data(sample_input)
 
-    assert _value == 'File.Name'
+    assert _value == expected_result
 
 
 @pytest.mark.parametrize('playbook_name, custom_image_path, expected_result',
@@ -669,10 +676,13 @@ class TestAppendOrReplaceCommandInDocs:
     command = 'dxl-send-event'
     old_doc = open(positive_test_data_file).read()
     new_docs = "\n<NEW DOCS>\n"
+    new_command = '\n### dxl-send-event-new-one\n***\nSends the specified event to the DXL fabric.\n##### Base Command\n`dxl-send-event-new-one`'
+    new_command += '\n##### Input\n| **Argument Name** | **Description** | **Required** |\n| --- | --- | --- |\n| topic | The topic for which to publish the'
+    new_command += ' message. | Required |\n| payload | The event payload. | Required |\n##### Context Output\nThere is no context output for this command.'
     positive_inputs = [
-        (old_doc, new_docs),
-        (old_doc + "\n## Known Limitation", new_docs + "\n## Known Limitation"),
-        (old_doc + "\n### new-command", new_docs + "\n### new-command"),
+        (old_doc, new_docs + new_command),
+        (old_doc + "\n## Known Limitation", new_docs + new_command + "\n## Known Limitation"),
+        (old_doc + "\n### new-command", new_docs + new_command + "\n### new-command"),
         ("no docs (empty)\n", "no docs (empty)\n" + new_docs),
         (f"Command in file, but cant replace. {command}", f"Command in file, but cant replace. {command}\n" + new_docs)
     ]

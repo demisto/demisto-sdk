@@ -164,7 +164,8 @@ def test_relative_url_not_valid():
     captured_output = io.StringIO()
     sys.stdout = captured_output  # redirect stdout.
     absolute_urls = ["https://www.good.co.il", "https://example.com", "https://github.com/demisto/content/blob/123",
-                     "github.com/demisto/content/blob/123/Packs/FeedOffice365/doc_files/test.png", "https://hreftesting.com"]
+                     "github.com/demisto/content/blob/123/Packs/FeedOffice365/doc_files/test.png",
+                     "https://hreftesting.com"]
     relative_urls = ["relative1.com", "www.relative2.com", "hreftesting.com", "www.hreftesting.com"]
     readme_validator = ReadMeValidator(INVALID_MD)
     result = readme_validator.verify_readme_relative_urls()
@@ -611,3 +612,32 @@ def test_verify_readme_image_paths(mocker):
     assert 'please repair it:\n' \
            '![Identity with High Risk Score](https://github.com/demisto/test3.png)' \
            not in captured_output
+
+
+def test_check_readme_relative_image_paths(mocker):
+    """
+
+    Given
+        - A README file (not pack README) with invalid relative image
+         paths and invalid absolute image paths in it.
+    When
+        - Run validate on README file and ignoring RM108 error
+    Then
+        - Ensure:
+            - Validation pass.
+            - nothing is printed as error.
+
+    """
+    readme_validator = ReadMeValidator(IMAGES_MD, ignored_errors={IMAGES_MD: 'RM108'})
+    mocker.patch.object(GitUtil, 'get_current_working_branch', return_value='branch_name')
+    with requests_mock.Mocker() as m:
+        # Mock get requests
+        m.get('https://github.com/demisto/test1.png',
+              status_code=404, text="Test1", reason='just because')
+        m.get('https://github.com/demisto/content/raw/test2.png',
+              status_code=404, text="Test2")
+        m.get('https://github.com/demisto/test3.png',
+              status_code=200, text="Test3")
+        formatted_errors = readme_validator.check_readme_relative_image_paths()
+
+    assert not formatted_errors

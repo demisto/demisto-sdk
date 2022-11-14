@@ -394,7 +394,9 @@ class ReadMeValidator(BaseValidator):
             if error_code and error_message:  # error was found
                 formatted_error = self.handle_error(error_message, error_code, file_path=self.file_path,
                                                     should_print=should_print_error)
-                error_list.append(formatted_error)
+                # if error is None it should be ignored
+                if formatted_error:
+                    error_list.append(formatted_error)
 
         return error_list
 

@@ -1736,7 +1736,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_metadata_non_approved_tag_prefix(tag, approved_prefixes: set) -> str:
-        return f'The pack metadata contains a tag with not approved prefix: {tag}.' \
+        return f'The pack metadata contains a tag with an invalid prefix: {tag}.' \
                f' The approved prefixes are: {", ".join(approved_prefixes)}.'
 
     @staticmethod

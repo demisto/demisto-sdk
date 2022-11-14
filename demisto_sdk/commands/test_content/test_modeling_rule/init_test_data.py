@@ -60,6 +60,15 @@ def init_test_data(
                         event_log.product = default_product
                 for expected in test_data.expected_values:
                     new_mapping = default_event_mapping.copy()
+
+                    # remove xdm mapping fields that are no longer in the rule
+                    keys_to_remove = []
+                    for key in expected.mapping:
+                        if key not in new_mapping:
+                            keys_to_remove.append(key)
+                    for key in keys_to_remove:
+                        expected.mapping.pop(key)
+                    
                     new_mapping.update(expected.mapping)
                     expected.mapping = new_mapping
 

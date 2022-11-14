@@ -238,5 +238,14 @@ view: |-
       }
     }
   }
-inputs: []
+inputs:
+- key: SearchFromDate
+  value:
+    simple: 2020-01-01T00:00:00
+  required: false
+  description: |-
+    When looking for existing hashes in the system, this is the date that it will look for hashes from.
+    The value should be in YYYY-MM-DDTHH:MM:SS.
+    For example: 2022-02-15T08:31:00
+  playbookInputQuery:
 outputs: []

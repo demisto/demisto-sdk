@@ -18,11 +18,11 @@ ALLOWED_IGNORE_ERRORS = [
     'BA101', 'BA106', 'BA108', 'BA109', 'BA110', 'BA111', 'BA112', 'BA113', 'BA116', 'BA119',
     'DS107',
     'GF102',
-    'IF100', 'IF106', 'IF115', 'IF116',
+    'IF100', 'IF106', 'IF113', 'IF115', 'IF116',
     'IN109', 'IN110', 'IN122', 'IN124', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145', 'IN153', 'IN154',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
-    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107', 'PB118', 'PB119',
+    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107', 'PB118', 'PB119', 'PB121',
     'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM110', 'RM112', 'RM113',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
@@ -314,6 +314,7 @@ ERROR_CODE = {
     "wrong_version_format": {'code': "PA130", 'ui_applicable': False, 'related_field': ''},
     "pack_metadata_version_diff_from_rn": {'code': "PA131", 'ui_applicable': False, 'related_field': ''},
     "pack_should_be_deprecated": {'code': "PA132", 'ui_applicable': False, 'related_field': ''},
+    "pack_metadata_non_approved_tag_prefix": {'code': "PA133", 'ui_applicable': False, 'related_field': ''},
 
     # PB - Playbooks
     "playbook_cant_have_rolename": {'code': "PB100", 'ui_applicable': True, 'related_field': 'rolename'},
@@ -339,6 +340,7 @@ ERROR_CODE = {
     "input_key_not_in_tasks": {'code': "PB118", 'ui_applicable': False, 'related_field': ''},
     "input_used_not_in_input_section": {'code': "PB119", 'ui_applicable': False, 'related_field': ''},
     "playbook_is_deprecated_and_used": {'code': 'PB120', 'ui_applicable': False, 'related_field': 'deprecated'},
+    "incorrect_value_references": {'code': "PB121", 'ui_applicable': False, 'related_field': 'taskid'},
 
     # PP - Pre-Process Rules
     "invalid_from_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
@@ -840,8 +842,14 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def error_starting_mdx_server(line):
-        return f'Failed starting mdx server. stdout: {line}.\n' \
+        return f'Failed starting local mdx server. stdout: {line}.\n' \
                f'Try running the following command: `npm install`'
+
+    @staticmethod
+    @error_code_decorator
+    def error_starting_docker_mdx_server(line):
+        return f'Failed starting docker mdx server. stdout: {line}.\n' \
+               f'Check to see if the docker daemon is up and running'
 
     @staticmethod
     @error_code_decorator
@@ -1727,8 +1735,15 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def pack_metadata_non_approved_tags(non_approved_tags: set) -> str:
-        return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}' \
-               f'The list of approved tags can be found in https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories'
+        return f'The pack metadata contains non approved tags: {", ".join(non_approved_tags)}. ' \
+               'The list of approved tags for each marketplace can be found on ' \
+               'https://xsoar.pan.dev/docs/documentation/pack-docs#pack-keywords-tags-use-cases--categories'
+
+    @staticmethod
+    @error_code_decorator
+    def pack_metadata_non_approved_tag_prefix(tag, approved_prefixes: set) -> str:
+        return f'The pack metadata contains a tag with an invalid prefix: {tag}.' \
+               f' The approved prefixes are: {", ".join(approved_prefixes)}.'
 
     @staticmethod
     @error_code_decorator
@@ -2185,6 +2200,13 @@ class Errors:
     def taskid_different_from_id(task_key, id_, taskid):
         return f"On task: {task_key},  the field 'taskid': {taskid} and the 'id' under the 'task' field: {id_}, " \
                f"must be with equal value. "
+
+    @staticmethod
+    @error_code_decorator
+    def incorrect_value_references(task_key, value, task_name, section_name):
+        return f"On task: '{task_name}' with ID: '{task_key}', an input with the value: '{value}' was passed as string, rather than as " \
+            f"a reference in the '{section_name}' section. Change the reference to 'From previous tasks' from 'As value'" \
+            " , or change the value to ${" + value + "}."
 
     @staticmethod
     @error_code_decorator

@@ -45,7 +45,7 @@ XSIAM_DASHBOARDS_DIR = 'XSIAMDashboards'
 XSIAM_REPORTS_DIR = 'XSIAMReports'
 TRIGGER_DIR = 'Triggers'
 WIZARDS_DIR = 'Wizards'
-AGENT_CONFIG_DIR = 'AgentConfigs'
+XDRC_TEMPLATE_DIR = 'XDRCTemplates'
 
 # NAMES OF ENTITIES
 
@@ -88,7 +88,7 @@ XSIAM_DASHBOARD = 'xsiamdashboard'
 XSIAM_REPORT = 'xsiamreport'
 TRIGGER = 'trigger'
 WIZARD = 'wizard'
-AGENT_CONFIG = 'agentconfig'
+XDRC_TEMPLATE = 'xdrctemplate'
 
 MARKETPLACE_KEY_PACK_METADATA = 'marketplaces'
 
@@ -157,8 +157,11 @@ class FileType(str, Enum):
     PACK_IGNORE = '.pack-ignore'
     SECRET_IGNORE = '.secrets-ignore'
     DOC_FILE = 'doc_files'
-    AGENT_CONFIG = 'agentconfig'
-    AGENT_CONFIG_YML = 'agentconfigyml'
+    XDRC_TEMPLATE = 'xdrctemplate'
+    XDRC_TEMPLATE_YML = 'xdrctemplateyml'
+    INDICATOR_TYPE = 'indicatortype'
+    TOOL = 'tools'
+    PACK_METADATA = 'packmetadata'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -224,7 +227,7 @@ ENTITY_TYPE_TO_DIR = {
     FileType.PARSING_RULE.value: PARSING_RULES_DIR,
     FileType.MODELING_RULE.value: MODELING_RULES_DIR,
     FileType.WIZARD.value: WIZARDS_DIR,
-    FileType.AGENT_CONFIG.value: AGENT_CONFIG_DIR,
+    FileType.XDRC_TEMPLATE.value: XDRC_TEMPLATE_DIR,
 }
 
 SIEM_ONLY_ENTITIES = [
@@ -234,7 +237,7 @@ SIEM_ONLY_ENTITIES = [
     FileType.XSIAM_DASHBOARD.value,
     FileType.XSIAM_REPORT.value,
     FileType.TRIGGER.value,
-    FileType.AGENT_CONFIG.value,
+    FileType.XDRC_TEMPLATE.value,
 ]
 
 CONTENT_FILE_ENDINGS = ['py', 'yml', 'png', 'json', 'md']
@@ -268,7 +271,7 @@ CONTENT_ENTITIES_DIRS = [
     JOBS_DIR,
     WIZARDS_DIR,
     MODELING_RULES_DIR,
-    AGENT_CONFIG_DIR,
+    XDRC_TEMPLATE_DIR,
 ]
 
 CONTENT_ENTITY_UPLOAD_ORDER = [
@@ -651,7 +654,7 @@ INTEGRATION_PREFIX = 'integration'
 SCRIPT_PREFIX = 'script'
 PARSING_RULE_PREFIX = 'parsingrule'
 MODELING_RULE_PREFIX = 'modelingrule'
-AGENT_CONFIG_PREFIX = 'agentconfig'
+XDRC_TEMPLATE_PREFIX = 'xdrctemplate'
 
 # Pack Unique Files
 PACKS_WHITELIST_FILE_NAME = '.secrets-ignore'
@@ -1108,7 +1111,7 @@ EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
 FILE_TYPES_PATHS_TO_VALIDATE = {
     'reports': JSON_ALL_REPORTS_REGEXES
 }
-
+DEPENDENCIES_DOCKER = 'demisto/demisto-sdk-dependencies:1.0.0.36679'
 DEF_DOCKER = 'demisto/python:1.3-alpine'
 DEF_DOCKER_PWSH = 'demisto/powershell:6.2.3.5563'
 
@@ -1117,7 +1120,7 @@ DIR_TO_PREFIX = {
     'Scripts': SCRIPT_PREFIX,
     'ModelingRules': MODELING_RULE_PREFIX,
     'ParsingRules': PARSING_RULE_PREFIX,
-    'AgentConfigs': AGENT_CONFIG_PREFIX,
+    'XDRCTemplates': XDRC_TEMPLATE_PREFIX,
 }
 
 ENTITY_NAME_SEPARATORS = [' ', '_', '-']
@@ -1451,7 +1454,7 @@ class ContentItems(Enum):
     XSIAM_REPORTS = 'xsiamreport'
     TRIGGERS = 'trigger',
     WIZARDS = 'wizard',
-    AGENT_CONFIG = 'agentconfig'
+    XDRC_TEMPLATE = 'xdrctemplate'
 
 
 CONTENT_ITEMS_DISPLAY_FOLDERS = {
@@ -1477,7 +1480,7 @@ CONTENT_ITEMS_DISPLAY_FOLDERS = {
     XSIAM_REPORTS_DIR,
     TRIGGER_DIR,
     WIZARDS_DIR,
-    AGENT_CONFIG_DIR,
+    XDRC_TEMPLATE_DIR,
 }
 
 
@@ -1503,6 +1506,7 @@ class IronBankDockers:
 class MarketplaceVersions(str, Enum):
     XSOAR = 'xsoar'
     MarketplaceV2 = 'marketplacev2'
+    XPANSE = 'xpanse'
 
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {'html': LooseVersion('6.1.0'), 'grid': LooseVersion('5.5.0')}

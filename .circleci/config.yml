@@ -47,8 +47,8 @@ references:
       run:
         name: Install Neo4j
         command: |
-          curl -fsSL https://debian.neo4j.com/neotechnology.gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/neo4j.gpg
-          echo "deb [signed-by=/usr/share/keyrings/neo4j.gpg] https://debian.neo4j.com stable 4.4" | sudo tee -a /etc/apt/sources.list.d/neo4j.list
+          wget -O - https://debian.neo4j.com/neotechnology.gpg.key | sudo apt-key add -
+          echo 'deb https://debian.neo4j.com stable 4.4' | sudo tee /etc/apt/sources.list.d/neo4j.list
           sudo apt-get update
           apt list -a neo4j
           sudo apt-get install neo4j
@@ -173,6 +173,7 @@ jobs:
         - python/install-packages:
             pkg-manager: "poetry"
             cache-version: << pipeline.parameters.cache-version >>
+
         - <<: *install_node_ci
         - run:
             name: pytest - graph
@@ -184,7 +185,7 @@ jobs:
               mkdir graph-test-results
               poetry run pytest -v --junitxml=graph-test-results/junit.xml $TEST_FILES
         - store_test_results:
-            path: graph-test-results        
+            path: graph-test-results
         - run:
             name: pytest - integrations
             no_output_timeout: 15m
@@ -251,7 +252,9 @@ jobs:
         - attach_workspace:
             at: ~/project
         - <<: *install_build_dependencies
-        - <<: *install_node_ci
+        - node/install-packages:
+            cache-version: << pipeline.parameters.cache-version >>
+            app-dir: content
         - run:
             name: Set Up & Create Id Set
             when: always

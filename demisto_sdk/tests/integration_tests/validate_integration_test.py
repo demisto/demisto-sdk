@@ -23,6 +23,7 @@ from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
     PackUniqueFilesValidator
 from demisto_sdk.commands.common.hook_validations.playbook import \
     PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
@@ -986,8 +987,8 @@ class TestPackValidation:
         mocker.patch.object(ContentEntityValidator, 'validate_readme_exists', return_value=True)
         mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_usecases',
                      return_value=[])
-        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_tags',
-                     return_value=[])
+        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_approved_tags_from_branch',
+                     return_value={})
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", VALID_PACK_PATH, "--no-conf-json",
                                       "--allow-skipped"])
@@ -1014,8 +1015,8 @@ class TestPackValidation:
         mocker.patch.object(BaseValidator, 'check_file_flags', return_value='')
         mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_usecases',
                      return_value=[])
-        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_current_tags',
-                     return_value=[])
+        mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_approved_tags_from_branch',
+                     return_value={})
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", AZURE_FEED_PACK_PATH, "--no-conf-json",
                                       "--allow-skipped"])
@@ -3062,6 +3063,7 @@ class TestAllFilesValidator:
         invalid_script_yml['name'] = invalid_script_yml['name'] + "_v2"
         pack2 = repo.create_pack('PackName2')
         script = pack2.create_script(yml=invalid_script_yml)
+        mocker.patch.object(ReadMeValidator, 'is_docker_available', return_value=False)
 
         with ChangeCWD(repo.path):
             runner = CliRunner(mix_stderr=False)
@@ -3485,7 +3487,8 @@ class TestSpecificValidations:
         reputation = pack._create_json_based(name='reputation', prefix='', content=reputation_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', reputation.path, '--run-specific-validations', 'BA101'], catch_exceptions=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', reputation.path, '--run-specific-validations', 'BA101'],
+                                   catch_exceptions=False)
         assert f'Validating {reputation.path} as reputation' in result.stdout
         assert 'The files are valid' in result.stdout
         assert result.exit_code == 0
@@ -3509,7 +3512,8 @@ class TestSpecificValidations:
         reputation = pack._create_json_based(name='reputation', prefix='', content=reputation_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', reputation.path, '--run-specific-validations', 'RP101'], catch_exceptions=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', reputation.path, '--run-specific-validations', 'RP101'],
+                                   catch_exceptions=False)
         assert f'Validating {reputation.path} as reputation' in result.stdout
         assert 'RP101' in result.stdout
         assert 'Expiration field should have a positive numeric value.' in result.stdout
@@ -3534,7 +3538,8 @@ class TestSpecificValidations:
         reputation = pack._create_json_based(name='reputation', prefix='', content=reputation_copy)
         with ChangeCWD(pack.repo_path):
             runner = CliRunner(mix_stderr=False)
-            result = runner.invoke(main, [VALIDATE_CMD, '-i', reputation.path, '--run-specific-validations', 'RP'], catch_exceptions=False)
+            result = runner.invoke(main, [VALIDATE_CMD, '-i', reputation.path, '--run-specific-validations', 'RP'],
+                                   catch_exceptions=False)
         assert f'Validating {reputation.path} as reputation' in result.stdout
         assert 'RP101' in result.stdout
         assert 'Expiration field should have a positive numeric value.' in result.stdout

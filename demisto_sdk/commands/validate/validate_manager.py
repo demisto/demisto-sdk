@@ -107,7 +107,7 @@ from demisto_sdk.commands.common.tools import (
     get_api_module_integrations_set, get_content_path, get_file,
     get_pack_ignore_file_path, get_pack_name, get_pack_names_from_files,
     get_relative_path_from_packs_dir, get_remote_file, get_yaml,
-    open_id_set_file, run_command_os)
+    open_id_set_file, print_warning, run_command_os)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
 SKIPPED_FILES = ['CommonServerPython.py', 'CommonServerUserPython.py', 'demistomock.py']
@@ -146,7 +146,7 @@ class ValidateManager:
         self.check_is_unskipped = check_is_unskipped
         self.conf_json_data = {}
         self.run_with_multiprocessing = multiprocessing
-        self.is_possible_validate_readme = self.is_node_exist()
+        self.is_possible_validate_readme = self.is_node_exist() or ReadMeValidator.is_docker_available()
 
         if json_file_path:
             self.json_file_path = os.path.join(json_file_path, 'validate_outputs.json') if \
@@ -205,8 +205,8 @@ class ValidateManager:
                                    FileType.XSIAM_DASHBOARD_IMAGE,
                                    FileType.XSIAM_REPORT_IMAGE,
                                    FileType.XSIAM_DASHBOARD_IMAGE,
-                                   FileType.AGENT_CONFIG_YML,
-                                   FileType.AGENT_CONFIG,)
+                                   FileType.XDRC_TEMPLATE_YML,
+                                   FileType.XDRC_TEMPLATE,)
 
         self.is_external_repo = is_external_repo
         if is_external_repo:
@@ -632,9 +632,10 @@ class ValidateManager:
                                      file_path=file_path):
                     return False
             if not self.validate_all:
-                if not ReadMeValidator.are_modules_installed_for_verify(get_content_path()):  # shows warning message
-                    return True
                 ReadMeValidator.add_node_env_vars()
+                if not ReadMeValidator.are_modules_installed_for_verify(get_content_path()) and not \
+                        ReadMeValidator.is_docker_available():  # shows warning message
+                    return True
                 with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):
                     return self.validate_readme(file_path, pack_error_ignore_list)
             return self.validate_readme(file_path, pack_error_ignore_list)

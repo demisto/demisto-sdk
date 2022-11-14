@@ -27,6 +27,8 @@ from demisto_sdk.commands.common.tools import (find_type,
                                                is_external_repository,
                                                print_error, print_success,
                                                print_warning)
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import \
+    Neo4jContentGraphInterface
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
 json = JSON_Handler()
@@ -567,7 +569,7 @@ def validate(config, **kwargs):
 @click.option('-mp', '--marketplace', help='The marketplace the artifacts are created for, that '
                                            'determines which artifacts are created for each pack. '
                                            'Default is the XSOAR marketplace, that has all of the packs '
-                                           'artifacts.', default='xsoar', type=click.Choice(['xsoar', 'marketplacev2', 'v2']))
+                                           'artifacts.', default='xsoar', type=click.Choice(['xsoar', 'marketplacev2', 'v2', 'xpanse']))
 @click.option('-fbi', '--filter-by-id-set', is_flag=True,
               help='Whether to use the id set as content items guide, meaning only include in the packs the '
                    'content items that appear in the id set.', default=False, hidden=True)
@@ -2285,27 +2287,32 @@ def error_code(config, **kwargs):
 )
 @click.option('-ud', '--use-docker', is_flag=True, help="Use docker service to run the content graph")
 @click.option('-us', '--use-existing', is_flag=True, help="Use existing service", default=False)
+@click.option('-d', '--dependencies', is_flag=True, help="Whether dependencies should be included in the graph", default=False)
 @click.option('-o', '--output-file', type=click.Path(), help="dump file output", default=None)
 @click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
               type=click.IntRange(0, 3, clamp=True), default=2, show_default=True)
 @click.option('-q', "--quiet", is_flag=True, help="Quiet output, only output results in the end")
 @click.option("-lp", "--log-path", help="Path to store all levels of logs",
               type=click.Path(resolve_path=True))
-def create_content_graph(use_docker: bool = False, use_existing: bool = False, output_file: Path = None, **kwargs):
+def create_content_graph(
+    use_docker: bool = False,
+    use_existing: bool = False,
+    dependencies: bool = False,
+    output_file: Path = None,
+    **kwargs,
+):
     from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.content_graph.content_graph_commands import \
         create_content_graph as create_content_graph_command
-    from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import \
-        Neo4jContentGraphInterface
     logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
                   quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
                   log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
     with Neo4jContentGraphInterface(
         start_service=not use_existing,
-        output_file=output_file,
+        output_file=Path(output_file) if output_file else None,
         use_docker=use_docker,
     ) as content_graph_interface:
-        create_content_graph_command(content_graph_interface)
+        create_content_graph_command(content_graph_interface, dependencies)
 
 
 @main.result_callback()

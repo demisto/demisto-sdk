@@ -67,6 +67,7 @@ class YmlSplitter:
             no_pipenv: bool = False,
             no_logging: bool = False,
             no_code_formatting: bool = False,
+            **_,  # ignoring unexpected kwargs
     ):
         self.input = Path(input).resolve()
         self.output = (Path(output) if output else Path(self.input.parent)).resolve()

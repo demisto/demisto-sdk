@@ -755,7 +755,7 @@ class Downloader:
 
         extractor = YmlSplitter(input=file_path, output=temp_dir, file_type=file_type, base_name=base_name,
                                 no_logging=not self.log_verbose, no_pipenv=True, no_readme=True,
-                                no_auto_create_dir=True)
+                                no_auto_create_dir=True, no_code_formatting=self.no_code_formatting)
         extractor.extract_to_package_format()
 
         extracted_file_paths: list = get_child_files(temp_dir)

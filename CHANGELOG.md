@@ -1,5 +1,7 @@
 # Changelog
 ## Unreleased
+
+* Added the capability to run the MDX server in a docker container for environments without node.
 * Fixed an issue where **generate-docs** with `-c` argument updated sections of the incorrect commands.
 * Added IF113 error code to **ALLOWED_IGNORE_ERRORS**.
 * Fixed an issue where **validate** failed on playbooks with non-string input values.

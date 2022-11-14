@@ -841,8 +841,14 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def error_starting_mdx_server(line):
-        return f'Failed starting mdx server. stdout: {line}.\n' \
+        return f'Failed starting local mdx server. stdout: {line}.\n' \
                f'Try running the following command: `npm install`'
+
+    @staticmethod
+    @error_code_decorator
+    def error_starting_docker_mdx_server(line):
+        return f'Failed starting docker mdx server. stdout: {line}.\n' \
+               f'Check to see if the docker daemon is up and running'
 
     @staticmethod
     @error_code_decorator

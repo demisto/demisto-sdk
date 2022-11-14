@@ -4,7 +4,7 @@
 * Fixed an issue in the **download** command, where an exception would be raised when downloading system playbooks.
 * Fixed an issue where the **upload** failed on playbooks containing a value that starts with `=`.
 * Fixed an issue where the **generate-unit-tests** failed to generate assertions, and generate unit tests when command names does not match method name.
-* Fixed an issue where **dowlnoad** would not properly handle a missing installation of `isort`, now showing a proper message.
+* Fixed an issue where **download** would not run `isort`.
 
 ## 1.7.6
 

@@ -1621,7 +1621,8 @@ def get_content_path() -> str:
             raise git.InvalidGitRepositoryError
         return git_repo.working_dir
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
-        print_warning("Please run demisto-sdk in content repository!")
+        if not os.getenv('DEMISTO_SDK_IGNORE_CONTENT_WARNING'):
+            print_warning("Please run demisto-sdk in content repository!")
     return ''
 
 

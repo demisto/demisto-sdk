@@ -58,7 +58,7 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
         # get mapping for the given query result
         td_event_id = result.pop(f'{test_data.data[0].dataset}.test_data_event_id')
         mapping = None
-        for e in test_data.expected_values:
+        for e in test_data.data:
             if str(e.test_data_event_id) == td_event_id:
                 mapping = e.mapping
                 break
@@ -83,7 +83,9 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
 def generate_xql_query(rule: MRule, test_data_event_ids: List[str]) -> str:
     fields = ', '.join([f'{f}' for f in rule.fields])
     td_event_ids = ', '.join([f'"{td_event_id}"' for td_event_id in test_data_event_ids])
-    query = f'datamodel dataset in({rule.dataset}) | filter {rule.dataset}.test_data_event_id in({td_event_ids}) | dedup {rule.dataset}.test_data_event_id by desc _insert_time | fields {rule.dataset}.test_data_event_id, {fields}'
+    query = (f'datamodel dataset in({rule.dataset}) | filter {rule.dataset}.test_data_event_id in({td_event_ids}) '
+             f'| dedup {rule.dataset}.test_data_event_id by desc _insert_time | fields '
+             f'{rule.dataset}.test_data_event_id, {fields}')
     return query
 
 

@@ -657,7 +657,7 @@ class PackUniqueFilesValidator(BaseValidator):
                         pack_tags[tag_marketplace].append(tag_data[1])
                 else:
                     pack_tags['common'].append(tag)
-        except (KeyError):
+        except KeyError:
             print_warning('You have non-approved tag prefix in the pack metadata tags, cannot validate tags until it is fixed.')
             return {}, False
 

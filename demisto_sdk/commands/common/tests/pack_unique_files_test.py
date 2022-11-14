@@ -372,7 +372,7 @@ class TestPackUniqueFilesValidator:
         with ChangeCWD(repo.path):
             assert self.validator._is_approved_tags() == is_valid
             if not is_valid:
-                assert 'The pack metadata contains non approved tags:' in self.validator.get_errors()
+                assert 'The pack metadata contains a tag with an invalid prefix:' in self.validator.get_errors()
 
     @pytest.mark.parametrize('tags, is_valid, branch_tags', [
         (['NonApprovedPref:Spam', 'Spam'], False, {'common': ['Spam'], "xsoar": [], "marketplacev2": [], "xpanse": []})

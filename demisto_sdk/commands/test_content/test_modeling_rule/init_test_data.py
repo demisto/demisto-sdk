@@ -1,9 +1,11 @@
+from io import StringIO
+import traceback
 import typer
 from rich import print as printr
 from typing import List
 from pathlib import Path
 from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import ModelingRule
-from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData, EventLog, ExpectedOutputs
+from demisto_sdk.commands.test_content.xsiam_tools.test_data import TestData, EventLog
 
 
 app = typer.Typer()
@@ -38,20 +40,22 @@ def init_test_data(
     """
     Initializes a test data file for a modeling rule
     """
-    errors = []
+    errors = False
     mr_content_entities = [ModelingRule(fp.as_posix()) for fp in input]
-    try:
-        for mr_entity in mr_content_entities:
+    for mr_entity in mr_content_entities:
+        try:
             all_mr_entity_fields = set()
             for mr in mr_entity.rules:
                 all_mr_entity_fields = all_mr_entity_fields.union(mr.fields)
 
+            operation_mode = 'create'
             default_event_mapping = dict.fromkeys(all_mr_entity_fields)
             default_dataset = mr_entity.rules[0].dataset
             default_vendor = mr_entity.rules[0].vendor
             default_product = mr_entity.rules[0].product
             test_data_file = mr_entity.testdata_path
             if test_data_file:
+                operation_mode = 'update'
                 printr(f'[cyan]Updating test data file: {test_data_file}[/cyan]')
                 test_data = TestData.parse_file(test_data_file)
                 for event_log in test_data.data:
@@ -61,58 +65,54 @@ def init_test_data(
                         event_log.product = default_product
                     if not event_log.dataset:
                         event_log.dataset = default_dataset
-                for expected in test_data.expected_values:
+                # for expected in test_data.expected_values:
                     new_mapping = default_event_mapping.copy()
 
                     # remove xdm mapping fields that are no longer in the rule
-                    keys_to_remove = []
-                    for key in expected.mapping:
-                        if key not in new_mapping:
-                            keys_to_remove.append(key)
-                    for key in keys_to_remove:
-                        expected.mapping.pop(key)
-                    
-                    new_mapping.update(expected.mapping)
-                    expected.mapping = new_mapping
+                    if event_log.mapping:
+                        keys_to_remove = []
+                        for key in event_log.mapping:
+                            if key not in new_mapping:
+                                keys_to_remove.append(key)
+                        for key in keys_to_remove:
+                            event_log.mapping.pop(key)
+                        new_mapping.update(event_log.mapping)
+
+                    event_log.mapping = new_mapping
 
                 if count > len(test_data.data):
                     # create the missing templated data and add it to the test data
                     templated_event_data_to_add = [
                         EventLog(
-                            vendor=default_vendor, product=default_product, dataset=default_dataset
+                            vendor=default_vendor,
+                            product=default_product,
+                            dataset=default_dataset,
+                            mapping=default_event_mapping.copy()
                         ) for _ in range(count - len(test_data.data))
                     ]
-                    templated_expected_values_to_add = [
-                        ExpectedOutputs(mapping=default_event_mapping) for _ in
-                        range(count - len(test_data.expected_values))
-                    ]
-                    # assign matching ids for test data and expected values for all of the newly created templates
-                    for d, e in zip(templated_event_data_to_add, templated_expected_values_to_add):
-                        e.test_data_event_id = d.test_data_event_id
 
                     test_data.data.extend(templated_event_data_to_add)
-                    test_data.expected_values.extend(templated_expected_values_to_add)
             else:
-                printr(f'[cyan]Creating test data file for: {mr_entity.path}[/cyan]')
+                printr(f'[cyan]Creating test data file for: {mr_entity.path.parent}[/cyan]')
                 test_data = TestData(
                     data=[
                         EventLog(
-                            vendor=default_vendor, product=default_product, dataset=default_dataset
+                            vendor=default_vendor,
+                            product=default_product,
+                            dataset=default_dataset,
+                            mapping=default_event_mapping.copy()
                         ) for _ in range(count)
-                    ],
-                    expected_values=[
-                        ExpectedOutputs(mapping=default_event_mapping) for _ in range(count)
                     ]
                 )
                 test_data_file = mr_entity.path.parent / f'{mr_entity.path.parent.stem}{mr_entity.TESTDATA_FILE_SUFFIX}'
             test_data_file.write_text(test_data.json(indent=4))
-    except Exception as e:
-        errors.append(e)
-    for error in errors:
-        printr(f'[red][bold]Error[/bold]: {error}[/red]')
+            printr(f'[green]Successfully {operation_mode}d {test_data_file}[/green]')
+        except Exception:
+            with StringIO() as sio:
+                traceback.print_exc(file=sio)
+                printr(f'[red]{sio.getvalue()}[/red]')
+            errors = True
     if errors:
-        if debug:
-            raise errors[0]
         typer.Exit(1)
 
 

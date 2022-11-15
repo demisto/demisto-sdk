@@ -1,5 +1,4 @@
-import typer
-from typing import Any, Dict, Optional, List, Union
+import logging
 from pathlib import Path
 from rich import print as printr
 from rich.console import Console, Group
@@ -20,6 +19,9 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 
 
+logger = logging.getLogger('demisto-sdk')
+
+
 custom_theme = Theme({
     "info": "cyan",
     "info_h1": "cyan underline",
@@ -29,7 +31,7 @@ custom_theme = Theme({
     "success": "green",
     "em": "italic"
 })
-console = Console()
+console = Console(theme=custom_theme)
 
 
 app = typer.Typer()
@@ -47,14 +49,16 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> Table:
 
 def verify_results(results: List[dict], test_data: init_test_data.TestData):
     if not len(results):
-        err = ('[error]No results were returned by the query - it\'s possible there is a syntax'
-               ' error with your modeling rule and that it did not install properly on the tenant[/error]')
-        printr(err)
+        err = ('[red]No results were returned by the query - it\'s possible there is a syntax'
+               ' error with your modeling rule and that it did not install properly on the tenant[/red]')
+        logger.error(err, extra={'markup': True})
         raise typer.Exit(1)
     if len(results) != len(test_data.data):
         raise ValueError(f'Expected {len(test_data.data)} results, got {len(results)}')
+    errors = False
     for i, result in enumerate(results):
-        printr(f'\n[cyan underline]Result {i + 1}[/cyan underline]')
+        logger.info(f'\n[cyan underline]Result {i + 1}[/cyan underline]', extra={'markup': True})
+
         # get mapping for the given query result
         td_event_id = result.pop(f'{test_data.data[0].dataset}.test_data_event_id')
         mapping = None
@@ -69,15 +73,30 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
             for key, val in mapping.items():
                 if not val:
                     # TODO: Make this a debugging statement
-                    printr(f'[cyan]No mapping for {key} - skipping checking match[/cyan]')
+                    logger.debug(
+                        f'[cyan]No mapping for {key} - skipping checking match[/cyan]',
+                        extra={'markup': True}
+                    )
                 else:
-                    printr(f'[cyan]Checking for key {key}:\n - expected: {val}\n - received: {result.get(key)}[/cyan]')
-                    assert result.get(key) == val, f'Expected {val} to equal {result.get(key)}'
+                    result_val = result.get(key)
+                    logger.debug(
+                        f'[cyan]Checking for key {key}:\n - expected: {val}\n - received: {result_val}[/cyan]',
+                        extra={'markup': True}
+                    )
+                    if result_val != val:
+                        logger.error(
+                            f'[red][bold]{key}[/bold] --- "{result_val}" != "{val}"[/red]',
+                            extra={'markup': True}
+                        )
+                        errors = True
         else:
-            printr(
-                f'[red]No matching mapping found for test_data_event_id={td_event_id} in test_data {test_data}[/red]'
+            logger.error(
+                f'[red]No matching mapping found for test_data_event_id={td_event_id} in test_data {test_data}[/red]',
+                extra={'markup': True}
             )
-            raise typer.Exit(1)
+            errors = True
+    if errors:
+        raise typer.Exit(1)
 
 
 def generate_xql_query(rule: MRule, test_data_event_ids: List[str]) -> str:
@@ -127,7 +146,7 @@ def get_containing_pack(content_entity: ContentEntity) -> Pack:
 
 
 def verify_pack_exists_on_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule, interactive: bool):
-    printr('[info]Verifying pack installed on tenant[/info]')
+    logger.info('[cyan]Verifying pack installed on tenant[/cyan]', extra={'markup': True})
     identified_pack = get_containing_pack(mr)
     installed_packs = xsiam_client.installed_packs
     found_pack = None
@@ -136,15 +155,15 @@ def verify_pack_exists_on_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule,
             found_pack = pack
             break
     if found_pack:
-        printr(f'[info]Found pack on tenant:\n{found_pack}[/info]')
+        logger.debug(f'[cyan]Found pack on tenant:\n{found_pack}[/cyan]', extra={'markup': True})
     else:
-        printr(f'[error]Pack {identified_pack.id} was not found on tenant[/error]')
+        logger.error(f'[red]Pack {identified_pack.id} was not found on tenant[/red]', extra={'markup': True})
         # TODO: add option to interactively install pack
         # upload_result = 0
         # if interactive:
         #     upload = typer.confirm(f'Would you like to upload {identified_pack.id} to the tenant?')
         #     if upload:
-        #         printr(f'[info_h1]Upload "{identified_pack.id}"[/info_h1]')
+        #         printr(f'[cyan underline]Upload "{identified_pack.id}"[/cyan underline]')
         #         # implement correct invocation of upload command
         #         upload_result = upload_cmd(zip=True, xsiam=True, input=identified_pack.path)
         #         if upload_result != 0:
@@ -162,7 +181,7 @@ def verify_pack_exists_on_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule,
         # if interactive:
         #     upload = typer.confirm(f'Would you like to upload {identified_pack.id} to the tenant?')
         #     if upload:
-        #         printr(f'[info_h1]Upload "{identified_pack.id}"[/info_h1]')
+        #         printr(f'[cyan underline]Upload "{identified_pack.id}"[/cyan underline]')
         #         # implement correct invocation of upload command
         #         # upload_result = upload_cmd(zip=True, xsiam=True, input=identified_pack.path)
         #         try:
@@ -171,7 +190,10 @@ def verify_pack_exists_on_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule,
         #             printr(f'[error]Failed to upload pack {identified_pack.id} to tenant: {err}[/error]')
         #             upload_result = 1
         # if not interactive or not upload_result == 0:
-        printr('[error]Please install or upload the pack to the tenant and try again[/error]')
+        logger.error(
+            '[red]Please install or upload the pack to the tenant and try again[/red]',
+            extra={'markup': True}
+        )
         cmd_group = Group(
             Syntax(f'demisto-sdk upload -z -x -i {identified_pack.path}', "bash"),
             Syntax(f'demisto-sdk modeling-rules test {mr.path.parent}', "bash")
@@ -207,50 +229,104 @@ def validate_modeling_rule(
         xsiam_url: str, api_key: str, auth_id: str, xsiam_token: str, interactive: bool, ctx: typer.Context
 ):
     console.rule("[info]Test Modeling Rule[/info]")
-    printr(f'[info]<<<< {mrule_dir} >>>>[/info]')
+    logger.info(f'[cyan]<<<< {mrule_dir} >>>>[/cyan]', extra={'markup': True})
     mr_entity = ModelingRule(mrule_dir.as_posix())
     execd_cmd = Panel(Syntax(f'{ctx.command_path} {mrule_dir}', "bash"))
     if not mr_entity.testdata_path:
-        printr(f'[warning]No test data file found for {mrule_dir}[/warning]')
+        logger.warning(f'[warning]No test data file found for {mrule_dir}[/warning]', extra={'markup': True})
         if interactive:
             generate = typer.confirm(f'Would you like to generate a test data file for {mrule_dir}?')
             if generate:
-                printr('[info_h1]Generate Test Data File[/info_h1]')
+                logger.info('[cyan underline]Generate Test Data File[/cyan underline]', extra={'markup': True})
                 init_td = app.command()(init_test_data.init_test_data)
                 events_count = typer.prompt(
                     'For how many events would you like to generate templates?', type=int, default=1, show_default=True
                 )
                 init_td([mrule_dir], events_count)
                 if mr_entity.testdata_path:
-                    printr(f'[success]Test data file generated for {mrule_dir}[/success]')
-                    printr(f'[info]Please complete the test data file at {mr_entity.testdata_path} '
-                           'with test event(s) data and expected outputs and then rerun,')
+                    logger.info(
+                        f'[green]Test data file generated for {mrule_dir}[/green]',
+                        extra={'markup': True}
+                    )
+                    logger.info(
+                        f'[cyan]Please complete the test data file at {mr_entity.testdata_path} '
+                        'with test event(s) data and expected outputs and then rerun,[/cyan]',
+                        extra={'markup': True}
+                    )
                     printr(execd_cmd)
                     raise typer.Exit()
                 else:
-                    printr(f'[error]Failed to generate test data file for {mrule_dir}[/error]')
+                    logger.error(
+                        f'[error]Failed to generate test data file for {mrule_dir}[/error]',
+                        extra={'markup': True}
+                    )
                     raise typer.Exit(1)
             else:
-                printr(f'[warning]Skipping test data file generation for {mrule_dir}[/warning]')
-                printr(f'[warning]Please create a test data file for {mrule_dir} and then rerun,[/warning]')
+                logger.warning(
+                    f'[yellow]Skipping test data file generation for {mrule_dir}[/yellow]',
+                    extra={'markup': True}
+                )
+                logger.warning(
+                    f'[yellow]Please create a test data file for {mrule_dir} and then rerun,[/yellow]',
+                    extra={'markup': True}
+                )
                 printr(execd_cmd)
                 raise typer.Abort()
         else:
-            printr(f'[warning]Please create a test data file for {mrule_dir} and then rerun,[/warning]')
+            logger.warning(
+                f'[yellow]Please create a test data file for {mrule_dir} and then rerun,[/yellow]',
+                extra={'markup': True}
+            )
             printr(execd_cmd)
     else:
-        printr(f'[info]Test data file found at {mr_entity.testdata_path}[/info]')
-        printr('[info]Checking that event data was added to the test data file[/info]')
-        missing_event_data = check_test_data_event_data_exists(mr_entity.testdata_path)
-        if missing_event_data:
-            printr('[warning]Event log test data is missing for the following ids:[/warning]')
-            for test_data_event_id in missing_event_data:
-                printr(f'[warning] - {test_data_event_id}[/warning]')
-            printr(f'[info]Please complete the test data file at {mr_entity.testdata_path} '
-                   'with test event(s) data and expected outputs and then rerun,')
-            printr(execd_cmd)
-            raise typer.Exit(1)
-        test_rule(mr_entity, xsiam_url, api_key, auth_id, xsiam_token, interactive)
+        logger.info(f'[cyan]Test data file found at {mr_entity.testdata_path}[/cyan]', extra={'markup': True})
+        logger.info('[cyan]Checking that event data was added to the test data file[/cyan]', extra={'markup': True})
+                logger.warning(
+                    '[yellow]Event log test data is missing for the following ids:[/yellow]',
+                    extra={'markup': True}
+                )
+                for test_data_event_id in missing_event_data:
+                    logger.warning(f'[yellow] - {test_data_event_id}[/yellow]', extra={'markup': True})
+                logger.warning(
+                    f'[yellow]Please complete the test data file at {mr_entity.testdata_path} '
+                    'with test event(s) data and expected outputs and then rerun,[/yellow]',
+                    extra={'markup': True}
+                )
+        else:
+            logger.info(
+                '[cyan]The command flag "--no-push" was passed - skipping pushing of test data[/cyan]',
+                extra={'markup': True}
+            )
+
+
+def setup_logging(verbosity: int, quiet: bool, log_path: Path, log_file_name: str):
+    """Override the default StreamHandler with the RichHandler.
+
+    Setup logging and then override the default StreamHandler with the RichHandler.
+
+    Args:
+        verbosity (int): The log level to output.
+        quiet (bool): If True, no logs will be output.
+        log_path (Path): Path to the directory where the log file will be created.
+        log_file_name (str): The filename of the log file.
+    """
+    from demisto_sdk.commands.common.logger import logging_setup
+    logger = logging_setup(
+        verbose=verbosity,
+        quiet=quiet,
+        log_path=log_path,  # type: ignore[arg-type]
+        log_file_name=log_file_name
+    )
+    console_handler_index = -1
+    for i, h in enumerate(logger.handlers):
+        if h.name == 'console-handler':
+            console_handler_index = i
+    if console_handler_index != -1:
+        logger.handlers[console_handler_index] = RichHandler(
+            rich_tracebacks=True,
+        )
+    else:
+        logger.addHandler(RichHandler(rich_tracebacks=True))
 
 
 # ====================== test-modeling-rule ====================== #
@@ -351,14 +427,9 @@ def test_modeling_rule(
     """
     Test a modeling rule against an XSIAM tenant
     """
-    from demisto_sdk.commands.common.logger import logging_setup
-    logging_setup(
-        verbose=verbosity,
-        quiet=quiet,
-        log_path=log_path,  # type: ignore[arg-type]
-        log_file_name=log_file_name
-    )
-    printr(f'[cyan]modeling rules directories to test: {input}[/cyan]')
+    setup_logging(verbosity, quiet, log_path, log_file_name)
+        
+    logger.info(f'[cyan]modeling rules directories to test: {input}[/cyan]', extra={'markup': True})
     for mrule_dir in input:
         validate_modeling_rule(
             mrule_dir,

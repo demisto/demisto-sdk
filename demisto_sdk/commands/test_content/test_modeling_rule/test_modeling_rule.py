@@ -452,6 +452,24 @@ def tenant_config_cb(ctx: typer.Context, param: typer.CallbackParam, value: Opti
     return value
 
 
+def logs_token_cb(ctx: typer.Context, param: typer.CallbackParam, value: Optional[str]):
+    if ctx.resilient_parsing:
+        return
+    if param.value_is_missing(value):
+        parameter_to_check = 'xsiam_token'
+        if param.name == 'xsiam_token':
+            parameter_to_check = 'collector_token'
+        # check if other token is set
+        other_token = ctx.params.get(parameter_to_check)
+        if not other_token:
+            err_str = (
+                f'One of {param.name} or {parameter_to_check} must be set either via it\'s associated'
+                ' environment variable or passed explicitly when running the command'
+            )
+            raise typer.BadParameter(err_str)
+    return value
+
+
 @app.command(no_args_is_help=True)
 def test_modeling_rule(
     ctx: typer.Context,
@@ -493,7 +511,15 @@ def test_modeling_rule(
         help='The token used to push event logs to XSIAM',
         rich_help_panel='XSIAM Tenant Configuration',
         show_default=False,
-        callback=tenant_config_cb
+        callback=logs_token_cb
+    ),
+    collector_token: Optional[str] = typer.Option(
+        None,
+        envvar='COLLECTOR_TOKEN',
+        help='The token used to push event logs to a custom HTTP Collector',
+        rich_help_panel='XSIAM Tenant Configuration',
+        show_default=False,
+        callback=logs_token_cb
     ),
     verbosity: int = typer.Option(
         0,

@@ -215,18 +215,21 @@ def test_rule(mr: ModelingRule, xsiam_url: str, api_key: str, auth_id: str, xsia
     validate_mappings(xsiam_client, mr, test_data)
 
 
-def check_test_data_event_data_exists(test_data_path: Path) -> List[str]:
-    missing_event_data = []
+def verify_test_data_exists(test_data_path: Path) -> Tuple[List[str], List[str]]:
+    missing_event_data, missing_mapping_data = [], []
     test_data = init_test_data.TestData.parse_file(test_data_path)
     for event_log in test_data.data:
         if not event_log.event_data:
             missing_event_data.append(event_log.test_data_event_id)
-    return missing_event_data
+        if all([val is None for val in event_log.mapping.values()]):
+            missing_mapping_data.append(event_log.test_data_event_id)
+    return missing_event_data, missing_mapping_data
 
 
 def validate_modeling_rule(
         mrule_dir: Path,
-        xsiam_url: str, api_key: str, auth_id: str, xsiam_token: str, interactive: bool, ctx: typer.Context
+        xsiam_url: str, api_key: str, auth_id: str, xsiam_token: str,
+        push: bool, interactive: bool, ctx: typer.Context
 ):
     console.rule("[info]Test Modeling Rule[/info]")
     logger.info(f'[cyan]<<<< {mrule_dir} >>>>[/cyan]', extra={'markup': True})
@@ -281,6 +284,9 @@ def validate_modeling_rule(
     else:
         logger.info(f'[cyan]Test data file found at {mr_entity.testdata_path}[/cyan]', extra={'markup': True})
         logger.info('[cyan]Checking that event data was added to the test data file[/cyan]', extra={'markup': True})
+        missing_event_data, _ = verify_test_data_exists(mr_entity.testdata_path)
+        if push:
+            if missing_event_data:
                 logger.warning(
                     '[yellow]Event log test data is missing for the following ids:[/yellow]',
                     extra={'markup': True}
@@ -292,6 +298,8 @@ def validate_modeling_rule(
                     'with test event(s) data and expected outputs and then rerun,[/yellow]',
                     extra={'markup': True}
                 )
+                printr(execd_cmd)
+                raise typer.Exit(1)
         else:
             logger.info(
                 '[cyan]The command flag "--no-push" was passed - skipping pushing of test data[/cyan]',
@@ -415,6 +423,13 @@ def test_modeling_rule(
         help='The file name (including extension) where log output should be saved to.',
         rich_help_panel='Logging Configuration'
     ),
+    push: bool = typer.Option(
+        True,
+        '--push/--no-push', '-p/-np',
+        help=('In the event that you\'ve already pushed test data and only want to test mappings, you can'
+              'pass "--no-push" to skip pushing the test data.'),
+        rich_help_panel='Interactive Configuration',
+    ),
     interactive: bool = typer.Option(
         True,
         '--interactive/--non-interactive', '-i/-ni',
@@ -435,7 +450,7 @@ def test_modeling_rule(
             mrule_dir,
             xsiam_url, api_key,  # type: ignore[arg-type] since if they are not set to str values an error occurs
             auth_id, xsiam_token,  # type: ignore[arg-type] since if they are not set to str values an error occurs
-            interactive, ctx
+            push, interactive, ctx
         )
 
 

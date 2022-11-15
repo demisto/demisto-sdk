@@ -218,19 +218,6 @@ def verify_pack_exists_on_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule,
         raise typer.Exit(1)
 
 
-def test_rule(mr: ModelingRule, xsiam_url: str, api_key: str, auth_id: str, xsiam_token: str, interactive: bool):
-    # initialize xsiam client
-    xsiam_client_cfg = XsiamApiClientConfig(
-        xsiam_url=xsiam_url, api_key=api_key, auth_id=auth_id, xsiam_token=xsiam_token
-    )
-    xsiam_client = XsiamApiClient(xsiam_client_cfg)
-    verify_pack_exists_on_tenant(xsiam_client, mr, interactive)
-    test_data = init_test_data.TestData.parse_file(mr.testdata_path.as_posix())
-    push_test_data_to_tenant(xsiam_client, mr, test_data)
-    sleep(5)
-    validate_mappings(xsiam_client, mr, test_data)
-
-
 def verify_test_data_exists(test_data_path: Path) -> Tuple[List[str], List[str]]:
     missing_event_data, missing_mapping_data = [], []
     test_data = init_test_data.TestData.parse_file(test_data_path)
@@ -333,7 +320,6 @@ def validate_modeling_rule(
                 extra={'markup': True}
             )
         validate_mappings(xsiam_client, mr_entity, test_data)
-        # test_rule(mr_entity, xsiam_url, api_key, auth_id, xsiam_token, interactive)
 
 
 def setup_logging(verbosity: int, quiet: bool, log_path: Path, log_file_name: str):

@@ -1210,12 +1210,15 @@ class TestRNUpdateUnit:
         """
         from demisto_sdk.commands.update_release_notes.update_rn import \
             UpdateRN
-        image_file_path = "Packs/DNSDB/Integrations/DNSDB_v2/DNSDB_v2_image.png"
+        integration_image_file_path = "Packs/DNSDB/Integrations/DNSDB_v2/DNSDB_v2_image.png"
+        xsiam_image_file_path = "Packs/Dropbox/XSIAMDashboards/DropboxDashboard_image.png"
         description_file_path = "Packs/DNSDB/Integrations/DNSDB_v2/DNSDB_v2_description.md"
         yml_file_path = "Packs/DNSDB/Integrations/DNSDB_v2/DNSDB_v2.yml"
+        json_file_path = "Packs/Dropbox/XSIAMDashboards/DropboxDashboard.json"
 
-        assert yml_file_path == UpdateRN.change_image_or_desc_file_path(image_file_path)
+        assert yml_file_path == UpdateRN.change_image_or_desc_file_path(integration_image_file_path)
         assert yml_file_path == UpdateRN.change_image_or_desc_file_path(description_file_path)
+        assert json_file_path == UpdateRN.change_image_or_desc_file_path(xsiam_image_file_path)
         assert yml_file_path == UpdateRN.change_image_or_desc_file_path(yml_file_path)
 
     def test_update_api_modules_dependents_rn__no_id_set(self, mocker):

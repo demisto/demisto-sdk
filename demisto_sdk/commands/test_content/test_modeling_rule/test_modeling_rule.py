@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 from time import sleep
+import requests
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import typer
@@ -22,6 +23,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.mode
     ModelingRule, MRule)
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data
+from demisto_sdk.commands.test_content.xsiam_tools import xsiam_interface
 from demisto_sdk.commands.test_content.xsiam_tools.xsiam_interface import (
     XsiamApiClient, XsiamApiClientConfig)
 
@@ -147,13 +149,27 @@ def generate_xql_query(rule: MRule, test_data_event_ids: List[str]) -> str:
 def validate_mappings(xsiam_client: XsiamApiClient, mr: ModelingRule, test_data: init_test_data.TestData):
     """Validate the mappings in the given test data file."""
     logger.info('[cyan]Validating mappings...[/cyan]', extra={'markup': True})
+    success = True
     for rule in mr.rules:
         query = generate_xql_query(rule, [str(d.test_data_event_id) for d in test_data.data])
         logger.debug(query)
-        execution_id = xsiam_client.start_xql_query(query)
-        results = xsiam_client.get_xql_query_result(execution_id)
-        verify_results(results, test_data)
-    logger.info('[green]Mappings validated successfully[/green]', extra={'markup': True})
+        try:
+            execution_id = xsiam_client.start_xql_query(query)
+            results = xsiam_client.get_xql_query_result(execution_id)
+            verify_results(results, test_data)
+        except requests.exceptions.HTTPError:
+            logger.error(
+                (
+                    '[red]Error executing XQL query, potential reasons could be:\n - mismatch between '
+                    'dataset/vendor/product marked in the test data from what is in the modeling rule\n'
+                    ' - dataset was not created in the tenant\n - model fields in the query are invalid\n'
+                    'Try manually querying your tenant to discover the exact problem.[/red]'
+                ),
+                extra={'markup': True}
+            )
+            success = False
+    if success:
+        logger.info('[green]Mappings validated successfully[/green]', extra={'markup': True})
 
 
 def push_test_data_to_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule, test_data: init_test_data.TestData):
@@ -379,6 +395,23 @@ def validate_modeling_rule(
         validate_mappings(xsiam_client, mr_entity, test_data)
 
 
+def set_console_stream_handler(logger: logging.Logger, handler: RichHandler = RichHandler(rich_tracebacks=True)):
+    """Set the console stream handler.
+
+    Args:
+        logger (logging.Logger): Logger.
+        handler (RichHandler, optional): RichHandler. Defaults to RichHandler(rich_tracebacks=True).
+    """
+    console_handler_index = -1
+    for i, h in enumerate(logger.handlers):
+        if h.name == 'console-handler':
+            console_handler_index = i
+    if console_handler_index != -1:
+        logger.handlers[console_handler_index] = handler
+    else:
+        logger.addHandler(handler)
+
+
 def setup_logging(verbosity: int, quiet: bool, log_path: Path, log_file_name: str):
     """Override the default StreamHandler with the RichHandler.
 
@@ -397,16 +430,13 @@ def setup_logging(verbosity: int, quiet: bool, log_path: Path, log_file_name: st
         log_path=log_path,  # type: ignore[arg-type]
         log_file_name=log_file_name
     )
-    console_handler_index = -1
-    for i, h in enumerate(logger.handlers):
-        if h.name == 'console-handler':
-            console_handler_index = i
-    if console_handler_index != -1:
-        logger.handlers[console_handler_index] = RichHandler(
-            rich_tracebacks=True,
-        )
-    else:
-        logger.addHandler(RichHandler(rich_tracebacks=True))
+    rich_handler = RichHandler(rich_tracebacks=True)
+    set_console_stream_handler(logger, rich_handler)
+
+    # override XsiamApiClient logger
+    xsiam_logger = logging.getLogger(xsiam_interface.__name__)
+    set_console_stream_handler(xsiam_logger, rich_handler)
+    xsiam_logger.propagate = False
 
 
 # ====================== test-modeling-rule ====================== #

@@ -64,6 +64,17 @@ def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> Table:
 
 
 def verify_results(results: List[dict], test_data: init_test_data.TestData):
+    """Verify that the results of the XQL query match the expected values.
+
+    Args:
+        results (List[dict]): The results of the XQL query.
+        test_data (init_test_data.TestData): The data parsed from the test data file.
+
+    Raises:
+        typer.Exit: If there are no results.
+        ValueError: If the number of results does not match the number of test data events.
+        typer.Exit: If the results do not match the expected values.
+    """
     if not len(results):
         err = ('[red]No results were returned by the query - it\'s possible there is a syntax'
                ' error with your modeling rule and that it did not install properly on the tenant[/red]')
@@ -116,6 +127,15 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
 
 
 def generate_xql_query(rule: MRule, test_data_event_ids: List[str]) -> str:
+    """Generate an XQL query from the given rule and test data event IDs.
+
+    Args:
+        rule (MRule): Rule object parsed from the modeling rule file.
+        test_data_event_ids (List[str]): List of test data event IDs to query.
+
+    Returns:
+        str: The XQL query.
+    """
     fields = ', '.join([f'{f}' for f in rule.fields])
     td_event_ids = ', '.join([f'"{td_event_id}"' for td_event_id in test_data_event_ids])
     query = (f'datamodel dataset in({rule.dataset}) | filter {rule.dataset}.test_data_event_id in({td_event_ids}) '
@@ -125,6 +145,7 @@ def generate_xql_query(rule: MRule, test_data_event_ids: List[str]) -> str:
 
 
 def validate_mappings(xsiam_client: XsiamApiClient, mr: ModelingRule, test_data: init_test_data.TestData):
+    """Validate the mappings in the given test data file."""
     logger.info('[cyan]Validating mappings...[/cyan]', extra={'markup': True})
     for rule in mr.rules:
         query = generate_xql_query(rule, [str(d.test_data_event_id) for d in test_data.data])
@@ -136,6 +157,13 @@ def validate_mappings(xsiam_client: XsiamApiClient, mr: ModelingRule, test_data:
 
 
 def push_test_data_to_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule, test_data: init_test_data.TestData):
+    """Push the test data to the tenant.
+
+    Args:
+        xsiam_client (XsiamApiClient): Xsiam API client.
+        mr (ModelingRule): Modeling rule object parsed from the modeling rule file.
+        test_data (init_test_data.TestData): Test data object parsed from the test data file.
+    """
     events_test_data = [e.event_data for e in test_data.data]
     for i, event_log in enumerate(test_data.data):
         if isinstance(event_log.event_data, dict):
@@ -162,6 +190,13 @@ def get_containing_pack(content_entity: ContentEntity) -> Pack:
 
 
 def verify_pack_exists_on_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule, interactive: bool):
+    """Verify that the pack containing the modeling rule exists on the tenant.
+
+    Args:
+        xsiam_client (XsiamApiClient): Xsiam API client.
+        mr (ModelingRule): Modeling rule object parsed from the modeling rule file.
+        interactive (bool): Whether command is being run in interactive mode.
+    """
     logger.info('[cyan]Verifying pack installed on tenant[/cyan]', extra={'markup': True})
     identified_pack = get_containing_pack(mr)
     installed_packs = xsiam_client.installed_packs
@@ -219,6 +254,16 @@ def verify_pack_exists_on_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule,
 
 
 def verify_test_data_exists(test_data_path: Path) -> Tuple[List[str], List[str]]:
+    """Verify that the test data file exists and is valid.
+
+    Args:
+        test_data_path (Path): Path to the test data file.
+
+    Returns:
+        Tuple[List[str], List[str]]: Tuple of lists where the first list is test event
+            ids that do not have example event data, and the second list is test event
+            ids that do not have mappings to check.
+    """
     missing_event_data, missing_mapping_data = [], []
     test_data = init_test_data.TestData.parse_file(test_data_path)
     for event_log in test_data.data:
@@ -234,6 +279,18 @@ def validate_modeling_rule(
         xsiam_url: str, api_key: str, auth_id: str, xsiam_token: str,
         push: bool, interactive: bool, ctx: typer.Context
 ):
+    """Validate a modeling rule.
+
+    Args:
+        mrule_dir (Path): Path to the modeling rule directory.
+        xsiam_url (str): URL of the xsiam tenant.
+        api_key (str): xsiam API key.
+        auth_id (str): xsiam auth ID.
+        xsiam_token (str): xsiam token.
+        push (bool): Whether to push test event data to the tenant.
+        interactive (bool): Whether command is being run in interactive mode.
+        ctx (typer.Context): Typer context.
+    """
     console.rule("[info]Test Modeling Rule[/info]")
     logger.info(f'[cyan]<<<< {mrule_dir} >>>>[/cyan]', extra={'markup': True})
     mr_entity = ModelingRule(mrule_dir.as_posix())

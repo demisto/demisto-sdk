@@ -1,22 +1,29 @@
 import logging
 from pathlib import Path
+from time import sleep
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import typer
 from rich import print as printr
 from rich.console import Console, Group
-from rich.syntax import Syntax
+from rich.logging import RichHandler
 from rich.panel import Panel
+from rich.syntax import Syntax
 from rich.table import Table
 from rich.theme import Theme
-from time import sleep
-from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import ModelingRule, MRule
-from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data
-from demisto_sdk.commands.test_content.xsiam_tools.xsiam_interface import XsiamApiClient, XsiamApiClientConfig
-from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
-    YAMLContentObject
+
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.json_content_object import \
     JSONContentObject
+from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
+    YAMLContentObject
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_unify_content_object import \
     YAMLContentUnifiedObject
+from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (
+    ModelingRule, MRule)
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
+from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data
+from demisto_sdk.commands.test_content.xsiam_tools.xsiam_interface import (
+    XsiamApiClient, XsiamApiClientConfig)
 
 
 logger = logging.getLogger('demisto-sdk')
@@ -41,6 +48,15 @@ ContentEntity = Union[YAMLContentUnifiedObject, YAMLContentObject, JSONContentOb
 
 
 def create_table(expected: Dict[str, Any], received: Dict[str, Any]) -> Table:
+    """Create a table to display the expected and received values.
+
+    Args:
+        expected (Dict[str, Any]): mapping of keys to expected values
+        received (Dict[str, Any]): mapping of keys to received values
+
+    Returns:
+        Table: Table object to display the expected and received values.
+    """
     table = Table('Model Field', 'Expected Value', 'Received Value')
     for key, val in expected.items():
         table.add_row(key, str(val), str(received.get(key)))
@@ -109,14 +125,14 @@ def generate_xql_query(rule: MRule, test_data_event_ids: List[str]) -> str:
 
 
 def validate_mappings(xsiam_client: XsiamApiClient, mr: ModelingRule, test_data: init_test_data.TestData):
-    with console.status('[info]Validating mappings...[/info]'):
-        for rule in mr.rules:
-            query = generate_xql_query(rule, [str(d.test_data_event_id) for d in test_data.data])
-            console.log(query)
-            execution_id = xsiam_client.start_xql_query(query)
-            results = xsiam_client.get_xql_query_result(execution_id)
-            verify_results(results, test_data)
-    console.print('[green]Mappings validated successfully[/green]')
+    logger.info('[cyan]Validating mappings...[/cyan]', extra={'markup': True})
+    for rule in mr.rules:
+        query = generate_xql_query(rule, [str(d.test_data_event_id) for d in test_data.data])
+        logger.debug(query)
+        execution_id = xsiam_client.start_xql_query(query)
+        results = xsiam_client.get_xql_query_result(execution_id)
+        verify_results(results, test_data)
+    logger.info('[green]Mappings validated successfully[/green]', extra={'markup': True})
 
 
 def push_test_data_to_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule, test_data: init_test_data.TestData):
@@ -125,9 +141,9 @@ def push_test_data_to_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule, tes
         if isinstance(event_log.event_data, dict):
             events_test_data[i] = {**event_log.event_data, "test_data_event_id": str(event_log.test_data_event_id)}
     # printr(events_test_data)
-    console.print('[info]Pushing test data to tenant...[/info]')
+    logger.info('[cyan]Pushing test data to tenant...[/cyan]', extra={'markup': True})
     xsiam_client.add_create_dataset(events_test_data, mr.rules[0].vendor, mr.rules[0].product)
-    console.print('[success]Test data pushed successfully[/success]')
+    logger.info('[green]Test data pushed successfully[/green]', extra={'markup': True})
 
 
 def get_containing_pack(content_entity: ContentEntity) -> Pack:
@@ -285,6 +301,15 @@ def validate_modeling_rule(
         logger.info(f'[cyan]Test data file found at {mr_entity.testdata_path}[/cyan]', extra={'markup': True})
         logger.info('[cyan]Checking that event data was added to the test data file[/cyan]', extra={'markup': True})
         missing_event_data, _ = verify_test_data_exists(mr_entity.testdata_path)
+
+        # initialize xsiam client
+        xsiam_client_cfg = XsiamApiClientConfig(
+            xsiam_url=xsiam_url, api_key=api_key, auth_id=auth_id, xsiam_token=xsiam_token
+        )
+        xsiam_client = XsiamApiClient(xsiam_client_cfg)
+        verify_pack_exists_on_tenant(xsiam_client, mr_entity, interactive)
+        test_data = init_test_data.TestData.parse_file(mr_entity.testdata_path.as_posix())
+
         if push:
             if missing_event_data:
                 logger.warning(
@@ -300,11 +325,15 @@ def validate_modeling_rule(
                 )
                 printr(execd_cmd)
                 raise typer.Exit(1)
+            push_test_data_to_tenant(xsiam_client, mr_entity, test_data)
+            sleep(5)
         else:
             logger.info(
                 '[cyan]The command flag "--no-push" was passed - skipping pushing of test data[/cyan]',
                 extra={'markup': True}
             )
+        validate_mappings(xsiam_client, mr_entity, test_data)
+        # test_rule(mr_entity, xsiam_url, api_key, auth_id, xsiam_token, interactive)
 
 
 def setup_logging(verbosity: int, quiet: bool, log_path: Path, log_file_name: str):

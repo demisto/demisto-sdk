@@ -404,7 +404,7 @@ def test_modeling_rule(
         rich_help_panel='Logging Configuration'
     ),
     quiet: bool = typer.Option(
-        True,
+        False,
         help='Quiet output, only output results in the end.',
         rich_help_panel='Logging Configuration',
     ),

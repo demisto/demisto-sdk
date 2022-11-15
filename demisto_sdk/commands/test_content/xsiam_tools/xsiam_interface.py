@@ -144,13 +144,13 @@ class XsiamApiClient(XsiamApiInterface):
     def copy_packs(self, *args, **kwargs):
         pass
 
-    def add_create_dataset(self, data: List[Dict[str, Any]], product: str, vendor: str, data_format: str = 'json'):
+    def add_create_dataset(self, data: List[Dict[str, Any]], vendor: str, product: str, data_format: str = 'json'):
         endpoint = urljoin(self.base_url, 'logs/v1/xsiam')
         additional_headers = {
             'authorization': self.xsiam_token,
             'format': data_format,
-            'product': 'anar',
-            'vendor': 'avidan',
+            'product': product,
+            'vendor': vendor,
             'content-encoding': 'gzip'
         }
         formatted_data = '\n'.join([json.dumps(d) for d in data])

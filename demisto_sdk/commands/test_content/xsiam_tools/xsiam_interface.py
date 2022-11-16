@@ -12,6 +12,9 @@ from typing import Any, Dict, List
 import requests
 
 
+logger = logging.getLogger(__name__)
+
+
 class XsiamApiClientConfig(BaseModel):
     xsiam_url: HttpUrl = Field(default=os.getenv('DEMISTO_BASE_URL'), description="XSIAM URL")
     api_key: SecretStr = Field(default=SecretStr(os.getenv('DEMISTO_API_KEY', '')), description="XSIAM API Key")
@@ -93,7 +96,7 @@ class XsiamApiClient(XsiamApiInterface):
         endpoint = urljoin(self.base_url, f'xsoar/contentpacks/marketplace/{pack_id}')
         response = self.session.get(endpoint)
         response.raise_for_status()
-        logging.debug(f'Found pack "{pack_id}" in bucket!')
+        logger.debug(f'Found pack "{pack_id}" in bucket!')
         data = response.json()
         pack_data = {
             'id': data.get('id'),
@@ -130,16 +133,16 @@ class XsiamApiClient(XsiamApiInterface):
                     'CurrentVersion': pack.get('currentVersion')
                 } for pack in response_data
             ]
-            logging.success(f'Packs were successfully installed on server {self.base_url}')
-            logging.debug(f'The packs that were successfully installed on server {self.base_url}:\n{packs_data}')
+            logger.info(f'Packs were successfully installed on server {self.base_url}')
+            logger.debug(f'The packs that were successfully installed on server {self.base_url}:\n{packs_data}')
         elif response.status_code == 204:
-            logging.success(f'Packs were successfully installed on server {self.base_url}')
+            logger.info(f'Packs were successfully installed on server {self.base_url}')
 
     def sync_marketplace(self):
         endpoint = urljoin(self.base_url, 'xsoar/contentpacks/marketplace/sync')
         response = self.session.post(endpoint)
         response.raise_for_status()
-        logging.info(f'Marketplace was successfully synced on server {self.base_url}')
+        logger.info(f'Marketplace was successfully synced on server {self.base_url}')
 
     def copy_packs(self, *args, **kwargs):
         pass
@@ -175,7 +178,7 @@ class XsiamApiClient(XsiamApiInterface):
             }
         }
         endpoint = urljoin(self.base_url, 'public_api/v1/xql/start_xql_query/')
-        logging.info(f'Starting xql query:\nendpoint={endpoint}\n{query=}')
+        logger.info(f'Starting xql query:\nendpoint={endpoint}\n{query=}')
         response = self.session.post(endpoint, json=body)
         data = response.json()
 
@@ -183,7 +186,7 @@ class XsiamApiClient(XsiamApiInterface):
             execution_id: str = data.get('reply', '')
             return execution_id
         else:
-            logging.error(
+            logger.error(
                 f'Failed to start xql query "{query}" - with status code {response.status_code}\n{pformat(data)}'
             )
             response.raise_for_status()
@@ -198,10 +201,10 @@ class XsiamApiClient(XsiamApiInterface):
             }
         })
         endpoint = urljoin(self.base_url, 'public_api/v1/xql/get_query_results/')
-        logging.info(f'Getting xql query results: endpoint={endpoint}')
+        logger.info(f'Getting xql query results: endpoint={endpoint}')
         response = self.session.post(endpoint, data=payload)
         data = response.json()
-        logging.debug(pformat(data))
+        logger.debug(pformat(data))
 
         if 200 <= response.status_code < 300 and data.get('reply', {}).get('status', '') == 'SUCCESS':
             reply_results_data = data.get('reply', {}).get('results', {}).get('data', [])
@@ -209,5 +212,5 @@ class XsiamApiClient(XsiamApiInterface):
         else:
             err_msg = (f'Failed to get xql query results for execution_id "{execution_id}"'
                        f' - with status code {response.status_code}\n{pformat(data)}')
-            logging.error(err_msg)
+            logger.error(err_msg)
             response.raise_for_status()

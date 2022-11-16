@@ -96,9 +96,9 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
                 expected_values = e.expected_values
                 break
 
-        printr(create_table(expected_values, result))
-
         if expected_values:
+            printr(create_table(expected_values, result))
+
             for key, val in expected_values.items():
                 if not val:
                     # TODO: Make this a debugging statement
@@ -571,14 +571,15 @@ def test_modeling_rule(
     xsiam_logger = logging.getLogger(xsiam_interface.__name__)
     set_console_stream_handler(xsiam_logger)
     xsiam_logger.propagate = False
-        
+
     logger.info(f'[cyan]modeling rules directories to test: {input}[/cyan]', extra={'markup': True})
     for mrule_dir in input:
         validate_modeling_rule(
             mrule_dir,
-            xsiam_url, api_key,  # type: ignore[arg-type] since if they are not set to str values an error occurs
-            auth_id, xsiam_token,  # type: ignore[arg-type] since if they are not set to str values an error occurs
-            collector_token,  # type: ignore[arg-type] since if they are not set to str values an error occurs
+            # can ignore the types since if they are not set to str values an error occurs
+            xsiam_url, api_key,  # type: ignore[arg-type]
+            auth_id, xsiam_token,  # type: ignore[arg-type]
+            collector_token,  # type: ignore[arg-type]
             push, interactive, ctx
         )
 

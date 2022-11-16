@@ -2,7 +2,7 @@ import logging
 import traceback
 from io import StringIO
 from pathlib import Path
-from typing import List
+from typing import List, Set
 
 import typer
 
@@ -73,7 +73,7 @@ def init_test_data(
     mr_content_entities = [ModelingRule(fp.as_posix()) for fp in input]
     for mr_entity in mr_content_entities:
         try:
-            all_mr_entity_fields = set()
+            all_mr_entity_fields: Set[str] = set()
             for mr in mr_entity.rules:
                 all_mr_entity_fields = all_mr_entity_fields.union(mr.fields)
 

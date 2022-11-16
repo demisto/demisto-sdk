@@ -22,7 +22,8 @@ from demisto_sdk.commands.common.tools import (find_type, get_last_remote_releas
                                                is_external_repository, print_error, print_success, print_warning)
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import Neo4jContentGraphInterface
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
-from demisto_sdk.commands.test_content.test_modeling_rule import test_modeling_rule, init_test_data
+from demisto_sdk.commands.test_content.test_modeling_rule import (
+    init_test_data, test_modeling_rule)
 
 json = JSON_Handler()
 

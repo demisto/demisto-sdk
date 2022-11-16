@@ -65,15 +65,15 @@ class XsiamApiInterface(ABC):
         pass
 
     @abstractmethod
-    def add_create_dataset(self, *args, **kwargs):
+    def add_create_dataset(self, data: List[Dict[str, Any]], vendor: str, product: str, data_format: str = 'json'):
         pass
 
     @abstractmethod
-    def start_xql_query(self, *args, **kwargs):
+    def start_xql_query(self, query: str):
         pass
 
     @abstractmethod
-    def get_xql_query_result(self, *args, **kwargs):
+    def get_xql_query_result(self, execution_id: str):
         pass
 
 

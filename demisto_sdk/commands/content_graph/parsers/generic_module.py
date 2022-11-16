@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List
+from typing import List, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -17,5 +17,5 @@ class GenericModuleParser(
         self.definition_ids = self.json_data.get("definitionIds")
 
     @property
-    def marketplaces(self) -> List[MarketplaceVersions]:
-        return [MarketplaceVersions.XSOAR]
+    def supported_marketplaces(self) -> Set[MarketplaceVersions]:
+        return {MarketplaceVersions.XSOAR}

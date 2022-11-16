@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -22,6 +22,10 @@ class IndicatorTypeParser(
     @property
     def name(self) -> Optional[str]:
         return self.json_data.get("details")
+
+    @property
+    def supported_marketplaces(self) -> Set[MarketplaceVersions]:
+        return {MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2}
 
     @property
     def description(self) -> Optional[str]:

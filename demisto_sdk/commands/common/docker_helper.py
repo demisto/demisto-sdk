@@ -10,7 +10,6 @@ import docker
 from docker.types import Mount
 
 from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON
-from demisto_sdk.tests.constants_test import LINT_RESOURCES
 
 DOCKER_CLIENT = None
 logger = logging.getLogger('demisto-sdk')
@@ -65,7 +64,7 @@ class DockerBase:
     def __init__(self):
         self.tmp_dir_name = tempfile.TemporaryDirectory(prefix=os.path.join(os.getcwd(), 'tmp'))
         self.tmp_dir = Path(self.tmp_dir_name.name)
-        installation_scripts = Path(LINT_RESOURCES)
+        installation_scripts = Path(__file__).parent.parent / 'lint' / 'resources' / 'installation_scripts'
         self.installation_scripts = {
             TYPE_PYTHON: installation_scripts / 'python_image.sh',
             TYPE_PWSH: installation_scripts / 'powershell_image.sh',

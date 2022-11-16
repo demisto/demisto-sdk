@@ -172,6 +172,36 @@ def validate_mappings(xsiam_client: XsiamApiClient, mr: ModelingRule, test_data:
         logger.info('[green]Mappings validated successfully[/green]', extra={'markup': True})
 
 
+def check_dataset_exists(xsiam_client: XsiamApiClient, test_data: init_test_data.TestData, timeout: int = 60, interval: int = 5):
+    """Check if the dataset in the test data file exists in the tenant.
+
+    Args:
+        xsiam_client (XsiamApiClient): Xsiam API client.
+        test_data (init_test_data.TestData): The data parsed from the test data file.
+        timeout (int, optional): The number of seconds to wait for the dataset to exist. Defaults to 60.
+        interval (int, optional): The number of seconds to wait between checking for the dataset. Defaults to 5.
+
+    Raises:
+        typer.Exit: If the dataset does not exist after the timeout.
+    """
+    dataset = test_data.data[0].dataset
+    logger.info(f'[cyan]Checking if dataset "{dataset}" exists on the tenant...[/cyan]', extra={'markup': True})
+    query = f'dataset = {dataset}'
+    for i in range(timeout // interval):
+        logger.debug(f'Check #{i+1}...')
+        try:
+            execution_id = xsiam_client.start_xql_query(query)
+            results = xsiam_client.get_xql_query_result(execution_id)
+            if results:
+                logger.info(f'[green]Dataset {dataset} exists[/green]', extra={'markup': True})
+                return
+        except requests.exceptions.HTTPError:
+            pass
+        sleep(interval)
+    logger.error(f'[red]Dataset {dataset} does not exist[/red]', extra={'markup': True})
+    raise typer.Exit(1)
+
+
 def push_test_data_to_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule, test_data: init_test_data.TestData):
     """Push the test data to the tenant.
 
@@ -324,7 +354,7 @@ def validate_modeling_rule(
     mr_entity = ModelingRule(mrule_dir.as_posix())
     execd_cmd = Panel(Syntax(f'{ctx.command_path} {mrule_dir}', "bash"))
     if not mr_entity.testdata_path:
-        logger.warning(f'[warning]No test data file found for {mrule_dir}[/warning]', extra={'markup': True})
+        logger.warning(f'[yellow]No test data file found for {mrule_dir}[/yellow]', extra={'markup': True})
         if interactive:
             generate = typer.confirm(f'Would you like to generate a test data file for {mrule_dir}?')
             if generate:
@@ -348,7 +378,7 @@ def validate_modeling_rule(
                     raise typer.Exit()
                 else:
                     logger.error(
-                        f'[error]Failed to generate test data file for {mrule_dir}[/error]',
+                        f'[red]Failed to generate test data file for {mrule_dir}[/red]',
                         extra={'markup': True}
                     )
                     raise typer.Exit(1)
@@ -398,7 +428,7 @@ def validate_modeling_rule(
                 printr(execd_cmd)
                 raise typer.Exit(1)
             push_test_data_to_tenant(xsiam_client, mr_entity, test_data)
-            sleep(5)
+            check_dataset_exists(xsiam_client, test_data, timeout=60, interval=5)
         else:
             logger.info(
                 '[cyan]The command flag "--no-push" was passed - skipping pushing of test data[/cyan]',

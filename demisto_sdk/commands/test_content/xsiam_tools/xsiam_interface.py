@@ -1,16 +1,16 @@
-from abc import ABC, abstractmethod
 import gzip
 import json
 import logging
 import os
-from pprint import pformat
-from urllib.parse import urljoin
+from abc import ABC, abstractmethod
 from pathlib import Path
-from pydantic import BaseModel, Field, SecretStr, validator, HttpUrl
-from pydantic.fields import ModelField
+from pprint import pformat
 from typing import Any, Dict, List, Optional
-import requests
+from urllib.parse import urljoin
 
+import requests
+from pydantic import BaseModel, Field, HttpUrl, SecretStr, validator
+from pydantic.fields import ModelField
 
 logger = logging.getLogger(__name__)
 

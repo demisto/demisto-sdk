@@ -91,7 +91,7 @@ class MRule:
     def vendor(self):
         if not self._vendor:
             try:
-                self.vendor, self.product = self.dataset.split('_')[:2]
+                self.vendor = self.dataset.split('_')[0]
             except ValueError:
                 pass
         return self._vendor
@@ -104,7 +104,9 @@ class MRule:
     def product(self):
         if not self._product:
             try:
-                self.vendor, self.product = self.dataset.split('_')[:2]
+                splitted_dataset = self.dataset.split('_')[1:]
+                splitted_dataset.remove('raw')
+                self.product = '_'.join(splitted_dataset)
             except ValueError:
                 pass
         return self._product

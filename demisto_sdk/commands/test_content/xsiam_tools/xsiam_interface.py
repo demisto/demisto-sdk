@@ -20,14 +20,28 @@ class XsiamApiClientConfig(BaseModel):
     api_key: SecretStr = Field(default=SecretStr(os.getenv('DEMISTO_API_KEY', '')), description="XSIAM API Key")
     auth_id: str = Field(default=os.getenv('XSIAM_AUTH_ID'), description="XSIAM Auth ID")
     xsiam_token: SecretStr = Field(default=SecretStr(os.getenv('XSIAM_TOKEN', '')), description="XSIAM Token")
+    collector_token: SecretStr = Field(default=SecretStr(os.getenv('COLLECTOR_TOKEN', '')),
+                                       description="XSIAM Collector Token")
 
-    @validator('*', always=True)
+    @validator('xsiam_url', 'api_key', 'auth_id', always=True)
     def validate_client_config(cls, v, field: ModelField):
         if not v:
             raise ValueError(
                 f"XSIAM client configuration is not complete: value was not passed for {field.name} and"
                 f" the associated environment variable for {field.name} is not set"
             )
+        return v
+
+    @validator('collector_token', always=True)
+    def validate_client_config_token(cls, v, values, field: ModelField):
+        if not v:
+            other_token_name = 'xsiam_token'
+            if not values.get(other_token_name):
+                raise ValueError(
+                    f"XSIAM client configuration is not complete: you must set one of \"{field.name}\" or "
+                    f"\"{other_token_name}\" either explicitly on the command line or via their associated "
+                    "environment variables"
+                )
         return v
 
 

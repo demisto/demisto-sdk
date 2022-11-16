@@ -55,7 +55,7 @@ class JSONContentItemParser(ContentItemParser):
         if file_marketplaces := [
             MarketplaceVersions(mp) for mp in self.json_data.get("marketplaces", [])
         ]:
-            return sorted(file_marketplaces)
+            return file_marketplaces
         return sorted(set(self.pack_marketplaces) & self.supported_marketplaces)
 
     def get_json(self) -> Dict[str, Any]:

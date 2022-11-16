@@ -37,7 +37,7 @@ class Content:
         TODO:
             1. Add attribute which init only changed objects by git.
         """
-        self._path = Path(path)
+        self._path = Path(path)  # type: ignore
 
     @classmethod
     def from_cwd(cls) -> Content:
@@ -52,7 +52,7 @@ class Content:
         """
         repo = cls.git()
         if repo:
-            content = Content(repo.working_tree_dir)
+            content = Content(repo.working_tree_dir)  # type: ignore
         else:
             content = Content(Path.cwd())
 

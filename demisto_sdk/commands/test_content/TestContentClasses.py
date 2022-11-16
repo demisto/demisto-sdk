@@ -853,7 +853,7 @@ class BuildContext:
             user_name = os.getenv('GITLAB_USER_LOGIN') or self._get_user_name_from_circle()
             res = self.slack_client.api_call('users.list')
 
-            user_list = res.get('members', [])
+            user_list = res.get('members', [])  # type: ignore
             for user in user_list:
                 profile = user.get('profile', {})
                 name = profile.get('real_name_normalized', '')

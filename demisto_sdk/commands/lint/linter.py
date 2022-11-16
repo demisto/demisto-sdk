@@ -5,7 +5,7 @@ import logging
 import os
 import platform
 import traceback
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 import docker
 import docker.errors
@@ -112,13 +112,13 @@ class Linter:
             "warning_code": SUCCESS,
         }
         self._pack_name = None
-        yml_file: Optional[Path] = self._pack_abs_dir.glob([r'*.yaml', r'*.yml', r'!*unified*.yml'], flags=NEGATE)
+        yml_file = self._pack_abs_dir.glob([r'*.yaml', r'*.yml', r'!*unified*.yml'], flags=NEGATE)
         if not yml_file:
             logger.info(f"{self._pack_abs_dir} - Skipping no yaml file found {yml_file}")
             self._pkg_lint_status["errors"].append('Unable to find yml file in package')
         else:
             try:
-                self._yml_file = next(yml_file)
+                self._yml_file = next(yml_file)  # type: ignore
                 self._pack_name = self._yml_file.stem
             except StopIteration:
                 logger.info(f"{self._pack_abs_dir} - Skipping no yaml file found {yml_file}")
@@ -249,8 +249,9 @@ class Linter:
                         self._facts["python_version"] = py_num
 
                 # Checking whatever *test* exists in package
-                self._facts["test"] = True if next(self._pack_abs_dir.glob([r'test_*.py', r'*_test.py']),
-                                                   None) else False
+                self._facts["test"] = True if next(
+                    self._pack_abs_dir.glob([r'test_*.py', r'*_test.py']), None  # type: ignore
+                ) else False
                 if self._facts["test"]:
                     logger.info(f"{log_prompt} - Tests found")
                 else:
@@ -284,10 +285,10 @@ class Linter:
         if 'commonserver' in self._pack_abs_dir.name.lower():
             # Powershell
             if self._pkg_lint_status["pack_type"] == TYPE_PWSH:
-                self._facts["lint_files"] = [Path(self._pack_abs_dir / 'CommonServerPowerShell.ps1')]
+                self._facts["lint_files"] = [Path(self._pack_abs_dir / 'CommonServerPowerShell.ps1')]  # type: ignore
             # Python
             elif self._pkg_lint_status["pack_type"] == TYPE_PYTHON:
-                self._facts["lint_files"] = [Path(self._pack_abs_dir / 'CommonServerPython.py')]
+                self._facts["lint_files"] = [Path(self._pack_abs_dir / 'CommonServerPython.py')]  # type: ignore
         else:
             test_modules = {self._pack_abs_dir / module.name for module in modules.keys()}
             lint_files = lint_files.difference(test_modules)
@@ -368,7 +369,9 @@ class Linter:
                 elif lint_check == "bandit" and not no_bandit:
                     exit_code, output = self._run_bandit(lint_files=self._facts["lint_files"])
 
-                elif lint_check == "mypy" and not no_mypy and parse(self._facts['python_version']).major >= 3:
+                elif lint_check == "mypy" and not no_mypy and parse(
+                    self._facts['python_version']
+                ).major >= 3:  # type: ignore
                     # mypy does not support python2 now
                     exit_code, output = self._run_mypy(py_num=self._facts["python_version"],
                                                        lint_files=self._facts["lint_files"])
@@ -416,7 +419,7 @@ class Linter:
             if self._facts['is_long_running']:
                 myenv['LONGRUNNING'] = 'True'
 
-            py_ver = parse(py_num).major
+            py_ver = parse(py_num).major  # type: ignore
             if py_ver < 3:
                 myenv['PY2'] = 'True'
             myenv['is_script'] = str(self._facts['is_script'])
@@ -425,7 +428,9 @@ class Linter:
             myenv['commands'] = ','.join([str(elem) for elem in self._facts['commands']]) \
                 if self._facts['commands'] else ''
             stdout, stderr, exit_code = run_command_os(
-                command=build_xsoar_linter_command(lint_files, self._facts.get('support_level', 'base')),
+                command=build_xsoar_linter_command(
+                    lint_files, self._facts.get('support_level', 'base')  # type: ignore
+                ),
                 cwd=self._pack_abs_dir, env=myenv)
         if exit_code & FAIL_PYLINT:
             logger.error(f"{log_prompt} - Finished, errors found")
@@ -469,7 +474,7 @@ class Linter:
         """
         log_prompt = f"{self._pack_name} - Bandit"
         logger.info(f"{log_prompt} - Start")
-        stdout, stderr, exit_code = run_command_os(command=build_bandit_command(lint_files),
+        stdout, stderr, exit_code = run_command_os(command=build_bandit_command(lint_files),  # type: ignore
                                                    cwd=self._pack_abs_dir)
         logger.debug(f"{log_prompt} - Finished, exit-code: {exit_code}")
         logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
@@ -499,8 +504,10 @@ class Linter:
         """
         log_prompt = f"{self._pack_name} - Mypy"
         logger.info(f"{log_prompt} - Start")
-        with add_typing_module(lint_files=lint_files, python_version=py_num):
-            mypy_command = build_mypy_command(files=lint_files, version=py_num, content_repo=self._content_repo)
+        with add_typing_module(lint_files=lint_files, python_version=py_num):  # type: ignore
+            mypy_command = build_mypy_command(
+                files=lint_files, version=py_num, content_repo=self._content_repo  # type: ignore
+            )
             stdout, stderr, exit_code = run_command_os(command=mypy_command, cwd=self._pack_abs_dir)
         logger.debug(f"{log_prompt} - Finished, exit-code: {exit_code}")
         logger.debug(f"{log_prompt} - Finished, stdout: {RL if stdout else ''}{stdout}")
@@ -649,7 +656,7 @@ class Linter:
         requirements = []
 
         if docker_base_image[1] != -1:
-            py_ver = parse(docker_base_image[1]).major
+            py_ver = parse(docker_base_image[1]).major  # type: ignore
             if py_ver == 2:
                 requirements = self._req_2
             elif py_ver == 3:

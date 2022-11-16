@@ -540,7 +540,7 @@ class TestScriptValidator:
     ]
 
     @pytest.mark.parametrize("current, answer", DEPRECATED_INPUTS)
-    def test_is_valid_deprecated_script(self, current, answer):
+    def test_is_valid_deprecated_script_comment(self, current, answer):
         """
         Given
             1. A deprecated script with a valid description according to 'deprecated regex' (including the replacement
@@ -556,13 +556,13 @@ class TestScriptValidator:
                (Includes the reason for deprecation, but doesn't include a replacement script name,
                or declare there isn't a replacement).
         When
-            - running is_valid_as_deprecated.
+            - running is_valid_deprecated_script_comment.
 
         Then
             - a script with an invalid description will be errored.
         """
         validator = get_validator(current_file=current)
-        assert validator.is_valid_as_deprecated() is answer
+        assert validator.is_valid_deprecated_script_comment() is answer
 
     def test_name_contains_the_type(self, pack):
         """

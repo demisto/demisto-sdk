@@ -79,7 +79,6 @@ class ScriptValidator(ContentEntityValidator):
             self.is_there_separators_in_names(),
             self.name_not_contain_the_type(),
             self.runas_is_not_dbtrole(),
-            self.is_script_deprecated_and_used(),
         ])
         # check only on added files
         if not self.old_file:
@@ -269,8 +268,16 @@ class ScriptValidator(ContentEntityValidator):
 
         return True
 
+    def is_valid_as_deprecated(self):
+        """Check if the integration is valid as a deprecated integration."""
+        answers = [
+            self.is_valid_deprecated_script_comment(),
+            self.is_script_deprecated_and_used()
+        ]
+        return all(answers)
+
     @error_codes('SC101')
-    def is_valid_as_deprecated(self) -> bool:
+    def is_valid_deprecated_script_comment(self) -> bool:
         is_valid = True
         is_deprecated = self.current_file.get('deprecated', False)
         comment = self.current_file.get('comment', '')

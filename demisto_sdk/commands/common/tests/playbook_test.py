@@ -569,7 +569,7 @@ class TestPlaybookValidator:
         validator._is_correct_value_references_interface() is expected_result
 
     @pytest.mark.parametrize("current, answer", DEPRECATED_INPUTS)
-    def test_is_valid_deprecated_playbook(self, current, answer):
+    def test_is_valid_deprecated_playbook_description(self, current, answer):
         """
         Given
             1. A deprecated playbook with a valid description according to 'deprecated regex' (including the replacement
@@ -585,7 +585,7 @@ class TestPlaybookValidator:
                (Includes the reason for deprecation, but doesn't include a replacement playbook name,
                or declare there isn't a replacement).
         When
-            - running is_valid_as_deprecated.
+            - running is_valid_deprecated_playbook_description.
 
         Then
             - a playbook with an invalid description will be errored.
@@ -593,7 +593,7 @@ class TestPlaybookValidator:
         structure = mock_structure("", current)
         validator = PlaybookValidator(structure)
         validator.current_file = current
-        assert validator.is_valid_as_deprecated() is answer
+        assert validator.is_valid_deprecated_playbook_description() is answer
 
     @pytest.mark.parametrize("playbook_json, expected_result", [(CONDITIONAL_SCRPT_WITH_NO_DFLT_NXT_TASK, True)])
     def test_verify_all_conditional_tasks_has_else_path(self, playbook_json, expected_result):

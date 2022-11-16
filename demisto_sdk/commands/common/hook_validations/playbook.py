@@ -56,7 +56,6 @@ class PlaybookValidator(ContentEntityValidator):
             self.name_not_contain_the_type(),
             self.is_valid_with_indicators_input(),
             self.inputs_in_use_check(is_modified),
-            self.is_playbook_deprecated_and_used(),
         ]
         answers = all(playbook_checks)
 
@@ -353,8 +352,15 @@ class PlaybookValidator(ContentEntityValidator):
 
         return tasks_bucket.issubset(next_tasks_bucket)
 
-    @error_codes('PB104')
     def is_valid_as_deprecated(self) -> bool:
+        answers = [
+            self.is_valid_deprecated_playbook_description(),
+            self.is_playbook_deprecated_and_used()
+        ]
+        return all(answers)
+
+    @error_codes('PB104')
+    def is_valid_deprecated_playbook_description(self) -> bool:
         is_valid = True
         is_deprecated = self.current_file.get('deprecated', False)
         description = self.current_file.get('description', '')
@@ -367,6 +373,7 @@ class PlaybookValidator(ContentEntityValidator):
                 error_message, error_code = Errors.invalid_deprecated_playbook()
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     is_valid = False
+
         return is_valid
 
     @error_codes('PB105')

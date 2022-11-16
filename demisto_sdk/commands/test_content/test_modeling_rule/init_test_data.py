@@ -68,17 +68,17 @@ def init_test_data(
                 # for expected in test_data.expected_values:
                     new_mapping = default_event_mapping.copy()
 
-                    # remove xdm mapping fields that are no longer in the rule
-                    if event_log.mapping:
+                    # remove xdm expected_values fields that are no longer in the rule
+                    if event_log.expected_values:
                         keys_to_remove = []
-                        for key in event_log.mapping:
+                        for key in event_log.expected_values:
                             if key not in new_mapping:
                                 keys_to_remove.append(key)
                         for key in keys_to_remove:
-                            event_log.mapping.pop(key)
-                        new_mapping.update(event_log.mapping)
+                            event_log.expected_values.pop(key)
+                        new_mapping.update(event_log.expected_values)
 
-                    event_log.mapping = new_mapping
+                    event_log.expected_values = new_mapping
 
                 if count > len(test_data.data):
                     # create the missing templated data and add it to the test data
@@ -87,7 +87,7 @@ def init_test_data(
                             vendor=default_vendor,
                             product=default_product,
                             dataset=default_dataset,
-                            mapping=default_event_mapping.copy()
+                            expected_values=default_event_mapping.copy()
                         ) for _ in range(count - len(test_data.data))
                     ]
 
@@ -100,7 +100,7 @@ def init_test_data(
                             vendor=default_vendor,
                             product=default_product,
                             dataset=default_dataset,
-                            mapping=default_event_mapping.copy()
+                            expected_values=default_event_mapping.copy()
                         ) for _ in range(count)
                     ]
                 )

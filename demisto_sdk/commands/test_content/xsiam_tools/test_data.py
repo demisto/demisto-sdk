@@ -1,5 +1,5 @@
 from uuid import UUID, uuid4
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field, validator
 
 
@@ -8,8 +8,8 @@ class EventLog(BaseModel):
     vendor: Optional[str] = None
     product: Optional[str] = None
     dataset: Optional[str] = None
-    event_data: Optional[Union[str, Dict[str, Any]]] = {}
-    mapping: Optional[Dict[str, Any]] = {}
+    event_data: Optional[Dict[str, Any]] = {}
+    expected_values: Optional[Dict[str, Any]] = {}
 
 
 class TestData(BaseModel):
@@ -17,7 +17,7 @@ class TestData(BaseModel):
 
     @validator('data', each_item=True)
     def validate_expected_values(cls, v):
-        for k in v.mapping.keys():
+        for k in v.expected_values.keys():
             if not k.casefold().startswith('xdm.'):
                 err = "The expected values mapping keys are expected to start with 'xdm.' (case insensitive)"
                 raise ValueError(err)

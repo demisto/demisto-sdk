@@ -77,7 +77,7 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
         ValueError: If the number of results does not match the number of test data events.
         typer.Exit: If the results do not match the expected values.
     """
-    if not len(results):
+    if not results:
         err = ('[red]No results were returned by the query - it\'s possible there is a syntax'
                ' error with your modeling rule and that it did not install properly on the tenant[/red]')
         logger.error(err, extra={'markup': True})
@@ -88,18 +88,18 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
     for i, result in enumerate(results):
         logger.info(f'\n[cyan underline]Result {i + 1}[/cyan underline]', extra={'markup': True})
 
-        # get mapping for the given query result
+        # get expected_values for the given query result
         td_event_id = result.pop(f'{test_data.data[0].dataset}.test_data_event_id')
-        mapping = None
+        expected_values = None
         for e in test_data.data:
             if str(e.test_data_event_id) == td_event_id:
-                mapping = e.mapping
+                expected_values = e.expected_values
                 break
 
-        printr(create_table(mapping, result))
+        printr(create_table(expected_values, result))
 
-        if mapping:
-            for key, val in mapping.items():
+        if expected_values:
+            for key, val in expected_values.items():
                 if not val:
                     # TODO: Make this a debugging statement
                     logger.debug(
@@ -120,7 +120,7 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
                         errors = True
         else:
             logger.error(
-                f'[red]No matching mapping found for test_data_event_id={td_event_id} in test_data {test_data}[/red]',
+                f'[red]No matching expected_values found for test_data_event_id={td_event_id} in test_data {test_data}[/red]',
                 extra={'markup': True}
             )
             errors = True
@@ -146,9 +146,9 @@ def generate_xql_query(rule: MRule, test_data_event_ids: List[str]) -> str:
     return query
 
 
-def validate_mappings(xsiam_client: XsiamApiClient, mr: ModelingRule, test_data: init_test_data.TestData):
-    """Validate the mappings in the given test data file."""
-    logger.info('[cyan]Validating mappings...[/cyan]', extra={'markup': True})
+def validate_expected_values(xsiam_client: XsiamApiClient, mr: ModelingRule, test_data: init_test_data.TestData):
+    """Validate the expected_values in the given test data file."""
+    logger.info('[cyan]Validating expected_values...[/cyan]', extra={'markup': True})
     success = True
     for rule in mr.rules:
         query = generate_xql_query(rule, [str(d.test_data_event_id) for d in test_data.data])
@@ -320,16 +320,16 @@ def verify_test_data_exists(test_data_path: Path) -> Tuple[List[str], List[str]]
     Returns:
         Tuple[List[str], List[str]]: Tuple of lists where the first list is test event
             ids that do not have example event data, and the second list is test event
-            ids that do not have mappings to check.
+            ids that do not have expected_values to check.
     """
-    missing_event_data, missing_mapping_data = [], []
+    missing_event_data, missing_expected_values_data = [], []
     test_data = init_test_data.TestData.parse_file(test_data_path)
     for event_log in test_data.data:
         if not event_log.event_data:
             missing_event_data.append(event_log.test_data_event_id)
-        if all([val is None for val in event_log.mapping.values()]):
-            missing_mapping_data.append(event_log.test_data_event_id)
-    return missing_event_data, missing_mapping_data
+        if all([val is None for val in event_log.expected_values.values()]):
+            missing_expected_values_data.append(event_log.test_data_event_id)
+    return missing_event_data, missing_expected_values_data
 
 
 def validate_modeling_rule(
@@ -434,7 +434,7 @@ def validate_modeling_rule(
                 '[cyan]The command flag "--no-push" was passed - skipping pushing of test data[/cyan]',
                 extra={'markup': True}
             )
-        validate_mappings(xsiam_client, mr_entity, test_data)
+        validate_expected_values(xsiam_client, mr_entity, test_data)
 
 
 def set_console_stream_handler(logger: logging.Logger, handler: RichHandler = RichHandler(rich_tracebacks=True)):
@@ -592,8 +592,8 @@ def test_modeling_rule(
     push: bool = typer.Option(
         True,
         '--push/--no-push', '-p/-np',
-        help=('In the event that you\'ve already pushed test data and only want to test mappings, you can'
-              'pass "--no-push" to skip pushing the test data.'),
+        help=('In the event that you\'ve already pushed test data and only want to verify expected values, you can'
+              ' pass "--no-push" to skip pushing the test data.'),
         rich_help_panel='Interactive Configuration',
     ),
     interactive: bool = typer.Option(

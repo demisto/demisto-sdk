@@ -197,6 +197,8 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.XSIAM_REPORT: 'XSIAM Reports',
     FileType.TRIGGER: 'Triggers Recommendations',  # https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
     FileType.WIZARD: 'Wizards',
+    FileType.XDRC_TEMPLATE: 'XDRC Templates',
+    FileType.XDRC_TEMPLATE_YML: 'XDRC Templates',
 }
 
 ENTITY_TYPE_TO_DIR = {

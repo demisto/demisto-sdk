@@ -60,7 +60,7 @@ class YAMLContentItemParser(ContentItemParser):
             MarketplaceVersions(mp) for mp in self.yml_data.get("marketplaces", [])
         ]:
             return file_marketplaces
-        return list(set(self.pack_marketplaces) & self.supported_marketplaces)
+        return sorted(set(self.pack_marketplaces) & self.supported_marketplaces)
 
     def connect_to_tests(self) -> None:
         """Iterates over the test playbooks registered to this content item,

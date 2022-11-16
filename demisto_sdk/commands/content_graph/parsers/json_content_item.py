@@ -55,8 +55,8 @@ class JSONContentItemParser(ContentItemParser):
         if file_marketplaces := [
             MarketplaceVersions(mp) for mp in self.json_data.get("marketplaces", [])
         ]:
-            return file_marketplaces
-        return list(set(self.pack_marketplaces) & self.supported_marketplaces)
+            return sorted(file_marketplaces)
+        return sorted(set(self.pack_marketplaces) & self.supported_marketplaces)
 
     def get_json(self) -> Dict[str, Any]:
         if self.path.is_dir():

@@ -149,7 +149,7 @@ class UpdateRN:
                               f"Did you mistype {file_path}?")
 
         if file_path.endswith('_image.png'):
-            if Path(file_path).parent.parts[-1] in [XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR]:
+            if Path(file_path).parent.name in (XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR):
                 new_path = file_path.replace('_image.png', '.json')
             else:
                 new_path = file_path.replace('_image.png', '.yml')

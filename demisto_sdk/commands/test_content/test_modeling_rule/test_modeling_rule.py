@@ -1,13 +1,12 @@
 import logging
 from pathlib import Path
 from time import sleep
-import requests
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import requests
 import typer
 from rich import print as printr
 from rich.console import Console, Group
-from rich.logging import RichHandler
 from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.table import Table
@@ -22,11 +21,12 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
 from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (
     ModelingRule, MRule)
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
+from demisto_sdk.commands.common.logger import (set_console_stream_handler,
+                                                setup_rich_logging)
 from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data
 from demisto_sdk.commands.test_content.xsiam_tools import xsiam_interface
 from demisto_sdk.commands.test_content.xsiam_tools.xsiam_interface import (
     XsiamApiClient, XsiamApiClientConfig)
-
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -439,50 +439,6 @@ def validate_modeling_rule(
         validate_expected_values(xsiam_client, mr_entity, test_data)
 
 
-def set_console_stream_handler(logger: logging.Logger, handler: RichHandler = RichHandler(rich_tracebacks=True)):
-    """Set the console stream handler.
-
-    Args:
-        logger (logging.Logger): Logger.
-        handler (RichHandler, optional): RichHandler. Defaults to RichHandler(rich_tracebacks=True).
-    """
-    console_handler_index = -1
-    for i, h in enumerate(logger.handlers):
-        if h.name == 'console-handler':
-            console_handler_index = i
-    if console_handler_index != -1:
-        logger.handlers[console_handler_index] = handler
-    else:
-        logger.addHandler(handler)
-
-
-def setup_logging(verbosity: int, quiet: bool, log_path: Path, log_file_name: str):
-    """Override the default StreamHandler with the RichHandler.
-
-    Setup logging and then override the default StreamHandler with the RichHandler.
-
-    Args:
-        verbosity (int): The log level to output.
-        quiet (bool): If True, no logs will be output.
-        log_path (Path): Path to the directory where the log file will be created.
-        log_file_name (str): The filename of the log file.
-    """
-    from demisto_sdk.commands.common.logger import logging_setup
-    logger = logging_setup(
-        verbose=verbosity,
-        quiet=quiet,
-        log_path=log_path,  # type: ignore[arg-type]
-        log_file_name=log_file_name
-    )
-    rich_handler = RichHandler(rich_tracebacks=True)
-    set_console_stream_handler(logger, rich_handler)
-
-    # override XsiamApiClient logger
-    xsiam_logger = logging.getLogger(xsiam_interface.__name__)
-    set_console_stream_handler(xsiam_logger, rich_handler)
-    xsiam_logger.propagate = False
-
-
 # ====================== test-modeling-rule ====================== #
 
 
@@ -610,7 +566,11 @@ def test_modeling_rule(
     """
     Test a modeling rule against an XSIAM tenant
     """
-    setup_logging(verbosity, quiet, log_path, log_file_name)
+    setup_rich_logging(verbosity, quiet, log_path, log_file_name)
+    # override XsiamApiClient logger
+    xsiam_logger = logging.getLogger(xsiam_interface.__name__)
+    set_console_stream_handler(xsiam_logger)
+    xsiam_logger.propagate = False
         
     logger.info(f'[cyan]modeling rules directories to test: {input}[/cyan]', extra={'markup': True})
     for mrule_dir in input:

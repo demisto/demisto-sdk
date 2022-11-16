@@ -6,7 +6,6 @@ from typing import List, Optional, Union
 import demisto_client
 from packaging.version import Version
 from wcmatch.pathlib import IGNORECASE, Path
-from pprint import pformat
 
 import demisto_sdk.commands.common.content.errors as exc
 from demisto_sdk.commands.common.constants import MODELING_RULE, FileType

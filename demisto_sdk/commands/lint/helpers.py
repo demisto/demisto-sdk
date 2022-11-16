@@ -130,7 +130,7 @@ def get_test_modules(content_repo: Optional[git.Repo], is_external_repo: bool) -
 
         for module in modules:
             try:
-                module_full_path = content_repo.working_dir / module
+                module_full_path = content_repo.working_dir / module  # type: ignore
                 logger.debug(f'read file {module_full_path}')
                 if module.match('*CommonServerPython.py'):
                     # Remove import of DemistoClassApiModule in CommonServerPython,
@@ -182,7 +182,7 @@ def add_typing_module(lint_files: List[Path], python_version: str):
     back_lint_files: List[Path] = []
     try:
         # Add typing import if needed to python version 2 packages
-        py_ver = parse(python_version).major
+        py_ver = parse(python_version).major  # type: ignore
         if py_ver < 3:
             for lint_file in lint_files:
                 data = lint_file.read_text(encoding="utf-8")

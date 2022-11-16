@@ -124,11 +124,13 @@ class YAMLContentUnifiedObject(YAMLContentObject):
         # Unify step
         unifier: Union[IntegrationScriptUnifier, RuleUnifier]
         if self._content_type in [FileType.SCRIPT, FileType.INTEGRATION]:
-            unifier = IntegrationScriptUnifier(input=str(self.path.parent), dir_name=unify_dir, output=dest_dir, force=True,
-                                               yml_modified_data=self.to_dict())
+            unifier = IntegrationScriptUnifier(
+                input=str(self.path.parent), dir_name=unify_dir,
+                output=dest_dir, force=True, yml_modified_data=self.to_dict()  # type: ignore
+            )
 
         elif self._content_type in [FileType.PARSING_RULE, FileType.MODELING_RULE]:
-            unifier = RuleUnifier(input=str(self.path.parent), output=dest_dir, force=True)
+            unifier = RuleUnifier(input=str(self.path.parent), output=dest_dir, force=True)  # type: ignore
 
         created_files: List[str] = unifier.unify()
 

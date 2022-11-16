@@ -242,7 +242,7 @@ class ValidateManager:
         """
         # Check node exist
         content_path = get_content_path()
-        stdout, stderr, exit_code = run_command_os('node -v', cwd=content_path)
+        stdout, stderr, exit_code = run_command_os('node -v', cwd=content_path)  # type: ignore
         if exit_code:
             return False
         return True
@@ -633,8 +633,9 @@ class ValidateManager:
                     return False
             if not self.validate_all:
                 ReadMeValidator.add_node_env_vars()
-                if not ReadMeValidator.are_modules_installed_for_verify(get_content_path()) and not \
-                        ReadMeValidator.is_docker_available():  # shows warning message
+                if not ReadMeValidator.are_modules_installed_for_verify(
+                    get_content_path()  # type: ignore
+                ) and not ReadMeValidator.is_docker_available():  # shows warning message
                     return True
                 with ReadMeValidator.start_mdx_server(handle_error=self.handle_error):
                     return self.validate_readme(file_path, pack_error_ignore_list)

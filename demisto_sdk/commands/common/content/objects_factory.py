@@ -92,7 +92,7 @@ def path_to_pack_object(path: Union[Path, str]) -> GeneralObject:
     Raises:
         ContentFactoryError: If not able to determine object type from file path.
     """
-    path = Path(path)
+    path = Path(path)  # type: ignore
     # Determinist conversion by file name.
     object_type = TYPE_CONVERSION_BY_FILE_NAME.get(path.name)
     # Tools in path

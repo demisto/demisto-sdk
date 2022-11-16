@@ -131,7 +131,7 @@ class ReadMeValidator(BaseValidator):
         self.content_path = get_content_path()
         self.file_path = Path(file_path)
         self.pack_path = self.file_path.parent
-        self.node_modules_path = self.content_path / Path('node_modules')
+        self.node_modules_path = self.content_path / Path('node_modules')  # type: ignore
         with open(self.file_path) as f:
             readme_content = f.read()
         self.readme_content = readme_content
@@ -162,8 +162,9 @@ class ReadMeValidator(BaseValidator):
             fp.write(readme_content)
             fp.flush()
             # run the javascript mdx parse validator
-            _, stderr, is_not_valid = run_command_os(f'node {mdx_parse} -f {fp.name}', cwd=self.content_path,
-                                                     env=os.environ)
+            _, stderr, is_not_valid = run_command_os(
+                f'node {mdx_parse} -f {fp.name}', cwd=self.content_path, env=os.environ  # type: ignore
+            )
         if is_not_valid:
             error_message, error_code = Errors.readme_error(stderr)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
@@ -206,8 +207,10 @@ class ReadMeValidator(BaseValidator):
 
     def should_run_mdx_validation(self):
         return os.environ.get('DEMISTO_README_VALIDATION') or os.environ.get(
-            'CI') or ReadMeValidator.are_modules_installed_for_verify(self.content_path) or \
-            ReadMeValidator.is_docker_available()
+            'CI'
+        ) or ReadMeValidator.are_modules_installed_for_verify(
+            self.content_path  # type: ignore
+        ) or ReadMeValidator.is_docker_available()
 
     def fix_mdx(self) -> str:
         txt = self.readme_content
@@ -700,7 +703,7 @@ class ReadMeValidator(BaseValidator):
 
         """
         with ReadMeValidator._MDX_SERVER_LOCK:
-            if ReadMeValidator.are_modules_installed_for_verify(get_content_path()):
+            if ReadMeValidator.are_modules_installed_for_verify(get_content_path()):  # type: ignore
                 return start_local_MDX_server(handle_error, file_path)
             elif ReadMeValidator.is_docker_available():
                 return start_docker_MDX_server(handle_error, file_path)
@@ -709,7 +712,7 @@ class ReadMeValidator(BaseValidator):
     @staticmethod
     def add_node_env_vars():
         content_path = get_content_path()
-        node_modules_path = content_path / Path('node_modules')
+        node_modules_path = content_path / Path('node_modules')  # type: ignore
         os.environ['NODE_PATH'] = str(node_modules_path) + os.pathsep + os.getenv("NODE_PATH", "")
 
     @staticmethod

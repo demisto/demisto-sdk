@@ -31,7 +31,9 @@ json = JSON_Handler()
 MINIMUM_DEPENDENCY_VERSION = Version('6.0.0')
 COMMON_TYPES_PACK = 'CommonTypes'
 CORE_ALERT_FIELDS_PACK = 'CoreAlertFields'
-PACKS_FULL_PATH = os.path.join(get_content_path(), PACKS_DIR)  # full path to Packs folder in content repo
+
+# full path to Packs folder in content repo
+PACKS_FULL_PATH = os.path.join(get_content_path(), PACKS_DIR)  # type: ignore
 
 
 def parse_for_pack_metadata(dependency_graph: nx.DiGraph, graph_root: str, verbose: bool = False,

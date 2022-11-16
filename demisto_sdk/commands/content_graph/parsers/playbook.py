@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 import networkx
 
@@ -36,6 +36,10 @@ class PlaybookParser(YAMLContentItemParser, content_type=ContentType.PLAYBOOK):
     @property
     def object_id(self) -> Optional[str]:
         return self.yml_data.get("id")
+
+    @property
+    def supported_marketplaces(self) -> Set[MarketplaceVersions]:
+        return {MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2, MarketplaceVersions.XPANSE}
 
     def is_mandatory_dependency(self, task_id: str) -> bool:
         try:

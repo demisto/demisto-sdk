@@ -335,7 +335,7 @@ def verify_test_data_exists(test_data_path: Path) -> Tuple[List[str], List[str]]
 def validate_modeling_rule(
         mrule_dir: Path,
         xsiam_url: str, api_key: str, auth_id: str, xsiam_token: str,
-        push: bool, interactive: bool, ctx: typer.Context
+        collector_token: str, push: bool, interactive: bool, ctx: typer.Context
 ):
     """Validate a modeling rule.
 
@@ -345,6 +345,7 @@ def validate_modeling_rule(
         api_key (str): xsiam API key.
         auth_id (str): xsiam auth ID.
         xsiam_token (str): xsiam token.
+        collector_token (str): collector token.
         push (bool): Whether to push test event data to the tenant.
         interactive (bool): Whether command is being run in interactive mode.
         ctx (typer.Context): Typer context.
@@ -406,7 +407,8 @@ def validate_modeling_rule(
 
         # initialize xsiam client
         xsiam_client_cfg = XsiamApiClientConfig(
-            xsiam_url=xsiam_url, api_key=api_key, auth_id=auth_id, xsiam_token=xsiam_token
+            xsiam_url=xsiam_url, api_key=api_key, auth_id=auth_id,  # type: ignore[arg-type]
+            xsiam_token=xsiam_token, collector_token=collector_token  # type: ignore[arg-type]
         )
         xsiam_client = XsiamApiClient(xsiam_client_cfg)
         verify_pack_exists_on_tenant(xsiam_client, mr_entity, interactive)
@@ -571,7 +573,7 @@ def test_modeling_rule(
     ),
     quiet: bool = typer.Option(
         False,
-        help='Quiet output, only output results in the end.',
+        help='Quiet output - sets verbosity to default.',
         rich_help_panel='Logging Configuration',
     ),
     log_path: Path = typer.Option(
@@ -616,6 +618,7 @@ def test_modeling_rule(
             mrule_dir,
             xsiam_url, api_key,  # type: ignore[arg-type] since if they are not set to str values an error occurs
             auth_id, xsiam_token,  # type: ignore[arg-type] since if they are not set to str values an error occurs
+            collector_token,  # type: ignore[arg-type] since if they are not set to str values an error occurs
             push, interactive, ctx
         )
 

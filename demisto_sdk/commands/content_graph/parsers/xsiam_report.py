@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -23,5 +23,5 @@ class XSIAMReportParser(JSONContentItemParser, content_type=ContentType.XSIAM_RE
         return self.json_data.get("global_id")
 
     @property
-    def marketplaces(self) -> List[MarketplaceVersions]:
-        return [MarketplaceVersions.MarketplaceV2]
+    def supported_marketplaces(self) -> Set[MarketplaceVersions]:
+        return {MarketplaceVersions.MarketplaceV2}

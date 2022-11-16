@@ -213,8 +213,7 @@ class GitContentConfig:
         try:
             r = requests.get(f'https://api.{api_host}/repos/{repo_name}',
                              headers={
-                                 'Authorization': f"Bearer {GitContentConfig.CREDENTIALS.github_token}"
-                                 if GitContentConfig.CREDENTIALS.github_token else None,
+                                 'Authorization': f"Bearer {GitContentConfig.CREDENTIALS.github_token or ''}",
                                  'Accept': 'application/vnd.github.VERSION.raw'},
                              verify=False,
                              timeout=10)
@@ -261,7 +260,7 @@ class GitContentConfig:
             res = None
             if project_id:
                 res = requests.get(f"https://{gitlab_hostname}/api/v4/projects/{project_id}",
-                                   headers={'PRIVATE-TOKEN': GitContentConfig.CREDENTIALS.gitlab_token},
+                                   headers={'PRIVATE-TOKEN': GitContentConfig.CREDENTIALS.gitlab_token or ''},
                                    timeout=10,
                                    verify=False)
                 if res.ok:
@@ -270,7 +269,7 @@ class GitContentConfig:
             if repo_name:
                 res = requests.get(f"https://{gitlab_hostname}/api/v4/projects",
                                    params={'search': repo_name},
-                                   headers={'PRIVATE-TOKEN': GitContentConfig.CREDENTIALS.gitlab_token},
+                                   headers={'PRIVATE-TOKEN': GitContentConfig.CREDENTIALS.gitlab_token or ''},
                                    timeout=10,
                                    verify=False)
                 if not res.ok:

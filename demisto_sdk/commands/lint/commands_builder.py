@@ -1,9 +1,9 @@
 # STD python packages
 import os
-from pathlib import Path
 from typing import List, Optional
 
-from packaging.version import parse
+from packaging.version import Version, parse
+from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.lint.resources.pylint_plugins.base_checker import \
     base_msg
@@ -200,7 +200,7 @@ def build_vulture_command(files: List[Path], pack_path: Path) -> str:
     # File to be excluded when performing lints check
     command += f" --exclude={','.join(excluded_files)}"
     # Whitelist vulture
-    whitelist = Path(pack_path) / '.vulture_whitelist.py'
+    whitelist = Path(pack_path) / '.vulture_whitelist.py'  # type: ignore [arg-type]
     if whitelist.exists():
         command += f" {whitelist.name}"
     files_list = [file.name for file in files]
@@ -228,11 +228,10 @@ def build_pylint_command(files: List[Path], docker_version: Optional[str] = None
 
     if docker_version:
         py_ver = parse(docker_version)
-        major = py_ver.major
-        minor = py_ver.minor
 
-        if major == 3 and minor >= 9:
+        if isinstance(py_ver, Version) and py_ver.major == 3 and py_ver.minor >= 9:
             disable.append('unsubscriptable-object')
+
     command += f" --disable={','.join(disable)}"
     # Disable specific errors
     command += " -d duplicate-string-formatting-argument"

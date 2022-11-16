@@ -1322,7 +1322,7 @@ def create_dirs(artifact_manager: ArtifactsManager):
 def zip_dirs(artifact_manager: ArtifactsManager):
     """Zip artifacts directories"""
     if artifact_manager.only_content_packs:
-        make_archive(artifact_manager.content_packs_path, 'zip', artifact_manager.content_packs_path)
+        make_archive(str(artifact_manager.content_packs_path), 'zip', artifact_manager.content_packs_path)
     else:
         with ProcessPoolHandler(artifact_manager) as pool:
             for artifact_dir in [artifact_manager.content_test_path, artifact_manager.content_new_path,

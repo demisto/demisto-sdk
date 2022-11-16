@@ -31,7 +31,7 @@ class XSIAMDashboardImage(GeneralObject):
         Raises:
             ContentInitializeError: If path not valid.
         """
-        path = Path(path)
+        path = Path(str(path))
         if not (path.exists() and path.is_file()):
             raise exc.ContentInitializeError(XSIAMDashboardImage, path)
 

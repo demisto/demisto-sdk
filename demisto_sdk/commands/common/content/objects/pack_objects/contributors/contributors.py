@@ -13,7 +13,7 @@ class Contributors(TextObject):
         super().__init__(path)
 
     @property
-    def path(self) -> Path:
+    def path(self) -> Union[Path, str]:
         return self._path
 
     def type(self):

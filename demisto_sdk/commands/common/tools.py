@@ -26,7 +26,7 @@ import git
 import giturlparse
 import requests
 import urllib3
-from packaging.version import parse
+from packaging.version import LegacyVersion, Version, parse
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
 
@@ -247,7 +247,7 @@ def src_root() -> Path:
     git_dir = git.Repo(Path.cwd(),
                        search_parent_directories=True).working_tree_dir
 
-    return Path(git_dir) / 'demisto_sdk'
+    return Path(str(git_dir)) / 'demisto_sdk'
 
 
 def print_error(error_str):
@@ -359,12 +359,12 @@ def get_remote_file_from_api(
         if git_content_config.git_provider == GitProvider.GitLab:
             res = requests.get(git_path,
                                params={'ref': tag},
-                               headers={'PRIVATE-TOKEN': gitlab_token},
+                               headers={'PRIVATE-TOKEN': gitlab_token or ''},
                                verify=False)
             res.raise_for_status()
         else:  # Github
             res = requests.get(git_path, verify=False, timeout=10, headers={
-                'Authorization': f"Bearer {github_token}" if github_token else None,
+                'Authorization': f"Bearer {github_token or ''}",
                 'Accept': f'application/vnd.github.VERSION.raw',
             })  # Sometime we need headers
             if not res.ok:  # sometime we need param token
@@ -1590,7 +1590,7 @@ def is_external_repository() -> bool:
     """
     try:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
-        private_settings_path = os.path.join(git_repo.working_dir, '.private-repo-settings')
+        private_settings_path = os.path.join(str(git_repo.working_dir), '.private-repo-settings')
         return os.path.exists(private_settings_path)
     except git.InvalidGitRepositoryError:
         return True
@@ -1619,7 +1619,7 @@ def get_content_path() -> str:
 
         if not is_fork_repo and not is_external_repo:
             raise git.InvalidGitRepositoryError
-        return git_repo.working_dir
+        return str(git_repo.working_dir)
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
         if not os.getenv('DEMISTO_SDK_IGNORE_CONTENT_WARNING'):
             print_warning("Please run demisto-sdk in content repository!")
@@ -1716,7 +1716,7 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
 
         if not is_fork_repo and not is_external_repo:
             return False, ''
-        content_path_parts = Path(git_repo.working_dir).parts
+        content_path_parts = Path(str(git_repo.working_dir)).parts
         input_path_parts = Path(file_path).parts
         input_path_parts_prefix = input_path_parts[:len(content_path_parts)]
         if content_path_parts == input_path_parts_prefix:
@@ -1985,7 +1985,7 @@ def open_id_set_file(id_set_path):
         return id_set
 
 
-def get_demisto_version(client: demisto_client) -> str:
+def get_demisto_version(client: demisto_client) -> Union[LegacyVersion, Version]:
     """
     Args:
         demisto_client: A configured demisto_client instance
@@ -1996,9 +1996,9 @@ def get_demisto_version(client: demisto_client) -> str:
     try:
         resp = client.generic_request('/about', 'GET')
         about_data = json.loads(resp[0].replace("'", '"'))
-        return parse(about_data.get('demistoVersion'))  # type: ignore
+        return parse(about_data.get('demistoVersion'))
     except Exception:
-        return "0"
+        return "0"  # type: ignore [return-value]
 
 
 def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:

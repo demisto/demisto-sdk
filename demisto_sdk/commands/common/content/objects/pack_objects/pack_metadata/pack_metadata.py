@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 from typing import Dict, List, Union
 
-from packaging.version import Version, parse
+from packaging.version import LegacyVersion, Version, parse
 from wcmatch.pathlib import Path
 
 from demisto_sdk.commands.common.constants import (PACKS_PACK_META_FILE_NAME,
@@ -49,8 +49,8 @@ class PackMetaData(JSONObject):
         self._vendorName: str = ''
         self._hidden: bool = False
         self._previewOnly: bool = False
-        self._serverMinVersion: Version = parse('0.0.0')
-        self._currentVersion: Version = parse('0.0.0')
+        self._serverMinVersion: Union[LegacyVersion, Version] = parse('0.0.0')
+        self._currentVersion: Union[LegacyVersion, Version] = parse('0.0.0')
         self._versionInfo: int = 0
         self._tags: List[str] = []
         self._categories: List[str] = []
@@ -343,7 +343,7 @@ class PackMetaData(JSONObject):
         self._hidden = is_hidden
 
     @property
-    def server_min_version(self) -> Version:
+    def server_min_version(self) -> Union[LegacyVersion, Version]:
         """Object serverMinVersion attribute.
 
         Returns:
@@ -370,7 +370,7 @@ class PackMetaData(JSONObject):
         self._previewOnly = is_preview_only
 
     @property
-    def current_version(self) -> Version:
+    def current_version(self) -> Union[LegacyVersion, Version]:
         """Object currentVersion attribute.
 
         Returns:

@@ -72,15 +72,15 @@ class XDRCTemplate(JSONContentObject):
             DumpContentObjectError: If not valid directory path - not directory or not exists.
         """
         if dest_dir:
-            dest_dir = Path(dest_dir)
-            if dest_dir.exists() and not Path(dest_dir).is_dir():
+            dest_dir_result = Path(dest_dir)  # type: ignore [arg-type]
+            if dest_dir_result.exists() and not dest_dir_result.is_dir():
                 raise exc.ContentDumpError(self, self._path, "Destiantion is not valid directory path")
             else:
-                dest_dir.mkdir(parents=True, exist_ok=True)
+                dest_dir_result.mkdir(parents=True, exist_ok=True)
         else:
-            dest_dir = self._path.parent
+            dest_dir_result = self._path.parent
 
-        return dest_dir
+        return dest_dir_result
 
     def dump(self, dest_dir: Optional[Union[Path, str]] = None, unify: bool = True) -> List[Path]:
         """

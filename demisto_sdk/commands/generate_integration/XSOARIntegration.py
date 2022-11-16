@@ -117,7 +117,7 @@ class XSOARIntegration:
             if script and isinstance(script, str):
                 self.script = FoldedScalarString(script)
             else:
-                self.script = script
+                self.script = script  # type: ignore [assignment]
 
             self.type = type_
             self.subtype = subtype

@@ -225,7 +225,7 @@ class Uploader:
                     click.secho(f"Input path {path} is not uploading due to version mismatch.\n"
                                 f"XSOAR version is: {self.demisto_version} while the file's version is "
                                 f"{upload_object.from_version} - {upload_object.to_version}", fg='bright_red')
-                self.unuploaded_due_to_version.append((file_name, entity_type.value, self.demisto_version,
+                self.unuploaded_due_to_version.append((file_name, entity_type.value, self.demisto_version,  # type: ignore [arg-type]
                                                        upload_object.from_version, upload_object.to_version))
                 return ERROR_RETURN_CODE
         else:

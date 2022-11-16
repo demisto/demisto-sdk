@@ -45,7 +45,7 @@ class ModelingRule(YAMLContentUnifiedObject):
             # export XSIAM 1.3 items only with the external prefix
             if not new_file_path.name.startswith('external-'):
                 move_to_path = new_file_path.parent / self.normalize_file_name()
-                shutil.move(new_file_path, move_to_path)
+                shutil.move(str(new_file_path), move_to_path)
                 created_files.remove(new_file_path)
                 created_files.append(move_to_path)
 
@@ -53,7 +53,7 @@ class ModelingRule(YAMLContentUnifiedObject):
             # export XSIAM 1.2 items only without the external prefix
             if new_file_path.name.startswith('external-'):
                 move_to_path = Path(str(new_file_path).replace('external-', ''))
-                shutil.move(new_file_path, move_to_path)
+                shutil.move(str(new_file_path), move_to_path)
                 created_files.remove(new_file_path)
                 created_files.append(move_to_path)
 

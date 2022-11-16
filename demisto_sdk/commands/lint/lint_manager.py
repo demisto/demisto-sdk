@@ -134,7 +134,7 @@ class LintManager:
             if not is_fork_repo and not is_external_repo:
                 raise git.InvalidGitRepositoryError
 
-            facts["content_repo"] = git_repo
+            facts["content_repo"] = git_repo  # type: ignore [assignment]
             logger.debug(f"Content path {git_repo.working_dir}")
         except (git.InvalidGitRepositoryError, git.NoSuchPathError) as e:
             print_warning("You are running demisto-sdk lint not in content repository!")
@@ -209,7 +209,7 @@ class LintManager:
         """
         pkgs: list
         if all_packs or git:
-            pkgs = LintManager._get_all_packages(content_dir=content_repo.working_dir)
+            pkgs = LintManager._get_all_packages(content_dir=str(content_repo.working_dir))
         else:  # specific pack as input, -i flag has been used
             pkgs = []
             if isinstance(input, str):
@@ -280,7 +280,7 @@ class LintManager:
             List[PosixPath]: A list of names of packages that should run.
         """
 
-        staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in
+        staged_files = {content_repo.working_dir / Path(item.b_path).parent for item in  # type: ignore[operator]
                         content_repo.active_branch.commit.tree.diff(None, paths=pkgs)}
 
         if base_branch == 'master' and content_repo.active_branch.name == 'master':
@@ -299,10 +299,10 @@ class LintManager:
             print(f"Comparing {Colors.Fg.cyan}{content_repo.active_branch}{Colors.reset} to"
                   f" last common commit with {Colors.Fg.cyan}{last_common_commit}{Colors.reset}")
 
-        changed_from_base = {content_repo.working_dir / Path(item.b_path).parent for item in
+        changed_from_base = {content_repo.working_dir / Path(item.b_path).parent for item in  # type: ignore[operator]
                              content_repo.active_branch.commit.tree.diff(last_common_commit, paths=pkgs)}
         all_changed = staged_files.union(changed_from_base)
-        pkgs_to_check = all_changed.intersection(pkgs)
+        pkgs_to_check: set = all_changed.intersection(pkgs)
 
         return list(pkgs_to_check)
 
@@ -357,7 +357,7 @@ class LintManager:
                 # Executing lint checks in different threads
                 for pack in sorted(self._pkgs):
                     linter: Linter = Linter(pack_dir=pack,
-                                            content_repo="" if not self._facts["content_repo"] else
+                                            content_repo="" if not self._facts["content_repo"] else  # type: ignore [arg-type]
                                             Path(self._facts["content_repo"].working_dir),
                                             req_2=self._facts["requirements_2"],
                                             req_3=self._facts["requirements_3"],

@@ -4,6 +4,7 @@ from functools import lru_cache
 from typing import Optional, Tuple, Union
 
 import requests
+import urllib3
 from pkg_resources import parse_version
 
 from demisto_sdk.commands.common.constants import IronBankDockers
@@ -13,7 +14,7 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
 from demisto_sdk.commands.common.tools import get_yaml
 
 # disable insecure warnings
-requests.packages.urllib3.disable_warnings()
+urllib3.disable_warnings()
 
 ACCEPT_HEADER = {
     'Accept': 'application/json, '

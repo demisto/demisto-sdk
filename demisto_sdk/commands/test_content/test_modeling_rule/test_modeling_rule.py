@@ -186,7 +186,19 @@ def push_test_data_to_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule, tes
             events_test_data[i] = {**event_log.event_data, "test_data_event_id": str(event_log.test_data_event_id)}
     # printr(events_test_data)
     logger.info('[cyan]Pushing test data to tenant...[/cyan]', extra={'markup': True})
-    xsiam_client.add_create_dataset(events_test_data, mr.rules[0].vendor, mr.rules[0].product)
+    try:
+        xsiam_client.add_create_dataset(events_test_data, mr.rules[0].vendor, mr.rules[0].product)
+    except requests.exceptions.HTTPError:
+        logger.error(
+            (
+                '[red]Failed pushing test data to tenant, potential reasons could be:\n - an incorrect token\n'
+                ' - currently only http collectors configured with "Compression" as "gzip" and "Log Format" as "JSON"'
+                ' are supported, double check your collector is configured as such\n - the configured http collector '
+                'on your tenant is disabled[/red]'
+            ),
+            extra={'markup': True}
+        )
+        raise typer.Exit(1)
     logger.info('[green]Test data pushed successfully[/green]', extra={'markup': True})
 
 

@@ -84,6 +84,8 @@ class XsiamApiClient(XsiamApiInterface):
         self.auth_id = config.auth_id
         self.xsiam_token = config.xsiam_token.get_secret_value() if isinstance(
             config.xsiam_token, SecretStr) else config.xsiam_token
+        self.collector_token = config.collector_token.get_secret_value() if isinstance(
+            config.collector_token, SecretStr) else config.collector_token
         self.__session: requests.Session = None  # type: ignore
 
     @property
@@ -163,7 +165,7 @@ class XsiamApiClient(XsiamApiInterface):
     def copy_packs(self, *args, **kwargs):
         pass
 
-    def add_create_dataset(self, data: List[Dict[str, Any]], vendor: str, product: str, data_format: str = 'json'):
+    def __push_using_xsiam_token__(self, data: List[Dict[str, Any]], vendor: str, product: str, data_format: str):
         endpoint = urljoin(self.base_url, 'logs/v1/xsiam')
         additional_headers = {
             'authorization': self.xsiam_token,
@@ -175,17 +177,53 @@ class XsiamApiClient(XsiamApiInterface):
         formatted_data = '\n'.join([json.dumps(d) for d in data])
         compressed_data = gzip.compress(formatted_data.encode('utf-8'))
         response = self.session.post(endpoint, data=compressed_data, headers=additional_headers)
-        response.raise_for_status()
         try:
-            res = response.json()
-            error = response.reason
-            if res.get('error').lower() == 'false':
-                xsiam_server_err_msg = res.get('error')
-                error += ": " + xsiam_server_err_msg
+            data = response.json()
+        except requests.exceptions.JSONDecodeError:
+            error = response.text
+            err_msg = f'Failed to push using xsiam_token - with status code {response.status_code}'
+            err_msg += f'\n{error}' if error else ''
+            logger.error(err_msg)
+            response.raise_for_status()
+        if 200 <= response.status_code < 300:
+            return data
+        else:
+            logger.error(
+                f'Failed to push using xsiam_token - with status code {response.status_code}\n{pformat(data)}'
+            )
+            response.raise_for_status()
 
-        except ValueError:
-            error = '\n{}'.format(response.text)
-        return response.json()
+    def __push_using_collector_token__(self, data: List[Dict[str, Any]], data_format: str):
+        endpoint = urljoin(self.base_url, 'logs/v1/event')
+        additional_headers = {
+            'authorization': self.collector_token,
+            'content-type': 'application/json' if data_format.casefold == 'json' else 'text/plain',
+            'content-encoding': 'gzip'
+        }
+        formatted_data = '\n'.join([json.dumps(d) for d in data])
+        compressed_data = gzip.compress(formatted_data.encode('utf-8'))
+        response = self.session.post(endpoint, data=compressed_data, headers=additional_headers)
+        try:
+            data = response.json()
+        except requests.exceptions.JSONDecodeError:
+            error = response.text
+            err_msg = f'Failed to push using collector_token - with status code {response.status_code}'
+            err_msg += f'\n{error}' if error else ''
+            logger.error(err_msg)
+            response.raise_for_status()
+        if 200 <= response.status_code < 300:
+            return data
+        else:
+            logger.error(
+                f'Failed to push using collector_token - with status code {response.status_code}\n{pformat(data)}'
+            )
+            response.raise_for_status()
+
+    def add_create_dataset(self, data: List[Dict[str, Any]], vendor: str, product: str, data_format: str = 'json'):
+        if self.xsiam_token:
+            return self.__push_using_xsiam_token__(data, vendor, product, data_format)
+        else:
+            return self.__push_using_collector_token__(data, data_format)
 
     def start_xql_query(self, query: str):
         body = {

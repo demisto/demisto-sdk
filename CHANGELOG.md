@@ -1,6 +1,6 @@
 # Changelog
 ## Unreleased
-
+ * Fixed an issue where **update-release-notes** did not generate release notes for **XDRC Templates**.
 
 ## 1.7.8
 * Added the capability to run the MDX server in a docker container for environments without node.
@@ -15,7 +15,6 @@
 * Fixed an issue where **download** would not run `isort`. @maxgubler
 * Fixed an issue where XSIAM Dashboards and Reports images failed the build.
 * Added support for **xpanse** marketplace to content graph.
-* Fixed an issue where **update-release-notes** not generated release notes for **XDRC Templates**.
 
 ## 1.7.7
 * Fixed an issue where paybooks **generate-docs** didn't parse complex input values when no accessor field is given correctly.

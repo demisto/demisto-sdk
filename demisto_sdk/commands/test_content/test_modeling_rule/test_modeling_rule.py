@@ -457,9 +457,6 @@ def logs_token_cb(ctx: typer.Context, param: typer.CallbackParam, value: Optiona
         return
     if param.value_is_missing(value):
         parameter_to_check = 'xsiam_token'
-        if param.name == 'xsiam_token':
-            parameter_to_check = 'collector_token'
-        # check if other token is set
         other_token = ctx.params.get(parameter_to_check)
         if not other_token:
             err_str = (
@@ -510,8 +507,7 @@ def test_modeling_rule(
         envvar='XSIAM_TOKEN',
         help='The token used to push event logs to XSIAM',
         rich_help_panel='XSIAM Tenant Configuration',
-        show_default=False,
-        callback=logs_token_cb
+        show_default=False
     ),
     collector_token: Optional[str] = typer.Option(
         None,

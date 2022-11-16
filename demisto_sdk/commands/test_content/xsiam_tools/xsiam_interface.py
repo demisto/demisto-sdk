@@ -8,7 +8,7 @@ from urllib.parse import urljoin
 from pathlib import Path
 from pydantic import BaseModel, Field, SecretStr, validator, HttpUrl
 from pydantic.fields import ModelField
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 import requests
 
 
@@ -19,9 +19,11 @@ class XsiamApiClientConfig(BaseModel):
     xsiam_url: HttpUrl = Field(default=os.getenv('DEMISTO_BASE_URL'), description="XSIAM URL")
     api_key: SecretStr = Field(default=SecretStr(os.getenv('DEMISTO_API_KEY', '')), description="XSIAM API Key")
     auth_id: str = Field(default=os.getenv('XSIAM_AUTH_ID'), description="XSIAM Auth ID")
-    xsiam_token: SecretStr = Field(default=SecretStr(os.getenv('XSIAM_TOKEN', '')), description="XSIAM Token")
-    collector_token: SecretStr = Field(default=SecretStr(os.getenv('COLLECTOR_TOKEN', '')),
-                                       description="XSIAM Collector Token")
+    xsiam_token: Optional[SecretStr] = Field(default=SecretStr(os.getenv('XSIAM_TOKEN', '')), description="XSIAM Token")
+    collector_token: Optional[SecretStr] = Field(
+        default=SecretStr(os.getenv('COLLECTOR_TOKEN', '')),
+        description="XSIAM Collector Token"
+    )
 
     @validator('xsiam_url', 'api_key', 'auth_id', always=True)
     def validate_client_config(cls, v, field: ModelField):

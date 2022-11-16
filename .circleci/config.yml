@@ -118,6 +118,10 @@ jobs:
             cache-version: << pipeline.parameters.cache-version >>
         - <<: *install_node_ci
         - run:
+            name: Run mypy
+            command: |
+              poetry run mypy .
+        - run:
             name: Run Pytest collection
             command: |
               poetry run pytest --collect-only .

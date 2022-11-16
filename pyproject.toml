@@ -129,6 +129,8 @@ ipykernel = "^6.16.1"
 build = ["gsutil"]
 
 [tool.mypy]
+files = "demisto_sdk"
+mypy_path = "demisto_sdk"
 check_untyped_defs = true
 ignore_missing_imports = true
 python_version = "3.8"

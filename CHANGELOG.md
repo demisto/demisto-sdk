@@ -1,10 +1,17 @@
 # Changelog
 ## Unreleased
+
+* Added the capability to run the MDX server in a docker container for environments without node.
 * Fixed an issue where **generate-docs** with `-c` argument updated sections of the incorrect commands.
 * Added IF113 error code to **ALLOWED_IGNORE_ERRORS**.
+* Fixed an issue where **validate** failed on playbooks with non-string input values.
+* Added the `DEMISTO_SDK_IGNORE_CONTENT_WARNING` environment variable, to allow suppressing warnings when commands are not run under a content repo folder.
 * Fixed an issue where **validate** failed to recognize integration tests that were missing from config.json
 * Added support for **xpanse** marketplace in **create-id-set** and **create-content-artifacts** commands.
 * Fixed an issue where **split** failed on yml files.
+* Added support for marketplace-specific tags.
+* Fixed an issue where **download** would not run `isort`. @maxgubler
+* Fixed an issue where XSIAM Dashboards and Reports images failed the build.
 * Added support for **xpanse** marketplace to content graph. 
 
 ## 1.7.7

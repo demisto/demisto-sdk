@@ -1,6 +1,6 @@
 # Changelog
 ## Unreleased
-
+ * Fixed an issue where **update-release-notes** did not generate release notes for **XDRC Templates**.
 
 ## 1.7.8
 * Added the capability to run the MDX server in a docker container for environments without node.

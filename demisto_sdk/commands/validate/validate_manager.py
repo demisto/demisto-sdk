@@ -1778,6 +1778,12 @@ class ValidateManager:
             else:
                 return irrelevant_file_output
 
+        if file_type == FileType.XDRC_TEMPLATE_YML:
+            file_path = file_path.replace('.yml', '.json')
+
+            if old_path:
+                old_path = old_path.replace('.yml', '.json')
+
         # redirect schema file when updating release notes
         if file_type == FileType.MODELING_RULE_SCHEMA:
             file_path = file_path.replace('_schema', '').replace('.json', '.yml')

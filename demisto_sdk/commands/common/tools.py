@@ -1385,6 +1385,9 @@ def find_type_by_path(path: Union[str, Path] = '') -> Optional[FileType]:
         elif XDRC_TEMPLATE_DIR in path.parts:
             return FileType.XDRC_TEMPLATE_YML
 
+        elif PARSING_RULES_DIR in path.parts:
+            return FileType.PARSING_RULE
+
     elif path.name == FileType.PACK_IGNORE:
         return FileType.PACK_IGNORE
 

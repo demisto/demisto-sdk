@@ -21,7 +21,8 @@ MERGE (n:{labels}{{
     fromversion: node_data.fromversion,
     marketplaces: node_data.marketplaces
 }})
-SET n = node_data  // override existing data
+SET n = node_data,  // override existing data
+    n.not_in_repository = false
 WITH n
     OPTIONAL MATCH (n)-[r]->()
     DELETE r
@@ -32,7 +33,8 @@ RETURN count(n) AS nodes_created
 CREATE_NODES_BY_TYPE_TEMPLATE = """
 UNWIND $data AS node_data
 MERGE (n:{labels}{{object_id: node_data.object_id}})
-SET n = node_data  // override existing data
+SET n = node_data,  // override existing data
+    n.not_in_repository = false
 RETURN count(n) AS nodes_created
 """
 

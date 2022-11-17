@@ -42,7 +42,8 @@ MERGE (cmd:{ContentType.COMMAND}{build_target_properties(with_content_type=True)
 ON CREATE
     SET cmd:{labels_of(ContentType.COMMAND)},
         cmd.marketplaces = rel_data.source_marketplaces,
-        cmd.name = rel_data.name
+        cmd.name = rel_data.name,
+        cmd.not_in_repository = false
 
 // Otherwize, add the integration's marketplaces to its marketplaces property
 ON MATCH

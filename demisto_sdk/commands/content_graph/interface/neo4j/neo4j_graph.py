@@ -6,7 +6,7 @@ from neo4j import GraphDatabase, Neo4jDriver, Session, graph
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import (NEO4J_DATABASE_URL, NEO4J_IMPORT_PATH,
+from demisto_sdk.commands.content_graph.common import (NEO4J_DATABASE_URL,
                                                        NEO4J_PASSWORD,
                                                        NEO4J_USERNAME,
                                                        ContentType,
@@ -14,13 +14,9 @@ from demisto_sdk.commands.content_graph.common import (NEO4J_DATABASE_URL, NEO4J
                                                        RelationshipType)
 from demisto_sdk.commands.content_graph.interface.graph import \
     ContentGraphInterface
-from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import (
-    clean_import_dir_before_export,
-    fix_csv_files_after_export,
-    prepare_csv_files_for_import
-)
+from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import Neo4jImportHandler
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import \
-    create_constraints
+    create_constraints, drop_constraints
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
     create_pack_dependencies, get_all_level_packs_dependencies)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import \
@@ -34,14 +30,9 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.tools import (
     import_csv,
     merge_duplicate_commands,
     merge_duplicate_content_items,
-    post_import_schema_queries,
     post_import_write_queries,
     post_export_write_queries,
-    pre_import_schema_queries,
-    # pre_import_write_queries
     pre_export_write_queries,
-    remove_not_in_repository,
-    temporarily_set_not_in_repository,
 )
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent, ServerContent, content_type_to_model)
@@ -271,27 +262,29 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.write_transaction(remove_server_nodes)
 
     def import_graphs(self, external_import_paths: List[Path]) -> None:
-        import_paths = [NEO4J_IMPORT_PATH] + external_import_paths
-        for idx, import_path in enumerate(import_paths, 1):
-            prepare_csv_files_for_import(import_path, prefix=str(idx))
+        """Imports CSV files to neo4j, by:
+        1. Dropping the constraints (we temporarily allow creating duplicate nodes from different repos)
+        2. Preparing the CSV files for import and importing them
+        3. Running serveral DB queries to fix the imported data
+        4. Merging duplicate nodes (conmmands/content items)
+        5. Recreating the constraints
+
+        Args:
+            external_import_paths (List[Path]): A list of external repositories' import paths.
+        """
         with self.driver.session() as session:
-            # session.write_transaction(pre_import_write_queries)
-            session.write_transaction(pre_import_schema_queries)
-            session.write_transaction(import_csv, NEO4J_IMPORT_PATH)
+            session.write_transaction(drop_constraints)
+            session.write_transaction(import_csv, Neo4jImportHandler(self.repo_path, external_import_paths))
             session.write_transaction(post_import_write_queries)
             session.write_transaction(merge_duplicate_commands)
-            session.write_transaction(temporarily_set_not_in_repository)  # todo: handle this area better
             session.write_transaction(merge_duplicate_content_items)
-            session.write_transaction(remove_not_in_repository)
-            session.write_transaction(post_import_schema_queries)
+            session.write_transaction(create_constraints)
 
     def export_graph(self) -> None:
-        clean_import_dir_before_export()
         with self.driver.session() as session:
             session.write_transaction(pre_export_write_queries)
-            session.write_transaction(export_to_csv)
+            session.write_transaction(export_to_csv, Neo4jImportHandler(self.repo_path))
             session.write_transaction(post_export_write_queries)
-        fix_csv_files_after_export()
 
     def clean_graph(self):
         with self.driver.session() as session:

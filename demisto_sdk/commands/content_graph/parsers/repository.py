@@ -1,4 +1,6 @@
+import logging
 import multiprocessing
+import traceback
 from pathlib import Path
 from typing import Iterator, List, Optional
 
@@ -8,10 +10,14 @@ from demisto_sdk.commands.content_graph.parsers.pack import PackParser
 IGNORED_PACKS_FOR_PARSING = ["NonSupported"]
 
 
+logger = logging.getLogger("demisto-sdk")
+
+
 class RepositoryParser:
     """
     Attributes:
         path (Path): The repository path.
+        packs_to_parse (Optional[List[str]]): A list of packs to parse. If not provided, parses all packs.
         packs (List[PackParser]): A list of the repository's packs parser objects.
     """
 
@@ -20,11 +26,16 @@ class RepositoryParser:
 
         Args:
             path (Path): The repository path.
+            packs_to_parse (Optional[List[str]]): A list of packs to parse. If not provided, parses all packs.
         """
         self.path: Path = path
         pool = multiprocessing.Pool()
-        self.packs_to_parse = packs_to_parse
-        self.packs: List[PackParser] = list(pool.map(PackParser, self.iter_packs()))
+        self.packs_to_parse: Optional[List[str]] = packs_to_parse
+        try:
+            self.packs: List[PackParser] = list(pool.map(PackParser, self.iter_packs()))
+        except Exception:
+            logger.error(traceback.format_exc())
+            raise
 
     def iter_packs(self) -> Iterator[Path]:
         """Iterates all packs in the repository.

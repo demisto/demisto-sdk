@@ -6,10 +6,12 @@ import docker
 import requests
 from requests.adapters import HTTPAdapter, Retry
 
-from demisto_sdk.commands.common.tools import run_command
+from demisto_sdk.commands.common.tools import get_content_path, run_command
 from demisto_sdk.commands.content_graph.common import (NEO4J_DATABASE_HTTP,
-                                                       NEO4J_PASSWORD,
-                                                       REPO_PATH)
+                                                       NEO4J_FOLDER,
+                                                       NEO4J_PASSWORD)
+
+REPO_PATH = Path(get_content_path())
 
 NEO4J_SERVICE_IMAGE = "neo4j:4.4.12"
 NEO4J_ADMIN_IMAGE = "neo4j/neo4j-admin:4.4.12"
@@ -89,7 +91,7 @@ def start(use_docker: bool = True):
         run_command("neo4j start", cwd=REPO_PATH, is_silenced=False)
 
     else:
-        Path.mkdir(REPO_PATH / "neo4j-data", exist_ok=True, parents=True)
+        Path.mkdir(REPO_PATH / NEO4J_FOLDER, exist_ok=True, parents=True)
         docker_client = _get_docker_client()
         _stop_neo4j_service_docker(docker_client)
         docker_client.containers.run(
@@ -97,9 +99,9 @@ def start(use_docker: bool = True):
             name="neo4j-content",
             ports={"7474/tcp": 7474, "7687/tcp": 7687, "7473/tcp": 7473},
             volumes=[
-                f'{REPO_PATH / "neo4j-data" / "data"}:/data',
-                f'{REPO_PATH / "neo4j-data" / "import"}:/var/lib/neo4j/import',
-                f'{REPO_PATH / "neo4j-data" / "plugins"}:/plugins'
+                f'{REPO_PATH / NEO4J_FOLDER / "data"}:/data',
+                f'{REPO_PATH / NEO4J_FOLDER / "import"}:/var/lib/neo4j/import',
+                f'{REPO_PATH / NEO4J_FOLDER / "plugins"}:/plugins'
             ],
             detach=True,
             environment={
@@ -107,9 +109,9 @@ def start(use_docker: bool = True):
                 "NEO4J_apoc_export_file_enabled": "true",
                 "NEO4J_apoc_import_file_enabled": "true",
                 "NEO4J_apoc_import_file_use__neo4j__config": "true",
-                # "NEO4JLABS_PLUGINS": '["apoc"]',
+                "NEO4JLABS_PLUGINS": '["apoc"]',
                 "NEO4J_dbms_security_procedures_unrestricted": "apoc.*",
-                "NEO4J_dbms_security_procedures_whitelist": "apoc.*",
+                "NEO4J_dbms_security_procedures_allowlist": "apoc.*",
             },
         )
     # health check to make sure that neo4j is up
@@ -152,9 +154,9 @@ def _neo4j_admin_command(name: str, command: str):
             name=f"neo4j-{name}",
             remove=True,
             volumes=[
-                f"{REPO_PATH}/neo4j-data/data:/data",
-                f"{REPO_PATH}/neo4j-data/import:/var/lib/neo4j/import",
-                f"{REPO_PATH}/neo4j-data/backups:/backups",
+                f"{REPO_PATH}/{NEO4J_FOLDER}/data:/data",
+                f"{REPO_PATH}/{NEO4J_FOLDER}/import:/var/lib/neo4j/import",
+                f"{REPO_PATH}/{NEO4J_FOLDER}/backups:/backups",
             ],
             command=command,
         )
@@ -168,7 +170,7 @@ def dump(output_path: Path, use_docker=True):
     command = f"neo4j-admin dump --database=neo4j --to={dump_path}"
     # The actual path in the host is different than the path in the container
     real_path = (
-        (REPO_PATH / "neo4j-data" / "backups" / "content-graph.dump")
+        (REPO_PATH / NEO4J_FOLDER / "backups" / "content-graph.dump")
         if use_docker
         else output_path
     )
@@ -187,8 +189,8 @@ def load(input_path: Path, use_docker=True):
     dump_path = Path("/backups/content-graph.dump") if use_docker else input_path
     if use_docker:
         # remove existing data
-        Path.mkdir(REPO_PATH / "neo4j-data" / "backups", parents=True, exist_ok=True)
-        shutil.rmtree(REPO_PATH / "neo4j-data" / "data", ignore_errors=True)
+        Path.mkdir(REPO_PATH / NEO4J_FOLDER / "backups", parents=True, exist_ok=True)
+        shutil.rmtree(REPO_PATH / NEO4J_FOLDER / "data", ignore_errors=True)
         # copy the dump file to the correct path
         shutil.copy(input_path, REPO_PATH / "neo4j" / "backups" / "content-graph.dump")
     # currently we assume that the data is empty when running without docker

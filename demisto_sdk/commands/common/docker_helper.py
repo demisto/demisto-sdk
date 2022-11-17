@@ -64,7 +64,7 @@ class DockerBase:
     def __init__(self):
         self.tmp_dir_name = tempfile.TemporaryDirectory(prefix=os.path.join(os.getcwd(), 'tmp'))
         self.tmp_dir = Path(self.tmp_dir_name.name)
-        installation_scripts = Path(__file__).parent / 'resources' / 'installation_scripts'
+        installation_scripts = Path(__file__).parent.parent / 'lint' / 'resources' / 'installation_scripts'
         self.installation_scripts = {
             TYPE_PYTHON: installation_scripts / 'python_image.sh',
             TYPE_PWSH: installation_scripts / 'powershell_image.sh',

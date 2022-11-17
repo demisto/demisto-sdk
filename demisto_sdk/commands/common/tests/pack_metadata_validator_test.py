@@ -43,9 +43,9 @@ class TestPackMetadataValidator:
                                           os.path.join(FILES_PATH, 'pack_metadata__valid__community.json'),
                                           ])
     def test_metadata_validator_valid(self, mocker, metadata):
-        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
         mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
                      return_value=["Data Enrichment & Threat Intelligence"])
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': {}}, 'json'))
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=TestPackMetadataValidator.read_file(metadata))
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
@@ -64,7 +64,7 @@ class TestPackMetadataValidator:
         os.path.join(FILES_PATH, 'pack_metadata_invalid_format_version.json'),
     ])
     def test_metadata_validator_invalid__non_breaking(self, mocker, metadata):
-        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': {}}, 'json'))
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=TestPackMetadataValidator.read_file(metadata))
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
@@ -91,7 +91,7 @@ class TestPackMetadataValidator:
         Then
                 Ensure BlockingValidationFailureException is raised
         """
-        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': {}}, 'json'))
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=TestPackMetadataValidator.read_file(metadata))
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
@@ -166,7 +166,7 @@ class TestPackMetadataValidator:
 
     def test_metadata_validator_empty_categories(self, mocker):
         metadata = os.path.join(self.__class__.FILES_PATH, 'pack_metadata_empty_categories.json')
-        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': {}}, 'json'))
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=TestPackMetadataValidator.read_file(metadata))
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)
@@ -203,7 +203,7 @@ class TestPackMetadataValidator:
             - Ensure false is returned and the correct error is added to the validation object error list
         """
         metadata = os.path.join(self.FILES_PATH, 'pack_metadata_invalid_format_version.json')
-        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': []}, 'json'))
+        mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': {}}, 'json'))
         mocker.patch.object(PackUniqueFilesValidator, '_read_file_content',
                             return_value=TestPackMetadataValidator.read_file(metadata))
         mocker.patch.object(PackUniqueFilesValidator, '_is_pack_file_exists', return_value=True)

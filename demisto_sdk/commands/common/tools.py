@@ -26,7 +26,8 @@ import git
 import giturlparse
 import requests
 import urllib3
-from packaging.version import parse
+from git.types import PathLike
+from packaging.version import LegacyVersion, Version, parse
 from pebble import ProcessFuture, ProcessPool
 from requests.exceptions import HTTPError
 
@@ -247,7 +248,7 @@ def src_root() -> Path:
     git_dir = git.Repo(Path.cwd(),
                        search_parent_directories=True).working_tree_dir
 
-    return Path(git_dir) / 'demisto_sdk'
+    return Path(git_dir) / 'demisto_sdk'  # type: ignore
 
 
 def print_error(error_str):
@@ -364,7 +365,7 @@ def get_remote_file_from_api(
             res.raise_for_status()
         else:  # Github
             res = requests.get(git_path, verify=False, timeout=10, headers={
-                'Authorization': f"Bearer {github_token}" if github_token else None,
+                'Authorization': f"Bearer {github_token}" if github_token else '',
                 'Accept': f'application/vnd.github.VERSION.raw',
             })  # Sometime we need headers
             if not res.ok:  # sometime we need param token
@@ -1091,7 +1092,7 @@ def filter_files_by_type(file_paths=None, skip_file_types=None) -> set:
 
 
 def pack_name_to_path(pack_name):
-    return os.path.join(get_content_path(), PACKS_DIR, pack_name)
+    return os.path.join(get_content_path(), PACKS_DIR, pack_name)  # type: ignore
 
 
 def pack_name_to_posix_path(pack_name):
@@ -1099,7 +1100,7 @@ def pack_name_to_posix_path(pack_name):
 
 
 def get_pack_ignore_file_path(pack_name):
-    return os.path.join(get_content_path(), PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)
+    return os.path.join(get_content_path(), PACKS_DIR, pack_name, PACKS_PACK_IGNORE_FILE_NAME)  # type: ignore
 
 
 def get_test_playbook_id(test_playbooks_list: list, tpb_path: str) -> Tuple:  # type: ignore
@@ -1590,7 +1591,7 @@ def is_external_repository() -> bool:
     """
     try:
         git_repo = git.Repo(os.getcwd(), search_parent_directories=True)
-        private_settings_path = os.path.join(git_repo.working_dir, '.private-repo-settings')
+        private_settings_path = os.path.join(git_repo.working_dir, '.private-repo-settings')  # type: ignore
         return os.path.exists(private_settings_path)
     except git.InvalidGitRepositoryError:
         return True
@@ -1601,7 +1602,7 @@ def get_content_id_set() -> dict:
     return requests.get(OFFICIAL_CONTENT_ID_SET_PATH).json()
 
 
-def get_content_path() -> str:
+def get_content_path() -> Union[str, PathLike, None]:
     """ Get abs content path, from any CWD
     Returns:
         str: Absolute content path
@@ -1621,7 +1622,8 @@ def get_content_path() -> str:
             raise git.InvalidGitRepositoryError
         return git_repo.working_dir
     except (git.InvalidGitRepositoryError, git.NoSuchPathError):
-        print_warning("Please run demisto-sdk in content repository!")
+        if not os.getenv('DEMISTO_SDK_IGNORE_CONTENT_WARNING'):
+            print_warning("Please run demisto-sdk in content repository!")
     return ''
 
 
@@ -1715,7 +1717,7 @@ def is_file_from_content_repo(file_path: str) -> Tuple[bool, str]:
 
         if not is_fork_repo and not is_external_repo:
             return False, ''
-        content_path_parts = Path(git_repo.working_dir).parts
+        content_path_parts = Path(git_repo.working_dir).parts  # type: ignore
         input_path_parts = Path(file_path).parts
         input_path_parts_prefix = input_path_parts[:len(content_path_parts)]
         if content_path_parts == input_path_parts_prefix:
@@ -1984,7 +1986,7 @@ def open_id_set_file(id_set_path):
         return id_set
 
 
-def get_demisto_version(client: demisto_client) -> str:
+def get_demisto_version(client: demisto_client) -> Union[Version, LegacyVersion]:
     """
     Args:
         demisto_client: A configured demisto_client instance
@@ -1997,7 +1999,7 @@ def get_demisto_version(client: demisto_client) -> str:
         about_data = json.loads(resp[0].replace("'", '"'))
         return parse(about_data.get('demistoVersion'))  # type: ignore
     except Exception:
-        return "0"
+        return parse("0")
 
 
 def arg_to_list(arg: Union[str, List[str]], separator: str = ",") -> List[str]:
@@ -2299,18 +2301,6 @@ def get_approved_usecases() -> list:
     ).get('approved_list', [])
 
 
-def get_approved_tags() -> list:
-    """Gets approved list of tags from content master
-
-    Returns:
-        List of approved tags
-    """
-    return get_remote_file(
-        'Tests/Marketplace/approved_tags.json',
-        git_content_config=GitContentConfig(repo_name=GitContentConfig.OFFICIAL_CONTENT_REPO_NAME)
-    ).get('approved_list', [])
-
-
 def get_pack_metadata(file_path: str) -> dict:
     """ Get the pack_metadata dict, of the pack containing the given file path.
 
@@ -2411,16 +2401,21 @@ def get_current_usecases() -> list:
     return []
 
 
-def get_current_tags() -> list:
+def get_approved_tags_from_branch() -> Dict[str, List[str]]:
     """Gets approved list of tags from current branch (only in content repo).
 
     Returns:
-        List of approved tags from current branch
+        Dict of approved tags from current branch
     """
     if not is_external_repository():
         approved_tags_json, _ = get_dict_from_file('Tests/Marketplace/approved_tags.json')
-        return approved_tags_json.get('approved_list', [])
-    return []
+        if isinstance(approved_tags_json.get('approved_list'), list):
+            print_warning('You are using a deprecated version of the file aproved_tags.json, consider pulling from master'
+                          ' to update it.')
+            return {'common': approved_tags_json.get('approved_list', []), 'xsoar': [], 'marketplacev2': [], 'xpanse': []}
+
+        return approved_tags_json.get('approved_list', {})
+    return {}
 
 
 def get_current_categories() -> list:

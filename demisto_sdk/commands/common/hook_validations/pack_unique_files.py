@@ -8,7 +8,7 @@ import re
 from datetime import datetime
 from distutils.version import LooseVersion
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, List, Set, Tuple
 
 import click
 from dateutil import parser
@@ -25,7 +25,7 @@ from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
     PACK_METADATA_SUPPORT, PACK_METADATA_TAGS, PACK_METADATA_URL,
     PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
     PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
-    PACKS_WHITELIST_FILE_NAME, VERSION_REGEX)
+    PACKS_WHITELIST_FILE_NAME, VERSION_REGEX, MarketplaceVersions)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.errors import Errors
@@ -36,7 +36,8 @@ from demisto_sdk.commands.common.hook_validations.base_validator import (
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.tools import (get_core_pack_list, get_json,
                                                get_remote_file,
-                                               pack_name_to_path)
+                                               pack_name_to_path,
+                                               print_warning)
 from demisto_sdk.commands.find_dependencies.find_dependencies import \
     PackDependencies
 
@@ -334,6 +335,7 @@ class PackUniqueFilesValidator(BaseValidator):
             self._is_valid_contributor_pack_support_details(),
             self._is_approved_usecases(),
             self._is_right_version(),
+            self._is_approved_tag_prefixes(),
             self._is_approved_tags(),
             self._is_price_changed(),
             self._is_valid_support_type(),
@@ -589,32 +591,94 @@ class PackUniqueFilesValidator(BaseValidator):
             return False
         return True
 
+    @error_codes('PA133')
+    def _is_approved_tag_prefixes(self) -> bool:
+        """Checks whether the tags in the pack metadata are approved
+
+        Return:
+            bool: True if the tags are approved, otherwise False
+        """
+        if tools.is_external_repository():
+            return True
+
+        is_valid = True
+        approved_prefixes = {x.value for x in list(MarketplaceVersions)}
+        pack_meta_file_content = self._read_metadata_content()
+        for tag in pack_meta_file_content.get('tags', []):
+            if ':' in tag:
+                tag_data = tag.split(':')
+                marketplaces = tag_data[0].split(',')
+                for marketplace in marketplaces:
+                    if marketplace not in approved_prefixes:
+                        if self._add_error(Errors.pack_metadata_non_approved_tag_prefix(tag, approved_prefixes), self.pack_meta_file):
+                            is_valid = False
+
+        return is_valid
+
     @error_codes('PA120')
     def _is_approved_tags(self) -> bool:
         """Checks whether the tags in the pack metadata are approved
-
         Return:
              bool: True if the tags are approved, otherwise False
         """
         if tools.is_external_repository():
             return True
 
+        is_valid_tag_prefixes = True
         non_approved_tags = set()
+        marketplaces = [x.value for x in list(MarketplaceVersions)]
         try:
-            pack_meta_file_content = self._read_metadata_content()
-            current_tags = tools.get_current_tags()
-            non_approved_tags = set(pack_meta_file_content[PACK_METADATA_TAGS]) - set(current_tags)
+            pack_tags, is_valid_tag_prefixes = self.filter_by_marketplace(marketplaces)
+            non_approved_tags = self.extract_non_approved_tags(pack_tags, marketplaces)
             if non_approved_tags:
                 if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
                     return False
         except (ValueError, TypeError):
             if self._add_error(Errors.pack_metadata_non_approved_tags(non_approved_tags), self.pack_meta_file):
                 return False
-        return True
+
+        return is_valid_tag_prefixes
+
+    def filter_by_marketplace(self, marketplaces):
+        """Filtering pack_metadata tags by marketplace"""
+        pack_meta_file_content = self._read_metadata_content()
+
+        pack_tags: Dict[str, List[str]] = {}
+        for marketplace in marketplaces:
+            pack_tags[marketplace] = []
+        pack_tags['common'] = []
+
+        is_valid = True
+        for tag in pack_meta_file_content.get('tags', []):
+            if ':' in tag:
+                tag_data = tag.split(':')
+                tag_marketplaces = tag_data[0].split(',')
+
+                try:
+                    for tag_marketplace in tag_marketplaces:
+                        pack_tags[tag_marketplace].append(tag_data[1])
+                except KeyError:
+                    print_warning('You have non-approved tag prefix in the pack metadata tags, cannot validate all tags until it is fixed.'
+                                  f' Valid tag prefixes are: { ", ".join(marketplaces)}.')
+                    is_valid = False
+
+            else:
+                pack_tags['common'].append(tag)
+
+        return pack_tags, is_valid
+
+    def extract_non_approved_tags(self, pack_tags, marketplaces) -> Set[str]:
+        approved_tags = tools.get_approved_tags_from_branch()
+
+        non_approved_tags = set(pack_tags.get('common', [])) - set(approved_tags.get('common', []))
+        for marketplace in marketplaces:
+            non_approved_tags |= set(pack_tags.get(marketplace, [])) - set(approved_tags.get(marketplace, []))
+
+        return non_approved_tags
 
     @error_codes('RN106,PA131')
     def _is_right_version(self):
-        """Checks whether the currentVersion field in the pack metadata match the version of the latest release note.
+        """Checks whether the currentVersion field in the pack metadata matches the version of the latest release note.
 
         Return:
              bool: True if the versions are match, otherwise False

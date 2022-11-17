@@ -108,7 +108,7 @@ class PackContentItems(BaseModel):
     )
     xsiam_report: List[XSIAMReport] = Field([], alias=ContentType.XSIAM_REPORT.value)
 
-    def __iter__(self) -> Generator[ContentItem, Any, Any]:
+    def __iter__(self) -> Generator[ContentItem, Any, Any]:  # type: ignore
         """Defines the iteration of the object. Each iteration yields a single content item."""
         for content_items in vars(self).values():
             for content_item in content_items:

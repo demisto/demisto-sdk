@@ -7,7 +7,7 @@ from neo4j import graph
 
 from demisto_sdk.commands.common.tools import get_content_path
 
-REPO_PATH = Path(get_content_path())
+REPO_PATH = Path(get_content_path())  # type: ignore
 
 NEO4J_ADMIN_DOCKER = ""
 

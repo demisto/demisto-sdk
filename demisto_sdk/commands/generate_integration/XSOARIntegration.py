@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 from ruamel.yaml.scalarstring import FoldedScalarString
 
@@ -112,12 +112,12 @@ class XSOARIntegration:
                 self.defaultvalue = 'false'
 
     class Script:
-        def __init__(self, script: str, type_: str, subtype: str, dockerimage: str, isfetch: bool,
-                     commands: list = None):
+        def __init__(self, script: Union[str, FoldedScalarString], type_: str, subtype: str, dockerimage: str,
+                     isfetch: bool, commands: Optional[list] = None):
             if script and isinstance(script, str):
                 self.script = FoldedScalarString(script)
             else:
-                self.script = script
+                self.script = script  # type: ignore
 
             self.type = type_
             self.subtype = subtype

@@ -99,8 +99,8 @@ class ContributionConverter:
         self.contrib_conversion_errs: List[str] = []
         self.create_new = create_new
         self.no_pipenv = no_pipenv
-        base_dir = base_dir or get_content_path()
-        self.packs_dir_path = os.path.join(base_dir, 'Packs')
+        base_dir = base_dir or get_content_path()  # type: ignore
+        self.packs_dir_path = os.path.join(base_dir, 'Packs')  # type: ignore
         if not os.path.isdir(self.packs_dir_path):
             os.makedirs(self.packs_dir_path)
 

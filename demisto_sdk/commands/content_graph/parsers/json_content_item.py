@@ -52,11 +52,11 @@ class JSONContentItemParser(ContentItemParser):
 
     @property
     def marketplaces(self) -> List[MarketplaceVersions]:
-        if marketplaces := [
+        if file_marketplaces := [
             MarketplaceVersions(mp) for mp in self.json_data.get("marketplaces", [])
         ]:
-            return marketplaces
-        return self.pack_marketplaces
+            return file_marketplaces
+        return sorted(set(self.pack_marketplaces) & self.supported_marketplaces)
 
     def get_json(self) -> Dict[str, Any]:
         if self.path.is_dir():

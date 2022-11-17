@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -67,3 +67,7 @@ class ClassifierParser(JSONContentItemParser, content_type=ContentType.CLASSIFIE
             self.get_filters_and_transformers_from_complex_value(
                 transformer_complex_value
             )
+
+    @property
+    def supported_marketplaces(self) -> Set[MarketplaceVersions]:
+        return {MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2}

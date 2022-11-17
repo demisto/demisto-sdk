@@ -11,7 +11,8 @@ from typing import Any, Optional, Tuple, Union
 
 from demisto_sdk.commands.common.constants import (
     ALL_FILES_VALIDATION_IGNORE_WHITELIST, DEPRECATED_REGEXES,
-    IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, FileType)
+    IGNORED_PACK_NAMES, RN_HEADER_BY_FILE_TYPE, XSIAM_DASHBOARDS_DIR,
+    XSIAM_REPORTS_DIR, FileType)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects import (
     Integration, Playbook, Script)
@@ -148,7 +149,10 @@ class UpdateRN:
                               f"Did you mistype {file_path}?")
 
         if file_path.endswith('_image.png'):
-            new_path = file_path.replace('_image.png', '.yml')
+            if Path(file_path).parent.name in (XSIAM_DASHBOARDS_DIR, XSIAM_REPORTS_DIR):
+                new_path = file_path.replace('_image.png', '.json')
+            else:
+                new_path = file_path.replace('_image.png', '.yml')
             validate_new_path(new_path)
             return new_path
 

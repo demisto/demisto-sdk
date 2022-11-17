@@ -41,7 +41,7 @@ SET_VERIFY_KEY_ACTION = f'set the key "{PACK_VERIFY_KEY}" to ' + '{}'
 
 class Pack:
     def __init__(self, path: Union[str, Path]):
-        self._path = Path(path)
+        self._path = Path(path)  # type: ignore
         # in case the given path are a Pack and not zipped pack - we init the metadata from the pack
         if not str(path).endswith('.zip'):
             self._metadata = PackMetaData(self._path.joinpath('metadata.json'))

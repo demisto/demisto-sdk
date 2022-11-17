@@ -1029,7 +1029,7 @@ class TestPackValidation:
         mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
                      return_value=[])
         mocker.patch('demisto_sdk.commands.common.hook_validations.pack_unique_files.tools.get_approved_tags_from_branch',
-                     
+
                      return_value={})
         runner = CliRunner(mix_stderr=False)
         result = runner.invoke(main, [VALIDATE_CMD, "-i", AZURE_FEED_PACK_PATH, "--no-conf-json",

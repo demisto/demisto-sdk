@@ -624,25 +624,21 @@ def get_file(file_path: Union[str, Path], type_of_file: str, clear_cache: bool =
     if clear_cache:
         get_file.cache_clear()
     file_path = Path(file_path).absolute()
-    data_dictionary = None
 
     if type_of_file in file_path.suffix:  # e.g. 'yml' in '.yml'
-        read_file = _read_file(file_path)
-        replaced = re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', read_file)
-        stream = io.StringIO(replaced)  # convert str to stream for loader
-
+        file_content = _read_file(file_path)
         try:
             if type_of_file in ('yml', '.yml'):
-                data_dictionary = yaml.load(stream)
+                replaced = re.sub(r"(simple: \s*\n*)(=)(\s*\n)", r'\1"\2"\3', file_content)
+                result = yaml.load(io.StringIO(replaced))
             else:
-                data_dictionary = json.load(stream)
+                result = json.load(io.StringIO(file_content))
 
         except Exception as e:
-            raise ValueError("{} has a structure issue of file type {}. Error was: {}"
-                             .format(file_path, type_of_file, str(e)))
+            raise ValueError(f"{file_path} has a structure issue of file type {type_of_file}\n{e}")
 
-    if isinstance(data_dictionary, (dict, list)):
-        return data_dictionary
+    if isinstance(result, (dict, list)):
+        return result
     return {}
 
 

@@ -35,6 +35,10 @@ class LayoutParser(JSONContentItemParser, content_type=ContentType.LAYOUT):
 
         self.connect_to_dependencies()
 
+    @property
+    def supported_marketplaces(self) -> Set[MarketplaceVersions]:
+        return {MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2}
+
     def connect_to_dependencies(self) -> None:
         """Collects the incident/indicator fields used as optional dependencies."""
         if self.group == "incident":

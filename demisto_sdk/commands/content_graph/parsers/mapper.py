@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -21,6 +21,10 @@ class MapperParser(JSONContentItemParser, content_type=ContentType.MAPPER):
     @property
     def name(self) -> Optional[str]:
         return self.json_data.get("name") or self.json_data.get("brandName")
+
+    @property
+    def supported_marketplaces(self) -> Set[MarketplaceVersions]:
+        return {MarketplaceVersions.XSOAR, MarketplaceVersions.MarketplaceV2}
 
     def get_filters_and_transformers_from_complex_value(
         self, complex_value: dict

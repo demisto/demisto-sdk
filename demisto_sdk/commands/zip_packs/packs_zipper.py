@@ -190,9 +190,12 @@ def PacksDirsHandler(artifact_manager: PacksManager):
         delete_dirs(artifact_manager)
         create_dirs(artifact_manager)
         yield
-    except (Exception, KeyboardInterrupt):
+    except (Exception, KeyboardInterrupt) as e:
         delete_dirs(artifact_manager)
         artifact_manager.exit_code = EX_FAIL
+        logger = logging.getLogger('demisto-sdk')
+        logger.error(e)
+        exit(EX_FAIL)
     else:
         if artifact_manager.zip_all:
             zip_packs(artifact_manager)

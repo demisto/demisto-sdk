@@ -143,7 +143,7 @@ def main(config, version, release_notes):
     import dotenv
 
     from demisto_sdk.commands.common.tools import get_content_path
-    dotenv.load_dotenv(Path(get_content_path()) / '.env', override=True)  # Load a .env file from the cwd.
+    dotenv.load_dotenv(Path(get_content_path()) / '.env', override=True)    # type: ignore # load .env file from the cwd
     if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
         try:
             __version__ = get_distribution('demisto-sdk').version

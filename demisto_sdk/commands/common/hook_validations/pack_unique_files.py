@@ -903,7 +903,7 @@ class PackUniqueFilesValidator(BaseValidator):
             )
         return False
 
-    @error_codes('PA133')
+    @error_codes('PA134')
     def is_categories_field_match_standard(self):
         # type: () -> bool
         """

@@ -12,7 +12,7 @@ from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
 
 class ContentGraphInterface(ABC):
     _calculate_dependencies = True
-    repo_path = Path(get_content_path())
+    repo_path = Path(get_content_path())  # type: ignore
 
     @abstractmethod
     def create_indexes_and_constraints(self) -> None:

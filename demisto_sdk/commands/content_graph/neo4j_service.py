@@ -11,7 +11,7 @@ from demisto_sdk.commands.content_graph.common import (NEO4J_DATABASE_HTTP,
                                                        NEO4J_FOLDER,
                                                        NEO4J_PASSWORD)
 
-REPO_PATH = Path(get_content_path())
+REPO_PATH = Path(get_content_path())  # type: ignore
 
 NEO4J_SERVICE_IMAGE = "neo4j:4.4.12"
 NEO4J_ADMIN_IMAGE = "neo4j/neo4j-admin:4.4.12"

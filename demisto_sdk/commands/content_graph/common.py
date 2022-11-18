@@ -5,7 +5,6 @@ from typing import Any, Dict, Iterator, List, NamedTuple, Set
 
 from neo4j import graph
 
-
 NEO4J_ADMIN_DOCKER = ""
 
 NEO4J_DATABASE_HTTP = os.getenv("DEMISTO_SDK_NEO4J_DATABASE_HTTP", "http://127.0.0.1:7474")

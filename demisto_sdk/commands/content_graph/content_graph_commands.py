@@ -22,10 +22,10 @@ def create_content_graph(
         content_graph_interface (ContentGraphInterface): The content graph interface.
     """
     ContentGraphBuilder(content_graph_interface).create_graph()
-    if export:
-        content_graph_interface.export_graph()
     if dependencies:
         content_graph_interface.create_pack_dependencies()
+    if export:
+        content_graph_interface.export_graph()
 
 
 def update_content_graph(
@@ -42,9 +42,9 @@ def update_content_graph(
         external_import_paths,
         packs_to_update
     )
-    content_graph_interface.export_graph()
     if dependencies:
         content_graph_interface.create_pack_dependencies()
+    content_graph_interface.export_graph()
 
 
 def stop_content_graph(

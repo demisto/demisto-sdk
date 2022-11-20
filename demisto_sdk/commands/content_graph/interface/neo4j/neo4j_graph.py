@@ -18,6 +18,10 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints impo
     create_constraints, drop_constraints)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
     create_pack_dependencies, get_all_level_packs_dependencies)
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.import_export import (
+    export_to_csv, import_csv, merge_duplicate_commands,
+    merge_duplicate_content_items, post_export_write_queries,
+    post_import_write_queries, pre_export_write_queries)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.indexes import \
     create_indexes
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
@@ -25,10 +29,6 @@ from demisto_sdk.commands.content_graph.interface.neo4j.queries.nodes import (
     remove_server_nodes)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.relationships import \
     create_relationships
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.tools import (
-    export_to_csv, import_csv, merge_duplicate_commands,
-    merge_duplicate_content_items, post_export_write_queries,
-    post_import_write_queries, pre_export_write_queries)
 from demisto_sdk.commands.content_graph.objects.base_content import (
     BaseContent, ServerContent, content_type_to_model)
 from demisto_sdk.commands.content_graph.objects.integration import Integration

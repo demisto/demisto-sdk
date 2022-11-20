@@ -8,32 +8,45 @@ from neo4j import Transaction
 
 logger = logging.getLogger('demisto-sdk')
 
-CONVERT_MARKETPLACES_FIELD_TO_STRING = """MATCH (n) WHERE NOT n.marketplaces IS NULL
-SET n.marketplaces = apoc.text.join(n.marketplaces, "$")
+LIST_PROPERTIES = [
+    'marketplaces',
+    'tags',
+    'categories',
+    'use_cases',
+    'keywords',
+    'packs',
+    'integrations',
+    'scripts'
+]
+
+CONVERT_FIELD_TO_STRING = """MATCH (n) WHERE NOT n.{prop} IS NULL
+SET n.{prop} = apoc.text.join(n.{prop}, "$")
 RETURN n
 """
-CONVERT_MARKETPLACES_FIELD_TO_LIST = """MATCH (n) WHERE NOT n.marketplaces IS NULL
-SET n.marketplaces = split(n.marketplaces, "$")
+CONVERT_FIELD_TO_LIST = """MATCH (n) WHERE NOT n.{prop} IS NULL
+SET n.{prop} = split(n.{prop}, "$")
 RETURN n
 """
 
 
 def pre_export_write_queries(tx: Transaction) -> None:
-    run_query(tx, CONVERT_MARKETPLACES_FIELD_TO_STRING)
+    for prop in LIST_PROPERTIES:
+        run_query(tx, CONVERT_FIELD_TO_STRING.format(prop=prop))
 
 
 def export_to_csv(
     tx: Transaction,
     import_handler: Neo4jImportHandler,
 ) -> None:
-    import_handler.clean_import_dir_before_export()
+    # import_handler.clean_import_dir_before_export()
     query = f'call apoc.export.csv.all("{import_handler.repo_path.name}.csv", {{bulkImport: true}})'
     run_query(tx, query)
     import_handler.fix_csv_files_after_export()
 
 
 def post_export_write_queries(tx: Transaction) -> None:
-    run_query(tx, CONVERT_MARKETPLACES_FIELD_TO_LIST)
+    for prop in LIST_PROPERTIES:
+        run_query(tx, CONVERT_FIELD_TO_LIST.format(prop=prop))
 
 
 def pre_import_write_queries(
@@ -63,7 +76,8 @@ def post_import_write_queries(
     tx: Transaction,
 ) -> None:
     remove_unused_properties(tx)
-    run_query(tx, CONVERT_MARKETPLACES_FIELD_TO_LIST)
+    for prop in LIST_PROPERTIES:
+        run_query(tx, CONVERT_FIELD_TO_LIST.format(prop=prop))
     fix_description_property(tx)
 
 

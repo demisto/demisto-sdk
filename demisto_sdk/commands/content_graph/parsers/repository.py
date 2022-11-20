@@ -37,6 +37,9 @@ class RepositoryParser:
             logger.error(traceback.format_exc())
             raise
 
+    def should_parse_pack(self, path: Path) -> bool:
+        return path.is_dir() and not path.name.startswith(".") and path.name not in IGNORED_PACKS_FOR_PARSING
+
     def iter_packs(self) -> Iterator[Path]:
         """Iterates all packs in the repository.
 
@@ -49,9 +52,10 @@ class RepositoryParser:
                 path = packs_folder / pack
                 if not path.is_dir():
                     raise FileNotFoundError(f"Pack {pack} does not exist.")
-                yield path
+                if self.should_parse_pack(path):
+                    yield path
 
         else:
             for path in packs_folder.iterdir():
-                if path.is_dir() and not path.name.startswith(".") and path.name not in IGNORED_PACKS_FOR_PARSING:
+                if self.should_parse_pack(path):
                     yield path

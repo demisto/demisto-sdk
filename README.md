@@ -58,6 +58,8 @@ The **demisto-sdk** is made to work with Cortex content, structured similar to t
 Demisto-SDK commands work best when called from the content directory or any of its subfolders.
 To run Demisto-SDK commands from other folders, you may set the `DEMISTO_SDK_CONTENT_PATH` environment variable.
 
+We recommend running all demisto-SDK commands from a folder with a git repo, or any of its subfolders. To suppress warnings about running commands outside of a content repo folder, set the `DEMISTO_SDK_IGNORE_CONTENT_WARNING` environment variable.
+
 ### CLI usage
 
 You can use the SDK in the CLI as follows:

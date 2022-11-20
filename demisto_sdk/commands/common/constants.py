@@ -159,6 +159,9 @@ class FileType(str, Enum):
     DOC_FILE = 'doc_files'
     XDRC_TEMPLATE = 'xdrctemplate'
     XDRC_TEMPLATE_YML = 'xdrctemplateyml'
+    INDICATOR_TYPE = 'indicatortype'
+    TOOL = 'tools'
+    PACK_METADATA = 'packmetadata'
 
 
 RN_HEADER_BY_FILE_TYPE = {
@@ -194,6 +197,7 @@ RN_HEADER_BY_FILE_TYPE = {
     FileType.XSIAM_REPORT: 'XSIAM Reports',
     FileType.TRIGGER: 'Triggers Recommendations',  # https://github.com/demisto/etc/issues/48153#issuecomment-1111988526
     FileType.WIZARD: 'Wizards',
+    FileType.XDRC_TEMPLATE: 'XDRC Templates',
 }
 
 ENTITY_TYPE_TO_DIR = {
@@ -1108,7 +1112,7 @@ EXTERNAL_PR_REGEX = r'^pull/(\d+)$'
 FILE_TYPES_PATHS_TO_VALIDATE = {
     'reports': JSON_ALL_REPORTS_REGEXES
 }
-
+DEPENDENCIES_DOCKER = 'demisto/demisto-sdk-dependencies:1.0.0.36679'
 DEF_DOCKER = 'demisto/python:1.3-alpine'
 DEF_DOCKER_PWSH = 'demisto/powershell:6.2.3.5563'
 
@@ -1503,6 +1507,7 @@ class IronBankDockers:
 class MarketplaceVersions(str, Enum):
     XSOAR = 'xsoar'
     MarketplaceV2 = 'marketplacev2'
+    XPANSE = 'xpanse'
 
 
 INDICATOR_FIELD_TYPE_TO_MIN_VERSION = {'html': LooseVersion('6.1.0'), 'grid': LooseVersion('5.5.0')}

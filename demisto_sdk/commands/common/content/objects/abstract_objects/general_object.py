@@ -76,8 +76,8 @@ class GeneralObject(object):
             DumpContentObjectError: If not valid directory path - not directory or not exists.
         """
         if dest_dir:
-            dest_dir = Path(dest_dir)
-            if dest_dir.exists() and not Path(dest_dir).is_dir():
+            dest_dir = Path(dest_dir)  # type: ignore
+            if dest_dir.exists() and not Path(dest_dir).is_dir():  # type: ignore
                 raise exc.ContentDumpError(self, self._path, "Destiantion is not valid directory path")
             else:
                 dest_dir.mkdir(parents=True, exist_ok=True)

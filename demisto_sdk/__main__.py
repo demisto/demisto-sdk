@@ -143,7 +143,7 @@ def main(config, version, release_notes):
     import dotenv
 
     from demisto_sdk.commands.common.tools import get_content_path
-    dotenv.load_dotenv(Path(get_content_path()) / '.env', override=True)  # Load a .env file from the cwd.
+    dotenv.load_dotenv(Path(get_content_path()) / '.env', override=True)    # type: ignore # load .env file from the cwd
     if not os.getenv('DEMISTO_SDK_SKIP_VERSION_CHECK') or version:  # If the key exists/called to version
         try:
             __version__ = get_distribution('demisto-sdk').version
@@ -569,7 +569,7 @@ def validate(config, **kwargs):
 @click.option('-mp', '--marketplace', help='The marketplace the artifacts are created for, that '
                                            'determines which artifacts are created for each pack. '
                                            'Default is the XSOAR marketplace, that has all of the packs '
-                                           'artifacts.', default='xsoar', type=click.Choice(['xsoar', 'marketplacev2', 'v2']))
+                                           'artifacts.', default='xsoar', type=click.Choice(['xsoar', 'marketplacev2', 'v2', 'xpanse']))
 @click.option('-fbi', '--filter-by-id-set', is_flag=True,
               help='Whether to use the id set as content items guide, meaning only include in the packs the '
                    'content items that appear in the id set.', default=False, hidden=True)

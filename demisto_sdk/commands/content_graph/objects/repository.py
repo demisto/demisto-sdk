@@ -17,7 +17,7 @@ USE_FUTURE = True  # toggle this for better debugging
 
 
 class ContentDTO(BaseModel):
-    path: DirectoryPath = Path(get_content_path())
+    path: DirectoryPath = Path(get_content_path())  # type: ignore
     packs: List[Pack]
 
     def dump(

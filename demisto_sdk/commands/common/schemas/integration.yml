@@ -29,7 +29,7 @@ mapping:
     enum: [
     'Analytics & SIEM', 'Authentication', 'Case Management', 'Cloud Services', 'Data Enrichment & Threat Intelligence',
     'Database', 'Deception', 'Endpoint', 'Forensics & Malware Analysis', 'IT Services', 'Identity and Access Management',
-	  'Messaging', 'Network Security', 'Utilities', 'Vulnerability Management']
+    'Messaging', 'Network Security', 'Utilities', 'Vulnerability Management']
     required: true
   sectionOrder:
     type: seq

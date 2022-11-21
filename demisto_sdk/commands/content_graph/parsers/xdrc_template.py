@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import List, Optional, Set
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import ContentType
@@ -20,7 +20,6 @@ class XDRCTemplateParser(JSONContentItemParser, content_type=ContentType.XDRC_TE
     @property
     def supported_marketplaces(self) -> Set[MarketplaceVersions]:
         return {MarketplaceVersions.MarketplaceV2}
-
 
     @property
     def object_id(self) -> Optional[str]:

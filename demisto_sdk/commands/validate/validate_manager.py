@@ -1998,15 +1998,15 @@ class ValidateManager:
             click.echo(f"Validating deprecated file: {file_path}")
 
             is_valid_as_deprecated = True
-            # if hasattr(validator, "is_valid_as_deprecated"):
-            is_valid_as_deprecated = validator.is_valid_as_deprecated()
+            if hasattr(validator, "is_valid_as_deprecated"):
+                is_valid_as_deprecated = validator.is_valid_as_deprecated()
 
             # if is_modified and is_backward_check:
             return all([is_valid_as_deprecated, validator.is_backward_compatible()])
 
-            self.ignored_files.add(file_path)
-            if self.print_ignored_files:
-                click.echo(f"Skipping validation for: {file_path}")
+            # self.ignored_files.add(file_path)
+            # if self.print_ignored_files:
+            #     click.echo(f"Skipping validation for: {file_path}")
 
-            return is_valid_as_deprecated
+            # return is_valid_as_deprecated
         return None

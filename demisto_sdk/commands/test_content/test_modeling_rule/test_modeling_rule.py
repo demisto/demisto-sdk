@@ -137,7 +137,7 @@ def generate_xql_query(rule: SingleModelingRule, test_data_event_ids: List[str])
     Returns:
         str: The XQL query.
     """
-    fields = ', '.join([f'{f}' for f in rule.fields])
+    fields = ', '.join([field for field in rule.fields])
     td_event_ids = ', '.join([f'"{td_event_id}"' for td_event_id in test_data_event_ids])
     query = (f'datamodel dataset in({rule.dataset}) | filter {rule.dataset}.test_data_event_id in({td_event_ids}) '
              f'| dedup {rule.dataset}.test_data_event_id by desc _insert_time | fields '

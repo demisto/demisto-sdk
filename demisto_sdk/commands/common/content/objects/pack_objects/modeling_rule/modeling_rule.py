@@ -156,6 +156,16 @@ class SingleModelingRule:
 
 
 class ModelingRule(YAMLContentUnifiedObject):
+    """Object model representing a modeling rule content entity.
+
+    Abstraction of a modeling rule content entity. Includes functions to return information about the
+    rule itself as well as the concrete rule(s) that are defined in the rule.
+
+    Attributes:
+        rules (List[SingleModelingRule]): A list of the rules that are defined as part of the Modeling Rule
+            content entity. Note that for the new xdm model syntax (>= version 1.3), there should only be one rule per
+            Modeling Rule content entity.
+    """
     MODEL_RULE_REGEX = re.compile(
         r"(?P<header>\[MODEL:[\w\W]*\])\s(^(?!.*(?P=header)).+$\n)+", flags=re.M
     )

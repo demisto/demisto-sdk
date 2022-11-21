@@ -25,7 +25,7 @@ def init_test_data(
         resolve_path=True,
         show_default=False,
         help=('The path to a directory of a modeling rule. May pass multiple paths to '
-              'initialize test data files for multiple modeling rules.')
+              'initialize/update test data files for multiple modeling rules.')
     ),
     count: int = typer.Option(
         1,
@@ -67,7 +67,7 @@ def init_test_data(
     )
 ):
     """
-    Initializes a test data file for a modeling rule
+    Initialize or update a test data file for a modeling rule
     """
     setup_rich_logging(verbosity, quiet, log_path, log_file_name)
     errors = False
@@ -95,7 +95,6 @@ def init_test_data(
                         event_log.product = default_product
                     if not event_log.dataset:
                         event_log.dataset = default_dataset
-                # for expected in test_data.expected_values:
                     new_mapping = default_event_mapping.copy()
 
                     # remove xdm expected_values fields that are no longer in the rule

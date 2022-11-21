@@ -537,7 +537,8 @@ def test_modeling_rule(
         '-lp', '--log-path',
         resolve_path=True,
         show_default=False,
-        help='Path of directory in which you would like to store all levels of logs.',
+        help='Path of directory in which you would like to store all levels of logs. If not given, then the '
+             '"log_file_name" command line option will be disregarded, and the log output will be to stdout.',
         rich_help_panel='Logging Configuration'
     ),
     log_file_name: str = typer.Option(

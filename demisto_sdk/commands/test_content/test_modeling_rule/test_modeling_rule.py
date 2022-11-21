@@ -101,7 +101,6 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
 
             for key, val in expected_values.items():
                 if not val:
-                    # TODO: Make this a debugging statement
                     logger.debug(
                         f'[cyan]No mapping for {key} - skipping checking match[/cyan]',
                         extra={'markup': True}

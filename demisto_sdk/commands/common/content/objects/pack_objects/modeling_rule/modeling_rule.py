@@ -167,7 +167,7 @@ class ModelingRule(YAMLContentUnifiedObject):
             Modeling Rule content entity.
     """
     MODEL_RULE_REGEX = re.compile(
-        r"(?P<header>\[MODEL:[\w\W]*\])\s(^(?!.*(?P=header)).+$\n)+", flags=re.M
+        r"(?P<header>\[MODEL:[\w\W]*?\])[ ]*?$(\n^(?!.*(?P=header)).+$)+", flags=re.M
     )
     TESTDATA_FILE_SUFFIX = '_testdata.json'
 

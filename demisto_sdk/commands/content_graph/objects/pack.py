@@ -55,6 +55,7 @@ from demisto_sdk.commands.content_graph.objects.wizard import Wizard
 from demisto_sdk.commands.content_graph.objects.xsiam_dashboard import \
     XSIAMDashboard
 from demisto_sdk.commands.content_graph.objects.xsiam_report import XSIAMReport
+from demisto_sdk.commands.content_graph.objects.xdrc_template import XDRCTemplate
 
 if TYPE_CHECKING:
     from demisto_sdk.commands.content_graph.objects.relationship import \
@@ -107,6 +108,7 @@ class PackContentItems(BaseModel):
         [], alias=ContentType.XSIAM_DASHBOARD.value
     )
     xsiam_report: List[XSIAMReport] = Field([], alias=ContentType.XSIAM_REPORT.value)
+    xdrc_template: List[XDRCTemplate] = Field([], alias=ContentType.XDRC_TEMPLATE.value)
 
     def __iter__(self) -> Generator[ContentItem, Any, Any]:  # type: ignore
         """Defines the iteration of the object. Each iteration yields a single content item."""

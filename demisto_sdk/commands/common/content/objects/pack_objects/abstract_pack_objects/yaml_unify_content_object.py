@@ -48,7 +48,7 @@ class YAMLContentUnifiedObject(YAMLContentObject):
 
     @property
     def rules_path(self) -> Optional[Path]:
-        """YAML related rules (modeling|parsing rule) path.
+        """YAML related rules (modeling|parsing rule|correlation rule) path.
 
         Returns:
             Rules file path or None if rules file not found.

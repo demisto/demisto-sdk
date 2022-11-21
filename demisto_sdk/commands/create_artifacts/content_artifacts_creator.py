@@ -469,7 +469,6 @@ class ContentItemsHandler:
             'name': content_object.get('name', ''),
             'os_type': content_object.get('os_type', ''),
             'profile_type': content_object.get('profile_type', ''),
-            'yaml_template': content_object.get('yaml_template', '')
         })
 
 

@@ -15,6 +15,23 @@ from demisto_sdk.commands.common.tools import generate_xsiam_normalized_name
 
 
 class SingleModelingRule:
+    """Parsed object model for a single rule.
+
+    The old xdm model syntax was such that a single rule would actually be composed of multiple rules, each mapping
+    to a different datamodel. This meant that a single xif file typically was composed of multiple rules each mapping
+    to a different datamodel. This class represents a single rule, and is used to parse the old xif format into a list
+    of these objects. This class structure is used to maintain backwards compatibility with the old xif format, while
+    allowing forward compatibility with the new xdm format in which a xif file maps to a single rule.
+
+    Attributes:
+        rule_text (str): The raw text of the rule
+        dataset (str): The dataset that the rule applies to
+        vendor (str): The vendor that the rule applies to
+        product (str): The product that the rule applies to
+        datamodel (str): The datamodel that the rule applies to (Only used in the old xif format)
+        fields (List[str]): The xdm fields that the rule maps to
+        filter_condition (str): The filter condition defining when to apply the modeling rule mapping
+    """
     RULE_HEADER_REGEX = re.compile(r"\[MODEL:\s*model\s*=\s*\"?(?P<datamodel>\w+)\"?\s*,?\s*"
                                    r"dataset\s*=\s*\"?(?P<dataset>\w+)\"?\]")
     RULE_HEADER_REGEX_REVERSED = re.compile(r"\[MODEL:\s*dataset\s*=\s*\"?(?P<dataset>\w+)\"?\s*,?\s*"

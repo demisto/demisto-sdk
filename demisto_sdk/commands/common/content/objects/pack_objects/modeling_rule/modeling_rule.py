@@ -14,7 +14,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
 from demisto_sdk.commands.common.tools import generate_xsiam_normalized_name
 
 
-class MRule:
+class SingleModelingRule:
     RULE_HEADER_REGEX = re.compile(r"\[MODEL:\s*model\s*=\s*\"?(?P<datamodel>\w+)\"?\s*,?\s*"
                                    r"dataset\s*=\s*\"?(?P<dataset>\w+)\"?\]")
     RULE_HEADER_REGEX_REVERSED = re.compile(r"\[MODEL:\s*dataset\s*=\s*\"?(?P<dataset>\w+)\"?\s*,?\s*"
@@ -146,7 +146,7 @@ class ModelingRule(YAMLContentUnifiedObject):
 
     def __init__(self, path: Union[Path, str]):
         super().__init__(path, FileType.MODELING_RULE, MODELING_RULE)
-        self._rules: List[MRule] = []
+        self._rules: List[SingleModelingRule] = []
 
     def normalize_file_name(self) -> str:
         return generate_xsiam_normalized_name(self._path.name, MODELING_RULE)
@@ -175,7 +175,7 @@ class ModelingRule(YAMLContentUnifiedObject):
                     rules_text = self.get('rules', '')
                 matches = self.MODEL_RULE_REGEX.finditer(rules_text)
                 for match in matches:
-                    _rules.append(MRule(match.group()))
+                    _rules.append(SingleModelingRule(match.group()))
                 self.rules = _rules
             except ValueError as ve:
                 rule_initialization_errs.append(ve)

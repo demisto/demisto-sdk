@@ -19,7 +19,7 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_unify_content_object import \
     YAMLContentUnifiedObject
 from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (
-    ModelingRule, MRule)
+    ModelingRule, SingleModelingRule)
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.logger import (set_console_stream_handler,
                                                 setup_rich_logging)
@@ -128,11 +128,11 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
         raise typer.Exit(1)
 
 
-def generate_xql_query(rule: MRule, test_data_event_ids: List[str]) -> str:
+def generate_xql_query(rule: SingleModelingRule, test_data_event_ids: List[str]) -> str:
     """Generate an XQL query from the given rule and test data event IDs.
 
     Args:
-        rule (MRule): Rule object parsed from the modeling rule file.
+        rule (SingleModelingRule): Rule object parsed from the modeling rule file.
         test_data_event_ids (List[str]): List of test data event IDs to query.
 
     Returns:

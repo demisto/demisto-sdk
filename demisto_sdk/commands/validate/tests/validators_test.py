@@ -1,3 +1,4 @@
+import contextlib
 import os
 import sys
 from io import StringIO
@@ -1212,7 +1213,6 @@ class TestValidators:
                               'Packs/pack_id/test_data/file.json',
                               'Packs/pack_id/Scripts/script_id/test_data/file.json',
                               'Packs/pack_id/TestPlaybooks/test_data/file.json',
-                              'Packs/pack_id/pack_metadata.json',
                               'Packs/pack_id/Integrations/integration_id/command_examples',
                               'Packs/pack_id/Integrations/integration_id/test.txt',
                               'Packs/pack_id/.secrets-ignore',
@@ -1558,7 +1558,6 @@ def test_check_file_relevance_and_format_path_non_formatted_relevant_file(mocker
                           'Packs/pack_id/test_data/file.json',
                           'Packs/pack_id/Scripts/script_id/test_data/file.json',
                           'Packs/pack_id/TestPlaybooks/test_data/file.json',
-                          'Packs/pack_id/pack_metadata.json',
                           'Packs/pack_id/Integrations/integration_id/command_examples'])
 def test_check_file_relevance_and_format_path_ignored_files(input_file_path):
     """
@@ -1981,3 +1980,47 @@ def test_check_file_relevance_and_format_path(mocker):
                                                                                    MODELING_RULES_SCHEMA_FILE,
                                                                                    set())
     assert file_path == old_path == MODELING_RULES_YML_FILE
+
+
+pack_metadata_invalid_tags = {
+    "name": "ForTesting",
+    "description": "A descriptive description.",
+    "support": "xsoar",
+    "currentVersion": "1.0.0",
+    "author": "Cortex XSOAR",
+    "url": "https://www.paloaltonetworks.com/cortex",
+    "email": "",
+    "categories": [
+        "Data Enrichment & Threat Intelligence"
+    ],
+    "tags": ["Use Case"],
+    "useCases": [],
+    "keywords": []
+}
+
+
+@pytest.mark.parametrize('pack_metadata_info', [pack_metadata_invalid_tags])
+def test_run_validation_using_git_on_metadata_with_invalid_tags(mocker, repo, pack_metadata_info):
+    """
+    Given
+        - A Pack with a Use Case tags but no PB, incidents Types or Layouts. Considered invalid.
+        - A git run.
+    When
+        - Running validations on pack using git.
+    Then
+        - Assert validation fails and the right error number is shown.
+    """
+    pack = repo.create_pack()
+    pack.pack_metadata.write_json(pack_metadata_info)
+    mocker.patch.object(ValidateManager, 'setup_git_params', return_value=True)
+    mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git',
+                        return_value=({pack.pack_metadata.path}, set(), set()))
+    mocker.patch.object(GitUtil, 'deleted_files', return_value=set())
+    validate_manager = ValidateManager(check_is_unskipped=False, skip_conf_json=True)
+    std_output = StringIO()
+    with contextlib.redirect_stdout(std_output):
+        with ChangeCWD(repo.path):
+            res = validate_manager.run_validation_using_git()
+    captured_stdout = std_output.getvalue()
+    assert "[PA123]" in captured_stdout, captured_stdout
+    assert not res

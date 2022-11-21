@@ -1685,7 +1685,8 @@ class ValidateManager:
 
         # extract metadata files from the recognised changes
         changed_meta = self.pack_metadata_extraction(modified_files, added_files, renamed_files)
-        filtered_changed_meta, old_format_changed, _ = self.filter_to_relevant_files(changed_meta)
+        filtered_changed_meta, old_format_changed, _ = self.filter_to_relevant_files(changed_meta,
+                                                                                     check_metadata_files=True)
         old_format_files |= old_format_changed
         return filtered_modified, filtered_added, filtered_changed_meta, old_format_files, valid_types
 
@@ -1707,7 +1708,7 @@ class ValidateManager:
 
         return changed_metadata_files
 
-    def filter_to_relevant_files(self, file_set):
+    def filter_to_relevant_files(self, file_set, check_metadata_files=False):
         """Goes over file set and returns only a filtered set of only files relevant for validation"""
         filtered_set: set = set()
         old_format_files: set = set()
@@ -1722,9 +1723,11 @@ class ValidateManager:
                 file_path = str(path)
 
             try:
-                formatted_path, old_path, valid_file_extension = self.check_file_relevance_and_format_path(file_path,
-                                                                                                           old_path,
-                                                                                                           old_format_files)
+                formatted_path, old_path, valid_file_extension = self.check_file_relevance_and_format_path(
+                    file_path,
+                    old_path,
+                    old_format_files,
+                    check_metadata_files=check_metadata_files)
                 valid_types.add(valid_file_extension)
                 if formatted_path:
                     if old_path:
@@ -1741,7 +1744,7 @@ class ValidateManager:
 
         return filtered_set, old_format_files, all(valid_types)
 
-    def check_file_relevance_and_format_path(self, file_path, old_path, old_format_files):
+    def check_file_relevance_and_format_path(self, file_path, old_path, old_format_files, check_metadata_files=False):
         """
         Determines if a file is relevant for validation and create any modification to the file_path if needed
         :returns a tuple(string, string, bool) where
@@ -1755,7 +1758,7 @@ class ValidateManager:
 
         file_type = find_type(file_path)
 
-        if self.ignore_files_irrelevant_for_validation(file_path):
+        if self.ignore_files_irrelevant_for_validation(file_path, check_metadata_files=check_metadata_files):
             return irrelevant_file_output
 
         if not file_type:
@@ -1805,19 +1808,23 @@ class ValidateManager:
         else:
             return file_path, '', True
 
-    def ignore_files_irrelevant_for_validation(self, file_path: str) -> bool:
+    def ignore_files_irrelevant_for_validation(self, file_path: str, check_metadata_files: bool = False) -> bool:
         """
         Will ignore files that are not in the packs directory, are .txt files or are in the
         VALIDATION_USING_GIT_IGNORABLE_DATA tuple.
 
         Args:
             file_path: path of file to check if should be ignored.
+            check_metadata_files: If True will not ignore metadata files.
         Returns: True if file is ignored, false otherwise
         """
 
         if PACKS_DIR not in file_path:
             self.ignore_file(file_path)
             return True
+
+        if check_metadata_files and find_type(file_path) == FileType.METADATA:
+            return False
 
         if file_path.endswith(".txt"):
             self.ignore_file(file_path)

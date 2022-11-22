@@ -341,7 +341,7 @@ ERROR_CODE = {
     "incorrect_value_references": {'code': "PB121", 'ui_applicable': False, 'related_field': 'taskid'},
     "playbook_unhandled_task_branches": {'code': "PB122", 'ui_applicable': True, 'related_field': 'conditions'},
     "playbook_unhandled_reply_options": {'code': "PB123", 'ui_applicable': True, 'related_field': 'conditions'},
-    "playbook_unhandled_condition": {'code': "PB124", 'ui_applicable': True, 'related_field': 'conditions'},
+    "playbook_unhandled_script_condition_branches": {'code': "PB124", 'ui_applicable': True, 'related_field': 'conditions'},
     "playbook_only_default_next": {'code': "PB125", 'ui_applicable': True, 'related_field': 'conditions'},
     "playbook_only_default_reply_option": {'code': "PB126", 'ui_applicable': True, 'related_field': 'message'},
 

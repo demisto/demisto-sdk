@@ -56,6 +56,7 @@ class PackContentItems:
             content_type=ContentType.XSIAM_DASHBOARD
         )
         self.xsiam_report = ContentItemsList(content_type=ContentType.XSIAM_REPORT)
+        self.xdrc_template = ContentItemsList(content_type=ContentType.XDRC_TEMPLATE)
 
     def iter_lists(self) -> Iterator[ContentItemsList]:
         for attribute in vars(self).values():

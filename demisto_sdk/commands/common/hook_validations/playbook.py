@@ -215,7 +215,7 @@ class PlaybookValidator(ContentEntityValidator):
                         task) and is_all_condition_branches_handled
         return is_all_condition_branches_handled
 
-    @error_codes('PB101,PB122')
+    @error_codes('PB122')
     def is_builtin_condition_task_branches_handled(self, task: Dict) -> bool:
         """Checks whether a builtin conditional task branches are handled properly
         NOTE: The function uses str.upper() on branches to be case insensitive
@@ -286,7 +286,7 @@ class PlaybookValidator(ContentEntityValidator):
         # Remove all nexttasks from unhandled_reply_options (UPPER)
         for next_task_branch, next_task_id in next_tasks_upper.items():
             try:
-                if next_task_id:
+                if next_task_id and next_task_branch != '#DEFAULT#':
                     unhandled_reply_options.remove(next_task_branch)
             except KeyError:
                 error_message, error_code = Errors.playbook_unreachable_condition(task.get('id'), next_task_branch)

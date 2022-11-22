@@ -6,11 +6,9 @@ from typing import List, Set
 
 import typer
 
-from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import \
-    ModelingRule
+from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import ModelingRule
 from demisto_sdk.commands.common.logger import setup_rich_logging
-from demisto_sdk.commands.test_content.xsiam_tools.test_data import (EventLog,
-                                                                     TestData)
+from demisto_sdk.commands.test_content.xsiam_tools.test_data import EventLog, TestData
 
 app = typer.Typer()
 logger = logging.getLogger('demisto-sdk')
@@ -71,9 +69,9 @@ def init_test_data(
     """
     setup_rich_logging(verbosity, quiet, log_path, log_file_name)
     errors = False
-    mr_content_entities = [ModelingRule(fp.as_posix()) for fp in input]
-    for mr_entity in mr_content_entities:
+    for fp in input:
         try:
+            mr_entity = ModelingRule(fp.as_posix())
             all_mr_entity_fields: Set[str] = set()
             for mr in mr_entity.rules:
                 all_mr_entity_fields = all_mr_entity_fields.union(mr.fields)
@@ -145,7 +143,7 @@ def init_test_data(
                 logger.error(f'[red]{sio.getvalue()}[/red]', extra={'markup': True})
             errors = True
     if errors:
-        typer.Exit(1)
+        raise typer.Exit(1)
 
 
 if __name__ == "__main__":

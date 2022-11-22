@@ -52,11 +52,15 @@ class PlaybookValidator(ContentEntityValidator):
             self._is_id_uuid(),
             self._is_taskid_equals_id(),
             self._is_correct_value_references_interface(),
-            self.verify_condition_tasks_has_else_path(),
             self.name_not_contain_the_type(),
             self.is_valid_with_indicators_input(),
             self.inputs_in_use_check(is_modified),
             self.is_playbook_deprecated_and_used(),
+            self.is_builtin_condition_task_branches_handled(),
+            self.is_ask_condition_branches_handled(),
+            self.is_script_condition_branches_handled(),
+            self.is_default_not_only_condition(),
+            self.is_default_not_only_reply_option(),
         ]
         answers = all(playbook_checks)
 
@@ -215,7 +219,7 @@ class PlaybookValidator(ContentEntityValidator):
                         task) and is_all_condition_branches_handled
         return is_all_condition_branches_handled
 
-    @error_codes('PB101,PB102')
+    @error_codes('PB101,PB122')
     def is_builtin_condition_task_branches_handled(self, task: Dict) -> bool:
         """Checks whether a builtin conditional task branches are handled properly
         NOTE: The function uses str.upper() on branches to be case insensitive
@@ -259,7 +263,7 @@ class PlaybookValidator(ContentEntityValidator):
 
         return is_all_condition_branches_handled
 
-    @error_codes('PB101,PB102')
+    @error_codes('PB101,PB123')
     def is_ask_condition_branches_handled(self, task: Dict) -> bool:
         """Checks whether a builtin conditional task branches are handled properly
         NOTE: The function uses str.upper() on branches to be case insensitive
@@ -272,9 +276,6 @@ class PlaybookValidator(ContentEntityValidator):
         """
         is_all_condition_branches_handled: bool = True
         next_tasks: Dict = task.get('nexttasks', {})
-        # if default is handled, then it means all branches are being handled
-        if '#default#' in next_tasks:
-            return is_all_condition_branches_handled
 
         # ADD all replyOptions to unhandled_reply_options (UPPER)
         unhandled_reply_options = set(map(str.upper, task.get('message', {}).get('replyOptions', [])))
@@ -296,13 +297,13 @@ class PlaybookValidator(ContentEntityValidator):
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = is_all_condition_branches_handled = False
 
-        if unhandled_reply_options:
+        if unhandled_reply_options and not (len(unhandled_reply_options) == 1 and '#DEFAULT#' in unhandled_reply_options):
             error_message, error_code = Errors.playbook_unhandled_condition(task.get('id'), unhandled_reply_options)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = is_all_condition_branches_handled = False
         return is_all_condition_branches_handled
 
-    @error_codes('PB102')
+    @error_codes('PB124')
     def is_script_condition_branches_handled(self, task: Dict) -> bool:
         """Checks whether a script conditional task branches are handled properly
 
@@ -314,10 +315,6 @@ class PlaybookValidator(ContentEntityValidator):
         """
         is_all_condition_branches_handled: bool = True
         next_tasks: Dict = task.get('nexttasks', {})
-        if '#default#' not in next_tasks:
-            error_message, error_code = Errors.playbook_unhandled_condition(task.get('id'), {'else'})
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self.is_valid = is_all_condition_branches_handled = False
 
         if len(next_tasks) < 2:
             # there should be at least 2 next tasks, we don't know what condition is missing, but we know it's missing
@@ -326,6 +323,50 @@ class PlaybookValidator(ContentEntityValidator):
                 self.is_valid = is_all_condition_branches_handled = False
 
         return is_all_condition_branches_handled
+
+    @error_codes('PB125')
+    def is_default_not_only_condition(self, task: Dict) -> bool:
+        """Checks whether the #default# is the only branch
+
+        Args:
+            task (dict): task json loaded from a yaml
+
+        Return:
+            bool. if the task's next tasks have more than just the default option.
+        """
+        is_default_not_only_condition: bool = True
+        next_tasks: Dict = task.get('nexttasks', {})
+
+        if len(next_tasks) == 1:
+            # Rename the keys in dictionary to upper case
+            next_tasks_upper = {k.upper(): v for k, v in next_tasks.items()}
+            if '#default#'.upper() in next_tasks_upper:
+                error_message, error_code = Errors.playbook_only_default_next(task.get('id'))
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self.is_valid = is_default_not_only_condition = False
+
+        return is_default_not_only_condition
+
+    @error_codes('PB126')
+    def is_default_not_only_reply_option(self, task: Dict) -> bool:
+        """Checks whether #default# is the only reply option
+
+        Args:
+            task (dict): task json loaded from a yaml
+
+        Return:
+            bool. if the task reply options have more than just the default option.
+        """
+        is_default_not_only_reply_option: bool = True
+
+        reply_options = set(map(str.upper, task.get('message', {}).get('replyOptions', [])))
+
+        if len(reply_options) == 1 and '#default#'.upper() in reply_options:
+            error_message, error_code = Errors.playbook_only_default_reply_option(task.get('id'))
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = is_default_not_only_reply_option = False
+
+        return is_default_not_only_reply_option
 
     @error_codes('PB103')
     def is_root_connected_to_all_tasks(self):  # type: () -> bool
@@ -498,28 +539,6 @@ class PlaybookValidator(ContentEntityValidator):
     def _is_else_path_in_condition_task(self, task):
         next_tasks: Dict = task.get('nexttasks', {})
         return '#default#' in next_tasks
-
-    @error_codes('PB112')
-    def verify_condition_tasks_has_else_path(self):  # type: () -> bool
-        """Check whether the playbook conditional tasks has else path
-
-        Return:
-            bool. if the Playbook has else path to all condition task
-        """
-        all_conditions_has_else_path: bool = True
-        tasks: Dict = self.current_file.get('tasks', {})
-        error_tasks_ids = []
-        for task in tasks.values():
-            if task.get('type') == 'condition':
-                if not self._is_else_path_in_condition_task(task):
-                    error_tasks_ids.append(task.get('id'))
-
-        if error_tasks_ids:
-            error_message, error_code = Errors.playbook_condition_has_no_else_path(error_tasks_ids)
-            if self.handle_error(error_message, error_code, file_path=self.file_path, warning=True):
-                all_conditions_has_else_path = False
-
-        return all_conditions_has_else_path
 
     @error_codes('PB108')
     def _is_id_uuid(self):

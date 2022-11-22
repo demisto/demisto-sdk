@@ -22,7 +22,7 @@ ALLOWED_IGNORE_ERRORS = [
     'IN109', 'IN110', 'IN122', 'IN124', 'IN126', 'IN128', 'IN135', 'IN136', 'IN139', 'IN144', 'IN145', 'IN153', 'IN154',
     'MP106',
     'PA113', 'PA116', 'PA124', 'PA125', 'PA127', 'PA129',
-    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB112', 'PB114', 'PB115', 'PB116', 'PB107', 'PB118', 'PB119', 'PB121',
+    'PB104', 'PB105', 'PB106', 'PB110', 'PB111', 'PB114', 'PB115', 'PB116', 'PB107', 'PB118', 'PB119', 'PB121',
     'RM100', 'RM102', 'RM104', 'RM106', 'RM108', 'RM110', 'RM112', 'RM113',
     'RP102', 'RP104',
     'SC100', 'SC101', 'SC105', 'SC106',
@@ -319,7 +319,6 @@ ERROR_CODE = {
     # PB - Playbooks
     "playbook_cant_have_rolename": {'code': "PB100", 'ui_applicable': True, 'related_field': 'rolename'},
     "playbook_unreachable_condition": {'code': "PB101", 'ui_applicable': True, 'related_field': 'tasks'},
-    "playbook_unhandled_condition": {'code': "PB102", 'ui_applicable': True, 'related_field': 'conditions'},
     "playbook_unconnected_tasks": {'code': "PB103", 'ui_applicable': True, 'related_field': 'tasks'},
     "invalid_deprecated_playbook": {'code': "PB104", 'ui_applicable': False, 'related_field': 'description'},
     "playbook_cant_have_deletecontext_all": {'code': "PB105", 'ui_applicable': True, 'related_field': 'tasks'},
@@ -331,7 +330,6 @@ ERROR_CODE = {
                                                           'related_field': 'toVersion'},
     "integration_version_not_match_playbook_version": {'code': "PB111", 'ui_applicable': False,
                                                        'related_field': 'toVersion'},
-    "playbook_condition_has_no_else_path": {'code': "PB112", 'ui_applicable': False, 'related_field': 'nexttasks'},
     "invalid_subplaybook_name": {'code': "PB113", 'ui_applicable': False, 'related_field': 'tasks'},
     "playbook_not_quiet_mode": {'code': "PB114", 'ui_applicable': False, 'related_field': ''},
     "playbook_tasks_not_quiet_mode": {'code': "PB115", 'ui_applicable': False, 'related_field': 'tasks'},
@@ -341,6 +339,11 @@ ERROR_CODE = {
     "input_used_not_in_input_section": {'code': "PB119", 'ui_applicable': False, 'related_field': ''},
     "playbook_is_deprecated_and_used": {'code': 'PB120', 'ui_applicable': False, 'related_field': 'deprecated'},
     "incorrect_value_references": {'code': "PB121", 'ui_applicable': False, 'related_field': 'taskid'},
+    "playbook_unhandled_task_branches": {'code': "PB122", 'ui_applicable': True, 'related_field': 'conditions'},
+    "playbook_unhandled_reply_options": {'code': "PB123", 'ui_applicable': True, 'related_field': 'conditions'},
+    "playbook_unhandled_condition": {'code': "PB124", 'ui_applicable': True, 'related_field': 'conditions'},
+    "playbook_only_default_next": {'code': "PB125", 'ui_applicable': True, 'related_field': 'conditions'},
+    "playbook_only_default_reply_option": {'code': "PB126", 'ui_applicable': True, 'related_field': 'message'},
 
     # PP - Pre-Process Rules
     "invalid_from_version_in_pre_process_rules": {'code': "PP100", 'ui_applicable': False,
@@ -1366,6 +1369,20 @@ class Errors:
         return f'Playbook conditional task with id:{task_id} has task with unreachable ' \
                f'next task condition "{next_task_branch}". Please remove this task or add ' \
                f'this condition to condition task with id:{task_id}.'
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_only_default_next(task_id):
+        return f'Playbook conditional task with id:{task_id} only has a default condition. ' \
+               f'Please remove this task or add ' \
+               f'another non-default condition to condition task with id:{task_id}.'
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_only_default_reply_option(task_id):
+        return f'Playbook task with id:{task_id} only has a default option. ' \
+               f'Please remove this task or add ' \
+               f'another non-default option to the task with id:{task_id}.'
 
     @staticmethod
     @error_code_decorator

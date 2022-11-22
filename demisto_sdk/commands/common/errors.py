@@ -1386,7 +1386,19 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
-    def playbook_unhandled_condition(task_id, task_condition_labels):
+    def playbook_unhandled_task_branches(task_id, task_condition_labels):
+        return f'Playbook conditional task with id:{task_id} has an unhandled ' \
+               f'condition: {",".join(map(lambda x: f"{str(x)}", task_condition_labels))}'
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_unhandled_reply_options(task_id, task_condition_labels):
+        return f'Playbook conditional task with id:{task_id} has an unhandled ' \
+               f'condition: {",".join(map(lambda x: f"{str(x)}", task_condition_labels))}'
+
+    @staticmethod
+    @error_code_decorator
+    def playbook_unhandled_script_condition_branches(task_id, task_condition_labels):
         return f'Playbook conditional task with id:{task_id} has an unhandled ' \
                f'condition: {",".join(map(lambda x: f"{str(x)}", task_condition_labels))}'
 

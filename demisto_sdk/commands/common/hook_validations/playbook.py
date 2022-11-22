@@ -247,13 +247,13 @@ class PlaybookValidator(ContentEntityValidator):
                 # else doesn't have a path, skip error
                 if '#DEFAULT#' == e.args[0]:
                     continue
-                error_message, error_code = Errors.playbook_unreachable_condition(task.get('id'), next_task_branch)
+                error_message, error_code = Errors.playbook_unhandled_task_branches(task.get('id'), next_task_branch)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = is_all_condition_branches_handled = False
 
         # if there are task_condition_labels left then not all branches are handled
         if task_condition_labels:
-            error_message, error_code = Errors.playbook_unhandled_condition(task.get('id'), task_condition_labels)
+            error_message, error_code = Errors.playbook_unhandled_task_branches(task.get('id'), task_condition_labels)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = is_all_condition_branches_handled = False
 
@@ -297,7 +297,7 @@ class PlaybookValidator(ContentEntityValidator):
             only_default = len(unhandled_reply_options) == 1 and '#DEFAULT#' in unhandled_reply_options
             more_than_one_unhandled_reply_option = len(unhandled_reply_options) > 1
             if not only_default or more_than_one_unhandled_reply_option:
-                error_message, error_code = Errors.playbook_unhandled_condition(task.get('id'), unhandled_reply_options)
+                error_message, error_code = Errors.playbook_unhandled_reply_options(task.get('id'), unhandled_reply_options)
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = is_all_condition_branches_handled = False
         return is_all_condition_branches_handled
@@ -317,7 +317,7 @@ class PlaybookValidator(ContentEntityValidator):
 
         if len(next_tasks) < 2:
             # there should be at least 2 next tasks, we don't know what condition is missing, but we know it's missing
-            error_message, error_code = Errors.playbook_unhandled_condition(task.get('id'), {})
+            error_message, error_code = Errors.playbook_unhandled_script_condition_branches(task.get('id'), {})
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = is_all_condition_branches_handled = False
 

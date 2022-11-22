@@ -293,10 +293,13 @@ class PlaybookValidator(ContentEntityValidator):
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
                     self.is_valid = is_all_condition_branches_handled = False
 
-        if unhandled_reply_options and not (len(unhandled_reply_options) == 1 and '#DEFAULT#' in unhandled_reply_options):
-            error_message, error_code = Errors.playbook_unhandled_condition(task.get('id'), unhandled_reply_options)
-            if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self.is_valid = is_all_condition_branches_handled = False
+        if unhandled_reply_options:
+            only_default = len(unhandled_reply_options) == 1 and '#DEFAULT#' in unhandled_reply_options
+            more_than_one_unhandled_reply_option = len(unhandled_reply_options) > 1
+            if not only_default or more_than_one_unhandled_reply_option:
+                error_message, error_code = Errors.playbook_unhandled_condition(task.get('id'), unhandled_reply_options)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self.is_valid = is_all_condition_branches_handled = False
         return is_all_condition_branches_handled
 
     @error_codes('PB124')

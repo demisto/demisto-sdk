@@ -65,7 +65,7 @@ class XsiamApiInterface(ABC):
         pass
 
     @abstractmethod
-    def add_create_dataset(self, data: List[Dict[str, Any]], vendor: str, product: str, data_format: str = 'json'):
+    def push_to_dataset(self, data: List[Dict[str, Any]], vendor: str, product: str, data_format: str = 'json'):
         pass
 
     @abstractmethod
@@ -219,7 +219,7 @@ class XsiamApiClient(XsiamApiInterface):
             )
             response.raise_for_status()
 
-    def add_create_dataset(self, data: List[Dict[str, Any]], vendor: str, product: str, data_format: str = 'json'):
+    def push_to_dataset(self, data: List[Dict[str, Any]], vendor: str, product: str, data_format: str = 'json'):
         if self.xsiam_token:
             return self.__push_using_xsiam_token__(data, vendor, product, data_format)
         else:

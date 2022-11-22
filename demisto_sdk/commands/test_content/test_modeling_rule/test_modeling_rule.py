@@ -216,7 +216,7 @@ def push_test_data_to_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule, tes
     # printr(events_test_data)
     logger.info('[cyan]Pushing test data to tenant...[/cyan]', extra={'markup': True})
     try:
-        xsiam_client.add_create_dataset(events_test_data, mr.rules[0].vendor, mr.rules[0].product)
+        xsiam_client.push_to_dataset(events_test_data, mr.rules[0].vendor, mr.rules[0].product)
     except requests.exceptions.HTTPError:
         logger.error(
             (

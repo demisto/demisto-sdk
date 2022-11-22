@@ -3,6 +3,10 @@ This module is designed to validate the correctness of generic definition entiti
 """
 import logging
 
+from ruamel.yaml.comments import CommentedSeq
+
+from demisto_sdk.commands.common.errors import Errors
+from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 
@@ -19,10 +23,26 @@ class CorrelationRuleValidator(ContentEntityValidator):
         https://github.com/demisto/etc/issues/48151#issuecomment-1109660727
         """
         logging.debug('Automatically considering XSIAM content item as valid, see issue #48151')
-        return True
+
+        self.is_hyphen_exists()
+        return self.is_valid
 
     def is_valid_version(self):
         """
         May deleted or be edited in the future by the use of XSIAM new content
         """
         pass
+
+    @error_codes('CR100')
+    def is_hyphen_exists(self):
+        """
+
+        Returns: False if type of current file is CommentSeq, which means the yaml starts with hyphen, True otherwise.
+
+        """
+        if isinstance(self.current_file, CommentedSeq):
+            error_message, error_code = Errors.correlation_rule_starts_with_hyphen(self.file_path)
+            if self.handle_error(error_message, error_code, file_path=self.file_path):
+                self.is_valid = False
+                return False
+        return True

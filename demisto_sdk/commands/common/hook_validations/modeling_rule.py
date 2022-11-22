@@ -1,10 +1,12 @@
 """
 This module is designed to validate the correctness of generic definition entities in content.
 """
+import json
 import os
 
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import YAML_Handler
+from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import get_files_in_dir
@@ -32,6 +34,7 @@ class ModelingRuleValidator(ContentEntityValidator):
         self.is_schema_file_exists()
         self.are_keys_empty_in_yml()
         self.is_valid_rule_names()
+        self.is_schema_types_valid()
 
         return self._is_valid
 
@@ -50,6 +53,34 @@ class ModelingRuleValidator(ContentEntityValidator):
                 self._is_valid = False
                 return False
         return True
+
+    @error_codes("MR104")
+    def is_schema_types_valid(self):
+        """
+
+        Returns:
+
+        """
+        valid_type = ['string', 'int', 'float', 'datetime', 'boolean']
+        invalid_types = []
+        schema_file = get_files_in_dir(os.path.dirname(self.file_path), ['json'], False)
+        if schema_file:
+            with open(schema_file[0], 'r') as sf:
+                schema_content = json.load(sf)
+
+            attributes = list(schema_content.values())[0]
+            for attr in attributes.values():
+                type_to_validate = attr.get('type')
+                if type_to_validate not in valid_type:
+                    invalid_types.append(type_to_validate)
+
+            if invalid_types:
+                error_message, error_code = Errors.modeling_rule_schema_types_invalid(invalid_types)
+                if self.handle_error(error_message, error_code, file_path=self.file_path):
+                    self._is_valid = False
+                    return False
+        return True
+
 
     def are_keys_empty_in_yml(self):
         """

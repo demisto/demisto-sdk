@@ -480,6 +480,10 @@ ERROR_CODE = {
     "modeling_rule_keys_not_empty": {'code': "MR101", 'ui_applicable': False, 'related_field': ''},
     "modeling_rule_keys_are_missing": {'code': "MR102", 'ui_applicable': False, 'related_field': ''},
     "invalid_rule_name": {'code': "MR103", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rule_schema_types_invalid": {'code': "MR104", 'ui_applicable': False, 'related_field': ''},
+
+    # CR - Correlation Rules
+    "correlation_rule_starts_with_hyphen": {'code': 'CR100', 'ui_applicable': False, 'related_field': ''}
 }
 
 
@@ -1411,7 +1415,7 @@ class Errors:
     @staticmethod
     @error_code_decorator
     def content_entity_version_not_match_playbook_version(
-        main_playbook: str, entities_names_and_version: str, main_playbook_version: str, content_sub_type: str
+            main_playbook: str, entities_names_and_version: str, main_playbook_version: str, content_sub_type: str
     ):
         return f"Playbook {main_playbook} with 'fromversion' {main_playbook_version} uses the following" \
                f" {content_sub_type} with an invalid 'fromversion': [{entities_names_and_version}]. " \
@@ -2205,8 +2209,8 @@ class Errors:
     @error_code_decorator
     def incorrect_value_references(task_key, value, task_name, section_name):
         return f"On task: '{task_name}' with ID: '{task_key}', an input with the value: '{value}' was passed as string, rather than as " \
-            f"a reference in the '{section_name}' section. Change the reference to 'From previous tasks' from 'As value'" \
-            " , or change the value to ${" + value + "}."
+               f"a reference in the '{section_name}' section. Change the reference to 'From previous tasks' from 'As value'" \
+               " , or change the value to ${" + value + "}."
 
     @staticmethod
     @error_code_decorator
@@ -2510,6 +2514,16 @@ class Errors:
 
     @staticmethod
     @error_code_decorator
+    def modeling_rule_schema_types_invalid(invalid_types: list):
+        return f"Some of the types in the schema file are invalid. Invalid types are: {','.join(invalid_types)}"
+
+    @staticmethod
+    @error_code_decorator
     def invalid_rule_name(invalid_files):
         return f"The following rule file name is invalid {invalid_files} - make sure that the rule name is " \
                f"the same as the folder containing it."
+
+    @staticmethod
+    @error_code_decorator
+    def correlation_rule_starts_with_hyphen(invalid_files):
+        return f"The following correlation rule file starts with a hyphen {invalid_files} - Please remove it."

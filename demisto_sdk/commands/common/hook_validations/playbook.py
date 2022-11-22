@@ -46,6 +46,7 @@ class PlaybookValidator(ContentEntityValidator):
             self.is_root_connected_to_all_tasks(),
             self.is_using_instance(),
             self.is_condition_branches_handled(),
+            self.are_default_conditions_valid(),
             self.is_delete_context_all_in_playbook(),
             self.are_tests_configured(),
             self.is_script_id_valid(id_set_file),
@@ -56,11 +57,6 @@ class PlaybookValidator(ContentEntityValidator):
             self.is_valid_with_indicators_input(),
             self.inputs_in_use_check(is_modified),
             self.is_playbook_deprecated_and_used(),
-            self.is_builtin_condition_task_branches_handled(),
-            self.is_ask_condition_branches_handled(),
-            self.is_script_condition_branches_handled(),
-            self.is_default_not_only_condition(),
-            self.is_default_not_only_reply_option(),
         ]
         answers = all(playbook_checks)
 
@@ -324,6 +320,26 @@ class PlaybookValidator(ContentEntityValidator):
 
         return is_all_condition_branches_handled
 
+    def are_default_conditions_valid(self):  # type: () -> bool
+        """Check whether the playbook conditional tasks' default options are valid
+
+        Return:
+            bool. if the Playbook's handles all condition default options correctly.
+        """
+        default_conditions_valid: bool = True
+        tasks: Dict = self.current_file.get('tasks', {})
+        for task in tasks.values():
+            if task.get('type') == 'condition':
+                # builtin conditional task
+                if task.get('nexttasks'):
+                    default_conditions_valid = self.is_default_not_only_condition(
+                        task) and default_conditions_valid
+                # ask conditional task
+                if task.get('message') and task.get('message').get('replyOptions'):
+                    default_conditions_valid = self.is_default_not_only_reply_option(
+                        task) and default_conditions_valid
+        return default_conditions_valid
+
     @error_codes('PB125')
     def is_default_not_only_condition(self, task: Dict) -> bool:
         """Checks whether the #default# is the only branch
@@ -334,7 +350,7 @@ class PlaybookValidator(ContentEntityValidator):
         Return:
             bool. if the task's next tasks have more than just the default option.
         """
-        is_default_not_only_condition: bool = True
+        is_default_not_only_condition_res: bool = True
         next_tasks: Dict = task.get('nexttasks', {})
 
         if len(next_tasks) == 1:
@@ -343,9 +359,9 @@ class PlaybookValidator(ContentEntityValidator):
             if '#default#'.upper() in next_tasks_upper:
                 error_message, error_code = Errors.playbook_only_default_next(task.get('id'))
                 if self.handle_error(error_message, error_code, file_path=self.file_path):
-                    self.is_valid = is_default_not_only_condition = False
+                    self.is_valid = is_default_not_only_condition_res = False
 
-        return is_default_not_only_condition
+        return is_default_not_only_condition_res
 
     @error_codes('PB126')
     def is_default_not_only_reply_option(self, task: Dict) -> bool:
@@ -357,16 +373,16 @@ class PlaybookValidator(ContentEntityValidator):
         Return:
             bool. if the task reply options have more than just the default option.
         """
-        is_default_not_only_reply_option: bool = True
+        is_default_not_only_reply_option_res: bool = True
 
         reply_options = set(map(str.upper, task.get('message', {}).get('replyOptions', [])))
 
         if len(reply_options) == 1 and '#default#'.upper() in reply_options:
             error_message, error_code = Errors.playbook_only_default_reply_option(task.get('id'))
             if self.handle_error(error_message, error_code, file_path=self.file_path):
-                self.is_valid = is_default_not_only_reply_option = False
+                self.is_valid = is_default_not_only_reply_option_res = False
 
-        return is_default_not_only_reply_option
+        return is_default_not_only_reply_option_res
 
     @error_codes('PB103')
     def is_root_connected_to_all_tasks(self):  # type: () -> bool

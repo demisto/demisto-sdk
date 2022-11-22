@@ -165,7 +165,7 @@ class TestPlaybookValidator:
         (CONDITION_EXIST_FULL_CASE_DIF, True),
         (CONDITIONAL_ASK_EXISTS_NO_REPLY_OPTS, True),
         (CONDITIONAL_ASK_EXISTS_NO_NXT_TASK, False),
-        (CONDITIONAL_ASK_EXISTS_WITH_DFLT_NXT_TASK, True),
+        (CONDITIONAL_ASK_EXISTS_WITH_DFLT_NXT_TASK, False),
         (CONDITIONAL_ASK_EXISTS_WITH_NXT_TASK, True),
         (CONDITIONAL_ASK_EXISTS_WITH_NXT_TASK_CASE_DIF, True),
         (CONDITIONAL_TASK_EXISTS_WITH_TRUE_AND_FALSE_POSITIVE, True),
@@ -449,6 +449,7 @@ class TestPlaybookValidator:
     @pytest.mark.parametrize("playbook_json, expected_result", IS_CONDITIONAL_INPUTS)
     def test_is_condition_branches_handled(self, playbook_json, expected_result):
         structure = mock_structure("", playbook_json)
+        print(f'*** {playbook_json=}')
         validator = PlaybookValidator(structure)
         assert validator.is_condition_branches_handled() is expected_result
 
@@ -594,22 +595,6 @@ class TestPlaybookValidator:
         validator = PlaybookValidator(structure)
         validator.current_file = current
         assert validator.is_valid_as_deprecated() is answer
-
-    @pytest.mark.parametrize("playbook_json, expected_result", [(CONDITIONAL_SCRPT_WITH_NO_DFLT_NXT_TASK, True)])
-    def test_verify_all_conditional_tasks_has_else_path(self, playbook_json, expected_result):
-        """
-        Given
-            - A playbook with a condition without a default task
-
-        When
-            - Running Validate playbook
-
-        Then
-            - Function returns true as this is an ignored error.
-        """
-        structure = mock_structure("", playbook_json)
-        validator = PlaybookValidator(structure)
-        assert validator.verify_condition_tasks_has_else_path() is expected_result
 
     @pytest.mark.parametrize("playbook_task_json, expected_result", IS_ELSE_IN_CONDITION_TASK)
     def test_verify_else_for_conditions_task(self, playbook_task_json, expected_result):

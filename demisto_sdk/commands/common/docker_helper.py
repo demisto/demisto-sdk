@@ -206,5 +206,5 @@ class MountableDocker(DockerBase):
 
 
 @functools.lru_cache
-def get_docker_helper():
+def get_docker():
     return MountableDocker() if CAN_MOUNT_FILES else DockerBase()

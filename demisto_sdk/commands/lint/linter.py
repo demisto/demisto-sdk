@@ -20,7 +20,7 @@ from demisto_sdk.commands.common.constants import (INTEGRATIONS_DIR,
                                                    PACKS_PACK_META_FILE_NAME,
                                                    TYPE_PWSH, TYPE_PYTHON)
 from demisto_sdk.commands.common.docker_helper import (
-    get_docker_helper, init_global_docker_client)
+    get_docker, init_global_docker_client)
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
 from demisto_sdk.commands.common.timers import timer
 from demisto_sdk.commands.common.tools import (get_all_docker_images,
@@ -670,7 +670,7 @@ class Linter:
         test_image = None
         try:
             logger.info(f"{log_prompt} - Trying to pull existing image {test_image_name}")
-            test_image = get_docker_helper().pull_image(test_image_name)
+            test_image = get_docker().pull_image(test_image_name)
         except (docker.errors.APIError, docker.errors.ImageNotFound):
             logger.info(f"{log_prompt} - Unable to find image {test_image_name}")
         # Creatng new image if existing image isn't found
@@ -679,8 +679,8 @@ class Linter:
                 f"{log_prompt} - Creating image based on {docker_base_image[0]} - Could take 2-3 minutes at first "
                 f"time")
             try:
-                get_docker_helper().create_image(docker_base_image[0], test_image_name, container_type=self._pkg_lint_status["pack_type"],
-                                                 install_packages=pip_requirements)
+                get_docker().create_image(docker_base_image[0], test_image_name, container_type=self._pkg_lint_status["pack_type"],
+                                          install_packages=pip_requirements)
 
                 if self._docker_hub_login:
                     for _ in range(2):
@@ -720,7 +720,7 @@ class Linter:
         exit_code = SUCCESS
         output = ""
         try:
-            container: docker.models.containers.Container = get_docker_helper().create_container(
+            container: docker.models.containers.Container = get_docker().create_container(
                 name=container_name,
                 image=test_image,
                 command=[self._facts['lint_to_commands'][linter]],
@@ -799,7 +799,7 @@ class Linter:
             cov = self._pack_abs_dir.stem if not no_coverage else ''
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
-            container: docker.models.containers.Container = get_docker_helper().create_container(
+            container: docker.models.containers.Container = get_docker().create_container(
                 name=container_name,
                 image=test_image,
                 command=[build_pytest_command(test_xml=test_xml, json=True, cov=cov)],
@@ -905,12 +905,12 @@ class Linter:
         try:
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
-            container = get_docker_helper().create_container(name=container_name, image=test_image,
-                                                             user=f"{uid}:4000", environment=self._facts["env_vars"],
-                                                             files_to_push=[(self._pack_abs_dir, '/devwork')],
-                                                             command=build_pwsh_analyze_command(
-                                                                 self._facts["lint_files"][0])
-                                                             )
+            container = get_docker().create_container(name=container_name, image=test_image,
+                                                      user=f"{uid}:4000", environment=self._facts["env_vars"],
+                                                      files_to_push=[(self._pack_abs_dir, '/devwork')],
+                                                      command=build_pwsh_analyze_command(
+                                                          self._facts["lint_files"][0])
+                                                      )
             container.start()
             stream_docker_container_output(container.logs(stream=True))
             # wait for container to finish
@@ -979,7 +979,7 @@ class Linter:
         try:
             uid = os.getuid() or 4000
             logger.debug(f'{log_prompt} - user uid for running lint/test: {uid}')  # lgtm[py/clear-text-logging-sensitive-data]
-            container: docker.models.containers.Container = get_docker_helper().create_container(
+            container: docker.models.containers.Container = get_docker().create_container(
                 files_to_push=[(self._pack_abs_dir, '/devwork')],
                 name=container_name, image=test_image, command=build_pwsh_test_command(),
                 user=f"{uid}:4000", environment=self._facts["env_vars"])

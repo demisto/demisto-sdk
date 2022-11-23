@@ -14,7 +14,7 @@ REPO_PATH = Path(get_content_path())  # type: ignore
 NEO4J_SERVICE_IMAGE = "neo4j:4.4.12"
 NEO4J_ADMIN_IMAGE = "neo4j/neo4j-admin:4.4.12"
 
-LOCAL_NEO4J_PATH = Path("var/lib/neo4j")
+LOCAL_NEO4J_PATH = Path("/var/lib/neo4j")
 NEO4J_IMPORT_FOLDER = "import"
 NEO4J_DATA_FOLDER = "data"
 NEO4J_PLUGINS_FOLDER = "plugins"

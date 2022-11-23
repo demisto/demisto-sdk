@@ -155,7 +155,6 @@ def validate_expected_values(xsiam_client: XsiamApiClient, mr: ModelingRule, tes
         try:
             execution_id = xsiam_client.start_xql_query(query)
             results = xsiam_client.get_xql_query_result(execution_id)
-            verify_results(results, test_data)
         except requests.exceptions.HTTPError:
             logger.error(
                 (
@@ -167,6 +166,8 @@ def validate_expected_values(xsiam_client: XsiamApiClient, mr: ModelingRule, tes
                 extra={'markup': True}
             )
             success = False
+        else:
+            verify_results(results, test_data)
     if success:
         logger.info('[green]Mappings validated successfully[/green]', extra={'markup': True})
 
@@ -197,7 +198,7 @@ def check_dataset_exists(xsiam_client: XsiamApiClient, test_data: init_test_data
         except requests.exceptions.HTTPError:
             pass
         sleep(interval)
-    logger.error(f'[red]Dataset {dataset} does not exist[/red]', extra={'markup': True})
+    logger.error(f'[red]Dataset {dataset} does not exist after {timeout} seconds[/red]', extra={'markup': True})
     raise typer.Exit(1)
 
 
@@ -209,11 +210,10 @@ def push_test_data_to_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule, tes
         mr (ModelingRule): Modeling rule object parsed from the modeling rule file.
         test_data (init_test_data.TestData): Test data object parsed from the test data file.
     """
-    events_test_data = [e.event_data for e in test_data.data]
-    for i, event_log in enumerate(test_data.data):
-        if isinstance(event_log.event_data, dict):
-            events_test_data[i] = {**event_log.event_data, "test_data_event_id": str(event_log.test_data_event_id)}
-    # printr(events_test_data)
+    events_test_data = [
+        {**event_log.event_data, "test_data_event_id": str(event_log.test_data_event_id)}
+        for event_log in test_data.data if isinstance(event_log.event_data, dict)
+    ]
     logger.info('[cyan]Pushing test data to tenant...[/cyan]', extra={'markup': True})
     try:
         xsiam_client.push_to_dataset(events_test_data, mr.rules[0].vendor, mr.rules[0].product)
@@ -241,31 +241,33 @@ def get_containing_pack(content_entity: ContentEntity) -> Pack:
         Pack: Pack object that contains the content entity.
     """
     pack_path = content_entity.path
-    while pack_path.parent.name != 'Packs':
+    while pack_path.parent.name.casefold() != 'packs':
         pack_path = pack_path.parent
     return Pack(pack_path)
 
 
-def verify_pack_exists_on_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule, interactive: bool):
+def verify_pack_exists_on_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule, interactive: bool, ctx: typer.Context):
     """Verify that the pack containing the modeling rule exists on the tenant.
 
     Args:
         xsiam_client (XsiamApiClient): Xsiam API client.
         mr (ModelingRule): Modeling rule object parsed from the modeling rule file.
         interactive (bool): Whether command is being run in interactive mode.
+        ctx (typer.Context): Typer context object - used to invoke other commands.
     """
     logger.info('[cyan]Verifying pack installed on tenant[/cyan]', extra={'markup': True})
-    identified_pack = get_containing_pack(mr)
+    containing_pack = get_containing_pack(mr)
+    containing_pack_id = containing_pack.id
     installed_packs = xsiam_client.installed_packs
     found_pack = None
     for pack in installed_packs:
-        if identified_pack.id == pack.get('id'):
+        if containing_pack_id == pack.get('id'):
             found_pack = pack
             break
     if found_pack:
         logger.debug(f'[cyan]Found pack on tenant:\n{found_pack}[/cyan]', extra={'markup': True})
     else:
-        logger.error(f'[red]Pack {identified_pack.id} was not found on tenant[/red]', extra={'markup': True})
+        logger.error(f'[red]Pack {containing_pack_id} was not found on tenant[/red]', extra={'markup': True})
         # TODO: add option to interactively install pack
         # upload_result = 0
         # if interactive:
@@ -311,7 +313,7 @@ def verify_pack_exists_on_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule,
 
 
 def verify_test_data_exists(test_data_path: Path) -> Tuple[List[str], List[str]]:
-    """Verify that the test data file exists and is valid.
+    """Verify that the test data exists and is valid.
 
     Args:
         test_data_path (Path): Path to the test data file.
@@ -334,7 +336,7 @@ def verify_test_data_exists(test_data_path: Path) -> Tuple[List[str], List[str]]
 def validate_modeling_rule(
         mrule_dir: Path,
         xsiam_url: str, api_key: str, auth_id: str, xsiam_token: str,
-        collector_token: str, push: bool, interactive: bool, ctx: typer.Context
+        collector_token: str, push: bool, interactive: bool, ctx: typer.Context,
 ):
     """Validate a modeling rule.
 
@@ -410,7 +412,7 @@ def validate_modeling_rule(
             xsiam_token=xsiam_token, collector_token=collector_token  # type: ignore[arg-type]
         )
         xsiam_client = XsiamApiClient(xsiam_client_cfg)
-        verify_pack_exists_on_tenant(xsiam_client, mr_entity, interactive)
+        verify_pack_exists_on_tenant(xsiam_client, mr_entity, interactive, ctx)
         test_data = init_test_data.TestData.parse_file(mr_entity.testdata_path.as_posix())
 
         if push:

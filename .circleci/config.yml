@@ -54,6 +54,8 @@ references:
           sudo apt-get install neo4j
           sudo chown -R circleci /var/log/neo4j
           sudo chown -R circleci /var/lib/neo4j
+          mkdir -p /var/lib/neo4j/plugins
+          wget -O /var/lib/neo4j/plugins/apoc-4.4.0.8-all.jar https://github.com/neo4j-contrib/neo4j-apoc-procedures/releases/download/4.4.0.8/apoc-4.4.0.8-all.jar
           neo4j-admin set-initial-password test
 
     install_node_ci: &install_node_ci

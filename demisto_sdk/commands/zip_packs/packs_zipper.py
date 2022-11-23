@@ -7,13 +7,12 @@ from shutil import make_archive
 
 import click
 
-from demisto_sdk.commands.common.constants import (PACKS_DIR,
-                                                   MarketplaceVersions)
+from demisto_sdk.commands.common.constants import PACKS_DIR, MarketplaceVersions
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.tools import arg_to_list
-from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
-    IGNORED_PACKS, ArtifactsManager, ContentObject, create_dirs, delete_dirs,
-    dump_pack, zip_packs)
+from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (IGNORED_PACKS, ArtifactsManager,
+                                                                             ContentObject, create_dirs, delete_dirs,
+                                                                             dump_pack, zip_packs)
 
 EX_SUCCESS = 0
 EX_FAIL = 1

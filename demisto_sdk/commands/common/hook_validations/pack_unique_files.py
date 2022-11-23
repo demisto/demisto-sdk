@@ -16,30 +16,26 @@ from git import GitCommandError, Repo
 from packaging.version import parse
 
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (  # PACK_METADATA_PRICE,
-    API_MODULES_PACK, EXCLUDED_DISPLAY_NAME_WORDS, INTEGRATIONS_DIR,
-    PACK_METADATA_CATEGORIES, PACK_METADATA_CERTIFICATION,
-    PACK_METADATA_CREATED, PACK_METADATA_CURR_VERSION,
-    PACK_METADATA_DEPENDENCIES, PACK_METADATA_DESC, PACK_METADATA_EMAIL,
-    PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS, PACK_METADATA_NAME,
-    PACK_METADATA_SUPPORT, PACK_METADATA_TAGS, PACK_METADATA_URL,
-    PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
-    PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
-    PACKS_WHITELIST_FILE_NAME, VERSION_REGEX, MarketplaceVersions)
+from demisto_sdk.commands.common.constants import API_MODULES_PACK  # PACK_METADATA_PRICE,
+from demisto_sdk.commands.common.constants import (EXCLUDED_DISPLAY_NAME_WORDS, INTEGRATIONS_DIR,
+                                                   PACK_METADATA_CATEGORIES, PACK_METADATA_CERTIFICATION,
+                                                   PACK_METADATA_CREATED, PACK_METADATA_CURR_VERSION,
+                                                   PACK_METADATA_DEPENDENCIES, PACK_METADATA_DESC, PACK_METADATA_EMAIL,
+                                                   PACK_METADATA_FIELDS, PACK_METADATA_KEYWORDS, PACK_METADATA_NAME,
+                                                   PACK_METADATA_SUPPORT, PACK_METADATA_TAGS, PACK_METADATA_URL,
+                                                   PACK_METADATA_USE_CASES, PACKS_PACK_IGNORE_FILE_NAME,
+                                                   PACKS_PACK_META_FILE_NAME, PACKS_README_FILE_NAME,
+                                                   PACKS_WHITELIST_FILE_NAME, VERSION_REGEX, MarketplaceVersions)
 from demisto_sdk.commands.common.content import Content
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import (
-    BaseValidator, error_codes)
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator, error_codes
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
-from demisto_sdk.commands.common.tools import (get_core_pack_list, get_json,
-                                               get_remote_file,
-                                               pack_name_to_path,
+from demisto_sdk.commands.common.tools import (get_core_pack_list, get_json, get_remote_file, pack_name_to_path,
                                                print_warning)
-from demisto_sdk.commands.find_dependencies.find_dependencies import \
-    PackDependencies
+from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 
 json = JSON_Handler()
 
@@ -340,6 +336,7 @@ class PackUniqueFilesValidator(BaseValidator):
             self._is_price_changed(),
             self._is_valid_support_type(),
             self.is_right_usage_of_usecase_tag(),
+            self.is_categories_field_match_standard(),
             not self.should_pack_be_deprecated()
         ]):
             if self.should_version_raise:
@@ -901,3 +898,35 @@ class PackUniqueFilesValidator(BaseValidator):
                 suggested_fix=Errors.suggest_fix(file_path=self._get_pack_file_path(self.pack_meta_file))
             )
         return False
+
+    @error_codes('PA134')
+    def is_categories_field_match_standard(self):
+        # type: () -> bool
+        """
+        Check that the pack category is in the schema.
+
+        Returns:
+            bool: True if pack contain only one category and the category is from the approved list. Otherwise, return False.
+        """
+        categories = self._read_metadata_content().get('categories', [])
+        approved_list = tools.get_current_categories()
+        if not len(categories) == 1 or not self.validate_categories_approved(categories, approved_list):
+            if self._add_error(Errors.categories_field_does_not_match_standard(approved_list), self.pack_meta_file):
+                return False
+        return True
+
+    def validate_categories_approved(self, categories, approved_list):
+        """
+        Check that the pack categories contain only approved categories.
+
+        Args:
+            categories (list): the list of the pack's categories.
+            approved_list (list): the predefined approved categories list.
+
+        Returns:
+            bool: True if all the pack categories is from the approved list. Otherwise, return False.
+        """
+        for category in categories:
+            if category not in approved_list:
+                return False
+        return True

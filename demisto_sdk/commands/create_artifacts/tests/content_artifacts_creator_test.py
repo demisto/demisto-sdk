@@ -147,8 +147,7 @@ def test_modify_common_server_constants():
     Notes:
         - After test clean up changes.
     """
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
-        modify_common_server_constants
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import modify_common_server_constants
     path_before = COMMON_SERVER / 'CommonServerPython.py'
     path_excepted = COMMON_SERVER / 'CommonServerPython_modified.py'
     old_data = path_before.read_text()
@@ -161,8 +160,8 @@ def test_modify_common_server_constants():
 
 def test_dump_pack(mock_git):
     import demisto_sdk.commands.create_artifacts.content_artifacts_creator as cca
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
-        ArtifactsManager, Pack, create_dirs, dump_pack)
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (ArtifactsManager, Pack, create_dirs,
+                                                                                 dump_pack)
 
     cca.logger = logging_setup(0)
 
@@ -214,8 +213,7 @@ def test_contains_indicator_type():
 
 
 def test_create_content_artifacts(mock_git):
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
-        ArtifactsManager
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import ArtifactsManager
     with temp_dir() as temp:
         config = ArtifactsManager(artifacts_path=temp,
                                   content_version='6.0.0',
@@ -238,8 +236,7 @@ def test_create_content_artifacts_by_id_set(mock_git):
     2. An item of a pack does not exist under the pack's section in the id set - the item will not exist as an artifact.
 
     """
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
-        ArtifactsManager
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import ArtifactsManager
     with temp_dir() as temp:
         config = ArtifactsManager(artifacts_path=temp,
                                   content_version='6.0.0',
@@ -257,8 +254,7 @@ def test_create_content_artifacts_by_id_set(mock_git):
 
 def test_create_private_content_artifacts(private_repo):
     from demisto_sdk.commands.common.content import Content
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
-        ArtifactsManager
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import ArtifactsManager
 
     with temp_dir() as temp:
         config = ArtifactsManager(artifacts_path=temp,
@@ -277,8 +273,7 @@ def test_create_private_content_artifacts(private_repo):
 
 @pytest.mark.parametrize(argnames="suffix", argvalues=["yml", "json"])
 def test_malformed_file_failure(suffix: str, mock_git):
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
-        ArtifactsManager
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import ArtifactsManager
     with temp_dir() as temp:
         config = ArtifactsManager(artifacts_path=temp,
                                   content_version='6.0.0',
@@ -294,8 +289,7 @@ def test_malformed_file_failure(suffix: str, mock_git):
 
 
 def test_duplicate_file_failure(mock_git):
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
-        ArtifactsManager
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import ArtifactsManager
     with temp_dir() as temp:
         config = ArtifactsManager(artifacts_path=temp,
                                   content_version='6.0.0',
@@ -325,8 +319,7 @@ def test_sign_packs_failure(repo, capsys, key, tool):
 
     """
     import demisto_sdk.commands.create_artifacts.content_artifacts_creator as cca
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import (
-        ArtifactsManager, sign_packs)
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import ArtifactsManager, sign_packs
 
     cca.logger = logging_setup(2)
 
@@ -365,8 +358,7 @@ def mock_single_pack_git(mocker):
 
 
 def test_use_alternative_fields(mock_single_pack_git):
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
-        ArtifactsManager
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import ArtifactsManager
 
     with temp_dir() as temp:
         config = ArtifactsManager(artifacts_path=temp,

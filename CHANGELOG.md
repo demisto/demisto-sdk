@@ -1,7 +1,11 @@
 # Changelog
 ## Unreleased
+* Added a validation that enforces predefined categories on MP Packs & integration yml files, the validation also ensures that each pack has only one category.
  * Fixed an issue where **update-release-notes** did not generate release notes for **XDRC Templates**.
  * Fixed an issue where **upload** failed without explaining the reason.
+ * Improved implementation of the docker_helper module.
+ * Fixed an issue where **validate** did not check changed pack_metadata.json files when running using git.
+ * Added support for **xdrctemplate** to content graph.
 
 ## 1.7.8
 * Added the capability to run the MDX server in a docker container for environments without node.

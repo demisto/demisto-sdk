@@ -42,8 +42,7 @@ class TestNeo4jQueries:
         Then:
             - Make sure the output string has the expected content type labels.
         """
-        from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import \
-            labels_of
+        from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import labels_of
 
         integration_labels = labels_of(content_type)
         for content_type in expected_labels:
@@ -58,8 +57,7 @@ class TestNeo4jQueries:
         Then:
             - Make sure the output is a string representation of a map in neo4j format.
         """
-        from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import \
-            node_map
+        from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import node_map
 
         assert (
             node_map(

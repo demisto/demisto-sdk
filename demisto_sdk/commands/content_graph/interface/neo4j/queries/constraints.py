@@ -1,9 +1,7 @@
 from neo4j import Transaction
 
-from demisto_sdk.commands.content_graph.common import (ContentType,
-                                                       RelationshipType)
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import \
-    run_query
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query
 
 # CONSTRAINT NAMES
 CMD_UNIQUE_OBJ_ID = "cmd_unique_object_id"

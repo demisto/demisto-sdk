@@ -14,21 +14,13 @@ import git
 from pkg_resources import DistributionNotFound, get_distribution
 
 from demisto_sdk.commands.common.configuration import Configuration
-from demisto_sdk.commands.common.constants import (ENV_DEMISTO_SDK_MARKETPLACE,
-                                                   MODELING_RULES_DIR,
-                                                   PARSING_RULES_DIR, FileType,
-                                                   MarketplaceVersions)
-from demisto_sdk.commands.common.content_constant_paths import \
-    ALL_PACKS_DEPENDENCIES_DEFAULT_PATH
+from demisto_sdk.commands.common.constants import (ENV_DEMISTO_SDK_MARKETPLACE, MODELING_RULES_DIR, PARSING_RULES_DIR,
+                                                   FileType, MarketplaceVersions)
+from demisto_sdk.commands.common.content_constant_paths import ALL_PACKS_DEPENDENCIES_DEFAULT_PATH
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.tools import (find_type,
-                                               get_last_remote_release_version,
-                                               get_release_note_entries,
-                                               is_external_repository,
-                                               print_error, print_success,
-                                               print_warning)
-from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import \
-    Neo4jContentGraphInterface
+from demisto_sdk.commands.common.tools import (find_type, get_last_remote_release_version, get_release_note_entries,
+                                               is_external_repository, print_error, print_success, print_warning)
+from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import Neo4jContentGraphInterface
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
 json = JSON_Handler()
@@ -324,8 +316,7 @@ def unify(**kwargs):
     if marketplace := kwargs.get('marketplace'):
         os.environ[ENV_DEMISTO_SDK_MARKETPLACE] = marketplace.lower()
     if file_type == FileType.GENERIC_MODULE:
-        from demisto_sdk.commands.unify.generic_module_unifier import \
-            GenericModuleUnifier
+        from demisto_sdk.commands.unify.generic_module_unifier import GenericModuleUnifier
 
         # pass arguments to GenericModule unifier and call the command
         generic_module_unifier = GenericModuleUnifier(**kwargs)
@@ -335,8 +326,7 @@ def unify(**kwargs):
         rule_unifier = RuleUnifier(**kwargs)
         rule_unifier.unify()
     else:
-        from demisto_sdk.commands.unify.integration_script_unifier import \
-            IntegrationScriptUnifier
+        from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
 
         # pass arguments to YML unifier and call the command
         yml_unifier = IntegrationScriptUnifier(**kwargs, custom=custom)
@@ -363,9 +353,7 @@ def zip_packs(**kwargs) -> int:
     """Generating zipped packs that are ready to be uploaded to Cortex XSOAR machine."""
     from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.upload.uploader import Uploader
-    from demisto_sdk.commands.zip_packs.packs_zipper import (EX_FAIL,
-                                                             EX_SUCCESS,
-                                                             PacksZipper)
+    from demisto_sdk.commands.zip_packs.packs_zipper import EX_FAIL, EX_SUCCESS, PacksZipper
     logging_setup(3)
     check_configuration_file('zip-packs', kwargs)
 
@@ -584,8 +572,7 @@ def create_content_artifacts(**kwargs) -> int:
        5. uploadable_packs - Contains zipped packs that are ready to be uploaded to Cortex XSOAR machine.
     """
     from demisto_sdk.commands.common.logger import logging_setup
-    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import \
-        ArtifactsManager
+    from demisto_sdk.commands.create_artifacts.content_artifacts_creator import ArtifactsManager
     logging_setup(3)
     check_configuration_file('create-content-artifacts', kwargs)
     if marketplace := kwargs.get('marketplace'):
@@ -774,8 +761,7 @@ def lint(**kwargs):
     default='https://storage.googleapis.com/marketplace-dist-dev/code-coverage-reports/coverage-min.json', type=str
 )
 def coverage_analyze(**kwargs):
-    from demisto_sdk.commands.coverage_analyze.coverage_report import \
-        CoverageReport
+    from demisto_sdk.commands.coverage_analyze.coverage_report import CoverageReport
     try:
         no_degradation_check = kwargs['allowed_coverage_degradation_percentage'] == 100.0
         no_min_coverage_enforcement = kwargs['no_min_coverage_enforcement']
@@ -940,8 +926,7 @@ def upload(**kwargs):
     * Note: Uploading classifiers to Cortex XSOAR is available from version 6.0.0 and up. *
     """
     from demisto_sdk.commands.upload.uploader import ConfigFileParser, Uploader
-    from demisto_sdk.commands.zip_packs.packs_zipper import (EX_FAIL,
-                                                             PacksZipper)
+    from demisto_sdk.commands.zip_packs.packs_zipper import EX_FAIL, PacksZipper
     keep_zip = kwargs.pop('keep_zip')
     is_zip = kwargs.pop('zip', False)
     config_file_path = kwargs.pop('input_config_file')
@@ -1058,8 +1043,7 @@ def xsoar_config_file_update(**kwargs):
     Add automatically all the installed MarketPlace Packs to the marketplace_packs section in XSOAR Configuration File.
     Add a Pack to both marketplace_packs and custom_packs sections in the Configuration File.
     """
-    from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import \
-        XSOARConfigFileUpdater
+    from demisto_sdk.commands.update_xsoar_config_file.update_xsoar_config_file import XSOARConfigFileUpdater
     file_updater: XSOARConfigFileUpdater = XSOARConfigFileUpdater(**kwargs)
     return file_updater.update()
 
@@ -1134,8 +1118,7 @@ def run_playbook(**kwargs):
     Example: DEMISTO_API_KEY=<API KEY> demisto-sdk run-playbook -p 'p_name' -u
     'https://demisto.local'.
     """
-    from demisto_sdk.commands.run_playbook.playbook_runner import \
-        PlaybookRunner
+    from demisto_sdk.commands.run_playbook.playbook_runner import PlaybookRunner
     check_configuration_file('run-playbook', kwargs)
     playbook_runner = PlaybookRunner(**kwargs)
     return playbook_runner.run_playbook()
@@ -1170,8 +1153,7 @@ def run_playbook(**kwargs):
     "--insecure", help="Skip certificate validation.", is_flag=True)
 def run_test_playbook(**kwargs):
     """Run a test playbooks in your instance."""
-    from demisto_sdk.commands.run_test_playbook.test_playbook_runner import \
-        TestPlaybookRunner
+    from demisto_sdk.commands.run_test_playbook.test_playbook_runner import TestPlaybookRunner
     check_configuration_file('run-test-playbook', kwargs)
     test_playbook_runner = TestPlaybookRunner(**kwargs)
     return test_playbook_runner.manage_and_run_test_playbooks()
@@ -1234,8 +1216,7 @@ def generate_outputs(**kwargs):
     file/UI/PyCharm. This script auto generates the YAML for a command from the JSON result of the relevant API call
     In addition you can supply examples files and generate the context description directly in the YML from those examples.
     """
-    from demisto_sdk.commands.generate_outputs.generate_outputs import \
-        run_generate_outputs
+    from demisto_sdk.commands.generate_outputs.generate_outputs import run_generate_outputs
     check_configuration_file('generate-outputs', kwargs)
     return run_generate_outputs(**kwargs)
 
@@ -1291,8 +1272,7 @@ def generate_outputs(**kwargs):
     "-u", "--upload", help="Whether to upload the test playbook after the generation.", is_flag=True)
 def generate_test_playbook(**kwargs):
     """Generate test playbook from integration or script"""
-    from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import \
-        PlaybookTestsGenerator
+    from demisto_sdk.commands.generate_test_playbook.test_playbook_generator import PlaybookTestsGenerator
     check_configuration_file('generate-test-playbook', kwargs)
     file_type: FileType = find_type(kwargs.get('input', ''), ignore_sub_categories=True)
     if file_type not in [FileType.INTEGRATION, FileType.SCRIPT]:
@@ -1436,12 +1416,9 @@ def generate_docs(**kwargs):
 def _generate_docs_for_file(kwargs: Dict[str, Any]):
     """Helper function for supporting Playbooks directory as an input and not only a single yml file."""
 
-    from demisto_sdk.commands.generate_docs.generate_integration_doc import \
-        generate_integration_doc
-    from demisto_sdk.commands.generate_docs.generate_playbook_doc import \
-        generate_playbook_doc
-    from demisto_sdk.commands.generate_docs.generate_script_doc import \
-        generate_script_doc
+    from demisto_sdk.commands.generate_docs.generate_integration_doc import generate_integration_doc
+    from demisto_sdk.commands.generate_docs.generate_playbook_doc import generate_playbook_doc
+    from demisto_sdk.commands.generate_docs.generate_script_doc import generate_script_doc
 
     # Extract all the necessary arguments
     input_path: str = kwargs.get('input', '')
@@ -1528,8 +1505,7 @@ def _generate_docs_for_file(kwargs: Dict[str, Any]):
 def create_id_set(**kwargs):
     """Create the content dependency tree by ids."""
     from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
-    from demisto_sdk.commands.find_dependencies.find_dependencies import \
-        remove_dependencies_from_id_set
+    from demisto_sdk.commands.find_dependencies.find_dependencies import remove_dependencies_from_id_set
 
     check_configuration_file('create-id-set', kwargs)
     id_set_creator = IDSetCreator(**kwargs)
@@ -1569,8 +1545,7 @@ def create_id_set(**kwargs):
 )
 def merge_id_sets(**kwargs):
     """Merge two id_sets"""
-    from demisto_sdk.commands.common.update_id_set import \
-        merge_id_sets_from_files
+    from demisto_sdk.commands.common.update_id_set import merge_id_sets_from_files
     check_configuration_file('merge-id-sets', kwargs)
     first = kwargs['id_set1']
     second = kwargs['id_set2']
@@ -1629,8 +1604,7 @@ def merge_id_sets(**kwargs):
     is_flag=True)
 def update_release_notes(**kwargs):
     """Auto-increment pack version and generate release notes template."""
-    from demisto_sdk.commands.update_release_notes.update_rn_manager import \
-        UpdateReleaseNotesManager
+    from demisto_sdk.commands.update_release_notes.update_rn_manager import UpdateReleaseNotesManager
     check_configuration_file('update-release-notes', kwargs)
     if kwargs.get('force') and not kwargs.get('input'):
         print_error('Please add a specific pack in order to force a release notes update.')
@@ -1683,8 +1657,7 @@ def update_release_notes(**kwargs):
                                          "dependency of the searched pack ", required=False)
 def find_dependencies(**kwargs):
     """Find pack dependencies and update pack metadata."""
-    from demisto_sdk.commands.find_dependencies.find_dependencies import \
-        PackDependencies
+    from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
     check_configuration_file('find-dependencies', kwargs)
     update_pack_metadata = not kwargs.get('no_update')
     input_paths = kwargs.get('input')  # since it can be multiple, received as a tuple
@@ -1766,8 +1739,7 @@ def postman_codegen(
 ):
     """Generates a Cortex XSOAR integration given a Postman collection 2.1 JSON file."""
     from demisto_sdk.commands.common.logger import logging_setup
-    from demisto_sdk.commands.postman_codegen.postman_codegen import \
-        postman_to_autogen_configuration
+    from demisto_sdk.commands.postman_codegen.postman_codegen import postman_to_autogen_configuration
     from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 
     if verbose:
@@ -1829,8 +1801,7 @@ def generate_integration(input: IO, output: Path, verbose: bool):
     which is generated by commands like postman-codegen
     """
     from demisto_sdk.commands.common.logger import logging_setup
-    from demisto_sdk.commands.generate_integration.code_generator import \
-        IntegrationGeneratorConfig
+    from demisto_sdk.commands.generate_integration.code_generator import IntegrationGeneratorConfig
     if verbose:
         logging_setup(verbose=3)
 
@@ -1876,8 +1847,7 @@ def openapi_codegen(**kwargs):
     In the first run of the command, an integration configuration file is created, which can be modified.
     Then, the command is run a second time with the integration configuration to generate the actual integration files.
     """
-    from demisto_sdk.commands.openapi_codegen.openapi_codegen import \
-        OpenAPIIntegration
+    from demisto_sdk.commands.openapi_codegen.openapi_codegen import OpenAPIIntegration
     check_configuration_file('openapi-codegen', kwargs)
     if not kwargs.get('output_dir'):
         output_dir = os.getcwd()
@@ -2023,8 +1993,7 @@ def test_content(**kwargs):
     run test playbook on the created investigation using mock if possible.
     Collect the result and give a report.
     """
-    from demisto_sdk.commands.test_content.execute_test_content import \
-        execute_test_content
+    from demisto_sdk.commands.test_content.execute_test_content import execute_test_content
     check_configuration_file('test-content', kwargs)
     execute_test_content(**kwargs)
 
@@ -2107,8 +2076,7 @@ def integration_diff(**kwargs):
     """
     Checks for differences between two versions of an integration, and verified that the new version covered the old version.
     """
-    from demisto_sdk.commands.integration_diff.integration_diff_detector import \
-        IntegrationDiffDetector
+    from demisto_sdk.commands.integration_diff.integration_diff_detector import IntegrationDiffDetector
     integration_diff_detector = IntegrationDiffDetector(
         new=kwargs.get('new', ''),
         old=kwargs.get('old', ''),
@@ -2141,8 +2109,7 @@ def generate_yml_from_python(**kwargs):
     """
     Checks for differences between two versions of an integration, and verified that the new version covered the old version.
     """
-    from demisto_sdk.commands.generate_yml_from_python.generate_yml import \
-        YMLGenerator
+    from demisto_sdk.commands.generate_yml_from_python.generate_yml import YMLGenerator
 
     yml_generator = YMLGenerator(filename=kwargs.get('input', ''), verbose=kwargs.get('verbose', False),
                                  force=kwargs.get('force', False))
@@ -2239,8 +2206,7 @@ def generate_unit_tests(input_path: str = '',
     klara_logger = logging.getLogger('PYSCA')
     klara_logger.propagate = False
     from demisto_sdk.commands.common.logger import logging_setup
-    from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import \
-        run_generate_unit_tests
+    from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import run_generate_unit_tests
     logging_setup(verbose=verbose,  # type: ignore[arg-type]
                   quiet=quiet,  # type: ignore[arg-type]
                   log_path=log_path)  # type: ignore[arg-type]
@@ -2268,8 +2234,7 @@ def generate_unit_tests(input_path: str = '',
 )
 @pass_config
 def error_code(config, **kwargs):
-    from demisto_sdk.commands.error_code_info.error_code_info import \
-        generate_error_code_information
+    from demisto_sdk.commands.error_code_info.error_code_info import generate_error_code_information
     check_configuration_file('error-code-info', kwargs)
     sys.path.append(config.configuration.env_dir)
 

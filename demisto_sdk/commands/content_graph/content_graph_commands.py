@@ -2,10 +2,8 @@ import logging
 from typing import List
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
-from demisto_sdk.commands.content_graph.content_graph_builder import \
-    ContentGraphBuilder
-from demisto_sdk.commands.content_graph.interface.graph import \
-    ContentGraphInterface
+from demisto_sdk.commands.content_graph.content_graph_builder import ContentGraphBuilder
+from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 
 logger = logging.getLogger("demisto-sdk")
 

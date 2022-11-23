@@ -1,0 +1,6 @@
+# .git-blame-ignore-revs
+# read about it at,
+# https://docs.github.com/en/repositories/working-with-files/using-files/viewing-a-file#ignore-commits-in-the-blame-view
+
+# updated the pre-commit isort hook to a line-length of 120 instead of 79 and updated all the import lines in the repo
+11bcb1692a4344c08dc417101355fa42de61969b

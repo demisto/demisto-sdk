@@ -9,35 +9,31 @@ import click
 import pytest
 from mock import Mock, patch
 
-from demisto_sdk.commands.common.constants import (
-    ALERT_FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS,
-    GENERAL_DEFAULT_FROMVERSION, INCIDENT_FETCH_REQUIRED_PARAMS,
-    NO_TESTS_DEPRECATED, MarketplaceVersions)
+from demisto_sdk.commands.common.constants import (ALERT_FETCH_REQUIRED_PARAMS, FEED_REQUIRED_PARAMS,
+                                                   GENERAL_DEFAULT_FROMVERSION, INCIDENT_FETCH_REQUIRED_PARAMS,
+                                                   NO_TESTS_DEPRECATED, MarketplaceVersions)
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.hook_validations.docker import \
-    DockerImageValidator
-from demisto_sdk.commands.common.hook_validations.integration import \
-    IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
+from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import LOG_COLORS, is_string_uuid
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.format.update_generic import BaseUpdate
 from demisto_sdk.commands.format.update_generic_yml import BaseUpdateYML
 from demisto_sdk.commands.format.update_integration import IntegrationYMLFormat
-from demisto_sdk.commands.format.update_playbook import (PlaybookYMLFormat,
-                                                         TestPlaybookYMLFormat)
+from demisto_sdk.commands.format.update_playbook import PlaybookYMLFormat, TestPlaybookYMLFormat
 from demisto_sdk.commands.format.update_script import ScriptYMLFormat
-from demisto_sdk.tests.constants_test import (
-    DESTINATION_FORMAT_INTEGRATION, DESTINATION_FORMAT_INTEGRATION_COPY,
-    DESTINATION_FORMAT_PLAYBOOK, DESTINATION_FORMAT_PLAYBOOK_COPY,
-    DESTINATION_FORMAT_SCRIPT_COPY, DESTINATION_FORMAT_TEST_PLAYBOOK,
-    FEED_INTEGRATION_EMPTY_VALID, FEED_INTEGRATION_INVALID,
-    FEED_INTEGRATION_VALID, GIT_ROOT, INTEGRATION_PATH, PLAYBOOK_PATH,
-    PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS, SOURCE_BETA_INTEGRATION_FILE,
-    SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_INTEGRATION_DEFAULT_VALUE,
-    SOURCE_FORMAT_INTEGRATION_INVALID, SOURCE_FORMAT_INTEGRATION_VALID,
-    SOURCE_FORMAT_PLAYBOOK, SOURCE_FORMAT_PLAYBOOK_COPY,
-    SOURCE_FORMAT_SCRIPT_COPY, SOURCE_FORMAT_TEST_PLAYBOOK, TEST_PLAYBOOK_PATH)
+from demisto_sdk.tests.constants_test import (DESTINATION_FORMAT_INTEGRATION, DESTINATION_FORMAT_INTEGRATION_COPY,
+                                              DESTINATION_FORMAT_PLAYBOOK, DESTINATION_FORMAT_PLAYBOOK_COPY,
+                                              DESTINATION_FORMAT_SCRIPT_COPY, DESTINATION_FORMAT_TEST_PLAYBOOK,
+                                              FEED_INTEGRATION_EMPTY_VALID, FEED_INTEGRATION_INVALID,
+                                              FEED_INTEGRATION_VALID, GIT_ROOT, INTEGRATION_PATH, PLAYBOOK_PATH,
+                                              PLAYBOOK_WITH_INCIDENT_INDICATOR_SCRIPTS, SOURCE_BETA_INTEGRATION_FILE,
+                                              SOURCE_FORMAT_INTEGRATION_COPY, SOURCE_FORMAT_INTEGRATION_DEFAULT_VALUE,
+                                              SOURCE_FORMAT_INTEGRATION_INVALID, SOURCE_FORMAT_INTEGRATION_VALID,
+                                              SOURCE_FORMAT_PLAYBOOK, SOURCE_FORMAT_PLAYBOOK_COPY,
+                                              SOURCE_FORMAT_SCRIPT_COPY, SOURCE_FORMAT_TEST_PLAYBOOK,
+                                              TEST_PLAYBOOK_PATH)
 from TestSuite.test_tools import ChangeCWD
 
 yaml = YAML_Handler()
@@ -91,8 +87,7 @@ class TestFormatting:
         base_yml = IntegrationYMLFormat(source_path, path=schema_path)
         base_yml.set_params_default_additional_info()
 
-        from demisto_sdk.commands.common.default_additional_info_loader import \
-            load_default_additional_info_dict
+        from demisto_sdk.commands.common.default_additional_info_loader import load_default_additional_info_dict
         default_additional_info = load_default_additional_info_dict()
 
         api_key_param = base_yml.data['configuration'][4]
@@ -525,6 +520,7 @@ class TestFormatting:
         mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
                             return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
 
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
@@ -567,7 +563,7 @@ class TestFormatting:
         mocker.patch.object(IntegrationValidator, 'has_no_fromlicense_key_in_contributions_integration',
                             return_value=True)
         mocker.patch.object(IntegrationValidator, 'is_api_token_in_credential_type', return_value=True)
-
+        mocker.patch.object(IntegrationValidator, 'is_valid_category', return_value=True)
         os.makedirs(path, exist_ok=True)
         shutil.copyfile(source, target)
         res = format_manager(input=target, verbose=True, clear_cache=True, assume_yes=True)
@@ -1057,8 +1053,7 @@ class TestFormatting:
         Then
             - Ensure that the integration fromversion is set to GENERAL_DEFAULT_FROMVERSION
         """
-        from demisto_sdk.commands.common.constants import \
-            GENERAL_DEFAULT_FROMVERSION
+        from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
 
         pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
         integration = pack.create_integration()
@@ -1075,8 +1070,7 @@ class TestFormatting:
         Then
             - Ensure that the integration fromversion is set to GENERAL_DEFAULT_FROMVERSION
         """
-        from demisto_sdk.commands.common.constants import \
-            GENERAL_DEFAULT_FROMVERSION
+        from demisto_sdk.commands.common.constants import GENERAL_DEFAULT_FROMVERSION
 
         pack.pack_metadata.update({'support': 'partner', 'currentVersion': '1.0.0'})
         script = pack.create_script()

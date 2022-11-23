@@ -7,16 +7,15 @@ import pytest
 from demisto_sdk.commands.common.constants import PB_Status
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.test_content.Docker import Docker
-from demisto_sdk.commands.test_content.TestContentClasses import (
-    Integration, TestConfiguration, TestContext, TestPlaybook)
-from demisto_sdk.commands.test_content.tests.build_context_test import (
-    generate_content_conf_json, generate_integration_configuration,
-    generate_secret_conf_json, generate_test_configuration,
-    get_mocked_build_context)
-from demisto_sdk.commands.test_content.tests.DemistoClientMock import \
-    DemistoClientMock
-from demisto_sdk.commands.test_content.tests.server_context_test import \
-    generate_mocked_server_context
+from demisto_sdk.commands.test_content.TestContentClasses import (Integration, TestConfiguration, TestContext,
+                                                                  TestPlaybook)
+from demisto_sdk.commands.test_content.tests.build_context_test import (generate_content_conf_json,
+                                                                        generate_integration_configuration,
+                                                                        generate_secret_conf_json,
+                                                                        generate_test_configuration,
+                                                                        get_mocked_build_context)
+from demisto_sdk.commands.test_content.tests.DemistoClientMock import DemistoClientMock
+from demisto_sdk.commands.test_content.tests.server_context_test import generate_mocked_server_context
 
 json = JSON_Handler()
 
@@ -588,8 +587,8 @@ def test_replacing_pb_inputs(mocker, current, new_configuration, expected):
     """
     from demisto_client.demisto_api import DefaultApi
 
-    from demisto_sdk.commands.test_content.TestContentClasses import (
-        demisto_client, replace_external_playbook_configuration)
+    from demisto_sdk.commands.test_content.TestContentClasses import (demisto_client,
+                                                                      replace_external_playbook_configuration)
 
     class clientMock(DefaultApi):
         def generic_request(self, path, method, body=None, **kwargs):
@@ -664,8 +663,8 @@ def test_replacing_pb_inputs_fails_with_build_pass(mocker, current, new_configur
     """
     from demisto_client.demisto_api import DefaultApi
 
-    from demisto_sdk.commands.test_content.TestContentClasses import (
-        demisto_client, replace_external_playbook_configuration)
+    from demisto_sdk.commands.test_content.TestContentClasses import (demisto_client,
+                                                                      replace_external_playbook_configuration)
 
     class clientMock(DefaultApi):
         def generic_request(self, path, method, body=None, **kwargs):
@@ -744,8 +743,8 @@ def test_replacing_pb_inputs_fails_with_build_fail(mocker, current, new_configur
     """
     from demisto_client.demisto_api import DefaultApi
 
-    from demisto_sdk.commands.test_content.TestContentClasses import (
-        demisto_client, replace_external_playbook_configuration)
+    from demisto_sdk.commands.test_content.TestContentClasses import (demisto_client,
+                                                                      replace_external_playbook_configuration)
 
     class clientMock(DefaultApi):
         def generic_request(self, path, method, body=None, **kwargs):

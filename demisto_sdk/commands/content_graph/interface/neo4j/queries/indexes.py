@@ -2,10 +2,8 @@ from typing import List
 
 from neo4j import Transaction
 
-from demisto_sdk.commands.content_graph.common import (ContentType,
-                                                       RelationshipType)
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import \
-    run_query
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query
 
 CREATE_NODE_INDEX_TEMPLATE = "CREATE INDEX IF NOT EXISTS FOR (n:{label}) ON ({props})"
 NODE_INDEX_OPTIONS = [

@@ -1,7 +1,5 @@
-from demisto_sdk.commands.common.content.objects.pack_objects import \
-    ParsingRule
-from demisto_sdk.commands.common.content.objects_factory import \
-    path_to_pack_object
+from demisto_sdk.commands.common.content.objects.pack_objects import ParsingRule
+from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 
 
 def get_parsing_rule(pack, name):

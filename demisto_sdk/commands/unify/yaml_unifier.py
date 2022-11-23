@@ -4,9 +4,7 @@ import sys
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from demisto_sdk.commands.common.constants import (DIR_TO_PREFIX,
-                                                   INTEGRATIONS_DIR,
-                                                   SCRIPTS_DIR)
+from demisto_sdk.commands.common.constants import DIR_TO_PREFIX, INTEGRATIONS_DIR, SCRIPTS_DIR
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.tools import get_yml_paths_in_dir, print_error

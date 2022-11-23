@@ -4,8 +4,7 @@ This module is designed to validate the correctness of incident field entities i
 
 from typing import Set
 
-from demisto_sdk.commands.common.hook_validations.field_base_validator import \
-    FieldBaseValidator
+from demisto_sdk.commands.common.hook_validations.field_base_validator import FieldBaseValidator
 
 
 class IncidentFieldValidator(FieldBaseValidator):

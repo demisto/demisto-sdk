@@ -4,10 +4,8 @@ from typing import List
 import pytest
 from mock import patch
 
-from demisto_sdk.commands.common.hook_validations.field_base_validator import (
-    FieldBaseValidator, GroupFieldTypes)
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
+from demisto_sdk.commands.common.hook_validations.field_base_validator import FieldBaseValidator, GroupFieldTypes
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 
 INDICATOR_GROUP_NUMBER = 2
 INCIDENT_GROUP_NUMBER = 0
@@ -429,8 +427,7 @@ class TestFieldValidator:
             Then
             - Ensure validate fails when the field name does not start with the pack name prefix.
         """
-        from demisto_sdk.commands.common.hook_validations import \
-            field_base_validator
+        from demisto_sdk.commands.common.hook_validations import field_base_validator
         with patch.object(StructureValidator, '__init__', lambda a, b: None):
             structure = StructureValidator("")
             structure.current_file = current_file

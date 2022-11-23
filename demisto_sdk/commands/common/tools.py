@@ -2421,6 +2421,18 @@ def get_approved_tags_from_branch() -> Dict[str, List[str]]:
     return {}
 
 
+def get_current_categories() -> list:
+    """Gets approved list of categories from current branch (only in content repo).
+
+    Returns:
+        List of approved categories from current branch
+    """
+    if not is_external_repository():
+        approved_categories_json, _ = get_dict_from_file('Tests/Marketplace/approved_categories.json')
+        return approved_categories_json.get('approved_list', [])
+    return []
+
+
 @contextmanager
 def suppress_stdout():
     """

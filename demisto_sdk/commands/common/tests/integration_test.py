@@ -634,13 +634,15 @@ class TestIntegrationValidator:
     VALID_CATEGORY2 = {"category": "File Integrity Management"}
 
     IS_VALID_CATEGORY_INPUTS = [
-        (VALID_CATEGORY1, True),
-        (VALID_CATEGORY2, True),
-        (INVALID_CATEGORY, False)
+        (VALID_CATEGORY1, True, ['Endpoint']),
+        (VALID_CATEGORY2, True, ['File Integrity Management']),
+        (INVALID_CATEGORY, False, [])
     ]
 
-    @pytest.mark.parametrize("current, answer", IS_VALID_CATEGORY_INPUTS)
-    def test_is_valid_category(self, current, answer):
+    @pytest.mark.parametrize("current, answer, valid_list_mock", IS_VALID_CATEGORY_INPUTS)
+    def test_is_valid_category(self, mocker, current, answer, valid_list_mock):
+        mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
+                     return_value=valid_list_mock)
         structure = mock_structure("", current)
         validator = IntegrationValidator(structure)
         validator.current_file = current

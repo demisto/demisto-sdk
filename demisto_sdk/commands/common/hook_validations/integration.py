@@ -3,15 +3,16 @@ import re
 from pathlib import Path
 from typing import Dict, Optional
 
+from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import (
     ALERT_FETCH_REQUIRED_PARAMS, BANG_COMMAND_ARGS_MAPPING_DICT,
     BANG_COMMAND_NAMES, DBOT_SCORES_DICT, DEFAULT_CONTENT_ITEM_FROM_VERSION,
     DEPRECATED_REGEXES, ENDPOINT_COMMAND_NAME, ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
     FEED_REQUIRED_PARAMS, FIRST_FETCH, FIRST_FETCH_PARAM,
-    INCIDENT_FETCH_REQUIRED_PARAMS, INTEGRATION_CATEGORIES, IOC_OUTPUTS_DICT,
-    MAX_FETCH, MAX_FETCH_PARAM, PACKS_DIR, PACKS_PACK_META_FILE_NAME,
-    PYTHON_SUBTYPES, REPUTATION_COMMAND_NAMES, TYPE_PWSH,
-    XSOAR_CONTEXT_STANDARD_URL, XSOAR_SUPPORT, MarketplaceVersions)
+    INCIDENT_FETCH_REQUIRED_PARAMS, IOC_OUTPUTS_DICT, MAX_FETCH,
+    MAX_FETCH_PARAM, PACKS_DIR, PACKS_PACK_META_FILE_NAME, PYTHON_SUBTYPES,
+    REPUTATION_COMMAND_NAMES, TYPE_PWSH, XSOAR_CONTEXT_STANDARD_URL,
+    XSOAR_SUPPORT, MarketplaceVersions)
 from demisto_sdk.commands.common.default_additional_info_loader import \
     load_default_additional_info_dict
 from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
@@ -351,8 +352,9 @@ class IntegrationValidator(ContentEntityValidator):
         # type: () -> bool
         """Check that the integration category is in the schema."""
         category = self.current_file.get('category', None)
-        if category not in INTEGRATION_CATEGORIES:
-            error_message, error_code = Errors.wrong_category(category)
+        approved_list = tools.get_current_categories()
+        if category not in approved_list:
+            error_message, error_code = Errors.wrong_category(category, approved_list)
             if self.handle_error(error_message, error_code, file_path=self.file_path):
                 self.is_valid = False
                 return False

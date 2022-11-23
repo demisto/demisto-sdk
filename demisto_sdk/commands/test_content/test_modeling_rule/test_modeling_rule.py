@@ -18,15 +18,14 @@ from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_obje
     YAMLContentObject
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_unify_content_object import \
     YAMLContentUnifiedObject
-from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (
-    ModelingRule, SingleModelingRule)
+from demisto_sdk.commands.common.content.objects.pack_objects.modeling_rule.modeling_rule import (ModelingRule,
+                                                                                                  SingleModelingRule)
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.common.logger import (set_console_stream_handler,
-                                                setup_rich_logging)
+from demisto_sdk.commands.common.logger import set_console_stream_handler, setup_rich_logging
 from demisto_sdk.commands.test_content.test_modeling_rule import init_test_data
 from demisto_sdk.commands.test_content.xsiam_tools import xsiam_interface
-from demisto_sdk.commands.test_content.xsiam_tools.xsiam_interface import (
-    XsiamApiClient, XsiamApiClientConfig)
+from demisto_sdk.commands.test_content.xsiam_tools.xsiam_interface import XsiamApiClient, XsiamApiClientConfig
+from demisto_sdk.commands.upload.upload import upload_content_entity as upload_cmd
 
 logger = logging.getLogger('demisto-sdk')
 
@@ -119,7 +118,10 @@ def verify_results(results: List[dict], test_data: init_test_data.TestData):
                         errors = True
         else:
             logger.error(
-                f'[red]No matching expected_values found for test_data_event_id={td_event_id} in test_data {test_data}[/red]',
+                (
+                    f'[red]No matching expected_values found for test_data_event_id={td_event_id} in '
+                    f'test_data {test_data}[/red]'
+                ),
                 extra={'markup': True}
             )
             errors = True
@@ -246,14 +248,13 @@ def get_containing_pack(content_entity: ContentEntity) -> Pack:
     return Pack(pack_path)
 
 
-def verify_pack_exists_on_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule, interactive: bool, ctx: typer.Context):
+def verify_pack_exists_on_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule, interactive: bool):
     """Verify that the pack containing the modeling rule exists on the tenant.
 
     Args:
         xsiam_client (XsiamApiClient): Xsiam API client.
         mr (ModelingRule): Modeling rule object parsed from the modeling rule file.
         interactive (bool): Whether command is being run in interactive mode.
-        ctx (typer.Context): Typer context object - used to invoke other commands.
     """
     logger.info('[cyan]Verifying pack installed on tenant[/cyan]', extra={'markup': True})
     containing_pack = get_containing_pack(mr)
@@ -269,47 +270,35 @@ def verify_pack_exists_on_tenant(xsiam_client: XsiamApiClient, mr: ModelingRule,
     else:
         logger.error(f'[red]Pack {containing_pack_id} was not found on tenant[/red]', extra={'markup': True})
         # TODO: add option to interactively install pack
-        # upload_result = 0
-        # if interactive:
-        #     upload = typer.confirm(f'Would you like to upload {identified_pack.id} to the tenant?')
-        #     if upload:
-        #         printr(f'[cyan underline]Upload "{identified_pack.id}"[/cyan underline]')
-        #         # implement correct invocation of upload command
-        #         upload_result = upload_cmd(zip=True, xsiam=True, input=identified_pack.path)
-        #         if upload_result != 0:
-        #             printr(f'[error]Failed to upload pack {identified_pack.id} to tenant[/error]')
-        # if not interactive or not upload_result == 0:
-        #     printr('[error]Please install or upload the pack to the tenant and try again[/error]')
-        #     cmd_group = Group(
-        #         Syntax(f'demisto-sdk upload -z -x -i {identified_pack.path}', "bash"),
-        #         Syntax(f'demisto-sdk modeling-rules test {mr.path}', "bash")
-        #     )
-        #     printr(Panel(cmd_group))
-        #     raise typer.Exit(1)
-        # ## different way?
-        # upload_result = 0
-        # if interactive:
-        #     upload = typer.confirm(f'Would you like to upload {identified_pack.id} to the tenant?')
-        #     if upload:
-        #         printr(f'[cyan underline]Upload "{identified_pack.id}"[/cyan underline]')
-        #         # implement correct invocation of upload command
-        #         # upload_result = upload_cmd(zip=True, xsiam=True, input=identified_pack.path)
-        #         try:
-        #             xsiam_client.upload_packs(identified_pack.path)
-        #         except requests.exceptions.HTTPError as err:
-        #             printr(f'[error]Failed to upload pack {identified_pack.id} to tenant: {err}[/error]')
-        #             upload_result = 1
-        # if not interactive or not upload_result == 0:
-        logger.error(
-            '[red]Please install or upload the pack to the tenant and try again[/red]',
-            extra={'markup': True}
-        )
-        cmd_group = Group(
-            Syntax(f'demisto-sdk upload -z -x -i {identified_pack.path}', "bash"),
-            Syntax(f'demisto-sdk modeling-rules test {mr.path.parent}', "bash")
-        )
-        printr(Panel(cmd_group))
-        raise typer.Exit(1)
+        upload_result = 0
+        if interactive:
+            upload = typer.confirm(f'Would you like to upload {containing_pack_id} to the tenant?')
+            if upload:
+                logger.info(f'[cyan underline]Upload "{containing_pack_id}"[/cyan underline]', extra={'markup': True})
+                upload_kwargs = {
+                    'zip': True, 'xsiam': True, 'input': containing_pack.path,
+                    'keep_zip': None, 'insecure': False, 'input_config_file': None,
+                    'skip_validation': False, 'verbose': False, 'reattach': True
+                }
+                upload_result = upload_cmd(**upload_kwargs)
+                if upload_result != 0:
+                    logger.error(
+                        f'[red]Failed to upload pack {containing_pack_id} to tenant[/red]',
+                        extra={'markup': True}
+                    )
+            else:
+                upload_result = 1
+        if not interactive or not upload_result == 0:
+            logger.error(
+                '[red]Please install or upload the pack to the tenant and try again[/red]',
+                extra={'markup': True}
+            )
+            cmd_group = Group(
+                Syntax(f'demisto-sdk upload -z -x -i {containing_pack.path}', "bash"),
+                Syntax(f'demisto-sdk modeling-rules test {mr.path.parent}', "bash")
+            )
+            printr(Panel(cmd_group))
+            raise typer.Exit(1)
 
 
 def verify_test_data_exists(test_data_path: Path) -> Tuple[List[str], List[str]]:
@@ -412,7 +401,7 @@ def validate_modeling_rule(
             xsiam_token=xsiam_token, collector_token=collector_token  # type: ignore[arg-type]
         )
         xsiam_client = XsiamApiClient(xsiam_client_cfg)
-        verify_pack_exists_on_tenant(xsiam_client, mr_entity, interactive, ctx)
+        verify_pack_exists_on_tenant(xsiam_client, mr_entity, interactive)
         test_data = init_test_data.TestData.parse_file(mr_entity.testdata_path.as_posix())
 
         if push:

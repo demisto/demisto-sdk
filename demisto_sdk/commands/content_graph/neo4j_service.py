@@ -7,7 +7,7 @@ import requests
 from requests.adapters import HTTPAdapter, Retry
 
 from demisto_sdk.commands.common.tools import get_content_path, run_command
-from demisto_sdk.commands.content_graph.common import NEO4J_DATABASE_HTTP, NEO4J_FOLDER, NEO4J_PASSWORD, REPO_PATH
+from demisto_sdk.commands.content_graph.common import NEO4J_DATABASE_HTTP, NEO4J_FOLDER, NEO4J_PASSWORD
 
 REPO_PATH = Path(get_content_path())  # type: ignore
 

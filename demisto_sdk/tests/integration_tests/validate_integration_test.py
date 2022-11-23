@@ -9,33 +9,28 @@ from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
 from demisto_sdk.commands.common.constants import DEFAULT_IMAGE_BASE64
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
-from demisto_sdk.commands.common.hook_validations.classifier import \
-    ClassifierValidator
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
+from demisto_sdk.commands.common.hook_validations.classifier import ClassifierValidator
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.hook_validations.integration import \
-    IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
 from demisto_sdk.commands.common.hook_validations.mapper import MapperValidator
-from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
-    PackUniqueFilesValidator
-from demisto_sdk.commands.common.hook_validations.playbook import \
-    PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
+from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
 from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from demisto_sdk.commands.common.tools import get_yaml
-from demisto_sdk.commands.find_dependencies.find_dependencies import \
-    PackDependencies
+from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
-from demisto_sdk.tests.constants_test import (CONTENT_REPO_EXAMPLE_ROOT,
-                                              NOT_VALID_IMAGE_PATH)
-from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (
-    CONNECTION, DASHBOARD, EMPTY_ID_SET, GENERIC_DEFINITION, GENERIC_FIELD,
-    GENERIC_MODULE, GENERIC_TYPE, INCIDENT_FIELD, INCIDENT_TYPE,
-    INDICATOR_FIELD, LAYOUT, LAYOUTS_CONTAINER, MAPPER, NEW_CLASSIFIER,
-    OLD_CLASSIFIER, REPORT, REPUTATION, WIDGET)
+from demisto_sdk.tests.constants_test import CONTENT_REPO_EXAMPLE_ROOT, NOT_VALID_IMAGE_PATH
+from demisto_sdk.tests.test_files.validate_integration_test_valid_types import (CONNECTION, DASHBOARD, EMPTY_ID_SET,
+                                                                                GENERIC_DEFINITION, GENERIC_FIELD,
+                                                                                GENERIC_MODULE, GENERIC_TYPE,
+                                                                                INCIDENT_FIELD, INCIDENT_TYPE,
+                                                                                INDICATOR_FIELD, LAYOUT,
+                                                                                LAYOUTS_CONTAINER, MAPPER,
+                                                                                NEW_CLASSIFIER, OLD_CLASSIFIER, REPORT,
+                                                                                REPUTATION, WIDGET)
 from TestSuite.test_tools import ChangeCWD
 
 VALIDATE_CMD = "validate"

@@ -16,23 +16,16 @@ from mergedeep import merge
 from tabulate import tabulate
 from urllib3.exceptions import MaxRetryError
 
-from demisto_sdk.commands.common.constants import (
-    CONTENT_ENTITIES_DIRS, CONTENT_FILE_ENDINGS,
-    DELETED_JSON_FIELDS_BY_DEMISTO, DELETED_YML_FIELDS_BY_DEMISTO,
-    ENTITY_NAME_SEPARATORS, ENTITY_TYPE_TO_DIR, FILE_EXIST_REASON,
-    FILE_NOT_IN_CC_REASON, INTEGRATIONS_DIR, PLAYBOOKS_DIR, SCRIPTS_DIR,
-    TEST_PLAYBOOKS_DIR)
+from demisto_sdk.commands.common.constants import (CONTENT_ENTITIES_DIRS, CONTENT_FILE_ENDINGS,
+                                                   DELETED_JSON_FIELDS_BY_DEMISTO, DELETED_YML_FIELDS_BY_DEMISTO,
+                                                   ENTITY_NAME_SEPARATORS, ENTITY_TYPE_TO_DIR, FILE_EXIST_REASON,
+                                                   FILE_NOT_IN_CC_REASON, INTEGRATIONS_DIR, PLAYBOOKS_DIR, SCRIPTS_DIR,
+                                                   TEST_PLAYBOOKS_DIR)
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type,
-                                               get_child_directories,
-                                               get_child_files, get_code_lang,
-                                               get_dict_from_file,
-                                               get_entity_id_by_entity_type,
-                                               get_entity_name_by_entity_type,
-                                               get_files_in_dir, get_json,
-                                               get_yaml, get_yml_paths_in_dir,
-                                               print_color,
-                                               retrieve_file_ending)
+from demisto_sdk.commands.common.tools import (LOG_COLORS, find_type, get_child_directories, get_child_files,
+                                               get_code_lang, get_dict_from_file, get_entity_id_by_entity_type,
+                                               get_entity_name_by_entity_type, get_files_in_dir, get_json, get_yaml,
+                                               get_yml_paths_in_dir, print_color, retrieve_file_ending)
 from demisto_sdk.commands.format.format_module import format_manager
 from demisto_sdk.commands.split.ymlsplitter import YmlSplitter
 

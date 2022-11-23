@@ -8,19 +8,13 @@ from git import GitCommandError
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (PACK_METADATA_DESC,
-                                                   PACK_METADATA_SUPPORT,
-                                                   PACK_METADATA_TAGS,
-                                                   PACK_METADATA_USE_CASES,
-                                                   PACKS_PACK_META_FILE_NAME,
-                                                   PACKS_README_FILE_NAME,
-                                                   XSOAR_SUPPORT)
+from demisto_sdk.commands.common.constants import (PACK_METADATA_DESC, PACK_METADATA_SUPPORT, PACK_METADATA_TAGS,
+                                                   PACK_METADATA_USE_CASES, PACKS_PACK_META_FILE_NAME,
+                                                   PACKS_README_FILE_NAME, XSOAR_SUPPORT)
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
-from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
-    PackUniqueFilesValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
+from demisto_sdk.commands.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
 from TestSuite.test_tools import ChangeCWD
 
@@ -650,8 +644,7 @@ class TestPackUniqueFilesValidator:
                     - Validation succeed
                     - Valid absolute image paths were not caught
         """
-        from demisto_sdk.commands.common.hook_validations.readme import \
-            ReadMeValidator
+        from demisto_sdk.commands.common.hook_validations.readme import ReadMeValidator
 
         self.validator = PackUniqueFilesValidator(os.path.join(self.FILES_PATH, 'DummyPack2'))
         mocker.patch.object(ReadMeValidator, 'check_readme_relative_image_paths',

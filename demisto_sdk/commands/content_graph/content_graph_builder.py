@@ -5,11 +5,9 @@ from typing import List
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
 from demisto_sdk.commands.content_graph.common import Nodes, Relationships
-from demisto_sdk.commands.content_graph.interface.graph import \
-    ContentGraphInterface
+from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
 from demisto_sdk.commands.content_graph.objects.repository import ContentDTO
-from demisto_sdk.commands.content_graph.parsers.repository import \
-    RepositoryParser
+from demisto_sdk.commands.content_graph.parsers.repository import RepositoryParser
 
 json = JSON_Handler()
 

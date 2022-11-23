@@ -4,17 +4,11 @@ from typing import Optional, Tuple
 
 import git
 
-from demisto_sdk.commands.common.constants import (
-    API_MODULES_PACK, SKIP_RELEASE_NOTES_FOR_TYPES)
-from demisto_sdk.commands.common.tools import (LOG_COLORS,
-                                               filter_files_by_type,
-                                               filter_files_on_pack,
-                                               get_pack_name,
-                                               get_pack_names_from_files,
-                                               pack_name_to_path, print_color,
-                                               print_warning, suppress_stdout)
-from demisto_sdk.commands.update_release_notes.update_rn import (
-    UpdateRN, update_api_modules_dependents_rn)
+from demisto_sdk.commands.common.constants import API_MODULES_PACK, SKIP_RELEASE_NOTES_FOR_TYPES
+from demisto_sdk.commands.common.tools import (LOG_COLORS, filter_files_by_type, filter_files_on_pack, get_pack_name,
+                                               get_pack_names_from_files, pack_name_to_path, print_color, print_warning,
+                                               suppress_stdout)
+from demisto_sdk.commands.update_release_notes.update_rn import UpdateRN, update_api_modules_dependents_rn
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 

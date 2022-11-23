@@ -4,37 +4,29 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (
-    ALERT_FETCH_REQUIRED_PARAMS, BANG_COMMAND_ARGS_MAPPING_DICT,
-    BANG_COMMAND_NAMES, DBOT_SCORES_DICT, DEFAULT_CONTENT_ITEM_FROM_VERSION,
-    DEPRECATED_REGEXES, ENDPOINT_COMMAND_NAME, ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
-    FEED_REQUIRED_PARAMS, FIRST_FETCH, FIRST_FETCH_PARAM,
-    INCIDENT_FETCH_REQUIRED_PARAMS, IOC_OUTPUTS_DICT, MAX_FETCH,
-    MAX_FETCH_PARAM, PACKS_DIR, PACKS_PACK_META_FILE_NAME, PYTHON_SUBTYPES,
-    REPUTATION_COMMAND_NAMES, TYPE_PWSH, XSOAR_CONTEXT_STANDARD_URL,
-    XSOAR_SUPPORT, MarketplaceVersions)
-from demisto_sdk.commands.common.default_additional_info_loader import \
-    load_default_additional_info_dict
-from demisto_sdk.commands.common.errors import (FOUND_FILES_AND_ERRORS,
-                                                FOUND_FILES_AND_IGNORED_ERRORS,
-                                                Errors)
+from demisto_sdk.commands.common.constants import (ALERT_FETCH_REQUIRED_PARAMS, BANG_COMMAND_ARGS_MAPPING_DICT,
+                                                   BANG_COMMAND_NAMES, DBOT_SCORES_DICT,
+                                                   DEFAULT_CONTENT_ITEM_FROM_VERSION, DEPRECATED_REGEXES,
+                                                   ENDPOINT_COMMAND_NAME, ENDPOINT_FLEXIBLE_REQUIRED_ARGS,
+                                                   FEED_REQUIRED_PARAMS, FIRST_FETCH, FIRST_FETCH_PARAM,
+                                                   INCIDENT_FETCH_REQUIRED_PARAMS, IOC_OUTPUTS_DICT, MAX_FETCH,
+                                                   MAX_FETCH_PARAM, PACKS_DIR, PACKS_PACK_META_FILE_NAME,
+                                                   PYTHON_SUBTYPES, REPUTATION_COMMAND_NAMES, TYPE_PWSH,
+                                                   XSOAR_CONTEXT_STANDARD_URL, XSOAR_SUPPORT, MarketplaceVersions)
+from demisto_sdk.commands.common.default_additional_info_loader import load_default_additional_info_dict
+from demisto_sdk.commands.common.errors import FOUND_FILES_AND_ERRORS, FOUND_FILES_AND_IGNORED_ERRORS, Errors
 from demisto_sdk.commands.common.handlers import JSON_Handler, YAML_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    error_codes
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
-from demisto_sdk.commands.common.hook_validations.description import \
-    DescriptionValidator
-from demisto_sdk.commands.common.hook_validations.docker import \
-    DockerImageValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.description import DescriptionValidator
+from demisto_sdk.commands.common.hook_validations.docker import DockerImageValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.tools import (
-    _get_file_id, compare_context_path_in_yml_and_readme,
-    extract_deprecated_command_names_from_yml,
-    extract_none_deprecated_command_names_from_yml, get_core_pack_list,
-    get_file_version_suffix_if_exists, get_files_in_dir, get_item_marketplaces,
-    get_pack_name, is_iron_bank_pack, print_error, server_version_compare,
-    string_to_bool)
+from demisto_sdk.commands.common.tools import (_get_file_id, compare_context_path_in_yml_and_readme,
+                                               extract_deprecated_command_names_from_yml,
+                                               extract_none_deprecated_command_names_from_yml, get_core_pack_list,
+                                               get_file_version_suffix_if_exists, get_files_in_dir,
+                                               get_item_marketplaces, get_pack_name, is_iron_bank_pack, print_error,
+                                               server_version_compare, string_to_bool)
 
 json = JSON_Handler()
 yaml = YAML_Handler()

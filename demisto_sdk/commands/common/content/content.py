@@ -7,19 +7,12 @@ from typing import Any, Iterator
 from git import InvalidGitRepositoryError, Repo
 from wcmatch.pathlib import Path
 
-from demisto_sdk.commands.common.constants import (DOCUMENTATION,
-                                                   DOCUMENTATION_DIR,
-                                                   PACKS_DIR,
-                                                   TEST_PLAYBOOKS_DIR)
+from demisto_sdk.commands.common.constants import DOCUMENTATION, DOCUMENTATION_DIR, PACKS_DIR, TEST_PLAYBOOKS_DIR
 from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
-from demisto_sdk.commands.common.content.objects.pack_objects.playbook.playbook import \
-    Playbook
-from demisto_sdk.commands.common.content.objects.pack_objects.script.script import \
-    Script
-from demisto_sdk.commands.common.content.objects.root_objects import (
-    ContentDescriptor, Documentation)
-from demisto_sdk.commands.common.content.objects_factory import \
-    path_to_pack_object
+from demisto_sdk.commands.common.content.objects.pack_objects.playbook.playbook import Playbook
+from demisto_sdk.commands.common.content.objects.pack_objects.script.script import Script
+from demisto_sdk.commands.common.content.objects.root_objects import ContentDescriptor, Documentation
+from demisto_sdk.commands.common.content.objects_factory import path_to_pack_object
 
 logger = logging.getLogger('demisto-sdk')
 

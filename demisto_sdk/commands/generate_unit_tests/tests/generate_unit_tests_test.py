@@ -8,10 +8,8 @@ import pytest
 from klara.contract.solver import MANAGER
 
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import (
-    UnitTestsGenerator, run_generate_unit_tests)
-from demisto_sdk.commands.generate_unit_tests.test_module_builder import \
-    TestModule
+from demisto_sdk.commands.generate_unit_tests.generate_unit_tests import UnitTestsGenerator, run_generate_unit_tests
+from demisto_sdk.commands.generate_unit_tests.test_module_builder import TestModule
 
 ARGS = [({'use_demisto': False}, 'malwarebazaar_all.py'),
         ({'use_demisto': False, 'commands': 'malwarebazaar-comment-add'}, 'malwarebazaar_specific_command.py'),

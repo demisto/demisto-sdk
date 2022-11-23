@@ -7,12 +7,10 @@ from pydantic import BaseModel, DirectoryPath, Field
 from pydantic.main import ModelMetaclass
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import (ContentType,
-                                                       RelationshipType)
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 
 if TYPE_CHECKING:
-    from demisto_sdk.commands.content_graph.objects.relationship import \
-        RelationshipData
+    from demisto_sdk.commands.content_graph.objects.relationship import RelationshipData
 
 content_type_to_model: Dict[ContentType, Type["BaseContent"]] = {}
 

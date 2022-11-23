@@ -12,18 +12,13 @@ import nltk
 from nltk.corpus import brown, webtext
 from spellchecker import SpellChecker
 
-from demisto_sdk.commands.common.constants import (PACKS_PACK_IGNORE_FILE_NAME,
-                                                   FileType)
-from demisto_sdk.commands.common.content import (Content, Integration,
-                                                 Playbook, ReleaseNote, Script,
-                                                 path_to_pack_object)
-from demisto_sdk.commands.common.content.objects.abstract_objects import \
-    TextObject
+from demisto_sdk.commands.common.constants import PACKS_PACK_IGNORE_FILE_NAME, FileType
+from demisto_sdk.commands.common.content import Content, Integration, Playbook, ReleaseNote, Script, path_to_pack_object
+from demisto_sdk.commands.common.content.objects.abstract_objects import TextObject
 from demisto_sdk.commands.common.content.objects.pack_objects.abstract_pack_objects.yaml_content_object import \
     YAMLContentObject
 from demisto_sdk.commands.common.git_util import GitUtil
-from demisto_sdk.commands.common.tools import (add_default_pack_known_words,
-                                               find_type)
+from demisto_sdk.commands.common.tools import add_default_pack_known_words, find_type
 from demisto_sdk.commands.doc_reviewer.known_words import KNOWN_WORDS
 from demisto_sdk.commands.doc_reviewer.rn_checker import ReleaseNotesChecker
 

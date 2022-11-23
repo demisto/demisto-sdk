@@ -4,15 +4,12 @@ from typing import Optional
 import pytest
 from mock import patch
 
-from demisto_sdk.commands.common.hook_validations.playbook import \
-    PlaybookValidator
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
-from demisto_sdk.tests.constants_test import (
-    CONTENT_REPO_EXAMPLE_ROOT, CORRECT_PLAYBOOK_REFERENCE_USE,
-    INCORRECT_PLAYBOOK_REFERENCE_USE, INVALID_PLAYBOOK_INPUTS_USE,
-    INVALID_PLAYBOOK_UNHANDLED_CONDITION,
-    INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION, VALID_PLAYBOOK_INPUTS_USE)
+from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
+from demisto_sdk.tests.constants_test import (CONTENT_REPO_EXAMPLE_ROOT, CORRECT_PLAYBOOK_REFERENCE_USE,
+                                              INCORRECT_PLAYBOOK_REFERENCE_USE, INVALID_PLAYBOOK_INPUTS_USE,
+                                              INVALID_PLAYBOOK_UNHANDLED_CONDITION,
+                                              INVALID_TEST_PLAYBOOK_UNHANDLED_CONDITION, VALID_PLAYBOOK_INPUTS_USE)
 from TestSuite.test_tools import ChangeCWD
 
 

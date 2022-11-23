@@ -23,8 +23,7 @@ from docker.models.containers import Container
 from packaging.version import parse
 
 # Local packages
-from demisto_sdk.commands.common.constants import (TYPE_PWSH, TYPE_PYTHON,
-                                                   DemistoException)
+from demisto_sdk.commands.common.constants import TYPE_PWSH, TYPE_PYTHON, DemistoException
 from demisto_sdk.commands.common.docker_helper import init_global_docker_client
 
 # Python2 requirements

@@ -4,12 +4,9 @@ from typing import Any, Dict, List, Optional, Set
 import networkx
 
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.common.update_id_set import (
-    BUILT_IN_FIELDS, build_tasks_graph, get_fields_by_script_argument)
-from demisto_sdk.commands.content_graph.common import (ContentType,
-                                                       RelationshipType)
-from demisto_sdk.commands.content_graph.parsers.yaml_content_item import \
-    YAMLContentItemParser
+from demisto_sdk.commands.common.update_id_set import BUILT_IN_FIELDS, build_tasks_graph, get_fields_by_script_argument
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.parsers.yaml_content_item import YAMLContentItemParser
 
 LIST_COMMANDS = ["Builtin|||setList", "Builtin|||getList"]
 

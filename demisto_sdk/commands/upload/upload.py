@@ -6,7 +6,7 @@ from demisto_sdk.commands.common.constants import ENV_DEMISTO_SDK_MARKETPLACE, M
 from demisto_sdk.utils.utils import check_configuration_file
 
 
-def upload_content_entity(**kwargs):
+def upload_content_entity(kwargs):
     from demisto_sdk.commands.upload.uploader import ConfigFileParser, Uploader
     from demisto_sdk.commands.zip_packs.packs_zipper import EX_FAIL, PacksZipper
     keep_zip = kwargs.pop('keep_zip')

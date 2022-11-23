@@ -73,6 +73,10 @@ mapping:
     type: seq
     sequence:
     - type: str
+  nativeImage:
+    type: seq
+    sequence:
+    - type: str
   runonce:
     type: bool
   tests:

@@ -76,6 +76,10 @@ mapping:
         type: seq
         sequence:
         - type: str
+      nativeImage:
+        type: seq
+        sequence:
+        - type: str
       isfetch:
         type: bool
       isfetchevents:

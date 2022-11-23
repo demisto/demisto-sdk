@@ -348,7 +348,7 @@ class TestUpdateContentGraph:
         script.code.write("execute_command('SampleScript')")
 
         with ContentGraphInterface(start_service=start_service) as interface:
-            update_content_graph(interface, external_import_paths=[], packs_to_update=['TestPack2'])
+            update_content_graph(interface, packs_to_update=['TestPack2'])
             packs = interface.search(marketplace=MarketplaceVersions.XSOAR, content_type=ContentType.PACK)
             integrations = interface.search(
                 marketplace=MarketplaceVersions.XSOAR,

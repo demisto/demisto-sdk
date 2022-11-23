@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 from typing import List
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
@@ -30,7 +29,6 @@ def create_content_graph(
 
 def update_content_graph(
     content_graph_interface: ContentGraphInterface,
-    external_import_paths: List[Path],
     packs_to_update: List[str],
     dependencies: bool = False,
 ) -> None:
@@ -38,10 +36,7 @@ def update_content_graph(
     Args:
         content_graph_interface (ContentGraphInterface): The content graph interface.
     """
-    ContentGraphBuilder(content_graph_interface).update_graph(
-        external_import_paths,
-        packs_to_update
-    )
+    ContentGraphBuilder(content_graph_interface).update_graph(packs_to_update)
     if dependencies:
         content_graph_interface.create_pack_dependencies()
     content_graph_interface.export_graph()

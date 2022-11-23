@@ -12,8 +12,6 @@ from demisto_sdk.commands.content_graph.common import (NEO4J_DATABASE_URL,
                                                        RelationshipType)
 from demisto_sdk.commands.content_graph.interface.graph import \
     ContentGraphInterface
-from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import \
-    Neo4jImportHandler
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import (
     create_constraints, drop_constraints)
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (
@@ -258,7 +256,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         with self.driver.session() as session:
             session.write_transaction(remove_server_nodes)
 
-    def import_graphs(self, external_import_paths: List[Path]) -> None:
+    def import_graph(self) -> None:
         """Imports CSV files to neo4j, by:
         1. Dropping the constraints (we temporarily allow creating duplicate nodes from different repos)
         2. Preparing the CSV files for import and importing them
@@ -271,7 +269,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         """
         with self.driver.session() as session:
             session.write_transaction(drop_constraints)
-            session.write_transaction(import_csv, Neo4jImportHandler(self.repo_path, external_import_paths))
+            session.write_transaction(import_csv)
             session.write_transaction(post_import_write_queries)
             session.write_transaction(merge_duplicate_commands)
             session.write_transaction(merge_duplicate_content_items)
@@ -280,7 +278,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
     def export_graph(self) -> None:
         with self.driver.session() as session:
             session.write_transaction(pre_export_write_queries)
-            session.write_transaction(export_to_csv, Neo4jImportHandler(self.repo_path))
+            session.write_transaction(export_to_csv, self.repo_path.name)
             session.write_transaction(post_export_write_queries)
 
     def clean_graph(self):

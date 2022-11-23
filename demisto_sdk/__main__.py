@@ -2326,10 +2326,7 @@ def create_content_graph(
 )
 @click.option('-ud', '--use-docker', is_flag=True, help="Use docker service to run the content graph")
 @click.option('-us', '--use-existing', is_flag=True, help="Use existing service", default=False)
-@click.option('-p', '--packs', help="A comma-separated list of packs to update", default=None)
-@click.option('-i', '--import-path', type=click.Path(exists=True), multiple=True, default=None,
-              help="Path to a directory with graph data to import (from external repositories). "
-                   "Can be provided multiple times.")
+@click.option('-p', '--packs', help="A comma-separated list of packs to update", multiple=True, default=None)
 @click.option('-d', '--dependencies', is_flag=True, help="Whether dependencies should be included in the graph", default=False)
 @click.option('-o', '--output-file', type=click.Path(), help="dump file output", default=None)
 @click.option('-v', "--verbose", count=True, help="Verbosity level -v / -vv / .. / -vvv",
@@ -2340,6 +2337,7 @@ def create_content_graph(
 def update_content_graph(
     use_docker: bool = False,
     use_existing: bool = False,
+    packs: list = None,
     dependencies: bool = False,
     output_file: Path = None,
     **kwargs
@@ -2353,11 +2351,6 @@ def update_content_graph(
                   quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
                   log_path=kwargs.get('log_path'))  # type: ignore[arg-type]
 
-    import_paths = list(kwargs.get('import_path', [])) if not isinstance(kwargs.get('import_path'), str) else \
-        [kwargs.get('import_path')]
-    import_paths = [Path(p) for p in import_paths]
-    packs = [] if not kwargs.get('packs') else kwargs.get('packs', '').split(',')
-
     with Neo4jContentGraphInterface(
         start_service=not use_existing,
         output_file=output_file,
@@ -2365,8 +2358,7 @@ def update_content_graph(
     ) as content_graph_interface:
         update_content_graph_command(
             content_graph_interface,
-            external_import_paths=import_paths,
-            packs_to_update=packs,
+            packs_to_update=packs or [],
             dependencies=dependencies,
         )
 

@@ -16,6 +16,13 @@ REPO_PATH = Path(get_content_path())  # type: ignore
 NEO4J_SERVICE_IMAGE = "neo4j:4.4.12"
 NEO4J_ADMIN_IMAGE = "neo4j/neo4j-admin:4.4.12"
 
+LOCAL_NEO4J_PATH = Path("var/lib/neo4j")
+NEO4J_IMPORT_FOLDER = "import"
+NEO4J_DATA_FOLDER = "data"
+NEO4J_PLUGINS_FOLDER = "plugins"
+
+IS_RUNNING_IN_NEO4J_DOCKER = False
+
 logger = logging.getLogger("demisto-sdk")
 
 try:
@@ -74,7 +81,10 @@ def _wait_until_service_is_up():
 
 
 def _should_use_docker(use_docker: bool) -> bool:
-    return use_docker or not IS_NEO4J_ADMIN_AVAILABLE
+    global IS_RUNNING_IN_NEO4J_DOCKER
+    if use_docker or not IS_NEO4J_ADMIN_AVAILABLE:
+        IS_RUNNING_IN_NEO4J_DOCKER = True
+    return IS_RUNNING_IN_NEO4J_DOCKER
 
 
 def start(use_docker: bool = True):
@@ -99,9 +109,9 @@ def start(use_docker: bool = True):
             name="neo4j-content",
             ports={"7474/tcp": 7474, "7687/tcp": 7687, "7473/tcp": 7473},
             volumes=[
-                f'{REPO_PATH / NEO4J_FOLDER / "data"}:/data',
-                f'{REPO_PATH / NEO4J_FOLDER / "import"}:/var/lib/neo4j/import',
-                f'{REPO_PATH / NEO4J_FOLDER / "plugins"}:/plugins'
+                f'{REPO_PATH / NEO4J_FOLDER / NEO4J_DATA_FOLDER}:/{NEO4J_DATA_FOLDER}',
+                f'{REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER}:/{LOCAL_NEO4J_PATH / NEO4J_IMPORT_FOLDER}',
+                f'{REPO_PATH / NEO4J_FOLDER / NEO4J_PLUGINS_FOLDER}:/{NEO4J_PLUGINS_FOLDER}'
             ],
             detach=True,
             environment={
@@ -204,3 +214,9 @@ def is_alive():
         return requests.get(NEO4J_DATABASE_HTTP, timeout=10).ok
     except requests.exceptions.RequestException:
         return False
+
+
+def get_neo4j_import_path() -> Path:
+    if IS_RUNNING_IN_NEO4J_DOCKER:
+        return REPO_PATH / NEO4J_FOLDER / NEO4J_IMPORT_FOLDER
+    return LOCAL_NEO4J_PATH / NEO4J_IMPORT_FOLDER

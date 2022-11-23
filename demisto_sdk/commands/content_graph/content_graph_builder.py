@@ -1,4 +1,3 @@
-from pathlib import Path
 from typing import List, Optional
 
 from demisto_sdk.commands.common.handlers import JSON_Handler
@@ -28,16 +27,14 @@ class ContentGraphBuilder:
 
     def update_graph(
         self,
-        external_import_paths: Optional[List[Path]] = None,
         packs_to_update: Optional[List[str]] = None,
     ) -> None:
         """Imports a content graph from files and updates the given pack nodes.
 
         Args:
-            external_import_paths (Optional[List[Path]): A list of external repositories' import paths.
             packs_to_update (Optional[List[str]]): A list of packs to update.
         """
-        self.content_graph.import_graphs(external_import_paths)
+        self.content_graph.import_graph()
         if packs_to_update:
             self._parse_and_model_content(packs_to_update)
             self._create_or_update_graph()

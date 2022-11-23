@@ -34,12 +34,10 @@ def pre_export_write_queries(tx: Transaction) -> None:
         run_query(tx, CONVERT_FIELD_TO_STRING.format(prop=prop))
 
 
-def export_to_csv(
-    tx: Transaction,
-    import_handler: Neo4jImportHandler,
-) -> None:
+def export_to_csv(tx: Transaction, repo_name: str) -> None:
+    import_handler = Neo4jImportHandler()
     # import_handler.clean_import_dir_before_export()
-    query = f'call apoc.export.csv.all("{import_handler.repo_path.name}.csv", {{bulkImport: true}})'
+    query = f'call apoc.export.csv.all("{repo_name}.csv", {{bulkImport: true}})'
     run_query(tx, query)
     import_handler.fix_csv_files_after_export()
 
@@ -55,10 +53,8 @@ def pre_import_write_queries(
     pass
 
 
-def import_csv(
-    tx: Transaction,
-    import_handler: Neo4jImportHandler,
-) -> None:
+def import_csv(tx: Transaction) -> None:
+    import_handler = Neo4jImportHandler()
     import_handler.ensure_data_uniqueness()
 
     nodes_files = ", ".join([

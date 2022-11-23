@@ -31,7 +31,7 @@ class ContentGraphInterface(ABC):
         pass
 
     @abstractmethod
-    def import_graphs(self, external_import_paths: List[Path]) -> None:
+    def import_graph(self) -> None:
         pass
 
     @abstractmethod

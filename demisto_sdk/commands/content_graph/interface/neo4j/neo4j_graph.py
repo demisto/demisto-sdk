@@ -9,6 +9,7 @@ from demisto_sdk.commands.common.constants import MarketplaceVersions
 from demisto_sdk.commands.content_graph.common import (NEO4J_DATABASE_URL, NEO4J_PASSWORD, NEO4J_USERNAME, ContentType,
                                                        Neo4jResult, RelationshipType)
 from demisto_sdk.commands.content_graph.interface.graph import ContentGraphInterface
+from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import Neo4jImportHandler
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.constraints import create_constraints, drop_constraints
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.dependencies import (create_pack_dependencies,
                                                                                      get_all_level_packs_dependencies)
@@ -259,9 +260,13 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
         Args:
             external_import_paths (List[Path]): A list of external repositories' import paths.
         """
+        import_handler = Neo4jImportHandler()
+        import_handler.ensure_data_uniqueness()
+        node_files = import_handler.get_nodes_files()
+        relationship_files = import_handler.get_relationships_files()
         with self.driver.session() as session:
             session.write_transaction(drop_constraints)
-            session.write_transaction(import_csv)
+            session.write_transaction(import_csv, node_files, relationship_files)
             session.write_transaction(post_import_write_queries)
             session.write_transaction(merge_duplicate_commands)
             session.write_transaction(merge_duplicate_content_items)

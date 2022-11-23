@@ -1,5 +1,4 @@
 import csv
-import os
 import shutil
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -17,10 +16,6 @@ class Neo4jImportHandler:
 
     def get_relationships_files(self) -> List[str]:
         return [file.name for file in self.import_path.iterdir() if '.relationships.' in file.name]
-
-    def clean_import_dir_before_export(self) -> None:
-        for file in self.import_path.iterdir():
-            os.remove(file)
 
     def ensure_data_uniqueness(self) -> None:
         if len(sources := self._get_import_sources()) > 1:
@@ -48,27 +43,3 @@ class Neo4jImportHandler:
                         row[1] = f'{prefix}{row[1]}' if 'relationships' in filename.name else row[1]
                         writer.writerow(row)
                 shutil.move(tempfile.name, (self.import_path / filename.name).as_posix())
-
-    def _get_indexes_to_exclude(self, headers: List[str]) -> List[int]:
-        return [
-            idx for idx, x in enumerate(headers)
-            if x in ['__csv_id', '__csv_type']
-        ]
-
-    def _remove_items_by_index(self, row, indexes_to_skip: List[int]) -> List[str]:
-        return [x for idx, x in enumerate(row) if idx not in indexes_to_skip]
-
-    def fix_csv_files_after_export(self) -> None:
-        for filename in self.import_path.iterdir():
-            if filename.suffix == '.csv':
-                tempfile = NamedTemporaryFile(mode='w', delete=False)
-                with open(filename, 'r') as csv_file, tempfile:
-                    reader = csv.reader(csv_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                    writer = csv.writer(tempfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                    headers = [x.strip() for x in next(reader)]
-                    indexes_to_exclude = self._get_indexes_to_exclude(headers)
-                    writer.writerow(self._remove_items_by_index(headers, indexes_to_exclude))
-                    for row in reader:
-                        writer.writerow(self._remove_items_by_index(row, indexes_to_exclude))
-
-                shutil.move(tempfile.name, filename.as_posix())

@@ -1,8 +1,8 @@
 import logging
 
+from typing import List
 from neo4j import Transaction
 
-from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import Neo4jImportHandler
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query
 
 logger = logging.getLogger('demisto-sdk')
@@ -23,7 +23,7 @@ SET n.{prop} = apoc.text.join(n.{prop}, "$")
 RETURN n
 """
 CONVERT_FIELD_TO_LIST = """MATCH (n) WHERE NOT n.{prop} IS NULL
-SET n.{prop} = split(n.{prop}, "$")
+SET n.{prop} = CASE n.{prop} WHEN "" THEN [] ELSE split(n.{prop}, "$") END
 RETURN n
 """
 
@@ -34,11 +34,8 @@ def pre_export_write_queries(tx: Transaction) -> None:
 
 
 def export_to_csv(tx: Transaction, repo_name: str) -> None:
-    import_handler = Neo4jImportHandler()
-    # import_handler.clean_import_dir_before_export()
     query = f'call apoc.export.csv.all("{repo_name}.csv", {{bulkImport: true}})'
     run_query(tx, query)
-    import_handler.fix_csv_files_after_export()
 
 
 def post_export_write_queries(tx: Transaction) -> None:
@@ -52,17 +49,14 @@ def pre_import_write_queries(
     pass
 
 
-def import_csv(tx: Transaction) -> None:
-    import_handler = Neo4jImportHandler()
-    import_handler.ensure_data_uniqueness()
-
+def import_csv(tx: Transaction, node_files: List[str], relationship_files: List[str]) -> None:
     nodes_files = ", ".join([
         f'{{fileName: "file:/{filename}", labels: []}}'
-        for filename in import_handler.get_nodes_files()
+        for filename in node_files
     ])
     relationship_files = ", ".join([
         f'{{fileName: "file:/{filename}", type: null}}'
-        for filename in import_handler.get_relationships_files()
+        for filename in relationship_files
     ])
     run_query(tx, f'CALL apoc.import.csv([{nodes_files}], [{relationship_files}], {{}})')
 

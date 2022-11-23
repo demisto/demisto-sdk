@@ -5,18 +5,12 @@ from typing import Callable, List
 
 import click
 
-from demisto_sdk.commands.common.constants import (KNOWN_FILE_STATUSES,
-                                                   PACKS_PACK_META_FILE_NAME,
-                                                   TESTS_AND_DOC_DIRECTORIES,
-                                                   FileType)
+from demisto_sdk.commands.common.constants import (KNOWN_FILE_STATUSES, PACKS_PACK_META_FILE_NAME,
+                                                   TESTS_AND_DOC_DIRECTORIES, FileType)
 from demisto_sdk.commands.common.errors import Errors
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
-from demisto_sdk.commands.common.tools import (filter_packagify_changes,
-                                               find_type, get_pack_name,
-                                               has_remote_configured,
-                                               is_origin_content_repo,
-                                               run_command)
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
+from demisto_sdk.commands.common.tools import (filter_packagify_changes, find_type, get_pack_name,
+                                               has_remote_configured, is_origin_content_repo, run_command)
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
 
 

@@ -2,8 +2,7 @@ from click.testing import CliRunner
 
 from demisto_sdk.__main__ import main
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.hook_validations.integration import \
-    IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
 from TestSuite.test_tools import ChangeCWD
 
 

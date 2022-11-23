@@ -11,76 +11,58 @@ from mock import patch
 
 import demisto_sdk.commands.validate.validate_manager
 from demisto_sdk.commands.common import tools
-from demisto_sdk.commands.common.constants import (
-    FILETYPE_TO_DEFAULT_FROMVERSION, PACKS_PACK_META_FILE_NAME, TEST_PLAYBOOK,
-    FileType)
+from demisto_sdk.commands.common.constants import (FILETYPE_TO_DEFAULT_FROMVERSION, PACKS_PACK_META_FILE_NAME,
+                                                   TEST_PLAYBOOK, FileType)
 from demisto_sdk.commands.common.content_constant_paths import CONF_PATH
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.git_util import GitUtil
 from demisto_sdk.commands.common.handlers import JSON_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import \
-    BaseValidator
-from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
-    ContentEntityValidator
-from demisto_sdk.commands.common.hook_validations.dashboard import \
-    DashboardValidator
-from demisto_sdk.commands.common.hook_validations.description import \
-    DescriptionValidator
-from demisto_sdk.commands.common.hook_validations.generic_field import \
-    GenericFieldValidator
+from demisto_sdk.commands.common.hook_validations.base_validator import BaseValidator
+from demisto_sdk.commands.common.hook_validations.content_entity_validator import ContentEntityValidator
+from demisto_sdk.commands.common.hook_validations.dashboard import DashboardValidator
+from demisto_sdk.commands.common.hook_validations.description import DescriptionValidator
+from demisto_sdk.commands.common.hook_validations.generic_field import GenericFieldValidator
 from demisto_sdk.commands.common.hook_validations.image import ImageValidator
-from demisto_sdk.commands.common.hook_validations.incident_field import \
-    IncidentFieldValidator
-from demisto_sdk.commands.common.hook_validations.integration import \
-    IntegrationValidator
-from demisto_sdk.commands.common.hook_validations.layout import (
-    LayoutsContainerValidator, LayoutValidator)
-from demisto_sdk.commands.common.hook_validations.old_release_notes import \
-    OldReleaseNotesValidator
-from demisto_sdk.commands.common.hook_validations.pack_unique_files import \
-    PackUniqueFilesValidator
-from demisto_sdk.commands.common.hook_validations.playbook import \
-    PlaybookValidator
-from demisto_sdk.commands.common.hook_validations.release_notes import \
-    ReleaseNotesValidator
-from demisto_sdk.commands.common.hook_validations.reputation import \
-    ReputationValidator
+from demisto_sdk.commands.common.hook_validations.incident_field import IncidentFieldValidator
+from demisto_sdk.commands.common.hook_validations.integration import IntegrationValidator
+from demisto_sdk.commands.common.hook_validations.layout import LayoutsContainerValidator, LayoutValidator
+from demisto_sdk.commands.common.hook_validations.old_release_notes import OldReleaseNotesValidator
+from demisto_sdk.commands.common.hook_validations.pack_unique_files import PackUniqueFilesValidator
+from demisto_sdk.commands.common.hook_validations.playbook import PlaybookValidator
+from demisto_sdk.commands.common.hook_validations.release_notes import ReleaseNotesValidator
+from demisto_sdk.commands.common.hook_validations.reputation import ReputationValidator
 from demisto_sdk.commands.common.hook_validations.script import ScriptValidator
-from demisto_sdk.commands.common.hook_validations.structure import \
-    StructureValidator
+from demisto_sdk.commands.common.hook_validations.structure import StructureValidator
 from demisto_sdk.commands.common.hook_validations.widget import WidgetValidator
 from demisto_sdk.commands.common.legacy_git_tools import git_path
-from demisto_sdk.commands.unify.integration_script_unifier import \
-    IntegrationScriptUnifier
+from demisto_sdk.commands.unify.integration_script_unifier import IntegrationScriptUnifier
 from demisto_sdk.commands.validate.validate_manager import ValidateManager
-from demisto_sdk.tests.constants_test import (
-    CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DIR_LIST, IGNORED_PNG,
-    INCIDENT_FIELD_TARGET, INCIDENT_TYPE_TARGET, INDICATOR_TYPE_TARGET,
-    INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
-    INVALID_BETA_INTEGRATION, INVALID_DASHBOARD_PATH,
-    INVALID_IGNORED_UNIFIED_INTEGRATION, INVALID_INCIDENT_FIELD_PATH,
-    INVALID_INTEGRATION_ID_PATH, INVALID_INTEGRATION_NO_TESTS,
-    INVALID_INTEGRATION_NON_CONFIGURED_TESTS, INVALID_LAYOUT_CONTAINER_PATH,
-    INVALID_LAYOUT_PATH, INVALID_MULTI_LINE_1_CHANGELOG_PATH,
-    INVALID_MULTI_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_1_CHANGELOG_PATH,
-    INVALID_ONE_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
-    INVALID_ONE_LINE_LIST_2_CHANGELOG_PATH, INVALID_PLAYBOOK_CONDITION_1,
-    INVALID_PLAYBOOK_CONDITION_2, INVALID_PLAYBOOK_ID_PATH,
-    INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
-    INVALID_REPUTATION_PATH, INVALID_SCRIPT_PATH, INVALID_WIDGET_PATH,
-    LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET, MODELING_RULES_SCHEMA_FILE,
-    MODELING_RULES_YML_FILE, PLAYBOOK_TARGET, SCRIPT_RELEASE_NOTES_TARGET,
-    SCRIPT_TARGET, VALID_BETA_INTEGRATION, VALID_BETA_PLAYBOOK_PATH,
-    VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH,
-    VALID_INDICATOR_FIELD_PATH, VALID_INTEGRATION_ID_PATH,
-    VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_CONTAINER_PATH,
-    VALID_LAYOUT_PATH, VALID_MD, VALID_MULTI_LINE_CHANGELOG_PATH,
-    VALID_MULTI_LINE_LIST_CHANGELOG_PATH, VALID_ONE_LINE_CHANGELOG_PATH,
-    VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_PACK, VALID_PLAYBOOK_CONDITION,
-    VALID_REPUTATION_PATH, VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH,
-    VALID_WIDGET_PATH, WIDGET_TARGET)
-from demisto_sdk.tests.test_files.validate_integration_test_valid_types import \
-    INCIDENT_FIELD
+from demisto_sdk.tests.constants_test import (CONF_JSON_MOCK_PATH, DASHBOARD_TARGET, DIR_LIST, IGNORED_PNG,
+                                              INCIDENT_FIELD_TARGET, INCIDENT_TYPE_TARGET, INDICATOR_TYPE_TARGET,
+                                              INTEGRATION_RELEASE_NOTES_TARGET, INTEGRATION_TARGET,
+                                              INVALID_BETA_INTEGRATION, INVALID_DASHBOARD_PATH,
+                                              INVALID_IGNORED_UNIFIED_INTEGRATION, INVALID_INCIDENT_FIELD_PATH,
+                                              INVALID_INTEGRATION_ID_PATH, INVALID_INTEGRATION_NO_TESTS,
+                                              INVALID_INTEGRATION_NON_CONFIGURED_TESTS, INVALID_LAYOUT_CONTAINER_PATH,
+                                              INVALID_LAYOUT_PATH, INVALID_MULTI_LINE_1_CHANGELOG_PATH,
+                                              INVALID_MULTI_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_1_CHANGELOG_PATH,
+                                              INVALID_ONE_LINE_2_CHANGELOG_PATH, INVALID_ONE_LINE_LIST_1_CHANGELOG_PATH,
+                                              INVALID_ONE_LINE_LIST_2_CHANGELOG_PATH, INVALID_PLAYBOOK_CONDITION_1,
+                                              INVALID_PLAYBOOK_CONDITION_2, INVALID_PLAYBOOK_ID_PATH,
+                                              INVALID_PLAYBOOK_PATH, INVALID_PLAYBOOK_PATH_FROM_ROOT,
+                                              INVALID_REPUTATION_PATH, INVALID_SCRIPT_PATH, INVALID_WIDGET_PATH,
+                                              LAYOUT_TARGET, LAYOUTS_CONTAINER_TARGET, MODELING_RULES_SCHEMA_FILE,
+                                              MODELING_RULES_YML_FILE, PLAYBOOK_TARGET, SCRIPT_RELEASE_NOTES_TARGET,
+                                              SCRIPT_TARGET, VALID_BETA_INTEGRATION, VALID_BETA_PLAYBOOK_PATH,
+                                              VALID_DASHBOARD_PATH, VALID_INCIDENT_FIELD_PATH, VALID_INCIDENT_TYPE_PATH,
+                                              VALID_INDICATOR_FIELD_PATH, VALID_INTEGRATION_ID_PATH,
+                                              VALID_INTEGRATION_TEST_PATH, VALID_LAYOUT_CONTAINER_PATH,
+                                              VALID_LAYOUT_PATH, VALID_MD, VALID_MULTI_LINE_CHANGELOG_PATH,
+                                              VALID_MULTI_LINE_LIST_CHANGELOG_PATH, VALID_ONE_LINE_CHANGELOG_PATH,
+                                              VALID_ONE_LINE_LIST_CHANGELOG_PATH, VALID_PACK, VALID_PLAYBOOK_CONDITION,
+                                              VALID_REPUTATION_PATH, VALID_SCRIPT_PATH, VALID_TEST_PLAYBOOK_PATH,
+                                              VALID_WIDGET_PATH, WIDGET_TARGET)
+from demisto_sdk.tests.test_files.validate_integration_test_valid_types import INCIDENT_FIELD
 from TestSuite.pack import Pack
 from TestSuite.test_tools import ChangeCWD
 
@@ -478,8 +460,7 @@ class TestValidators:
                                                                 pack_error_ignore_list=[], is_modified=True)
 
     def test_files_validator_validate_pack_unique_files(self, mocker):
-        from demisto_sdk.commands.common.content.objects.pack_objects.pack import \
-            Pack
+        from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
         mocker.patch.object(tools, 'get_dict_from_file', return_value=({'approved_list': {}}, 'json'))
         mocker.patch.object(Pack, 'should_be_deprecated', return_value=False)
         mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
@@ -521,8 +502,7 @@ class TestValidators:
             Then:
                 - return a True validation response
         """
-        from demisto_sdk.commands.common.content.objects.pack_objects.pack import \
-            Pack
+        from demisto_sdk.commands.common.content.objects.pack_objects.pack import Pack
         id_set_path = os.path.normpath(
             os.path.join(__file__, git_path(), 'demisto_sdk', 'tests', 'test_files', 'id_set', 'id_set.json'))
         mocker.patch('demisto_sdk.commands.common.hook_validations.integration.tools.get_current_categories',
@@ -1357,8 +1337,7 @@ def test_skip_conf_json(mocker):
           - If set to `False`, the `ConfJsonValidator` should be called.
 
     """
-    from demisto_sdk.commands.common.hook_validations.conf_json import \
-        ConfJsonValidator
+    from demisto_sdk.commands.common.hook_validations.conf_json import ConfJsonValidator
     conf_json_init = mocker.patch.object(ConfJsonValidator, 'load_conf_file')
     ValidateManager(skip_conf_json=False)
     conf_json_init.asssert_called()

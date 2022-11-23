@@ -6,8 +6,7 @@ from typing import List
 import pytest
 
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
-from demisto_sdk.commands.find_dependencies.find_dependencies import \
-    PackDependencies
+from demisto_sdk.commands.find_dependencies.find_dependencies import PackDependencies
 from TestSuite.integration import Integration
 from TestSuite.json_based import JSONBased
 from TestSuite.playbook import Playbook

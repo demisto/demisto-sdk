@@ -7,8 +7,7 @@ import time
 import unicodedata
 from contextlib import contextmanager
 from pprint import pformat
-from subprocess import (STDOUT, CalledProcessError, call, check_call,
-                        check_output)
+from subprocess import STDOUT, CalledProcessError, call, check_call, check_output
 from threading import Lock
 from typing import Dict, Iterator
 

@@ -2,11 +2,10 @@ from typing import Tuple
 
 import click
 
-from demisto_sdk.commands.common.constants import (
-    FILETYPE_TO_DEFAULT_FROMVERSION, FileType)
-from demisto_sdk.commands.format.format_constants import (
-    ERROR_RETURN_CODE, GENERIC_FIELD_DEFAULT_GROUP,
-    GENERIC_FIELD_DEFAULT_ID_PREFIX, SKIP_RETURN_CODE, SUCCESS_RETURN_CODE)
+from demisto_sdk.commands.common.constants import FILETYPE_TO_DEFAULT_FROMVERSION, FileType
+from demisto_sdk.commands.format.format_constants import (ERROR_RETURN_CODE, GENERIC_FIELD_DEFAULT_GROUP,
+                                                          GENERIC_FIELD_DEFAULT_ID_PREFIX, SKIP_RETURN_CODE,
+                                                          SUCCESS_RETURN_CODE)
 from demisto_sdk.commands.format.update_generic_json import BaseUpdateJSON
 
 

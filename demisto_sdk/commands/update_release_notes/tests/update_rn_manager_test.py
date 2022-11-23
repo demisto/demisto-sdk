@@ -1,7 +1,6 @@
 import pytest
 
-from demisto_sdk.commands.update_release_notes.update_rn_manager import \
-    UpdateReleaseNotesManager
+from demisto_sdk.commands.update_release_notes.update_rn_manager import UpdateReleaseNotesManager
 
 
 class TestUpdateRNManager:
@@ -109,8 +108,7 @@ class TestUpdateRNManager:
         Then:
             - execute_update in UpdateRN should be called.
         """
-        from demisto_sdk.commands.update_release_notes.update_rn_manager import \
-            UpdateRN
+        from demisto_sdk.commands.update_release_notes.update_rn_manager import UpdateRN
 
         mng = UpdateReleaseNotesManager()
         mock_func = mocker.patch.object(UpdateRN, 'execute_update', return_result=True)
@@ -153,8 +151,7 @@ class TestUpdateRNManager:
         Then:
             - The update is successfully executed and no error is raised.
         """
-        from demisto_sdk.commands.update_release_notes.update_rn_manager import \
-            UpdateReleaseNotesManager
+        from demisto_sdk.commands.update_release_notes.update_rn_manager import UpdateReleaseNotesManager
         mocker.patch.object(UpdateReleaseNotesManager, 'get_git_changed_files',
                             return_value=({'Packs/test1', 'Packs/test2'}, set(), set()))
         mocker.patch.object(UpdateReleaseNotesManager, 'check_existing_rn')
@@ -173,10 +170,8 @@ class TestUpdateRNManager:
         Then:
             - The update is successfully executed on both packs and no error is raised.
         """
-        from demisto_sdk.commands.update_release_notes.update_rn_manager import \
-            UpdateReleaseNotesManager
-        from demisto_sdk.commands.validate.validate_manager import \
-            ValidateManager
+        from demisto_sdk.commands.update_release_notes.update_rn_manager import UpdateReleaseNotesManager
+        from demisto_sdk.commands.validate.validate_manager import ValidateManager
         mocker.patch.object(ValidateManager, 'setup_git_params')
         mocker.patch.object(ValidateManager, 'filter_to_relevant_files', side_effect=(lambda x: (set(x), set(), True)))
         mocker.patch.object(ValidateManager, 'get_unfiltered_changed_files_from_git',

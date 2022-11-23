@@ -4,8 +4,7 @@ import time
 import demisto_client
 from demisto_client.demisto_api.rest import ApiException
 
-from demisto_sdk.commands.common.tools import (LOG_COLORS, print_color,
-                                               print_error)
+from demisto_sdk.commands.common.tools import LOG_COLORS, print_color, print_error
 
 
 class PlaybookRunner:

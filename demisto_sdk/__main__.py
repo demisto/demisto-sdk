@@ -2310,8 +2310,7 @@ def update_content_graph(
     from demisto_sdk.commands.common.logger import logging_setup
     from demisto_sdk.commands.content_graph.content_graph_commands import \
         update_content_graph as update_content_graph_command
-    from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import \
-        Neo4jContentGraphInterface
+    from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import Neo4jContentGraphInterface
     logging_setup(verbose=kwargs.get('verbose'),  # type: ignore[arg-type]
                   quiet=kwargs.get('quiet'),  # type: ignore[arg-type]
                   log_path=kwargs.get('log_path'))  # type: ignore[arg-type]

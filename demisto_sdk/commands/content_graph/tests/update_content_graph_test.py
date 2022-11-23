@@ -352,6 +352,8 @@ class TestUpdateContentGraph:
             )
             all_content_items = interface.search(marketplace=MarketplaceVersions.XSOAR)
             content_cto = interface.marshal_graph(MarketplaceVersions.XSOAR)
+        for pack_node in packs:
+            print(pack_node)
         assert len(packs) == 2
         assert len(integrations) == 1
         assert len(all_content_items) == 10

@@ -1,10 +1,9 @@
 import logging
 
-from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import \
-    Neo4jImportHandler
-from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import \
-    run_query
 from neo4j import Transaction
+
+from demisto_sdk.commands.content_graph.interface.neo4j.import_utils import Neo4jImportHandler
+from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query
 
 logger = logging.getLogger('demisto-sdk')
 

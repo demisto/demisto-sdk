@@ -47,6 +47,7 @@ references:
       run:
         name: Install Neo4j
         command: |
+          # workaround for 402 Payment required issue: https://github.com/actions/runner-images/issues/1983
           sudo rm -fv /etc/apt/sources.list.d/github_git-lfs.list
           sudo rm -fv /etc/apt/sources.list.d/github_git-lfs.list.save
 

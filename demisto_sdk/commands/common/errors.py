@@ -481,6 +481,7 @@ ERROR_CODE = {
     "modeling_rule_keys_are_missing": {'code': "MR102", 'ui_applicable': False, 'related_field': ''},
     "invalid_rule_name": {'code': "MR103", 'ui_applicable': False, 'related_field': ''},
     "modeling_rule_schema_types_invalid": {'code': "MR104", 'ui_applicable': False, 'related_field': ''},
+    "modeling_rule_schema_xif_dataset_mismatch": {'code': "MR105", 'ui_applicable': False, 'related_field': ''},
 
     # CR - Correlation Rules
     "correlation_rule_starts_with_hyphen": {'code': 'CR100', 'ui_applicable': False, 'related_field': ''}
@@ -2516,6 +2517,11 @@ class Errors:
     @error_code_decorator
     def modeling_rule_schema_types_invalid(invalid_types: list):
         return f"Some of the types in the schema file are invalid. Invalid types are: {','.join(invalid_types)}"
+
+    @staticmethod
+    @error_code_decorator
+    def modeling_rule_schema_xif_dataset_mismatch():
+        return "The dataset name in the schema file and in the xif file do not match"
 
     @staticmethod
     @error_code_decorator

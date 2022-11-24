@@ -1,5 +1,7 @@
 import os
 
+import pytest
+
 from demisto_sdk.commands.common.handlers import YAML_Handler
 from demisto_sdk.commands.common.hook_validations.modeling_rule import \
     ModelingRuleValidator
@@ -130,3 +132,31 @@ def test_is_invalid_rule_file_name(repo):
     with ChangeCWD(repo.path):
         modeling_rule_validator = ModelingRuleValidator(structure_validator)
         assert not modeling_rule_validator.is_valid_rule_names()
+
+
+@pytest.mark.parametrize('schema, valid', [({"test_audit_raw": {"name": {"type": "sting", "is_array": False}}}, False),
+                                           ({"test_audit_raw": {"name": {"type": "string", "is_array": False}}}, True)])
+def test_is_schema_types_valid(repo, schema, valid):
+    """
+    Given: A modeling rule with invalid schema attribute types
+    When: running is_schema_types_valid
+    Then: Validate that the modeling rule is invalid
+    """
+    pack = repo.create_pack('TestPack')
+    dummy_modeling_rule = pack.create_modeling_rule('MyRule', schema=schema)
+    structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
+    modeling_rule_validator = ModelingRuleValidator(structure_validator)
+    assert modeling_rule_validator.is_schema_types_valid() == valid
+
+
+def test_is_dataset_name_similar(repo):
+    """
+    Given: A modeling rule with mismatch between dataset name of the schema and xif files.
+    When: running is_dataset_name_similar.
+    Then: Validate that the modeling rule is invalid.
+    """
+    pack = repo.create_pack('TestPack')
+    dummy_modeling_rule = pack.create_modeling_rule('MyRule')
+    structure_validator = StructureValidator(dummy_modeling_rule.yml.path)
+    modeling_rule_validator = ModelingRuleValidator(structure_validator)
+    assert not modeling_rule_validator.is_dataset_name_similar()

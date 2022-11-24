@@ -6,7 +6,8 @@ import os
 
 from demisto_sdk.commands.common.errors import Errors
 from demisto_sdk.commands.common.handlers import YAML_Handler
-from demisto_sdk.commands.common.hook_validations.base_validator import error_codes
+from demisto_sdk.commands.common.hook_validations.base_validator import \
+    error_codes
 from demisto_sdk.commands.common.hook_validations.content_entity_validator import \
     ContentEntityValidator
 from demisto_sdk.commands.common.tools import get_files_in_dir
@@ -23,6 +24,13 @@ class ModelingRuleValidator(ContentEntityValidator):
         super().__init__(structure_validator, ignored_errors=ignored_errors, print_as_warnings=print_as_warnings,
                          json_file_path=json_file_path)
         self._is_valid = True
+        self.schema_content = self.get_schema_file_content()
+
+    def get_schema_file_content(self):
+        schema_file = get_files_in_dir(os.path.dirname(self.file_path), ['json'], False)
+        if schema_file:
+            with open(schema_file[0], 'r') as sf:
+                return json.load(sf)
 
     def is_valid_file(self, validate_rn=True, is_new_file=False, use_git=False):
         """
@@ -35,6 +43,7 @@ class ModelingRuleValidator(ContentEntityValidator):
         self.are_keys_empty_in_yml()
         self.is_valid_rule_names()
         self.is_schema_types_valid()
+        self.is_dataset_name_similar()
 
         return self._is_valid
 
@@ -57,18 +66,12 @@ class ModelingRuleValidator(ContentEntityValidator):
     @error_codes("MR104")
     def is_schema_types_valid(self):
         """
-
-        Returns:
-
+            Validates all types used in the schema file are valid, i.e. part of the list below.
         """
         valid_type = ['string', 'int', 'float', 'datetime', 'boolean']
         invalid_types = []
-        schema_file = get_files_in_dir(os.path.dirname(self.file_path), ['json'], False)
-        if schema_file:
-            with open(schema_file[0], 'r') as sf:
-                schema_content = json.load(sf)
-
-            attributes = list(schema_content.values())[0]
+        if self.schema_content:
+            attributes = list(self.schema_content.values())[0]
             for attr in attributes.values():
                 type_to_validate = attr.get('type')
                 if type_to_validate not in valid_type:
@@ -81,6 +84,32 @@ class ModelingRuleValidator(ContentEntityValidator):
                     return False
         return True
 
+    @error_codes("MR105")
+    def is_dataset_name_similar(self):
+        """
+            Validates the dataset name is the same in the xif file and in the schema file
+        """
+
+        def get_dataset_from_xif(xif_file_path):
+            with open(xif_file_path, 'r') as xif_file:
+                xif_content = xif_file.readline()
+                for attr in xif_content.split(" "):
+                    if "dataset" in attr:
+                        dataset = attr.split("=")[1].strip("\",]\n")
+                        return dataset
+            return None
+
+        xif_file_path = get_files_in_dir(os.path.dirname(self.file_path), ['xif'], False)
+        if xif_file_path and self.schema_content:
+            xif_dataset = get_dataset_from_xif(xif_file_path[0])
+            schema_dataset = next(iter(self.schema_content))
+            if xif_dataset and schema_dataset and xif_dataset == schema_dataset:
+                return True
+
+        error_message, error_code = Errors.modeling_rule_schema_xif_dataset_mismatch()
+        if self.handle_error(error_message, error_code, file_path=self.file_path):
+            self._is_valid = False
+            return False
 
     def are_keys_empty_in_yml(self):
         """

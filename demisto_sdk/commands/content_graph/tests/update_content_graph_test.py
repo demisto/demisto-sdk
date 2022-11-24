@@ -5,7 +5,7 @@ import pytest
 
 import demisto_sdk.commands.content_graph.neo4j_service as neo4j_service
 from demisto_sdk.commands.common.constants import MarketplaceVersions
-from demisto_sdk.commands.content_graph.common import NEO4J_FOLDER, ContentType, RelationshipType
+from demisto_sdk.commands.content_graph.common import ContentType, RelationshipType
 from demisto_sdk.commands.content_graph.content_graph_commands import create_content_graph, update_content_graph
 from demisto_sdk.commands.content_graph.interface.neo4j.neo4j_graph import \
     Neo4jContentGraphInterface as ContentGraphInterface
@@ -389,12 +389,11 @@ class TestUpdateContentGraph:
         assert Path.exists(tmp_path / "TestPack" / "Scripts" / "script-script1.yml")
         assert Path.exists(tmp_path / "TestPack2")
 
-        assert any((Path(repo.path) / NEO4J_FOLDER / "import").iterdir())
-
-    def test_update_content_graph_end_to_end_with_existing_service(self, repo: Repo, tmp_path: Path):
+    def test_update_content_graph_end_to_end_with_new_service(self, repo: Repo, tmp_path: Path):
         """
         Given:
             - A repository with a pack TestPack, containing a script SampleScript.
+            - A new neo4j service.
         When:
             - Running create_content_graph() with a new service.
             - Adding to the repository the pack TestPack2, containing a script that uses SampleScript.
@@ -408,15 +407,17 @@ class TestUpdateContentGraph:
         repo = self._test_create_content_graph_end_to_end(repo, start_service=True)
         self._test_update_content_graph_end_to_end(repo, start_service=False, tmp_path=tmp_path)
 
-    def test_update_content_graph_end_to_end_with_new_service(self, repo: Repo, tmp_path: Path):
+    def test_update_content_graph_end_to_end_with_existing_service(self, repo: Repo, tmp_path: Path):
         """
         Given:
-            - A repository with a pack TestPack, containing an integration TestIntegration.
+            - A repository with a pack TestPack, containing a script SampleScript.
+            - An existing neo4j service.
         When:
-            - Running create_content_graph() with an existing, running service.
+            - Running update_content_graph() with the same service.
         Then:
             - Make sure the service remains available by querying for all content items in the graph.
-            - Make sure there is a single integration in the query response.
+            - Make sure TestPack content items are returned in the query response.
+            - Make sure TestPack2 content items and the USES relationship are returned in the query response.
+
         """
-        repo = self._test_create_content_graph_end_to_end(repo, start_service=True)
-        self._test_update_content_graph_end_to_end(repo, start_service=True, tmp_path=tmp_path)
+        self._test_update_content_graph_end_to_end(repo, start_service=False, tmp_path=tmp_path)

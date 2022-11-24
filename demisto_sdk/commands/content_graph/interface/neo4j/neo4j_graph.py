@@ -273,6 +273,7 @@ class Neo4jContentGraphInterface(ContentGraphInterface):
             session.write_transaction(create_constraints)
 
     def export_graph(self) -> None:
+        Neo4jImportHandler().clean_import_dir()
         with self.driver.session() as session:
             session.write_transaction(pre_export_write_queries)
             session.write_transaction(export_to_csv, self.repo_path.name)

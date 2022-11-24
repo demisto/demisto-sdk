@@ -1,6 +1,6 @@
 import logging
-
 from typing import List
+
 from neo4j import Transaction
 
 from demisto_sdk.commands.content_graph.interface.neo4j.queries.common import run_query

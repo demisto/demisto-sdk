@@ -73,7 +73,7 @@ from demisto_sdk.commands.common.tools import (_get_file_id, find_type, get_api_
                                                open_id_set_file, print_warning, run_command_os)
 from demisto_sdk.commands.create_id_set.create_id_set import IDSetCreator
 
-SKIPPED_FILES = ['CommonServerPython.py', 'CommonServerUserPython.py', 'demistomock.py']
+SKIPPED_FILES = ['CommonServerPython.py', 'CommonServerUserPython.py', 'demistomock.py', 'DemistoClassApiModule.py']
 
 
 class ValidateManager:

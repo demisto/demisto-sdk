@@ -169,7 +169,7 @@ class YmlSplitter:
                 if self.run_code_formatting:
                     self.print_logs("Running autopep8 on file: {} ...".format(code_file), log_color=LOG_COLORS.NATIVE)
                     try:
-                        autopep8.fix_code(code_file, options={'max-line-length': '130', 'in-place': 1})
+                        autopep8.fix_code(code_file, options={'max_line_length': 130, 'in_place': 1})
                     except FileNotFoundError:
                         self.print_logs("autopep8 skipped! It doesn't seem you have autopep8 installed.\n"
                                         "Make sure to install it with: pip install autopep8.\n"

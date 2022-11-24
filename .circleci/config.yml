@@ -47,6 +47,9 @@ references:
       run:
         name: Install Neo4j
         command: |
+          sudo rm -fv /etc/apt/sources.list.d/github_git-lfs.list
+          sudo rm -fv /etc/apt/sources.list.d/github_git-lfs.list.save
+
           wget -O - https://debian.neo4j.com/neotechnology.gpg.key | sudo apt-key add -
           echo 'deb https://debian.neo4j.com stable 4.4' | sudo tee /etc/apt/sources.list.d/neo4j.list
           sudo apt-get update
